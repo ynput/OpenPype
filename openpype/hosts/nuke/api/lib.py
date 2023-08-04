@@ -1699,7 +1699,7 @@ def create_write_node_legacy(
             knob_value = float(knob_value)
         if knob_type == "bool":
             knob_value = bool(knob_value)
-        if knob_type in ["2d_vector", "3d_vector"]:
+        if knob_type in ["2d_vector", "3d_vector", "color", "box"]:
             knob_value = list(knob_value)
 
         GN[knob_name].setValue(knob_value)
@@ -1715,7 +1715,7 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
     Args:
         node (nuke.Node): nuke node
         knob_settings (list): list of dict. Keys are `type`, `name`, `value`
-        kwargs (dict)[optional]: keys for formatable knob settings
+        kwargs (dict)[optional]: keys for formattable knob settings
     """
     for knob in knob_settings:
         log.debug("__ knob: {}".format(pformat(knob)))
@@ -1732,7 +1732,7 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
             )
             continue
 
-        # first deal with formatable knob settings
+        # first deal with formattable knob settings
         if knob_type == "formatable":
             template = knob["template"]
             to_type = knob["to_type"]
@@ -1741,8 +1741,8 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
                     **kwargs
                 )
             except KeyError as msg:
-                log.warning("__ msg: {}".format(msg))
-                raise KeyError(msg)
+                raise KeyError(
+                    "Not able to format expression: {}".format(msg))
 
             # convert value to correct type
             if to_type == "2d_vector":
@@ -1781,8 +1781,8 @@ def convert_knob_value_to_correct_type(knob_type, knob_value):
         knob_value = knob_value
     elif knob_type == "color_gui":
         knob_value = color_gui_to_int(knob_value)
-    elif knob_type in ["2d_vector", "3d_vector", "color"]:
-        knob_value = [float(v) for v in knob_value]
+    elif knob_type in ["2d_vector", "3d_vector", "color", "box"]:
+        knob_value = [float(val_) for val_ in knob_value]
 
     return knob_value
 
