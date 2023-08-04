@@ -2,11 +2,13 @@ import nuke
 import pyblish.api
 
 
-class CollectInstanceData(pyblish.api.InstancePlugin):
-    """Collect all nodes with Avalon knob."""
+class CollectNukeInstanceData(pyblish.api.InstancePlugin):
+    """Collect Nuke instance data
+
+    """
 
     order = pyblish.api.CollectorOrder - 0.49
-    label = "Collect Instance Data"
+    label = "Collect Nuke Instance Data"
     hosts = ["nuke", "nukeassist"]
 
     # presets
@@ -40,5 +42,14 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
             "pixelAspect": pixel_aspect
 
         })
+
+        # add review family if review activated on instance
+        if instance.data.get("review"):
+            instance.data["families"].append("review")
+
+        # add creator attributes to instance
+        creator_attributes = instance.data["creator_attributes"]
+        instance.data.update(creator_attributes)
+
         self.log.debug("Collected instance: {}".format(
             instance.data))
