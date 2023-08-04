@@ -136,6 +136,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                 temp_arr = #()
                 for x in all_handles do
                 (
+                    if x.node == undefined do continue
                     handle_name = node_to_name x.node
                     append temp_arr handle_name
                 )
@@ -209,13 +210,17 @@ class MaxCreator(Creator, MaxCreatorBase):
         if pre_create_data.get("use_selection"):
 
             node_list = []
+            sel_list = []
             for i in self.selected_nodes:
                 node_ref = rt.NodeTransformMonitor(node=i)
                 node_list.append(node_ref)
+                sel_list.append(str(i))
 
             # Setting the property
             rt.setProperty(
                 instance_node.openPypeData, "all_handles", node_list)
+            rt.setProperty(
+                instance_node.openPypeData, "sel_list", sel_list)
 
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
