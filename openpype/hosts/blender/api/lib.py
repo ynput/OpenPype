@@ -124,11 +124,14 @@ def get_user_links(
             continue
         all_datablocks.update(getattr(bpy.data, datacol))
 
-    all_not_linked = set()
     users_links = {}
     user_map = bpy.data.user_map(subset=all_datablocks)
-    for datablock in user_map.keys():
-        for user in users_datablocks:
+
+    all_not_linked = user_map.keys()
+    for user in users_datablocks:
+        current_user_links = users_links.setdefault(user, {user})
+        not_linked = set()
+        for datablock in all_not_linked:
             # Substitute scene collection with scene
             if (
                 isinstance(datablock, bpy.types.Collection)
@@ -137,15 +140,14 @@ def get_user_links(
                 user = bpy.context.scene
 
             # Recursive search
-            not_linked = set()
             _recursive_collect_user_links(
                 datablock,
                 user,
-                users_links.setdefault(user, {user}),
+                current_user_links,
                 not_linked,
                 user_map,
             )
-            all_not_linked.update(not_linked)
+        all_not_linked -= current_user_links
 
     # Filter datablocks by types
     if types:
@@ -156,9 +158,7 @@ def get_user_links(
         }
         not_linked = {d for d in not_linked if isinstance(d, types)}
 
-    return users_links, not_linked - set(
-        chain.from_iterable(users_links.values())
-    )
+    return users_links, not_linked
 
 
 def _recursive_collect_user_links(
