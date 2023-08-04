@@ -108,7 +108,7 @@ class ApplicationsAddon(BaseServerAddon):
 
         instance = AddonLibrary.getinstance()
         app_defs = instance.data.get(self.name)
-        old_addon = app_defs.get("0.1.0")
+        old_addon = app_defs.versions.get("0.1.0")
         if old_addon is not None:
             # Override 'create_applications_attribute' for older versions
             #   - avoid infinite server restart loop
