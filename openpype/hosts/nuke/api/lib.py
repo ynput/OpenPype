@@ -2105,23 +2105,29 @@ class WorkfileSettings(object):
                 config_data["path"]))
 
             # check if there's a mismatch between environment and settings
-            wrong_environment = self._is_settings_different_from_environment(
+            correct_settings = self._is_settings_matching_environment(
                 config_data)
 
             # if there's no mismatch between environment and settings
-            if not wrong_environment:
+            if correct_settings:
                 self._set_ocio_config_path_to_workfile(config_data)
 
-    def _is_settings_different_from_environment(self, config_data):
+    def _is_settings_matching_environment(self, config_data):
         """ Check if OCIO config path is different from environment
 
         Args:
             config_data (dict): OCIO config data from settings
 
         Returns:
-            bool: True if there's a mismatch between environment and settings
+            bool: True if settings are matching environment, False otherwise
         """
-        current_ocio_path = os.getenv("OCIO")
+        current_ocio_path = os.environ["OCIO"]
+        settings_ocio_path = config_data["path"]
+
+        # normalize all paths to forward slashes
+        current_ocio_path = current_ocio_path.replace("\\", "/")
+        settings_ocio_path = settings_ocio_path.replace("\\", "/")
+
         if current_ocio_path != config_data["path"]:
             message = """
 It seems like there's a mismatch between the OCIO config path set in your Nuke
@@ -2147,7 +2153,9 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
                     settings_path=config_data["path"]
                 )
             )
-            return True
+            return False
+
+        return True
 
     def _set_ocio_config_path_to_workfile(self, config_data):
         """ Set OCIO config path to workfile
