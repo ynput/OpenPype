@@ -54,7 +54,7 @@ class CreatePluginsModel(BaseSettingsModel):
 DEFAULT_HOUDINI_CREATE_SETTINGS = {
     "CreateArnoldAss": {
         "enabled": True,
-        "defaults": [],
+        "default_variants": [],
         "ext": ".ass"
     },
     "CreateAlembicCamera": {

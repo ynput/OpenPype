@@ -1,5 +1,9 @@
 import os
-from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
+from openpype.lib.applications import (
+    PreLaunchHook,
+    LaunchTypes,
+    ApplicationLaunchFailed,
+)
 from openpype.hosts.fusion import (
     FUSION_HOST_DIR,
     FUSION_VERSIONS_DICT,
@@ -17,8 +21,9 @@ class FusionPrelaunch(PreLaunchHook):
     Fusion 18        : Python 3.6 - 3.10
     """
 
-    app_groups = ["fusion"]
+    app_groups = {"fusion"}
     order = 1
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         # making sure python 3 is installed at provided path
