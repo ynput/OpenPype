@@ -44,14 +44,15 @@ class MenuSocketListener(QtCore.QThread):
     def execute(self, data):
         fusion_uuid = data.get("uuid")
         log.info(f"FusionID: {fusion_uuid}")
-        os.environ["VARIABLE_NAME"] = fusion_uuid
+        os.environ["FUSION_UUID"] = fusion_uuid
 
         from openpype.hosts.fusion.api import FusionHost
 
         install_host(FusionHost())
         log.info(f"Registered host: {registered_host()}")
         log.info(
-            f"get_current_project_name: {registered_host().get_current_project_name()}"
+            f"get_current_project_name: "
+            f"{registered_host().get_current_project_name()}"
         )
 
         tools_helper = host_tools.HostToolsHelper()

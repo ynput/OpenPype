@@ -370,7 +370,7 @@ def get_fusion_module():
     """Get current Fusion instance"""
     try:
         fusion_module = getattr(sys.modules["__main__"], "fusion")
-    except:
+    except BaseException:
         fusion_module = get_bmd_library().scriptapp(
             "Fusion", "localhost", 0, os.environ["FUSION_UUID"]
         )

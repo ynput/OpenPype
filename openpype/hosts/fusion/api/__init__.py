@@ -1,11 +1,10 @@
 from .pipeline import (
     FusionHost,
     ls,
-
     imprint_container,
     parse_container,
     list_instances,
-    remove_instance
+    remove_instance,
 )
 
 from .lib import (
@@ -28,11 +27,12 @@ from .menu_communication import (
 
 __all__ = [
     # pipeline
+    "FusionHost",
     "ls",
-
     "imprint_container",
     "parse_container",
-
+    "list_instances",
+    "remove_instance",
     # lib
     "maintained_selection",
     "update_frame_range",
@@ -42,7 +42,8 @@ __all__ = [
     "get_bmd_library",
     "get_fusion_module",
     "comp_lock_and_undo_chunk",
-
     # menu
     "launch_openpype_menu",
+    # meny_communication
+    "MenuSocketListener",
 ]

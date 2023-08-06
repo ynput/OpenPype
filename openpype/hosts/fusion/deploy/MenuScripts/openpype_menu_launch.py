@@ -19,5 +19,6 @@ if "menu_item" in data and "uuid" in data:
     send_message_to_OpenPype(data)
 else:
     print(
-        f"data sent didn't contain all needed items (menu_item and uuid):\n{data}"
+        f"data sent didn't contain all needed items (menu_item and uuid):"
+        f"\n{data}"
     )
