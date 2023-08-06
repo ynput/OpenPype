@@ -1,6 +1,5 @@
-import tempfile
-import sys
 import os
+import tempfile
 
 from qtpy import QtCore, QtGui, QtWidgets
 
@@ -12,34 +11,45 @@ class ScreenMarquee(QtWidgets.QDialog):
 
     You can use any of its classmethods for easily saving an image,
     capturing to QClipboard or returning a QPixmap, respectively
-    `capture_file`, `capture_clipboard` and `capture_pixmap`.
-
+    `capture_to_file`, `capture_to_clipboard` and `capture_to_pixmap`.
     """
 
     def __init__(self, parent=None):
-        """Constructor"""
         super(ScreenMarquee, self).__init__(parent=parent)
 
-        self._opacity = 1
-        self._click_pos = None
-        self._capture_rect = QtCore.QRect()
-
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint |
-                            QtCore.Qt.WindowStaysOnTopHint |
-                            QtCore.Qt.CustomizeWindowHint |
-                            QtCore.Qt.Tool)
+        self.setWindowFlags(
+            QtCore.Qt.FramelessWindowHint
+            | QtCore.Qt.WindowStaysOnTopHint
+            | QtCore.Qt.CustomizeWindowHint
+            | QtCore.Qt.Tool)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setCursor(QtCore.Qt.CrossCursor)
         self.setMouseTracking(True)
+
+        fade_anim = QtCore.QVariantAnimation()
+        fade_anim.setStartValue(0)
+        fade_anim.setEndValue(50)
+        fade_anim.setDuration(200)
+        fade_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+        fade_anim.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+
+        fade_anim.valueChanged.connect(self._on_fade_anim)
 
         desktop = QtWidgets.QApplication.desktop()
         desktop.resized.connect(self._fit_screen_geometry)
         desktop.screenCountChanged.connect(self._fit_screen_geometry)
 
-    @property
-    def capture_rect(self):
-        """The resulting QRect from a previous capture operation."""
-        return self._capture_rect
+        self._opacity = fade_anim.currentValue()
+        self._click_pos = None
+        self._capture_rect = None
+
+        self._fade_anim = fade_anim
+
+    def get_captured_pixmap(self):
+        if self._capture_rect is None:
+            return QtGui.QPixmap()
+
+        return self.get_desktop_pixmap(self._capture_rect)
 
     def paintEvent(self, event):
         """Paint event"""
@@ -72,16 +82,24 @@ class ScreenMarquee(QtWidgets.QDialog):
         # Draw cropping markers at click position
         rect = event.rect()
         if click_pos is not None:
-            painter.drawLine(rect.left(), click_pos.y(),
-                             rect.right(), click_pos.y())
-            painter.drawLine(click_pos.x(), rect.top(),
-                             click_pos.x(), rect.bottom())
+            painter.drawLine(
+                rect.left(), click_pos.y(),
+                rect.right(), click_pos.y()
+            )
+            painter.drawLine(
+                click_pos.x(), rect.top(),
+                click_pos.x(), rect.bottom()
+            )
 
         # Draw cropping markers at current mouse position
-        painter.drawLine(rect.left(), mouse_pos.y(),
-                         rect.right(), mouse_pos.y())
-        painter.drawLine(mouse_pos.x(), rect.top(),
-                         mouse_pos.x(), rect.bottom())
+        painter.drawLine(
+            rect.left(), mouse_pos.y(),
+            rect.right(), mouse_pos.y()
+        )
+        painter.drawLine(
+            mouse_pos.x(), rect.top(),
+            mouse_pos.x(), rect.bottom()
+        )
 
     def mousePressEvent(self, event):
         """Mouse click event"""
@@ -92,10 +110,14 @@ class ScreenMarquee(QtWidgets.QDialog):
 
     def mouseReleaseEvent(self, event):
         """Mouse release event"""
-        if event.button() == QtCore.Qt.LeftButton and self._click_pos is not None:
+        if (
+            self._click_pos is not None
+            and event.button() == QtCore.Qt.LeftButton
+        ):
             # End click drag operation and commit the current capture rect
-            self._capture_rect = QtCore.QRect(self._click_pos,
-                                              event.globalPos()).normalized()
+            self._capture_rect = QtCore.QRect(
+                self._click_pos, event.globalPos()
+            ).normalized()
             self._click_pos = None
         self.close()
 
@@ -103,64 +125,24 @@ class ScreenMarquee(QtWidgets.QDialog):
         """Mouse move event"""
         self.repaint()
 
-    @classmethod
-    def capture_pixmap(cls):
-        """Modally capture screen with marquee into pixmap.
-
-        Returns:
-            QtGui.QPixmap: Captured pixmap image
-        """
-
-        tool = cls()
-        tool.exec_()
-        return get_desktop_pixmap(tool.capture_rect)
-
-    @classmethod
-    def capture_file(cls, filepath=None):
-
-        if filepath is None:
-            filepath = tempfile.NamedTemporaryFile(prefix="screenshot_",
-                                                   suffix=".png",
-                                                   delete=False).name
-        pixmap = cls.capture_pixmap()
-        pixmap.save(filepath)
-        return filepath
-
-    @classmethod
-    def capture_clipboard(cls):
-        clipboard = QtWidgets.QApplication.clipboard()
-        pixmap = cls.capture_pixmap()
-        image = pixmap.toImage()
-        clipboard.setImage(image, QtGui.QClipboard.Clipboard);
+    def keyPressEvent(self, event):
+        """Mouse press event"""
+        if event.button() == QtCore.Qt.Key_Escape:
+            self._click_pos = None
+            self._capture_rect = None
+            self.close()
+            return
+        return super(ScreenMarquee, self).mousePressEvent(event)
 
     def showEvent(self, event):
-        """
-        Show event
-        """
         self._fit_screen_geometry()
+        self._fade_anim.start()
 
-        # Start fade in animation
-        fade_anim = QtCore.QPropertyAnimation(self, b"_opacity_anim_prop", self)
-        fade_anim.setStartValue(self._opacity)
-        fade_anim.setEndValue(50)
-        fade_anim.setDuration(200)
-        fade_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-        fade_anim.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+    def _on_fade_anim(self):
+        """Animation callback for opacity."""
 
-    def _set_opacity(self, value):
-        """
-        Animation callback for opacity
-        """
-        self._opacity = value
+        self._opacity = self._fade_anim.currentValue()
         self.repaint()
-
-    def _get_opacity(self):
-        """
-        Animation callback for opacity
-        """
-        return self._opacity
-
-    _opacity_anim_prop = QtCore.Property(int, _get_opacity, _set_opacity)
 
     def _fit_screen_geometry(self):
         # Compute the union of all screen geometries, and resize to fit.
@@ -170,24 +152,126 @@ class ScreenMarquee(QtWidgets.QDialog):
             workspace_rect = workspace_rect.united(screen.geometry())
         self.setGeometry(workspace_rect)
 
+    @classmethod
+    def get_desktop_pixmap(cls, rect):
+        """Performs a screen capture on the specified rectangle.
 
-def get_desktop_pixmap(rect):
-    """Performs a screen capture on the specified rectangle.
+        Args:
+            rect (QtCore.QRect): The rectangle to capture.
 
-    Args:
-        rect (QtCore.QRect): The rectangle to capture.
+        Returns:
+            QtGui.QPixmap: Captured pixmap image
+        """
+
+        desktop = QtWidgets.QApplication.desktop()
+        return QtGui.QPixmap.grabWindow(
+            desktop.winId(),
+            rect.x(),
+            rect.y(),
+            rect.width(),
+            rect.height()
+        )
+
+    @classmethod
+    def capture_to_pixmap(cls):
+        """Take screenshot with marquee into pixmap.
+
+        Note:
+            The pixmap can be invalid (use 'isNull' to check).
+
+        Returns:
+            QtGui.QPixmap: Captured pixmap image.
+        """
+
+        tool = cls()
+        tool.exec_()
+        return tool.get_captured_pixmap()
+
+    @classmethod
+    def capture_to_file(cls, filepath=None):
+        """Take screenshot with marquee into file.
+
+        Args:
+            filepath (Optional[str]): Path where screenshot will be saved.
+
+        Returns:
+            Union[str, None]: Path to the saved screenshot, or None if user
+                cancelled the operation.
+        """
+
+        pixmap = cls.capture_to_pixmap()
+        if pixmap.isNull():
+            return None
+
+        if filepath is None:
+            with tempfile.NamedTemporaryFile(
+                prefix="screenshot_", suffix=".png", delete=False
+            ) as tmpfile:
+                filepath = tmpfile.name
+
+        else:
+            output_dir = os.path.dirname(filepath)
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+
+        pixmap.save(filepath)
+        return filepath
+
+    @classmethod
+    def capture_to_clipboard(cls):
+        """Take screenshot with marquee into clipboard.
+
+        Notes:
+            Screenshot is not in clipboard if user cancelled the operation.
+
+        Returns:
+            bool: Screenshot was added to clipboard.
+        """
+
+        clipboard = QtWidgets.QApplication.clipboard()
+        pixmap = cls.capture_to_pixmap()
+        if pixmap.isNull():
+            return False
+        image = pixmap.toImage()
+        clipboard.setImage(image, QtGui.QClipboard.Clipboard)
+        return True
+
+
+def capture_to_pixmap():
+    """Take screenshot with marquee into pixmap.
+
+    Note:
+        The pixmap can be invalid (use 'isNull' to check).
 
     Returns:
-        QtGui.QPixmap: Captured pixmap image
-
+        QtGui.QPixmap: Captured pixmap image.
     """
-    desktop = QtWidgets.QApplication.desktop()
-    pixmap = QtGui.QPixmap.grabWindow(desktop.winId(),
-                                      rect.x(),
-                                      rect.y(),
-                                      rect.width(),
-                                      rect.height())
 
-    return pixmap
+    return ScreenMarquee.capture_to_pixmap()
 
-ScreenMarquee.capture_clipboard()
+
+def capture_to_file(filepath=None):
+    """Take screenshot with marquee into file.
+
+    Args:
+        filepath (Optional[str]): Path where screenshot will be saved.
+
+    Returns:
+        Union[str, None]: Path to the saved screenshot, or None if user
+            cancelled the operation.
+    """
+
+    return ScreenMarquee.capture_to_file(filepath)
+
+
+def capture_to_clipboard():
+    """Take screenshot with marquee into clipboard.
+
+    Notes:
+        Screenshot is not in clipboard if user cancelled the operation.
+
+    Returns:
+        bool: Screenshot was added to clipboard.
+    """
+
+    return ScreenMarquee.capture_to_clipboard()
