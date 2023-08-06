@@ -22,6 +22,7 @@ from openpype.tools.utils import (
 from openpype.tools.publisher.control import CardMessageTypes
 
 from .icons import get_image
+from .screenshot_widget import capture_to_file
 
 
 class ThumbnailPainterWidget(QtWidgets.QWidget):
@@ -311,15 +312,23 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         icon_color = get_objected_colors("bg-view-selection").get_qcolor()
         icon_color.setAlpha(255)
+
         clear_image = get_image("clear_thumbnail")
         clear_pix = paint_image_with_color(clear_image, icon_color)
-
         clear_button = PixmapButton(clear_pix, buttons_widget)
         clear_button.setObjectName("ThumbnailPixmapHoverButton")
+
+        take_screenshot_image = get_image("take_screenshot")
+        take_screenshot_pix = paint_image_with_color(
+            take_screenshot_image, icon_color)
+        take_screenshot_btn = PixmapButton(
+            take_screenshot_pix, buttons_widget)
+        take_screenshot_btn.setObjectName("ThumbnailPixmapHoverButton")
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(3, 3, 3, 3)
         buttons_layout.addStretch(1)
+        buttons_layout.addWidget(take_screenshot_btn, 0)
         buttons_layout.addWidget(clear_button, 0)
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -327,6 +336,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
         layout.addWidget(thumbnail_painter)
 
         clear_button.clicked.connect(self._on_clear_clicked)
+        take_screenshot_btn.clicked.connect(self._on_take_screenshot)
 
         self._controller = controller
         self._output_dir = controller.get_thumbnail_temp_dir_path()
@@ -341,6 +351,8 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         self._buttons_widget = buttons_widget
         self._thumbnail_painter = thumbnail_painter
+        self._clear_button = clear_button
+        self._take_screenshot_btn = take_screenshot_btn
 
     @property
     def width_ratio(self):
@@ -438,6 +450,12 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self.set_current_thumbnails()
         self.thumbnail_cleared.emit()
 
+    def _on_take_screenshot(self):
+        output_path = os.path.join(
+            self._output_dir, uuid.uuid4().hex + ".png")
+        if capture_to_file(output_path):
+            self.thumbnail_created.emit(output_path)
+
     def _adapt_to_size(self):
         if not self._adapted_to_size:
             return
@@ -452,7 +470,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._thumbnail_painter.clear_cache()
 
     def _update_buttons_position(self):
-        self._buttons_widget.setVisible(self._thumbnail_painter.has_pixes)
+        self._clear_button.setVisible(self._thumbnail_painter.has_pixes)
         size = self.size()
         my_height = size.height()
         height = self._buttons_widget.sizeHint().height()
