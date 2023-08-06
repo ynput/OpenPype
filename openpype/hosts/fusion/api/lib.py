@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import contextlib
+import imp
 
 from openpype.lib import Logger
 from openpype.client import (
@@ -333,16 +334,47 @@ def get_frame_path(path):
     return filename, padding, ext
 
 
-def get_fusion_module():
-    """Get current Fusion instance"""
-    fusion = getattr(sys.modules["__main__"], "fusion", None)
-    return fusion
+def _load_fusuionscriptlib():
+    try:
+        import fusionscript as script_module
+
+        return script_module
+    except ImportError as e:
+        lib_path = ""
+        if sys.platform.startswith("darwin"):
+            lib_path = "/Applications/Blackmagic Fusion 18/Fusion.app/Contents/MacOS/fusionscript.so"
+        elif sys.platform.startswith("win"):
+            lib_path = "C:\\Program Files\\Blackmagic Design\\DaVinci Resolve\\fusionscript.dll"
+        elif sys.platform.startswith("linux"):
+            lib_path = "/opt/BlackmagicDesign/Fusion18/fusionscript.so"
+
+        if not os.path.isfile(lib_path):
+            print("[Fusion] [Library Does Not Exist on Disk]", lib_path)
+
+        bmd = imp.load_dynamic("fusionscript", lib_path)
+
+        if not bmd:
+            raise ImportError(
+                "[BMD] Could not locate module dependencies"
+            ) from e
+
+        return bmd
 
 
 def get_bmd_library():
     """Get bmd library"""
-    bmd = getattr(sys.modules["__main__"], "bmd", None)
-    return bmd
+    return _load_fusuionscriptlib()
+
+
+def get_fusion_module():
+    """Get current Fusion instance"""
+    try:
+        fusion_module = getattr(sys.modules["__main__"], "fusion")
+    except:
+        fusion_module = get_bmd_library().scriptapp(
+            "Fusion", "localhost", 0, os.environ["FUSION_UUID"]
+        )
+    return fusion_module
 
 
 def get_current_comp():

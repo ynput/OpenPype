@@ -3,6 +3,8 @@ import sys
 
 from qtpy import QtCore
 
+from .lib import get_fusion_module
+
 
 class PulseThread(QtCore.QThread):
     no_response = QtCore.Signal()
@@ -11,7 +13,7 @@ class PulseThread(QtCore.QThread):
         super(PulseThread, self).__init__(parent=parent)
 
     def run(self):
-        app = getattr(sys.modules["__main__"], "app", None)
+        app = get_fusion_module()
 
         # Interval in milliseconds
         interval = os.environ.get("OPENPYPE_FUSION_PULSE_INTERVAL", 1000)

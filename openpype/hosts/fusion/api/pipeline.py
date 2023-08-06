@@ -28,6 +28,7 @@ from openpype.tools.utils import host_tools
 
 from .lib import (
     get_current_comp,
+    get_fusion_module,
     comp_lock_and_undo_chunk,
     validate_comp_prefs
 )
@@ -52,7 +53,7 @@ class FusionLogHandler(logging.Handler):
             # Use cached
             return self._print
 
-        _print = getattr(sys.modules["__main__"], "fusion").Print
+        _print = get_fusion_module().Print
         if _print is None:
             # Backwards compatibility: Print method on Fusion instance was
             # added around Fusion 17.4 and wasn't available on PyRemote Object
@@ -122,7 +123,7 @@ class FusionHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def open_workfile(self, filepath):
         # Hack to get fusion, see
         #   openpype.hosts.fusion.api.pipeline.get_current_comp()
-        fusion = getattr(sys.modules["__main__"], "fusion", None)
+        fusion = get_fusion_module()
 
         return fusion.LoadComp(filepath)
 
@@ -341,8 +342,7 @@ class FusionEventThread(QtCore.QThread):
     on_event = QtCore.Signal(dict)
 
     def run(self):
-
-        app = getattr(sys.modules["__main__"], "app", None)
+        app = get_fusion_module()
         if app is None:
             # No Fusion app found
             return
@@ -394,7 +394,7 @@ class FusionEventHandler(QtCore.QObject):
         super(FusionEventHandler, self).__init__(parent=parent)
 
         # Set up Fusion event callbacks
-        fusion = getattr(sys.modules["__main__"], "fusion", None)
+        fusion = get_fusion_module()
         ui = fusion.UIManager
 
         # Add notifications for the ones we want to listen to

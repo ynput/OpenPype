@@ -51,7 +51,7 @@ def _format_version_folder(folder):
 
 
 def _get_fusion_instance():
-    fusion = getattr(sys.modules["__main__"], "fusion", None)
+    fusion = fusion_lib.get_fusion_module()
     if fusion is None:
         try:
             # Support for FuScript.exe, BlackmagicFusion module for py2 only
