@@ -71,9 +71,11 @@ class ScreenMarquee(QtWidgets.QDialog):
         # Clear the capture area
         if click_pos is not None:
             capture_rect = QtCore.QRect(click_pos, mouse_pos)
-            painter.setCompositionMode(painter.CompositionMode_Clear)
+            painter.setCompositionMode(
+                QtGui.QPainter.CompositionMode_Clear)
             painter.drawRect(capture_rect)
-            painter.setCompositionMode(painter.CompositionMode_SourceOver)
+            painter.setCompositionMode(
+                QtGui.QPainter.CompositionMode_SourceOver)
 
         pen_color = QtGui.QColor(255, 255, 255, 64)
         pen = QtGui.QPen(pen_color, 1, QtCore.Qt.DotLine)
