@@ -41,6 +41,176 @@
             },
         },
     },
+    Action
+    {
+        ID = "OpenPype_Workfiles",
+        Category = "OpenPype",
+        Name = "Workfiles...",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    data = {menu_item = "workfiles", uuid = bmd.getappuuid()}
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/openpype_menu_launch.py")
+                    target:RunScript(scriptPath, { data = data })
+                ]=],
+            },
+        },
+    },
+    Action
+    {
+        ID = "OpenPype_Create",
+        Category = "OpenPype",
+        Name = "Create...",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    data = {menu_item = "create", uuid = bmd.getappuuid()}
+
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/openpype_menu_launch.py")
+                    target:RunScript(scriptPath, { data = data })
+                ]=],
+            },
+        },
+    },
+    Action
+    {
+        ID = "OpenPype_Load",
+        Category = "OpenPype",
+        Name = "Load...",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    data = {menu_item = "load", uuid = bmd.getappuuid()}
+
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/openpype_menu_launch.py")
+                    target:RunScript(scriptPath, { data = data })
+                ]=],
+            },
+        },
+    },
+    Action
+    {
+        ID = "OpenPype_Publish",
+        Category = "OpenPype",
+        Name = "Publish...",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    data = {menu_item = "publish", uuid = bmd.getappuuid()}
+
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/openpype_menu_launch.py")
+                    target:RunScript(scriptPath, { data = data })
+                ]=],
+            },
+        },
+    },
+    Action
+    {
+        ID = "OpenPype_Manage",
+        Category = "OpenPype",
+        Name = "Manage...",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    data = {menu_item = "manage", uuid = bmd.getappuuid()}
+
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/openpype_menu_launch.py")
+                    target:RunScript(scriptPath, { data = data })
+                ]=],
+            },
+        },
+    },
+    Action
+    {
+        ID = "OpenPype_Library",
+        Category = "OpenPype",
+        Name = "Library...",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    data = {menu_item = "library", uuid = bmd.getappuuid()}
+
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/openpype_menu_launch.py")
+                    target:RunScript(scriptPath, { data = data })
+                ]=],
+            },
+        },
+    },
+    Action
+    {
+        ID = "OpenPype_Set_frame_range",
+        Category = "OpenPype",
+        Name = "Set frame range",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    data = {menu_item = "set_frame_range", uuid = bmd.getappuuid()}
+
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/openpype_menu_launch.py")
+                    target:RunScript(scriptPath, { data = data })
+                ]=],
+            },
+        },
+    },
+    Action
+    {
+        ID = "OpenPype_Set_resolution",
+        Category = "OpenPype",
+        Name = "Set resolution",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    data = {menu_item = "set_resolution", uuid = bmd.getappuuid()}
+
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/openpype_menu_launch.py")
+                    target:RunScript(scriptPath, { data = data })
+                ]=],
+            },
+        },
+    },
+    Action
+    {
+        ID = "OpenPype_Duplicate_with_input_connections",
+        Category = "OpenPype",
+        Name = "Duplicate with input connections",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    data = {menu_item = "duplicate_with_input_connections", uuid = bmd.getappuuid()}
+
+                    local scriptPath = app:MapPath("OpenPype:MenuScripts/openpype_menu_launch.py")
+                    target:RunScript(scriptPath, { data = data })
+                ]=],
+            },
+        },
+    },
     Menus
     {
         Target = "ChildFrame",
@@ -53,7 +223,21 @@
                 "_",
                 Sub "Admin" {
                     "OpenPype_Install_PySide2{}"
-                }
+                },
+                "_",
+                "OpenPype_Workfiles{}",
+                "_",
+                "OpenPype_Create{}",
+                "OpenPype_Load{}",
+                "OpenPype_Publish{}",
+                "OpenPype_Manage{}",
+                "_",
+                "OpenPype_Library{}",
+                "_",
+                "OpenPype_Set_frame_range{}",
+                "OpenPype_Set_resolution{}",
+                "_",
+                "OpenPype_Duplicate_with_input_connections{}",
             }
         },
     },

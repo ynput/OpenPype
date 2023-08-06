@@ -19,6 +19,10 @@ from .lib import (
 
 from .menu import launch_openpype_menu
 
+from .menu_communication import (
+    MenuSocketListener,
+)
+
 
 __all__ = [
     # pipeline
