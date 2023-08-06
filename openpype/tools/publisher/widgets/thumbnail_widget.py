@@ -317,6 +317,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
         clear_pix = paint_image_with_color(clear_image, icon_color)
         clear_button = PixmapButton(clear_pix, buttons_widget)
         clear_button.setObjectName("ThumbnailPixmapHoverButton")
+        clear_button.setToolTip("Clear thumbnail")
 
         take_screenshot_image = get_image("take_screenshot")
         take_screenshot_pix = paint_image_with_color(
@@ -324,6 +325,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
         take_screenshot_btn = PixmapButton(
             take_screenshot_pix, buttons_widget)
         take_screenshot_btn.setObjectName("ThumbnailPixmapHoverButton")
+        take_screenshot_btn.setToolTip("Take screenshot")
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(3, 3, 3, 3)
