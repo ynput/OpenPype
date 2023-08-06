@@ -35,9 +35,16 @@ class ScreenMarquee(QtWidgets.QDialog):
 
         fade_anim.valueChanged.connect(self._on_fade_anim)
 
-        desktop = QtWidgets.QApplication.desktop()
-        desktop.resized.connect(self._fit_screen_geometry)
-        desktop.screenCountChanged.connect(self._fit_screen_geometry)
+        app = QtWidgets.QApplication.instance()
+        if hasattr(app, "screenAdded"):
+            app.screenAdded.connect(self._on_screen_added)
+            app.screenRemoved.connect(self._fit_screen_geometry)
+        elif hasattr(app, "desktop"):
+            desktop = app.desktop()
+            desktop.screenCountChanged.connect(self._fit_screen_geometry)
+
+        for screen in QtWidgets.QApplication.screens():
+            screen.geometryChanged.connect(self._fit_screen_geometry)
 
         self._opacity = fade_anim.currentValue()
         self._click_pos = None
@@ -140,19 +147,22 @@ class ScreenMarquee(QtWidgets.QDialog):
         self._fit_screen_geometry()
         self._fade_anim.start()
 
+    def _fit_screen_geometry(self):
+        # Compute the union of all screen geometries, and resize to fit.
+        workspace_rect = QtCore.QRect()
+        for screen in QtWidgets.QApplication.screens():
+            workspace_rect = workspace_rect.united(screen.geometry())
+        self.setGeometry(workspace_rect)
+
     def _on_fade_anim(self):
         """Animation callback for opacity."""
 
         self._opacity = self._fade_anim.currentValue()
         self.repaint()
 
-    def _fit_screen_geometry(self):
-        # Compute the union of all screen geometries, and resize to fit.
-        screens = QtGui.QGuiApplication.screens()
-        workspace_rect = QtCore.QRect()
-        for screen in screens:
-            workspace_rect = workspace_rect.united(screen.geometry())
-        self.setGeometry(workspace_rect)
+    def _on_screen_added(self):
+        for screen in QtGui.QGuiApplication.screens():
+            screen.geometryChanged.connect(self._fit_screen_geometry)
 
     @classmethod
     def get_desktop_pixmap(cls, rect):
@@ -165,14 +175,39 @@ class ScreenMarquee(QtWidgets.QDialog):
             QtGui.QPixmap: Captured pixmap image
         """
 
-        desktop = QtWidgets.QApplication.desktop()
-        return QtGui.QPixmap.grabWindow(
-            desktop.winId(),
-            rect.x(),
-            rect.y(),
-            rect.width(),
-            rect.height()
-        )
+        if rect.width() < 1 or rect.height() < 1:
+            return QtGui.QPixmap()
+
+        screen_pixes = []
+        for screen in QtWidgets.QApplication.screens():
+            screen_geo = screen.geometry()
+            if not screen_geo.intersects(rect):
+                continue
+
+            screen_pix_rect = screen_geo.intersected(rect)
+            screen_pix = screen.grabWindow(
+                0,
+                screen_pix_rect.x() - screen_geo.x(),
+                screen_pix_rect.y() - screen_geo.y(),
+                screen_pix_rect.width(), screen_pix_rect.height()
+            )
+            paste_point = QtCore.QPoint(
+                screen_pix_rect.x() - rect.x(),
+                screen_pix_rect.y() - rect.y()
+            )
+            screen_pixes.append((screen_pix, paste_point))
+
+        output_pix = QtGui.QPixmap(rect.width(), rect.height())
+        output_pix.fill(QtCore.Qt.transparent)
+        pix_painter = QtGui.QPainter()
+        pix_painter.begin(output_pix)
+        for item in screen_pixes:
+            (screen_pix, offset) = item
+            pix_painter.drawPixmap(offset, screen_pix)
+
+        pix_painter.end()
+
+        return output_pix
 
     @classmethod
     def capture_to_pixmap(cls):
