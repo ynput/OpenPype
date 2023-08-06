@@ -82,18 +82,6 @@ class FusionHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         See the Maya equivalent for inspiration on how to implement this.
 
         """
-        # Remove all handlers associated with the root logger object, because
-        # that one always logs as "warnings" incorrectly.
-        for handler in logging.root.handlers[:]:
-            logging.root.removeHandler(handler)
-
-        # Attach default logging handler that prints to active comp
-        logger = logging.getLogger()
-        formatter = logging.Formatter(fmt="%(message)s\n")
-        handler = FusionLogHandler()
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
 
         pyblish.api.register_host("fusion")
         pyblish.api.register_plugin_path(PUBLISH_PATH)
