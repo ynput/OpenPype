@@ -6,7 +6,7 @@ import pyblish.util
 from openpype.lib import Logger
 from openpype.lib.applications import (
     ApplicationManager,
-    get_app_environments_for_context,
+    LaunchTypes,
 )
 from openpype.pipeline import install_host
 from openpype.hosts.webpublisher.api import WebpublisherHost
@@ -156,22 +156,31 @@ def cli_publish_from_app(
     found_variant_key = find_variant_key(application_manager, host_name)
     app_name = "{}/{}".format(host_name, found_variant_key)
 
+    data = {
+        "last_workfile_path": workfile_path,
+        "start_last_workfile": True,
+        "project_name": project_name,
+        "asset_name": asset_name,
+        "task_name": task_name,
+        "launch_type": LaunchTypes.automated,
+    }
+    launch_context = application_manager.create_launch_context(
+        app_name, **data)
+    launch_context.run_prelaunch_hooks()
+
     # must have for proper launch of app
-    env = get_app_environments_for_context(
-        project_name,
-        asset_name,
-        task_name,
-        app_name
-    )
+    env = launch_context.env
     print("env:: {}".format(env))
+    env["OPENPYPE_PUBLISH_DATA"] = batch_path
+    # must pass identifier to update log lines for a batch
+    env["BATCH_LOG_ID"] = str(_id)
+    env["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
+    env["USER_EMAIL"] = user_email
+
     os.environ.update(env)
 
-    os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
-    # must pass identifier to update log lines for a batch
-    os.environ["BATCH_LOG_ID"] = str(_id)
-    os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
-    os.environ["USER_EMAIL"] = user_email
-
+    # Why is this here? Registered host in this process does not affect
+    #   regitered host in launched process.
     pyblish.api.register_host(host_name)
     if targets:
         if isinstance(targets, str):
@@ -184,15 +193,7 @@ def cli_publish_from_app(
         os.environ["PYBLISH_TARGETS"] = os.pathsep.join(
             set(current_targets))
 
-    data = {
-        "last_workfile_path": workfile_path,
-        "start_last_workfile": True,
-        "project_name": project_name,
-        "asset_name": asset_name,
-        "task_name": task_name
-    }
-
-    launched_app = application_manager.launch(app_name, **data)
+    launched_app = application_manager.launch_with_context(launch_context)
 
     timeout = get_timeout(project_name, host_name, task_type)
 

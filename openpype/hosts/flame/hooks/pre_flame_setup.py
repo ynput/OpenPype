@@ -6,13 +6,10 @@ import socket
 from pprint import pformat
 
 from openpype.lib import (
-    PreLaunchHook,
     get_openpype_username,
     run_subprocess,
 )
-from openpype.lib.applications import (
-    ApplicationLaunchFailed
-)
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.hosts import flame as opflame
 
 
@@ -22,11 +19,12 @@ class FlamePrelaunch(PreLaunchHook):
     Will make sure flame_script_dirs are copied to user's folder defined
     in environment var FLAME_SCRIPT_DIR.
     """
-    app_groups = ["flame"]
+    app_groups = {"flame"}
     permissions = 0o777
 
     wtc_script_path = os.path.join(
         opflame.HOST_DIR, "api", "scripts", "wiretap_com.py")
+    launch_types = {LaunchTypes.local}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

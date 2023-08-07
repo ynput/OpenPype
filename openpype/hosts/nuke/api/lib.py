@@ -424,9 +424,12 @@ def add_publish_knob(node):
     return node
 
 
-@deprecated
+@deprecated("openpype.hosts.nuke.api.lib.set_node_data")
 def set_avalon_knob_data(node, data=None, prefix="avalon:"):
     """[DEPRECATED] Sets data into nodes's avalon knob
+
+    This function is still used but soon will be deprecated.
+    Use `set_node_data` instead.
 
     Arguments:
         node (nuke.Node): Nuke node to imprint with data,
@@ -487,9 +490,12 @@ def set_avalon_knob_data(node, data=None, prefix="avalon:"):
     return node
 
 
-@deprecated
+@deprecated("openpype.hosts.nuke.api.lib.get_node_data")
 def get_avalon_knob_data(node, prefix="avalon:", create=True):
     """[DEPRECATED]  Gets a data from nodes's avalon knob
+
+    This function is still used but soon will be deprecated.
+    Use `get_node_data` instead.
 
     Arguments:
         node (obj): Nuke node to search for data,
@@ -1699,7 +1705,7 @@ def create_write_node_legacy(
             knob_value = float(knob_value)
         if knob_type == "bool":
             knob_value = bool(knob_value)
-        if knob_type in ["2d_vector", "3d_vector"]:
+        if knob_type in ["2d_vector", "3d_vector", "color", "box"]:
             knob_value = list(knob_value)
 
         GN[knob_name].setValue(knob_value)
@@ -1715,7 +1721,7 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
     Args:
         node (nuke.Node): nuke node
         knob_settings (list): list of dict. Keys are `type`, `name`, `value`
-        kwargs (dict)[optional]: keys for formatable knob settings
+        kwargs (dict)[optional]: keys for formattable knob settings
     """
     for knob in knob_settings:
         log.debug("__ knob: {}".format(pformat(knob)))
@@ -1732,7 +1738,7 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
             )
             continue
 
-        # first deal with formatable knob settings
+        # first deal with formattable knob settings
         if knob_type == "formatable":
             template = knob["template"]
             to_type = knob["to_type"]
@@ -1741,8 +1747,8 @@ def set_node_knobs_from_settings(node, knob_settings, **kwargs):
                     **kwargs
                 )
             except KeyError as msg:
-                log.warning("__ msg: {}".format(msg))
-                raise KeyError(msg)
+                raise KeyError(
+                    "Not able to format expression: {}".format(msg))
 
             # convert value to correct type
             if to_type == "2d_vector":
@@ -1781,8 +1787,8 @@ def convert_knob_value_to_correct_type(knob_type, knob_value):
         knob_value = knob_value
     elif knob_type == "color_gui":
         knob_value = color_gui_to_int(knob_value)
-    elif knob_type in ["2d_vector", "3d_vector", "color"]:
-        knob_value = [float(v) for v in knob_value]
+    elif knob_type in ["2d_vector", "3d_vector", "color", "box"]:
+        knob_value = [float(val_) for val_ in knob_value]
 
     return knob_value
 
@@ -2204,7 +2210,6 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
                     continue
                 preset_clrsp = input["colorspace"]
 
-            log.debug(preset_clrsp)
             if preset_clrsp is not None:
                 current = n["colorspace"].value()
                 future = str(preset_clrsp)
@@ -2686,7 +2691,15 @@ def _launch_workfile_app():
     host_tools.show_workfiles(parent=None, on_top=True)
 
 
+@deprecated("openpype.hosts.nuke.api.lib.start_workfile_template_builder")
 def process_workfile_builder():
+    """ [DEPRECATED] Process workfile builder on nuke start
+
+    This function is deprecated and will be removed in future versions.
+    Use settings for `project_settings/nuke/templated_workfile_build` which are
+    supported by api `start_workfile_template_builder()`.
+    """
+
     # to avoid looping of the callback, remove it!
     nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
@@ -2694,11 +2707,6 @@ def process_workfile_builder():
     project_settings = get_current_project_settings()
     workfile_builder = project_settings["nuke"].get(
         "workfile_builder", {})
-
-    # get all imortant settings
-    openlv_on = env_value_to_bool(
-        env_key="AVALON_OPEN_LAST_WORKFILE",
-        default=None)
 
     # get settings
     createfv_on = workfile_builder.get("create_first_version") or None
@@ -2740,19 +2748,14 @@ def process_workfile_builder():
         save_file(last_workfile_path)
         return
 
-    # skip opening of last version if it is not enabled
-    if not openlv_on or not os.path.exists(last_workfile_path):
-        return
-
-    log.info("Opening last workfile...")
-    # open workfile
-    open_file(last_workfile_path)
-
 
 def start_workfile_template_builder():
     from .workfile_template_builder import (
         build_workfile_template
     )
+
+    # remove callback since it would be duplicating the workfile
+    nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
 
     # to avoid looping of the callback, remove it!
     log.info("Starting workfile template builder...")
@@ -2761,8 +2764,6 @@ def start_workfile_template_builder():
     except TemplateProfileNotFound:
         log.warning("Template profile not found. Skipping...")
 
-    # remove callback since it would be duplicating the workfile
-    nuke.removeOnCreate(start_workfile_template_builder, nodeClass="Root")
 
 @deprecated
 def recreate_instance(origin_node, avalon_data=None):

@@ -224,7 +224,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "make_tx": True,
         "rs_tex": False,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
@@ -236,7 +236,7 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateUnrealStaticMesh": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "",
             "_Main"
         ],
@@ -250,7 +250,7 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateUnrealSkeletalMesh": {
         "enabled": True,
-        "defaults": [],
+        "default_variants": [],
         "joint_hints": "jnt_org"
     },
     "CreateMultiverseLook": {
@@ -262,7 +262,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "write_face_sets": False,
         "include_parent_hierarchy": False,
         "include_user_defined_attributes": False,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
@@ -270,7 +270,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "write_color_sets": False,
         "write_face_sets": False,
-        "defaults": [
+        "default_variants": [
             "Main",
             "Proxy",
             "Sculpt"
@@ -281,7 +281,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "write_color_sets": False,
         "write_face_sets": False,
         "include_user_defined_attributes": False,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
@@ -289,7 +289,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "write_color_sets": False,
         "write_face_sets": False,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
@@ -313,7 +313,7 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateAss": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ],
         "expandProcedurals": False,
@@ -363,7 +363,7 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateReview": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ],
         "useMayaTimeline": True
@@ -387,7 +387,7 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "vrmesh": True,
         "alembic": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
