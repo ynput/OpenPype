@@ -186,7 +186,10 @@ class MaxCreatorBase(object):
             node = rt.Container(name=node)
 
         attrs = rt.Execute(MS_CUSTOM_ATTRIB)
-        rt.custAttributes.add(node.baseObject, attrs)
+        modifier = rt.EmptyModifier()
+        rt.addModifier(node, modifier)
+        node.modifiers[0].name = "OP Data"
+        rt.custAttributes.add(node.modifiers[0], attrs)
 
         return node
 
@@ -218,9 +221,9 @@ class MaxCreator(Creator, MaxCreatorBase):
 
             # Setting the property
             rt.setProperty(
-                instance_node.openPypeData, "all_handles", node_list)
+                instance_node.modifiers[0].openPypeData, "all_handles", node_list)
             rt.setProperty(
-                instance_node.openPypeData, "sel_list", sel_list)
+                instance_node.modifiers[0].openPypeData, "sel_list", sel_list)
 
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
@@ -259,8 +262,8 @@ class MaxCreator(Creator, MaxCreatorBase):
             instance_node = rt.GetNodeByName(
                 instance.data.get("instance_node"))
             if instance_node:
-                count = rt.custAttributes.count(instance_node)
-                rt.custAttributes.delete(instance_node, count)
+                count = rt.custAttributes.count(instance_node.modifiers[0])
+                rt.custAttributes.delete(instance_node.modifiers[0], count)
                 rt.Delete(instance_node)
 
             self._remove_instance_from_context(instance)
