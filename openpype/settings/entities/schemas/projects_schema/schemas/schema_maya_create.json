@@ -12,9 +12,8 @@
             "checkbox_key": "enabled",
             "children": [
                 {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
+                    "type": "label",
+                    "label": "This plugin is not optional due to implicit creation through loading the \"rig\" family.\nThis family is also hidden from creation due to complexity in setup."
                 },
                 {
                     "type": "boolean",
