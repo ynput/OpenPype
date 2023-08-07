@@ -386,10 +386,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         }))
 
         # convert only to base names
-        expected_filenames = [
+        expected_filenames = {
             os.path.basename(filepath)
             for filepath in expected_paths
-        ]
+        }
 
         # make sure files are existing at folder
         collected_frames = [
