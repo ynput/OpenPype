@@ -3,7 +3,7 @@
 import hou  # noqa
 
 from openpype.hosts.houdini.api import plugin
-from openpype.lib import EnumDef
+from openpype.lib import EnumDef, BoolDef
 
 
 class CreateRedshiftROP(plugin.HoudiniCreator):
@@ -23,7 +23,7 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
         # Add chunk size attribute
         instance_data["chunkSize"] = 10
         # Submit for job publishing
-        instance_data["farm"] = True
+        instance_data["farm"] = pre_create_data.get("farm")
 
         instance = super(CreateRedshiftROP, self).create(
             subset_name,
@@ -100,6 +100,9 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
         ]
 
         return attrs + [
+            BoolDef("farm",
+                    label="Submitting to Farm",
+                    default=True),
             EnumDef("image_format",
                     image_format_enum,
                     default=self.ext,

@@ -50,7 +50,7 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
         num_aovs = rop.evalParm("ar_aovs")
         for index in range(1, num_aovs + 1):
             # Skip disabled AOVs
-            if not rop.evalParm("ar_enable_aovP{}".format(index)):
+            if not rop.evalParm("ar_enable_aov{}".format(index)):
                 continue
 
             if rop.evalParm("ar_aov_exr_enable_layer_name{}".format(index)):

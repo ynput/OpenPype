@@ -29,11 +29,13 @@ class ImageFromSequenceLoader(photoshop.PhotoshopLoader):
     options = []
 
     def load(self, context, name=None, namespace=None, data=None):
+
+        path = self.filepath_from_context(context)
         if data.get("frame"):
-            self.fname = os.path.join(
-                os.path.dirname(self.fname), data["frame"]
+            path = os.path.join(
+                os.path.dirname(path), data["frame"]
             )
-            if not os.path.exists(self.fname):
+            if not os.path.exists(path):
                 return
 
         stub = self.get_stub()
@@ -42,7 +44,7 @@ class ImageFromSequenceLoader(photoshop.PhotoshopLoader):
         )
 
         with photoshop.maintained_selection():
-            layer = stub.import_smart_object(self.fname, layer_name)
+            layer = stub.import_smart_object(path, layer_name)
 
         self[:] = [layer]
         namespace = namespace or layer_name

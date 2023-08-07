@@ -3,15 +3,16 @@ import os
 import platform
 import re
 import subprocess
+import tempfile
 from distutils import dir_util
+from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import List, Union
-import tempfile
-from distutils.dir_util import copy_tree
-
-import openpype.hosts.unreal.lib as ue_lib
 
 from qtpy import QtCore
+
+import openpype.hosts.unreal.lib as ue_lib
+from openpype.settings import get_project_settings
 
 
 def parse_comp_progress(line: str, progress_signal: QtCore.Signal(int)):
@@ -39,42 +40,71 @@ def retrieve_exit_code(line: str):
     return None
 
 
-class UEProjectGenerationWorker(QtCore.QObject):
+class UEWorker(QtCore.QObject):
     finished = QtCore.Signal(str)
-    failed = QtCore.Signal(str)
+    failed = QtCore.Signal(str, int)
     progress = QtCore.Signal(int)
     log = QtCore.Signal(str)
+
+    engine_path: Path = None
+    env = None
+
+    def execute(self):
+        raise NotImplementedError("Please implement this method!")
+
+    def run(self):
+        try:
+            self.execute()
+        except Exception as e:
+            import traceback
+            self.log.emit(str(e))
+            self.log.emit(traceback.format_exc())
+            self.failed.emit(str(e), 1)
+            raise e
+
+
+class UEProjectGenerationWorker(UEWorker):
     stage_begin = QtCore.Signal(str)
 
     ue_version: str = None
     project_name: str = None
-    env = None
-    engine_path: Path = None
     project_dir: Path = None
     dev_mode = False
 
     def setup(self, ue_version: str,
-              project_name,
+              project_name: str,
+              unreal_project_name,
               engine_path: Path,
               project_dir: Path,
               dev_mode: bool = False,
               env: dict = None):
+        """Set the worker with necessary parameters.
+
+        Args:
+            ue_version (str): Unreal Engine version.
+            project_name (str): Name of the project in AYON.
+            unreal_project_name (str): Name of the project in Unreal.
+            engine_path (Path): Path to the Unreal Engine.
+            project_dir (Path): Path to the project directory.
+            dev_mode (bool, optional): Whether to run the project in dev mode.
+                Defaults to False.
+            env (dict, optional): Environment variables. Defaults to None.
+
+        """
 
         self.ue_version = ue_version
         self.project_dir = project_dir
         self.env = env or os.environ
 
-        preset = ue_lib.get_project_settings(
-            project_name
-        )["unreal"]["project_setup"]
+        preset = get_project_settings(project_name)["unreal"]["project_setup"]
 
         if dev_mode or preset["dev_mode"]:
             self.dev_mode = True
 
-        self.project_name = project_name
+        self.project_name = unreal_project_name
         self.engine_path = engine_path
 
-    def run(self):
+    def execute(self):
         # engine_path should be the location of UE_X.X folder
 
         ue_editor_exe = ue_lib.get_editor_exe_path(self.engine_path,
@@ -285,15 +315,8 @@ class UEProjectGenerationWorker(QtCore.QObject):
         self.finished.emit("Project successfully built!")
 
 
-class UEPluginInstallWorker(QtCore.QObject):
-    finished = QtCore.Signal(str)
+class UEPluginInstallWorker(UEWorker):
     installing = QtCore.Signal(str)
-    failed = QtCore.Signal(str, int)
-    progress = QtCore.Signal(int)
-    log = QtCore.Signal(str)
-
-    engine_path: Path = None
-    env = None
 
     def setup(self, engine_path: Path, env: dict = None, ):
         self.engine_path = engine_path
@@ -361,7 +384,7 @@ class UEPluginInstallWorker(QtCore.QObject):
 
         dir_util.remove_tree(temp_dir.as_posix())
 
-    def run(self):
+    def execute(self):
         src_plugin_dir = Path(self.env.get("AYON_UNREAL_PLUGIN", ""))
 
         if not os.path.isdir(src_plugin_dir):

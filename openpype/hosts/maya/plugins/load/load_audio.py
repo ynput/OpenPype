@@ -6,7 +6,7 @@ from openpype.client import (
     get_version_by_id,
 )
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     load,
     get_representation_path,
 )
@@ -68,7 +68,7 @@ class AudioLoader(load.LoaderPlugin):
         )
 
         # Set frame range.
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version = get_version_by_id(
             project_name, representation["parent"], fields=["parent"]
         )

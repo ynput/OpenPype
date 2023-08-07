@@ -16,10 +16,11 @@ import bpy
 import bpy.utils.previews
 
 from openpype import style
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_asset_name, get_current_task_name
 from openpype.tools.utils import host_tools
 
 from .workio import OpenFileCacher
+from . import pipeline
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
@@ -283,7 +284,7 @@ class LaunchLoader(LaunchQtApp):
 
     def before_window_show(self):
         self._window.set_context(
-            {"asset": legacy_io.Session["AVALON_ASSET"]},
+            {"asset": get_current_asset_name()},
             refresh=True
         )
 
@@ -331,8 +332,8 @@ class LaunchWorkFiles(LaunchQtApp):
     def execute(self, context):
         result = super().execute(context)
         self._window.set_context({
-            "asset": legacy_io.Session["AVALON_ASSET"],
-            "task": legacy_io.Session["AVALON_TASK"]
+            "asset": get_current_asset_name(),
+            "task": get_current_task_name()
         })
         return result
 
@@ -342,6 +343,26 @@ class LaunchWorkFiles(LaunchQtApp):
             os.environ.get("AVALON_SCENEDIR", ""),
         ))
         self._window.refresh()
+
+
+class SetFrameRange(bpy.types.Operator):
+    bl_idname = "wm.ayon_set_frame_range"
+    bl_label = "Set Frame Range"
+
+    def execute(self, context):
+        data = pipeline.get_asset_data()
+        pipeline.set_frame_range(data)
+        return {"FINISHED"}
+
+
+class SetResolution(bpy.types.Operator):
+    bl_idname = "wm.ayon_set_resolution"
+    bl_label = "Set Resolution"
+
+    def execute(self, context):
+        data = pipeline.get_asset_data()
+        pipeline.set_resolution(data)
+        return {"FINISHED"}
 
 
 class TOPBAR_MT_avalon(bpy.types.Menu):
@@ -362,8 +383,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         else:
             pyblish_menu_icon_id = 0
 
-        asset = legacy_io.Session['AVALON_ASSET']
-        task = legacy_io.Session['AVALON_TASK']
+        asset = get_current_asset_name()
+        task = get_current_task_name()
         context_label = f"{asset}, {task}"
         context_label_item = layout.row()
         context_label_item.operator(
@@ -381,9 +402,11 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(LaunchManager.bl_idname, text="Manage...")
         layout.operator(LaunchLibrary.bl_idname, text="Library...")
         layout.separator()
+        layout.operator(SetFrameRange.bl_idname, text="Set Frame Range")
+        layout.operator(SetResolution.bl_idname, text="Set Resolution")
+        layout.separator()
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
-        # TODO (jasper): maybe add 'Reload Pipeline', 'Set Frame Range' and
-        #                'Set Resolution'?
+        # TODO (jasper): maybe add 'Reload Pipeline'
 
 
 def draw_avalon_menu(self, context):
@@ -399,6 +422,8 @@ classes = [
     LaunchManager,
     LaunchLibrary,
     LaunchWorkFiles,
+    SetFrameRange,
+    SetResolution,
     TOPBAR_MT_avalon,
 ]
 

@@ -4,6 +4,7 @@ from datetime import datetime
 
 from maya import cmds
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
@@ -110,15 +111,18 @@ class MayaSubmitRemotePublishDeadline(
 
         # TODO replace legacy_io with context.data
         environment["AVALON_PROJECT"] = project_name
-        environment["AVALON_ASSET"] = legacy_io.Session["AVALON_ASSET"]
-        environment["AVALON_TASK"] = legacy_io.Session["AVALON_TASK"]
+        environment["AVALON_ASSET"] = instance.context.data["asset"]
+        environment["AVALON_TASK"] = instance.context.data["task"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
         environment["OPENPYPE_LOG_NO_COLORS"] = "1"
-        environment["OPENPYPE_REMOTE_JOB"] = "1"
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_SUBSET"] = instance.data["subset"]
         environment["OPENPYPE_REMOTE_PUBLISH"] = "1"
 
+        if AYON_SERVER_ENABLED:
+            environment["AYON_REMOTE_PUBLISH"] = "1"
+        else:
+            environment["OPENPYPE_REMOTE_PUBLISH"] = "1"
         for key, value in environment.items():
             job_info.EnvironmentKeyValue[key] = value
 

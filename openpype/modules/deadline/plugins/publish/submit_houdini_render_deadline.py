@@ -88,7 +88,6 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS",
-            "OPENPYPE_VERSION"
         ]
 
         # Add OpenPype version if we are running from build.
@@ -106,8 +105,8 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             if value:
                 job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        job_info.add_render_job_env_var(job_info)
 
         for i, filepath in enumerate(instance.data["files"]):
             dirname = os.path.dirname(filepath)

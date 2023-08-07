@@ -19,7 +19,7 @@ from openpype.pipeline import (
     CreatorError,
     Creator as NewCreator,
     CreatedInstance,
-    legacy_io
+    get_current_task_name
 )
 from .lib import (
     INSTANCE_DATA_KNOB,
@@ -212,8 +212,14 @@ class NukeCreator(NewCreator):
                 created_instance["creator_attributes"].pop(key)
 
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
+        for created_inst, changes in update_list:
             instance_node = created_inst.transient_data["node"]
+
+            # update instance node name if subset name changed
+            if "subset" in changes.changed_keys:
+                instance_node["name"].setValue(
+                    changes["subset"].new_value
+                )
 
             # in case node is not existing anymore (user erased it manually)
             try:
@@ -255,6 +261,17 @@ class NukeWriteCreator(NukeCreator):
     label = "Create Write"
     family = "write"
     icon = "sign-out"
+
+    def get_linked_knobs(self):
+        linked_knobs = []
+        if "channels" in self.instance_attributes:
+            linked_knobs.append("channels")
+        if "ordered" in self.instance_attributes:
+            linked_knobs.append("render_order")
+        if "use_range_limit" in self.instance_attributes:
+            linked_knobs.extend(["___", "first", "last", "use_limit"])
+
+        return linked_knobs
 
     def integrate_links(self, node, outputs=True):
         # skip if no selection
@@ -824,41 +841,6 @@ class ExporterReviewMov(ExporterReview):
         add_tags = []
         self.publish_on_farm = farm
         read_raw = kwargs["read_raw"]
-
-        # TODO: remove this when `reformat_nodes_config`
-        # is changed in settings
-        reformat_node_add = kwargs["reformat_node_add"]
-        reformat_node_config = kwargs["reformat_node_config"]
-
-        # TODO: make this required in future
-        reformat_nodes_config = kwargs.get("reformat_nodes_config", {})
-
-        # TODO: remove this once deprecated is removed
-        # make sure only reformat_nodes_config is used in future
-        if reformat_node_add and reformat_nodes_config.get("enabled"):
-            self.log.warning(
-                "`reformat_node_add` is deprecated. "
-                "Please use only `reformat_nodes_config` instead.")
-            reformat_nodes_config = None
-
-        # TODO: reformat code when backward compatibility is not needed
-        # warning if reformat_nodes_config is not set
-        if not reformat_nodes_config:
-            self.log.warning(
-                "Please set `reformat_nodes_config` in settings. "
-                "Using `reformat_node_config` instead."
-            )
-            reformat_nodes_config = {
-                "enabled": reformat_node_add,
-                "reposition_nodes": [
-                    {
-                        "node_class": "Reformat",
-                        "knobs": reformat_node_config
-                    }
-                ]
-            }
-
-
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -897,6 +879,7 @@ class ExporterReviewMov(ExporterReview):
         self._shift_to_previous_node_and_temp(subset, r_node, "Read...   `{}`")
 
         # add reformat node
+        reformat_nodes_config = kwargs["reformat_nodes_config"]
         if reformat_nodes_config["enabled"]:
             reposition_nodes = reformat_nodes_config["reposition_nodes"]
             for reposition_node in reposition_nodes:
@@ -955,7 +938,11 @@ class ExporterReviewMov(ExporterReview):
         except Exception:
             self.log.info("`mov64_codec` knob was not found")
 
-        write_node["mov64_write_timecode"].setValue(1)
+        try:
+            write_node["mov64_write_timecode"].setValue(1)
+        except Exception:
+            self.log.info("`mov64_write_timecode` knob was not found")
+
         write_node["raw"].setValue(1)
         # connect
         write_node.setInput(0, self.previous_node)
@@ -1173,7 +1160,7 @@ def convert_to_valid_instaces():
 
     from openpype.hosts.nuke.api import workio
 
-    task_name = legacy_io.Session["AVALON_TASK"]
+    task_name = get_current_task_name()
 
     # save into new workfile
     current_file = workio.current_file()
