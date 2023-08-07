@@ -1,7 +1,9 @@
 import os
 
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.pipeline import containerise, loadOpenpypeData
+from openpype.hosts.max.api.pipeline import (
+    containerise, load_Openpype_data_max_raw
+    )
 from openpype.pipeline import get_representation_path, load
 
 
@@ -20,7 +22,7 @@ class MaxSceneLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
         # implement the OP attributes before load
-        loadOpenpypeData()
+        load_Openpype_data_max_raw()
         path = self.filepath_from_context(context)
         path = os.path.normpath(path)
         # import the max scene by using "merge file"
@@ -40,6 +42,10 @@ class MaxSceneLoader(load.LoaderPlugin):
         node = rt.GetNodeByName(node_name)
         # delete the old container with attribute
         # delete old duplicate
+        prev_max_objects = [obj for obj in rt.getLastMergedNodes()
+                            if rt.ClassOf(obj) == rt.Container]
+        for prev_object in prev_max_objects:
+            rt.Delete(prev_object)
         rt.MergeMaxFile(path, rt.Name("deleteOldDups"))
 
         max_objects = rt.getLastMergedNodes()

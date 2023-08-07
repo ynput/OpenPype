@@ -173,5 +173,5 @@ def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
     return container
 
 
-def loadOpenpypeData():
+def load_Openpype_data_max_raw():
     return rt.Execute(MS_CUSTOM_ATTRIB)
