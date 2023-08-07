@@ -82,34 +82,6 @@ class HoudiniSubmitDeadline(
     env_search_replace_values = {}
 
     @classmethod
-    def apply_settings(cls, project_settings, system_settings):
-        settings = project_settings["deadline"]["publish"]["HoudiniSubmitDeadline"]  # noqa
-
-        # Take some defaults from settings
-        cls.use_published = settings.get(
-            "use_published", cls.use_published
-        )
-        cls.priority = settings.get(
-            "priority", cls.priority
-        )
-        cls.export_priority = settings.get(
-            "export_priority", cls.export_priority
-        )
-        cls.chunk_size = settings.get("chunk_size", cls.chunk_size)
-        cls.export_chunk_size = settings.get(
-            "export_chunk_size", cls.export_chunk_size
-        )
-        cls.group = settings.get("group", cls.group)
-        cls.export_group = settings.get("export_group", cls.export_group)
-        cls.department = settings.get("department", cls.department)
-        cls.env_allowed_keys = settings.get(
-            "env_allowed_keys", cls.env_allowed_keys
-        )
-        cls.env_search_replace_values = settings.get(
-            "env_search_replace_values", cls.env_allowed_keys
-        )
-
-    @classmethod
     def get_attribute_defs(cls):
         return [
             NumberDef(
