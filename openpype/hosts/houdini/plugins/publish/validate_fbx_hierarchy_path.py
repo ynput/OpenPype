@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Validate path attribute for all primitives.
 
+Validators are used to verify the work of artists,
+by running some checks which automates the approval process.
+
 It's almost the same as
 'validate_primitive_hierarchy_paths.py'
 however this one includes extra comments for demonstration.
@@ -44,11 +47,12 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     by default.
     """
 
-    # Usually you will use this value as default
-    order = ValidateContentsOrder + 0.1
     families = ["filmboxfbx"]
     hosts = ["houdini"]
     label = "Validate FBX Hierarchy Path"
+
+    # Usually you will use this value as default
+    order = ValidateContentsOrder + 0.1
 
     # Validation can have as many actions as you want
     # all of these actions are defined in a seperate place
@@ -69,7 +73,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
     # This method was named get_invalid as a convention
     # it's also used by SelectInvalidAction to select
-    # the returned node
+    # the returned nodes
     @classmethod
     def get_invalid(cls, instance):
 

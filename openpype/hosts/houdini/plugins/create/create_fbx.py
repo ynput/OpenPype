@@ -21,12 +21,15 @@ import hou
 
 
 class CreateFilmboxFBX(plugin.HoudiniCreator):
-    """Filmbox FBX Driver"""
+    """Filmbox FBX Driver."""
+
+    # you should set
     identifier = "io.openpype.creators.houdini.filmboxfbx"
     label = "Filmbox FBX"
     family = "filmboxfbx"
     icon = "fa5s.cubes"
 
+    # optional to set
     default_variant = "Main"
     default_variants = ["Main", "Test"]
 
@@ -36,7 +39,7 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
         # set node type
         instance_data.update({"node_type": "filmboxfbx"})
 
-        # create instance (calls super create method)
+        # create instance (calls HoudiniCreator.create())
         instance = super(CreateFilmboxFBX, self).create(
             subset_name,
             instance_data,

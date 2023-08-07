@@ -1,3 +1,11 @@
+"""Extract FilmBox FBX.
+
+Extractors are used to generate output and
+update representation dictionary.
+
+This plugin is part of publish process guide.
+"""
+
 import os
 
 import pyblish.api
@@ -10,31 +18,51 @@ import hou
 
 class ExtractRedshiftProxy(publish.Extractor):
 
-    # Usually you will use this value as default
-    order = pyblish.api.ExtractorOrder + 0.1
     label = "Extract FilmBox FBX"
     families = ["filmboxfbx"]
     hosts = ["houdini"]
 
+    # Usually you will use this value as default
+    order = pyblish.api.ExtractorOrder + 0.1
+
     # overrides Extractor.process()
     def process(self, instance):
 
+        # get rop node
         ropnode = hou.node(instance.data.get("instance_node"))
 
-        # Get the filename from the filename parameter
-        # `.evalParm(parameter)` will make sure all tokens are resolved
-        output = ropnode.evalParm("sopoutput")
-        staging_dir = os.path.normpath(os.path.dirname(output))
+        # render rop
+        render_rop(ropnode)
+
+        # get required data
+        file_name, staging_dir = self.get_paths_data(ropnode)
+        representation = self.get_representation(instance,
+                                                 file_name,
+                                                 staging_dir)
+
+        # set value type for 'representations' key to list
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        # update instance data
         instance.data["stagingDir"] = staging_dir
+        instance.data["representations"].append(representation)
+
+    def get_paths_data(self, ropnode):
+        # Get the filename from the filename parameter
+        output = ropnode.evalParm("sopoutput")
+
+        staging_dir = os.path.normpath(os.path.dirname(output))
+
         file_name = os.path.basename(output)
 
         self.log.info("Writing FBX '%s' to '%s'" % (file_name,
                                                     staging_dir))
 
-        render_rop(ropnode)
+        return file_name, staging_dir
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
+    def get_representation(self, instance,
+                           file_name, staging_dir):
 
         representation = {
             "name": "fbx",
@@ -48,4 +76,4 @@ class ExtractRedshiftProxy(publish.Extractor):
             representation["frameStart"] = instance.data["frameStart"]
             representation["frameEnd"] = instance.data["frameEnd"]
 
-        instance.data["representations"].append(representation)
+        return representation

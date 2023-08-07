@@ -22,9 +22,11 @@ class FbxLoader(load.LoaderPlugin):
     label = "Load FBX"
     families = ["filmboxfbx", "fbx"]
     representations = ["fbx"]
-    order = -10  # you can use this by default.
-    icon = "code-fork"  # you can use this by default.
-    color = "orange"  # you can use this by default.
+
+    # Usually you will use these value as default
+    order = -10
+    icon = "code-fork"
+    color = "orange"
 
     def load(self, context, name=None, namespace=None, data=None):
 
