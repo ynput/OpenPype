@@ -327,11 +327,20 @@ class ThumbnailWidget(QtWidgets.QWidget):
         take_screenshot_btn.setObjectName("ThumbnailPixmapHoverButton")
         take_screenshot_btn.setToolTip("Take screenshot")
 
+        menu_image = get_image("minus")
+        menu_pix = paint_image_with_color(
+            menu_image, icon_color)
+        menu_btn = PixmapButton(
+            menu_pix, buttons_widget)
+        menu_btn.setObjectName("ThumbnailPixmapHoverButton")
+        menu_btn.setToolTip("More options..")
+
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(3, 3, 3, 3)
         buttons_layout.addStretch(1)
         buttons_layout.addWidget(take_screenshot_btn, 0)
         buttons_layout.addWidget(clear_button, 0)
+        buttons_layout.addWidget(menu_btn, 0)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -339,6 +348,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         clear_button.clicked.connect(self._on_clear_clicked)
         take_screenshot_btn.clicked.connect(self._on_take_screenshot)
+        menu_btn.clicked.connect(self._on_menu)
 
         self._controller = controller
         self._output_dir = controller.get_thumbnail_temp_dir_path()
@@ -462,6 +472,62 @@ class ThumbnailWidget(QtWidgets.QWidget):
             self.thumbnail_created.emit(output_path)
         # restore original window state
         window.setWindowState(state)
+
+    def _on_menu(self):
+        """Show additional thumbnail options to user in a pop-up menu"""
+
+        menu = QtWidgets.QMenu(self)
+        action = menu.addAction("Browse...")
+        action.triggered.connect(self._on_browse)
+        action = menu.addAction("Paste image from clipboard")
+        action.triggered.connect(self._on_set_from_clipboard)
+        clipboard = QtWidgets.QApplication.clipboard()
+        has_image_in_clipboard = not clipboard.pixmap().isNull()
+        action.setEnabled(has_image_in_clipboard)
+
+        # Show at cursor
+        menu.move(QtGui.QCursor.pos())
+        menu.show()
+
+    def _on_browse(self):
+        """Allow user to browse for an image using native file browser"""
+
+        # Define browse starting directory
+        # TODO: This might be too specific for a generic thumbnail widget?
+        from openpype.pipeline import registered_host, legacy_io
+        host = registered_host()
+        root = None
+        if hasattr(host, "work_root"):
+            root = host.work_root(legacy_io.Session)
+
+        # Choose file
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Choose thumbnail", root
+        )
+        if not filename:
+            return
+
+        # TODO: Should we ensure it's a valid image file?
+        self.thumbnail_created.emit(filename)
+
+    def _on_set_from_clipboard(self):
+        """Set thumbnail from a pixmap image in the system clipboard"""
+
+        clipboard = QtWidgets.QApplication.clipboard()
+        pixmap = clipboard.pixmap()
+        if pixmap.isNull():
+            return
+
+        # Save as temporary file
+        output_path = os.path.join(
+            self._output_dir, uuid.uuid4().hex + ".png")
+
+        output_dir = os.path.dirname(output_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        if pixmap.save(output_path):
+            self.thumbnail_created.emit(output_path)
 
     def _adapt_to_size(self):
         if not self._adapted_to_size:
