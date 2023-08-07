@@ -25,6 +25,44 @@ For [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline) support you ne
 Multiple different DL webservice could be configured. First set them in point 4., then they could be configured per project in `project_settings/deadline/deadline_servers`.
 Only single webservice could be a target of publish though.
 
+### DL Houdini plugin
+
+It's supported to pass houdini patch version to deadline
+![Houdini Patch Version](assets/deadline/deadline_houdini_patch_version_toggle.jpg)
+
+This requires updating `DeadlineRepo\plugins\Houdini\Houdini.param` with the deisred `Hython_Executable` and `SimTracker` because there's no way to add houdini version from deadline Configure PLugins UI
+
+To achieve that:
+1. Copy these blocks to `Houdini.param`
+2. Replace `<major>`, `<minor>` and `<patch>` with the desired numbers
+3. Update paths from deadline UI
+
+#### Hython Executable block
+```
+[Houdini<major>_<minor>_<patch>_Hython_Executable]
+Label=Houdini <major>.<minor>.<patch> Hython Executable
+Category=Render Executables
+CategoryOrder=0
+Type=multilinemultifilename
+Index=14
+Default=C:\Program Files\Side Effects Software\Houdini 19.0.000\bin\hython.exe;/Applications/Houdini/Houdini19.0.000/Frameworks/Houdini.framework/Versions/19.0.000/Resources/bin/hython;/opt/hfs19.0/bin/hython
+Description=The path to the hython executable. It can be found in the Houdini bin folder.
+```
+
+#### Sim Tracker block
+```
+[Houdini<major>_<minor>_<patch>_SimTracker]
+Label=Houdini <major>.<minor>.<patch> Sim Tracker File
+Category=HQueue Simulation Job Options
+CategoryOrder=1
+Type=multilinemultifilename
+Index=10
+Default=C:\Program Files\Side Effects Software\Houdini 19.0.000\houdini\python3.7libs\simtracker.py;/Applications/Houdini/Houdini19.0.000/Frameworks/Houdini.framework/Versions/19.0.000/Resources/houdini/python3.7libs/simtracker.py;/opt/hfs19.0/houdini/python3.7libs/simtracker.py
+Description=The path to the simtracker.py file that is used when distributing HQueue sim jobs. This file can be found in the Houdini install.
+```
+So, it may look similar to this
+
+![Deadline Houdini Plugin](assets/deadline/deadline_houdini_plugin_parameters.jpg)
 
 ## Configuration
 
@@ -115,3 +153,17 @@ Each publishing from OpenPype consists of 2 jobs, first one is rendering, second
     ![Deadline group](assets/deadline_group.png)
 
     Example: I have separated machines with "Harmony" installed into "harmony" group on Deadline. I want rendering jobs published from Harmony to run only on those machines.
+
+#### Houdini: Attempted to access non-existent config key
+
+This error happens when Deadline can't find the executable with the specified version
+
+```
+=======================================================
+Error
+=======================================================
+Error: RenderPluginException : GetConfigEntry: Attempted to access non-existent config key: Houdini19_5_403_Hython_Executable
+   at Deadline.Plugins.DeadlinePlugin.GetConfigEntry(String key) (Python.Runtime.PythonException)
+```
+
+It may happen when toggling houdini patch version option without updating `houdini.param` as mentioned in [DL Houdini plugin](#dl-houdini-plugin)
