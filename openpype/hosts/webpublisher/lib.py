@@ -77,15 +77,13 @@ def find_close_plugin(close_plugin_name, log):
     log.debug("Close plugin not found, app might not close.")
 
 
-def publish_in_test(log, close_plugin_name=None, raise_error=False):
+def publish_in_test(log, close_plugin_name=None):
     """Loops through all plugins, logs to console. Used for tests.
 
     Args:
         log (Logger)
         close_plugin_name (Optional[str]): Name of plugin with responsibility
             to close application.
-        raise_error (Optional[bool]): Raise RuntimeError on first error
-            if True.
     """
 
     # Error exit as soon as any error occurs.
@@ -101,17 +99,12 @@ def publish_in_test(log, close_plugin_name=None, raise_error=False):
         if not result["error"]:
             continue
 
+        # QUESTION We don't break on error?
         error_message = error_format.format(**result)
         log.error(error_message)
         if close_plugin:  # close host app explicitly after error
             context = pyblish.api.Context()
             close_plugin().process(context)
-
-        # Raise error if needed
-        #   - fatal Error is because of Deadline
-        # QUESTION We don't break on error?
-        if raise_error:
-            raise RuntimeError("Fatal Error: {}".format(error_message))
 
 
 def get_webpublish_conn():
