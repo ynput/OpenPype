@@ -2379,25 +2379,24 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
                             knobs["to"]))
 
     def set_colorspace(self):
-        ''' Setting colorpace following presets
+        ''' Setting colorspace following presets
         '''
         # get imageio
         nuke_colorspace = get_nuke_imageio_settings()
 
         log.info("Setting colorspace to workfile...")
-        # try:
-        self.set_root_colorspace(nuke_colorspace)
-        # except AttributeError:
-        #     msg = "set_colorspace(): missing `workfile` settings in template"
-        #     nuke.message(msg)
+        try:
+            self.set_root_colorspace(nuke_colorspace)
+        except AttributeError as _error:
+            msg = "Set Colorspace to workfile error: {}".format(_error)
+            nuke.message(msg)
 
         log.info("Setting colorspace to viewers...")
         try:
             self.set_viewers_colorspace(nuke_colorspace["viewer"])
-        except AttributeError:
-            msg = "set_colorspace(): missing `viewer` settings in template"
+        except AttributeError as _error:
+            msg = "Set Colorspace to viewer error: {}".format(_error)
             nuke.message(msg)
-            log.error(msg)
 
         log.info("Setting colorspace to write nodes...")
         try:
