@@ -14,7 +14,6 @@ class CreateVrayROP(plugin.HoudiniCreator):
     label = "VRay ROP"
     family = "vray_rop"
     icon = "magic"
-    default_variants = ["master"]
 
     ext = "exr"
 

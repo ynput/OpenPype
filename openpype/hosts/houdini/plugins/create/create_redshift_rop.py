@@ -13,7 +13,6 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
     label = "Redshift ROP"
     family = "redshift_rop"
     icon = "magic"
-    default_variants = ["master"]
 
     ext = "exr"
 
