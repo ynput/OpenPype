@@ -13,6 +13,9 @@ class CreateMantraROP(plugin.HoudiniCreator):
     icon = "magic"
     defaults = ["master"]
 
+    # Default to split export and render jobs
+    export_job = True
+
     def create(self, subset_name, instance_data, pre_create_data):
         import hou  # noqa
 
@@ -44,6 +47,14 @@ class CreateMantraROP(plugin.HoudiniCreator):
             # Mantra ROP Setting
             "vm_picture": filepath,
         }
+
+        if pre_create_data.get("export_job"):
+            ifd_filepath = "{export_dir}{subset_name}/{subset_name}.$F4.ifd".format(
+                export_dir=hou.text.expandString("$HIP/pyblish/ifd/"),
+                subset_name=subset_name,
+            )
+            parms["soho_outputmode"] = 1
+            parms["soho_diskfile"] = ifd_filepath
 
         if self.selected_nodes:
             # If camera found in selection

@@ -43,6 +43,22 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         render_products = []
         # TODO: add render elements if render element
 
+        # Store whether we are splitting the render job in an export + render
+        # TODO: check names of VRay parms
+        export_job = bool(rop.parm("render_export_mode").eval())
+        instance.data["exportJob"] = export_job
+        export_prefix = None
+        export_products = []
+        if export_job:
+            export_prefix = evalParmNoFrame(rop, "render_export_filepath", pad_character="0")
+            beauty_export_product = self.get_render_product_name(
+                prefix=export_prefix,
+                suffix=None)
+            export_products.append(beauty_export_product)
+            self.log.debug("Found export product: {}".format(beauty_export_product))
+            instance.data["ifdFile"] = beauty_export_product
+            instance.data["exportFiles"] = list(export_products)
+
         beauty_product = self.get_beauty_render_product(default_prefix)
         render_products.append(beauty_product)
         files_by_aov = {

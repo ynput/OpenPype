@@ -42,6 +42,21 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
             default_prefix = evalParmNoFrame(rop, "vm_picture")
             render_products = []
 
+            # Store whether we are splitting the render job in an export + render
+            export_job = bool(rop.parm("soho_outputmode").eval())
+            instance.data["exportJob"] = export_job
+            export_prefix = None
+            export_products = []
+            if export_job:
+                export_prefix = evalParmNoFrame(rop, "soho_diskfile", pad_character="0")
+                beauty_export_product = self.get_render_product_name(
+                    prefix=export_prefix,
+                    suffix=None)
+                export_products.append(beauty_export_product)
+                self.log.debug("Found export product: {}".format(beauty_export_product))
+                instance.data["ifdFile"] = beauty_export_product
+                instance.data["exportFiles"] = list(export_products)
+
             # Default beauty AOV
             beauty_product = self.get_render_product_name(
                 prefix=default_prefix, suffix=None
