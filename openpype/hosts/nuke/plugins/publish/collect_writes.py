@@ -269,15 +269,14 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             "tags": []
         }
 
-        frame_start_str = "%0{}d".format(
-            len(str(last_frame))) % first_frame
+        frame_start_str = self._get_frame_start_str(first_frame, last_frame)
+
         representation['frameStart'] = frame_start_str
 
         # set slate frame
         collected_frames = self._add_slate_frame_to_collected_frames(
             instance,
             collected_frames,
-            frame_start_str,
             first_frame,
             last_frame
         )
@@ -289,15 +288,40 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         return representation
 
+    def _get_frame_start_str(self, first_frame, last_frame):
+        """Get frame start string.
+
+        Args:
+            first_frame (int): first frame
+            last_frame (int): last frame
+
+        Returns:
+            str: frame start string
+        """
+        # convert first frame to string with padding
+        return (
+            "{{:0{}d}}".format(len(str(last_frame)))
+        ).format(first_frame)
+
     def _add_slate_frame_to_collected_frames(
         self,
         instance,
         collected_frames,
-        frame_start_str,
         first_frame,
         last_frame
     ):
-        """Set slate frame."""
+        """Add slate frame to collected frames.
+
+        Args:
+            instance (pyblish.api.Instance): pyblish instance
+            collected_frames (list): collected frames
+            first_frame (int): first frame
+            last_frame (int): last frame
+
+        Returns:
+            list: collected frames
+        """
+        frame_start_str = self._get_frame_start_str(first_frame, last_frame)
         frame_length = int(last_frame - first_frame + 1)
 
         # this will only run if slate frame is not already
@@ -305,15 +329,15 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         if (
             "slate" in instance.data["families"]
             and frame_length == len(collected_frames)
-            and instance.data["family"] == "render"
         ):
-            frame_slate_str = (
-                "{{:0{}d}}".format(len(str(last_frame)))
-            ).format(first_frame - 1)
+            frame_slate_str = self._get_frame_start_str(
+                first_frame - 1,
+                last_frame
+            )
 
-        slate_frame = collected_frames[0].replace(
-            frame_start_str, frame_slate_str)
-        collected_frames.insert(0, slate_frame)
+            slate_frame = collected_frames[0].replace(
+                frame_start_str, frame_slate_str)
+            collected_frames.insert(0, slate_frame)
 
         return collected_frames
 
