@@ -336,34 +336,6 @@ class PypeCommands:
         import pytest
         pytest.main(args)
 
-    def syncserver(self, active_site):
-        """Start running sync_server in background.
-
-        This functionality is available in directly in module cli commands.
-        `~/openpype_console module sync_server syncservice`
-        """
-
-        os.environ["OPENPYPE_LOCAL_ID"] = active_site
-
-        def signal_handler(sig, frame):
-            print("You pressed Ctrl+C. Process ended.")
-            sync_server_module.server_exit()
-            sys.exit(0)
-
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-
-        from openpype.modules import ModulesManager
-
-        manager = ModulesManager()
-        sync_server_module = manager.modules_by_name["sync_server"]
-
-        sync_server_module.server_init()
-        sync_server_module.server_start()
-
-        while True:
-            time.sleep(1.0)
-
     def repack_version(self, directory):
         """Repacking OpenPype version."""
         from openpype.tools.repack_version import VersionRepacker
