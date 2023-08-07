@@ -23,6 +23,7 @@ class DeadlinePluginInfo():
     Version = attr.ib(default=None)
     IgnoreInputs = attr.ib(default=True)
 
+
 @attr.s
 class ArnoldRenderDeadlinePluginInfo():
     InputFile = attr.ib(default=None)
@@ -101,7 +102,9 @@ class HoudiniSubmitDeadline(
         cls.group = settings.get("group", cls.group)
         cls.export_group = settings.get("export_group", cls.export_group)
         cls.department = settings.get("department", cls.department)
-        cls.env_allowed_keys = settings.get("env_allowed_keys", cls.env_allowed_keys)
+        cls.env_allowed_keys = settings.get(
+            "env_allowed_keys", cls.env_allowed_keys
+        )
         cls.env_search_replace_values = settings.get(
             "env_search_replace_values", cls.env_allowed_keys
         )
@@ -145,11 +148,11 @@ class HoudiniSubmitDeadline(
         ]
 
     def get_job_info(
-            self,
-            split_render_job=False,
-            export_job=False,
-            dependency_job_ids=None
-        ):
+        self,
+        split_render_job=False,
+        export_job=False,
+        dependency_job_ids=None
+    ):
 
         instance = self._instance
         context = instance.context
