@@ -147,6 +147,21 @@ class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
             "load": [os.path.join(SYNC_SERVER_ROOT, "plugins", "load")]
         }
 
+    def get_site_icons(self):
+        """Icons for sites.
+
+        Returns:
+            dict[str, str]: Path to icon by site.
+        """
+
+        resource_path = os.path.join(
+            SYNC_SERVER_ROOT, "providers", "resources"
+        )
+        return {
+            provider: "{}/{}.png".format(resource_path, provider)
+            for provider in ["studio", "local_drive", "gdrive"]
+        }
+
     """ Start of Public API """
     def add_site(self, project_name, representation_id, site_name=None,
                  force=False, priority=None, reset_timer=False):
