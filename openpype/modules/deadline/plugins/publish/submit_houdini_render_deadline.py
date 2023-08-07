@@ -45,7 +45,7 @@ class HoudiniSubmitDeadline(
     abstract_submit_deadline.AbstractSubmitDeadline,
     OpenPypePyblishPluginMixin
 ):
-    """Submit Solaris USD Render ROPs to Deadline.
+    """Submit Render ROPs to Deadline.
 
     Renders are submitted to a Deadline Web Service as
     supplied via the environment variable AVALON_DEADLINE.
