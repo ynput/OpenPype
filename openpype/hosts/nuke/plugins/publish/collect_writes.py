@@ -144,7 +144,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         instance.data["families"].append(
             "{}.{}".format(family, render_target)
         )
-        self.log.info("Appending render target to families: {}.{}".format(
+        self.log.debug("Appending render target to families: {}.{}".format(
             family, render_target)
         )
 
