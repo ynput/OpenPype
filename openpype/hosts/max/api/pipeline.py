@@ -174,4 +174,9 @@ def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
 
 
 def load_Openpype_data_max_raw():
+    """Re-loading the Openpype parameter built by the creator
+
+    Returns:
+        attribute: re-loading the custom OP attributes set in Maxscript
+    """
     return rt.Execute(MS_CUSTOM_ATTRIB)
