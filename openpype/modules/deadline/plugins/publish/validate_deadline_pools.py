@@ -21,7 +21,8 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
                 "render.farm",
                 "renderFarm",
                 "renderlayer",
-                "maxrender"]    # TODO hornet: removed in hornet build
+                "maxrender"]    # hornet: deadline submission without publish
+    hosts = ["maya"]
     optional = True
 
     def process(self, instance):
