@@ -1,7 +1,7 @@
 import os
 
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
+from openpype.hosts.max.api.pipeline import containerise
 
 from openpype.pipeline import get_representation_path, load
 
@@ -28,7 +28,6 @@ class MaxSceneLoader(load.LoaderPlugin):
         rt.MergeMaxFile(path)
         max_objects = rt.getLastMergedNodes()
         max_container = rt.Container(name=f"{name}")
-        load_OpenpypeData(max_container, max_objects)
         for max_object in max_objects:
             max_object.Parent = max_container
 
@@ -50,7 +49,6 @@ class MaxSceneLoader(load.LoaderPlugin):
         for max_object in max_objects:
             max_object.Parent = instance_container
         instance_container.Parent = container_node
-        load_OpenpypeData(container_node, max_objects)
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
