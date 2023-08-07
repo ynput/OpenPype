@@ -210,11 +210,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             else:
                 if "translate" in options:
                     if not attach_to_root and new_nodes:
-                        reference_node = get_reference_node(new_nodes)
-                        for node in new_nodes:
-                            if node != reference_node:
-                                break
-                        group_name = node.lstrip("|")
+                        root_nodes = cmds.ls(new_nodes, assemblies=True,
+                                             long=True)
+                        # we assume only a single root is ever loaded
+                        group_name = root_nodes[0]
                     cmds.setAttr("{}.translate".format(group_name),
                                  *options["translate"])
             return new_nodes
