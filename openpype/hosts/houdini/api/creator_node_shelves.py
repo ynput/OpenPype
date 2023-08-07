@@ -35,11 +35,11 @@ CATEGORY_GENERIC_TOOL = {
 
 CREATE_SCRIPT = """
 from openpype.hosts.houdini.api.creator_node_shelves import create_interactive
-create_interactive("{identifier}", **kwargs)
+create_interactive("{identifier}", "{variant}", **kwargs)
 """
 
 
-def create_interactive(creator_identifier, **kwargs):
+def create_interactive(creator_identifier, default_variant, **kwargs):
     """Create a Creator using its identifier interactively.
 
     This is used by the generated shelf tools as callback when a user selects
@@ -59,9 +59,9 @@ def create_interactive(creator_identifier, **kwargs):
     """
 
     # TODO Use Qt instead
-    result, variant = hou.ui.readInput('Define variant name',
+    result, variant = hou.ui.readInput("Define variant name",
                                        buttons=("Ok", "Cancel"),
-                                       initial_contents='Main',
+                                       initial_contents=default_variant,
                                        title="Define variant",
                                        help="Set the variant for the "
                                             "publish instance",
@@ -196,7 +196,14 @@ def install():
 
             key = "openpype_create.{}".format(identifier)
             log.debug(f"Registering {key}")
-            script = CREATE_SCRIPT.format(identifier=identifier)
+            default_variant = "Main"
+            if hasattr(creator, "default_variant"):
+                default_variant = creator.default_variant
+            elif hasattr(creator, "default_variants"):
+                default_variant = creator.default_variants[0]
+            script = CREATE_SCRIPT.format(
+                identifier=identifier, variant=default_variant
+            )
             data = {
                 "script": script,
                 "language": hou.scriptLanguage.Python,
