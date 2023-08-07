@@ -2,6 +2,7 @@ import os
 import pyblish.api
 import clique
 from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import get_errored_instances_from_context
 
 
 class RepairActionBase(pyblish.api.Action):
@@ -11,14 +12,7 @@ class RepairActionBase(pyblish.api.Action):
     @staticmethod
     def get_instance(context, plugin):
         # Get the errored instances
-        failed = []
-        for result in context.data["results"]:
-            if (result["error"] is not None and result["instance"] is not None
-               and result["instance"] not in failed):
-                failed.append(result["instance"])
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        return pyblish.api.instances_by_plugin(failed, plugin)
+        return get_errored_instances_from_context(context, plugin=plugin)
 
     def repair_knob(self, instances, state):
         for instance in instances:

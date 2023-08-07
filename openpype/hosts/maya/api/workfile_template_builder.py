@@ -278,7 +278,12 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             return
 
         roots = cmds.sets(container, q=True)
-        ref_node = get_reference_node(roots)
+        ref_node = None
+        try:
+            ref_node = get_reference_node(roots)
+        except AssertionError as e:
+            self.log.info(e.args[0])
+
         nodes_to_parent = []
         for root in roots:
             if ref_node:

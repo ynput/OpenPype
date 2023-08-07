@@ -5,7 +5,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import style
 from openpype.pipeline import AvalonMongoDB
-from openpype.tools.utils.lib import center_window
+from openpype.tools.utils.lib import center_window, get_openpype_qt_app
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.constants import (
     PROJECT_NAME_ROLE
@@ -376,9 +376,7 @@ def main(
     strict=True
 ):
     # Run Qt application
-    app = QtWidgets.QApplication.instance()
-    if app is None:
-        app = QtWidgets.QApplication([])
+    app = get_openpype_qt_app()
     window = ContextDialog()
     window.set_strict(strict)
     window.set_context(project_name, asset_name)

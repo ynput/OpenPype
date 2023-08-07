@@ -78,6 +78,14 @@ def read(container) -> dict:
                 value.startswith(JSON_PREFIX):
             with contextlib.suppress(json.JSONDecodeError):
                 value = json.loads(value[len(JSON_PREFIX):])
+
+        # default value behavior
+        # convert maxscript boolean values
+        if value == "true":
+            value = True
+        elif value == "false":
+            value = False
+
         data[key.strip()] = value
 
     data["instance_node"] = container.Name
@@ -282,6 +290,21 @@ def get_max_version():
     """
     max_info = rt.MaxVersion()
     return max_info[7]
+
+
+@contextlib.contextmanager
+def viewport_camera(camera):
+    original = rt.viewport.getCamera()
+    if not original:
+        # if there is no original camera
+        # use the current camera as original
+        original = rt.getNodeByName(camera)
+    review_camera = rt.getNodeByName(camera)
+    try:
+        rt.viewport.setCamera(review_camera)
+        yield
+    finally:
+        rt.viewport.setCamera(original)
 
 
 def set_timeline(frameStart, frameEnd):

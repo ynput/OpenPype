@@ -7,8 +7,8 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
     load,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import (
@@ -86,7 +86,7 @@ class LoadImage(load.LoaderPlugin):
         if namespace is None:
             namespace = context['asset']['name']
 
-        file = self.fname
+        file = self.filepath_from_context(context)
 
         if not file:
             repr_id = context["representation"]["_id"]
@@ -119,10 +119,9 @@ class LoadImage(load.LoaderPlugin):
         with viewer_update_and_undo_stop():
             r = nuke.createNode(
                 "Read",
-                "name {}".format(read_name))
-
-            # hide property panel
-            r.hideControlPanel()
+                "name {}".format(read_name),
+                inpanel=False
+            )
 
             r["file"].setValue(file)
 
@@ -202,7 +201,7 @@ class LoadImage(load.LoaderPlugin):
                 format(frame_number, "0{}".format(padding)))
 
         # Get start frame from version data
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
         last_version_doc = get_last_version_by_subset_id(
             project_name, version_doc["parent"], fields=["_id"]

@@ -536,8 +536,8 @@ class SyncServerThread(threading.Thread):
                     _site_is_working(self.module, project_name, remote_site,
                                      remote_site_config)]):
             self.log.debug(
-                "Some of the sites {} - {} is not working properly".format(
-                    local_site, remote_site
+                "Some of the sites {} - {} in {} is not working properly".format(  # noqa
+                    local_site, remote_site, project_name
                 )
             )
 

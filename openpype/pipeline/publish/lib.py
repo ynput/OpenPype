@@ -577,12 +577,14 @@ def remote_publish(log, close_plugin_name=None, raise_error=False):
                 raise RuntimeError(error_message)
 
 
-def get_errored_instances_from_context(context):
+def get_errored_instances_from_context(context, plugin=None):
     """Collect failed instances from pyblish context.
 
     Args:
         context (pyblish.api.Context): Publish context where we're looking
             for failed instances.
+        plugin (pyblish.api.Plugin): If provided then only consider errors
+            related to that plug-in.
 
     Returns:
         List[pyblish.lib.Instance]: Instances which failed during processing.
@@ -592,6 +594,9 @@ def get_errored_instances_from_context(context):
     for result in context.data["results"]:
         if result["instance"] is None:
             # When instance is None we are on the "context" result
+            continue
+
+        if plugin is not None and result.get("plugin") != plugin:
             continue
 
         if result["error"]:
@@ -864,6 +869,110 @@ def _validate_transient_template(project_name, template_name, anatomy):
                          ).format(template_name, project_name))
 
 
+def get_published_workfile_instance(context):
+    """Find workfile instance in context"""
+    for i in context:
+        is_workfile = (
+            "workfile" in i.data.get("families", []) or
+            i.data["family"] == "workfile"
+        )
+        if not is_workfile:
+            continue
+
+        # test if there is instance of workfile waiting
+        # to be published.
+        if not i.data.get("publish", True):
+            continue
+
+        return i
+
+
+def replace_with_published_scene_path(instance, replace_in_path=True):
+    """Switch work scene path for published scene.
+    If rendering/exporting from published scenes is enabled, this will
+    replace paths from working scene to published scene.
+    This only works if publish contains workfile instance!
+    Args:
+        instance (pyblish.api.Instance): Pyblish instance.
+        replace_in_path (bool): if True, it will try to find
+            old scene name in path of expected files and replace it
+            with name of published scene.
+    Returns:
+        str: Published scene path.
+        None: if no published scene is found.
+    Note:
+        Published scene path is actually determined from project Anatomy
+        as at the time this plugin is running scene can still not be
+        published.
+    """
+    log = Logger.get_logger("published_workfile")
+    workfile_instance = get_published_workfile_instance(instance.context)
+    if workfile_instance is None:
+        return
+
+    # determine published path from Anatomy.
+    template_data = workfile_instance.data.get("anatomyData")
+    rep = workfile_instance.data["representations"][0]
+    template_data["representation"] = rep.get("name")
+    template_data["ext"] = rep.get("ext")
+    template_data["comment"] = None
+
+    anatomy = instance.context.data['anatomy']
+    anatomy_filled = anatomy.format(template_data)
+    template_filled = anatomy_filled["publish"]["path"]
+    file_path = os.path.normpath(template_filled)
+
+    log.info("Using published scene for render {}".format(file_path))
+
+    if not os.path.exists(file_path):
+        log.error("published scene does not exist!")
+        raise
+
+    if not replace_in_path:
+        return file_path
+
+    # now we need to switch scene in expected files
+    # because <scene> token will now point to published
+    # scene file and that might differ from current one
+    def _clean_name(path):
+        return os.path.splitext(os.path.basename(path))[0]
+
+    new_scene = _clean_name(file_path)
+    orig_scene = _clean_name(instance.context.data["currentFile"])
+    expected_files = instance.data.get("expectedFiles")
+
+    if isinstance(expected_files[0], dict):
+        # we have aovs and we need to iterate over them
+        new_exp = {}
+        for aov, files in expected_files[0].items():
+            replaced_files = []
+            for f in files:
+                replaced_files.append(
+                    str(f).replace(orig_scene, new_scene)
+                )
+            new_exp[aov] = replaced_files
+        # [] might be too much here, TODO
+        instance.data["expectedFiles"] = [new_exp]
+    else:
+        new_exp = []
+        for f in expected_files:
+            new_exp.append(
+                str(f).replace(orig_scene, new_scene)
+            )
+        instance.data["expectedFiles"] = new_exp
+
+    metadata_folder = instance.data.get("publishRenderMetadataFolder")
+    if metadata_folder:
+        metadata_folder = metadata_folder.replace(orig_scene,
+                                                  new_scene)
+        instance.data["publishRenderMetadataFolder"] = metadata_folder
+
+    log.info("Scene name was switched {} -> {}".format(
+        orig_scene, new_scene
+    ))
+
+    return file_path
+
 def add_repre_files_for_cleanup(instance, repre):
     """ Explicitly mark repre files to be deleted.
 
@@ -872,7 +981,7 @@ def add_repre_files_for_cleanup(instance, repre):
     """
     files = repre["files"]
     staging_dir = repre.get("stagingDir")
-    if not staging_dir:
+    if not staging_dir or instance.data.get("stagingDir_persistent"):
         return
 
     if isinstance(files, str):

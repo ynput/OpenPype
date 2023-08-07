@@ -10,7 +10,7 @@ import json
 import six
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name, get_current_asset_name
 from openpype.pipeline.context_tools import get_current_project_asset
 
 import hou
@@ -78,8 +78,8 @@ def generate_ids(nodes, asset_id=None):
     """
 
     if asset_id is None:
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         # Get the asset ID from the database for the asset of current context
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
 
@@ -474,8 +474,8 @@ def maintained_selection():
 def reset_framerange():
     """Set frame range to current asset"""
 
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     # Get the asset ID from the database for the asset of current context
     asset_doc = get_asset_by_name(project_name, asset_name)
     asset_data = asset_doc["data"]
@@ -633,23 +633,8 @@ def evalParmNoFrame(node, parm, pad_character="#"):
 
 def get_color_management_preferences():
     """Get default OCIO preferences"""
-    data = {
-        "config": hou.Color.ocio_configPath()
-
+    return {
+        "config": hou.Color.ocio_configPath(),
+        "display": hou.Color.ocio_defaultDisplay(),
+        "view": hou.Color.ocio_defaultView()
     }
-
-    # Get default display and view from OCIO
-    display = hou.Color.ocio_defaultDisplay()
-    disp_regex = re.compile(r"^(?P<name>.+-)(?P<display>.+)$")
-    disp_match = disp_regex.match(display)
-
-    view = hou.Color.ocio_defaultView()
-    view_regex = re.compile(r"^(?P<name>.+- )(?P<view>.+)$")
-    view_match = view_regex.match(view)
-    data.update({
-        "display": disp_match.group("display"),
-        "view": view_match.group("view")
-
-    })
-
-    return data
