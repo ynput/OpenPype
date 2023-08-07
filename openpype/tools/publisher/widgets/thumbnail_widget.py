@@ -454,12 +454,14 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
     def _on_take_screenshot(self):
         window = self.window()
+        states = window.windowStates()
         window.setWindowState(QtCore.Qt.WindowMinimized)
         output_path = os.path.join(
             self._output_dir, uuid.uuid4().hex + ".png")
         if capture_to_file(output_path):
             self.thumbnail_created.emit(output_path)
-        window.setWindowState(QtCore.Qt.WindowActive)
+        # restore original window state
+        window.setWindowStates(states)
 
     def _adapt_to_size(self):
         if not self._adapted_to_size:
