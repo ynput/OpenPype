@@ -599,7 +599,6 @@ def _convert_maya_project_settings(ayon_settings, output):
     reference_loader = ayon_maya_load["reference_loader"]
     reference_loader["namespace"] = (
         reference_loader["namespace"]
-        .replace("{folder[name]}", "{asset_name}")
         .replace("{product[name]}", "{subset}")
     )
 
