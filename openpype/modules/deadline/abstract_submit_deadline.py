@@ -446,25 +446,20 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
         self.scene_path = file_path
         self.log.info("Using {} for render/export.".format(file_path))
 
-        # Check whether we are splitting render job in export + render
-        # and if so, create a separate task for the render
-        # TODO: Find a cleaner way so `get_job_info` can take extra args
-        # depending on host
-        export_job = instance.data["exportJob"]
-        self.job_info = self.get_job_info(
-            split_render_job=export_job, export_job=True
-        )
+        self.job_info = self.get_job_info()
         self.plugin_info = self.get_plugin_info()
         self.aux_files = self.get_aux_files()
 
         job_id = self.process_submission()
+        self.log.info("Submitted job to Deadline: {}.".format(job_id))
+
+        # TODO: Find a way that's more generic and not render type specific
+        export_job = instance.data["exportJob"]
         if export_job:
             self.log.info("Splitting export and render in two jobs")
             self.log.info("Export job id: %s", job_id)
-            render_job_info = self.get_job_info(
-                split_render_job=True, dependency_job_ids=[job_id]
-            )
-            render_plugin_info = self.get_plugin_info(split_render_job=True)
+            render_job_info = self.get_job_info(dependency_job_ids=[job_id])
+            render_plugin_info = self.get_plugin_info(job_type="render")
             payload = self.assemble_payload(
                 job_info=render_job_info,
                 plugin_info=render_plugin_info

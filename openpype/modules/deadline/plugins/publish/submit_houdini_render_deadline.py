@@ -115,19 +115,24 @@ class HoudiniSubmitDeadline(
             )
         ]
 
-    def get_job_info(
-        self,
-        split_render_job=False,
-        export_job=False,
-        dependency_job_ids=None
-    ):
+    def get_job_info(self, dependency_job_ids=None):
 
         instance = self._instance
         context = instance.context
 
         attribute_values = self.get_attr_values_from_data(instance.data)
 
-        if split_render_job and not export_job:
+        # Whether Deadline render submission is being split in two
+        # (extract + render)
+        split_render_job = instance.data["exportJob"]
+
+        # If there's some dependency job ids we can assume this is a render job
+        # and not an export job
+        is_export_job = True
+        if dependency_job_ids:
+            is_export_job = False
+
+        if split_render_job and not is_export_job:
             # Convert from family to Deadline plugin name
             # i.e., arnold_rop -> Arnold
             plugin = instance.data["family"].replace("_rop", "").capitalize()
@@ -144,7 +149,7 @@ class HoudiniSubmitDeadline(
         job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())
 
-        if split_render_job and export_job:
+        if split_render_job and is_export_job:
             job_info.Priority = attribute_values.get(
                 "export_priority", self.export_priority
             )
@@ -166,13 +171,13 @@ class HoudiniSubmitDeadline(
 
         # Make sure we make job frame dependent so render tasks pick up a soon
         # as export tasks are done
-        if split_render_job and not export_job:
+        if split_render_job and not is_export_job:
             job_info.IsFrameDependent = True
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
         job_info.Group = self.group
-        if split_render_job and export_job:
+        if split_render_job and is_export_job:
             job_info.ChunkSize = attribute_values.get(
                 "export_chunk", self.export_chunk_size
             )
@@ -207,7 +212,6 @@ class HoudiniSubmitDeadline(
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 
-
         for key in keys:
             value = environment.get(key)
             if value:
@@ -228,7 +232,7 @@ class HoudiniSubmitDeadline(
 
         return job_info
 
-    def get_plugin_info(self, split_render_job=False):
+    def get_plugin_info(self, job_type=None):
 
         instance = self._instance
         context = instance.context
@@ -236,7 +240,7 @@ class HoudiniSubmitDeadline(
         hou_major_minor = hou.applicationVersionString().rsplit(".", 1)[0]
 
         # Output driver to render
-        if split_render_job:
+        if job_type == "render":
             family = instance.data.get("family")
             if family == "arnold_rop":
                 plugin_info = ArnoldRenderDeadlinePluginInfo(
