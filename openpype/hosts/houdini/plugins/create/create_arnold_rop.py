@@ -53,10 +53,11 @@ class CreateArnoldRop(plugin.HoudiniCreator):
         }
 
         if pre_create_data.get("export_job"):
-            ass_filepath = "{export_dir}{subset_name}/{subset_name}.$F4.ass".format(
-                export_dir=hou.text.expandString("$HIP/pyblish/ass/"),
-                subset_name=subset_name,
-            )
+            ass_filepath = \
+                "{export_dir}{subset_name}/{subset_name}.$F4.ass".format(
+                    export_dir=hou.text.expandString("$HIP/pyblish/ass/"),
+                    subset_name=subset_name,
+                )
             parms["ar_ass_export_enable"] = 1
             parms["ar_ass_file"] = ass_filepath
 

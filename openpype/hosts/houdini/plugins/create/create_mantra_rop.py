@@ -49,10 +49,11 @@ class CreateMantraROP(plugin.HoudiniCreator):
         }
 
         if pre_create_data.get("export_job"):
-            ifd_filepath = "{export_dir}{subset_name}/{subset_name}.$F4.ifd".format(
-                export_dir=hou.text.expandString("$HIP/pyblish/ifd/"),
-                subset_name=subset_name,
-            )
+            ifd_filepath = \
+                "{export_dir}{subset_name}/{subset_name}.$F4.ifd".format(
+                    export_dir=hou.text.expandString("$HIP/pyblish/ifd/"),
+                    subset_name=subset_name,
+                )
             parms["soho_outputmode"] = 1
             parms["soho_diskfile"] = ifd_filepath
 

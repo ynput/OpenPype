@@ -144,7 +144,12 @@ class HoudiniSubmitDeadline(
             )
         ]
 
-    def get_job_info(self, split_render_job=False, export_job=False, dependency_job_ids=None):
+    def get_job_info(
+            self,
+            split_render_job=False,
+            export_job=False,
+            dependency_job_ids=None
+        ):
 
         instance = self._instance
         context = instance.context
@@ -154,7 +159,7 @@ class HoudiniSubmitDeadline(
         if split_render_job and not export_job:
             # Convert from family to Deadline plugin name
             # i.e., arnold_rop -> Arnold
-            plugin = instance.data.get("family").replace("_rop", "").capitalize()
+            plugin = instance.data["family"].replace("_rop", "").capitalize()
         else:
             plugin = "Houdini"
 
@@ -288,7 +293,7 @@ class HoudiniSubmitDeadline(
                 )
             else:
                 self.log.error(
-                    "Family %s not supported yet to split export and render job",
+                    "Family '%s' not supported yet to split render job",
                     family
                 )
                 return

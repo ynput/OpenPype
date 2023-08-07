@@ -58,10 +58,11 @@ class CreateVrayROP(plugin.HoudiniCreator):
         }
 
         if pre_create_data.get("export_job"):
-            scene_filepath = "{export_dir}{subset_name}/{subset_name}.$F4.vrscene".format(
-                export_dir=hou.text.expandString("$HIP/pyblish/vrscene/"),
-                subset_name=subset_name,
-            )
+            scene_filepath = \
+                "{export_dir}{subset_name}/{subset_name}.$F4.vrscene".format(
+                    export_dir=hou.text.expandString("$HIP/pyblish/vrscene/"),
+                    subset_name=subset_name,
+                )
             # TODO: don't have VRay to check the names of these
             parms["render_export_mode"] = 1
             parms["render_export_filepath"] = scene_filepath

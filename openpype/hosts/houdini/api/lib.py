@@ -122,7 +122,8 @@ def get_export_parameter(node):
     """
     node_type = node.type().description()
 
-    # Ensures the proper Take is selected for each ROP to retrieve the correct ifd
+    # Ensures the proper Take is selected for each ROP to retrieve the correct
+    # ifd
     try:
         rop_take = hou.takes.findTake(node.parm("take").eval())
         if rop_take is not None:
@@ -136,7 +137,8 @@ def get_export_parameter(node):
     elif node_type == "Alfred":
         return node.parm("alf_diskfile")
     elif (node_type == "RenderMan" or node_type == "RenderMan RIS"):
-        pre_ris22 = node.parm("rib_outputmode") and node.parm("rib_outputmode").eval()
+        pre_ris22 = node.parm("rib_outputmode") and \
+            node.parm("rib_outputmode").eval()
         ris22 = node.parm("diskfile") and node.parm("diskfile").eval()
         if pre_ris22 or ris22:
             return node.parm("soho_diskfile")
@@ -178,13 +180,15 @@ def get_output_parameter(node):
     category = node.type().category().name()
 
     # Figure out which type of node is being rendered
-    if node_type == "Geometry" or node_type == "Filmbox FBX" or (node_type == "ROP Output Driver" and category == "Sop"):
+    if node_type == "Geometry" or node_type == "Filmbox FBX" or \
+            (node_type == "ROP Output Driver" and category == "Sop"):
         return node.parm("sopoutput")
     elif node_type == "Composite":
         return node.parm("copoutput")
     elif node_type == "Channel":
         return node.parm("chopoutput")
-    elif node_type == "Dynamics" or (node_type == "ROP Output Driver" and category == "Dop"):
+    elif node_type == "Dynamics" or \
+            (node_type == "ROP Output Driver" and category == "Dop"):
         return node.parm("dopoutput")
     elif node_type == "Alfred":
         return node.parm("alf_diskfile")
