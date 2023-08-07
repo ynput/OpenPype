@@ -3,7 +3,7 @@ import os
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.pipeline import (
     containerise, load_Openpype_data_max_raw
-    )
+)
 from openpype.pipeline import get_representation_path, load
 
 
