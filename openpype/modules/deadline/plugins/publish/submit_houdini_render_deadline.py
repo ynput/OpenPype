@@ -76,10 +76,6 @@ class HoudiniSubmitDeadline(
     export_chunk_size = 10
     group = ""
     export_group = ""
-    department = ""
-    limit_groups = {}
-    env_allowed_keys = []
-    env_search_replace_values = {}
 
     @classmethod
     def get_attribute_defs(cls):
@@ -157,8 +153,6 @@ class HoudiniSubmitDeadline(
                 "priority", self.priority
             )
 
-        job_info.Department = self.department
-
         if is_in_tests():
             job_info.BatchName += datetime.now().strftime("%d%m%Y%H%M%S")
 
@@ -210,18 +204,9 @@ class HoudiniSubmitDeadline(
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
 
-        # add allowed keys from preset if any
-        if self.env_allowed_keys:
-            keys += self.env_allowed_keys
-
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 
-        # finally search replace in values of any key
-        if self.env_search_replace_values:
-            for key, value in environment.items():
-                for _k, _v in self.env_search_replace_values.items():
-                    environment[key] = value.replace(_k, _v)
 
         for key in keys:
             value = environment.get(key)
