@@ -4,10 +4,12 @@
 It was made to pratice publish process.
 
 Filmbox by default expects an ObjNode
-it's by default selects the output sop with mimimum idx
-or the node with render flag isntead.
+however, we set the sop node explictly
+to eleminate any confusion.
 
-to eleminate any confusion, we set the sop node explictly.
+This creator by default will select
+the output sop with mimimum idx
+or the node with render flag isntead.
 
 This plugin is part of publish process guide.
 """
@@ -30,12 +32,11 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
 
     # Overrides HoudiniCreator.create()
     def create(self, subset_name, instance_data, pre_create_data):
-        # instance_data.pop("active", None)
 
         # set node type
         instance_data.update({"node_type": "filmboxfbx"})
 
-        # set essential extra parameters
+        # create instance (calls super create method)
         instance = super(CreateFilmboxFBX, self).create(
             subset_name,
             instance_data,
@@ -44,33 +45,14 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
         # get the created node
         instance_node = hou.node(instance.get("instance_node"))
 
-        # Get this node specific parms
-        # 1. get output path
-        output_path = hou.text.expandString(
-            "$HIP/pyblish/{}.fbx".format(subset_name))
-
-        # 2. get selection
-        selection = self.get_selection()
-
-        # 3. get Vertex Cache Format
-        vcformat = pre_create_data.get("vcformat")
-
-        # 3. get Valid Frame Range
-        trange = pre_create_data.get("trange")
-
-        # parms dictionary
-        parms = {
-            "startnode" : selection,
-            "sopoutput": output_path,
-            "vcformat" : vcformat,
-            "trange" : trange
-        }
+        # get parms
+        parms = self.get_parms(subset_name, pre_create_data)
 
         # set parms
         instance_node.setParms(parms)
 
         # Lock any parameters in this list
-        to_lock = []
+        to_lock = ["family", "id"]
         self.lock_parameters(instance_node, to_lock)
 
     # Overrides HoudiniCreator.get_network_categories()
@@ -99,6 +81,32 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
                             label="Valid Frame Range")
 
         return attrs + [vcformat, trange]
+
+    def get_parms(self, subset_name, pre_create_data):
+        """Get parameters values for this specific node."""
+
+        # 1. get output path
+        output_path = hou.text.expandString(
+            "$HIP/pyblish/{}.fbx".format(subset_name))
+
+        # 2. get selection
+        selection = self.get_selection()
+
+        # 3. get Vertex Cache Format
+        vcformat = pre_create_data.get("vcformat")
+
+        # 4. get Valid Frame Range
+        trange = pre_create_data.get("trange")
+
+        # parms dictionary
+        parms = {
+            "startnode" : selection,
+            "sopoutput": output_path,
+            "vcformat" : vcformat,
+            "trange" : trange
+        }
+
+        return parms
 
     def get_selection(self):
         """Selection Logic.
