@@ -34,7 +34,12 @@ from openpype.settings.constants import (
 from .providers.local_drive import LocalDriveHandler
 from .providers import lib
 
-from .utils import time_function, SyncStatus, SiteAlreadyPresentError
+from .utils import (
+    time_function,
+    SyncStatus,
+    SiteAlreadyPresentError,
+    SYNC_SERVER_ROOT,
+)
 
 log = Logger.get_logger("SyncServer")
 
@@ -138,9 +143,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
 
     def get_plugin_paths(self):
         """Deadline plugin paths."""
-        current_dir = os.path.dirname(os.path.abspath(__file__))
         return {
-            "load": [os.path.join(current_dir, "plugins", "load")]
+            "load": [os.path.join(SYNC_SERVER_ROOT, "plugins", "load")]
         }
 
     """ Start of Public API """
@@ -904,10 +908,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
             (str): full absolut path to directory with hooks for the module
         """
 
-        return os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "launch_hooks"
-        )
+        return os.path.join(SYNC_SERVER_ROOT, "launch_hooks")
 
     # Needs to be refactored after Settings are updated
     # # Methods for Settings to get appriate values to fill forms
