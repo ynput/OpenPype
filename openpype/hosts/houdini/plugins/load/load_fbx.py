@@ -30,14 +30,19 @@ class FbxLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
 
+        # get file path
         file_path = self.get_file_path(context)
 
+        # get necessary data
         namespace, node_name = self.get_node_name(context, name, namespace)
 
+        # create load tree
         nodes = self.create_load_node_tree(file_path, node_name, name)
 
         self[:] = nodes
 
+        # Call containerise function which does some
+        # automations for you
         containerised_nodes = self.get_containerised_nodes(
             nodes, context, node_name, namespace
         )
@@ -96,7 +101,7 @@ class FbxLoader(load.LoaderPlugin):
         return namespace, node_name
 
     def create_load_node_tree(self, file_path, node_name, subset_name):
-        """Create Load node network.
+        """Create Load network.
 
         you can start building your tree at any obj level.
         it'll be much easier to build it in the root obj level.
@@ -148,6 +153,12 @@ class FbxLoader(load.LoaderPlugin):
         return nodes
 
     def get_containerised_nodes(self, nodes, context, node_name, namespace):
+        """Call containerise function.
+
+        It does some automations that you don't have to worry about, e.g.
+            1. It moves created nodes to the AVALON_CONTAINERS  subnetwork
+            2. Add extra parameters
+        """
         containerised_nodes = pipeline.containerise(
             node_name,
             namespace,
