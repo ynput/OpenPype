@@ -3,8 +3,12 @@ from ayon_server.settings import BaseSettingsModel
 
 from .imageio import AfterEffectsImageIOModel
 from .creator_plugins import AfterEffectsCreatorPlugins
-from .publish_plugins import AfterEffectsPublishPlugins
+from .publish_plugins import (
+    AfterEffectsPublishPlugins,
+    AE_PUBLISH_PLUGINS_DEFAULTS,
+)
 from .workfile_builder import WorkfileBuilderPlugin
+from .templated_workfile_build import TemplatedWorkfileBuildModel
 
 
 class AfterEffectsSettings(BaseSettingsModel):
@@ -18,15 +22,17 @@ class AfterEffectsSettings(BaseSettingsModel):
         default_factory=AfterEffectsCreatorPlugins,
         title="Creator plugins"
     )
-
     publish: AfterEffectsPublishPlugins = Field(
         default_factory=AfterEffectsPublishPlugins,
         title="Publish plugins"
     )
-
     workfile_builder: WorkfileBuilderPlugin = Field(
         default_factory=WorkfileBuilderPlugin,
         title="Workfile Builder"
+    )
+    templated_workfile_build: TemplatedWorkfileBuildModel = Field(
+        default_factory=TemplatedWorkfileBuildModel,
+        title="Templated Workfile Build Settings"
     )
 
 
@@ -39,24 +45,12 @@ DEFAULT_AFTEREFFECTS_SETTING = {
             ]
         }
     },
-    "publish": {
-        "CollectReview": {
-            "enabled": True
-        },
-        "ValidateSceneSettings": {
-            "enabled": True,
-            "optional": True,
-            "active": True,
-            "skip_resolution_check": [
-                ".*"
-            ],
-            "skip_timelines_check": [
-                ".*"
-            ]
-        }
-    },
+    "publish": AE_PUBLISH_PLUGINS_DEFAULTS,
     "workfile_builder": {
         "create_first_version": False,
         "custom_templates": []
-    }
+    },
+    "templated_workfile_build": {
+        "profiles": []
+    },
 }

@@ -18,12 +18,12 @@ class DeadlineSettings(BaseSettingsModel):
     deadline_urls: list[ServerListSubmodel] = Field(
         default_factory=list,
         title="System Deadline Webservice URLs",
+        scope=["studio"],
     )
-
     deadline_servers: list[str] = Field(
         title="Project deadline servers",
-        section="---")
-
+        section="---",
+    )
     publish: PublishPluginsModel = Field(
         default_factory=PublishPluginsModel,
         title="Publish Plugins",

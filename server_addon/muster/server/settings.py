@@ -10,7 +10,11 @@ class TemplatesMapping(BaseSettingsModel):
 
 class MusterSettings(BaseSettingsModel):
     enabled: bool = True
-    MUSTER_REST_URL: str = Field("", title="Muster Rest URL")
+    MUSTER_REST_URL: str = Field(
+        "",
+        title="Muster Rest URL",
+        scope=["studio"],
+    )
 
     templates_mapping: list[TemplatesMapping] = Field(
         default_factory=list,

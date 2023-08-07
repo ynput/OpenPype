@@ -359,7 +359,7 @@ class TransferProgress:
     def __init__(self):
         self._started = False
         self._transfer_done = False
-        self._transfered = 0
+        self._transferred = 0
         self._content_size = None
 
         self._failed = False
@@ -369,25 +369,66 @@ class TransferProgress:
         self._destination_url = "N/A"
 
     def get_content_size(self):
+        """Content size in bytes.
+
+        Returns:
+            Union[int, None]: Content size in bytes or None
+                if is unknown.
+        """
+
         return self._content_size
 
     def set_content_size(self, content_size):
+        """Set content size in bytes.
+
+        Args:
+            content_size (int): Content size in bytes.
+
+        Raises:
+            ValueError: If content size was already set.
+        """
+
         if self._content_size is not None:
             raise ValueError("Content size was set more then once")
         self._content_size = content_size
 
     def get_started(self):
+        """Transfer was started.
+
+        Returns:
+            bool: True if transfer started.
+        """
+
         return self._started
 
     def set_started(self):
+        """Mark that transfer started.
+
+        Raises:
+            ValueError: If transfer was already started.
+        """
+
         if self._started:
             raise ValueError("Progress already started")
         self._started = True
 
     def get_transfer_done(self):
+        """Transfer finished.
+
+        Returns:
+            bool: Transfer finished.
+        """
+
         return self._transfer_done
 
     def set_transfer_done(self):
+        """Mark progress as transfer finished.
+
+        Raises:
+            ValueError: If progress was already marked as done
+                or wasn't started yet.
+        """
+
         if self._transfer_done:
             raise ValueError("Progress was already marked as done")
         if not self._started:
@@ -395,41 +436,117 @@ class TransferProgress:
         self._transfer_done = True
 
     def get_failed(self):
+        """Transfer failed.
+
+        Returns:
+            bool: True if transfer failed.
+        """
+
         return self._failed
 
     def get_fail_reason(self):
+        """Get reason why transfer failed.
+
+        Returns:
+            Union[str, None]: Reason why transfer
+                failed or None.
+        """
+
         return self._fail_reason
 
     def set_failed(self, reason):
+        """Mark progress as failed.
+
+        Args:
+            reason (str): Reason why transfer failed.
+        """
+
         self._fail_reason = reason
         self._failed = True
 
     def get_transferred_size(self):
-        return self._transfered
+        """Already transferred size in bytes.
 
-    def set_transferred_size(self, transfered):
-        self._transfered = transfered
+        Returns:
+            int: Already transferred size in bytes.
+        """
+
+        return self._transferred
+
+    def set_transferred_size(self, transferred):
+        """Set already transferred size in bytes.
+
+        Args:
+            transferred (int): Already transferred size in bytes.
+        """
+
+        self._transferred = transferred
 
     def add_transferred_chunk(self, chunk_size):
-        self._transfered += chunk_size
+        """Add transferred chunk size in bytes.
+
+        Args:
+            chunk_size (int): Add transferred chunk size
+                in bytes.
+        """
+
+        self._transferred += chunk_size
 
     def get_source_url(self):
+        """Source url from where transfer happens.
+
+        Note:
+            Consider this as title. Must be set using
+                'set_source_url' or 'N/A' will be returned.
+
+        Returns:
+            str: Source url from where transfer happens.
+        """
+
         return self._source_url
 
     def set_source_url(self, url):
+        """Set source url from where transfer happens.
+
+        Args:
+            url (str): Source url from where transfer happens.
+        """
+
         self._source_url = url
 
     def get_destination_url(self):
+        """Destination url where transfer happens.
+
+        Note:
+            Consider this as title. Must be set using
+                'set_source_url' or 'N/A' will be returned.
+
+        Returns:
+            str: Destination url where transfer happens.
+        """
+
         return self._destination_url
 
     def set_destination_url(self, url):
+        """Set destination url where transfer happens.
+
+        Args:
+            url (str): Destination url where transfer happens.
+        """
+
         self._destination_url = url
 
     @property
     def is_running(self):
+        """Check if transfer is running.
+
+        Returns:
+            bool: True if transfer is running.
+        """
+
         if (
             not self.started
-            or self.done
+            or self.transfer_done
             or self.failed
         ):
             return False
@@ -437,9 +554,16 @@ class TransferProgress:
 
     @property
     def transfer_progress(self):
+        """Get transfer progress in percents.
+
+        Returns:
+            Union[float, None]: Transfer progress in percents or 'None'
+                if content size is unknown.
+        """
+
         if self._content_size is None:
             return None
-        return (self._transfered * 100.0) / float(self._content_size)
+        return (self._transferred * 100.0) / float(self._content_size)
 
     content_size = property(get_content_size, set_content_size)
     started = property(get_started)
@@ -448,7 +572,6 @@ class TransferProgress:
     fail_reason = property(get_fail_reason)
     source_url = property(get_source_url, set_source_url)
     destination_url = property(get_destination_url, set_destination_url)
-    content_size = property(get_content_size, set_content_size)
     transferred_size = property(get_transferred_size, set_transferred_size)
 
 

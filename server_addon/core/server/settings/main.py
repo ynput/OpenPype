@@ -49,8 +49,8 @@ class CoreImageIOBaseModel(BaseSettingsModel):
 
 
 class CoreSettings(BaseSettingsModel):
-    studio_name: str = Field("", title="Studio name")
-    studio_code: str = Field("", title="Studio code")
+    studio_name: str = Field("", title="Studio name", scope=["studio"])
+    studio_code: str = Field("", title="Studio code", scope=["studio"])
     environments: str = Field(
         "{}",
         title="Global environment variables",

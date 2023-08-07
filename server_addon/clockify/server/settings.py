@@ -5,5 +5,6 @@ from ayon_server.settings import BaseSettingsModel
 class ClockifySettings(BaseSettingsModel):
     workspace_name: str = Field(
         "",
-        title="Workspace name"
+        title="Workspace name",
+        scope=["studio"]
     )

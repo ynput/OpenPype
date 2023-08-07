@@ -439,7 +439,7 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
 
             creator_identifier = cmds.getAttr(node + ".creator_identifier")
             if creator_identifier == self.identifier:
-                self.log.info(f"Found node: {node}")
+                self.log.info("Found node: {}".format(node))
                 return node
 
     def _create_layer_instance_node(self, layer):
@@ -581,6 +581,9 @@ class ReferenceLoader(Loader):
         formatting_data = {
             "asset_name": asset['name'],
             "asset_type": asset['type'],
+            "folder": {
+                "name": asset["name"],
+            },
             "subset": subset['name'],
             "family": (
                 subset['data'].get('family') or

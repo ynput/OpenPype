@@ -114,9 +114,10 @@ class LibraryLoaderWindow(QtWidgets.QDialog):
 
         manager = ModulesManager()
         sync_server = manager.modules_by_name.get("sync_server")
-        sync_server_enabled = False
-        if sync_server is not None:
-            sync_server_enabled = sync_server.enabled
+        sync_server_enabled = (
+            sync_server is not None
+            and sync_server.enabled
+        )
 
         repres_widget = None
         if sync_server_enabled:

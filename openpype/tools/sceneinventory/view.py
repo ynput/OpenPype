@@ -54,8 +54,11 @@ class SceneInventoryView(QtWidgets.QTreeView):
         self._selected = None
 
         manager = ModulesManager()
-        self.sync_server = manager.modules_by_name["sync_server"]
-        self.sync_enabled = self.sync_server.enabled
+        sync_server = manager.modules_by_name.get("sync_server")
+        sync_enabled = sync_server is not None and self.sync_server.enabled
+
+        self.sync_server = sync_server
+        self.sync_enabled = sync_enabled
 
     def _set_hierarchy_view(self, enabled):
         if enabled == self._hierarchy_view:
