@@ -645,6 +645,9 @@ def _convert_nuke_knobs(knobs):
         elif knob_type == "vector_3d":
             value = [value["x"], value["y"], value["z"]]
 
+        elif knob_type == "box":
+            value = [value["x"], value["y"], value["r"], value["t"]]
+
         new_knob[value_key] = value
     return new_knobs
 
