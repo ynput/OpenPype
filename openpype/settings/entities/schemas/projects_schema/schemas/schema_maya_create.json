@@ -28,7 +28,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -52,7 +52,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 },
@@ -84,7 +84,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 },
@@ -120,10 +120,12 @@
             "collapsible": true,
             "key": "CreateAnimation",
             "label": "Create Animation",
+            "checkbox_key": "enabled",
             "children": [
                 {
-                    "type": "label",
-                    "label": "This plugin is not optional due to implicit creation through loading the \"rig\" family.\nThis family is also hidden from creation due to complexity in setup."
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
                 },
                 {
                     "type": "boolean",
@@ -147,7 +149,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -177,7 +179,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -212,7 +214,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -242,7 +244,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }
@@ -262,7 +264,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 },
@@ -287,7 +289,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 },
@@ -389,7 +391,7 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
+                    "key": "default_variants",
                     "label": "Default Subsets",
                     "object_type": "text"
                 }

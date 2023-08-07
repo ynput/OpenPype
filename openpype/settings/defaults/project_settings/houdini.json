@@ -14,48 +14,80 @@
     "create": {
         "CreateArnoldAss": {
             "enabled": true,
-            "defaults": [],
+            "default_variants": [],
             "ext": ".ass"
+        },
+        "CreateArnoldRop": {
+            "enabled": true,
+            "default_variants": []
         },
         "CreateAlembicCamera": {
             "enabled": true,
-            "defaults": []
+            "default_variants": []
+        },
+        "CreateBGEO": {
+            "enabled": true,
+            "default_variants": []
         },
         "CreateCompositeSequence": {
             "enabled": true,
-            "defaults": []
+            "default_variants": []
+        },
+        "CreateHDA": {
+            "enabled": true,
+            "default_variants": []
+        },
+        "CreateKarmaROP": {
+            "enabled": true,
+            "default_variants": []
+        },
+        "CreateMantraROP": {
+            "enabled": true,
+            "default_variants": []
         },
         "CreatePointCache": {
             "enabled": true,
-            "defaults": []
+            "default_variants": []
+        },
+        "CreateRedshiftProxy": {
+            "enabled": true,
+            "default_variants": []
         },
         "CreateRedshiftROP": {
             "enabled": true,
-            "defaults": []
+            "default_variants": []
         },
         "CreateRemotePublish": {
             "enabled": true,
-            "defaults": []
+            "default_variants": []
         },
-        "CreateVDBCache": {
+        "CreateReview": {
             "enabled": true,
-            "defaults": []
+            "default_variants": []
         },
         "CreateUSD": {
             "enabled": false,
-            "defaults": []
+            "default_variants": []
         },
         "CreateUSDModel": {
             "enabled": false,
-            "defaults": []
+            "default_variants": []
         },
         "USDCreateShadingWorkspace": {
             "enabled": false,
-            "defaults": []
+            "default_variants": []
         },
         "CreateUSDRender": {
             "enabled": false,
-            "defaults": []
+            "default_variants": []
+        },
+        "CreateVDBCache": {
+            "enabled": true,
+            "default_variants": []
+        },
+        "CreateVrayROP": {
+            "enabled": true,
+            "default_variants": []
         }
     },
     "publish": {

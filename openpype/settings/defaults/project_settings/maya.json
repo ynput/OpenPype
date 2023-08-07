@@ -521,19 +521,19 @@
             "enabled": true,
             "make_tx": true,
             "rs_tex": false,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateRender": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateUnrealStaticMesh": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "",
                 "_Main"
             ],
@@ -547,7 +547,7 @@
         },
         "CreateUnrealSkeletalMesh": {
             "enabled": true,
-            "defaults": [],
+            "default_variants": [],
             "joint_hints": "jnt_org"
         },
         "CreateMultiverseLook": {
@@ -555,11 +555,12 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
+            "enabled": false,
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,
             "include_user_defined_attributes": false,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
@@ -567,7 +568,7 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
-            "defaults": [
+            "default_variants": [
                 "Main",
                 "Proxy",
                 "Sculpt"
@@ -578,7 +579,7 @@
             "write_color_sets": false,
             "write_face_sets": false,
             "include_user_defined_attributes": false,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
@@ -586,20 +587,20 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateReview": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ],
             "useMayaTimeline": true
         },
         "CreateAss": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ],
             "expandProcedurals": false,
@@ -621,61 +622,61 @@
             "enabled": true,
             "vrmesh": true,
             "alembic": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsd": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdComp": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdOver": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateAssembly": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateCamera": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateLayout": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMayaScene": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateRenderSetup": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateRig": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main",
                 "Sim",
                 "Cloth"
@@ -683,20 +684,20 @@
         },
         "CreateSetDress": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main",
                 "Anim"
             ]
         },
         "CreateVRayScene": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateYetiRig": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         }
