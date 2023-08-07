@@ -19,21 +19,6 @@
                 "deadline"
             ]
         },
-        "HoudiniSubmitDeadline": {
-            "enabled": true,
-            "active": true,
-            "use_published": true,
-            "priority": 50,
-            "render_chunk_size": 1,
-            "group": "none",
-            "export_priority": 50,
-            "export_chunk_size": 10,
-            "export_group": "none",
-            "department": "",
-            "env_allowed_keys": [],
-            "env_search_replace_values": {},
-            "limit_groups": {}
-        },
         "MayaSubmitDeadline": {
             "enabled": true,
             "optional": false,
