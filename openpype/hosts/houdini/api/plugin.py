@@ -292,3 +292,22 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
 
         """
         return [hou.ropNodeTypeCategory()]
+
+    def get_creator_settings(self, project_settings, settings_key=None):
+        if not settings_key:
+            settings_key = self.__class__.__name__
+        return project_settings["houdini"]["create"][settings_key]
+
+    def apply_settings(
+        self,
+        project_settings,
+        system_settings
+    ):
+        """Method called on initialization of plugin to apply settings."""
+
+        # plugin settings
+        plugin_settings = self.get_creator_settings(project_settings)
+
+        # individual attributes
+        self.default_variants = plugin_settings.get(
+            "default_variants") or self.default_variants
