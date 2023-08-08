@@ -624,8 +624,15 @@ class Creator(BaseCreator):
             str: Variant value.
         """
 
-        if only_explicit or self._default_variant:
-            return self._default_variant
+        if isinstance(self.__class__.default_variant, property):
+            default_variant = self._default_variant
+        else:
+            # Backwards compatibility for plugins which override
+            #   'default_variant' attribute directly
+            default_variant = self.default_variant
+
+        if only_explicit or default_variant:
+            return default_variant
 
         for variant in self.get_default_variants():
             return variant
