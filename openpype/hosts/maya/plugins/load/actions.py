@@ -84,7 +84,7 @@ class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
                              animationEndTime=end)
 
 
-class ImportMayaLoader(openpype.hosts.maya.api.plugin.LoaderPlugin):
+class ImportMayaLoader(openpype.hosts.maya.api.plugin.Loader):
     """Import action for Maya (unmanaged)
 
     Warning:
@@ -132,12 +132,12 @@ class ImportMayaLoader(openpype.hosts.maya.api.plugin.LoaderPlugin):
             return
 
         custom_group_name, custom_namespace, options = \
-            self.get_custom_namespace_and_group(context, self.options,
+            self.get_custom_namespace_and_group(context, data,
                                                 "import_loader")
 
         namespace = get_custom_namespace(custom_namespace)
 
-        if not self.options.get("attach_to_root", True):
+        if not options.get("attach_to_root", True):
             custom_group_name = namespace
 
         path = self.filepath_from_context(context)
@@ -147,7 +147,8 @@ class ImportMayaLoader(openpype.hosts.maya.api.plugin.LoaderPlugin):
                               preserveReferences=True,
                               namespace=namespace,
                               returnNewNodes=True,
-                              groupReference=options["attach_to_root"],
+                              groupReference=options.get("attach_to_root",
+                                                         True),
                               groupName=custom_group_name)
 
             if data.get("clean_import", False):
