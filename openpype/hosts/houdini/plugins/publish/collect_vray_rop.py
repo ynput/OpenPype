@@ -44,7 +44,6 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         # TODO: add render elements if render element
 
         # Store whether we are splitting the render job in an export + render
-        # TODO: check names of VRay parms
         export_job = bool(rop.parm("render_export_mode").eval())
         instance.data["exportJob"] = export_job
         export_prefix = None
@@ -63,7 +62,7 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
             instance.data["ifdFile"] = beauty_export_product
             instance.data["exportFiles"] = list(export_products)
 
-        beauty_product = self.get_beauty_render_product(default_prefix)
+        beauty_product = self.get_render_product_name(default_prefix)
         render_products.append(beauty_product)
         files_by_aov = {
             "RGB Color": self.generate_expected_files(instance,
@@ -97,7 +96,7 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         instance.data["colorspaceDisplay"] = colorspace_data["display"]
         instance.data["colorspaceView"] = colorspace_data["view"]
 
-    def get_beauty_render_product(self, prefix, suffix="<reName>"):
+    def get_render_product_name(self, prefix, suffix="<reName>"):
         """Return the beauty output filename if render element enabled
         """
         aov_parm = ".{}".format(suffix)

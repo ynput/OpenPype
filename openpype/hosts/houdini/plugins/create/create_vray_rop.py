@@ -63,8 +63,7 @@ class CreateVrayROP(plugin.HoudiniCreator):
                     export_dir=hou.text.expandString("$HIP/pyblish/vrscene/"),
                     subset_name=subset_name,
                 )
-            # TODO: don't have VRay to check the names of these
-            parms["render_export_mode"] = 1
+            parms["render_export_mode"] = "1"
             parms["render_export_filepath"] = scene_filepath
 
         if self.selected_nodes:
