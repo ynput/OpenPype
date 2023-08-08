@@ -2240,10 +2240,9 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         # make sure we return original path if no env var is included
         new_path = config_path
 
-        for env_var, env_path in os.environ.items():
-            # first check if variable is whitelisted
-            if env_var not in included_vars:
-                # included vars not found in env_var name
+        for env_var in included_vars:
+            env_path = os.getenv(env_var)
+            if not env_path:
                 continue
 
             # it has to be directory current process can see
