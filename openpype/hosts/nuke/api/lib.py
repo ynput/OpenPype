@@ -2212,7 +2212,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
 
         # use regex to find env var in template with format {ENV_VAR}
         # this way we make sure only template used env vars are included
-        env_var_regex = r"\{([A-Z_]+)\}"
+        env_var_regex = r"\{([A-Z0-9_]+)\}"
         env_var = re.findall(env_var_regex, config_template)
         if env_var:
             included_vars.append(env_var[0])
