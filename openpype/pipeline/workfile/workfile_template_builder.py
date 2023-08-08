@@ -1588,7 +1588,7 @@ class PlaceholderLoadMixin(object):
             )
             return
         if not placeholder.data.get("keep_placeholder", True):
-            self.delete_placeholder(placeholder, failed)
+            self.delete_placeholder(placeholder)
 
     def load_failed(self, placeholder, representation):
         if hasattr(placeholder, "load_failed"):
@@ -1612,7 +1612,7 @@ class PlaceholderLoadMixin(object):
 
         pass
 
-    def delete_placeholder(self, placeholder, failed):
+    def delete_placeholder(self, placeholder):
         """Called when all item population is done."""
         self.log.debug("Clean up of placeholder is not implemented.")
 
@@ -1789,7 +1789,7 @@ class PlaceholderCreateMixin(object):
             return
 
         if not placeholder.data.get("keep_placeholder", True):
-            self.delete_placeholder(placeholder, failed)
+            self.delete_placeholder(placeholder)
 
 
     def create_failed(self, placeholder, creator_data):
@@ -1813,7 +1813,7 @@ class PlaceholderCreateMixin(object):
         """
         pass
 
-    def delete_placeholder(self, placeholder, failed):
+    def delete_placeholder(self, placeholder):
         """Called when all item population is done."""
         self.log.debug("Clean up of placeholder is not implemented.")
 

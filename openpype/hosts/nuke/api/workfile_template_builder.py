@@ -114,7 +114,7 @@ class NukePlaceholderPlugin(PlaceholderPlugin):
             placeholder_data[key] = value
         return placeholder_data
 
-    def delete_placeholder(self, placeholder, failed):
+    def delete_placeholder(self, placeholder):
         """Remove placeholder if building was successful"""
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
         nuke.delete(placeholder_node)
