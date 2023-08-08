@@ -1,4 +1,3 @@
-import os
 import copy
 import collections
 
@@ -20,6 +19,7 @@ from openpype.pipeline.plugin_discover import (
     deregister_plugin_path
 )
 
+from .constants import DEFAULT_VARIANT_VALUE
 from .subset_name import get_subset_name
 from .utils import get_next_versions_for_instances
 from .legacy_create import LegacyCreator
@@ -517,7 +517,7 @@ class Creator(BaseCreator):
     default_variants = []
 
     # Default variant used in 'get_default_variant'
-    default_variant = None
+    _default_variant = None
 
     # Short description of family
     # - may not be used if `get_description` is overriden
@@ -614,9 +614,17 @@ class Creator(BaseCreator):
 
         Can return `None`. In that case first element from
         `get_default_variants` should be used.
+
+        Returns:
+            str: Variant value.
         """
 
-        return self.default_variant
+        if self._default_variant:
+            return self._default_variant
+
+        for variant in self.get_default_variants():
+            return variant
+        return DEFAULT_VARIANT_VALUE
 
     def get_pre_create_attr_defs(self):
         """Plugin attribute definitions needed for creation.
