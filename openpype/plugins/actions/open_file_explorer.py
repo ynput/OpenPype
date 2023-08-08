@@ -15,8 +15,8 @@ from openpype.pipeline import (
 
 class OpenTaskPath(LauncherAction):
     name = "open_task_path"
-    label = "Open in File Browser"
-    icon = None
+    label = "Explore here"
+    icon = "folder-open"
     order = 500
 
     def is_compatible(self, session):
