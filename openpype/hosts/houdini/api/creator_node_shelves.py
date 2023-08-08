@@ -196,13 +196,8 @@ def install():
 
             key = "openpype_create.{}".format(identifier)
             log.debug(f"Registering {key}")
-            default_variant = "Main"
-            if hasattr(creator, "default_variant"):
-                default_variant = creator.default_variant
-            elif hasattr(creator, "default_variants"):
-                default_variant = creator.default_variants[0]
             script = CREATE_SCRIPT.format(
-                identifier=identifier, variant=default_variant
+                identifier=identifier, variant=creator.get_default_variant()
             )
             data = {
                 "script": script,
