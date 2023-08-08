@@ -14,99 +14,80 @@
     "create": {
         "CreateArnoldAss": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"],
+            "default_variants": ["main"],
             "ext": ".ass"
         },
         "CreateArnoldRop": {
             "enabled": true,
-            "default_variant": "master",
-            "default_variants": ["master"]
+            "default_variants": ["main"]
         },
         "CreateAlembicCamera": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateBGEO": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateCompositeSequence": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateHDA": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateKarmaROP": {
             "enabled": true,
-            "default_variant": "master",
-            "default_variants": ["master"]
+            "default_variants": ["main"]
         },
         "CreateMantraROP": {
             "enabled": true,
-            "default_variant": "master",
-            "default_variants": ["master"]
+            "default_variants": ["main"]
         },
         "CreatePointCache": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateRedshiftProxy": {
             "enabled": true,
-            "default_variant": "master",
-            "default_variants": ["master"]
+            "default_variants": ["main"]
         },
         "CreateRedshiftROP": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateRemotePublish": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateReview": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateUSD": {
             "enabled": false,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateUSDModel": {
             "enabled": false,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "USDCreateShadingWorkspace": {
             "enabled": false,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateUSDRender": {
             "enabled": false,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateVDBCache": {
             "enabled": true,
-            "default_variant": "Main",
-            "default_variants": ["Main"]
+            "default_variants": ["main"]
         },
         "CreateVrayROP": {
             "enabled": true,
-            "default_variant": "master",
-            "default_variants": ["master"]
+            "default_variants": ["main"]
         }
     },
     "publish": {

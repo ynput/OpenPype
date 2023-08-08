@@ -521,21 +521,18 @@
             "enabled": true,
             "make_tx": true,
             "rs_tex": false,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateRender": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateUnrealStaticMesh": {
             "enabled": true,
-            "default_variant": "",
             "default_variants": [
                 "",
                 "_Main"
@@ -550,7 +547,6 @@
         },
         "CreateUnrealSkeletalMesh": {
             "enabled": true,
-            "default_variant": "",
             "default_variants": [],
             "joint_hints": "jnt_org"
         },
@@ -559,12 +555,10 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
-            "enabled": false,
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,
             "include_user_defined_attributes": false,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
@@ -573,7 +567,6 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
-            "default_variant": "Main",
             "default_variants": [
                 "Main",
                 "Proxy",
@@ -585,7 +578,6 @@
             "write_color_sets": false,
             "write_face_sets": false,
             "include_user_defined_attributes": false,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
@@ -594,14 +586,12 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateReview": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ],
@@ -609,7 +599,6 @@
         },
         "CreateAss": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ],
@@ -632,70 +621,60 @@
             "enabled": true,
             "vrmesh": true,
             "alembic": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsd": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdComp": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdOver": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateAssembly": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateCamera": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateLayout": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateMayaScene": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateRenderSetup": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateRig": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main",
                 "Sim",
@@ -704,7 +683,6 @@
         },
         "CreateSetDress": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main",
                 "Anim"
@@ -712,14 +690,12 @@
         },
         "CreateVRayScene": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
         },
         "CreateYetiRig": {
             "enabled": true,
-            "default_variant": "Main",
             "default_variants": [
                 "Main"
             ]
