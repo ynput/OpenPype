@@ -8,6 +8,7 @@ import shutil
 
 from maya import utils, cmds, OpenMaya
 import maya.api.OpenMaya as om
+import maya.api.OpenMayaUI as omui
 
 import pyblish.api
 
@@ -525,6 +526,7 @@ def on_before_save():
 def on_after_save():
     """Check if there is a lockfile after save"""
     check_lock_on_current_file()
+    generate_thumbnail()
 
 
 def check_lock_on_current_file():
@@ -579,6 +581,26 @@ def on_save():
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
+
+
+def generate_thumbnail():
+    if lib.IS_HEADLESS:
+        log.debug("Generating thumbnail skipped due to headless mode")
+        return
+
+    current_filepath = current_file()
+    if not current_filepath:
+        log.error("No current workfile path. Thumbnail generation skipped")
+
+    base, _ = os.path.splitext(current_filepath)
+    thumbnail_path = "{}_thumbnail.jpg".format(base)
+
+    view = omui.M3dView.active3dView()
+    image = om.MImage()
+    view.readColorBuffer(image, True)
+    image.writeToFile(thumbnail_path, "jpg")
+    log.info("Generated thumbnail: {}".format(thumbnail_path))
+    return thumbnail_path
 
 
 def _update_render_layer_observers():

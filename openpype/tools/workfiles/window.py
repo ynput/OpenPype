@@ -54,6 +54,13 @@ class SidePanelWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(SidePanelWidget, self).__init__(parent)
 
+        # TODO: This should not import from publisher
+        from openpype.tools.publisher.widgets.thumbnail_widget import (
+            ThumbnailPainterWidget
+        )
+
+        thumbnail = ThumbnailPainterWidget(self)
+
         details_label = QtWidgets.QLabel("Details", self)
         details_input = QtWidgets.QPlainTextEdit(self)
         details_input.setReadOnly(True)
@@ -73,6 +80,7 @@ class SidePanelWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(thumbnail, 1)
         main_layout.addWidget(details_label, 0)
         main_layout.addWidget(details_input, 1)
         main_layout.addWidget(artist_note_widget, 1)
@@ -80,6 +88,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         note_input.textChanged.connect(self._on_note_change)
         btn_note_save.clicked.connect(self._on_save_click)
 
+        self._thumbnail = thumbnail
         self._details_input = details_input
         self._artist_note_widget = artist_note_widget
         self._note_input = note_input
@@ -139,6 +148,14 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._note_input.setPlainText(orig_note)
         # Set as empty string
         self._details_input.setPlainText("")
+
+        # Set thumbnail if found
+        base, _ = os.path.splitext(filepath)
+        thumbnail = "{}_thumbnail.jpg".format(base)
+        if os.path.exists(thumbnail):
+            self._thumbnail.set_current_thumbnails([thumbnail])
+        else:
+            self._thumbnail.set_current_thumbnails()
 
         filestat = os.stat(filepath)
         size_value = file_size_to_string(filestat.st_size)
