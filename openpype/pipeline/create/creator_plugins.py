@@ -606,17 +606,25 @@ class Creator(BaseCreator):
 
         return copy.deepcopy(self.default_variants)
 
-    def get_default_variant(self):
+    def get_default_variant(self, only_explicit=False):
         """Default variant value that will be used to prefill variant input.
 
         This is for user input and value may not be content of result from
         `get_default_variants`.
 
+        Note:
+            This method does not allow to have empty string as
+                default variant.
+
+        Args:
+            only_explicit (Optional[bool]): If True, only explicit default
+                variant from '_default_variant' will be returned.
+
         Returns:
             str: Variant value.
         """
 
-        if self._default_variant:
+        if only_explicit or self._default_variant:
             return self._default_variant
 
         for variant in self.get_default_variants():
@@ -644,9 +652,12 @@ class Creator(BaseCreator):
 
         This method is needed for automated settings overrides which are
         changing attributes based on keys in settings.
+
+        Args:
+            variant (str): New default variant value.
         """
 
-        self._default_variant = variant or ""
+        self._default_variant = variant
 
     default_variant = property(
         _get_default_variant_wrap,
