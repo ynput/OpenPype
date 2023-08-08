@@ -438,6 +438,12 @@ class Window(QtWidgets.QWidget):
         task_name = self.tasks_widget.get_selected_task_name()
         task_type = self.tasks_widget.get_selected_task_type()
 
+        # NOTE hornet fix for workspace
+        if task_name == 'anim' and task_type == 'anim' :
+            from openpype.hpipe import maya_fix
+            maya_fix.fix_workspace()
+        # END
+
         asset_is_valid = asset_id is not None
         self.tasks_widget.setEnabled(asset_is_valid)
 

@@ -148,7 +148,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             instance.data["representations"].append(representation)
             self.log.info("Publishing rendered frames ...")
 
-        elif render_target == "farm":
+        # NOTE hornet update on use existing frames on farm
+        elif render_target == "farm" or render_target == 'farm_frames':
             farm_keys = ["farm_chunk", "farm_priority", "farm_concurrency"]
             for key in farm_keys:
                 # Skip if key is not in creator attributes

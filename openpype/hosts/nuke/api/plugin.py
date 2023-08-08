@@ -326,7 +326,8 @@ class NukeWriteCreator(NukeCreator):
     def _get_render_target_enum(self):
         rendering_targets = {
             "local": "Local machine rendering",
-            "frames": "Use existing frames"
+            "frames": "Use existing frames",
+            "farm_frames": "Use existing frames on farm" # NOTE hornet update on use existing frames on farm
         }
         if ("farm_rendering" in self.instance_attributes):
             rendering_targets["farm"] = "Farm rendering"
@@ -1279,6 +1280,11 @@ def convert_to_valid_instaces():
                 elif target == "On farm":
                     # Farm rendering
                     creator_attr["render_target"] = "farm"
+                elif target == "Use existing frames on farm":
+                    # NOTE hornet update on use existing frames on farm
+                    # Farm rendering
+                    creator_attr["render_target"] = "farm_frames"
+
 
                 if "deadlinePriority" in node.knobs():
                     transfer_data["farm_priority"] = (

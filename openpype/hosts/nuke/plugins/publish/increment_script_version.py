@@ -17,7 +17,12 @@ class IncrementScriptVersion(pyblish.api.ContextPlugin):
         assert all(result["success"] for result in context.data["results"]), (
             "Publishing not successful so version is not increased.")
 
-        from openpype.lib import version_up
-        path = context.data["currentFile"]
-        nuke.scriptSaveAs(version_up(path))
-        self.log.info('Incrementing script version')
+        # NOTE hornet update on use existing frames on farm
+        render_target = context.data.get("render_target")
+        review = context.data.get("review")
+        self.log.info('render_target : {} review : {}'.format(render_target,review))
+        if review == False or render_target in ['farm','local'] :
+            from openpype.lib import version_up
+            path = context.data["currentFile"]
+            nuke.scriptSaveAs(version_up(path))
+            self.log.info('Incrementing script version')

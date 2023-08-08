@@ -10,6 +10,9 @@ class ExtractScriptSave(pyblish.api.Extractor):
     hosts = ['nuke']
 
     def process(self, instance):
-
-        self.log.info('saving script')
-        nuke.scriptSave()
+        # NOTE hornet update on use existing frames on farm
+        render_target = instance.data.get("render_target")
+        review = instance.data.get("review")
+        if review == False or render_target in ['farm','local'] :
+            self.log.info('saving script')
+            nuke.scriptSave()
