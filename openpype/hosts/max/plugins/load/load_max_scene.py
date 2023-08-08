@@ -45,6 +45,11 @@ class MaxSceneLoader(load.LoaderPlugin):
             quiet=True,
             mergedNodes=prev_max_objects,
             includeFullGroup=True)
+        current_max_objects = rt.getLastMergedNodes()
+        for current_object in current_max_objects:
+            prev_max_objects = prev_max_objects.remove(current_object)
+        for prev_object in prev_max_objects:
+            rt.Delete(prev_object)
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
