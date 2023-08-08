@@ -34,7 +34,7 @@ def cli_publish(project_name, batch_path, user_email, targets):
 
     Args:
         project_name (str): project to publish (only single context is
-            expected per call of remotepublish
+            expected per call of 'publish')
         batch_path (str): Path batch folder. Contains subfolders with
             resources (workfile, another subfolder 'renders' etc.)
         user_email (string): email address for webpublisher - used to
@@ -49,8 +49,8 @@ def cli_publish(project_name, batch_path, user_email, targets):
     if not batch_path:
         raise RuntimeError("No publish paths specified")
 
-    log = Logger.get_logger("remotepublish")
-    log.info("remotepublish command")
+    log = Logger.get_logger("Webpublish")
+    log.info("Webpublish command")
 
     # Register target and host
     webpublisher_host = WebpublisherHost()
@@ -107,7 +107,7 @@ def cli_publish_from_app(
 
     Args:
         project_name (str): project to publish (only single context is
-            expected per call of remotepublish
+            expected per call of publish
         batch_path (str): Path batch folder. Contains subfolders with
             resources (workfile, another subfolder 'renders' etc.)
         host_name (str): 'photoshop'
@@ -117,9 +117,9 @@ def cli_publish_from_app(
             (to choose validator for example)
     """
 
-    log = Logger.get_logger("RemotePublishFromApp")
+    log = Logger.get_logger("PublishFromApp")
 
-    log.info("remotepublishphotoshop command")
+    log.info("Webpublish photoshop command")
 
     task_data = get_task_data(batch_path)
 
