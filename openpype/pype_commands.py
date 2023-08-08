@@ -88,7 +88,10 @@ class PypeCommands:
         """
 
         from openpype.lib import Logger
-        from openpype.lib.applications import get_app_environments_for_context
+        from openpype.lib.applications import (
+            get_app_environments_for_context,
+            LaunchTypes,
+        )
         from openpype.modules import ModulesManager
         from openpype.pipeline import (
             install_openpype_plugins,
@@ -122,7 +125,8 @@ class PypeCommands:
                 context["project_name"],
                 context["asset_name"],
                 context["task_name"],
-                app_full_name
+                app_full_name,
+                launch_type=LaunchTypes.farm_publish,
             )
             os.environ.update(env)
 
@@ -237,11 +241,19 @@ class PypeCommands:
         Called by Deadline plugin to propagate environment into render jobs.
         """
 
-        from openpype.lib.applications import get_app_environments_for_context
+        from openpype.lib.applications import (
+            get_app_environments_for_context,
+            LaunchTypes,
+        )
 
         if all((project, asset, task, app)):
             env = get_app_environments_for_context(
-                project, asset, task, app, env_group
+                project,
+                asset,
+                task,
+                app,
+                env_group=env_group,
+                launch_type=LaunchTypes.farm_render,
             )
         else:
             env = os.environ.copy()
@@ -323,34 +335,6 @@ class PypeCommands:
         print("run_tests args: {}".format(args))
         import pytest
         pytest.main(args)
-
-    def syncserver(self, active_site):
-        """Start running sync_server in background.
-
-        This functionality is available in directly in module cli commands.
-        `~/openpype_console module sync_server syncservice`
-        """
-
-        os.environ["OPENPYPE_LOCAL_ID"] = active_site
-
-        def signal_handler(sig, frame):
-            print("You pressed Ctrl+C. Process ended.")
-            sync_server_module.server_exit()
-            sys.exit(0)
-
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-
-        from openpype.modules import ModulesManager
-
-        manager = ModulesManager()
-        sync_server_module = manager.modules_by_name["sync_server"]
-
-        sync_server_module.server_init()
-        sync_server_module.server_start()
-
-        while True:
-            time.sleep(1.0)
 
     def repack_version(self, directory):
         """Repacking OpenPype version."""

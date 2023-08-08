@@ -581,6 +581,9 @@ class ReferenceLoader(Loader):
         formatting_data = {
             "asset_name": asset['name'],
             "asset_type": asset['type'],
+            "folder": {
+                "name": asset["name"],
+            },
             "subset": subset['name'],
             "family": (
                 subset['data'].get('family') or

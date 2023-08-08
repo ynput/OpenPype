@@ -338,12 +338,18 @@ def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
                              persist, app_variant, timeout, setup_only)
 
 
-@main.command()
+@main.command(help="DEPRECATED - run sync server")
+@click.pass_context
 @click.option("-a", "--active_site", required=True,
-              help="Name of active stie")
-def syncserver(active_site):
+              help="Name of active site")
+def syncserver(ctx, active_site):
     """Run sync site server in background.
 
+    Deprecated:
+        This command is deprecated and will be removed in future versions.
+        Use '~/openpype_console module sync_server syncservice' instead.
+
+    Details:
         Some Site Sync use cases need to expose site to another one.
         For example if majority of artists work in studio, they are not using
         SS at all, but if you want to expose published assets to 'studio' site
@@ -359,7 +365,10 @@ def syncserver(active_site):
 
     if AYON_SERVER_ENABLED:
         raise RuntimeError("AYON does not support 'syncserver' command.")
-    PypeCommands().syncserver(active_site)
+
+    from openpype.modules.sync_server.sync_server_module import (
+        syncservice)
+    ctx.invoke(syncservice, active_site=active_site)
 
 
 @main.command()

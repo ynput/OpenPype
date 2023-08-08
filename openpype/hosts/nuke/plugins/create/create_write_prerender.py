@@ -45,12 +45,6 @@ class CreateWritePrerender(napi.NukeWriteCreator):
         return attr_defs
 
     def create_instance_node(self, subset_name, instance_data):
-        linked_knobs_ = []
-        if "use_range_limit" in self.instance_attributes:
-            linked_knobs_ = ["channels", "___", "first", "last", "use_limit"]
-
-        linked_knobs_.append("render_order")
-
         # add fpath_template
         write_data = {
             "creator": self.__class__.__name__,
@@ -73,7 +67,7 @@ class CreateWritePrerender(napi.NukeWriteCreator):
             write_data,
             input=self.selected_node,
             prenodes=self.prenodes,
-            linked_knobs=linked_knobs_,
+            linked_knobs=self.get_linked_knobs(),
             **{
                 "width": width,
                 "height": height

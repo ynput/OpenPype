@@ -9,16 +9,13 @@ import clique
 
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_last_version_by_subset_name,
 )
-from openpype.pipeline import (
-    legacy_io,
-)
-from openpype.pipeline import publish
-from openpype.lib import EnumDef
+from openpype.pipeline import publish, legacy_io
+from openpype.lib import EnumDef, is_running_from_build
 from openpype.tests.lib import is_in_tests
-from openpype.lib import is_running_from_build
 
 from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
@@ -94,7 +91,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     label = "Submit image sequence jobs to Deadline or Muster"
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
-    deadline_plugin = "OpenPype"
+
     targets = ["local"]
 
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
@@ -125,10 +122,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         "OPENPYPE_USERNAME",
         "OPENPYPE_SG_USER"
     ]
-
-    # Add OpenPype version if we are running from build.
-    if is_running_from_build():
-        environ_keys.append("OPENPYPE_VERSION")
 
     # custom deadline attributes
     deadline_department = ""
@@ -189,7 +182,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             instance.data.get("asset"),
             instances[0]["subset"],
             instance.context,
-            'render',
+            instances[0]["family"],
             override_version
         )
 
@@ -203,12 +196,24 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": instance.context.data["task"],
             "OPENPYPE_USERNAME": instance.context.data["user"],
-            "OPENPYPE_PUBLISH_JOB": "1",
-            "OPENPYPE_RENDER_JOB": "0",
-            "OPENPYPE_REMOTE_JOB": "0",
             "OPENPYPE_LOG_NO_COLORS": "1",
             "IS_TEST": str(int(is_in_tests()))
         }
+
+        if AYON_SERVER_ENABLED:
+            environment["AYON_PUBLISH_JOB"] = "1"
+            environment["AYON_RENDER_JOB"] = "0"
+            environment["AYON_REMOTE_PUBLISH"] = "0"
+            environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
+            deadline_plugin = "Ayon"
+        else:
+            environment["OPENPYPE_PUBLISH_JOB"] = "1"
+            environment["OPENPYPE_RENDER_JOB"] = "0"
+            environment["OPENPYPE_REMOTE_PUBLISH"] = "0"
+            deadline_plugin = "Openpype"
+            # Add OpenPype version if we are running from build.
+            if is_running_from_build():
+                self.environ_keys.append("OPENPYPE_VERSION")
 
         # add environments from self.environ_keys
         for env_key in self.environ_keys:
@@ -252,7 +257,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         )
         payload = {
             "JobInfo": {
-                "Plugin": self.deadline_plugin,
+                "Plugin": deadline_plugin,
                 "BatchName": job["Props"]["Batch"],
                 "Name": job_name,
                 "UserName": job["Props"]["User"],
@@ -563,11 +568,22 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             else:
                 version = 1
 
+        host_name = context.data["hostName"]
+        task_info = template_data.get("task") or {}
+
+        template_name = publish.get_publish_template_name(
+            project_name,
+            host_name,
+            family,
+            task_info.get("name"),
+            task_info.get("type"),
+        )
+
         template_data["subset"] = subset
         template_data["family"] = family
         template_data["version"] = version
 
-        render_templates = anatomy.templates_obj["render"]
+        render_templates = anatomy.templates_obj[template_name]
         if "folder" in render_templates:
             publish_folder = render_templates["folder"].format_strict(
                 template_data
