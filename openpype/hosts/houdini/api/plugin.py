@@ -169,8 +169,6 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
     selected_nodes = []
     settings_name = None
 
-    default_variant = "Main"
-
     def create(self, subset_name, instance_data, pre_create_data):
         try:
             self.selected_nodes = []
