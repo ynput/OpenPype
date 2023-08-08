@@ -48,4 +48,3 @@ class ExtractActiveViewThumbnail(pyblish.api.InstancePlugin):
 
             context.data[cache_key] = path
         return context.data[cache_key]
-
