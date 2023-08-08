@@ -12,6 +12,7 @@ from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 import pyblish.api
 
 from openpype.pipeline import (
+    registered_host,
     register_creator_plugin_path,
     register_loader_plugin_path,
     AVALON_CONTAINER_ID,
@@ -291,6 +292,47 @@ def ls():
         yield parse_container(container)
 
 
+def generate_thumbnail():
+    """
+    Get the current sceneviewer (may be more than one or hidden)
+    and screengrab the perspective viewport to a file in the
+    publish location to be picked up with the publish.
+
+    Note that .png output will render pooly, so use .jpg
+    """
+    if IS_HEADLESS:
+        log.debug("Generating thumbnail skipped due to headless mode")
+        return
+
+    host = registered_host()
+    current_filepath = host.get_current_workfile()
+    if not current_filepath:
+        log.error("No current workfile path. Thumbnail generation skipped")
+        return
+
+    base, _ = os.path.splitext(current_filepath)
+    thumbnail_path = "{}_thumbnail.jpg".format(base)
+
+    sceneview = lib.get_scene_viewer()
+    if not sceneview:
+        log.debug("No active scene viewer found. Can't generate thumbnail.")
+        return
+    viewport = sceneview.curViewport()
+
+    frame = hou.frame()
+    fbs = sceneview.flipbookSettings().stash()
+    fbs.frameRange((frame, frame))
+    fbs.output(thumbnail_path)
+    fbs.outputToMPlay(False)
+    sceneview.flipbook(viewport, fbs)
+    log.debug("Generated thumbnail: {}".format(thumbnail_path))
+
+    # Redraw solely to clear out the top/bottom banners in the view
+    viewport.draw()
+
+    return thumbnail_path
+
+
 def before_save():
     return lib.validate_fps()
 
@@ -302,6 +344,8 @@ def on_save():
     nodes = lib.get_id_required_nodes()
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
+
+    generate_thumbnail()
 
 
 def on_open():

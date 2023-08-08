@@ -638,3 +638,26 @@ def get_color_management_preferences():
         "display": hou.Color.ocio_defaultDisplay(),
         "view": hou.Color.ocio_defaultView()
     }
+
+
+def get_scene_viewer():
+    """Return an instance of a visible viewport.
+
+    Returns:
+        SceneViewer or None: Scene viewer
+
+    """
+    panetabs = hou.ui.paneTabs()
+    panetabs = [x for x in panetabs if x.type() == hou.paneTabType.SceneViewer]
+
+    # Prefer a tab that is set as current tab
+    current_pane = next((tab for tab in panetabs if tab.isCurrentTab()), None)
+    if current_pane:
+        return current_pane
+
+    # Otherwise allow any tab
+    if panetabs:
+        return panetabs[0]
+    else:
+        print("No SceneViewers detected.")
+        return None
