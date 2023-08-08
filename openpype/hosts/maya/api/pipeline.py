@@ -591,6 +591,7 @@ def generate_thumbnail():
     current_filepath = current_file()
     if not current_filepath:
         log.error("No current workfile path. Thumbnail generation skipped")
+        return
 
     base, _ = os.path.splitext(current_filepath)
     thumbnail_path = "{}_thumbnail.jpg".format(base)
