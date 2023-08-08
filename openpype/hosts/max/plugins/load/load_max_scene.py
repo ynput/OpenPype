@@ -24,7 +24,9 @@ class MaxSceneLoader(load.LoaderPlugin):
         path = os.path.normpath(path)
         # import the max scene by using "merge file"
         path = path.replace('\\', '/')
-        rt.MergeMaxFile(path)
+        rt.MergeMaxFile(
+            path, rt.Name("autoRenameDups"),
+            includeFullGroup=True)
         max_objects = rt.getLastMergedNodes()
         max_container = rt.Container(name=f"{name}")
         for max_object in max_objects:
@@ -38,11 +40,11 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node_name = container["instance_node"]
-
-        rt.MergeMaxFile(path,
-                        rt.Name("noRedraw"),
-                        rt.Name("deleteOldDups"),
-                        rt.Name("useSceneMtlDups"))
+        merged_max_objects = rt.getLastMergedNodes()
+        rt.MergeMaxFile(
+            path, rt.Name("autoRenameDups"),
+            mergedNodes=merged_max_objects,
+            includeFullGroup=True)
 
         max_objects = rt.getLastMergedNodes()
         container_node = rt.GetNodeByName(node_name)
