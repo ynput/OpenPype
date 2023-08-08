@@ -599,7 +599,7 @@ def generate_thumbnail():
     image = om.MImage()
     view.readColorBuffer(image, True)
     image.writeToFile(thumbnail_path, "jpg")
-    log.info("Generated thumbnail: {}".format(thumbnail_path))
+    log.debug("Generated thumbnail: {}".format(thumbnail_path))
     return thumbnail_path
 
 
