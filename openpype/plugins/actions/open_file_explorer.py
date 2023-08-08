@@ -24,7 +24,7 @@ class OpenTaskPath(LauncherAction):
         return "AVALON_ASSET" in session
 
     def process(self, session, **kwargs):
-        from Qt import QtCore, QtWidgets
+        from qtpy import QtCore, QtWidgets
 
         project_name = session["AVALON_PROJECT"]
         asset_name = session.get("AVALON_ASSET", None)
@@ -160,7 +160,7 @@ class OpenTaskPath(LauncherAction):
 
     @staticmethod
     def copy_path_to_clipboard(path):
-        from Qt import QtWidgets
+        from qtpy import QtWidgets
 
         path = path.replace("\\", "/")
         print(f"Copied to clipboard: {path}")
