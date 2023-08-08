@@ -10,7 +10,6 @@ class CreateArnoldAss(plugin.HoudiniCreator):
     label = "Arnold ASS"
     family = "ass"
     icon = "magic"
-    defaults = ["Main"]
 
     # Default extension: `.ass` or `.ass.gz`
     # however calling HoudiniCreator.create()

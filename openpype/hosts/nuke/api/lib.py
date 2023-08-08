@@ -2955,6 +2955,7 @@ class DirmapCache:
     """Caching class to get settings and sync_module easily and only once."""
     _project_name = None
     _project_settings = None
+    _sync_module_discovered = False
     _sync_module = None
     _mapping = None
 
@@ -2972,8 +2973,10 @@ class DirmapCache:
 
     @classmethod
     def sync_module(cls):
-        if cls._sync_module is None:
-            cls._sync_module = ModulesManager().modules_by_name["sync_server"]
+        if not cls._sync_module_discovered:
+            cls._sync_module_discovered = True
+            cls._sync_module = ModulesManager().modules_by_name.get(
+                "sync_server")
         return cls._sync_module
 
     @classmethod
