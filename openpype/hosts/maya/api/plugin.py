@@ -528,7 +528,6 @@ class Loader(LoaderPlugin):
         subset = context['subset']
         settings = get_project_settings(context['project']['name'])
         custom_naming = settings['maya']['load'][loader_key]
-
         options["attach_to_root"] = True
         if not custom_naming['namespace']:
             raise LoadError("No namespace specified in "
