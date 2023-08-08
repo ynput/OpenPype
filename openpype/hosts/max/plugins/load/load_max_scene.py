@@ -25,30 +25,26 @@ class MaxSceneLoader(load.LoaderPlugin):
         # import the max scene by using "merge file"
         path = path.replace('\\', '/')
         rt.MergeMaxFile(
-            path, rt.Name("autoRenameDups"),
+            path, rt.Name("mergeDups"),
             includeFullGroup=True)
         max_objects = rt.getLastMergedNodes()
-        max_container = rt.Container(name=f"{name}")
-        for max_object in max_objects:
-            max_object.Parent = max_container
 
         return containerise(
-            name, [max_container], context, loader=self.__class__.__name__)
+            name, [max_objects], context, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node_name = container["instance_node"]
-        merged_max_objects = rt.getLastMergedNodes()
+        prev_max_objects = rt.getLastMergedNodes()
+        merged_max_objects = [obj.name for obj
+                              in prev_max_objects]
         rt.MergeMaxFile(
-            path, mergedNodes=merged_max_objects,
+            path, merged_max_objects,
+            rt.Name("deleteOldDups"),
+            quiet=True,
+            mergedNodes=prev_max_objects,
             includeFullGroup=True)
-
-        max_objects = rt.getLastMergedNodes()
-        container_node = rt.GetNodeByName(node_name)
-        for max_object in max_objects:
-            max_object.Parent = container_node
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
