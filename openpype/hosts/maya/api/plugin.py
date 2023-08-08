@@ -523,6 +523,39 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
 class Loader(LoaderPlugin):
     hosts = ["maya"]
 
+    def get_custom_namespace_and_group(self, context, options, loader_key):
+        asset = context['asset']
+        subset = context['subset']
+        settings = get_project_settings(context['project']['name'])
+        custom_naming = settings['maya']['load'][loader_key]
+
+        options["attach_to_root"] = True
+        if not custom_naming['namespace']:
+            raise LoadError("No namespace specified in "
+                            "Maya ReferenceLoader settings")
+        elif not custom_naming['group_name']:
+            self.log.debug("No custom group_name, no group will be created.")
+            options["attach_to_root"] = False
+        formatting_data = {
+            "asset_name": asset['name'],
+            "asset_type": asset['type'],
+            "folder": {
+                "name": asset["name"],
+            },
+            "subset": subset['name'],
+            "family": (
+                    subset['data'].get('family') or
+                    subset['data']['families'][0]
+            )
+        }
+        custom_namespace = custom_naming['namespace'].format(
+            **formatting_data
+        )
+        custom_group_name = custom_naming['group_name'].format(
+            **formatting_data
+        )
+        return custom_group_name, custom_namespace, options
+
 
 class ReferenceLoader(Loader):
     """A basic ReferenceLoader for Maya
@@ -565,42 +598,13 @@ class ReferenceLoader(Loader):
         path = self.filepath_from_context(context)
         assert os.path.exists(path), "%s does not exist." % path
 
-        asset = context['asset']
-        subset = context['subset']
-        settings = get_project_settings(context['project']['name'])
-        custom_naming = settings['maya']['load']['reference_loader']
-        loaded_containers = []
-
-        if not custom_naming['namespace']:
-            raise LoadError("No namespace specified in "
-                            "Maya ReferenceLoader settings")
-        elif not custom_naming['group_name']:
-            self.log.debug("No custom group_name, no group will be created.")
-            options["attach_to_root"] = False
-
-        formatting_data = {
-            "asset_name": asset['name'],
-            "asset_type": asset['type'],
-            "folder": {
-                "name": asset["name"],
-            },
-            "subset": subset['name'],
-            "family": (
-                subset['data'].get('family') or
-                subset['data']['families'][0]
-            )
-        }
-
-        custom_namespace = custom_naming['namespace'].format(
-            **formatting_data
-        )
-
-        custom_group_name = custom_naming['group_name'].format(
-            **formatting_data
-        )
+        custom_group_name, custom_namespace, options = \
+            self.get_custom_namespace_and_group(context, options,
+                                                "reference_loader")
 
         count = options.get("count") or 1
 
+        loaded_containers = []
         for c in range(0, count):
             namespace = lib.get_custom_namespace(custom_namespace)
             group_name = "{}:{}".format(

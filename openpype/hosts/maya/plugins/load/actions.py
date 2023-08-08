@@ -5,8 +5,9 @@ import qargparse
 from openpype.pipeline import load
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
-    unique_namespace
+    get_custom_namespace
 )
+import openpype.hosts.maya.api.plugin
 
 
 class SetFrameRangeLoader(load.LoaderPlugin):
@@ -83,7 +84,7 @@ class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
                              animationEndTime=end)
 
 
-class ImportMayaLoader(load.LoaderPlugin):
+class ImportMayaLoader(openpype.hosts.maya.api.plugin.LoaderPlugin):
     """Import action for Maya (unmanaged)
 
     Warning:
@@ -130,13 +131,14 @@ class ImportMayaLoader(load.LoaderPlugin):
         if choice is False:
             return
 
-        asset = context['asset']
+        custom_group_name, custom_namespace, options = \
+            self.get_custom_namespace_and_group(context, self.options,
+                                                "import_loader")
 
-        namespace = namespace or unique_namespace(
-            asset["name"] + "_",
-            prefix="_" if asset["name"][0].isdigit() else "",
-            suffix="_",
-        )
+        namespace = get_custom_namespace(custom_namespace)
+
+        if not self.options.get("attach_to_root", True):
+            custom_group_name = namespace
 
         path = self.filepath_from_context(context)
         with maintained_selection():
@@ -145,8 +147,8 @@ class ImportMayaLoader(load.LoaderPlugin):
                               preserveReferences=True,
                               namespace=namespace,
                               returnNewNodes=True,
-                              groupReference=True,
-                              groupName="{}:{}".format(namespace, name))
+                              groupReference=options["attach_to_root"],
+                              groupName=custom_group_name)
 
             if data.get("clean_import", False):
                 remove_attributes = ["cbId"]
