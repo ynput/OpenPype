@@ -524,6 +524,17 @@ class Loader(LoaderPlugin):
     hosts = ["maya"]
 
     def get_custom_namespace_and_group(self, context, options, loader_key):
+        """Queries Settings to get custom template for namespace and group.
+
+        Group template might be empty >> this forces to not wrap imported items
+        into separate group.
+
+        Args:
+            context (dict)
+            options (dict): artist modifiable options from dialog
+            loader_key (str): key to get separate configuration from Settings
+                ('reference_loader'|'import_loader')
+        """
         asset = context['asset']
         subset = context['subset']
         settings = get_project_settings(context['project']['name'])
