@@ -612,9 +612,6 @@ class Creator(BaseCreator):
         This is for user input and value may not be content of result from
         `get_default_variants`.
 
-        Can return `None`. In that case first element from
-        `get_default_variants` should be used.
-
         Returns:
             str: Variant value.
         """
@@ -625,6 +622,36 @@ class Creator(BaseCreator):
         for variant in self.get_default_variants():
             return variant
         return DEFAULT_VARIANT_VALUE
+
+    def _get_default_variant_wrap(self):
+        """Default variant value that will be used to prefill variant input.
+
+        Wrapper for 'get_default_variant'.
+
+        Notes:
+            This method is wrapper for 'get_default_variant'
+                for 'default_variant' property, so creator can override
+                the method.
+
+        Returns:
+            str: Variant value.
+        """
+
+        return self.get_default_variant()
+
+    def _set_default_variant_wrap(self, variant):
+        """Set default variant value.
+
+        This method is needed for automated settings overrides which are
+        changing attributes based on keys in settings.
+        """
+
+        self._default_variant = variant or ""
+
+    default_variant = property(
+        _get_default_variant_wrap,
+        _set_default_variant_wrap
+    )
 
     def get_pre_create_attr_defs(self):
         """Plugin attribute definitions needed for creation.
