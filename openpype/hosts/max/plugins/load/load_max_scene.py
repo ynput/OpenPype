@@ -42,8 +42,7 @@ class MaxSceneLoader(load.LoaderPlugin):
         node_name = container["instance_node"]
         merged_max_objects = rt.getLastMergedNodes()
         rt.MergeMaxFile(
-            path, rt.Name("autoRenameDups"),
-            mergedNodes=merged_max_objects,
+            path, mergedNodes=merged_max_objects,
             includeFullGroup=True)
 
         max_objects = rt.getLastMergedNodes()
