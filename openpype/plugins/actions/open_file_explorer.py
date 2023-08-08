@@ -53,11 +53,6 @@ class OpenTaskPath(LauncherAction):
         STUB = "<<NULL>>"
         valid_dir = workdir.split(STUB, 1)[0]
 
-        # If the unformatted data left us with half a folder name or file name
-        # after splitting then we get the dirname.
-        if not valid_dir.replace("\\", "/").endswith("/"):
-            valid_dir = os.path.dirname(valid_dir)
-
         # If the path endswith `/work` and the path does not exist but the
         # parent does then we allow to go to the parent because it could for
         # example be the hierarchical folder for `asset` in e.g. `asset/hero`
