@@ -9,7 +9,7 @@ class ModelAbcLoader(load.LoaderPlugin):
     """Loading model with the Alembic loader."""
 
     families = ["model"]
-    label = "Load Model(Alembic) with Max"
+    label = "Load Model with Alembic"
     representations = ["abc"]
     order = -10
     icon = "code-fork"

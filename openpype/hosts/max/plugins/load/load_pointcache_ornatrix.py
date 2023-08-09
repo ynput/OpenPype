@@ -8,7 +8,7 @@ class ModelAbcLoader(load.LoaderPlugin):
     """Ornatrix Alembic loader."""
 
     families = ["camera", "animation", "pointcache"]
-    label = "Load Model(Alembic) with Ornatrix"
+    label = "Load Alembic with Ornatrix"
     representations = ["abc"]
     order = -10
     icon = "code-fork"
