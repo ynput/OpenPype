@@ -610,10 +610,10 @@ class Creator(BaseCreator):
     def get_default_variants(self):
         """Default variant values for UI tooltips.
 
-        Replacement of `defatults` attribute. Using method gives ability to
-        have some "logic" other than attribute values.
+        Replacement of `default_variants` attribute. Using method gives
+        ability to have some "logic" other than attribute values.
 
-        By default returns `default_variants` value.
+        By default, returns `default_variants` value.
 
         Returns:
             List[str]: Whisper variants for user input.
