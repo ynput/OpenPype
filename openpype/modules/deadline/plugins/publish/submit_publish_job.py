@@ -121,8 +121,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     hosts = ["fusion", "max", "maya", "nuke",
              "celaction", "aftereffects", "harmony"]
 
+    # NOTE hornet update on use existing frames on farm
     families = ["render.farm", "prerender.farm",
-                "renderlayer", "imagesequence", "maxrender", "vrayscene"]
+                "renderlayer", "imagesequence", "maxrender", "vrayscene","render.farm_frames"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
