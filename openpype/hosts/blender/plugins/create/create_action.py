@@ -43,8 +43,6 @@ class CreateAction(openpype.hosts.blender.api.plugin.BlenderCreator):
                 "instance_node": instance_node,
             }
         )
-        from pprint import pprint
-        pprint(instance_data)
         lib.imprint(collection, instance_data)
 
         if pre_create_data.get("useSelection"):
