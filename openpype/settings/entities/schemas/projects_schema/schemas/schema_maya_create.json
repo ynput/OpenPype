@@ -34,9 +34,15 @@
                 }
             ]
         },
-            {
-            "type": "schema",
-            "name": "schema_maya_create_render"
+        {
+            "type": "schema_template",
+            "name": "template_create_plugin",
+            "template_data": [
+                {
+                    "key": "CreateRender",
+                    "label": "Create Render"
+                }
+            ]
         },
         {
             "type": "dict",
