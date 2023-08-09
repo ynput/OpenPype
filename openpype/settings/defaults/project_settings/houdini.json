@@ -14,80 +14,48 @@
     "create": {
         "CreateArnoldAss": {
             "enabled": true,
-            "default_variants": ["main"],
+            "default_variants": [],
             "ext": ".ass"
-        },
-        "CreateArnoldRop": {
-            "enabled": true,
-            "default_variants": ["main"]
         },
         "CreateAlembicCamera": {
             "enabled": true,
-            "default_variants": ["main"]
-        },
-        "CreateBGEO": {
-            "enabled": true,
-            "default_variants": ["main"]
+            "defaults": []
         },
         "CreateCompositeSequence": {
             "enabled": true,
-            "default_variants": ["main"]
-        },
-        "CreateHDA": {
-            "enabled": true,
-            "default_variants": ["main"]
-        },
-        "CreateKarmaROP": {
-            "enabled": true,
-            "default_variants": ["main"]
-        },
-        "CreateMantraROP": {
-            "enabled": true,
-            "default_variants": ["main"]
+            "defaults": []
         },
         "CreatePointCache": {
             "enabled": true,
-            "default_variants": ["main"]
-        },
-        "CreateRedshiftProxy": {
-            "enabled": true,
-            "default_variants": ["main"]
+            "defaults": []
         },
         "CreateRedshiftROP": {
             "enabled": true,
-            "default_variants": ["main"]
+            "defaults": []
         },
         "CreateRemotePublish": {
             "enabled": true,
-            "default_variants": ["main"]
-        },
-        "CreateReview": {
-            "enabled": true,
-            "default_variants": ["main"]
-        },
-        "CreateUSD": {
-            "enabled": false,
-            "default_variants": ["main"]
-        },
-        "CreateUSDModel": {
-            "enabled": false,
-            "default_variants": ["main"]
-        },
-        "USDCreateShadingWorkspace": {
-            "enabled": false,
-            "default_variants": ["main"]
-        },
-        "CreateUSDRender": {
-            "enabled": false,
-            "default_variants": ["main"]
+            "defaults": []
         },
         "CreateVDBCache": {
             "enabled": true,
-            "default_variants": ["main"]
+            "defaults": []
         },
-        "CreateVrayROP": {
-            "enabled": true,
-            "default_variants": ["main"]
+        "CreateUSD": {
+            "enabled": false,
+            "defaults": []
+        },
+        "CreateUSDModel": {
+            "enabled": false,
+            "defaults": []
+        },
+        "USDCreateShadingWorkspace": {
+            "enabled": false,
+            "defaults": []
+        },
+        "CreateUSDRender": {
+            "enabled": false,
+            "defaults": []
         }
     },
     "publish": {

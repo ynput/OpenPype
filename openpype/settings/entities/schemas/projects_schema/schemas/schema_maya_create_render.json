@@ -12,7 +12,7 @@
         },
         {
             "type": "list",
-            "key": "default_variants",
+            "key": "defaults",
             "label": "Default Subsets",
             "object_type": "text"
         }

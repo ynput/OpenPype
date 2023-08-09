@@ -527,7 +527,7 @@
         },
         "CreateRender": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
@@ -627,55 +627,55 @@
         },
         "CreateMultiverseUsd": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdComp": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdOver": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
         "CreateAssembly": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
         "CreateCamera": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
         "CreateLayout": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
         "CreateMayaScene": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
         "CreateRenderSetup": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
         "CreateRig": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main",
                 "Sim",
                 "Cloth"
@@ -683,20 +683,20 @@
         },
         "CreateSetDress": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main",
                 "Anim"
             ]
         },
         "CreateVRayScene": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         },
         "CreateYetiRig": {
             "enabled": true,
-            "default_variants": [
+            "defaults": [
                 "Main"
             ]
         }

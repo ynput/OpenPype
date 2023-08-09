@@ -1,82 +1,59 @@
 {
-    "type": "dict",
-    "collapsible": true,
-    "key": "create",
-    "label": "Creator plugins",
-    "children": [
-        {
-            "type": "dict",
-            "collapsible": true,
-            "key": "CreateArnoldAss",
-            "label": "Create Arnold Ass",
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "list",
-                    "key": "default_variants",
-                    "label": "Default Subsets",
-                    "object_type": "text"
-                },
-                {
-                    "type": "enum",
-                    "key": "ext",
-                    "label": "Default Output Format (extension)",
-                    "multiselection": false,
-                    "enum_items": [
-                        {
-                            ".ass": ".ass"
-                        },
-                        {
-                            ".ass.gz": ".ass.gz (gzipped)"
-                        }
-                    ]
-                }
-            ]
+  "type": "dict",
+  "collapsible": true,
+  "key": "create",
+  "label": "Creator plugins",
+  "children": [
+      {
+          "type": "dict",
+          "collapsible": true,
+          "key": "CreateArnoldAss",
+          "label": "Create Arnold Ass",
+          "checkbox_key": "enabled",
+          "children": [
+              {
+                  "type": "boolean",
+                  "key": "enabled",
+                  "label": "Enabled"
+              },
+              {
+                  "type": "list",
+                  "key": "default_variants",
+                  "label": "Default Subsets",
+                  "object_type": "text"
+              },
+              {
+                  "type": "enum",
+                  "key": "ext",
+                  "label": "Default Output Format (extension)",
+                  "multiselection": false,
+                  "enum_items": [
+                      {
+                          ".ass": ".ass"
+                      },
+                      {
+                          ".ass.gz": ".ass.gz (gzipped)"
+                      }
+                  ]
+              }
+          ]
+
       },
     {
       "type": "schema_template",
       "name": "template_create_plugin",
       "template_data": [
         {
-          "key": "CreateArnoldRop",
-          "label": "Create Arnold ROP"
-        },
-        {
           "key": "CreateAlembicCamera",
           "label": "Create Alembic Camera"
-        },
-        {
-          "key": "CreateBGEO",
-          "label": "Create Houdini BGEO"
         },
         {
           "key": "CreateCompositeSequence",
           "label": "Create Composite (Image Sequence)"
         },
         {
-          "key": "CreateKarmaROP",
-          "label": "Create Karma ROP"
-        },
-        {
-          "key": "CreateMantraROP",
-          "label": "Create Mantra ROP"
-        },
-        {
-          "key": "CreateHDA",
-          "label": "Create HDA"
-        },
-        {
           "key": "CreatePointCache",
           "label": "Create Point Cache"
-        },
-        {
-          "key": "CreateRedshiftProxy",
-          "label": "Create Redshift Proxy"
         },
         {
           "key": "CreateRedshiftROP",
@@ -87,8 +64,8 @@
           "label": "Create Remote Publish"
         },
         {
-          "key": "CreateReview",
-          "label": "Create Review"
+          "key": "CreateVDBCache",
+          "label": "Create VDB Cache"
         },
         {
           "key": "CreateUSD",
@@ -105,14 +82,6 @@
         {
           "key": "CreateUSDRender",
           "label": "Create USD Render"
-        },
-        {
-          "key": "CreateVDBCache",
-          "label": "Create VDB Cache"
-        },
-        {
-          "key": "CreateVrayROP",
-          "label": "Create VRay ROP"
         }
       ]
     }
