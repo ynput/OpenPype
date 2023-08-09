@@ -43,13 +43,14 @@ class CollectNukeInstanceData(pyblish.api.InstancePlugin):
 
         })
 
+        # add creator attributes to instance
+        creator_attributes = instance.data["creator_attributes"]
+        instance.data.update(creator_attributes)
+
         # add review family if review activated on instance
         if instance.data.get("review"):
             instance.data["families"].append("review")
 
-        # add creator attributes to instance
-        creator_attributes = instance.data["creator_attributes"]
-        instance.data.update(creator_attributes)
 
         self.log.debug("Collected instance: {}".format(
             instance.data))
