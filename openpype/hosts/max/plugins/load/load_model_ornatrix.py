@@ -4,7 +4,7 @@ from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 
 
-class ModelAbcLoader(load.LoaderPlugin):
+class ModelOxAbcLoader(load.LoaderPlugin):
     """Loading model with the Ornatrix Alembic loader."""
 
     families = ["model"]
