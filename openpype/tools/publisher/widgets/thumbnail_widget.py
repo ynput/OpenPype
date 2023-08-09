@@ -310,18 +310,11 @@ class ThumbnailWidget(QtWidgets.QWidget):
         icon_color = get_objected_colors("bg-view-selection").get_qcolor()
         icon_color.setAlpha(255)
 
-        options_widget = QtWidgets.QWidget(self)
-        options_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
         options_image = get_image("options")
         options_pix = paint_image_with_color(options_image, icon_color)
-        options_button = PixmapButton(options_pix, options_widget)
+        options_button = PixmapButton(options_pix, self)
         options_button.setObjectName("ThumbnailPixmapHoverButton")
         options_button.setToolTip("More options...")
-
-        options_layout = QtWidgets.QHBoxLayout(options_widget)
-        options_layout.setContentsMargins(0, 0, 0, 0)
-        options_layout.addWidget(options_button, 0)
 
         buttons_widget = QtWidgets.QWidget(self)
         buttons_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
@@ -392,7 +385,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._last_height = None
         self._hide_on_finish = False
 
-        self._options_widget = options_widget
+        self._options_button = options_button
         self._buttons_widget = buttons_widget
         self._thumbnail_painter = thumbnail_painter
         self._clear_button = clear_button
@@ -515,7 +508,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
     def _start_animation(self):
         self._buttons_widget.setVisible(True)
-        self._options_widget.setVisible(True)
+        self._options_button.setVisible(True)
         if self._change_anim.state() != QtCore.QAbstractAnimation.Running:
             self._change_anim.start()
 
@@ -531,7 +524,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
             self._change_anim.currentValue() == self._change_anim.endValue()
         )
         self._buttons_widget.setVisible(buttons_visible)
-        self._options_widget.setVisible(not buttons_visible)
+        self._options_button.setVisible(not buttons_visible)
         self._update_buttons_position()
         if not buttons_visible:
             self.removeEventFilter(self)
@@ -626,8 +619,8 @@ class ThumbnailWidget(QtWidgets.QWidget):
                 buttons_height
             )
 
-        if self._options_widget.isVisible():
-            options_sh = self._options_widget.sizeHint()
+        if self._options_button.isVisible():
+            options_sh = self._options_button.sizeHint()
             options_value = (1.0 - value)
             width_sh = options_sh.width()
             height_sh = options_sh.height()
@@ -639,7 +632,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
             else:
                 pos_x = my_width - (width_sh + 3)
                 pos_y = my_height - (height_sh + 3)
-            self._options_widget.setGeometry(
+            self._options_button.setGeometry(
                 pos_x, pos_y, options_width, options_height
             )
 
