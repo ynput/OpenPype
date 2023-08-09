@@ -410,6 +410,13 @@ class PixmapButtonPainter(QtWidgets.QWidget):
 
         self._pixmap = pixmap
         self._cached_pixmap = None
+        self._disabled = False
+
+    def set_enabled(self, enabled):
+        if self._disabled != enabled:
+            return
+        self._disabled = not enabled
+        self.repaint()
 
     def set_pixmap(self, pixmap):
         self._pixmap = pixmap
@@ -444,6 +451,8 @@ class PixmapButtonPainter(QtWidgets.QWidget):
         if self._cached_pixmap is None:
             self._cache_pixmap()
 
+        if self._disabled:
+            painter.setOpacity(0.5)
         painter.drawPixmap(0, 0, self._cached_pixmap)
 
         painter.end()
@@ -463,6 +472,10 @@ class PixmapButton(ClickableFrame):
         layout = self.layout()
         layout.setContentsMargins(*args)
         self._update_painter_geo()
+
+    def setEnabled(self, enabled):
+        self._button_painter.set_enabled(enabled)
+        super(PixmapButton, self).setEnabled(enabled)
 
     def set_pixmap(self, pixmap):
         self._button_painter.set_pixmap(pixmap)
