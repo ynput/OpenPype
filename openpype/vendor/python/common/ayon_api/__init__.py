@@ -78,6 +78,8 @@ from ._api import (
     download_dependency_package,
     upload_dependency_package,
 
+    upload_addon_zip,
+
     get_bundles,
     create_bundle,
     update_bundle,
@@ -261,6 +263,8 @@ __all__ = (
 
     "download_dependency_package",
     "upload_dependency_package",
+
+    "upload_addon_zip",
 
     "get_bundles",
     "create_bundle",

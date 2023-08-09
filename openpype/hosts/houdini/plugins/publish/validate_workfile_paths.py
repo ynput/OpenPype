@@ -7,8 +7,6 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.publish import RepairAction
 
-from openpype.pipeline.publish import RepairAction
-
 
 class ValidateWorkfilePaths(
         pyblish.api.InstancePlugin, OptionalPyblishPluginMixin):

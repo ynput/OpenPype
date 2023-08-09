@@ -124,8 +124,6 @@ def _convert_applications_system_settings(
 
     # Applications settings
     ayon_apps = addon_settings["applications"]
-    if "adsk_3dsmax" in ayon_apps:
-        ayon_apps["3dsmax"] = ayon_apps.pop("adsk_3dsmax")
 
     additional_apps = ayon_apps.pop("additional_apps")
     applications = _convert_applications_groups(
@@ -161,91 +159,95 @@ def _convert_general(ayon_settings, output, default_settings):
     output["general"] = general
 
 
-def _convert_kitsu_system_settings(ayon_settings, output):
-    output["modules"]["kitsu"] = {
-        "server": ayon_settings["kitsu"]["server"]
-    }
+def _convert_kitsu_system_settings(
+    ayon_settings, output, addon_versions, default_settings
+):
+    enabled = addon_versions.get("kitsu") is not None
+    kitsu_settings = default_settings["modules"]["kitsu"]
+    kitsu_settings["enabled"] = enabled
+    if enabled:
+        kitsu_settings["server"] = ayon_settings["kitsu"]["server"]
+    output["modules"]["kitsu"] = kitsu_settings
 
 
-def _convert_ftrack_system_settings(ayon_settings, output, defaults):
-    # Ftrack contains few keys that are needed for initialization in OpenPype
-    #   mode and some are used on different places
-    ftrack_settings = defaults["modules"]["ftrack"]
-    ftrack_settings["ftrack_server"] = (
-        ayon_settings["ftrack"]["ftrack_server"])
-    output["modules"]["ftrack"] = ftrack_settings
-
-
-def _convert_shotgrid_system_settings(ayon_settings, output):
-    ayon_shotgrid = ayon_settings["shotgrid"]
-    # Skip conversion if different ayon addon is used
-    if "leecher_manager_url" not in ayon_shotgrid:
-        output["shotgrid"] = ayon_shotgrid
-        return
-
-    shotgrid_settings = {}
-    for key in (
-        "leecher_manager_url",
-        "leecher_backend_url",
-        "filter_projects_by_login",
-    ):
-        shotgrid_settings[key] = ayon_shotgrid[key]
-
-    new_items = {}
-    for item in ayon_shotgrid["shotgrid_settings"]:
-        name = item.pop("name")
-        new_items[name] = item
-    shotgrid_settings["shotgrid_settings"] = new_items
-
-    output["modules"]["shotgrid"] = shotgrid_settings
-
-
-def _convert_timers_manager_system_settings(ayon_settings, output):
-    ayon_manager = ayon_settings["timers_manager"]
-    manager_settings = {
-        key: ayon_manager[key]
-        for key in {
-            "auto_stop", "full_time", "message_time", "disregard_publishing"
-        }
-    }
+def _convert_timers_manager_system_settings(
+    ayon_settings, output, addon_versions, default_settings
+):
+    enabled = addon_versions.get("timers_manager") is not None
+    manager_settings = default_settings["modules"]["timers_manager"]
+    manager_settings["enabled"] = enabled
+    if enabled:
+        ayon_manager = ayon_settings["timers_manager"]
+        manager_settings.update({
+            key: ayon_manager[key]
+            for key in {
+                "auto_stop",
+                "full_time",
+                "message_time",
+                "disregard_publishing"
+            }
+        })
     output["modules"]["timers_manager"] = manager_settings
 
 
-def _convert_clockify_system_settings(ayon_settings, output):
-    output["modules"]["clockify"] = ayon_settings["clockify"]
+def _convert_clockify_system_settings(
+    ayon_settings, output, addon_versions, default_settings
+):
+    enabled = addon_versions.get("clockify") is not None
+    clockify_settings = default_settings["modules"]["clockify"]
+    clockify_settings["enabled"] = enabled
+    if enabled:
+        clockify_settings["workspace_name"] = (
+            ayon_settings["clockify"]["workspace_name"]
+        )
+    output["modules"]["clockify"] = clockify_settings
 
 
-def _convert_deadline_system_settings(ayon_settings, output):
-    ayon_deadline = ayon_settings["deadline"]
-    deadline_settings = {
-        "deadline_urls": {
+def _convert_deadline_system_settings(
+    ayon_settings, output, addon_versions, default_settings
+):
+    enabled = addon_versions.get("deadline") is not None
+    deadline_settings = default_settings["modules"]["deadline"]
+    deadline_settings["enabled"] = enabled
+    if enabled:
+        ayon_deadline = ayon_settings["deadline"]
+        deadline_settings["deadline_urls"] = {
             item["name"]: item["value"]
             for item in ayon_deadline["deadline_urls"]
         }
-    }
+
     output["modules"]["deadline"] = deadline_settings
 
 
-def _convert_muster_system_settings(ayon_settings, output):
-    ayon_muster = ayon_settings["muster"]
-    templates_mapping = {
-        item["name"]: item["value"]
-        for item in ayon_muster["templates_mapping"]
-    }
-    output["modules"]["muster"] = {
-        "templates_mapping": templates_mapping,
-        "MUSTER_REST_URL": ayon_muster["MUSTER_REST_URL"]
-    }
+def _convert_muster_system_settings(
+    ayon_settings, output, addon_versions, default_settings
+):
+    enabled = addon_versions.get("muster") is not None
+    muster_settings = default_settings["modules"]["muster"]
+    muster_settings["enabled"] = enabled
+    if enabled:
+        ayon_muster = ayon_settings["muster"]
+        muster_settings["MUSTER_REST_URL"] = ayon_muster["MUSTER_REST_URL"]
+        muster_settings["templates_mapping"] = {
+            item["name"]: item["value"]
+            for item in ayon_muster["templates_mapping"]
+        }
+    output["modules"]["muster"] = muster_settings
 
 
-def _convert_royalrender_system_settings(ayon_settings, output):
-    ayon_royalrender = ayon_settings["royalrender"]
-    output["modules"]["royalrender"] = {
-        "rr_paths": {
+def _convert_royalrender_system_settings(
+    ayon_settings, output, addon_versions, default_settings
+):
+    enabled = addon_versions.get("royalrender") is not None
+    rr_settings = default_settings["modules"]["royalrender"]
+    rr_settings["enabled"] = enabled
+    if enabled:
+        ayon_royalrender = ayon_settings["royalrender"]
+        rr_settings["rr_paths"] = {
             item["name"]: item["value"]
             for item in ayon_royalrender["rr_paths"]
         }
-    }
+    output["modules"]["royalrender"] = rr_settings
 
 
 def _convert_modules_system(
@@ -253,42 +255,39 @@ def _convert_modules_system(
 ):
     # TODO add all modules
     # TODO add 'enabled' values
-    for key, func in (
-        ("kitsu", _convert_kitsu_system_settings),
-        ("shotgrid", _convert_shotgrid_system_settings),
-        ("timers_manager", _convert_timers_manager_system_settings),
-        ("clockify", _convert_clockify_system_settings),
-        ("deadline", _convert_deadline_system_settings),
-        ("muster", _convert_muster_system_settings),
-        ("royalrender", _convert_royalrender_system_settings),
+    for func in (
+        _convert_kitsu_system_settings,
+        _convert_timers_manager_system_settings,
+        _convert_clockify_system_settings,
+        _convert_deadline_system_settings,
+        _convert_muster_system_settings,
+        _convert_royalrender_system_settings,
     ):
-        if key in ayon_settings:
-            func(ayon_settings, output)
+        func(ayon_settings, output, addon_versions, default_settings)
 
-    if "ftrack" in ayon_settings:
-        _convert_ftrack_system_settings(
-            ayon_settings, output, default_settings)
+    modules_settings = output["modules"]
+    for module_name in (
+        "sync_server",
+        "log_viewer",
+        "standalonepublish_tool",
+        "project_manager",
+        "job_queue",
+        "avalon",
+        "addon_paths",
+    ):
+        settings = default_settings["modules"][module_name]
+        if "enabled" in settings:
+            settings["enabled"] = False
+        modules_settings[module_name] = settings
 
-    output_modules = output["modules"]
-    # TODO remove when not needed
-    for module_name, value in default_settings["modules"].items():
-        if module_name not in output_modules:
-            output_modules[module_name] = value
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
 
-    for module_name, value in default_settings["modules"].items():
-        if "enabled" not in value or module_name not in output_modules:
-            continue
-
-        ayon_module_name = module_name
-        if module_name == "sync_server":
-            ayon_module_name = "sitesync"
-        output_modules[module_name]["enabled"] = (
-            ayon_module_name in addon_versions)
-
-    # Missing modules conversions
-    # - "sync_server" -> renamed to sitesync
-    # - "slack" -> only 'enabled'
-    # - "job_queue" -> completelly missing in ayon
+        # Make sure addons have access to settings in initialization
+        # - ModulesManager passes only modules settings into initialization
+        if key not in modules_settings:
+            modules_settings[key] = value
 
 
 def convert_system_settings(ayon_settings, default_settings, addon_versions):
@@ -302,15 +301,16 @@ def convert_system_settings(ayon_settings, default_settings, addon_versions):
     if "core" in ayon_settings:
         _convert_general(ayon_settings, output, default_settings)
 
+    for key, value in default_settings.items():
+        if key not in output:
+            output[key] = value
+
     _convert_modules_system(
         ayon_settings,
         output,
         addon_versions,
         default_settings
     )
-    for key, value in default_settings.items():
-        if key not in output:
-            output[key] = value
     return output
 
 
@@ -599,7 +599,6 @@ def _convert_maya_project_settings(ayon_settings, output):
     reference_loader = ayon_maya_load["reference_loader"]
     reference_loader["namespace"] = (
         reference_loader["namespace"]
-        .replace("{folder[name]}", "{asset_name}")
         .replace("{product[name]}", "{subset}")
     )
 
@@ -644,6 +643,9 @@ def _convert_nuke_knobs(knobs):
 
         elif knob_type == "vector_3d":
             value = [value["x"], value["y"], value["z"]]
+
+        elif knob_type == "box":
+            value = [value["x"], value["y"], value["r"], value["t"]]
 
         new_knob[value_key] = value
     return new_knobs
@@ -723,12 +725,6 @@ def _convert_nuke_project_settings(ayon_settings, output):
         if "product_names" in item_filter:
             item_filter["subsets"] = item_filter.pop("product_names")
             item_filter["families"] = item_filter.pop("product_types")
-
-        item["reformat_node_config"] = _convert_nuke_knobs(
-            item["reformat_node_config"])
-
-        for node in item["reformat_nodes_config"]["reposition_nodes"]:
-            node["knobs"] = _convert_nuke_knobs(node["knobs"])
 
         name = item.pop("name")
         new_review_data_outputs[name] = item
@@ -990,8 +986,11 @@ def _convert_royalrender_project_settings(ayon_settings, output):
     if "royalrender" not in ayon_settings:
         return
     ayon_royalrender = ayon_settings["royalrender"]
+    rr_paths = ayon_royalrender.get("selected_rr_paths", [])
+
     output["royalrender"] = {
-        "publish": ayon_royalrender["publish"]
+        "publish": ayon_royalrender["publish"],
+        "rr_paths": rr_paths,
     }
 
 
