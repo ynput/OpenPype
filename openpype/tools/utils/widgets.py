@@ -412,6 +412,11 @@ class PixmapButtonPainter(QtWidgets.QWidget):
         self._cached_pixmap = None
         self._disabled = False
 
+    def resizeEvent(self, event):
+        super(PixmapButtonPainter, self).resizeEvent(event)
+        self._cached_pixmap = None
+        self.repaint()
+
     def set_enabled(self, enabled):
         if self._disabled != enabled:
             return
