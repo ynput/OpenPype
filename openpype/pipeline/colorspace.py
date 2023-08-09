@@ -590,6 +590,7 @@ def _get_imageio_settings(project_settings, host_name):
 
     return imageio_global, imageio_host
 
+
 def get_display_view_colorspace_name(config_path, display, view):
     """get view colorspace name for the given display and view.
 
@@ -608,9 +609,10 @@ def get_display_view_colorspace_name(config_path, display, view):
         return get_display_view_colorspace_subprocess(config_path,
                                                       display, view)
 
-    from openpype.scripts.ocio_wrapper import _get_display_view_colorspace_name #noqa
+    from openpype.scripts.ocio_wrapper import _get_display_view_colorspace_name  # noqa
 
     return _get_display_view_colorspace_name(config_path, display, view)
+
 
 def get_display_view_colorspace_subprocess(config_path, display, view):
     """get view colorspace name for the given display and view

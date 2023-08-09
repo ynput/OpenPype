@@ -173,6 +173,7 @@ def _get_views_data(config_path):
 
     return data
 
+
 def _get_display_view_colorspace_name(config_path, display, view):
     """get view colorspace name for the given display and view.
 
@@ -199,6 +200,7 @@ def _get_display_view_colorspace_name(config_path, display, view):
 
     return colorspace
 
+
 @config.command(
     name="get_display_view_colorspace_name",
     help=(
@@ -223,7 +225,7 @@ def get_display_view_colorspace_name(in_path, out_path,
                                      display, view):
     """Aggregate view colorspace name to file.
 
-    Python 2 wrapped console command
+    Wrapper command for processes without acces to OpenColorIO
 
     Args:
         in_path (str): config file path string

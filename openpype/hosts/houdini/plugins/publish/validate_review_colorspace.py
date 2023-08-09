@@ -4,6 +4,9 @@ from openpype.pipeline import PublishValidationError
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.houdini.api.action import SelectROPAction
 
+import os
+import hou
+
 
 class SetDefaultViewSpaceAction(RepairAction):
     label = "Set default view space"
@@ -32,8 +35,6 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-        import hou  # noqa
-        import os
 
         rop_node = hou.node(instance.data["instance_node"])
         if os.getenv("OCIO") is None:
@@ -70,16 +71,15 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
         used to set colorspace on opengl node to the default view.
         """
 
-        import hou
-        from openpype.pipeline.colorspace import get_display_view_colorspace_name #noqa
-        from openpype.hosts.houdini.api.lib import get_color_management_preferences #noqa
+        from openpype.pipeline.colorspace import get_display_view_colorspace_name  # noqa
+        from openpype.hosts.houdini.api.lib import get_color_management_preferences  # noqa
 
         rop_node = hou.node(instance.data["instance_node"])
 
-        data =  get_color_management_preferences()
+        data = get_color_management_preferences()
         config_path = data.get("config")
-        display =  data.get("display")
-        view =  data.get("view")
+        display = data.get("display")
+        view = data.get("view")
 
         cls.log.debug("Get default view colorspace name..")
 
