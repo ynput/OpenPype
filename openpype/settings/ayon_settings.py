@@ -599,7 +599,6 @@ def _convert_maya_project_settings(ayon_settings, output):
     reference_loader = ayon_maya_load["reference_loader"]
     reference_loader["namespace"] = (
         reference_loader["namespace"]
-        .replace("{folder[name]}", "{asset_name}")
         .replace("{product[name]}", "{subset}")
     )
 
@@ -644,6 +643,9 @@ def _convert_nuke_knobs(knobs):
 
         elif knob_type == "vector_3d":
             value = [value["x"], value["y"], value["z"]]
+
+        elif knob_type == "box":
+            value = [value["x"], value["y"], value["r"], value["t"]]
 
         new_knob[value_key] = value
     return new_knobs
