@@ -14,7 +14,7 @@ class AbcLoader(load.LoaderPlugin):
     """Alembic loader."""
 
     families = ["camera", "animation", "pointcache"]
-    label = "Load Alembic with Max"
+    label = "Load Alembic"
     representations = ["abc"]
     order = -10
     icon = "code-fork"
