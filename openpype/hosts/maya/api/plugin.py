@@ -535,17 +535,20 @@ class Loader(LoaderPlugin):
             loader_key (str): key to get separate configuration from Settings
                 ('reference_loader'|'import_loader')
         """
+        options["attach_to_root"] = True
+
         asset = context['asset']
         subset = context['subset']
         settings = get_project_settings(context['project']['name'])
         custom_naming = settings['maya']['load'][loader_key]
-        options["attach_to_root"] = True
+
         if not custom_naming['namespace']:
             raise LoadError("No namespace specified in "
                             "Maya ReferenceLoader settings")
         elif not custom_naming['group_name']:
             self.log.debug("No custom group_name, no group will be created.")
             options["attach_to_root"] = False
+
         formatting_data = {
             "asset_name": asset['name'],
             "asset_type": asset['type'],
@@ -554,16 +557,19 @@ class Loader(LoaderPlugin):
             },
             "subset": subset['name'],
             "family": (
-                    subset['data'].get('family') or
-                    subset['data']['families'][0]
+                subset['data'].get('family') or
+                subset['data']['families'][0]
             )
         }
+
         custom_namespace = custom_naming['namespace'].format(
             **formatting_data
         )
+
         custom_group_name = custom_naming['group_name'].format(
             **formatting_data
         )
+
         return custom_group_name, custom_namespace, options
 
 
