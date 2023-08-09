@@ -49,17 +49,17 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
             # 'Color Correct' parm to be set to 'OpenColorIO'
             rop_node.setParms({"colorcorrect": 2})
             cls.log.debug(
-                "'Color Correct' parm on '%s' has been set to"
-                " 'OpenColorIO'", rop_node
+                "'Color Correct' parm on '{}' has been set to"
+                " 'OpenColorIO'".format(rop_node)
             )
 
         if rop_node.evalParm("ociocolorspace") not in \
                 hou.Color.ocio_spaces():
 
             cls.log.error(
-                "'OCIO Colorspace' value on '%s' is not valid, "
-                "select a valid option from the dropdown menu.",
-                rop_node
+                "'OCIO Colorspace' value on '{}' is not valid, "
+                "select a valid option from the dropdown menu."
+                .format(rop_node)
             )
             return rop_node
 
@@ -88,7 +88,8 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
 
         rop_node.setParms({"ociocolorspace": default_view_space})
         cls.log.debug(
-            "'OCIO Colorspace' parm on '%s' has been set to "
-            "the default view color space '%s'",
-            default_view_space, rop_node
+            "'OCIO Colorspace' parm on '{}' has been set to "
+            "the default view color space '{}'"
+            .formate(rop_node, default_view_space)
+
         )
