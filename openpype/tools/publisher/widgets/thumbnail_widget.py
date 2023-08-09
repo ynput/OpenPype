@@ -307,11 +307,25 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         thumbnail_painter = ThumbnailPainterWidget(self)
 
-        buttons_widget = QtWidgets.QWidget(self)
-        buttons_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
         icon_color = get_objected_colors("bg-view-selection").get_qcolor()
         icon_color.setAlpha(255)
+
+        options_widget = QtWidgets.QWidget(self)
+        options_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        options_image = get_image("options")
+        options_pix = paint_image_with_color(options_image, icon_color)
+        options_button = PixmapButton(options_pix, options_widget)
+        options_button.setObjectName("ThumbnailPixmapHoverButton")
+        options_button.setToolTip("More options...")
+
+        options_layout = QtWidgets.QHBoxLayout(options_widget)
+        options_layout.setContentsMargins(0, 0, 0, 0)
+        options_layout.addWidget(options_button, 0)
+
+        buttons_widget = QtWidgets.QWidget(self)
+        buttons_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        buttons_widget.setVisible(False)
 
         clear_image = get_image("clear_thumbnail")
         clear_pix = paint_image_with_color(clear_image, icon_color)
@@ -327,21 +341,47 @@ class ThumbnailWidget(QtWidgets.QWidget):
         take_screenshot_btn.setObjectName("ThumbnailPixmapHoverButton")
         take_screenshot_btn.setToolTip("Take screenshot")
 
-        buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
-        buttons_layout.setContentsMargins(3, 3, 3, 3)
-        buttons_layout.addStretch(1)
-        buttons_layout.addWidget(take_screenshot_btn, 0)
-        buttons_layout.addWidget(clear_button, 0)
+        paste_image = get_image("paste")
+        paste_pix = paint_image_with_color(paste_image, icon_color)
+        paste_btn = PixmapButton(paste_pix, buttons_widget)
+        paste_btn.setObjectName("ThumbnailPixmapHoverButton")
+        paste_btn.setToolTip("Paste from clipboard")
+
+        browse_image = get_image("browse")
+        browse_pix = paint_image_with_color(browse_image, icon_color)
+        browse_btn = PixmapButton(browse_pix, buttons_widget)
+        browse_btn.setObjectName("ThumbnailPixmapHoverButton")
+        browse_btn.setToolTip("Browse...")
+
+        buttons_layout = QtWidgets.QGridLayout(buttons_widget)
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.addWidget(take_screenshot_btn, 0, 1)
+        buttons_layout.addWidget(paste_btn, 0, 2)
+        buttons_layout.addWidget(browse_btn, 1, 1)
+        buttons_layout.addWidget(clear_button, 1, 2)
+        buttons_layout.setColumnStretch(1, 1)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(thumbnail_painter)
 
+        change_anim = QtCore.QVariantAnimation()
+        change_anim.setStartValue(0.0)
+        change_anim.setEndValue(1.0)
+        change_anim.setDuration(300)
+        change_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
+
+        options_button.clicked.connect(self._on_options_clicked)
         clear_button.clicked.connect(self._on_clear_clicked)
         take_screenshot_btn.clicked.connect(self._on_take_screenshot)
+        paste_btn.clicked.connect(self._on_paste_from_clipboard)
+        browse_btn.clicked.connect(self._on_browse_clicked)
+        change_anim.valueChanged.connect(self._on_change_anim)
+        change_anim.finished.connect(self._on_change_anim_finished)
 
         self._controller = controller
         self._output_dir = controller.get_thumbnail_temp_dir_path()
+        self._change_anim = change_anim
 
         self._review_extensions = set(IMAGE_EXTENSIONS) | set(VIDEO_EXTENSIONS)
 
@@ -350,11 +390,15 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._adapted_to_size = True
         self._last_width = None
         self._last_height = None
+        self._hide_on_finish = False
 
+        self._options_widget = options_widget
         self._buttons_widget = buttons_widget
         self._thumbnail_painter = thumbnail_painter
         self._clear_button = clear_button
         self._take_screenshot_btn = take_screenshot_btn
+        self._paste_btn = paste_btn
+        self._browse_btn = browse_btn
 
     @property
     def width_ratio(self):
@@ -448,9 +492,54 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._thumbnail_painter.set_current_thumbnails(thumbnail_paths)
         self._update_buttons_position()
 
+    def _on_options_clicked(self):
+        self._clear_button.setEnabled(self._thumbnail_painter.has_pixes)
+        clipboard = QtWidgets.QApplication.clipboard()
+        pixmap = clipboard.pixmap()
+        self._paste_btn.setEnabled(not pixmap.isNull())
+        self.installEventFilter(self)
+        self._show_options()
+
+    def _show_options(self):
+        self._hide_on_finish = False
+        self._change_anim.setDirection(QtCore.QAbstractAnimation.Forward)
+        self._start_animation()
+
+    def _hide_options(self):
+        if self._change_anim.state() == QtCore.QAbstractAnimation.Running:
+            self._hide_on_finish = True
+            return
+        self._hide_on_finish = False
+        self._change_anim.setDirection(QtCore.QAbstractAnimation.Backward)
+        self._start_animation()
+
+    def _start_animation(self):
+        self._buttons_widget.setVisible(True)
+        self._options_widget.setVisible(True)
+        if self._change_anim.state() != QtCore.QAbstractAnimation.Running:
+            self._change_anim.start()
+
+    def _on_change_anim(self):
+        self._update_buttons_position()
+
+    def _on_change_anim_finished(self):
+        if self._hide_on_finish:
+            self._hide_options()
+            return
+
+        buttons_visible = (
+            self._change_anim.currentValue() == self._change_anim.endValue()
+        )
+        self._buttons_widget.setVisible(buttons_visible)
+        self._options_widget.setVisible(not buttons_visible)
+        self._update_buttons_position()
+        if not buttons_visible:
+            self.removeEventFilter(self)
+
     def _on_clear_clicked(self):
         self.set_current_thumbnails()
         self.thumbnail_cleared.emit()
+        self._clear_button.setEnabled(False)
 
     def _on_take_screenshot(self):
         window = self.window()
@@ -462,6 +551,51 @@ class ThumbnailWidget(QtWidgets.QWidget):
             self.thumbnail_created.emit(output_path)
         # restore original window state
         window.setWindowState(state)
+
+    def _on_paste_from_clipboard(self):
+        """Set thumbnail from a pixmap image in the system clipboard"""
+
+        clipboard = QtWidgets.QApplication.clipboard()
+        pixmap = clipboard.pixmap()
+        if pixmap.isNull():
+            return
+
+        # Save as temporary file
+        output_path = os.path.join(
+            self._output_dir, uuid.uuid4().hex + ".png")
+
+        output_dir = os.path.dirname(output_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        if pixmap.save(output_path):
+            self.thumbnail_created.emit(output_path)
+
+    def _on_browse_clicked(self):
+        ext_filter = "Source (*{0})".format(
+            " *".join(self._review_extensions)
+        )
+        filepath, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Choose thumbnail", os.path.expanduser("~"), ext_filter
+        )
+        if not filepath:
+            return
+        valid_path = False
+        ext = os.path.splitext(filepath)[-1].lower()
+        if ext in self._review_extensions:
+            valid_path = True
+
+        output = None
+        if valid_path:
+            output = export_thumbnail(filepath, self._output_dir)
+
+        if output:
+            self.thumbnail_created.emit(output)
+        else:
+            self._controller.emit_card_message(
+                "Couldn't convert the source for thumbnail",
+                CardMessageTypes.error
+            )
 
     def _adapt_to_size(self):
         if not self._adapted_to_size:
@@ -477,14 +611,45 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._thumbnail_painter.clear_cache()
 
     def _update_buttons_position(self):
-        self._clear_button.setVisible(self._thumbnail_painter.has_pixes)
         size = self.size()
+        my_width = size.width()
         my_height = size.height()
-        height = self._buttons_widget.sizeHint().height()
-        self._buttons_widget.setGeometry(
-            0, my_height - height,
-            size.width(), height
-        )
+        value = self._change_anim.currentValue()
+        if self._buttons_widget.isVisible():
+            buttons_sh = self._buttons_widget.sizeHint()
+            buttons_height = int(buttons_sh.height() * value)
+            buttons_width = int(buttons_sh.width() * value)
+            self._buttons_widget.setGeometry(
+                my_width - (buttons_width + 3),
+                my_height - (buttons_height + 3),
+                buttons_width,
+                buttons_height
+            )
+
+        if self._options_widget.isVisible():
+            options_sh = self._options_widget.sizeHint()
+            options_value = (1.0 - value)
+            width_sh = options_sh.width()
+            height_sh = options_sh.height()
+            options_width = int(width_sh * options_value)
+            options_height = int(height_sh * options_value)
+            if self._change_anim.direction() == QtCore.QAbstractAnimation.Forward:
+                pos_x = my_width - (options_width + 3)
+                pos_y = my_height - (options_height + 3)
+            else:
+                pos_x = my_width - (width_sh + 3)
+                pos_y = my_height - (height_sh + 3)
+            self._options_widget.setGeometry(
+                pos_x, pos_y, options_width, options_height
+            )
+
+    def eventFilter(self, obj, event):
+        if obj is self:
+            if event.type() in (QtCore.QEvent.FocusOut, QtCore.QEvent.Leave):
+                self._hide_options()
+            elif event.type() == QtCore.QEvent.Enter:
+                self._show_options()
+        return super(ThumbnailWidget, self).eventFilter(obj, event)
 
     def resizeEvent(self, event):
         super(ThumbnailWidget, self).resizeEvent(event)
