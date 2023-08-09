@@ -34,6 +34,7 @@ from .lib import (
     get_main_window,
     add_publish_knob,
     WorkfileSettings,
+    # TODO: remove this once workfile builder will be removed
     process_workfile_builder,
     start_workfile_template_builder,
     launch_workfiles_app,
@@ -155,11 +156,18 @@ def add_nuke_callbacks():
     """
     nuke_settings = get_current_project_settings()["nuke"]
     workfile_settings = WorkfileSettings()
+
     # Set context settings.
     nuke.addOnCreate(
         workfile_settings.set_context_settings, nodeClass="Root")
+
+    # adding favorites to file browser
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
+
+    # template builder callbacks
     nuke.addOnCreate(start_workfile_template_builder, nodeClass="Root")
+
+    # TODO: remove this callback once workfile builder will be removed
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
 
     # fix ffmpeg settings on script
@@ -169,11 +177,12 @@ def add_nuke_callbacks():
     nuke.addOnScriptLoad(check_inventory_versions)
     nuke.addOnScriptSave(check_inventory_versions)
 
-    # # set apply all workfile settings on script load and save
+    # set apply all workfile settings on script load and save
     nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
 
+
     if nuke_settings["nuke-dirmap"]["enabled"]:
-        log.info("Added Nuke's dirmaping callback ...")
+        log.info("Added Nuke's dir-mapping callback ...")
         # Add dirmap for file paths.
         nuke.addFilenameFilter(dirmap_file_name_filter)
 
