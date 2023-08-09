@@ -44,7 +44,7 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         # TODO: add render elements if render element
 
         # Store whether we are splitting the render job in an export + render
-        export_job = bool(rop.parm("render_export_mode").eval())
+        export_job = rop.parm("render_export_mode").eval() == "2"
         instance.data["exportJob"] = export_job
         export_prefix = None
         export_products = []
