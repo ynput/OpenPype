@@ -2134,7 +2134,7 @@ class WorkfileSettings(object):
         current_ocio_path = current_ocio_path.replace("\\", "/")
         settings_ocio_path = settings_ocio_path.replace("\\", "/")
 
-        if current_ocio_path != config_data["path"]:
+        if current_ocio_path != settings_ocio_path:
             message = """
 It seems like there's a mismatch between the OCIO config path set in your Nuke
 settings and the actual path set in your OCIO environment.
