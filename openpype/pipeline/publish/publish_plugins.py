@@ -1,3 +1,5 @@
+import os
+import re
 import inspect
 from abc import ABCMeta
 from pprint import pformat
@@ -266,6 +268,88 @@ class RepairContextAction(pyblish.api.Action):
         if plugin in failed_plugins:
             self.log.debug("Attempting repair ...")
             plugin.repair(context)
+
+
+class Collector(pyblish.api.InstancePlugin):
+
+    order = pyblish.api.CollectorOrder
+
+    def generate_expected_files(self, instance, path, only_existing=False):
+        """Generate expected files from path
+
+        Args:
+            instance (pyblish.api.Instance): Instance to generate
+                                             expected files for
+            path (str): Path to generate expected files from
+            only_existing Optional[bool]: Ensure that files exists.
+
+        Returns:
+            Any[list, str]: List of expected files or path if single file
+        """
+
+        dirpath = os.path.dirname(path)
+        filename = os.path.basename(path)
+        start = instance.data["frameStart"]
+        end = instance.data["frameEnd"]
+
+        formattable_string = self.convert_filename_to_formattable_string(
+            filename)
+
+        if not formattable_string:
+            return path
+
+        expected_files = []
+        for frame in range(int(start), (int(end) + 1)):
+            frame_file_path = os.path.join(
+                dirpath, formattable_string.format(frame)
+            )
+            # normalize path
+            frame_file_path = os.path.normpath(frame_file_path)
+
+            # make sure file exists if ensure_exists is enabled
+            if only_existing and not os.path.exists(frame_file_path):
+                continue
+
+            # add to expected files
+            expected_files.append(
+                # add normalized path
+                frame_file_path
+            )
+
+        return expected_files
+
+    def convert_filename_to_formattable_string(self, filename):
+        """Convert filename to formattable string
+
+        Args:
+            filename (str): Filename to convert
+
+        Returns:
+            Any[str, None]: Formattable string or None if not possible
+                            to convert
+        """
+        new_filename = None
+
+        if "#" in filename:
+            # use regex to convert #### to {:0>4}
+            def replace(match):
+                return "{{:0>{}}}".format(len(match.group()))
+            new_filename = re.sub("#+", replace, filename)
+
+        elif "%" in filename:
+            # use regex to convert %04d to {:0>4}
+            def replace(match):
+                return "{{:0>{}}}".format(match.group()[1:])
+            new_filename = re.sub("%\\d+d", replace, filename)
+
+        return new_filename
+
+    def set_expected_files(self, instance, path, only_existing=False):
+        """Create expected files in instance data"""
+
+        expected_files = self.generate_expected_files(
+            instance, path, only_existing)
+        instance.data["expectedFiles"] = expected_files
 
 
 class Extractor(pyblish.api.InstancePlugin):

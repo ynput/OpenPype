@@ -18,6 +18,7 @@ from .publish_plugins import (
     RepairAction,
     RepairContextAction,
 
+    Collector,
     Extractor,
     ColormanagedPyblishPluginMixin
 )
@@ -67,6 +68,7 @@ __all__ = (
     "RepairAction",
     "RepairContextAction",
 
+    "Collector",
     "Extractor",
     "ColormanagedPyblishPluginMixin",
 
