@@ -42,6 +42,11 @@ class CreateReview(plugin.BlenderCreator):
         name = plugin.asset_name(instance_data["asset"], subset_name)
         asset_group = bpy.data.collections.new(name=name)
         instances.children.link(asset_group)
+
+        instance_node = {}
+        for key, value in asset_group.items():
+            instance_node[key] = value
+
         instance_data.update(
             {
                 "id": "pyblish.avalon.instance",
@@ -49,6 +54,7 @@ class CreateReview(plugin.BlenderCreator):
                 "label": self.label,
                 "task": get_current_task_name(),
                 "subset": subset_name,
+                "instance_node": instance_node,
             }
         )
         lib.imprint(asset_group, instance_data)

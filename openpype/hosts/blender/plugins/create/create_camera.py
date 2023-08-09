@@ -44,6 +44,11 @@ class CreateCamera(plugin.BlenderCreator):
         asset_group = bpy.data.objects.new(name=name, object_data=None)
         asset_group.empty_display_type = 'SINGLE_ARROW'
         instances.objects.link(asset_group)
+
+        instance_node = {}
+        for key, value in asset_group.items():
+            instance_node[key] = value
+
         instance_data.update(
             {
                 "id": "pyblish.avalon.instance",
@@ -51,6 +56,7 @@ class CreateCamera(plugin.BlenderCreator):
                 "label": self.label,
                 "task": get_current_task_name(),
                 "subset": subset_name,
+                "instance_node": instance_node,
             }
         )
         lib.imprint(asset_group, instance_data)

@@ -234,13 +234,20 @@ class BlenderCreator(Creator):
             pre_create_data(dict): Data based on pre creation attributes.
                 Those may affect how creator works.
         """
+        collection = bpy.data.collections.new(name=subset_name)
+        bpy.context.scene.collection.children.link(collection)
+
+        instance_node = {}
+        for key, value in collection.items():
+            instance_node[key] = value
+
+        instance_data["instance_node"] = instance_node
+
         instance = CreatedInstance(
             self.family, subset_name, instance_data, self
         )
         self._add_instance_to_context(instance)
 
-        collection = bpy.data.collections.new(name=subset_name)
-        bpy.context.scene.collection.children.link(collection)
         imprint(collection, instance_data)
 
         if pre_create_data.get("useSelection"):
@@ -287,7 +294,7 @@ class BlenderCreator(Creator):
         for created_instance, _changes in update_list:
             data = created_instance.data_to_store()
 
-            # TODO
+            imprint(data.get("instance_node", {}), data)
 
 
     def remove_instances(self, instances: List[CreatedInstance]):

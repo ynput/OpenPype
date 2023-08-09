@@ -28,6 +28,11 @@ class CreatePointcache(plugin.BlenderCreator):
         )
         collection = bpy.data.collections.new(name=name)
         bpy.context.scene.collection.children.link(collection)
+
+        instance_node = {}
+        for key, value in collection.items():
+            instance_node[key] = value
+
         instance_data.update(
             {
                 "id": "pyblish.avalon.instance",
@@ -35,6 +40,7 @@ class CreatePointcache(plugin.BlenderCreator):
                 "label": self.label,
                 "task": get_current_task_name(),
                 "subset": subset_name,
+                "instance_node": instance_node,
             }
         )
         lib.imprint(collection, instance_data)

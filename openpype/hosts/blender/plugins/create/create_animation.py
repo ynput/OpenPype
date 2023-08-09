@@ -46,6 +46,11 @@ class CreateAnimation(plugin.BlenderCreator):
         # asset_group.empty_display_type = 'SINGLE_ARROW'
         asset_group = bpy.data.collections.new(name=name)
         instances.children.link(asset_group)
+
+        instance_node = {}
+        for key, value in asset_group.items():
+            instance_node[key] = value
+
         instance_data.update(
             {
                 "id": "pyblish.avalon.instance",
@@ -53,6 +58,7 @@ class CreateAnimation(plugin.BlenderCreator):
                 "label": self.label,
                 "task": get_current_task_name(),
                 "subset": subset_name,
+                "instance_node": instance_node,
             }
         )
         lib.imprint(asset_group, instance_data)
