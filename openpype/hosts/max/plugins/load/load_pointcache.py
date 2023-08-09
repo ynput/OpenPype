@@ -33,7 +33,8 @@ class AbcLoader(load.LoaderPlugin):
         }
 
         rt.AlembicImport.ImportToRoot = False
-        rt.importFile(file_path, rt.name("noPrompt"))
+        rt.importFile(
+            file_path, rt.name("noPrompt"), using=rt.AlembicImport)
 
         abc_after = {
             c
