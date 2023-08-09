@@ -7,14 +7,14 @@ class CreateLookModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     make_tx: bool = Field(title="Make tx files")
     rs_tex: bool = Field(title="Make Redshift texture files")
-    defaults: list[str] = Field(
-        default_factory=["Main"], title="Default Products"
+    default_variants: list[str] = Field(
+        default_factory=list, title="Default Products"
     )
 
 
 class BasicCreatorModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
-    defaults: list[str] = Field(
+    default_variants: list[str] = Field(
         default_factory=list,
         title="Default Products"
     )
@@ -22,20 +22,20 @@ class BasicCreatorModel(BaseSettingsModel):
 
 class CreateUnrealStaticMeshModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
-    defaults: list[str] = Field(
-        default_factory=["", "_Main"],
+    default_variants: list[str] = Field(
+        default_factory=list,
         title="Default Products"
     )
     static_mesh_prefixes: str = Field("S", title="Static Mesh Prefix")
     collision_prefixes: list[str] = Field(
-        default_factory=["UBX", "UCP", "USP", "UCX"],
+        default_factory=list,
         title="Collision Prefixes"
     )
 
 
 class CreateUnrealSkeletalMeshModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
-    defaults: list[str] = Field(default_factory=[], title="Default Products")
+    default_variants: list[str] = Field(default_factory=list, title="Default Products")
     joint_hints: str = Field("jnt_org", title="Joint root hint")
 
 
@@ -48,7 +48,7 @@ class BasicExportMeshModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     write_color_sets: bool = Field(title="Write Color Sets")
     write_face_sets: bool = Field(title="Write Face Sets")
-    defaults: list[str] = Field(
+    default_variants: list[str] = Field(
         default_factory=list,
         title="Default Products"
     )
@@ -61,7 +61,7 @@ class CreateAnimationModel(BaseSettingsModel):
         title="Include Parent Hierarchy")
     include_user_defined_attributes: bool = Field(
         title="Include User Defined Attributes")
-    defaults: list[str] = Field(
+    default_variants: list[str] = Field(
         default_factory=list,
         title="Default Products"
     )
@@ -74,8 +74,8 @@ class CreatePointCacheModel(BaseSettingsModel):
     include_user_defined_attributes: bool = Field(
         title="Include User Defined Attributes"
     )
-    defaults: list[str] = Field(
-        default_factory=["Main"],
+    default_variants: list[str] = Field(
+        default_factory=list,
         title="Default Products"
     )
 
@@ -84,8 +84,8 @@ class CreateProxyAlembicModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     write_color_sets: bool = Field(title="Write Color Sets")
     write_face_sets: bool = Field(title="Write Face Sets")
-    defaults: list[str] = Field(
-        default_factory=["Main"],
+    default_variants: list[str] = Field(
+        default_factory=list,
         title="Default Products"
     )
 
@@ -115,7 +115,7 @@ class CreateVrayProxyModel(BaseSettingsModel):
     enabled: bool = Field(True)
     vrmesh: bool = Field(title="VrMesh")
     alembic: bool = Field(title="Alembic")
-    defaults: list[str] = Field(default_factory=list, title="Default Products")
+    default_variants: list[str] = Field(default_factory=list, title="Default Products")
 
 
 class CreatorsModel(BaseSettingsModel):
@@ -230,7 +230,7 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateRender": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
@@ -295,19 +295,19 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateMultiverseUsd": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateMultiverseUsdComp": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateMultiverseUsdOver": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
@@ -333,31 +333,31 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateAssembly": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateCamera": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateLayout": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateMayaScene": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateRenderSetup": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
@@ -370,7 +370,7 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateRig": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main",
             "Sim",
             "Cloth"
@@ -378,7 +378,7 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateSetDress": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main",
             "Anim"
         ]
@@ -393,13 +393,13 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateVRayScene": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     },
     "CreateYetiRig": {
         "enabled": True,
-        "defaults": [
+        "default_variants": [
             "Main"
         ]
     }
