@@ -27,14 +27,14 @@ knobMatrix = { 'exr': ['colorspace', 'autocrop', 'datatype', 'heroview', 'metada
                 'png': ['colorspace', 'datatype'],
                 'dpx': ['colorspace', 'datatype'],
                 'tiff': ['colorspace','datatype', 'compression'],
-                'jpeg': ['colorspace','_jpeg_quality']
+                'jpeg': ['colorspace']
 }
 #list of key-value tuples for write node knob presets based on file extension
 presets = {
     'exr' : [ ("colorspace", 'ACES - ACEScg'), ('channels', 'all'), ('datatype', '16 bit half') ],
     'png' : [ ("colorspace", 'Output - Rec.709'), ('channels', 'rgba'), ('datatype','16 bit') ],
-    'dpx' : [ ("colorspace", 'Output - Rec.709'), ('channels', 'rgba'), ('datatype','10 bit'), ('big endian', True) ],
-    'jpeg' : [ ("colorspace", 'Output - sRGB'), ('channels', 'rgb'), ('_jpeg_quality', 1) ]
+    'dpx' : [ ("colorspace", 'Output - Rec.709'), ('channels', 'rgb'), ('datatype','10 bit'), ('big endian', True) ],
+    'jpeg' : [ ("colorspace", 'Output - sRGB'), ('channels', 'rgb') ]
            }
 # fix ffmpeg settings on script
 
@@ -49,7 +49,8 @@ def apply_format_presets():
     if knob.name() == 'file_type':
         if knob.value() in presets.keys():
             for preset in presets[knob.value()]:
-                node.knob(preset[0]).setValue(preset[1])
+                if node.knob(preset[0]):
+                    node.knob(preset[0]).setValue(preset[1])
 # Hornet- helper to switch file extension to filetype
 def writes_ver_sync():
     ''' Callback synchronizing version of publishable write nodes
