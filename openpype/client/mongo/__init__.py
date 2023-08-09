@@ -6,6 +6,7 @@ from .mongo import (
     OpenPypeMongoConnection,
     get_project_database,
     get_project_connection,
+    load_json_file,
 )
 
 
@@ -17,4 +18,5 @@ __all__ = (
     "OpenPypeMongoConnection",
     "get_project_database",
     "get_project_connection",
+    "load_json_file",
 )
