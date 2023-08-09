@@ -2156,7 +2156,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             nuke.message(
                 message.format(
                     env_path=current_ocio_path,
-                    settings_path=config_data["path"]
+                    settings_path=settings_ocio_path
                 )
             )
             return False
