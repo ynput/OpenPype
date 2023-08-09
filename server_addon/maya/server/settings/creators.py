@@ -35,7 +35,8 @@ class CreateUnrealStaticMeshModel(BaseSettingsModel):
 
 class CreateUnrealSkeletalMeshModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
-    default_variants: list[str] = Field(default_factory=list, title="Default Products")
+    default_variants: list[str] = Field(
+        default_factory=list, title="Default Products")
     joint_hints: str = Field("jnt_org", title="Joint root hint")
 
 
@@ -115,7 +116,8 @@ class CreateVrayProxyModel(BaseSettingsModel):
     enabled: bool = Field(True)
     vrmesh: bool = Field(title="VrMesh")
     alembic: bool = Field(title="Alembic")
-    default_variants: list[str] = Field(default_factory=list, title="Default Products")
+    default_variants: list[str] = Field(
+        default_factory=list, title="Default Products")
 
 
 class CreatorsModel(BaseSettingsModel):
