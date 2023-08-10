@@ -29,6 +29,7 @@ def _validate_deadline_bool_value(instance, attribute, value):
 class BlenderPluginInfo():
     SceneFile = attr.ib(default=None)   # Input
     Version = attr.ib(default=None)  # Mandatory for Deadline
+    SaveFile = attr.ib(default=True)
 
 
 class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
@@ -36,8 +37,9 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     hosts = ["blender"]
     families = ["renderlayer"]
 
+    use_published = True
     priority = 50
-
+    chunk_size = 1
     jobInfo = {}
     pluginInfo = {}
     group = None
@@ -148,12 +150,10 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         return job_info
 
     def get_plugin_info(self):
-        instance = self._instance
-        context = instance.context
-
         plugin_info = BlenderPluginInfo(
             SceneFile=self.scene_path,
             Version=bpy.app.version_string,
+            SaveFile=True,
         )
 
         plugin_payload = attr.asdict(plugin_info)
@@ -164,12 +164,33 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         return plugin_payload
 
-    def process(self, instance):
-        output_dir = "C:/tmp"
+    def process_submission(self):
+        instance = self._instance
+
+        expected_files = instance.data["expectedFiles"]
+        if not expected_files:
+            raise RuntimeError("No Render Elements found!")
+
+        output_dir = os.path.dirname(expected_files[0])
         instance.data["outputDir"] = output_dir
+        instance.data["toBeRenderedOn"] = "deadline"
 
-        super(BlenderSubmitDeadline, self).process(instance)
+        file = os.path.basename(bpy.context.scene.render.filepath)
+        bpy.context.scene.render.filepath = os.path.join(output_dir, file)
+        bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
 
-        # TODO: Avoid the need for this logic here, needed for submit publish
-        # Store output dir for unified publisher (filesequence)
-        # output_dir = os.path.dirname(instance.data["expectedFiles"][0])
+        self.log.debug(f"expected_files[0]: {expected_files[0]}")
+        self.log.debug(f"Output dir: {output_dir}")
+
+        payload = self.assemble_payload()
+        return self.submit(payload)
+
+    def from_published_scene(self):
+        """ Do not overwrite expected files.
+
+            Use published is set to True, so rendering will be triggered
+            from published scene (in 'publish' folder). Default implementation
+            of abstract class renames expected (eg. rendered) files accordingly
+            which is not needed here.
+        """
+        return super().from_published_scene(False)

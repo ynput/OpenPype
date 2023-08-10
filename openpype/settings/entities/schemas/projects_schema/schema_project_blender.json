@@ -55,6 +55,37 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "RenderSettings",
+            "label": "Render Settings",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "default_render_image_folder",
+                    "label": "Default render image folder"
+                },
+                {
+                  "key": "image_format",
+                  "label": "Output Image Format",
+                  "type": "enum",
+                  "multiselection": false,
+                  "defaults": "exr",
+                  "enum_items": [
+                    {"exr":      "exr"},
+                    {"bmp":      "bmp"},
+                    {"iris":     "iris"},
+                    {"png":      "png"},
+                    {"jpeg":     "jpeg"},
+                    {"jpeg2000": "jpeg2000"},
+                    {"tga":      "tga"},
+                    {"tga_raw":  "tga_raw"},
+                    {"tiff":     "tiff"}
+                  ]
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_workfile_options",
             "skip_paths": [

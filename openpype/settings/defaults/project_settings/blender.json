@@ -17,6 +17,10 @@
             "rules": {}
         }
     },
+    "RenderSettings": {
+        "default_render_image_folder": "renders/blender",
+        "image_format": "exr"
+    },
     "workfile_builder": {
         "create_first_version": false,
         "custom_templates": []
