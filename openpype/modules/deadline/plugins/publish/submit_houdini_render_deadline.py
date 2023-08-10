@@ -39,6 +39,7 @@ class MantraRenderDeadlinePluginInfo():
 @attr.s
 class VrayRenderPluginInfo():
     InputFilename = attr.ib(default=None)
+    SeparateFilesPerFrame = attr.ib(default=True)
 
 
 class HoudiniSubmitDeadline(
