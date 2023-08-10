@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 
+from string import Formatter
 from openpype.client import (
     get_project,
     get_asset_by_name,
@@ -30,30 +31,9 @@ class OpenTaskPath(LauncherAction):
         asset_name = session.get("AVALON_ASSET", None)
         task_name = session.get("AVALON_TASK", None)
 
-        project = get_project(project_name)
-        asset = get_asset_by_name(project_name, asset_name)
-
-        data = get_template_data(project, asset, task_name)
-
-        anatomy = Anatomy(project_name)
-        workdir = anatomy.templates_obj["work"]["folder"].format(data)
-
-        # Remove any potential unformatted parts of the path
-        valid_workdir = workdir.split("{", 1)[0]
-
-        # Path is not filled
-        if not valid_workdir:
+        path = self._get_workdir(project_name, asset_name, task_name)
+        if not path:
             return
-
-        # Normalize
-        valid_workdir = os.path.normpath(valid_workdir)
-        while not os.path.exists(valid_workdir):
-            prev_workdir = valid_workdir
-            valid_workdir = os.path.dirname(prev_workdir)
-            if not valid_workdir or valid_workdir == prev_workdir:
-                return None
-
-        path = valid_workdir
 
         app = QtWidgets.QApplication.instance()
         ctrl_pressed = QtCore.Qt.ControlModifier & app.keyboardModifiers()
@@ -62,6 +42,59 @@ class OpenTaskPath(LauncherAction):
             self.copy_path_to_clipboard(path)
         else:
             self.open_in_explorer(path)
+
+    def _find_first_filled_path(self, path):
+        if not path:
+            return ""
+
+        fields = set()
+        for item in Formatter().parse(path):
+            _, field_name, format_spec, conversion = item
+            if not field_name:
+                continue
+            conversion = "!{}".format(conversion) if conversion else ""
+            format_spec = ":{}".format(format_spec) if format_spec else ""
+            orig_key = "{{{}{}{}}}".format(
+                field_name, conversion, format_spec)
+            fields.add(orig_key)
+
+        for field in fields:
+            path = path.split(field, 1)[0]
+        return path
+
+    def _get_workdir(self, project_name, asset_name, task_name):
+        project = get_project(project_name)
+        asset = get_asset_by_name(project_name, asset_name)
+
+        data = get_template_data(project, asset, task_name)
+
+        anatomy = Anatomy(project_name)
+        workdir = anatomy.templates_obj["work"]["folder"].format(data)
+
+        # Remove any potential un-formatted parts of the path
+        valid_workdir = self._find_first_filled_path(workdir)
+
+        # Path is not filled at all
+        if not valid_workdir:
+            return
+
+        # Normalize
+        valid_workdir = os.path.normpath(valid_workdir)
+        if os.path.exists(valid_workdir):
+            return valid_workdir
+
+        # If task was selected, try to find asset path only to asset
+        if not task_name:
+            return
+
+        data.pop("task", None)
+        workdir = anatomy.templates_obj["work"]["folder"].format(data)
+        valid_workdir = self._find_first_filled_path(workdir)
+        if valid_workdir:
+            # Normalize
+            valid_workdir = os.path.normpath(valid_workdir)
+            if os.path.exists(valid_workdir):
+                return valid_workdir
 
     @staticmethod
     def open_in_explorer(path):
