@@ -155,7 +155,6 @@ class BlenderCreator(Creator):
 
         return collection
 
-
     @staticmethod
     def cache_subsets(shared_data):
         """Cache instances for Creators shared data.
@@ -221,7 +220,6 @@ class BlenderCreator(Creator):
 
         return shared_data
 
-
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
@@ -254,7 +252,6 @@ class BlenderCreator(Creator):
             for obj in get_selection():
                 collection.objects.link(obj)
 
-
     def collect_instances(self):
         """Override abstract method from BaseCreator.
         Collect existing instances related to this creator plugin."""
@@ -283,7 +280,6 @@ class BlenderCreator(Creator):
                 # Add instance to create context
                 self._add_instance_to_context(instance)
 
-
     def update_instances(self, update_list):
         """Override abstract method from BaseCreator.
         Store changes of existing instances so they can be recollected.
@@ -296,7 +292,6 @@ class BlenderCreator(Creator):
 
             imprint(data.get("instance_node", {}), data)
 
-
     def remove_instances(self, instances: List[CreatedInstance]):
         """Override abstract method from BaseCreator.
         Method called when instances are removed.
@@ -305,6 +300,23 @@ class BlenderCreator(Creator):
             instance(List[CreatedInstance]): Instance objects to remove.
         """
         for instance in instances:
+            outliner_entity = instance.data.get("instance_node", {}).get(
+                "datablock"
+            )
+            if not outliner_entity:
+                continue
+
+            if isinstance(outliner_entity, bpy.types.Collection):
+                for children in outliner_entity.children_recursive:
+                    if isinstance(children, bpy.types.Collection):
+                        bpy.data.collections.remove(children)
+                    else:
+                        bpy.data.objects.remove(children)
+
+                bpy.data.collections.remove(outliner_entity)
+            elif isinstance(outliner_entity, bpy.types.Object):
+                bpy.data.objects.remove(outliner_entity)
+
             self._remove_instance_from_context(instance)
 
 

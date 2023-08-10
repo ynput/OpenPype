@@ -4,7 +4,10 @@ import bpy
 
 from openpype.pipeline import get_current_task_name, CreatedInstance
 from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_INSTANCES,
+    AVALON_PROPERTY,
+)
 
 
 class CreateReview(plugin.BlenderCreator):
@@ -43,9 +46,10 @@ class CreateReview(plugin.BlenderCreator):
         asset_group = bpy.data.collections.new(name=name)
         instances.children.link(asset_group)
 
-        instance_node = {}
-        for key, value in asset_group.items():
-            instance_node[key] = value
+        asset_group[AVALON_PROPERTY] = instance_node = {
+            "name": asset_group.name,
+            "datablock": asset_group,
+        }
 
         instance_data.update(
             {

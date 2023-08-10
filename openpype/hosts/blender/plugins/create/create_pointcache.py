@@ -5,6 +5,7 @@ import bpy
 from openpype.pipeline import get_current_task_name, CreatedInstance
 from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class CreatePointcache(plugin.BlenderCreator):
@@ -29,9 +30,10 @@ class CreatePointcache(plugin.BlenderCreator):
         collection = bpy.data.collections.new(name=name)
         bpy.context.scene.collection.children.link(collection)
 
-        instance_node = {}
-        for key, value in collection.items():
-            instance_node[key] = value
+        collection[AVALON_PROPERTY] = instance_node = {
+            "name": collection.name,
+            "datablock": collection,
+        }
 
         instance_data.update(
             {

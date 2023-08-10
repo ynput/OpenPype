@@ -5,6 +5,7 @@ import bpy
 from openpype.pipeline import get_current_task_name, CreatedInstance
 import openpype.hosts.blender.api.plugin
 from openpype.hosts.blender.api import lib
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class CreateAction(openpype.hosts.blender.api.plugin.BlenderCreator):
@@ -29,9 +30,10 @@ class CreateAction(openpype.hosts.blender.api.plugin.BlenderCreator):
         collection = bpy.data.collections.new(name=name)
         bpy.context.scene.collection.children.link(collection)
 
-        instance_node = {}
-        for key, value in collection.items():
-            instance_node[key] = value
+        collection[AVALON_PROPERTY] = instance_node = {
+            "name": collection.name,
+            "datablock": collection,
+        }
 
         instance_data.update(
             {
