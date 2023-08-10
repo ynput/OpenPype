@@ -76,7 +76,7 @@ class OpenTaskPath(LauncherAction):
 
         # Path is not filled at all
         if not valid_workdir:
-            return
+            raise AssertionError("Failed to calculate workdir.")
 
         # Normalize
         valid_workdir = os.path.normpath(valid_workdir)
@@ -85,7 +85,7 @@ class OpenTaskPath(LauncherAction):
 
         # If task was selected, try to find asset path only to asset
         if not task_name:
-            return
+            raise AssertionError("Folder does not exist.")
 
         data.pop("task", None)
         workdir = anatomy.templates_obj["work"]["folder"].format(data)
@@ -95,6 +95,7 @@ class OpenTaskPath(LauncherAction):
             valid_workdir = os.path.normpath(valid_workdir)
             if os.path.exists(valid_workdir):
                 return valid_workdir
+        raise AssertionError("Folder does not exist.")
 
     @staticmethod
     def open_in_explorer(path):
