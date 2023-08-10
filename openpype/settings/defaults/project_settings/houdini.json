@@ -14,48 +14,70 @@
     "create": {
         "CreateArnoldAss": {
             "enabled": true,
-            "default_variants": [],
+            "default_variants": [
+                "Main"
+            ],
             "ext": ".ass"
         },
         "CreateAlembicCamera": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateCompositeSequence": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreatePointCache": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateRedshiftROP": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateRemotePublish": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateVDBCache": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateUSD": {
             "enabled": false,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateUSDModel": {
             "enabled": false,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "USDCreateShadingWorkspace": {
             "enabled": false,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateUSDRender": {
             "enabled": false,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         }
     },
     "publish": {
