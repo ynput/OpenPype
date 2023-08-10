@@ -1,3 +1,5 @@
+"""Utility functions for file sequences.
+"""
 import os
 import re
 from openpype.lib import Logger
@@ -86,8 +88,8 @@ def get_representation_with_expected_files(
     context_data,
     file_ext,
     output_dir,
-    first_frame,
-    last_frame,
+    frame_start,
+    frame_end,
     collected_file_frames,
     colorspace=None,
     log=None
@@ -99,8 +101,8 @@ def get_representation_with_expected_files(
         context_data (dict[str, Any]): publishing context data
         file_ext (str): file extension
         output_dir (str): output directory
-        first_frame (int): first frame
-        last_frame (int): last frame
+        frame_start (int): first frame
+        frame_end (int): last frame
         collected_file_frames (list[str]): collected file frames
 
     Returns:
@@ -116,7 +118,7 @@ def get_representation_with_expected_files(
     }
 
     frame_start_str = frames.get_frame_start_str(
-        first_frame, last_frame)
+        frame_start, frame_end)
 
     representation['frameStart'] = frame_start_str
 
@@ -127,8 +129,8 @@ def get_representation_with_expected_files(
         collected_file_frames = \
             add_slate_frame_to_collected_frames(
                 collected_file_frames,
-                first_frame,
-                last_frame
+                frame_start,
+                frame_end
             )
 
     if len(collected_file_frames) == 1:
@@ -149,28 +151,28 @@ def get_representation_with_expected_files(
 
 def add_slate_frame_to_collected_frames(
     collected_file_frames,
-    first_frame,
-    last_frame
+    frame_start,
+    frame_end
 ):
     """Add slate frame to collected frames.
 
     Args:
         collected_file_frames (list[str]): collected file frames
-        first_frame (int): first frame
-        last_frame (int): last frame
+        frame_start (int): first frame
+        frame_end (int): last frame
 
     Returns:
         list[str]: collected file frames
     """
     frame_start_str = frames.get_frame_start_str(
-        first_frame, last_frame)
-    frame_length = int(last_frame - first_frame + 1)
+        frame_start, frame_end)
+    frame_length = int(frame_end - frame_start + 1)
 
     # add slate frame only if it is not already in collected frames
     if frame_length == len(collected_file_frames):
         frame_slate_str = frames.get_frame_start_str(
-            first_frame - 1,
-            last_frame
+            frame_start - 1,
+            frame_end
         )
 
         slate_frame = collected_file_frames[0].replace(

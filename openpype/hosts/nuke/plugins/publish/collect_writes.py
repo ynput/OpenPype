@@ -23,7 +23,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         render_target = instance.data["render_target"]
 
         write_node = self._write_node_helper(instance)
-        first_frame, last_frame = self._get_frame_range(instance)
+        frame_start, frame_end = self._get_frame_range(instance)
 
         if write_node is None:
             self.log.warning(
@@ -38,11 +38,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         if render_target == "frames":
             self._set_representation_with_existing_files(
-                instance, first_frame, last_frame, colorspace)
+                instance, frame_start, frame_end, colorspace)
 
         elif render_target == "frames_farm":
-            collected_file_frames = self._set_representation_with_existing_files(
-                instance, first_frame, last_frame, colorspace)
+            collected_file_frames = \
+                self._set_representation_with_existing_files(
+                    instance, frame_start, frame_end, colorspace)
 
             self._set_expected_files(instance, collected_file_frames)
 
@@ -53,21 +54,21 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         # set additional instance data
         self._set_additional_instance_data(
-            instance, render_target, first_frame, last_frame, colorspace)
+            instance, render_target, frame_start, frame_end, colorspace)
 
     def _set_representation_with_existing_files(
         self,
         instance,
-        first_frame,
-        last_frame,
+        frame_start,
+        frame_end,
         colorspace
     ):
         """Set existing files data to instance data.
 
         Args:
             instance (pyblish.api.Instance): pyblish instance
-            first_frame (int): first frame
-            last_frame (int): last frame
+            frame_start (int): first frame
+            frame_end (int): last frame
             colorspace (str): colorspace
 
         Returns:
@@ -75,10 +76,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         """
 
         collected_file_frames = self._get_collected_frames(
-            instance, first_frame, last_frame, )
+            instance, frame_start, frame_end, )
 
         representation = self._get_existing_frames_representation(
-            instance, instance, first_frame, collected_file_frames, colorspace)
+            instance, frame_start, frame_end,
+            collected_file_frames, colorspace
+        )
 
         instance.data["representations"].append(representation)
 
@@ -108,32 +111,32 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             instance (pyblish.api.Instance): pyblish instance
 
         Returns:
-            tuple: first_frame, last_frame
+            tuple: frame_start, frame_end
         """
 
         write_node = self._write_node_helper(instance)
 
         # Get frame range from workfile
-        first_frame = int(nuke.root()["first_frame"].getValue())
-        last_frame = int(nuke.root()["last_frame"].getValue())
+        frame_start = int(nuke.root()["first_frame"].getValue())
+        frame_end = int(nuke.root()["last_frame"].getValue())
 
         # Get frame range from write node if activated
         if write_node["use_limit"].getValue():
-            first_frame = int(write_node["first"].getValue())
-            last_frame = int(write_node["last"].getValue())
+            frame_start = int(write_node["first"].getValue())
+            frame_end = int(write_node["last"].getValue())
 
-        return first_frame, last_frame
+        return frame_start, frame_end
 
     def _set_additional_instance_data(
-        self, instance, render_target, first_frame, last_frame, colorspace
+        self, instance, render_target, frame_start, frame_end, colorspace
     ):
         """Set additional instance data.
 
         Args:
             instance (pyblish.api.Instance): pyblish instance
             render_target (str): render target
-            first_frame (int): first frame
-            last_frame (int): last frame
+            frame_start (int): first frame
+            frame_end (int): last frame
             colorspace (str): colorspace
         """
         family = instance.data["family"]
@@ -176,19 +179,19 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             instance.data.update({
                 "handleStart": handle_start,
                 "handleEnd": handle_end,
-                "frameStart": first_frame + handle_start,
-                "frameEnd": last_frame - handle_end,
-                "frameStartHandle": first_frame,
-                "frameEndHandle": last_frame,
+                "frameStart": frame_start + handle_start,
+                "frameEnd": frame_end - handle_end,
+                "frameStartHandle": frame_start,
+                "frameEndHandle": frame_end,
             })
         else:
             instance.data.update({
                 "handleStart": 0,
                 "handleEnd": 0,
-                "frameStart": first_frame,
-                "frameEnd": last_frame,
-                "frameStartHandle": first_frame,
-                "frameEndHandle": last_frame,
+                "frameStart": frame_start,
+                "frameEnd": frame_end,
+                "frameStartHandle": frame_start,
+                "frameEndHandle": frame_end,
             })
 
         # TODO temporarily set stagingDir as persistent for backward
@@ -236,8 +239,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
     def _get_existing_frames_representation(
         self,
         instance,
-        first_frame,
-        last_frame,
+        frame_start,
+        frame_end,
         collected_file_frames,
         colorspace,
     ):
@@ -245,14 +248,14 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         Args:
             instance (pyblish.api.Instance): pyblish instance
-            first_frame (int): first frame
-            last_frame (int): last frame
+            frame_start (int): first frame
+            frame_end (int): last frame
             collected_file_frames (list[str]): collected file name frames
 
         Returns:
             dict: representation
         """
-        families = set(instance.data["families"] + instance.data["family"])
+        families = set(instance.data["families"] + [instance.data["family"]])
         write_node = self._write_node_helper(instance)
 
         write_file_path = nuke.filename(write_node)
@@ -263,22 +266,23 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         return expected_files.get_representation_with_expected_files(
             families,
+            instance.context.data,
             file_ext,
             output_dir,
-            first_frame,
-            last_frame,
+            frame_start,
+            frame_end,
             collected_file_frames,
             colorspace,
             self.log
         )
 
-    def _get_collected_frames(self, instance, first_frame, last_frame):
+    def _get_collected_frames(self, instance, frame_start, frame_end):
         """Get collected frames.
 
         Args:
             instance (pyblish.api.Instance): pyblish instance
-            first_frame (int): first frame
-            last_frame (int): last frame
+            frame_start (int): first frame
+            frame_end (int): last frame
 
         Returns:
             list[str]: collected file frames
@@ -294,7 +298,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         # list file paths based on input frames
         expected_paths = list(sorted({
             node_file_knob.evaluate(frame)
-            for frame in range(first_frame, last_frame + 1)
+            for frame in range(frame_start, frame_end + 1)
         }))
 
         # convert only to base names

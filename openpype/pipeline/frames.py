@@ -1,26 +1,32 @@
 """Utility functions.
 
 This module contains utility functions dedicated to operations
-
-
 """
-from openpype.pipeline.context_tools import get_current_project_asset
 
 
-def get_frame_start_str(first_frame, last_frame):
+from openpype.lib import Logger
+
+log = Logger.get_logger(__name__)
+
+
+def get_frame_start_str(frame_start, frame_end):
     """Get frame start string.
 
     Args:
-        first_frame (int): first frame
-        last_frame (int): last frame
+        frame_start (int): first frame
+        frame_end (int): last frame
 
     Returns:
         str: frame start string
     """
+    log.debug("frame_start, frame_end: {}, {}".format(frame_start, frame_end))
+    last_frame_str = str(frame_end)
+    max_padding_length = len(last_frame_str)
+    formatting_str = "{{:0>{}}}".format(max_padding_length)
+
+    log.debug("Formatting string: {}".format(formatting_str))
     # convert first frame to string with padding
-    return (
-        "{{:0{}d}}".format(len(str(last_frame)))
-    ).format(first_frame)
+    return formatting_str.format(frame_start)
 
 
 def get_frame_range(asset_name=None, asset_id=None, fields=None):
@@ -35,6 +41,8 @@ def get_frame_range(asset_name=None, asset_id=None, fields=None):
     Returns:
         dict: with frame start, frame end, handle start, handle end.
     """
+    from openpype.pipeline.context_tools import get_current_project_asset
+
     # Set frame start/end
     asset = get_current_project_asset()
     frame_start = asset["data"].get("frameStart")
