@@ -568,9 +568,15 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             col = list(cols[0])
 
         # create subset name `familyTaskSubset_AOV`
-        group_name = 'render{}{}{}{}'.format(
-            task[0].upper(), task[1:],
-            subset[0].upper(), subset[1:])
+        # TODO reactor/remove me
+        family = skeleton["family"]
+        if not subset.startswith(family):
+            group_name = '{}{}{}'.format(
+                family,
+                task.capitalize(),
+                task.capitalize())
+        else:
+            group_name = subset
 
         # if there are multiple cameras, we need to add camera name
         if isinstance(col, (list, tuple)):
