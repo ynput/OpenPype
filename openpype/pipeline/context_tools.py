@@ -21,6 +21,7 @@ from openpype.client import (
 from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
+from openpype.tests.lib import is_in_tests
 
 from .publish.lib import filter_pyblish_plugins
 from .anatomy import Anatomy
@@ -141,6 +142,10 @@ def install_host(host):
         pyblish.api.register_target("remote")
     else:
         pyblish.api.register_target("local")
+
+    if is_in_tests():
+        print("Registering pyblish target: automated")
+        pyblish.api.register_target("automated")
 
     project_name = os.environ.get("AVALON_PROJECT")
     host_name = os.environ.get("AVALON_APP")
