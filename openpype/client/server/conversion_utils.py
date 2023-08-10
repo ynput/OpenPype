@@ -133,7 +133,6 @@ def _get_default_template_name(templates):
 def _template_replacements_to_v3(template):
     return (
         template
-        .replace("{folder[name]}", "{asset}")
         .replace("{product[name]}", "{subset}")
         .replace("{product[type]}", "{family}")
     )
@@ -715,7 +714,6 @@ def convert_v4_representation_to_v3(representation):
     if "template" in output_data:
         output_data["template"] = (
             output_data["template"]
-            .replace("{folder[name]}", "{asset}")
             .replace("{product[name]}", "{subset}")
             .replace("{product[type]}", "{family}")
         )
@@ -977,7 +975,6 @@ def convert_create_representation_to_v4(representation, con):
     representation_data = representation["data"]
     representation_data["template"] = (
         representation_data["template"]
-        .replace("{asset}", "{folder[name]}")
         .replace("{subset}", "{product[name]}")
         .replace("{family}", "{product[type]}")
     )
@@ -1266,7 +1263,6 @@ def convert_update_representation_to_v4(
     if "template" in attribs:
         attribs["template"] = (
             attribs["template"]
-            .replace("{asset}", "{folder[name]}")
             .replace("{family}", "{product[type]}")
             .replace("{subset}", "{product[name]}")
         )
