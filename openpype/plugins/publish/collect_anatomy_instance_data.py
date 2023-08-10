@@ -188,16 +188,13 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         project_task_types = project_doc["config"]["tasks"]
 
         for instance in context:
-            if self.follow_workfile_version:
-                version_number = context.data('version')
-            else:
-                version_number = instance.data.get("version")
-
             anatomy_updates = {
                 "asset": instance.data["asset"],
+                "folder": {
+                    "name": instance.data["asset"],
+                },
                 "family": instance.data["family"],
                 "subset": instance.data["subset"],
-                "version": version_number
             }
 
             # Hierarchy
@@ -234,6 +231,11 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 }
 
             # Define version
+            if self.follow_workfile_version:
+                version_number = context.data('version')
+            else:
+                version_number = instance.data.get("version")
+
             # use latest version (+1) if already any exist
             if version_number is None:
                 latest_version = instance.data["latestVersion"]
@@ -250,6 +252,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     family=instance.data["family"],
                     subset=instance.data["subset"]
                 )
+            anatomy_updates["version"] = version_number
 
             # Additional data
             resolution_width = instance.data.get("resolutionWidth")
