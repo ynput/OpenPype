@@ -1,12 +1,10 @@
-import os
-import re
 import inspect
 from abc import ABCMeta
-from pprint import pformat
 import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
 from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
 from openpype.lib import BoolDef
+from openpype.pipeline import expected_files
 
 from .lib import (
     load_help_content_from_plugin,
@@ -16,9 +14,8 @@ from .lib import (
 )
 
 from openpype.pipeline.colorspace import (
-    get_imageio_colorspace_from_filepath,
-    get_imageio_config,
-    get_imageio_file_rules
+    get_colorspace_settings_from_publish_context,
+    set_colorspace_data_to_representation
 )
 
 
@@ -270,88 +267,6 @@ class RepairContextAction(pyblish.api.Action):
             plugin.repair(context)
 
 
-class Collector(pyblish.api.InstancePlugin):
-
-    order = pyblish.api.CollectorOrder
-
-    def generate_expected_files(self, instance, path, only_existing=False):
-        """Generate expected files from path
-
-        Args:
-            instance (pyblish.api.Instance): Instance to generate
-                                             expected files for
-            path (str): Path to generate expected files from
-            only_existing Optional[bool]: Ensure that files exists.
-
-        Returns:
-            Any[list, str]: List of expected files or path if single file
-        """
-
-        dirpath = os.path.dirname(path)
-        filename = os.path.basename(path)
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
-
-        formattable_string = self.convert_filename_to_formattable_string(
-            filename)
-
-        if not formattable_string:
-            return path
-
-        expected_files = []
-        for frame in range(int(start), (int(end) + 1)):
-            frame_file_path = os.path.join(
-                dirpath, formattable_string.format(frame)
-            )
-            # normalize path
-            frame_file_path = os.path.normpath(frame_file_path)
-
-            # make sure file exists if ensure_exists is enabled
-            if only_existing and not os.path.exists(frame_file_path):
-                continue
-
-            # add to expected files
-            expected_files.append(
-                # add normalized path
-                frame_file_path
-            )
-
-        return expected_files
-
-    def convert_filename_to_formattable_string(self, filename):
-        """Convert filename to formattable string
-
-        Args:
-            filename (str): Filename to convert
-
-        Returns:
-            Any[str, None]: Formattable string or None if not possible
-                            to convert
-        """
-        new_filename = None
-
-        if "#" in filename:
-            # use regex to convert #### to {:0>4}
-            def replace(match):
-                return "{{:0>{}}}".format(len(match.group()))
-            new_filename = re.sub("#+", replace, filename)
-
-        elif "%" in filename:
-            # use regex to convert %04d to {:0>4}
-            def replace(match):
-                return "{{:0>{}}}".format(match.group()[1:])
-            new_filename = re.sub("%\\d+d", replace, filename)
-
-        return new_filename
-
-    def set_expected_files(self, instance, path, only_existing=False):
-        """Create expected files in instance data"""
-
-        expected_files = self.generate_expected_files(
-            instance, path, only_existing)
-        instance.data["expectedFiles"] = expected_files
-
-
 class Extractor(pyblish.api.InstancePlugin):
     """Extractor base class.
 
@@ -394,9 +309,8 @@ class ColormanagedPyblishPluginMixin(object):
         ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
     )
 
-    @staticmethod
-    def get_colorspace_settings(context):
-        """Returns solved settings for the host context.
+    def get_colorspace_settings(self, context):
+        """[Deprecated] Returns solved settings for the host context.
 
         Args:
             context (publish.Context): publishing context
@@ -404,33 +318,12 @@ class ColormanagedPyblishPluginMixin(object):
         Returns:
             tuple | bool: config, file rules or None
         """
-        if "imageioSettings" in context.data:
-            return context.data["imageioSettings"]
-
-        project_name = context.data["projectName"]
-        host_name = context.data["hostName"]
-        anatomy_data = context.data["anatomyData"]
-        project_settings_ = context.data["project_settings"]
-
-        config_data = get_imageio_config(
-            project_name, host_name,
-            project_settings=project_settings_,
-            anatomy_data=anatomy_data
+        self.log.warning(
+            "'get_colorspace_settings' is deprecated, "
+            "use 'get_colorspace_settings_from_publish_context' instead"
         )
-
-        # in case host color management is not enabled
-        if not config_data:
-            return None
-
-        file_rules = get_imageio_file_rules(
-            project_name, host_name,
-            project_settings=project_settings_
-        )
-
-        # caching settings for future instance processing
-        context.data["imageioSettings"] = (config_data, file_rules)
-
-        return config_data, file_rules
+        # TODO: for backward compatibility, remove in future
+        return get_colorspace_settings_from_publish_context(context.data)
 
     def set_representation_colorspace(
         self, representation, context,
@@ -464,64 +357,61 @@ class ColormanagedPyblishPluginMixin(object):
             ```
 
         """
-        ext = representation["ext"]
-        # check extension
-        self.log.debug("__ ext: `{}`".format(ext))
-
-        # check if ext in lower case is in self.allowed_ext
-        if ext.lstrip(".").lower() not in self.allowed_ext:
-            self.log.debug(
-                "Extension '{}' is not in allowed extensions.".format(ext)
-            )
-            return
-
-        if colorspace_settings is None:
-            colorspace_settings = self.get_colorspace_settings(context)
-
-        # in case host color management is not enabled
-        if not colorspace_settings:
-            self.log.warning("Host's colorspace management is disabled.")
-            return
-
-        # unpack colorspace settings
-        config_data, file_rules = colorspace_settings
-
-        if not config_data:
-            # warn in case no colorspace path was defined
-            self.log.warning("No colorspace management was defined")
-            return
-
-        self.log.debug("Config data is: `{}`".format(config_data))
-
-        project_name = context.data["projectName"]
-        host_name = context.data["hostName"]
-        project_settings = context.data["project_settings"]
-
-        # get one filename
-        filename = representation["files"]
-        if isinstance(filename, list):
-            filename = filename[0]
-
-        self.log.debug("__ filename: `{}`".format(filename))
-
-        # get matching colorspace from rules
-        colorspace = colorspace or get_imageio_colorspace_from_filepath(
-            filename, host_name, project_name,
-            config_data=config_data,
-            file_rules=file_rules,
-            project_settings=project_settings
+        # using cached settings if available
+        set_colorspace_data_to_representation(
+            representation, context.data,
+            colorspace,
+            colorspace_settings,
+            log=self.log
         )
-        self.log.debug("__ colorspace: `{}`".format(colorspace))
 
-        # infuse data to representation
-        if colorspace:
-            colorspace_data = {
-                "colorspace": colorspace,
-                "config": config_data
-            }
 
-            # update data key
-            representation["colorspaceData"] = colorspace_data
+class FarmPluginMixin:
+    """Mixin for farm plugins.
 
-            self.log.debug("__ colorspace_data: `{}`".format(
-                pformat(colorspace_data)))
+    This mixin provides methods for farm plugins to use.
+    """
+
+    def set_expected_files(
+        self,
+        instance,
+        frame_start,
+        frame_end,
+        path,
+        only_existing=False
+    ):
+        """Create expected files in instance data
+
+        Args:
+            instance (pyblish.api.Instance): Instance to set expected files on
+            frame_start (int): Start frame of the sequence
+            frame_end (int): End frame of the sequence
+            path (str): Path to generate expected files from
+            only_existing Optional[bool]: Ensure that files exists.
+
+        Returns:
+            None: sets `expectedFiles` key on instance data
+        """
+
+        expected_files_list = expected_files.generate_expected_files(
+            frame_start, frame_end, path, only_existing)
+        instance.data["expectedFiles"] = expected_files_list
+
+    def add_farm_instance_data(self, instance):
+        """Add farm publishing related instance data.
+
+        Args:
+            instance (pyblish.api.Instance): pyblish instance
+        """
+
+        # make sure rendered sequence on farm will
+        # be used for extract review
+        if not instance.data.get("review"):
+            instance.data["useSequenceForReview"] = False
+
+        # Farm rendering
+        instance.data.update({
+            "transfer": False,
+            "farm": True  # to skip integrate
+        })
+        self.log.info("Farm rendering ON ...")

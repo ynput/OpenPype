@@ -18,9 +18,9 @@ from .publish_plugins import (
     RepairAction,
     RepairContextAction,
 
-    Collector,
     Extractor,
-    ColormanagedPyblishPluginMixin
+    ColormanagedPyblishPluginMixin,
+    FarmPluginMixin,
 )
 
 from .lib import (
@@ -68,9 +68,9 @@ __all__ = (
     "RepairAction",
     "RepairContextAction",
 
-    "Collector",
     "Extractor",
     "ColormanagedPyblishPluginMixin",
+    "FarmPluginMixin",
 
     "get_publish_template_name",
 
