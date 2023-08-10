@@ -407,8 +407,8 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 # until it's been saved/persisted at least once.
                 project_name = self.create_context.get_current_project_name()
                 instance_data = {
-                    "asset": self.create_context.get_current_asset_name,
-                    "task": self.create_context.get_current_task_name,
+                    "asset": self.create_context.get_current_asset_name(),
+                    "task": self.create_context.get_current_task_name(),
                     "variant": layer.name(),
                 }
                 asset_doc = get_asset_by_name(project_name,
