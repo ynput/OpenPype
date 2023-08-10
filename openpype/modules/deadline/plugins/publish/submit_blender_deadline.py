@@ -175,13 +175,6 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         instance.data["outputDir"] = output_dir
         instance.data["toBeRenderedOn"] = "deadline"
 
-        file = os.path.basename(bpy.context.scene.render.filepath)
-        bpy.context.scene.render.filepath = os.path.join(output_dir, file)
-        bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
-
-        self.log.debug(f"expected_files[0]: {expected_files[0]}")
-        self.log.debug(f"Output dir: {output_dir}")
-
         payload = self.assemble_payload()
         return self.submit(payload)
 
