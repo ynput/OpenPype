@@ -23,7 +23,9 @@ class OxModelAbcLoader(load.LoaderPlugin):
         rt.AlembicImport.CustomAttributes = True
         rt.AlembicImport.UVs = True
         rt.AlembicImport.VertexColors = True
-        rt.importFile(file_path, rt.name("noPrompt"))
+        rt.importFile(
+            file_path, rt.name("noPrompt"),
+            using=rt.Ornatrix_Alembic_Importer)
         scene_object_after = [obj for obj in rt.rootNode.Children]
         for scene_object in scene_object_before:
             scene_object_after = scene_object_after.remove(scene_object)

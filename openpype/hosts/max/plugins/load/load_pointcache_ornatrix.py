@@ -21,7 +21,9 @@ class OxAbcLoader(load.LoaderPlugin):
         scene_object_before = [obj for obj in rt.rootNode.Children]
         rt.AlembicImport.ImportToRoot = True
         rt.AlembicImport.CustomAttributes = True
-        rt.importFile(file_path, rt.name("noPrompt"))
+        rt.importFile(
+            file_path, rt.name("noPrompt"),
+            using=rt.Ornatrix_Alembic_Importer)
         scene_object_after = [obj for obj in rt.rootNode.Children]
         for scene_object in scene_object_before:
             scene_object_after = scene_object_after.remove(scene_object)
