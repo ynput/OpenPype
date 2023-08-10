@@ -193,29 +193,6 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             else:
                 version_number = instance.data.get("version")
 
-            # use latest version (+1) if already any exist
-            if version_number is None:
-                latest_version = instance.data["latestVersion"]
-                if latest_version is not None:
-                    version_number = int(latest_version) + 1
-
-            # If version is not specified for instance or context
-            if version_number is None:
-                task_name = instance.data.get("task", "")
-                task_type = None
-                if task_name:
-                    asset_tasks = instance.data["assetEntity"]["data"]["tasks"]
-                    task_type = asset_tasks.get(task_name, {}).get("type")
-
-                version_number = get_versioning_start(
-                    context.data["projectName"],
-                    instance.context.data["hostName"],
-                    task_name=task_name,
-                    task_type=task_type,
-                    family=instance.data["family"],
-                    subset=instance.data["subset"]
-                )
-
             anatomy_updates = {
                 "asset": instance.data["asset"],
                 "family": instance.data["family"],
@@ -240,6 +217,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 anatomy_updates["parent"] = parent_name
 
             # Task
+            task_type = None
             task_name = instance.data.get("task")
             if task_name:
                 asset_tasks = asset_doc["data"]["tasks"]
@@ -254,6 +232,24 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     "type": task_type,
                     "short": task_code
                 }
+
+            # Define version
+            # use latest version (+1) if already any exist
+            if version_number is None:
+                latest_version = instance.data["latestVersion"]
+                if latest_version is not None:
+                    version_number = int(latest_version) + 1
+
+            # If version is not specified for instance or context
+            if version_number is None:
+                version_number = get_versioning_start(
+                    context.data["projectName"],
+                    instance.context.data["hostName"],
+                    task_name=task_name,
+                    task_type=task_type,
+                    family=instance.data["family"],
+                    subset=instance.data["subset"]
+                )
 
             # Additional data
             resolution_width = instance.data.get("resolutionWidth")
