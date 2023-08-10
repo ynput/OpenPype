@@ -235,9 +235,10 @@ class BlenderCreator(Creator):
         collection = bpy.data.collections.new(name=subset_name)
         bpy.context.scene.collection.children.link(collection)
 
-        instance_node = {}
-        for key, value in collection.items():
-            instance_node[key] = value
+        collection["instance_node"] = instance_node = {
+            "name": collection.name,
+            "datablock": collection,
+        }
 
         instance_data["instance_node"] = instance_node
 
