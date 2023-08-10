@@ -11,10 +11,8 @@ Provides:
 """
 
 import os
-import sys
 import collections
 
-import six
 import pyblish.api
 import clique
 
