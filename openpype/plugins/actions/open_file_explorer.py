@@ -38,6 +38,7 @@ class OpenTaskPath(LauncherAction):
         anatomy = Anatomy(project_name)
         workdir = anatomy.templates_obj["work"]["folder"].format(data)
 
+        # Remove any potential unformatted parts of the path
         valid_workdir = workdir.split("{", 1)[0]
 
         # Path is not filled
