@@ -35,7 +35,6 @@ class ExtractCameraAlembic(publish.Extractor):
 
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
-        camera = cameras[0]
 
         # Define extract output file path
         dir_path = self.staging_dir(instance)
@@ -64,9 +63,10 @@ class ExtractCameraAlembic(publish.Extractor):
 
                 # if baked, drop the camera hierarchy to maintain
                 # clean output and backwards compatibility
-                camera_root = cmds.listRelatives(
-                    camera, parent=True, fullPath=True)[0]
-                job_str += ' -root {0}'.format(camera_root)
+                camera_roots = cmds.listRelatives(
+                    cameras, parent=True, fullPath=True)
+                for camera_root in camera_roots:
+                    job_str += ' -root {0}'.format(camera_root)
 
                 for member in members:
                     descendants = cmds.listRelatives(member,
