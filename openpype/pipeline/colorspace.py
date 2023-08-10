@@ -13,12 +13,17 @@ from openpype.lib import (
     Logger
 )
 from openpype.pipeline import Anatomy
+from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
+
 
 log = Logger.get_logger(__name__)
 
 
 class CashedData:
     remapping = None
+    allowed_ext = {
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    }
 
 
 @contextlib.contextmanager
@@ -601,3 +606,133 @@ def _get_imageio_settings(project_settings, host_name):
     imageio_host = project_settings.get(host_name, {}).get("imageio", {})
 
     return imageio_global, imageio_host
+
+
+def get_colorspace_settings_from_publish_context(context_data):
+    """Returns solved settings for the host context.
+
+    Args:
+        context_data (publish.Context.data): publishing context data
+
+    Returns:
+        tuple | bool: config, file rules or None
+    """
+    if "imageioSettings" in context_data:
+        return context_data["imageioSettings"]
+
+    project_name = context_data["projectName"]
+    host_name = context_data["hostName"]
+    anatomy_data = context_data["anatomyData"]
+    project_settings_ = context_data["project_settings"]
+
+    config_data = get_imageio_config(
+        project_name, host_name,
+        project_settings=project_settings_,
+        anatomy_data=anatomy_data
+    )
+
+    # in case host color management is not enabled
+    if not config_data:
+        return None
+
+    file_rules = get_imageio_file_rules(
+        project_name, host_name,
+        project_settings=project_settings_
+    )
+
+    # caching settings for future instance processing
+    context_data["imageioSettings"] = (config_data, file_rules)
+
+    return config_data, file_rules
+
+
+def set_colorspace_data_to_representation(
+    representation, context_data,
+    colorspace=None,
+    colorspace_settings=None,
+    log=None
+):
+    """Sets colorspace data to representation.
+
+    Args:
+        representation (dict): publishing representation
+        context_data (publish.Context.data): publishing context data
+        config_data (dict): host resolved config data
+        file_rules (dict): host resolved file rules data
+        colorspace (str, optional): colorspace name. Defaults to None.
+        colorspace_settings (tuple[dict, dict], optional):
+            Settings for config_data and file_rules.
+            Defaults to None.
+        log (logging.Logger, optional): logger instance. Defaults to None.
+
+    Example:
+        ```
+        {
+            # for other publish plugins and loaders
+            "colorspace": "linear",
+            "config": {
+                # for future references in case need
+                "path": "/abs/path/to/config.ocio",
+                # for other plugins within remote publish cases
+                "template": "{project[root]}/path/to/config.ocio"
+            }
+        }
+        ```
+
+    """
+    log = log or Logger.get_logger(__name__)
+
+    file_ext = representation["ext"]
+
+    # check if `file_ext` in lower case is in CashedData.allowed_ext
+    if file_ext.lstrip(".").lower() not in CashedData.allowed_ext:
+        log.debug(
+            "Extension '{}' is not in allowed extensions.".format(file_ext)
+        )
+        return
+
+    if colorspace_settings is None:
+        colorspace_settings = get_colorspace_settings_from_publish_context(
+            context_data)
+
+    # in case host color management is not enabled
+    if not colorspace_settings:
+        log.warning("Host's colorspace management is disabled.")
+        return
+
+    # unpack colorspace settings
+    config_data, file_rules = colorspace_settings
+
+    if not config_data:
+        # warn in case no colorspace path was defined
+        log.warning("No colorspace management was defined")
+        return
+
+    log.debug("Config data is: `{}`".format(config_data))
+
+    project_name = context_data["projectName"]
+    host_name = context_data["hostName"]
+    project_settings = context_data["project_settings"]
+
+    # get one filename
+    filename = representation["files"]
+    if isinstance(filename, list):
+        filename = filename[0]
+
+    # get matching colorspace from rules
+    colorspace = colorspace or get_imageio_colorspace_from_filepath(
+        filename, host_name, project_name,
+        config_data=config_data,
+        file_rules=file_rules,
+        project_settings=project_settings
+    )
+
+    # infuse data to representation
+    if colorspace:
+        colorspace_data = {
+            "colorspace": colorspace,
+            "config": config_data
+        }
+
+        # update data key
+        representation["colorspaceData"] = colorspace_data
