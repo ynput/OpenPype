@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 from pprint import pformat
 
 import pyblish.api
@@ -7,7 +8,7 @@ import pyblish.api
 from openpype.lib import (
     path_to_subprocess_arg,
     run_subprocess,
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     get_ffprobe_data,
     get_ffprobe_streams,
     get_ffmpeg_codec_args,
@@ -47,8 +48,6 @@ class ExtractReviewSlate(publish.Extractor):
 
         self.log.info("_ slates_data: {}".format(pformat(slates_data)))
 
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
-
         if "reviewToWidth" in inst_data:
             use_legacy_code = True
         else:
@@ -86,8 +85,11 @@ class ExtractReviewSlate(publish.Extractor):
                 input_width,
                 input_height,
                 input_timecode,
-                input_frame_rate
+                input_frame_rate,
+                input_pixel_aspect
             ) = self._get_video_metadata(streams)
+            if input_pixel_aspect:
+                pixel_aspect = input_pixel_aspect
 
             # Raise exception of any stream didn't define input resolution
             if input_width is None:
@@ -260,7 +262,7 @@ class ExtractReviewSlate(publish.Extractor):
             _remove_at_end.append(slate_v_path)
 
             slate_args = [
-                path_to_subprocess_arg(ffmpeg_path),
+                subprocess.list2cmdline(get_ffmpeg_tool_args("ffmpeg")),
                 " ".join(input_args),
                 " ".join(output_args)
             ]
@@ -281,7 +283,6 @@ class ExtractReviewSlate(publish.Extractor):
                     os.path.splitext(slate_v_path))
                 _remove_at_end.append(slate_silent_path)
                 self._create_silent_slate(
-                    ffmpeg_path,
                     slate_v_path,
                     slate_silent_path,
                     audio_codec,
@@ -309,12 +310,12 @@ class ExtractReviewSlate(publish.Extractor):
                     "[0:v] [1:v] concat=n=2:v=1:a=0 [v]",
                     "-map", '[v]'
                 ]
-            concat_args = [
-                ffmpeg_path,
+            concat_args = get_ffmpeg_tool_args(
+                "ffmpeg",
                 "-y",
                 "-i", slate_v_path,
                 "-i", input_path,
-            ]
+            )
             concat_args.extend(fmap)
             if offset_timecode:
                 concat_args.extend(["-timecode", offset_timecode])
@@ -421,6 +422,7 @@ class ExtractReviewSlate(publish.Extractor):
         input_width = None
         input_height = None
         input_frame_rate = None
+        input_pixel_aspect = None
         for stream in streams:
             if stream.get("codec_type") != "video":
                 continue
@@ -438,6 +440,16 @@ class ExtractReviewSlate(publish.Extractor):
             input_width = width
             input_height = height
 
+            input_pixel_aspect = stream.get("sample_aspect_ratio")
+            if input_pixel_aspect is not None:
+                try:
+                    input_pixel_aspect = float(
+                        eval(str(input_pixel_aspect).replace(':', '/')))
+                except Exception:
+                    self.log.debug(
+                        "__Converting pixel aspect to float failed: {}".format(
+                            input_pixel_aspect))
+
             tags = stream.get("tags") or {}
             input_timecode = tags.get("timecode") or ""
 
@@ -448,7 +460,8 @@ class ExtractReviewSlate(publish.Extractor):
             input_width,
             input_height,
             input_timecode,
-            input_frame_rate
+            input_frame_rate,
+            input_pixel_aspect
         )
 
     def _get_audio_metadata(self, streams):
@@ -490,7 +503,6 @@ class ExtractReviewSlate(publish.Extractor):
 
     def _create_silent_slate(
         self,
-        ffmpeg_path,
         src_path,
         dst_path,
         audio_codec,
@@ -515,8 +527,8 @@ class ExtractReviewSlate(publish.Extractor):
             one_frame_duration = str(int(one_frame_duration)) + "us"
         self.log.debug("One frame duration is {}".format(one_frame_duration))
 
-        slate_silent_args = [
-            ffmpeg_path,
+        slate_silent_args = get_ffmpeg_tool_args(
+            "ffmpeg",
             "-i", src_path,
             "-f", "lavfi", "-i",
             "anullsrc=r={}:cl={}:d={}".format(
@@ -531,7 +543,7 @@ class ExtractReviewSlate(publish.Extractor):
             "-shortest",
             "-y",
             dst_path
-        ]
+        )
         # run slate generation subprocess
         self.log.debug("Silent Slate Executing: {}".format(
             " ".join(slate_silent_args)

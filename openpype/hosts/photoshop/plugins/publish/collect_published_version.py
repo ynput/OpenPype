@@ -27,7 +27,7 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.190
     label = "Collect published version"
     hosts = ["photoshop"]
-    targets = ["remotepublish"]
+    targets = ["automated"]
 
     def process(self, context):
         workfile_subset_name = None

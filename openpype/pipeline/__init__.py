@@ -13,6 +13,7 @@ from .create import (
     BaseCreator,
     Creator,
     AutoCreator,
+    HiddenCreator,
     CreatedInstance,
     CreatorError,
 
@@ -114,6 +115,7 @@ __all__ = (
     "BaseCreator",
     "Creator",
     "AutoCreator",
+    "HiddenCreator",
     "CreatedInstance",
     "CreatorError",
 

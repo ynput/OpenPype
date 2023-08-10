@@ -1,5 +1,5 @@
 from openpype.client import get_project, get_asset_by_name
-from openpype.lib import (
+from openpype.lib.applications import (
     PreLaunchHook,
     EnvironmentPrepData,
     prepare_app_environments,
@@ -10,6 +10,7 @@ from openpype.pipeline import Anatomy
 
 class GlobalHostDataHook(PreLaunchHook):
     order = -100
+    launch_types = set()
 
     def execute(self):
         """Prepare global objects to `data` that will be used for sure."""

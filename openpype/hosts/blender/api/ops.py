@@ -20,6 +20,7 @@ from openpype.pipeline import get_current_asset_name, get_current_task_name
 from openpype.tools.utils import host_tools
 
 from .workio import OpenFileCacher
+from . import pipeline
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
@@ -344,6 +345,26 @@ class LaunchWorkFiles(LaunchQtApp):
         self._window.refresh()
 
 
+class SetFrameRange(bpy.types.Operator):
+    bl_idname = "wm.ayon_set_frame_range"
+    bl_label = "Set Frame Range"
+
+    def execute(self, context):
+        data = pipeline.get_asset_data()
+        pipeline.set_frame_range(data)
+        return {"FINISHED"}
+
+
+class SetResolution(bpy.types.Operator):
+    bl_idname = "wm.ayon_set_resolution"
+    bl_label = "Set Resolution"
+
+    def execute(self, context):
+        data = pipeline.get_asset_data()
+        pipeline.set_resolution(data)
+        return {"FINISHED"}
+
+
 class TOPBAR_MT_avalon(bpy.types.Menu):
     """Avalon menu."""
 
@@ -381,9 +402,11 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(LaunchManager.bl_idname, text="Manage...")
         layout.operator(LaunchLibrary.bl_idname, text="Library...")
         layout.separator()
+        layout.operator(SetFrameRange.bl_idname, text="Set Frame Range")
+        layout.operator(SetResolution.bl_idname, text="Set Resolution")
+        layout.separator()
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
-        # TODO (jasper): maybe add 'Reload Pipeline', 'Set Frame Range' and
-        #                'Set Resolution'?
+        # TODO (jasper): maybe add 'Reload Pipeline'
 
 
 def draw_avalon_menu(self, context):
@@ -399,6 +422,8 @@ classes = [
     LaunchManager,
     LaunchLibrary,
     LaunchWorkFiles,
+    SetFrameRange,
+    SetResolution,
     TOPBAR_MT_avalon,
 ]
 
