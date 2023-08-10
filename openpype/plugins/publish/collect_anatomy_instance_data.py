@@ -190,6 +190,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         for instance in context:
             anatomy_updates = {
                 "asset": instance.data["asset"],
+                "folder": {
+                    "name": instance.data["asset"],
+                },
                 "family": instance.data["family"],
                 "subset": instance.data["subset"],
             }
