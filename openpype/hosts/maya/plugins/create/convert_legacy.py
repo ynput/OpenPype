@@ -139,7 +139,6 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
             # "rendering" family being converted to "renderlayer" family)
             original_data["family"] = creator.family
 
-
             # recreate subset name as without it would be
             # `renderingMain` vs correct `renderMain`
             project_name = get_current_project_name()

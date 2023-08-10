@@ -22,8 +22,6 @@ from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
     get_representation_path,
-
-    legacy_io,
 )
 from openpype.pipeline.load import LoadError
 from openpype.client import get_asset_by_name
