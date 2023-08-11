@@ -96,7 +96,8 @@ class LoadImage(load.LoaderPlugin):
 
         file = file.replace("\\", "/")
 
-        repr_cont = context["representation"]["context"]
+        representation = context["representation"]
+        repr_cont = representation["context"]
         frame = repr_cont.get("frame")
         if frame:
             padding = len(frame)
@@ -104,16 +105,7 @@ class LoadImage(load.LoaderPlugin):
                 frame,
                 format(frame_number, "0{}".format(padding)))
 
-        name_data = {
-            "asset": repr_cont["asset"],
-            "subset": repr_cont["subset"],
-            "representation": context["representation"]["name"],
-            "ext": repr_cont["representation"],
-            "id": context["representation"]["_id"],
-            "class_name": self.__class__.__name__
-        }
-
-        read_name = self.node_name_template.format(**name_data)
+        read_name = self._get_node_name(representation)
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
