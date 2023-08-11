@@ -261,7 +261,7 @@ ___
 <details>
 <summary>Enhancement: Houdini Update pointcache labels <a href="https://github.com/ynput/OpenPype/pull/5373">#5373</a></summary>
 
-To me it's logical to find pointcaches types listed one after another, but they were named differentlySo, I made this PR to update their labels 
+To me it's logical to find pointcaches types listed one after another, but they were named differentlySo, I made this PR to update their labels
 
 
 ___
@@ -386,13 +386,16 @@ ___
 
 `assemblies` in `cmds.ls` does not seem to work;
 ```python
+
 from maya import cmds
 
 
 content_instance = ['|group2|pSphere1_GEO', '|group2|pSphere1_GEO|pSphere1_GEOShape', '|group1|pSphere1_GEO', '|group1|pSphere1_GEO|pSphere1_GEOShape']
 assemblies = cmds.ls(content_instance, assemblies=True, long=True)
 print(assemblies)
-```Fixing with string splitting instead.
+```
+
+Fixing with string splitting instead.
 
 
 ___
@@ -653,7 +656,7 @@ ___
 <details>
 <summary>Bugfix: Houdini abc validator error message <a href="https://github.com/ynput/OpenPype/pull/5386">#5386</a></summary>
 
-When ABC path validator fails, it prints node objects not node paths or namesThis bug happened because of updating `get_invalid` method to return nodes instead of node pathsBeforeAfter 
+When ABC path validator fails, it prints node objects not node paths or namesThis bug happened because of updating `get_invalid` method to return nodes instead of node pathsBeforeAfter
 
 
 ___
@@ -1189,7 +1192,7 @@ ___
 
 Add functional base for API Documentation using Sphinx and AutoAPI.
 
-After unsuccessful #2512, #834 and #210 this is yet another try. But this time without ambition to solve the whole issue. This is making Shinx script to work and nothing else. Any changes and improvements in API docs should be made in subsequent PRs. 
+After unsuccessful #2512, #834 and #210 this is yet another try. But this time without ambition to solve the whole issue. This is making Shinx script to work and nothing else. Any changes and improvements in API docs should be made in subsequent PRs.
 
 ## How to use it
 
@@ -1200,7 +1203,7 @@ cd .\docs
 make.bat html
 ```
 
-or 
+or
 
 ```sh
 cd ./docs
@@ -1215,7 +1218,7 @@ During the build you'll see tons of red errors that are pointing to our issues:
     Invalid import are usually wrong relative imports (too deep) or circular imports.
 
 2) **Invalid doc-strings**
-   Doc-strings to be processed into documentation needs to follow some syntax - this can be checked by running 
+   Doc-strings to be processed into documentation needs to follow some syntax - this can be checked by running
    `pydocstyle` that is already included with OpenPype
 3) **Invalid markdown/rst files**
     md/rst files can be included inside rst files using `.. include::` directive. But they have to be properly formatted.
@@ -2402,11 +2405,11 @@ ___
 <details>
 <summary>Houdini: Redshift ROP image format bug <a href="https://github.com/ynput/OpenPype/pull/5218">#5218</a></summary>
 
-Problem : 
-"RS_outputFileFormat" parm value was missing 
-and there were more "image_format" than redshift rop supports 
+Problem :
+"RS_outputFileFormat" parm value was missing
+and there were more "image_format" than redshift rop supports
 
-Fix: 
+Fix:
 1)  removed unnecessary formats from `image_format_enum`
 2) add the selected format value to `RS_outputFileFormat`
 ___
@@ -4583,7 +4586,7 @@ ___
 <details>
 <summary>Maya Load References - Add Display Handle Setting <a href="https://github.com/ynput/OpenPype/pull/4904">#4904</a></summary>
 
-When we load a reference in Maya using OpenPype loader, display handle is checked by default and prevent us to select easily the object in the viewport. I understand that some productions like to keep this option, so I propose to add display handle to the reference loader settings. 
+When we load a reference in Maya using OpenPype loader, display handle is checked by default and prevent us to select easily the object in the viewport. I understand that some productions like to keep this option, so I propose to add display handle to the reference loader settings.
 
 
 ___
@@ -4691,7 +4694,7 @@ ___
 <details>
 <summary>Patchelf version locked <a href="https://github.com/ynput/OpenPype/pull/4853">#4853</a></summary>
 
-For Centos dockerfile it is necessary to lock the patchelf version to the older, otherwise the build process fails. 
+For Centos dockerfile it is necessary to lock the patchelf version to the older, otherwise the build process fails.
 
 ___
 
