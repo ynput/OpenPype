@@ -120,5 +120,10 @@ DEFAULT_LOADERS_SETTING = {
         "namespace": "{folder[name]}_{product[name]}_##_",
         "group_name": "_GRP",
         "display_handle": True
+    },
+    "import_loader": {
+        "namespace": "{folder[name]}_{product[name]}_##_",
+        "group_name": "_GRP",
+        "display_handle": True
     }
 }
