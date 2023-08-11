@@ -11,7 +11,6 @@ class CreateKarmaROP(plugin.HoudiniCreator):
     label = "Karma ROP"
     family = "karma_rop"
     icon = "magic"
-    defaults = ["master"]
 
     def create(self, subset_name, instance_data, pre_create_data):
         import hou  # noqa
@@ -67,6 +66,7 @@ class CreateKarmaROP(plugin.HoudiniCreator):
             camera = None
             for node in self.selected_nodes:
                 if node.type().name() == "cam":
+                    camera = node.path()
                     has_camera = pre_create_data.get("cam_res")
                     if has_camera:
                         res_x = node.evalParm("resx")

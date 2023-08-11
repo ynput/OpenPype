@@ -45,6 +45,11 @@ class ReferenceLoaderModel(BaseSettingsModel):
     display_handle: bool = Field(title="Display Handle On Load References")
 
 
+class ImportLoaderModel(BaseSettingsModel):
+    namespace: str = Field(title="Namespace")
+    group_name: str = Field(title="Group name")
+
+
 class LoadersModel(BaseSettingsModel):
     colors: ColorsSetting = Field(
         default_factory=ColorsSetting,
@@ -55,6 +60,10 @@ class LoadersModel(BaseSettingsModel):
         title="Reference Loader"
     )
 
+    import_loader: ImportLoaderModel = Field(
+        default_factory=ImportLoaderModel,
+        title="Import Loader"
+    )
 
 DEFAULT_LOADERS_SETTING = {
     "colors": {

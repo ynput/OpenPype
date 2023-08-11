@@ -17,6 +17,10 @@ class ValidateFrameRangeModel(ValidatePluginModel):
 
 
 class TrayPublisherPublishPlugins(BaseSettingsModel):
+    CollectFrameDataFromAssetEntity: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Collect Frame Data From Folder Entity",
+    )
     ValidateFrameRange: ValidateFrameRangeModel = Field(
         title="Validate Frame Range",
         default_factory=ValidateFrameRangeModel,
@@ -28,6 +32,11 @@ class TrayPublisherPublishPlugins(BaseSettingsModel):
 
 
 DEFAULT_PUBLISH_PLUGINS = {
+    "CollectFrameDataFromAssetEntity": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
     "ValidateFrameRange": {
         "enabled": True,
         "optional": True,

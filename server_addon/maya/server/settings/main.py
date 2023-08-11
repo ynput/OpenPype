@@ -60,7 +60,9 @@ class MayaSettings(BaseSettingsModel):
         title="Include/Exclude Handles in default playback & render range"
     )
     scriptsmenu: ScriptsmenuModel = Field(
-        default_factory=ScriptsmenuModel, title="Scriptsmenu Settings")
+        default_factory=ScriptsmenuModel,
+        title="Scriptsmenu Settings"
+    )
     render_settings: RenderSettingsModel = Field(
         default_factory=RenderSettingsModel, title="Render Settings")
     create: CreatorsModel = Field(

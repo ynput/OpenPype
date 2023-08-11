@@ -2,7 +2,6 @@ from pydantic import Field
 from ayon_server.settings import BaseSettingsModel
 
 from .imageio import HarmonyImageIOModel
-from .load import HarmonyLoadModel
 from .publish_plugins import HarmonyPublishPlugins
 
 
@@ -12,10 +11,6 @@ class HarmonySettings(BaseSettingsModel):
     imageio: HarmonyImageIOModel = Field(
         default_factory=HarmonyImageIOModel,
         title="OCIO config"
-    )
-    load: HarmonyLoadModel = Field(
-        default_factory=HarmonyLoadModel,
-        title="Loader plugins"
     )
     publish: HarmonyPublishPlugins = Field(
         default_factory=HarmonyPublishPlugins,

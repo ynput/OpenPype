@@ -2,11 +2,67 @@ import os
 import json
 import copy
 
-from ayon_server.addons import BaseServerAddon
+from ayon_server.addons import BaseServerAddon, AddonLibrary
 from ayon_server.lib.postgres import Postgres
 
 from .version import __version__
 from .settings import ApplicationsAddonSettings, DEFAULT_VALUES
+
+try:
+    import semver
+except ImportError:
+    semver = None
+
+
+def sort_versions(addon_versions, reverse=False):
+    if semver is None:
+        for addon_version in sorted(addon_versions, reverse=reverse):
+            yield addon_version
+        return
+
+    version_objs = []
+    invalid_versions = []
+    for addon_version in addon_versions:
+        try:
+            version_objs.append(
+                (addon_version, semver.VersionInfo.parse(addon_version))
+            )
+        except ValueError:
+            invalid_versions.append(addon_version)
+
+    valid_versions = [
+        addon_version
+        for addon_version, _ in sorted(version_objs, key=lambda x: x[1])
+    ]
+    sorted_versions = list(sorted(invalid_versions)) + valid_versions
+    if reverse:
+        sorted_versions = reversed(sorted_versions)
+    for addon_version in sorted_versions:
+        yield addon_version
+
+
+def merge_groups(output, new_groups):
+    groups_by_name = {
+        o_group["name"]: o_group
+        for o_group in output
+    }
+    extend_groups = []
+    for new_group in new_groups:
+        group_name = new_group["name"]
+        if group_name not in groups_by_name:
+            extend_groups.append(new_group)
+            continue
+        existing_group = groups_by_name[group_name]
+        existing_variants = existing_group["variants"]
+        existing_variants_by_name = {
+            variant["name"]: variant
+            for variant in existing_variants
+        }
+        for new_variant in new_group["variants"]:
+            if new_variant["name"] not in existing_variants_by_name:
+                existing_variants.append(new_variant)
+
+    output.extend(extend_groups)
 
 
 def get_enum_items_from_groups(groups):
@@ -22,16 +78,16 @@ def get_enum_items_from_groups(groups):
             full_name = f"{group_name}/{variant_name}"
             full_label = f"{group_label} {variant_label}"
             label_by_name[full_name] = full_label
-    enum_items = []
-    for full_name in sorted(label_by_name):
-        enum_items.append(
-            {"value": full_name, "label": label_by_name[full_name]}
-        )
-    return enum_items
+
+    return [
+        {"value": full_name, "label": label_by_name[full_name]}
+        for full_name in sorted(label_by_name)
+    ]
 
 
 class ApplicationsAddon(BaseServerAddon):
     name = "applications"
+    title = "Applications"
     version = __version__
     settings_model = ApplicationsAddonSettings
 
@@ -47,6 +103,19 @@ class ApplicationsAddon(BaseServerAddon):
 
         return self.get_settings_model()(**default_values)
 
+    async def pre_setup(self):
+        """Make sure older version of addon use the new way of attributes."""
+
+        instance = AddonLibrary.getinstance()
+        app_defs = instance.data.get(self.name)
+        old_addon = app_defs.versions.get("0.1.0")
+        if old_addon is not None:
+            # Override 'create_applications_attribute' for older versions
+            #   - avoid infinite server restart loop
+            old_addon.create_applications_attribute = (
+                self.create_applications_attribute
+            )
+
     async def setup(self):
         need_restart = await self.create_applications_attribute()
         if need_restart:
@@ -59,21 +128,32 @@ class ApplicationsAddon(BaseServerAddon):
             bool: 'True' if an attribute was created or updated.
         """
 
-        settings_model = await self.get_studio_settings()
-        studio_settings = settings_model.dict()
-        applications = studio_settings["applications"]
-        _applications = applications.pop("additional_apps")
-        for name, value in applications.items():
-            value["name"] = name
-            _applications.append(value)
+        instance = AddonLibrary.getinstance()
+        app_defs = instance.data.get(self.name)
+        all_applications = []
+        all_tools = []
+        for addon_version in sort_versions(
+            app_defs.versions.keys(), reverse=True
+        ):
+            addon = app_defs.versions[addon_version]
+            for variant in ("production", "staging"):
+                settings_model = await addon.get_studio_settings(variant)
+                studio_settings = settings_model.dict()
+                application_settings = studio_settings["applications"]
+                app_groups = application_settings.pop("additional_apps")
+                for group_name, value in application_settings.items():
+                    value["name"] = group_name
+                    app_groups.append(value)
+                merge_groups(all_applications, app_groups)
+                merge_groups(all_tools, studio_settings["tool_groups"])
 
         query = "SELECT name, position, scope, data from public.attributes"
 
         apps_attrib_name = "applications"
         tools_attrib_name = "tools"
 
-        apps_enum = get_enum_items_from_groups(_applications)
-        tools_enum = get_enum_items_from_groups(studio_settings["tool_groups"])
+        apps_enum = get_enum_items_from_groups(all_applications)
+        tools_enum = get_enum_items_from_groups(all_tools)
         apps_attribute_data = {
             "type": "list_of_strings",
             "title": "Applications",

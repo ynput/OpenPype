@@ -165,10 +165,6 @@ class BakingStreamModel(BaseSettingsModel):
     viewer_process_override: str = Field(title="Viewer process override")
     bake_viewer_process: bool = Field(title="Bake view process")
     bake_viewer_input_process: bool = Field(title="Bake viewer input process")
-    reformat_node_add: bool = Field(title="Add reformat node")
-    reformat_node_config: list[KnobModel] = Field(
-        default_factory=list,
-        title="Reformat node properties")
     reformat_nodes_config: ReformatNodesConfigModel = Field(
         default_factory=ReformatNodesConfigModel,
         title="Reformat Nodes")
@@ -443,34 +439,6 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
                 "viewer_process_override": "",
                 "bake_viewer_process": True,
                 "bake_viewer_input_process": True,
-                "reformat_node_add": False,
-                "reformat_node_config": [
-                    {
-                        "type": "text",
-                        "name": "type",
-                        "text": "to format"
-                    },
-                    {
-                        "type": "text",
-                        "name": "format",
-                        "text": "HD_1080"
-                    },
-                    {
-                        "type": "text",
-                        "name": "filter",
-                        "text": "Lanczos6"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "black_outside",
-                        "boolean": True
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "pbb",
-                        "boolean": False
-                    }
-                ],
                 "reformat_nodes_config": {
                     "enabled": False,
                     "reposition_nodes": [

@@ -25,6 +25,14 @@ class BlenderSettings(BaseSettingsModel):
         default_factory=UnitScaleSettingsModel,
         title="Set Unit Scale"
     )
+    set_resolution_startup: bool = Field(
+        True,
+        title="Set Resolution on Startup"
+    )
+    set_frames_startup: bool = Field(
+        True,
+        title="Set Start/End Frames and FPS on Startup"
+    )
     imageio: BlenderImageIOModel = Field(
         default_factory=BlenderImageIOModel,
         title="Color Management (ImageIO)"
@@ -45,6 +53,8 @@ DEFAULT_VALUES = {
         "apply_on_opening": False,
         "base_file_unit_scale": 0.01
     },
+    "set_frames_startup": True,
+    "set_resolution_startup": True,
     "publish": DEFAULT_BLENDER_PUBLISH_SETTINGS,
     "workfile_builder": {
         "create_first_version": False,
