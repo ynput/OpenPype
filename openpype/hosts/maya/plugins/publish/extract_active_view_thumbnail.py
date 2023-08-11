@@ -46,5 +46,6 @@ class ExtractActiveViewThumbnail(pyblish.api.InstancePlugin):
             image.writeToFile(path, "jpg")
             self.log.debug("Generated thumbnail: {}".format(path))
 
+            context.data["cleanupFullPaths"].append(path)
             context.data[cache_key] = path
         return context.data[cache_key]
