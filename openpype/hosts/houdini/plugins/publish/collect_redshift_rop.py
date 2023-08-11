@@ -4,6 +4,7 @@ import os
 import hou
 import pyblish.api
 
+from openpype.pipeline import expected_files
 from openpype.hosts.houdini.api.lib import (
     evalParmNoFrame,
     get_color_management_preferences
@@ -31,6 +32,8 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         rop = hou.node(instance.data.get("instance_node"))
+        frame_start = instance.data["frameStart"]
+        frame_end = instance.data["frameEnd"]
 
         # Collect chunkSize
         chunk_size_parm = rop.parm("chunkSize")
@@ -49,8 +52,9 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
         )
         render_products.append(beauty_product)
         files_by_aov = {
-            "_": self.generate_expected_files(instance,
-                                              beauty_product)}
+            "_": expected_files.generate_expected_files(
+                frame_start, frame_end, beauty_product)
+        }
 
         num_aovs = rop.evalParm("RS_aov")
         for index in range(num_aovs):
@@ -68,8 +72,8 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
             aov_product = self.get_render_product_name(aov_prefix, aov_suffix)
             render_products.append(aov_product)
 
-            files_by_aov[aov_suffix] = self.generate_expected_files(instance,
-                                                                    aov_product)    # noqa
+            files_by_aov[aov_suffix] = expected_files.generate_expected_files(
+                frame_start, frame_end, aov_product)
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
@@ -115,27 +119,3 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
                 product_name = prefix
 
         return product_name
-
-    def generate_expected_files(self, instance, path):
-        """Create expected files in instance data"""
-
-        dir = os.path.dirname(path)
-        file = os.path.basename(path)
-
-        if "#" in file:
-            def replace(match):
-                return "%0{}d".format(len(match.group()))
-
-            file = re.sub("#+", replace, file)
-
-        if "%" not in file:
-            return path
-
-        expected_files = []
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
-        for i in range(int(start), (int(end) + 1)):
-            expected_files.append(
-                os.path.join(dir, (file % i)).replace("\\", "/"))
-
-        return expected_files

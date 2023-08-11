@@ -46,10 +46,9 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
                                                       suffix=None)
         render_products.append(beauty_product)
 
-
         files_by_aov = {
             "": expected_files.generate_expected_files(
-            frame_start, frame_end, beauty_product)
+                frame_start, frame_end, beauty_product)
         }
 
         num_aovs = rop.evalParm("ar_aovs")
