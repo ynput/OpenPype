@@ -138,8 +138,7 @@ class ExtractCameraMayaScene(publish.Extractor):
 
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
-        camera = cameras[0]
-        transform = cmds.listRelatives(camera, parent=True, fullPath=True)
+        transform = cmds.listRelatives(cameras, parent=True, fullPath=True)
 
         # Define extract output file path
         dir_path = self.staging_dir(instance)
@@ -165,7 +164,8 @@ class ExtractCameraMayaScene(publish.Extractor):
                                                long=True)
 
                         members = members + baked_camera_shapes
-                        members.remove(camera)
+                        for camera in cameras:
+                            members.remove(camera)
                     else:
                         baked_camera_shapes = cmds.ls(cameras,
                                                       type="camera",
