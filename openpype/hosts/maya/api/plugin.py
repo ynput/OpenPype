@@ -413,8 +413,7 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 }
                 asset_doc = get_asset_by_name(project_name,
                                               instance_data["asset"])
-                subset_name = get_subset_name(
-                    self.layer_instance_prefix,
+                subset_name = self.get_subset_name(
                     layer.name(),
                     instance_data["task"],
                     asset_doc,
@@ -525,6 +524,22 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 node = instance.data.get("instance_node")
                 if node and cmds.objExists(node):
                     cmds.delete(node)
+
+    def get_subset_name(
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
+    ):
+        # creator.family != 'render' as expected
+        return get_subset_name(self.layer_instance_prefix,
+                               variant,
+                               task_name,
+                               asset_doc,
+                               project_name)
 
 
 class Loader(LoaderPlugin):
