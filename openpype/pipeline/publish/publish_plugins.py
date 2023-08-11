@@ -393,7 +393,7 @@ class FarmPluginMixin:
             None: sets `expectedFiles` key on instance data
         """
 
-        expected_files_list = expected_files.generate_expected_files(
+        expected_files_list = expected_files.generate_expected_filepaths(
             frame_start, frame_end, path, only_existing)
         instance.data["expectedFiles"] = expected_files_list
 

@@ -49,7 +49,7 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         beauty_product = self.get_beauty_render_product(default_prefix)
         render_products.append(beauty_product)
         files_by_aov = {
-            "RGB Color": expected_files.generate_expected_files(
+            "RGB Color": expected_files.generate_expected_filepaths(
                 frame_start, frame_end, beauty_product)
         }
 
@@ -58,7 +58,7 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
             if render_element:
                 for aov, renderpass in render_element.items():
                     render_products.append(renderpass)
-                    files_by_aov[aov] = expected_files.generate_expected_files(
+                    files_by_aov[aov] = expected_files.generate_expected_filepaths(
                         frame_start, frame_end, renderpass)
 
         for product in render_products:

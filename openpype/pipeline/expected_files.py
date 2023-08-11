@@ -7,7 +7,7 @@ from openpype.pipeline import frames
 from openpype.pipeline import colorspace as clrs
 
 
-def generate_expected_files(
+def generate_expected_filepaths(
     frame_start,
     frame_end,
     path,

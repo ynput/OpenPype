@@ -47,7 +47,7 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
         render_products.append(beauty_product)
 
         files_by_aov = {
-            "": expected_files.generate_expected_files(
+            "": expected_files.generate_expected_filepaths(
                 frame_start, frame_end, beauty_product)
         }
 
@@ -65,7 +65,7 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
             aov_product = self.get_render_product_name(default_prefix,
                                                        suffix=label)
             render_products.append(aov_product)
-            files_by_aov[label] = expected_files.generate_expected_files(
+            files_by_aov[label] = expected_files.generate_expected_filepaths(
                 frame_start, frame_end, aov_product)
 
         for product in render_products:

@@ -52,7 +52,7 @@ class CollectKarmaROPRenderProducts(pyblish.api.InstancePlugin):
             render_products.append(beauty_product)
 
             files_by_aov = {
-                "beauty": expected_files.generate_expected_files(
+                "beauty": expected_files.generate_expected_filepaths(
                     frame_start, frame_end, beauty_product)
             }
 

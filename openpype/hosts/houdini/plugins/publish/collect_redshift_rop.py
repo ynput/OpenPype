@@ -52,7 +52,7 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
         )
         render_products.append(beauty_product)
         files_by_aov = {
-            "_": expected_files.generate_expected_files(
+            "_": expected_files.generate_expected_filepaths(
                 frame_start, frame_end, beauty_product)
         }
 
@@ -72,7 +72,7 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
             aov_product = self.get_render_product_name(aov_prefix, aov_suffix)
             render_products.append(aov_product)
 
-            files_by_aov[aov_suffix] = expected_files.generate_expected_files(
+            files_by_aov[aov_suffix] = expected_files.generate_expected_filepaths(
                 frame_start, frame_end, aov_product)
 
         for product in render_products:
