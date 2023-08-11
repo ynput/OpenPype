@@ -571,10 +571,10 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         # TODO refactor/remove me
         family = skeleton["family"]
         if not subset.startswith(family):
-            group_name = '{}{}{}'.format(
+            group_name = '{}{}{}{}{}'.format(
                 family,
-                task.capitalize(),
-                subset.capitalize())
+                task[0].upper(), task[1:],
+                subset[0].upper(), subset[1:])
         else:
             group_name = subset
 
