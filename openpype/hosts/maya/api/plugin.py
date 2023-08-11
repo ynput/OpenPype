@@ -406,6 +406,7 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 # this instance will not have the `instance_node` data yet
                 # until it's been saved/persisted at least once.
                 project_name = self.create_context.get_current_project_name()
+
                 instance_data = {
                     "asset": self.create_context.get_current_asset_name(),
                     "task": self.create_context.get_current_task_name(),
