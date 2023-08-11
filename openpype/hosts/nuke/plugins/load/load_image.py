@@ -212,6 +212,8 @@ class LoadImage(load.LoaderPlugin):
         last = first = int(frame_number)
 
         # Set the global in to the start frame of the sequence
+        read_name = self._get_node_name(representation)
+        node["name"].setValue(read_name)
         node["file"].setValue(file)
         node["origfirst"].setValue(first)
         node["first"].setValue(first)
@@ -250,3 +252,17 @@ class LoadImage(load.LoaderPlugin):
 
         with viewer_update_and_undo_stop():
             nuke.delete(node)
+
+    def _get_node_name(self, representation):
+
+        repre_cont = representation["context"]
+        name_data = {
+            "asset": repre_cont["asset"],
+            "subset": repre_cont["subset"],
+            "representation": representation["name"],
+            "ext": repre_cont["representation"],
+            "id": representation["_id"],
+            "class_name": self.__class__.__name__
+        }
+
+        return self.node_name_template.format(**name_data)
