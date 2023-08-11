@@ -1195,7 +1195,7 @@
         },
         "ValidateCameraContents": {
             "enabled": true,
-            "optional": false,
+            "optional": true,
             "validate_shapes": true
         },
         "ExtractPlayblast": {

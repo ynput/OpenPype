@@ -76,6 +76,9 @@ class ValidateCameraContents(pyblish.api.InstancePlugin,
 
     def process(self, instance):
         """Process all the nodes in the instance"""
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError("Invalid camera contents: "
