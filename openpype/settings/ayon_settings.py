@@ -602,6 +602,13 @@ def _convert_maya_project_settings(ayon_settings, output):
         .replace("{product[name]}", "{subset}")
     )
 
+    if ayon_maya_load.get("import_loader"):
+        import_loader = ayon_maya_load["import_loader"]
+        import_loader["namespace"] = (
+            import_loader["namespace"]
+            .replace("{product[name]}", "{subset}")
+        )
+
     output["maya"] = ayon_maya
 
 
