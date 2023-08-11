@@ -1,9 +1,7 @@
 """Utility functions for file sequences.
 """
-from calendar import c
 import os
 import re
-from isort import file
 from openpype.lib import Logger
 from openpype.pipeline import frames
 from openpype.pipeline import colorspace as clrs
