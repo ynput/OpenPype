@@ -547,7 +547,9 @@
         },
         "CreateUnrealSkeletalMesh": {
             "enabled": true,
-            "default_variants": [],
+            "default_variants": [
+                "Main"
+            ],
             "joint_hints": "jnt_org"
         },
         "CreateMultiverseLook": {

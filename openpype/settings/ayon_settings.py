@@ -301,6 +301,10 @@ def convert_system_settings(ayon_settings, default_settings, addon_versions):
     if "core" in ayon_settings:
         _convert_general(ayon_settings, output, default_settings)
 
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
+
     for key, value in default_settings.items():
         if key not in output:
             output[key] = value
@@ -1271,6 +1275,10 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_slack_project_settings(ayon_settings, output)
 
     _convert_global_project_settings(ayon_settings, output, default_settings)
+
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
 
     for key, value in default_settings.items():
         if key not in output:
