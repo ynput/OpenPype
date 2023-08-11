@@ -415,3 +415,36 @@ class FarmPluginMixin:
             "farm": True  # to skip integrate
         })
         self.log.info("Farm rendering ON ...")
+
+    def set_farm_representation(
+        self,
+        instance,
+        file_path,
+        frame_start,
+        frame_end,
+        colorspace,
+    ):
+        """Set farm representation to instance data.
+
+        Args:
+            instance (pyblish.api.Instance): pyblish instance
+            file_path (str): Path to a single file or a sequence of files
+                with a pattern (##, %02d) in it.
+            frame_start (int): first frame
+            frame_end (int): last frame
+            colorspace (str): colorspace
+
+        Returns:
+            dict: representation
+        """
+        representation = expected_files.get_farm_publishing_representation(
+            instance,
+            file_path,
+            frame_start,
+            frame_end,
+            colorspace,
+            self.log,
+            only_existing=True
+        )
+
+        instance.data["representations"].append(representation)
