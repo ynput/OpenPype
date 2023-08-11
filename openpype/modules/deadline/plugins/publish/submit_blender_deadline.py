@@ -17,14 +17,6 @@ from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
 
-def _validate_deadline_bool_value(instance, attribute, value):
-    if not isinstance(value, (str, bool)):
-        raise TypeError(f"Attribute {attribute} must be str or bool.")
-    if value not in {"1", "0", True, False}:
-        raise ValueError(
-            f"Value of {attribute} must be one of '0', '1', True, False")
-
-
 @attr.s
 class BlenderPluginInfo():
     SceneFile = attr.ib(default=None)   # Input
