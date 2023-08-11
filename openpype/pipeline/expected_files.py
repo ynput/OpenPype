@@ -83,7 +83,7 @@ def convert_filename_to_formattable_string(filename):
     return new_filename
 
 
-def get_representation_with_expected_files(
+def get_farm_representation(
     families,
     context_data,
     file_ext,
@@ -114,29 +114,24 @@ def get_representation_with_expected_files(
         "name": file_ext,
         "ext": file_ext,
         "stagingDir": output_dir,
-        "tags": []
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "tags": ["publish_on_farm"],
     }
 
-    frame_start_str = frames.get_frame_start_str(
-        frame_start, frame_end)
-
-    representation['frameStart'] = frame_start_str
-
     # set slate frame
-    # QUESTION: should not we also include the slate
-    #           frame within representation frameStart?
-    if "slate" in families:
-        collected_file_frames = \
-            add_slate_frame_to_collected_frames(
-                collected_file_frames,
-                frame_start,
-                frame_end
-            )
+    if (
+        "slate" in families
+        and _add_slate_frame_to_collected_frames(
+            collected_file_frames, frame_start, frame_end)
+    ):
+        log.info("Slate frame added to collected frames.")
+        representation["frameStart"] = frame_start - 1
 
     if len(collected_file_frames) == 1:
-        representation['files'] = collected_file_frames.pop()
+        representation["files"] = collected_file_frames.pop()
     else:
-        representation['files'] = collected_file_frames
+        representation["files"] = collected_file_frames
 
     # inject colorspace data
     clrs.set_colorspace_data_to_representation(
@@ -149,7 +144,7 @@ def get_representation_with_expected_files(
     return representation
 
 
-def add_slate_frame_to_collected_frames(
+def _add_slate_frame_to_collected_frames(
     collected_file_frames,
     frame_start,
     frame_end
@@ -162,7 +157,7 @@ def add_slate_frame_to_collected_frames(
         frame_end (int): last frame
 
     Returns:
-        list[str]: collected file frames
+        Bool: True if slate frame was added
     """
     frame_start_str = frames.get_frame_start_str(
         frame_start, frame_end)
@@ -179,4 +174,4 @@ def add_slate_frame_to_collected_frames(
             frame_start_str, frame_slate_str)
         collected_file_frames.insert(0, slate_frame)
 
-    return collected_file_frames
+        return True

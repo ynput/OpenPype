@@ -41,11 +41,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
                 instance, frame_start, frame_end, colorspace)
 
         elif render_target == "frames_farm":
-            collected_file_frames = \
-                self._set_representation_with_existing_files(
-                    instance, frame_start, frame_end, colorspace)
-
-            self._set_expected_files(instance, collected_file_frames)
+            self._set_representation_with_existing_files(
+                instance, frame_start, frame_end, colorspace)
 
             self.add_farm_instance_data(instance)
 
@@ -70,9 +67,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             frame_start (int): first frame
             frame_end (int): last frame
             colorspace (str): colorspace
-
-        Returns:
-            list[str]: collected file frames
         """
 
         collected_file_frames = self._get_collected_frames(
@@ -84,8 +78,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         )
 
         instance.data["representations"].append(representation)
-
-        return collected_file_frames
 
     def _set_expected_files(self, instance, collected_file_frames):
         """Set expected files to instance data.
@@ -264,7 +256,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         # Determine defined file type
         file_ext = write_node["file_type"].value()
 
-        return expected_files.get_representation_with_expected_files(
+        return expected_files.get_farm_representation(
             families,
             instance.context.data,
             file_ext,
