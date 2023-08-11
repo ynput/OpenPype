@@ -9,8 +9,7 @@ from openpype.hosts.maya.api.lib import (
     maintained_selection,
     get_container_members,
     parent_nodes,
-    create_rig_animation_instance,
-    get_reference_node
+    create_rig_animation_instance
 )
 
 
