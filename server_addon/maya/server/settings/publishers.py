@@ -1220,7 +1220,7 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ValidateCameraContents": {
         "enabled": True,
-        "optional": False,
+        "optional": True,
         "validate_shapes": True
     },
     "ExtractPlayblast": DEFAULT_PLAYBLAST_SETTING,
