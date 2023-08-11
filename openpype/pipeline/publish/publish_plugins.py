@@ -387,7 +387,7 @@ class FarmPluginMixin:
             frame_start (int): Start frame of the sequence
             frame_end (int): End frame of the sequence
             path (str): Path to generate expected files from
-            only_existing Optional[bool]: Ensure that files exists.
+            only_existing (Optional[bool]): Ensure that files exists.
 
         Returns:
             None: sets `expectedFiles` key on instance data

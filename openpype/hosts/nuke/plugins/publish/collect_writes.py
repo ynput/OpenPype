@@ -37,11 +37,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         colorspace = napi.get_colorspace_from_node(write_node)
 
         if render_target == "frames":
-            self._set_representation_with_existing_files(
+            self._set_farm_representation(
                 instance, frame_start, frame_end, colorspace)
 
         elif render_target == "frames_farm":
-            self._set_representation_with_existing_files(
+            self._set_farm_representation(
                 instance, frame_start, frame_end, colorspace)
 
             self.add_farm_instance_data(instance)
@@ -52,49 +52,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         # set additional instance data
         self._set_additional_instance_data(
             instance, render_target, frame_start, frame_end, colorspace)
-
-    def _set_representation_with_existing_files(
-        self,
-        instance,
-        frame_start,
-        frame_end,
-        colorspace
-    ):
-        """Set existing files data to instance data.
-
-        Args:
-            instance (pyblish.api.Instance): pyblish instance
-            frame_start (int): first frame
-            frame_end (int): last frame
-            colorspace (str): colorspace
-        """
-
-        collected_file_frames = self._get_collected_frames(
-            instance, frame_start, frame_end, )
-
-        representation = self._get_existing_frames_representation(
-            instance, frame_start, frame_end,
-            collected_file_frames, colorspace
-        )
-
-        instance.data["representations"].append(representation)
-
-    def _set_expected_files(self, instance, collected_file_frames):
-        """Set expected files to instance data.
-
-        Args:
-            instance (pyblish.api.Instance): pyblish instance
-            collected_file_frames (list[str]): collected file name frames
-        """
-        write_node = self._write_node_helper(instance)
-
-        write_file_path = nuke.filename(write_node)
-        output_dir = os.path.dirname(write_file_path)
-
-        instance.data["expectedFiles"] = [
-            os.path.join(output_dir, source_file)
-            for source_file in collected_file_frames
-        ]
 
     def _get_frame_range(self, instance):
         """Get frame range data from instance.
@@ -228,82 +185,35 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
             return self._write_nodes[instance_name]
 
-    def _get_existing_frames_representation(
+    def _set_farm_representation(
         self,
         instance,
         frame_start,
         frame_end,
-        collected_file_frames,
         colorspace,
     ):
-        """Get existing frames representation.
+        """Set farm representation to instance data.
 
         Args:
             instance (pyblish.api.Instance): pyblish instance
             frame_start (int): first frame
             frame_end (int): last frame
-            collected_file_frames (list[str]): collected file name frames
+            colorspace (str): colorspace
 
         Returns:
             dict: representation
         """
-        families = set(instance.data["families"] + [instance.data["family"]])
         write_node = self._write_node_helper(instance)
-
         write_file_path = nuke.filename(write_node)
-        output_dir = os.path.dirname(write_file_path)
 
-        # Determine defined file type
-        file_ext = write_node["file_type"].value()
-
-        return expected_files.get_farm_representation(
-            families,
-            instance.context.data,
-            file_ext,
-            output_dir,
+        representation = expected_files.get_farm_publishing_representation(
+            instance,
+            write_file_path,
             frame_start,
             frame_end,
-            collected_file_frames,
             colorspace,
-            self.log
+            self.log,
+            only_existing=True
         )
 
-    def _get_collected_frames(self, instance, frame_start, frame_end):
-        """Get collected frames.
-
-        Args:
-            instance (pyblish.api.Instance): pyblish instance
-            frame_start (int): first frame
-            frame_end (int): last frame
-
-        Returns:
-            list[str]: collected file frames
-        """
-
-        write_node = self._write_node_helper(instance)
-
-        write_file_path = nuke.filename(write_node)
-        output_dir = os.path.dirname(write_file_path)
-
-        # get file path knob
-        node_file_knob = write_node["file"]
-        # list file paths based on input frames
-        expected_paths = list(sorted({
-            node_file_knob.evaluate(frame)
-            for frame in range(frame_start, frame_end + 1)
-        }))
-
-        # convert only to base names
-        expected_filenames = {
-            os.path.basename(filepath)
-            for filepath in expected_paths
-        }
-
-        # make sure files are existing at folder
-        collected_file_frames = [
-            filename
-            for filename in os.listdir(output_dir)
-            if filename in expected_filenames
-        ]
-
-        return collected_file_frames
+        instance.data["representations"].append(representation)
