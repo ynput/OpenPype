@@ -1,9 +1,9 @@
-import re
 import os
 
 import hou
 import pyblish.api
 
+from openpype.pipeline import expected_files
 from openpype.hosts.houdini.api.lib import (
     evalParmNoFrame,
     get_color_management_preferences
@@ -31,49 +31,65 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         rop = hou.node(instance.data.get("instance_node"))
+        frame_start = instance.data["frameStart"]
+        frame_end = instance.data["frameEnd"]
 
         # Collect chunkSize
         chunk_size_parm = rop.parm("chunkSize")
-        if chunk_size_parm:
-            chunk_size = int(chunk_size_parm.eval())
-            instance.data["chunkSize"] = chunk_size
-            self.log.debug("Chunk Size: %s" % chunk_size)
+        if not chunk_size_parm:
+            return
 
-            default_prefix = evalParmNoFrame(rop, "vm_picture")
-            render_products = []
+        chunk_size = int(chunk_size_parm.eval())
+        instance.data["chunkSize"] = chunk_size
+        self.log.debug("Chunk Size: {}".format(chunk_size))
 
-            # Default beauty AOV
-            beauty_product = self.get_render_product_name(
-                prefix=default_prefix, suffix=None
+        default_prefix = evalParmNoFrame(rop, "vm_picture")
+        render_products = []
+
+        # Default beauty AOV
+        beauty_product = self.get_render_product_name(
+            prefix=default_prefix, suffix=None
+        )
+        render_products.append(beauty_product)
+
+        files_by_aov = {
+            "beauty": expected_files.generate_expected_files(
+                frame_start, frame_end, beauty_product)
+        }
+
+        # get the number of AOVs
+        aov_numbers = rop.evalParm("vm_numaux")
+        if aov_numbers < 0:
+            return
+
+        # get the filenames of the AOVs
+        for index in range(1, aov_numbers + 1):
+            var_ = rop.evalParm("vm_variable_plane{:>1}".format(index))
+
+            # skip empty variables
+            if not var_:
+                continue
+
+            aov_name = "vm_filename_plane{:>1}".format(index)
+            aov_boolean = "vm_usefile_plane{:>1}".format(index)
+            aov_enabled = rop.evalParm(aov_boolean)
+            has_aov_path = rop.evalParm(aov_name)
+
+            # skip disabled AOVs
+            if not (has_aov_path and aov_enabled == 1):
+                continue
+
+            aov_prefix = evalParmNoFrame(rop, aov_name)
+            aov_product = self.get_render_product_name(
+                prefix=aov_prefix, suffix=None
             )
-            render_products.append(beauty_product)
+            render_products.append(aov_product)
 
-            files_by_aov = {
-                "beauty": self.generate_expected_files(instance,
-                                                       beauty_product)
-            }
-
-            aov_numbers = rop.evalParm("vm_numaux")
-            if aov_numbers > 0:
-                # get the filenames of the AOVs
-                for i in range(1, aov_numbers + 1):
-                    var = rop.evalParm("vm_variable_plane%d" % i)
-                    if var:
-                        aov_name = "vm_filename_plane%d" % i
-                        aov_boolean = "vm_usefile_plane%d" % i
-                        aov_enabled = rop.evalParm(aov_boolean)
-                        has_aov_path = rop.evalParm(aov_name)
-                        if has_aov_path and aov_enabled == 1:
-                            aov_prefix = evalParmNoFrame(rop, aov_name)
-                            aov_product = self.get_render_product_name(
-                                prefix=aov_prefix, suffix=None
-                            )
-                            render_products.append(aov_product)
-
-                            files_by_aov[var] = self.generate_expected_files(instance, aov_product)     # noqa
+            files_by_aov[var_] = expected_files.generate_expected_files(
+                frame_start, frame_end, aov_product)
 
         for product in render_products:
-            self.log.debug("Found render product: %s" % product)
+            self.log.debug("Found render product: {}".format(product))
 
         filenames = list(render_products)
         instance.data["files"] = filenames
@@ -101,27 +117,3 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
             product_name = prefix_base + "." + suffix + ext
 
         return product_name
-
-    def generate_expected_files(self, instance, path):
-        """Create expected files in instance data"""
-
-        dir = os.path.dirname(path)
-        file = os.path.basename(path)
-
-        if "#" in file:
-            def replace(match):
-                return "%0{}d".format(len(match.group()))
-
-            file = re.sub("#+", replace, file)
-
-        if "%" not in file:
-            return path
-
-        expected_files = []
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
-        for i in range(int(start), (int(end) + 1)):
-            expected_files.append(
-                os.path.join(dir, (file % i)).replace("\\", "/"))
-
-        return expected_files
