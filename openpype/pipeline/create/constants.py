@@ -1,7 +1,7 @@
 SUBSET_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_."
 DEFAULT_SUBSET_TEMPLATE = "{family}{Variant}"
 PRE_CREATE_THUMBNAIL_KEY = "thumbnail_source"
-DEFAULT_VARIANT_VALUE = "main"
+DEFAULT_VARIANT_VALUE = "Main"
 
 
 __all__ = (
