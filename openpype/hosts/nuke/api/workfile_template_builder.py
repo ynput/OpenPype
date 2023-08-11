@@ -114,6 +114,11 @@ class NukePlaceholderPlugin(PlaceholderPlugin):
             placeholder_data[key] = value
         return placeholder_data
 
+    def delete_placeholder(self, placeholder):
+        """Remove placeholder if building was successful"""
+        placeholder_node = nuke.toNode(placeholder.scene_identifier)
+        nuke.delete(placeholder_node)
+
 
 class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
     identifier = "nuke.load"
@@ -275,14 +280,6 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
 
         placeholder.data["nb_children"] += 1
         reset_selection()
-
-        # remove placeholders marked as delete
-        if (
-            placeholder.data.get("delete")
-            and not placeholder.data.get("keep_placeholder")
-        ):
-            self.log.debug("Deleting node: {}".format(placeholder_node.name()))
-            nuke.delete(placeholder_node)
 
         # go back to root group
         nuke.root().begin()
@@ -689,14 +686,6 @@ class NukePlaceholderCreatePlugin(
 
         placeholder.data["nb_children"] += 1
         reset_selection()
-
-        # remove placeholders marked as delete
-        if (
-            placeholder.data.get("delete")
-            and not placeholder.data.get("keep_placeholder")
-        ):
-            self.log.debug("Deleting node: {}".format(placeholder_node.name()))
-            nuke.delete(placeholder_node)
 
         # go back to root group
         nuke.root().begin()

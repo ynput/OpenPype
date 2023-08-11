@@ -19,15 +19,13 @@ from openpype.pipeline import (
 )
 
 from openpype.pipeline.context_tools import get_workdir_from_session
+from openpype.pipeline.version_start import get_versioning_start
 
 log = logging.getLogger("Update Slap Comp")
 
 
 def _format_version_folder(folder):
     """Format a version folder based on the filepath
-
-    Assumption here is made that, if the path does not exists the folder
-    will be "v001"
 
     Args:
         folder: file path to a folder
@@ -36,9 +34,13 @@ def _format_version_folder(folder):
         str: new version folder name
     """
 
-    new_version = 1
+    new_version = get_versioning_start(
+        get_current_project_name(),
+        "fusion",
+        family="workfile"
+    )
     if os.path.isdir(folder):
-        re_version = re.compile("v\d+$")
+        re_version = re.compile(r"v\d+$")
         versions = [i for i in os.listdir(folder) if os.path.isdir(i)
                     and re_version.match(i)]
         if versions:
