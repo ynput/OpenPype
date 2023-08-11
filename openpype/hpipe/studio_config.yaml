@@ -1,0 +1,14 @@
+---
+dev: T:/dev/_dev
+prod: T:/dev/_builds
+beta: T:/dev/_builds
+superusers:
+  - josepht
+  - erik
+  - kevinPoli
+  - johnk
+  - garath
+  - ruiYang
+  - josephc
+OpenPypeExecutable:
+  - T:/dev/_dev/nuke-dev-use_frames_on_farm-3.15.8-amd64-3.9/openpype_console.exe

@@ -603,6 +603,10 @@ class ExporterReview(object):
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
 
+        #NOTE hornet update for use exiting frame on farm
+        if self.instance.data('render_target') == 'farm_frames':
+            self.fhead = self.fhead.replace('%04d.','')
+
     def get_representation_data(
         self, tags=None, range=False,
         custom_tags=None
@@ -801,7 +805,6 @@ class ExporterReviewMov(ExporterReview):
 
         self.name = name or "baked"
         self.ext = ext or "mov"
-
         # set frame start / end and file name to self
         self.get_file_info()
 
