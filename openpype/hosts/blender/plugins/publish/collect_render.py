@@ -42,6 +42,17 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
 
     @staticmethod
     def get_render_product(file_path, render_folder, file_name, instance, ext):
+        """
+        Generate the path to the render product. Blender interprets the `#`
+        as the frame number, when it renders.
+
+        Args:
+            file_path (str): The path to the blender scene.
+            render_folder (str): The render folder set in settings.
+            file_name (str): The name of the blender scene.
+            instance (pyblish.api.Instance): The instance to publish.
+            ext (str): The image format to render.
+        """
         output_file = os.path.join(
             file_path, render_folder, file_name, instance.name)
 
@@ -54,6 +65,10 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
     def generate_expected_files(
         render_product, frame_start, frame_end, frame_step
     ):
+        """Generate the expected files for the render product.
+        This returns a list of files that should be rendered. It replaces
+        the sequence of `#` with the frame number.
+        """
         path = os.path.dirname(render_product)
         file = os.path.basename(render_product)
 

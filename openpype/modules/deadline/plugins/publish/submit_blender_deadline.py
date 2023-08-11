@@ -179,11 +179,10 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         return self.submit(payload)
 
     def from_published_scene(self):
-        """ Do not overwrite expected files.
-
-            Use published is set to True, so rendering will be triggered
-            from published scene (in 'publish' folder). Default implementation
-            of abstract class renames expected (eg. rendered) files accordingly
-            which is not needed here.
+        """
+        This is needed to set the correct path for the json metadata. Because
+        the rendering path is set in the blend file during the collection,
+        and the path is adjusted to use the published scene, this ensures that
+        the metadata and the rendered files are in the same location.
         """
         return super().from_published_scene(False)
