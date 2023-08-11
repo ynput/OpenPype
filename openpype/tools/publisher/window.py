@@ -1,3 +1,6 @@
+import os
+import json
+import time
 import collections
 import copy
 from qtpy import QtWidgets, QtCore, QtGui
@@ -15,10 +18,11 @@ from openpype.tools.utils import (
 
 from .constants import ResetKeySequence
 from .publish_report_viewer import PublishReportViewerWidget
+from .control import CardMessageTypes
 from .control_qt import QtPublisherController
 from .widgets import (
     OverviewWidget,
-    ValidationsWidget,
+    ReportPageWidget,
     PublishFrame,
 
     PublisherTabsWidget,
@@ -62,8 +66,7 @@ class PublisherWindow(QtWidgets.QDialog):
             on_top_flag = QtCore.Qt.Dialog
 
         self.setWindowFlags(
-            self.windowFlags()
-            | QtCore.Qt.WindowTitleHint
+            QtCore.Qt.WindowTitleHint
             | QtCore.Qt.WindowMaximizeButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
             | QtCore.Qt.WindowCloseButtonHint
@@ -182,7 +185,7 @@ class PublisherWindow(QtWidgets.QDialog):
             controller, content_stacked_widget
         )
 
-        report_widget = ValidationsWidget(controller, parent)
+        report_widget = ReportPageWidget(controller, parent)
 
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(
@@ -313,6 +316,13 @@ class PublisherWindow(QtWidgets.QDialog):
         controller.event_system.add_callback(
             "convertors.find.failed", self._on_convertor_error
         )
+        controller.event_system.add_callback(
+            "export_report.request", self._export_report
+        )
+        controller.event_system.add_callback(
+            "copy_report.request", self._copy_report
+        )
+
 
         # Store extra header widget for TrayPublisher
         # - can be used to add additional widgets to header between context
@@ -443,7 +453,11 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         save_match = event.matches(QtGui.QKeySequence.Save)
-        if save_match == QtGui.QKeySequence.ExactMatch:
+        # PySide2 and PySide6 support
+        if not isinstance(save_match, bool):
+            save_match = save_match == QtGui.QKeySequence.ExactMatch
+
+        if save_match:
             if not self._controller.publish_has_started:
                 self._save_changes(True)
             event.accept()
@@ -620,16 +634,7 @@ class PublisherWindow(QtWidgets.QDialog):
         if old_tab == "details":
             self._publish_details_widget.close_details_popup()
 
-        if new_tab in ("create", "publish"):
-            animate = True
-            if old_tab not in ("create", "publish"):
-                animate = False
-                self._content_stacked_layout.setCurrentWidget(
-                    self._overview_widget
-                )
-            self._overview_widget.set_state(new_tab, animate)
-
-        elif new_tab == "details":
+        if new_tab == "details":
             self._content_stacked_layout.setCurrentWidget(
                 self._publish_details_widget
             )
@@ -639,6 +644,21 @@ class PublisherWindow(QtWidgets.QDialog):
             self._content_stacked_layout.setCurrentWidget(
                 self._report_widget
             )
+
+        old_on_overview = old_tab in ("create", "publish")
+        if new_tab in ("create", "publish"):
+            self._content_stacked_layout.setCurrentWidget(
+                self._overview_widget
+            )
+            # Overview state is animated only when switching between
+            #   'create' and 'publish' tab
+            self._overview_widget.set_state(new_tab, old_on_overview)
+
+        elif old_on_overview:
+            # Make sure animation finished if previous tab was 'create'
+            #   or 'publish'. That is just for safety to avoid stuck animation
+            #   when user clicks too fast.
+            self._overview_widget.make_sure_animation_is_finished()
 
         is_create = new_tab == "create"
         if is_create:
@@ -665,7 +685,15 @@ class PublisherWindow(QtWidgets.QDialog):
         self._tabs_widget.set_current_tab(identifier)
 
     def set_current_tab(self, tab):
-        self._set_current_tab(tab)
+        if tab == "create":
+            self._go_to_create_tab()
+        elif tab == "publish":
+            self._go_to_publish_tab()
+        elif tab == "report":
+            self._go_to_report_tab()
+        elif tab == "details":
+            self._go_to_details_tab()
+
         if not self._window_is_visible:
             self.set_tab_on_reset(tab)
 
@@ -675,6 +703,12 @@ class PublisherWindow(QtWidgets.QDialog):
     def _go_to_create_tab(self):
         if self._create_tab.isEnabled():
             self._set_current_tab("create")
+            return
+
+        self._overlay_object.add_message(
+            "Can't switch to Create tab because publishing is paused.",
+            message_type="info"
+        )
 
     def _go_to_publish_tab(self):
         self._set_current_tab("publish")
@@ -825,6 +859,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._validate_btn.setEnabled(validate_enabled)
         self._publish_btn.setEnabled(publish_enabled)
 
+        if not publish_enabled:
+            self._publish_frame.set_shrunk_state(True)
+
         self._update_publish_details_widget()
 
     def _validate_create_instances(self):
@@ -940,6 +977,46 @@ class PublisherWindow(QtWidgets.QDialog):
             widget_x = widget_geo.left() + (widget_geo.width() * 0.5)
             under_mouse = widget_x < global_pos.x()
         self._create_overlay_button.set_under_mouse(under_mouse)
+
+    def _copy_report(self):
+        logs = self._controller.get_publish_report()
+        logs_string = json.dumps(logs, indent=4)
+
+        mime_data = QtCore.QMimeData()
+        mime_data.setText(logs_string)
+        QtWidgets.QApplication.instance().clipboard().setMimeData(
+            mime_data
+        )
+        self._controller.emit_card_message(
+            "Report added to clipboard",
+            CardMessageTypes.info)
+
+    def _export_report(self):
+        default_filename = "publish-report-{}".format(
+            time.strftime("%y%m%d-%H-%M")
+        )
+        default_filepath = os.path.join(
+            os.path.expanduser("~"),
+            default_filename
+        )
+        new_filepath, ext = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save report", default_filepath, ".json"
+        )
+        if not ext or not new_filepath:
+            return
+
+        logs = self._controller.get_publish_report()
+        full_path = new_filepath + ext
+        dir_path = os.path.dirname(full_path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+        with open(full_path, "w") as file_stream:
+            json.dump(logs, file_stream)
+
+        self._controller.emit_card_message(
+            "Report saved",
+            CardMessageTypes.info)
 
 
 class ErrorsMessageBox(ErrorMessageBox):

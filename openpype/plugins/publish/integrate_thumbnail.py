@@ -18,8 +18,10 @@ import collections
 import six
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_versions
 from openpype.client.operations import OperationsSession, new_thumbnail_doc
+from openpype.pipeline.publish import get_publish_instance_label
 
 InstanceFilterResult = collections.namedtuple(
     "InstanceFilterResult",
@@ -38,10 +40,14 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
+        if AYON_SERVER_ENABLED:
+            self.log.info("AYON is enabled. Skipping v3 thumbnail integration")
+            return
+
         # Filter instances which can be used for integration
         filtered_instance_items = self._prepare_instances(context)
         if not filtered_instance_items:
-            self.log.info(
+            self.log.debug(
                 "All instances were filtered. Thumbnail integration skipped."
             )
             return
@@ -133,7 +139,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
         filtered_instances = []
         for instance in context:
-            instance_label = self._get_instance_label(instance)
+            instance_label = get_publish_instance_label(instance)
             # Skip instances without published representations
             # - there is no place where to put the thumbnail
             published_repres = instance.data.get("published_representations")
@@ -162,7 +168,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
             # Skip instance if thumbnail path is not available for it
             if not thumbnail_path:
-                self.log.info((
+                self.log.debug((
                     "Skipping thumbnail integration for instance \"{}\"."
                     " Instance and context"
                     " thumbnail paths are not available."
@@ -248,7 +254,7 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
         for instance_item in filtered_instance_items:
             instance, thumbnail_path, version_id = instance_item
-            instance_label = self._get_instance_label(instance)
+            instance_label = get_publish_instance_label(instance)
             version_doc = version_docs_by_str_id.get(version_id)
             if not version_doc:
                 self.log.warning((
@@ -339,10 +345,3 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
             ))
 
         op_session.commit()
-
-    def _get_instance_label(self, instance):
-        return (
-            instance.data.get("label")
-            or instance.data.get("name")
-            or "N/A"
-        )

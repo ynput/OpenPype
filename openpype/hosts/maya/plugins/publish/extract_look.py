@@ -15,8 +15,14 @@ import pyblish.api
 
 from maya import cmds  # noqa
 
-from openpype.lib.vendor_bin_utils import find_executable
-from openpype.lib import source_hash, run_subprocess, get_oiio_tools_path
+from openpype.lib import (
+    find_executable,
+    source_hash,
+    run_subprocess,
+    get_oiio_tool_args,
+    ToolNotFoundError,
+)
+
 from openpype.pipeline import legacy_io, publish, KnownPublishError
 from openpype.hosts.maya.api import lib
 
@@ -267,12 +273,11 @@ class MakeTX(TextureProcessor):
 
         """
 
-        maketx_path = get_oiio_tools_path("maketx")
-
-        if not maketx_path:
-            raise AssertionError(
-                "OIIO 'maketx' tool not found. Result: {}".format(maketx_path)
-            )
+        try:
+            maketx_args = get_oiio_tool_args("maketx")
+        except ToolNotFoundError:
+            raise KnownPublishError(
+                "OpenImageIO is not available on the machine")
 
         # Define .tx filepath in staging if source file is not .tx
         fname, ext = os.path.splitext(os.path.basename(source))
@@ -328,8 +333,7 @@ class MakeTX(TextureProcessor):
 
         self.log.info("Generating .tx file for %s .." % source)
 
-        subprocess_args = [
-            maketx_path,
+        subprocess_args = maketx_args + [
             "-v",  # verbose
             "-u",  # update mode
             # --checknan doesn't influence the output file but aborts the
@@ -412,7 +416,7 @@ class ExtractLook(publish.Extractor):
             instance.context.data["project_settings"]["maya"]["ext_mapping"]
         )
         if ext_mapping:
-            self.log.info("Looking in settings for scene type ...")
+            self.log.debug("Looking in settings for scene type ...")
             # use extension mapping for first family found
             for family in self.families:
                 try:
@@ -444,12 +448,12 @@ class ExtractLook(publish.Extractor):
 
         # Remove all members of the sets so they are not included in the
         # exported file by accident
-        self.log.info("Processing sets..")
+        self.log.debug("Processing sets..")
         lookdata = instance.data["lookData"]
         relationships = lookdata["relationships"]
         sets = list(relationships.keys())
         if not sets:
-            self.log.info("No sets found")
+            self.log.info("No sets found for the look")
             return
 
         # Specify texture processing executables to activate

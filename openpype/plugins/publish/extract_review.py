@@ -3,6 +3,7 @@ import re
 import copy
 import json
 import shutil
+import subprocess
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -11,7 +12,7 @@ import speedcopy
 import pyblish.api
 
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     filter_profiles,
     path_to_subprocess_arg,
     run_subprocess,
@@ -23,7 +24,11 @@ from openpype.lib.transcoding import (
     convert_input_paths_for_ffmpeg,
     get_transcode_temp_directory,
 )
-from openpype.pipeline.publish import KnownPublishError
+from openpype.pipeline.publish import (
+    KnownPublishError,
+    get_publish_instance_label,
+)
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -45,6 +50,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "maya",
         "blender",
         "houdini",
+        "max",
         "shell",
         "hiero",
         "premiere",
@@ -66,9 +72,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
     supported_exts = image_exts + video_exts
 
     alpha_exts = ["exr", "png", "dpx"]
-
-    # FFmpeg tools paths
-    ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
     # Preset attributes
     profiles = None
@@ -92,8 +95,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         host_name = instance.context.data["hostName"]
         family = self.main_family_from_instance(instance)
 
-        self.log.info("Host: \"{}\"".format(host_name))
-        self.log.info("Family: \"{}\"".format(family))
+        self.log.debug("Host: \"{}\"".format(host_name))
+        self.log.debug("Family: \"{}\"".format(family))
 
         profile = filter_profiles(
             self.profiles,
@@ -202,17 +205,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return filtered_defs
 
-    @staticmethod
-    def get_instance_label(instance):
-        return (
-            getattr(instance, "label", None)
-            or instance.data.get("label")
-            or instance.data.get("name")
-            or str(instance)
-        )
-
     def main_process(self, instance):
-        instance_label = self.get_instance_label(instance)
+        instance_label = get_publish_instance_label(instance)
         self.log.debug("Processing instance \"{}\"".format(instance_label))
         profile_outputs = self._get_outputs_for_instance(instance)
         if not profile_outputs:
@@ -351,7 +345,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             temp_data = self.prepare_temp_data(instance, repre, output_def)
             files_to_clean = []
             if temp_data["input_is_sequence"]:
-                self.log.info("Filling gaps in sequence.")
+                self.log.debug("Checking sequence to fill gaps in sequence..")
                 files_to_clean = self.fill_sequence_gaps(
                     files=temp_data["origin_repre"]["files"],
                     staging_dir=new_repre["stagingDir"],
@@ -424,6 +418,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "Adding new representation: {}".format(new_repre)
             )
             instance.data["representations"].append(new_repre)
+
+            add_repre_files_for_cleanup(instance, new_repre)
 
     def input_is_sequence(self, repre):
         """Deduce from representation data if input is sequence."""
@@ -789,8 +785,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     arg = arg.replace(identifier, "").strip()
                     audio_filters.append(arg)
 
-        all_args = []
-        all_args.append(path_to_subprocess_arg(self.ffmpeg_path))
+        all_args = [
+            subprocess.list2cmdline(get_ffmpeg_tool_args("ffmpeg"))
+        ]
         all_args.extend(input_args)
         if video_filters:
             all_args.append("-filter:v")

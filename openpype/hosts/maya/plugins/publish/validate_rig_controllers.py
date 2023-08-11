@@ -5,6 +5,7 @@ import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     RepairAction,
+    PublishValidationError
 )
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import undo_chunk
@@ -51,7 +52,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError('{} failed, see log '
+            raise PublishValidationError('{} failed, see log '
                                'information'.format(self.label))
 
     @classmethod

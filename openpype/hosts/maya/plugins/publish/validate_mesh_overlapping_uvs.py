@@ -6,7 +6,18 @@ import maya.api.OpenMaya as om
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateMeshOrder
+from openpype.pipeline.publish import (
+    ValidateMeshOrder,
+    OptionalPyblishPluginMixin,
+    PublishValidationError
+)
+
+
+def _as_report_list(values, prefix="- ", suffix="\n"):
+    """Return list as bullet point list for a report"""
+    if not values:
+        return ""
+    return prefix + (suffix + prefix).join(values)
 
 
 class GetOverlappingUVs(object):
@@ -225,7 +236,8 @@ class GetOverlappingUVs(object):
         return faces
 
 
-class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
+class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """ Validate the current mesh overlapping UVs.
 
     It validates whether the current UVs are overlapping or not.
@@ -281,9 +293,14 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
         return instance.data.get("overlapping_faces", [])
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         invalid = self.get_invalid(instance, compute=True)
         if invalid:
-            raise RuntimeError(
-                "Meshes found with overlapping UVs: {0}".format(invalid)
+            raise PublishValidationError(
+                "Meshes found with overlapping UVs:\n\n{0}".format(
+                    _as_report_list(sorted(invalid))
+                ),
+                title="Overlapping UVs"
             )

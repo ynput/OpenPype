@@ -14,7 +14,7 @@ from openpype.client import (
 )
 from openpype.pipeline import (
     switch_container,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 
@@ -206,7 +206,7 @@ def switch_item(container,
 
     # Collect any of current asset, subset and representation if not provided
     #   so we can use the original name from those.
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     if any(not x for x in [asset_name, subset_name, representation_name]):
         repre_id = container["representation"]
         representation = get_representation_by_id(project_name, repre_id)
@@ -256,8 +256,11 @@ def switch_item(container,
 
 
 @contextlib.contextmanager
-def maintained_selection():
-    comp = get_current_comp()
+def maintained_selection(comp=None):
+    """Reset comp selection from before the context after the context"""
+    if comp is None:
+        comp = get_current_comp()
+
     previous_selection = comp.GetToolList(True).values()
     try:
         yield
@@ -267,6 +270,33 @@ def maintained_selection():
         if previous_selection:
             for tool in previous_selection:
                 flow.Select(tool, True)
+
+
+@contextlib.contextmanager
+def maintained_comp_range(comp=None,
+                          global_start=True,
+                          global_end=True,
+                          render_start=True,
+                          render_end=True):
+    """Reset comp frame ranges from before the context after the context"""
+    if comp is None:
+        comp = get_current_comp()
+
+    comp_attrs = comp.GetAttrs()
+    preserve_attrs = {}
+    if global_start:
+        preserve_attrs["COMPN_GlobalStart"] = comp_attrs["COMPN_GlobalStart"]
+    if global_end:
+        preserve_attrs["COMPN_GlobalEnd"] = comp_attrs["COMPN_GlobalEnd"]
+    if render_start:
+        preserve_attrs["COMPN_RenderStart"] = comp_attrs["COMPN_RenderStart"]
+    if render_end:
+        preserve_attrs["COMPN_RenderEnd"] = comp_attrs["COMPN_RenderEnd"]
+
+    try:
+        yield
+    finally:
+        comp.SetAttrs(preserve_attrs)
 
 
 def get_frame_path(path):

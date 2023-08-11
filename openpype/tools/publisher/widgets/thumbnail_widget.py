@@ -7,8 +7,8 @@ from openpype.style import get_objected_colors
 from openpype.lib import (
     run_subprocess,
     is_oiio_supported,
-    get_oiio_tools_path,
-    get_ffmpeg_tool_path,
+    get_oiio_tool_args,
+    get_ffmpeg_tool_args,
 )
 from openpype.lib.transcoding import (
     IMAGE_EXTENSIONS,
@@ -75,6 +75,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
 
         painter = QtGui.QPainter()
         painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.drawPixmap(0, 0, self._cached_pix)
         painter.end()
 
@@ -183,6 +184,18 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
             backgrounded_images.append(new_pix)
         return backgrounded_images
 
+    def _paint_dash_line(self, painter, rect):
+        pen = QtGui.QPen()
+        pen.setWidth(1)
+        pen.setBrush(QtCore.Qt.darkGray)
+        pen.setStyle(QtCore.Qt.DashLine)
+
+        new_rect = rect.adjusted(1, 1, -1, -1)
+        painter.setPen(pen)
+        painter.setBrush(QtCore.Qt.transparent)
+        # painter.drawRect(rect)
+        painter.drawRect(new_rect)
+
     def _cache_pix(self):
         rect = self.rect()
         rect_width = rect.width()
@@ -264,13 +277,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
 
         # Draw drop enabled dashes
         if used_default_pix:
-            pen = QtGui.QPen()
-            pen.setWidth(1)
-            pen.setBrush(QtCore.Qt.darkGray)
-            pen.setStyle(QtCore.Qt.DashLine)
-            final_painter.setPen(pen)
-            final_painter.setBrush(QtCore.Qt.transparent)
-            final_painter.drawRect(rect)
+            self._paint_dash_line(final_painter, rect)
 
         final_painter.end()
 
@@ -474,12 +481,12 @@ def _convert_thumbnail_oiio(src_path, dst_path):
     if not is_oiio_supported():
         return None
 
-    oiio_cmd = [
-        get_oiio_tools_path(),
+    oiio_cmd = get_oiio_tool_args(
+        "oiiotool",
         "-i", src_path,
         "--subimage", "0",
         "-o", dst_path
-    ]
+    )
     try:
         _run_silent_subprocess(oiio_cmd)
     except Exception:
@@ -488,12 +495,12 @@ def _convert_thumbnail_oiio(src_path, dst_path):
 
 
 def _convert_thumbnail_ffmpeg(src_path, dst_path):
-    ffmpeg_cmd = [
-        get_ffmpeg_tool_path(),
+    ffmpeg_cmd = get_ffmpeg_tool_args(
+        "ffmpeg",
         "-y",
         "-i", src_path,
         dst_path
-    ]
+    )
     try:
         _run_silent_subprocess(ffmpeg_cmd)
     except Exception:

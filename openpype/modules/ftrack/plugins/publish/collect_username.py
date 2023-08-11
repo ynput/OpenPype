@@ -33,7 +33,7 @@ class CollectUsernameForWebpublish(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.0015
     label = "Collect ftrack username"
     hosts = ["webpublisher", "photoshop"]
-    targets = ["remotepublish", "filespublish", "tvpaint_worker"]
+    targets = ["webpublish"]
 
     def process(self, context):
         self.log.info("{}".format(self.__class__.__name__))

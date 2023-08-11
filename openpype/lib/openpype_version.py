@@ -13,6 +13,7 @@ import os
 import sys
 
 import openpype.version
+from openpype import AYON_SERVER_ENABLED
 
 from .python_module_tools import import_filepath
 
@@ -25,8 +26,25 @@ def get_openpype_version():
     return openpype.version.__version__
 
 
+def get_ayon_launcher_version():
+    version_filepath = os.path.join(
+        os.environ["AYON_ROOT"],
+        "version.py"
+    )
+    if not os.path.exists(version_filepath):
+        return None
+    content = {}
+    with open(version_filepath, "r") as stream:
+        exec(stream.read(), content)
+    return content["__version__"]
+
+
 def get_build_version():
     """OpenPype version of build."""
+
+    if AYON_SERVER_ENABLED:
+        return get_ayon_launcher_version()
+
     # Return OpenPype version if is running from code
     if not is_running_from_build():
         return get_openpype_version()
@@ -50,7 +68,11 @@ def is_running_from_build():
     Returns:
         bool: True if running from build.
     """
-    executable_path = os.environ["OPENPYPE_EXECUTABLE"]
+
+    if AYON_SERVER_ENABLED:
+        executable_path = os.environ["AYON_EXECUTABLE"]
+    else:
+        executable_path = os.environ["OPENPYPE_EXECUTABLE"]
     executable_filename = os.path.basename(executable_path)
     if "python" in executable_filename.lower():
         return False
@@ -58,6 +80,8 @@ def is_running_from_build():
 
 
 def is_staging_enabled():
+    if AYON_SERVER_ENABLED:
+        return os.getenv("AYON_USE_STAGING") == "1"
     return os.environ.get("OPENPYPE_USE_STAGING") == "1"
 
 
@@ -87,6 +111,9 @@ def is_running_staging():
     Returns:
         bool: Using staging version or not.
     """
+
+    if AYON_SERVER_ENABLED:
+        return is_staging_enabled()
 
     if os.environ.get("OPENPYPE_IS_STAGING") == "1":
         return True

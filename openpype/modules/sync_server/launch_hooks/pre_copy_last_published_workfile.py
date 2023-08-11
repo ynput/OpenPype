@@ -1,12 +1,8 @@
 import os
 import shutil
 
-from openpype.client.entities import (
-    get_representations,
-    get_project
-)
-
-from openpype.lib import PreLaunchHook
+from openpype.client.entities import get_representations
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.modules.sync_server.sync_server import (
     download_last_published_workfile,
@@ -32,6 +28,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                   "nuke", "nukeassist", "nukex", "hiero", "nukestudio",
                   "maya", "harmony", "celaction", "flame", "fusion",
                   "houdini", "tvpaint"]
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         """Check if local workfile doesn't exist, else copy it.

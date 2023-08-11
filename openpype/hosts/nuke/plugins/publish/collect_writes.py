@@ -133,11 +133,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
                 else:
                     representation['files'] = collected_frames
 
-            # inject colorspace data
-            self.set_representation_colorspace(
-                representation, instance.context,
-                colorspace=colorspace
-            )
+                # inject colorspace data
+                self.set_representation_colorspace(
+                    representation, instance.context,
+                    colorspace=colorspace
+                )
 
             instance.data["representations"].append(representation)
             self.log.info("Publishing rendered frames ...")
@@ -192,5 +192,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         # be used for extract review
         if not instance.data.get("review"):
             instance.data["useSequenceForReview"] = False
+
+        # TODO temporarily set stagingDir as persistent for backward
+        # compatibility. This is mainly focused on `renders`folders which
+        # were previously not cleaned up (and could be used in read notes)
+        # this logic should be removed and replaced with custom staging dir
+        instance.data["stagingDir_persistent"] = True
 
         self.log.debug("instance.data: {}".format(pformat(instance.data)))

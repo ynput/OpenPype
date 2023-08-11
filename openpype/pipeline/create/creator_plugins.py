@@ -21,6 +21,7 @@ from openpype.pipeline.plugin_discover import (
 )
 
 from .subset_name import get_subset_name
+from .utils import get_next_versions_for_instances
 from .legacy_create import LegacyCreator
 
 
@@ -483,6 +484,27 @@ class BaseCreator:
             thumbnail_path
         )
 
+    def get_next_versions_for_instances(self, instances):
+        """Prepare next versions for instances.
+
+        This is helper method to receive next possible versions for instances.
+        It is using context information on instance to receive them, 'asset'
+        and 'subset'.
+
+        Output will contain version by each instance id.
+
+        Args:
+            instances (list[CreatedInstance]): Instances for which to get next
+                versions.
+
+        Returns:
+            Dict[str, int]: Next versions by instance id.
+        """
+
+        return get_next_versions_for_instances(
+            self.create_context.project_name, instances
+        )
+
 
 class Creator(BaseCreator):
     """Creator that has more information for artist to show in UI.
@@ -638,12 +660,12 @@ def discover_convertor_plugins(*args, **kwargs):
 
 
 def discover_legacy_creator_plugins():
-    from openpype.lib import Logger
+    from openpype.pipeline import get_current_project_name
 
     log = Logger.get_logger("CreatorDiscover")
 
     plugins = discover(LegacyCreator)
-    project_name = os.environ.get("AVALON_PROJECT")
+    project_name = get_current_project_name()
     system_settings = get_system_settings()
     project_settings = get_project_settings(project_name)
     for plugin in plugins:

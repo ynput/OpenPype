@@ -8,7 +8,8 @@ from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 
-class ExtractModel(publish.Extractor):
+class ExtractModel(publish.Extractor,
+                   publish.OptionalPyblishPluginMixin):
     """Extract as Model (Maya Scene).
 
     Only extracts contents based on the original "setMembers" data to ensure
@@ -31,11 +32,14 @@ class ExtractModel(publish.Extractor):
 
     def process(self, instance):
         """Plugin entry point."""
+        if not self.is_active(instance.data):
+            return
+
         ext_mapping = (
             instance.context.data["project_settings"]["maya"]["ext_mapping"]
         )
         if ext_mapping:
-            self.log.info("Looking in settings for scene type ...")
+            self.log.debug("Looking in settings for scene type ...")
             # use extension mapping for first family found
             for family in self.families:
                 try:

@@ -8,6 +8,8 @@ import requests
 import pyblish.api
 
 import nuke
+
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     OpenPypePyblishPluginMixin
@@ -86,7 +88,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
     def process(self, instance):
         if not instance.data.get("farm"):
-            self.log.info("Skipping local instance.")
+            self.log.debug("Skipping local instance.")
             return
 
         instance.data["attributeValues"] = self.get_attr_values_from_data(
@@ -337,8 +339,14 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             if _path.lower().startswith('openpype_'):
                 environment[_path] = os.environ[_path]
 
-        # to recognize job from PYPE for turning Event On/Off
-        environment["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        if AYON_SERVER_ENABLED:
+            environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
+            render_job_label = "AYON_RENDER_JOB"
+        else:
+            render_job_label = "OPENPYPE_RENDER_JOB"
+
+        environment[render_job_label] = "1"
 
         # finally search replace in values of any key
         if self.env_search_replace_values:

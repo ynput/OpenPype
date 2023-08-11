@@ -8,18 +8,14 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (OCIO managed)",
+            "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
                 }
-
             ]
         },
         {
@@ -36,7 +32,7 @@
                     "children": [
                         {
                             "type": "list",
-                            "key": "defaults",
+                            "key": "default_variants",
                             "label": "Default Variants",
                             "object_type": "text",
                             "docstring": "Fill default variant(s) (like 'Main' or 'Default') used in subset name creation."
@@ -111,6 +107,17 @@
                             "label": "Skip Timeline Check  for Tasks"
                         }
                     ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "docstring": "Check if loaded container in scene are latest versions.",
+                            "key": "ValidateContainers",
+                            "label": "ValidateContainers"
+                        }
+                    ]
                 }
             ]
         },
@@ -121,6 +128,10 @@
                 "workfile_builder/builder_on_start",
                 "workfile_builder/profiles"
             ]
+        },
+        {
+            "type": "schema",
+            "name": "schema_templated_workfile_build"
         }
     ]
 }
