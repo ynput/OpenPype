@@ -4,7 +4,6 @@ from openpype.hosts.maya.api.lib import read
 
 from openpype.client import get_asset_by_name
 from openpype.pipeline.create import get_subset_name
-from openpype.pipeline import get_current_project_name
 
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
@@ -141,7 +140,7 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
 
             # recreate subset name as without it would be
             # `renderingMain` vs correct `renderMain`
-            project_name = get_current_project_name()
+            project_name = self.create_context.get_current_project_name()
             asset_doc = get_asset_by_name(project_name,
                                           original_data["asset"])
             subset_name = get_subset_name("render",
