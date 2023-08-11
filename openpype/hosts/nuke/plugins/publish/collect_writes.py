@@ -38,11 +38,23 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         render_target = instance.data["render_target"]
         if render_target == "frames":
             self.set_farm_representation(
-                instance, write_file_path, frame_start, frame_end, colorspace)
+                instance,
+                write_file_path,
+                frame_start,
+                frame_end,
+                colorspace,
+                only_existing=True
+            )
 
         elif render_target == "frames_farm":
             self.set_farm_representation(
-                instance, write_file_path, frame_start, frame_end, colorspace)
+                instance,
+                write_file_path,
+                frame_start,
+                frame_end,
+                colorspace,
+                only_existing=True
+            )
 
             self.add_farm_instance_data(instance)
 

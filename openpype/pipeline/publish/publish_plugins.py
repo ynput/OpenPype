@@ -420,9 +420,11 @@ class FarmPluginMixin:
         self,
         instance,
         file_path,
-        frame_start,
-        frame_end,
-        colorspace,
+        frame_start=None,
+        frame_end=None,
+        colorspace=None,
+        only_existing=False,
+        reviewable=False,
     ):
         """Set farm representation to instance data.
 
@@ -430,21 +432,86 @@ class FarmPluginMixin:
             instance (pyblish.api.Instance): pyblish instance
             file_path (str): Path to a single file or a sequence of files
                 with a pattern (##, %02d) in it.
-            frame_start (int): first frame
-            frame_end (int): last frame
-            colorspace (str): colorspace
+            frame_start (Optional[int]): first frame
+            frame_end (Optional[int]): last frame
+            colorspace (Optional[str]): colorspace name
+            only_existing (Optional[bool]): Ensure that files exists.
+            reviewable (Optional[bool]): reviewable flag
 
         Returns:
             dict: representation
         """
-        representation = expected_files.get_farm_publishing_representation(
+        representation = expected_files.get_publishing_representation(
             instance,
             file_path,
             frame_start,
             frame_end,
             colorspace,
             self.log,
-            only_existing=True
+            only_existing,
+            reviewable,
         )
-
+        representation["tags"].append("publish_on_farm")
         instance.data["representations"].append(representation)
+
+    def set_representation(
+        self,
+        instance,
+        file_path,
+        frame_start=None,
+        frame_end=None,
+        colorspace=None,
+        only_existing=False,
+        reviewable=False,
+    ):
+        """Set farm representation to instance data.
+
+        Args:
+            instance (pyblish.api.Instance): pyblish instance
+            file_path (str): Path to a single file or a sequence of files
+                with a pattern (##, %02d) in it.
+            frame_start (Optional[int]): first frame
+            frame_end (Optional[int]): last frame
+            colorspace (Optional[str]): colorspace name
+            only_existing (Optional[bool]): Ensure that files exists.
+            reviewable (Optional[bool]): reviewable flag
+
+        Returns:
+            dict: representation
+        """
+        representation = expected_files.get_publishing_representation(
+            instance,
+            file_path,
+            frame_start,
+            frame_end,
+            colorspace,
+            self.log,
+            only_existing,
+            reviewable,
+        )
+        instance.data["representations"].append(representation)
+
+    def get_single_filepath_from_list_of_files(self, collected_files):
+        """Get single filepath from list of files.
+
+        Args:
+            collected_files (list[str]): list of files
+
+        Returns:
+            Any[str, None]: single filepath or None if not possible
+        """
+        return expected_files.get_single_filepath_from_list_of_files(
+            collected_files)
+
+    def get_frame_range_from_list_of_files(self, collected_files):
+        """Get frame range from sequence files.
+
+        Args:
+            collected_files (list[str]): list of files
+
+        Returns:
+            Any[tuple[int, int], tuple[None, None]]: frame range or None
+                if not possible
+        """
+        return expected_files.get_frame_range_from_list_of_files(
+            collected_files)

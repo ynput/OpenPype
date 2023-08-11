@@ -2,11 +2,12 @@ import os
 import tempfile
 from pathlib import Path
 
-import clique
 import pyblish.api
+from openpype.pipeline import publish
 
 
-class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
+class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
+                                     publish.FarmPluginMixin):
     """Collect data for instances created by settings creators.
 
     Plugin create representations for simple instances based
@@ -37,7 +38,9 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         if not instance.data.get("settings_creator"):
             return
 
+        context = instance.context
         instance_label = instance.data["name"]
+
         # Create instance's staging dir in temp
         tmp_folder = tempfile.mkdtemp(prefix="traypublisher_")
         instance.data["stagingDir"] = tmp_folder
@@ -47,35 +50,112 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             "Created temp staging directory for instance {}. {}"
         ).format(instance_label, tmp_folder))
 
+         # Add targeted family to families
+        creator_attributes = instance.data["creator_attributes"]
+        publish_target = creator_attributes["publish_target"]
+        review_file_item = creator_attributes["reviewable"]
+        review_filenames = review_file_item.get("filenames")
+
+        # make instance reviewable if reviewable attribute is set
+        if review_filenames:
+            instance.data["families"].append("review")
+
+        # Add render target specific data
+        # NOTE: need to be done after review family is added
+        if publish_target == "farm":
+            self.add_farm_instance_data(instance)
+
         self._fill_version(instance, instance_label)
 
-        # Store filepaths for validation of their existence
+        # prep all representation files for processing
+        filepath_items = creator_attributes["representation_files"]
+        if not isinstance(filepath_items, list):
+            filepath_items = [filepath_items]
+
+        # also add reviewable item to list of items to process
+        if review_filenames:
+            filepath_items.append(review_file_item)
+
+        representation_files = self.get_processing_file_data(
+            instance, filepath_items)
+
+        for file_path, file_data in representation_files.items():
+            frame_start, frame_end = file_data["framerange"]
+            if publish_target == "farm":
+                # farm publish needs to have output dir set
+                # QUESTION: perhaps we do need to do this?
+                output_dir = os.path.dirname(file_path)
+                instance.data["outputDir"] = output_dir
+                context.data["currentFile"] = output_dir
+
+                # add representation
+                self.set_farm_representation(
+                    instance, file_path, frame_start, frame_end,
+                    reviewable=("reviewable" in file_data)
+                )
+            else:
+                self.set_representation(
+                    instance, file_path, frame_start, frame_end,
+                    reviewable=("reviewable" in file_data)
+                )
+
+        self.log.debug(
+            (
+                "Created Simple Settings instance \"{}\""
+                " with {} representations"
+            ).format(
+                instance_label,
+                len(instance.data["representations"])
+            )
+        )
+
+    def get_processing_file_data(self, instance, filepath_items):
+        """Get data for processing files.
+
+        Args:
+            filepath_items (List[Dict[str, Any]]): List of items with
+                information about files.
+        Returns:
+            List[Dict[str, Any]]: List of items with data for processing files.
+        """
+        representation_files = {}
         source_filepaths = []
-        # Make sure there are no representations with same name
-        repre_names_counter = {}
-        # Store created names for logging
-        repre_names = []
-        # Store set of filepaths per each representation
-        representation_files_mapping = []
-        source = self._create_main_representations(
-            instance,
-            source_filepaths,
-            repre_names_counter,
-            repre_names,
-            representation_files_mapping
-        )
+        for filepath_item in filepath_items:
+            # Skip if filepath item does not have filenames
+            if not filepath_item["filenames"]:
+                continue
 
-        self._create_review_representation(
-            instance,
-            source_filepaths,
-            repre_names_counter,
-            repre_names,
-            representation_files_mapping
-        )
-        source_filepaths = list(set(source_filepaths))
-        instance.data["source"] = source
-        instance.data["sourceFilepaths"] = source_filepaths
+            filepaths = {
+                os.path.join(filepath_item["directory"], filename)
+                for filename in filepath_item["filenames"]
+            }
 
+            # add it to source filepaths
+            # for later validation of existence
+            source_filepaths.extend(filepaths)
+
+            file_path = self.get_single_filepath_from_list_of_files(
+                filepaths)
+            frame_start, frame_end = self.get_frame_range_from_list_of_files(
+                filepaths)
+            processing_file_data = {
+                file_path: {
+                    "framerange": (frame_start, frame_end)
+                }
+            }
+
+            # make sure there is no duplicity for case reviewable is duplicated
+            if file_path in representation_files:
+                # update the data to be reviewable
+                representation_files[file_path]["reviewable"] = True
+            else:
+                representation_files.update(processing_file_data)
+
+        # store source filepaths on instance
+        # NOTE: we need to make sure there are no duplicities
+        instance.data.setdefault(
+            "sourceFilepaths", list(set(source_filepaths))
+        )
         # NOTE: Missing filepaths should not cause crashes (at least not here)
         # - if filepaths are required they should crash on validation
         if source_filepaths:
@@ -84,16 +164,10 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
             origin_basename = Path(source_filepaths[0]).stem
             instance.data["originalBasename"] = origin_basename
 
-        self.log.debug(
-            (
-                "Created Simple Settings instance \"{}\""
-                " with {} representations: {}"
-            ).format(
-                instance_label,
-                len(instance.data["representations"]),
-                ", ".join(repre_names)
-            )
-        )
+        if not instance.data.get("thumbnailSource"):
+            instance.data["thumbnailSource"] = source_filepaths[0]
+
+        return representation_files
 
     def _fill_version(self, instance, instance_label):
         """Fill instance version under which will be instance integrated.
@@ -116,152 +190,3 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin):
         self.log.debug(
             "Version for instance \"{}\" was set to \"{}\"".format(
                 instance_label, version_to_use))
-
-    def _create_main_representations(
-        self,
-        instance,
-        source_filepaths,
-        repre_names_counter,
-        repre_names,
-        representation_files_mapping
-    ):
-        creator_attributes = instance.data["creator_attributes"]
-        filepath_items = creator_attributes["representation_files"]
-        if not isinstance(filepath_items, list):
-            filepath_items = [filepath_items]
-
-        source = None
-        for filepath_item in filepath_items:
-            # Skip if filepath item does not have filenames
-            if not filepath_item["filenames"]:
-                continue
-
-            filepaths = {
-                os.path.join(filepath_item["directory"], filename)
-                for filename in filepath_item["filenames"]
-            }
-            source_filepaths.extend(filepaths)
-
-            source = self._calculate_source(filepaths)
-            representation = self._create_representation_data(
-                filepath_item, repre_names_counter, repre_names
-            )
-            instance.data["representations"].append(representation)
-            representation_files_mapping.append(
-                (filepaths, representation, source)
-            )
-        return source
-
-    def _create_review_representation(
-        self,
-        instance,
-        source_filepaths,
-        repre_names_counter,
-        repre_names,
-        representation_files_mapping
-    ):
-        # Skip review representation creation if there are no representations
-        #   created for "main" part
-        #   - review representation must not be created in that case so
-        #       validation can care about it
-        if not representation_files_mapping:
-            self.log.warning((
-                "There are missing source representations."
-                " Creation of review representation was skipped."
-            ))
-            return
-
-        creator_attributes = instance.data["creator_attributes"]
-        review_file_item = creator_attributes["reviewable"]
-        filenames = review_file_item.get("filenames")
-        if not filenames:
-            self.log.debug((
-                "Filepath for review is not defined."
-                " Skipping review representation creation."
-            ))
-            return
-
-        item_dir = review_file_item["directory"]
-        first_filepath = os.path.join(item_dir, filenames[0])
-
-        filepaths = {
-            os.path.join(item_dir, filename)
-            for filename in filenames
-        }
-        source_filepaths.extend(filepaths)
-        # First try to find out representation with same filepaths
-        #   so it's not needed to create new representation just for review
-        review_representation = None
-        # Review path (only for logging)
-        review_path = None
-        for item in representation_files_mapping:
-            _filepaths, representation, repre_path = item
-            if _filepaths == filepaths:
-                review_representation = representation
-                review_path = repre_path
-                break
-
-        if review_representation is None:
-            self.log.debug("Creating new review representation")
-            review_path = self._calculate_source(filepaths)
-            review_representation = self._create_representation_data(
-                review_file_item, repre_names_counter, repre_names
-            )
-            instance.data["representations"].append(review_representation)
-
-        if "review" not in instance.data["families"]:
-            instance.data["families"].append("review")
-
-        if not instance.data.get("thumbnailSource"):
-            instance.data["thumbnailSource"] = first_filepath
-
-        review_representation["tags"].append("review")
-        self.log.debug("Representation {} was marked for review. {}".format(
-            review_representation["name"], review_path
-        ))
-
-    def _create_representation_data(
-        self, filepath_item, repre_names_counter, repre_names
-    ):
-        """Create new representation data based on file item.
-
-        Args:
-            filepath_item (Dict[str, Any]): Item with information about
-                representation paths.
-            repre_names_counter (Dict[str, int]): Store count of representation
-                names.
-            repre_names (List[str]): All used representation names. For
-                logging purposes.
-
-        Returns:
-            Dict: Prepared base representation data.
-        """
-
-        filenames = filepath_item["filenames"]
-        _, ext = os.path.splitext(filenames[0])
-        if len(filenames) == 1:
-            filenames = filenames[0]
-
-        repre_name = repre_ext = ext[1:]
-        if repre_name not in repre_names_counter:
-            repre_names_counter[repre_name] = 2
-        else:
-            counter = repre_names_counter[repre_name]
-            repre_names_counter[repre_name] += 1
-            repre_name = "{}_{}".format(repre_name, counter)
-        repre_names.append(repre_name)
-        return {
-            "ext": repre_ext,
-            "name": repre_name,
-            "stagingDir": filepath_item["directory"],
-            "files": filenames,
-            "tags": []
-        }
-
-    def _calculate_source(self, filepaths):
-        cols, rems = clique.assemble(filepaths)
-        if cols:
-            source = cols[0].format("{head}{padding}{tail}")
-        elif rems:
-            source = rems[0]
-        return source

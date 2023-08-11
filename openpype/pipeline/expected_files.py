@@ -1,24 +1,25 @@
-"""Utility functions for file sequences.
+"""Utility functions for file sequences.frame_start
 """
 import os
 import re
+import clique
 from openpype.lib import Logger
 from openpype.pipeline import frames
 from openpype.pipeline import colorspace as clrs
 
 
 def collect_filepaths_from_sequential_path(
-    frame_start,
-    frame_end,
-    path,
+    file_path,
+    frame_start=None,
+    frame_end=None,
     only_existing=False,
 ):
     """Generate expected files from path
 
     Args:
-        frame_start (int): Start frame of the sequence
-        frame_end (int): End frame of the sequence
-        path (str): Path to generate expected files from
+        file_path (str): Path to generate expected files from
+        frame_start (Optional[int]): Start frame of the sequence
+        frame_end (Optional[int]): End frame of the sequence
         only_existing (Optional[bool]): Ensure that files exists.
 
     Returns:
@@ -26,14 +27,18 @@ def collect_filepaths_from_sequential_path(
             (frames of a sequence) or path if single file
     """
 
-    dirpath = os.path.dirname(path)
-    filename = os.path.basename(path)
+    dirpath = os.path.dirname(file_path)
+    filename = os.path.basename(file_path)
 
     formattable_string = convert_filename_to_formattable_string(
         filename)
 
-    if not formattable_string:
-        return path
+    if (
+        not formattable_string
+        or frame_start is not None
+        or frame_end is not None
+    ):
+        return file_path
 
     expected_files = []
     for frame in range(int(frame_start), (int(frame_end) + 1)):
@@ -81,17 +86,17 @@ def generate_expected_filepaths(
 
 
 def collect_files_from_sequential_path(
-    frame_start,
-    frame_end,
     file_path,
+    frame_start=None,
+    frame_end=None,
     only_existing=False,
 ):
     """Collect files from sequential path
 
     Args:
-        frame_start (int): Start frame of the sequence
-        frame_end (int): End frame of the sequence
         file_path (str): Absolute path with any sequential pattern (##, %02d)
+        frame_start (Optional[int]): Start frame of the sequence
+        frame_end (Optional[int]): End frame of the sequence
         only_existing (Optional[bool]): Ensure that files exists.
 
     Returns:
@@ -100,9 +105,9 @@ def collect_files_from_sequential_path(
     """
 
     collected_abs_filepaths = collect_filepaths_from_sequential_path(
+        file_path,
         frame_start,
         frame_end,
-        file_path,
         only_existing,
     )
 
@@ -140,25 +145,27 @@ def convert_filename_to_formattable_string(filename):
     return new_filename
 
 
-def get_farm_publishing_representation(
+def get_publishing_representation(
     instance,
     file_path,
-    frame_start,
-    frame_end,
+    frame_start=None,
+    frame_end=None,
     colorspace=None,
     log=None,
     only_existing=False,
+    reviewable=False,
 ):
     """Get representation with expected files.
 
     Args:
         instance (pyblish.Instance): instance
         file_path (str): file path
-        frame_start (int): first frame
-        frame_end (int): last frame
-        colorspace (Optional[str]): colorspace
+        frame_start (Optional[int]): first frame
+        frame_end (Optional[int]): last frame
+        colorspace (Optional[str]): colorspace name
         log (Optional[Logger]): logger
         only_existing (Optional[bool]): Ensure that files exists.
+        reviewable (Optional[bool]): reviewable
 
 
     Returns:
@@ -173,24 +180,33 @@ def get_farm_publishing_representation(
     )
     context_data = instance.context.data
 
+    tags = []
+    if reviewable:
+        tags.append("review")
+
     # prepare base representation data
     representation = {
         "name": file_ext,
         "ext": file_ext,
         "stagingDir": output_dir,
-        "frameStart": frame_start,
-        "frameEnd": frame_end,
-        "tags": ["publish_on_farm"],
+        "tags": tags,
     }
+
+    # add frame range data
+    if frame_start is not None:
+        representation["frameStart"] = frame_start
+    if frame_end is not None:
+        representation["frameEnd"] = frame_end
 
     # collect files from sequential path or single file in list
     collected_file_frames = \
         collect_files_from_sequential_path(
-            frame_start, frame_end, file_path, only_existing)
+            file_path, frame_start, frame_end, only_existing)
 
     # set slate frame
     if (
         "slate" in families
+        # make sure frame range is set
         and _add_slate_frame_to_collected_frames(
             collected_file_frames, frame_start, frame_end)
     ):
@@ -215,19 +231,25 @@ def get_farm_publishing_representation(
 
 def _add_slate_frame_to_collected_frames(
     collected_file_frames,
-    frame_start,
-    frame_end
+    frame_start=None,
+    frame_end=None,
 ):
     """Add slate frame to collected frames.
 
     Args:
         collected_file_frames (list[str]): collected file frames
-        frame_start (int): first frame
-        frame_end (int): last frame
+        frame_start (Optional[int]): first frame
+        frame_end (Optional[int]): last frame
 
     Returns:
         Bool: True if slate frame was added
     """
+    if (
+        frame_start is not None
+        and frame_end is not None
+    ):
+        return False
+
     frame_start_str = frames.get_frame_start_str(
         frame_start, frame_end)
     frame_length = int(frame_end - frame_start + 1)
@@ -244,3 +266,42 @@ def _add_slate_frame_to_collected_frames(
         collected_file_frames.insert(0, slate_frame)
 
         return True
+
+
+def get_single_filepath_from_list_of_files(collected_files):
+    """Get single filepath from list of files.
+
+    Args:
+        collected_files (list[str]): list of files
+
+    Returns:
+        Any[str, None]: single filepath or None if not possible
+    """
+    collections, reminders = clique.assemble(collected_files)
+    if collections:
+        return collections[0].format("{head}{padding}{tail}")
+    elif reminders:
+        return reminders[0]
+
+
+def get_frame_range_from_list_of_files(collected_files):
+    """Get frame range from sequence files.
+
+    Args:
+        collected_files (list[str]): list of files
+
+    Returns:
+        Any[tuple[int, int], tuple[None, None]]: frame range or None
+            if not possible
+    """
+
+    collections, remainder = clique.assemble(collected_files)
+    if not collections:
+        # No sequences detected and we can't retrieve
+        # frame range from single file
+        return None, None
+
+    collection = collections[0]
+    repres_frames = list(collection.indexes)
+
+    return repres_frames[0], repres_frames[-1]
