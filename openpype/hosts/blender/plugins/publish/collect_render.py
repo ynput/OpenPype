@@ -74,19 +74,17 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
             image_settings.file_format = "OPEN_EXR"
         elif ext == "bmp":
             image_settings.file_format = "BMP"
-        elif ext == "iris":
+        elif ext == "rgb":
             image_settings.file_format = "IRIS"
         elif ext == "png":
             image_settings.file_format = "PNG"
         elif ext == "jpeg":
             image_settings.file_format = "JPEG"
-        elif ext == "jpeg2000":
+        elif ext == "jp2":
             image_settings.file_format = "JPEG2000"
         elif ext == "tga":
             image_settings.file_format = "TARGA"
-        elif ext == "tga_raw":
-            image_settings.file_format = "TARGA_RAW"
-        elif ext == "tiff":
+        elif ext == "tif":
             image_settings.file_format = "TIFF"
 
     @staticmethod

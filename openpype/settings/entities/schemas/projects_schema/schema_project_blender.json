@@ -72,15 +72,14 @@
                   "multiselection": false,
                   "defaults": "exr",
                   "enum_items": [
-                    {"exr":      "exr"},
-                    {"bmp":      "bmp"},
-                    {"iris":     "iris"},
-                    {"png":      "png"},
-                    {"jpeg":     "jpeg"},
-                    {"jpeg2000": "jpeg2000"},
-                    {"tga":      "tga"},
-                    {"tga_raw":  "tga_raw"},
-                    {"tiff":     "tiff"}
+                    {"exr": "OpenEXR"},
+                    {"bmp": "BMP"},
+                    {"rgb": "Iris"},
+                    {"png": "PNG"},
+                    {"jpg": "JPEG"},
+                    {"jp2": "JPEG 2000"},
+                    {"tga": "Targa"},
+                    {"tif": "TIFF"}
                   ]
                 }
             ]
