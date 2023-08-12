@@ -77,6 +77,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
     profiles = None
 
     def process(self, instance):
+
+        # Instance should be integrated on a farm
+        if instance.data.get("farm"):
+            self.log.info(
+                "Instance is marked to be processed on farm. Skipping")
+            return
+
         self.log.debug(str(instance.data["representations"]))
         # Skip review when requested.
         if not instance.data.get("review", True):

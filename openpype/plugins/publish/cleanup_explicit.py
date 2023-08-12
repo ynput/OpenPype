@@ -22,6 +22,12 @@ class ExplicitCleanUp(pyblish.api.ContextPlugin):
     active = True
 
     def process(self, context):
+        # Instance should be integrated on a farm
+        if context.data.get("farm"):
+            self.log.info(
+                "Instance is marked to be processed on farm. Skipping")
+            return
+
         cleanup_full_paths = context.data.get("cleanupFullPaths")
         cleanup_empty_dirs = context.data.get("cleanupEmptyDirs")
 

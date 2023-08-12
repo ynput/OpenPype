@@ -28,6 +28,12 @@ class ExtractColorspaceData(publish.Extractor,
     order = pyblish.api.ExtractorOrder + 0.49
 
     def process(self, instance):
+        # Instance should be integrated on a farm
+        if instance.data.get("farm"):
+            self.log.info(
+                "Instance is marked to be processed on farm. Skipping")
+            return
+
         representations = instance.data.get("representations")
         if not representations:
             self.log.info("No representations at instance : `{}`".format(

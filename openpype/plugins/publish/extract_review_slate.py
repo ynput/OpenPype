@@ -33,6 +33,12 @@ class ExtractReviewSlate(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        # Instance should be integrated on a farm
+        if instance.data.get("farm"):
+            self.log.info(
+                "Instance is marked to be processed on farm. Skipping")
+            return
+
         inst_data = instance.data
         if "representations" not in inst_data:
             raise RuntimeError("Burnin needs already created mov to work on.")
