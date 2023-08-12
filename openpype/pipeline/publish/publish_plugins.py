@@ -371,6 +371,9 @@ class FarmPluginMixin:
 
     This mixin provides methods for farm plugins to use.
     """
+    pixel_ext = set(
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    )
 
     def set_expected_files(
         self,
@@ -406,8 +409,8 @@ class FarmPluginMixin:
 
         # make sure rendered sequence on farm will
         # be used for extract review
-        if not instance.data.get("review"):
-            instance.data["useSequenceForReview"] = False
+        instance.data["useSequenceForReview"] = bool(
+            instance.data.get("review"))
 
         # Farm rendering
         instance.data.update({
@@ -422,7 +425,6 @@ class FarmPluginMixin:
         file_path,
         frame_start=None,
         frame_end=None,
-        colorspace=None,
         only_existing=False,
         reviewable=False,
     ):
@@ -446,7 +448,6 @@ class FarmPluginMixin:
             file_path,
             frame_start,
             frame_end,
-            colorspace,
             self.log,
             only_existing,
             reviewable,
@@ -460,7 +461,6 @@ class FarmPluginMixin:
         file_path,
         frame_start=None,
         frame_end=None,
-        colorspace=None,
         only_existing=False,
         reviewable=False,
     ):
@@ -472,7 +472,6 @@ class FarmPluginMixin:
                 with a pattern (##, %02d) in it.
             frame_start (Optional[int]): first frame
             frame_end (Optional[int]): last frame
-            colorspace (Optional[str]): colorspace name
             only_existing (Optional[bool]): Ensure that files exists.
             reviewable (Optional[bool]): reviewable flag
 
@@ -484,7 +483,6 @@ class FarmPluginMixin:
             file_path,
             frame_start,
             frame_end,
-            colorspace,
             self.log,
             only_existing,
             reviewable,

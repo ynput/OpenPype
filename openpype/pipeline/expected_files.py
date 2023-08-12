@@ -5,7 +5,6 @@ import re
 import clique
 from openpype.lib import Logger
 from openpype.pipeline import frames
-from openpype.pipeline import colorspace as clrs
 
 
 def collect_filepaths_from_sequential_path(
@@ -35,8 +34,8 @@ def collect_filepaths_from_sequential_path(
 
     if (
         not formattable_string
-        or frame_start is not None
-        or frame_end is not None
+        or frame_start is None
+        or frame_end is None
     ):
         return file_path
 
@@ -150,7 +149,6 @@ def get_publishing_representation(
     file_path,
     frame_start=None,
     frame_end=None,
-    colorspace=None,
     log=None,
     only_existing=False,
     reviewable=False,
@@ -162,7 +160,6 @@ def get_publishing_representation(
         file_path (str): file path
         frame_start (Optional[int]): first frame
         frame_end (Optional[int]): last frame
-        colorspace (Optional[str]): colorspace name
         log (Optional[Logger]): logger
         only_existing (Optional[bool]): Ensure that files exists.
         reviewable (Optional[bool]): reviewable
@@ -178,7 +175,6 @@ def get_publishing_representation(
     families = set(
         instance.data.get("families", []) + [instance.data["family"]]
     )
-    context_data = instance.context.data
 
     tags = []
     if reviewable:
@@ -217,14 +213,6 @@ def get_publishing_representation(
         representation["files"] = collected_file_frames.pop()
     else:
         representation["files"] = collected_file_frames
-
-    # inject colorspace data
-    clrs.set_colorspace_data_to_representation(
-        representation,
-        context_data,
-        colorspace,
-        log=log
-    )
 
     return representation
 
