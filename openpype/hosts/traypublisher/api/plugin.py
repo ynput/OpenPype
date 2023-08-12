@@ -286,6 +286,14 @@ class SettingsCreator(TrayPublishCreator):
     def get_pre_create_attr_defs(self):
         # Use same attributes as for instance attributes
         return [
+            EnumDef(
+                "publish_target",
+                items={
+                    "local": "Local machine publishing",
+                    "farm": "Farm publishing"
+                },
+                label="Publishing target"
+            ),
             FileDef(
                 "representation_files",
                 folders=False,
@@ -302,14 +310,6 @@ class SettingsCreator(TrayPublishCreator):
                 single_item=True,
                 label="Reviewable representations",
                 extensions_label="Single reviewable item"
-            ),
-            EnumDef(
-                "publish_target",
-                items={
-                    "local": "Local machine publishing",
-                    "farm": "Farm publishing"
-                },
-                label="Publishing target"
             ),
         ]
 

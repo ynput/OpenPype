@@ -1,4 +1,5 @@
 import os
+from pprint import pformat
 import tempfile
 from pathlib import Path
 
@@ -40,6 +41,7 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
 
         context = instance.context
         instance_label = instance.data["name"]
+        family = instance.data["family"]
 
         # Create instance's staging dir in temp
         tmp_folder = tempfile.mkdtemp(prefix="traypublisher_")
@@ -50,7 +52,6 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
             "Created temp staging directory for instance {}. {}"
         ).format(instance_label, tmp_folder))
 
-         # Add targeted family to families
         creator_attributes = instance.data["creator_attributes"]
         publish_target = creator_attributes["publish_target"]
         review_file_item = creator_attributes["reviewable"]
@@ -58,12 +59,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
 
         # make instance reviewable if reviewable attribute is set
         if review_filenames:
+            instance.data["review"] = True
             instance.data["families"].append("review")
-
-        # Add render target specific data
-        # NOTE: need to be done after review family is added
-        if publish_target == "farm":
-            self.add_farm_instance_data(instance)
 
         self._fill_version(instance, instance_label)
 
@@ -80,6 +77,12 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
             instance, filepath_items)
 
         for file_path, file_data in representation_files.items():
+            # making sure file extension is publishable over farm
+            file_ext = os.path.splitext(file_path)[-1].lower().lstrip(".")
+            if file_ext not in self.pixel_ext:
+                # allow farm publishing only for pixel type data
+                publish_target = "local"
+
             frame_start, frame_end = file_data["framerange"]
             if publish_target == "farm":
                 # farm publish needs to have output dir set
@@ -87,6 +90,7 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
                 output_dir = os.path.dirname(file_path)
                 instance.data["outputDir"] = output_dir
                 context.data["currentFile"] = output_dir
+
 
                 # add representation
                 self.set_farm_representation(
@@ -99,6 +103,14 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
                     reviewable=("reviewable" in file_data)
                 )
 
+        # Add render target specific data
+        # NOTE: need to be done after review family is added
+        if publish_target == "farm":
+            self.add_farm_instance_data(instance)
+            # add farm suffixed family to families
+            instance.data["families"].append("{}.farm".format(family))
+
+
         self.log.debug(
             (
                 "Created Simple Settings instance \"{}\""
@@ -108,6 +120,7 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
                 len(instance.data["representations"])
             )
         )
+        self.log.debug(pformat(instance.data))
 
     def get_processing_file_data(self, instance, filepath_items):
         """Get data for processing files.
@@ -152,9 +165,10 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
                 representation_files.update(processing_file_data)
 
         # store source filepaths on instance
+        source_filepaths = sorted(list(set(source_filepaths)))
         # NOTE: we need to make sure there are no duplicities
         instance.data.setdefault(
-            "sourceFilepaths", list(set(source_filepaths))
+            "sourceFilepaths", source_filepaths
         )
         # NOTE: Missing filepaths should not cause crashes (at least not here)
         # - if filepaths are required they should crash on validation
@@ -184,6 +198,8 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
         use_next_version = creator_attributes.get("use_next_version", True)
         # If 'version_to_use' is '0' it means that next version should be used
         version_to_use = creator_attributes.get("version_to_use", 0)
+        instance.context.data["version"] = version_to_use
+
         if use_next_version or not version_to_use:
             return
         instance.data["version"] = version_to_use
