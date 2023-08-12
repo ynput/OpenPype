@@ -6,7 +6,6 @@ import re
 from copy import deepcopy
 import requests
 import clique
-
 import pyblish.api
 
 from openpype import AYON_SERVER_ENABLED
@@ -96,9 +95,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     targets = ["local"]
 
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
-             "celaction", "aftereffects", "harmony"]
+             "celaction", "aftereffects", "harmony", "traypublisher"]
 
-    families = ["render.farm", "render.frames_farm",
+    families = ["render.farm", "render.frames_farm", "plate.farm",
                 "prerender.farm", "prerender.frames_farm",
                 "renderlayer", "imagesequence",
                 "vrayscene", "maxrender",
@@ -146,7 +145,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     }
 
     # list of family names to transfer to new family if present
-    families_transfer = ["render3d", "render2d", "ftrack", "slate"]
+    families_transfer = ["render3d", "render2d", "ftrack", "slate", "plate"]
     plugin_pype_version = "3.0"
 
     # script path for publish_filesequence.py
@@ -326,7 +325,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
         return deadline_publish_job_id
 
-
     def process(self, instance):
         # type: (pyblish.api.Instance) -> None
         """Process plugin.
@@ -394,28 +392,34 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             self.log.debug("Instance has review explicitly disabled.")
             do_not_add_review = True
 
-        if isinstance(instance.data.get("expectedFiles")[0], dict):
+
+        if (
+            instance.data.get("expectedFiles")
+            and isinstance(instance.data["expectedFiles"][0], dict)
+        ):
             instances = create_instances_for_aov(
                 instance, instance_skeleton_data,
                 self.aov_filter, self.skip_integration_repre_list,
                 do_not_add_review)
         else:
-            representations = prepare_representations(
-                instance_skeleton_data,
-                instance.data.get("expectedFiles"),
-                anatomy,
-                self.aov_filter,
-                self.skip_integration_repre_list,
-                do_not_add_review,
-                instance.context,
-                self
-            )
+            if instance.data.get("expectedFiles"):
+                representations = prepare_representations(
+                    instance_skeleton_data,
+                    instance.data.get("expectedFiles"),
+                    anatomy,
+                    self.aov_filter,
+                    self.skip_integration_repre_list,
+                    do_not_add_review,
+                    instance.context,
+                    self
+                )
 
-            if "representations" not in instance_skeleton_data.keys():
-                instance_skeleton_data["representations"] = []
+                if "representations" not in instance_skeleton_data.keys():
+                    instance_skeleton_data["representations"] = []
 
-            # add representation
-            instance_skeleton_data["representations"] += representations
+                # add representation
+                instance_skeleton_data["representations"] += representations
+
             instances = [instance_skeleton_data]
 
         # attach instances to subset
