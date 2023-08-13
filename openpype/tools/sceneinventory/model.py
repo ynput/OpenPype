@@ -85,7 +85,7 @@ class InventoryModel(TreeModel):
         self.remote_provider = remote_provider
         self._site_icons = {
             provider: QtGui.QIcon(icon_path)
-            for provider, icon_path in self.get_site_icons().items()
+            for provider, icon_path in sync_server.get_site_icons().items()
         }
         if "active_site" not in self.Columns:
             self.Columns.append("active_site")
