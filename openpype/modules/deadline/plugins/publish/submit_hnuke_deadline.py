@@ -46,8 +46,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}
-    # NOTE hornet updated for suspend_publish default on
-    suspend_publish = True
+    # NOTE hornet updated for suspend_publish default off
+    suspend_publish = False
 
     @classmethod
     def get_attribute_defs(cls):
@@ -81,7 +81,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             ),
             BoolDef(
                 "suspend_publish",
-                default=cls.suspend_publish,
+                default=cls.suspend_publish, # NOTE hornet updated for suspend_publish default off
                 label="Suspend publish"
             )
         ]
@@ -116,12 +116,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         self._ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())
-        if instance.data.get("render_target") == "farm_frames":
-            submit_frame_start = int(instance.data["frameStartHandle"])
-            submit_frame_end = int(instance.data["frameStartHandle"])
-        else:
-            submit_frame_start = int(instance.data["frameStartHandle"])
-            submit_frame_end = int(instance.data["frameEndHandle"])
+        submit_frame_start = int(instance.data["frameStartHandle"])
+        submit_frame_end = int(instance.data["frameEndHandle"])
 
         # get output path
         render_path = instance.data['path']
@@ -250,6 +246,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         limit_groups = self.get_limit_groups()
         self.log.info("Limit groups: `{}`".format(limit_groups))
 
+        # NOTE hornet update on use existing frames on farm
+        if instance.data.get("render_target") == "farm_frames":
+            ChunkSize =  99999999
+        else:
+            ChunkSize =  instance.data["attributeValues"].get("chunk", self.chunk_size)
+
         payload = {
             "JobInfo": {
                 # Top-level group name
@@ -266,8 +268,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
                 "Priority": instance.data["attributeValues"].get(
                     "priority", self.priority),
-                "ChunkSize": instance.data["attributeValues"].get(
-                    "chunk", self.chunk_size),
+                # NOTE hornet update on use existing frames on farm
+                # "ChunkSize": instance.data["attributeValues"].get(
+                    # "chunk", self.chunk_size),
+                "ChunkSize":ChunkSize,
                 "ConcurrentTasks": instance.data["attributeValues"].get(
                     "concurrency",
                     self.concurrent_tasks
@@ -275,7 +279,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
                 "Department": self.department,
 
-                "Pool": instance.data.get("primaryPool"),
+                "Pool": instance.data.get("primaryPool") or "local",
                 "SecondaryPool": instance.data.get("secondaryPool"),
                 "Group": self.group,
 
