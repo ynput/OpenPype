@@ -136,7 +136,7 @@ class ScreenMarquee(QtWidgets.QDialog):
 
     def keyPressEvent(self, event):
         """Mouse press event"""
-        if event.button() == QtCore.Qt.Key_Escape:
+        if event.key() == QtCore.Qt.Key_Escape:
             self._click_pos = None
             self._capture_rect = None
             self.close()
