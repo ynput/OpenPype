@@ -45,7 +45,24 @@ class AbstractWorkfileController(object):
 
     # Current context
     @abstractmethod
+    def get_host_name(self):
+        pass
+
+    @abstractmethod
     def get_current_project_name(self):
+        pass
+
+    @property
+    @abstractmethod
+    def project_anatomy(self):
+        """Anatomy object for current project.
+
+        Todos:
+            Rename to 'project_anatomy'.
+
+        Returns:
+            Anatomy: Project anatomy.
+        """
         pass
 
     @abstractmethod
@@ -89,6 +106,33 @@ class AbstractWorkfileController(object):
     def set_selected_representation_id(self, representation_id):
         pass
 
+    # Expected selection
+    # - expected selection is used to restore selection after refresh
+    #   or when current context should be used
+    @abstractmethod
+    def set_expected_selection(self, folder_id, task_name):
+        pass
+
+    @abstractmethod
+    def set_expected_folder_id(self, folder_id):
+        pass
+
+    @abstractmethod
+    def set_expected_task_name(self, task_name):
+        pass
+
+    @abstractmethod
+    def get_expected_folder_id(self):
+        pass
+
+    @abstractmethod
+    def get_expected_task_name(self):
+        pass
+
+    @abstractmethod
+    def go_to_current_context(self):
+        pass
+
     # Model functions
     @abstractmethod
     def get_folder_items(self):
@@ -98,7 +142,28 @@ class AbstractWorkfileController(object):
     def get_task_items(self, folder_id):
         pass
 
+    @abstractmethod
+    def get_workarea_file_items(self, folder_id, task_id):
+        pass
+
+    @abstractmethod
+    def get_published_file_items(self, folder_id):
+        pass
+
+    @abstractmethod
+    def get_workfile_info(self, folder_id, task_id, filepath):
+        pass
+
+    @abstractmethod
+    def save_workfile_info(self, folder_id, task_id, filepath, note):
+        pass
+
     # General commands
     @abstractmethod
     def refresh(self):
+        pass
+
+    # Controller actions
+    @abstractmethod
+    def open_workfile(self, filepath):
         pass

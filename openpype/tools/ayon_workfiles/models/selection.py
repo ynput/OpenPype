@@ -4,7 +4,7 @@ class SelectionModel(object):
     Triggering events:
     - "selection.folder.changed"
     - "selection.task.changed"
-    - "selection.path.changed"
+    - "workarea.selection.changed"
     - "selection.representation.changed"
     """
 
@@ -64,8 +64,13 @@ class SelectionModel(object):
 
         self._workfile_path = path
         self._control.emit_event(
-            "selection.path.changed",
-            {"path": path},
+            "workarea.selection.changed",
+            {
+                "path": path,
+                "folder_id": self._folder_id,
+                "task_name": self._task_name,
+                "task_id": self._task_id,
+            },
             self.event_source
         )
 

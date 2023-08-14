@@ -1,3 +1,9 @@
+"""Hierarchy model that handles folders and tasks.
+
+The model can be extracted for common usage. In that case it will be required
+to add more handling of project name changes.
+"""
+
 import time
 import collections
 import contextlib
@@ -77,10 +83,17 @@ class TaskItem:
         self.parent_id = parent_id
         self.icon_name = icon_name or "fa.male"
         self.icon_color = icon_color or get_default_entity_icon_color()
+        self._label = None
 
     @property
     def id(self):
         return self.task_id
+
+    @property
+    def label(self):
+        if self._label is None:
+            self._label = "{} ({})".format(self.name, self.task_type)
+        return self._label
 
     def to_data(self):
         return {

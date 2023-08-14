@@ -21,13 +21,12 @@ def file_size_to_string(file_size):
 
 
 class SidePanelWidget(QtWidgets.QWidget):
-    save_clicked = QtCore.Signal()
     published_workfile_message = (
         "<b>INFO</b>: Opened published workfiles will be stored in"
         " temp directory on your machine. Current temp size: <b>{}</b>."
     )
 
-    def __init__(self, control, parent=None):
+    def __init__(self, control, parent):
         super(SidePanelWidget, self).__init__(parent)
 
         details_label = QtWidgets.QLabel("Details", self)
@@ -57,7 +56,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         btn_note_save.clicked.connect(self._on_save_click)
 
         control.register_event_callback(
-            "selection.path.changed", self._on_selection_change
+            "workarea.selection.changed", self._on_selection_change
         )
 
         self._details_input = details_input
@@ -65,37 +64,50 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._note_input = note_input
         self._btn_note_save = btn_note_save
 
+        self._folder_id = None
+        self._task_id = None
+        self._filepath = None
         self._orig_note = ""
-        self._workfile_doc = None
+        self._control = control
 
-    def set_published_visible(self, published_visible):
-        self._artist_note_widget.setVisible(not published_visible)
+    def set_published_mode(self, published_mode):
+        self._artist_note_widget.setVisible(not published_mode)
 
     def _on_selection_change(self, event):
-        # TODO implement
-        # self.set_context(folder_id, task_name, filepath, workfile_doc)
-        pass
+        folder_id = event["folder_id"]
+        task_id = event["task_id"]
+        filepath = event["path"]
+
+        self._set_context(folder_id, task_id, filepath)
 
     def _on_note_change(self):
         text = self._note_input.toPlainText()
         self._btn_note_save.setEnabled(self._orig_note != text)
 
     def _on_save_click(self):
-        self._orig_note = self._note_input.toPlainText()
-        self._on_note_change()
-        self.save_clicked.emit()
+        note = self._note_input.toPlainText()
+        self._control.save_workfile_info(
+            self._folder_id,
+            self._task_id,
+            self._filepath,
+            note
+        )
+        self._orig_note = note
+        self._btn_note_save.setEnabled(False)
 
-    def set_context(self, folder_id, task_name, filepath, workfile_doc):
+    def _set_context(self, folder_id, task_id, filepath):
         # Check if folder, task and file are selected
         # NOTE workfile document is not requirement
-        enabled = bool(folder_id) and bool(task_name) and bool(filepath)
+        enabled = bool(folder_id) and bool(task_id) and bool(filepath)
 
         self._details_input.setEnabled(enabled)
         self._note_input.setEnabled(enabled)
         self._btn_note_save.setEnabled(enabled)
 
-        # Make sure workfile doc is overridden
-        self._workfile_doc = workfile_doc
+        self._folder_id = folder_id
+        self._task_id = task_id
+        self._filepath = filepath
+
         # Disable inputs and remove texts if any required arguments are missing
         if not enabled:
             self._orig_note = ""
@@ -103,9 +115,12 @@ class SidePanelWidget(QtWidgets.QWidget):
             self._note_input.setPlainText("")
             return
 
+        workfile_info = self._control.get_workfile_info(
+            folder_id, task_id, filepath
+        )
         orig_note = ""
-        if workfile_doc:
-            orig_note = workfile_doc["data"].get("note") or orig_note
+        if workfile_info:
+            orig_note = workfile_info["attrib"].get("description") or orig_note
 
         self._orig_note = orig_note
         self._note_input.setPlainText(orig_note)
@@ -128,9 +143,3 @@ class SidePanelWidget(QtWidgets.QWidget):
             modification_time.strftime(datetime_format)
         )
         self._details_input.appendHtml("<br>".join(lines))
-
-    def get_workfile_data(self):
-        data = {
-            "note": self._note_input.toPlainText()
-        }
-        return self._workfile_doc, data

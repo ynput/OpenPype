@@ -26,6 +26,12 @@ class FoldersModel(QtGui.QStandardItemModel):
         self._has_content = False
         super(FoldersModel, self).clear()
 
+    def get_index_by_id(self, item_id):
+        item = self._items_by_id.get(item_id)
+        if item is None:
+            return QtCore.QModelIndex()
+        return self.indexFromItem(item)
+
     def refresh(self):
         folder_items_by_id = self._control.get_folder_items()
         if not folder_items_by_id:
@@ -129,6 +135,10 @@ class FoldersWidget(QtWidgets.QWidget):
             "controller.refresh.finished",
             self._on_controller_refresh
         )
+        control.register_event_callback(
+            "controller.expected_selection_changed",
+            self._on_expected_selection_change
+        )
 
         selection_model = folders_view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
@@ -139,6 +149,9 @@ class FoldersWidget(QtWidgets.QWidget):
         self._folders_proxy_model = folders_proxy_model
 
         self._last_project = None
+
+    def set_name_filer(self, name):
+        self._folders_proxy_model.setFilterFixedString(name)
 
     def _clear(self):
         self._folders_model.clear()
@@ -160,6 +173,26 @@ class FoldersWidget(QtWidgets.QWidget):
             return
 
         # NOTE Something to do here?
+        self._set_expected_selection()
+
+    def _set_expected_selection(self, **kwargs):
+        if "folder_id" in kwargs:
+            folder_id = kwargs["folder_id"]
+        else:
+            folder_id = self._control.get_expected_folder_id()
+        if folder_id is None:
+            return
+
+        if folder_id != self._get_selected_item_id():
+            index = self._folders_model.get_index_by_id(folder_id)
+            if index.isValid():
+                proxy_index = self._folders_proxy_model.mapFromSource(index)
+                self._folders_view.setCurrentIndex(proxy_index)
+
+        self._control.get_expected_folder_id(None)
+
+    def _on_expected_selection_change(self, event):
+        self._set_expected_selection(folder_id=event["folder_id"])
 
     def _get_selected_item_id(self):
         selection_model = self._folders_view.selectionModel()

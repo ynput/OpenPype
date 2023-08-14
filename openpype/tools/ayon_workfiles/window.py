@@ -1,6 +1,8 @@
 from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype import style, resources
+from openpype.tools.utils import PlaceholderLineEdit
+from openpype.tools.utils.lib import get_qta_icon_by_name_and_color
 
 from .widgets import (
     SidePanelWidget,
@@ -9,6 +11,18 @@ from .widgets import (
     FilesWidget,
 )
 from .control import BaseWorkfileController
+
+
+def get_refresh_icon():
+    return get_qta_icon_by_name_and_color(
+        "fa.refresh", style.get_default_tools_icon_color()
+    )
+
+
+def get_go_to_current_icon():
+    return get_qta_icon_by_name_and_color(
+        "fa.arrow-down", style.get_default_tools_icon_color()
+    )
 
 
 class WorkfilesToolWindow(QtWidgets.QWidget):
@@ -26,15 +40,25 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.Window)
 
+        self._folder_widget = None
+        self._folder_filter_input = None
+
+        self._files_widget = None
+
+        self._first_show = True
+        self._context_to_set = None
+
+        self._controller = controller
+
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
 
         home_page_widget = QtWidgets.QWidget(pages_widget)
         home_body_widget = QtWidgets.QWidget(home_page_widget)
 
-        folder_widget = FoldersWidget(controller, home_body_widget)
+        col_1_widget = self._create_col_1_widget(controller, parent)
         tasks_widget = TasksWidget(controller, home_body_widget)
-        files_widget = FilesWidget(controller, home_body_widget)
+        col_3_widget = self._create_col_3_widget(controller, home_body_widget)
         side_panel = SidePanelWidget(controller, home_body_widget)
 
         pages_widget.addWidget(home_page_widget)
@@ -46,42 +70,112 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         # Build home - body
         body_layout = QtWidgets.QVBoxLayout(home_body_widget)
         split_widget = QtWidgets.QSplitter(home_body_widget)
-        split_widget.addWidget(folder_widget)
+        split_widget.addWidget(col_1_widget)
         split_widget.addWidget(tasks_widget)
-        split_widget.addWidget(files_widget)
+        split_widget.addWidget(col_3_widget)
         split_widget.addWidget(side_panel)
         split_widget.setSizes([255, 160, 455, 175])
 
         body_layout.addWidget(split_widget)
 
-        # Add top margin for tasks to align it visually with files as
-        # the files widget has a filter field which tasks does not.
-        tasks_widget.setContentsMargins(0, 32, 0, 0)
-
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(pages_widget, 1)
 
-        files_widget.file_opened.connect(self._on_file_opened)
+        first_show_timer = QtCore.QTimer()
+        first_show_timer.setSingleShot(True)
+        first_show_timer.setInterval(50)
+
+        first_show_timer.timeout.connect(self._on_first_show)
 
         self._home_page_widget = home_page_widget
         self._pages_widget = pages_widget
         self._home_body_widget = home_body_widget
         self._split_widget = split_widget
 
-        self._folder_widget = folder_widget
         self._tasks_widget = tasks_widget
-        self._files_widget = files_widget
         self._side_panel = side_panel
 
+        self._first_show_timer = first_show_timer
+
+        self._post_init()
+
+    def _post_init(self):
+        self._on_published_checkbox_changed()
+
         # Force focus on the open button by default, required for Houdini.
-        files_widget.setFocus()
+        self._files_widget.setFocus()
 
         self.resize(1200, 600)
 
-        self._controller = controller
+    def _create_col_1_widget(self, controller, parent):
+        col_widget = QtWidgets.QWidget(parent)
+        header_widget = QtWidgets.QWidget(col_widget)
 
-        self._first_show = True
-        self._context_to_set = None
+        folder_filter_input = PlaceholderLineEdit(header_widget)
+        folder_filter_input.setPlaceholderText("Filter folders..")
+
+        go_to_current_btn = QtWidgets.QPushButton(header_widget)
+        go_to_current_btn.setIcon(get_go_to_current_icon())
+
+        refresh_btn = QtWidgets.QPushButton(header_widget)
+        refresh_btn.setIcon(get_refresh_icon())
+
+        folder_widget = FoldersWidget(controller, col_widget)
+
+        header_layout = QtWidgets.QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.addWidget(folder_filter_input, 1)
+        header_layout.addWidget(go_to_current_btn, 0)
+        header_layout.addWidget(refresh_btn, 0)
+
+        col_layout = QtWidgets.QVBoxLayout(col_widget)
+        col_layout.setContentsMargins(0, 0, 0, 0)
+        col_layout.addWidget(header_widget, 0)
+        col_layout.addWidget(folder_widget, 1)
+
+        folder_filter_input.textChanged.connect(self._on_folder_filter_change)
+        go_to_current_btn.clicked.connect(self._on_go_to_current_clicked)
+        refresh_btn.clicked.connect(self._on_refresh_clicked)
+
+        self._folder_filter_input = folder_filter_input
+        self._folder_widget = folder_widget
+
+        return col_widget
+
+    def _create_col_3_widget(self, controller, parent):
+        col_widget = QtWidgets.QWidget(parent)
+
+        header_widget = QtWidgets.QWidget(col_widget)
+
+        files_filter_input = PlaceholderLineEdit(header_widget)
+        files_filter_input.setPlaceholderText("Filter files..")
+
+        published_checkbox = QtWidgets.QCheckBox("Published", header_widget)
+
+        header_layout = QtWidgets.QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.addWidget(files_filter_input, 1)
+        header_layout.addWidget(published_checkbox, 0)
+
+        files_widget = FilesWidget(controller, col_widget)
+
+        col_layout = QtWidgets.QVBoxLayout(col_widget)
+        col_layout.setContentsMargins(0, 0, 0, 0)
+        col_layout.addWidget(header_widget, 0)
+        col_layout.addWidget(files_widget, 1)
+
+        files_filter_input.textChanged.connect(
+            self._on_file_text_filter_change)
+        published_checkbox.stateChanged.connect(
+            self._on_published_checkbox_changed
+        )
+
+        self._files_filter_input = files_filter_input
+        self._published_checkbox = published_checkbox
+
+        self._files_widget = files_widget
+
+        return col_widget
 
     def ensure_visible(self):
         self.show()
@@ -92,8 +186,11 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         super(WorkfilesToolWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
-            self.refresh()
             self.setStyleSheet(style.load_stylesheet())
+            self._first_show_timer.start()
+
+    def _on_first_show(self):
+        self.refresh()
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -106,14 +203,25 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
         pass
 
-    def _on_file_opened(self):
-        self.close()
+    # def _on_file_opened(self):
+    #     self.close()
+    #
+    def _on_file_text_filter_change(self, text):
+        self._files_widget.set_text_filter(text)
+
+    def _on_published_checkbox_changed(self):
+        published_mode = self._published_checkbox.isChecked()
+        self._files_widget.set_published_mode(published_mode)
+        self._side_panel.set_published_mode(published_mode)
 
     def refresh(self):
         self._controller.refresh()
 
-    def _on_folder_changed(self):
-        pass
+    def _on_folder_filter_change(self, text):
+        self._folder_widget.set_name_filer(text)
 
-    def _on_task_changed(self):
-        pass
+    def _on_go_to_current_clicked(self):
+        self._controller.go_to_current_context()
+
+    def _on_refresh_clicked(self):
+        self._controller.refresh()
