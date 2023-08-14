@@ -185,6 +185,7 @@ def get_publishing_representation(
         "name": file_ext,
         "ext": file_ext,
         "stagingDir": output_dir,
+        "stagingDir_persistent": True,
         "tags": tags,
     }
 
