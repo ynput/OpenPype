@@ -134,10 +134,10 @@ class ExtractCameraMayaScene(publish.Extractor):
                              "bake to world space is ignored...")
 
         # get cameras
-        members = cmds.ls(instance.data['setMembers'], leaf=True, shapes=True,
-                          long=True, dag=True)
-        cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
-                          dag=True, type="camera")
+        members = set(cmds.ls(instance.data['setMembers'], leaf=True,
+                      shapes=True, long=True, dag=True))
+        cameras = set(cmds.ls(members, leaf=True, shapes=True, long=True,
+                      dag=True, type="camera"))
 
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
@@ -160,15 +160,14 @@ class ExtractCameraMayaScene(publish.Extractor):
                             frame_range=[start, end],
                             step=step
                         )
-                        baked_camera_shapes = cmds.ls(baked,
-                                               type="camera",
-                                               dag=True,
-                                               shapes=True,
-                                               long=True)
+                        baked_camera_shapes = set(cmds.ls(baked,
+                                                  type="camera",
+                                                  dag=True,
+                                                  shapes=True,
+                                                  long=True))
 
-                        members = members + baked_camera_shapes
-                        for camera in cameras:
-                            members.remove(camera)
+                        members = members.union(baked_camera_shapes)
+                        members.difference_update(cameras)
                     else:
                         baked_camera_shapes = cmds.ls(cameras,
                                                       type="camera",
