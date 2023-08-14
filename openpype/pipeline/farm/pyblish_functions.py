@@ -211,9 +211,15 @@ def create_skeleton_instance(
         log.warning(("Could not find root path for remapping \"{}\". "
                      "This may cause issues.").format(source))
 
-    family = ("render"
-              if "prerender.farm" not in instance.data["families"]
-              else "prerender")
+    # pass families from original instance to skeleton
+    family = "render"
+    # try to find family with farm suffixes
+    families = instance.data["families"]
+    for family_ in families:
+        match = re.search(r"\.farm(_frames)?$", family_)
+        if match:
+            family = re.sub(r"\.farm(_frames)?$", "", family_)
+            break
     families = [family]
 
     # pass review to families if marked as review
