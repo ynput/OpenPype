@@ -116,10 +116,12 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                 "len(collection.indexes): {}".format(collected_frames_len)
             )
 
-            if ("slate" in instance.data["families"]) \
-                    and (frame_length != collected_frames_len):
-                collected_frames_len -= 1
-                f_start_h += 1
+            if (
+                    "slate" in instance.data["families"]
+                    and frame_length != collected_frames_len
+            ):
+                f_start_h -= 1
+                frame_length += 1
 
             if (
                 collected_frames_len != frame_length
