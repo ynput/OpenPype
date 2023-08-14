@@ -194,4 +194,4 @@ def load_OpenpypeData(container, loaded_nodes):
 
     # Setting the property
     rt.setProperty(
-        container.openPypeData, "all_handles", node_list)
+        container.modifiers[0].openPypeData, "all_handles", node_list)
