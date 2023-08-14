@@ -97,6 +97,9 @@ class BaseWorkfileController(AbstractWorkfileController):
     def set_selected_folder(self, folder_id):
         self._selection_model.set_selected_folder(folder_id)
 
+    def get_selected_task_id(self):
+        return self._selection_model.get_selected_task_id()
+
     def get_selected_task_name(self):
         return self._selection_model.get_selected_task_name()
 
@@ -151,6 +154,10 @@ class BaseWorkfileController(AbstractWorkfileController):
 
     def get_task_items(self, folder_id):
         return self._entities_model.get_tasks_items(folder_id)
+
+    def get_workarea_dir_by_context(self, folder_id, task_id):
+        return self._workfiles_model.get_workarea_dir_by_context(
+            folder_id, task_id)
 
     def get_workarea_file_items(self, folder_id, task_id):
         return self._workfiles_model.get_workarea_file_items(

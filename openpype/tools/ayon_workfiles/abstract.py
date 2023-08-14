@@ -83,6 +83,10 @@ class AbstractWorkfileController(object):
         pass
 
     @abstractmethod
+    def get_selected_task_id(self):
+        pass
+
+    @abstractmethod
     def get_selected_task_name(self):
         pass
 
@@ -105,6 +109,16 @@ class AbstractWorkfileController(object):
     @abstractmethod
     def set_selected_representation_id(self, representation_id):
         pass
+
+    def get_selected_context(self):
+        return {
+            "project_name": self.get_current_project_name(),
+            "folder_id": self.get_selected_folder_id(),
+            "task_id": self.get_selected_task_id(),
+            "task_name": self.get_selected_task_name(),
+            "workfile_path": self.get_selected_workfile_path(),
+            "representation_id": self.get_selected_representation_id(),
+        }
 
     # Expected selection
     # - expected selection is used to restore selection after refresh
@@ -140,6 +154,10 @@ class AbstractWorkfileController(object):
 
     @abstractmethod
     def get_task_items(self, folder_id):
+        pass
+
+    @abstractmethod
+    def get_workarea_dir_by_context(self, folder_id, task_id):
         pass
 
     @abstractmethod

@@ -89,6 +89,7 @@ class WorkareaModel:
         self._base_data = None
         self._fill_data_by_folder_id = {}
         self._task_data_by_folder_id = {}
+        self._workdir_by_context = {}
 
     @property
     def project_name(self):
@@ -118,7 +119,9 @@ class WorkareaModel:
     def _get_task_data(self, folder_id, task_id):
         task_data = self._task_data_by_folder_id.setdefault(folder_id, {})
         if task_id not in task_data:
-            for task in ayon_api.get_tasks(self.project_name, task_ids=[task_id]):
+            for task in ayon_api.get_tasks(
+                self.project_name, task_ids=[task_id]
+            ):
                 task_data[task_id] = get_task_template_data(task)
         return copy.deepcopy(task_data[task_id])
 
@@ -135,11 +138,13 @@ class WorkareaModel:
 
         return base_data
 
-    def get_file_items(self, folder_id, task_id):
-        items = []
-        # TODO finish implementation
+    def get_workarea_dir_by_context(self, folder_id, task_id):
         if not folder_id or not task_id:
-            return items
+            return None
+        folder_mapping = self._workdir_by_context.setdefault(folder_id, {})
+        workdir = folder_mapping.get(task_id)
+        if workdir is not None:
+            return workdir
 
         # TODO use entity model to get task info
         workdir_data = self._prepare_fill_data(folder_id, task_id)
@@ -149,7 +154,16 @@ class WorkareaModel:
             self.project_name,
             anatomy=self._control.project_anatomy,
         )
+        folder_mapping[task_id] = workdir
+        return workdir
 
+    def get_file_items(self, folder_id, task_id):
+        items = []
+        # TODO finish implementation
+        if not folder_id or not task_id:
+            return items
+
+        workdir = self.get_workarea_dir_by_context(folder_id, task_id)
         if not os.path.exists(workdir):
             return items
         extensions = self._control.get_workfile_extensions()
@@ -163,7 +177,9 @@ class WorkareaModel:
                 continue
 
             modified = os.path.getmtime(filepath)
-            items.append(FileItem(workdir, filename, modified, False))
+            items.append(
+                FileItem(workdir, filename, modified, False)
+            )
         return items
 
 
@@ -289,6 +305,22 @@ class WorkfilesModel:
         return self._entities_model.save_workfile_info(
             folder_id, task_id, filepath, note
         )
+
+    def get_workarea_dir_by_context(self, folder_id, task_id):
+        """Workarea dir for passed context.
+
+        The directory path is based on project anatomy templates.
+
+        Args:
+            folder_id (str): Folder id.
+            task_id (str): Task id.
+
+        Returns:
+            Union[str, None]: Workarea dir path or None for invalid context.
+        """
+
+        return self._workarea_model.get_workarea_dir_by_context(
+            folder_id, task_id)
 
     def get_workarea_file_items(self, folder_id, task_id):
         """Workfile items for passed context from workarea.

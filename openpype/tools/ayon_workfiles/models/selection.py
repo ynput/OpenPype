@@ -36,6 +36,9 @@ class SelectionModel(object):
     def get_selected_task_name(self):
         return self._task_name
 
+    def get_selected_task_id(self):
+        return self._task_id
+
     def set_selected_task(self, folder_id, task_id, task_name):
         if folder_id != self._folder_id:
             self.set_selected_folder(folder_id)

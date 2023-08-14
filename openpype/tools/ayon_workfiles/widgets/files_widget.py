@@ -1,11 +1,13 @@
+import os
+
 import qtawesome
+import qtpy
 from qtpy import QtWidgets, QtGui, QtCore
 
 from openpype.style import (
     get_default_entity_icon_color,
     get_disabled_entity_icon_color,
 )
-from openpype.tools.utils import PlaceholderLineEdit
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 
 FILENAME_ROLE = QtCore.Qt.UserRole + 1
@@ -285,10 +287,10 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
 class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
 
-    def __init__(self, control, parent):
+    def __init__(self, controller, parent):
         super(FilesWidget, self).__init__(parent)
 
-        workarea_widget = WorkAreaFilesWidget(control, self)
+        workarea_widget = WorkAreaFilesWidget(controller, self)
 
         btns_widget = QtWidgets.QWidget(self)
 
@@ -333,7 +335,7 @@ class FilesWidget(QtWidgets.QWidget):
         main_layout.addWidget(workarea_widget, 1)
         main_layout.addWidget(btns_widget, 0)
 
-        control.register_event_callback(
+        controller.register_event_callback(
             "workarea.selection.changed", self._on_workarea_path_changed
         )
 
@@ -341,6 +343,7 @@ class FilesWidget(QtWidgets.QWidget):
         workarea_btn_browse.clicked.connect(self._on_workarea_browse_clicked)
         workarea_btn_save.clicked.connect(self._on_workarea_save_clicked)
 
+        self._controller = controller
         self._workarea_widget = workarea_widget
         self._workarea_btns_widget = workarea_btns_widget
         self._publish_btns_widget = publish_btns_widget
@@ -370,7 +373,35 @@ class FilesWidget(QtWidgets.QWidget):
         self._workarea_widget.open_current_file()
 
     def _on_workarea_browse_clicked(self):
-        pass
+        extnsions = self._controller.get_workfile_extensions()
+        ext_filter = "Work File (*{0})".format(
+            " *".join(extnsions)
+        )
+        dir_key = "directory"
+        if qtpy.API in ("pyside", "pyside2", "pyside6"):
+            dir_key = "dir"
+
+        selected_context = self._controller.get_selected_context()
+        workfile_root = self._controller.get_workarea_dir_by_context(
+            selected_context["folder_id"], selected_context["task_id"]
+        )
+        # Find existing directory of workfile root
+        #   - Qt will use 'cwd' instead, if path does not exist, which may lead
+        #       to igniter directory
+        while workfile_root:
+            if os.path.exists(workfile_root):
+                break
+            workfile_root = os.path.dirname(workfile_root)
+
+        kwargs = {
+            "caption": "Work Files",
+            "filter": ext_filter,
+            dir_key: workfile_root
+        }
+
+        work_file = QtWidgets.QFileDialog.getOpenFileName(**kwargs)[0]
+        if work_file:
+            self._controller.open_workfile(work_file)
 
     def _on_workarea_save_clicked(self):
         pass
