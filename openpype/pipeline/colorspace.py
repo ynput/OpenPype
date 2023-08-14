@@ -604,7 +604,7 @@ def _get_imageio_settings(project_settings, host_name):
 
 
 def get_display_view_colorspace_name(config_path, display, view):
-    """get view colorspace name for the given display and view.
+    """Return colorspace name for the given display and view.
 
     Args:
         config_path (str): path string leading to config.ocio

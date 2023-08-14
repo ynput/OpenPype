@@ -247,7 +247,7 @@ def get_display_view_colorspace_name(in_path, out_path,
     with open(json_path, "w") as f:
         json.dump(out_data, f)
 
-    print(f"Viewer data are saved to '{json_path}'")
+    print(f"Display view colorspace saved to '{json_path}'")
 
 if __name__ == '__main__':
     main()
