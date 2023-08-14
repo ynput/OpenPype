@@ -12,7 +12,9 @@ from .widgets import (
 )
 from .control import BaseWorkfileController
 
-
+# TODO move to utils
+# from openpype.tools.utils.lib import (
+#     get_refresh_icon, get_go_to_current_icon)
 def get_refresh_icon():
     return get_qta_icon_by_name_and_color(
         "fa.refresh", style.get_default_tools_icon_color()
