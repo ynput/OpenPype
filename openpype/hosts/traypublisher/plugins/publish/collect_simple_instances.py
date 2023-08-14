@@ -86,11 +86,10 @@ class CollectSettingsSimpleInstances(pyblish.api.InstancePlugin,
             frame_start, frame_end = file_data["framerange"]
             if publish_target == "farm":
                 # farm publish needs to have output dir set
-                # QUESTION: perhaps we do need to do this?
                 output_dir = os.path.dirname(file_path)
                 instance.data["outputDir"] = output_dir
-                context.data["currentFile"] = output_dir
-
+                # QUESTION: perhaps we do need to do this?
+                context.data["currentFile"] = file_path
 
                 # add representation
                 self.set_farm_representation(

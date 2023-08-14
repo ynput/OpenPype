@@ -2,7 +2,7 @@
 import pyblish.api
 
 
-class CollectFarmTargetInstance(pyblish.api.InstancePlugin):
+class CollectFarmTarget(pyblish.api.InstancePlugin):
     """Collects the render target for the instance
     """
 
