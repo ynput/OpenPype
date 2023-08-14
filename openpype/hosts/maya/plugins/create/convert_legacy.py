@@ -3,7 +3,6 @@ from openpype.hosts.maya.api import plugin
 from openpype.hosts.maya.api.lib import read
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline.create import get_subset_name
 
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
