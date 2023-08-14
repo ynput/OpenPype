@@ -2,7 +2,7 @@ import pyblish.api
 from openpype.pipeline import publish
 
 
-class ExtractColorspaceData(publish.Extractor,
+class CollectColorspaceData(pyblish.api.InstancePlugin,
                             publish.ColormanagedPyblishPluginMixin):
     """ Inject Colorspace data to available representations.
 
@@ -24,15 +24,10 @@ class ExtractColorspaceData(publish.Extractor,
             }
         }
     """
-    label = "Extract Colorspace data"
-    order = pyblish.api.ExtractorOrder + 0.49
+    label = "Collect Colorspace data"
+    order = pyblish.api.CollectorOrder + 0.49
 
     def process(self, instance):
-        # Instance should be integrated on a farm
-        if instance.data.get("farm"):
-            self.log.info(
-                "Instance is marked to be processed on farm. Skipping")
-            return
 
         representations = instance.data.get("representations")
         if not representations:
@@ -50,5 +45,6 @@ class ExtractColorspaceData(publish.Extractor,
                 continue
 
             self.set_representation_colorspace(
-                representation, context
+                representation, context,
+                colorspace=instance.data.get("colorspace")
             )
