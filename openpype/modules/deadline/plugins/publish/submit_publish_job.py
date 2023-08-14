@@ -452,6 +452,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             # add representation
             instance_skeleton_data["representations"] += representations
 
+            instances = [instance_skeleton_data]
+
         # attach instances to subset
         if instance.data.get("attachTo"):
             instances = attach_instances_to_subset(
