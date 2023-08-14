@@ -166,74 +166,6 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def remotepublishfromapp(project_name, batch_path, host_name,
-                             user_email, targets=None):
-        """Opens installed variant of 'host' and run remote publish there.
-
-        Eventually should be yanked out to Webpublisher cli.
-
-        Currently implemented and tested for Photoshop where customer
-        wants to process uploaded .psd file and publish collected layers
-        from there. Triggered by Webpublisher.
-
-        Checks if no other batches are running (status =='in_progress). If
-        so, it sleeps for SLEEP (this is separate process),
-        waits for WAIT_FOR seconds altogether.
-
-        Requires installed host application on the machine.
-
-        Runs publish process as user would, in automatic fashion.
-
-        Args:
-            project_name (str): project to publish (only single context is
-                expected per call of remotepublish
-            batch_path (str): Path batch folder. Contains subfolders with
-                resources (workfile, another subfolder 'renders' etc.)
-            host_name (str): 'photoshop'
-            user_email (string): email address for webpublisher - used to
-                find Ftrack user with same email
-            targets (list): Pyblish targets
-                (to choose validator for example)
-        """
-
-        from openpype.hosts.webpublisher.publish_functions import (
-            cli_publish_from_app
-        )
-
-        cli_publish_from_app(
-            project_name, batch_path, host_name, user_email, targets
-        )
-
-    @staticmethod
-    def remotepublish(project, batch_path, user_email, targets=None):
-        """Start headless publishing.
-
-        Used to publish rendered assets, workfiles etc via Webpublisher.
-        Eventually should be yanked out to Webpublisher cli.
-
-        Publish use json from passed paths argument.
-
-        Args:
-            project (str): project to publish (only single context is expected
-                per call of remotepublish
-            batch_path (str): Path batch folder. Contains subfolders with
-                resources (workfile, another subfolder 'renders' etc.)
-            user_email (string): email address for webpublisher - used to
-                find Ftrack user with same email
-            targets (list): Pyblish targets
-                (to choose validator for example)
-
-        Raises:
-            RuntimeError: When there is no path to process.
-        """
-
-        from openpype.hosts.webpublisher.publish_functions import (
-            cli_publish
-        )
-
-        cli_publish(project, batch_path, user_email, targets)
-
-    @staticmethod
     def extractenvironments(output_json_path, project, asset, task, app,
                             env_group):
         """Produces json file with environment based on project and app.
@@ -335,34 +267,6 @@ class PypeCommands:
         print("run_tests args: {}".format(args))
         import pytest
         pytest.main(args)
-
-    def syncserver(self, active_site):
-        """Start running sync_server in background.
-
-        This functionality is available in directly in module cli commands.
-        `~/openpype_console module sync_server syncservice`
-        """
-
-        os.environ["OPENPYPE_LOCAL_ID"] = active_site
-
-        def signal_handler(sig, frame):
-            print("You pressed Ctrl+C. Process ended.")
-            sync_server_module.server_exit()
-            sys.exit(0)
-
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-
-        from openpype.modules import ModulesManager
-
-        manager = ModulesManager()
-        sync_server_module = manager.modules_by_name["sync_server"]
-
-        sync_server_module.server_init()
-        sync_server_module.server_start()
-
-        while True:
-            time.sleep(1.0)
 
     def repack_version(self, directory):
         """Repacking OpenPype version."""
