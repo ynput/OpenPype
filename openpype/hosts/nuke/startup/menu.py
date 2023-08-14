@@ -23,12 +23,15 @@ from openpype.settings import get_project_settings
 
 log = Logger.get_logger(__name__)
 # dict mapping extension to list of exposed parameters from write node to top level group node
-knobMatrix = { 'exr': ['colorspace', 'autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
-                'png': ['colorspace', 'datatype'],
-                'dpx': ['colorspace', 'datatype'],
-                'tiff': ['colorspace','datatype', 'compression'],
-                'jpeg': ['colorspace']
+knobMatrix = { 'exr': ['autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
+                'png': ['datatype'],
+                'dpx': ['datatype'],
+                'tiff': ['datatype', 'compression'],
+                'jpeg': []
 }
+universalKnobs = ['colorspace', 'first', 'last','use_limit']
+
+knobMatrix = {key: universalKnobs + value for key, value in knobMatrix.items()}
 #list of key-value tuples for write node knob presets based on file extension
 presets = {
     'exr' : [ ("colorspace", 'ACES - ACEScg'), ('channels', 'all'), ('datatype', '16 bit half') ],
@@ -148,7 +151,7 @@ def embedOptions():
         if knob.name() in ['beginoutput','endoutput','beginpipeline','beginoutput','endpipeline','htab']:
             group.removeKnob(knob)
     for knob in allScriptKnobs:
-        if knob.name() in ["submit","publish", "readfrom"]:
+        if knob.name() in ["submit","publish", "readfrom", 'clear']:
             group.removeKnob(knob)
     for knob in allMultiKnobs:
         if knob.name() == "File output":
@@ -181,13 +184,20 @@ def embedOptions():
             link.makeLink(nde.name(), kname)
             link.setName(kname)
             link.setFlag(0x1000)
+            if kname in ['first','last']:
+                link.setLabel(kname + ' frame')
+            if kname == 'use_limit':
+                link.setLabel('use frame range')
             group.addKnob(link)
     log.info("links made")
+
+
     endGroup = nuke.Tab_Knob('endoutput', None, nuke.TABENDGROUP)
     group.addKnob(endGroup)
     beginGroup = nuke.Tab_Knob('beginpipeline', 'Rendering and Pipeline', nuke.TABBEGINGROUP)
     group.addKnob(beginGroup)
     sub = nuke.PyScript_Knob('submit', 'Submit to Deadline', "DeadlineNukeClient.main()")
+    clr = nuke.PyScript_Knob('clear', 'Clear Temp Outputs', "import os;fpath = os.path.dirname(nuke.thisNode().knob('File output').value());[os.remove(os.path.join(fpath, f)) for f in os.listdir(fpath)]")
     pub = nuke.PyScript_Knob('publish', 'Publish', "from openpype.tools.utils import host_tools;host_tools.show_publisher(parent=(main_window if nuke.NUKE_VERSION_MAJOR >= 14 else None),tab='Publish')")
     readfrom_src = "import write_to_read;write_to_read.write_to_read(nuke.thisNode(), allow_relative=False)"
     readfrom = nuke.PyScript_Knob('readfrom', 'Read From Rendered', readfrom_src)
@@ -199,6 +209,7 @@ def embedOptions():
     div = nuke.Text_Knob('div','','')
     group.addKnob(sub)
     group.addKnob(readfrom)
+    group.addKnob(clr)
     group.addKnob(div)
     group.addKnob(pub)
     tempwarn = nuke.Text_Knob('tempwarn', '', '- all rendered files are TEMPORARY and WILL BE OVERWRITTEN unless published ')
@@ -210,7 +221,19 @@ def embedOptions():
     endGroup = nuke.Tab_Knob('endpipeline', None, nuke.TABENDGROUP)
     group.addKnob(endGroup)
 
+def enable_disable_frame_range():
+    nde = nuke.thisNode()
+    knb = nuke.thisKnob()
+    if not nde.knob('use_limit') or not knb.name() == 'use_limit':
+        return
+    group = nuke.toNode('.'.join(['root'] + nde.fullName().split('.')[:-1]))
+    enable = nde.knob('use_limit').value()
+    group.knobs()['first'].setEnabled(enable)
+    group.knobs()['last'].setEnabled(enable)
+
+
 nuke.addKnobChanged(switchExtension, nodeClass='Write')
 nuke.addKnobChanged(embedOptions, nodeClass='Write')
 nuke.addKnobChanged(apply_format_presets, nodeClass='Write')
+nuke.addKnobChanged(enable_disable_frame_range, nodeClass='Write')
 nuke.addOnScriptSave(writes_ver_sync)
