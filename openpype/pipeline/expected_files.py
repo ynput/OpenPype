@@ -235,8 +235,8 @@ def _add_slate_frame_to_collected_frames(
         Bool: True if slate frame was added
     """
     if (
-        frame_start is not None
-        and frame_end is not None
+        frame_start is None
+        and frame_end is None
     ):
         return False
 
