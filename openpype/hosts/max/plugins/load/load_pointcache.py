@@ -78,7 +78,6 @@ class AbcLoader(load.LoaderPlugin):
                 rt.Select(abc.Children)
                 for abc_con in rt.Selection:
                     container = rt.GetNodeByName(abc_con.name)
-                    abc_object = container
                     container.source = path
                     rt.Select(container.Children)
                     for abc_obj in rt.Selection:
