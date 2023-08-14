@@ -1,6 +1,5 @@
 import os
 import requests
-
 import pyblish.api
 
 from openpype.lib import collect_frames
@@ -12,7 +11,6 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
     label = "Validate rendered files from Deadline"
     order = pyblish.api.ValidatorOrder
-    families = ["render"]
     targets = ["deadline"]
 
     # check if actual frame range on render job wasn't different
@@ -21,7 +19,7 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the nodes in the instance"""
-
+        self.log.debug("Validate expected files for instance")
         # get dependency jobs ids for retrieving frame list
         dependent_job_ids = self._get_dependent_job_ids(instance)
 
@@ -35,6 +33,15 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
             instance, dependent_job_ids)
 
         for repre in instance.data["representations"]:
+            # representations are explicitly tagged with publish_on_farm tag
+            # validation was already done with local process during submission
+            farm_tagged = "publish_on_farm" in repre.get("tags", [])
+
+            if farm_tagged:
+                self.log.info(
+                    "Skipping farm tagged representation: {}".format(repre))
+                continue
+
             expected_files = self._get_expected_files(repre)
 
             staging_dir = repre["stagingDir"]
