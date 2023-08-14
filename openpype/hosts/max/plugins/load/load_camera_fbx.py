@@ -33,7 +33,7 @@ class FbxLoader(load.LoaderPlugin):
             container = rt.Container()
             container.name = f"{name}"
         selections = rt.GetCurrentSelection()
-        load_OpenpypeData(container, selections)
+        load_OpenpypeData()
         for selection in selections:
             selection.Parent = container
 
@@ -52,7 +52,7 @@ class FbxLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.ImportFile(
             path, rt.name("noPrompt"), using=rt.FBXIMP)
-        load_OpenpypeData(node, node.Children)
+        load_OpenpypeData()
 
         with maintained_selection():
             rt.Select(node)

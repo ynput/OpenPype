@@ -25,7 +25,7 @@ class PointCloudLoader(load.LoaderPlugin):
         prt_container = rt.container()
         prt_container.name = name
         obj.Parent = prt_container
-        load_OpenpypeData(prt_container, [obj])
+        load_OpenpypeData()
 
         return containerise(
             name, [prt_container], context, loader=self.__class__.__name__)
@@ -41,7 +41,7 @@ class PointCloudLoader(load.LoaderPlugin):
             for prt in rt.Selection:
                 prt_object = rt.GetNodeByName(prt.name)
                 prt_object.filename = path
-        load_OpenpypeData(node, node.Children)
+        load_OpenpypeData()
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

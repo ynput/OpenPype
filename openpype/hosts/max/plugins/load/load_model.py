@@ -45,10 +45,7 @@ class ModelAbcLoader(load.LoaderPlugin):
             self.log.error("Something failed when loading.")
 
         abc_container = abc_containers.pop()
-        selections = rt.GetCurrentSelection()
-        abc_selections = [abc for abc in selections
-                          if abc.name != "Alembic"]
-        load_OpenpypeData(abc_container, abc_selections)
+        load_OpenpypeData()
         return containerise(
             name, [abc_container], context, loader=self.__class__.__name__
         )
@@ -61,7 +58,6 @@ class ModelAbcLoader(load.LoaderPlugin):
         rt.Select(node.Children)
 
         nodes_list = []
-        abc_object = None
         with maintained_selection():
             rt.Select(node)
 
@@ -77,9 +73,8 @@ class ModelAbcLoader(load.LoaderPlugin):
                     alembic_obj = rt.GetNodeByName(abc_obj.name)
                     alembic_obj.source = path
                     nodes_list.append(alembic_obj)
-        abc_selections = [abc for abc in nodes_list
-                          if abc.name != "Alembic"]
-        load_OpenpypeData(abc_object, abc_selections)
+
+        load_OpenpypeData()
 
         lib.imprint(
             container["instance_node"],

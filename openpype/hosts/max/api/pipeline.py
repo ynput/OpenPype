@@ -174,24 +174,9 @@ def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
     return container
 
 
-def load_OpenpypeData(container, loaded_nodes):
-    """Function to load the OpenpypeData Parameter along with
-    the published objects
-
-    Args:
-        container (str): target container to set up
-            the custom attributes
-        loaded_nodes (list): list of nodes to be loaded
+def load_OpenpypeData():
+    """Re-loading the Openpype parameter built by the creator
+    Returns:
+        attribute: re-loading the custom OP attributes set in Maxscript
     """
-    attrs = rt.Execute(MS_CUSTOM_ATTRIB)
-    if rt.custAttributes.get(container.baseObject, attrs):
-        rt.custAttributes.delete(container.baseObject, attrs)
-    rt.custAttributes.add(container.baseObject, attrs)
-    node_list = []
-    for i in loaded_nodes:
-        node_ref = rt.NodeTransformMonitor(node=i)
-        node_list.append(node_ref)
-
-    # Setting the property
-    rt.setProperty(
-        container.modifiers[0].openPypeData, "all_handles", node_list)
+    return rt.Execute(MS_CUSTOM_ATTRIB)

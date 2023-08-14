@@ -49,9 +49,7 @@ class AbcLoader(load.LoaderPlugin):
 
         abc_container = abc_containers.pop()
         selections = rt.GetCurrentSelection()
-        abc_selections = [abc for abc in selections
-                          if abc.name != "Alembic"]
-        load_OpenpypeData(abc_container, abc_selections)
+        load_OpenpypeData()
         for abc in selections:
             for cam_shape in abc.Children:
                 cam_shape.playbackType = 2
@@ -72,7 +70,6 @@ class AbcLoader(load.LoaderPlugin):
             {"representation": str(representation["_id"])},
         )
         nodes_list = []
-        abc_object = None
         with maintained_selection():
             rt.Select(node.Children)
 
@@ -88,8 +85,7 @@ class AbcLoader(load.LoaderPlugin):
                         alembic_obj = rt.GetNodeByName(abc_obj.name)
                         alembic_obj.source = path
                         nodes_list.append(alembic_obj)
-        abc_selections = [abc for abc in nodes_list if abc.name != "Alembic"]
-        load_OpenpypeData(abc_object, abc_selections)
+        load_OpenpypeData()
 
     def switch(self, container, representation):
         self.update(container, representation)

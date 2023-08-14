@@ -26,7 +26,7 @@ class ObjLoader(load.LoaderPlugin):
         container = rt.Container()
         container.name = name
         selections = rt.GetCurrentSelection()
-        load_OpenpypeData(container, selections)
+        load_OpenpypeData()
         # get current selection
         for selection in selections:
             selection.Parent = container
@@ -53,7 +53,7 @@ class ObjLoader(load.LoaderPlugin):
         selections = rt.GetCurrentSelection()
         for selection in selections:
             selection.Parent = container
-        load_OpenpypeData(container, container.Children)
+        load_OpenpypeData()
         with maintained_selection():
             rt.Select(node)
 

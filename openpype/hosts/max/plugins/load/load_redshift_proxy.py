@@ -33,7 +33,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         container = rt.container()
         container.name = name
         rs_proxy.Parent = container
-        load_OpenpypeData(container, [rs_proxy])
+        load_OpenpypeData()
         asset = rt.getNodeByName(name)
 
         return containerise(
@@ -49,7 +49,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
             for proxy in children_node.Children:
                 proxy.file = path
 
-        load_OpenpypeData(node, node.Children)
+        load_OpenpypeData()
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

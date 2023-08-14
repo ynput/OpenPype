@@ -30,10 +30,8 @@ class ModelUSDLoader(load.LoaderPlugin):
         rt.LogLevel = rt.Name("info")
         rt.USDImporter.importFile(filepath,
                                   importOptions=import_options)
-        selections = rt.GetCurrentSelection()
         asset = rt.GetNodeByName(name)
-        mesh_selections = [r for r in selections if r != asset]
-        load_OpenpypeData(asset, mesh_selections)
+        load_OpenpypeData()
 
         return containerise(
             name, [asset], context, loader=self.__class__.__name__)
@@ -62,7 +60,7 @@ class ModelUSDLoader(load.LoaderPlugin):
 
         asset = rt.GetNodeByName(instance_name)
         asset.Parent = node
-        load_OpenpypeData(asset, asset.Children)
+        load_OpenpypeData()
 
         with maintained_selection():
             rt.Select(node)
