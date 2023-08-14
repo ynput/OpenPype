@@ -123,8 +123,8 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
 
             if (
                 collected_frames_len != frame_length
-                and coll_start <= f_start_h
-                and coll_end >= f_end_h
+                or coll_start != f_start_h
+                or coll_end != f_end_h
             ):
                 raise PublishXmlValidationError(
                     self, (
