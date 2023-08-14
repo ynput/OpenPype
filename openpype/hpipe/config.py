@@ -23,5 +23,6 @@ class ConfigReader:
                 return self.config[key]
             raise AttributeError(f"'ConfigReader' object has no attribute '{key}'")
 
-    def __dir__(self):
-        return super().__dir__() + list(self.config.keys())
+if __name__ == "__main__":
+    config = ConfigReader()
+    print(dir(config))
