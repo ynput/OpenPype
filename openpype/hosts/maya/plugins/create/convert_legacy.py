@@ -143,11 +143,11 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
             project_name = self.create_context.get_current_project_name()
             asset_doc = get_asset_by_name(project_name,
                                           original_data["asset"])
-            subset_name = get_subset_name("render",
-                                          original_data["variant"],
-                                          data["task"],
-                                          asset_doc,
-                                          project_name)
+            subset_name = creator.get_subset_name(
+                original_data["variant"],
+                data["task"],
+                asset_doc,
+                project_name)
             original_data["subset"] = subset_name
 
             # Convert to creator attributes when relevant
