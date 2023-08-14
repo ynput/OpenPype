@@ -9,14 +9,17 @@ from openpype.hosts.maya.api import lib
 class ExtractCameraAlembic(publish.Extractor):
     """Extract a Camera as Alembic.
 
-    The cameras gets baked to world space by default. Only when the instance's
+    The camera gets baked to world space by default. Only when the instance's
     `bakeToWorldSpace` is set to False it will include its full hierarchy.
+
+    'camera' family expects only single camera, if multiple cameras are needed,
+    'matchmove' is better choice.
 
     """
 
     label = "Camera (Alembic)"
     hosts = ["maya"]
-    families = ["camera"]
+    families = ["camera", "matchmove"]
     bake_attributes = []
 
     def process(self, instance):

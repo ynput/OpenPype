@@ -88,6 +88,9 @@ class ExtractCameraMayaScene(publish.Extractor):
     The cameras gets baked to world space by default. Only when the instance's
     `bakeToWorldSpace` is set to False it will include its full hierarchy.
 
+    'camera' family expects only single camera, if multiple cameras are needed,
+    'matchmove' is better choice.
+
     Note:
         The extracted Maya ascii file gets "massaged" removing the uuid values
         so they are valid for older versions of Fusion (e.g. 6.4)
@@ -96,7 +99,7 @@ class ExtractCameraMayaScene(publish.Extractor):
 
     label = "Camera (Maya Scene)"
     hosts = ["maya"]
-    families = ["camera"]
+    families = ["camera", "matchmove"]
     scene_type = "ma"
 
     def process(self, instance):
