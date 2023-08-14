@@ -173,7 +173,7 @@ def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
     return container
 
 
-def load_Openpype_data_max_raw():
+def load_Openpype_data():
     """Re-loading the Openpype parameter built by the creator
 
     Returns:

@@ -2,7 +2,7 @@ import os
 
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.pipeline import (
-    containerise, load_Openpype_data_max_raw
+    containerise, load_Openpype_data
 )
 from openpype.pipeline import get_representation_path, load
 
@@ -22,7 +22,7 @@ class MaxSceneLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
         # implement the OP attributes before load
-        load_Openpype_data_max_raw()
+        load_Openpype_data()
         path = self.filepath_from_context(context)
         path = os.path.normpath(path)
         # import the max scene by using "merge file"
