@@ -97,7 +97,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
              "celaction", "aftereffects", "harmony", "traypublisher"]
 
-    families = ["render.farm", "render.frames_farm", "plate.farm",
+    families = ["render.farm", "render.frames_farm",
+                "plate.farm", "image.farm", "online.farm",
                 "prerender.farm", "prerender.frames_farm",
                 "renderlayer", "imagesequence",
                 "vrayscene", "maxrender",
@@ -145,7 +146,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     }
 
     # list of family names to transfer to new family if present
-    families_transfer = ["render3d", "render2d", "ftrack", "slate", "plate"]
+    families_transfer = [
+        "render3d", "render2d", "ftrack", "slate", "plate"
+    ]
     plugin_pype_version = "3.0"
 
     # script path for publish_filesequence.py
