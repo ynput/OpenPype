@@ -42,7 +42,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
                 write_file_path,
                 frame_start,
                 frame_end,
-                colorspace,
                 only_existing=True
             )
 
@@ -52,7 +51,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
                 write_file_path,
                 frame_start,
                 frame_end,
-                colorspace,
                 only_existing=True
             )
 
