@@ -10,7 +10,10 @@ from openpype.pipeline import (
     get_current_asset_name,
     get_current_task_name,
 )
-from openpype.client.entities import get_last_version_by_subset_name
+from openpype.client.entities import (
+    get_last_version_by_subset_name,
+    get_representations,
+)
 
 
 class OpenFileCacher:
@@ -107,11 +110,27 @@ def check_workfile_up_to_date() -> bool:
         bool: True if the current workfile is up to date.
     """
 
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
+
     # Get date and time of the latest published workfile
     last_published_version = get_last_version_by_subset_name(
-        get_current_project_name(),
-        f"workfile{get_current_task_name()}",
-        asset_name=get_current_asset_name(),
+        project_name,
+        next(
+            (
+                repre.get("context", {}).get("subset", "")
+                for repre in get_representations(
+                    project_name,
+                    context_filters={
+                        "asset": asset_name,
+                        "family": "workfile",
+                        "task": {"name": get_current_task_name()},
+                    }
+                )
+            ),
+            "",
+        ),
+        asset_name=asset_name,
         fields=["data"]
     )
 
