@@ -173,8 +173,8 @@ def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
     return container
 
 
-def load_OpenpypeData():
-    """Re-loading the Openpype parameter built by the creator
+def load_custom_attribute_data():
+    """Re-loading the Openpype/AYON custom parameter built by the creator
 
     Returns:
         attribute: re-loading the custom OP attributes set in Maxscript

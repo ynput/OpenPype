@@ -33,7 +33,6 @@ class ExtractMaxSceneRaw(publish.Extractor, OptionalPyblishPluginMixin):
             instance.data["representations"] = []
 
         nodes = instance.data["members"]
-        nodes.append(container)
         rt.saveNodes(nodes, max_path, quiet=True)
 
         self.log.info("Performing Extraction ...")
