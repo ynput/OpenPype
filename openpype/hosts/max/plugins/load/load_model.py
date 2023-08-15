@@ -64,7 +64,7 @@ class ModelAbcLoader(load.LoaderPlugin):
             rt.Select(node)
         for alembic in rt.Selection:
             abc = rt.GetNodeByName(alembic.name)
-            import_OpenpypeData(abc, abc.Children)
+            update_Openpype_Data(abc, abc.Children)
             rt.Select(abc.Children)
             for abc_con in rt.Selection:
                 container = rt.GetNodeByName(abc_con.name)
