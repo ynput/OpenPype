@@ -18,7 +18,6 @@ class ExtractMaxSceneRaw(publish.Extractor, OptionalPyblishPluginMixin):
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        container = rt.getNodeByName(instance.data["instance_node"])
 
         # publish the raw scene for camera
         self.log.info("Extracting Raw Max Scene ...")

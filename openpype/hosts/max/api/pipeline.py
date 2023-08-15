@@ -181,6 +181,7 @@ def load_custom_attribute_data():
     """
     return rt.Execute(MS_CUSTOM_ATTRIB)
 
+
 def import_custom_attribute_data(container: str, selections: list):
     """Importing the Openpype/AYON custom parameter built by the creator
 
