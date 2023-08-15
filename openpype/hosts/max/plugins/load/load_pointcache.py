@@ -8,7 +8,9 @@ import os
 from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.pipeline import (
-    containerise, import_OpenpypeData, update_Openpype_Data
+    containerise,
+    import_custom_attribute_data,
+    update_custom_attribute_data
 )
 
 
@@ -51,7 +53,8 @@ class AbcLoader(load.LoaderPlugin):
 
         abc_container = abc_containers.pop()
         selections = rt.GetCurrentSelection()
-        import_OpenpypeData(abc_container, abc_container.Children)
+        import_custom_attribute_data(
+            abc_container, abc_container.Children)
         for abc in selections:
             for cam_shape in abc.Children:
                 cam_shape.playbackType = 2
@@ -77,7 +80,7 @@ class AbcLoader(load.LoaderPlugin):
 
             for alembic in rt.Selection:
                 abc = rt.GetNodeByName(alembic.name)
-                update_Openpype_Data(abc, abc.Children)
+                update_custom_attribute_data(abc, abc.Children)
                 rt.Select(abc.Children)
                 for abc_con in rt.Selection:
                     container = rt.GetNodeByName(abc_con.name)

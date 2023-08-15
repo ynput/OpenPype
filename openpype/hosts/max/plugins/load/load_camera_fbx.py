@@ -2,7 +2,9 @@ import os
 
 from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.pipeline import (
-    containerise, import_OpenpypeData, update_Openpype_Data
+    containerise,
+    import_custom_attribute_data,
+    update_custom_attribute_data
 )
 from openpype.pipeline import get_representation_path, load
 
@@ -32,7 +34,7 @@ class FbxLoader(load.LoaderPlugin):
 
         container = rt.container(name=name)
         selections = rt.GetCurrentSelection()
-        import_OpenpypeData(container, selections)
+        import_custom_attribute_data(container, selections)
         for selection in selections:
             selection.Parent = container
 
@@ -47,7 +49,8 @@ class FbxLoader(load.LoaderPlugin):
         inst_name, _ = os.path.split(container["instance_node"])
         container = rt.getNodeByName(inst_name)
         rt.Select(node.Children)
-        update_Openpype_Data(container, rt.GetCurrentSelection())
+        update_custom_attribute_data(
+            container, rt.GetCurrentSelection())
         rt.FBXImporterSetParam("Animation", True)
         rt.FBXImporterSetParam("Camera", True)
         rt.FBXImporterSetParam("Mode", rt.Name("merge"))

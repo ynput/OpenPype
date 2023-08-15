@@ -174,16 +174,24 @@ def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
     return container
 
 
-def load_OpenpypeData():
-    """Re-loading the Openpype parameter built by the creator
+def load_custom_attribute_data():
+    """Re-loading the Openpype/AYON custom parameter built by the creator
+
     Returns:
         attribute: re-loading the custom OP attributes set in Maxscript
     """
     return rt.Execute(MS_CUSTOM_ATTRIB)
 
 
-def import_OpenpypeData(container, selections):
-    attrs = load_OpenpypeData()
+def import_custom_attribute_data(container: str, selections: list):
+    """Importing the Openpype/AYON custom parameter built by the creator
+
+    Args:
+        container (str): target container which adds custom attributes
+        selections (_type_): nodes to be added into
+        group in custom attributes
+    """
+    attrs = load_custom_attribute_data()
     modifier = rt.EmptyModifier()
     rt.addModifier(container, modifier)
     container.modifiers[0].name = "OP Data"
@@ -203,7 +211,14 @@ def import_OpenpypeData(container, selections):
         "sel_list", sel_list)
 
 
-def update_Openpype_Data(container, selections):
+def update_custom_attribute_data(container: str, selections: list):
+    """Updating the Openpype/AYON custom parameter built by the creator
+
+    Args:
+        container (str): target container which adds custom attributes
+        selections (_type_): nodes to be added into
+        group in custom attributes
+    """
     if container.modifiers[0].name == "OP Data":
         rt.deleteModifier(container, container.modifiers[0])
-    import_OpenpypeData(container, selections)
+    import_custom_attribute_data(container, selections)
