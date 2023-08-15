@@ -141,7 +141,21 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                     "Using published scene for render {}".format(script_path)
                 )
         # NOTE hornet update on use existing frames on farm
-        if not instance.data.get("render_target") == "farm_frames":
+        if instance.data.get("render_target") == "farm_frames":
+            response = self.payload_submit(
+                instance,
+                script_path,
+                render_path,
+                node.name(),
+                submit_frame_start,
+                submit_frame_end
+            )
+            # Store output dir for unified publisher (filesequence)
+            instance.data["deadlineSubmissionJob"] = response.json()
+            instance.data["outputDir"] = os.path.dirname(
+                render_path).replace("\\", "/")
+            instance.data["publishJobState"] = "Suspended"
+        else:
             response = self.payload_submit(
                 instance,
                 script_path,
@@ -222,7 +236,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             asset_name = context.data.get("asset")
             task_name = context.data.get("task")
             current_version = context.data.get("version")
-            h_batch_name = '{0}_{1}_{2}_v{3}.nk-'.format(project_name,asset_name,task_name,current_version)
+            h_batch_name = '{0}_{1}_{2}_v{3}.nk'.format(project_name,asset_name,task_name,current_version)
         else:
             h_batch_name = os.path.basename(script_path)
 
@@ -252,6 +266,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         else:
             ChunkSize =  instance.data["attributeValues"].get("chunk", self.chunk_size)
 
+        plugin = "Nuke"
+        suspended = "Active"
+        if instance.data.get("render_target") == "farm_frames":
+            if 'baking' in jobname:
+                render_pool = instance.data.get("primaryPool") or "local"
+            else:
+                suspended = "Suspended"
+                render_pool = None
+        else:
+            render_pool = instance.data.get("primaryPool") or "local"
         payload = {
             "JobInfo": {
                 # Top-level group name
@@ -265,6 +289,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": self._deadline_user,
+                # "InitialStatus":suspended,
 
                 "Priority": instance.data["attributeValues"].get(
                     "priority", self.priority),
@@ -279,11 +304,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
                 "Department": self.department,
 
-                "Pool": instance.data.get("primaryPool") or "local",
+                "Pool": render_pool,
                 "SecondaryPool": instance.data.get("secondaryPool"),
                 "Group": self.group,
-
-                "Plugin": "Nuke",
+                "Plugin": plugin,
                 "Frames": "{start}-{end}".format(
                     start=start_frame,
                     end=end_frame
@@ -292,10 +316,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0.replace("\\", "/"),
+                "OutputFilename0": str(output_filename_0).replace("\\", "/"),
 
                 # limiting groups
-                "LimitGroups": ",".join(limit_groups)
+                "LimitGroups": ",".join(limit_groups),
 
             },
             "PluginInfo": {

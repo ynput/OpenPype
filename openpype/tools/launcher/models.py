@@ -95,12 +95,8 @@ class ActionModel(QtGui.QStandardItemModel):
         project_name = self.dbcon.active_project()
         project_doc = get_project(project_name, fields=["config.apps"])
         config_data = config.ConfigReader()
-        print('users')
-        print(os.getenv('USERNAME'),config_data.superusers)
         if os.getenv('USERNAME') not in config_data.superusers:
             project_doc["config"]["apps"] = [x for x in  project_doc["config"]["apps"] if '-dev' not in x['name']]
-            print('models.project_doc',project_doc)
-            print('project_doc_test',project_doc["config"]["apps"])
         if not project_doc:
             return actions
 

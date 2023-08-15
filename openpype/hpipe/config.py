@@ -4,11 +4,11 @@ from pprint import pprint
 from typing import Any
 
 
-file_path = 'D:/jt_dev/hpipe/newdev/OpenPype/openpype/hpipe/studio_config.yaml'
+file_path = os.path.join(os.getenv("OPENPYPE_REPOS_ROOT"),"openpype","hpipe","studio_config.yaml")
 
 class ConfigReader:
     def __init__(self):
-        yaml_file_path = file_path #os.path.join(os.path.dirname(os.path.__file__),'studio_config.yaml')
+        yaml_file_path = file_path
         with open(yaml_file_path, 'r') as file:
             yaml_content = file.read()
         self.config = yaml.load(yaml_content, Loader=yaml.FullLoader)

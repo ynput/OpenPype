@@ -604,8 +604,8 @@ class ExporterReview(object):
             self.fhead = self.fhead.replace("#", "")[:-1]
 
         #NOTE hornet update for use exiting frame on farm
-        if self.instance.data('render_target') == 'farm_frames':
-            self.fhead = self.fhead.replace('%04d.','')
+        # if self.instance.data('render_target') == 'farm_frames':
+        self.fhead = self.fhead.replace('%04d.','')
 
     def get_representation_data(
         self, tags=None, range=False,
