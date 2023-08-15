@@ -5,7 +5,9 @@ from openpype.pipeline import (
     load,
     get_representation_path
 )
-from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
+from openpype.hosts.max.api.pipeline import (
+    containerise, import_OpenpypeData, update_Openpype_Data
+)
 from openpype.hosts.max.api import lib
 
 
@@ -33,7 +35,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         container = rt.container()
         container.name = name
         rs_proxy.Parent = container
-        load_OpenpypeData()
+        import_OpenpypeData(container, [rs_proxy])
         asset = rt.getNodeByName(name)
 
         return containerise(
@@ -49,7 +51,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
             for proxy in children_node.Children:
                 proxy.file = path
 
-        load_OpenpypeData()
+        update_Openpype_Data(node, node.Children)
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

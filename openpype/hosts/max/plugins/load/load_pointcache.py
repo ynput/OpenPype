@@ -7,7 +7,9 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 import os
 from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api import lib, maintained_selection
-from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
+from openpype.hosts.max.api.pipeline import (
+    containerise, import_OpenpypeData, update_Openpype_Data
+)
 
 
 class AbcLoader(load.LoaderPlugin):
@@ -33,7 +35,7 @@ class AbcLoader(load.LoaderPlugin):
         }
 
         rt.AlembicImport.ImportToRoot = False
-        rt.importFile(file_path, rt.name("noPrompt"))
+        rt.importFile(file_path, rt.name("noPrompt"), using=rt.AlembicImport)
 
         abc_after = {
             c
@@ -49,7 +51,7 @@ class AbcLoader(load.LoaderPlugin):
 
         abc_container = abc_containers.pop()
         selections = rt.GetCurrentSelection()
-        load_OpenpypeData()
+        import_OpenpypeData(abc_container, abc_container.Children)
         for abc in selections:
             for cam_shape in abc.Children:
                 cam_shape.playbackType = 2
@@ -75,6 +77,7 @@ class AbcLoader(load.LoaderPlugin):
 
             for alembic in rt.Selection:
                 abc = rt.GetNodeByName(alembic.name)
+                update_Openpype_Data(abc, abc.Children)
                 rt.Select(abc.Children)
                 for abc_con in rt.Selection:
                     container = rt.GetNodeByName(abc_con.name)
@@ -84,7 +87,7 @@ class AbcLoader(load.LoaderPlugin):
                         alembic_obj = rt.GetNodeByName(abc_obj.name)
                         alembic_obj.source = path
                         nodes_list.append(alembic_obj)
-        load_OpenpypeData()
+
 
     def switch(self, container, representation):
         self.update(container, representation)

@@ -1,7 +1,9 @@
 import os
 
 from openpype.hosts.max.api import lib, maintained_selection
-from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
+from openpype.hosts.max.api.pipeline import (
+    containerise, import_OpenpypeData, update_Openpype_Data
+)
 from openpype.pipeline import get_representation_path, load
 
 
@@ -16,24 +18,21 @@ class FbxLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
-
         filepath = self.filepath_from_context(context)
         filepath = os.path.normpath(filepath)
         rt.FBXImporterSetParam("Animation", True)
         rt.FBXImporterSetParam("Camera", True)
         rt.FBXImporterSetParam("AxisConversionMethod", True)
+        rt.FBXImporterSetParam("Mode", rt.Name("create"))
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.ImportFile(
             filepath,
             rt.name("noPrompt"),
             using=rt.FBXIMP)
 
-        container = rt.GetNodeByName(f"{name}")
-        if not container:
-            container = rt.Container()
-            container.name = f"{name}"
+        container = rt.container(name=name)
         selections = rt.GetCurrentSelection()
-        load_OpenpypeData()
+        import_OpenpypeData(container, selections)
         for selection in selections:
             selection.Parent = container
 
@@ -45,14 +44,17 @@ class FbxLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
+        inst_name, _ = os.path.split(container["instance_node"])
+        container = rt.getNodeByName(inst_name)
         rt.Select(node.Children)
+        update_Openpype_Data(container, rt.GetCurrentSelection())
         rt.FBXImporterSetParam("Animation", True)
         rt.FBXImporterSetParam("Camera", True)
+        rt.FBXImporterSetParam("Mode", rt.Name("merge"))
         rt.FBXImporterSetParam("AxisConversionMethod", True)
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.ImportFile(
             path, rt.name("noPrompt"), using=rt.FBXIMP)
-        load_OpenpypeData()
 
         with maintained_selection():
             rt.Select(node)

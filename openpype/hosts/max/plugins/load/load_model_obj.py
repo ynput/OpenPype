@@ -2,7 +2,7 @@ import os
 
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
-from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
+from openpype.hosts.max.api.pipeline import containerise, import_OpenpypeData
 from openpype.pipeline import get_representation_path, load
 
 
@@ -26,7 +26,7 @@ class ObjLoader(load.LoaderPlugin):
         container = rt.Container()
         container.name = name
         selections = rt.GetCurrentSelection()
-        load_OpenpypeData()
+        import_OpenpypeData(container, selections)
         # get current selection
         for selection in selections:
             selection.Parent = container
@@ -53,7 +53,7 @@ class ObjLoader(load.LoaderPlugin):
         selections = rt.GetCurrentSelection()
         for selection in selections:
             selection.Parent = container
-        load_OpenpypeData()
+        import_OpenpypeData(container, selections)
         with maintained_selection():
             rt.Select(node)
 

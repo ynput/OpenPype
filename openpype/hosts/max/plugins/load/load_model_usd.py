@@ -2,7 +2,9 @@ import os
 
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
-from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
+from openpype.hosts.max.api.pipeline import (
+    containerise, import_OpenpypeData, update_Openpype_Data
+)
 from openpype.pipeline import get_representation_path, load
 
 
@@ -31,7 +33,7 @@ class ModelUSDLoader(load.LoaderPlugin):
         rt.USDImporter.importFile(filepath,
                                   importOptions=import_options)
         asset = rt.GetNodeByName(name)
-        load_OpenpypeData()
+        import_OpenpypeData(asset, asset.Children)
 
         return containerise(
             name, [asset], context, loader=self.__class__.__name__)
@@ -60,7 +62,7 @@ class ModelUSDLoader(load.LoaderPlugin):
 
         asset = rt.GetNodeByName(instance_name)
         asset.Parent = node
-        load_OpenpypeData()
+        update_Openpype_Data(asset, asset.Children)
 
         with maintained_selection():
             rt.Select(node)

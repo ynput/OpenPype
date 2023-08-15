@@ -1,6 +1,8 @@
 import os
 from openpype.pipeline import load, get_representation_path
-from openpype.hosts.max.api.pipeline import containerise, load_OpenpypeData
+from openpype.hosts.max.api.pipeline import (
+    containerise, import_OpenpypeData, update_Openpype_Data
+)
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
 
@@ -30,7 +32,7 @@ class ModelAbcLoader(load.LoaderPlugin):
         rt.AlembicImport.CustomAttributes = True
         rt.AlembicImport.UVs = True
         rt.AlembicImport.VertexColors = True
-        rt.importFile(file_path, rt.name("noPrompt"))
+        rt.importFile(file_path, rt.name("noPrompt"), using=rt.AlembicImport)
 
         abc_after = {
             c
@@ -45,7 +47,7 @@ class ModelAbcLoader(load.LoaderPlugin):
             self.log.error("Something failed when loading.")
 
         abc_container = abc_containers.pop()
-        load_OpenpypeData()
+        import_OpenpypeData(abc_container, abc_container.Children)
         return containerise(
             name, [abc_container], context, loader=self.__class__.__name__
         )
@@ -62,6 +64,7 @@ class ModelAbcLoader(load.LoaderPlugin):
             rt.Select(node)
         for alembic in rt.Selection:
             abc = rt.GetNodeByName(alembic.name)
+            import_OpenpypeData(abc, abc.Children)
             rt.Select(abc.Children)
             for abc_con in rt.Selection:
                 container = rt.GetNodeByName(abc_con.name)
@@ -71,8 +74,6 @@ class ModelAbcLoader(load.LoaderPlugin):
                     alembic_obj = rt.GetNodeByName(abc_obj.name)
                     alembic_obj.source = path
                     nodes_list.append(alembic_obj)
-
-        load_OpenpypeData()
 
         lib.imprint(
             container["instance_node"],
