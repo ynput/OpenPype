@@ -142,6 +142,12 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             ))
             return
 
+        if AYON_SERVER_ENABLED and src_version_entity["name"] == 0:
+            self.log.debug(
+                "Version 0 cannot have hero version. Skipping."
+            )
+            return
+
         all_copied_files = []
         transfers = instance.data.get("transfers", list())
         for _src, dst in transfers:
