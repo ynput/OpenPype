@@ -57,7 +57,8 @@ class MaxSceneLoader(load.LoaderPlugin):
         for name in current_max_object_names:
             idx = rt.findItem(prev_max_object_names, name)
             if idx:
-                prev_max_object_names = rt.deleteItem(prev_max_object_names, idx)
+                prev_max_object_names = rt.deleteItem(
+                    prev_max_object_names, idx)
         for object_name in prev_max_object_names:
             prev_max_object = rt.getNodeByName(object_name)
             rt.Delete(prev_max_object)
