@@ -11,7 +11,6 @@ sidebar_label: AfterEffects
 -   [Load](artist_tools_loader)
 -   [Publish](artist_tools_publisher)
 -   [Manage](artist_tools_inventory)
--   [Subset Manager](artist_tools_subset_manager)
 
 ## Setup
 
@@ -176,3 +175,43 @@ Both previous settings are triggered at same time.
 ### Experimental tools
 
 Currently empty. Could contain special tools available only for specific hosts for early access testing.
+
+
+### Workfile builder section
+
+Next 3 menu items handle creation and usage advanced workfile builder. This could be used to prepare workfile template with placeholders for loaded items and publishable items.
+This allow to build template with layers for guides, any text layers and layer for image content which get dynamically populated when template is used an populated by an artist.
+
+#### Create placeholder
+
+Load or Create placeholders could be used to provide dynamic content or preparation steps for publish.
+
+##### Load Placeholder
+
+This one provide way how to load particular representation for particular subset for particular asset for particular task.
+Eg. Whenever artist start `animation` task they want to load `png` representation of `imageMain` subset of current context's asset.
+
+![Load placeholder](assets/aftereffects_load_placeholder.png)
+
+#### Create Placeholder
+
+This allows to create new composition and when populated it will be enhanced with metadata for publish instance which will be created.
+
+![Create placeholder](assets/aftereffects_create_placeholder.png)
+
+
+### Example
+
+This is how it looks when `Load placeholder` was used to create `LOADERPLACEHOLDER` item which is added as a layer into `CREATEPLACEHOLDER` composition
+created by `Create placeholder`.
+
+![Prepared template](assets/aftereffects_prepared_template.png)
+
+Load placeholder was configured to load `image` family, subset with name `imageMain` and `png` representation.
+
+Any additional layers could be added into composition, when `Build Workfile from template` will be used by an artist, load placeholders will be replace
+by loaded item(s).
+
+![Prepared template](assets/aftereffects_populated_template.png)
+
+Same prepared template could be used for any asset, in each case correct asset according to context will be used automatically.

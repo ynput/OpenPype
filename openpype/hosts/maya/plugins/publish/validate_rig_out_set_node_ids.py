@@ -7,6 +7,7 @@ from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 
@@ -37,7 +38,7 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
         # if a deformer has been created on the shape
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Nodes found with mismatching "
+            raise PublishValidationError("Nodes found with mismatching "
                                "IDs: {0}".format(invalid))
 
     @classmethod

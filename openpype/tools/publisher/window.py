@@ -66,8 +66,7 @@ class PublisherWindow(QtWidgets.QDialog):
             on_top_flag = QtCore.Qt.Dialog
 
         self.setWindowFlags(
-            self.windowFlags()
-            | QtCore.Qt.WindowTitleHint
+            QtCore.Qt.WindowTitleHint
             | QtCore.Qt.WindowMaximizeButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
             | QtCore.Qt.WindowCloseButtonHint
@@ -454,7 +453,11 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         save_match = event.matches(QtGui.QKeySequence.Save)
-        if save_match == QtGui.QKeySequence.ExactMatch:
+        # PySide2 and PySide6 support
+        if not isinstance(save_match, bool):
+            save_match = save_match == QtGui.QKeySequence.ExactMatch
+
+        if save_match:
             if not self._controller.publish_has_started:
                 self._save_changes(True)
             event.accept()
@@ -631,16 +634,7 @@ class PublisherWindow(QtWidgets.QDialog):
         if old_tab == "details":
             self._publish_details_widget.close_details_popup()
 
-        if new_tab in ("create", "publish"):
-            animate = True
-            if old_tab not in ("create", "publish"):
-                animate = False
-                self._content_stacked_layout.setCurrentWidget(
-                    self._overview_widget
-                )
-            self._overview_widget.set_state(new_tab, animate)
-
-        elif new_tab == "details":
+        if new_tab == "details":
             self._content_stacked_layout.setCurrentWidget(
                 self._publish_details_widget
             )
@@ -650,6 +644,21 @@ class PublisherWindow(QtWidgets.QDialog):
             self._content_stacked_layout.setCurrentWidget(
                 self._report_widget
             )
+
+        old_on_overview = old_tab in ("create", "publish")
+        if new_tab in ("create", "publish"):
+            self._content_stacked_layout.setCurrentWidget(
+                self._overview_widget
+            )
+            # Overview state is animated only when switching between
+            #   'create' and 'publish' tab
+            self._overview_widget.set_state(new_tab, old_on_overview)
+
+        elif old_on_overview:
+            # Make sure animation finished if previous tab was 'create'
+            #   or 'publish'. That is just for safety to avoid stuck animation
+            #   when user clicks too fast.
+            self._overview_widget.make_sure_animation_is_finished()
 
         is_create = new_tab == "create"
         if is_create:

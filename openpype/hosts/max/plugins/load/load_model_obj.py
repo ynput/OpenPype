@@ -1,15 +1,13 @@
 import os
-from openpype.pipeline import (
-    load,
-    get_representation_path
-)
-from openpype.hosts.max.api.pipeline import containerise
+
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import maintained_selection
+from openpype.hosts.max.api.pipeline import containerise
+from openpype.pipeline import get_representation_path, load
 
 
 class ObjLoader(load.LoaderPlugin):
-    """Obj Loader"""
+    """Obj Loader."""
 
     families = ["model"]
     representations = ["obj"]
@@ -20,19 +18,19 @@ class ObjLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        filepath = os.path.normpath(self.fname)
-        self.log.debug(f"Executing command to import..")
+        filepath = os.path.normpath(self.filepath_from_context(context))
+        self.log.debug("Executing command to import..")
 
-        rt.execute(f'importFile @"{filepath}" #noPrompt using:ObjImp')
+        rt.Execute(f'importFile @"{filepath}" #noPrompt using:ObjImp')
         # create "missing" container for obj import
-        container = rt.container()
-        container.name = f"{name}"
+        container = rt.Container()
+        container.name = name
 
         # get current selection
-        for selection in rt.getCurrentSelection():
+        for selection in rt.GetCurrentSelection():
             selection.Parent = container
 
-        asset = rt.getNodeByName(f"{name}")
+        asset = rt.GetNodeByName(name)
 
         return containerise(
             name, [asset], context, loader=self.__class__.__name__)
@@ -42,27 +40,30 @@ class ObjLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node_name = container["instance_node"]
-        node = rt.getNodeByName(node_name)
+        node = rt.GetNodeByName(node_name)
 
         instance_name, _ = node_name.split("_")
-        container = rt.getNodeByName(instance_name)
-        for n in container.Children:
-            rt.delete(n)
+        container = rt.GetNodeByName(instance_name)
+        for child in container.Children:
+            rt.Delete(child)
 
-        rt.execute(f'importFile @"{path}" #noPrompt using:ObjImp')
+        rt.Execute(f'importFile @"{path}" #noPrompt using:ObjImp')
         # get current selection
-        for selection in rt.getCurrentSelection():
+        for selection in rt.GetCurrentSelection():
             selection.Parent = container
 
         with maintained_selection():
-            rt.select(node)
+            rt.Select(node)
 
         lib.imprint(node_name, {
             "representation": str(representation["_id"])
         })
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)

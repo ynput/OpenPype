@@ -7,7 +7,9 @@ from openpype.hosts.maya.api.action import (
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
+
 
 from maya import cmds
 
@@ -28,7 +30,7 @@ class ValidateSkeletalMeshTriangulated(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "The following objects needs to be triangulated: "
                 "{}".format(invalid))
 

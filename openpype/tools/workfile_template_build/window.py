@@ -220,7 +220,6 @@ class WorkfileBuildPlaceholderDialog(QtWidgets.QDialog):
         # TODO much better error handling
         try:
             plugin.create_placeholder(options)
-            self.accept()
         except Exception:
             self.log.warning("Something went wrong", exc_info=True)
             dialog = QtWidgets.QMessageBox(self)

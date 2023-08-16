@@ -109,6 +109,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
             return
 
         kwargs["filename"] = file_path.replace(".ass", "_proxy.ass")
+
         filenames, _ = self._extract(
             instance.data["proxy"], attribute_data, kwargs
         )

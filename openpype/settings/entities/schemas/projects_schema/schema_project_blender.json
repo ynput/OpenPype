@@ -32,20 +32,26 @@
             ]
         },
         {
+            "key": "set_resolution_startup",
+            "type": "boolean",
+            "label": "Set Resolution on Startup"
+        },
+        {
+            "key": "set_frames_startup",
+            "type": "boolean",
+            "label": "Set Start/End Frames and FPS on Startup"
+        },
+        {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (OCIO managed)",
+            "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
                 }
-
             ]
         },
         {

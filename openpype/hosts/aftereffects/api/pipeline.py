@@ -10,6 +10,10 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.hosts.aftereffects.api.workfile_template_builder import (
+    AEPlaceholderLoadPlugin,
+    AEPlaceholderCreatePlugin
+)
 from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects
 
@@ -19,6 +23,7 @@ from openpype.host import (
     ILoadHost,
     IPublishHost
 )
+from openpype.tools.utils import get_openpype_qt_app
 
 from .launch_logic import get_stub
 from .ws_stub import ConnectionNotEstablishedYet
@@ -115,6 +120,12 @@ class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         item = data
         item["id"] = "publish_context"
         self.stub.imprint(item["id"], item)
+
+    def get_workfile_build_placeholder_plugins(self):
+        return [
+            AEPlaceholderLoadPlugin,
+            AEPlaceholderCreatePlugin
+        ]
 
     # created instances section
     def list_instances(self):
@@ -226,10 +237,7 @@ def check_inventory():
         return
 
     # Warn about outdated containers.
-    _app = QtWidgets.QApplication.instance()
-    if not _app:
-        print("Starting new QApplication..")
-        _app = QtWidgets.QApplication([])
+    _app = get_openpype_qt_app()
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)

@@ -14,11 +14,16 @@ from openpype.client import (
 from openpype.style import (
     get_default_entity_icon_color,
     get_objected_colors,
+    get_app_icon_path,
 )
 from openpype.resources import get_image_path
 from openpype.lib import filter_profiles, Logger
 from openpype.settings import get_project_settings
-from openpype.pipeline import registered_host
+from openpype.pipeline import (
+    registered_host,
+    get_current_context,
+    get_current_host_name,
+)
 
 from .constants import CHECKED_INT, UNCHECKED_INT
 
@@ -44,7 +49,6 @@ def checkstate_enum_to_int(state):
     if state == QtCore.Qt.PartiallyChecked:
         return 1
     return 2
-
 
 
 def center_window(window):
@@ -147,6 +151,36 @@ def qt_app_context():
     else:
         print("Using existing QApplication..")
         yield app
+
+
+def get_openpype_qt_app():
+    """Main Qt application initialized for OpenPype processed.
+
+    This function should be used only inside OpenPype process and never inside
+        other processes.
+    """
+
+    app = QtWidgets.QApplication.instance()
+    if app is None:
+        for attr_name in (
+            "AA_EnableHighDpiScaling",
+            "AA_UseHighDpiPixmaps",
+        ):
+            attr = getattr(QtCore.Qt, attr_name, None)
+            if attr is not None:
+                QtWidgets.QApplication.setAttribute(attr)
+
+        if hasattr(
+            QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"
+        ):
+            QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(
+                QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+            )
+
+        app = QtWidgets.QApplication(sys.argv)
+
+    app.setWindowIcon(QtGui.QIcon(get_app_icon_path()))
+    return app
 
 
 class SharedObjects:
@@ -496,10 +530,11 @@ class FamilyConfigCache:
             return
 
         # Update the icons from the project configuration
-        project_name = os.environ.get("AVALON_PROJECT")
-        asset_name = os.environ.get("AVALON_ASSET")
-        task_name = os.environ.get("AVALON_TASK")
-        host_name = os.environ.get("AVALON_APP")
+        context = get_current_context()
+        project_name = context["project_name"]
+        asset_name = context["asset_name"]
+        task_name = context["task_name"]
+        host_name = get_current_host_name()
         if not all((project_name, asset_name, task_name)):
             return
 
@@ -725,20 +760,23 @@ def create_qthread(func, *args, **kwargs):
 
 def get_repre_icons():
     """Returns a dict {'provider_name': QIcon}"""
+    icons = {}
     try:
         from openpype_modules import sync_server
     except Exception:
         # Backwards compatibility
-        from openpype.modules import sync_server
+        try:
+            from openpype.modules import sync_server
+        except Exception:
+            return icons
 
     resource_path = os.path.join(
         os.path.dirname(sync_server.sync_server_module.__file__),
         "providers", "resources"
     )
-    icons = {}
     if not os.path.exists(resource_path):
         print("No icons for Site Sync found")
-        return {}
+        return icons
 
     for file_name in os.listdir(resource_path):
         if file_name and not file_name.endswith("png"):
@@ -750,61 +788,6 @@ def get_repre_icons():
         icons[provider] = QtGui.QIcon(pix_url)
 
     return icons
-
-
-def get_progress_for_repre(doc, active_site, remote_site):
-    """
-        Calculates average progress for representation.
-
-        If site has created_dt >> fully available >> progress == 1
-
-        Could be calculated in aggregate if it would be too slow
-        Args:
-            doc(dict): representation dict
-        Returns:
-            (dict) with active and remote sites progress
-            {'studio': 1.0, 'gdrive': -1} - gdrive site is not present
-                -1 is used to highlight the site should be added
-            {'studio': 1.0, 'gdrive': 0.0} - gdrive site is present, not
-                uploaded yet
-    """
-    progress = {active_site: -1,
-                remote_site: -1}
-    if not doc:
-        return progress
-
-    files = {active_site: 0, remote_site: 0}
-    doc_files = doc.get("files") or []
-    for doc_file in doc_files:
-        if not isinstance(doc_file, dict):
-            continue
-
-        sites = doc_file.get("sites") or []
-        for site in sites:
-            if (
-                # Pype 2 compatibility
-                not isinstance(site, dict)
-                # Check if site name is one of progress sites
-                or site["name"] not in progress
-            ):
-                continue
-
-            files[site["name"]] += 1
-            norm_progress = max(progress[site["name"]], 0)
-            if site.get("created_dt"):
-                progress[site["name"]] = norm_progress + 1
-            elif site.get("progress"):
-                progress[site["name"]] = norm_progress + site["progress"]
-            else:  # site exists, might be failed, do not add again
-                progress[site["name"]] = 0
-
-    # for example 13 fully avail. files out of 26 >> 13/26 = 0.5
-    avg_progress = {}
-    avg_progress[active_site] = \
-        progress[active_site] / max(files[active_site], 1)
-    avg_progress[remote_site] = \
-        progress[remote_site] / max(files[remote_site], 1)
-    return avg_progress
 
 
 def is_sync_loader(loader):
