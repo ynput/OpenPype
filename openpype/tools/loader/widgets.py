@@ -745,8 +745,8 @@ class VersionTextEdit(QtWidgets.QTextEdit):
         version_colorspace = version_doc["data"].get("colorspace")
         colorspace_html = ""
         if version_colorspace:
-            colorspace_html = "<b>Colorspace</b><br>{colorspace}<br><br>".format(
-                colorspace=version_colorspace
+            colorspace_html = "<b>Colorspace</b><br>{}<br><br>".format(
+                version_colorspace
             )
 
         data["colorspace_html"] = colorspace_html
