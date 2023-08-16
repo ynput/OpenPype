@@ -116,8 +116,8 @@ def get_time_data_from_instance_or_context(instance):
              instance.context.data.get("fps")),
         handle_start=(instance.data.get("handleStart") or
                       instance.context.data.get("handleStart")),  # noqa: E501
-        handle_end=(instance.data.get("handleStart") or
-                    instance.context.data.get("handleStart"))
+        handle_end=(instance.data.get("handleEnd") or
+                    instance.context.data.get("handleEnd"))
     )
 
 
