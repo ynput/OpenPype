@@ -45,12 +45,12 @@ class MaxSceneLoader(load.LoaderPlugin):
         node = rt.GetNodeByName(node_name)
         inst_name, _ = os.path.splitext(node_name)
         old_container = rt.getNodeByName(inst_name)
+        prev_max_objects = rt.getLastMergedNodes()
         # delete the old container with attribute
         # delete old duplicate
         rt.Delete(old_container)
         rt.MergeMaxFile(path, rt.Name("deleteOldDups"))
         new_container = rt.Container(name=inst_name)
-        max_objects = rt.getLastMergedNodes()
         current_max_objects = rt.getLastMergedNodes()
         for current_object in current_max_objects:
             prev_max_objects = prev_max_objects.remove(current_object)
@@ -58,11 +58,11 @@ class MaxSceneLoader(load.LoaderPlugin):
             rt.Delete(prev_object)
         max_objects_list = []
         max_objects_list.append(new_container)
-        max_objects_list.extend(max_objects)
+        max_objects_list.extend(current_max_objects)
 
         for max_object in max_objects_list:
             max_object.Parent = node
-        update_custom_attribute_data(new_container, max_objects)
+        update_custom_attribute_data(new_container, current_max_objects)
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
