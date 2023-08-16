@@ -26,7 +26,7 @@ class MaxSceneLoader(load.LoaderPlugin):
         path = os.path.normpath(path)
         # import the max scene by using "merge file"
         path = path.replace('\\', '/')
-        rt.MergeMaxFile(path, quiet=True)
+        rt.MergeMaxFile(path, quiet=True, includeFullGroup=True)
         max_objects = rt.getLastMergedNodes()
         # implement the OP/AYON custom attributes before load
         max_container = []
