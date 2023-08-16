@@ -26,7 +26,10 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(filepath, rt.name("noPrompt"), using=rt.FBXIMP)
 
+        container = rt.GetNodeByName(name)
+
         container = rt.Container(name=name)
+
         selections = rt.GetCurrentSelection()
         import_custom_attribute_data(container, selections)
 
@@ -40,8 +43,9 @@ class FbxModelLoader(load.LoaderPlugin):
     def update(self, container, representation):
         from pymxs import runtime as rt
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
-        inst_name, _ = os.path.splitext(container["instance_node"])
+        node_name = container["instance_node"]
+        node = rt.getNodeByName(node_name)
+        inst_name, _ = node_name.split("_")
         rt.select(node.Children)
 
         rt.FBXImporterSetParam("Animation", False)
@@ -52,14 +56,14 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(path, rt.name("noPrompt"), using=rt.FBXIMP)
 
-        container = rt.getNodeByName(inst_name)
+        inst_container = rt.getNodeByName(inst_name)
         update_custom_attribute_data(
-            container, rt.GetCurrentSelection())
+            inst_container, rt.GetCurrentSelection())
         with maintained_selection():
             rt.Select(node)
 
         lib.imprint(
-            container["instance_node"],
+            node_name,
             {"representation": str(representation["_id"])},
         )
 

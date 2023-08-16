@@ -45,12 +45,11 @@ class FbxLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.GetNodeByName(container["instance_node"])
-        inst_name, _ = os.path.split(container["instance_node"])
-        container = rt.getNodeByName(inst_name)
+        node_name = container["instance_node"]
+        node = rt.getNodeByName(node_name)
+        inst_name, _ = node_name.split("_")
         rt.Select(node.Children)
-        update_custom_attribute_data(
-            container, rt.GetCurrentSelection())
+
         rt.FBXImporterSetParam("Animation", True)
         rt.FBXImporterSetParam("Camera", True)
         rt.FBXImporterSetParam("Mode", rt.Name("merge"))
@@ -58,7 +57,9 @@ class FbxLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.ImportFile(
             path, rt.name("noPrompt"), using=rt.FBXIMP)
-
+        inst_container = rt.getNodeByName(inst_name)
+        update_custom_attribute_data(
+            inst_container, rt.GetCurrentSelection())
         with maintained_selection():
             rt.Select(node)
 

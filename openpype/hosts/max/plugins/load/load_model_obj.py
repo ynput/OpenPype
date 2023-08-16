@@ -33,7 +33,6 @@ class ObjLoader(load.LoaderPlugin):
         # get current selection
         for selection in selections:
             selection.Parent = container
-            self.log.debug(f"{container.ClassID}")
 
         return containerise(
             name, [container], context, loader=self.__class__.__name__)
@@ -46,7 +45,7 @@ class ObjLoader(load.LoaderPlugin):
         node = rt.GetNodeByName(node_name)
 
         instance_name, _ = node_name.split("_")
-        container = rt.GetNodeByName(instance_name)
+        inst_container = rt.GetNodeByName(instance_name)
         for child in container.Children:
             rt.Delete(child)
 
@@ -54,8 +53,8 @@ class ObjLoader(load.LoaderPlugin):
         # get current selection
         selections = rt.GetCurrentSelection()
         for selection in selections:
-            selection.Parent = container
-        update_custom_attribute_data(container, selections)
+            selection.Parent = inst_container
+        update_custom_attribute_data(inst_container, selections)
         with maintained_selection():
             rt.Select(node)
 

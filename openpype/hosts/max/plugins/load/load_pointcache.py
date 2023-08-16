@@ -70,10 +70,6 @@ class AbcLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
 
-        lib.imprint(
-            container["instance_node"],
-            {"representation": str(representation["_id"])},
-        )
         nodes_list = []
         with maintained_selection():
             rt.Select(node.Children)
@@ -83,14 +79,18 @@ class AbcLoader(load.LoaderPlugin):
                 update_custom_attribute_data(abc, abc.Children)
                 rt.Select(abc.Children)
                 for abc_con in rt.Selection:
-                    container = rt.GetNodeByName(abc_con.name)
-                    container.source = path
-                    rt.Select(container.Children)
+                    abc_container = rt.GetNodeByName(abc_con.name)
+                    abc_container.source = path
+                    rt.Select(abc_container.Children)
                     for abc_obj in rt.Selection:
                         alembic_obj = rt.GetNodeByName(abc_obj.name)
                         alembic_obj.source = path
                         nodes_list.append(alembic_obj)
 
+        lib.imprint(
+            container["instance_node"],
+            {"representation": str(representation["_id"])},
+        )
 
     def switch(self, container, representation):
         self.update(container, representation)

@@ -70,9 +70,9 @@ class ModelAbcLoader(load.LoaderPlugin):
             update_custom_attribute_data(abc, abc.Children)
             rt.Select(abc.Children)
             for abc_con in rt.Selection:
-                container = rt.GetNodeByName(abc_con.name)
-                container.source = path
-                rt.Select(container.Children)
+                abc_container = rt.GetNodeByName(abc_con.name)
+                abc_container.source = path
+                rt.Select(abc_container.Children)
                 for abc_obj in rt.Selection:
                     alembic_obj = rt.GetNodeByName(abc_obj.name)
                     alembic_obj.source = path

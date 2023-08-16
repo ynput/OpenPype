@@ -42,27 +42,28 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node_name = container["instance_node"]
-        node = rt.GetNodeByName(node_name)
-        inst_name, _ = os.path.splitext(node_name)
-        old_container = rt.getNodeByName(inst_name)
-        prev_max_objects = rt.getLastMergedNodes()
+        node = rt.getNodeByName(node_name)
+        inst_name, _ = node_name.split("_")
+        inst_container = rt.getNodeByName(inst_name)
         # delete the old container with attribute
         # delete old duplicate
-        rt.Delete(old_container)
+        prev_max_object_names = [obj.name for obj in rt.getLastMergedNodes()]
         rt.MergeMaxFile(path, rt.Name("deleteOldDups"))
-        new_container = rt.Container(name=inst_name)
-        current_max_objects = rt.getLastMergedNodes()
-        for current_object in current_max_objects:
-            prev_max_objects = prev_max_objects.remove(current_object)
-        for prev_object in prev_max_objects:
-            rt.Delete(prev_object)
-        max_objects_list = []
-        max_objects_list.append(new_container)
-        max_objects_list.extend(current_max_objects)
 
-        for max_object in max_objects_list:
+        current_max_objects = rt.getLastMergedNodes()
+        current_max_object_names = [obj.name for obj in rt.getLastMergedNodes()]
+        for obj in current_max_object_names:
+            idx = rt.findItem(prev_max_object_names, obj)
+            if idx:
+                prev_max_object_names = rt.deleteItem(prev_max_object_names, idx)
+        for object_name in prev_max_object_names:
+            prev_max_object = rt.getNodeByName(object_name)
+            rt.Delete(prev_max_object)
+
+        update_custom_attribute_data(inst_container, current_max_objects)
+
+        for max_object in current_max_objects:
             max_object.Parent = node
-        update_custom_attribute_data(new_container, current_max_objects)
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
