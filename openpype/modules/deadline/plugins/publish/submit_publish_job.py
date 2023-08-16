@@ -121,7 +121,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_SG_USER"
+        "OPENPYPE_SG_USER",
+        "KITSU_LOGIN",
+        "KITSU_PWD"
     ]
 
     # custom deadline attributes
