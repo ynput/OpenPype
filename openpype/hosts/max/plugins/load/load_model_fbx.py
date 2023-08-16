@@ -26,11 +26,7 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(filepath, rt.name("noPrompt"), using=rt.FBXIMP)
 
-        container = rt.GetNodeByName(name)
-        if not container:
-            container = rt.Container()
-            container.name = name
-
+        container = rt.Container(name=name)
         selections = rt.GetCurrentSelection()
         import_custom_attribute_data(container, selections)
 

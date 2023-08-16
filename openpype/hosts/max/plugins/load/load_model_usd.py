@@ -35,6 +35,7 @@ class ModelUSDLoader(load.LoaderPlugin):
         rt.USDImporter.importFile(filepath,
                                   importOptions=import_options)
         asset = rt.GetNodeByName(name)
+
         import_custom_attribute_data(asset, asset.Children)
 
         return containerise(

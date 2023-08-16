@@ -188,7 +188,7 @@ def import_custom_attribute_data(container: str, selections: list):
 
     Args:
         container (str): target container which adds custom attributes
-        selections (_type_): nodes to be added into
+        selections (list): nodes to be added into
         group in custom attributes
     """
     attrs = load_custom_attribute_data()
@@ -216,7 +216,7 @@ def update_custom_attribute_data(container: str, selections: list):
 
     Args:
         container (str): target container which adds custom attributes
-        selections (_type_): nodes to be added into
+        selections (list): nodes to be added into
         group in custom attributes
     """
     if container.modifiers[0].name == "OP Data":

@@ -51,7 +51,11 @@ class MaxSceneLoader(load.LoaderPlugin):
         rt.MergeMaxFile(path, rt.Name("deleteOldDups"))
         new_container = rt.Container(name=inst_name)
         max_objects = rt.getLastMergedNodes()
-
+        current_max_objects = rt.getLastMergedNodes()
+        for current_object in current_max_objects:
+            prev_max_objects = prev_max_objects.remove(current_object)
+        for prev_object in prev_max_objects:
+            rt.Delete(prev_object)
         max_objects_list = []
         max_objects_list.append(new_container)
         max_objects_list.extend(max_objects)

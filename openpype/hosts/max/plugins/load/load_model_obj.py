@@ -27,18 +27,16 @@ class ObjLoader(load.LoaderPlugin):
 
         rt.Execute(f'importFile @"{filepath}" #noPrompt using:ObjImp')
         # create "missing" container for obj import
-        container = rt.Container()
-        container.name = name
+        container = rt.Container(name=name)
         selections = rt.GetCurrentSelection()
         import_custom_attribute_data(container, selections)
         # get current selection
         for selection in selections:
             selection.Parent = container
-
-        asset = rt.GetNodeByName(name)
+            self.log.debug(f"{container.ClassID}")
 
         return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
+            name, [container], context, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
