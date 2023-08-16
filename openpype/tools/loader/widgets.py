@@ -741,6 +741,16 @@ class VersionTextEdit(QtWidgets.QTextEdit):
             "source": source_label
         }
 
+        # Add colorspace info to Version Info tab
+        version_colorspace = version_doc["data"].get("colorspace")
+        colorspace_html = ""
+        if version_colorspace:
+            colorspace_html = "<b>Colorspace</b><br>{colorspace}<br><br>".format(
+                colorspace=version_colorspace
+            )
+
+        data["colorspace_html"] = colorspace_html
+
         self.setHtml((
             "<h2>{subset}</h2>"
             "<h3>{version}</h3>"
@@ -749,7 +759,7 @@ class VersionTextEdit(QtWidgets.QTextEdit):
 
             "<b>Created</b><br>"
             "{created}<br><br>"
-
+            "{colorspace_html}"
             "<b>Source</b><br>"
             "{source}"
         ).format(**data))
