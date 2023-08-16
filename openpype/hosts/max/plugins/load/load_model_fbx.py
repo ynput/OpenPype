@@ -46,19 +46,20 @@ class FbxModelLoader(load.LoaderPlugin):
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
         inst_name, _ = node_name.split("_")
-        rt.select(node.Children)
+        inst_container = rt.getNodeByName(inst_name)
 
         rt.FBXImporterSetParam("Animation", False)
         rt.FBXImporterSetParam("Cameras", False)
         rt.FBXImporterSetParam("Mode", rt.Name("merge"))
         rt.FBXImporterSetParam("AxisConversionMethod", True)
-        rt.FBXImporterSetParam("UpAxis", "Y")
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(path, rt.name("noPrompt"), using=rt.FBXIMP)
-
-        inst_container = rt.getNodeByName(inst_name)
+        current_fbx_objects = rt.GetCurrentSelection()
+        for fbx_object in current_fbx_objects:
+            if fbx_object.Parent != inst_container:
+                fbx_object.Parent = inst_container
         update_custom_attribute_data(
-            inst_container, rt.GetCurrentSelection())
+            inst_container, current_fbx_objects)
         with maintained_selection():
             rt.Select(node)
 

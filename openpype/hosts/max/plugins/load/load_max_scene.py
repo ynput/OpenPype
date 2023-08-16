@@ -47,13 +47,15 @@ class MaxSceneLoader(load.LoaderPlugin):
         inst_container = rt.getNodeByName(inst_name)
         # delete the old container with attribute
         # delete old duplicate
-        prev_max_object_names = [obj.name for obj in rt.getLastMergedNodes()]
+        prev_max_object_names = [obj.name for obj
+                                 in rt.getLastMergedNodes()]
         rt.MergeMaxFile(path, rt.Name("deleteOldDups"))
 
         current_max_objects = rt.getLastMergedNodes()
-        current_max_object_names = [obj.name for obj in rt.getLastMergedNodes()]
-        for obj in current_max_object_names:
-            idx = rt.findItem(prev_max_object_names, obj)
+        current_max_object_names = [obj.name for obj
+                                    in current_max_objects]
+        for name in current_max_object_names:
+            idx = rt.findItem(prev_max_object_names, name)
             if idx:
                 prev_max_object_names = rt.deleteItem(prev_max_object_names, idx)
         for object_name in prev_max_object_names:

@@ -57,7 +57,11 @@ class FbxLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.ImportFile(
             path, rt.name("noPrompt"), using=rt.FBXIMP)
+        current_fbx_objects = rt.GetCurrentSelection()
         inst_container = rt.getNodeByName(inst_name)
+        for fbx_object in current_fbx_objects:
+            if fbx_object.Parent != inst_container:
+                fbx_object.Parent = inst_container
         update_custom_attribute_data(
             inst_container, rt.GetCurrentSelection())
         with maintained_selection():
