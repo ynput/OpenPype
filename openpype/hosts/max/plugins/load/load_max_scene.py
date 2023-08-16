@@ -1,7 +1,10 @@
 import os
 
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import (
+    containerise, import_custom_attribute_data,
+    update_custom_attribute_data
+)
 from openpype.pipeline import get_representation_path, load
 
 
@@ -19,36 +22,43 @@ class MaxSceneLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
-
         path = self.filepath_from_context(context)
         path = os.path.normpath(path)
         # import the max scene by using "merge file"
         path = path.replace('\\', '/')
-        rt.MergeMaxFile(path)
+        rt.MergeMaxFile(path, quiet=True)
         max_objects = rt.getLastMergedNodes()
-        max_container = rt.Container(name=f"{name}")
-        for max_object in max_objects:
-            max_object.Parent = max_container
-
+        # implement the OP/AYON custom attributes before load
+        max_container = []
+        container = rt.Container(name=name)
+        import_custom_attribute_data(container, max_objects)
+        max_container.append(container)
+        max_container.extend(max_objects)
         return containerise(
-            name, [max_container], context, loader=self.__class__.__name__)
+            name, max_container, context, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
         node_name = container["instance_node"]
-
-        rt.MergeMaxFile(path,
-                        rt.Name("noRedraw"),
-                        rt.Name("deleteOldDups"),
-                        rt.Name("useSceneMtlDups"))
-
+        node = rt.GetNodeByName(node_name)
+        inst_name, _ = os.path.splitext(node_name)
+        old_container = rt.getNodeByName(inst_name)
+        # delete the old container with attribute
+        # delete old duplicate
+        rt.Delete(old_container)
+        rt.MergeMaxFile(path, rt.Name("deleteOldDups"))
+        new_container = rt.Container(name=inst_name)
         max_objects = rt.getLastMergedNodes()
-        container_node = rt.GetNodeByName(node_name)
-        for max_object in max_objects:
-            max_object.Parent = container_node
 
+        max_objects_list = []
+        max_objects_list.append(new_container)
+        max_objects_list.extend(max_objects)
+
+        for max_object in max_objects_list:
+            max_object.Parent = node
+        update_custom_attribute_data(new_container, max_objects)
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
