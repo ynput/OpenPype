@@ -94,7 +94,8 @@ class CameraLoader(load.LoaderPlugin):
         import hou
 
         # Format file name, Houdini only wants forward slashes
-        file_path = os.path.normpath(self.fname)
+        file_path = self.filepath_from_context(context)
+        file_path = os.path.normpath(file_path)
         file_path = file_path.replace("\\", "/")
 
         # Get the root node
@@ -192,3 +193,6 @@ class CameraLoader(load.LoaderPlugin):
 
         new_node.moveToGoodPosition()
         return new_node
+
+    def switch(self, container, representation):
+        self.update(container, representation)

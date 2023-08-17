@@ -6,12 +6,12 @@ from openpype.client import (
     get_version_by_id,
 )
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     load,
     get_representation_path,
 )
 from openpype.hosts.maya.api.pipeline import containerise
-from openpype.hosts.maya.api.lib import unique_namespace
+from openpype.hosts.maya.api.lib import unique_namespace, get_container_members
 
 
 class AudioLoader(load.LoaderPlugin):
@@ -52,17 +52,15 @@ class AudioLoader(load.LoaderPlugin):
         )
 
     def update(self, container, representation):
-        import pymel.core as pm
 
-        audio_node = None
-        for node in pm.PyNode(container["objectName"]).members():
-            if node.nodeType() == "audio":
-                audio_node = node
+        members = get_container_members(container)
+        audio_nodes = cmds.ls(members, type="audio")
 
-        assert audio_node is not None, "Audio node not found."
+        assert audio_nodes is not None, "Audio node not found."
+        audio_node = audio_nodes[0]
 
         path = get_representation_path(representation)
-        audio_node.filename.set(path)
+        cmds.setAttr("{}.filename".format(audio_node), path, type="string")
         cmds.setAttr(
             container["objectName"] + ".representation",
             str(representation["_id"]),
@@ -70,7 +68,7 @@ class AudioLoader(load.LoaderPlugin):
         )
 
         # Set frame range.
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version = get_version_by_id(
             project_name, representation["parent"], fields=["parent"]
         )
@@ -80,8 +78,12 @@ class AudioLoader(load.LoaderPlugin):
         asset = get_asset_by_id(
             project_name, subset["parent"], fields=["parent"]
         )
-        audio_node.sourceStart.set(1 - asset["data"]["frameStart"])
-        audio_node.sourceEnd.set(asset["data"]["frameEnd"])
+
+        source_start = 1 - asset["data"]["frameStart"]
+        source_end = asset["data"]["frameEnd"]
+
+        cmds.setAttr("{}.sourceStart".format(audio_node), source_start)
+        cmds.setAttr("{}.sourceEnd".format(audio_node), source_end)
 
     def switch(self, container, representation):
         self.update(container, representation)

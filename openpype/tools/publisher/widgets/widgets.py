@@ -9,7 +9,8 @@ import collections
 from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype.lib.attribute_definitions import UnknownDef, UIDef
+from openpype import AYON_SERVER_ENABLED
+from openpype.lib.attribute_definitions import UnknownDef
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
 from openpype.tools.flickcharm import FlickCharm
@@ -34,8 +35,46 @@ from .icons import (
 )
 
 from ..constants import (
-    VARIANT_TOOLTIP
+    VARIANT_TOOLTIP,
+    ResetKeySequence,
+    INPUTS_LAYOUT_HSPACING,
+    INPUTS_LAYOUT_VSPACING,
 )
+
+FA_PREFIXES = ["", "fa.", "fa5.", "fa5b.", "fa5s.", "ei.", "mdi."]
+
+
+def parse_icon_def(
+    icon_def, default_width=None, default_height=None, color=None
+):
+    if not icon_def:
+        return None
+
+    if isinstance(icon_def, QtGui.QPixmap):
+        return icon_def
+
+    color = color or "white"
+    default_width = default_width or 512
+    default_height = default_height or 512
+
+    if isinstance(icon_def, QtGui.QIcon):
+        return icon_def.pixmap(default_width, default_height)
+
+    try:
+        if os.path.exists(icon_def):
+            return QtGui.QPixmap(icon_def)
+    except Exception:
+        # TODO logging
+        pass
+
+    for prefix in FA_PREFIXES:
+        try:
+            icon_name = "{}{}".format(prefix, icon_def)
+            icon = qtawesome.icon(icon_name, color=color)
+            return icon.pixmap(default_width, default_height)
+        except Exception:
+            # TODO logging
+            continue
 
 
 class PublishPixmapLabel(PixmapLabel):
@@ -51,7 +90,6 @@ class IconValuePixmapLabel(PublishPixmapLabel):
     Handle icon parsing from creators/instances. Using of QAwesome module
     of path to images.
     """
-    fa_prefixes = ["", "fa."]
     default_size = 200
 
     def __init__(self, icon_def, parent):
@@ -74,31 +112,9 @@ class IconValuePixmapLabel(PublishPixmapLabel):
         return pix
 
     def _parse_icon_def(self, icon_def):
-        if not icon_def:
-            return self._default_pixmap()
-
-        if isinstance(icon_def, QtGui.QPixmap):
-            return icon_def
-
-        if isinstance(icon_def, QtGui.QIcon):
-            return icon_def.pixmap(self.default_size, self.default_size)
-
-        try:
-            if os.path.exists(icon_def):
-                return QtGui.QPixmap(icon_def)
-        except Exception:
-            # TODO logging
-            pass
-
-        for prefix in self.fa_prefixes:
-            try:
-                icon_name = "{}{}".format(prefix, icon_def)
-                icon = qtawesome.icon(icon_name, color="white")
-                return icon.pixmap(self.default_size, self.default_size)
-            except Exception:
-                # TODO logging
-                continue
-
+        icon = parse_icon_def(icon_def, self.default_size, self.default_size)
+        if icon:
+            return icon
         return self._default_pixmap()
 
 
@@ -198,12 +214,26 @@ class CreateBtn(PublishIconBtn):
         self.setLayoutDirection(QtCore.Qt.RightToLeft)
 
 
+class SaveBtn(PublishIconBtn):
+    """Save context and instances information."""
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("save")
+        super(SaveBtn, self).__init__(icon_path, parent)
+        self.setToolTip(
+            "Save changes ({})".format(
+                QtGui.QKeySequence(QtGui.QKeySequence.Save).toString()
+            )
+        )
+
+
 class ResetBtn(PublishIconBtn):
     """Publish reset button."""
     def __init__(self, parent=None):
         icon_path = get_icon_path("refresh")
         super(ResetBtn, self).__init__(icon_path, parent)
-        self.setToolTip("Refresh publishing")
+        self.setToolTip(
+            "Reset & discard changes ({})".format(ResetKeySequence.toString())
+        )
 
 
 class StopBtn(PublishIconBtn):
@@ -346,6 +376,19 @@ class AbstractInstanceView(QtWidgets.QWidget):
 
         raise NotImplementedError((
             "{} Method 'set_selected_items' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def set_active_toggle_enabled(self, enabled):
+        """Instances are disabled for changing enabled state.
+
+        Active state should stay the same until is "unset".
+
+        Args:
+            enabled (bool): Instance state can be changed.
+        """
+
+        raise NotImplementedError((
+            "{} Method 'set_active_toggle_enabled' is not implemented."
         ).format(self.__class__.__name__))
 
 
@@ -662,6 +705,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         style.drawControl(
             QtWidgets.QStyle.CE_ComboBoxLabel, opt, painter, self
         )
+        painter.end()
 
     def is_valid(self):
         """Are all selected items valid."""
@@ -1070,11 +1114,19 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         btns_layout.addWidget(cancel_btn)
 
         main_layout = QtWidgets.QFormLayout(self)
+        main_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        main_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         main_layout.addRow("Variant", variant_input)
-        main_layout.addRow("Asset", asset_value_widget)
+        main_layout.addRow(
+            "Folder" if AYON_SERVER_ENABLED else "Asset",
+            asset_value_widget)
         main_layout.addRow("Task", task_value_widget)
-        main_layout.addRow("Family", family_value_widget)
-        main_layout.addRow("Subset", subset_value_widget)
+        main_layout.addRow(
+            "Product type" if AYON_SERVER_ENABLED else "Family",
+            family_value_widget)
+        main_layout.addRow(
+            "Product name" if AYON_SERVER_ENABLED else "Subset",
+            subset_value_widget)
         main_layout.addRow(btns_layout)
 
         variant_input.value_changed.connect(self._on_variant_change)
@@ -1318,6 +1370,8 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
         content_layout.setColumnStretch(0, 0)
         content_layout.setColumnStretch(1, 1)
         content_layout.setAlignment(QtCore.Qt.AlignTop)
+        content_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        content_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
 
         row = 0
         for attr_def, attr_instances, values in result:
@@ -1343,9 +1397,19 @@ class CreatorAttrsWidget(QtWidgets.QWidget):
 
             col_num = 2 - expand_cols
 
-            label = attr_def.label or attr_def.key
+            label = None
+            if attr_def.is_value_def:
+                label = attr_def.label or attr_def.key
             if label:
                 label_widget = QtWidgets.QLabel(label, self)
+                tooltip = attr_def.tooltip
+                if tooltip:
+                    label_widget.setToolTip(tooltip)
+                if attr_def.is_label_horizontal:
+                    label_widget.setAlignment(
+                        QtCore.Qt.AlignRight
+                        | QtCore.Qt.AlignVCenter
+                    )
                 content_layout.addWidget(
                     label_widget, row, 0, 1, expand_cols
                 )
@@ -1446,6 +1510,8 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         attr_def_layout = QtWidgets.QGridLayout(attr_def_widget)
         attr_def_layout.setColumnStretch(0, 0)
         attr_def_layout.setColumnStretch(1, 1)
+        attr_def_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
+        attr_def_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.addWidget(attr_def_widget, 0)
@@ -1473,12 +1539,19 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                         expand_cols = 1
 
                     col_num = 2 - expand_cols
-                    label = attr_def.label or attr_def.key
+                    label = None
+                    if attr_def.is_value_def:
+                        label = attr_def.label or attr_def.key
                     if label:
                         label_widget = QtWidgets.QLabel(label, content_widget)
                         tooltip = attr_def.tooltip
                         if tooltip:
                             label_widget.setToolTip(tooltip)
+                        if attr_def.is_label_horizontal:
+                            label_widget.setAlignment(
+                                QtCore.Qt.AlignRight
+                                | QtCore.Qt.AlignVCenter
+                            )
                         attr_def_layout.addWidget(
                             label_widget, row, 0, 1, expand_cols
                         )
@@ -1489,7 +1562,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                     )
                     row += 1
 
-                if isinstance(attr_def, UIDef):
+                if not attr_def.is_value_def:
                     continue
 
                 widget.value_changed.connect(self._input_value_changed)
@@ -1533,7 +1606,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
     │   attributes    │  Thumbnail  │  TOP
     │                 │             │
     ├─────────────┬───┴─────────────┤
-    │  Family     │   Publish       │
+    │  Creator    │   Publish       │
     │  attributes │   plugin        │  BOTTOM
     │             │   attributes    │
     └───────────────────────────────┘

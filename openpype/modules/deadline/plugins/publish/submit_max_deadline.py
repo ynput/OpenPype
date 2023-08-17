@@ -3,7 +3,15 @@ import getpass
 import copy
 
 import attr
-from openpype.pipeline import legacy_io
+from openpype.lib import (
+    TextDef,
+    BoolDef,
+    NumberDef,
+)
+from openpype.pipeline import (
+    legacy_io,
+    OpenPypePyblishPluginMixin
+)
 from openpype.settings import get_project_settings
 from openpype.hosts.max.api.lib import (
     get_current_renderer,
@@ -12,6 +20,7 @@ from openpype.hosts.max.api.lib import (
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.lib import is_running_from_build
 
 
 @attr.s
@@ -22,7 +31,8 @@ class MaxPluginInfo(object):
     IgnoreInputs = attr.ib(default=True)
 
 
-class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
+class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
+                        OpenPypePyblishPluginMixin):
 
     label = "Submit Render to Deadline"
     hosts = ["max"]
@@ -31,14 +41,22 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
     use_published = True
     priority = 50
-    tile_priority = 50
     chunk_size = 1
     jobInfo = {}
     pluginInfo = {}
     group = None
-    deadline_pool = None
-    deadline_pool_secondary = None
-    framePerTask = 1
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        settings = project_settings["deadline"]["publish"]["MaxSubmitDeadline"]  # noqa
+
+        # Take some defaults from settings
+        cls.use_published = settings.get("use_published",
+                                         cls.use_published)
+        cls.priority = settings.get("priority",
+                                    cls.priority)
+        cls.chuck_size = settings.get("chunk_size", cls.chunk_size)
+        cls.group = settings.get("group", cls.group)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="3dsmax")
@@ -49,11 +67,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         instance = self._instance
         context = instance.context
-
         # Always use the original work file name for the Job name even when
         # rendering is done from the published Work File. The original work
         # file name is clearer because it can also have subversion strings,
         # etc. which are stripped for the published file.
+
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
@@ -61,7 +79,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         job_info.BatchName = src_filename
         job_info.Plugin = instance.data["plugin"]
         job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
-
+        job_info.EnableAutoTimeout = True
         # Deadline requires integers in frame range
         frames = "{start}-{end}".format(
             start=int(instance.data["frameStart"]),
@@ -71,13 +89,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
-        job_info.ChunkSize = instance.data.get("chunkSize", 1)
-        job_info.Comment = context.data.get("comment")
-        job_info.Priority = instance.data.get("priority", self.priority)
-        job_info.FramesPerTask = instance.data.get("framesPerTask", 1)
 
-        if self.group:
-            job_info.Group = self.group
+        attr_values = self.get_attr_values_from_data(instance.data)
+
+        job_info.ChunkSize = attr_values.get("chunkSize", 1)
+        job_info.Comment = context.data.get("comment")
+        job_info.Priority = attr_values.get("priority", self.priority)
+        job_info.Group = attr_values.get("group", self.group)
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
@@ -93,9 +111,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_VERSION",
             "IS_TEST"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
@@ -109,14 +131,15 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 continue
             job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
         job_info.EnvironmentKeyValue["OPENPYPE_LOG_NO_COLORS"] = "1"
 
         # Add list of expected files to job
         # ---------------------------------
         exp = instance.data.get("expectedFiles")
-        for filepath in exp:
+
+        for filepath in self._iter_expected_files(exp):
             job_info.OutputDirectory += os.path.dirname(filepath)
             job_info.OutputFilename += os.path.basename(filepath)
 
@@ -145,10 +168,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         instance = self._instance
         filepath = self.scene_path
 
-        expected_files = instance.data["expectedFiles"]
-        if not expected_files:
+        files = instance.data["expectedFiles"]
+        if not files:
             raise RuntimeError("No Render Elements found!")
-        output_dir = os.path.dirname(expected_files[0])
+        first_file = next(self._iter_expected_files(files))
+        output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
         instance.data["toBeRenderedOn"] = "deadline"
 
@@ -160,44 +184,39 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         }
 
         self.log.debug("Submitting 3dsMax render..")
-        payload = self._use_published_name(payload_data)
+        project_settings = instance.context.data["project_settings"]
+        payload = self._use_published_name(payload_data, project_settings)
         job_info, plugin_info = payload
         self.submit(self.assemble_payload(job_info, plugin_info))
 
-    def _use_published_name(self, data):
+    def _use_published_name(self, data, project_settings):
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
         plugin_data = {}
-        project_setting = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
 
-        multipass = get_multipass_setting(project_setting)
+        multipass = get_multipass_setting(project_settings)
         if multipass:
             plugin_data["DisableMultipass"] = 0
         else:
             plugin_data["DisableMultipass"] = 1
 
-        expected_files = instance.data.get("expectedFiles")
-        if not expected_files:
+        files = instance.data.get("expectedFiles")
+        if not files:
             raise RuntimeError("No render elements found")
-        old_output_dir = os.path.dirname(expected_files[0])
+        first_file = next(self._iter_expected_files(files))
+        old_output_dir = os.path.dirname(first_file)
         output_beauty = RenderSettings().get_render_output(instance.name,
                                                            old_output_dir)
-        filepath = self.from_published_scene()
-
-        def _clean_name(path):
-            return os.path.splitext(os.path.basename(path))[0]
-
-        new_scene = _clean_name(filepath)
-        orig_scene = _clean_name(instance.context.data["currentFile"])
-
-        output_beauty = output_beauty.replace(orig_scene, new_scene)
-        output_beauty = output_beauty.replace("\\", "/")
-        plugin_data["RenderOutput"] = output_beauty
-
+        rgb_bname = os.path.basename(output_beauty)
+        dir = os.path.dirname(first_file)
+        beauty_name = f"{dir}/{rgb_bname}"
+        beauty_name = beauty_name.replace("\\", "/")
+        plugin_data["RenderOutput"] = beauty_name
+        # as 3dsmax has version with different languages
+        plugin_data["Language"] = "ENU"
         renderer_class = get_current_renderer()
+
         renderer = str(renderer_class).split(":")[0]
         if renderer in [
             "ART_Renderer",
@@ -209,10 +228,62 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         ]:
             render_elem_list = RenderSettings().get_render_element()
             for i, element in enumerate(render_elem_list):
-                element = element.replace(orig_scene, new_scene)
-                plugin_data["RenderElementOutputFilename%d" % i] = element   # noqa
+                elem_bname = os.path.basename(element)
+                new_elem = f"{dir}/{elem_bname}"
+                new_elem = new_elem.replace("/", "\\")
+                plugin_data["RenderElementOutputFilename%d" % i] = new_elem   # noqa
+
+        if renderer == "Redshift_Renderer":
+            plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
+                "separateAovFiles")
 
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 
         return job_info, plugin_info
+
+    def from_published_scene(self, replace_in_path=True):
+        instance = self._instance
+        if instance.data["renderer"] == "Redshift_Renderer":
+            self.log.debug("Using Redshift...published scene wont be used..")
+            replace_in_path = False
+            return replace_in_path
+
+    @staticmethod
+    def _iter_expected_files(exp):
+        if isinstance(exp[0], dict):
+            for _aov, files in exp[0].items():
+                for file in files:
+                    yield file
+        else:
+            for file in exp:
+                yield file
+
+    @classmethod
+    def get_attribute_defs(cls):
+        defs = super(MaxSubmitDeadline, cls).get_attribute_defs()
+        defs.extend([
+            BoolDef("use_published",
+                    default=cls.use_published,
+                    label="Use Published Scene"),
+
+            NumberDef("priority",
+                      minimum=1,
+                      maximum=250,
+                      decimals=0,
+                      default=cls.priority,
+                      label="Priority"),
+
+            NumberDef("chunkSize",
+                      minimum=1,
+                      maximum=50,
+                      decimals=0,
+                      default=cls.chunk_size,
+                      label="Frame Per Task"),
+
+            TextDef("group",
+                    default=cls.group,
+                    label="Group Name"),
+        ])
+
+        return defs

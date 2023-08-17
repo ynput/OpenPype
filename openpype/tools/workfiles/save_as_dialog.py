@@ -12,6 +12,7 @@ from openpype.pipeline import (
 from openpype.pipeline.workfile import get_last_workfile_with_version
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.tools.utils import PlaceholderLineEdit
+from openpype.pipeline import version_start, get_current_host_name
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class CommentMatcher(object):
         # Create a regex group for extensions
         extensions = registered_host().file_extensions()
         any_extension = "(?:{})".format(
-            "|".join(re.escape(ext[1:]) for ext in extensions)
+            "|".join(re.escape(ext.lstrip(".")) for ext in extensions)
         )
 
         # Use placeholders that will never be in the filename
@@ -60,8 +61,8 @@ class CommentMatcher(object):
         temp_data["version"] = "<<version>>"
         temp_data["ext"] = "<<ext>>"
 
-        formatted = anatomy.format(temp_data)
-        fname_pattern = formatted[template_key]["file"]
+        template_obj = anatomy.templates_obj[template_key]["file"]
+        fname_pattern = template_obj.format_strict(temp_data)
         fname_pattern = re.escape(fname_pattern)
 
         # Replace comment and version with something we can match with regex
@@ -218,7 +219,15 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         # Version number input
         version_input = QtWidgets.QSpinBox(version_widget)
-        version_input.setMinimum(1)
+        version_input.setMinimum(
+            version_start.get_versioning_start(
+                self.data["project"]["name"],
+                get_current_host_name(),
+                task_name=self.data["task"]["name"],
+                task_type=self.data["task"]["type"],
+                family="workfile"
+            )
+        )
         version_input.setMaximum(9999)
 
         # Last version checkbox
@@ -373,10 +382,10 @@ class SaveAsDialog(QtWidgets.QDialog):
         if not data["comment"]:
             data.pop("comment", None)
 
-        data["ext"] = data["ext"][1:]
+        data["ext"] = data["ext"].lstrip(".")
 
-        anatomy_filled = self.anatomy.format(data)
-        return anatomy_filled[self.template_key]["file"]
+        template_obj = self.anatomy.templates_obj[self.template_key]["file"]
+        return template_obj.format_strict(data)
 
     def refresh(self):
         extensions = list(self._extensions)
@@ -413,14 +422,20 @@ class SaveAsDialog(QtWidgets.QDialog):
             if not data["comment"]:
                 data.pop("comment", None)
 
-            data["ext"] = data["ext"][1:]
+            data["ext"] = data["ext"].lstrip(".")
 
             version = get_last_workfile_with_version(
                 self.root, template, data, extensions
             )[1]
 
             if version is None:
-                version = 1
+                version = version_start.get_versioning_start(
+                    data["project"]["name"],
+                    get_current_host_name(),
+                    task_name=self.data["task"]["name"],
+                    task_type=self.data["task"]["type"],
+                    family="workfile"
+                )
             else:
                 version += 1
 

@@ -30,9 +30,11 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
     def displayText(self, value, locale):
         if isinstance(value, HeroVersionType):
             return lib.format_version(value, True)
-        assert isinstance(value, numbers.Integral), (
-            "Version is not integer. \"{}\" {}".format(value, str(type(value)))
-        )
+        if not isinstance(value, numbers.Integral):
+            # For cases where no version is resolved like NOT FOUND cases
+            # where a representation might not exist in current database
+            return
+
         return lib.format_version(value)
 
     def paint(self, painter, option, index):
@@ -121,10 +123,14 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
         project_name = self.dbcon.active_project()
         # Add all available versions to the editor
         parent_id = item["version_document"]["parent"]
-        version_docs = list(sorted(
-            get_versions(project_name, subset_ids=[parent_id]),
-            key=lambda item: item["name"]
-        ))
+        version_docs = [
+            version_doc
+            for version_doc in sorted(
+                get_versions(project_name, subset_ids=[parent_id]),
+                key=lambda item: item["name"]
+            )
+            if version_doc["data"].get("active", True)
+        ]
 
         hero_versions = list(
             get_hero_versions(

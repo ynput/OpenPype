@@ -21,8 +21,13 @@ from .pipeline import (
     reset_selection
 )
 
+from .constants import (
+    OPENPYPE_TAG_NAME,
+    DEFAULT_SEQUENCE_NAME,
+    DEFAULT_BIN_NAME
+)
+
 from .lib import (
-    pype_tag_name,
     flatten,
     get_track_items,
     get_current_project,
@@ -82,8 +87,12 @@ __all__ = [
     "file_extensions",
     "work_root",
 
+    # Constants
+    "OPENPYPE_TAG_NAME",
+    "DEFAULT_SEQUENCE_NAME",
+    "DEFAULT_BIN_NAME",
+
     # Lib functions
-    "pype_tag_name",
     "flatten",
     "get_track_items",
     "get_current_project",
@@ -108,7 +117,7 @@ __all__ = [
     "apply_colorspace_project",
     "apply_colorspace_clips",
     "get_sequence_pattern_and_padding",
-    # depricated
+    # deprecated
     "get_track_item_pype_tag",
     "set_track_item_pype_tag",
     "get_track_item_pype_data",

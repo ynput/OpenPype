@@ -1,14 +1,15 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    PublishValidationError, ValidateContentsOrder)
 
 
 class ValidateCameraAttributes(pyblish.api.InstancePlugin):
     """Validates Camera has no invalid attribute keys or values.
 
-    The Alembic file format does not a specifc subset of attributes as such
+    The Alembic file format does not a specific subset of attributes as such
     we validate that no values are set there as the output will not match the
     current scene. For example the preScale, film offsets and film roll.
 
@@ -65,4 +66,5 @@ class ValidateCameraAttributes(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("Invalid camera attributes: %s" % invalid)
+            raise PublishValidationError(
+                "Invalid camera attributes: {}".format(invalid))

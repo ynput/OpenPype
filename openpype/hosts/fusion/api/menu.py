@@ -6,14 +6,13 @@ from openpype.tools.utils import host_tools
 from openpype.style import load_stylesheet
 from openpype.lib import register_event_callback
 from openpype.hosts.fusion.scripts import (
-    set_rendermode,
     duplicate_with_inputs,
 )
 from openpype.hosts.fusion.api.lib import (
     set_asset_framerange,
     set_asset_resolution,
 )
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_asset_name
 from openpype.resources import get_openpype_icon_filepath
 
 from .pipeline import FusionEventHandler
@@ -60,7 +59,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
         publish_btn = QtWidgets.QPushButton("Publish...", self)
         manager_btn = QtWidgets.QPushButton("Manage...", self)
         libload_btn = QtWidgets.QPushButton("Library...", self)
-        rendermode_btn = QtWidgets.QPushButton("Set render mode...", self)
         set_framerange_btn = QtWidgets.QPushButton("Set Frame Range", self)
         set_resolution_btn = QtWidgets.QPushButton("Set Resolution", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
@@ -91,7 +89,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addWidget(set_framerange_btn)
         layout.addWidget(set_resolution_btn)
-        layout.addWidget(rendermode_btn)
 
         layout.addSpacing(20)
 
@@ -108,7 +105,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
         load_btn.clicked.connect(self.on_load_clicked)
         manager_btn.clicked.connect(self.on_manager_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
-        rendermode_btn.clicked.connect(self.on_rendermode_clicked)
         duplicate_with_inputs_btn.clicked.connect(
             self.on_duplicate_with_inputs_clicked
         )
@@ -129,7 +125,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_task_changed(self):
         # Update current context label
-        label = legacy_io.Session["AVALON_ASSET"]
+        label = get_current_asset_name()
         self.asset_label.setText(label)
 
     def register_callback(self, name, fn):
@@ -161,15 +157,6 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_libload_clicked(self):
         host_tools.show_library_loader()
-
-    def on_rendermode_clicked(self):
-        if self.render_mode_widget is None:
-            window = set_rendermode.SetRenderMode()
-            window.setStyleSheet(load_stylesheet())
-            window.show()
-            self.render_mode_widget = window
-        else:
-            self.render_mode_widget.show()
 
     def on_duplicate_with_inputs_clicked(self):
         duplicate_with_inputs.duplicate_with_input_connections()

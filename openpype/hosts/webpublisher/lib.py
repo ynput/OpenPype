@@ -12,7 +12,6 @@ from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.settings import get_project_settings
 from openpype.lib import Logger
 from openpype.lib.profiles_filtering import filter_profiles
-from openpype.pipeline.publish.lib import find_close_plugin
 
 ERROR_STATUS = "error"
 IN_PROGRESS_STATUS = "in_progress"
@@ -30,7 +29,7 @@ def parse_json(path):
         Returns:
             (dict) or None if unparsable
         Raises:
-            AsssertionError if 'path' doesn't exist
+            AssertionError if 'path' doesn't exist
     """
     path = path.strip('\"')
     assert os.path.isfile(path), (
@@ -66,6 +65,46 @@ def get_batch_asset_task_info(ctx):
         asset = ctx["name"]
 
     return asset, task_name, task_type
+
+
+def find_close_plugin(close_plugin_name, log):
+    if close_plugin_name:
+        plugins = pyblish.api.discover()
+        for plugin in plugins:
+            if plugin.__name__ == close_plugin_name:
+                return plugin
+
+    log.debug("Close plugin not found, app might not close.")
+
+
+def publish_in_test(log, close_plugin_name=None):
+    """Loops through all plugins, logs to console. Used for tests.
+
+    Args:
+        log (Logger)
+        close_plugin_name (Optional[str]): Name of plugin with responsibility
+            to close application.
+    """
+
+    # Error exit as soon as any error occurs.
+    error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
+    close_plugin = find_close_plugin(close_plugin_name, log)
+
+    for result in pyblish.util.publish_iter():
+        for record in result["records"]:
+            # Why do we log again? pyblish logger is logging to stdout...
+            log.info("{}: {}".format(result["plugin"].label, record.msg))
+
+        if not result["error"]:
+            continue
+
+        # QUESTION We don't break on error?
+        error_message = error_format.format(**result)
+        log.error(error_message)
+        if close_plugin:  # close host app explicitly after error
+            context = pyblish.api.Context()
+            close_plugin().process(context)
 
 
 def get_webpublish_conn():
@@ -231,7 +270,7 @@ def find_variant_key(application_manager, host):
 def get_task_data(batch_dir):
     """Return parsed data from first task manifest.json
 
-        Used for `remotepublishfromapp` command where batch contains only
+        Used for `publishfromapp` command where batch contains only
         single task with publishable workfile.
 
         Returns:

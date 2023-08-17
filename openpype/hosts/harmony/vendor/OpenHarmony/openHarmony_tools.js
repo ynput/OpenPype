@@ -4,7 +4,7 @@
 //                            openHarmony Library v0.01
 //
 //
-//         Developped by Mathieu Chaptel, ...
+//         Developed by Mathieu Chaptel, ...
 //
 //
 //   This library is an open source implementation of a Document Object Model
@@ -16,7 +16,7 @@
 //   and by hiding the heavy lifting required by the official API.
 //
 //   This library is provided as is and is a work in progress. As such, not every
-//   function has been implemented or is garanteed to work. Feel free to contribute
+//   function has been implemented or is guaranteed to work. Feel free to contribute
 //   improvements to its official github. If you do make sure you follow the provided
 //   template and naming conventions and document your new methods properly.
 //
@@ -212,7 +212,7 @@ function openHarmony_toolInstaller(){
         
         
         //----------------------------------------------
-        //-- GET THE FILE CONTENTS IN A DIRCTORY ON GIT
+        //-- GET THE FILE CONTENTS IN A DIRECTORY ON GIT
         this.recurse_files = function( contents, arr_files ){
           with( context.$.global ){
             try{
@@ -501,7 +501,7 @@ function openHarmony_toolInstaller(){
                   var download_item = item["download_url"];
                   var query = $.network.webQuery( download_item, false, false );
                   if( query ){
-                    //INSTALL TYPES ARE script, package, ect.
+                    //INSTALL TYPES ARE script, package, etc.
                     
                     if( install_types[ m.install_cache[ item["url"] ] ] ){
                       m.installLabel.text = install_types[ m.install_cache[ item["url"] ] ];

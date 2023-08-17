@@ -32,6 +32,7 @@ from openpype.client import (
     get_subsets,
     get_last_versions
 )
+from openpype.pipeline.version_start import get_versioning_start
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -46,18 +47,17 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     follow_workfile_version = False
 
     def process(self, context):
-        self.log.info("Collecting anatomy data for all instances.")
+        self.log.debug("Collecting anatomy data for all instances.")
 
         project_name = context.data["projectName"]
         self.fill_missing_asset_docs(context, project_name)
-        self.fill_instance_data_from_asset(context)
         self.fill_latest_versions(context, project_name)
         self.fill_anatomy_data(context)
 
-        self.log.info("Anatomy Data collection finished.")
+        self.log.debug("Anatomy Data collection finished.")
 
     def fill_missing_asset_docs(self, context, project_name):
-        self.log.debug("Qeurying asset documents for instances.")
+        self.log.debug("Querying asset documents for instances.")
 
         context_asset_doc = context.data.get("assetEntity")
 
@@ -114,23 +114,6 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             self.log.warning((
                 "Not found asset documents with names \"{}\"."
             ).format(joined_asset_names))
-
-    def fill_instance_data_from_asset(self, context):
-        for instance in context:
-            asset_doc = instance.data.get("assetEntity")
-            if not asset_doc:
-                continue
-
-            asset_data = asset_doc["data"]
-            for key in (
-                "fps",
-                "frameStart",
-                "frameEnd",
-                "handleStart",
-                "handleEnd",
-            ):
-                if key not in instance.data and key in asset_data:
-                    instance.data[key] = asset_data[key]
 
     def fill_latest_versions(self, context, project_name):
         """Try to find latest version for each instance's subset.
@@ -205,25 +188,13 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         project_task_types = project_doc["config"]["tasks"]
 
         for instance in context:
-            if self.follow_workfile_version:
-                version_number = context.data('version')
-            else:
-                version_number = instance.data.get("version")
-            # If version is not specified for instance or context
-            if version_number is None:
-                # TODO we should be able to change default version by studio
-                # preferences (like start with version number `0`)
-                version_number = 1
-                # use latest version (+1) if already any exist
-                latest_version = instance.data["latestVersion"]
-                if latest_version is not None:
-                    version_number += int(latest_version)
-
             anatomy_updates = {
                 "asset": instance.data["asset"],
+                "folder": {
+                    "name": instance.data["asset"],
+                },
                 "family": instance.data["family"],
                 "subset": instance.data["subset"],
-                "version": version_number
             }
 
             # Hierarchy
@@ -243,6 +214,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 anatomy_updates["parent"] = parent_name
 
             # Task
+            task_type = None
             task_name = instance.data.get("task")
             if task_name:
                 asset_tasks = asset_doc["data"]["tasks"]
@@ -257,6 +229,30 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     "type": task_type,
                     "short": task_code
                 }
+
+            # Define version
+            if self.follow_workfile_version:
+                version_number = context.data('version')
+            else:
+                version_number = instance.data.get("version")
+
+            # use latest version (+1) if already any exist
+            if version_number is None:
+                latest_version = instance.data["latestVersion"]
+                if latest_version is not None:
+                    version_number = int(latest_version) + 1
+
+            # If version is not specified for instance or context
+            if version_number is None:
+                version_number = get_versioning_start(
+                    context.data["projectName"],
+                    instance.context.data["hostName"],
+                    task_name=task_name,
+                    task_type=task_type,
+                    family=instance.data["family"],
+                    subset=instance.data["subset"]
+                )
+            anatomy_updates["version"] = version_number
 
             # Additional data
             resolution_width = instance.data.get("resolutionWidth")
@@ -289,7 +285,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             instance_name = instance.data["name"]
             instance_label = instance.data.get("label")
             if instance_label:
-                instance_name += "({})".format(instance_label)
+                instance_name += " ({})".format(instance_label)
             self.log.debug("Anatomy data for instance {}: {}".format(
                 instance_name,
                 json.dumps(anatomy_data, indent=4)

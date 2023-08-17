@@ -10,7 +10,7 @@ from openpype.lib import (
     Logger,
     StringTemplate,
 )
-from openpype.pipeline import Anatomy
+from openpype.pipeline import version_start, Anatomy
 from openpype.pipeline.template_data import get_template_data
 
 
@@ -132,9 +132,9 @@ def get_workdir_with_workdir_data(
             project_settings
         )
 
-    anatomy_filled = anatomy.format(workdir_data)
+    template_obj = anatomy.templates_obj[template_key]["folder"]
     # Output is TemplateResult object which contain useful data
-    output = anatomy_filled[template_key]["folder"]
+    output = template_obj.format_strict(workdir_data)
     if output:
         return output.normalized()
     return output
@@ -316,7 +316,13 @@ def get_last_workfile(
     )
     if filename is None:
         data = copy.deepcopy(fill_data)
-        data["version"] = 1
+        data["version"] = version_start.get_versioning_start(
+            data["project"]["name"],
+            data["app"],
+            task_name=data["task"]["name"],
+            task_type=data["task"]["type"],
+            family="workfile"
+        )
         data.pop("comment", None)
         if not data.get("ext"):
             data["ext"] = extensions[0]

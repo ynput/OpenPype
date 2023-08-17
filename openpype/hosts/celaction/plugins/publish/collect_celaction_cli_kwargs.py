@@ -39,7 +39,7 @@ class CollectCelactionCliKwargs(pyblish.api.Collector):
             passing_kwargs[key] = value
 
         if missing_kwargs:
-            raise RuntimeError("Missing arguments {}".format(
+            self.log.debug("Missing arguments {}".format(
                 ", ".join(
                     [f'"{key}"' for key in missing_kwargs]
                 )

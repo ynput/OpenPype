@@ -63,7 +63,7 @@ It's up to the Loaders to read these values and apply the correct expected color
 	- set the `OCIO` environment variable before launching the host via a prelaunch hook
 	- or (if the host allows) to set the workfile OCIO config path using the host's API
 
-3. Each Extractor exporting pixel data (e.g. image or video) has to use parent class `openpype.pipeline.publish.publish_plugins.ExtractorColormanaged` and use `self.set_representation_colorspace` on the representations to be integrated.
+3. Each Extractor exporting pixel data (e.g. image or video) has to inherit from the mixin class `openpype.pipeline.publish.publish_plugins.ColormanagedPyblishPluginMixin` and use `self.set_representation_colorspace` on the representations to be integrated.
 
 The **set_representation_colorspace** method adds `colorspaceData` to the representation. If the `colorspace` passed is not `None` then it is added directly to the representation with resolved config path otherwise a color space is assumed using the configured file rules. If no file rule matches the `colorspaceData` is **not** added to the representation.
 
@@ -80,7 +80,7 @@ from openpype.pipeline.colorspace import (
 
 class YourLoader(api.Loader):
   def load(self, context, name=None, namespace=None, options=None):
-    path = self.fname
+    path = self.filepath_from_context(context)
     colorspace_data = context["representation"]["data"].get("colorspaceData", {})
     colorspace = (
       colorspace_data.get("colorspace")

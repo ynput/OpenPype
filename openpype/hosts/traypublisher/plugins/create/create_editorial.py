@@ -260,7 +260,7 @@ or updating already created. Publishing will create OTIO file.
             )
 
             if not first_otio_timeline:
-                # assing otio timeline for multi file to layer
+                # assign otio timeline for multi file to layer
                 first_otio_timeline = otio_timeline
 
         # create otio editorial instance
@@ -283,7 +283,7 @@ or updating already created. Publishing will create OTIO file.
 
         Args:
             subset_name (str): name of subset
-            data (dict): instnance data
+            data (dict): instance data
             sequence_path (str): path to sequence file
             media_path (str): path to media file
             otio_timeline (otio.Timeline): otio timeline object
@@ -315,7 +315,7 @@ or updating already created. Publishing will create OTIO file.
         kwargs = {}
         if extension == ".edl":
             # EDL has no frame rate embedded so needs explicit
-            # frame rate else 24 is asssumed.
+            # frame rate else 24 is assumed.
             kwargs["rate"] = fps
             kwargs["ignore_timecode_mismatch"] = True
 
@@ -358,7 +358,7 @@ or updating already created. Publishing will create OTIO file.
         sequence_file_name,
         first_otio_timeline=None
     ):
-        """Helping function fro creating clip instance
+        """Helping function for creating clip instance
 
         Args:
             otio_timeline (otio.Timeline): otio timeline object
@@ -487,7 +487,22 @@ or updating already created. Publishing will create OTIO file.
             )
 
             # get video stream data
-            video_stream = media_data["streams"][0]
+            video_streams = []
+            audio_streams = []
+            for stream in media_data["streams"]:
+                codec_type = stream.get("codec_type")
+                if codec_type == "audio":
+                    audio_streams.append(stream)
+
+                elif codec_type == "video":
+                    video_streams.append(stream)
+
+            if not video_streams:
+                raise ValueError(
+                    "Could not find video stream in source file."
+                )
+
+            video_stream = video_streams[0]
             return_data = {
                 "video": True,
                 "start_frame": 0,
@@ -500,12 +515,7 @@ or updating already created. Publishing will create OTIO file.
             }
 
             # get audio  streams data
-            audio_stream = [
-                stream for stream in media_data["streams"]
-                if stream["codec_type"] == "audio"
-            ]
-
-            if audio_stream:
+            if audio_streams:
                 return_data["audio"] = True
 
         except Exception as exc:
@@ -527,7 +537,7 @@ or updating already created. Publishing will create OTIO file.
 
         Args:
             otio_clip (otio.Clip): otio clip object
-            preset (dict): sigle family preset
+            preset (dict): single family preset
             instance_data (dict): instance data
             parenting_data (dict): shot instance parent data
 
@@ -767,7 +777,7 @@ or updating already created. Publishing will create OTIO file.
         ]
 
     def _validate_clip_for_processing(self, otio_clip):
-        """Validate otio clip attribues
+        """Validate otio clip attributes
 
         Args:
             otio_clip (otio.Clip): otio clip object
@@ -843,7 +853,7 @@ or updating already created. Publishing will create OTIO file.
                 single_item=False,
                 label="Media files",
             ),
-            # TODO: perhpas better would be timecode and fps input
+            # TODO: perhaps better would be timecode and fps input
             NumberDef(
                 "timeline_offset",
                 default=0,

@@ -5,7 +5,7 @@ import husdoutputprocessors.base as base
 import colorbleed.usdlib as usdlib
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline import Anatomy, get_current_project_name
 
 
 class AvalonURIOutputProcessor(base.OutputProcessorBase):
@@ -122,20 +122,20 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
 
         """
 
-        PROJECT = legacy_io.Session["AVALON_PROJECT"]
+        PROJECT = get_current_project_name()
         anatomy = Anatomy(PROJECT)
         asset_doc = get_asset_by_name(PROJECT, asset)
         if not asset_doc:
             raise RuntimeError("Invalid asset name: '%s'" % asset)
 
-        formatted_anatomy = anatomy.format({
+        template_obj = anatomy.templates_obj["publish"]["path"]
+        path = template_obj.format_strict({
             "project": PROJECT,
             "asset": asset_doc["name"],
             "subset": subset,
             "representation": ext,
             "version": 0  # stub version zero
         })
-        path = formatted_anatomy["publish"]["path"]
 
         # Remove the version folder
         subset_folder = os.path.dirname(os.path.dirname(path))

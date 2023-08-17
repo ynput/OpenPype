@@ -1,16 +1,20 @@
 import os
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.pipeline.workfile import create_workdir_extra_folders
 
 
-class AddLastWorkfileToLaunchArgs(PreLaunchHook):
-    """Add last workfile path to launch arguments.
+class CreateWorkdirExtraFolders(PreLaunchHook):
+    """Create extra folders for the work directory.
 
-    This is not possible to do for all applications the same way.
+    Based on setting `project_settings/global/tools/Workfiles/extra_folders`
+    profile filtering will decide whether extra folders need to be created in
+    the work directory.
+
     """
 
     # Execute after workfile template copy
     order = 15
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         if not self.application.is_host:

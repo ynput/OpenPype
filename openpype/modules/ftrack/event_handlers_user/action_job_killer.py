@@ -54,14 +54,14 @@ class JobKiller(BaseAction):
         for job in jobs:
             try:
                 data = json.loads(job["data"])
-                desctiption = data["description"]
+                description = data["description"]
             except Exception:
-                desctiption = "*No description*"
+                description = "*No description*"
             user_id = job["user_id"]
             username = usernames_by_id.get(user_id) or "Unknown user"
             created = job["created_at"].strftime('%d.%m.%Y %H:%M:%S')
             label = "{} - {} - {}".format(
-                username, desctiption, created
+                username, description, created
             )
             item_label = {
                 "type": "label",

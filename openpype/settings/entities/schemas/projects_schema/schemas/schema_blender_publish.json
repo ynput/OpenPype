@@ -105,11 +105,75 @@
                 },
                 {
                     "key": "ExtractCamera",
-                    "label": "Extract FBX Camera as FBX"
+                    "label": "Extract Camera as FBX"
+                },
+                {
+                    "key": "ExtractCameraABC",
+                    "label": "Extract Camera as ABC"
                 },
                 {
                     "key": "ExtractLayout",
                     "label": "Extract Layout as JSON"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractThumbnail",
+            "label": "ExtractThumbnail",
+            "checkbox_key": "enabled",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "raw-json",
+                    "key": "presets",
+                    "label": "Presets"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractPlayblast",
+            "label": "ExtractPlayblast",
+            "checkbox_key": "enabled",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "raw-json",
+                    "key": "presets",
+                    "label": "Presets"
                 }
             ]
         }

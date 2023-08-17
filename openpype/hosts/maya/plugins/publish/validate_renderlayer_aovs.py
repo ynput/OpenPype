@@ -1,8 +1,9 @@
 import pyblish.api
 
-from openpype.client import get_subset_by_name
 import openpype.hosts.maya.api.action
+from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import PublishValidationError
 
 
 class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
@@ -30,15 +31,16 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found unregistered subsets: {}".format(invalid))
+            raise PublishValidationError(
+                "Found unregistered subsets: {}".format(invalid))
 
     def get_invalid(self, instance):
         invalid = []
 
         project_name = legacy_io.active_project()
         asset_doc = instance.data["assetEntity"]
-        render_passses = instance.data.get("renderPasses", [])
-        for render_pass in render_passses:
+        render_passes = instance.data.get("renderPasses", [])
+        for render_pass in render_passes:
             is_valid = self.validate_subset_registered(
                 project_name, asset_doc, render_pass
             )

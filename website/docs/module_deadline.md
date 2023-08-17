@@ -22,6 +22,9 @@ For [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline) support you ne
 
 5. Install our custom plugin and scripts to your deadline repository. It should be as simple as copying content of `openpype/modules/deadline/repository/custom` to `path/to/your/deadline/repository/custom`.
 
+Multiple different DL webservice could be configured. First set them in point 4., then they could be configured per project in `project_settings/deadline/deadline_servers`.
+Only single webservice could be a target of publish though.
+
 
 ## Configuration
 
@@ -44,6 +47,10 @@ executable. It is recommended to use the `openpype_console` executable as it pro
  location for itself.
 
 ![Configure plugin](assets/deadline_configure_plugin.png)
+
+### OpenPypeTileAssembler Plugin
+To setup tile rendering copy the `OpenPypeTileAssembler` plugin to the repository;
+`[OpenPype]\openpype\modules\deadline\repository\custom\plugins\OpenPypeTileAssembler` > `[DeadlineRepository]\custom\plugins\OpenPypeTileAssembler`
 
 ### Pools
 

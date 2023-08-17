@@ -1,10 +1,9 @@
 import os
-import shutil
 from PIL import Image
 
 from openpype.lib import (
     run_subprocess,
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
 )
 from openpype.pipeline import publish
 from openpype.hosts.photoshop import api as photoshop
@@ -47,35 +46,45 @@ class ExtractReview(publish.Extractor):
         layers = self._get_layers_from_image_instances(instance)
         self.log.info("Layers image instance found: {}".format(layers))
 
+        repre_name = "jpg"
+        repre_skeleton = {
+            "name": repre_name,
+            "ext": "jpg",
+            "stagingDir": staging_dir,
+            "tags": self.jpg_options['tags'],
+        }
+
+        if instance.data["family"] != "review":
+            # enable creation of review, without this jpg review would clash
+            # with jpg of the image family
+            output_name = repre_name
+            repre_name = "{}_{}".format(repre_name, output_name)
+            repre_skeleton.update({"name": repre_name,
+                                   "outputName": output_name})
+
         if self.make_image_sequence and len(layers) > 1:
             self.log.info("Extract layers to image sequence.")
             img_list = self._save_sequence_images(staging_dir, layers)
 
-            instance.data["representations"].append({
-                "name": "jpg",
-                "ext": "jpg",
-                "files": img_list,
+            repre_skeleton.update({
                 "frameStart": 0,
                 "frameEnd": len(img_list),
                 "fps": fps,
-                "stagingDir": staging_dir,
-                "tags": self.jpg_options['tags'],
+                "files": img_list,
             })
+            instance.data["representations"].append(repre_skeleton)
             processed_img_names = img_list
         else:
             self.log.info("Extract layers to flatten image.")
             img_list = self._save_flatten_image(staging_dir, layers)
 
-            instance.data["representations"].append({
-                "name": "jpg",
-                "ext": "jpg",
-                "files": img_list,  # cannot be [] for single frame
-                "stagingDir": staging_dir,
-                "tags": self.jpg_options['tags']
+            repre_skeleton.update({
+                "files": img_list,
             })
+            instance.data["representations"].append(repre_skeleton)
             processed_img_names = [img_list]
 
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_args = get_ffmpeg_tool_args("ffmpeg")
 
         instance.data["stagingDir"] = staging_dir
 
@@ -84,13 +93,21 @@ class ExtractReview(publish.Extractor):
         source_files_pattern = self._check_and_resize(processed_img_names,
                                                       source_files_pattern,
                                                       staging_dir)
-        self._generate_thumbnail(ffmpeg_path, instance, source_files_pattern,
-                                 staging_dir)
+        self._generate_thumbnail(
+            list(ffmpeg_args),
+            instance,
+            source_files_pattern,
+            staging_dir)
 
         no_of_frames = len(processed_img_names)
         if no_of_frames > 1:
-            self._generate_mov(ffmpeg_path, instance, fps, no_of_frames,
-                               source_files_pattern, staging_dir)
+            self._generate_mov(
+                list(ffmpeg_args),
+                instance,
+                fps,
+                no_of_frames,
+                source_files_pattern,
+                staging_dir)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
 
@@ -129,12 +146,12 @@ class ExtractReview(publish.Extractor):
             "frameStart": 1,
             "frameEnd": no_of_frames,
             "fps": fps,
-            "preview": True,
             "tags": self.mov_options['tags']
         })
 
-    def _generate_thumbnail(self, ffmpeg_path, instance, source_files_pattern,
-                            staging_dir):
+    def _generate_thumbnail(
+        self, ffmpeg_args, instance, source_files_pattern, staging_dir
+    ):
         """Generates scaled down thumbnail and adds it as representation.
 
         Args:
@@ -148,8 +165,7 @@ class ExtractReview(publish.Extractor):
         # Generate thumbnail
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         self.log.info(f"Generate thumbnail {thumbnail_path}")
-        args = [
-            ffmpeg_path,
+        args = ffmpeg_args + [
             "-y",
             "-i", source_files_pattern,
             "-vf", "scale=300:-1",

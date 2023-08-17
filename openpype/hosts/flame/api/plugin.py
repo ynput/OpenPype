@@ -10,6 +10,7 @@ from qtpy import QtCore, QtWidgets
 from openpype import style
 from openpype.lib import Logger, StringTemplate
 from openpype.pipeline import LegacyCreator, LoaderPlugin
+from openpype.pipeline.colorspace import get_remapped_colorspace_to_native
 from openpype.settings import get_current_project_settings
 
 from . import constants
@@ -157,7 +158,7 @@ class CreatorWidget(QtWidgets.QDialog):
         # convert label text to normal capitalized text with spaces
         label_text = self.camel_case_split(text)
 
-        # assign the new text to lable widget
+        # assign the new text to label widget
         label = QtWidgets.QLabel(label_text)
         label.setObjectName("LineLabel")
 
@@ -345,8 +346,8 @@ class PublishableClip:
         "track": "sequence",
     }
 
-    # parents search patern
-    parents_search_patern = r"\{([a-z]*?)\}"
+    # parents search pattern
+    parents_search_pattern = r"\{([a-z]*?)\}"
 
     # default templates for non-ui use
     rename_default = False
@@ -445,7 +446,7 @@ class PublishableClip:
         return self.current_segment
 
     def _populate_segment_default_data(self):
-        """ Populate default formating data from segment. """
+        """ Populate default formatting data from segment. """
 
         self.current_segment_default_data = {
             "_folder_": "shots",
@@ -538,7 +539,7 @@ class PublishableClip:
         if not self.index_from_segment:
             self.count_steps *= self.rename_index
 
-        hierarchy_formating_data = {}
+        hierarchy_formatting_data = {}
         hierarchy_data = deepcopy(self.hierarchy_data)
         _data = self.current_segment_default_data.copy()
         if self.ui_inputs:
@@ -552,7 +553,7 @@ class PublishableClip:
                 # mark review layer
                 if self.review_track and (
                         self.review_track not in self.review_track_default):
-                    # if review layer is defined and not the same as defalut
+                    # if review layer is defined and not the same as default
                     self.review_layer = self.review_track
 
                 # shot num calculate
@@ -578,13 +579,13 @@ class PublishableClip:
 
             # fill up pythonic expresisons in hierarchy data
             for k, _v in hierarchy_data.items():
-                hierarchy_formating_data[k] = _v["value"].format(**_data)
+                hierarchy_formatting_data[k] = _v["value"].format(**_data)
         else:
             # if no gui mode then just pass default data
-            hierarchy_formating_data = hierarchy_data
+            hierarchy_formatting_data = hierarchy_data
 
         tag_hierarchy_data = self._solve_tag_hierarchy_data(
-            hierarchy_formating_data
+            hierarchy_formatting_data
         )
 
         tag_hierarchy_data.update({"heroTrack": True})
@@ -615,27 +616,27 @@ class PublishableClip:
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
                         _hero_data["subset"] = self.subset
-                    # assing data to return hierarchy data to tag
+                    # assign data to return hierarchy data to tag
                     tag_hierarchy_data = _hero_data
                     break
 
         # add data to return data dict
         self.marker_data.update(tag_hierarchy_data)
 
-    def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
+    def _solve_tag_hierarchy_data(self, hierarchy_formatting_data):
         """ Solve marker data from hierarchy data and templates. """
         # fill up clip name and hierarchy keys
-        hierarchy_filled = self.hierarchy.format(**hierarchy_formating_data)
-        clip_name_filled = self.clip_name.format(**hierarchy_formating_data)
+        hierarchy_filled = self.hierarchy.format(**hierarchy_formatting_data)
+        clip_name_filled = self.clip_name.format(**hierarchy_formatting_data)
 
         # remove shot from hierarchy data: is not needed anymore
-        hierarchy_formating_data.pop("shot")
+        hierarchy_formatting_data.pop("shot")
 
         return {
             "newClipName": clip_name_filled,
             "hierarchy": hierarchy_filled,
             "parents": self.parents,
-            "hierarchyData": hierarchy_formating_data,
+            "hierarchyData": hierarchy_formatting_data,
             "subset": self.subset,
             "family": self.subset_family,
             "families": [self.family]
@@ -650,17 +651,17 @@ class PublishableClip:
             type
         )
 
-        # first collect formating data to use for formating template
-        formating_data = {}
+        # first collect formatting data to use for formatting template
+        formatting_data = {}
         for _k, _v in self.hierarchy_data.items():
             value = _v["value"].format(
                 **self.current_segment_default_data)
-            formating_data[_k] = value
+            formatting_data[_k] = value
 
         return {
             "entity_type": entity_type,
             "entity_name": template.format(
-                **formating_data
+                **formatting_data
             )
         }
 
@@ -668,9 +669,9 @@ class PublishableClip:
         """ Create parents and return it in list. """
         self.parents = []
 
-        patern = re.compile(self.parents_search_patern)
+        pattern = re.compile(self.parents_search_pattern)
 
-        par_split = [(patern.findall(t).pop(), t)
+        par_split = [(pattern.findall(t).pop(), t)
                      for t in self.hierarchy.split("/")]
 
         for type, template in par_split:
@@ -701,6 +702,7 @@ class ClipLoader(LoaderPlugin):
     ]
 
     _mapping = None
+    _host_settings = None
 
     def apply_settings(cls, project_settings, system_settings):
 
@@ -769,15 +771,26 @@ class ClipLoader(LoaderPlugin):
         Returns:
             str: native colorspace name defined in mapping or None
         """
+        # TODO: rewrite to support only pipeline's remapping
+        if not cls._host_settings:
+            cls._host_settings = get_current_project_settings()["flame"]
+
+        # [Deprecated] way of remapping
         if not cls._mapping:
-            settings = get_current_project_settings()["flame"]
-            mapping = settings["imageio"]["profilesMapping"]["inputs"]
+            mapping = (
+                cls._host_settings["imageio"]["profilesMapping"]["inputs"])
             cls._mapping = {
                 input["ocioName"]: input["flameName"]
                 for input in mapping
             }
 
-        return cls._mapping.get(input_colorspace)
+        native_name = cls._mapping.get(input_colorspace)
+
+        if not native_name:
+            native_name = get_remapped_colorspace_to_native(
+                input_colorspace, "flame", cls._host_settings["imageio"])
+
+        return native_name
 
 
 class OpenClipSolver(flib.MediaInfoFile):
@@ -902,22 +915,22 @@ class OpenClipSolver(flib.MediaInfoFile):
         ):
             return
 
-        formating_data = self._update_formating_data(
+        formatting_data = self._update_formatting_data(
             layerName=layer_name,
             layerUID=layer_uid
         )
         name_obj.text = StringTemplate(
             self.layer_rename_template
-        ).format(formating_data)
+        ).format(formatting_data)
 
-    def _update_formating_data(self, **kwargs):
-        """ Updating formating data for layer rename
+    def _update_formatting_data(self, **kwargs):
+        """ Updating formatting data for layer rename
 
         Attributes:
-            key=value (optional): will be included to formating data
+            key=value (optional): will be included to formatting data
                                   as {key: value}
         Returns:
-            dict: anatomy context data for formating
+            dict: anatomy context data for formatting
         """
         self.log.debug(">> self.clip_data: {}".format(self.clip_data))
         clip_name_obj = self.clip_data.find("name")

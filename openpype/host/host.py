@@ -18,7 +18,7 @@ class HostBase(object):
     Compared to 'avalon' concept:
     What was before considered as functions in host implementation folder. The
     host implementation should primarily care about adding ability of creation
-    (mark subsets to be published) and optionaly about referencing published
+    (mark subsets to be published) and optionally about referencing published
     representations as containers.
 
     Host may need extend some functionality like working with workfiles
@@ -129,9 +129,9 @@ class HostBase(object):
         """Get current context information.
 
         This method should be used to get current context of host. Usage of
-        this method can be crutial for host implementations in DCCs where
+        this method can be crucial for host implementations in DCCs where
         can be opened multiple workfiles at one moment and change of context
-        can't be catched properly.
+        can't be caught properly.
 
         Default implementation returns values from 'legacy_io.Session'.
 

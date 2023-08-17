@@ -199,7 +199,7 @@ function getActiveDocumentName(){
 function getActiveDocumentFullName(){
     /**
      *   Returns file name of active document with file path.
-     *   activeDocument.fullName returns path in URI (eg /c/.. insted of c:/)
+     *   activeDocument.fullName returns path in URI (eg /c/.. instead of c:/)
      * */
     if (documents.length == 0){
         return null;
@@ -225,7 +225,7 @@ function getSelectedLayers(doc) {
      * Returns json representation of currently selected layers.
      * Works in three steps - 1) creates new group with selected layers
      *                        2) traverses this group
-     *                        3) deletes newly created group, not neede
+     *                        3) deletes newly created group, not needed
      * Bit weird, but Adobe..
      **/
     if (doc == null){
@@ -284,7 +284,7 @@ function selectLayers(selectedLayers){
           existing_ids.push(existing_layers[y]["id"]);
     }
     for (var i = 0; i < selectedLayers.length; i++) {
-       // a check to see if the id stil exists
+       // a check to see if the id still exists
        var id = selectedLayers[i];
        if(existing_ids.toString().indexOf(id)>=0){
            layers[i] = charIDToTypeID( "Lyr " );

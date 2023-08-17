@@ -60,29 +60,43 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         #   which is available on 'context.data["assetEntity"]'
         #   - the same approach can be used in 'ValidateSceneSettingsRepair'
         expected_settings = harmony.get_asset_settings()
-        self.log.info("scene settings from DB:".format(expected_settings))
+        self.log.info("scene settings from DB:{}".format(expected_settings))
+        expected_settings.pop("entityType")  # not useful for the validation
 
         expected_settings = _update_frames(dict.copy(expected_settings))
         expected_settings["frameEndHandle"] = expected_settings["frameEnd"] +\
             expected_settings["handleEnd"]
 
-        if (any(re.search(pattern, os.getenv('AVALON_TASK'))
+        task_name = instance.context.data["task"]
+
+        if (any(re.search(pattern, task_name)
                 for pattern in self.skip_resolution_check)):
+            self.log.info("Skipping resolution check because of "
+                          "task name and pattern {}".format(
+                              self.skip_resolution_check))
             expected_settings.pop("resolutionWidth")
             expected_settings.pop("resolutionHeight")
 
-        entity_type = expected_settings.get("entityType")
-        if (any(re.search(pattern, entity_type)
+        if (any(re.search(pattern, os.getenv('AVALON_TASK'))
                 for pattern in self.skip_timelines_check)):
+            self.log.info("Skipping frames check because of "
+                          "task name and pattern {}".format(
+                              self.skip_timelines_check))
             expected_settings.pop('frameStart', None)
             expected_settings.pop('frameEnd', None)
-
-        expected_settings.pop("entityType")  # not useful after the check
+            expected_settings.pop('frameStartHandle', None)
+            expected_settings.pop('frameEndHandle', None)
 
         asset_name = instance.context.data['anatomyData']['asset']
         if any(re.search(pattern, asset_name)
                 for pattern in self.frame_check_filter):
-            expected_settings.pop("frameEnd")
+            self.log.info("Skipping frames check because of "
+                          "task name and pattern {}".format(
+                              self.frame_check_filter))
+            expected_settings.pop('frameStart', None)
+            expected_settings.pop('frameEnd', None)
+            expected_settings.pop('frameStartHandle', None)
+            expected_settings.pop('frameEndHandle', None)
 
         # handle case where ftrack uses only two decimal places
         # 23.976023976023978 vs. 23.98
@@ -99,6 +113,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             "frameEnd": instance.context.data["frameEnd"],
             "handleStart": instance.context.data.get("handleStart"),
             "handleEnd": instance.context.data.get("handleEnd"),
+            "frameStartHandle": instance.context.data.get("frameStartHandle"),
             "frameEndHandle": instance.context.data.get("frameEndHandle"),
             "resolutionWidth": instance.context.data.get("resolutionWidth"),
             "resolutionHeight": instance.context.data.get("resolutionHeight"),

@@ -11,8 +11,10 @@ class ColorEntity(InputEntity):
 
     def _item_initialization(self):
         self.valid_value_types = (list, )
-        self.value_on_not_set = [0, 0, 0, 255]
         self.use_alpha = self.schema_data.get("use_alpha", True)
+        self.value_on_not_set = self.convert_to_valid_type(
+            self.schema_data.get("default", [0, 0, 0, 255])
+        )
 
     def set_override_state(self, *args, **kwargs):
         super(ColorEntity, self).set_override_state(*args, **kwargs)

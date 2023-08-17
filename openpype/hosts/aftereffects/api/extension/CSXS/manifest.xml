@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="8.0" ExtensionBundleId="com.openpype.AE.panel" ExtensionBundleVersion="1.0.24"
-		ExtensionBundleName="openpype" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest Version="8.0" ExtensionBundleId="com.openpype.AE.panel" ExtensionBundleVersion="1.0.26"
+		ExtensionBundleName="com.openpype.AE.panel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<ExtensionList>
 		<Extension Id="com.openpype.AE.panel" Version="1.0" />
 	</ExtensionList>

@@ -3,7 +3,7 @@ from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype_modules.clockify.clockify_api import ClockifyAPI
 
 
-class SyncClocifyLocal(BaseAction):
+class SyncClockifyLocal(BaseAction):
     '''Synchronise project names and task types.'''
 
     #: Action identifier.
@@ -18,9 +18,9 @@ class SyncClocifyLocal(BaseAction):
     icon = statics_icon("app_icons", "clockify-white.png")
 
     def __init__(self, *args, **kwargs):
-        super(SyncClocifyLocal, self).__init__(*args, **kwargs)
+        super(SyncClockifyLocal, self).__init__(*args, **kwargs)
         #: CLockifyApi
-        self.clockapi = ClockifyAPI()
+        self.clockify_api = ClockifyAPI()
 
     def discover(self, session, entities, event):
         if (
@@ -31,14 +31,18 @@ class SyncClocifyLocal(BaseAction):
         return False
 
     def launch(self, session, entities, event):
-        self.clockapi.set_api()
-        if self.clockapi.workspace_id is None:
+        self.clockify_api.set_api()
+        if self.clockify_api.workspace_id is None:
             return {
                 "success": False,
                 "message": "Clockify Workspace or API key are not set!"
             }
 
-        if self.clockapi.validate_workspace_perm() is False:
+        if (
+            self.clockify_api.validate_workspace_permissions(
+                self.clockify_api.workspace_id, self.clockify_api.user_id)
+            is False
+        ):
             return {
                 "success": False,
                 "message": "Missing permissions for this action!"
@@ -74,9 +78,9 @@ class SyncClocifyLocal(BaseAction):
             task_type["name"] for task_type in task_types
         ]
         try:
-            clockify_projects = self.clockapi.get_projects()
+            clockify_projects = self.clockify_api.get_projects()
             if project_name not in clockify_projects:
-                response = self.clockapi.add_project(project_name)
+                response = self.clockify_api.add_project(project_name)
                 if "id" not in response:
                     self.log.warning(
                         "Project \"{}\" can't be created. Response: {}".format(
@@ -91,7 +95,7 @@ class SyncClocifyLocal(BaseAction):
                         ).format(project_name)
                     }
 
-            clockify_workspace_tags = self.clockapi.get_tags()
+            clockify_workspace_tags = self.clockify_api.get_tags()
             for task_type_name in task_type_names:
                 if task_type_name in clockify_workspace_tags:
                     self.log.debug(
@@ -99,7 +103,7 @@ class SyncClocifyLocal(BaseAction):
                     )
                     continue
 
-                response = self.clockapi.add_tag(task_type_name)
+                response = self.clockify_api.add_tag(task_type_name)
                 if "id" not in response:
                     self.log.warning(
                         "Task \"{}\" can't be created. Response: {}".format(
@@ -121,4 +125,4 @@ class SyncClocifyLocal(BaseAction):
 
 
 def register(session, **kw):
-    SyncClocifyLocal(session).register()
+    SyncClockifyLocal(session).register()

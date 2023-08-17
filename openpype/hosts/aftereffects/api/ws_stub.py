@@ -11,6 +11,10 @@ from wsrpc_aiohttp import WebSocketAsync
 from openpype.tools.adobe_webserver.app import WebServerTool
 
 
+class ConnectionNotEstablishedYet(Exception):
+    pass
+
+
 @attr.s
 class AEItem(object):
     """
@@ -24,13 +28,15 @@ class AEItem(object):
     # all imported elements, single for
     # regular image, array for Backgrounds
     members = attr.ib(factory=list)
-    workAreaStart = attr.ib(default=None)
-    workAreaDuration = attr.ib(default=None)
+    frameStart = attr.ib(default=None)
+    framesDuration = attr.ib(default=None)
     frameRate = attr.ib(default=None)
     file_name = attr.ib(default=None)
     instance_id = attr.ib(default=None)  # New Publisher
     width = attr.ib(default=None)
     height = attr.ib(default=None)
+    is_placeholder = attr.ib(default=False)
+    uuid = attr.ib(default=False)
 
 
 class AfterEffectsServerStub():
@@ -80,7 +86,7 @@ class AfterEffectsServerStub():
             Get complete stored JSON with metadata from AE.Metadata.Label
             field.
 
-            It contains containers loaded by any Loader OR instances creted
+            It contains containers loaded by any Loader OR instances created
             by Creator.
 
         Returns:
@@ -216,6 +222,16 @@ class AfterEffectsServerStub():
               )
         return self._to_records(self._handle_return(res))
 
+    def select_items(self, items):
+        """
+            Select items in Project list
+        Args:
+            items (list): of int item ids
+        """
+        self.websocketserver.call(
+            self.client.call('AfterEffects.select_items', items=items))
+
+
     def get_selected_items(self, comps, folders=False, footages=False):
         """
             Same as get_items but using selected items only
@@ -235,6 +251,21 @@ class AfterEffectsServerStub():
                                          footages=footages)
                                         )
         return self._to_records(self._handle_return(res))
+
+    def add_item(self, name, item_type):
+        """
+            Adds either composition or folder to project item list.
+
+            Args:
+                name (str)
+                item_type (str): COMP|FOLDER
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_item',
+                                         name=name,
+                                         item_type=item_type))
+
+        return self._handle_return(res)
 
     def get_item(self, item_id):
         """
@@ -312,7 +343,7 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
-    def remove_instance(self, instance_id):
+    def remove_instance(self, instance_id, metadata=None):
         """
             Removes instance with 'instance_id' from file's metadata and
             saves them.
@@ -324,7 +355,10 @@ class AfterEffectsServerStub():
         """
         cleaned_data = []
 
-        for instance in self.get_metadata():
+        if metadata is None:
+            metadata = self.get_metadata()
+
+        for instance in metadata:
             inst_id = instance.get("instance_id") or instance.get("uuid")
             if inst_id != instance_id:
                 cleaned_data.append(instance)
@@ -355,42 +389,50 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
-    def get_work_area(self, item_id):
-        """ Get work are information for render purposes
+    def get_comp_properties(self, comp_id):
+        """ Get composition information for render purposes
+
+            Returns startFrame, frameDuration, fps, width, height.
+
             Args:
-                item_id (int):
+                comp_id (int):
 
             Returns:
                 (AEItem)
 
         """
         res = self.websocketserver.call(self.client.call
-                                        ('AfterEffects.get_work_area',
-                                         item_id=item_id
+                                        ('AfterEffects.get_comp_properties',
+                                         item_id=comp_id
                                          ))
 
         records = self._to_records(self._handle_return(res))
         if records:
             return records.pop()
 
-    def set_work_area(self, item, start, duration, frame_rate):
+    def set_comp_properties(self, comp_id, start, duration, frame_rate,
+                            width, height):
         """
             Set work area to predefined values (from Ftrack).
             Work area directs what gets rendered.
             Beware of rounding, AE expects seconds, not frames directly.
 
         Args:
-            item (dict):
-            start (float): workAreaStart in seconds
-            duration (float): in seconds
+            comp_id (int):
+            start (int): workAreaStart in frames
+            duration (int): in frames
             frame_rate (float): frames in seconds
+            width (int): resolution width
+            height (int): resolution height
         """
         res = self.websocketserver.call(self.client.call
-                                        ('AfterEffects.set_work_area',
-                                         item_id=item.id,
+                                        ('AfterEffects.set_comp_properties',
+                                         item_id=comp_id,
                                          start=start,
                                          duration=duration,
-                                         frame_rate=frame_rate))
+                                         frame_rate=frame_rate,
+                                         width=width,
+                                         height=height))
         return self._handle_return(res)
 
     def save(self):
@@ -522,6 +564,47 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
+    def add_item_instead_placeholder(self, placeholder_item_id, item_id):
+        """
+            Adds item_id to layers where plaeholder_item_id is present.
+
+            1 placeholder could result in multiple loaded containers (eg items)
+
+            Args:
+                placeholder_item_id (int): id of placeholder item
+                item_id (int): loaded FootageItem id
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_item_instead_placeholder',  # noqa
+                                         placeholder_item_id=placeholder_item_id,  # noqa
+                                         item_id=item_id))
+
+        return self._handle_return(res)
+
+    def add_placeholder(self, name, width, height, fps, duration):
+        """
+            Adds new FootageItem as a placeholder for workfile builder
+
+            Placeholder requires width etc, currently probably only hardcoded
+            values.
+
+            Args:
+                name (str)
+                width (int)
+                height (int)
+                fps (float)
+                duration (int)
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_placeholder',
+                                         name=name,
+                                         width=width,
+                                         height=height,
+                                         fps=fps,
+                                         duration=duration))
+
+        return self._handle_return(res)
+
     def render(self, folder_url, comp_id):
         """
             Render all renderqueueitem to 'folder_url'
@@ -553,6 +636,12 @@ class AfterEffectsServerStub():
         res = self.websocketserver.call(self.client.call('AfterEffects.close'))
 
         return self._handle_return(res)
+
+    def print_msg(self, msg):
+        """Triggers Javascript alert dialog."""
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.print_msg',
+                                   msg=msg))
 
     def _handle_return(self, res):
         """Wraps return, throws ValueError if 'error' key is present."""
@@ -608,13 +697,29 @@ class AfterEffectsServerStub():
                           d.get('name'),
                           d.get('type'),
                           d.get('members'),
-                          d.get('workAreaStart'),
-                          d.get('workAreaDuration'),
+                          d.get('frameStart'),
+                          d.get('framesDuration'),
                           d.get('frameRate'),
                           d.get('file_name'),
                           d.get("instance_id"),
                           d.get("width"),
-                          d.get("height"))
+                          d.get("height"),
+                          d.get("is_placeholder"))
 
             ret.append(item)
         return ret
+
+
+def get_stub():
+    """
+        Convenience function to get server RPC stub to call methods directed
+        for host (Photoshop).
+        It expects already created connection, started from client.
+        Currently created when panel is opened (PS: Window>Extensions>Avalon)
+    :return: <PhotoshopClientStub> where functions could be called from
+    """
+    ae_stub = AfterEffectsServerStub()
+    if not ae_stub.client:
+        raise ConnectionNotEstablishedYet("Connection is not created yet")
+
+    return ae_stub

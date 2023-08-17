@@ -27,7 +27,7 @@ class DeleteOldVersions(BaseAction):
     variant = "- Delete old versions"
     description = (
         "Delete files from older publishes so project can be"
-        " archived with only lates versions."
+        " archived with only latest versions."
     )
     icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
 
@@ -307,7 +307,7 @@ class DeleteOldVersions(BaseAction):
             file_path, seq_path = self.path_from_represenation(repre, anatomy)
             if file_path is None:
                 self.log.warning((
-                    "Could not format path for represenation \"{}\""
+                    "Could not format path for representation \"{}\""
                 ).format(str(repre)))
                 continue
 

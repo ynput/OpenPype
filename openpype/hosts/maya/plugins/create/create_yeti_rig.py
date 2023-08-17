@@ -6,18 +6,22 @@ from openpype.hosts.maya.api import (
 )
 
 
-class CreateYetiRig(plugin.Creator):
+class CreateYetiRig(plugin.MayaCreator):
     """Output for procedural plugin nodes ( Yeti / XGen / etc)"""
 
+    identifier = "io.openpype.creators.maya.yetirig"
     label = "Yeti Rig"
     family = "yetiRig"
     icon = "usb"
 
-    def process(self):
+    def create(self, subset_name, instance_data, pre_create_data):
 
         with lib.undo_chunk():
-            instance = super(CreateYetiRig, self).process()
+            instance = super(CreateYetiRig, self).create(subset_name,
+                                                         instance_data,
+                                                         pre_create_data)
+            instance_node = instance.get("instance_node")
 
             self.log.info("Creating Rig instance set up ...")
             input_meshes = cmds.sets(name="input_SET", empty=True)
-            cmds.sets(input_meshes, forceElement=instance)
+            cmds.sets(input_meshes, forceElement=instance_node)

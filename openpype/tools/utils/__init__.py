@@ -1,12 +1,16 @@
+from .layouts import FlowLayout
 from .widgets import (
     FocusSpinBox,
     FocusDoubleSpinBox,
+    ComboBox,
     CustomTextComboBox,
     PlaceholderLineEdit,
+    ExpandingTextEdit,
     BaseClickableFrame,
     ClickableFrame,
     ClickableLabel,
     ExpandBtn,
+    ClassicExpandBtn,
     PixmapLabel,
     IconButton,
     PixmapButton,
@@ -21,6 +25,7 @@ from .lib import (
     set_style_property,
     DynamicQThread,
     qt_app_context,
+    get_openpype_qt_app,
     get_asset_icon,
     get_asset_icon_by_name,
     get_asset_icon_name_from_doc,
@@ -36,14 +41,19 @@ from .overlay_messages import (
 
 
 __all__ = (
+    "FlowLayout",
+
     "FocusSpinBox",
     "FocusDoubleSpinBox",
+    "ComboBox",
     "CustomTextComboBox",
     "PlaceholderLineEdit",
+    "ExpandingTextEdit",
     "BaseClickableFrame",
     "ClickableFrame",
     "ClickableLabel",
     "ExpandBtn",
+    "ClassicExpandBtn",
     "PixmapLabel",
     "IconButton",
     "PixmapButton",
@@ -59,6 +69,7 @@ __all__ = (
     "set_style_property",
     "DynamicQThread",
     "qt_app_context",
+    "get_openpype_qt_app",
     "get_asset_icon",
     "get_asset_icon_by_name",
     "get_asset_icon_name_from_doc",

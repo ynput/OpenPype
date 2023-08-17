@@ -30,7 +30,7 @@ class PreregisterException(Exception):
 class BaseHandler(object):
     '''Custom Action base class
 
-    <label> - a descriptive string identifing your action.
+    <label> - a descriptive string identifying your action.
     <varaint>   - To group actions together, give them the same
                   label and specify a unique variant per action.
     <identifier>  - a unique identifier for app.
@@ -242,7 +242,7 @@ class BaseHandler(object):
         return entities
 
     def _get_entity_type(self, entity, session=None):
-        '''Return translated entity type tht can be used with API.'''
+        '''Return translated entity type that can be used with API.'''
         # Get entity type and make sure it is lower cased. Most places except
         # the component tab in the Sidebar will use lower case notation.
         entity_type = entity.get('entityType').replace('_', '').lower()

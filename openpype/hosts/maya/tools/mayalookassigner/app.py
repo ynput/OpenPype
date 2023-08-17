@@ -4,11 +4,14 @@ import logging
 
 from qtpy import QtWidgets, QtCore
 
-from openpype.client import get_last_version_by_subset_id
 from openpype import style
-from openpype.pipeline import legacy_io
+from openpype.client import get_last_version_by_subset_id
+from openpype.pipeline import get_current_project_name
 from openpype.tools.utils.lib import qt_app_context
-from openpype.hosts.maya.api.lib import assign_look_by_version
+from openpype.hosts.maya.api.lib import (
+    assign_look_by_version,
+    get_main_window
+)
 
 from maya import cmds
 # old api for MFileIO
@@ -24,6 +27,7 @@ from .commands import (
     remove_unused_looks
 )
 from .vray_proxies import vrayproxy_assign_look
+from . import arnold_standin
 
 module = sys.modules[__name__]
 module.window = None
@@ -43,7 +47,7 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
         filename = get_workfile()
 
         self.setObjectName("lookManager")
-        self.setWindowTitle("Look Manager 1.3.0 - [{}]".format(filename))
+        self.setWindowTitle("Look Manager 1.4.0 - [{}]".format(filename))
         self.setWindowFlags(QtCore.Qt.Window)
         self.setParent(parent)
 
@@ -212,7 +216,7 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
         selection = self.assign_selected.isChecked()
         asset_nodes = self.asset_outliner.get_nodes(selection=selection)
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         start = time.time()
         for i, (asset, item) in enumerate(asset_nodes.items()):
 
@@ -240,18 +244,38 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
             ))
             nodes = item["nodes"]
 
+            # Assign Vray Proxy look.
             if cmds.pluginInfo('vrayformaya', query=True, loaded=True):
                 self.echo("Getting vray proxy nodes ...")
                 vray_proxies = set(cmds.ls(type="VRayProxy", long=True))
 
-                if vray_proxies:
-                    for vp in vray_proxies:
-                        if vp in nodes:
-                            vrayproxy_assign_look(vp, subset_name)
+                for vp in vray_proxies:
+                    if vp in nodes:
+                        vrayproxy_assign_look(vp, subset_name)
 
-                    nodes = list(set(item["nodes"]).difference(vray_proxies))
+                nodes = list(set(nodes).difference(vray_proxies))
+            else:
+                self.echo(
+                    "Could not assign to VRayProxy because vrayformaya plugin "
+                    "is not loaded."
+                )
 
-                # Assign look
+            # Assign Arnold Standin look.
+            if cmds.pluginInfo("mtoa", query=True, loaded=True):
+                arnold_standins = set(cmds.ls(type="aiStandIn", long=True))
+
+                for standin in arnold_standins:
+                    if standin in nodes:
+                        arnold_standin.assign_look(standin, subset_name)
+
+                nodes = list(set(nodes).difference(arnold_standins))
+            else:
+                self.echo(
+                    "Could not assign to aiStandIn because mtoa plugin is not "
+                    "loaded."
+                )
+
+            # Assign look
             if nodes:
                 assign_look_by_version(nodes, version_id=version["_id"])
 
@@ -276,9 +300,7 @@ def show():
         pass
 
     # Get Maya main window
-    top_level_widgets = QtWidgets.QApplication.topLevelWidgets()
-    mainwindow = next(widget for widget in top_level_widgets
-                      if widget.objectName() == "MayaWindow")
+    mainwindow = get_main_window()
 
     with qt_app_context():
         window = MayaLookAssignerWindow(parent=mainwindow)

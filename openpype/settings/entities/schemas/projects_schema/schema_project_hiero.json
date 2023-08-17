@@ -8,17 +8,13 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
-            "is_group": true,
+            "label": "Color Management (OCIO managed)",
             "collapsible": true,
+            "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
                 },
                 {
                     "key": "workfile",
@@ -26,10 +22,6 @@
                     "label": "Workfile",
                     "collapsible": false,
                     "children": [
-                        {
-                            "type": "label",
-                            "label": "<b style='color:red'>'ocioconfigpath'</b> will be deprecated. <br>Please move values to : <i>project_settings/{app}/imageio/ocio_config/filepath</i>."
-                        },
                         {
                             "type": "form",
                             "children": [
@@ -42,22 +34,21 @@
                                             "nuke-default": "nuke-default"
                                         },
                                         {
-                                            "aces_1.0.3": "aces_1.0.3"
+                                            "aces_1.0.3": "aces_1.0.3 (12)"
                                         },
                                         {
-                                            "aces_1.1": "aces_1.1"
+                                            "aces_1.1": "aces_1.1 (12, 13)"
                                         },
                                         {
-                                            "custom": "custom"
+                                            "aces_1.2": "aces_1.2 (13, 14)"
+                                        },
+                                        {
+                                            "studio-config-v1.0.0_aces-v1.3_ocio-v2.1": "studio-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"
+                                        },
+                                        {
+                                            "cg-config-v1.0.0_aces-v1.3_ocio-v2.1": "cg-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"
                                         }
                                     ]
-                                },
-                                {
-                                    "type": "path",
-                                    "key": "ocioconfigpath",
-                                    "label": "Custom OCIO path",
-                                    "multiplatform": true,
-                                    "multipath": true
                                 },
                                 {
                                     "type": "text",
@@ -93,6 +84,11 @@
                                     "type": "text",
                                     "key": "thumbnailLut",
                                     "label": "Thumbnails"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "monitorOutLut",
+                                    "label": "Monitor"
                                 }
                             ]
                         }

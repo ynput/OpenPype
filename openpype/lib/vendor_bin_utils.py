@@ -3,7 +3,13 @@ import logging
 import platform
 import subprocess
 
+from openpype import AYON_SERVER_ENABLED
+
 log = logging.getLogger("Vendor utils")
+
+
+class ToolNotFoundError(Exception):
+    """Raised when tool arguments are not found."""
 
 
 class CachedToolPaths:
@@ -224,18 +230,26 @@ def find_tool_in_custom_paths(paths, tool, validation_func=None):
 
 def _check_args_returncode(args):
     try:
-        # Python 2 compatibility where DEVNULL is not available
+        kwargs = {}
+        if platform.system().lower() == "windows":
+            kwargs["creationflags"] = (
+                subprocess.CREATE_NEW_PROCESS_GROUP
+                | getattr(subprocess, "DETACHED_PROCESS", 0)
+                | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            )
+
         if hasattr(subprocess, "DEVNULL"):
             proc = subprocess.Popen(
                 args,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                **kwargs
             )
             proc.wait()
         else:
             with open(os.devnull, "w") as devnull:
                 proc = subprocess.Popen(
-                    args, stdout=devnull, stderr=devnull,
+                    args, stdout=devnull, stderr=devnull, **kwargs
                 )
                 proc.wait()
 
@@ -244,7 +258,7 @@ def _check_args_returncode(args):
     return proc.returncode == 0
 
 
-def _oiio_executable_validation(filepath):
+def _oiio_executable_validation(args):
     """Validate oiio tool executable if can be executed.
 
     Validation has 2 steps. First is using 'find_executable' to fill possible
@@ -252,7 +266,7 @@ def _oiio_executable_validation(filepath):
     that it can be executed. For that is used '--help' argument which is fast
     and does not need any other inputs.
 
-    Any possible crash of missing libraries or invalid build should be catched.
+    Any possible crash of missing libraries or invalid build should be caught.
 
     Main reason is to validate if executable can be executed on OS just running
     which can be issue ob linux machines.
@@ -262,31 +276,62 @@ def _oiio_executable_validation(filepath):
             should be used.
 
     Args:
-        filepath (str): Path to executable.
+        args (Union[str, list[str]]): Arguments to launch tool or
+            path to tool executable.
 
     Returns:
         bool: Filepath is valid executable.
     """
 
-    filepath = find_executable(filepath)
-    if not filepath:
+    if not args:
         return False
 
-    return _check_args_returncode([filepath, "--help"])
+    if not isinstance(args, list):
+        filepath = find_executable(args)
+        if not filepath:
+            return False
+        args = [filepath]
+    return _check_args_returncode(args + ["--help"])
+
+
+def _get_ayon_oiio_tool_args(tool_name):
+    try:
+        # Use 'ayon-third-party' addon to get oiio arguments
+        from ayon_third_party import get_oiio_arguments
+    except Exception:
+        print("!!! Failed to import 'ayon_third_party' addon.")
+        return None
+
+    try:
+        return get_oiio_arguments(tool_name)
+    except Exception as exc:
+        print("!!! Failed to get OpenImageIO args. Reason: {}".format(exc))
+    return None
 
 
 def get_oiio_tools_path(tool="oiiotool"):
-    """Path to vendorized OpenImageIO tool executables.
+    """Path to OpenImageIO tool executables.
 
-    On Window it adds .exe extension if missing from tool argument.
+    On Windows it adds .exe extension if missing from tool argument.
 
     Args:
-        tool (string): Tool name (oiiotool, maketx, ...).
+        tool (string): Tool name 'oiiotool', 'maketx', etc.
             Default is "oiiotool".
     """
 
     if CachedToolPaths.is_tool_cached(tool):
         return CachedToolPaths.get_executable_path(tool)
+
+    if AYON_SERVER_ENABLED:
+        args = _get_ayon_oiio_tool_args(tool)
+        if args:
+            if len(args) > 1:
+                raise ValueError(
+                    "AYON oiio arguments consist of multiple arguments."
+                )
+            tool_executable_path = args[0]
+            CachedToolPaths.cache_executable_path(tool, tool_executable_path)
+            return tool_executable_path
 
     custom_paths_str = os.environ.get("OPENPYPE_OIIO_PATHS") or ""
     tool_executable_path = find_tool_in_custom_paths(
@@ -313,7 +358,33 @@ def get_oiio_tools_path(tool="oiiotool"):
     return tool_executable_path
 
 
-def _ffmpeg_executable_validation(filepath):
+def get_oiio_tool_args(tool_name, *extra_args):
+    """Arguments to launch OpenImageIO tool.
+
+    Args:
+        tool_name (str): Tool name 'oiiotool', 'maketx', etc.
+        *extra_args (str): Extra arguments to add to after tool arguments.
+
+    Returns:
+        list[str]: List of arguments.
+    """
+
+    extra_args = list(extra_args)
+
+    if AYON_SERVER_ENABLED:
+        args = _get_ayon_oiio_tool_args(tool_name)
+        if args:
+            return args + extra_args
+
+    path = get_oiio_tools_path(tool_name)
+    if path:
+        return [path] + extra_args
+    raise ToolNotFoundError(
+        "OIIO '{}' tool not found.".format(tool_name)
+    )
+
+
+def _ffmpeg_executable_validation(args):
     """Validate ffmpeg tool executable if can be executed.
 
     Validation has 2 steps. First is using 'find_executable' to fill possible
@@ -321,7 +392,7 @@ def _ffmpeg_executable_validation(filepath):
     that it can be executed. For that is used '-version' argument which is fast
     and does not need any other inputs.
 
-    Any possible crash of missing libraries or invalid build should be catched.
+    Any possible crash of missing libraries or invalid build should be caught.
 
     Main reason is to validate if executable can be executed on OS just running
     which can be issue ob linux machines.
@@ -330,24 +401,45 @@ def _ffmpeg_executable_validation(filepath):
         It does not validate if the executable is really a ffmpeg tool.
 
     Args:
-        filepath (str): Path to executable.
+        args (Union[str, list[str]]): Arguments to launch tool or
+            path to tool executable.
 
     Returns:
         bool: Filepath is valid executable.
     """
 
-    filepath = find_executable(filepath)
-    if not filepath:
+    if not args:
         return False
 
-    return _check_args_returncode([filepath, "-version"])
+    if not isinstance(args, list):
+        filepath = find_executable(args)
+        if not filepath:
+            return False
+        args = [filepath]
+    return _check_args_returncode(args + ["--help"])
+
+
+def _get_ayon_ffmpeg_tool_args(tool_name):
+    try:
+        # Use 'ayon-third-party' addon to get ffmpeg arguments
+        from ayon_third_party import get_ffmpeg_arguments
+
+    except Exception:
+        print("!!! Failed to import 'ayon_third_party' addon.")
+        return None
+
+    try:
+        return get_ffmpeg_arguments(tool_name)
+    except Exception as exc:
+        print("!!! Failed to get FFmpeg args. Reason: {}".format(exc))
+    return None
 
 
 def get_ffmpeg_tool_path(tool="ffmpeg"):
     """Path to vendorized FFmpeg executable.
 
     Args:
-        tool (string): Tool name (ffmpeg, ffprobe, ...).
+        tool (str): Tool name 'ffmpeg', 'ffprobe', etc.
             Default is "ffmpeg".
 
     Returns:
@@ -356,6 +448,17 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
 
     if CachedToolPaths.is_tool_cached(tool):
         return CachedToolPaths.get_executable_path(tool)
+
+    if AYON_SERVER_ENABLED:
+        args = _get_ayon_ffmpeg_tool_args(tool)
+        if args is not None:
+            if len(args) > 1:
+                raise ValueError(
+                    "AYON ffmpeg arguments consist of multiple arguments."
+                )
+            tool_executable_path = args[0]
+            CachedToolPaths.cache_executable_path(tool, tool_executable_path)
+            return tool_executable_path
 
     custom_paths_str = os.environ.get("OPENPYPE_FFMPEG_PATHS") or ""
     tool_executable_path = find_tool_in_custom_paths(
@@ -375,11 +478,37 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
     # Look to PATH for the tool
     if not tool_executable_path:
         from_path = find_executable(tool)
-        if from_path and _oiio_executable_validation(from_path):
+        if from_path and _ffmpeg_executable_validation(from_path):
             tool_executable_path = from_path
 
     CachedToolPaths.cache_executable_path(tool, tool_executable_path)
     return tool_executable_path
+
+
+def get_ffmpeg_tool_args(tool_name, *extra_args):
+    """Arguments to launch FFmpeg tool.
+
+    Args:
+        tool_name (str): Tool name 'ffmpeg', 'ffprobe', exc.
+        *extra_args (str): Extra arguments to add to after tool arguments.
+
+    Returns:
+        list[str]: List of arguments.
+    """
+
+    extra_args = list(extra_args)
+
+    if AYON_SERVER_ENABLED:
+        args = _get_ayon_ffmpeg_tool_args(tool_name)
+        if args:
+            return args + extra_args
+
+    executable_path = get_ffmpeg_tool_path(tool_name)
+    if executable_path:
+        return [executable_path] + extra_args
+    raise ToolNotFoundError(
+        "FFmpeg '{}' tool not found.".format(tool_name)
+    )
 
 
 def is_oiio_supported():
@@ -388,13 +517,12 @@ def is_oiio_supported():
     Returns:
         bool: OIIO tool executable is available.
     """
-    loaded_path = oiio_path = get_oiio_tools_path()
-    if oiio_path:
-        oiio_path = find_executable(oiio_path)
 
-    if not oiio_path:
-        log.debug("OIIOTool is not configured or not present at {}".format(
-            loaded_path
-        ))
+    try:
+        args = get_oiio_tool_args("oiiotool")
+    except ToolNotFoundError:
+        args = None
+    if not args:
+        log.debug("OIIOTool is not configured or not present.")
         return False
-    return True
+    return _oiio_executable_validation(args)

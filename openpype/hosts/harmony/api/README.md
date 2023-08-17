@@ -432,11 +432,11 @@ copy_files = """function copyFile(srcFilename, dstFilename)
 
 import_files = """function %s_import_files()
 {
-  var PNGTransparencyMode = 0;  // Premultiplied wih Black
-  var TGATransparencyMode = 0;  // Premultiplied wih Black
-  var SGITransparencyMode = 0;  // Premultiplied wih Black
+  var PNGTransparencyMode = 0;  // Premultiplied with Black
+  var TGATransparencyMode = 0;  // Premultiplied with Black
+  var SGITransparencyMode = 0;  // Premultiplied with Black
   var LayeredPSDTransparencyMode = 1;  // Straight
-  var FlatPSDTransparencyMode = 2;  // Premultiplied wih White
+  var FlatPSDTransparencyMode = 2;  // Premultiplied with White
 
   function getUniqueColumnName( column_prefix )
   {
@@ -610,7 +610,7 @@ class ImageSequenceLoader(load.LoaderPlugin):
     def update(self, container, representation):
         node = container.pop("node")
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version = get_version_by_id(project_name, representation["parent"])
         files = []
         for f in version["data"]["files"]:

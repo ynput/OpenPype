@@ -5,24 +5,26 @@ import platform
 import collections
 import numbers
 
+import ayon_api
 import six
 import time
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.settings.lib import (
     get_local_settings,
 )
 from openpype.settings.constants import (
     DEFAULT_PROJECT_KEY
 )
-
 from openpype.client import get_project
+from openpype.lib import Logger, get_local_site_id
 from openpype.lib.path_templates import (
     TemplateUnsolved,
     TemplateResult,
+    StringTemplate,
     TemplatesDict,
     FormatObject,
 )
-from openpype.lib.log import Logger
 from openpype.modules import ModulesManager
 
 log = Logger.get_logger(__name__)
@@ -474,6 +476,13 @@ class Anatomy(BaseAnatomy):
             Union[Dict[str, str], None]): Local root overrides.
         """
 
+        if AYON_SERVER_ENABLED:
+            if not project_name:
+                return
+            return ayon_api.get_project_roots_for_site(
+                project_name, get_local_site_id()
+            )
+
         if local_settings is None:
             local_settings = get_local_settings()
 
@@ -606,6 +615,32 @@ class AnatomyTemplateResult(TemplateResult):
         return self.__class__(tmp, self.rootless)
 
 
+class AnatomyStringTemplate(StringTemplate):
+    """String template which has access to anatomy."""
+
+    def __init__(self, anatomy_templates, template):
+        self.anatomy_templates = anatomy_templates
+        super(AnatomyStringTemplate, self).__init__(template)
+
+    def format(self, data):
+        """Format template and add 'root' key to data if not available.
+
+        Args:
+            data (dict[str, Any]): Formatting data for template.
+
+        Returns:
+            AnatomyTemplateResult: Formatting result.
+        """
+
+        anatomy_templates = self.anatomy_templates
+        if not data.get("root"):
+            data = copy.deepcopy(data)
+            data["root"] = anatomy_templates.anatomy.roots
+        result = StringTemplate.format(self, data)
+        rootless_path = anatomy_templates.rootless_path_from_result(result)
+        return AnatomyTemplateResult(result, rootless_path)
+
+
 class AnatomyTemplates(TemplatesDict):
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
     inner_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
@@ -614,12 +649,6 @@ class AnatomyTemplates(TemplatesDict):
         super(AnatomyTemplates, self).__init__()
         self.anatomy = anatomy
         self.loaded_project = None
-
-    def __getitem__(self, key):
-        return self.templates[key]
-
-    def get(self, key, default=None):
-        return self.templates.get(key, default)
 
     def reset(self):
         self._raw_templates = None
@@ -655,12 +684,7 @@ class AnatomyTemplates(TemplatesDict):
     def _format_value(self, value, data):
         if isinstance(value, RootItem):
             return self._solve_dict(value, data)
-
-        result = super(AnatomyTemplates, self)._format_value(value, data)
-        if isinstance(result, TemplateResult):
-            rootless_path = self._rootless_path(result, data)
-            result = AnatomyTemplateResult(result, rootless_path)
-        return result
+        return super(AnatomyTemplates, self)._format_value(value, data)
 
     def set_templates(self, templates):
         if not templates:
@@ -689,9 +713,12 @@ class AnatomyTemplates(TemplatesDict):
 
         solved_templates = self.solve_template_inner_links(templates)
         self._templates = solved_templates
-        self._objected_templates = self.create_ojected_templates(
+        self._objected_templates = self.create_objected_templates(
             solved_templates
         )
+
+    def _create_template_object(self, template):
+        return AnatomyStringTemplate(self, template)
 
     def default_templates(self):
         """Return default templates data with solved inner keys."""
@@ -886,7 +913,8 @@ class AnatomyTemplates(TemplatesDict):
 
         return keys_by_subkey
 
-    def _dict_to_subkeys_list(self, subdict, pre_keys=None):
+    @classmethod
+    def _dict_to_subkeys_list(cls, subdict, pre_keys=None):
         if pre_keys is None:
             pre_keys = []
         output = []
@@ -895,7 +923,7 @@ class AnatomyTemplates(TemplatesDict):
             result = list(pre_keys)
             result.append(key)
             if isinstance(value, dict):
-                for item in self._dict_to_subkeys_list(value, result):
+                for item in cls._dict_to_subkeys_list(value, result):
                     output.append(item)
             else:
                 output.append(result)
@@ -908,7 +936,17 @@ class AnatomyTemplates(TemplatesDict):
             return {key_list[0]: value}
         return {key_list[0]: self._keys_to_dicts(key_list[1:], value)}
 
-    def _rootless_path(self, result, final_data):
+    @classmethod
+    def rootless_path_from_result(cls, result):
+        """Calculate rootless path from formatting result.
+
+        Args:
+            result (TemplateResult): Result of StringTemplate formatting.
+
+        Returns:
+            str: Rootless path if result contains one of anatomy roots.
+        """
+
         used_values = result.used_values
         missing_keys = result.missing_keys
         template = result.template
@@ -924,7 +962,7 @@ class AnatomyTemplates(TemplatesDict):
             if "root" in invalid_type:
                 return
 
-        root_keys = self._dict_to_subkeys_list({"root": used_values["root"]})
+        root_keys = cls._dict_to_subkeys_list({"root": used_values["root"]})
         if not root_keys:
             return
 

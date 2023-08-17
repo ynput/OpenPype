@@ -1,12 +1,21 @@
-import pymel.core as pc
+from collections import defaultdict
+
+from maya import cmds
 
 import pyblish.api
 
 import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api.lib import get_id, set_id
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
+
+
+def get_basename(node):
+    """Return node short name without namespace"""
+    return node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
 
 
 class ValidateRigOutputIds(pyblish.api.InstancePlugin):
@@ -26,47 +35,53 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance, compute=True)
         if invalid:
-            raise RuntimeError("Found nodes with mismatched IDs.")
+            raise PublishValidationError("Found nodes with mismatched IDs.")
 
     @classmethod
     def get_invalid(cls, instance, compute=False):
-        invalid = cls.get_invalid_matches(instance, compute=compute)
-        return [x["node"].longName() for x in invalid]
+        invalid_matches = cls.get_invalid_matches(instance, compute=compute)
+        return list(invalid_matches.keys())
 
     @classmethod
     def get_invalid_matches(cls, instance, compute=False):
-        invalid = []
+        invalid = {}
 
         if compute:
-            out_set = next(x for x in instance if x.endswith("out_SET"))
-            instance_nodes = pc.sets(out_set, query=True)
-            instance_nodes.extend(
-                [x.getShape() for x in instance_nodes if x.getShape()])
+            out_set = next(x for x in instance if "out_SET" in x)
 
-            scene_nodes = pc.ls(type="transform") + pc.ls(type="mesh")
+            instance_nodes = cmds.sets(out_set, query=True, nodesOnly=True)
+            instance_nodes = cmds.ls(instance_nodes, long=True)
+            for node in instance_nodes:
+                shapes = cmds.listRelatives(node, shapes=True, fullPath=True)
+                if shapes:
+                    instance_nodes.extend(shapes)
+
+            scene_nodes = cmds.ls(type="transform", long=True)
+            scene_nodes += cmds.ls(type="mesh", long=True)
             scene_nodes = set(scene_nodes) - set(instance_nodes)
 
+            scene_nodes_by_basename = defaultdict(list)
+            for node in scene_nodes:
+                basename = get_basename(node)
+                scene_nodes_by_basename[basename].append(node)
+
             for instance_node in instance_nodes:
-                matches = []
-                basename = instance_node.name(stripNamespace=True)
-                for scene_node in scene_nodes:
-                    if scene_node.name(stripNamespace=True) == basename:
-                        matches.append(scene_node)
+                basename = get_basename(instance_node)
+                if basename not in scene_nodes_by_basename:
+                    continue
 
-                if matches:
-                    ids = [instance_node.cbId.get()]
-                    ids.extend([x.cbId.get() for x in matches])
-                    ids = set(ids)
+                matches = scene_nodes_by_basename[basename]
 
-                    if len(ids) > 1:
-                        cls.log.error(
-                            "\"{}\" id mismatch to: {}".format(
-                                instance_node.longName(), matches
-                            )
+                ids = set(get_id(node) for node in matches)
+                ids.add(get_id(instance_node))
+
+                if len(ids) > 1:
+                    cls.log.error(
+                        "\"{}\" id mismatch to: {}".format(
+                            instance_node, matches
                         )
-                        invalid.append(
-                            {"node": instance_node, "matches": matches}
-                        )
+                    )
+                    invalid[instance_node] = matches
 
             instance.data["mismatched_output_ids"] = invalid
         else:
@@ -76,22 +91,24 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-        invalid = cls.get_invalid_matches(instance)
+        invalid_matches = cls.get_invalid_matches(instance)
 
         multiple_ids_match = []
-        for data in invalid:
-            ids = [x.cbId.get() for x in data["matches"]]
+        for instance_node, matches in invalid_matches.items():
+            ids = set(get_id(node) for node in matches)
 
             # If there are multiple scene ids matched, and error needs to be
             # raised for manual correction.
             if len(ids) > 1:
-                multiple_ids_match.append(data)
+                multiple_ids_match.append({"node": instance_node,
+                                           "matches": matches})
                 continue
 
-            data["node"].cbId.set(ids[0])
+            id_to_set = next(iter(ids))
+            set_id(instance_node, id_to_set, overwrite=True)
 
         if multiple_ids_match:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "Multiple matched ids found. Please repair manually: "
                 "{}".format(multiple_ids_match)
             )

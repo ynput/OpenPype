@@ -15,7 +15,7 @@ class TestPublishInNuke(NukeLocalPublishTestClass):
         !!!
         It expects modified path in WriteNode,
         use '[python {nuke.script_directory()}]' instead of regular root
-        dir (eg. instead of `c:/projects/test_project/test_asset/test_task`).
+        dir (eg. instead of `c:/projects`).
         Access file path by selecting WriteNode group, CTRL+Enter, update file
         input
         !!!
@@ -70,8 +70,26 @@ class TestPublishInNuke(NukeLocalPublishTestClass):
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 4))
 
+        additional_args = {"context.subset": "workfileTest_task",
+                           "context.ext": "nk"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
         additional_args = {"context.subset": "renderTest_taskMain",
                            "context.ext": "exr"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "thumbnail"}
+        failures.append(
+            DBAssert.count_of_types(dbcon, "representation", 1,
+                                    additional_args=additional_args))
+
+        additional_args = {"context.subset": "renderTest_taskMain",
+                           "name": "h264_mov"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))

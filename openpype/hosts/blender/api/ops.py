@@ -16,15 +16,16 @@ import bpy
 import bpy.utils.previews
 
 from openpype import style
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_asset_name, get_current_task_name
 from openpype.tools.utils import host_tools
 
 from .workio import OpenFileCacher
+from . import pipeline
 
 PREVIEW_COLLECTIONS: Dict = dict()
 
 # This seems like a good value to keep the Qt app responsive and doesn't slow
-# down Blender. At least on macOS I the interace of Blender gets very laggy if
+# down Blender. At least on macOS I the interface of Blender gets very laggy if
 # you make it smaller.
 TIMER_INTERVAL: float = 0.01 if platform.system() == "Windows" else 0.1
 
@@ -84,11 +85,11 @@ class MainThreadItem:
         self.kwargs = kwargs
 
     def execute(self):
-        """Execute callback and store it's result.
+        """Execute callback and store its result.
 
         Method must be called from main thread. Item is marked as `done`
         when callback execution finished. Store output of callback of exception
-        information when callback raise one.
+        information when callback raises one.
         """
         print("Executing process in main thread")
         if self.done:
@@ -283,7 +284,7 @@ class LaunchLoader(LaunchQtApp):
 
     def before_window_show(self):
         self._window.set_context(
-            {"asset": legacy_io.Session["AVALON_ASSET"]},
+            {"asset": get_current_asset_name()},
             refresh=True
         )
 
@@ -331,8 +332,8 @@ class LaunchWorkFiles(LaunchQtApp):
     def execute(self, context):
         result = super().execute(context)
         self._window.set_context({
-            "asset": legacy_io.Session["AVALON_ASSET"],
-            "task": legacy_io.Session["AVALON_TASK"]
+            "asset": get_current_asset_name(),
+            "task": get_current_task_name()
         })
         return result
 
@@ -342,6 +343,26 @@ class LaunchWorkFiles(LaunchQtApp):
             os.environ.get("AVALON_SCENEDIR", ""),
         ))
         self._window.refresh()
+
+
+class SetFrameRange(bpy.types.Operator):
+    bl_idname = "wm.ayon_set_frame_range"
+    bl_label = "Set Frame Range"
+
+    def execute(self, context):
+        data = pipeline.get_asset_data()
+        pipeline.set_frame_range(data)
+        return {"FINISHED"}
+
+
+class SetResolution(bpy.types.Operator):
+    bl_idname = "wm.ayon_set_resolution"
+    bl_label = "Set Resolution"
+
+    def execute(self, context):
+        data = pipeline.get_asset_data()
+        pipeline.set_resolution(data)
+        return {"FINISHED"}
 
 
 class TOPBAR_MT_avalon(bpy.types.Menu):
@@ -362,8 +383,8 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         else:
             pyblish_menu_icon_id = 0
 
-        asset = legacy_io.Session['AVALON_ASSET']
-        task = legacy_io.Session['AVALON_TASK']
+        asset = get_current_asset_name()
+        task = get_current_task_name()
         context_label = f"{asset}, {task}"
         context_label_item = layout.row()
         context_label_item.operator(
@@ -381,9 +402,11 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(LaunchManager.bl_idname, text="Manage...")
         layout.operator(LaunchLibrary.bl_idname, text="Library...")
         layout.separator()
+        layout.operator(SetFrameRange.bl_idname, text="Set Frame Range")
+        layout.operator(SetResolution.bl_idname, text="Set Resolution")
+        layout.separator()
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
-        # TODO (jasper): maybe add 'Reload Pipeline', 'Set Frame Range' and
-        #                'Set Resolution'?
+        # TODO (jasper): maybe add 'Reload Pipeline'
 
 
 def draw_avalon_menu(self, context):
@@ -399,6 +422,8 @@ classes = [
     LaunchManager,
     LaunchLibrary,
     LaunchWorkFiles,
+    SetFrameRange,
+    SetResolution,
     TOPBAR_MT_avalon,
 ]
 
@@ -411,6 +436,7 @@ def register():
     pcoll.load("pyblish_menu_icon", str(pyblish_icon_file.absolute()), 'IMAGE')
     PREVIEW_COLLECTIONS["avalon"] = pcoll
 
+    BlenderApplication.get_app()
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.TOPBAR_MT_editor_menus.append(draw_avalon_menu)

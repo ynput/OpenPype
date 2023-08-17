@@ -63,17 +63,7 @@ class CreateWriteImage(napi.NukeWriteCreator):
             default=nuke.frame()
         )
 
-    def get_instance_attr_defs(self):
-        attr_defs = [
-            self._get_render_target_enum(),
-            self._get_reviewable_bool()
-        ]
-        return attr_defs
-
     def create_instance_node(self, subset_name, instance_data):
-        linked_knobs_ = []
-        if "use_range_limit" in self.instance_attributes:
-            linked_knobs_ = ["channels", "___", "first", "last", "use_limit"]
 
         # add fpath_template
         write_data = {
@@ -88,12 +78,11 @@ class CreateWriteImage(napi.NukeWriteCreator):
             write_data,
             input=self.selected_node,
             prenodes=self.prenodes,
-            linked_knobs=linked_knobs_,
+            linked_knobs=self.get_linked_knobs(),
             **{
                 "frame": nuke.frame()
             }
         )
-        self.add_info_knob(created_node)
 
         self._add_frame_range_limit(created_node, instance_data)
 

@@ -1,8 +1,8 @@
-from qtpy import QtCore
+from qtpy import QtCore, QtGui
 
 # ID of context item in instance view
 CONTEXT_ID = "context"
-CONTEXT_LABEL = "Options"
+CONTEXT_LABEL = "Context"
 # Not showed anywhere - used as identifier
 CONTEXT_GROUP = "__ContextGroup__"
 
@@ -15,6 +15,9 @@ VARIANT_TOOLTIP = (
     "\nnumerical characters (0-9) dot (\".\") or underscore (\"_\")."
 )
 
+INPUTS_LAYOUT_HSPACING = 4
+INPUTS_LAYOUT_VSPACING = 2
+
 # Roles for instance views
 INSTANCE_ID_ROLE = QtCore.Qt.UserRole + 1
 SORT_VALUE_ROLE = QtCore.Qt.UserRole + 2
@@ -26,11 +29,18 @@ GROUP_ROLE = QtCore.Qt.UserRole + 7
 CONVERTER_IDENTIFIER_ROLE = QtCore.Qt.UserRole + 8
 CREATOR_SORT_ROLE = QtCore.Qt.UserRole + 9
 
+ResetKeySequence = QtGui.QKeySequence(
+    QtCore.Qt.ControlModifier | QtCore.Qt.Key_R
+)
 
 __all__ = (
     "CONTEXT_ID",
+    "CONTEXT_LABEL",
 
     "VARIANT_TOOLTIP",
+
+    "INPUTS_LAYOUT_HSPACING",
+    "INPUTS_LAYOUT_VSPACING",
 
     "INSTANCE_ID_ROLE",
     "SORT_VALUE_ROLE",
@@ -41,4 +51,6 @@ __all__ = (
     "FAMILY_ROLE",
     "GROUP_ROLE",
     "CONVERTER_IDENTIFIER_ROLE",
+
+    "ResetKeySequence",
 )

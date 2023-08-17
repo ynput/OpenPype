@@ -17,7 +17,7 @@ from openpype.pipeline import install_host
 from openpype.hosts.traypublisher.api import TrayPublisherHost
 from openpype.tools.publisher.control_qt import QtPublisherController
 from openpype.tools.publisher.window import PublisherWindow
-from openpype.tools.utils import PlaceholderLineEdit
+from openpype.tools.utils import PlaceholderLineEdit, get_openpype_qt_app
 from openpype.tools.utils.constants import PROJECT_NAME_ROLE
 from openpype.tools.utils.models import (
     ProjectModel,
@@ -247,7 +247,7 @@ class TrayPublishWindow(PublisherWindow):
 
     def _on_project_select(self, project_name):
         # TODO register project specific plugin paths
-        self._controller.save_changes()
+        self._controller.save_changes(False)
         self._controller.reset_project_data_cache()
 
         self.reset()
@@ -263,9 +263,7 @@ def main():
     host = TrayPublisherHost()
     install_host(host)
 
-    app_instance = QtWidgets.QApplication.instance()
-    if app_instance is None:
-        app_instance = QtWidgets.QApplication([])
+    app_instance = get_openpype_qt_app()
 
     if platform.system().lower() == "windows":
         import ctypes

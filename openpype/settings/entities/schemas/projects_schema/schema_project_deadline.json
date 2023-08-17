@@ -121,7 +121,7 @@
                                     "DraftTileAssembler": "Draft Tile Assembler"
                                 },
                                 {
-                                    "OpenPypeTileAssembler": "Open Image IO"
+                                    "OpenPypeTileAssembler": "OpenPype Tile Assembler"
                                 }
                             ]
                         },
@@ -239,27 +239,56 @@
                         {
                             "type": "number",
                             "key": "chunk_size",
-                            "label": "Chunk Size"
+                            "label": "Frame per Task"
                         },
                         {
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "FusionSubmitDeadline",
+                    "label": "Fusion submit to Deadline",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
                         },
                         {
-                            "type": "text",
-                            "key": "deadline_pool",
-                            "label": "Deadline pool"
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
                         },
                         {
-                            "type": "text",
-                            "key": "deadline_pool_secondary",
-                            "label": "Deadline pool (secondary)"
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
                         },
                         {
                             "type": "number",
-                            "key": "framePerTask",
-                            "label": "Frame Per Task"
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "chunk_size",
+                            "label": "Frame per Task"
+                        },
+                        {
+                            "type": "number",
+                            "key": "concurrent_tasks",
+                            "label": "Number of concurrent tasks"
+                        },
+                        {
+                            "type": "text",
+                            "key": "group",
+                            "label": "Group Name"
                         }
                     ]
                 },

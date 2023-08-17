@@ -1,11 +1,19 @@
 {
+    "unit_scale_settings": {
+        "enabled": true,
+        "apply_on_opening": false,
+        "base_file_unit_scale": 0.01
+    },
+    "set_resolution_startup": true,
+    "set_frames_startup": true,
     "imageio": {
+        "activate_host_color_management": true,
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "activate_host_rules": false,
             "rules": {}
         }
     },
@@ -48,7 +56,8 @@
                 "camera",
                 "rig",
                 "action",
-                "layout"
+                "layout",
+                "blendScene"
             ]
         },
         "ExtractFBX": {
@@ -76,10 +85,103 @@
             "optional": true,
             "active": true
         },
+        "ExtractCameraABC": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ExtractLayout": {
             "enabled": true,
             "optional": true,
             "active": false
+        },
+        "ExtractThumbnail": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "presets": {
+                "model": {
+                    "image_settings": {
+                        "file_format": "JPEG",
+                        "color_mode": "RGB",
+                        "quality": 100
+                    },
+                    "display_options": {
+                        "shading": {
+                            "light": "STUDIO",
+                            "studio_light": "Default",
+                            "type": "SOLID",
+                            "color_type": "OBJECT",
+                            "show_xray": false,
+                            "show_shadows": false,
+                            "show_cavity": true
+                        },
+                        "overlay": {
+                            "show_overlays": false
+                        }
+                    }
+                },
+                "rig": {
+                    "image_settings": {
+                        "file_format": "JPEG",
+                        "color_mode": "RGB",
+                        "quality": 100
+                    },
+                    "display_options": {
+                        "shading": {
+                            "light": "STUDIO",
+                            "studio_light": "Default",
+                            "type": "SOLID",
+                            "color_type": "OBJECT",
+                            "show_xray": true,
+                            "show_shadows": false,
+                            "show_cavity": false
+                        },
+                        "overlay": {
+                            "show_overlays": true,
+                            "show_ortho_grid": false,
+                            "show_floor": false,
+                            "show_axis_x": false,
+                            "show_axis_y": false,
+                            "show_axis_z": false,
+                            "show_text": false,
+                            "show_stats": false,
+                            "show_cursor": false,
+                            "show_annotation": false,
+                            "show_extras": false,
+                            "show_relationship_lines": false,
+                            "show_outline_selected": false,
+                            "show_motion_paths": false,
+                            "show_object_origins": false,
+                            "show_bones": true
+                        }
+                    }
+                }
+            }
+        },
+        "ExtractPlayblast": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "presets": {
+                "default": {
+                    "image_settings": {
+                        "file_format": "PNG",
+                        "color_mode": "RGB",
+                        "color_depth": "8",
+                        "compression": 15
+                    },
+                    "display_options": {
+                        "shading": {
+                            "type": "MATERIAL",
+                            "render_pass": "COMBINED"
+                        },
+                        "overlay": {
+                            "show_overlays": false
+                        }
+                    }
+                }
+            }
         }
     }
 }

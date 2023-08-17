@@ -2,9 +2,10 @@ import os
 import logging
 import sys
 import copy
+import datetime
+
 import clique
 import six
-
 from bson.objectid import ObjectId
 import pyblish.api
 
@@ -24,7 +25,10 @@ from openpype.client import (
     get_version_by_name,
 )
 from openpype.lib import source_hash
-from openpype.lib.file_transaction import FileTransaction
+from openpype.lib.file_transaction import (
+    FileTransaction,
+    DuplicateDestinationError
+)
 from openpype.pipeline.publish import (
     KnownPublishError,
     get_publish_template_name,
@@ -80,10 +84,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     families = ["workfile",
                 "pointcache",
+                "pointcloud",
                 "proxyAbc",
                 "camera",
                 "animation",
                 "model",
+                "maxScene",
                 "mayaAscii",
                 "mayaScene",
                 "setdress",
@@ -132,7 +138,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsdOverride",
                 "simpleUnrealTexture",
                 "online",
-                "uasset"
+                "uasset",
+                "blendScene"
                 ]
 
     default_template_name = "publish"
@@ -143,19 +150,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "username", "user", "output"
     ]
-    skip_host_families = []
 
     def process(self, instance):
-        if self._temp_skip_instance_by_settings(instance):
-            return
-
-        # Mark instance as processed for legacy integrator
-        instance.data["processedWithNewIntegrator"] = True
 
         # Instance should be integrated on a farm
         if instance.data.get("farm"):
             self.log.info(
                 "Instance is marked to be processed on farm. Skipping")
+            return
+
+        # Instance is marked to not get integrated
+        if not instance.data.get("integrate", True):
+            self.log.info("Instance is marked to skip integrating. Skipping")
             return
 
         filtered_repres = self.filter_representations(instance)
@@ -168,9 +174,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             ).format(instance.data["family"]))
             return
 
-        file_transactions = FileTransaction(log=self.log)
+        file_transactions = FileTransaction(log=self.log,
+                                            # Enforce unique transfers
+                                            allow_queue_replacements=False)
         try:
             self.register(instance, file_transactions, filtered_repres)
+        except DuplicateDestinationError as exc:
+            # Raise DuplicateDestinationError as KnownPublishError
+            # and rollback the transactions
+            file_transactions.rollback()
+            six.reraise(KnownPublishError,
+                        KnownPublishError(exc),
+                        sys.exc_info()[2])
         except Exception:
             # clean destination
             # todo: preferably we'd also rollback *any* changes to the database
@@ -181,39 +196,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Finalizing can't rollback safely so no use for moving it to
         # the try, except.
         file_transactions.finalize()
-
-    def _temp_skip_instance_by_settings(self, instance):
-        """Decide if instance will be processed with new or legacy integrator.
-
-        This is temporary solution until we test all usecases with new (this)
-        integrator plugin.
-        """
-
-        host_name = instance.context.data["hostName"]
-        instance_family = instance.data["family"]
-        instance_families = set(instance.data.get("families") or [])
-
-        skip = False
-        for item in self.skip_host_families:
-            if host_name not in item["host"]:
-                continue
-
-            families = set(item["families"])
-            if instance_family in families:
-                skip = True
-                break
-
-            for family in instance_families:
-                if family in families:
-                    skip = True
-                    break
-
-            if skip:
-                break
-
-        if skip:
-            self.log.debug("Instance is marked to be skipped by settings.")
-        return skip
 
     def filter_representations(self, instance):
         # Prepare repsentations that should be integrated
@@ -248,7 +230,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
-            self.log.info((
+            self.log.debug((
                 "{0} is missing reference to staging directory."
                 " Will try to get it from representation."
             ).format(instance))
@@ -339,10 +321,16 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Get the accessible sites for Site Sync
         modules_by_name = instance.context.data["openPypeModules"]
-        sync_server_module = modules_by_name["sync_server"]
-        sites = sync_server_module.compute_resource_sync_sites(
-            project_name=instance.data["projectEntity"]["name"]
-        )
+        sync_server_module = modules_by_name.get("sync_server")
+        if sync_server_module is None:
+            sites = [{
+                "name": "studio",
+                "created_dt": datetime.datetime.now()
+            }]
+        else:
+            sites = sync_server_module.compute_resource_sync_sites(
+                project_name=instance.data["projectEntity"]["name"]
+            )
         self.log.debug("Sync Server Sites: {}".format(sites))
 
         # Compute the resource file infos once (files belonging to the
@@ -398,7 +386,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.debug("{}".format(op_session.to_data()))
         op_session.commit()
 
-        # Backwards compatibility
+        # Backwards compatibility used in hero integration.
         # todo: can we avoid the need to store this?
         instance.data["published_representations"] = {
             p["representation"]["_id"]: p for p in prepared_representations
@@ -461,7 +449,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 update_data
             )
 
-        self.log.info("Prepared subset: {}".format(subset_name))
+        self.log.debug("Prepared subset: {}".format(subset_name))
         return subset_doc
 
     def prepare_version(self, instance, op_session, subset_doc, project_name):
@@ -502,7 +490,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 project_name, version_doc["type"], version_doc
             )
 
-        self.log.info("Prepared version: v{0:03d}".format(version_doc["name"]))
+        self.log.debug(
+            "Prepared version: v{0:03d}".format(version_doc["name"])
+        )
 
         return version_doc
 
@@ -651,8 +641,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # - template_data (Dict[str, Any]): source data used to fill template
         #   - to add required data to 'repre_context' not used for
         #       formatting
-        # - anatomy_filled (Dict[str, Any]): filled anatomy of last file
-        #   - to fill 'publishDir' on instance.data -> not ideal
+        path_template_obj = anatomy.templates_obj[template_name]["path"]
 
         # Treat template with 'orignalBasename' in special way
         if "{originalBasename}" in template:
@@ -686,8 +675,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 template_data["originalBasename"], _ = os.path.splitext(
                     src_file_name)
 
-                anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled[template_name]["path"]
+                dst = path_template_obj.format_strict(template_data)
                 src = os.path.join(stagingdir, src_file_name)
                 transfers.append((src, dst))
                 if repre_context is None:
@@ -747,8 +735,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     template_data["udim"] = index
                 else:
                     template_data["frame"] = index
-                anatomy_filled = anatomy.format(template_data)
-                template_filled = anatomy_filled[template_name]["path"]
+                template_filled = path_template_obj.format_strict(
+                    template_data
+                )
                 dst_filepaths.append(template_filled)
                 if repre_context is None:
                     self.log.debug(
@@ -784,8 +773,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             if is_udim:
                 template_data["udim"] = repre["udim"][0]
             # Construct destination filepath from template
-            anatomy_filled = anatomy.format(template_data)
-            template_filled = anatomy_filled[template_name]["path"]
+            template_filled = path_template_obj.format_strict(template_data)
             repre_context = template_filled.used_values
             dst = os.path.normpath(template_filled)
 
@@ -796,11 +784,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # todo: Are we sure the assumption each representation
         #       ends up in the same folder is valid?
         if not instance.data.get("publishDir"):
-            instance.data["publishDir"] = (
-                anatomy_filled
-                [template_name]
-                ["folder"]
-            )
+            template_obj = anatomy.templates_obj[template_name]["folder"]
+            template_filled = template_obj.format_strict(template_data)
+            instance.data["publishDir"] = template_filled
 
         for key in self.db_representation_context_keys:
             # Also add these values to the context even if not used by the
@@ -898,7 +884,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Include optional data if present in
         optionals = [
-            "frameStart", "frameEnd", "step", "handles",
+            "frameStart", "frameEnd", "step",
             "handleEnd", "handleStart", "sourceHashes"
         ]
         for key in optionals:

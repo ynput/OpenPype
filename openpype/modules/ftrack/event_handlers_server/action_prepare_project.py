@@ -124,7 +124,7 @@ class PrepareProjectServer(ServerAction):
         root_items.append({
             "type": "label",
             "value": (
-                "<p><i>NOTE: Roots are <b>crutial</b> for path filling"
+                "<p><i>NOTE: Roots are <b>crucial</b> for path filling"
                 " (and creating folder structure).</i></p>"
             )
         })

@@ -5,8 +5,9 @@ import qargparse
 from openpype.pipeline import load
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
-    unique_namespace
+    get_custom_namespace
 )
+import openpype.hosts.maya.api.plugin
 
 
 class SetFrameRangeLoader(load.LoaderPlugin):
@@ -83,7 +84,7 @@ class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
                              animationEndTime=end)
 
 
-class ImportMayaLoader(load.LoaderPlugin):
+class ImportMayaLoader(openpype.hosts.maya.api.plugin.Loader):
     """Import action for Maya (unmanaged)
 
     Warning:
@@ -105,7 +106,8 @@ class ImportMayaLoader(load.LoaderPlugin):
         "camera",
         "rig",
         "camerarig",
-        "staticMesh"
+        "staticMesh",
+        "workfile"
     ]
 
     label = "Import"
@@ -118,7 +120,7 @@ class ImportMayaLoader(load.LoaderPlugin):
             "clean_import",
             label="Clean import",
             default=False,
-            help="Should all occurences of cbId be purged?"
+            help="Should all occurrences of cbId be purged?"
         )
     ]
 
@@ -129,22 +131,25 @@ class ImportMayaLoader(load.LoaderPlugin):
         if choice is False:
             return
 
-        asset = context['asset']
+        custom_group_name, custom_namespace, options = \
+            self.get_custom_namespace_and_group(context, data,
+                                                "import_loader")
 
-        namespace = namespace or unique_namespace(
-            asset["name"] + "_",
-            prefix="_" if asset["name"][0].isdigit() else "",
-            suffix="_",
-        )
+        namespace = get_custom_namespace(custom_namespace)
 
+        if not options.get("attach_to_root", True):
+            custom_group_name = namespace
+
+        path = self.filepath_from_context(context)
         with maintained_selection():
-            nodes = cmds.file(self.fname,
+            nodes = cmds.file(path,
                               i=True,
                               preserveReferences=True,
                               namespace=namespace,
                               returnNewNodes=True,
-                              groupReference=True,
-                              groupName="{}:{}".format(namespace, name))
+                              groupReference=options.get("attach_to_root",
+                                                         True),
+                              groupName=custom_group_name)
 
             if data.get("clean_import", False):
                 remove_attributes = ["cbId"]

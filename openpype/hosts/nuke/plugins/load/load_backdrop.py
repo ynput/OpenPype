@@ -6,8 +6,8 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
     load,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import (
@@ -54,28 +54,25 @@ class LoadBackdropNodes(load.LoaderPlugin):
         version = context['version']
         version_data = version.get("data", {})
         vname = version.get("name", None)
-        first = version_data.get("frameStart", None)
-        last = version_data.get("frameEnd", None)
         namespace = namespace or context['asset']['name']
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
 
         # prepare data for imprinting
         # add additional metadata from the version to imprint to Avalon knob
-        add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
-                    "source", "author", "fps"]
+        add_keys = ["source", "author", "fps"]
 
-        data_imprint = {"frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "version": vname,
+            "colorspaceInput": colorspace,
+            "objectName": object_name
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = self.fname.replace("\\", "/")
+        file = self.filepath_from_context(context).replace("\\", "/")
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -193,7 +190,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
 
         # get main variables
         # Get version from io
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         # get corresponding node
@@ -204,18 +201,13 @@ class LoadBackdropNodes(load.LoaderPlugin):
         name = container['name']
         version_data = version_doc.get("data", {})
         vname = version_doc.get("name", None)
-        first = version_data.get("frameStart", None)
-        last = version_data.get("frameEnd", None)
         namespace = container['namespace']
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
 
-        add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
-                    "source", "author", "fps"]
+        add_keys = ["source", "author", "fps"]
 
         data_imprint = {"representation": str(representation["_id"]),
-                        "frameStart": first,
-                        "frameEnd": last,
                         "version": vname,
                         "colorspaceInput": colorspace,
                         "objectName": object_name}

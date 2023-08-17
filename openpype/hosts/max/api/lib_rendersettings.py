@@ -2,11 +2,11 @@ import os
 from pymxs import runtime as rt
 from openpype.lib import Logger
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name
 from openpype.pipeline.context_tools import get_current_project_asset
 
 from openpype.hosts.max.api.lib import (
-    set_framerange,
+    set_render_frame_range,
     get_current_renderer,
     get_default_render_folder
 )
@@ -31,7 +31,7 @@ class RenderSettings(object):
         self._project_settings = project_settings
         if not self._project_settings:
             self._project_settings = get_project_settings(
-                legacy_io.Session["AVALON_PROJECT"]
+                get_current_project_name()
             )
 
     def set_render_camera(self, selection):
@@ -68,7 +68,7 @@ class RenderSettings(object):
         # Set Frame Range
         frame_start = context["data"].get("frame_start")
         frame_end = context["data"].get("frame_end")
-        set_framerange(frame_start, frame_end)
+        set_render_frame_range(frame_start, frame_end)
         # get the production render
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
@@ -104,6 +104,9 @@ class RenderSettings(object):
             self.render_element_layer(output, width, height, img_fmt)
 
         rt.rendSaveFile = True
+
+        if rt.renderSceneDialog.isOpen():
+            rt.renderSceneDialog.close()
 
     def arnold_setup(self):
         # get Arnold RenderView run in the background

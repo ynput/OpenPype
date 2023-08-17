@@ -1,14 +1,19 @@
 import os
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
+    PublishValidationError
+)
 
 
 COLOUR_SPACES = ['sRGB', 'linear', 'auto']
 MIPMAP_EXTENSIONS = ['tdl']
 
 
-class ValidateMvLookContents(pyblish.api.InstancePlugin):
+class ValidateMvLookContents(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     order = ValidateContentsOrder
     families = ['mvLook']
     hosts = ['maya']
@@ -23,6 +28,9 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin):
     enforced_intents = ['-', 'Final']
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         intent = instance.context.data['intent']['value']
         publishMipMap = instance.data["publishMipMap"]
         enforced = True
@@ -35,14 +43,15 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin):
                           .format(intent))
 
         if not instance[:]:
-            raise RuntimeError("Instance is empty")
+            raise PublishValidationError("Instance is empty")
 
         invalid = set()
 
         resources = instance.data.get("resources", [])
         for resource in resources:
             files = resource["files"]
-            self.log.debug("Resouce '{}', files: [{}]".format(resource, files))
+            self.log.debug(
+                "Resource '{}', files: [{}]".format(resource, files))
             node = resource["node"]
             if len(files) == 0:
                 self.log.error("File node '{}' uses no or non-existing "
@@ -61,12 +70,12 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin):
                     if enforced:
                         invalid.add(node)
                         self.log.error(msg)
-                        raise RuntimeError(msg)
+                        raise PublishValidationError(msg)
                     else:
                         self.log.warning(msg)
 
         if invalid:
-            raise RuntimeError("'{}' has invalid look "
+            raise PublishValidationError("'{}' has invalid look "
                                "content".format(instance.name))
 
     def valid_file(self, fname):

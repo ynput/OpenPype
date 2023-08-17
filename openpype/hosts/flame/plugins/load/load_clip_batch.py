@@ -58,11 +58,11 @@ class LoadClipBatch(opfapi.ClipLoader):
             self.layer_rename_template = self.layer_rename_template.replace(
                 "output", "representation")
 
-        formating_data = deepcopy(context["representation"]["context"])
-        formating_data["batch"] = self.batch.name.get_value()
+        formatting_data = deepcopy(context["representation"]["context"])
+        formatting_data["batch"] = self.batch.name.get_value()
 
         clip_name = StringTemplate(self.clip_name_template).format(
-            formating_data)
+            formatting_data)
 
         # convert colorspace with ocio to flame mapping
         # in imageio flame section
@@ -81,14 +81,15 @@ class LoadClipBatch(opfapi.ClipLoader):
         if not os.path.exists(openclip_dir):
             os.makedirs(openclip_dir)
 
-        # prepare clip data from context ad send it to openClipLoader
+        # prepare clip data from context and send it to openClipLoader
+        path = self.filepath_from_context(context)
         loading_context = {
-            "path": self.fname.replace("\\", "/"),
+            "path": path.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
             "layer_rename_template": self.layer_rename_template,
             "layer_rename_patterns": self.layer_rename_patterns,
-            "context_data": formating_data
+            "context_data": formatting_data
         }
         self.log.debug(pformat(
             loading_context

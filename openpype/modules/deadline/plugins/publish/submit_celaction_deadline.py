@@ -59,7 +59,6 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
             render_path).replace("\\", "/")
 
         instance.data["publishJobState"] = "Suspended"
-        instance.context.data['ftrackStatus'] = "Render"
 
         # adding 2d render specific family for version identification in Loader
         instance.data["families"] = ["render2d"]
@@ -106,7 +105,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
 
         # define chunk and priority
         chunk_size = instance.context.data.get("chunk")
-        if chunk_size == 0:
+        if not chunk_size:
             chunk_size = self.deadline_chunk_size
 
         # search for %02d pattern in name, and padding number

@@ -19,7 +19,7 @@ from openpype.pipeline import (
     CreatorError,
     Creator as NewCreator,
     CreatedInstance,
-    legacy_io
+    get_current_task_name
 )
 from .lib import (
     INSTANCE_DATA_KNOB,
@@ -74,20 +74,6 @@ class NukeCreator(NewCreator):
         creator_attrs = instance_data["creator_attributes"] = {}
         for pass_key in keys:
             creator_attrs[pass_key] = pre_create_data[pass_key]
-
-    def add_info_knob(self, node):
-        if "OP_info" in node.knobs().keys():
-            return
-
-        # add info text
-        info_knob = nuke.Text_Knob("OP_info", "")
-        info_knob.setValue("""
-<span style=\"color:#fc0303\">
-<p>This node is maintained by <b>OpenPype Publisher</b>.</p>
-<p>To remove it use Publisher gui.</p>
-</span>
-        """)
-        node.addKnob(info_knob)
 
     def check_existing_subset(self, subset_name):
         """Make sure subset name is unique.
@@ -153,8 +139,6 @@ class NukeCreator(NewCreator):
                 created_node = nuke.createNode(node_type)
                 created_node["name"].setValue(node_name)
 
-                self.add_info_knob(created_node)
-
                 for key, values in node_knobs.items():
                     if key in created_node.knobs():
                         created_node["key"].setValue(values)
@@ -208,6 +192,12 @@ class NukeCreator(NewCreator):
 
     def collect_instances(self):
         cached_instances = _collect_and_cache_nodes(self)
+        attr_def_keys = {
+            attr_def.key
+            for attr_def in self.get_instance_attr_defs()
+        }
+        attr_def_keys.discard(None)
+
         for (node, data) in cached_instances[self.identifier]:
             created_instance = CreatedInstance.from_existing(
                 data, self
@@ -215,9 +205,21 @@ class NukeCreator(NewCreator):
             created_instance.transient_data["node"] = node
             self._add_instance_to_context(created_instance)
 
+            for key in (
+                set(created_instance["creator_attributes"].keys())
+                - attr_def_keys
+            ):
+                created_instance["creator_attributes"].pop(key)
+
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
+        for created_inst, changes in update_list:
             instance_node = created_inst.transient_data["node"]
+
+            # update instance node name if subset name changed
+            if "subset" in changes.changed_keys:
+                instance_node["name"].setValue(
+                    changes["subset"].new_value
+                )
 
             # in case node is not existing anymore (user erased it manually)
             try:
@@ -260,6 +262,17 @@ class NukeWriteCreator(NukeCreator):
     family = "write"
     icon = "sign-out"
 
+    def get_linked_knobs(self):
+        linked_knobs = []
+        if "channels" in self.instance_attributes:
+            linked_knobs.append("channels")
+        if "ordered" in self.instance_attributes:
+            linked_knobs.append("render_order")
+        if "use_range_limit" in self.instance_attributes:
+            linked_knobs.extend(["___", "first", "last", "use_limit"])
+
+        return linked_knobs
+
     def integrate_links(self, node, outputs=True):
         # skip if no selection
         if not self.selected_node:
@@ -301,8 +314,11 @@ class NukeWriteCreator(NukeCreator):
     def get_instance_attr_defs(self):
         attr_defs = [
             self._get_render_target_enum(),
-            self._get_reviewable_bool()
         ]
+        # add reviewable attribute
+        if "reviewable" in self.instance_attributes:
+            attr_defs.append(self._get_reviewable_bool())
+
         return attr_defs
 
     def _get_render_target_enum(self):
@@ -322,7 +338,7 @@ class NukeWriteCreator(NukeCreator):
     def _get_reviewable_bool(self):
         return BoolDef(
             "review",
-            default=("reviewable" in self.instance_attributes),
+            default=True,
             label="Review"
         )
 
@@ -594,7 +610,7 @@ class ExporterReview(object):
                                         Defaults to None.
             range (bool, optional): flag for adding ranges.
                                     Defaults to False.
-            custom_tags (list[str], optional): user inputed custom tags.
+            custom_tags (list[str], optional): user inputted custom tags.
                                                Defaults to None.
         """
         add_tags = tags or []
@@ -825,41 +841,6 @@ class ExporterReviewMov(ExporterReview):
         add_tags = []
         self.publish_on_farm = farm
         read_raw = kwargs["read_raw"]
-
-        # TODO: remove this when `reformat_nodes_config`
-        # is changed in settings
-        reformat_node_add = kwargs["reformat_node_add"]
-        reformat_node_config = kwargs["reformat_node_config"]
-
-        # TODO: make this required in future
-        reformat_nodes_config = kwargs.get("reformat_nodes_config", {})
-
-        # TODO: remove this once deprecated is removed
-        # make sure only reformat_nodes_config is used in future
-        if reformat_node_add and reformat_nodes_config.get("enabled"):
-            self.log.warning(
-                "`reformat_node_add` is deprecated. "
-                "Please use only `reformat_nodes_config` instead.")
-            reformat_nodes_config = None
-
-        # TODO: reformat code when backward compatibility is not needed
-        # warning if reformat_nodes_config is not set
-        if not reformat_nodes_config:
-            self.log.warning(
-                "Please set `reformat_nodes_config` in settings. "
-                "Using `reformat_node_config` instead."
-            )
-            reformat_nodes_config = {
-                "enabled": reformat_node_add,
-                "reposition_nodes": [
-                    {
-                        "node_class": "Reformat",
-                        "knobs": reformat_node_config
-                    }
-                ]
-            }
-
-
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
             "bake_viewer_input_process"]
@@ -898,6 +879,7 @@ class ExporterReviewMov(ExporterReview):
         self._shift_to_previous_node_and_temp(subset, r_node, "Read...   `{}`")
 
         # add reformat node
+        reformat_nodes_config = kwargs["reformat_nodes_config"]
         if reformat_nodes_config["enabled"]:
             reposition_nodes = reformat_nodes_config["reposition_nodes"]
             for reposition_node in reposition_nodes:
@@ -956,7 +938,11 @@ class ExporterReviewMov(ExporterReview):
         except Exception:
             self.log.info("`mov64_codec` knob was not found")
 
-        write_node["mov64_write_timecode"].setValue(1)
+        try:
+            write_node["mov64_write_timecode"].setValue(1)
+        except Exception:
+            self.log.info("`mov64_write_timecode` knob was not found")
+
         write_node["raw"].setValue(1)
         # connect
         write_node.setInput(0, self.previous_node)
@@ -1110,7 +1096,7 @@ class AbstractWriteRender(OpenPypeCreator):
     def is_legacy(self):
         """Check if it needs to run legacy code
 
-        In case where `type` key is missing in singe
+        In case where `type` key is missing in single
         knob it is legacy project anatomy.
 
         Returns:
@@ -1174,7 +1160,7 @@ def convert_to_valid_instaces():
 
     from openpype.hosts.nuke.api import workio
 
-    task_name = legacy_io.Session["AVALON_TASK"]
+    task_name = get_current_task_name()
 
     # save into new workfile
     current_file = workio.current_file()

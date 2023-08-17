@@ -2,8 +2,6 @@ import os
 import re
 import nuke
 import pyblish.api
-from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
 
 
 class CollectNukeReads(pyblish.api.InstancePlugin):
@@ -15,16 +13,9 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
     families = ["source"]
 
     def process(self, instance):
-        node = instance.data["transientData"]["node"]
-
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        asset_doc = get_asset_by_name(project_name, asset_name)
-
-        self.log.debug("asset_doc: {}".format(asset_doc["data"]))
-
         self.log.debug("checking instance: {}".format(instance))
 
+        node = instance.data["transientData"]["node"]
         if node.Class() != "Read":
             return
 
@@ -103,7 +94,6 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
 
         # Add version data to instance
         version_data = {
-            "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
             "frameStart": first_frame + handle_start,
@@ -123,7 +113,8 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame,
             "colorspace": colorspace,
-            "handles": int(asset_doc["data"].get("handles", 0)),
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
             "step": 1,
             "fps": int(nuke.root()['fps'].value())
         })

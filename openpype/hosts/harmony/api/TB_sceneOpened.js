@@ -142,10 +142,10 @@ function Client() {
     };
 
     /**
-     * Process recieved request. This will eval recieved function and produce
+     * Process received request. This will eval received function and produce
      * results.
      * @function
-     * @param  {object} request - recieved request JSON
+     * @param  {object} request - received request JSON
      * @return {object} result of evaled function.
      */
     self.processRequest = function(request) {
@@ -245,7 +245,7 @@ function Client() {
         var request = JSON.parse(to_parse);
         var mid = request.message_id;
         // self.logDebug('[' + mid + '] - Request: ' + '\n' + JSON.stringify(request));
-        self.logDebug('[' + mid + '] Recieved.');
+        self.logDebug('[' + mid + '] Received.');
 
         request.result = self.processRequest(request);
         self.logDebug('[' + mid + '] Processing done.');
@@ -286,8 +286,8 @@ function Client() {
       /** Harmony 21.1 doesn't have QDataStream anymore.
 
       This means we aren't able to write bytes into QByteArray so we had
-      modify how content lenght is sent do the server.
-      Content lenght is sent as string of 8 char convertible into integer
+      modify how content length is sent do the server.
+      Content length is sent as string of 8 char convertible into integer
       (instead of 0x00000001[4 bytes] > "000000001"[8 bytes]) */
       var codec_name = new QByteArray().append("UTF-8");
 
@@ -474,6 +474,25 @@ function start() {
     if (app.avalonMenu == null) {
         action = menu.addAction('Subset Manager...');
         action.triggered.connect(self.onSubsetManage);
+    }
+
+     /**
+      * Set scene settings from DB to the scene
+      */
+    self.onSetSceneSettings = function() {
+          app.avalonClient.send(
+            {
+              "module": "openpype.hosts.harmony.api",
+              "method": "ensure_scene_settings",
+              "args": []
+            },
+            false
+          );
+    };
+    // add Set Scene Settings
+    if (app.avalonMenu == null) {
+        action = menu.addAction('Set Scene Settings...');
+        action.triggered.connect(self.onSetSceneSettings);
     }
 
     /**

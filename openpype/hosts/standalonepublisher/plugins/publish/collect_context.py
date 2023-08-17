@@ -104,7 +104,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 if repr.get(k):
                     repr.pop(k)
 
-            # convert files to list if it isnt
+            # convert files to list if it isn't
             if not isinstance(files, (tuple, list)):
                 files = [files]
 
@@ -174,7 +174,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 continue
 
             files = repre["files"]
-            # Convert files to list if it isnt
+            # Convert files to list if it isn't
             if not isinstance(files, (tuple, list)):
                 files = [files]
 
@@ -222,7 +222,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 "label": subset,
                 "name": subset,
                 "family": in_data["family"],
-                # "version": in_data.get("version", 1),
                 "frameStart": in_data.get("representations", [None])[0].get(
                     "frameStart", None
                 ),
@@ -232,6 +231,14 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 "families": instance_families
             }
         )
+        # Fill version only if 'use_next_available_version' is disabled
+        #   and version is filled in instance data
+        version = in_data.get("version")
+        use_next_available_version = in_data.get(
+            "use_next_available_version", True)
+        if not use_next_available_version and version is not None:
+            instance.data["version"] = version
+
         self.log.info("collected instance: {}".format(pformat(instance.data)))
         self.log.info("parsing data: {}".format(pformat(in_data)))
 
@@ -255,7 +262,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             if ext.startswith("."):
                 component["ext"] = ext[1:]
 
-            if component["preview"]:
+            # Remove 'preview' key from representation data
+            preview = component.pop("preview")
+            if preview:
                 instance.data["families"].append("review")
                 component["tags"] = ["review"]
                 self.log.debug("Adding review family")

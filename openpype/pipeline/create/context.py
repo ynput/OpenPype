@@ -22,8 +22,8 @@ from openpype.lib.attribute_definitions import (
     deserialize_attr_defs,
     get_default_values,
 )
-from openpype.host import IPublishHost
-from openpype.pipeline import legacy_io
+from openpype.host import IPublishHost, IWorkfileHost
+from openpype.pipeline import legacy_io, Anatomy
 from openpype.pipeline.plugin_discover import DiscoverResult
 
 from .creator_plugins import (
@@ -596,7 +596,14 @@ class AttributeValues(object):
             self[_key] = _value
 
     def pop(self, key, default=None):
-        return self._data.pop(key, default)
+        value = self._data.pop(key, default)
+        # Remove attribute definition if is 'UnknownDef'
+        # - gives option to get rid of unknown values
+        attr_def = self._attr_defs_by_key.get(key)
+        if isinstance(attr_def, UnknownDef):
+            self._attr_defs_by_key.pop(key)
+            self._attr_defs.remove(attr_def)
+        return value
 
     def reset_values(self):
         self._data = {}
@@ -1115,10 +1122,10 @@ class CreatedInstance:
 
     @property
     def creator_attribute_defs(self):
-        """Attribute defintions defined by creator plugin.
+        """Attribute definitions defined by creator plugin.
 
         Returns:
-              List[AbstractAttrDef]: Attribute defitions.
+              List[AbstractAttrDef]: Attribute definitions.
         """
 
         return self.creator_attributes.attr_defs
@@ -1158,8 +1165,8 @@ class CreatedInstance:
         Args:
             instance_data (Dict[str, Any]): Data in a structure ready for
                 'CreatedInstance' object.
-            creator (Creator): Creator plugin which is creating the instance
-                of for which the instance belong.
+            creator (BaseCreator): Creator plugin which is creating the
+                instance of for which the instance belong.
         """
 
         instance_data = copy.deepcopy(instance_data)
@@ -1374,6 +1381,9 @@ class CreateContext:
         self._current_project_name = None
         self._current_asset_name = None
         self._current_task_name = None
+        self._current_workfile_path = None
+
+        self._current_project_anatomy = None
 
         self._host_is_valid = host_is_valid
         # Currently unused variable
@@ -1430,6 +1440,19 @@ class CreateContext:
     def publish_attributes(self):
         """Access to global publish attributes."""
         return self._publish_attributes
+
+    def get_instance_by_id(self, instance_id):
+        """Receive instance by id.
+
+        Args:
+            instance_id (str): Instance id.
+
+        Returns:
+            Union[CreatedInstance, None]: Instance or None if instance with
+                given id is not available.
+        """
+
+        return self._instances_by_id.get(instance_id)
 
     def get_sorted_creators(self, identifiers=None):
         """Sorted creators by 'order' attribute.
@@ -1503,15 +1526,76 @@ class CreateContext:
         return os.environ["AVALON_APP"]
 
     def get_current_project_name(self):
+        """Project name which was used as current context on context reset.
+
+        Returns:
+            Union[str, None]: Project name.
+        """
+
         return self._current_project_name
 
     def get_current_asset_name(self):
+        """Asset name which was used as current context on context reset.
+
+        Returns:
+            Union[str, None]: Asset name.
+        """
+
         return self._current_asset_name
 
     def get_current_task_name(self):
+        """Task name which was used as current context on context reset.
+
+        Returns:
+            Union[str, None]: Task name.
+        """
+
         return self._current_task_name
 
+    def get_current_workfile_path(self):
+        """Workfile path which was opened on context reset.
+
+        Returns:
+            Union[str, None]: Workfile path.
+        """
+
+        return self._current_workfile_path
+
+    def get_current_project_anatomy(self):
+        """Project anatomy for current project.
+
+        Returns:
+            Anatomy: Anatomy object ready to be used.
+        """
+
+        if self._current_project_anatomy is None:
+            self._current_project_anatomy = Anatomy(
+                self._current_project_name)
+        return self._current_project_anatomy
+
+    @property
+    def context_has_changed(self):
+        """Host context has changed.
+
+        As context is used project, asset, task name and workfile path if
+        host does support workfiles.
+
+        Returns:
+            bool: Context changed.
+        """
+
+        project_name, asset_name, task_name, workfile_path = (
+            self._get_current_host_context()
+        )
+        return (
+            self._current_project_name != project_name
+            or self._current_asset_name != asset_name
+            or self._current_task_name != task_name
+            or self._current_workfile_path != workfile_path
+        )
+
     project_name = property(get_current_project_name)
+    project_anatomy = property(get_current_project_anatomy)
 
     @property
     def log(self):
@@ -1575,6 +1659,28 @@ class CreateContext:
         self._collection_shared_data = None
         self.refresh_thumbnails()
 
+    def _get_current_host_context(self):
+        project_name = asset_name = task_name = workfile_path = None
+        if hasattr(self.host, "get_current_context"):
+            host_context = self.host.get_current_context()
+            if host_context:
+                project_name = host_context.get("project_name")
+                asset_name = host_context.get("asset_name")
+                task_name = host_context.get("task_name")
+
+        if isinstance(self.host, IWorkfileHost):
+            workfile_path = self.host.get_current_workfile()
+
+        # --- TODO remove these conditions ---
+        if not project_name:
+            project_name = legacy_io.Session.get("AVALON_PROJECT")
+        if not asset_name:
+            asset_name = legacy_io.Session.get("AVALON_ASSET")
+        if not task_name:
+            task_name = legacy_io.Session.get("AVALON_TASK")
+        # ---
+        return project_name, asset_name, task_name, workfile_path
+
     def reset_current_context(self):
         """Refresh current context.
 
@@ -1593,24 +1699,16 @@ class CreateContext:
                 are stored. We should store the workfile (if is available) too.
         """
 
-        project_name = asset_name = task_name = None
-        if hasattr(self.host, "get_current_context"):
-            host_context = self.host.get_current_context()
-            if host_context:
-                project_name = host_context.get("project_name")
-                asset_name = host_context.get("asset_name")
-                task_name = host_context.get("task_name")
-
-        if not project_name:
-            project_name = legacy_io.Session.get("AVALON_PROJECT")
-        if not asset_name:
-            asset_name = legacy_io.Session.get("AVALON_ASSET")
-        if not task_name:
-            task_name = legacy_io.Session.get("AVALON_TASK")
+        project_name, asset_name, task_name, workfile_path = (
+            self._get_current_host_context()
+        )
 
         self._current_project_name = project_name
         self._current_asset_name = asset_name
         self._current_task_name = task_name
+        self._current_workfile_path = workfile_path
+
+        self._current_project_anatomy = None
 
     def reset_plugins(self, discover_publish_plugins=True):
         """Reload plugins.
@@ -1881,7 +1979,11 @@ class CreateContext:
         if pre_create_data is None:
             pre_create_data = {}
 
-        precreate_attr_defs = creator.get_pre_create_attr_defs() or []
+        precreate_attr_defs = []
+        # Hidden creators do not have or need the pre-create attributes.
+        if isinstance(creator, Creator):
+            precreate_attr_defs = creator.get_pre_create_attr_defs()
+
         # Create default values of precreate data
         _pre_create_data = get_default_values(precreate_attr_defs)
         # Update passed precreate data to default values
@@ -2023,7 +2125,7 @@ class CreateContext:
 
     def reset_instances(self):
         """Reload instances"""
-        self._instances_by_id = {}
+        self._instances_by_id = collections.OrderedDict()
 
         # Collect instances
         error_message = "Collection of instances for creator {} failed. {}"

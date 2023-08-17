@@ -8,10 +8,11 @@ from openpype.lib import Logger, register_event_callback
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
-    legacy_io,
+)
+from openpype.hosts.aftereffects.api.workfile_template_builder import (
+    AEPlaceholderLoadPlugin,
+    AEPlaceholderCreatePlugin
 )
 from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects
@@ -22,8 +23,10 @@ from openpype.host import (
     ILoadHost,
     IPublishHost
 )
+from openpype.tools.utils import get_openpype_qt_app
 
-from .launch_logic import get_stub, ConnectionNotEstablishedYet
+from .launch_logic import get_stub
+from .ws_stub import ConnectionNotEstablishedYet
 
 log = Logger.get_logger(__name__)
 
@@ -58,9 +61,6 @@ class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             stub = get_stub()  # only after Photoshop is up
         except ConnectionNotEstablishedYet:
             print("Not connected yet, ignoring")
-            return
-
-        if not stub.get_active_document_name():
             return
 
         self._stub = stub
@@ -120,6 +120,12 @@ class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         item = data
         item["id"] = "publish_context"
         self.stub.imprint(item["id"], item)
+
+    def get_workfile_build_placeholder_plugins(self):
+        return [
+            AEPlaceholderLoadPlugin,
+            AEPlaceholderCreatePlugin
+        ]
 
     # created instances section
     def list_instances(self):
@@ -231,10 +237,7 @@ def check_inventory():
         return
 
     # Warn about outdated containers.
-    _app = QtWidgets.QApplication.instance()
-    if not _app:
-        print("Starting new QApplication..")
-        _app = QtWidgets.QApplication([])
+    _app = get_openpype_qt_app()
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)

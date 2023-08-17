@@ -6,22 +6,28 @@ import maya.cmds as cmds
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
     load,
+    legacy_io,
     get_representation_path
 )
 from openpype.hosts.maya.api.lib import (
-    unique_namespace, get_attribute_input, maintained_selection
+    unique_namespace,
+    get_attribute_input,
+    maintained_selection,
+    convert_to_maya_fps
 )
 from openpype.hosts.maya.api.pipeline import containerise
 
-
 def is_sequence(files):
     sequence = False
-    collections, remainder = clique.assemble(files)
+    collections, remainder = clique.assemble(files, minimum_items=1)
     if collections:
         sequence = True
-
     return sequence
 
+
+def get_current_session_fps():
+    session_fps = float(legacy_io.Session.get('AVALON_FPS', 25))
+    return convert_to_maya_fps(session_fps)
 
 class ArnoldStandinLoader(load.LoaderPlugin):
     """Load as Arnold standin"""
@@ -35,9 +41,15 @@ class ArnoldStandinLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, options):
+        if not cmds.pluginInfo("mtoa", query=True, loaded=True):
+            cmds.loadPlugin("mtoa")
+            # Create defaultArnoldRenderOptions before creating aiStandin
+            # which tries to connect it. Since we load the plugin and directly
+            # create aiStandin without the defaultArnoldRenderOptions,
+            # we need to create the render options for aiStandin creation.
+            from mtoa.core import createOptions
+            createOptions()
 
-        # Make sure to load arnold before importing `mtoa.ui.arnoldmenu`
-        cmds.loadPlugin("mtoa", quiet=True)
         import mtoa.ui.arnoldmenu
 
         version = context['version']
@@ -77,14 +89,18 @@ class ArnoldStandinLoader(load.LoaderPlugin):
             cmds.parent(standin, root)
 
             # Set the standin filepath
+            repre_path = self.filepath_from_context(context)
             path, operator = self._setup_proxy(
-                standin_shape, self.fname, namespace
+                standin_shape, repre_path, namespace
             )
             cmds.setAttr(standin_shape + ".dso", path, type="string")
-            sequence = is_sequence(os.listdir(os.path.dirname(self.fname)))
+            sequence = is_sequence(os.listdir(os.path.dirname(repre_path)))
             cmds.setAttr(standin_shape + ".useFrameExtension", sequence)
 
-        nodes = [root, standin]
+            fps = float(version["data"].get("fps"))or get_current_session_fps()
+            cmds.setAttr(standin_shape + ".abcFPS", fps)
+
+        nodes = [root, standin, standin_shape]
         if operator is not None:
             nodes.append(operator)
         self[:] = nodes
@@ -180,10 +196,10 @@ class ArnoldStandinLoader(load.LoaderPlugin):
         proxy_basename, proxy_path = self._get_proxy_path(path)
 
         # Whether there is proxy or so, we still update the string operator.
-        # If no proxy exists, the string operator wont replace anything.
+        # If no proxy exists, the string operator won't replace anything.
         cmds.setAttr(
             string_replace_operator + ".match",
-            "resources/" + proxy_basename,
+            proxy_basename,
             type="string"
         )
         cmds.setAttr(

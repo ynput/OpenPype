@@ -1,7 +1,6 @@
 import os
 
 import pyblish.api
-from openpype.pipeline import legacy_io
 from openpype.pipeline.create import get_subset_name
 
 
@@ -44,7 +43,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         instance.data["publish"] = instance.data["active"]  # for DL
 
     def _get_new_instance(self, context, scene_file):
-        task = legacy_io.Session["AVALON_TASK"]
+        task = context.data["task"]
         version = context.data["version"]
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
@@ -53,10 +52,10 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "active": True,
             "asset": asset_entity["name"],
             "task": task,
-            "frameStart": asset_entity["data"]["frameStart"],
-            "frameEnd": asset_entity["data"]["frameEnd"],
-            "handleStart": asset_entity["data"]["handleStart"],
-            "handleEnd": asset_entity["data"]["handleEnd"],
+            "frameStart": context.data['frameStart'],
+            "frameEnd": context.data['frameEnd'],
+            "handleStart": context.data['handleStart'],
+            "handleEnd": context.data['handleEnd'],
             "fps": asset_entity["data"]["fps"],
             "resolutionWidth": asset_entity["data"].get(
                 "resolutionWidth",

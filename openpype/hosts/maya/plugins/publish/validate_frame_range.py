@@ -4,6 +4,8 @@ from maya import cmds
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 from openpype.hosts.maya.api.lib_rendersetup import (
     get_attr_overrides,
@@ -12,7 +14,8 @@ from openpype.hosts.maya.api.lib_rendersetup import (
 from maya.app.renderSetup.model.override import AbsOverride
 
 
-class ValidateFrameRange(pyblish.api.InstancePlugin):
+class ValidateFrameRange(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """Validates the frame ranges.
 
     This is an optional validator checking if the frame range on instance
@@ -39,6 +42,9 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     exclude_families = []
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         context = instance.context
         if instance.data.get("tileRendering"):
             self.log.info((
@@ -49,7 +55,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         frame_start_handle = int(context.data.get("frameStartHandle"))
         frame_end_handle = int(context.data.get("frameEndHandle"))
-        handles = int(context.data.get("handles"))
         handle_start = int(context.data.get("handleStart"))
         handle_end = int(context.data.get("handleEnd"))
         frame_start = int(context.data.get("frameStart"))
@@ -65,8 +70,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
         # basic sanity checks
         assert frame_start_handle <= frame_end_handle, (
             "start frame is lower then end frame")
-
-        assert handles >= 0, ("handles cannot have negative values")
 
         # compare with data on instance
         errors = []
@@ -104,10 +107,12 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                     "({}).".format(label.title(), values[1], values[0])
                 )
 
-        for e in errors:
-            self.log.error(e)
+        if errors:
+            report = "Frame range settings are incorrect.\n\n"
+            for error in errors:
+                report += "- {}\n\n".format(error)
 
-        assert len(errors) == 0, ("Frame range settings are incorrect")
+            raise PublishValidationError(report, title="Frame Range incorrect")
 
     @classmethod
     def repair(cls, instance):
@@ -152,7 +157,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     def repair_renderlayer(cls, instance):
         """Apply frame range in render settings"""
 
-        layer = instance.data["setMembers"]
+        layer = instance.data["renderlayer"]
         context = instance.context
 
         start_attr = "defaultRenderGlobals.startFrame"

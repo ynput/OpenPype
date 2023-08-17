@@ -43,9 +43,10 @@ class BgeoLoader(load.LoaderPlugin):
             file_node.destroy()
 
         # Explicitly create a file node
+        path = self.filepath_from_context(context)
         file_node = container.createNode("file", node_name=node_name)
         file_node.setParms(
-            {"file": self.format_path(self.fname, context["representation"])})
+            {"file": self.format_path(path, context["representation"])})
 
         # Set display on last node
         file_node.setDisplayFlag(True)
@@ -106,3 +107,6 @@ class BgeoLoader(load.LoaderPlugin):
 
         node = container["node"]
         node.destroy()
+
+    def switch(self, container, representation):
+        self.update(container, representation)

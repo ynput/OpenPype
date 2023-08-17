@@ -25,8 +25,9 @@ class ExtractRender(pyblish.api.InstancePlugin):
         application_path = instance.context.data.get("applicationPath")
         scene_path = instance.context.data.get("scenePath")
         frame_rate = instance.context.data.get("frameRate")
-        frame_start = instance.context.data.get("frameStart")
-        frame_end = instance.context.data.get("frameEnd")
+        # real value from timeline
+        frame_start = instance.context.data.get("frameStartHandle")
+        frame_end = instance.context.data.get("frameEndHandle")
         audio_path = instance.context.data.get("audioPath")
 
         if audio_path and os.path.exists(audio_path):
@@ -55,9 +56,13 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         # Execute rendering. Ignoring error cause Harmony returns error code
         # always.
-        self.log.info(f"running [ {application_path} -batch {scene_path}")
+
+        args = [application_path, "-batch",
+                "-frames", str(frame_start), str(frame_end),
+                "-scene", scene_path]
+        self.log.info(f"running [ {application_path} {' '.join(args)}")
         proc = subprocess.Popen(
-            [application_path, "-batch", scene_path],
+            args,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             stdin=subprocess.PIPE
@@ -89,15 +94,14 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         # Generate thumbnail.
         thumbnail_path = os.path.join(path, "thumbnail.png")
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
-        args = [
-            ffmpeg_path,
+        args = openpype.lib.get_ffmpeg_tool_args(
+            "ffmpeg",
             "-y",
             "-i", os.path.join(path, list(collections[0])[0]),
             "-vf", "scale=300:-1",
             "-vframes", "1",
             thumbnail_path
-        ]
+        )
         process = subprocess.Popen(
             args,
             stdout=subprocess.PIPE,

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import re
 import uuid
 import logging
 from contextlib import contextmanager
@@ -9,7 +10,7 @@ import json
 import six
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name, get_current_asset_name
 from openpype.pipeline.context_tools import get_current_project_asset
 
 import hou
@@ -77,8 +78,8 @@ def generate_ids(nodes, asset_id=None):
     """
 
     if asset_id is None:
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         # Get the asset ID from the database for the asset of current context
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
 
@@ -127,6 +128,8 @@ def get_output_parameter(node):
         return node.parm("filename")
     elif node_type == "comp":
         return node.parm("copoutput")
+    elif node_type == "opengl":
+        return node.parm("picture")
     elif node_type == "arnold":
         if node.evalParm("ar_ass_export_enable"):
             return node.parm("ar_ass_file")
@@ -471,31 +474,21 @@ def maintained_selection():
 def reset_framerange():
     """Set frame range to current asset"""
 
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     # Get the asset ID from the database for the asset of current context
     asset_doc = get_asset_by_name(project_name, asset_name)
     asset_data = asset_doc["data"]
 
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
-    # Backwards compatibility
-    if frame_start is None or frame_end is None:
-        frame_start = asset_data.get("edit_in")
-        frame_end = asset_data.get("edit_out")
 
     if frame_start is None or frame_end is None:
         log.warning("No edit information found for %s" % asset_name)
         return
 
-    handles = asset_data.get("handles") or 0
-    handle_start = asset_data.get("handleStart")
-    if handle_start is None:
-        handle_start = handles
-
-    handle_end = asset_data.get("handleEnd")
-    if handle_end is None:
-        handle_end = handles
+    handle_start = asset_data.get("handleStart", 0)
+    handle_end = asset_data.get("handleEnd", 0)
 
     frame_start -= int(handle_start)
     frame_end += int(handle_end)
@@ -589,3 +582,59 @@ def splitext(name, allowed_multidot_extensions):
             return name[:-len(ext)], ext
 
     return os.path.splitext(name)
+
+
+def get_top_referenced_parm(parm):
+
+    processed = set()  # disallow infinite loop
+    while True:
+        if parm.path() in processed:
+            raise RuntimeError("Parameter references result in cycle.")
+
+        processed.add(parm.path())
+
+        ref = parm.getReferencedParm()
+        if ref.path() == parm.path():
+            # It returns itself when it doesn't reference
+            # another parameter
+            return ref
+        else:
+            parm = ref
+
+
+def evalParmNoFrame(node, parm, pad_character="#"):
+
+    parameter = node.parm(parm)
+    assert parameter, "Parameter does not exist: %s.%s" % (node, parm)
+
+    # If the parameter has a parameter reference, then get that
+    # parameter instead as otherwise `unexpandedString()` fails.
+    parameter = get_top_referenced_parm(parameter)
+
+    # Substitute out the frame numbering with padded characters
+    try:
+        raw = parameter.unexpandedString()
+    except hou.Error as exc:
+        print("Failed: %s" % parameter)
+        raise RuntimeError(exc)
+
+    def replace(match):
+        padding = 1
+        n = match.group(2)
+        if n and int(n):
+            padding = int(n)
+        return pad_character * padding
+
+    expression = re.sub(r"(\$F([0-9]*))", replace, raw)
+
+    with hou.ScriptEvalContext(parameter):
+        return hou.expandStringAtFrame(expression, 0)
+
+
+def get_color_management_preferences():
+    """Get default OCIO preferences"""
+    return {
+        "config": hou.Color.ocio_configPath(),
+        "display": hou.Color.ocio_defaultDisplay(),
+        "view": hou.Color.ocio_defaultView()
+    }

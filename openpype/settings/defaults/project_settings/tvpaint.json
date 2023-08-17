@@ -1,11 +1,12 @@
 {
     "imageio": {
+        "activate_host_color_management": true,
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "activate_host_rules": false,
             "rules": {}
         }
     },
@@ -42,6 +43,7 @@
             "default_variants": []
         },
         "auto_detect_render": {
+            "enabled": false,
             "allow_group_rename": true,
             "group_name_template": "L{group_index}",
             "group_idx_offset": 10,
@@ -58,11 +60,6 @@
                 255,
                 255,
                 255
-            ],
-            "families_to_review": [
-                "review",
-                "renderlayer",
-                "renderscene"
             ]
         },
         "ValidateProjectSettings": {

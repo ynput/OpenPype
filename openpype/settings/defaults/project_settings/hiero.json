@@ -1,27 +1,24 @@
 {
     "imageio": {
+        "activate_host_color_management": true,
         "ocio_config": {
-            "enabled": false,
+            "override_global_config": false,
             "filepath": []
         },
         "file_rules": {
-            "enabled": false,
+            "activate_host_rules": false,
             "rules": {}
         },
         "workfile": {
             "ocioConfigName": "nuke-default",
-            "ocioconfigpath": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
             "workingSpace": "linear",
             "sixteenBitLut": "sRGB",
             "eightBitLut": "sRGB",
             "floatLut": "linear",
             "logLut": "Cineon",
             "viewerLut": "sRGB",
-            "thumbnailLut": "sRGB"
+            "thumbnailLut": "sRGB",
+            "monitorOutLut": "sRGB"
         },
         "regexInputs": {
             "inputs": [

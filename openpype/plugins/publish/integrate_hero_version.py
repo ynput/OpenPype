@@ -6,6 +6,7 @@ import shutil
 
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_version_by_id,
     get_hero_version_by_subset_id,
@@ -141,6 +142,12 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             ))
             return
 
+        if AYON_SERVER_ENABLED and src_version_entity["name"] == 0:
+            self.log.debug(
+                "Version 0 cannot have hero version. Skipping."
+            )
+            return
+
         all_copied_files = []
         transfers = instance.data.get("transfers", list())
         for _src, dst in transfers:
@@ -195,11 +202,20 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
         entity_id = None
         if old_version:
             entity_id = old_version["_id"]
-        new_hero_version = new_hero_version_doc(
-            src_version_entity["_id"],
-            src_version_entity["parent"],
-            entity_id=entity_id
-        )
+
+        if AYON_SERVER_ENABLED:
+            new_hero_version = new_hero_version_doc(
+                src_version_entity["parent"],
+                copy.deepcopy(src_version_entity["data"]),
+                src_version_entity["name"],
+                entity_id=entity_id
+            )
+        else:
+            new_hero_version = new_hero_version_doc(
+                src_version_entity["_id"],
+                src_version_entity["parent"],
+                entity_id=entity_id
+            )
 
         if old_version:
             self.log.debug("Replacing old hero version.")
@@ -291,6 +307,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 ))
         try:
             src_to_dst_file_paths = []
+            path_template_obj = anatomy.templates_obj[template_key]["path"]
             for repre_info in published_repres.values():
 
                 # Skip if new repre does not have published repre files
@@ -303,9 +320,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                 anatomy_data.pop("version", None)
 
                 # Get filled path to repre context
-                anatomy_filled = anatomy.format(anatomy_data)
-                template_filled = anatomy_filled[template_key]["path"]
-
+                template_filled = path_template_obj.format_strict(anatomy_data)
                 repre_data = {
                     "path": str(template_filled),
                     "template": hero_template
@@ -343,8 +358,9 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     # Get head and tail for collection
                     frame_splitter = "_-_FRAME_SPLIT_-_"
                     anatomy_data["frame"] = frame_splitter
-                    _anatomy_filled = anatomy.format(anatomy_data)
-                    _template_filled = _anatomy_filled[template_key]["path"]
+                    _template_filled = path_template_obj.format_strict(
+                        anatomy_data
+                    )
                     head, tail = _template_filled.split(frame_splitter)
                     padding = int(
                         anatomy.templates[template_key]["frame_padding"]
@@ -388,22 +404,27 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                         old_repre, repre)
 
                     # Keep previously synchronized sites up-to-date
-                    # by comparing old and new sites and adding old sites
-                    # if missing in new ones
-                    old_repre_files_sites = [
-                        f.get("sites", []) for f in old_repre.get("files", [])
-                    ]
-                    for i, file in enumerate(repre.get("files", [])):
-                        repre_sites_names = {
-                            s["name"] for s in file.get("sites", [])
+                    #   by comparing old and new sites and adding old sites
+                    #   if missing in new ones
+                    # Prepare all sites from all files in old representation
+                    old_site_names = set()
+                    for file_info in old_repre.get("files", []):
+                        old_site_names |= {
+                            site["name"]
+                            for site in file_info["sites"]
                         }
-                        for site in old_repre_files_sites[i]:
-                            if site["name"] not in repre_sites_names:
-                                # Pop the date to tag for sync
-                                site.pop("created_dt", None)
-                                file["sites"].append(site)
 
-                        update_data["files"][i] = file
+                    for file_info in update_data.get("files", []):
+                        file_info.setdefault("sites", [])
+                        file_info_site_names = {
+                            site["name"]
+                            for site in file_info["sites"]
+                        }
+                        for site_name in old_site_names:
+                            if site_name not in file_info_site_names:
+                                file_info["sites"].append({
+                                    "name": site_name
+                                })
 
                     op_session.update_entity(
                         project_name,
@@ -515,24 +536,24 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             })
 
         if "folder" in anatomy.templates[template_key]:
-            anatomy_filled = anatomy.format(template_data)
-            publish_folder = anatomy_filled[template_key]["folder"]
+            template_obj = anatomy.templates_obj[template_key]["folder"]
+            publish_folder = template_obj.format_strict(template_data)
         else:
             # This is for cases of Deprecated anatomy without `folder`
             # TODO remove when all clients have solved this issue
-            template_data.update({
-                "frame": "FRAME_TEMP",
-                "representation": "TEMP"
-            })
-            anatomy_filled = anatomy.format(template_data)
-            # solve deprecated situation when `folder` key is not underneath
-            # `publish` anatomy
             self.log.warning((
                 "Deprecation warning: Anatomy does not have set `folder`"
                 " key underneath `publish` (in global of for project `{}`)."
             ).format(anatomy.project_name))
+            # solve deprecated situation when `folder` key is not underneath
+            # `publish` anatomy
+            template_data.update({
+                "frame": "FRAME_TEMP",
+                "representation": "TEMP"
+            })
+            template_obj = anatomy.templates_obj[template_key]["path"]
+            file_path = template_obj.format_strict(template_data)
 
-            file_path = anatomy_filled[template_key]["path"]
             # Directory
             publish_folder = os.path.dirname(file_path)
 
