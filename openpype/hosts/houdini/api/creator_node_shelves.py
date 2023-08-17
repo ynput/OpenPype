@@ -35,11 +35,11 @@ CATEGORY_GENERIC_TOOL = {
 
 CREATE_SCRIPT = """
 from openpype.hosts.houdini.api.creator_node_shelves import create_interactive
-create_interactive("{identifier}", "{variant}", **kwargs)
+create_interactive("{identifier}", **kwargs)
 """
 
 
-def create_interactive(creator_identifier, default_variant, **kwargs):
+def create_interactive(creator_identifier, **kwargs):
     """Create a Creator using its identifier interactively.
 
     This is used by the generated shelf tools as callback when a user selects
@@ -57,28 +57,31 @@ def create_interactive(creator_identifier, default_variant, **kwargs):
         list: The created instances.
 
     """
-
-    # TODO Use Qt instead
-    result, variant = hou.ui.readInput("Define variant name",
-                                       buttons=("Ok", "Cancel"),
-                                       initial_contents=default_variant,
-                                       title="Define variant",
-                                       help="Set the variant for the "
-                                            "publish instance",
-                                       close_choice=1)
-    if result == 1:
-        # User interrupted
-        return
-    variant = variant.strip()
-    if not variant:
-        raise RuntimeError("Empty variant value entered.")
-
     host = registered_host()
     context = CreateContext(host)
     creator = context.manual_creators.get(creator_identifier)
     if not creator:
-        raise RuntimeError("Invalid creator identifier: "
-                           "{}".format(creator_identifier))
+        raise RuntimeError("Invalid creator identifier: {}".format(
+            creator_identifier)
+        )
+
+    # TODO Use Qt instead
+    result, variant = hou.ui.readInput(
+        "Define variant name",
+        buttons=("Ok", "Cancel"),
+        initial_contents=creator.get_default_variant(),
+        title="Define variant",
+        help="Set the variant for the publish instance",
+        close_choice=1
+    )
+
+    if result == 1:
+        # User interrupted
+        return
+
+    variant = variant.strip()
+    if not variant:
+        raise RuntimeError("Empty variant value entered.")
 
     # TODO: Once more elaborate unique create behavior should exist per Creator
     #   instead of per network editor area then we should move this from here
@@ -196,9 +199,7 @@ def install():
 
             key = "openpype_create.{}".format(identifier)
             log.debug(f"Registering {key}")
-            script = CREATE_SCRIPT.format(
-                identifier=identifier, variant=creator.get_default_variant()
-            )
+            script = CREATE_SCRIPT.format(identifier=identifier)
             data = {
                 "script": script,
                 "language": hou.scriptLanguage.Python,
