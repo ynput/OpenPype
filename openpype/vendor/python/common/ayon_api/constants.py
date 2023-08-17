@@ -4,6 +4,25 @@ SERVER_API_ENV_KEY = "AYON_API_KEY"
 # Backwards compatibility
 SERVER_TOKEN_ENV_KEY = SERVER_API_ENV_KEY
 
+# --- User ---
+DEFAULT_USER_FIELDS = {
+    "roles",
+    "name",
+    "isService",
+    "isManager",
+    "isGuest",
+    "isAdmin",
+    "defaultRoles",
+    "createdAt",
+    "active",
+    "hasPassword",
+    "updatedAt",
+    "apiKeyPreview",
+    "attrib.avatarUrl",
+    "attrib.email",
+    "attrib.fullName",
+}
+
 # --- Product types ---
 DEFAULT_PRODUCT_TYPE_FIELDS = {
     "name",
