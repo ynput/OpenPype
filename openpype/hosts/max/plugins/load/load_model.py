@@ -6,7 +6,9 @@ from openpype.hosts.max.api.pipeline import (
     update_custom_attribute_data
 )
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.lib import maintained_selection
+from openpype.hosts.max.api.lib import (
+    maintained_selection, unique_namespace
+)
 
 
 class ModelAbcLoader(load.LoaderPlugin):
@@ -51,8 +53,15 @@ class ModelAbcLoader(load.LoaderPlugin):
         abc_container = abc_containers.pop()
         import_custom_attribute_data(
             abc_container, abc_container.Children)
+
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+
         return containerise(
-            name, [abc_container], context, loader=self.__class__.__name__
+            name, [abc_container], context,
+            namespace, loader=self.__class__.__name__
         )
 
     def update(self, container, representation):

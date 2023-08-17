@@ -7,6 +7,7 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 import os
 from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api import lib, maintained_selection
+from openpype.hosts.max.api.lib import unique_namespace
 from openpype.hosts.max.api.pipeline import (
     containerise,
     import_custom_attribute_data,
@@ -59,9 +60,14 @@ class AbcLoader(load.LoaderPlugin):
             for cam_shape in abc.Children:
                 cam_shape.playbackType = 2
 
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
 
         return containerise(
-            name, [abc_container], context, loader=self.__class__.__name__
+            name, [abc_container], context,
+            namespace, loader=self.__class__.__name__
         )
 
     def update(self, container, representation):

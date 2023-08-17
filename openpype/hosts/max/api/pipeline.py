@@ -154,17 +154,18 @@ def ls() -> list:
         yield lib.read(container)
 
 
-def containerise(name: str, nodes: list, context, loader=None, suffix="_CON"):
+def containerise(name: str, nodes: list, context,
+                 namespace=None, loader=None, suffix="_CON"):
     data = {
         "schema": "openpype:container-2.0",
         "id": AVALON_CONTAINER_ID,
         "name": name,
-        "namespace": "",
+        "namespace": namespace,
         "loader": loader,
         "representation": context["representation"]["_id"],
     }
 
-    container_name = f"{name}{suffix}"
+    container_name = f"{namespace}:{name}{suffix}"
     container = rt.container(name=container_name)
     for node in nodes:
         node.Parent = container

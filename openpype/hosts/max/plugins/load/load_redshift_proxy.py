@@ -11,6 +11,7 @@ from openpype.hosts.max.api.pipeline import (
     update_custom_attribute_data
 )
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import unique_namespace
 
 
 class RedshiftProxyLoader(load.LoaderPlugin):
@@ -40,8 +41,14 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         import_custom_attribute_data(container, [rs_proxy])
         asset = rt.getNodeByName(name)
 
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+
         return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
+            name, [asset], context,
+            namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt

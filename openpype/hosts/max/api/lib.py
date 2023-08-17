@@ -6,7 +6,7 @@ from typing import Any, Dict, Union
 
 import six
 from openpype.pipeline.context_tools import (
-    get_current_project, get_current_project_asset,)
+    get_current_project, get_current_project_asset)
 from pymxs import runtime as rt
 
 JSON_PREFIX = "JSON::"
@@ -312,3 +312,59 @@ def set_timeline(frameStart, frameEnd):
     """
     rt.animationRange = rt.interval(frameStart, frameEnd)
     return rt.animationRange
+
+
+def unique_namespace(namespace, format="%02d",
+                     prefix="", suffix="", con_suffix="CON"):
+    from pymxs import runtime as rt
+    """Return unique namespace
+
+    Arguments:
+        namespace (str): Name of namespace to consider
+        format (str, optional): Formatting of the given iteration number
+        suffix (str, optional): Only consider namespaces with this suffix.
+        con_suffix: max only, for finding the name of the master container
+
+    >>> unique_namespace("bar")
+    # bar01
+    >>> unique_namespace(":hello")
+    # :hello01
+    >>> unique_namespace("bar:", suffix="_NS")
+    # bar01_NS:
+
+    """
+
+    def current_namespace():
+        current = namespace
+        # When inside a namespace Maya adds no trailing :
+        if not current.endswith(":"):
+            current += ":"
+        return current
+
+    # Always check against the absolute namespace root
+    # There's no clash with :x if we're defining namespace :a:x
+    ROOT = ":" if namespace.startswith(":") else current_namespace()
+
+    # Strip trailing `:` tokens since we might want to add a suffix
+    start = ":" if namespace.startswith(":") else ""
+    end = ":" if namespace.endswith(":") else ""
+    namespace = namespace.strip(":")
+    if ":" in namespace:
+        # Split off any nesting that we don't uniqify anyway.
+        parents, namespace = namespace.rsplit(":", 1)
+        start += parents + ":"
+        ROOT += start
+
+    iteration = 1
+    increment_version = True
+    while increment_version:
+        nr_namespace = namespace + format % iteration
+        unique = prefix + nr_namespace + suffix
+        container_name = f"{unique}:{namespace}{con_suffix}"
+        if not rt.getNodeByName(container_name):
+            name_space = start + unique + end
+            increment_version = False
+            return name_space
+        else:
+            increment_version = True
+        iteration +=1

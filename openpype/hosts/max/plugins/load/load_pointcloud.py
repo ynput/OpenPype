@@ -1,6 +1,7 @@
 import os
 
 from openpype.hosts.max.api import lib, maintained_selection
+from openpype.hosts.max.api.lib import unique_namespace
 from openpype.hosts.max.api.pipeline import (
     containerise,
     import_custom_attribute_data,
@@ -31,8 +32,14 @@ class PointCloudLoader(load.LoaderPlugin):
         obj.Parent = prt_container
         import_custom_attribute_data(prt_container, [obj])
 
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+
         return containerise(
-            name, [prt_container], context, loader=self.__class__.__name__)
+            name, [prt_container], context,
+            namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         """update the container"""

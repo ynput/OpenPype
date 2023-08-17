@@ -1,6 +1,7 @@
 import os
 
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import unique_namespace
 from openpype.hosts.max.api.lib import maintained_selection
 from openpype.hosts.max.api.pipeline import (
     containerise,
@@ -34,8 +35,13 @@ class ObjLoader(load.LoaderPlugin):
         for selection in selections:
             selection.Parent = container
 
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
         return containerise(
-            name, [container], context, loader=self.__class__.__name__)
+            name, [container], context,
+            namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
