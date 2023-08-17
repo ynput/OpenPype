@@ -1,0 +1,27 @@
+{
+    "type": "dict",
+    "key": "version_control",
+    "label": "Version Control",
+    "collapsible": true,
+    "require_restart": true,
+    "checkbox_key": "enabled",
+    "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "enum",
+            "multiselection": false,
+            "key": "active_version_control_system",
+            "label": "Active Version Control System",
+            "enum_items":
+            [
+                {"none": "None"},
+                {"perforce": "Perforce"}
+            ],
+            "default": "none"
+        }
+    ]
+}

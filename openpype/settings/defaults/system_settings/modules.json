@@ -12,6 +12,10 @@
             "linux": ""
         }
     },
+    "version_control": {
+        "enabled": false,
+        "active_version_control_system": "none"
+    },
     "ftrack": {
         "enabled": false,
         "ftrack_server": "",

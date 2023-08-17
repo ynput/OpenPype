@@ -42,6 +42,10 @@
         },
         {
             "type": "schema",
+            "name": "schema_version_control"
+        },
+        {
+            "type": "schema",
             "name": "schema_ftrack"
         },
         {

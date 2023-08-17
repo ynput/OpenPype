@@ -7,10 +7,9 @@ from pathlib import Path
 from qtpy import QtCore
 
 from openpype import resources
-from openpype.lib import (
+from openpype.lib.applications import (
     PreLaunchHook,
     ApplicationLaunchFailed,
-    get_openpype_execute_args
 )
 from openpype.pipeline.workfile import get_workfile_template_key
 import openpype.hosts.unreal.lib as unreal_lib
@@ -30,6 +29,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
     shell script.
 
     """
+    app_groups = {"unreal"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

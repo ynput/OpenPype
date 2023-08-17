@@ -124,8 +124,6 @@ def _convert_applications_system_settings(
 
     # Applications settings
     ayon_apps = addon_settings["applications"]
-    if "adsk_3dsmax" in ayon_apps:
-        ayon_apps["3dsmax"] = ayon_apps.pop("adsk_3dsmax")
 
     additional_apps = ayon_apps.pop("additional_apps")
     applications = _convert_applications_groups(
@@ -302,6 +300,10 @@ def convert_system_settings(ayon_settings, default_settings, addon_versions):
 
     if "core" in ayon_settings:
         _convert_general(ayon_settings, output, default_settings)
+
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
 
     for key, value in default_settings.items():
         if key not in output:
@@ -601,9 +603,15 @@ def _convert_maya_project_settings(ayon_settings, output):
     reference_loader = ayon_maya_load["reference_loader"]
     reference_loader["namespace"] = (
         reference_loader["namespace"]
-        .replace("{folder[name]}", "{asset_name}")
         .replace("{product[name]}", "{subset}")
     )
+
+    if ayon_maya_load.get("import_loader"):
+        import_loader = ayon_maya_load["import_loader"]
+        import_loader["namespace"] = (
+            import_loader["namespace"]
+            .replace("{product[name]}", "{subset}")
+        )
 
     output["maya"] = ayon_maya
 
@@ -646,6 +654,9 @@ def _convert_nuke_knobs(knobs):
 
         elif knob_type == "vector_3d":
             value = [value["x"], value["y"], value["z"]]
+
+        elif knob_type == "box":
+            value = [value["x"], value["y"], value["r"], value["t"]]
 
         new_knob[value_key] = value
     return new_knobs
@@ -1264,6 +1275,10 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_slack_project_settings(ayon_settings, output)
 
     _convert_global_project_settings(ayon_settings, output, default_settings)
+
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
 
     for key, value in default_settings.items():
         if key not in output:
