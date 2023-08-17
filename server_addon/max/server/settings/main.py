@@ -25,7 +25,7 @@ class MaxSettings(BaseSettingsModel):
         default_factory=ImageIOSettings,
         title="Color Management (ImageIO)"
     )
-    render_settings: RenderSettingsModel = Field(
+    RenderSettings: RenderSettingsModel = Field(
         default_factory=RenderSettingsModel,
         title="Render Settings"
     )
@@ -39,7 +39,7 @@ class MaxSettings(BaseSettingsModel):
 
 
 DEFAULT_VALUES = {
-    "render_settings": DEFAULT_RENDER_SETTINGS,
+    "RenderSettings": DEFAULT_RENDER_SETTINGS,
     "PointCloud": {
         "attribute": [
             {"name": "Age", "value": "age"},
