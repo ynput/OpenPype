@@ -301,10 +301,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Priority": priority,
 
                 "Group": self.deadline_group,
-                "Pool": self.deadline_pool or instance.data.get("primaryPool"),
+                "Pool": self.deadline_pool or instance.data.get("primaryPool") or "local",
                 "SecondaryPool": secondary_pool,
                 # ensure the outputdirectory with correct slashes
-                "OutputDirectory0": output_dir.replace("\\", "/")
+                "OutputDirectory0": output_dir.replace("\\", "/"),
+                # "PostTaskScript":post_task_script,
+
             },
             "PluginInfo": {
                 "Version": self.plugin_pype_version,

@@ -306,8 +306,8 @@ class NukeWriteCreator(NukeCreator):
 
     def get_pre_create_attr_defs(self):
         attr_defs = [
-            # NOTE hornet updated for review default off
-            BoolDef("use_selection",default=False,label="Use selection"),
+            # NOTE hornet updated for Use selection default off
+            BoolDef("use_selection",default=False,enabled=False,label="Use selection"),
             # BoolDef("use_selection", label="Use selection"),
             self._get_render_target_enum()
         ]
@@ -326,7 +326,7 @@ class NukeWriteCreator(NukeCreator):
     def _get_render_target_enum(self):
         rendering_targets = {
             "local": "Local machine rendering",
-            "frames": "Use existing frames",
+            # "frames": "Use existing frames",
             "farm_frames": "Use existing frames on farm" # NOTE hornet update on use existing frames on farm
         }
         if ("farm_rendering" in self.instance_attributes):
@@ -341,8 +341,7 @@ class NukeWriteCreator(NukeCreator):
     def _get_reviewable_bool(self):
         return BoolDef(
             "review",
-            default=False, # NOTE hornet updated for review default off
-            # default=True,
+            default=True,
             label="Review"
         )
 
