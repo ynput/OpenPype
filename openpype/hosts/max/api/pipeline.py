@@ -160,7 +160,7 @@ def containerise(name: str, nodes: list, context,
         "schema": "openpype:container-2.0",
         "id": AVALON_CONTAINER_ID,
         "name": name,
-        "namespace": namespace,
+        "namespace": namespace or "",
         "loader": loader,
         "representation": context["representation"]["_id"],
     }

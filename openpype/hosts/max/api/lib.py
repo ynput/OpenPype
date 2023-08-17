@@ -367,4 +367,4 @@ def unique_namespace(namespace, format="%02d",
             return name_space
         else:
             increment_version = True
-        iteration +=1
+        iteration += 1
