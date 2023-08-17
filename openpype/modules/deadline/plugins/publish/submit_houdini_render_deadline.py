@@ -106,7 +106,7 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 job_info.EnvironmentKeyValue[key] = value
 
         # to recognize render jobs
-        job_info.add_render_job_env_var(job_info)
+        job_info.add_render_job_env_var()
 
         for i, filepath in enumerate(instance.data["files"]):
             dirname = os.path.dirname(filepath)
