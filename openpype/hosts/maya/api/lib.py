@@ -4053,6 +4053,9 @@ def create_rig_animation_instance(
             creator_plugin,
             name=namespace,
             asset=asset,
-            options={"useSelection": True},
+            options={
+                "useSelection": True,
+                "animSet": True
+                },
             data={"dependencies": dependency}
         )
