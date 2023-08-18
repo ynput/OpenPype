@@ -29,7 +29,7 @@ knobMatrix = { 'exr': ['autocrop', 'datatype', 'heroview', 'metadata', 'interlea
                 'tiff': ['datatype', 'compression'],
                 'jpeg': []
 }
-universalKnobs = ['colorspace', 'first', 'last','use_limit']
+universalKnobs = ['colorspace', 'views','first', 'last','use_limit']
 
 knobMatrix = {key: universalKnobs + value for key, value in knobMatrix.items()}
 #list of key-value tuples for write node knob presets based on file extension
