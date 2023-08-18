@@ -2,6 +2,8 @@ from openpype.pipeline.create.creator_plugins import SubsetConvertorPlugin
 from openpype.hosts.maya.api import plugin
 from openpype.hosts.maya.api.lib import read
 
+from openpype.client import get_asset_by_name
+
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
@@ -134,6 +136,18 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
             # The family gets converted to the new family (this is due to
             # "rendering" family being converted to "renderlayer" family)
             original_data["family"] = creator.family
+
+            # recreate subset name as without it would be
+            # `renderingMain` vs correct `renderMain`
+            project_name = self.create_context.get_current_project_name()
+            asset_doc = get_asset_by_name(project_name,
+                                          original_data["asset"])
+            subset_name = creator.get_subset_name(
+                original_data["variant"],
+                data["task"],
+                asset_doc,
+                project_name)
+            original_data["subset"] = subset_name
 
             # Convert to creator attributes when relevant
             creator_attributes = {}
