@@ -26,9 +26,7 @@ class PointCloudLoader(load.LoaderPlugin):
         filepath = os.path.normpath(self.filepath_from_context(context))
         obj = rt.tyCache()
         obj.filename = filepath
-        prt_container = rt.GetNodeByName(obj.name)
-        prt_container = rt.container()
-        prt_container.name = name
+        prt_container = rt.Container(name=name)
         obj.Parent = prt_container
         import_custom_attribute_data(prt_container, [obj])
 
@@ -49,10 +47,12 @@ class PointCloudLoader(load.LoaderPlugin):
         node = rt.GetNodeByName(container["instance_node"])
         with maintained_selection():
             rt.Select(node.Children)
-            for prt in rt.Selection:
-                prt_object = rt.GetNodeByName(prt.name)
-                prt_object.filename = path
-        update_custom_attribute_data(node, node.Children)
+            for sub_node in rt.Selection:
+                children_node = sub_node.Children
+                update_custom_attribute_data(
+                    sub_node, sub_node.Children)
+                for prt in children_node:
+                    prt.filename = path
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

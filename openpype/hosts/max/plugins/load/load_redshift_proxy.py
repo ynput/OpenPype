@@ -35,11 +35,9 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         if collections:
             rs_proxy.is_sequence = True
 
-        container = rt.container()
-        container.name = name
+        container = rt.Container(name=name)
         rs_proxy.Parent = container
         import_custom_attribute_data(container, [rs_proxy])
-        asset = rt.getNodeByName(name)
 
         namespace = unique_namespace(
             name + "_",
@@ -47,7 +45,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         )
 
         return containerise(
-            name, [asset], context,
+            name, [container], context,
             namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
@@ -55,12 +53,13 @@ class RedshiftProxyLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
-        for children in node.Children:
-            children_node = rt.getNodeByName(children.name)
-            for proxy in children_node.Children:
+        for sub_node in node.Children:
+            children_node = sub_node.Children
+            update_custom_attribute_data(
+                sub_node, children_node)
+            for proxy in children_node:
                 proxy.file = path
 
-        update_custom_attribute_data(node, node.Children)
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

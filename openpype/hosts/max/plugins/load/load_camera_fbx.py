@@ -54,7 +54,10 @@ class FbxLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
-        inst_name, _ = node_name.split("_")
+        container_name = node_name.split(":")[-1]
+        param_container, _ = container_name.split("_")
+
+        inst_container = rt.getNodeByName(param_container)
         rt.Select(node.Children)
 
         rt.FBXImporterSetParam("Animation", True)
@@ -65,12 +68,16 @@ class FbxLoader(load.LoaderPlugin):
         rt.ImportFile(
             path, rt.name("noPrompt"), using=rt.FBXIMP)
         current_fbx_objects = rt.GetCurrentSelection()
-        inst_container = rt.getNodeByName(inst_name)
         for fbx_object in current_fbx_objects:
             if fbx_object.Parent != inst_container:
                 fbx_object.Parent = inst_container
-        update_custom_attribute_data(
-            inst_container, rt.GetCurrentSelection())
+
+        for children in node.Children:
+            if rt.classOf(children) == rt.Container:
+                if children.name == param_container:
+                    update_custom_attribute_data(
+                        children, current_fbx_objects)
+
         with maintained_selection():
             rt.Select(node)
 

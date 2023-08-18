@@ -40,7 +40,6 @@ class MaxSceneLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-
         return containerise(
             name, max_container, context,
             namespace, loader=self.__class__.__name__)
@@ -50,9 +49,11 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node_name = container["instance_node"]
+
         node = rt.getNodeByName(node_name)
-        inst_name, _ = node_name.split("_")
-        inst_container = rt.getNodeByName(inst_name)
+        container_name = node_name.split(":")[-1]
+        param_container, _ = container_name.split("_")
+
         # delete the old container with attribute
         # delete old duplicate
         prev_max_object_names = [obj.name for obj
@@ -71,10 +72,14 @@ class MaxSceneLoader(load.LoaderPlugin):
             prev_max_object = rt.getNodeByName(object_name)
             rt.Delete(prev_max_object)
 
-        update_custom_attribute_data(inst_container, current_max_objects)
-
         for max_object in current_max_objects:
             max_object.Parent = node
+        for children in node.Children:
+            if rt.classOf(children) == rt.Container:
+                if children.name == param_container:
+                    update_custom_attribute_data(
+                        children, current_max_objects)
+
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

@@ -58,7 +58,8 @@ class ModelUSDLoader(load.LoaderPlugin):
             for r in n.Children:
                 rt.Delete(r)
             rt.Delete(n)
-        instance_name, _ = node_name.split("_")
+        container_name = node_name.split(":")[-1]
+        param_container, _ = container_name.split("_")
 
         import_options = rt.USDImporter.CreateOptions()
         base_filename = os.path.basename(path)
@@ -70,9 +71,13 @@ class ModelUSDLoader(load.LoaderPlugin):
         rt.USDImporter.importFile(
             path, importOptions=import_options)
 
-        asset = rt.GetNodeByName(instance_name)
+        asset = rt.GetNodeByName(param_container)
         asset.Parent = node
-        update_custom_attribute_data(asset, asset.Children)
+        for children in node.Children:
+            if rt.classOf(children) == rt.Container:
+                if children.name == param_container:
+                    update_custom_attribute_data(
+                        asset, asset.Children)
 
         with maintained_selection():
             rt.Select(node)

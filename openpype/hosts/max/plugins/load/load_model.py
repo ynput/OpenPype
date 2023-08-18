@@ -69,23 +69,19 @@ class ModelAbcLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
-        rt.Select(node.Children)
 
-        nodes_list = []
         with maintained_selection():
-            rt.Select(node)
-        for alembic in rt.Selection:
-            abc = rt.GetNodeByName(alembic.name)
-            update_custom_attribute_data(abc, abc.Children)
-            rt.Select(abc.Children)
-            for abc_con in rt.Selection:
-                abc_container = rt.GetNodeByName(abc_con.name)
-                abc_container.source = path
-                rt.Select(abc_container.Children)
-                for abc_obj in rt.Selection:
-                    alembic_obj = rt.GetNodeByName(abc_obj.name)
-                    alembic_obj.source = path
-                    nodes_list.append(alembic_obj)
+            rt.Select(node.Children)
+
+            for alembic in rt.Selection:
+                abc = rt.GetNodeByName(alembic.name)
+                update_custom_attribute_data(abc, abc.Children)
+                rt.Select(abc.Children)
+                for abc_con in abc.Children:
+                    abc_con.source = path
+                    rt.Select(abc_con.Children)
+                    for abc_obj in abc_con.Children:
+                        abc_obj.source = path
 
         lib.imprint(
             container["instance_node"],

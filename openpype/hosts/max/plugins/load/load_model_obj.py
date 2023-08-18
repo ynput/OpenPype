@@ -50,9 +50,11 @@ class ObjLoader(load.LoaderPlugin):
         node_name = container["instance_node"]
         node = rt.GetNodeByName(node_name)
 
-        instance_name, _ = node_name.split("_")
-        inst_container = rt.GetNodeByName(instance_name)
-        for child in container.Children:
+        container_name = node_name.split(":")[-1]
+        param_container, _ = container_name.split("_")
+
+        inst_container = rt.getNodeByName(param_container)
+        for child in inst_container.Children:
             rt.Delete(child)
 
         rt.Execute(f'importFile @"{path}" #noPrompt using:ObjImp')
