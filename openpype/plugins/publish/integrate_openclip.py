@@ -12,8 +12,8 @@ class IntegrateOpenclip(pyblish.api.InstancePlugin):
     label = "Integrate Openclip"
     order = pyblish.api.IntegratorOrder + 0.91
     families = ['render', 'plate']
-    hosts = ['nuke', 'standalonepublisher', 'traypublisher']
-    targets = ['local', 'deadline']
+    hosts = ['nuke', 'standalonepublisher', 'traypublisher','shell']
+    targets = ['local', 'deadline', 'farm_frames', 'farm']
 # the pattern based clips are very compact and can reasonably fit here to avoid referencing non python files in the publish steps
     template = r"""<?xml version="1.0"?>
 <clip type="clip" version="6">
@@ -34,9 +34,8 @@ class IntegrateOpenclip(pyblish.api.InstancePlugin):
         clippable_reps = [rep for rep in instance_repres
                           if 'files' in rep.keys() and 'ext' in rep.keys() and rep['ext'] in supported_exts]
         sequence = True
-        for rep in clippable_reps:
-            if 'ext' in rep.keys() and rep['ext'] in ['mov','mp4']:
-                sequence = False
+        if 'ext' in clippable_reps[0].keys() and clippable_reps[0]['ext'] in ['mov','mp4']:
+            sequence = False
         self.log.info(clippable_reps)
         self.log.info(instance_repres)
         if len(clippable_reps) < 1:
