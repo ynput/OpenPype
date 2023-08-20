@@ -164,6 +164,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 submit_frame_start,
                 submit_frame_end
             )
+            self.log.info('response : {}'.format(response))
             # Store output dir for unified publisher (filesequence)
             instance.data["deadlineSubmissionJob"] = response.json()
             instance.data["outputDir"] = os.path.dirname(
@@ -426,18 +427,17 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
         self.log.debug("__ expectedFiles: `{}`".format(
             instance.data["expectedFiles"]))
-        if instance.data.get("render_target") == "farm_frames" and 'baking' in jobname:
+        if instance.data.get("render_target") == "farm_frames":
+            if 'baking' in jobname:
                 response = requests.post(self.deadline_url, json=payload, timeout=10)
                 if not response.ok:
                     raise Exception(response.text)
                 return response
         else:
-            if 'baking' in jobname:
-                response = requests.post(self.deadline_url, json=payload, timeout=10)
-                if not response.ok:
-                    raise Exception(response.text)
-
-                return response
+            response = requests.post(self.deadline_url, json=payload, timeout=10)
+            if not response.ok:
+                raise Exception(response.text)
+            return response
 
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
