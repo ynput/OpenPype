@@ -327,7 +327,7 @@ class NukeWriteCreator(NukeCreator):
         rendering_targets = {
             "local": "Local machine rendering",
             # "frames": "Use existing frames",
-            "farm_frames": "Use existing frames on farm" # NOTE hornet update on use existing frames on farm
+            "a_farm_frames": "Use existing frames on farm" # NOTE hornet update on use existing frames on farm
         }
         if ("farm_rendering" in self.instance_attributes):
             rendering_targets["farm"] = "Farm rendering"
@@ -335,7 +335,7 @@ class NukeWriteCreator(NukeCreator):
         return EnumDef(
             "render_target",
             items=rendering_targets,
-            label="Render target"
+            label="Publishing Method"
         )
 
     def _get_reviewable_bool(self):
