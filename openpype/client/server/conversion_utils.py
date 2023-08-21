@@ -1074,7 +1074,7 @@ def convert_update_folder_to_v4(project_name, asset_id, update_data, con):
     parent_id = None
     tasks = None
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.get("attrib") or {}
     if "type" in update_data:
         new_update_data["active"] = update_data["type"] == "asset"
 
@@ -1126,7 +1126,7 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
     full_update_data = _from_flat_dict(update_data)
     data = full_update_data.get("data")
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.get("attrib") or {}
     if data:
         if "family" in data:
             family = data.pop("family")
@@ -1179,7 +1179,7 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
     full_update_data = _from_flat_dict(update_data)
     data = full_update_data.get("data")
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.get("attrib") or {}
     if data:
         if "author" in data:
             new_update_data["author"] = data.pop("author")
@@ -1252,7 +1252,7 @@ def convert_update_representation_to_v4(
     data = full_update_data.get("data")
 
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.get("attrib") or {}
     if data:
         for key, value in data.items():
             if key in folder_attributes:
