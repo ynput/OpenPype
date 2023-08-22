@@ -10,6 +10,8 @@ from openpype.style import (
 )
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 
+from .save_as_dialog import SaveAsDialog
+
 FILENAME_ROLE = QtCore.Qt.UserRole + 1
 FILEPATH_ROLE = QtCore.Qt.UserRole + 2
 DATE_MODIFIED_ROLE = QtCore.Qt.UserRole + 3
@@ -404,7 +406,11 @@ class FilesWidget(QtWidgets.QWidget):
             self._controller.open_workfile(work_file)
 
     def _on_workarea_save_clicked(self):
-        pass
+        dialog = SaveAsDialog(self._controller, self)
+        dialog.update_context()
+        dialog.exec_()
+        result = dialog.get_result()
+        print(result)
 
     def _on_workarea_path_changed(self, event):
         valid_path = event["path"] is not None

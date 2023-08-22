@@ -11,6 +11,8 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.workfile import get_last_workfile_with_version
 from openpype.pipeline.template_data import get_template_data_with_names
+
+from openpype.pipeline import get_current_host_name
 from openpype.tools.utils import PlaceholderLineEdit
 
 log = logging.getLogger(__name__)
@@ -35,58 +37,6 @@ def build_workfile_data(session):
     })
 
     return data
-
-
-class CommentMatcher(object):
-    """Use anatomy and work file data to parse comments from filenames"""
-    def __init__(self, anatomy, template_key, data):
-
-        self.fname_regex = None
-
-        template = anatomy.templates[template_key]["file"]
-        if "{comment}" not in template:
-            # Don't look for comment if template doesn't allow it
-            return
-
-        # Create a regex group for extensions
-        extensions = registered_host().file_extensions()
-        any_extension = "(?:{})".format(
-            "|".join(re.escape(ext.lstrip(".")) for ext in extensions)
-        )
-
-        # Use placeholders that will never be in the filename
-        temp_data = copy.deepcopy(data)
-        temp_data["comment"] = "<<comment>>"
-        temp_data["version"] = "<<version>>"
-        temp_data["ext"] = "<<ext>>"
-
-        template_obj = anatomy.templates_obj[template_key]["file"]
-        fname_pattern = template_obj.format_strict(temp_data)
-        fname_pattern = re.escape(fname_pattern)
-
-        # Replace comment and version with something we can match with regex
-        replacements = {
-            "<<comment>>": "(.+)",
-            "<<version>>": "[0-9]+",
-            "<<ext>>": any_extension,
-        }
-        for src, dest in replacements.items():
-            fname_pattern = fname_pattern.replace(re.escape(src), dest)
-
-        # Match from beginning to end of string to be safe
-        fname_pattern = "^{}$".format(fname_pattern)
-
-        self.fname_regex = re.compile(fname_pattern)
-
-    def parse_comment(self, filepath):
-        """Parse the {comment} part from a filename"""
-        if not self.fname_regex:
-            return
-
-        fname = os.path.basename(filepath)
-        match = self.fname_regex.match(fname)
-        if match:
-            return match.group(1)
 
 
 class SubversionLineEdit(QtWidgets.QWidget):
@@ -177,28 +127,20 @@ class SaveAsDialog(QtWidgets.QDialog):
 
     """
 
-    def __init__(
-        self, parent, root, anatomy, template_key, extensions, session=None
-    ):
+    def __init__(self, controller, parent):
         super(SaveAsDialog, self).__init__(parent=parent)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
-        self.result = None
-        self.host = registered_host()
-        self.root = root
-        self.work_file = None
-        self._extensions = extensions
+        self._controller = controller
+        self._template = None
+        self._last_version = None
+        self._comment_value = None
+        self._version_value = None
+        self._ext_value = None
+        self._workdir = None
+        self._fill_data = None
 
-        if not session:
-            # Fallback to active session
-            session = legacy_io.Session
-
-        self.data = build_workfile_data(session)
-
-        # Store project anatomy
-        self.anatomy = anatomy
-        self.template = anatomy.templates[template_key]["file"]
-        self.template_key = template_key
+        self._result = None
 
         # Btns widget
         btns_widget = QtWidgets.QWidget(self)
@@ -233,54 +175,33 @@ class SaveAsDialog(QtWidgets.QDialog):
         version_layout.addWidget(last_version_check)
 
         # Preview widget
-        preview_label = QtWidgets.QLabel("Preview filename", inputs_widget)
+        preview_widget = QtWidgets.QLabel("Preview filename", inputs_widget)
 
         # Subversion input
-        subversion = SubversionLineEdit(inputs_widget)
-        subversion.set_placeholder("Will be part of filename.")
+        subversion_input = SubversionLineEdit(inputs_widget)
+        subversion_input.set_placeholder("Will be part of filename.")
 
         # Extensions combobox
-        ext_combo = QtWidgets.QComboBox(inputs_widget)
+        extension_combobox = QtWidgets.QComboBox(inputs_widget)
         # Add styled delegate to use stylesheets
-        ext_delegate = QtWidgets.QStyledItemDelegate()
-        ext_combo.setItemDelegate(ext_delegate)
-        ext_combo.addItems(self._extensions)
+        extension_delegate = QtWidgets.QStyledItemDelegate()
+        extension_combobox.setItemDelegate(extension_delegate)
+
+        version_label = QtWidgets.QLabel("Version:", inputs_widget)
+        subversion_label = QtWidgets.QLabel("Subversion:", inputs_widget)
+        extension_label = QtWidgets.QLabel("Extension:", inputs_widget)
+        preview_label = QtWidgets.QLabel("Preview:", inputs_widget)
 
         # Build inputs
-        inputs_layout = QtWidgets.QFormLayout(inputs_widget)
-        # Add version only if template contains version key
-        # - since the version can be padded with "{version:0>4}" we only search
-        #   for "{version".
-        if "{version" in self.template:
-            inputs_layout.addRow("Version:", version_widget)
-        else:
-            version_widget.setVisible(False)
-
-        # Add subversion only if template contains `{comment}`
-        if "{comment}" in self.template:
-            inputs_layout.addRow("Subversion:", subversion)
-
-            # Detect whether a {comment} is in the current filename - if so,
-            # preserve it by default and set it in the comment/subversion field
-            current_filepath = self.host.current_file()
-            if current_filepath:
-                # We match the current filename against the current session
-                # instead of the session where the user is saving to.
-                current_data = build_workfile_data(legacy_io.Session)
-                matcher = CommentMatcher(anatomy, template_key, current_data)
-                comment = matcher.parse_comment(current_filepath)
-                if comment:
-                    log.info("Detected subversion comment: {}".format(comment))
-                    self.data["comment"] = comment
-                    subversion.set_text(comment)
-
-            existing_comments = self.get_existing_comments()
-            subversion.set_values(existing_comments)
-
-        else:
-            subversion.setVisible(False)
-        inputs_layout.addRow("Extension:", ext_combo)
-        inputs_layout.addRow("Preview:", preview_label)
+        inputs_layout = QtWidgets.QGridLayout(inputs_widget)
+        inputs_layout.addWidget(version_label, 0, 0)
+        inputs_layout.addWidget(version_widget, 0, 1)
+        inputs_layout.addWidget(subversion_label, 1, 0)
+        inputs_layout.addWidget(subversion_input, 1, 1)
+        inputs_layout.addWidget(extension_label, 2, 0)
+        inputs_layout.addWidget(extension_combobox, 2, 1)
+        inputs_layout.addWidget(preview_label, 3, 0)
+        inputs_layout.addWidget(preview_widget, 3, 1)
 
         # Build layout
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -288,85 +209,141 @@ class SaveAsDialog(QtWidgets.QDialog):
         main_layout.addWidget(btns_widget)
 
         # Signal callback registration
-        version_input.valueChanged.connect(self.on_version_spinbox_changed)
+        version_input.valueChanged.connect(self._on_version_spinbox_change)
         last_version_check.stateChanged.connect(
-            self.on_version_checkbox_changed
+            self._on_version_checkbox_change
         )
 
-        subversion.text_changed.connect(self.on_comment_changed)
-        ext_combo.currentIndexChanged.connect(self.on_extension_changed)
+        subversion_input.text_changed.connect(self._on_comment_change)
+        extension_combobox.currentIndexChanged.connect(
+            self._on_extension_change)
 
-        btn_ok.pressed.connect(self.on_ok_pressed)
-        btn_cancel.pressed.connect(self.on_cancel_pressed)
+        btn_ok.pressed.connect(self._on_ok_pressed)
+        btn_cancel.pressed.connect(self._on_cancel_pressed)
+
+        # Store objects
+        self._inputs_layout = inputs_layout
+
+        self._btn_ok = btn_ok
+        self._btn_cancel = btn_cancel
+
+        self._version_widget = version_widget
+
+        self._version_input = version_input
+        self._last_version_check = last_version_check
+
+        self._extension_delegate = extension_delegate
+        self._extension_combobox = extension_combobox
+        self._subversion_input = subversion_input
+        self._preview_widget = preview_widget
+
+        self._version_label = version_label
+        self._subversion_label = subversion_label
+        self._extension_label = extension_label
+        self._preview_label = preview_label
+
+        # Post init setup
 
         # Allow "Enter" key to accept the save.
         btn_ok.setDefault(True)
 
         # Force default focus to comment, some hosts didn't automatically
         # apply focus to this line edit (e.g. Houdini)
-        subversion.setFocus()
+        subversion_input.setFocus()
 
-        # Store widgets
-        self.btn_ok = btn_ok
+    def update_context(self):
+        # Add version only if template contains version key
+        # - since the version can be padded with "{version:0>4}" we only search
+        #   for "{version".
+        selected_context = self._controller.get_selected_context()
+        data = self._controller.get_workarea_save_as_data(
+            selected_context["folder_id"], selected_context["task_id"]
+        )
+        template = data["file_template"]
+        last_version = data["last_version"]
+        comment = data["comment"]
+        comment_hints = data["comment_hints"]
 
-        self.version_widget = version_widget
+        template_has_version = "{version" in template
 
-        self.version_input = version_input
-        self.last_version_check = last_version_check
+        self._workdir = data["workdir"]
+        self._fill_data = data["fill_data"]
 
-        self.preview_label = preview_label
-        self.subversion = subversion
-        self.ext_combo = ext_combo
-        self._ext_delegate = ext_delegate
+        self._extension_combobox.clear()
+        self._extension_combobox.addItems(data["extensions"])
 
-        self.refresh()
+        self._version_input.setValue(last_version)
 
-    def get_existing_comments(self):
-        matcher = CommentMatcher(self.anatomy, self.template_key, self.data)
-        host_extensions = set(self._extensions)
-        comments = set()
-        if os.path.isdir(self.root):
-            for fname in os.listdir(self.root):
-                if not os.path.isfile(os.path.join(self.root, fname)):
-                    continue
+        vw_idx = self._inputs_layout.indexOf(self._version_widget)
+        self._version_label.setVisible(template_has_version)
+        self._version_widget.setVisible(template_has_version)
+        if template_has_version:
+            if vw_idx == -1:
+                self._inputs_layout.addWidget(self._version_label, 0, 0)
+                self._inputs_layout.addWidget(self._version_widget, 0, 1)
+        elif vw_idx != -1:
+            self._inputs_layout.takeAt(vw_idx)
+            self._inputs_layout.takeAt(
+                self._inputs_layout.indexOf(self._version_label)
+            )
 
-                ext = os.path.splitext(fname)[-1]
-                if ext not in host_extensions:
-                    continue
+        template_has_comment = "{comment" in template
+        cw_idx = self._inputs_layout.indexOf(self._subversion_input)
+        self._subversion_label.setVisible(template_has_comment)
+        self._subversion_input.setVisible(template_has_comment)
+        if template_has_comment:
+            if cw_idx == -1:
+                self._inputs_layout.addWidget(self._subversion_label, 1, 0)
+                self._inputs_layout.addWidget(self._subversion_input, 1, 1)
+        elif cw_idx != -1:
+            self._inputs_layout.takeAt(cw_idx)
+            self._inputs_layout.takeAt(
+                self._inputs_layout.indexOf(self._subversion_label)
+            )
 
-                comment = matcher.parse_comment(fname)
-                if comment:
-                    comments.add(comment)
-
-        return list(comments)
-
-    def on_version_spinbox_changed(self, value):
-        self.data["version"] = value
-        self.refresh()
-
-    def on_version_checkbox_changed(self, _value):
-        self.refresh()
-
-    def on_comment_changed(self, text):
-        self.data["comment"] = text
-        self.refresh()
-
-    def on_extension_changed(self):
-        ext = self.ext_combo.currentText()
-        if ext == self.data["ext"]:
+        if not template_has_comment:
             return
-        self.data["ext"] = ext
+
+        self._subversion_input.set_text(comment or "")
+        self._subversion_input.set_values(comment_hints)
+
+    def _on_version_spinbox_change(self, value):
+        if not self._last_version_check.isChecked():
+            return
+        self._version_value = value
         self.refresh()
 
-    def on_ok_pressed(self):
-        self.result = self.work_file
+    def _on_version_checkbox_change(self):
+        version_value = None
+        if not self._last_version_check.isChecked():
+            version_value = self._version_input.value()
+        if self._version_value == version_value:
+            return
+        self._version_value = version_value
+        self.refresh()
+
+    def _on_comment_change(self, text):
+        if self._comment_value == text:
+            return
+        self._comment_value = text
+        self.refresh()
+
+    def _on_extension_change(self):
+        ext = self._extension_combobox.currentText()
+        if ext == self._ext_value:
+            return
+        self._ext_value = ext
+        self.refresh()
+
+    def _on_ok_pressed(self):
+        self._result = self.work_file
         self.close()
 
-    def on_cancel_pressed(self):
+    def _on_cancel_pressed(self):
         self.close()
 
     def get_result(self):
-        return self.result
+        return self._result
 
     def get_work_file(self):
         data = copy.deepcopy(self.data)
@@ -379,6 +356,12 @@ class SaveAsDialog(QtWidgets.QDialog):
         return template_obj.format_strict(data)
 
     def refresh(self):
+        fill_data = copy.deepcopy(self._fill_data)
+        fill_data.update({
+            "ext": self._ext_value,
+            "": ""
+        })
+
         extensions = list(self._extensions)
         extension = self.data["ext"]
         if extension is None:
@@ -392,20 +375,20 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         if extension != self.data["ext"]:
             self.data["ext"] = extension
-            index = self.ext_combo.findText(
+            index = self._extension_combobox.findText(
                 extension, QtCore.Qt.MatchFixedString
             )
             if index >= 0:
-                self.ext_combo.setCurrentIndex(index)
+                self._extension_combobox.setCurrentIndex(index)
 
-        if not self.last_version_check.isChecked():
-            self.version_input.setEnabled(True)
-            self.data["version"] = self.version_input.value()
+        if not self._last_version_check.isChecked():
+            self._version_input.setEnabled(True)
+            self.data["version"] = self._version_input.value()
 
             work_file = self.get_work_file()
 
         else:
-            self.version_input.setEnabled(False)
+            self._version_input.setEnabled(False)
 
             data = copy.deepcopy(self.data)
             template = str(self.template)
@@ -420,7 +403,13 @@ class SaveAsDialog(QtWidgets.QDialog):
             )[1]
 
             if version is None:
-                version = 1
+                version = version_start.get_versioning_start(
+                    data["project"]["name"],
+                    get_current_host_name(),
+                    task_name=self.data["task"]["name"],
+                    task_type=self.data["task"]["type"],
+                    family="workfile"
+                )
             else:
                 version += 1
 
@@ -456,14 +445,14 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         path_exists = os.path.exists(os.path.join(self.root, work_file))
 
-        self.btn_ok.setEnabled(not path_exists)
+        self._btn_ok.setEnabled(not path_exists)
 
         if path_exists:
-            self.preview_label.setText(
+            self._preview_widget.setText(
                 "<font color='red'>Cannot create \"{0}\" because file exists!"
                 "</font>".format(work_file)
             )
         else:
-            self.preview_label.setText(
+            self._preview_widget.setText(
                 "<font color='green'>{0}</font>".format(work_file)
             )
