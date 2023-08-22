@@ -103,13 +103,16 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
             # stash render job id for later validation
             instance.data["render_job_id"] = data.get("job").get("_id")
-
+            staging_dir_persistent = instance.data.get(
+                "stagingDir_persistent", False
+            )
             representations = []
             for repre_data in instance_data.get("representations") or []:
                 self._fill_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
 
-                add_repre_files_for_cleanup(instance, repre_data)
+                if not staging_dir_persistent:
+                    add_repre_files_for_cleanup(instance, repre_data)
 
             instance.data["representations"] = representations
 
@@ -124,7 +127,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 self.log.info(
                     f"Adding audio to instance: {instance.data['audio']}")
 
-            return instance.data.get("stagingDir_persistent", False)
+            return staging_dir_persistent
 
     def process(self, context):
         self._context = context
