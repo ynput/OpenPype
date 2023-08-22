@@ -20,7 +20,7 @@ import threading
 import typing
 
 from . import p4_errors
-from . import p4_offline
+#from . import p4_offline
 from ..vendor import P4
 
 from contextlib import contextmanager
@@ -56,8 +56,11 @@ T_StrTuple = typing.NewType("T_StrTuple", "tuple[str]")
 
 
 def make_tuple_if_not(value: Any) -> tuple[Any]:
-    import openpype.lib
-    return openpype.lib.make_tuple_if_not(value)
+    if not isinstance(value, (tuple, list)):
+        return (value,)
+    else:
+        return value
+    # return openpype.lib.make_tuple_if_not(value)
 
 
 class E_RunOutput(enum.Enum):
@@ -302,7 +305,8 @@ class P4ConnectionManager:
     @property
     def offline_manager(self):
         if self._offline_manager is None:
-            self._offline_manager = p4_offline.P4ConnectionManager()
+            pass
+            # self._offline_manager = p4_offline.P4ConnectionManager()
         return self._offline_manager
 
     @property
