@@ -24,7 +24,7 @@ class PerforceModuleRestAPI:
         add_file = rest_routes.AddEndpoint()
         self.server_manager.add_route(
             "POST",
-            self.prefix + "/add_file",
+            self.prefix + "/add",
             add_file.dispatch
         )
 
