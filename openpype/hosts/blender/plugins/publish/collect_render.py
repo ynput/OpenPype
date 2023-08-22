@@ -45,6 +45,14 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
                         ["image_format"])
 
     @staticmethod
+    def get_multilayer(settings):
+        """Get multilayer from blender settings."""
+
+        return (settings["blender"]
+                        ["RenderSettings"]
+                        ["multilayer_exr"])
+
+    @staticmethod
     def get_render_product(output_path, instance):
         """
         Generate the path to the render product. Blender interprets the `#`
@@ -85,15 +93,15 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         return expected_files
 
     @staticmethod
-    def set_render_format(ext):
+    def set_render_format(ext, multilayer):
         # Set Blender to save the file with the right extension
         bpy.context.scene.render.use_file_extension = True
 
         image_settings = bpy.context.scene.render.image_settings
 
         if ext == "exr":
-            # TODO: Check if multilayer option is selected
-            image_settings.file_format = "OPEN_EXR"
+            image_settings.file_format = (
+                "OPEN_EXR_MULTILAYER" if multilayer else "OPEN_EXR")
         elif ext == "bmp":
             image_settings.file_format = "BMP"
         elif ext == "rgb":
@@ -108,6 +116,21 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
             image_settings.file_format = "TARGA"
         elif ext == "tif":
             image_settings.file_format = "TIFF"
+
+    def _create_context():
+        context = bpy.context.copy()
+
+        win = bpy.context.window_manager.windows[0]
+        screen = win.screen
+        area = screen.areas[0]
+        region = area.regions[0]
+
+        context["window"] = win
+        context['screen'] = screen
+        context['area'] = area
+        context['region'] = region
+
+        return context
 
     def _set_node_tree(self, output_path, instance):
         # Set the scene to use the compositor node tree to render
@@ -143,22 +166,10 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         # Create a new output node
         output = tree.nodes.new("CompositorNodeOutputFile")
 
-
-        context = bpy.context.copy()
-        # context = create_blender_context()
+        context = self._create_context()
         context["node"] = output
 
-        win = bpy.context.window_manager.windows[0]
-        screen = win.screen
-        area = screen.areas[0]
-        region = area.regions[0]
-
-        context["window"] = win
-        context['screen'] = screen
-        context['area'] = area
-        context['region'] = region
-
-        self.log.debug(f"context: {context}")
+        area = context["area"]
 
         # Change area type to node editor, to execute node operators
         old_area_type = area.ui_type
@@ -214,6 +225,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
 
         render_folder = self.get_default_render_folder(settings)
         ext = self.get_image_format(settings)
+        multilayer = self.get_multilayer(settings)
 
         output_path = os.path.join(file_path, render_folder, file_name)
 
@@ -222,7 +234,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
 
         # We set the render path, the format and the camera
         bpy.context.scene.render.filepath = render_product
-        self.set_render_format(ext)
+        self.set_render_format(ext, multilayer)
         self.set_render_camera(instance)
 
         # We save the file to save the render settings

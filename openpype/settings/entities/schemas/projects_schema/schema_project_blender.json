@@ -66,21 +66,26 @@
                     "label": "Default render image folder"
                 },
                 {
-                  "key": "image_format",
-                  "label": "Output Image Format",
-                  "type": "enum",
-                  "multiselection": false,
-                  "defaults": "exr",
-                  "enum_items": [
-                    {"exr": "OpenEXR"},
-                    {"bmp": "BMP"},
-                    {"rgb": "Iris"},
-                    {"png": "PNG"},
-                    {"jpg": "JPEG"},
-                    {"jp2": "JPEG 2000"},
-                    {"tga": "Targa"},
-                    {"tif": "TIFF"}
-                  ]
+                    "key": "image_format",
+                    "label": "Output Image Format",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "exr",
+                    "enum_items": [
+                        {"exr": "OpenEXR"},
+                        {"bmp": "BMP"},
+                        {"rgb": "Iris"},
+                        {"png": "PNG"},
+                        {"jpg": "JPEG"},
+                        {"jp2": "JPEG 2000"},
+                        {"tga": "Targa"},
+                        {"tif": "TIFF"}
+                    ]
+                },
+                {
+                    "key": "multilayer_exr",
+                    "type": "boolean",
+                    "label": "Multilayer (EXR)"
                 }
             ]
         },

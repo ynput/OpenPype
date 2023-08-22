@@ -19,7 +19,8 @@
     },
     "RenderSettings": {
         "default_render_image_folder": "renders/blender",
-        "image_format": "exr"
+        "image_format": "exr",
+        "multilayer_exr": true
     },
     "workfile_builder": {
         "create_first_version": false,
