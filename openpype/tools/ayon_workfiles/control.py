@@ -6,6 +6,7 @@ import ayon_api
 from openpype.lib import Logger
 from openpype.lib.events import EventSystem
 from openpype.pipeline import Anatomy, registered_host
+from openpype.settings import get_project_settings
 
 from .abstract import AbstractWorkfileController
 from .models import SelectionModel, EntitiesModel, WorkfilesModel
@@ -17,7 +18,8 @@ class BaseWorkfileController(AbstractWorkfileController):
             host = registered_host()
         self._host = host
 
-        self._anatomy = None
+        self._project_anatomy = None
+        self._project_settings = None
         self._event_system = None
         self._log = None
 
@@ -41,10 +43,19 @@ class BaseWorkfileController(AbstractWorkfileController):
         return self._log
 
     @property
+    def project_settings(self):
+        # TODO add cache timeout? It is refreshed on 'Refresh' button click.
+        if self._project_settings is None:
+            self._project_settings = get_project_settings(
+                self.get_current_project_name())
+        return self._project_settings
+
+    @property
     def project_anatomy(self):
-        if self._anatomy is None:
-            self._anatomy = Anatomy(self.get_current_project_name())
-        return self._anatomy
+        # TODO add cache timeout? It is refreshed on 'Refresh' button click.
+        if self._project_anatomy is None:
+            self._project_anatomy = Anatomy(self.get_current_project_name())
+        return self._project_anatomy
 
     @property
     def event_system(self):
@@ -199,6 +210,9 @@ class BaseWorkfileController(AbstractWorkfileController):
             folder = ayon_api.get_folder_by_name(project_name, folder_name)
             if folder:
                 folder_id = folder["id"]
+
+        self._project_settings = None
+        self._project_anatomy = None
 
         self._current_project_name = project_name
         self._current_folder_name = folder_name
