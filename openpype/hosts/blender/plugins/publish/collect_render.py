@@ -12,6 +12,10 @@ from openpype.pipeline import (
 from openpype.settings import (
     get_project_settings,
 )
+from openpype.hosts.blender.api.ops import (
+    MainThreadItem,
+    execute_in_main_thread
+)
 import pyblish.api
 
 
@@ -41,7 +45,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
                         ["image_format"])
 
     @staticmethod
-    def get_render_product(file_path, render_folder, file_name, instance, ext):
+    def get_render_product(output_path, instance):
         """
         Generate the path to the render product. Blender interprets the `#`
         as the frame number, when it renders.
@@ -53,10 +57,9 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
             instance (pyblish.api.Instance): The instance to publish.
             ext (str): The image format to render.
         """
-        output_file = os.path.join(
-            file_path, render_folder, file_name, instance.name)
+        output_file = os.path.join(output_path, instance.name)
 
-        render_product = f"{output_file}.####.{ext}"
+        render_product = f"{output_file}.####"
         render_product = render_product.replace("\\", "/")
 
         return render_product
@@ -83,9 +86,13 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
 
     @staticmethod
     def set_render_format(ext):
+        # Set Blender to save the file with the right extension
+        bpy.context.scene.render.use_file_extension = True
+
         image_settings = bpy.context.scene.render.image_settings
 
         if ext == "exr":
+            # TODO: Check if multilayer option is selected
             image_settings.file_format = "OPEN_EXR"
         elif ext == "bmp":
             image_settings.file_format = "BMP"
@@ -101,6 +108,86 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
             image_settings.file_format = "TARGA"
         elif ext == "tif":
             image_settings.file_format = "TIFF"
+
+    def _set_node_tree(self, output_path, instance):
+        # Set the scene to use the compositor node tree to render
+        bpy.context.scene.use_nodes = True
+
+        tree = bpy.context.scene.node_tree
+
+        # Get the Render Layers node
+        rl_node = None
+        for node in tree.nodes:
+            if node.bl_idname == "CompositorNodeRLayers":
+                rl_node = node
+                break
+
+        # If there's not a Render Layers node, we create it
+        if not rl_node:
+            rl_node = tree.nodes.new("CompositorNodeRLayers")
+
+        # Get the enabled output sockets, that are the active passes for the
+        # render.
+        # We also exclude some layers.
+        exclude_sockets = ["Image", "Alpha"]
+        passes = [
+            socket for socket in rl_node.outputs
+            if socket.enabled and socket.name not in exclude_sockets
+        ]
+
+        # Remove all output nodes
+        for node in tree.nodes:
+            if node.bl_idname == "CompositorNodeOutputFile":
+                tree.nodes.remove(node)
+
+        # Create a new output node
+        output = tree.nodes.new("CompositorNodeOutputFile")
+
+
+        context = bpy.context.copy()
+        # context = create_blender_context()
+        context["node"] = output
+
+        win = bpy.context.window_manager.windows[0]
+        screen = win.screen
+        area = screen.areas[0]
+        region = area.regions[0]
+
+        context["window"] = win
+        context['screen'] = screen
+        context['area'] = area
+        context['region'] = region
+
+        self.log.debug(f"context: {context}")
+
+        # Change area type to node editor, to execute node operators
+        old_area_type = area.ui_type
+        area.ui_type = "CompositorNodeTree"
+
+        # Remove the default input socket from the output node
+        bpy.ops.node.output_file_remove_active_socket(context)
+
+        output.base_path = output_path
+        image_settings = bpy.context.scene.render.image_settings
+        output.format.file_format = image_settings.file_format
+
+        # For each active render pass, we add a new socket to the output node
+        # and link it
+        for render_pass in passes:
+            bpy.ops.node.output_file_add_socket(
+                context, file_path=f"{instance.name}_{render_pass.name}.####")
+
+            node_input = output.inputs[-1]
+
+            tree.links.new(render_pass, node_input)
+
+        # Restore the area type
+        area.ui_type = old_area_type
+
+    def set_node_tree(self, output_path, instance):
+        """ Run the creator on Blender main thread"""
+        mti = MainThreadItem(self._set_node_tree, output_path, instance)
+        execute_in_main_thread(mti)
 
     @staticmethod
     def set_render_camera(instance):
@@ -128,8 +215,10 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         render_folder = self.get_default_render_folder(settings)
         ext = self.get_image_format(settings)
 
-        render_product = self.get_render_product(
-            file_path, render_folder, file_name, instance, ext)
+        output_path = os.path.join(file_path, render_folder, file_name)
+
+        render_product = self.get_render_product(output_path, instance)
+        self.set_node_tree(output_path, instance)
 
         # We set the render path, the format and the camera
         bpy.context.scene.render.filepath = render_product
