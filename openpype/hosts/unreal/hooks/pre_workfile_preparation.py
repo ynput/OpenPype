@@ -2,6 +2,7 @@
 """Hook to launch Unreal and prepare projects."""
 import os
 import copy
+import tempfile
 from pathlib import Path
 
 from qtpy import QtCore
@@ -224,10 +225,19 @@ class UnrealPrelaunchHook(PreLaunchHook):
         project_file = project_path / unreal_project_filename
 
         if not project_file.is_file():
-            self.exec_ue_project_gen(engine_version,
-                                     unreal_project_name,
-                                     engine_path,
-                                     project_path)
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_path = Path(temp_dir) / unreal_project_filename
+                self.exec_ue_project_gen(engine_version,
+                                         unreal_project_name,
+                                         engine_path,
+                                         temp_path)
+                try:
+                    temp_path.rename(project_path)
+                except FileExistsError as e:
+                    raise ApplicationLaunchFailed((
+                        f"{self.signature} Project folder "
+                        f"already exists {project_path.as_posix()}"
+                    )) from e
 
         self.launch_context.env["AYON_UNREAL_VERSION"] = engine_version
         # Append project file to launch arguments
