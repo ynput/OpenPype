@@ -9,7 +9,12 @@ from openpype.pipeline import (
     registered_host,
     legacy_io,
 )
-from openpype.pipeline.context_tools import get_current_task_name
+from openpype.pipeline.context_tools import (
+    get_current_task_name,
+    get_current_asset_name,
+    get_current_context,
+    get_global_context
+)
 from openpype.pipeline.workfile import get_last_workfile_with_version
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.tools.utils import PlaceholderLineEdit
@@ -237,13 +242,20 @@ class SaveAsDialog(QtWidgets.QDialog):
         preview_label = QtWidgets.QLabel("Preview filename", inputs_widget)
         current_task_name = get_current_task_name()
         target_task_name = self.data.get("task").get("name")
-        warning_label = QtWidgets.QLabel(
+        current_asset_name = get_current_asset_name()
+        target_asset_name = self.data.get("asset")
+        task_warning_label = QtWidgets.QLabel(
             "<font color='red'>Warning: You are saving to a different task "
             "than the current one. "
             "Current task: {}. Target task: {}"
             "</font>".format(current_task_name, target_task_name)
         )
-
+        asset_warning_label = QtWidgets.QLabel(
+            "<font color='red'>Warning: You are saving to a different asset "
+            "than the current one. "
+            "Current asset: {}. Target asset: {}"
+            "</font>".format(current_asset_name, target_asset_name)
+        )
         # Subversion input
         subversion = SubversionLineEdit(inputs_widget)
         subversion.set_placeholder("Will be part of filename.")
@@ -290,8 +302,10 @@ class SaveAsDialog(QtWidgets.QDialog):
             subversion.setVisible(False)
         inputs_layout.addRow("Extension:", ext_combo)
         inputs_layout.addRow("Preview:", preview_label)
+        if current_asset_name != target_asset_name:
+            inputs_layout.addRow(asset_warning_label)
         if current_task_name != target_task_name:
-            inputs_layout.addRow(warning_label)
+            inputs_layout.addRow(task_warning_label)
 
         # Build layout
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -326,7 +340,8 @@ class SaveAsDialog(QtWidgets.QDialog):
         self.last_version_check = last_version_check
 
         self.preview_label = preview_label
-        self.warning_label = warning_label
+        self.task_warning_label = task_warning_label
+        self.asset_warning_label = asset_warning_label
         self.subversion = subversion
         self.ext_combo = ext_combo
         self._ext_delegate = ext_delegate
