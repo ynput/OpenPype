@@ -40,18 +40,25 @@ class VersionControlModule(OpenPypeModule, ITrayService):
         self.set_service_running_icon() if enabled else self.set_service_failed_icon()
         self.enabled = enabled
 
+        if enabled:
+            from .backends.perforce.communication_server import WebServer
+            self.webserver = WebServer()
+
     def get_global_environments(self):
         # return {"ACTIVE_VERSION_CONTROL_SYSTEM": self.active_version_control_system}
         return {}
 
     def tray_exit(self):
-        return
+        if self.enabled and \
+                self.webserver and self.webserver.server_is_running():
+            self.webserver.stop()
 
     def tray_init(self):
         return
 
     def tray_start(self):
-        return
+        if self.enabled:
+            self.webserver.start()
 
     def cli(self, click_group):
         click_group.add_command(cli_main)
