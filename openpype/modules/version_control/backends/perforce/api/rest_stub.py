@@ -2,7 +2,7 @@ import six
 import os
 import requests
 
-from .. import abstract
+from openpype.modules.version_control.backends import abstract
 
 if six.PY2:
     import pathlib2 as pathlib
@@ -24,14 +24,15 @@ class PerforceRestStub(abstract.VersionControl):
         if not webserver_url:
             raise RuntimeError("Uknown url for Perforce")
 
-        action_url = f"{webserver_url}/{command}"
-
-        body = {key: value for key, value in kwargs}
+        action_url = f"{webserver_url}/perforce/{command}"
 
         response = requests.post(
-            action_url, json=body
+            action_url, json=kwargs
         )
-        return response
+        if not response.ok:
+            print(response.content)
+            raise RuntimeError(response.text)
+        return response.json()
 
 
     @staticmethod
@@ -40,18 +41,18 @@ class PerforceRestStub(abstract.VersionControl):
         response = PerforceRestStub._wrap_call("add",
                                                path=path,
                                                comment=comment)
-        print(response)
+        return response
 
     @staticmethod
     def checkout(path, comment=""):
         response = PerforceRestStub._wrap_call("checkout",
                                                path=path,
                                                comment=comment)
-        print(response)
+        return response
 
 
     @staticmethod
     def submit_change_list(comment):
         response = PerforceRestStub._wrap_call("submit_change_list",
                                                comment=comment)
-        print(response)
+        return response
