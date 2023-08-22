@@ -72,16 +72,16 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
                            items={
                                0: "Maya Compatible (MC)",
                                1: "3DS MAX Compatible (PC2)"
-                                 },
+                            },
                            default=0,
                            label="Vertex Cache Format")
         trange = EnumDef("trange",
                          items={
                              0: "Render Current Frame",
                              1: "Render Frame Range"
-                             },
-                             default=0,
-                             label="Valid Frame Range")
+                         },
+                         default=0,
+                         label="Valid Frame Range")
 
         return attrs + [vcformat, trange]
 
