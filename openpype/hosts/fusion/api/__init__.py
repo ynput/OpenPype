@@ -20,10 +20,6 @@ from .lib import (
 
 from .menu import launch_openpype_menu
 
-from .menu_communication import (
-    MenuSocketListener,
-)
-
 
 __all__ = [
     # pipeline
@@ -44,6 +40,4 @@ __all__ = [
     "comp_lock_and_undo_chunk",
     # menu
     "launch_openpype_menu",
-    # meny_communication
-    "MenuSocketListener",
 ]
