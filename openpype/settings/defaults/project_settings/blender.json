@@ -4,6 +4,8 @@
         "apply_on_opening": false,
         "base_file_unit_scale": 0.01
     },
+    "set_resolution_startup": true,
+    "set_frames_startup": true,
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {
@@ -54,7 +56,8 @@
                 "camera",
                 "rig",
                 "action",
-                "layout"
+                "layout",
+                "blendScene"
             ]
         },
         "ExtractFBX": {
@@ -78,6 +81,11 @@
             "active": false
         },
         "ExtractCamera": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractCameraABC": {
             "enabled": true,
             "optional": true,
             "active": true

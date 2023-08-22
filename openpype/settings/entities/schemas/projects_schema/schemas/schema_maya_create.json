@@ -28,15 +28,21 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]
         },
-            {
-            "type": "schema",
-            "name": "schema_maya_create_render"
+        {
+            "type": "schema_template",
+            "name": "template_create_plugin",
+            "template_data": [
+                {
+                    "key": "CreateRender",
+                    "label": "Create Render"
+                }
+            ]
         },
         {
             "type": "dict",
@@ -52,8 +58,8 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -84,8 +90,8 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -120,17 +126,15 @@
             "collapsible": true,
             "key": "CreateAnimation",
             "label": "Create Animation",
-            "checkbox_key": "enabled",
             "children": [
                 {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
+                    "type": "label",
+                    "label": "This plugin is not optional due to implicit creation through loading the \"rig\" family.\nThis family is also hidden from creation due to complexity in setup."
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -451,8 +455,8 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]
@@ -471,8 +475,8 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -788,8 +792,8 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]
@@ -808,8 +812,8 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -833,8 +837,8 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -935,8 +939,8 @@
                 },
                 {
                     "type": "list",
-                    "key": "defaults",
-                    "label": "Default Subsets",
+                    "key": "default_variants",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]

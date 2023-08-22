@@ -20,6 +20,6 @@ class CreateRig(plugin.MayaCreator):
         instance_node = instance.get("instance_node")
 
         self.log.info("Creating Rig instance set up ...")
-        controls = cmds.sets(name="controls_SET", empty=True)
-        pointcache = cmds.sets(name="out_SET", empty=True)
+        controls = cmds.sets(name=subset_name + "_controls_SET", empty=True)
+        pointcache = cmds.sets(name=subset_name + "_out_SET", empty=True)
         cmds.sets([controls, pointcache], forceElement=instance_node)

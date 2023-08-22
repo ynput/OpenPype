@@ -167,9 +167,12 @@ class HoudiniCreatorBase(object):
 class HoudiniCreator(NewCreator, HoudiniCreatorBase):
     """Base class for most of the Houdini creator plugins."""
     selected_nodes = []
+    settings_name = None
 
     def create(self, subset_name, instance_data, pre_create_data):
         try:
+            self.selected_nodes = []
+
             if pre_create_data.get("use_selection"):
                 self.selected_nodes = hou.selectedNodes()
 
@@ -292,3 +295,21 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
 
         """
         return [hou.ropNodeTypeCategory()]
+
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+
+        settings_name = self.settings_name
+        if settings_name is None:
+            settings_name = self.__class__.__name__
+
+        settings = project_settings["houdini"]["create"]
+        settings = settings.get(settings_name)
+        if settings is None:
+            self.log.debug(
+                "No settings found for {}".format(self.__class__.__name__)
+            )
+            return
+
+        for key, value in settings.items():
+            setattr(self, key, value)

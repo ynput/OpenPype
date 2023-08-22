@@ -13,7 +13,8 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.01
     label = "Collect Frames"
-    families = ["vdbcache", "imagesequence", "ass", "redshiftproxy", "review"]
+    families = ["vdbcache", "imagesequence", "ass",
+                "redshiftproxy", "review", "bgeo"]
 
     def process(self, instance):
 
@@ -32,9 +33,9 @@ class CollectFrames(pyblish.api.InstancePlugin):
             output = output_parm.eval()
 
         _, ext = lib.splitext(
-            output,
-            allowed_multidot_extensions=[".ass.gz"]
-        )
+            output, allowed_multidot_extensions=[
+                ".ass.gz", ".bgeo.sc", ".bgeo.gz",
+                ".bgeo.lzma", ".bgeo.bz2"])
         file_name = os.path.basename(output)
         result = file_name
 
@@ -76,7 +77,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
         frame = match.group(1)
         padding = len(frame)
 
-        # Get the parts of the filename surrounding the frame number
+        # Get the parts of the filename surrounding the frame number,
         # so we can put our own frame numbers in.
         span = match.span(1)
         prefix = match.string[: span[0]]
