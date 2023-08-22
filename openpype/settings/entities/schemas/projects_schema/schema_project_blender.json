@@ -66,6 +66,18 @@
                     "label": "Default render image folder"
                 },
                 {
+                    "key": "aov_separator",
+                    "label": "AOV Separator Character",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "underscore",
+                    "enum_items": [
+                        {"dash": "- (dash)"},
+                        {"underscore": "_ (underscore)"},
+                        {"dot": ". (dot)"}
+                    ]
+                },
+                {
                     "key": "image_format",
                     "label": "Output Image Format",
                     "type": "enum",

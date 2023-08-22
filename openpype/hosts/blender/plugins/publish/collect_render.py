@@ -34,6 +34,23 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
                         ["default_render_image_folder"])
 
     @staticmethod
+    def get_aov_separator(settings):
+        """Get aov separator from blender settings."""
+
+        aov_sep = (settings["blender"]
+                           ["RenderSettings"]
+                           ["aov_separator"])
+
+        if aov_sep == "dash":
+            return "-"
+        elif aov_sep == "underscore":
+            return "_"
+        elif aov_sep == "dot":
+            return "."
+        else:
+            raise ValueError(f"Invalid aov separator: {aov_sep}")
+
+    @staticmethod
     def get_image_format(settings):
         """Get image format from blender settings."""
 
@@ -160,7 +177,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
 
         return context
 
-    def set_node_tree(self, output_path, instance):
+    def set_node_tree(self, output_path, instance, aov_sep):
         # Set the scene to use the compositor node tree to render
         bpy.context.scene.use_nodes = True
 
@@ -181,7 +198,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         # render.
         # We also exclude some layers.
         exclude_sockets = ["Image", "Alpha"]
-        passes =  [
+        passes = [
             socket
             for socket in rl_node.outputs
             if socket.enabled and socket.name not in exclude_sockets
@@ -216,7 +233,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         # For each active render pass, we add a new socket to the output node
         # and link it
         for render_pass in passes:
-            filepath = f"{instance.name}_{render_pass.name}.####"
+            filepath = f"{instance.name}{aov_sep}{render_pass.name}.####"
             bpy.ops.node.output_file_add_socket(context, file_path=filepath)
 
             aov_file_products.append(
@@ -255,13 +272,14 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         settings = get_project_settings(project)
 
         render_folder = self.get_default_render_folder(settings)
+        aov_sep = self.get_aov_separator(settings)
         ext = self.get_image_format(settings)
         multilayer = self.get_multilayer(settings)
 
         output_path = os.path.join(file_path, render_folder, file_name)
 
         render_product = self.get_render_product(output_path, instance)
-        aov_file_product = self.set_node_tree(output_path, instance)
+        aov_file_product = self.set_node_tree(output_path, instance, aov_sep)
 
         # We set the render path, the format and the camera
         bpy.context.scene.render.filepath = render_product
