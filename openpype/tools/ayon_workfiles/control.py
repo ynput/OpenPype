@@ -1,12 +1,12 @@
-import sys
-
-import six
+import os
 import ayon_api
 
-from openpype.lib import Logger
+from openpype.lib import Logger, emit_event
 from openpype.lib.events import EventSystem
-from openpype.pipeline import Anatomy, registered_host
 from openpype.settings import get_project_settings
+from openpype.pipeline import Anatomy, registered_host
+from openpype.pipeline.context_tools import change_current_context
+from openpype.pipeline.workfile import create_workdir_extra_folders
 
 from .abstract import AbstractWorkfileController
 from .models import SelectionModel, EntitiesModel, WorkfilesModel
@@ -181,6 +181,24 @@ class BaseWorkfileController(AbstractWorkfileController):
         return self._workfiles_model.get_workarea_save_as_data(
             folder_id, task_id)
 
+    def fill_workarea_filepath(
+        self,
+        folder_id,
+        task_id,
+        extension,
+        use_last_version,
+        version,
+        comment,
+    ):
+        return self._workfiles_model.fill_workarea_filepath(
+            folder_id,
+            task_id,
+            extension,
+            use_last_version,
+            version,
+            comment,
+        )
+
     def get_published_file_items(self, folder_id):
         return self._workfiles_model.get_published_file_items(folder_id)
 
@@ -234,18 +252,98 @@ class BaseWorkfileController(AbstractWorkfileController):
     def open_workfile(self, filepath):
         self._emit_event("controller.open_workfile.started")
 
-        exc_cls = exc = tb = None
         failed = False
         try:
             self._host.open_workfile(filepath)
         except Exception:
             failed = True
-            exc_cls, exc, tb = sys.exc_info()
+            # TODO add some visual feedback for user
+            self.log.warning("Open of workfile failed", exc_info=True)
 
         self._emit_event(
             "controller.open_workfile.finished",
             {"failed": failed},
         )
-        # TODO reraise is probably not good idea
-        if failed:
-            six.reraise(exc_cls, exc, tb)
+
+    def save_as_workfile(self, *args, **kwargs):
+        self._emit_event("controller.save_as.started")
+
+        failed = False
+        try:
+            self._save_as_workfile(*args, **kwargs)
+        except Exception:
+            failed = True
+            # TODO add some visual feedback for user
+            self.log.warning("Save as failed", exc_info=True)
+
+        self._emit_event(
+            "controller.save_as.finished",
+            {"failed": failed},
+        )
+
+    def _save_as_workfile(
+        self,
+        folder_id,
+        task_id,
+        workdir,
+        filename,
+        template_key,
+    ):
+        # Trigger before save event
+        project_name = self.get_current_project_name()
+        # TODO use entities model
+        folder = ayon_api.get_folder_by_id(project_name, folder_id)
+        task = ayon_api.get_task_by_id(project_name, task_id)
+        task_name = task["name"]
+
+        # QUESTION should the data be different for 'before' and 'after'?
+        # NOTE keys should be OpenPype compatible
+        event_data = {
+            "project_name": project_name,
+            "folder_id": folder_id,
+            "asset_id": folder["id"],
+            "asset_name": folder["name"],
+            "task_id": task_id,
+            "task_name": task_name,
+            "host_name": self.get_host_name(),
+            "filename": filename,
+            "workdir_path": workdir,
+        }
+        emit_event("workfile.save.before", event_data, source="workfiles.tool")
+
+        # Create workfiles root folder
+        if not os.path.exists(workdir):
+            self.log.debug("Initializing work directory: %s", workdir)
+            os.makedirs(workdir)
+
+        # Change context
+        if (
+            folder_id != self.get_current_folder_id()
+            or task_name != self.get_current_task_name()
+        ):
+            change_current_context(
+                folder,
+                task["name"],
+                template_key=template_key
+            )
+
+        # Save workfile
+        filepath = os.path.join(workdir, filename)
+        host = self._host
+        if hasattr(host, "save_workfile"):
+            host.save_workfile(filepath)
+        else:
+            host.save_file(filepath)
+
+        # Create extra folders
+        create_workdir_extra_folders(
+            workdir,
+            self.get_host_name(),
+            task["taskType"],
+            task_name,
+            project_name
+        )
+
+        # Trigger after save events
+        emit_event("workfile.save.after", event_data, source="workfiles.tool")
+        self.refresh()

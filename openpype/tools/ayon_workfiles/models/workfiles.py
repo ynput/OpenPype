@@ -18,6 +18,7 @@ from openpype.pipeline.workfile import (
     get_last_workfile_with_version,
 )
 from openpype.pipeline.version_start import get_versioning_start
+from openpype.tools.ayon_workfiles.abstract import WorkareaFilepathResult
 
 
 def get_folder_template_data(folder):
@@ -81,7 +82,6 @@ class FileItem:
 class CommentMatcher(object):
     """Use anatomy and work file data to parse comments from filenames"""
     def __init__(self, extensions, file_template, data):
-
         self.fname_regex = None
 
         if "{comment}" not in file_template:
@@ -217,14 +217,14 @@ class WorkareaModel:
         workdir = self.get_workarea_dir_by_context(folder_id, task_id)
         if not os.path.exists(workdir):
             return items
-        extensions = self._control.get_workfile_extensions()
+
         for filename in os.listdir(workdir):
             filepath = os.path.join(workdir, filename)
             if not os.path.isfile(filepath):
                 continue
 
-            ext = os.path.splitext(filename)[1]
-            if ext not in extensions:
+            ext = os.path.splitext(filename)[1].lower()
+            if ext not in self._extensions:
                 continue
 
             modified = os.path.getmtime(filepath)
@@ -256,7 +256,8 @@ class WorkareaModel:
                 self._control.get_host_name(),
                 task_name=task_info.get("name"),
                 task_type=task_info.get("type"),
-                family="workfile"
+                family="workfile",
+                project_settings=self._control.project_settings,
             )
         else:
             version += 1
@@ -284,7 +285,7 @@ class WorkareaModel:
                     filenames.append(filename)
 
         if not filenames:
-            return comment_hints
+            return comment_hints, current_comment
 
         matcher = CommentMatcher(extensions, file_template, fill_data)
 
@@ -297,6 +298,11 @@ class WorkareaModel:
 
         return list(comment_hints), current_comment
 
+    def _get_workdir(self, anatomy, template_key, fill_data):
+        template_info = anatomy.templates_obj[template_key]
+        directory_template = template_info["folder"]
+        return directory_template.format_strict(fill_data).normalized()
+
     def get_workarea_save_as_data(self, folder_id, task_id):
         folder = None
         task = None
@@ -306,8 +312,9 @@ class WorkareaModel:
             task = ayon_api.get_task_by_id(self.project_name, task_id)
         if not folder or not task:
             return {
-                "file_template": None,
-                "data": None,
+                "template_key": None,
+                "template_has_version": None,
+                "template_has_comment": None,
                 "ext": None,
                 "workdir": None,
                 "comment": None,
@@ -327,14 +334,14 @@ class WorkareaModel:
             current_filename = os.path.basename(current_workfile)
             current_ext = os.path.splitext(current_filename)[1].lower()
 
-        extensions = self._control.get_workfile_extensions()
+        extensions = self._extensions
         if not current_ext and extensions:
             current_ext = tuple(extensions)[0]
 
+        workdir = self._get_workdir(anatomy, template_key, fill_data)
+
         template_info = anatomy.templates_obj[template_key]
         file_template = template_info["file"]
-        directory_template = template_info["folder"]
-        workdir = directory_template.format_strict(fill_data).normalized()
 
         comment_hints, comment = self._get_comments_from_root(
             file_template,
@@ -345,9 +352,14 @@ class WorkareaModel:
         )
         last_version = self._get_last_workfile_version(
             workdir, file_template, fill_data, extensions)
+        str_file_template = str(file_template)
+        template_has_version = "{version" in str_file_template
+        template_has_comment = "{comment" in str_file_template
+
         return {
-            "file_template": str(file_template),
-            "fill_data": fill_data,
+            "template_key": template_key,
+            "template_has_version": template_has_version,
+            "template_has_comment": template_has_comment,
             "ext": current_ext,
             "workdir": workdir,
             "comment": comment,
@@ -355,6 +367,49 @@ class WorkareaModel:
             "last_version": last_version,
             "extensions": extensions,
         }
+
+    def fill_workarea_filepath(
+        self,
+        folder_id,
+        task_id,
+        extension,
+        use_last_version,
+        version,
+        comment,
+    ):
+        anatomy = self._control.project_anatomy
+        fill_data = self._prepare_fill_data(folder_id, task_id)
+        template_key = self._get_template_key(fill_data)
+
+        workdir = self._get_workdir(anatomy, template_key, fill_data)
+
+        template_info = anatomy.templates_obj[template_key]
+        file_template = template_info["file"]
+
+        if use_last_version:
+            version = self._get_last_workfile_version(
+                workdir, file_template, fill_data, self._extensions
+            )
+        fill_data["version"] = version
+        fill_data["ext"] = extension.lstrip(".")
+
+        filename = file_template.format(fill_data)
+        if not filename.solved:
+            filename = None
+
+        exists = False
+        if filename:
+            filepath = os.path.join(workdir, filename)
+            exists = os.path.exists(filepath)
+
+        if comment:
+            fill_data["comment"] = comment
+
+        return WorkareaFilepathResult(
+            workdir,
+            filename,
+            exists
+        )
 
 
 class WorkfileEntitiesModel:
@@ -513,6 +568,11 @@ class WorkfilesModel:
     def get_workarea_save_as_data(self, folder_id, task_id):
         return self._workarea_model.get_workarea_save_as_data(
             folder_id, task_id)
+
+    def fill_workarea_filepath(self, *args, **kwargs):
+        return self._workarea_model.fill_workarea_filepath(
+            *args, **kwargs
+        )
 
     def get_published_file_items(self, folder_id):
         """Published workfiles for passed context.

@@ -410,7 +410,15 @@ class FilesWidget(QtWidgets.QWidget):
         dialog.update_context()
         dialog.exec_()
         result = dialog.get_result()
-        print(result)
+        if result is None:
+            return
+        self._controller.save_as_workfile(
+            result["folder_id"],
+            result["task_id"],
+            result["workdir"],
+            result["filename"],
+            result["template_key"],
+        )
 
     def _on_workarea_path_changed(self, event):
         valid_path = event["path"] is not None

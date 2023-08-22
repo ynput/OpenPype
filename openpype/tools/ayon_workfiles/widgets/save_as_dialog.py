@@ -1,42 +1,12 @@
 import os
-import re
 import copy
-import logging
 
 from qtpy import QtWidgets, QtCore
 
-from openpype.pipeline import (
-    registered_host,
-    legacy_io,
-)
 from openpype.pipeline.workfile import get_last_workfile_with_version
-from openpype.pipeline.template_data import get_template_data_with_names
 
 from openpype.pipeline import get_current_host_name
 from openpype.tools.utils import PlaceholderLineEdit
-
-log = logging.getLogger(__name__)
-
-
-def build_workfile_data(session):
-    """Get the data required for workfile formatting from avalon `session`"""
-
-    # Set work file data for template formatting
-    project_name = session["AVALON_PROJECT"]
-    asset_name = session["AVALON_ASSET"]
-    task_name = session["AVALON_TASK"]
-    host_name = session["AVALON_APP"]
-
-    data = get_template_data_with_names(
-        project_name, asset_name, task_name, host_name
-    )
-    data.update({
-        "version": 1,
-        "comment": "",
-        "ext": None
-    })
-
-    return data
 
 
 class SubversionLineEdit(QtWidgets.QWidget):
@@ -132,13 +102,16 @@ class SaveAsDialog(QtWidgets.QDialog):
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
         self._controller = controller
-        self._template = None
+
+        self._folder_id = None
+        self._task_id = None
         self._last_version = None
+        self._template_key = None
         self._comment_value = None
         self._version_value = None
         self._ext_value = None
+        self._filename = None
         self._workdir = None
-        self._fill_data = None
 
         self._result = None
 
@@ -176,6 +149,7 @@ class SaveAsDialog(QtWidgets.QDialog):
 
         # Preview widget
         preview_widget = QtWidgets.QLabel("Preview filename", inputs_widget)
+        preview_widget.setWordWrap(True)
 
         # Subversion input
         subversion_input = SubversionLineEdit(inputs_widget)
@@ -247,6 +221,9 @@ class SaveAsDialog(QtWidgets.QDialog):
         # Allow "Enter" key to accept the save.
         btn_ok.setDefault(True)
 
+        # Disable version input if last version is checked
+        version_input.setEnabled(not last_version_check.isChecked())
+
         # Force default focus to comment, some hosts didn't automatically
         # apply focus to this line edit (e.g. Houdini)
         subversion_input.setFocus()
@@ -256,18 +233,23 @@ class SaveAsDialog(QtWidgets.QDialog):
         # - since the version can be padded with "{version:0>4}" we only search
         #   for "{version".
         selected_context = self._controller.get_selected_context()
-        data = self._controller.get_workarea_save_as_data(
-            selected_context["folder_id"], selected_context["task_id"]
-        )
-        template = data["file_template"]
+        folder_id = selected_context["folder_id"]
+        task_id = selected_context["task_id"]
+        data = self._controller.get_workarea_save_as_data(folder_id, task_id)
         last_version = data["last_version"]
         comment = data["comment"]
         comment_hints = data["comment_hints"]
 
-        template_has_version = "{version" in template
+        template_has_version = data["template_has_version"]
+        template_has_comment = data["template_has_comment"]
 
+        self._folder_id = folder_id
+        self._task_id = task_id
         self._workdir = data["workdir"]
-        self._fill_data = data["fill_data"]
+        self._comment_value = data["comment"]
+        self._ext_value = data["ext"]
+        self._template_key = data["template_key"]
+        self._last_version = data["last_version"]
 
         self._extension_combobox.clear()
         self._extension_combobox.addItems(data["extensions"])
@@ -287,7 +269,6 @@ class SaveAsDialog(QtWidgets.QDialog):
                 self._inputs_layout.indexOf(self._version_label)
             )
 
-        template_has_comment = "{comment" in template
         cw_idx = self._inputs_layout.indexOf(self._subversion_input)
         self._subversion_label.setVisible(template_has_comment)
         self._subversion_input.setVisible(template_has_comment)
@@ -301,42 +282,48 @@ class SaveAsDialog(QtWidgets.QDialog):
                 self._inputs_layout.indexOf(self._subversion_label)
             )
 
-        if not template_has_comment:
-            return
-
-        self._subversion_input.set_text(comment or "")
-        self._subversion_input.set_values(comment_hints)
+        if template_has_comment:
+            self._subversion_input.set_text(comment or "")
+            self._subversion_input.set_values(comment_hints)
+        self._update_filename()
 
     def _on_version_spinbox_change(self, value):
-        if not self._last_version_check.isChecked():
+        if value == self._version_value:
             return
         self._version_value = value
-        self.refresh()
+        if not self._last_version_check.isChecked():
+            self._update_filename()
 
     def _on_version_checkbox_change(self):
-        version_value = None
-        if not self._last_version_check.isChecked():
-            version_value = self._version_input.value()
-        if self._version_value == version_value:
-            return
-        self._version_value = version_value
-        self.refresh()
+        use_last_version = self._last_version_check.isChecked()
+        self._version_input.setEnabled(not use_last_version)
+        if use_last_version:
+            self._version_input.blockSignals(True)
+            self._version_input.setValue(self._last_version)
+            self._version_input.blockSignals(False)
+        self._update_filename()
 
     def _on_comment_change(self, text):
         if self._comment_value == text:
             return
         self._comment_value = text
-        self.refresh()
+        self._update_filename()
 
     def _on_extension_change(self):
         ext = self._extension_combobox.currentText()
         if ext == self._ext_value:
             return
         self._ext_value = ext
-        self.refresh()
+        self._update_filename()
 
     def _on_ok_pressed(self):
-        self._result = self.work_file
+        self._result = {
+            "filename": self._filename,
+            "workdir": self._workdir,
+            "folder_id": self._folder_id,
+            "task_id": self._task_id,
+            "template_key": self._template_key,
+        }
         self.close()
 
     def _on_cancel_pressed(self):
@@ -345,114 +332,24 @@ class SaveAsDialog(QtWidgets.QDialog):
     def get_result(self):
         return self._result
 
-    def get_work_file(self):
-        data = copy.deepcopy(self.data)
-        if not data["comment"]:
-            data.pop("comment", None)
+    def _update_filename(self):
+        result = self._controller.fill_workarea_filepath(
+            self._folder_id,
+            self._task_id,
+            self._ext_value,
+            self._last_version_check.isChecked(),
+            self._version_value,
+            self._comment_value,
+        )
+        self._filename = result.filename
+        self._btn_ok.setEnabled(not result.exists)
 
-        data["ext"] = data["ext"].lstrip(".")
-
-        template_obj = self.anatomy.templates_obj[self.template_key]["file"]
-        return template_obj.format_strict(data)
-
-    def refresh(self):
-        fill_data = copy.deepcopy(self._fill_data)
-        fill_data.update({
-            "ext": self._ext_value,
-            "": ""
-        })
-
-        extensions = list(self._extensions)
-        extension = self.data["ext"]
-        if extension is None:
-            # Define saving file extension
-            current_file = self.host.current_file()
-            if current_file:
-                # Match the extension of current file
-                _, extension = os.path.splitext(current_file)
-            else:
-                extension = extensions[0]
-
-        if extension != self.data["ext"]:
-            self.data["ext"] = extension
-            index = self._extension_combobox.findText(
-                extension, QtCore.Qt.MatchFixedString
-            )
-            if index >= 0:
-                self._extension_combobox.setCurrentIndex(index)
-
-        if not self._last_version_check.isChecked():
-            self._version_input.setEnabled(True)
-            self.data["version"] = self._version_input.value()
-
-            work_file = self.get_work_file()
-
-        else:
-            self._version_input.setEnabled(False)
-
-            data = copy.deepcopy(self.data)
-            template = str(self.template)
-
-            if not data["comment"]:
-                data.pop("comment", None)
-
-            data["ext"] = data["ext"].lstrip(".")
-
-            version = get_last_workfile_with_version(
-                self.root, template, data, extensions
-            )[1]
-
-            if version is None:
-                version = version_start.get_versioning_start(
-                    data["project"]["name"],
-                    get_current_host_name(),
-                    task_name=self.data["task"]["name"],
-                    task_type=self.data["task"]["type"],
-                    family="workfile"
-                )
-            else:
-                version += 1
-
-            found_valid_version = False
-            # Check if next version is valid version and give a chance to try
-            # next 100 versions
-            for idx in range(100):
-                # Store version to data
-                self.data["version"] = version
-
-                work_file = self.get_work_file()
-                # Safety check
-                path = os.path.join(self.root, work_file)
-                if not os.path.exists(path):
-                    found_valid_version = True
-                    break
-
-                # Try next version
-                version += 1
-                # Log warning
-                if idx == 0:
-                    log.warning((
-                        "BUG: Function `get_last_workfile_with_version` "
-                        "didn't return last version."
-                    ))
-            # Raise exception if even 100 version fallback didn't help
-            if not found_valid_version:
-                raise AssertionError(
-                    "This is a bug. Couldn't find valid version!"
-                )
-
-        self.work_file = work_file
-
-        path_exists = os.path.exists(os.path.join(self.root, work_file))
-
-        self._btn_ok.setEnabled(not path_exists)
-
-        if path_exists:
-            self._preview_widget.setText(
-                "<font color='red'>Cannot create \"{0}\" because file exists!"
-                "</font>".format(work_file)
-            )
+        if result.exists:
+            self._preview_widget.setText((
+                "<font color='red'>Cannot create \"{}\" because file exists!"
+                "</font>"
+            ).format(result.filename))
         else:
             self._preview_widget.setText(
-                "<font color='green'>{0}</font>".format(work_file)
+                "<font color='green'>{}</font>".format(result.filename)
             )

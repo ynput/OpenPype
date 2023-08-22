@@ -1,6 +1,17 @@
+import os
 from abc import ABCMeta, abstractmethod
 
 import six
+
+
+class WorkareaFilepathResult:
+    def __init__(self, root, filename, exists, filepath=None):
+        if not filepath and root and filename:
+            filepath = os.path.join(root, filename)
+        self.root = root
+        self.filename = filename
+        self.exists = exists
+        self.filepath = filepath
 
 
 @six.add_metaclass(ABCMeta)
@@ -132,6 +143,23 @@ class AbstractWorkfileController(object):
         pass
 
     @abstractmethod
+    def fill_workarea_filepath(
+        self,
+        folder_id,
+        task_id,
+        extension,
+        use_last_version,
+        version,
+        comment,
+    ):
+        """
+
+        Returns:
+            WorkareaFilepathResult: Result of the operation.
+        """
+        pass
+
+    @abstractmethod
     def get_published_file_items(self, folder_id):
         pass
 
@@ -151,4 +179,15 @@ class AbstractWorkfileController(object):
     # Controller actions
     @abstractmethod
     def open_workfile(self, filepath):
+        pass
+
+    @abstractmethod
+    def save_as_workfile(
+        self,
+        folder_id,
+        task_id,
+        workdir,
+        filename,
+        template_key,
+    ):
         pass
