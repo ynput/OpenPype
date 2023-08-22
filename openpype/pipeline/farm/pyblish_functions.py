@@ -116,8 +116,8 @@ def get_time_data_from_instance_or_context(instance):
              instance.context.data.get("fps")),
         handle_start=(instance.data.get("handleStart") or
                       instance.context.data.get("handleStart")),  # noqa: E501
-        handle_end=(instance.data.get("handleStart") or
-                    instance.context.data.get("handleStart"))
+        handle_end=(instance.data.get("handleEnd") or
+                    instance.context.data.get("handleEnd"))
     )
 
 
@@ -212,7 +212,7 @@ def create_skeleton_instance(
                      "This may cause issues.").format(source))
 
     family = ("render"
-              if "prerender" not in instance.data["families"]
+              if "prerender.farm" not in instance.data["families"]
               else "prerender")
     families = [family]
 
@@ -267,6 +267,9 @@ def create_skeleton_instance(
     representations = get_transferable_representations(instance)
     instance_skeleton_data["representations"] = []
     instance_skeleton_data["representations"] += representations
+
+    persistent = instance.data.get("stagingDir_persistent") is True
+    instance_skeleton_data["stagingDir_persistent"] = persistent
 
     return instance_skeleton_data
 
@@ -565,9 +568,15 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             col = list(cols[0])
 
         # create subset name `familyTaskSubset_AOV`
-        group_name = 'render{}{}{}{}'.format(
-            task[0].upper(), task[1:],
-            subset[0].upper(), subset[1:])
+        # TODO refactor/remove me
+        family = skeleton["family"]
+        if not subset.startswith(family):
+            group_name = '{}{}{}{}{}'.format(
+                family,
+                task[0].upper(), task[1:],
+                subset[0].upper(), subset[1:])
+        else:
+            group_name = subset
 
         # if there are multiple cameras, we need to add camera name
         if isinstance(col, (list, tuple)):

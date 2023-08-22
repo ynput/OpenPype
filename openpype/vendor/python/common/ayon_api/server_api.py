@@ -4,7 +4,6 @@ import io
 import json
 import logging
 import collections
-import datetime
 import platform
 import copy
 import uuid
@@ -15,7 +14,16 @@ except ImportError:
     HTTPStatus = None
 
 import requests
-from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
+try:
+    # This should be used if 'requests' have it available
+    from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
+except ImportError:
+    # Older versions of 'requests' don't have custom exception for json
+    #   decode error
+    try:
+        from simplejson import JSONDecodeError as RequestsJSONDecodeError
+    except ImportError:
+        from json import JSONDecodeError as RequestsJSONDecodeError
 
 from .constants import (
     DEFAULT_PRODUCT_TYPE_FIELDS,
@@ -28,8 +36,8 @@ from .constants import (
     REPRESENTATION_FILES_FIELDS,
     DEFAULT_WORKFILE_INFO_FIELDS,
     DEFAULT_EVENT_FIELDS,
+    DEFAULT_USER_FIELDS,
 )
-from .thumbnails import ThumbnailCache
 from .graphql import GraphQlQuery, INTROSPECTION_QUERY
 from .graphql_queries import (
     project_graphql_query,
@@ -44,6 +52,7 @@ from .graphql_queries import (
     representations_parents_qraphql_query,
     workfiles_info_graphql_query,
     events_graphql_query,
+    users_graphql_query,
 )
 from .exceptions import (
     FailedOperations,
@@ -62,6 +71,7 @@ from .utils import (
     failed_json_default,
     TransferProgress,
     create_dependency_package_basename,
+    ThumbnailContent,
 )
 
 PatternType = type(re.compile(""))
@@ -320,11 +330,15 @@ class ServerAPI(object):
         default_settings_variant (Optional[Literal["production", "staging"]]):
             Settings variant used by default if a method for settings won't
             get any (by default is 'production').
+        sender (Optional[str]): Sender of requests. Used in server logs and
+            propagated into events.
         ssl_verify (Union[bool, str, None]): Verify SSL certificate
             Looks for env variable value 'AYON_CA_FILE' by default. If not
             available then 'True' is used.
         cert (Optional[str]): Path to certificate file. Looks for env
             variable value 'AYON_CERT_FILE' by default.
+        create_session (Optional[bool]): Create session for connection if
+            token is available. Default is True.
     """
 
     def __init__(
@@ -334,8 +348,10 @@ class ServerAPI(object):
         site_id=None,
         client_version=None,
         default_settings_variant=None,
+        sender=None,
         ssl_verify=None,
         cert=None,
+        create_session=True,
     ):
         if not base_url:
             raise ValueError("Invalid server URL {}".format(str(base_url)))
@@ -352,6 +368,7 @@ class ServerAPI(object):
             default_settings_variant
             or "production"
         )
+        self._sender = sender
 
         if ssl_verify is None:
             # Custom AYON env variable for CA file or 'True'
@@ -367,6 +384,7 @@ class ServerAPI(object):
 
         self._access_token_is_service = None
         self._token_is_valid = None
+        self._token_validation_started = False
         self._server_available = None
         self._server_version = None
         self._server_version_tuple = None
@@ -387,7 +405,11 @@ class ServerAPI(object):
         self._entity_type_attributes_cache = {}
 
         self._as_user_stack = _AsUserStack()
-        self._thumbnail_cache = ThumbnailCache(True)
+
+        # Create session
+        if self._access_token and create_session:
+            self.validate_server_availability()
+            self.create_session()
 
     @property
     def log(self):
@@ -551,6 +573,29 @@ class ServerAPI(object):
         set_default_settings_variant
     )
 
+    def get_sender(self):
+        """Sender used to send requests.
+
+        Returns:
+            Union[str, None]: Sender name or None.
+        """
+
+        return self._sender
+
+    def set_sender(self, sender):
+        """Change sender used for requests.
+
+        Args:
+            sender (Union[str, None]): Sender name or None.
+        """
+
+        if sender == self._sender:
+            return
+        self._sender = sender
+        self._update_session_headers()
+
+    sender = property(get_sender, set_sender)
+
     def get_default_service_username(self):
         """Default username used for callbacks when used with service API key.
 
@@ -652,6 +697,7 @@ class ServerAPI(object):
 
     def validate_token(self):
         try:
+            self._token_validation_started = True
             # TODO add other possible validations
             # - existence of 'user' key in info
             # - validate that 'site_id' is in 'sites' in info
@@ -661,6 +707,9 @@ class ServerAPI(object):
 
         except UnauthorizedError:
             self._token_is_valid = False
+
+        finally:
+            self._token_validation_started = False
         return self._token_is_valid
 
     def set_token(self, token):
@@ -673,8 +722,25 @@ class ServerAPI(object):
         self._token_is_valid = None
         self.close_session()
 
-    def create_session(self):
+    def create_session(self, ignore_existing=True, force=False):
+        """Create a connection session.
+
+        Session helps to keep connection with server without
+            need to reconnect on each call.
+
+        Args:
+            ignore_existing (bool): If session already exists,
+                ignore creation.
+            force (bool): If session already exists, close it and
+                create new.
+        """
+
+        if force and self._session is not None:
+            self.close_session()
+
         if self._session is not None:
+            if ignore_existing:
+                return
             raise ValueError("Session is already created.")
 
         self._as_user_stack.clear()
@@ -713,6 +779,7 @@ class ServerAPI(object):
             ("X-as-user", self._as_user_stack.username),
             ("x-ayon-version", self._client_version),
             ("x-ayon-site-id", self._site_id),
+            ("x-sender", self._sender),
         ):
             if value is not None:
                 self._session.headers[key] = value
@@ -797,10 +864,36 @@ class ServerAPI(object):
         self._access_token_is_service = None
         return None
 
-    def get_users(self):
-        # TODO how to find out if user have permission?
-        users = self.get("users")
-        return users.data
+    def get_users(self, usernames=None, fields=None):
+        """Get Users.
+
+        Args:
+            usernames (Optional[Iterable[str]]): Filter by usernames.
+            fields (Optional[Iterable[str]]): fields to be queried
+                for users.
+
+        Returns:
+            Generator[dict[str, Any]]: Queried users.
+        """
+
+        filters = {}
+        if usernames is not None:
+            usernames = set(usernames)
+            if not usernames:
+                return
+            filters["userNames"] = list(usernames)
+
+        if not fields:
+            fields = self.get_default_fields_for_type("user")
+
+        query = users_graphql_query(set(fields))
+        for attr, filter_value in filters.items():
+            query.set_variable_value(attr, filter_value)
+
+        for parsed_data in query.continuous_query(self):
+            for user in parsed_data["users"]:
+                user["roles"] = json.loads(user["roles"])
+                yield user
 
     def get_user(self, username=None):
         output = None
@@ -830,6 +923,9 @@ class ServerAPI(object):
         if self._client_version is not None:
             headers["x-ayon-version"] = self._client_version
 
+        if self._sender is not None:
+            headers["x-sender"] = self._sender
+
         if self._access_token:
             if self._access_token_is_service:
                 headers["X-Api-Key"] = self._access_token
@@ -841,7 +937,19 @@ class ServerAPI(object):
                     self._access_token)
         return headers
 
-    def login(self, username, password):
+    def login(self, username, password, create_session=True):
+        """Login to server.
+
+        Args:
+            username (str): Username.
+            password (str): Password.
+            create_session (Optional[bool]): Create session after login.
+                Default: True.
+
+        Raises:
+            AuthenticationError: Login failed.
+        """
+
         if self.has_valid_token:
             try:
                 user_info = self.get_user()
@@ -851,31 +959,40 @@ class ServerAPI(object):
             current_username = user_info.get("name")
             if current_username == username:
                 self.close_session()
-                self.create_session()
+                if create_session:
+                    self.create_session()
                 return
 
         self.reset_token()
 
         self.validate_server_availability()
 
-        response = self.post(
-            "auth/login",
-            name=username,
-            password=password
-        )
-        if response.status_code != 200:
-            _detail = response.data.get("detail")
-            details = ""
-            if _detail:
-                details = " {}".format(_detail)
+        self._token_validation_started = True
 
-            raise AuthenticationError("Login failed {}".format(details))
+        try:
+            response = self.post(
+                "auth/login",
+                name=username,
+                password=password
+            )
+            if response.status_code != 200:
+                _detail = response.data.get("detail")
+                details = ""
+                if _detail:
+                    details = " {}".format(_detail)
+
+                raise AuthenticationError("Login failed {}".format(details))
+
+        finally:
+            self._token_validation_started = False
 
         self._access_token = response["token"]
 
         if not self.has_valid_token:
             raise AuthenticationError("Invalid credentials")
-        self.create_session()
+
+        if create_session:
+            self.create_session()
 
     def logout(self, soft=False):
         if self._access_token:
@@ -888,6 +1005,15 @@ class ServerAPI(object):
 
     def _do_rest_request(self, function, url, **kwargs):
         if self._session is None:
+            # Validate token if was not yet validated
+            #    - ignore validation if we're in middle of
+            #       validation
+            if (
+                self._token_is_valid is None
+                and not self._token_validation_started
+            ):
+                self.validate_token()
+
             if "headers" not in kwargs:
                 kwargs["headers"] = self.get_headers()
 
@@ -1074,7 +1200,7 @@ class ServerAPI(object):
         filters["includeLogsFilter"] = include_logs
 
         if not fields:
-            fields = DEFAULT_EVENT_FIELDS
+            fields = self.get_default_fields_for_type("event")
 
         query = events_graphql_query(set(fields))
         for attr, filter_value in filters.items():
@@ -1175,7 +1301,8 @@ class ServerAPI(object):
         target_topic,
         sender,
         description=None,
-        sequential=None
+        sequential=None,
+        events_filter=None,
     ):
         """Enroll job based on events.
 
@@ -1217,6 +1344,8 @@ class ServerAPI(object):
                 in target event.
             sequential (Optional[bool]): The source topic must be processed
                 in sequence.
+            events_filter (Optional[ayon_server.sqlfilter.Filter]): A dict-like
+                with conditions to filter the source event.
 
         Returns:
             Union[None, dict[str, Any]]: None if there is no event matching
@@ -1232,6 +1361,8 @@ class ServerAPI(object):
             kwargs["sequential"] = sequential
         if description is not None:
             kwargs["description"] = description
+        if events_filter is not None:
+            kwargs["filter"] = events_filter
         response = self.post("enroll", **kwargs)
         if response.status_code == 204:
             return None
@@ -1328,6 +1459,7 @@ class ServerAPI(object):
             response = post_func(url, data=stream, **kwargs)
         response.raise_for_status()
         progress.set_transferred_size(size)
+        return response
 
     def upload_file(
         self, endpoint, filepath, progress=None, request_type=None
@@ -1344,6 +1476,9 @@ class ServerAPI(object):
                 to track upload progress.
             request_type (Optional[RequestType]): Type of request that will
                 be used to upload file.
+
+        Returns:
+            requests.Response: Response object.
         """
 
         if endpoint.startswith(self._base_url):
@@ -1362,7 +1497,7 @@ class ServerAPI(object):
         progress.set_started()
 
         try:
-            self._upload_file(url, filepath, progress, request_type)
+            return self._upload_file(url, filepath, progress, request_type)
 
         except Exception as exc:
             progress.set_failed(str(exc))
@@ -1555,6 +1690,19 @@ class ServerAPI(object):
 
         return copy.deepcopy(attributes)
 
+    def get_attributes_fields_for_type(self, entity_type):
+        """Prepare attribute fields for entity type.
+
+        Returns:
+            set[str]: Attributes fields for entity type.
+        """
+
+        attributes = self.get_attributes_for_type(entity_type)
+        return {
+            "attrib.{}".format(attr)
+            for attr in attributes
+        }
+
     def get_default_fields_for_type(self, entity_type):
         """Default fields for entity type.
 
@@ -1567,51 +1715,46 @@ class ServerAPI(object):
             set[str]: Fields that should be queried from server.
         """
 
-        attributes = self.get_attributes_for_type(entity_type)
+        # Event does not have attributes
+        if entity_type == "event":
+            return set(DEFAULT_EVENT_FIELDS)
+
         if entity_type == "project":
-            return DEFAULT_PROJECT_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+            entity_type_defaults = DEFAULT_PROJECT_FIELDS
 
-        if entity_type == "folder":
-            return DEFAULT_FOLDER_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+        elif entity_type == "folder":
+            entity_type_defaults = DEFAULT_FOLDER_FIELDS
 
-        if entity_type == "task":
-            return DEFAULT_TASK_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+        elif entity_type == "task":
+            entity_type_defaults = DEFAULT_TASK_FIELDS
 
-        if entity_type == "product":
-            return DEFAULT_PRODUCT_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+        elif entity_type == "product":
+            entity_type_defaults = DEFAULT_PRODUCT_FIELDS
 
-        if entity_type == "version":
-            return DEFAULT_VERSION_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+        elif entity_type == "version":
+            entity_type_defaults = DEFAULT_VERSION_FIELDS
 
-        if entity_type == "representation":
-            return (
+        elif entity_type == "representation":
+            entity_type_defaults = (
                 DEFAULT_REPRESENTATION_FIELDS
                 | REPRESENTATION_FILES_FIELDS
-                | {
-                    "attrib.{}".format(attr)
-                    for attr in attributes
-                }
             )
 
-        if entity_type == "productType":
-            return DEFAULT_PRODUCT_TYPE_FIELDS
+        elif entity_type == "productType":
+            entity_type_defaults = DEFAULT_PRODUCT_TYPE_FIELDS
 
-        raise ValueError("Unknown entity type \"{}\"".format(entity_type))
+        elif entity_type == "workfile":
+            entity_type_defaults = DEFAULT_WORKFILE_INFO_FIELDS
+
+        elif entity_type == "user":
+            entity_type_defaults = DEFAULT_USER_FIELDS
+
+        else:
+            raise ValueError("Unknown entity type \"{}\"".format(entity_type))
+        return (
+            entity_type_defaults
+            | self.get_attributes_fields_for_type(entity_type)
+        )
 
     def get_addons_info(self, details=True):
         """Get information about addons available on server.
@@ -1640,7 +1783,7 @@ class ServerAPI(object):
         Args:
             addon_name (str): Name of addon.
             addon_version (str): Version of addon.
-            subpaths (tuple[str]): Any amount of subpaths that are added to
+            *subpaths (str): Any amount of subpaths that are added to
                 addon url.
 
         Returns:
@@ -1848,9 +1991,12 @@ class ServerAPI(object):
             dst_filename (str): Destination filename.
             progress (Optional[TransferProgress]): Object that gives ability
                 to track download progress.
+
+        Returns:
+            requests.Response: Response object.
         """
 
-        self.upload_file(
+        return self.upload_file(
             "desktop/installers/{}".format(dst_filename),
             src_filepath,
             progress=progress
@@ -2161,6 +2307,33 @@ class ServerAPI(object):
         """
 
         return create_dependency_package_basename(platform_name)
+
+    def upload_addon_zip(self, src_filepath, progress=None):
+        """Upload addon zip file to server.
+
+        File is validated on server. If it is valid, it is installed. It will
+            create an event job which can be tracked (tracking part is not
+            implemented yet).
+
+        Example output:
+            {'eventId': 'a1bfbdee27c611eea7580242ac120003'}
+
+        Args:
+            src_filepath (str): Path to a zip file.
+            progress (Optional[TransferProgress]): Object to keep track about
+                upload state.
+
+        Returns:
+            dict[str, Any]: Response data from server.
+        """
+
+        response = self.upload_file(
+            "addons/install",
+            src_filepath,
+            progress=progress,
+            request_type=RequestTypes.post,
+        )
+        return response.json()
 
     def _get_bundles_route(self):
         major, minor, patch, _, _ = self.server_version_tuple
@@ -2839,6 +3012,79 @@ class ServerAPI(object):
             only_values=only_values
         )
 
+    def get_secrets(self):
+        """Get all secrets.
+
+        Example output:
+            [
+                {
+                    "name": "secret_1",
+                    "value": "secret_value_1",
+                },
+                {
+                    "name": "secret_2",
+                    "value": "secret_value_2",
+                }
+            ]
+
+        Returns:
+            list[dict[str, str]]: List of secret entities.
+        """
+
+        response = self.get("secrets")
+        response.raise_for_status()
+        return response.data
+
+    def get_secret(self, secret_name):
+        """Get secret by name.
+
+        Example output:
+            {
+                "name": "secret_name",
+                "value": "secret_value",
+            }
+
+        Args:
+            secret_name (str): Name of secret.
+
+        Returns:
+            dict[str, str]: Secret entity data.
+        """
+
+        response = self.get("secrets/{}".format(secret_name))
+        response.raise_for_status()
+        return response.data
+
+    def save_secret(self, secret_name, secret_value):
+        """Save secret.
+
+        This endpoint can create and update secret.
+
+        Args:
+            secret_name (str): Name of secret.
+            secret_value (str): Value of secret.
+        """
+
+        response = self.put(
+            "secrets/{}".format(secret_name),
+            name=secret_name,
+            value=secret_value,
+        )
+        response.raise_for_status()
+        return response.data
+
+
+    def delete_secret(self, secret_name):
+        """Delete secret by name.
+
+        Args:
+            secret_name (str): Name of secret to delete.
+        """
+
+        response = self.delete("secrets/{}".format(secret_name))
+        response.raise_for_status()
+        return response.data
+
     # Entity getters
     def get_rest_project(self, project_name):
         """Query project by name.
@@ -2983,8 +3229,6 @@ class ServerAPI(object):
         else:
             use_rest = False
             fields = set(fields)
-            if own_attributes:
-                fields.add("ownAttrib")
             for field in fields:
                 if field.startswith("config"):
                     use_rest = True
@@ -2997,6 +3241,13 @@ class ServerAPI(object):
                 yield project
 
         else:
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("project")
+
+            if own_attributes:
+                fields.add("ownAttrib")
+
             query = projects_graphql_query(fields)
             for parsed_data in query.continuous_query(self):
                 for project in parsed_data["projects"]:
@@ -3037,8 +3288,12 @@ class ServerAPI(object):
                 fill_own_attribs(project)
             return project
 
+        if "attrib" in fields:
+            fields.remove("attrib")
+            fields |= self.get_attributes_fields_for_type("project")
+
         if own_attributes:
-            field.add("ownAttrib")
+            fields.add("ownAttrib")
         query = project_graphql_query(fields)
         query.set_variable_value("projectName", project_name)
 
@@ -3050,6 +3305,65 @@ class ServerAPI(object):
             if own_attributes:
                 fill_own_attribs(project)
         return project
+
+    def get_folders_hierarchy(
+        self,
+        project_name,
+        search_string=None,
+        folder_types=None
+    ):
+        """Get project hierarchy.
+
+        All folders in project in hierarchy data structure.
+
+        Example output:
+            {
+                "hierarchy": [
+                    {
+                        "id": "...",
+                        "name": "...",
+                        "label": "...",
+                        "status": "...",
+                        "folderType": "...",
+                        "hasTasks": False,
+                        "taskNames": [],
+                        "parents": [],
+                        "parentId": None,
+                        "children": [...children folders...]
+                    },
+                    ...
+                ]
+            }
+
+        Args:
+            project_name (str): Project where to look for folders.
+            search_string (Optional[str]): Search string to filter folders.
+            folder_types (Optional[Iterable[str]]): Folder types to filter.
+
+        Returns:
+            dict[str, Any]: Response data from server.
+        """
+
+        if folder_types:
+            folder_types = ",".join(folder_types)
+
+        query_fields = [
+            "{}={}".format(key, value)
+            for key, value in (
+                ("search", search_string),
+                ("types", folder_types),
+            )
+            if value
+        ]
+        query = ""
+        if query_fields:
+            query = "?{}".format(",".join(query_fields))
+
+        response = self.get(
+            "projects/{}/hierarchy{}".format(project_name, query)
+        )
+        response.raise_for_status()
+        return response.data
 
     def get_folders(
         self,
@@ -3136,10 +3450,13 @@ class ServerAPI(object):
 
             filters["parentFolderIds"] = list(parent_ids)
 
-        if fields:
-            fields = set(fields)
-        else:
+        if not fields:
             fields = self.get_default_fields_for_type("folder")
+        else:
+            fields = set(fields)
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("folder")
 
         use_rest = False
         if "data" in fields:
@@ -3373,8 +3690,11 @@ class ServerAPI(object):
 
         if not fields:
             fields = self.get_default_fields_for_type("task")
-
-        fields = set(fields)
+        else:
+            fields = set(fields)
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("task")
 
         use_rest = False
         if "data" in fields:
@@ -3559,6 +3879,9 @@ class ServerAPI(object):
         # Convert fields and add minimum required fields
         if fields:
             fields = set(fields) | {"id"}
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("folder")
         else:
             fields = self.get_default_fields_for_type("product")
 
@@ -3621,7 +3944,6 @@ class ServerAPI(object):
                 )
                 if filtered_product is not None:
                     yield filtered_product
-
 
     def get_product_by_id(
         self,
@@ -3816,7 +4138,11 @@ class ServerAPI(object):
 
         if not fields:
             fields = self.get_default_fields_for_type("version")
-        fields = set(fields)
+        else:
+            fields = set(fields)
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("version")
 
         if active is not None:
             fields.add("active")
@@ -4274,7 +4600,11 @@ class ServerAPI(object):
 
         if not fields:
             fields = self.get_default_fields_for_type("representation")
-        fields = set(fields)
+        else:
+            fields = set(fields)
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("representation")
 
         use_rest = False
         if "data" in fields:
@@ -4620,8 +4950,15 @@ class ServerAPI(object):
             filters["workfileIds"] = list(workfile_ids)
 
         if not fields:
-            fields = DEFAULT_WORKFILE_INFO_FIELDS
+            fields = self.get_default_fields_for_type("workfile")
+
         fields = set(fields)
+        if "attrib" in fields:
+            fields.remove("attrib")
+            fields |= {
+                "attrib.{}".format(attr)
+                for attr in self.get_attributes_for_type("workfile")
+            }
         if own_attributes:
             fields.add("ownAttrib")
 
@@ -4698,18 +5035,61 @@ class ServerAPI(object):
             return workfile_info
         return None
 
+    def _prepare_thumbnail_content(self, project_name, response):
+        content = None
+        content_type = response.content_type
+
+        # It is expected the response contains thumbnail id otherwise the
+        #   content cannot be cached and filepath returned
+        thumbnail_id = response.headers.get("X-Thumbnail-Id")
+        if thumbnail_id is not None:
+            content = response.content
+
+        return ThumbnailContent(
+            project_name, thumbnail_id, content, content_type
+        )
+
+    def get_thumbnail_by_id(self, project_name, thumbnail_id):
+        """Get thumbnail from server by id.
+
+        Permissions of thumbnails are related to entities so thumbnails must
+        be queried per entity. So an entity type and entity type is required
+        to be passed.
+
+        Notes:
+            It is recommended to use one of prepared entity type specific
+                methods 'get_folder_thumbnail', 'get_version_thumbnail' or
+                'get_workfile_thumbnail'.
+            We do recommend pass thumbnail id if you have access to it. Each
+                entity that allows thumbnails has 'thumbnailId' field, so it
+                can be queried.
+
+        Args:
+            project_name (str): Project under which the entity is located.
+            thumbnail_id (Optional[str]): DEPRECATED Use
+                'get_thumbnail_by_id'.
+
+        Returns:
+            ThumbnailContent: Thumbnail content wrapper. Does not have to be
+                valid.
+        """
+
+        response = self.raw_get(
+            "projects/{}/thumbnails/{}".format(
+                project_name,
+                thumbnail_id
+            )
+        )
+        return self._prepare_thumbnail_content(project_name, response)
+
     def get_thumbnail(
         self, project_name, entity_type, entity_id, thumbnail_id=None
     ):
         """Get thumbnail from server.
 
-        Permissions of thumbnails are related to entities so thumbnails must be
-        queried per entity. So an entity type and entity type is required to
-        be passed.
-
-        If thumbnail id is passed logic can look into locally cached thumbnails
-        before calling server which can enhance loading time. If thumbnail id
-        is not passed the thumbnail is always downloaded even if is available.
+        Permissions of thumbnails are related to entities so thumbnails must
+        be queried per entity. So an entity type and entity type is required
+        to be passed.
 
         Notes:
             It is recommended to use one of prepared entity type specific
@@ -4723,20 +5103,16 @@ class ServerAPI(object):
             project_name (str): Project under which the entity is located.
             entity_type (str): Entity type which passed entity id represents.
             entity_id (str): Entity id for which thumbnail should be returned.
-            thumbnail_id (Optional[str]): Prepared thumbnail id from entity.
-                Used only to check if thumbnail was already cached.
+            thumbnail_id (Optional[str]): DEPRECATED Use
+                'get_thumbnail_by_id'.
 
         Returns:
-            Union[str, None]: Path to downloaded thumbnail or none if entity
-                does not have any (or if user does not have permissions).
+            ThumbnailContent: Thumbnail content wrapper. Does not have to be
+                valid.
         """
 
-        # Look for thumbnail into cache and return the path if was found
-        filepath = self._thumbnail_cache.get_thumbnail_filepath(
-            project_name, thumbnail_id
-        )
-        if filepath:
-            return filepath
+        if thumbnail_id:
+            return self.get_thumbnail_by_id(project_name, thumbnail_id)
 
         if entity_type in (
             "folder",
@@ -4745,29 +5121,12 @@ class ServerAPI(object):
         ):
             entity_type += "s"
 
-        # Receive thumbnail content from server
-        result = self.raw_get("projects/{}/{}/{}/thumbnail".format(
+        response = self.raw_get("projects/{}/{}/{}/thumbnail".format(
             project_name,
             entity_type,
             entity_id
         ))
-
-        if result.content_type is None:
-            return None
-
-        # It is expected the response contains thumbnail id otherwise the
-        #   content cannot be cached and filepath returned
-        thumbnail_id = result.headers.get("X-Thumbnail-Id")
-        if thumbnail_id is None:
-            return None
-
-        # Cache thumbnail and return path
-        return self._thumbnail_cache.store_thumbnail(
-            project_name,
-            thumbnail_id,
-            result.content,
-            result.content_type
-        )
+        return self._prepare_thumbnail_content(project_name, response)
 
     def get_folder_thumbnail(
         self, project_name, folder_id, thumbnail_id=None

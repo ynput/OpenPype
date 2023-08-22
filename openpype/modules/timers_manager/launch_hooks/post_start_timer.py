@@ -1,4 +1,4 @@
-from openpype.lib import PostLaunchHook
+from openpype.lib.applications import PostLaunchHook, LaunchTypes
 
 
 class PostStartTimerHook(PostLaunchHook):
@@ -7,6 +7,7 @@ class PostStartTimerHook(PostLaunchHook):
     This module requires enabled TimerManager module.
     """
     order = None
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         project_name = self.data.get("project_name")

@@ -193,4 +193,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         if not instance.data.get("review"):
             instance.data["useSequenceForReview"] = False
 
+        # TODO temporarily set stagingDir as persistent for backward
+        # compatibility. This is mainly focused on `renders`folders which
+        # were previously not cleaned up (and could be used in read notes)
+        # this logic should be removed and replaced with custom staging dir
+        instance.data["stagingDir_persistent"] = True
+
         self.log.debug("instance.data: {}".format(pformat(instance.data)))

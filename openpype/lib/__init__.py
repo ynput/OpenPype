@@ -5,11 +5,11 @@
 import sys
 import os
 import site
+from openpype import PACKAGE_DIR
 
 # Add Python version specific vendor folder
 python_version_dir = os.path.join(
-    os.getenv("OPENPYPE_REPOS_ROOT", ""),
-    "openpype", "vendor", "python", "python_{}".format(sys.version[0])
+    PACKAGE_DIR, "vendor", "python", "python_{}".format(sys.version[0])
 )
 # Prepend path in sys paths
 sys.path.insert(0, python_version_dir)
@@ -22,11 +22,14 @@ from .events import (
 )
 
 from .vendor_bin_utils import (
+    ToolNotFoundError,
     find_executable,
     get_vendor_bin_path,
     get_oiio_tools_path,
+    get_oiio_tool_args,
     get_ffmpeg_tool_path,
-    is_oiio_supported
+    get_ffmpeg_tool_args,
+    is_oiio_supported,
 )
 
 from .attribute_definitions import (
@@ -52,11 +55,13 @@ from .env_tools import (
 
 from .terminal import Terminal
 from .execute import (
+    get_ayon_launcher_args,
     get_openpype_execute_args,
     get_linux_launcher_args,
     execute,
     run_subprocess,
     run_detached_process,
+    run_ayon_launcher_process,
     run_openpype_process,
     clean_envs_for_openpype_process,
     path_to_subprocess_arg,
@@ -172,12 +177,13 @@ __all__ = [
     "emit_event",
     "register_event_callback",
 
-    "find_executable",
+    "get_ayon_launcher_args",
     "get_openpype_execute_args",
     "get_linux_launcher_args",
     "execute",
     "run_subprocess",
     "run_detached_process",
+    "run_ayon_launcher_process",
     "run_openpype_process",
     "clean_envs_for_openpype_process",
     "path_to_subprocess_arg",
@@ -186,9 +192,13 @@ __all__ = [
     "env_value_to_bool",
     "get_paths_from_environ",
 
+    "ToolNotFoundError",
+    "find_executable",
     "get_vendor_bin_path",
     "get_oiio_tools_path",
+    "get_oiio_tool_args",
     "get_ffmpeg_tool_path",
+    "get_ffmpeg_tool_args",
     "is_oiio_supported",
 
     "AbstractAttrDef",
