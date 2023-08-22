@@ -163,7 +163,8 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         if not expected_files:
             raise RuntimeError("No Render Elements found!")
 
-        output_dir = os.path.dirname(expected_files[0])
+        first_file = next(iter_expected_files(expected_files))
+        output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
         instance.data["toBeRenderedOn"] = "deadline"
 
