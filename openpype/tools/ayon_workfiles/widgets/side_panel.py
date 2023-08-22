@@ -70,6 +70,8 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._orig_note = ""
         self._control = control
 
+        self._set_context(None, None, None)
+
     def set_published_mode(self, published_mode):
         self._artist_note_widget.setVisible(not published_mode)
 
