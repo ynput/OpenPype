@@ -162,6 +162,29 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         elif ext == "tif":
             image_settings.file_format = "TIFF"
 
+    @staticmethod
+    def set_render_passes(settings):
+        aov_list = (settings["blender"]
+                            ["RenderSettings"]
+                            ["aov_list"])
+
+        scene = bpy.context.scene
+        vl = bpy.context.view_layer
+
+        vl.use_pass_combined = "combined" in aov_list
+        vl.use_pass_z = "z" in aov_list
+        vl.use_pass_mist = "mist" in aov_list
+        vl.use_pass_normal = "normal" in aov_list
+        vl.use_pass_diffuse_direct = "diffuse_light" in aov_list
+        vl.use_pass_diffuse_color = "diffuse_color" in aov_list
+        vl.use_pass_glossy_direct = "specular_light" in aov_list
+        vl.use_pass_glossy_color = "specular_color" in aov_list
+        vl.eevee.use_pass_volume_direct = "volume_light" in aov_list
+        vl.use_pass_emit = "emission" in aov_list
+        vl.use_pass_environment = "environment" in aov_list
+        vl.use_pass_shadow = "shadow" in aov_list
+        vl.use_pass_ambient_occlusion = "ao" in aov_list
+
     def _create_context(self):
         context = bpy.context.copy()
 
@@ -275,6 +298,8 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         aov_sep = self.get_aov_separator(settings)
         ext = self.get_image_format(settings)
         multilayer = self.get_multilayer(settings)
+
+        self.set_render_passes(settings)
 
         output_path = os.path.join(file_path, render_folder, file_name)
 

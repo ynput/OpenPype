@@ -98,6 +98,29 @@
                     "key": "multilayer_exr",
                     "type": "boolean",
                     "label": "Multilayer (EXR)"
+                },
+                {
+                    "key": "aov_list",
+                    "label": "AOVs to create",
+                    "type": "enum",
+                    "multiselection": true,
+                    "defaults": "empty",
+                    "enum_items": [
+                        {"empty": "< empty >"},
+                        {"combined": "Combined"},
+                        {"z": "Z"},
+                        {"mist": "Mist"},
+                        {"normal": "Normal"},
+                        {"diffuse_light": "Diffuse Light"},
+                        {"diffuse_color": "Diffuse Color"},
+                        {"specular_light": "Specular Light"},
+                        {"specular_color": "Specular Color"},
+                        {"volume_light": "Volume Light"},
+                        {"emission": "Emission"},
+                        {"environment": "Environment"},
+                        {"shadow": "Shadow"},
+                        {"ao": "Ambient Occlusion"}
+                    ]
                 }
             ]
         },

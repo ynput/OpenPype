@@ -21,7 +21,8 @@
         "default_render_image_folder": "renders/blender",
         "aov_separator": "underscore",
         "image_format": "exr",
-        "multilayer_exr": true
+        "multilayer_exr": true,
+        "aov_list": []
     },
     "workfile_builder": {
         "create_first_version": false,
