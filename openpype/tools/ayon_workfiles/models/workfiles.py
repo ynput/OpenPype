@@ -1,10 +1,11 @@
 import os
+import re
 import copy
 
 import ayon_api
 from ayon_api.operations import OperationsSession
 
-
+from openpype.client import get_project
 from openpype.client.operations import (
     prepare_workfile_info_update_data,
 )
@@ -14,7 +15,9 @@ from openpype.pipeline.template_data import (
 from openpype.pipeline.workfile import (
     get_workdir_with_workdir_data,
     get_workfile_template_key,
+    get_last_workfile_with_version,
 )
+from openpype.pipeline.version_start import get_versioning_start
 
 
 def get_folder_template_data(folder):
@@ -75,6 +78,55 @@ class FileItem:
         return output
 
 
+class CommentMatcher(object):
+    """Use anatomy and work file data to parse comments from filenames"""
+    def __init__(self, extensions, file_template, data):
+
+        self.fname_regex = None
+
+        if "{comment}" not in file_template:
+            # Don't look for comment if template doesn't allow it
+            return
+
+        # Create a regex group for extensions
+        any_extension = "(?:{})".format(
+            "|".join(re.escape(ext.lstrip(".")) for ext in extensions)
+        )
+
+        # Use placeholders that will never be in the filename
+        temp_data = copy.deepcopy(data)
+        temp_data["comment"] = "<<comment>>"
+        temp_data["version"] = "<<version>>"
+        temp_data["ext"] = "<<ext>>"
+
+        fname_pattern = file_template.format_strict(temp_data)
+        fname_pattern = re.escape(fname_pattern)
+
+        # Replace comment and version with something we can match with regex
+        replacements = {
+            "<<comment>>": "(.+)",
+            "<<version>>": "[0-9]+",
+            "<<ext>>": any_extension,
+        }
+        for src, dest in replacements.items():
+            fname_pattern = fname_pattern.replace(re.escape(src), dest)
+
+        # Match from beginning to end of string to be safe
+        fname_pattern = "^{}$".format(fname_pattern)
+
+        self.fname_regex = re.compile(fname_pattern)
+
+    def parse_comment(self, filepath):
+        """Parse the {comment} part from a filename"""
+        if not self.fname_regex:
+            return
+
+        fname = os.path.basename(filepath)
+        match = self.fname_regex.match(fname)
+        if match:
+            return match.group(1)
+
+
 class WorkareaModel:
     """Workfiles model looking for workfiles in workare folder.
 
@@ -102,8 +154,7 @@ class WorkareaModel:
 
     def _get_base_data(self):
         if self._base_data is None:
-            base_data = get_template_data(
-                ayon_api.get_project(self.project_name))
+            base_data = get_template_data(get_project(self.project_name))
             base_data["app"] = self._control.get_host_name()
             self._base_data = base_data
         return copy.deepcopy(self._base_data)
@@ -181,6 +232,129 @@ class WorkareaModel:
                 FileItem(workdir, filename, modified, False)
             )
         return items
+
+    def _get_template_key(self, fill_data):
+        task_type = fill_data.get("task", {}).get("type")
+        # TODO cache
+        return get_workfile_template_key(
+            task_type,
+            self._control.get_host_name(),
+            project_name=self.project_name
+        )
+
+    def _get_last_workfile_version(
+        self, workdir, file_template, fill_data, extensions
+    ):
+        version = get_last_workfile_with_version(
+            workdir, str(file_template), fill_data, extensions
+        )[1]
+
+        if version is None:
+            task_info = fill_data.get("task", {})
+            version = get_versioning_start(
+                self.project_name,
+                self._control.get_host_name(),
+                task_name=task_info.get("name"),
+                task_type=task_info.get("type"),
+                family="workfile"
+            )
+        else:
+            version += 1
+        return version
+
+    def _get_comments_from_root(
+        self,
+        file_template,
+        extensions,
+        fill_data,
+        root,
+        current_filename,
+    ):
+        current_comment = None
+        comment_hints = set()
+        filenames = []
+        if root and os.path.exists(root):
+            for filename in os.listdir(root):
+                path = os.path.join(root, filename)
+                if not os.path.isfile(path):
+                    continue
+
+                ext = os.path.splitext(filename)[-1].lower()
+                if ext in extensions:
+                    filenames.append(filename)
+
+        if not filenames:
+            return comment_hints
+
+        matcher = CommentMatcher(extensions, file_template, fill_data)
+
+        for filename in filenames:
+            comment = matcher.parse_comment(filename)
+            if comment:
+                comment_hints.add(comment)
+                if filename == current_filename:
+                    current_comment = comment
+
+        return list(comment_hints), current_comment
+
+    def get_workarea_save_as_data(self, folder_id, task_id):
+        folder = None
+        task = None
+        if folder_id:
+            folder = ayon_api.get_folder_by_id(self.project_name, folder_id)
+        if task_id:
+            task = ayon_api.get_task_by_id(self.project_name, task_id)
+        if not folder or not task:
+            return {
+                "file_template": None,
+                "data": None,
+                "ext": None,
+                "workdir": None,
+                "comment": None,
+                "comment_hints": None,
+                "last_version": None,
+                "extensions": None,
+            }
+
+        anatomy = self._control.project_anatomy
+        fill_data = self._prepare_fill_data(folder_id, task_id)
+        template_key = self._get_template_key(fill_data)
+
+        current_workfile = self._control.get_current_workfile()
+        current_filename = None
+        current_ext = None
+        if current_workfile:
+            current_filename = os.path.basename(current_workfile)
+            current_ext = os.path.splitext(current_filename)[1].lower()
+
+        extensions = self._control.get_workfile_extensions()
+        if not current_ext and extensions:
+            current_ext = tuple(extensions)[0]
+
+        template_info = anatomy.templates_obj[template_key]
+        file_template = template_info["file"]
+        directory_template = template_info["folder"]
+        workdir = directory_template.format_strict(fill_data).normalized()
+
+        comment_hints, comment = self._get_comments_from_root(
+            file_template,
+            extensions,
+            fill_data,
+            workdir,
+            current_filename,
+        )
+        last_version = self._get_last_workfile_version(
+            workdir, file_template, fill_data, extensions)
+        return {
+            "file_template": str(file_template),
+            "fill_data": fill_data,
+            "ext": current_ext,
+            "workdir": workdir,
+            "comment": comment,
+            "comment_hints": comment_hints,
+            "last_version": last_version,
+            "extensions": extensions,
+        }
 
 
 class WorkfileEntitiesModel:
@@ -335,6 +509,10 @@ class WorkfilesModel:
         """
 
         return self._workarea_model.get_file_items(folder_id, task_id)
+
+    def get_workarea_save_as_data(self, folder_id, task_id):
+        return self._workarea_model.get_workarea_save_as_data(
+            folder_id, task_id)
 
     def get_published_file_items(self, folder_id):
         """Published workfiles for passed context.

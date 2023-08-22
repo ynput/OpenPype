@@ -90,6 +90,9 @@ class BaseWorkfileController(AbstractWorkfileController):
     def get_current_task_name(self):
         return self._current_task_name
 
+    def get_current_workfile(self):
+        return self._host.get_current_workfile()
+
     # Selection information
     def get_selected_folder_id(self):
         return self._selection_model.get_selected_folder_id()
@@ -161,6 +164,10 @@ class BaseWorkfileController(AbstractWorkfileController):
 
     def get_workarea_file_items(self, folder_id, task_id):
         return self._workfiles_model.get_workarea_file_items(
+            folder_id, task_id)
+
+    def get_workarea_save_as_data(self, folder_id, task_id):
+        return self._workfiles_model.get_workarea_save_as_data(
             folder_id, task_id)
 
     def get_published_file_items(self, folder_id):
