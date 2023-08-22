@@ -17,7 +17,7 @@ class ClosePS(pyblish.api.ContextPlugin):
     active = True
 
     hosts = ["photoshop"]
-    targets = ["remotepublish"]
+    targets = ["automated"]
 
     def process(self, context):
         self.log.info("ClosePS")

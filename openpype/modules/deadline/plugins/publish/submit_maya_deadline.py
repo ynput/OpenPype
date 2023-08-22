@@ -47,6 +47,7 @@ from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
+from openpype.pipeline.farm.tools import iter_expected_files
 
 
 def _validate_deadline_bool_value(instance, attribute, value):
@@ -225,8 +226,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                 continue
             job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
         job_info.EnvironmentKeyValue["OPENPYPE_LOG_NO_COLORS"] = "1"
 
         # Adding file dependencies.
@@ -238,7 +239,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # Add list of expected files to job
         # ---------------------------------
         exp = instance.data.get("expectedFiles")
-        for filepath in self._iter_expected_files(exp):
+        for filepath in iter_expected_files(exp):
             job_info.OutputDirectory += os.path.dirname(filepath)
             job_info.OutputFilename += os.path.basename(filepath)
 
@@ -295,7 +296,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # TODO: Avoid the need for this logic here, needed for submit publish
         # Store output dir for unified publisher (filesequence)
         expected_files = instance.data["expectedFiles"]
-        first_file = next(self._iter_expected_files(expected_files))
+        first_file = next(iter_expected_files(expected_files))
         output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
         instance.data["toBeRenderedOn"] = "deadline"
@@ -812,16 +813,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             end=int(self._instance.data["frameEndHandle"]),
         )
 
-    @staticmethod
-    def _iter_expected_files(exp):
-        if isinstance(exp[0], dict):
-            for _aov, files in exp[0].items():
-                for file in files:
-                    yield file
-        else:
-            for file in exp:
-                yield file
-
     @classmethod
     def get_attribute_defs(cls):
         defs = super(MayaSubmitDeadline, cls).get_attribute_defs()
@@ -859,7 +850,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         ])
 
         return defs
-
 
 def _format_tiles(
         filename,

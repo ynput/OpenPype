@@ -267,25 +267,26 @@ class SitesWidget(QtWidgets.QWidget):
         self.input_objects = {}
 
     def _get_sites_inputs(self):
-        sync_server_module = (
-            self.modules_manager.modules_by_name["sync_server"]
-        )
+        output = []
+        if self._project_name is None:
+            return output
+
+        sync_server_module = self.modules_manager.modules_by_name.get(
+            "sync_server")
+        if sync_server_module is None or not sync_server_module.enabled:
+            return output
 
         site_configs = sync_server_module.get_all_site_configs(
             self._project_name, local_editable_only=True)
 
-        roots_entity = (
-            self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
-        )
         site_names = [self.active_site_widget.current_text(),
                       self.remote_site_widget.current_text()]
-        output = []
         for site_name in site_names:
             if not site_name:
                 continue
 
             site_inputs = []
-            site_config = site_configs[site_name]
+            site_config = site_configs.get(site_name, {})
             for root_name, path_entity in site_config.get("root", {}).items():
                 if not path_entity:
                     continue
@@ -349,9 +350,6 @@ class SitesWidget(QtWidgets.QWidget):
 
     def refresh(self):
         self._clear_widgets()
-
-        if self._project_name is None:
-            return
 
         # Site label
         for site_name, site_inputs in self._get_sites_inputs():

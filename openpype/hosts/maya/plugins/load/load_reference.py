@@ -123,6 +123,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         attach_to_root = options.get("attach_to_root", True)
         group_name = options["group_name"]
 
+        # no group shall be created
+        if not attach_to_root:
+            group_name = namespace
+
         path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
@@ -148,11 +152,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             if current_namespace != ":":
                 group_name = current_namespace + ":" + group_name
 
-            group_name = "|" + group_name
-
             self[:] = new_nodes
 
             if attach_to_root:
+                group_name = "|" + group_name
                 roots = cmds.listRelatives(group_name,
                                            children=True,
                                            fullPath=True) or []
@@ -205,6 +208,11 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 self._post_process_rig(name, namespace, context, options)
             else:
                 if "translate" in options:
+                    if not attach_to_root and new_nodes:
+                        root_nodes = cmds.ls(new_nodes, assemblies=True,
+                                             long=True)
+                        # we assume only a single root is ever loaded
+                        group_name = root_nodes[0]
                     cmds.setAttr("{}.translate".format(group_name),
                                  *options["translate"])
             return new_nodes
