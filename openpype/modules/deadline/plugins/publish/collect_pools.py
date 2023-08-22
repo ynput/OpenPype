@@ -47,10 +47,6 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
         if instance.data["secondaryPool"] == "-":
             instance.data["secondaryPool"] = None
 
-        self.log.info("prima::{}".format(instance.data["primaryPool"]))
-        self.log.info(
-            "secondaryPool::{}".format(instance.data["secondaryPool"]))
-
     @classmethod
     def get_attribute_defs(cls):
         # TODO: Preferably this would be an enum for the user

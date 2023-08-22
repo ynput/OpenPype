@@ -2,9 +2,10 @@ import os
 import logging
 import sys
 import copy
+import datetime
+
 import clique
 import six
-
 from bson.objectid import ObjectId
 import pyblish.api
 
@@ -321,10 +322,16 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Get the accessible sites for Site Sync
         modules_by_name = instance.context.data["openPypeModules"]
-        sync_server_module = modules_by_name["sync_server"]
-        sites = sync_server_module.compute_resource_sync_sites(
-            project_name=instance.data["projectEntity"]["name"]
-        )
+        sync_server_module = modules_by_name.get("sync_server")
+        if sync_server_module is None:
+            sites = [{
+                "name": "studio",
+                "created_dt": datetime.datetime.now()
+            }]
+        else:
+            sites = sync_server_module.compute_resource_sync_sites(
+                project_name=instance.data["projectEntity"]["name"]
+            )
         self.log.debug("Sync Server Sites: {}".format(sites))
 
         # Compute the resource file infos once (files belonging to the

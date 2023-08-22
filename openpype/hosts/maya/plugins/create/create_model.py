@@ -12,7 +12,7 @@ class CreateModel(plugin.MayaCreator):
     label = "Model"
     family = "model"
     icon = "cube"
-    defaults = ["Main", "Proxy", "_MD", "_HD", "_LD"]
+    default_variants = ["Main", "Proxy", "_MD", "_HD", "_LD"]
 
     write_color_sets = False
     write_face_sets = False

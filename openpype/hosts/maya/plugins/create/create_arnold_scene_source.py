@@ -15,6 +15,7 @@ class CreateArnoldSceneSource(plugin.MayaCreator):
     label = "Arnold Scene Source"
     family = "ass"
     icon = "cube"
+    settings_name = "CreateAss"
 
     expandProcedurals = False
     motionBlur = True

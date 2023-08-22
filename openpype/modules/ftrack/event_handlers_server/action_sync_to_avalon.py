@@ -40,6 +40,7 @@ class SyncToAvalonServer(ServerAction):
     #: Action description.
     description = "Send data from Ftrack to Avalon"
     role_list = {"Pypeclub", "Administrator", "Project Manager"}
+    settings_key = "sync_to_avalon"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,11 +49,16 @@ class SyncToAvalonServer(ServerAction):
     def discover(self, session, entities, event):
         """ Validation """
         # Check if selection is valid
+        is_valid = False
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
             if ent["entityType"].lower() in ["show", "task"]:
-                return True
-        return False
+                is_valid = True
+                break
+
+        if is_valid:
+            is_valid = self.valid_roles(session, entities, event)
+        return is_valid
 
     def launch(self, session, in_entities, event):
         self.log.debug("{}: Creating job".format(self.label))
