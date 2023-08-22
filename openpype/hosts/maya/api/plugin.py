@@ -65,6 +65,25 @@ def get_reference_node_parents(*args, **kwargs):
     return lib.get_reference_node_parents(*args, **kwargs)
 
 
+def apply_settings(cls, project_settings, system_settings):
+    """Method called on initialization of plugin to apply settings."""
+
+    settings_name = cls.settings_name
+    if settings_name is None:
+        settings_name = cls.__class__.__name__
+
+    settings = project_settings["maya"]["create"]
+    settings = settings.get(settings_name)
+    if settings is None:
+        cls.log.debug(
+            "No settings found for {}".format(cls.__class__.__name__)
+        )
+        return
+
+    for key, value in settings.items():
+        setattr(cls, key, value)
+
+
 class Creator(LegacyCreator):
     defaults = ['Main']
 
@@ -262,21 +281,7 @@ class MayaCreator(NewCreator, MayaCreatorBase):
 
     def apply_settings(self, project_settings, system_settings):
         """Method called on initialization of plugin to apply settings."""
-
-        settings_name = self.settings_name
-        if settings_name is None:
-            settings_name = self.__class__.__name__
-
-        settings = project_settings["maya"]["create"]
-        settings = settings.get(settings_name)
-        if settings is None:
-            self.log.debug(
-                "No settings found for {}".format(self.__class__.__name__)
-            )
-            return
-
-        for key, value in settings.items():
-            setattr(self, key, value)
+        apply_settings(self, project_settings, system_settings)
 
 
 class MayaAutoCreator(AutoCreator, MayaCreatorBase):
@@ -285,6 +290,8 @@ class MayaAutoCreator(AutoCreator, MayaCreatorBase):
     The plugin is not visible in UI, and 'create' method does not expect
         any arguments.
     """
+
+    settings_name = None
 
     def collect_instances(self):
         return self._default_collect_instances()
@@ -295,6 +302,10 @@ class MayaAutoCreator(AutoCreator, MayaCreatorBase):
     def remove_instances(self, instances):
         return self._default_remove_instances(instances)
 
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+        apply_settings(self, project_settings, system_settings)
+
 
 class MayaHiddenCreator(HiddenCreator, MayaCreatorBase):
     """Hidden creator for Maya.
@@ -302,6 +313,8 @@ class MayaHiddenCreator(HiddenCreator, MayaCreatorBase):
     The plugin is not visible in UI, and it does not have strictly defined
         arguments for 'create' method.
     """
+
+    settings_name = None
 
     def create(self, *args, **kwargs):
         return MayaCreator.create(self, *args, **kwargs)
@@ -314,6 +327,10 @@ class MayaHiddenCreator(HiddenCreator, MayaCreatorBase):
 
     def remove_instances(self, instances):
         return self._default_remove_instances(instances)
+
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+        apply_settings(self, project_settings, system_settings)
 
 
 def ensure_namespace(namespace):
