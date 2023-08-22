@@ -43,7 +43,7 @@ class RenderSettings(object):
                 rt.viewport.setCamera(sel)
                 break
             if not found:
-                raise RuntimeError("Camera not found")
+                raise RuntimeError("Active Camera not found")
 
     def render_output(self, container):
         folder = rt.maxFilePath
@@ -113,7 +113,8 @@ class RenderSettings(object):
         # for setting up renderable camera
         arv = rt.MAXToAOps.ArnoldRenderView()
         render_camera = rt.viewport.GetCamera()
-        arv.setOption("Camera", str(render_camera))
+        if render_camera:
+            arv.setOption("Camera", str(render_camera))
 
         # TODO: add AOVs and extension
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa

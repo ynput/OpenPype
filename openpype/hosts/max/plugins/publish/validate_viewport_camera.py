@@ -4,6 +4,7 @@ from openpype.pipeline import (
     PublishValidationError,
     OptionalPyblishPluginMixin)
 from openpype.pipeline.publish import RepairAction
+from openpype.hosts.max.api.lib import get_current_renderer
 
 from pymxs import runtime as rt
 
@@ -35,11 +36,13 @@ class ValidateViewportCamera(pyblish.api.InstancePlugin,
 
     @classmethod
     def repair(cls, instance):
-        # Get all cameras in the scene
-        cameras_in_scene = [c.name for c in rt.Objects
-                            if rt.classOf(c) in rt.Camera.Classes]
-        # Set the first camera as viewport camera for rendering
-        if cameras_in_scene:
-            camera = rt.getNodeByName(cameras_in_scene[0])
-            rt.viewport.setCamera(camera)
-            cls.log.info(f"Camera {camera} set as viewport camera")
+
+        rt.viewport.setType(rt.Name("view_camera"))
+        camera = rt.viewport.GetCamera()
+        cls.log.info(f"Camera {camera} set as viewport camera")
+        renderer_class = get_current_renderer()
+        renderer = str(renderer_class).split(":")[0]
+        if renderer == "Arnold":
+            arv = rt.MAXToAOps.ArnoldRenderView()
+            arv.setOption("Camera", str(camera))
+            arv.close()
