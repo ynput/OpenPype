@@ -1,4 +1,3 @@
-import os
 from openpype.lib.applications import (
     PreLaunchHook,
     LaunchTypes,
