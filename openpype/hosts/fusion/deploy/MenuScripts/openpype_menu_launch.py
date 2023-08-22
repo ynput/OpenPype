@@ -15,6 +15,7 @@ def send_message_to_OpenPype(data_to_send):
     client_socket.close()
 
 
+# Variable data is passed from openpype_menu.fu
 if "menu_item" in data and "uuid" in data:
     send_message_to_OpenPype(data)
 else:
