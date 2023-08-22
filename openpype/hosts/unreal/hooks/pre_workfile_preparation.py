@@ -2,6 +2,7 @@
 """Hook to launch Unreal and prepare projects."""
 import os
 import copy
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -230,13 +231,19 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 self.exec_ue_project_gen(engine_version,
                                          unreal_project_name,
                                          engine_path,
-                                         temp_path)
+                                         Path(temp_dir))
                 try:
-                    temp_path.rename(project_path)
-                except FileExistsError as e:
+                    self.log.info((
+                         f"Moving from {temp_dir} to "
+                         f"{project_path.as_posix()}"
+                    ))
+                    shutil.copytree(
+                        temp_dir, project_path, dirs_exist_ok=True)
+
+                except shutil.Error as e:
                     raise ApplicationLaunchFailed((
-                        f"{self.signature} Project folder "
-                        f"already exists {project_path.as_posix()}"
+                        f"{self.signature} Cannot copy directory {temp_dir} "
+                        f"to {project_path.as_posix()} - {e}"
                     )) from e
 
         self.launch_context.env["AYON_UNREAL_VERSION"] = engine_version
