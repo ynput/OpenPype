@@ -233,8 +233,8 @@ class UnrealPrelaunchHook(PreLaunchHook):
                                          Path(temp_dir))
                 try:
                     self.log.info((
-                         f"Moving from {temp_dir} to "
-                         f"{project_path.as_posix()}"
+                        f"Moving from {temp_dir} to "
+                        f"{project_path.as_posix()}"
                     ))
                     shutil.copytree(
                         temp_dir, project_path, dirs_exist_ok=True)
