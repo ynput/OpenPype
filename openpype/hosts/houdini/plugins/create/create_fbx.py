@@ -69,19 +69,19 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
     def get_pre_create_attr_defs(self):
         attrs = super().get_pre_create_attr_defs()
         vcformat = EnumDef("vcformat",
-                            items={
-                                0: "Maya Compatible (MC)",
-                                1: "3DS MAX Compatible (PC2)"
-                            },
-                            default=0,
-                            label="Vertex Cache Format")
+                           items={
+                               0: "Maya Compatible (MC)",
+                               1: "3DS MAX Compatible (PC2)"
+                               },
+                               default=0,
+                               label="Vertex Cache Format")
         trange = EnumDef("trange",
-                            items={
-                                0: "Render Current Frame",
-                                1: "Render Frame Range"
-                            },
-                            default=0,
-                            label="Valid Frame Range")
+                         items={
+                             0: "Render Current Frame",
+                             1: "Render Frame Range"
+                             },
+                             default=0,
+                             label="Valid Frame Range")
 
         return attrs + [vcformat, trange]
 
@@ -103,10 +103,10 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
 
         # parms dictionary
         parms = {
-            "startnode" : selection,
+            "startnode": selection,
             "sopoutput": output_path,
-            "vcformat" : vcformat,
-            "trange" : trange
+            "vcformat": vcformat,
+            "trange": trange
         }
 
         return parms
@@ -139,7 +139,7 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
                 )
 
             # Allow object level paths to Geometry nodes (e.g. /obj/geo1)
-            # but do not allow other object level nodes types like cameras, etc.
+            # but do not allow other object level nodes types like cameras.
             elif isinstance(selected_node, hou.ObjNode) and \
                     selected_node.type().name() in ["geo"]:
 

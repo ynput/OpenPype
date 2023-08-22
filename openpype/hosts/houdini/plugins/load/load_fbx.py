@@ -126,19 +126,19 @@ class FbxLoader(load.LoaderPlugin):
             file_node.destroy()
 
         # Create a new file node
-        file_node = parent_node.createNode("file", node_name= node_name)
-        file_node.setParms({"file":file_path})
+        file_node = parent_node.createNode("file", node_name=node_name)
+        file_node.setParms({"file": file_path})
 
         # Create attribute delete
         attribdelete_name = "attribdelete_{}".format(subset_name)
         attribdelete = parent_node.createNode("attribdelete",
-                                              node_name= attribdelete_name)
-        attribdelete.setParms({"ptdel":"fbx_*"})
+                                              node_name=attribdelete_name)
+        attribdelete.setParms({"ptdel": "fbx_*"})
         attribdelete.setInput(0, file_node)
 
         # Create a Null node
         null_name = "OUT_{}".format(subset_name)
-        null = parent_node.createNode("null", node_name= null_name)
+        null = parent_node.createNode("null", node_name=null_name)
         null.setInput(0, attribdelete)
 
         # Ensure display flag is on the file_node input node and not on the OUT

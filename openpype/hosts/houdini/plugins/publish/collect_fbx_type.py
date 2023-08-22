@@ -42,7 +42,6 @@ class CollectFilmboxfbxType(pyblish.api.InstancePlugin):
         #   to Update instance.data with ouptut_node of different types
         #   however, this collector is used for demonstration
 
-
     def get_output_node(self, instance):
         """Getting output_node Logic."""
 
