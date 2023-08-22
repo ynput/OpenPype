@@ -70,8 +70,8 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
         attrs = super().get_pre_create_attr_defs()
         vcformat = EnumDef("vcformat",
                            items={
-                                 0: "Maya Compatible (MC)",
-                                 1: "3DS MAX Compatible (PC2)"
+                               0: "Maya Compatible (MC)",
+                               1: "3DS MAX Compatible (PC2)"
                                  },
                            default=0,
                            label="Vertex Cache Format")
