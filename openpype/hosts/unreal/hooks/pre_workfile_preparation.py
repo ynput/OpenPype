@@ -227,7 +227,6 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         if not project_file.is_file():
             with tempfile.TemporaryDirectory() as temp_dir:
-                temp_path = Path(temp_dir) / unreal_project_filename
                 self.exec_ue_project_gen(engine_version,
                                          unreal_project_name,
                                          engine_path,
