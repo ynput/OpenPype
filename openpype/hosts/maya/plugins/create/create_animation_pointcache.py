@@ -10,18 +10,15 @@ from openpype.lib import (
     NumberDef,
     EnumDef
 )
-from openpype.settings import get_current_project_settings#not needed if applying settings is merged.
 
 
 class CreateAnimation(plugin.MayaCreator):
-    """Animation output for character rigs"""
+    """Animation output for character rigs
 
-    # We hide the animation creator from the UI since the creation of it
-    # is automated upon loading a rig. There's an inventory action to recreate
-    # it for loaded rigs if by chance someone deleted the animation instance.
-    # Note: This setting is actually applied from project settings
-    enabled = False
-
+    We hide the animation creator from the UI since the creation of it is
+    automated upon loading a rig. There's an inventory action to recreate it
+    for loaded rigs if by chance someone deleted the animation instance.
+    """
     identifier = "io.openpype.creators.maya.animation"
     name = "animationDefault"
     label = "Animation"
@@ -32,9 +29,6 @@ class CreateAnimation(plugin.MayaCreator):
     write_face_sets = False
     include_parent_hierarchy = False
     include_user_defined_attributes = False
-
-    # TODO: Would be great if we could visually hide this from the creator
-    #       by default but do allow to generate it through code.
 
     def get_instance_attr_defs(self):
         defs = lib.collect_animation_defs()
@@ -101,27 +95,20 @@ class CreateAnimation(plugin.MayaCreator):
         ])
 
         # Collect editable state and default values.
-        settings = get_current_project_settings()
-        settings = settings["maya"]["create"][self.__class__.__name__]
-        editable_attributes = {}
-        for key, value in settings.items():
-            if not key.endswith("_editable"):
-                continue
-
-            if not value:
-                continue
-
-            attribute = key.replace("_editable", "")
-            editable_attributes[attribute] = settings[attribute]
-
         resulting_defs = []
         for definition in defs:
+            # Include by default any attributes which has no editable state
+            # from settings.
+            if not hasattr(self, definition.key + "_editable"):
+                resulting_defs.append(definition)
+                continue
+
             # Remove non-editable defs.
-            if definition.key not in editable_attributes.keys():
+            if not getattr(self, definition.key + "_editable"):
                 continue
 
             # Set default values from settings.
-            definition.default = editable_attributes[definition.key]
+            definition.default = getattr(self, definition.key)
 
             resulting_defs.append(definition)
 

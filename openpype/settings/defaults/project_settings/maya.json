@@ -557,10 +557,7 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
-            "enabled": false,
-            "defaults": [
-                "Main"
-            ],
+            "default_variants": [],
             "step": 1.0,
             "step_editable": true,
             "writeColorSets": false,
@@ -630,9 +627,6 @@
         },
         "CreatePointCache": {
             "enabled": true,
-            "write_color_sets": false,
-            "write_face_sets": false,
-            "include_user_defined_attributes": false,
             "default_variants": [
                 "Main"
             ],
