@@ -183,10 +183,12 @@ class CreateRenderlayer(plugin.Creator):
 
         if ext == "exr" and multilayer:
             output.layer_slots.clear()
+            filepath = f"{name}{aov_sep}AOVs.####"
+            output.base_path = os.path.join(output_path, filepath)
         else:
             output.file_slots.clear()
+            output.base_path = output_path
 
-        output.base_path = output_path
         image_settings = bpy.context.scene.render.image_settings
         output.format.file_format = image_settings.file_format
 
@@ -195,10 +197,11 @@ class CreateRenderlayer(plugin.Creator):
         # For each active render pass, we add a new socket to the output node
         # and link it
         for render_pass in passes:
-            filepath = f"{name}{aov_sep}{render_pass.name}.####"
             if ext == "exr" and multilayer:
                 output.layer_slots.new(render_pass.name)
             else:
+                filepath = f"{name}{aov_sep}{render_pass.name}.####"
+
                 output.file_slots.new(filepath)
 
                 aov_file_products.append(
