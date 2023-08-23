@@ -1,11 +1,9 @@
 """Create render."""
 import os
-import re
 
 import bpy
 
 from openpype.pipeline import (
-    get_current_context,
     get_current_project_name,
 )
 from openpype.settings import (
