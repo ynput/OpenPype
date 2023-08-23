@@ -17,7 +17,10 @@ This plugin is part of publish process guide.
 """
 
 import pyblish.api
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     RepairAction,
@@ -37,7 +40,8 @@ class AddDefaultPathAction(RepairAction):
     icon = "mdi.pencil-plus-outline"
 
 
-class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
+class ValidateFBXPrimitiveHierarchyPaths(pyblish.api.InstancePlugin,
+                                         OptionalPyblishPluginMixin):
     """Validate all primitives build hierarchy from attribute
     when enabled.
 
@@ -50,7 +54,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
     families = ["filmboxfbx"]
     hosts = ["houdini"]
-    label = "Validate FBX Hierarchy Path"
+    label = "Validate Prims Hierarchy Path (FBX)"
 
     # Usually you will use this value as default
     order = ValidateContentsOrder + 0.1
@@ -60,6 +64,10 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     # unlike the repair action
     actions = [SelectInvalidAction, AddDefaultPathAction,
                SelectROPAction]
+
+    # 'OptionalPyblishPluginMixin' where logic for 'optional' is implemented.
+    #  It requires updating project settings
+    optional = True
 
     # overrides InstancePlugin.process()
     def process(self, instance):
@@ -108,18 +116,20 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
         cls.log.debug("Checking for attribute: %s", path_attr)
 
-        if not hasattr(output_node, "geometry"):
-            # In the case someone has explicitly set an Object
-            # node instead of a SOP node in Geometry context
-            # then for now we ignore - this allows us to also
-            # export object transforms.
-            cls.log.warning("No geometry output node found,"
+        # Get frame
+        frame = hou.intFrame()
+        trange = rop_node.parm("trange").eval()
+        if trange:
+            frame = int(hou.playbar.frameRange()[0])
+
+        frame = instance.data.get("frameStart", frame)
+
+        # Get Geo at that frame
+        geo = output_node.geometryAtFrame(frame)
+        if not geo:
+            cls.log.warning("No geometry found,"
                             " skipping check..")
             return
-
-        # Check if the primitive attribute exists
-        frame = instance.data.get("frameStart", 0)
-        geo = output_node.geometryAtFrame(frame)
 
         # If there are no primitives on the current frame then
         # we can't check whether the path names are correct.
