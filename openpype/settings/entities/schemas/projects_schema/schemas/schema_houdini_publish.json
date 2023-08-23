@@ -43,6 +43,10 @@
           {
               "key": "ValidateContainers",
               "label": "ValidateContainers"
+          },
+          {
+            "key": "ValidateFBXPrimitiveHierarchyPaths",
+            "label": "Validate Path Attribute for FBX"
           }
       ]
     }

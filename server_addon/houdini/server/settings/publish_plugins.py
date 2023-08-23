@@ -133,6 +133,9 @@ class PublishPluginsModel(BaseSettingsModel):
     ValidateContainers: ValidateContainersModel = Field(
         default_factory=ValidateContainersModel,
         title="Validate Latest Containers.")
+    ValidateFBXPrimitiveHierarchyPaths: ValidateContainersModel = Field(
+        default_factory=ValidateContainersModel,
+        title="Validate Path Attribute for FBX.")
 
 
 DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
@@ -149,6 +152,11 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
         ]
     },
     "ValidateContainers": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateFBXPrimitiveHierarchyPaths": {
         "enabled": True,
         "optional": True,
         "active": True
