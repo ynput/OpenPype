@@ -134,6 +134,7 @@ class MayaCreatorBase(object):
         # We never store the instance_node as value on the node since
         # it's the node name itself
         data.pop("instance_node", None)
+        data.pop("instance_id", None)
 
         # We store creator attributes at the root level and assume they
         # will not clash in names with `subset`, `task`, etc. and other
@@ -185,6 +186,7 @@ class MayaCreatorBase(object):
 
         # Explicitly re-parse the node name
         node_data["instance_node"] = node
+        node_data["instance_id"] = node
 
         return node_data
 
