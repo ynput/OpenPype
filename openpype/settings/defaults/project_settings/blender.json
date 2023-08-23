@@ -22,7 +22,8 @@
         "aov_separator": "underscore",
         "image_format": "exr",
         "multilayer_exr": true,
-        "aov_list": []
+        "aov_list": [],
+        "custom_passes": []
     },
     "workfile_builder": {
         "create_first_version": false,

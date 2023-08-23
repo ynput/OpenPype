@@ -121,6 +121,33 @@
                         {"shadow": "Shadow"},
                         {"ao": "Ambient Occlusion"}
                     ]
+                },
+                {
+                    "type": "label",
+                    "label": "Add custom AOVs. They are added to the view layer and in the Compositing Nodetree,\nbut they need to be added manually to the Shader Nodetree."
+                },
+                {
+                    "type": "dict-modifiable",
+                    "store_as_list": true,
+                    "key": "custom_passes",
+                    "label": "Custom Passes",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "type",
+                                "label": "Type",
+                                "type": "enum",
+                                "multiselection": false,
+                                "defaults": "color",
+                                "enum_items": [
+                                    {"COLOR": "Color"},
+                                    {"VALUE": "Value"}
+                                ]
+                            }
+                        ]
+                    }
                 }
             ]
         },

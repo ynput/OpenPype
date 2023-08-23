@@ -168,7 +168,10 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
                             ["RenderSettings"]
                             ["aov_list"])
 
-        scene = bpy.context.scene
+        custom_passes = (settings["blender"]
+                                 ["RenderSettings"]
+                                 ["custom_passes"])
+
         vl = bpy.context.view_layer
 
         vl.use_pass_combined = "combined" in aov_list
@@ -184,6 +187,16 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         vl.use_pass_environment = "environment" in aov_list
         vl.use_pass_shadow = "shadow" in aov_list
         vl.use_pass_ambient_occlusion = "ao" in aov_list
+
+        aovs_names = [aov.name for aov in vl.aovs]
+        for cp in custom_passes:
+            cp_name = cp[0]
+            if cp_name not in aovs_names:
+                aov = vl.aovs.add()
+                aov.name = cp_name
+            else:
+                aov = vl.aovs[cp_name]
+            aov.type = cp[1].get("type", "VALUE")
 
     def _create_context(self):
         context = bpy.context.copy()
