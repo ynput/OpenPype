@@ -249,6 +249,7 @@ class OpenPypeTileAssembler(DeadlinePlugin):
 
     def __init__(self):
         """Init."""
+        super().__init__()
         self.InitializeProcessCallback += self.initialize_process
         self.RenderExecutableCallback += self.render_executable
         self.RenderArgumentCallback += self.render_argument
