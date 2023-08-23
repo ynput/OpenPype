@@ -19,7 +19,12 @@ class IntegratePerforce(pyblish.api.ContextPlugin):
         # PerforceRestStub.checkout("c:/projects/!perforce_workspace/text.txt")
         workfile_path = context.data["currentFile"]
         basename = os.path.basename(workfile_path)
-        perforce_file_path = os.path.join("c:/Users/pypeclub/Perforce/perforce_workspace", basename)
+        perforce_file_path = \
+            os.path.join("c:/Users/pypeclub/Perforce/perforce_workspace",
+                         basename)
         shutil.copy(workfile_path, perforce_file_path)
-        result = PerforceRestStub.add(perforce_file_path, "Init commit")
-        result = PerforceRestStub.submit_change_list("Init commit")
+        if not PerforceRestStub.add(workfile_path, "Init commit"):
+            raise ValueError("File {} not added to changelist".
+                             format(perforce_file_path))
+        if not PerforceRestStub.submit_change_list("Init commit"):
+            raise ValueError("Changelist not submitted")

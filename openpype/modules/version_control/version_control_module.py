@@ -4,7 +4,7 @@ import os
 VERSION_CONTROL_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 from .. import OpenPypeModule
-from ..interfaces import ITrayService
+from ..interfaces import ITrayService, IPluginPaths
 
 _typing = False
 if _typing:
@@ -12,7 +12,7 @@ if _typing:
 del _typing
 
 
-class VersionControlModule(OpenPypeModule, ITrayService):
+class VersionControlModule(OpenPypeModule, ITrayService, IPluginPaths):
     # _icon_name = "mdi.jira"
     # _icon_scale = 1.3
 
@@ -62,6 +62,13 @@ class VersionControlModule(OpenPypeModule, ITrayService):
 
     def cli(self, click_group):
         click_group.add_command(cli_main)
+
+    def get_plugin_paths(self):
+        """Publish plugin paths."""
+        return {
+            "publish": [os.path.join(VERSION_CONTROL_MODULE_DIR,
+                                     "plugins", "publish")]
+        }
 
 
 @click.group("version_control", help="Version Control module related commands.")
