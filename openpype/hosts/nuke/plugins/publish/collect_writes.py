@@ -14,7 +14,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
     hosts = ["nuke", "nukeassist"]
     families = ["render", "prerender", "image"]
 
-    # cashing
+    # cache
     _write_nodes = {}
     _frame_ranges = {}
 
