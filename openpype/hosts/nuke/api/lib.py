@@ -2041,6 +2041,7 @@ class WorkfileSettings(object):
         )
 
         workfile_settings = imageio_host["workfile"]
+        viewer_process_settings = imageio_host["viewer"]["viewerProcess"]
 
         if not config_data:
             # TODO: backward compatibility for old projects - remove later
@@ -2090,6 +2091,31 @@ class WorkfileSettings(object):
         workfile_settings.pop("customOCIOConfigPath", None)
         workfile_settings.pop("colorManagement", None)
         workfile_settings.pop("OCIO_config", None)
+
+        # treat monitor lut separately
+        monitor_lut = workfile_settings.pop("monitorLut", None)
+        m_display, m_viewer = get_viewer_config_from_string(monitor_lut)
+        v_display, v_viewer = get_viewer_config_from_string(
+            viewer_process_settings
+        )
+
+        # set monitor lut differently for nuke version 14
+        if nuke.NUKE_VERSION_MAJOR >= 14:
+            workfile_settings["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            workfile_settings["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=False)
+
+        if nuke.NUKE_VERSION_MAJOR == 13:
+            workfile_settings["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            workfile_settings["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=True)
+        if nuke.NUKE_VERSION_MAJOR <= 12:
+            workfile_settings["monitorLut"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=True)
 
         # then set the rest
         for knob, value_ in workfile_settings.items():
@@ -3320,11 +3346,11 @@ def get_viewer_config_from_string(input_string):
         display = split[0]
     elif "(" in viewer:
         pattern = r"([\w\d\s\.\-]+).*[(](.*)[)]"
-        result = re.findall(pattern, viewer)
+        result_ = re.findall(pattern, viewer)
         try:
-            result = result.pop()
-            display = str(result[1]).rstrip()
-            viewer = str(result[0]).rstrip()
+            result_ = result_.pop()
+            display = str(result_[1]).rstrip()
+            viewer = str(result_[0]).rstrip()
         except IndexError:
             raise IndexError((
                 "Viewer Input string is not correct. "
@@ -3332,3 +3358,23 @@ def get_viewer_config_from_string(input_string):
             ).format(input_string))
 
     return (display, viewer)
+
+
+def create_viewer_profile_string(viewer, display=None, path_like=False):
+    """Convert viewer and display to string
+
+    Args:
+        viewer (str): viewer name
+        display (Optional[str]): display name
+        path_like (Optional[bool]): if True, return path like string
+
+    Returns:
+        str: viewer config string
+    """
+    if display:
+        if path_like:
+            return "{}/{}".format(display, viewer)
+        else:
+            return "{} ({})".format(viewer, display)
+    else:
+        return viewer
