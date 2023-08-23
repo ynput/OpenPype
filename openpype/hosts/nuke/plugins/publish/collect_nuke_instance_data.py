@@ -51,6 +51,5 @@ class CollectNukeInstanceData(pyblish.api.InstancePlugin):
         if instance.data.get("review"):
             instance.data["families"].append("review")
 
-
         self.log.debug("Collected instance: {}".format(
             instance.data))
