@@ -165,34 +165,29 @@ class FoldersWidget(QtWidgets.QWidget):
         self._folders_proxy_model.sort(0)
 
     def _on_controller_refresh(self):
-        folder_id = (
-            self._control.get_selected_folder_id()
-            or self._control.get_current_folder_id()
-        )
-        if not folder_id:
-            return
-
-        # NOTE Something to do here?
         self._set_expected_selection()
 
-    def _set_expected_selection(self, **kwargs):
-        if "folder_id" in kwargs:
-            folder_id = kwargs["folder_id"]
-        else:
-            folder_id = self._control.get_expected_folder_id()
-        if folder_id is None:
+    def _set_expected_selection(self, expected_data=None):
+        if expected_data is None:
+            expected_data = self._control.get_expected_selection_data()
+
+        # We're done
+        if expected_data["folder_selected"]:
             return
 
-        if folder_id != self._get_selected_item_id():
+        folder_id = expected_data["folder_id"]
+        if (
+            folder_id is not None
+            and folder_id != self._get_selected_item_id()
+        ):
             index = self._folders_model.get_index_by_id(folder_id)
             if index.isValid():
                 proxy_index = self._folders_proxy_model.mapFromSource(index)
                 self._folders_view.setCurrentIndex(proxy_index)
-
-        self._control.get_expected_folder_id(None)
+        self._control.expected_folder_selected(folder_id)
 
     def _on_expected_selection_change(self, event):
-        self._set_expected_selection(folder_id=event["folder_id"])
+        self._set_expected_selection(event.data)
 
     def _get_selected_item_id(self):
         selection_model = self._folders_view.selectionModel()

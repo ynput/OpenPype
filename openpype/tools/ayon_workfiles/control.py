@@ -12,6 +12,44 @@ from .abstract import AbstractWorkfileController
 from .models import SelectionModel, EntitiesModel, WorkfilesModel
 
 
+class ExpectedSelection:
+    def __init__(self):
+        self._folder_id = None
+        self._task_name = None
+        self._folder_selected = False
+        self._task_selected = False
+
+    def set_expected_selection(self, folder_id, task_name):
+        self._folder_id = folder_id
+        self._task_name = task_name
+        self._folder_selected = False
+        self._task_selected = False
+
+    def get_expected_selection_data(self):
+        return {
+            "folder_id": self._folder_id,
+            "task_name": self._task_name,
+            "folder_selected": self._folder_selected,
+            "task_selected": self._task_selected,
+        }
+
+    def expected_folder_selected(self, folder_id):
+        if folder_id != self._folder_id:
+            return False
+        self._folder_selected = True
+        return True
+
+    def expected_task_selected(self, folder_id, task_name):
+        if not self.expected_folder_selected(folder_id):
+            return False
+
+        if task_name != self._task_name:
+            return False
+
+        self._task_selected = True
+        return True
+
+
 class BaseWorkfileController(AbstractWorkfileController):
     def __init__(self, host=None):
         if host is None:
@@ -29,8 +67,7 @@ class BaseWorkfileController(AbstractWorkfileController):
         self._current_task_name = None
 
         # Expected selected folder and task
-        self._expected_folder_id = None
-        self._expected_task_name = None
+        self._expected_selection = ExpectedSelection()
 
         self._selection_model = SelectionModel(self)
         self._entities_model = EntitiesModel(self)
@@ -137,25 +174,28 @@ class BaseWorkfileController(AbstractWorkfileController):
     # Expected selection
     # - expected selection is used to restore selection after refresh
     #   or when current context should be used
-    def set_expected_selection(self, folder_id, task_name):
-        self._expected_folder_id = folder_id
-        self._expected_task_name = task_name
+    def _trigger_expected_selection_changed(self):
         self._emit_event(
             "controller.expected_selection_changed",
-            {"folder_id": folder_id, "task_name": task_name},
+            self._expected_selection.get_expected_selection_data(),
         )
 
-    def set_expected_folder_id(self, folder_id):
-        self.set_expected_selection(folder_id, self._expected_task_name)
+    def set_expected_selection(self, folder_id, task_name):
+        self._expected_selection.set_expected_selection(folder_id, task_name)
+        self._trigger_expected_selection_changed()
 
-    def set_expected_task_name(self, task_name):
-        self.set_expected_selection(self._expected_folder_id, task_name)
+    def expected_folder_selected(self, folder_id):
+        if self._expected_selection.expected_folder_selected(folder_id):
+            self._trigger_expected_selection_changed()
 
-    def get_expected_folder_id(self):
-        return self._expected_folder_id
+    def expected_task_selected(self, folder_id, task_name):
+        if self._expected_selection.expected_task_selected(
+            folder_id, task_name
+        ):
+            self._trigger_expected_selection_changed()
 
-    def get_expected_task_name(self):
-        return self._expected_task_name
+    def get_expected_selection_data(self):
+        return self._expected_selection.get_expected_selection_data()
 
     def go_to_current_context(self):
         self.set_expected_selection(
@@ -241,8 +281,9 @@ class BaseWorkfileController(AbstractWorkfileController):
             expected_folder_id = folder_id
             expected_task_name = task_name
 
-        self._expected_folder_id = expected_folder_id
-        self._expected_task_name = expected_task_name
+        self._expected_selection.set_expected_selection(
+            expected_folder_id, expected_task_name
+        )
 
         self._entities_model.refresh()
 

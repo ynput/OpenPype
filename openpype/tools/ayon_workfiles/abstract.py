@@ -102,19 +102,7 @@ class AbstractWorkfileController(object):
         pass
 
     @abstractmethod
-    def set_expected_folder_id(self, folder_id):
-        pass
-
-    @abstractmethod
-    def set_expected_task_name(self, task_name):
-        pass
-
-    @abstractmethod
-    def get_expected_folder_id(self):
-        pass
-
-    @abstractmethod
-    def get_expected_task_name(self):
+    def get_expected_selection_data(self):
         pass
 
     @abstractmethod

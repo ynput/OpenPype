@@ -188,8 +188,8 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         super(WorkfilesToolWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
-            self.setStyleSheet(style.load_stylesheet())
             self._first_show_timer.start()
+            self.setStyleSheet(style.load_stylesheet())
 
     def _on_first_show(self):
         self.refresh()
@@ -205,9 +205,6 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
         pass
 
-    # def _on_file_opened(self):
-    #     self.close()
-    #
     def _on_file_text_filter_change(self, text):
         self._files_widget.set_text_filter(text)
 
@@ -226,4 +223,4 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self._controller.go_to_current_context()
 
     def _on_refresh_clicked(self):
-        self._controller.refresh()
+        self.refresh()

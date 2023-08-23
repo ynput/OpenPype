@@ -251,29 +251,17 @@ class TasksWidget(QtWidgets.QWidget):
         self._on_selection_change()
 
     def _on_expected_selection_change(self, event):
-        if event["folder_id"] != self._last_folder_id:
+        if event["task_selected"] or not event["folder_selected"]:
             return
-        self._set_expected_selection(
-            task_name=event["task_name"],
-            folder_id=event["folder_id"],
-        )
 
-    def _set_expected_selection(self, **kwargs):
-        if "task_name" in kwargs:
-            task_name = kwargs["task_name"]
-        else:
-            task_name = self._control.get_expected_task_name()
-        if task_name is None:
-            return False
-
-        self._control.set_expected_task_name(None)
-
-        index = self._tasks_model.get_index_by_name(task_name)
-        if index.isValid():
-            proxy_index = self._tasks_proxy_model.mapFromSource(index)
-            self._tasks_view.setCurrentIndex(proxy_index)
-            return True
-        return False
+        folder_id = self._control.get_selected_folder_id()
+        task_name = event["task_name"]
+        if task_name is not None:
+            index = self._tasks_model.get_index_by_name(task_name)
+            if index.isValid():
+                proxy_index = self._tasks_proxy_model.mapFromSource(index)
+                self._tasks_view.setCurrentIndex(proxy_index)
+        self._control.expected_task_selected(folder_id, task_name)
 
     def _get_selected_item_ids(self):
         selection_model = self._tasks_view.selectionModel()
@@ -292,11 +280,4 @@ class TasksWidget(QtWidgets.QWidget):
         if self._tasks_model.is_refreshing:
             return
         parent_id, task_id, task_name = self._get_selected_item_ids()
-        expected_name = self._control.get_expected_task_name()
-        if (
-            expected_name is not None
-            and task_name != expected_name
-            and self._set_expected_selection(task_name=expected_name)
-        ):
-            return
         self._control.set_selected_task(parent_id, task_id, task_name)
