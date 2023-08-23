@@ -21,7 +21,7 @@ import typing
 
 from . import p4_errors
 #from . import p4_offline
-from ..vendor import P4
+import P4
 
 from contextlib import contextmanager
 from functools import lru_cache
