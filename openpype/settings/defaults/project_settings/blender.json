@@ -35,6 +35,12 @@
             "optional": true,
             "active": true
         },
+        "ValidateFileSaved": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "exclude_families": []
+        },
         "ValidateMeshHasUvs": {
             "enabled": true,
             "optional": true,

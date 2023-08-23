@@ -19,6 +19,39 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateFileSaved",
+            "label": "Validate File Saved",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "key": "exclude_families",
+                    "label": "Exclude Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
             "type": "collapsible-wrap",
             "label": "Model",
             "children": [
