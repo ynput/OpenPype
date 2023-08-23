@@ -379,6 +379,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         # Add OpenPype version if we are running from build.
         if is_running_from_build():
             keys.append("OPENPYPE_VERSION")
+            keys.append("OPENPYPE_CONSOLE")
 
         # Add mongo url if it's enabled
         if instance.context.data.get("deadlinePassMongoUrl"):

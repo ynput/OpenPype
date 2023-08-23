@@ -147,6 +147,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # Add OpenPype version if we are running from build.
     if is_running_from_build():
         environ_keys.append("OPENPYPE_VERSION")
+        environ_keys.append("OPENPYPE_CONSOLE")
 
     # custom deadline attributes
     deadline_department = ""

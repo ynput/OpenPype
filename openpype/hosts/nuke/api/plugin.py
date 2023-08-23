@@ -327,7 +327,7 @@ class NukeWriteCreator(NukeCreator):
         rendering_targets = {
             "local": "Local machine rendering",
             # "frames": "Use existing frames",
-            "a_farm_frames": "Use existing frames on farm" # NOTE hornet update on use existing frames on farm
+            "farm_frames": "Use existing frames on farm" # NOTE hornet update on use existing frames on farm
         }
         if ("farm_rendering" in self.instance_attributes):
             rendering_targets["farm"] = "Farm rendering"
