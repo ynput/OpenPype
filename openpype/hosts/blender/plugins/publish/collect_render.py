@@ -198,22 +198,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
                 aov = vl.aovs[cp_name]
             aov.type = cp[1].get("type", "VALUE")
 
-    def _create_context(self):
-        context = bpy.context.copy()
-
-        win = bpy.context.window_manager.windows[0]
-        screen = win.screen
-        area = screen.areas[0]
-        region = area.regions[0]
-
-        context["window"] = win
-        context['screen'] = screen
-        context['area'] = area
-        context['region'] = region
-
-        return context
-
-    def set_node_tree(self, output_path, instance, aov_sep):
+    def set_node_tree(self, output_path, instance, aov_sep, ext, multilayer):
         # Set the scene to use the compositor node tree to render
         bpy.context.scene.use_nodes = True
 
@@ -248,17 +233,10 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         # Create a new output node
         output = tree.nodes.new("CompositorNodeOutputFile")
 
-        context = self._create_context()
-        context["node"] = output
-
-        area = context["area"]
-
-        # Change area type to node editor, to execute node operators
-        old_area_type = area.ui_type
-        area.ui_type = "CompositorNodeTree"
-
-        # Remove the default input socket from the output node
-        bpy.ops.node.output_file_remove_active_socket(context)
+        if ext == "exr" and multilayer:
+            output.layer_slots.clear()
+        else:
+            output.file_slots.clear()
 
         output.base_path = output_path
         image_settings = bpy.context.scene.render.image_settings
@@ -270,17 +248,17 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         # and link it
         for render_pass in passes:
             filepath = f"{instance.name}{aov_sep}{render_pass.name}.####"
-            bpy.ops.node.output_file_add_socket(context, file_path=filepath)
+            if ext == "exr" and multilayer:
+                output.layer_slots.new(render_pass.name)
+            else:
+                output.file_slots.new(filepath)
 
-            aov_file_products.append(
-                (render_pass.name, os.path.join(output_path, filepath)))
+                aov_file_products.append(
+                    (render_pass.name, os.path.join(output_path, filepath)))
 
             node_input = output.inputs[-1]
 
             tree.links.new(render_pass, node_input)
-
-        # Restore the area type
-        area.ui_type = old_area_type
 
         return aov_file_products
 
@@ -317,7 +295,8 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         output_path = os.path.join(file_path, render_folder, file_name)
 
         render_product = self.get_render_product(output_path, instance)
-        aov_file_product = self.set_node_tree(output_path, instance, aov_sep)
+        aov_file_product = self.set_node_tree(
+            output_path, instance, aov_sep, ext, multilayer)
 
         # We set the render path, the format and the camera
         bpy.context.scene.render.filepath = render_product
