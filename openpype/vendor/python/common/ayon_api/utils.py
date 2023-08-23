@@ -27,6 +27,45 @@ RepresentationParents = collections.namedtuple(
 )
 
 
+class ThumbnailContent:
+    """Wrapper for thumbnail content.
+
+    Args:
+        project_name (str): Project name.
+        thumbnail_id (Union[str, None]): Thumbnail id.
+        content_type (Union[str, None]): Content type e.g. 'image/png'.
+        content (Union[bytes, None]): Thumbnail content.
+    """
+
+    def __init__(self, project_name, thumbnail_id, content, content_type):
+        self.project_name = project_name
+        self.thumbnail_id = thumbnail_id
+        self.content_type = content_type
+        self.content = content or b""
+
+    @property
+    def id(self):
+        """Wrapper for thumbnail id.
+
+        Returns:
+
+        """
+
+        return self.thumbnail_id
+
+    @property
+    def is_valid(self):
+        """Content of thumbnail is valid.
+
+        Returns:
+            bool: Content is valid and can be used.
+        """
+        return (
+            self.thumbnail_id is not None
+            and self.content_type is not None
+        )
+
+
 def prepare_query_string(key_values):
     """Prepare data to query string.
 

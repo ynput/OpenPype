@@ -22,10 +22,10 @@ from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
     get_representation_path,
-
-    legacy_io,
 )
 from openpype.pipeline.load import LoadError
+from openpype.client import get_asset_by_name
+from openpype.pipeline.create import get_subset_name
 
 from . import lib
 from .lib import imprint, read
@@ -405,14 +405,21 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 # No existing scene instance node for this layer. Note that
                 # this instance will not have the `instance_node` data yet
                 # until it's been saved/persisted at least once.
-                # TODO: Correctly define the subset name using templates
-                prefix = self.layer_instance_prefix or self.family
-                subset_name = "{}{}".format(prefix, layer.name())
+                project_name = self.create_context.get_current_project_name()
+
                 instance_data = {
-                    "asset": legacy_io.Session["AVALON_ASSET"],
-                    "task": legacy_io.Session["AVALON_TASK"],
+                    "asset": self.create_context.get_current_asset_name(),
+                    "task": self.create_context.get_current_task_name(),
                     "variant": layer.name(),
                 }
+                asset_doc = get_asset_by_name(project_name,
+                                              instance_data["asset"])
+                subset_name = self.get_subset_name(
+                    layer.name(),
+                    instance_data["task"],
+                    asset_doc,
+                    project_name)
+
                 instance = CreatedInstance(
                     family=self.family,
                     subset_name=subset_name,
@@ -519,9 +526,74 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 if node and cmds.objExists(node):
                     cmds.delete(node)
 
+    def get_subset_name(
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
+    ):
+        # creator.family != 'render' as expected
+        return get_subset_name(self.layer_instance_prefix,
+                               variant,
+                               task_name,
+                               asset_doc,
+                               project_name)
+
 
 class Loader(LoaderPlugin):
     hosts = ["maya"]
+
+    def get_custom_namespace_and_group(self, context, options, loader_key):
+        """Queries Settings to get custom template for namespace and group.
+
+        Group template might be empty >> this forces to not wrap imported items
+        into separate group.
+
+        Args:
+            context (dict)
+            options (dict): artist modifiable options from dialog
+            loader_key (str): key to get separate configuration from Settings
+                ('reference_loader'|'import_loader')
+        """
+        options["attach_to_root"] = True
+
+        asset = context['asset']
+        subset = context['subset']
+        settings = get_project_settings(context['project']['name'])
+        custom_naming = settings['maya']['load'][loader_key]
+
+        if not custom_naming['namespace']:
+            raise LoadError("No namespace specified in "
+                            "Maya ReferenceLoader settings")
+        elif not custom_naming['group_name']:
+            self.log.debug("No custom group_name, no group will be created.")
+            options["attach_to_root"] = False
+
+        formatting_data = {
+            "asset_name": asset['name'],
+            "asset_type": asset['type'],
+            "folder": {
+                "name": asset["name"],
+            },
+            "subset": subset['name'],
+            "family": (
+                subset['data'].get('family') or
+                subset['data']['families'][0]
+            )
+        }
+
+        custom_namespace = custom_naming['namespace'].format(
+            **formatting_data
+        )
+
+        custom_group_name = custom_naming['group_name'].format(
+            **formatting_data
+        )
+
+        return custom_group_name, custom_namespace, options
 
 
 class ReferenceLoader(Loader):
@@ -565,42 +637,13 @@ class ReferenceLoader(Loader):
         path = self.filepath_from_context(context)
         assert os.path.exists(path), "%s does not exist." % path
 
-        asset = context['asset']
-        subset = context['subset']
-        settings = get_project_settings(context['project']['name'])
-        custom_naming = settings['maya']['load']['reference_loader']
-        loaded_containers = []
-
-        if not custom_naming['namespace']:
-            raise LoadError("No namespace specified in "
-                            "Maya ReferenceLoader settings")
-        elif not custom_naming['group_name']:
-            self.log.debug("No custom group_name, no group will be created.")
-            options["attach_to_root"] = False
-
-        formatting_data = {
-            "asset_name": asset['name'],
-            "asset_type": asset['type'],
-            "folder": {
-                "name": asset["name"],
-            },
-            "subset": subset['name'],
-            "family": (
-                subset['data'].get('family') or
-                subset['data']['families'][0]
-            )
-        }
-
-        custom_namespace = custom_naming['namespace'].format(
-            **formatting_data
-        )
-
-        custom_group_name = custom_naming['group_name'].format(
-            **formatting_data
-        )
+        custom_group_name, custom_namespace, options = \
+            self.get_custom_namespace_and_group(context, options,
+                                                "reference_loader")
 
         count = options.get("count") or 1
 
+        loaded_containers = []
         for c in range(0, count):
             namespace = lib.get_custom_namespace(custom_namespace)
             group_name = "{}:{}".format(

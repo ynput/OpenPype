@@ -116,6 +116,18 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             "task": {"name": task_name, "type": task_type}
         }
 
+        # Add version filter
+        workfile_version = self.launch_context.data.get("workfile_version", -1)
+        if workfile_version > 0 and workfile_version not in {None, "last"}:
+            context_filters["version"] = self.launch_context.data[
+                "workfile_version"
+            ]
+
+            # Only one version will be matched
+            version_index = 0
+        else:
+            version_index = workfile_version
+
         workfile_representations = list(get_representations(
             project_name,
             context_filters=context_filters
@@ -133,9 +145,10 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             lambda r: r["context"].get("version") is not None,
             workfile_representations
         )
-        workfile_representation = max(
+        # Get workfile version
+        workfile_representation = sorted(
             filtered_repres, key=lambda r: r["context"]["version"]
-        )
+        )[version_index]
 
         # Copy file and substitute path
         last_published_workfile_path = download_last_published_workfile(

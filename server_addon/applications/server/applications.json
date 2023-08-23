@@ -127,9 +127,7 @@
                         "linux": []
                     },
                     "arguments": {
-                        "windows": [
-                            "-U MAXScript {OPENPYPE_ROOT}\\openpype\\hosts\\max\\startup\\startup.ms"
-                        ],
+                        "windows": [],
                         "darwin": [],
                         "linux": []
                     },
