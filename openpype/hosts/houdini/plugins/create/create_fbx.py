@@ -67,6 +67,8 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
 
     # Overrides HoudiniCreator.get_pre_create_attr_defs()
     def get_pre_create_attr_defs(self):
+        """Add settings for users. """
+
         attrs = super().get_pre_create_attr_defs()
         vcformat = EnumDef("vcformat",
                            items={
