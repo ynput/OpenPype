@@ -3,7 +3,7 @@
 import os
 import json
 import re
-from copy import copy, deepcopy
+from copy import deepcopy
 import requests
 import clique
 
@@ -16,6 +16,7 @@ from openpype.client import (
 from openpype.pipeline import publish, legacy_io
 from openpype.lib import EnumDef, is_running_from_build
 from openpype.tests.lib import is_in_tests
+from openpype.pipeline.version_start import get_versioning_start
 
 from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
@@ -211,7 +212,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             environment["OPENPYPE_PUBLISH_JOB"] = "1"
             environment["OPENPYPE_RENDER_JOB"] = "0"
             environment["OPENPYPE_REMOTE_PUBLISH"] = "0"
-            deadline_plugin = "Openpype"
+            deadline_plugin = "OpenPype"
             # Add OpenPype version if we are running from build.
             if is_running_from_build():
                 self.environ_keys.append("OPENPYPE_VERSION")
@@ -568,7 +569,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if version:
                 version = int(version["name"]) + 1
             else:
-                version = 1
+                version = get_versioning_start(
+                    project_name,
+                    template_data["app"],
+                    task_name=template_data["task"]["name"],
+                    task_type=template_data["task"]["type"],
+                    family="render",
+                    subset=subset,
+                    project_settings=context.data["project_settings"]
+                )
 
         host_name = context.data["hostName"]
         task_info = template_data.get("task") or {}

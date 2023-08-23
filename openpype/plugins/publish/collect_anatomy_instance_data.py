@@ -32,6 +32,7 @@ from openpype.client import (
     get_subsets,
     get_last_versions
 )
+from openpype.pipeline.version_start import get_versioning_start
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -187,25 +188,13 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         project_task_types = project_doc["config"]["tasks"]
 
         for instance in context:
-            if self.follow_workfile_version:
-                version_number = context.data('version')
-            else:
-                version_number = instance.data.get("version")
-            # If version is not specified for instance or context
-            if version_number is None:
-                # TODO we should be able to change default version by studio
-                # preferences (like start with version number `0`)
-                version_number = 1
-                # use latest version (+1) if already any exist
-                latest_version = instance.data["latestVersion"]
-                if latest_version is not None:
-                    version_number += int(latest_version)
-
             anatomy_updates = {
                 "asset": instance.data["asset"],
+                "folder": {
+                    "name": instance.data["asset"],
+                },
                 "family": instance.data["family"],
                 "subset": instance.data["subset"],
-                "version": version_number
             }
 
             # Hierarchy
@@ -225,6 +214,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 anatomy_updates["parent"] = parent_name
 
             # Task
+            task_type = None
             task_name = instance.data.get("task")
             if task_name:
                 asset_tasks = asset_doc["data"]["tasks"]
@@ -239,6 +229,30 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     "type": task_type,
                     "short": task_code
                 }
+
+            # Define version
+            if self.follow_workfile_version:
+                version_number = context.data('version')
+            else:
+                version_number = instance.data.get("version")
+
+            # use latest version (+1) if already any exist
+            if version_number is None:
+                latest_version = instance.data["latestVersion"]
+                if latest_version is not None:
+                    version_number = int(latest_version) + 1
+
+            # If version is not specified for instance or context
+            if version_number is None:
+                version_number = get_versioning_start(
+                    context.data["projectName"],
+                    instance.context.data["hostName"],
+                    task_name=task_name,
+                    task_type=task_type,
+                    family=instance.data["family"],
+                    subset=instance.data["subset"]
+                )
+            anatomy_updates["version"] = version_number
 
             # Additional data
             resolution_width = instance.data.get("resolutionWidth")

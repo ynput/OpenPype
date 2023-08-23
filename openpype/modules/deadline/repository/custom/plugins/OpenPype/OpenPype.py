@@ -38,6 +38,7 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
         for publish process.
     """
     def __init__(self):
+        super().__init__()
         self.InitializeProcessCallback += self.InitializeProcess
         self.RenderExecutableCallback += self.RenderExecutable
         self.RenderArgumentCallback += self.RenderArgument
@@ -107,7 +108,7 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
                 "Scanning for compatible requested "
                 f"version {requested_version}"))
             dir_list = self.GetConfigEntry("OpenPypeInstallationDirs")
-            
+
             # clean '\ ' for MacOS pasting
             if platform.system().lower() == "darwin":
                 dir_list = dir_list.replace("\\ ", " ")
