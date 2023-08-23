@@ -10,8 +10,8 @@ class SelectionModel(object):
 
     event_source = "selection.model"
 
-    def __init__(self, control):
-        self._control = control
+    def __init__(self, controller):
+        self._controller = controller
 
         self._folder_id = None
         self._task_name = None
@@ -27,7 +27,7 @@ class SelectionModel(object):
             return
 
         self._folder_id = folder_id
-        self._control.emit_event(
+        self._controller.emit_event(
             "selection.folder.changed",
             {"folder_id": folder_id},
             self.event_source
@@ -48,7 +48,7 @@ class SelectionModel(object):
 
         self._task_name = task_name
         self._task_id = task_id
-        self._control.emit_event(
+        self._controller.emit_event(
             "selection.task.changed",
             {
                 "folder_id": folder_id,
@@ -66,7 +66,7 @@ class SelectionModel(object):
             return
 
         self._workfile_path = path
-        self._control.emit_event(
+        self._controller.emit_event(
             "workarea.selection.changed",
             {
                 "path": path,
@@ -84,7 +84,7 @@ class SelectionModel(object):
         if representation_id == self._representation_id:
             return
         self._representation_id = representation_id
-        self._control.emit_event(
+        self._controller.emit_event(
             "selection.representation.changed",
             {"representation_id": representation_id},
             self.event_source

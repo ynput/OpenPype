@@ -12,10 +12,10 @@ from .constants import (
 
 
 class TasksModel(QtGui.QStandardItemModel):
-    def __init__(self, control):
+    def __init__(self, controller):
         super(TasksModel, self).__init__()
 
-        self._control = control
+        self._controller = controller
 
         self._items_by_name = {}
         self._has_content = False
@@ -106,12 +106,12 @@ class TasksModel(QtGui.QStandardItemModel):
             self._empty_tasks_item_used = False
 
     def _refresh(self):
-        folder_id = self._control.get_selected_folder_id()
+        folder_id = self._controller.get_selected_folder_id()
         if not folder_id:
             self._add_invalid_selection_item()
             return
 
-        task_items = self._control.get_task_items(folder_id)
+        task_items = self._controller.get_task_items(folder_id)
         # Task items are refreshed
         if task_items is None:
             return
@@ -179,13 +179,13 @@ class TasksModel(QtGui.QStandardItemModel):
 
 
 class TasksWidget(QtWidgets.QWidget):
-    def __init__(self, control, parent):
+    def __init__(self, controller, parent):
         super(TasksWidget, self).__init__(parent)
 
         tasks_view = DeselectableTreeView(self)
         tasks_view.setIndentation(0)
 
-        tasks_model = TasksModel(control)
+        tasks_model = TasksModel(controller)
         tasks_proxy_model = QtCore.QSortFilterProxyModel()
         tasks_proxy_model.setSourceModel(tasks_model)
 
@@ -195,19 +195,19 @@ class TasksWidget(QtWidgets.QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(tasks_view, 1)
 
-        control.register_event_callback(
+        controller.register_event_callback(
             "tasks.refresh.started",
             self._on_tasks_refresh_started
         )
-        control.register_event_callback(
+        controller.register_event_callback(
             "tasks.refresh.finished",
             self._on_tasks_refresh_finished
         )
-        control.register_event_callback(
+        controller.register_event_callback(
             "selection.folder.changed",
             self._folder_selection_changed
         )
-        control.register_event_callback(
+        controller.register_event_callback(
             "controller.expected_selection_changed",
             self._on_expected_selection_change
         )
@@ -215,7 +215,7 @@ class TasksWidget(QtWidgets.QWidget):
         selection_model = tasks_view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
 
-        self._control = control
+        self._controller = controller
         self._tasks_view = tasks_view
         self._tasks_model = tasks_model
         self._tasks_proxy_model = tasks_proxy_model
@@ -254,14 +254,14 @@ class TasksWidget(QtWidgets.QWidget):
         if event["task_selected"] or not event["folder_selected"]:
             return
 
-        folder_id = self._control.get_selected_folder_id()
+        folder_id = self._controller.get_selected_folder_id()
         task_name = event["task_name"]
         if task_name is not None:
             index = self._tasks_model.get_index_by_name(task_name)
             if index.isValid():
                 proxy_index = self._tasks_proxy_model.mapFromSource(index)
                 self._tasks_view.setCurrentIndex(proxy_index)
-        self._control.expected_task_selected(folder_id, task_name)
+        self._controller.expected_task_selected(folder_id, task_name)
 
     def _get_selected_item_ids(self):
         selection_model = self._tasks_view.selectionModel()
@@ -280,4 +280,4 @@ class TasksWidget(QtWidgets.QWidget):
         if self._tasks_model.is_refreshing:
             return
         parent_id, task_id, task_name = self._get_selected_item_ids()
-        self._control.set_selected_task(parent_id, task_id, task_name)
+        self._controller.set_selected_task(parent_id, task_id, task_name)

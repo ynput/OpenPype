@@ -26,7 +26,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         " temp directory on your machine. Current temp size: <b>{}</b>."
     )
 
-    def __init__(self, control, parent):
+    def __init__(self, controller, parent):
         super(SidePanelWidget, self).__init__(parent)
 
         details_label = QtWidgets.QLabel("Details", self)
@@ -55,7 +55,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         note_input.textChanged.connect(self._on_note_change)
         btn_note_save.clicked.connect(self._on_save_click)
 
-        control.register_event_callback(
+        controller.register_event_callback(
             "workarea.selection.changed", self._on_selection_change
         )
 
@@ -68,7 +68,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._task_id = None
         self._filepath = None
         self._orig_note = ""
-        self._control = control
+        self._controller = controller
 
         self._set_context(None, None, None)
 
@@ -88,7 +88,7 @@ class SidePanelWidget(QtWidgets.QWidget):
 
     def _on_save_click(self):
         note = self._note_input.toPlainText()
-        self._control.save_workfile_info(
+        self._controller.save_workfile_info(
             self._folder_id,
             self._task_id,
             self._filepath,
@@ -117,7 +117,7 @@ class SidePanelWidget(QtWidgets.QWidget):
             self._note_input.setPlainText("")
             return
 
-        workfile_info = self._control.get_workfile_info(
+        workfile_info = self._controller.get_workfile_info(
             folder_id, task_id, filepath
         )
         orig_note = ""

@@ -159,7 +159,7 @@ class CacheItem:
 class EntitiesModel(object):
     event_source = "entities.model"
 
-    def __init__(self, control):
+    def __init__(self, controller):
         folders_cache = CacheItem()
         folders_cache.set_invalid({})
         self._folders_cache = folders_cache
@@ -168,7 +168,7 @@ class EntitiesModel(object):
 
         self._folders_refreshing = False
         self._tasks_refreshing = set()
-        self._control = control
+        self._controller = controller
 
     def reset(self):
         self._folders_cache.set_invalid({})
@@ -204,7 +204,7 @@ class EntitiesModel(object):
     @contextlib.contextmanager
     def _folder_refresh_event_manager(self, project_name):
         self._folders_refreshing = True
-        self._control.emit_event(
+        self._controller.emit_event(
             "folders.refresh.started",
             {"project_name": project_name},
             self.event_source
@@ -213,7 +213,7 @@ class EntitiesModel(object):
             yield
 
         finally:
-            self._control.emit_event(
+            self._controller.emit_event(
                 "folders.refresh.finished",
                 {"project_name": project_name},
                 self.event_source
@@ -223,7 +223,7 @@ class EntitiesModel(object):
     @contextlib.contextmanager
     def _task_refresh_event_manager(self, project_name, folder_id):
         self._tasks_refreshing.add(folder_id)
-        self._control.emit_event(
+        self._controller.emit_event(
             "tasks.refresh.started",
             {"project_name": project_name, "folder_id": folder_id},
             self.event_source
@@ -232,7 +232,7 @@ class EntitiesModel(object):
             yield
 
         finally:
-            self._control.emit_event(
+            self._controller.emit_event(
                 "tasks.refresh.finished",
                 {"project_name": project_name, "folder_id": folder_id},
                 self.event_source
@@ -242,7 +242,7 @@ class EntitiesModel(object):
     def _refresh_folders_cache(self):
         if self._folders_refreshing:
             return
-        project_name = self._control.get_current_project_name()
+        project_name = self._controller.get_current_project_name()
         with self._folder_refresh_event_manager(project_name):
             folder_items = self._query_folders(project_name)
             self._folders_cache.update_data(folder_items)
@@ -263,7 +263,7 @@ class EntitiesModel(object):
         if folder_id in self._tasks_refreshing:
             return
 
-        project_name = self._control.get_current_project_name()
+        project_name = self._controller.get_current_project_name()
         with self._task_refresh_event_manager(project_name, folder_id):
             cache_item = self._tasks_cache.get(folder_id)
             if cache_item is None:

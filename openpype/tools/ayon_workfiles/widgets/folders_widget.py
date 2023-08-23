@@ -12,10 +12,10 @@ from .constants import ITEM_ID_ROLE, ITEM_NAME_ROLE
 
 
 class FoldersModel(QtGui.QStandardItemModel):
-    def __init__(self, control):
+    def __init__(self, controller):
         super(FoldersModel, self).__init__()
 
-        self._control = control
+        self._controller = controller
         self._has_content = False
         self._items_by_id = {}
         self._parent_id_by_id = {}
@@ -33,7 +33,7 @@ class FoldersModel(QtGui.QStandardItemModel):
         return self.indexFromItem(item)
 
     def refresh(self):
-        folder_items_by_id = self._control.get_folder_items()
+        folder_items_by_id = self._controller.get_folder_items()
         if not folder_items_by_id:
             if folder_items_by_id is not None:
                 self.clear()
@@ -107,13 +107,13 @@ class FoldersModel(QtGui.QStandardItemModel):
 
 
 class FoldersWidget(QtWidgets.QWidget):
-    def __init__(self, control, parent):
+    def __init__(self, controller, parent):
         super(FoldersWidget, self).__init__(parent)
 
         folders_view = DeselectableTreeView(self)
         folders_view.setHeaderHidden(True)
 
-        folders_model = FoldersModel(control)
+        folders_model = FoldersModel(controller)
         folders_proxy_model = RecursiveSortFilterProxyModel()
         folders_proxy_model.setSourceModel(folders_model)
 
@@ -123,19 +123,19 @@ class FoldersWidget(QtWidgets.QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(folders_view, 1)
 
-        control.register_event_callback(
+        controller.register_event_callback(
             "folders.refresh.started",
             self._on_folders_refresh_started
         )
-        control.register_event_callback(
+        controller.register_event_callback(
             "folders.refresh.finished",
             self._on_folders_refresh_finished
         )
-        control.register_event_callback(
+        controller.register_event_callback(
             "controller.refresh.finished",
             self._on_controller_refresh
         )
-        control.register_event_callback(
+        controller.register_event_callback(
             "controller.expected_selection_changed",
             self._on_expected_selection_change
         )
@@ -143,7 +143,7 @@ class FoldersWidget(QtWidgets.QWidget):
         selection_model = folders_view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
 
-        self._control = control
+        self._controller = controller
         self._folders_view = folders_view
         self._folders_model = folders_model
         self._folders_proxy_model = folders_proxy_model
@@ -169,7 +169,7 @@ class FoldersWidget(QtWidgets.QWidget):
 
     def _set_expected_selection(self, expected_data=None):
         if expected_data is None:
-            expected_data = self._control.get_expected_selection_data()
+            expected_data = self._controller.get_expected_selection_data()
 
         # We're done
         if expected_data["folder_selected"]:
@@ -184,7 +184,7 @@ class FoldersWidget(QtWidgets.QWidget):
             if index.isValid():
                 proxy_index = self._folders_proxy_model.mapFromSource(index)
                 self._folders_view.setCurrentIndex(proxy_index)
-        self._control.expected_folder_selected(folder_id)
+        self._controller.expected_folder_selected(folder_id)
 
     def _on_expected_selection_change(self, event):
         self._set_expected_selection(event.data)
@@ -199,4 +199,4 @@ class FoldersWidget(QtWidgets.QWidget):
 
     def _on_selection_change(self):
         item_id = self._get_selected_item_id()
-        self._control.set_selected_folder(item_id)
+        self._controller.set_selected_folder(item_id)

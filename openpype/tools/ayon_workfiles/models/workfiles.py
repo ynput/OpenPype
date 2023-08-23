@@ -135,9 +135,9 @@ class WorkareaModel:
     by host integration.
     """
 
-    def __init__(self, control):
-        self._control = control
-        self._extensions = control.get_workfile_extensions()
+    def __init__(self, controller):
+        self._controller = controller
+        self._extensions = controller.get_workfile_extensions()
         self._base_data = None
         self._fill_data_by_folder_id = {}
         self._task_data_by_folder_id = {}
@@ -145,7 +145,7 @@ class WorkareaModel:
 
     @property
     def project_name(self):
-        return self._control.get_current_project_name()
+        return self._controller.get_current_project_name()
 
     def reset(self):
         self._base_data = None
@@ -155,7 +155,7 @@ class WorkareaModel:
     def _get_base_data(self):
         if self._base_data is None:
             base_data = get_template_data(get_project(self.project_name))
-            base_data["app"] = self._control.get_host_name()
+            base_data["app"] = self._controller.get_host_name()
             self._base_data = base_data
         return copy.deepcopy(self._base_data)
 
@@ -203,7 +203,7 @@ class WorkareaModel:
         workdir = get_workdir_with_workdir_data(
             workdir_data,
             self.project_name,
-            anatomy=self._control.project_anatomy,
+            anatomy=self._controller.project_anatomy,
         )
         folder_mapping[task_id] = workdir
         return workdir
@@ -238,7 +238,7 @@ class WorkareaModel:
         # TODO cache
         return get_workfile_template_key(
             task_type,
-            self._control.get_host_name(),
+            self._controller.get_host_name(),
             project_name=self.project_name
         )
 
@@ -253,11 +253,11 @@ class WorkareaModel:
             task_info = fill_data.get("task", {})
             version = get_versioning_start(
                 self.project_name,
-                self._control.get_host_name(),
+                self._controller.get_host_name(),
                 task_name=task_info.get("name"),
                 task_type=task_info.get("type"),
                 family="workfile",
-                project_settings=self._control.project_settings,
+                project_settings=self._controller.project_settings,
             )
         else:
             version += 1
@@ -323,11 +323,11 @@ class WorkareaModel:
                 "extensions": None,
             }
 
-        anatomy = self._control.project_anatomy
+        anatomy = self._controller.project_anatomy
         fill_data = self._prepare_fill_data(folder_id, task_id)
         template_key = self._get_template_key(fill_data)
 
-        current_workfile = self._control.get_current_workfile()
+        current_workfile = self._controller.get_current_workfile()
         current_filename = None
         current_ext = None
         if current_workfile:
@@ -377,7 +377,7 @@ class WorkareaModel:
         version,
         comment,
     ):
-        anatomy = self._control.project_anatomy
+        anatomy = self._controller.project_anatomy
         fill_data = self._prepare_fill_data(folder_id, task_id)
         template_key = self._get_template_key(fill_data)
 
@@ -419,8 +419,8 @@ class WorkfileEntitiesModel:
         control (AbstractWorkfileController): Controller object.
     """
 
-    def __init__(self, control):
-        self._control = control
+    def __init__(self, controller):
+        self._controller = controller
         self._cache = {}
 
     def _get_workfile_info_identifier(
@@ -428,7 +428,7 @@ class WorkfileEntitiesModel:
         return "_".join([folder_id, task_id, rootless_path])
 
     def _get_rootless_path(self, filepath):
-        anatomy = self._control.project_anatomy
+        anatomy = self._controller.project_anatomy
 
         workdir, filename = os.path.split(filepath)
         success, rootless_dir = anatomy.find_root_template_from_path(workdir)
@@ -452,7 +452,7 @@ class WorkfileEntitiesModel:
         info = self._cache.get(identifier)
         if not info:
             for workfile_info in ayon_api.get_workfiles_info(
-                self._control.get_current_project_name(),
+                self._controller.get_current_project_name(),
                 task_ids=[task_id],
                 fields=["id", "path", "attrib"],
             ):
@@ -487,7 +487,7 @@ class WorkfileEntitiesModel:
         if not update_data:
             return
 
-        project_name = self._control.get_current_project_name()
+        project_name = self._controller.get_current_project_name()
 
         session = OperationsSession()
         session.update_entity(
@@ -498,7 +498,7 @@ class WorkfileEntitiesModel:
     def _create_workfile_doc(self, task_id, rootless_path, note):
         extension = os.path.splitext(rootless_path)[1]
 
-        project_name = self._control.get_current_project_name()
+        project_name = self._controller.get_current_project_name()
 
         workfile_info = {
             "path": rootless_path,
@@ -518,12 +518,12 @@ class WorkfileEntitiesModel:
 class WorkfilesModel:
     """Workfiles model."""
 
-    def __init__(self, control):
-        self._control = control
+    def __init__(self, controller):
+        self._controller = controller
         self._cache = {}
 
-        self._entities_model = WorkfileEntitiesModel(control)
-        self._workarea_model = WorkareaModel(control)
+        self._entities_model = WorkfileEntitiesModel(controller)
+        self._workarea_model = WorkareaModel(controller)
 
     def get_workfile_info(self, folder_id, task_id, filepath):
         return self._entities_model.get_workfile_info(

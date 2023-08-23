@@ -24,12 +24,12 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         control (AbstractControl): The control object.
     """
 
-    def __init__(self, control):
+    def __init__(self, controller):
         super(WorkAreaFilesModel, self).__init__()
 
         self.setColumnCount(2)
 
-        control.register_event_callback(
+        controller.register_event_callback(
             "selection.task.changed",
             self._on_task_changed
         )
@@ -38,7 +38,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             "fa.file-o",
             color=get_default_entity_icon_color()
         )
-        self._control = control
+        self._controller = controller
         self._items_by_filename = {}
         self._missing_context_item = None
         self._missing_context_used = False
@@ -118,7 +118,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             self._add_missing_context_item()
             return
 
-        file_items = self._control.get_workarea_file_items(
+        file_items = self._controller.get_workarea_file_items(
             event["folder_id"], event["task_id"]
         )
         root_item = self.invisibleRootItem()
@@ -218,7 +218,7 @@ class FilesView(QtWidgets.QTreeView):
 class WorkAreaFilesWidget(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
 
-    def __init__(self, control, parent):
+    def __init__(self, controller, parent):
         super(WorkAreaFilesWidget, self).__init__(parent)
 
         view = FilesView(self)
@@ -227,7 +227,7 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         # Smaller indentation
         view.setIndentation(3)
 
-        model = WorkAreaFilesModel(control)
+        model = WorkAreaFilesModel(controller)
         proxy_model = QtCore.QSortFilterProxyModel()
         proxy_model.setSourceModel(model)
         proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
@@ -254,7 +254,7 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         self._model = model
         self._proxy_model = proxy_model
         self._time_delegate = time_delegate
-        self._control = control
+        self._controller = controller
 
         self._published_mode = False
 
@@ -276,11 +276,11 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
     def open_current_file(self):
         path = self.get_selected_path()
         if path:
-            self._control.open_workfile(path)
+            self._controller.open_workfile(path)
 
     def _on_selection_change(self):
         filepath = self.get_selected_path()
-        self._control.set_selected_workfile_path(filepath)
+        self._controller.set_selected_workfile_path(filepath)
 
     def _on_left_double_click(self):
         self.open_current_file()
