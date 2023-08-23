@@ -26,7 +26,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     order = ValidateContentsOrder + 0.1
     families = ["abc"]
     hosts = ["houdini"]
-    label = "Validate Prims Hierarchy Path"
+    label = "Validate Prims Hierarchy Path (ABC)"
     actions = [AddDefaultPathAction]
 
     def process(self, instance):
