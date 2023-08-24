@@ -73,6 +73,10 @@ def get_frame_range_from_list_of_files(collected_files):
         # frame range from single file
         return None, None
 
+    assert len(collections) == 1, (
+        "Multiple sequences detected in collected files"
+    )
+
     collection = collections[0]
     repres_frames = list(collection.indexes)
 
