@@ -272,8 +272,8 @@ def get_single_filepath_from_list_of_files(collected_files):
     Returns:
         Any[str, None]: single filepath or None if not possible
     """
-    collections, reminders = clique.assemble(collected_files)
+    collections, remainders = clique.assemble(collected_files)
     if collections:
         return collections[0].format("{head}{padding}{tail}")
-    elif reminders:
-        return reminders[0]
+    elif remainders:
+        return remainders[0]
