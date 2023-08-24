@@ -16,7 +16,7 @@ def collect_filepaths_from_sequential_path(
     """Generate expected files from path
 
     Args:
-        file_path (str): Path to generate expected files from
+        file_path (str): Absolute path with any sequential pattern (##, %02d)
         frame_start (Optional[int]): Start frame of the sequence
         frame_end (Optional[int]): End frame of the sequence
         only_existing (Optional[bool]): Ensure that files exists.
@@ -63,25 +63,26 @@ def collect_filepaths_from_sequential_path(
 def generate_expected_filepaths(
     frame_start,
     frame_end,
-    path,
+    file_path,
 ):
     """Generate expected files from path
 
     Args:
         frame_start (int): Start frame of the sequence
         frame_end (int): End frame of the sequence
-        path (str): Path to generate expected files from
+        file_path (str): Absolute path with any sequential pattern (##, %02d)
 
     Returns:
         Any[list[str], str]: List of expected absolute paths to files
-            (frames of a sequence) or path if single file
+            (frames of a sequence)
     """
-    return collect_filepaths_from_sequential_path(
+    files = collect_filepaths_from_sequential_path(
         frame_start,
         frame_end,
-        path,
+        file_path,
         only_existing=False,
     )
+    return [files] if isinstance(files, str) else files
 
 
 def collect_basenames_from_sequential_path(
