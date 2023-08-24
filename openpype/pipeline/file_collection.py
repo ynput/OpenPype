@@ -26,7 +26,9 @@ def collect_filepaths_from_sequential_path(
             (frames of a sequence) or path if single file
     """
 
-    dirpath = os.path.dirname(file_path)
+    dirpath = os.path.normpath(
+        os.path.dirname(file_path))
+
     filename = os.path.basename(file_path)
 
     formattable_string = convert_filename_to_formattable_string(
@@ -44,8 +46,6 @@ def collect_filepaths_from_sequential_path(
         frame_file_path = os.path.join(
             dirpath, formattable_string.format(frame)
         )
-        # normalize path
-        frame_file_path = os.path.normpath(frame_file_path)
 
         # make sure file exists if ensure_exists is enabled
         if only_existing and not os.path.exists(frame_file_path):
@@ -63,25 +63,26 @@ def collect_filepaths_from_sequential_path(
 def generate_expected_filepaths(
     frame_start,
     frame_end,
-    path,
+    file_path,
 ):
     """Generate expected files from path
 
     Args:
         frame_start (int): Start frame of the sequence
         frame_end (int): End frame of the sequence
-        path (str): Absolute path with any sequential pattern (##, %02d)
+        file_path (str): Absolute path with any sequential pattern (##, %02d)
 
     Returns:
         Any[list[str], str]: List of expected absolute paths to files
-            (frames of a sequence) or path if single file
+            (frames of a sequence)
     """
-    return collect_filepaths_from_sequential_path(
+    files = collect_filepaths_from_sequential_path(
         frame_start,
         frame_end,
-        path,
+        file_path,
         only_existing=False,
     )
+    return [files] if isinstance(files, str) else files
 
 
 def collect_basenames_from_sequential_path(
@@ -137,9 +138,13 @@ def convert_filename_to_formattable_string(filename):
 
     elif "%" in filename:
         # use regex to convert %04d to {:0>4}
-        def replace(match):
-            return "{{:0>{}}}".format(match.group()[1:])
-        new_filename = re.sub("%\\d+d", replace, filename)
+        padding = re.search("%(\\d)+d", filename)
+        padding = padding.group(1) if padding else 1
+        new_filename = re.sub(
+            "%.*d",
+            "{{:0>{}}}".format(padding),
+            filename
+        )
 
     return new_filename
 
@@ -257,7 +262,7 @@ def _add_slate_frame_to_collected_frames(
     if frame_length == len(collected_file_frames):
         frame_slate_str = frames.get_frame_start_str(
             frame_start - 1,
-            frame_end
+            frame_start
         )
 
         slate_frame = collected_file_frames[0].replace(
@@ -276,8 +281,8 @@ def get_single_filepath_from_list_of_files(collected_files):
     Returns:
         Any[str, None]: single filepath or None if not possible
     """
-    collections, reminders = clique.assemble(collected_files)
+    collections, remainders = clique.assemble(collected_files)
     if collections:
         return collections[0].format("{head}{padding}{tail}")
-    elif reminders:
-        return reminders[0]
+    elif remainders:
+        return remainders[0]

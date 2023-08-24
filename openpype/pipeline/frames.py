@@ -38,7 +38,7 @@ def get_asset_frame_range(asset_name=None, asset_id=None, fields=None):
     from openpype.pipeline.context_tools import get_current_project_asset
 
     # Set frame start/end
-    asset = get_current_project_asset()
+    asset = get_current_project_asset(fields=["data.frameStart", "data.frameEnd", "data.handleStart", "data.handleEnd"])
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
 
@@ -72,6 +72,10 @@ def get_frame_range_from_list_of_files(collected_files):
         # No sequences detected and we can't retrieve
         # frame range from single file
         return None, None
+
+    assert len(collections) == 1, (
+        "Multiple sequences detected in collected files"
+    )
 
     collection = collections[0]
     repres_frames = list(collection.indexes)
