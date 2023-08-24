@@ -367,7 +367,6 @@ class HarmonySubmitDeadline(
     def get_plugin_info(self):
         # this is path to published scene workfile _ZIP_. Before
         # rendering, we need to unzip it.
-        self.log.info("env::{}".format(os.environ.get("IS_TEST")))
         published_scene = Path(
             self.from_published_scene(False))
         self.log.info(f"Processing {published_scene.as_posix()}")
