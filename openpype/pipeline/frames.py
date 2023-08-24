@@ -38,7 +38,7 @@ def get_asset_frame_range(asset_name=None, asset_id=None, fields=None):
     from openpype.pipeline.context_tools import get_current_project_asset
 
     # Set frame start/end
-    asset = get_current_project_asset()
+    asset = get_current_project_asset(fields=["data.frameStart", "data.frameEnd", "data.handleStart", "data.handleEnd"])
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
 
