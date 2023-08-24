@@ -19,12 +19,8 @@ def get_frame_start_str(frame_start, frame_end):
     Returns:
         str: frame start string
     """
-    last_frame_str = str(frame_end)
-    max_padding_length = len(last_frame_str)
-    formatting_str = "{{:0>{}}}".format(max_padding_length)
-
-    # convert first frame to string with padding
-    return formatting_str.format(frame_start)
+    padding = len(str(frame_end))
+    return str(frame_start).zfill(padding)
 
 
 def get_asset_frame_range(asset_name=None, asset_id=None, fields=None):
