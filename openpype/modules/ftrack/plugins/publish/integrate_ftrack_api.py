@@ -353,7 +353,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         status_name = asset_version_data.pop("status_name", None)
 
         # Try query asset version by criteria (asset id and version)
-        version = asset_version_data.get("version") or 0
+        version = asset_version_data.get("version") or "0"
         asset_version_entity = self._query_asset_version(
             session, version, asset_id
         )
