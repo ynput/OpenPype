@@ -37,7 +37,6 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         if collections:
             rs_proxy.is_sequence = True
 
-
         namespace = unique_namespace(
             name + "_",
             suffix="_",

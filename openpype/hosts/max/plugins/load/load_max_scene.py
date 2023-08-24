@@ -61,7 +61,6 @@ class MaxSceneLoader(load.LoaderPlugin):
         sub_container_name = f"{namespace}:{name}"
         # delete the old container with attribute
         # delete old duplicate
-        #TODO: get the prev_max_objects by using node.Children
         rt.Select(node.Children)
         for prev_max_obj in rt.GetCurrentSelection():
             if rt.isValidNode(prev_max_obj) and prev_max_obj.name != sub_container_name:  # noqa
@@ -75,8 +74,8 @@ class MaxSceneLoader(load.LoaderPlugin):
         update_custom_attribute_data(sub_container, current_max_objects)
         for max_object in current_max_objects:
             max_object.Parent = node
-        for max_obj, obj_name in zip(
-            current_max_objects, current_max_object_names):
+        for max_obj, obj_name in zip(current_max_objects,
+                                     current_max_object_names):
             max_obj.name = f"{namespace}:{obj_name}"
 
 
