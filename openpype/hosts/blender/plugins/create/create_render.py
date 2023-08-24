@@ -214,18 +214,6 @@ class CreateRenderlayer(plugin.Creator):
         return aov_file_products
 
     @staticmethod
-    def set_render_camera(asset_group):
-        # There should be only one camera in the instance
-        found = False
-        for obj in asset_group.all_objects:
-            if isinstance(obj, bpy.types.Object) and obj.type == "CAMERA":
-                bpy.context.scene.camera = obj
-                found = True
-                break
-
-        assert found, "No camera found in the render instance"
-
-    @staticmethod
     def imprint_render_settings(node, data):
         RENDER_DATA = "render_data"
         if not node.get(RENDER_DATA):
@@ -262,7 +250,6 @@ class CreateRenderlayer(plugin.Creator):
         # We set the render path, the format and the camera
         bpy.context.scene.render.filepath = render_product
         self.set_render_format(ext, multilayer)
-        self.set_render_camera(asset_group)
 
         render_settings = {
             "render_folder": render_folder,

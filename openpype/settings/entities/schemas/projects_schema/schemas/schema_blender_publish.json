@@ -52,6 +52,30 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateRenderCameraIsSet",
+            "label": "Validate Render Camera Is Set",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                }
+            ]
+        },
+        {
             "type": "collapsible-wrap",
             "label": "Model",
             "children": [
