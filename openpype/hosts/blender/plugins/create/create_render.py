@@ -235,30 +235,7 @@ class CreateRenderlayer(plugin.Creator):
                 continue
             node[RENDER_DATA][key] = value
 
-    def process(self):
-        # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
-
-        # Create instance object
-        asset = self.data["asset"]
-        subset = self.data["subset"]
-        name = plugin.asset_name(asset, subset)
-        asset_group = bpy.data.collections.new(name=name)
-        instances.children.link(asset_group)
-        self.data['task'] = get_current_task_name()
-        lib.imprint(asset_group, self.data)
-
-        if (self.options or {}).get("useSelection"):
-            selected = lib.get_selection()
-            for obj in selected:
-                asset_group.objects.link(obj)
-        elif (self.options or {}).get("asset_group"):
-            obj = (self.options or {}).get("asset_group")
-            asset_group.objects.link(obj)
-
+    def prepare_rendering(self, asset_group, name):
         filepath = bpy.data.filepath
         assert filepath, "Workfile not saved. Please save the file first."
 
@@ -299,5 +276,29 @@ class CreateRenderlayer(plugin.Creator):
         }
 
         self.imprint_render_settings(asset_group, render_settings)
+
+    def process(self):
+        # Get Instance Container or create it if it does not exist
+        instances = bpy.data.collections.get(AVALON_INSTANCES)
+        if not instances:
+            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
+            bpy.context.scene.collection.children.link(instances)
+
+        # Create instance object
+        asset = self.data["asset"]
+        subset = self.data["subset"]
+        name = plugin.asset_name(asset, subset)
+        asset_group = bpy.data.collections.new(name=name)
+
+        try:
+            instances.children.link(asset_group)
+            self.data['task'] = get_current_task_name()
+            lib.imprint(asset_group, self.data)
+
+            self.prepare_rendering(asset_group, name)
+        except Exception:
+            # Remove the instance if there was an error
+            bpy.data.collections.remove(asset_group)
+            raise
 
         return asset_group
