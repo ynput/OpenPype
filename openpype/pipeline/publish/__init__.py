@@ -19,7 +19,8 @@ from .publish_plugins import (
     RepairContextAction,
 
     Extractor,
-    ColormanagedPyblishPluginMixin
+    ColormanagedPyblishPluginMixin,
+    PrepRepresentationPluginMixin,
 )
 
 from .lib import (
@@ -69,6 +70,7 @@ __all__ = (
 
     "Extractor",
     "ColormanagedPyblishPluginMixin",
+    "PrepRepresentationPluginMixin",
 
     "get_publish_template_name",
 
