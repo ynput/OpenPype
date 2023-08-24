@@ -137,9 +137,13 @@ def convert_filename_to_formattable_string(filename):
 
     elif "%" in filename:
         # use regex to convert %04d to {:0>4}
-        def replace(match):
-            return "{{:0>{}}}".format(match.group()[1:])
-        new_filename = re.sub("%\\d+d", replace, filename)
+        padding = re.search("%(\\d)+d", filename)
+        padding = padding.group(1) if padding else 1
+        new_filename = re.sub(
+            "%.*d",
+            "{{:0>{}}}".format(padding),
+            filename
+        )
 
     return new_filename
 
