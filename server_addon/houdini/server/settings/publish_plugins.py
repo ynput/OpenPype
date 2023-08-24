@@ -20,11 +20,27 @@ class CreateArnoldAssModel(BaseSettingsModel):
     )
     ext: str = Field(Title="Extension")
 
+class HouCreateUnrealStaticMeshModel(BaseSettingsModel):
+    enabled: bool = Field(title="Enabled")
+    default_variants: list[str] = Field(
+        default_factory=list,
+        title="Default Products"
+    )
+    static_mesh_prefixes: str = Field("S", title="Static Mesh Prefix")
+    collision_prefixes: list[str] = Field(
+        default_factory=list,
+        title="Collision Prefixes"
+    )
 
 class CreatePluginsModel(BaseSettingsModel):
     CreateArnoldAss: CreateArnoldAssModel = Field(
         default_factory=CreateArnoldAssModel,
         title="Create Alembic Camera")
+    # "-" is not compatible in the new model
+    HouCreateUnrealStaticMesh: HouCreateUnrealStaticMeshModel = Field(
+        default_factory=HouCreateUnrealStaticMeshModel,
+        title="Create Unreal_Static Mesh"
+    )
     CreateAlembicCamera: CreatorModel = Field(
         default_factory=CreatorModel,
         title="Create Alembic Camera")
@@ -62,6 +78,19 @@ DEFAULT_HOUDINI_CREATE_SETTINGS = {
         "enabled": True,
         "default_variants": ["Main"],
         "ext": ".ass"
+    },
+    "HouCreateUnrealStaticMesh": {
+        "enabled": True,
+        "default_variants": [
+            "Main"
+        ],
+        "static_mesh_prefix": "S",
+        "collision_prefixes": [
+            "UBX",
+            "UCP",
+            "USP",
+            "UCX"
+        ]
     },
     "CreateAlembicCamera": {
         "enabled": True,

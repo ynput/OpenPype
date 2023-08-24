@@ -139,8 +139,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "simpleUnrealTexture",
                 "online",
                 "uasset",
-                "blendScene",
-                "filmboxfbx"
+                "blendScene"
                 ]
 
     default_template_name = "publish"

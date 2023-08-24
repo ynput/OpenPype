@@ -52,7 +52,7 @@ class ValidateFBXPrimitiveHierarchyPaths(pyblish.api.InstancePlugin,
     by default.
     """
 
-    families = ["filmboxfbx"]
+    families = ["fbx"]
     hosts = ["houdini"]
     label = "Validate Prims Hierarchy Path (FBX)"
 

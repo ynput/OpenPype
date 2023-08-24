@@ -20,17 +20,18 @@ from openpype.lib import EnumDef
 import hou
 
 
-class CreateFilmboxFBX(plugin.HoudiniCreator):
+class HouCreateUnrealStaticMesh(plugin.HoudiniCreator):
     """Filmbox FBX Driver."""
 
     # you should set
-    identifier = "io.openpype.creators.houdini.filmboxfbx"
-    label = "Filmbox FBX"
-    family = "filmboxfbx"
+    identifier = "io.openpype.creators.houdini.unrealstaticmesh"
+    label = "Unreal - Static Mesh"
+    family = "staticMesh"
     icon = "fa5s.cubes"
 
     # optional to set
     default_variant = "Main"
+    # 'default_variants' will be overriden by settings.
     default_variants = ["Main", "Test"]
 
     # Overrides HoudiniCreator.create()
@@ -40,7 +41,7 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
         instance_data.update({"node_type": "filmboxfbx"})
 
         # create instance (calls HoudiniCreator.create())
-        instance = super(CreateFilmboxFBX, self).create(
+        instance = super(HouCreateUnrealStaticMesh, self).create(
             subset_name,
             instance_data,
             pre_create_data)
@@ -77,15 +78,8 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
                            },
                            default=0,
                            label="Vertex Cache Format")
-        trange = EnumDef("trange",
-                         items={
-                             0: "Render Current Frame",
-                             1: "Render Frame Range"
-                         },
-                         default=0,
-                         label="Valid Frame Range")
 
-        return attrs + [vcformat, trange]
+        return attrs + [vcformat]
 
     def get_parms(self, subset_name, pre_create_data):
         """Get parameters values for this specific node."""
@@ -100,8 +94,9 @@ class CreateFilmboxFBX(plugin.HoudiniCreator):
         # 3. get Vertex Cache Format
         vcformat = pre_create_data.get("vcformat")
 
-        # 4. get Valid Frame Range
-        trange = pre_create_data.get("trange")
+        # 4. Valid Frame Range
+        # It should publish the current frame.
+        trange = 0
 
         # parms dictionary
         parms = {

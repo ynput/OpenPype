@@ -13,11 +13,11 @@ import pyblish.api
 
 
 class CollectFilmboxfbxType(pyblish.api.InstancePlugin):
-    """Collect data type for filmboxfbx instance."""
+    """Collect data type for fbx instance."""
 
     hosts = ["houdini"]
-    families = ["filmboxfbx"]
-    label = "Collect type of filmboxfbx"
+    families = ["fbx", "staticMesh"]
+    label = "Collect type of fbx"
 
     # Usually you will use this value as default
     order = pyblish.api.CollectorOrder
@@ -25,12 +25,12 @@ class CollectFilmboxfbxType(pyblish.api.InstancePlugin):
     # overrides InstancePlugin.process()
     def process(self, instance):
 
-        if instance.data["creator_identifier"] == "io.openpype.creators.houdini.filmboxfbx":  # noqa: E501
+        if instance.data["creator_identifier"] == "io.openpype.creators.houdini.unrealstaticmesh":  # noqa: E501
             # such a condition can be used to differentiate between
             #  instances by identifier becuase sometimes instances
             #  may have the same family but different identifier
             #  e.g. bgeo and alembic
-            pass
+            instance.data["families"] += ["fbx"]
 
         # Update instance.data with ouptut_node
         out_node = self.get_output_node(instance)

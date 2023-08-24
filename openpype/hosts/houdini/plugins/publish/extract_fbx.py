@@ -18,8 +18,8 @@ import hou
 
 class ExtractRedshiftProxy(publish.Extractor):
 
-    label = "Extract FilmBox FBX"
-    families = ["filmboxfbx"]
+    label = "Extract FBX"
+    families = ["fbx"]
     hosts = ["houdini"]
 
     # Usually you will use this value as default

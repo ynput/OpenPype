@@ -20,7 +20,7 @@ class FbxLoader(load.LoaderPlugin):
     """Load fbx files to Houdini."""
 
     label = "Load FBX"
-    families = ["filmboxfbx", "fbx"]
+    families = ["staticMesh", "fbx"]
     representations = ["fbx"]
 
     # Usually you will use these value as default
