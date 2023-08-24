@@ -26,7 +26,9 @@ def collect_filepaths_from_sequential_path(
             (frames of a sequence) or path if single file
     """
 
-    dirpath = os.path.dirname(file_path)
+    dirpath = os.path.normpath(
+        os.path.dirname(file_path))
+
     filename = os.path.basename(file_path)
 
     formattable_string = convert_filename_to_formattable_string(
@@ -44,8 +46,6 @@ def collect_filepaths_from_sequential_path(
         frame_file_path = os.path.join(
             dirpath, formattable_string.format(frame)
         )
-        # normalize path
-        frame_file_path = os.path.normpath(frame_file_path)
 
         # make sure file exists if ensure_exists is enabled
         if only_existing and not os.path.exists(frame_file_path):
