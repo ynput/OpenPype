@@ -1,6 +1,313 @@
 # Changelog
 
 
+## [3.16.4](https://github.com/ynput/OpenPype/tree/3.16.4)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.3...3.16.4)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Feature: Download last published workfile specify version <a href="https://github.com/ynput/OpenPype/pull/4998">#4998</a></summary>
+
+Setting `workfile_version` key to hook's `self.launch_context.data` allow you to specify the workfile version you want sync service to download if none is matched locally. This is helpful if the last version hasn't been correctly published/synchronized, and you want to recover the previous one (or some you'd like).Version could be set in two ways:
+- OP's absolute version, matching the `version` index in DB.
+- Relative version in reverse order from the last one: `-2`, `-3`...I don't know where I should write documentation about that.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: allow not creation of group for Import loaders <a href="https://github.com/ynput/OpenPype/pull/5427">#5427</a></summary>
+
+This PR enhances previous one. All ReferenceLoaders could not wrap imported products into explicit group.Also `Import` Loaders have same options. Control for this is separate in Settings, eg. Reference might wrap loaded items in group, `Import` might not.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3dsMax: Settings for Ayon <a href="https://github.com/ynput/OpenPype/pull/5388">#5388</a></summary>
+
+Max Addon Setting for Ayon
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Navigation to Folder from Launcher <a href="https://github.com/ynput/OpenPype/pull/5404">#5404</a></summary>
+
+Adds an action in launcher to open the directory of the asset.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Default variant in create plugin  <a href="https://github.com/ynput/OpenPype/pull/5429">#5429</a></summary>
+
+Attribute `default_variant` on create plugins always returns string and if default variant is not filled other ways how to get one are implemented.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Thumbnail widget enhancements <a href="https://github.com/ynput/OpenPype/pull/5439">#5439</a></summary>
+
+Thumbnails widget in Publisher has new 3 options to choose from: Paste (from clipboard), Take screenshot and Browse. Clear button and new options are not visible by default, user must expand options button to show them.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Update ayon api to '0.3.5' <a href="https://github.com/ynput/OpenPype/pull/5460">#5460</a></summary>
+
+Updated ayon-python-api to 0.3.5.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>AYON: Apply unknown ayon settings first <a href="https://github.com/ynput/OpenPype/pull/5435">#5435</a></summary>
+
+Settings of custom addons are available in converted settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix wrong subset name of render family in deadline <a href="https://github.com/ynput/OpenPype/pull/5442">#5442</a></summary>
+
+New Publisher is creating different subset names than previously which resulted in duplication of `render` string in final subset name of `render` family published on Deadline.This PR solves that, it also fixes issues with legacy instances from old publisher, it matches the subset name as was before.This solves same issue in Max implementation.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix setting of version to workfile instance <a href="https://github.com/ynput/OpenPype/pull/5452">#5452</a></summary>
+
+If there are multiple instances of renderlayer published, previous logic resulted in unpredictable rewrite of instance family to 'workfile' if `Sync render version with workfile` was on.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Context plugin shouldn't be tied to family <a href="https://github.com/ynput/OpenPype/pull/5464">#5464</a></summary>
+
+`Maya Current File` collector was tied to `workfile` unnecessary. It should run even if `workile` instance is not being published.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Fix loading hero version for static and skeletal meshes <a href="https://github.com/ynput/OpenPype/pull/5393">#5393</a></summary>
+
+Fixed a problem with loading hero versions for static ans skeletal meshes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Fix 'repeat' behavior <a href="https://github.com/ynput/OpenPype/pull/5412">#5412</a></summary>
+
+Calculation of frames for repeat behavior is working correctly.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Thumbnails cache and api prep <a href="https://github.com/ynput/OpenPype/pull/5437">#5437</a></summary>
+
+Moved thumbnails cache from ayon python api to OpenPype and prepare AYON thumbnail resolver for new api functions. Current implementation should work with old and new ayon-python-api.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Name of the Read Node should be updated correctly when switching versions or assets. <a href="https://github.com/ynput/OpenPype/pull/5444">#5444</a></summary>
+
+Bug fixing of the read node's name not being updated correctly when setting version or switching asset.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Farm publishing: asymmetric handles fixed <a href="https://github.com/ynput/OpenPype/pull/5446">#5446</a></summary>
+
+Handles are now set correctly on farm published product version if asymmetric were set to shot attributes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Scene Inventory: Provider icons fix <a href="https://github.com/ynput/OpenPype/pull/5450">#5450</a></summary>
+
+Fix how provider icons are accessed in scene inventory.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix typo on Deadline OP plugin name <a href="https://github.com/ynput/OpenPype/pull/5453">#5453</a></summary>
+
+Surprised that no one has hit this bug yet... but it seems like there was a typo on the name of the OP Deadline plugin when submitting jobs to it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Fix version attributes update <a href="https://github.com/ynput/OpenPype/pull/5472">#5472</a></summary>
+
+Fixed updates of attribs in AYON mode.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Added missing defaults for import_loader <a href="https://github.com/ynput/OpenPype/pull/5447">#5447</a></summary>
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bug: Local settings don't open on 3.14.7  <a href="https://github.com/ynput/OpenPype/pull/5220">#5220</a></summary>
+
+### Before posting a new ticket, have you looked through the documentation to find an answer?
+
+Yes I have
+
+### Have you looked through the existing tickets to find any related issues ?
+
+Not yet
+
+### Author of the bug
+
+@FadyFS
+
+### Version
+
+3.15.11-nightly.3
+
+### What platform you are running OpenPype on?
+
+Linux / Centos
+
+### Current Behavior:
+
+the previous behavior (bug) : 
+![image](https://github.com/quadproduction/OpenPype/assets/135602303/09bff9d5-3f8b-4339-a1e5-30c04ade828c)
+
+
+### Expected Behavior:
+
+![image](https://github.com/quadproduction/OpenPype/assets/135602303/c505a103-7965-4796-bcdf-73bcc48a469b)
+
+
+### What type of bug is it ?
+
+Happened only once in a particular configuration
+
+### Which project / workfile / asset / ...
+
+open settings with 3.14.7 
+
+### Steps To Reproduce:
+
+1. Run openpype on the 3.15.11-nightly.3 version 
+2. Open settings in 3.14.7 version
+
+### Relevant log output:
+
+_No response_
+
+### Additional context:
+
+_No response_
+
+___
+
+</details>
+
+
+<details>
+<summary>Tests: Add automated targets for tests <a href="https://github.com/ynput/OpenPype/pull/5443">#5443</a></summary>
+
+Without it plugins with 'automated' targets won't be triggered (eg `CloseAE` etc.)
+
+
+___
+
+</details>
+
+
+
+
 ## [3.16.3](https://github.com/ynput/OpenPype/tree/3.16.3)
 
 

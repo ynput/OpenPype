@@ -304,9 +304,9 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
 
         if self.sync_workfile_version:
             data["version"] = context.data["version"]
-            for instance in context:
-                if instance.data['family'] == "workfile":
-                    instance.data["version"] = context.data["version"]
+            for _instance in context:
+                if _instance.data['family'] == "workfile":
+                    _instance.data["version"] = context.data["version"]
 
         # Define nice label
         label = "{0} ({1})".format(layer_name, instance.data["asset"])

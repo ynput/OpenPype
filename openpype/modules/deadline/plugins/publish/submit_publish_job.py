@@ -122,7 +122,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_SG_USER"
+        "OPENPYPE_SG_USER",
+        "KITSU_LOGIN",
+        "KITSU_PWD"
     ]
 
     # custom deadline attributes
@@ -214,7 +216,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             environment["OPENPYPE_PUBLISH_JOB"] = "1"
             environment["OPENPYPE_RENDER_JOB"] = "0"
             environment["OPENPYPE_REMOTE_PUBLISH"] = "0"
-            deadline_plugin = "Openpype"
+            deadline_plugin = "OpenPype"
             # Add OpenPype version if we are running from build.
             if is_running_from_build():
                 self.environ_keys.append("OPENPYPE_VERSION")
