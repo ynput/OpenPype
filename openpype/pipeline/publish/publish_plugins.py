@@ -1,6 +1,5 @@
 import inspect
 from abc import ABCMeta
-from pprint import pformat
 import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
 from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
@@ -14,9 +13,8 @@ from .lib import (
 )
 
 from openpype.pipeline.colorspace import (
-    get_imageio_colorspace_from_filepath,
-    get_imageio_config,
-    get_imageio_file_rules
+    get_colorspace_settings_from_publish_context,
+    set_colorspace_data_to_representation
 )
 
 
@@ -306,12 +304,8 @@ class ColormanagedPyblishPluginMixin(object):
     matching colorspace from rules. Finally, it infuses this
     data into the representation.
     """
-    allowed_ext = set(
-        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
-    )
 
-    @staticmethod
-    def get_colorspace_settings(context):
+    def get_colorspace_settings(self, context):
         """Returns solved settings for the host context.
 
         Args:
@@ -320,33 +314,7 @@ class ColormanagedPyblishPluginMixin(object):
         Returns:
             tuple | bool: config, file rules or None
         """
-        if "imageioSettings" in context.data:
-            return context.data["imageioSettings"]
-
-        project_name = context.data["projectName"]
-        host_name = context.data["hostName"]
-        anatomy_data = context.data["anatomyData"]
-        project_settings_ = context.data["project_settings"]
-
-        config_data = get_imageio_config(
-            project_name, host_name,
-            project_settings=project_settings_,
-            anatomy_data=anatomy_data
-        )
-
-        # in case host color management is not enabled
-        if not config_data:
-            return None
-
-        file_rules = get_imageio_file_rules(
-            project_name, host_name,
-            project_settings=project_settings_
-        )
-
-        # caching settings for future instance processing
-        context.data["imageioSettings"] = (config_data, file_rules)
-
-        return config_data, file_rules
+        return get_colorspace_settings_from_publish_context(context.data)
 
     def set_representation_colorspace(
         self, representation, context,
@@ -380,64 +348,10 @@ class ColormanagedPyblishPluginMixin(object):
             ```
 
         """
-        ext = representation["ext"]
-        # check extension
-        self.log.debug("__ ext: `{}`".format(ext))
-
-        # check if ext in lower case is in self.allowed_ext
-        if ext.lstrip(".").lower() not in self.allowed_ext:
-            self.log.debug(
-                "Extension '{}' is not in allowed extensions.".format(ext)
-            )
-            return
-
-        if colorspace_settings is None:
-            colorspace_settings = self.get_colorspace_settings(context)
-
-        # in case host color management is not enabled
-        if not colorspace_settings:
-            self.log.warning("Host's colorspace management is disabled.")
-            return
-
-        # unpack colorspace settings
-        config_data, file_rules = colorspace_settings
-
-        if not config_data:
-            # warn in case no colorspace path was defined
-            self.log.warning("No colorspace management was defined")
-            return
-
-        self.log.debug("Config data is: `{}`".format(config_data))
-
-        project_name = context.data["projectName"]
-        host_name = context.data["hostName"]
-        project_settings = context.data["project_settings"]
-
-        # get one filename
-        filename = representation["files"]
-        if isinstance(filename, list):
-            filename = filename[0]
-
-        self.log.debug("__ filename: `{}`".format(filename))
-
-        # get matching colorspace from rules
-        colorspace = colorspace or get_imageio_colorspace_from_filepath(
-            filename, host_name, project_name,
-            config_data=config_data,
-            file_rules=file_rules,
-            project_settings=project_settings
+        # using cached settings if available
+        set_colorspace_data_to_representation(
+            representation, context.data,
+            colorspace,
+            colorspace_settings,
+            log=self.log
         )
-        self.log.debug("__ colorspace: `{}`".format(colorspace))
-
-        # infuse data to representation
-        if colorspace:
-            colorspace_data = {
-                "colorspace": colorspace,
-                "config": config_data
-            }
-
-            # update data key
-            representation["colorspaceData"] = colorspace_data
-
-            self.log.debug("__ colorspace_data: `{}`".format(
-                pformat(colorspace_data)))
