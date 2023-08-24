@@ -1,6 +1,6 @@
 """Utility functions.
 
-This module contains utility functions dedicated to operations
+This module contains utility functions dedicated to frame range operations
 """
 import clique
 
