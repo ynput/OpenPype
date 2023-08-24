@@ -154,6 +154,7 @@ class CollectFarmRender(publish.AbstractCollectRender):
 
                 family="render.farm",
                 families=["render.farm"],
+                farm=True,
 
                 resolutionWidth=context.data["resolutionWidth"],
                 resolutionHeight=context.data["resolutionHeight"],
