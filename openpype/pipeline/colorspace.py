@@ -19,7 +19,7 @@ from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
 log = Logger.get_logger(__name__)
 
 
-class CashedData:
+class CachedData:
     remapping = None
     allowed_ext = {
         ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
