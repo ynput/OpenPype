@@ -70,8 +70,6 @@ class AbcLoader(load.LoaderPlugin):
         # rename the abc container with namespace
         abc_container_name = f"{namespace}:{name}"
         abc_container.name = abc_container_name
-        # get the correct container
-        abc_container = rt.GetNodeByName(abc_container_name)
 
         return containerise(
             name, [abc_container], context,
