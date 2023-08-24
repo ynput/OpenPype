@@ -288,4 +288,15 @@ class CreateRenderlayer(plugin.Creator):
             bpy.data.collections.remove(asset_group)
             raise
 
+        # TODO: this is undesiderable, but it's the only way to be sure that
+        # the file is saved before the render starts.
+        # Blender, by design, doesn't set the file as dirty if modifications
+        # happen by script. So, when creating the instance and setting the
+        # render settings, the file is not marked as dirty. This means that
+        # there is the risk of sending to deadline a file without the right
+        # settings. Even the validator to check that the file is saved will
+        # detect the file as saved, even if it isn't. The only solution for
+        # now it is to force the file to be saved.
+        bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
+
         return asset_group
