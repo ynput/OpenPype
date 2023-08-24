@@ -1,4 +1,4 @@
-"""Utility functions for file sequences.frame_start
+"""Utility functions for file sequences and collections
 """
 import os
 import re
