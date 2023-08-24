@@ -40,25 +40,25 @@ class CollectKarmaROPRenderProducts(pyblish.api.InstancePlugin):
         if chunk_size_parm:
             chunk_size = int(chunk_size_parm.eval())
             instance.data["chunkSize"] = chunk_size
-            self.log.debug("Chunk Size: %s" % chunk_size)
+            self.log.debug("Chunk Size: {}".format(chunk_size))
 
-            default_prefix = evalParmNoFrame(rop, "picture")
-            render_products = []
+        default_prefix = evalParmNoFrame(rop, "picture")
+        render_products = []
 
-            # Default beauty AOV
-            beauty_product = self.get_render_product_name(
-                prefix=default_prefix, suffix=None
-            )
-            render_products.append(beauty_product)
+        # Default beauty AOV
+        beauty_product = self.get_render_product_name(
+            prefix=default_prefix, suffix=None
+        )
+        render_products.append(beauty_product)
 
-            files_by_aov = {
-                "beauty": file_collection.generate_expected_filepaths(
-                    frame_start, frame_end, beauty_product)
-            }
+        files_by_aov = {
+            "beauty": file_collection.generate_expected_filepaths(
+                frame_start, frame_end, beauty_product)
+        }
 
-            filenames = list(render_products)
-            instance.data["files"] = filenames
-            instance.data["renderProducts"] = colorspace.ARenderProduct()
+        filenames = list(render_products)
+        instance.data["files"] = filenames
+        instance.data["renderProducts"] = colorspace.ARenderProduct()
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
