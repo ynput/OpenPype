@@ -4,6 +4,7 @@ import os
 import hou
 import pyblish.api
 
+from openpype.pipeline import file_collection
 from openpype.hosts.houdini.api.lib import (
     evalParmNoFrame,
     get_color_management_preferences
@@ -31,6 +32,8 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         rop = hou.node(instance.data.get("instance_node"))
+        frame_start = instance.data["frameStart"]
+        frame_end = instance.data["frameEnd"]
 
         # Collect chunkSize
         chunk_size_parm = rop.parm("chunkSize")
@@ -46,15 +49,17 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         beauty_product = self.get_beauty_render_product(default_prefix)
         render_products.append(beauty_product)
         files_by_aov = {
-            "RGB Color": self.generate_expected_files(instance,
-                                                      beauty_product)}
+            "RGB Color": file_collection.generate_expected_filepaths(
+                frame_start, frame_end, beauty_product)
+        }
 
         if instance.data.get("RenderElement", True):
             render_element = self.get_render_element_name(rop, default_prefix)
             if render_element:
                 for aov, renderpass in render_element.items():
                     render_products.append(renderpass)
-                    files_by_aov[aov] = self.generate_expected_files(instance, renderpass)          # noqa
+                    files_by_aov[aov] = file_collection.generate_expected_filepaths(
+                        frame_start, frame_end, renderpass)
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
@@ -103,27 +108,3 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
                     render_product = prefix.replace(suffix, aov)
                     render_element_dict[aov] = render_product
         return render_element_dict
-
-    def generate_expected_files(self, instance, path):
-        """Create expected files in instance data"""
-
-        dir = os.path.dirname(path)
-        file = os.path.basename(path)
-
-        if "#" in file:
-            def replace(match):
-                return "%0{}d".format(len(match.group()))
-
-            file = re.sub("#+", replace, file)
-
-        if "%" not in file:
-            return path
-
-        expected_files = []
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
-        for i in range(int(start), (int(end) + 1)):
-            expected_files.append(
-                os.path.join(dir, (file % i)).replace("\\", "/"))
-
-        return expected_files
