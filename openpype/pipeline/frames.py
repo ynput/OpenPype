@@ -2,7 +2,7 @@
 
 This module contains utility functions dedicated to operations
 """
-
+import clique
 
 from openpype.lib import Logger
 
@@ -60,3 +60,26 @@ def get_asset_frame_range(asset_name=None, asset_id=None, fields=None):
         "handleStart": handle_start,
         "handleEnd": handle_end
     }
+
+
+def get_frame_range_from_list_of_files(collected_files):
+    """Get frame range from sequence files.
+
+    Args:
+        collected_files (list[str]): list of files
+
+    Returns:
+        Any[tuple[int, int], tuple[None, None]]: frame range or None
+            if not possible
+    """
+
+    collections, remainder = clique.assemble(collected_files)
+    if not collections:
+        # No sequences detected and we can't retrieve
+        # frame range from single file
+        return None, None
+
+    collection = collections[0]
+    repres_frames = list(collection.indexes)
+
+    return repres_frames[0], repres_frames[-1]
