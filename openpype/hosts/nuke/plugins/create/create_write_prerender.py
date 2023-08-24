@@ -34,7 +34,8 @@ class CreateWritePrerender(napi.NukeWriteCreator):
         attr_defs = [
             BoolDef(
                 "use_selection",
-                default=not self.create_context.headless,
+                default= False, # NOTE hornet updated for use_selection default off
+                # default=not self.create_context.headless,
                 label="Use selection"
             ),
             self._get_render_target_enum()

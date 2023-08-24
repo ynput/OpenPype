@@ -1072,6 +1072,9 @@ def boot():
     # set this to point either to `python` from venv in case of live code
     # or to `openpype` or `openpype_console` in case of frozen code
     os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
+    if sys.executable.endswith("openpype_gui.exe"):
+        if os.path.exists(sys.executable.replace("openpype_gui.exe", "openpype_console.exe")):
+            os.environ["OPENPYPE_CONSOLE"] = sys.executable.replace("openpype_gui.exe", "openpype_console.exe")
 
     # delete OpenPype module and it's submodules from cache so it is used from
     # specific version

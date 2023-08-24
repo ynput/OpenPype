@@ -18,7 +18,7 @@ class CreateWriteRender(napi.NukeWriteCreator):
     icon = "sign-out"
 
     instance_attributes = [
-        "reviewable"
+        "reviewable","use_range_limit"
     ]
     default_variants = [
         "Main",
@@ -31,7 +31,8 @@ class CreateWriteRender(napi.NukeWriteCreator):
         attr_defs = [
             BoolDef(
                 "use_selection",
-                default=not self.create_context.headless,
+                default= False, # NOTE hornet updated for use_selection default off
+                # default=not self.create_context.headless,
                 label="Use selection"
             ),
             self._get_render_target_enum()
@@ -39,6 +40,10 @@ class CreateWriteRender(napi.NukeWriteCreator):
         return attr_defs
 
     def create_instance_node(self, subset_name, instance_data):
+        linked_knobs_ = []
+        if "use_range_limit" in self.instance_attributes:
+            linked_knobs_ = ["channels", "___", "first", "last", "use_limit"]
+
         # add fpath_template
         write_data = {
             "creator": self.__class__.__name__,
@@ -100,9 +105,11 @@ class CreateWriteRender(napi.NukeWriteCreator):
                 "height": height
             }
         )
-        self.add_info_knob(created_node)
+        #self.add_info_knob(created_node)
 
-        self.integrate_links(created_node, outputs=False)
+        self._add_frame_range_limit(created_node)
+
+        #self.integrate_links(created_node, outputs=True)
 
         return created_node
 
@@ -152,3 +159,20 @@ class CreateWriteRender(napi.NukeWriteCreator):
                 napi.NukeCreatorError("Creator error: {}".format(er)),
                 sys.exc_info()[2]
             )
+
+    def _add_frame_range_limit(self, write_node):
+        if "use_range_limit" not in self.instance_attributes:
+            return
+
+        write_node.begin()
+        for n in nuke.allNodes():
+            # get write node
+            if n.Class() in "Write":
+                w_node = n
+        write_node.end()
+
+        w_node["use_limit"].setValue(True)
+        w_node["first"].setValue(nuke.root()["first_frame"].value())
+        w_node["last"].setValue(nuke.root()["last_frame"].value())
+
+        return write_node

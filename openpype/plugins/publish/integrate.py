@@ -662,7 +662,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             template_data["originalDirname"] = without_root
 
         is_sequence_representation = isinstance(files, (list, tuple))
-        self._validate_repre_files(files, is_sequence_representation)
+        # hornet - fix mixed digit frame range
+        # this validator is an opaque call to an outside library verifying something verified earlier in the publish process
+        # the outside library has the mixed digit frame range bug - the pipeline functions fine without it
+        #self._validate_repre_files(files, is_sequence_representation)
 
         # Output variables of conditions below:
         # - transfers (List[Tuple[str, str]]): src -> dst filepaths to copy

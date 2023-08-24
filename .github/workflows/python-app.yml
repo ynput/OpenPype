@@ -20,10 +20,10 @@ jobs:
     steps:
     - name: checkout repo
       uses: actions/checkout@v3
-    - name: Set up Python 3.7.9
+    - name: Set up Python 3.9.11
       uses: actions/setup-python@v3
       with:
-        python-version: "3.7.9"
+        python-version: "3.9.11"
     - name: Install Venv
       run: |
         .\tools\create_env.ps1
@@ -45,7 +45,7 @@ jobs:
         $commitmsg -match "\[(.*)\]"
         $commitmsg = $matches[1]
         $buildname = ($commitmsg + "-" + $date + "-" + $platform)
-        mv exe.win-amd64-3.7 $buildname
+        mv exe.win-amd64-3.9 $buildname
         cp $buildname T:\dev\_builds -R
     - name: Cleanup local build folder
       run: |

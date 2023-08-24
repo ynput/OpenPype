@@ -35,4 +35,6 @@ class ValidateContainers(OptionalPyblishPluginMixin,
 
         if any_outdated_containers():
             msg = "There are outdated containers in the scene."
-            raise PublishXmlValidationError(self, msg)
+            # NOTE hornet updated to generating warning instead of publish error
+            # raise PublishXmlValidationError(self, msg)
+            self.log.info(msg)

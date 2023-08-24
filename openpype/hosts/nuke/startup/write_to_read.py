@@ -86,6 +86,8 @@ def evaluate_filepath_new(
 def create_read_node(ndata, comp_start):
     read = nuke.createNode('Read', 'file "' + ndata['filepath'] + '"')
     read.addKnob(nuke.Text_Knob('warn', 'Read from Temporary Render, Please publish and load after checking' ))
+    pub = nuke.PyScript_Knob('publish', 'Publish', "from openpype.tools.utils import host_tools;host_tools.show_publisher(parent=(main_window if nuke.NUKE_VERSION_MAJOR >= 14 else None),tab='Publish')")
+    read.addKnob(pub)
     read.knob('colorspace').setValue(int(ndata['colorspace']))
     read.knob('raw').setValue(ndata['rawdata'])
     read.knob('first').setValue(int(ndata['firstframe']))

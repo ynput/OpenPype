@@ -57,16 +57,22 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         # Get frame range
         handle_start = instance.context.data["handleStart"]
         handle_end = instance.context.data["handleEnd"]
+        # hornet- publish whatever was rendered.
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
         frame_length = int(last_frame - first_frame + 1)
+        write_file_path = nuke.filename(write_node)
+        output_dir = os.path.dirname(write_file_path)
+
+        len_rendered_frames = len([f for f in os.listdir(output_dir) if f.endswith(ext)])
+        if len_rendered_frames != frame_length:
+            last_frame = first_frame + len_rendered_frames - 1
+            frame_length = len_rendered_frames
 
         if write_node["use_limit"].getValue():
             first_frame = int(write_node["first"].getValue())
             last_frame = int(write_node["last"].getValue())
 
-        write_file_path = nuke.filename(write_node)
-        output_dir = os.path.dirname(write_file_path)
 
         # get colorspace and add to version data
         colorspace = napi.get_colorspace_from_node(write_node)
@@ -99,7 +105,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             collected_frames = [
                 filename
                 for filename in os.listdir(output_dir)
-                if filename in expected_filenames
+                #if filename in expected_filenames Hornet - allow any frame range
             ]
 
             if collected_frames:
@@ -142,7 +148,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             instance.data["representations"].append(representation)
             self.log.info("Publishing rendered frames ...")
 
-        elif render_target == "farm":
+        # NOTE hornet update on use existing frames on farm
+        elif render_target == "farm" or render_target == 'farm_frames':
             farm_keys = ["farm_chunk", "farm_priority", "farm_concurrency"]
             for key in farm_keys:
                 # Skip if key is not in creator attributes

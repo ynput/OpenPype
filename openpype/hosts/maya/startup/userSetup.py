@@ -70,13 +70,8 @@ if shelf_preset:
 print("Finished OpenPype usersetup.")
 
 # NOTE Hornet hotfix for workspace
-
+print("userSetup:Hornet hotfix for workspace...")
 if project_settings.get('maya'):
-    print("userSetup:Hornet hotfix for workspace...")
-    from maya import mel
-    mel_workspace = project_settings.get('maya')['mel_workspace']
-    mel.eval(mel_workspace)
-    workdir = legacy_io.Session["AVALON_WORKDIR"]
-    cmds.workspace(workdir, openWorkspace=True)
-    cmds.workspace( s=True )
+    from openpype.hpipe import maya_fix
+    maya_fix.fix_workspace()
 # END

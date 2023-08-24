@@ -121,8 +121,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     hosts = ["fusion", "max", "maya", "nuke",
              "celaction", "aftereffects", "harmony"]
 
+    # NOTE hornet update on use existing frames on farm
     families = ["render.farm", "prerender.farm",
-                "renderlayer", "imagesequence", "maxrender", "vrayscene"]
+                "renderlayer", "imagesequence", "maxrender", "vrayscene","render.farm_frames"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
@@ -146,6 +147,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # Add OpenPype version if we are running from build.
     if is_running_from_build():
         environ_keys.append("OPENPYPE_VERSION")
+        environ_keys.append("OPENPYPE_CONSOLE")
 
     # custom deadline attributes
     deadline_department = ""
@@ -300,10 +302,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Priority": priority,
 
                 "Group": self.deadline_group,
-                "Pool": self.deadline_pool or instance.data.get("primaryPool"),
+                "Pool": self.deadline_pool or instance.data.get("primaryPool") or "local",
                 "SecondaryPool": secondary_pool,
                 # ensure the outputdirectory with correct slashes
-                "OutputDirectory0": output_dir.replace("\\", "/")
+                "OutputDirectory0": output_dir.replace("\\", "/"),
+                # "PostTaskScript":post_task_script,
+
             },
             "PluginInfo": {
                 "Version": self.plugin_pype_version,

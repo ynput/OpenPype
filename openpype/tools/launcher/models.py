@@ -4,11 +4,13 @@ import copy
 import logging
 import collections
 import time
+import os
 
 import appdirs
 from qtpy import QtCore, QtGui
 import qtawesome
 
+from openpype.hpipe import config
 from openpype.client import (
     get_projects,
     get_project,
@@ -92,6 +94,9 @@ class ActionModel(QtGui.QStandardItemModel):
 
         project_name = self.dbcon.active_project()
         project_doc = get_project(project_name, fields=["config.apps"])
+        config_data = config.ConfigReader()
+        if os.getenv('USERNAME') not in config_data.superusers:
+            project_doc["config"]["apps"] = [x for x in  project_doc["config"]["apps"] if '-dev' not in x['name']]
         if not project_doc:
             return actions
 

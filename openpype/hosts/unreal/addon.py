@@ -1,5 +1,8 @@
 import os
-from pathlib import Path
+try:
+    from pathlib import Path
+except:
+    pass
 
 from openpype.modules import IHostAddon, OpenPypeModule
 from .lib import get_compatible_integration

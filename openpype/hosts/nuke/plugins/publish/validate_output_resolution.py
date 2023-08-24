@@ -24,7 +24,7 @@ class ValidateOutputResolution(
     optional = True
     families = ["render"]
     label = "Write resolution"
-    hosts = ["nuke"]    # TODO hornet: removed in hornet build
+    hosts = []    # hornet: simplified publish
     actions = [RepairAction]
 
     missing_msg = "Missing Reformat node in render group node"

@@ -153,7 +153,7 @@ class NukeCreator(NewCreator):
                 created_node = nuke.createNode(node_type)
                 created_node["name"].setValue(node_name)
 
-                self.add_info_knob(created_node)
+                #self.add_info_knob(created_node)
 
                 for key, values in node_knobs.items():
                     if key in created_node.knobs():
@@ -253,7 +253,8 @@ class NukeCreator(NewCreator):
         return [
             BoolDef(
                 "use_selection",
-                default=not self.create_context.headless,
+                default= False, # NOTE hornet updated for use_selection default off
+                # default=not self.create_context.headless,
                 label="Use selection"
             )
         ]
@@ -305,7 +306,9 @@ class NukeWriteCreator(NukeCreator):
 
     def get_pre_create_attr_defs(self):
         attr_defs = [
-            BoolDef("use_selection", label="Use selection"),
+            # NOTE hornet updated for Use selection default off
+            BoolDef("use_selection",default=False,enabled=False,label="Use selection"),
+            # BoolDef("use_selection", label="Use selection"),
             self._get_render_target_enum()
         ]
         return attr_defs
@@ -323,7 +326,8 @@ class NukeWriteCreator(NukeCreator):
     def _get_render_target_enum(self):
         rendering_targets = {
             "local": "Local machine rendering",
-            "frames": "Use existing frames"
+            # "frames": "Use existing frames",
+            "farm_frames": "Use existing frames on farm" # NOTE hornet update on use existing frames on farm
         }
         if ("farm_rendering" in self.instance_attributes):
             rendering_targets["farm"] = "Farm rendering"
@@ -331,7 +335,7 @@ class NukeWriteCreator(NukeCreator):
         return EnumDef(
             "render_target",
             items=rendering_targets,
-            label="Render target"
+            label="Publishing Method"
         )
 
     def _get_reviewable_bool(self):
@@ -598,6 +602,10 @@ class ExporterReview(object):
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
 
+        #NOTE hornet update for use exiting frame on farm
+        # if self.instance.data('render_target') == 'farm_frames':
+        self.fhead = self.fhead.replace('%04d.','')
+
     def get_representation_data(
         self, tags=None, range=False,
         custom_tags=None
@@ -796,7 +804,6 @@ class ExporterReviewMov(ExporterReview):
 
         self.name = name or "baked"
         self.ext = ext or "mov"
-
         # set frame start / end and file name to self
         self.get_file_info()
 
@@ -1275,6 +1282,11 @@ def convert_to_valid_instaces():
                 elif target == "On farm":
                     # Farm rendering
                     creator_attr["render_target"] = "farm"
+                elif target == "Use existing frames on farm":
+                    # NOTE hornet update on use existing frames on farm
+                    # Farm rendering
+                    creator_attr["render_target"] = "farm_frames"
+
 
                 if "deadlinePriority" in node.knobs():
                     transfer_data["farm_priority"] = (
@@ -1301,7 +1313,6 @@ def _remove_old_knobs(node):
         "OpenpypeDataGroup", "OpenpypeDataGroup_End", "deadlinePriority",
         "deadlineChunkSize", "deadlineConcurrentTasks", "Deadline"
     ]
-    print(node.name())
 
     # remove all old knobs
     for knob in node.allKnobs():
