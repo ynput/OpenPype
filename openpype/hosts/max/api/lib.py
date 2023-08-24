@@ -368,3 +368,12 @@ def unique_namespace(namespace, format="%02d",
         else:
             increment_version = True
         iteration += 1
+
+
+def get_namespace(container_name):
+    node = rt.getNodeByName(container_name)
+    if not node:
+        raise RuntimeError("Master Container Not Found..")
+    name = rt.getUserProp(node, "name")
+    namespace = rt.getUserProp(node, "namespace")
+    return namespace, name

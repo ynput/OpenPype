@@ -1,7 +1,9 @@
 import os
 
 from openpype.hosts.max.api import lib, maintained_selection
-from openpype.hosts.max.api.lib import unique_namespace
+from openpype.hosts.max.api.lib import (
+    unique_namespace, get_namespace
+)
 from openpype.hosts.max.api.pipeline import (
     containerise,
     import_custom_attribute_data,
@@ -26,14 +28,15 @@ class PointCloudLoader(load.LoaderPlugin):
         filepath = os.path.normpath(self.filepath_from_context(context))
         obj = rt.tyCache()
         obj.filename = filepath
-        prt_container = rt.Container(name=name)
-        obj.Parent = prt_container
-        import_custom_attribute_data(prt_container, [obj])
 
         namespace = unique_namespace(
             name + "_",
             suffix="_",
         )
+        prt_container = rt.Container(name=f"{namespace}:{name}")
+        import_custom_attribute_data(prt_container, [obj])
+        obj.Parent = prt_container
+        obj.name = f"{namespace}:{obj.name}"
 
         return containerise(
             name, [prt_container], context,
@@ -45,14 +48,15 @@ class PointCloudLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
+        namespace, name = get_namespace(container["instance_node"])
+        sub_node_name = f"{namespace}:{name}"
+        inst_container = rt.getNodeByName(sub_node_name)
+        update_custom_attribute_data(
+            inst_container, inst_container.Children)
         with maintained_selection():
             rt.Select(node.Children)
-            for sub_node in rt.Selection:
-                children_node = sub_node.Children
-                update_custom_attribute_data(
-                    sub_node, sub_node.Children)
-                for prt in children_node:
-                    prt.filename = path
+            for prt in inst_container.Children:
+                prt.filename = path
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

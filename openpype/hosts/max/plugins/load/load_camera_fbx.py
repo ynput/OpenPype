@@ -1,7 +1,9 @@
 import os
 
 from openpype.hosts.max.api import lib, maintained_selection
-from openpype.hosts.max.api.lib import unique_namespace
+from openpype.hosts.max.api.lib import (
+    unique_namespace, get_namespace
+)
 from openpype.hosts.max.api.pipeline import (
     containerise,
     import_custom_attribute_data,
@@ -33,16 +35,17 @@ class FbxLoader(load.LoaderPlugin):
             rt.name("noPrompt"),
             using=rt.FBXIMP)
 
-        container = rt.container(name=name)
-        selections = rt.GetCurrentSelection()
-        import_custom_attribute_data(container, selections)
-        for selection in selections:
-            selection.Parent = container
-
         namespace = unique_namespace(
             name + "_",
             suffix="_",
         )
+        container = rt.container(name=f"{namespace}:{name}")
+        selections = rt.GetCurrentSelection()
+        import_custom_attribute_data(container, selections)
+
+        for selection in selections:
+            selection.Parent = container
+            selection.name = f"{namespace}:{selection.name}"
 
         return containerise(
             name, [container], context,
@@ -54,11 +57,13 @@ class FbxLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
-        container_name = node_name.split(":")[-1]
-        param_container, _ = container_name.split("_")
-
-        inst_container = rt.getNodeByName(param_container)
-        rt.Select(node.Children)
+        namespace, name = get_namespace(node_name)
+        sub_node_name = f"{namespace}:{name}"
+        inst_container = rt.getNodeByName(sub_node_name)
+        rt.Select(inst_container.Children)
+        for prev_fbx_obj in rt.selection:
+            if rt.isValidNode(prev_fbx_obj):
+                rt.Delete(prev_fbx_obj)
 
         rt.FBXImporterSetParam("Animation", True)
         rt.FBXImporterSetParam("Camera", True)
@@ -71,10 +76,11 @@ class FbxLoader(load.LoaderPlugin):
         for fbx_object in current_fbx_objects:
             if fbx_object.Parent != inst_container:
                 fbx_object.Parent = inst_container
+                fbx_object.name = f"{namespace}:{fbx_object.name}"
 
         for children in node.Children:
             if rt.classOf(children) == rt.Container:
-                if children.name == param_container:
+                if children.name == sub_node_name:
                     update_custom_attribute_data(
                         children, current_fbx_objects)
 

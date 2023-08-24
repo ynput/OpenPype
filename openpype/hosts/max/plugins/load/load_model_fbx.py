@@ -5,7 +5,9 @@ from openpype.hosts.max.api.pipeline import (
     update_custom_attribute_data
 )
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.lib import unique_namespace
+from openpype.hosts.max.api.lib import (
+    unique_namespace, get_namespace
+)
 from openpype.hosts.max.api.lib import maintained_selection
 
 
@@ -28,20 +30,18 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(filepath, rt.name("noPrompt"), using=rt.FBXIMP)
 
-        container = rt.GetNodeByName(name)
-
-        container = rt.Container(name=name)
-
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+        container = rt.container(name=f"{namespace}:{name}")
         selections = rt.GetCurrentSelection()
         import_custom_attribute_data(container, selections)
 
         for selection in selections:
             selection.Parent = container
+            selection.name = f"{namespace}:{selection.name}"
 
-        namespace = unique_namespace(
-            name + "_",
-            suffix="_",
-        )
         return containerise(
             name, [container], context,
             namespace, loader=self.__class__.__name__
@@ -52,8 +52,14 @@ class FbxModelLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
-        container_name = node_name.split(":")[-1]
-        param_container, _ = container_name.split("_")
+        namespace, name = get_namespace(node_name)
+        sub_node_name = f"{namespace}:{name}"
+        inst_container = rt.getNodeByName(sub_node_name)
+        rt.Select(inst_container.Children)
+        for prev_fbx_obj in rt.selection:
+            if rt.isValidNode(prev_fbx_obj):
+                rt.Delete(prev_fbx_obj)
+
         rt.FBXImporterSetParam("Animation", False)
         rt.FBXImporterSetParam("Cameras", False)
         rt.FBXImporterSetParam("Mode", rt.Name("merge"))
@@ -61,16 +67,17 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(path, rt.name("noPrompt"), using=rt.FBXIMP)
         current_fbx_objects = rt.GetCurrentSelection()
-
-        inst_container = rt.getNodeByName(param_container)
-        for children in node.Children:
-            if rt.classOf(children) == rt.Container:
-                if children.name == param_container:
-                    update_custom_attribute_data(
-                        children, current_fbx_objects)
         for fbx_object in current_fbx_objects:
             if fbx_object.Parent != inst_container:
                 fbx_object.Parent = inst_container
+                fbx_object.name = f"{namespace}:{fbx_object.name}"
+
+        for children in node.Children:
+            if rt.classOf(children) == rt.Container:
+                if children.name == sub_node_name:
+                    update_custom_attribute_data(
+                        children, current_fbx_objects)
+
         with maintained_selection():
             rt.Select(node)
 

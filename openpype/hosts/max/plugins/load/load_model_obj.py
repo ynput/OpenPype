@@ -1,7 +1,9 @@
 import os
 
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.lib import unique_namespace
+from openpype.hosts.max.api.lib import (
+    unique_namespace, get_namespace
+)
 from openpype.hosts.max.api.lib import maintained_selection
 from openpype.hosts.max.api.pipeline import (
     containerise,
@@ -27,18 +29,19 @@ class ObjLoader(load.LoaderPlugin):
         self.log.debug("Executing command to import..")
 
         rt.Execute(f'importFile @"{filepath}" #noPrompt using:ObjImp')
-        # create "missing" container for obj import
-        container = rt.Container(name=name)
-        selections = rt.GetCurrentSelection()
-        import_custom_attribute_data(container, selections)
-        # get current selection
-        for selection in selections:
-            selection.Parent = container
 
         namespace = unique_namespace(
             name + "_",
             suffix="_",
         )
+        # create "missing" container for obj import
+        container = rt.Container(name=f"{namespace}:{name}")
+        selections = rt.GetCurrentSelection()
+        import_custom_attribute_data(container, selections)
+        # get current selection
+        for selection in selections:
+            selection.Parent = container
+            selection.name = f"{namespace}:{selection.name}"
         return containerise(
             name, [container], context,
             namespace, loader=self.__class__.__name__)
@@ -48,21 +51,22 @@ class ObjLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node_name = container["instance_node"]
-        node = rt.GetNodeByName(node_name)
-
-        container_name = node_name.split(":")[-1]
-        param_container, _ = container_name.split("_")
-
-        inst_container = rt.getNodeByName(param_container)
-        for child in inst_container.Children:
-            rt.Delete(child)
+        node = rt.getNodeByName(node_name)
+        namespace, name = get_namespace(node_name)
+        sub_node_name = f"{namespace}:{name}"
+        inst_container = rt.getNodeByName(sub_node_name)
+        rt.Select(inst_container.Children)
+        for prev_obj in rt.selection:
+            if rt.isValidNode(prev_obj):
+                rt.Delete(prev_obj)
 
         rt.Execute(f'importFile @"{path}" #noPrompt using:ObjImp')
         # get current selection
         selections = rt.GetCurrentSelection()
+        update_custom_attribute_data(inst_container, selections)
         for selection in selections:
             selection.Parent = inst_container
-        update_custom_attribute_data(inst_container, selections)
+            selection.name = f"{namespace}:{selection.name}"
         with maintained_selection():
             rt.Select(node)
 

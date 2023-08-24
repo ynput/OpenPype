@@ -58,6 +58,13 @@ class ModelAbcLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
+        for abc_object in abc_container.Children:
+            abc_object.name = f"{namespace}:{abc_object.name}"
+        # rename the abc container with namespace
+        abc_container_name = f"{namespace}:{name}"
+        abc_container.name = abc_container_name
+        # get the correct container
+        abc_container = rt.GetNodeByName(abc_container_name)
 
         return containerise(
             name, [abc_container], context,

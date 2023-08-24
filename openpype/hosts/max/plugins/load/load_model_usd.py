@@ -1,12 +1,13 @@
 import os
 
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.lib import unique_namespace
+from openpype.hosts.max.api.lib import (
+    unique_namespace, get_namespace
+)
 from openpype.hosts.max.api.lib import maintained_selection
 from openpype.hosts.max.api.pipeline import (
     containerise,
-    import_custom_attribute_data,
-    update_custom_attribute_data
+    import_custom_attribute_data
 )
 from openpype.pipeline import get_representation_path, load
 
@@ -35,14 +36,20 @@ class ModelUSDLoader(load.LoaderPlugin):
         rt.LogLevel = rt.Name("info")
         rt.USDImporter.importFile(filepath,
                                   importOptions=import_options)
-        asset = rt.GetNodeByName(name)
-
-        import_custom_attribute_data(asset, asset.Children)
-
         namespace = unique_namespace(
             name + "_",
             suffix="_",
         )
+        asset = rt.GetNodeByName(name)
+        import_custom_attribute_data(asset, asset.Children)
+        for usd_asset in asset.Children:
+            usd_asset.name = f"{namespace}:{usd_asset.name}"
+
+        asset_name = f"{namespace}:{name}"
+        asset.name = asset_name
+        # need to get the correct container after renamed
+        asset = rt.GetNodeByName(asset_name)
+
 
         return containerise(
             name, [asset], context,
@@ -54,12 +61,14 @@ class ModelUSDLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.GetNodeByName(node_name)
+        namespace, name = get_namespace(node_name)
+        sub_node_name = f"{namespace}:{name}"
         for n in node.Children:
-            for r in n.Children:
-                rt.Delete(r)
+            rt.Select(n.Children)
+            for prev_usd_asset in rt.selection:
+                if rt.isValidNode(prev_usd_asset):
+                    rt.Delete(prev_usd_asset)
             rt.Delete(n)
-        container_name = node_name.split(":")[-1]
-        param_container, _ = container_name.split("_")
 
         import_options = rt.USDImporter.CreateOptions()
         base_filename = os.path.basename(path)
@@ -71,13 +80,13 @@ class ModelUSDLoader(load.LoaderPlugin):
         rt.USDImporter.importFile(
             path, importOptions=import_options)
 
-        asset = rt.GetNodeByName(param_container)
+        asset = rt.GetNodeByName(name)
         asset.Parent = node
-        for children in node.Children:
-            if rt.classOf(children) == rt.Container:
-                if children.name == param_container:
-                    update_custom_attribute_data(
-                        asset, asset.Children)
+        import_custom_attribute_data(asset, asset.Children)
+        for children in asset.Children:
+            children.name = f"{namespace}:{children.name}"
+        asset.name = sub_node_name
+
 
         with maintained_selection():
             rt.Select(node)

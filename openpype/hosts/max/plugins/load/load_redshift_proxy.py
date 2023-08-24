@@ -11,7 +11,9 @@ from openpype.hosts.max.api.pipeline import (
     update_custom_attribute_data
 )
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.lib import unique_namespace
+from openpype.hosts.max.api.lib import (
+    unique_namespace, get_namespace
+)
 
 
 class RedshiftProxyLoader(load.LoaderPlugin):
@@ -35,14 +37,15 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         if collections:
             rs_proxy.is_sequence = True
 
-        container = rt.Container(name=name)
-        rs_proxy.Parent = container
-        import_custom_attribute_data(container, [rs_proxy])
 
         namespace = unique_namespace(
             name + "_",
             suffix="_",
         )
+        container = rt.Container(name=f"{namespace}:{name}")
+        rs_proxy.Parent = container
+        rs_proxy.name = f"{namespace}:{rs_proxy.name}"
+        import_custom_attribute_data(container, [rs_proxy])
 
         return containerise(
             name, [container], context,
@@ -52,13 +55,14 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
-        for sub_node in node.Children:
-            children_node = sub_node.Children
-            update_custom_attribute_data(
-                sub_node, children_node)
-            for proxy in children_node:
-                proxy.file = path
+        namespace, name = get_namespace(container["instance_node"])
+        sub_node_name = f"{namespace}:{name}"
+        inst_container = rt.getNodeByName(sub_node_name)
+
+        update_custom_attribute_data(
+            inst_container, inst_container.Children)
+        for proxy in inst_container.Children:
+            proxy.file = path
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
