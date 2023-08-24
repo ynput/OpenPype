@@ -154,7 +154,8 @@ class HouCreateUnrealStaticMesh(plugin.HoudiniCreator):
 
             if not selection:
                 self.log.debug(
-                    "Selection isn't valid. 'Export' in filmboxfbx will be empty."
+                    "Selection isn't valid. 'Export' in "
+                    "filmboxfbx will be empty."
                 )
         else:
             self.log.debug(

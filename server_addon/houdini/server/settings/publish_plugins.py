@@ -20,6 +20,7 @@ class CreateArnoldAssModel(BaseSettingsModel):
     )
     ext: str = Field(Title="Extension")
 
+
 class HouCreateUnrealStaticMeshModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     default_variants: list[str] = Field(
@@ -31,6 +32,7 @@ class HouCreateUnrealStaticMeshModel(BaseSettingsModel):
         default_factory=list,
         title="Collision Prefixes"
     )
+
 
 class CreatePluginsModel(BaseSettingsModel):
     CreateArnoldAss: CreateArnoldAssModel = Field(
