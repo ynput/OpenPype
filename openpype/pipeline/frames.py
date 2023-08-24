@@ -29,7 +29,7 @@ def get_frame_start_str(frame_start, frame_end):
     return formatting_str.format(frame_start)
 
 
-def get_frame_range(asset_name=None, asset_id=None, fields=None):
+def get_asset_frame_range(asset_name=None, asset_id=None, fields=None):
     """Get the current assets frame range and handles.
 
     Args:
