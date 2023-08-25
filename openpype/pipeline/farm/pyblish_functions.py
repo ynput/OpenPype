@@ -139,7 +139,7 @@ def get_transferable_representations(instance):
     to_transfer = []
 
     for representation in instance.data.get("representations", []):
-        if "publish_on_farm" not in representation.get("tags"):
+        if "publish_on_farm" not in representation.get("tags", []):
             continue
 
         trans_rep = representation.copy()
@@ -265,8 +265,7 @@ def create_skeleton_instance(
                 instance_skeleton_data[v] = instance.data.get(v)
 
     representations = get_transferable_representations(instance)
-    instance_skeleton_data["representations"] = []
-    instance_skeleton_data["representations"] += representations
+    instance_skeleton_data["representations"] = representations
 
     persistent = instance.data.get("stagingDir_persistent") is True
     instance_skeleton_data["stagingDir_persistent"] = persistent
