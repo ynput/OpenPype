@@ -147,6 +147,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
         oiio_cmd = get_oiio_tool_args(
             "oiiotool",
             "-a", src_path,
+            "--ch", "R,G,B",
             "-o", dst_path
         )
         self.log.info("Running: {}".format(" ".join(oiio_cmd)))
