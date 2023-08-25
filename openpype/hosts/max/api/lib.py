@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 """Library of functions useful for 3dsmax pipeline."""
+import os
 import contextlib
 import json
 from typing import Any, Dict, Union
 
 import six
+from openpype.pipeline import get_current_project_name
+from openpype.settings import get_project_settings
 from openpype.pipeline.context_tools import (
-    get_current_project, get_current_project_asset,)
+    get_current_project, get_current_project_asset)
 from pymxs import runtime as rt
 
 JSON_PREFIX = "JSON::"
@@ -277,6 +280,7 @@ def set_context_setting():
     """
     reset_scene_resolution()
     reset_frame_range()
+    reset_colorspace()
 
 
 def get_max_version():
@@ -312,3 +316,30 @@ def set_timeline(frameStart, frameEnd):
     """
     rt.animationRange = rt.interval(frameStart, frameEnd)
     return rt.animationRange
+
+
+def reset_colorspace():
+    """OCIO Configuration
+    Supports in 3dsMax 2024+
+
+    """
+    if int(get_max_version) < 2024:
+        return
+    project_name = get_current_project_name()
+    ocio_config_path = os.environ.get("OCIO")
+    global_imageio = get_project_settings(
+        project_name)["global"]["imageio"]
+    if global_imageio["activate_global_color_management"]:
+        ocio_config = global_imageio["ocio_config"]
+        ocio_config_path = ocio_config["filepath"][-1]
+
+    max_imageio = get_project_settings(
+        project_name)["global"]["imageio"]
+    if max_imageio["activate_global_color_management"]:
+        ocio_config = max_imageio["ocio_config"]
+        if ocio_config["override_global_config"]:
+            ocio_config_path = ocio_config["filepath"][0]
+
+    colorspace_mgr = rt.ColorPipelineMgr
+    colorspace_mgr.Mode = rt.Name("OCIO_Custom")
+    colorspace_mgr.OCIOConfigPath = ocio_config_path
