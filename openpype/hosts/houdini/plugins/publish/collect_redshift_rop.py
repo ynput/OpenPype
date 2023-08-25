@@ -72,8 +72,9 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
             aov_product = self.get_render_product_name(aov_prefix, aov_suffix)
             render_products.append(aov_product)
 
-            files_by_aov[aov_suffix] = file_collection.generate_expected_filepaths(
-                frame_start, frame_end, aov_product)
+            files_by_aov[aov_suffix] = \
+                file_collection.generate_expected_filepaths(
+                    frame_start, frame_end, aov_product)
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
@@ -87,7 +88,7 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
         instance.data["attachTo"] = []      # stub required data
 
         if "expectedFiles" not in instance.data:
-            instance.data["expectedFiles"] = list()
+            instance.data["expectedFiles"] = []
         instance.data["expectedFiles"].append(files_by_aov)
 
         # update the colorspace data

@@ -58,8 +58,9 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
             if render_element:
                 for aov, renderpass in render_element.items():
                     render_products.append(renderpass)
-                    files_by_aov[aov] = file_collection.generate_expected_filepaths(
-                        frame_start, frame_end, renderpass)
+                    files_by_aov[aov] = \
+                        file_collection.generate_expected_filepaths(
+                            frame_start, frame_end, renderpass)
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)
@@ -72,7 +73,7 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         instance.data["attachTo"] = []      # stub required data
 
         if "expectedFiles" not in instance.data:
-            instance.data["expectedFiles"] = list()
+            instance.data["expectedFiles"] = []
         instance.data["expectedFiles"].append(files_by_aov)
         self.log.debug("expectedFiles:{}".format(files_by_aov))
 
