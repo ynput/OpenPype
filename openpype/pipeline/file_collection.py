@@ -162,20 +162,19 @@ def convert_filename_to_formattable_string(filename):
     return new_filename
 
 
-def get_publishing_representation(
+def prepare_publishing_representation(
     instance,
-    file_path,
+    file_paths,
     frame_start=None,
     frame_end=None,
-    log=None,
-    only_existing=False,
     reviewable=False,
+    log=None,
 ):
     """Get representation with expected files.
 
     Args:
         instance (pyblish.Instance): instance
-        file_path (str): file path
+        file_paths (list): list of absolute file paths or single file path
         frame_start (Optional[int]): first frame
         frame_end (Optional[int]): last frame
         log (Optional[Logger]): logger
@@ -187,12 +186,8 @@ def get_publishing_representation(
         dict[str, Any]: representation
     """
     log = log or Logger.get_logger(__name__)
-    file_ext = os.path.splitext(file_path)[-1].lstrip(".")
-    output_dir = os.path.dirname(file_path)
-    # get families from instance and add family from data
-    families = set(
-        instance.data.get("families", []) + [instance.data["family"]]
-    )
+    file_ext = os.path.splitext(file_paths[0])[-1].lstrip(".")
+    output_dir = os.path.dirname(file_paths[0])
 
     tags = []
     if reviewable:
@@ -208,17 +203,31 @@ def get_publishing_representation(
         "tags": tags,
     }
 
+    # getting frame range from files
+    if (
+        len(file_paths) > 1
+        and frame_start is None
+        and frame_end is None
+    ):
+        frame_start, frame_end = \
+            frame_utils.get_frame_range_from_list_of_files(file_paths)
+
     # add frame range data
     if frame_start is not None:
         representation["frameStart"] = frame_start
     if frame_end is not None:
         representation["frameEnd"] = frame_end
 
-    # collect files from sequential path or single file in list
-    collected_file_frames = \
-        collect_basenames_from_sequential_path(
-            file_path, frame_start, frame_end, only_existing)
+    # collect file frames
+    collected_file_frames = [
+        os.path.basename(filepath)
+        for filepath in file_paths
+    ]
 
+    # get families from instance and add family from data
+    families = set(
+        instance.data.get("families", []) + [instance.data["family"]]
+    )
     # set slate frame
     if (
         "slate" in families
