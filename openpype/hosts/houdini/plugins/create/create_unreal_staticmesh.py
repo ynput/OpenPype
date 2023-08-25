@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Creator plugin for creating fbx.
+"""Creator plugin for creating Unreal Static Meshes.
 
-It was made to pratice publish process.
+Unreal Static Meshes will be published as FBX.
 
 Filmbox by default expects an ObjNode
 however, we set the sop node explictly
 to eleminate any confusion.
 
-This creator by default will select
+This will make Filmbox to ignore any object transformations!
+
+get_obj_output selects
 the output sop with mimimum idx
 or the node with render flag isntead.
 
@@ -15,13 +17,13 @@ This plugin is part of publish process guide.
 """
 
 from openpype.hosts.houdini.api import plugin
-from openpype.lib import EnumDef
+from openpype.lib import BoolDef, EnumDef
 
 import hou
 
 
-class HouCreateUnrealStaticMesh(plugin.HoudiniCreator):
-    """Filmbox FBX Driver."""
+class CreateUnrealStaticMesh(plugin.HoudiniCreator):
+    """Unreal Static Meshes with collisions. """
 
     # you should set
     identifier = "io.openpype.creators.houdini.unrealstaticmesh"
@@ -41,7 +43,7 @@ class HouCreateUnrealStaticMesh(plugin.HoudiniCreator):
         instance_data.update({"node_type": "filmboxfbx"})
 
         # create instance (calls HoudiniCreator.create())
-        instance = super(HouCreateUnrealStaticMesh, self).create(
+        instance = super(CreateUnrealStaticMesh, self).create(
             subset_name,
             instance_data,
             pre_create_data)
@@ -78,8 +80,15 @@ class HouCreateUnrealStaticMesh(plugin.HoudiniCreator):
                            },
                            default=0,
                            label="Vertex Cache Format")
+        convert_units = BoolDef("convertunits",
+                                tooltip="When on, the FBX is converted"
+                                        "from the current Houdini "
+                                        "system units to the native "
+                                        "FBX unit of centimeters.",
+                                default=False,
+                                label="Convert Units")
 
-        return attrs + [vcformat]
+        return attrs + [vcformat, convert_units]
 
     def get_parms(self, subset_name, pre_create_data):
         """Get parameters values for this specific node."""
@@ -94,15 +103,18 @@ class HouCreateUnrealStaticMesh(plugin.HoudiniCreator):
         # 3. get Vertex Cache Format
         vcformat = pre_create_data.get("vcformat")
 
-        # 4. Valid Frame Range
-        # It should publish the current frame.
-        trange = 0
+        # 4. get convert_units
+        convertunits = pre_create_data.get("convertunits")
+
+        # 5. get Valid Frame Range
+        trange = 1
 
         # parms dictionary
         parms = {
             "startnode": selection,
             "sopoutput": output_path,
             "vcformat": vcformat,
+            "convertunits": convertunits,
             "trange": trange
         }
 
@@ -166,7 +178,7 @@ class HouCreateUnrealStaticMesh(plugin.HoudiniCreator):
 
     def get_obj_output(self, obj_node):
         """Find output node with the smallest 'outputidx'
-        or return tje node with the render flag instead.
+        or return the node with the render flag instead.
         """
 
         outputs = obj_node.subnetOutputs()

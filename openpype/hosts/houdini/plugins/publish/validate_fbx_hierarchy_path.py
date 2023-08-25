@@ -65,8 +65,8 @@ class ValidateFBXPrimitiveHierarchyPaths(pyblish.api.InstancePlugin,
     actions = [SelectInvalidAction, AddDefaultPathAction,
                SelectROPAction]
 
-    # 'OptionalPyblishPluginMixin' where logic for 'optional' is implemented.
-    #  It requires updating project settings
+    # 'OptionalPyblishPluginMixin' adds the functionality to
+    # enable/disable plugins, It requires adding new settings.
     optional = True
 
     # overrides InstancePlugin.process()
@@ -116,13 +116,9 @@ class ValidateFBXPrimitiveHierarchyPaths(pyblish.api.InstancePlugin,
 
         cls.log.debug("Checking for attribute: %s", path_attr)
 
-        # Get frame
-        frame = hou.intFrame()
-        trange = rop_node.parm("trange").eval()
-        if trange:
-            frame = int(hou.playbar.frameRange()[0])
-
-        frame = instance.data.get("frameStart", frame)
+        # Use current frame if "frameStart" doesn't exist
+        # This only happens when ""trange" is 0
+        frame = instance.data.get("frameStart", hou.intFrame())
 
         # Get Geo at that frame
         geo = output_node.geometryAtFrame(frame)

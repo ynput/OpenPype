@@ -16,7 +16,7 @@ from openpype.hosts.houdini.api.lib import render_rop
 import hou
 
 
-class ExtractRedshiftProxy(publish.Extractor):
+class ExtractFBX(publish.Extractor):
 
     label = "Extract FBX"
     families = ["fbx"]

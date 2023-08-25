@@ -19,7 +19,7 @@
             ],
             "ext": ".ass"
         },
-        "HouCreateUnrealStaticMesh": {
+        "CreateUnrealStaticMesh": {
             "enabled": true,
             "default_variants": [
                 "Main"
