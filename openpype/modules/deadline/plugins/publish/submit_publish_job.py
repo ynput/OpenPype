@@ -6,7 +6,6 @@ import re
 from copy import deepcopy
 import requests
 import clique
-
 import pyblish.api
 
 from openpype import AYON_SERVER_ENABLED
@@ -297,6 +296,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 job_index += 1
         elif instance.data.get("bakingSubmissionJobs"):
             self.log.info("Adding baking submission jobs as dependencies...")
+
             job_index = 0
             for assembly_id in instance.data["bakingSubmissionJobs"]:
                 payload["JobInfo"]["JobDependency{}".format(
@@ -328,9 +328,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
         return deadline_publish_job_id
 
-
     def process(self, instance):
         # type: (pyblish.api.Instance) -> None
+
         """Process plugin.
 
         Detect type of render farm submission and create and post dependent
@@ -342,14 +342,32 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
         """
         if not instance.data.get("farm"):
-            self.log.debug("Skipping local instance.")
+            self.log.debug("Skipping local instance: {}".format(
+                instance["name"]))
             return
 
         anatomy = instance.context.data["anatomy"]
 
+        # set farm type and job data
+        render_job = None
+        submission_type = ""
+        if instance.data.get("toBeRenderedOn") == "deadline":
+            render_job = instance.data.pop("deadlineSubmissionJob", None)
+            submission_type = "deadline"
+
+        if instance.data.get("toBeRenderedOn") == "muster":
+            render_job = instance.data.pop("musterSubmissionJob", None)
+            submission_type = "muster"
+
+        if not render_job and instance.data.get("tileRendering") is False:
+            raise AssertionError(("Cannot continue without valid Deadline "
+                                  "or Muster submission."))
+
+        # create skeleton instance
         instance_skeleton_data = create_skeleton_instance(
             instance, families_transfer=self.families_transfer,
             instance_transfer=self.instance_transfer)
+
         """
         if content of `expectedFiles` list are dictionaries, we will handle
         it as list of AOVs, creating instance for every one of them.
@@ -396,12 +414,21 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             self.log.debug("Instance has review explicitly disabled.")
             do_not_add_review = True
 
-        if isinstance(instance.data.get("expectedFiles")[0], dict):
+        if not instance.data.get("expectedFiles"):
+            # TODO: perhaps we could find better way to do this
+            # QUESTION: what happen if we have expectedFiles
+            #           and prepared representations?
+            # bypassing aov generation from expectedFiles
+            # Representations from upstream tagged `publish_on_farm`
+            instances = [instance_skeleton_data]
+        elif isinstance(instance.data["expectedFiles"][0], dict):
+            # we have AOVs
             instances = create_instances_for_aov(
                 instance, instance_skeleton_data,
                 self.aov_filter, self.skip_integration_repre_list,
                 do_not_add_review)
         else:
+            # we have list of files
             representations = prepare_representations(
                 instance_skeleton_data,
                 instance.data.get("expectedFiles"),
@@ -418,6 +445,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
             # add representation
             instance_skeleton_data["representations"] += representations
+
             instances = [instance_skeleton_data]
 
         # attach instances to subset
@@ -426,57 +454,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 instance.data.get("attachTo"), instances
             )
 
-        r''' SUBMiT PUBLiSH JOB 2 D34DLiN3
-          ____
-        '     '            .---.  .---. .--. .---. .--..--..--..--. .---.
-        |     |   --= \   |  .  \/   _|/    \|  .  \  ||  ||   \  |/   _|
-        | JOB |   --= /   |  |  ||  __|  ..  |  |  |  |;_ ||  \   ||  __|
-        |     |           |____./ \.__|._||_.|___./|_____|||__|\__|\.___|
-        ._____.
-
-        '''
-
-        render_job = None
-        submission_type = ""
-        if instance.data.get("toBeRenderedOn") == "deadline":
-            render_job = instance.data.pop("deadlineSubmissionJob", None)
-            submission_type = "deadline"
-
-        if instance.data.get("toBeRenderedOn") == "muster":
-            render_job = instance.data.pop("musterSubmissionJob", None)
-            submission_type = "muster"
-
-        if not render_job and instance.data.get("tileRendering") is False:
-            raise AssertionError(("Cannot continue without valid Deadline "
-                                  "or Muster submission."))
-
         if not render_job:
-            import getpass
-
-            render_job = {}
-            self.log.info("Faking job data ...")
-            render_job["Props"] = {}
-            # Render job doesn't exist because we do not have prior submission.
-            # We still use data from it so lets fake it.
-            #
-            # Batch name reflect original scene name
-
-            if instance.data.get("assemblySubmissionJobs"):
-                render_job["Props"]["Batch"] = instance.data.get(
-                    "jobBatchName")
-            else:
-                batch = os.path.splitext(os.path.basename(
-                    instance.context.data.get("currentFile")))[0]
-                render_job["Props"]["Batch"] = batch
-            # User is deadline user
-            render_job["Props"]["User"] = instance.context.data.get(
-                "deadlineUser", getpass.getuser())
-
-            render_job["Props"]["Env"] = {
-                "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
-                "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
-                "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
-            }
+            render_job = self._create_default_render_job(instance)
 
         deadline_publish_job_id = None
         if submission_type == "deadline":
@@ -516,7 +495,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # add audio to metadata file if available
         audio_file = instance.context.data.get("audioFile")
         if audio_file and os.path.isfile(audio_file):
-            publish_job.update({"audio": audio_file})
+            publish_job["audio"] = audio_file
 
         # pass Ftrack credentials in case of Muster
         if submission_type == "muster":
@@ -525,13 +504,50 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
-            publish_job.update({"ftrack": ftrack})
+            publish_job["ftrack"] = ftrack
 
         metadata_path, rootless_metadata_path = \
-            create_metadata_path(instance, anatomy)
+                create_metadata_path(instance, anatomy)
 
-        with open(metadata_path, "w") as f:
-            json.dump(publish_job, f, indent=4, sort_keys=True)
+        with open(metadata_path, "w") as f_:
+            json.dump(publish_job, f_, indent=4, sort_keys=True)
+
+    def _create_default_render_job(self, instance):
+        import getpass
+
+        self.log.info("Faking job data ...")
+        job_data = {"Props": {}}
+        # Render job doesn't exist because we do not have prior submission.
+        # We still use data from it so lets fake it.
+        #
+        # Batch name reflect original scene name
+
+        if instance.data.get("assemblySubmissionJobs"):
+            job_data["Props"]["Batch"] = instance.data.get("jobBatchName")
+        else:
+            asset = instance.data["asset"]
+            subset = instance.data["subset"]
+            file_name = os.path.splitext(
+                os.path.basename(
+                    instance.context.data.get("currentFile")))[0]
+            batch = "{asset}-{subset}-{file_name}".format(
+                asset=asset,
+                subset=subset,
+                file_name=file_name
+            )
+            job_data["Props"]["Batch"] = batch
+            # User is deadline user
+        job_data["Props"]["User"] = instance.context.data.get(
+            "deadlineUser", getpass.getuser()
+        )
+
+        job_data["Props"]["Env"] = {
+            "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
+            "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
+            "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
+        }
+
+        return job_data
 
     def _get_publish_folder(self, anatomy, template_data,
                             asset, subset, context,
