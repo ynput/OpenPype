@@ -128,7 +128,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
         if thumbnail_created:
             return full_output_path
 
-        self.log.warning("Thumbanil has not been created.")
+        self.log.warning("Thumbnail has not been created.")
 
     def _instance_has_thumbnail(self, instance):
         if "representations" not in instance.data:
