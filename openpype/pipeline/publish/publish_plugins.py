@@ -483,14 +483,15 @@ class PrepRepresentationPluginMixin:
             instance (pyblish.api.Instance): pyblish instance
         """
 
-        # make sure rendered sequence on farm will
-        # be used for extract review
-        instance.data["useSequenceForReview"] = bool(
-            instance.data.get("review"))
+        # TODO: this should be removed
+        # - it is only needed if expectedFiles keys is used
+        # - not needed if representation tagged for farm
+        #   is used (make_farm_publishing_representation)
+        instance.data["useSequenceForReview"] = (
+            "review" in instance.data["families"])
 
         # Farm rendering
         instance.data.update({
-            "transfer": False,
             "farm": True  # to skip integrate
         })
         self.log.info("Farm rendering ON ...")
