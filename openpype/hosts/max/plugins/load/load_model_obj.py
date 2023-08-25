@@ -2,7 +2,10 @@ import os
 
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import (
-    unique_namespace, get_namespace
+    unique_namespace,
+    get_namespace,
+    maintained_selection,
+    object_transform_set
 )
 from openpype.hosts.max.api.lib import maintained_selection
 from openpype.hosts.max.api.pipeline import (
@@ -56,6 +59,7 @@ class ObjLoader(load.LoaderPlugin):
         sub_node_name = f"{namespace}:{name}"
         inst_container = rt.getNodeByName(sub_node_name)
         rt.Select(inst_container.Children)
+        transform_data = object_transform_set(inst_container.Children)
         for prev_obj in rt.selection:
             if rt.isValidNode(prev_obj):
                 rt.Delete(prev_obj)
@@ -67,6 +71,12 @@ class ObjLoader(load.LoaderPlugin):
         for selection in selections:
             selection.Parent = inst_container
             selection.name = f"{namespace}:{selection.name}"
+            selection.pos = transform_data[
+                f"{selection.name}.transform"]
+            selection.rotation = transform_data[
+                f"{selection.name}.rotation"]
+            selection.scale = transform_data[
+                f"{selection.name}.scale"]
         with maintained_selection():
             rt.Select(node)
 

@@ -2,7 +2,9 @@ import os
 
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import (
-    unique_namespace, get_namespace
+    unique_namespace,
+    get_namespace,
+    object_transform_set
 )
 from openpype.hosts.max.api.lib import maintained_selection
 from openpype.hosts.max.api.pipeline import (
@@ -63,8 +65,10 @@ class ModelUSDLoader(load.LoaderPlugin):
         node = rt.GetNodeByName(node_name)
         namespace, name = get_namespace(node_name)
         sub_node_name = f"{namespace}:{name}"
+        transform_data = None
         for n in node.Children:
             rt.Select(n.Children)
+            transform_data = object_transform_set(n.Children)
             for prev_usd_asset in rt.selection:
                 if rt.isValidNode(prev_usd_asset):
                     rt.Delete(prev_usd_asset)
@@ -85,8 +89,14 @@ class ModelUSDLoader(load.LoaderPlugin):
         import_custom_attribute_data(asset, asset.Children)
         for children in asset.Children:
             children.name = f"{namespace}:{children.name}"
-        asset.name = sub_node_name
+            children.pos = transform_data[
+                f"{children.name}.transform"]
+            children.rotation = transform_data[
+                f"{children.name}.rotation"]
+            children.scale = transform_data[
+                f"{children.name}.scale"]
 
+        asset.name = sub_node_name
 
         with maintained_selection():
             rt.Select(node)

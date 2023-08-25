@@ -2,7 +2,9 @@ import os
 
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import (
-    unique_namespace, get_namespace
+    unique_namespace,
+    get_namespace,
+    object_transform_set
 )
 from openpype.hosts.max.api.pipeline import (
     containerise, import_custom_attribute_data,
@@ -62,6 +64,7 @@ class MaxSceneLoader(load.LoaderPlugin):
         # delete the old container with attribute
         # delete old duplicate
         rt.Select(node.Children)
+        transform_data = object_transform_set(node.Children)
         for prev_max_obj in rt.GetCurrentSelection():
             if rt.isValidNode(prev_max_obj) and prev_max_obj.name != sub_container_name:  # noqa
                 rt.Delete(prev_max_obj)
@@ -77,7 +80,12 @@ class MaxSceneLoader(load.LoaderPlugin):
         for max_obj, obj_name in zip(current_max_objects,
                                      current_max_object_names):
             max_obj.name = f"{namespace}:{obj_name}"
-
+            max_obj.pos = transform_data[
+                f"{max_obj.name}.transform"]
+            max_obj.rotation = transform_data[
+                f"{max_obj.name}.rotation"]
+            max_obj.scale = transform_data[
+                f"{max_obj.name}.scale"]
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])

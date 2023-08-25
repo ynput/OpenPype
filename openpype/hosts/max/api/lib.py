@@ -371,9 +371,41 @@ def unique_namespace(namespace, format="%02d",
 
 
 def get_namespace(container_name):
+    """Get the namespace and name of the sub-container
+
+    Args:
+        container_name (str): the name of master container
+
+    Raises:
+        RuntimeError: when there is no master container found
+
+    Returns:
+        namespace (str): namespace of the sub-container
+        name (str): name of the sub-container
+    """
     node = rt.getNodeByName(container_name)
     if not node:
         raise RuntimeError("Master Container Not Found..")
     name = rt.getUserProp(node, "name")
     namespace = rt.getUserProp(node, "namespace")
     return namespace, name
+
+def object_transform_set(container_children):
+    """A function which allows to store the transform of
+    previous loaded object(s)
+    Args:
+        container_children(list): A list of nodes
+
+    Returns:
+        transform_set (dict): A dict with all transform data of
+        the previous loaded object(s)
+    """
+    transform_set = {}
+    for node in container_children:
+        name = f"{node.name}.transform"
+        transform_set[name] = node.pos
+        name = f"{node.name}.scale"
+        transform_set[name] = node.scale
+        name = f"{node.name}.rotation"
+        transform_set[name] = node.rotation
+    return transform_set

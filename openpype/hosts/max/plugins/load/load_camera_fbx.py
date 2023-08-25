@@ -2,7 +2,9 @@ import os
 
 from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.lib import (
-    unique_namespace, get_namespace
+    unique_namespace,
+    get_namespace,
+    object_transform_set
 )
 from openpype.hosts.max.api.pipeline import (
     containerise,
@@ -61,6 +63,7 @@ class FbxLoader(load.LoaderPlugin):
         sub_node_name = f"{namespace}:{name}"
         inst_container = rt.getNodeByName(sub_node_name)
         rt.Select(inst_container.Children)
+        transform_data = object_transform_set(inst_container.Children)
         for prev_fbx_obj in rt.selection:
             if rt.isValidNode(prev_fbx_obj):
                 rt.Delete(prev_fbx_obj)
@@ -77,6 +80,12 @@ class FbxLoader(load.LoaderPlugin):
             if fbx_object.Parent != inst_container:
                 fbx_object.Parent = inst_container
                 fbx_object.name = f"{namespace}:{fbx_object.name}"
+                fbx_object.pos = transform_data[
+                    f"{fbx_object.name}.transform"]
+                fbx_object.rotation = transform_data[
+                    f"{fbx_object.name}.rotation"]
+                fbx_object.scale = transform_data[
+                    f"{fbx_object.name}.scale"]
 
         for children in node.Children:
             if rt.classOf(children) == rt.Container:
