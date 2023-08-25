@@ -334,15 +334,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     def process(self, instance):
         # type: (pyblish.api.Instance) -> None
 
-        r''' SUBMiT PUBLiSH JOB 2 D34DLiN3
-          ____
-        '     '            .---.  .---. .--. .---. .--..--..--..--. .---.
-        |     |   --= \   |  .  \/   _|/    \|  .  \  ||  ||   \  |/   _|
-        | JOB |   --= /   |  |  ||  __|  ..  |  |  |  |;_ ||  \   ||  __|
-        |     |           |____./ \.__|._||_.|___./|_____|||__|\__|\.___|
-        ._____.
-
-        '''
         """Process plugin.
 
         Detect type of render farm submission and create and post dependent
