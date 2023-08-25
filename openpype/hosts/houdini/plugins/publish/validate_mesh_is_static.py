@@ -66,8 +66,6 @@ class ValidateMeshIsStatic(pyblish.api.InstancePlugin):
             cls.log.info("Mesh is not static!")
             return [output_node]
 
-
-
     # what repair action expects to find and call
     @classmethod
     def repair(cls, instance):
@@ -94,8 +92,6 @@ class ValidateMeshIsStatic(pyblish.api.InstancePlugin):
         if cls.get_invalid(instance) != [output_node]:
             return
 
-
-
         time_shift = output_node.parent().createNode("timeshift",
                                                      "freeze_time")
         time_shift.parm("frame").deleteAllKeyframes()
@@ -104,8 +100,8 @@ class ValidateMeshIsStatic(pyblish.api.InstancePlugin):
         time_shift.parm("frame").set(frame)
 
         cls.log.debug(
-            "'%s' was created. It will kill time dependency."
-            , time_shift
+            "'%s' was created. It will kill time dependency.",
+            time_shift
         )
 
         time_shift.setGenericFlag(hou.nodeFlag.DisplayComment, True)
