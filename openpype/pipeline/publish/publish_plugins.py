@@ -444,7 +444,6 @@ class ColormanagedPyblishPluginMixin(object):
                 pformat(colorspace_data)))
 
 
-
 class PrepRepresentationPluginMixin:
     """Mixin for preparation of representation plugins.
 
