@@ -24,6 +24,7 @@ class AbcLoader(load.LoaderPlugin):
     order = -10
     icon = "code-fork"
     color = "orange"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -68,7 +69,7 @@ class AbcLoader(load.LoaderPlugin):
         for abc_object in abc_container.Children:
             abc_object.name = f"{namespace}:{abc_object.name}"
         # rename the abc container with namespace
-        abc_container_name = f"{namespace}:{name}"
+        abc_container_name = f"{namespace}:{name}_{self.postfix}"
         abc_container.name = abc_container_name
 
         return containerise(

@@ -25,6 +25,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
     order = -9
     icon = "code-fork"
     color = "white"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -41,7 +42,8 @@ class RedshiftProxyLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-        container = rt.Container(name=f"{namespace}:{name}")
+        container = rt.Container(
+            name=f"{namespace}:{name}_{self.postfix}")
         rs_proxy.Parent = container
         rs_proxy.name = f"{namespace}:{rs_proxy.name}"
         import_custom_attribute_data(container, [rs_proxy])
@@ -55,7 +57,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         namespace, name = get_namespace(container["instance_node"])
-        sub_node_name = f"{namespace}:{name}"
+        sub_node_name = f"{namespace}:{name}_{self.postfix}"
         inst_container = rt.getNodeByName(sub_node_name)
 
         update_custom_attribute_data(

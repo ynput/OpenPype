@@ -23,6 +23,7 @@ class ModelUSDLoader(load.LoaderPlugin):
     order = -10
     icon = "code-fork"
     color = "orange"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -47,7 +48,7 @@ class ModelUSDLoader(load.LoaderPlugin):
         for usd_asset in asset.Children:
             usd_asset.name = f"{namespace}:{usd_asset.name}"
 
-        asset_name = f"{namespace}:{name}"
+        asset_name = f"{namespace}:{name}_{self.postfix}"
         asset.name = asset_name
         # need to get the correct container after renamed
         asset = rt.GetNodeByName(asset_name)
@@ -64,7 +65,7 @@ class ModelUSDLoader(load.LoaderPlugin):
         node_name = container["instance_node"]
         node = rt.GetNodeByName(node_name)
         namespace, name = get_namespace(node_name)
-        sub_node_name = f"{namespace}:{name}"
+        sub_node_name = f"{namespace}:{name}_{self.postfix}"
         transform_data = None
         for n in node.Children:
             rt.Select(n.Children)
@@ -91,8 +92,6 @@ class ModelUSDLoader(load.LoaderPlugin):
             children.name = f"{namespace}:{children.name}"
             children.pos = transform_data[
                 f"{children.name}.transform"]
-            children.rotation = transform_data[
-                f"{children.name}.rotation"]
             children.scale = transform_data[
                 f"{children.name}.scale"]
 

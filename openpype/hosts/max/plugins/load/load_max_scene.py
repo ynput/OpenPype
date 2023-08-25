@@ -24,6 +24,7 @@ class MaxSceneLoader(load.LoaderPlugin):
     order = -8
     icon = "code-fork"
     color = "green"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -41,7 +42,7 @@ class MaxSceneLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-        container_name = f"{namespace}:{name}"
+        container_name = f"{namespace}:{name}_{self.postfix}"
         container = rt.Container(name=container_name)
         import_custom_attribute_data(container, max_objects)
         max_container.append(container)
@@ -60,7 +61,7 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         node = rt.getNodeByName(node_name)
         namespace, name = get_namespace(node_name)
-        sub_container_name = f"{namespace}:{name}"
+        sub_container_name = f"{namespace}:{name}_{self.postfix}"
         # delete the old container with attribute
         # delete old duplicate
         rt.Select(node.Children)
@@ -82,8 +83,6 @@ class MaxSceneLoader(load.LoaderPlugin):
             max_obj.name = f"{namespace}:{obj_name}"
             max_obj.pos = transform_data[
                 f"{max_obj.name}.transform"]
-            max_obj.rotation = transform_data[
-                f"{max_obj.name}.rotation"]
             max_obj.scale = transform_data[
                 f"{max_obj.name}.scale"]
 

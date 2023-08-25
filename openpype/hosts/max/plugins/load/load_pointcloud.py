@@ -20,6 +20,7 @@ class PointCloudLoader(load.LoaderPlugin):
     order = -8
     icon = "code-fork"
     color = "green"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         """load point cloud by tyCache"""
@@ -33,7 +34,8 @@ class PointCloudLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-        prt_container = rt.Container(name=f"{namespace}:{name}")
+        prt_container = rt.Container(
+            name=f"{namespace}:{name}_{self.postfix}")
         import_custom_attribute_data(prt_container, [obj])
         obj.Parent = prt_container
         obj.name = f"{namespace}:{obj.name}"
@@ -49,7 +51,7 @@ class PointCloudLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
         namespace, name = get_namespace(container["instance_node"])
-        sub_node_name = f"{namespace}:{name}"
+        sub_node_name = f"{namespace}:{name}_{self.postfix}"
         inst_container = rt.getNodeByName(sub_node_name)
         update_custom_attribute_data(
             inst_container, inst_container.Children)

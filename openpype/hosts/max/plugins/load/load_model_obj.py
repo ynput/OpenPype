@@ -24,6 +24,7 @@ class ObjLoader(load.LoaderPlugin):
     order = -9
     icon = "code-fork"
     color = "white"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -38,7 +39,7 @@ class ObjLoader(load.LoaderPlugin):
             suffix="_",
         )
         # create "missing" container for obj import
-        container = rt.Container(name=f"{namespace}:{name}")
+        container = rt.Container(name=f"{namespace}:{name}_{self.postfix}")
         selections = rt.GetCurrentSelection()
         import_custom_attribute_data(container, selections)
         # get current selection
@@ -56,7 +57,7 @@ class ObjLoader(load.LoaderPlugin):
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
         namespace, name = get_namespace(node_name)
-        sub_node_name = f"{namespace}:{name}"
+        sub_node_name = f"{namespace}:{name}_{self.postfix}"
         inst_container = rt.getNodeByName(sub_node_name)
         rt.Select(inst_container.Children)
         transform_data = object_transform_set(inst_container.Children)
@@ -73,8 +74,6 @@ class ObjLoader(load.LoaderPlugin):
             selection.name = f"{namespace}:{selection.name}"
             selection.pos = transform_data[
                 f"{selection.name}.transform"]
-            selection.rotation = transform_data[
-                f"{selection.name}.rotation"]
             selection.scale = transform_data[
                 f"{selection.name}.scale"]
         with maintained_selection():

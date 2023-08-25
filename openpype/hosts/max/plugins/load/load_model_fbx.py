@@ -21,6 +21,7 @@ class FbxModelLoader(load.LoaderPlugin):
     order = -9
     icon = "code-fork"
     color = "white"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -36,7 +37,8 @@ class FbxModelLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-        container = rt.container(name=f"{namespace}:{name}")
+        container = rt.container(
+            name=f"{namespace}:{name}_{self.postfix}")
         selections = rt.GetCurrentSelection()
         import_custom_attribute_data(container, selections)
 
@@ -55,7 +57,7 @@ class FbxModelLoader(load.LoaderPlugin):
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
         namespace, name = get_namespace(node_name)
-        sub_node_name = f"{namespace}:{name}"
+        sub_node_name = f"{namespace}:{name}_{self.postfix}"
         inst_container = rt.getNodeByName(sub_node_name)
         rt.Select(inst_container.Children)
         transform_data = object_transform_set(inst_container.Children)
@@ -76,8 +78,6 @@ class FbxModelLoader(load.LoaderPlugin):
                 fbx_object.name = f"{namespace}:{fbx_object.name}"
                 fbx_object.pos = transform_data[
                     f"{fbx_object.name}.transform"]
-                fbx_object.rotation = transform_data[
-                    f"{fbx_object.name}.rotation"]
                 fbx_object.scale = transform_data[
                     f"{fbx_object.name}.scale"]
 
