@@ -2,6 +2,7 @@
 """
 import os
 import re
+
 import clique
 from openpype.lib import Logger
 from openpype.pipeline import frame_utils
@@ -246,6 +247,30 @@ def prepare_publishing_representation(
     return representation
 
 
+def _get_padding_from_collected_frames(file_paths):
+    """Get padding from collected frames.
+
+    Args:
+        file_paths (list[str]): list of file paths
+
+    Returns:
+        int: padding or None no padding detected
+    """
+    collections, _ = clique.assemble(file_paths)
+    if not collections:
+        raise Exception(
+            "No sequences detected in input data.")
+    elif len(collections) > 1:
+        raise Exception(
+            "Multiple sequences detected in input data."
+        )
+
+    collection = collections[0]
+    padding = collection.format("{padding}")
+    padding = re.search("%(\\d)+d", padding)
+    return padding.group(1) if padding else None
+
+
 def _add_slate_frame_to_collected_frames(
     collected_file_frames,
     frame_start=None,
@@ -261,22 +286,30 @@ def _add_slate_frame_to_collected_frames(
     Returns:
         Bool: True if slate frame was added
     """
+    print(type(frame_start), type(frame_end))
+
     if (
         frame_start is None
         and frame_end is None
     ):
         return False
 
-    frame_start_str = frame_utils.get_frame_start_str(
-        frame_start, frame_end)
+    padding = _get_padding_from_collected_frames(
+        collected_file_frames)
+
+    if not padding:
+        frame_start_str = str(frame_start)
+    else:
+        frame_start_str = str(frame_start).zfill(int(padding))
+
     frame_length = int(frame_end - frame_start + 1)
 
     # add slate frame only if it is not already in collected frames
     if frame_length == len(collected_file_frames):
-        frame_slate_str = frame_utils.get_frame_start_str(
-            frame_start - 1,
-            frame_end
-        )
+        if not padding:
+            frame_slate_str = str(frame_start - 1)
+        else:
+            frame_slate_str = str(frame_start - 1).zfill(int(padding))
 
         slate_frame = collected_file_frames[0].replace(
             frame_start_str, frame_slate_str)
