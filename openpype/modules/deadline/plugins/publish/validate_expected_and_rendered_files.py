@@ -19,7 +19,6 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the nodes in the instance"""
-        self.log.debug("Validate expected files for instance")
         # get dependency jobs ids for retrieving frame list
         dependent_job_ids = self._get_dependent_job_ids(instance)
 
