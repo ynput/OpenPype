@@ -5,6 +5,7 @@ import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
 from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
 from openpype.lib import BoolDef
+from openpype.pipeline import file_collection
 
 from .lib import (
     load_help_content_from_plugin,
@@ -441,3 +442,143 @@ class ColormanagedPyblishPluginMixin(object):
 
             self.log.debug("__ colorspace_data: `{}`".format(
                 pformat(colorspace_data)))
+
+
+
+class PrepRepresentationPluginMixin:
+    """Mixin for preparation of representation plugins.
+
+    This mixin provides methods for farm plugins to use.
+    """
+
+    def set_expected_files_to_instance(
+        self,
+        instance,
+        frame_start,
+        frame_end,
+        path,
+        only_existing=False
+    ):
+        """Create expected files in instance data
+
+        Args:
+            instance (pyblish.api.Instance): Instance to set expected files on
+            frame_start (int): Start frame of the sequence
+            frame_end (int): End frame of the sequence
+            path (str): Path to generate expected files from
+            only_existing (Optional[bool]): Ensure that files exists.
+
+        Returns:
+            None: sets `expectedFiles` key on instance data
+        """
+
+        expected_files_list = file_collection.generate_expected_filepaths(
+            frame_start, frame_end, path, only_existing)
+        instance.data["expectedFiles"] = expected_files_list
+
+    def add_farm_instance_data(self, instance):
+        """Add farm publishing related instance data.
+
+        Args:
+            instance (pyblish.api.Instance): pyblish instance
+        """
+
+        # make sure rendered sequence on farm will
+        # be used for extract review
+        instance.data["useSequenceForReview"] = bool(
+            instance.data.get("review"))
+
+        # Farm rendering
+        instance.data.update({
+            "transfer": False,
+            "farm": True  # to skip integrate
+        })
+        self.log.info("Farm rendering ON ...")
+
+    def make_farm_publishing_representation(
+        self,
+        representation
+    ):
+        """Add farm related tags to representation.
+
+        Args:
+            representation (dict): representation
+        """
+        representation["tags"].append("publish_on_farm")
+
+    def prepare_collection_of_file_paths(
+        self,
+        file_path,
+        frame_start=None,
+        frame_end=None,
+        only_existing=False,
+    ):
+        """Collect file paths from file path.
+
+        Args:
+            file_path (str): Path to a single file or a sequence of files
+                with a pattern (##, %02d) in it.
+            frame_start (Optional[int]): first frame
+            frame_end (Optional[int]): last frame
+            only_existing (Optional[bool]): Ensure that files exists.
+
+        Returns:
+        Any[list[str], str]: List of absolute paths to files
+            (frames of a sequence) or path if single file
+        """
+        return file_collection.collect_filepaths_from_sequential_path(
+            file_path, frame_start, frame_end, only_existing)
+
+    def prepare_representation(
+        self,
+        instance,
+        file_paths,
+        frame_start=None,
+        frame_end=None,
+        reviewable=False,
+    ):
+        """Prepare publishable representation data.
+
+        Args:
+            instance (pyblish.api.Instance): pyblish instance
+            file_paths (list): list of absolute file paths or single file path
+            frame_start (Optional[int]): first frame
+            frame_end (Optional[int]): last frame
+            reviewable (Optional[bool]): reviewable flag
+
+        Returns:
+            dict: representation
+        """
+        return file_collection.prepare_publishing_representation(
+            instance,
+            file_paths,
+            frame_start,
+            frame_end,
+            reviewable,
+            self.log,
+        )
+
+    def get_single_filepath_from_list_of_files(self, collected_files):
+        """Get single filepath from list of files.
+
+        Args:
+            collected_files (list[str]): list of files
+
+        Returns:
+            Any[str, None]: single filepath or None if not possible
+        """
+        return file_collection.get_single_filepath_from_list_of_files(
+            collected_files)
+
+    def get_frame_range_from_list_of_files(self, collected_files):
+        """Get frame range from sequence files.
+
+        Args:
+            collected_files (list[str]): list of files
+
+        Returns:
+            Any[tuple[int, int], tuple[None, None]]: frame range or None
+                if not possible
+        """
+        return file_collection.get_frame_range_from_list_of_files(
+            collected_files)
