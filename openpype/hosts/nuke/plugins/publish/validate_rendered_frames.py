@@ -82,12 +82,12 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
 
             collection = collections[0]
 
-            f_start_h = instance.data["frameStartHandle"]
-            f_end_h = instance.data["frameEndHandle"]
+            frame_start_handle = instance.data["frameStartHandle"]
+            frame_end_handle = instance.data["frameEndHandle"]
 
-            frame_length = int(f_end_h - f_start_h + 1)
+            asset_frames_len = int(frame_end_handle - frame_start_handle + 1)
 
-            if frame_length != 1:
+            if asset_frames_len != 1:
                 if len(collections) != 1:
                     msg = "There are multiple collections in the folder"
                     self.log.error(msg)
@@ -101,30 +101,20 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                         self, msg, formatting_data=f_data)
 
             collected_frames_len = len(collection.indexes)
-            coll_start = min(collection.indexes)
-            coll_end = max(collection.indexes)
-
-            self.log.info("frame_length: {}".format(frame_length))
-            self.log.info("collected_frames_len: {}".format(
-                collected_frames_len))
-            self.log.info("f_start_h-f_end_h: {}-{}".format(
-                f_start_h, f_end_h))
-            self.log.info(
-                "coll_start-coll_end: {}-{}".format(coll_start, coll_end))
-
-            self.log.info(
-                "len(collection.indexes): {}".format(collected_frames_len)
-            )
-
-            if ("slate" in instance.data["families"]) \
-                    and (frame_length != collected_frames_len):
-                collected_frames_len -= 1
-                f_start_h += 1
+            collection_frame_start = min(collection.indexes)
+            collection_frame_end = max(collection.indexes)
 
             if (
-                collected_frames_len != frame_length
-                and coll_start <= f_start_h
-                and coll_end >= f_end_h
+                    "slate" in instance.data["families"]
+                    and asset_frames_len != collected_frames_len
+            ):
+                frame_start_handle -= 1
+                asset_frames_len += 1
+
+            if (
+                collected_frames_len != asset_frames_len
+                or collection_frame_start != frame_start_handle
+                or collection_frame_end != frame_end_handle
             ):
                 raise PublishXmlValidationError(
                     self, (
