@@ -16,7 +16,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
     families = ["render", "prerender", "image"]
 
     def process(self, instance):
-
+        creator_attributes = instance.data["creator_attributes"]
         group_node = instance.data["transientData"]["node"]
 
         write_node = self._write_node_helper(instance)
@@ -36,7 +36,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         colorspace = napi.get_colorspace_from_node(write_node)
 
         # split operations by render target
-        render_target = instance.data["render_target"]
+        render_target = creator_attributes["render_target"]
 
         if render_target == "farm":
             self.add_farm_instance_data(instance)
@@ -48,7 +48,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
             representation = self.prepare_representation(
                 instance, file_paths, frame_start, frame_end,
-                reviewable=("review" in instance.data)
+                reviewable=("review" in creator_attributes)
             )
 
             # QUESTION: should we set colorspace at this moment or downstream?
@@ -65,7 +65,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
             representation = self.prepare_representation(
                 instance, file_paths, frame_start, frame_end,
-                reviewable=("review" in instance.data)
+                reviewable=("review" in creator_attributes)
             )
             self.make_farm_publishing_representation(representation)
 
@@ -114,8 +114,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             frame_end (int): last frame
             colorspace (str): colorspace
         """
+        creator_attributes = instance.data["creator_attributes"]
         family = instance.data["family"]
-        render_target = instance.data["render_target"]
+        render_target = creator_attributes["render_target"]
 
         # add targeted family to families
         instance.data["families"].append(
