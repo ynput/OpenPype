@@ -47,8 +47,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             )
 
             representation = self.prepare_representation(
-                instance, file_paths, frame_start, frame_end,
-                reviewable=("review" in creator_attributes)
+                instance, file_paths, frame_start, frame_end
             )
 
             # QUESTION: should we set colorspace at this moment or downstream?
@@ -64,8 +63,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             )
 
             representation = self.prepare_representation(
-                instance, file_paths, frame_start, frame_end,
-                reviewable=("review" in creator_attributes)
+                instance, file_paths, frame_start, frame_end
             )
             self.make_farm_publishing_representation(representation)
 
