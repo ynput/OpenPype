@@ -211,15 +211,18 @@ def create_skeleton_instance(
         log.warning(("Could not find root path for remapping \"{}\". "
                      "This may cause issues.").format(source))
 
+    # search for family with farm suffixes to
     # pass families from original instance to skeleton
-    family = "render"
-    # try to find family with farm suffixes
     families = instance.data["families"]
+    farm_suffixes = [".farm", ".farm_frames"]
     for family_ in families:
-        match = re.search(r"\.farm(_frames)?$", family_)
-        if match:
-            family = re.sub(r"\.farm(_frames)?$", "", family_)
+        suffix = next((s for s in farm_suffixes if family.endswith(suffix)), None)
+        if suffix:
+            family = family_[:-len(suffix)]
             break
+    else:
+        # No family found with farm suffix
+        family = "render"
     families = [family]
 
     # pass review to families if marked as review
