@@ -276,7 +276,7 @@ class ExtractSlateFrame(publish.Extractor):
 
         if not matching_repre:
             self.log.info((
-                "Matching reresentaion was not found."
+                "Matching representation was not found."
                 " Representation files were not filled with slate."
             ))
             return
@@ -286,11 +286,7 @@ class ExtractSlateFrame(publish.Extractor):
             matching_repre["files"] = [first_filename, slate_filename]
         elif slate_filename not in matching_repre["files"]:
             matching_repre["files"].insert(0, slate_filename)
-            matching_repre["frameStart"] = (
-                "{{:0>{}}}"
-                .format(len(str(last_frame)))
-                .format(slate_first_frame)
-            )
+            matching_repre["frameStart"] = slate_first_frame
             self.log.debug(
                 "__ matching_repre: {}".format(pformat(matching_repre)))
 
