@@ -10,20 +10,6 @@ from openpype.client import get_asset_by_name
 log = Logger.get_logger(__name__)
 
 
-def get_frame_start_str(frame_start, frame_end):
-    """Get frame start string.
-
-    Args:
-        frame_start (int): first frame
-        frame_end (int): last frame
-
-    Returns:
-        str: frame start string
-    """
-    padding = len(str(frame_end))
-    return str(frame_start).zfill(padding)
-
-
 def get_asset_frame_range(project_name, asset_name, asset_doc=None):
     """Get the current assets frame range and handles.
 

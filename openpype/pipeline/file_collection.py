@@ -275,7 +275,7 @@ def _add_slate_frame_to_collected_frames(
     if frame_length == len(collected_file_frames):
         frame_slate_str = frame_utils.get_frame_start_str(
             frame_start - 1,
-            frame_start
+            frame_end
         )
 
         slate_frame = collected_file_frames[0].replace(
