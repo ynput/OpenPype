@@ -370,7 +370,8 @@ DEFAULT_TOOLS_VALUES = {
                     "staticMesh"
                 ],
                 "hosts": [
-                    "maya"
+                    "maya",
+                    "houdini"
                 ],
                 "task_types": [],
                 "tasks": [],

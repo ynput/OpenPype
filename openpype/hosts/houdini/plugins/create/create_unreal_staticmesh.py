@@ -90,6 +90,20 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
 
         return attrs + [vcformat, convert_units]
 
+    # Overrides BaseCreator.get_dynamic_data()
+    def get_dynamic_data(
+        self, variant, task_name, asset_doc, project_name, host_name, instance
+    ):
+        """
+        The default subset name templates for Unreal include {asset} and thus
+        we should pass that along as dynamic data.
+        """
+        dynamic_data = super(CreateUnrealStaticMesh, self).get_dynamic_data(
+            variant, task_name, asset_doc, project_name, host_name, instance
+        )
+        dynamic_data["asset"] = asset_doc["name"]
+        return dynamic_data
+
     def get_parms(self, subset_name, pre_create_data):
         """Get parameters values for this specific node."""
 

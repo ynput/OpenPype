@@ -429,7 +429,8 @@
                         "staticMesh"
                     ],
                     "hosts": [
-                        "maya"
+                        "maya",
+                        "houdini"
                     ],
                     "task_types": [],
                     "tasks": [],
