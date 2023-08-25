@@ -1,3 +1,4 @@
+import uuid
 import qtawesome
 from qtpy import QtWidgets, QtGui, QtCore
 
@@ -10,8 +11,35 @@ from .constants import (
     PARENT_ID_ROLE,
 )
 
+SENDER_NAME = "qt_tasks_model"
+
+
+class RefreshThread(QtCore.QThread):
+    refresh_finished = QtCore.Signal(str)
+
+    def __init__(self, controller, folder_id):
+        super(RefreshThread, self).__init__()
+        self._id = uuid.uuid4().hex
+        self._controller = controller
+        self._folder_id = folder_id
+        self._result = None
+
+    @property
+    def id(self):
+        return self._id
+
+    def run(self):
+        self._result = self._controller.get_task_items(
+            self._folder_id, SENDER_NAME)
+        self.refresh_finished.emit(self.id)
+
+    def get_result(self):
+        return self._result
+
 
 class TasksModel(QtGui.QStandardItemModel):
+    refreshed = QtCore.Signal()
+
     def __init__(self, controller):
         super(TasksModel, self).__init__()
 
@@ -26,6 +54,11 @@ class TasksModel(QtGui.QStandardItemModel):
         self._empty_tasks_item_used = False
         self._empty_tasks_item = None
 
+        self._last_folder_id = None
+
+        self._refresh_threads = {}
+        self._current_refresh_thread = None
+
         # Initial state
         self._add_invalid_selection_item()
 
@@ -36,17 +69,16 @@ class TasksModel(QtGui.QStandardItemModel):
         super(TasksModel, self).clear()
 
     def refresh(self):
-        self._is_refreshing = True
-        try:
-            self._refresh()
-        finally:
-            self._is_refreshing = False
+        self._refresh()
 
     def get_index_by_name(self, task_name):
         item = self._items_by_name.get(task_name)
         if item is None:
             return QtCore.QModelIndex()
         return self.indexFromItem(item)
+
+    def get_last_folder_id(self):
+        return self._last_folder_id
 
     def _get_invalid_selection_item(self):
         if self._invalid_selection_item is None:
@@ -106,12 +138,28 @@ class TasksModel(QtGui.QStandardItemModel):
             self._empty_tasks_item_used = False
 
     def _refresh(self):
+        self._is_refreshing = True
         folder_id = self._controller.get_selected_folder_id()
+        self._last_folder_id = folder_id
         if not folder_id:
             self._add_invalid_selection_item()
+            self._current_refresh_thread = None
+            self._is_refreshing = False
+            self.refreshed.emit()
             return
 
-        task_items = self._controller.get_task_items(folder_id)
+        thread = RefreshThread(self._controller, folder_id)
+        self._current_refresh_thread = thread.id
+        self._refresh_threads[thread.id] = thread
+        thread.refresh_finished.connect(self._on_refresh_thread)
+        thread.start()
+
+    def _on_refresh_thread(self, thread_id):
+        thread = self._refresh_threads.pop(thread_id)
+        if thread_id != self._current_refresh_thread:
+            return
+
+        task_items = thread.get_result()
         # Task items are refreshed
         if task_items is None:
             return
@@ -155,6 +203,8 @@ class TasksModel(QtGui.QStandardItemModel):
             root_item.appendRows(new_items)
 
         self._has_content = root_item.rowCount() > 0
+        self._is_refreshing = False
+        self.refreshed.emit()
 
     @property
     def is_refreshing(self):
@@ -215,6 +265,8 @@ class TasksWidget(QtWidgets.QWidget):
         selection_model = tasks_view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
 
+        tasks_model.refreshed.connect(self._on_tasks_model_refresh)
+
         self._controller = controller
         self._tasks_view = tasks_view
         self._tasks_model = tasks_model
@@ -222,6 +274,8 @@ class TasksWidget(QtWidgets.QWidget):
 
         self._last_project = None
         self._last_folder_id = None
+
+        self._expected_selection_data = None
 
     def _clear(self):
         self._tasks_model.clear()
@@ -237,31 +291,53 @@ class TasksWidget(QtWidgets.QWidget):
     def _on_tasks_refresh_finished(self, event):
         # Refresh only if current folder id is the same
         if (
-            event["project_name"] != self._last_project
+            event["sender"] == SENDER_NAME
+            or event["project_name"] != self._last_project
             or event["folder_id"] != self._last_folder_id
         ):
             return
         self._tasks_model.refresh()
-        self._tasks_proxy_model.sort(0)
 
     def _folder_selection_changed(self, event):
         self._last_folder_id = event["folder_id"]
         self._tasks_model.refresh()
-        # Fake trigger of selection change to update selected task
-        self._on_selection_change()
 
-    def _on_expected_selection_change(self, event):
-        if event["task_selected"] or not event["folder_selected"]:
-            return
+    def _on_tasks_model_refresh(self):
+        if not self._set_expected_selection():
+            self._on_selection_change()
+        self._tasks_proxy_model.sort(0)
 
-        folder_id = self._controller.get_selected_folder_id()
-        task_name = event["task_name"]
+    def _set_expected_selection(self):
+        if self._expected_selection_data is None:
+            return False
+        folder_id = self._expected_selection_data["folder_id"]
+        task_name = self._expected_selection_data["task_name"]
+        self._expected_selection_data = None
+        model_folder_id = self._tasks_model.get_last_folder_id()
+        if folder_id != model_folder_id:
+            return False
         if task_name is not None:
             index = self._tasks_model.get_index_by_name(task_name)
             if index.isValid():
                 proxy_index = self._tasks_proxy_model.mapFromSource(index)
                 self._tasks_view.setCurrentIndex(proxy_index)
         self._controller.expected_task_selected(folder_id, task_name)
+        return True
+
+    def _on_expected_selection_change(self, event):
+        if event["task_selected"] or not event["folder_selected"]:
+            return
+
+        model_folder_id = self._tasks_model.get_last_folder_id()
+        folder_id = self._controller.get_selected_folder_id()
+        self._expected_selection_data = {
+            "task_name": event["task_name"],
+            "folder_id": folder_id,
+        }
+
+        if folder_id != model_folder_id or self._tasks_model.is_refreshing:
+            return
+        self._set_expected_selection()
 
     def _get_selected_item_ids(self):
         selection_model = self._tasks_view.selectionModel()

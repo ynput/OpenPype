@@ -80,6 +80,23 @@ class BaseWorkfileController(AbstractWorkfileController):
         return self._log
 
     @property
+    def event_system(self):
+        """Inner event system for workfiles tool controller.
+
+        Is used for communication with UI. Event system is created on demand.
+
+        Returns:
+            QueuedEventSystem: Event system which can trigger callbacks for topics.
+        """
+
+        if self._event_system is None:
+            self._event_system = EventSystem()
+        return self._event_system
+
+    # ----------------------------------------------------
+    # Implementation of methods required for backend logic
+    # ----------------------------------------------------
+    @property
     def project_settings(self):
         # TODO add cache timeout? It is refreshed on 'Refresh' button click.
         if self._project_settings is None:
@@ -94,20 +111,15 @@ class BaseWorkfileController(AbstractWorkfileController):
             self._project_anatomy = Anatomy(self.get_current_project_name())
         return self._project_anatomy
 
-    @property
-    def event_system(self):
-        """Inner event system for workfiles tool controller.
+    def get_folder_entity(self, folder_id):
+        return self._entities_model.get_folder_entity(folder_id)
 
-        Is used for communication with UI. Event system is created on demand.
+    def get_task_entity(self, task_id):
+        return self._entities_model.get_task_entity(task_id)
 
-        Returns:
-            EventSystem: Event system which can trigger callbacks for topics.
-        """
-
-        if self._event_system is None:
-            self._event_system = EventSystem()
-        return self._event_system
-
+    # ---------------------------------
+    # Implementation of abstract methods
+    # ---------------------------------
     def emit_event(self, topic, data=None, source=None):
         """Use implemented event system to trigger event."""
 
@@ -117,9 +129,6 @@ class BaseWorkfileController(AbstractWorkfileController):
 
     def register_event_callback(self, topic, callback):
         self.event_system.add_callback(topic, callback)
-
-    def _emit_event(self, topic, data=None):
-        self.emit_event(topic, data, "controller")
 
     # Host information
     def get_workfile_extensions(self):
@@ -171,15 +180,6 @@ class BaseWorkfileController(AbstractWorkfileController):
         self._selection_model.set_selected_representation_id(
             representation_id)
 
-    # Expected selection
-    # - expected selection is used to restore selection after refresh
-    #   or when current context should be used
-    def _trigger_expected_selection_changed(self):
-        self._emit_event(
-            "controller.expected_selection_changed",
-            self._expected_selection.get_expected_selection_data(),
-        )
-
     def set_expected_selection(self, folder_id, task_name):
         self._expected_selection.set_expected_selection(folder_id, task_name)
         self._trigger_expected_selection_changed()
@@ -203,11 +203,11 @@ class BaseWorkfileController(AbstractWorkfileController):
         )
 
     # Model functions
-    def get_folder_items(self):
-        return self._entities_model.get_folder_items()
+    def get_folder_items(self, sender):
+        return self._entities_model.get_folder_items(sender)
 
-    def get_task_items(self, folder_id):
-        return self._entities_model.get_tasks_items(folder_id)
+    def get_task_items(self, folder_id, sender):
+        return self._entities_model.get_tasks_items(folder_id, sender)
 
     def get_workarea_dir_by_context(self, folder_id, task_id):
         return self._workfiles_model.get_workarea_dir_by_context(
@@ -239,8 +239,14 @@ class BaseWorkfileController(AbstractWorkfileController):
             comment,
         )
 
-    def get_published_file_items(self, folder_id):
-        return self._workfiles_model.get_published_file_items(folder_id)
+    def get_published_file_items(self, folder_id, task_id):
+        task_name = None
+        if task_id:
+            task = self.get_task_entity(task_id)
+            task_name = task.get("name")
+
+        return self._workfiles_model.get_published_file_items(
+            folder_id, task_name)
 
     def get_workfile_info(self, folder_id, task_id, filepath):
         return self._workfiles_model.get_workfile_info(
@@ -322,6 +328,18 @@ class BaseWorkfileController(AbstractWorkfileController):
             {"failed": failed},
         )
 
+    def _emit_event(self, topic, data=None):
+        self.emit_event(topic, data, "controller")
+
+    # Expected selection
+    # - expected selection is used to restore selection after refresh
+    #   or when current context should be used
+    def _trigger_expected_selection_changed(self):
+        self._emit_event(
+            "controller.expected_selection_changed",
+            self._expected_selection.get_expected_selection_data(),
+        )
+
     def _save_as_workfile(
         self,
         folder_id,
@@ -332,9 +350,8 @@ class BaseWorkfileController(AbstractWorkfileController):
     ):
         # Trigger before save event
         project_name = self.get_current_project_name()
-        # TODO use entities model
-        folder = ayon_api.get_folder_by_id(project_name, folder_id)
-        task = ayon_api.get_task_by_id(project_name, task_id)
+        folder = self.get_folder_entity(folder_id)
+        task = self.get_task_entity(task_id)
         task_name = task["name"]
 
         # QUESTION should the data be different for 'before' and 'after'?
@@ -342,7 +359,7 @@ class BaseWorkfileController(AbstractWorkfileController):
         event_data = {
             "project_name": project_name,
             "folder_id": folder_id,
-            "asset_id": folder["id"],
+            "asset_id": folder_id,
             "asset_name": folder["name"],
             "task_id": task_id,
             "task_name": task_name,

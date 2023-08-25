@@ -1,3 +1,4 @@
+import uuid
 import collections
 
 import qtawesome
@@ -10,15 +11,53 @@ from openpype.tools.utils import (
 
 from .constants import ITEM_ID_ROLE, ITEM_NAME_ROLE
 
+SENDER_NAME = "qt_folders_model"
+
+
+class RefreshThread(QtCore.QThread):
+    refresh_finished = QtCore.Signal(str)
+
+    def __init__(self, controller):
+        super(RefreshThread, self).__init__()
+        self._id = uuid.uuid4().hex
+        self._controller = controller
+        self._result = None
+
+    @property
+    def id(self):
+        return self._id
+
+    def run(self):
+        self._result = self._controller.get_folder_items(SENDER_NAME)
+        self.refresh_finished.emit(self.id)
+
+    def get_result(self):
+        return self._result
+
 
 class FoldersModel(QtGui.QStandardItemModel):
+    refreshed = QtCore.Signal()
+
     def __init__(self, controller):
         super(FoldersModel, self).__init__()
 
         self._controller = controller
-        self._has_content = False
         self._items_by_id = {}
         self._parent_id_by_id = {}
+
+        self._refresh_threads = {}
+        self._current_refresh_thread = None
+
+        self._has_content = False
+        self._is_refreshing = False
+
+    @property
+    def is_refreshing(self):
+        return self._is_refreshing
+
+    @property
+    def has_content(self):
+        return self._has_content
 
     def clear(self):
         self._items_by_id = {}
@@ -33,10 +72,24 @@ class FoldersModel(QtGui.QStandardItemModel):
         return self.indexFromItem(item)
 
     def refresh(self):
-        folder_items_by_id = self._controller.get_folder_items()
+        self._is_refreshing = True
+
+        thread = RefreshThread(self._controller)
+        self._current_refresh_thread = thread.id
+        self._refresh_threads[thread.id] = thread
+        thread.refresh_finished.connect(self._on_refresh_thread)
+        thread.start()
+
+    def _on_refresh_thread(self, thread_id):
+        thread = self._refresh_threads.pop(thread_id)
+        if thread_id != self._current_refresh_thread:
+            return
+
+        folder_items_by_id = thread.get_result()
         if not folder_items_by_id:
             if folder_items_by_id is not None:
                 self.clear()
+            self._is_refreshing = False
             return
 
         self._has_content = True
@@ -101,9 +154,8 @@ class FoldersModel(QtGui.QStandardItemModel):
             self._items_by_id.pop(item_id)
             self._parent_id_by_id.pop(item_id)
 
-    @property
-    def has_content(self):
-        return self._has_content
+        self._is_refreshing = False
+        self.refreshed.emit()
 
 
 class FoldersWidget(QtWidgets.QWidget):
@@ -143,12 +195,16 @@ class FoldersWidget(QtWidgets.QWidget):
         selection_model = folders_view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
 
+        folders_model.refreshed.connect(self._on_model_refresh)
+
         self._controller = controller
         self._folders_view = folders_view
         self._folders_model = folders_model
         self._folders_proxy_model = folders_proxy_model
 
         self._last_project = None
+
+        self._expected_selection = None
 
     def set_name_filer(self, name):
         self._folders_proxy_model.setFilterFixedString(name)
@@ -160,14 +216,14 @@ class FoldersWidget(QtWidgets.QWidget):
         if self._last_project != event["project_name"]:
             self._clear()
 
-    def _on_folders_refresh_finished(self):
-        self._folders_model.refresh()
-        self._folders_proxy_model.sort(0)
+    def _on_folders_refresh_finished(self, event):
+        if event["sender"] != SENDER_NAME:
+            self._folders_model.refresh()
 
     def _on_controller_refresh(self):
-        self._set_expected_selection()
+        self._update_expected_selection()
 
-    def _set_expected_selection(self, expected_data=None):
+    def _update_expected_selection(self, expected_data=None):
         if expected_data is None:
             expected_data = self._controller.get_expected_selection_data()
 
@@ -176,6 +232,13 @@ class FoldersWidget(QtWidgets.QWidget):
             return
 
         folder_id = expected_data["folder_id"]
+        self._expected_selection = folder_id
+        if not self._folders_model.is_refreshing:
+            self._set_expected_selection()
+
+    def _set_expected_selection(self):
+        folder_id = self._expected_selection
+        self._expected_selection = None
         if (
             folder_id is not None
             and folder_id != self._get_selected_item_id()
@@ -186,8 +249,13 @@ class FoldersWidget(QtWidgets.QWidget):
                 self._folders_view.setCurrentIndex(proxy_index)
         self._controller.expected_folder_selected(folder_id)
 
+    def _on_model_refresh(self):
+        if self._expected_selection:
+            self._set_expected_selection()
+        self._folders_proxy_model.sort(0)
+
     def _on_expected_selection_change(self, event):
-        self._set_expected_selection(event.data)
+        self._update_expected_selection(event.data)
 
     def _get_selected_item_id(self):
         selection_model = self._folders_view.selectionModel()

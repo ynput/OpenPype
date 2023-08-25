@@ -111,11 +111,40 @@ class AbstractWorkfileController(object):
 
     # Model functions
     @abstractmethod
-    def get_folder_items(self):
+    def get_folder_items(self, sender):
+        """Folder items to visualize project hierarchy.
+
+        This function may trigger events 'folders.refresh.started' and
+        'folders.refresh.finished' which will contain 'sender' value in data.
+        That may help to avoid re-refresh of folder items in UI elements.
+
+        Args:
+            sender (str): Who requested folder items.
+
+        Returns:
+            list[FolderItem]: Minimum possible information needed
+                for visualisation of folder hierarchy.
+        """
+
         pass
 
     @abstractmethod
-    def get_task_items(self, folder_id):
+    def get_task_items(self, folder_id, sender):
+        """Task items.
+
+        This function may trigger events 'tasks.refresh.started' and
+        'tasks.refresh.finished' which will contain 'sender' value in data.
+        That may help to avoid re-refresh of task items in UI elements.
+
+        Args:
+            folder_id (str): Folder ID for which are tasks requested.
+            sender (str): Who requested folder items.
+
+        Returns:
+            list[TaskItem]: Minimum possible information needed
+                for visualisation of tasks.
+        """
+
         pass
 
     @abstractmethod
@@ -148,7 +177,7 @@ class AbstractWorkfileController(object):
         pass
 
     @abstractmethod
-    def get_published_file_items(self, folder_id):
+    def get_published_file_items(self, folder_id, task_id):
         pass
 
     @abstractmethod

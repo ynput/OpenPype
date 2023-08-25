@@ -2,6 +2,7 @@ import os
 import re
 import copy
 
+import arrow
 import ayon_api
 from ayon_api.operations import OperationsSession
 
@@ -18,7 +19,10 @@ from openpype.pipeline.workfile import (
     get_last_workfile_with_version,
 )
 from openpype.pipeline.version_start import get_versioning_start
-from openpype.tools.ayon_workfiles.abstract import WorkareaFilepathResult
+try:
+    from openpype.tools.ayon_workfiles.abstract import WorkareaFilepathResult
+except Exception:
+    from ayon_workfiles.abstract import WorkareaFilepathResult
 
 
 def get_folder_template_data(folder):
@@ -50,33 +54,60 @@ def get_task_template_data(task):
 
 
 class FileItem:
-    def __init__(self, dirpath, filename, modified, published):
+    def __init__(
+        self,
+        dirpath,
+        filename,
+        modified,
+        representation_id=None,
+        filepath=None,
+        exists=None
+    ):
         self.filename = filename
         self.dirpath = dirpath
         self.modified = modified
-        self.published = published
+        self.representation_id = representation_id
+        self._filepath = filepath
+        self._exists = exists
 
     @property
     def filepath(self):
-        return os.path.join(self.dirpath, self.filename)
+        if self._filepath is None:
+            self._filepath = os.path.join(self.dirpath, self.filename)
+        return self._filepath
+
+    @property
+    def exists(self):
+        if self._exists is None:
+            self._exists = os.path.exists(self.filepath)
+        return self._exists
+
+    def to_data(self):
+        return {
+            "filename": self.filename,
+            "dirpath": self.dirpath,
+            "modified": self.modified,
+            "representation_id": self.representation_id,
+            "filepath": self.filepath,
+            "exists": self.exists,
+        }
 
     @classmethod
-    def from_dir(cls, dirpath, extensions):
-        output = []
-        if not dirpath or not os.path.exists(dirpath):
-            return output
+    def from_data(cls, data):
+        required_keys = {
+            "filename",
+            "dirpath",
+            "modified",
+            "representation_id"
+        }
+        missing_keys = required_keys - set(data.keys())
+        if missing_keys:
+            raise KeyError("Missing keys: {}".format(missing_keys))
 
-        for filename in os.listdir(dirpath):
-            ext = os.path.splitext(filename)[-1]
-            if ext.lower() not in extensions:
-                continue
-            output.append(cls(
-                dirpath,
-                filename,
-                os.path.getmtime(os.path.join(dirpath, filename))
-            ))
-
-        return output
+        return cls(**{
+            key: data[key]
+            for key in required_keys
+        })
 
 
 class CommentMatcher(object):
@@ -162,7 +193,7 @@ class WorkareaModel:
     def _get_folder_data(self, folder_id):
         fill_data = self._fill_data_by_folder_id.get(folder_id)
         if fill_data is None:
-            folder = ayon_api.get_folder_by_id(self.project_name, folder_id)
+            folder = self._controller.get_folder_entity(folder_id)
             fill_data = get_folder_template_data(folder)
             self._fill_data_by_folder_id[folder_id] = fill_data
         return copy.deepcopy(fill_data)
@@ -170,9 +201,8 @@ class WorkareaModel:
     def _get_task_data(self, folder_id, task_id):
         task_data = self._task_data_by_folder_id.setdefault(folder_id, {})
         if task_id not in task_data:
-            for task in ayon_api.get_tasks(
-                self.project_name, task_ids=[task_id]
-            ):
+            task = self._controller.get_task_entity(task_id)
+            if task:
                 task_data[task_id] = get_task_template_data(task)
         return copy.deepcopy(task_data[task_id])
 
@@ -229,7 +259,7 @@ class WorkareaModel:
 
             modified = os.path.getmtime(filepath)
             items.append(
-                FileItem(workdir, filename, modified, False)
+                FileItem(workdir, filename, modified)
             )
         return items
 
@@ -307,9 +337,10 @@ class WorkareaModel:
         folder = None
         task = None
         if folder_id:
-            folder = ayon_api.get_folder_by_id(self.project_name, folder_id)
+            folder = self._controller.get_folder_entity(folder_id)
         if task_id:
-            task = ayon_api.get_task_by_id(self.project_name, task_id)
+            task = self._controller.get_task_entity(task_id)
+
         if not folder or not task:
             return {
                 "template_key": None,
@@ -446,7 +477,6 @@ class WorkfileEntitiesModel:
         if rootless_path is None:
             rootless_path = self._get_rootless_path(filepath)
 
-        # TODO add threadable way to get workfile info
         identifier = self._get_workfile_info_identifier(
             folder_id, task_id, rootless_path)
         info = self._cache.get(identifier)
@@ -515,15 +545,111 @@ class WorkfileEntitiesModel:
         return workfile_info
 
 
+class PublishWorkfilesModel:
+    """Model for handling of published workfiles.
+
+    Todos:
+        Cache workfiles products and representations for some time.
+            Note Representations won't change. Only what can change are
+                versions.
+    """
+
+    def __init__(self, controller):
+        self._controller = controller
+        self._cached_extensions = None
+
+    @property
+    def _extensions(self):
+        if self._cached_extensions is None:
+            exts = self._controller.get_workfile_extensions()
+            self._cached_extensions = exts or []
+        return self._cached_extensions
+
+    def get_file_items(self, folder_id, task_name):
+        project_name = self._controller.get_current_project_name()
+        # Get subset docs of asset
+        product_entities = ayon_api.get_products(
+            project_name,
+            folder_ids=[folder_id],
+            product_types=["workfile"],
+            fields=["id", "name"]
+        )
+
+        output = []
+        product_ids = {product["id"] for product in product_entities}
+        if not product_ids:
+            return output
+
+        # Get version docs of subsets with their families
+        version_entities = ayon_api.get_versions(
+            project_name,
+            product_ids=product_ids,
+            fields=["id", "productId"]
+        )
+        version_ids = {version["id"] for version in version_entities}
+        if not version_ids:
+            return output
+
+        # Query representations of filtered versions and add filter for
+        #   extension
+        extensions = {ext.lstrip(".") for ext in self._extensions}
+        repre_entities = ayon_api.get_representations(
+            project_name,
+            version_ids=version_ids
+        )
+        project_anatomy = self._controller.project_anatomy
+
+        # Filter queried representations by task name if task is set
+        file_items = []
+        for repre_entity in repre_entities:
+            # Filter by task name (less expensive validation)
+            if task_name is not None:
+                task_info = repre_entity["context"].get("task")
+                if not task_info or task_info["name"] != task_name:
+                    continue
+
+            # Filter by extension
+            workfile_path = None
+            for repre_file in repre_entity["files"]:
+                ext = (
+                    os.path.splitext(repre_file["name"])[1]
+                    .lower()
+                    .lstrip(".")
+                )
+                if ext in extensions:
+                    workfile_path = repre_file["path"]
+                    break
+
+            if not workfile_path:
+                continue
+
+            try:
+                workfile_path = workfile_path.format(
+                    root=project_anatomy.roots)
+            except Exception as exc:
+                print("Failed to format workfile path: {}".format(exc))
+
+            dirpath, filename = os.path.split(workfile_path)
+            created_at = arrow.get(repre_entity["createdAt"])
+            file_items.append(FileItem(
+                dirpath,
+                filename,
+                created_at.float_timestamp,
+                repre_entity["id"]
+            ))
+
+        return file_items
+
+
 class WorkfilesModel:
     """Workfiles model."""
 
     def __init__(self, controller):
         self._controller = controller
-        self._cache = {}
 
         self._entities_model = WorkfileEntitiesModel(controller)
         self._workarea_model = WorkareaModel(controller)
+        self._published_model = PublishWorkfilesModel(controller)
 
     def get_workfile_info(self, folder_id, task_id, filepath):
         return self._entities_model.get_workfile_info(
@@ -574,15 +700,16 @@ class WorkfilesModel:
             *args, **kwargs
         )
 
-    def get_published_file_items(self, folder_id):
+    def get_published_file_items(self, folder_id, task_name):
         """Published workfiles for passed context.
 
         Args:
             folder_id (str): Folder id.
+            task_name (str): Task name.
 
         Returns:
             list[FileItem]: List of files for published workfiles.
         """
 
         # TODO implement
-        return []
+        return self._published_model.get_file_items(folder_id, task_name)

@@ -166,6 +166,9 @@ class EntitiesModel(object):
         self._folder_id_by_path = {}
         self._tasks_cache = {}
 
+        self._folders_by_id = {}
+        self._tasks_by_id = {}
+
         self._folders_refreshing = False
         self._tasks_refreshing = set()
         self._controller = controller
@@ -174,6 +177,9 @@ class EntitiesModel(object):
         self._folders_cache.set_invalid({})
         self._tasks_cache = {}
         self._folder_id_by_path = {}
+
+        self._folders_by_id = {}
+        self._tasks_by_id = {}
 
     def refresh(self):
         self._refresh_folders_cache()
@@ -185,28 +191,45 @@ class EntitiesModel(object):
         folder_items = self._folders_cache.get_data()
         return folder_items.get(folder_id)
 
-    def get_folder_items(self):
+    def get_folder_items(self, sender):
         if not self._folders_cache.is_valid:
-            self._refresh_folders_cache()
-            return None
+            self._refresh_folders_cache(sender)
         return self._folders_cache.get_data()
 
-    def get_tasks_items(self, folder_id):
+    def get_tasks_items(self, folder_id, sender):
         if not folder_id:
             return []
 
         task_cache = self._tasks_cache.get(folder_id)
         if task_cache is None or not task_cache.is_valid:
-            self._refresh_tasks_cache(folder_id)
-            return None
+            self._refresh_tasks_cache(folder_id, sender)
+            task_cache = self._tasks_cache.get(folder_id)
         return task_cache.get_data()
 
+    def get_folder_entity(self, folder_id):
+        if folder_id not in self._folders_by_id:
+            entity = None
+            if folder_id:
+                project_name = self._controller.get_current_project_name()
+                entity = ayon_api.get_folder_by_id(project_name, folder_id)
+            self._folders_by_id[folder_id] = entity
+        return self._folders_by_id[folder_id]
+
+    def get_task_entity(self, task_id):
+        if task_id not in self._tasks_by_id:
+            entity = None
+            if task_id:
+                project_name = self._controller.get_current_project_name()
+                entity = ayon_api.get_task_by_id(project_name, task_id)
+            self._tasks_by_id[task_id] = entity
+        return self._tasks_by_id[task_id]
+
     @contextlib.contextmanager
-    def _folder_refresh_event_manager(self, project_name):
+    def _folder_refresh_event_manager(self, project_name, sender):
         self._folders_refreshing = True
         self._controller.emit_event(
             "folders.refresh.started",
-            {"project_name": project_name},
+            {"project_name": project_name, "sender": sender},
             self.event_source
         )
         try:
@@ -215,17 +238,23 @@ class EntitiesModel(object):
         finally:
             self._controller.emit_event(
                 "folders.refresh.finished",
-                {"project_name": project_name},
+                {"project_name": project_name, "sender": sender},
                 self.event_source
             )
             self._folders_refreshing = False
 
     @contextlib.contextmanager
-    def _task_refresh_event_manager(self, project_name, folder_id):
+    def _task_refresh_event_manager(
+        self, project_name, folder_id, sender
+    ):
         self._tasks_refreshing.add(folder_id)
         self._controller.emit_event(
             "tasks.refresh.started",
-            {"project_name": project_name, "folder_id": folder_id},
+            {
+                "project_name": project_name,
+                "folder_id": folder_id,
+                "sender": sender,
+            },
             self.event_source
         )
         try:
@@ -234,16 +263,20 @@ class EntitiesModel(object):
         finally:
             self._controller.emit_event(
                 "tasks.refresh.finished",
-                {"project_name": project_name, "folder_id": folder_id},
+                {
+                    "project_name": project_name,
+                    "folder_id": folder_id,
+                    "sender": sender,
+                },
                 self.event_source
             )
             self._tasks_refreshing.discard(folder_id)
 
-    def _refresh_folders_cache(self):
+    def _refresh_folders_cache(self, sender=None):
         if self._folders_refreshing:
             return
         project_name = self._controller.get_current_project_name()
-        with self._folder_refresh_event_manager(project_name):
+        with self._folder_refresh_event_manager(project_name, sender):
             folder_items = self._query_folders(project_name)
             self._folders_cache.update_data(folder_items)
 
@@ -259,12 +292,14 @@ class EntitiesModel(object):
             hierachy_queue.extend(item["children"] or [])
         return folder_items
 
-    def _refresh_tasks_cache(self, folder_id):
+    def _refresh_tasks_cache(self, folder_id, sender=None):
         if folder_id in self._tasks_refreshing:
             return
 
         project_name = self._controller.get_current_project_name()
-        with self._task_refresh_event_manager(project_name, folder_id):
+        with self._task_refresh_event_manager(
+            project_name, folder_id, sender
+        ):
             cache_item = self._tasks_cache.get(folder_id)
             if cache_item is None:
                 cache_item = CacheItem()
