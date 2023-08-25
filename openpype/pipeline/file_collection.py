@@ -124,6 +124,19 @@ def convert_filename_to_formattable_string(filename):
     Args:
         filename (str): Filename to convert
 
+    Examples:
+        >>> convert_filename_to_formattable_string("file.####.exr")
+        "file.{:0>4}.exr"
+        >>> collect_filepaths_from_sequential_path("file.%d.exr")
+        "file.{:0>1}.exr"
+        >>> collect_filepaths_from_sequential_path("file.%04d.exr")
+        "file.{:0>4}.exr"
+
+    Limitations:
+        - Only sequential patterns with # or %d are supported
+        - any path with following pattern will not be converted:
+            - file.<frame>.exr
+            - file.[1001-1100].exr
     Returns:
         Any[str, None]: Formattable string or None if not possible
                         to convert
