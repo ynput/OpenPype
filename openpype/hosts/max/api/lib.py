@@ -390,6 +390,7 @@ def get_namespace(container_name):
     namespace = rt.getUserProp(node, "namespace")
     return namespace, name
 
+
 def object_transform_set(container_children):
     """A function which allows to store the transform of
     previous loaded object(s)
