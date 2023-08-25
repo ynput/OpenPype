@@ -191,7 +191,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
-        metadata_path, rootless_metadata_path = \
+        _, rootless_metadata_path = \
             create_metadata_path(instance, anatomy)
 
         environment = {
@@ -506,8 +506,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             }
             publish_job["ftrack"] = ftrack
 
-        metadata_path, rootless_metadata_path = \
-                create_metadata_path(instance, anatomy)
+        metadata_path, _ = \
+            create_metadata_path(instance, anatomy)
 
         with open(metadata_path, "w") as f_:
             json.dump(publish_job, f_, indent=4, sort_keys=True)
