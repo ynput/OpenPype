@@ -226,12 +226,10 @@ def get_colorspace_from_filepath(config_path, filepath):
 def parse_colorspace_from_filepath(
     filepath, colorspaces=None, config_path=None
 ):
-    """Parse colorspace name from list of filepaths
+    """Parse colorspace name from filepath
 
     An input path can have colorspace name used as part of name
     or as folder name.
-
-    # add example python code block
 
     Example:
         >>> config_path = "path/to/config.ocio"
