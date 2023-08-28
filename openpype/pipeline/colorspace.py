@@ -449,7 +449,6 @@ def get_ocio_config_colorspaces(config_path):
     return CashedData.ocio_config_colorspaces[config_path]
 
 
-
 # TODO: remove this in future - backward compatibility
 @deprecated("get_wrapped_with_subprocess")
 def get_colorspace_data_subprocess(config_path):
