@@ -106,7 +106,7 @@ class ExtractCameraMayaScene(publish.Extractor,
     families = ["camera", "matchmove"]
     scene_type = "ma"
 
-    keep_image_planes = False
+    keep_input_conn = False
 
     def process(self, instance):
         """Plugin entry point."""
