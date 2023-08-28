@@ -64,8 +64,8 @@ class CreateVDBCache(plugin.HoudiniCreator):
         # Allow sop level paths (e.g. /obj/geo1/box1)
         if isinstance(selected_node, hou.SopNode):
             self.log.debug(
-                "Valid SopNode selection, 'SOP Path' in ROP will be set to '%s'."
-                % selected_node.path()
+                "Valid SopNode selection, 'SOP Path' in ROP will"
+                " be set to '%s'.", selected_node.path()
             )
             return selected_node.path()
 
@@ -79,9 +79,8 @@ class CreateVDBCache(plugin.HoudiniCreator):
             sop_node = self.get_obj_output(selected_node)
             if sop_node:
                 self.log.debug(
-                    "Valid ObjNode selection, 'SOP Path' in ROP will be set to "
-                    "the child path '%s'."
-                    % sop_node.path()
+                    "Valid ObjNode selection, 'SOP Path' in ROP will "
+                    "be set to the child path '%s'.", sop_node.path()
                 )
                 return sop_node.path()
 
