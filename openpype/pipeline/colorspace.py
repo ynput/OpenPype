@@ -171,8 +171,6 @@ def get_imageio_colorspace_from_filepath(
     # from filepath with OCIO v2 way
     # QUESTION: should we override file rules from our settings and
     #           in ocio v2 only focus on file rules set in config file?
-    # TODO: do the ocio v compatibility check inside of wrapper script
-    #       because of implementation `parseColorSpaceFromString`
     if (
         compatibility_check_config_version(config_data["path"], major=2)
         and not colorspace_name
@@ -226,51 +224,56 @@ def get_colorspace_from_filepath(config_path, filepath):
 
 
 def parse_colorspace_from_filepath(
-    path, host_name, project_name,
-    config_data=None,
-    project_settings=None
+    filepath, colorspaces=None, config_path=None
 ):
-    """Parse colorspace name from filepath
+    """Parse colorspace name from list of filepaths
 
     An input path can have colorspace name used as part of name
     or as folder name.
 
+    # add example python code block
+
+    Example:
+        >>> config_path = "path/to/config.ocio"
+        >>> colorspaces = get_ocio_config_colorspaces(config_path)
+        >>> colorspace = parse_colorspace_from_filepath(
+                "path/to/file/acescg/file.exr",
+                colorspaces=colorspaces
+            )
+        >>> print(colorspace)
+        acescg
+
     Args:
-        path (str): path string
-        host_name (str): host name
-        project_name (str): project name
-        config_data (dict, optional): config path and template in dict.
-                                      Defaults to None.
-        project_settings (dict, optional): project settings. Defaults to None.
+        filepath (str): path string
+        colorspaces (Optional[dict[str]]): list of colorspaces
+        config_path (Optional[str]): path to config.ocio file
 
     Returns:
         str: name of colorspace
     """
-    if not config_data:
-        project_settings = project_settings or get_project_settings(
-            project_name
+    if not colorspaces and not config_path:
+        raise ValueError(
+            "You need to provide `config_path` if you don't "
+            "want to provide input `colorspaces`."
         )
-        config_data = get_imageio_config(
-            project_name, host_name, project_settings)
 
-    config_path = config_data["path"]
+    colorspaces = colorspaces or get_ocio_config_colorspaces(config_path)
 
     # match file rule from path
     colorspace_name = None
-    colorspaces = get_ocio_config_colorspaces(config_path)
     for colorspace_key in colorspaces:
         # check underscored variant of colorspace name
         # since we are reformatting it in integrate.py
-        if colorspace_key.replace(" ", "_") in path:
+        if colorspace_key.replace(" ", "_") in filepath:
             colorspace_name = colorspace_key
             break
-        if colorspace_key in path:
+        if colorspace_key in filepath:
             colorspace_name = colorspace_key
             break
 
     if not colorspace_name:
         log.info("No matching colorspace in config '{}' for path: '{}'".format(
-            config_path, path
+            config_path, filepath
         ))
         return None
 

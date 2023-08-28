@@ -132,14 +132,14 @@ class TestPipelineColorspace(TestPipeline):
         path_1 = "renderCompMain_ACES2065-1.####.exr"
         expected_1 = "ACES2065-1"
         ret_1 = colorspace.parse_colorspace_from_filepath(
-            path_1, "nuke", "test_project", project_settings=project_settings
+            path_1, config_path=config_path_asset
         )
         assert ret_1 == expected_1, f"Not matching colorspace {expected_1}"
 
         path_2 = "renderCompMain_BMDFilm_WideGamut_Gen5.mov"
         expected_2 = "BMDFilm WideGamut Gen5"
         ret_2 = colorspace.parse_colorspace_from_filepath(
-            path_2, "nuke", "test_project", project_settings=project_settings
+            path_2, config_path=config_path_asset
         )
         assert ret_2 == expected_2, f"Not matching colorspace {expected_2}"
 
