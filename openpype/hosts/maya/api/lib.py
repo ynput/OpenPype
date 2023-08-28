@@ -2571,7 +2571,8 @@ def bake_to_world_space(nodes,
             new_name = "{0}_baked".format(short_name)
             new_node = cmds.duplicate(node,
                                       name=new_name,
-                                      renameChildren=True)[0]
+                                      renameChildren=True,
+                                      ic=True)[0]
 
             # Connect all attributes on the node except for transform
             # attributes
