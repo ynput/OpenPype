@@ -407,7 +407,6 @@ def compatibility_check_config_version(config_path, major=1, minor=None):
                 "config", "get_version", config_path=config_path
             )
 
-
     # check major version
     if CashedData.config_version_data["major"] != major:
         return False
