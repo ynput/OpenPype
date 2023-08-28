@@ -81,7 +81,8 @@ def unlock(plug):
             cmds.disconnectAttr(source, destination)
 
 
-class ExtractCameraMayaScene(publish.Extractor):
+class ExtractCameraMayaScene(publish.Extractor,
+                             publish.OptionalPyblishPluginMixin):
     """Extract a Camera as Maya Scene.
 
     This will create a duplicate of the camera that will be baked *with*

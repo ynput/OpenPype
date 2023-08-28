@@ -6,7 +6,8 @@ from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 
-class ExtractCameraAlembic(publish.Extractor):
+class ExtractCameraAlembic(publish.Extractor,
+                           publish.OptionalPyblishPluginMixin):
     """Extract a Camera as Alembic.
 
     The camera gets baked to world space by default. Only when the instance's
