@@ -285,6 +285,7 @@ class SelectContextOverlay(QtWidgets.QFrame):
 
 class PublishedFilesWidget(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
+    save_as_requested = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(PublishedFilesWidget, self).__init__(parent)
@@ -364,8 +365,7 @@ class PublishedFilesWidget(QtWidgets.QWidget):
         self._controller.set_selected_representation_id(repre_id)
 
     def _on_left_double_click(self):
-        # TODO Request save as dialog
-        pass
+        self.save_as_requested.emit()
 
     def _on_expected_selection_change(self, event):
         if (

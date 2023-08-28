@@ -182,6 +182,12 @@ class BaseWorkfileController(AbstractWorkfileController):
     def get_workfile_extensions(self):
         return self._host.get_workfile_extensions()
 
+    def has_unsaved_changes(self):
+        host = self._host
+        if isinstance(host, IWorkfileHost):
+            return host.workfile_has_unsaved_changes()
+        return host.has_unsaved_changes()
+
     # Current context
     def get_host_name(self):
         return self._host.name
@@ -381,6 +387,15 @@ class BaseWorkfileController(AbstractWorkfileController):
             "open_workfile.finished",
             {"failed": failed},
         )
+
+    def save_current_workfile(self):
+        host = self._host
+        if isinstance(host, IWorkfileHost):
+            current_file = host.get_current_workfile()
+            host.save_workfile(current_file)
+        else:
+            current_file = host.current_file()
+            host.save_file(current_file)
 
     def save_as_workfile(
         self,

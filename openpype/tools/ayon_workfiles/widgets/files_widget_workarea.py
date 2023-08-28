@@ -219,6 +219,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
 
 class WorkAreaFilesWidget(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
+    open_current_requested = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(WorkAreaFilesWidget, self).__init__(parent)
@@ -287,17 +288,12 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
     def get_selected_path(self):
         return self._get_selected_info()["filepath"]
 
-    def open_current_file(self):
-        path = self.get_selected_path()
-        if path:
-            self._controller.open_workfile(path)
-
     def _on_selection_change(self):
         filepath = self.get_selected_path()
         self._controller.set_selected_workfile_path(filepath)
 
     def _on_left_double_click(self):
-        self.open_current_file()
+        self.open_current_requested.emit()
 
     def _on_expected_selection_change(self, event):
         if event["workfile_name_selected"]:

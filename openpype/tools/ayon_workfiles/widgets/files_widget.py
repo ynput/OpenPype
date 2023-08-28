@@ -1,7 +1,7 @@
 import os
 
 import qtpy
-from qtpy import QtWidgets
+from qtpy import QtWidgets, QtCore
 
 from .save_as_dialog import SaveAsDialog
 from .files_widget_workarea import WorkAreaFilesWidget
@@ -75,11 +75,18 @@ class FilesWidget(QtWidgets.QWidget):
             "selection.task.changed",
             self._on_task_changed
         )
+        controller.register_event_callback(
+            "copy_representation.finished",
+            self._on_copy_representation_finished,
+        )
 
+        workarea_widget.open_current_requested.connect(
+            self._on_current_open_requests)
         workarea_btn_open.clicked.connect(self._on_workarea_open_clicked)
         workarea_btn_browse.clicked.connect(self._on_workarea_browse_clicked)
         workarea_btn_save.clicked.connect(self._on_workarea_save_clicked)
 
+        published_widget.save_as_requested.connect(self._on_save_as_request)
         published_btn_copy_n_open.clicked.connect(
             self._on_published_save_clicked)
         published_btn_change_context.clicked.connect(
@@ -159,8 +166,23 @@ class FilesWidget(QtWidgets.QWidget):
     # -------------------------------------------------------------
     # Workare workfiles
     # -------------------------------------------------------------
+    def _open_workfile(self, filepath):
+        if self._controller.has_unsaved_changes():
+            result = self._save_changes_prompt()
+            if result is None:
+                return
+
+            if result:
+                self._controller.save_current_workfile()
+        self._controller.open_workfile(filepath)
+
     def _on_workarea_open_clicked(self):
-        self._workarea_widget.open_current_file()
+        path = self._workarea_widget.get_selected_path()
+        if path:
+            self._open_workfile(path)
+
+    def _on_current_open_requests(self):
+        self._on_workarea_open_clicked()
 
     def _on_workarea_browse_clicked(self):
         extnsions = self._controller.get_workfile_extensions()
@@ -191,7 +213,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         filepath = QtWidgets.QFileDialog.getOpenFileName(**kwargs)[0]
         if filepath:
-            self._controller.open_workfile(filepath)
+            self._open_workfile(filepath)
 
     def _on_workarea_save_clicked(self):
         result = self._exec_save_as_dialog()
@@ -246,6 +268,9 @@ class FilesWidget(QtWidgets.QWidget):
             result["template_key"],
         )
 
+    def _on_save_as_request(self):
+        self._on_published_save_clicked()
+
     def _set_select_contex_mode(self, enabled):
         if self._select_context_mode is enabled:
             return
@@ -287,3 +312,31 @@ class FilesWidget(QtWidgets.QWidget):
             self._controller.set_expected_selection(
                 folder_id, task_name, representation_id=representation_id
             )
+
+    def _on_copy_representation_finished(self, event):
+        if not event["failed"]:
+            self._set_select_contex_mode(False)
+
+    def _save_changes_prompt(self):
+        messagebox = QtWidgets.QMessageBox(parent=self)
+        messagebox.setWindowFlags(
+            messagebox.windowFlags() | QtCore.Qt.FramelessWindowHint
+        )
+        messagebox.setIcon(QtWidgets.QMessageBox.Warning)
+        messagebox.setWindowTitle("Unsaved Changes!")
+        messagebox.setText(
+            "There are unsaved changes to the current file."
+            "\nDo you want to save the changes?"
+        )
+        messagebox.setStandardButtons(
+            QtWidgets.QMessageBox.Yes
+            | QtWidgets.QMessageBox.No
+            | QtWidgets.QMessageBox.Cancel
+        )
+
+        result = messagebox.exec_()
+        if result == QtWidgets.QMessageBox.Yes:
+            return True
+        if result == QtWidgets.QMessageBox.No:
+            return False
+        return None

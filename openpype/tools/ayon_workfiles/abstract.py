@@ -148,6 +148,10 @@ class AbstractWorkfileController(object):
         pass
 
     @abstractmethod
+    def has_unsaved_changes(self):
+        pass
+
+    @abstractmethod
     def get_workarea_dir_by_context(self, folder_id, task_id):
         pass
 
@@ -196,6 +200,10 @@ class AbstractWorkfileController(object):
     # Controller actions
     @abstractmethod
     def open_workfile(self, filepath):
+        pass
+
+    @abstractmethod
+    def save_current_workfile(self):
         pass
 
     @abstractmethod
