@@ -2573,7 +2573,7 @@ def bake_to_world_space(nodes,
             new_node = cmds.duplicate(node,
                                       name=new_name,
                                       renameChildren=True,
-                                      ic=copy_input_conn)[0]
+                                      inputConnections=copy_input_conn)[0]
 
             # Connect all attributes on the node except for transform
             # attributes
