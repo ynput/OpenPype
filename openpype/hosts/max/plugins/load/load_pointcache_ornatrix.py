@@ -2,7 +2,7 @@ import os
 from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
-
+from pymxs import runtime as rt
 
 class OxAbcLoader(load.LoaderPlugin):
     """Ornatrix Alembic loader."""
@@ -15,7 +15,10 @@ class OxAbcLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name=None, namespace=None, data=None):
-        from pymxs import runtime as rt
+        plugin_list = get_plugins()
+        if "ornatrix.dlo" not in plugin_list:
+            raise RuntimeError("Ornatrix plugin not "
+                               "found/installed in Max yet..")
 
         file_path = os.path.normpath(self.filepath_from_context(context))
         scene_object_before = [obj for obj in rt.rootNode.Children]
@@ -37,8 +40,6 @@ class OxAbcLoader(load.LoaderPlugin):
         )
 
     def update(self, container, representation):
-        from pymxs import runtime as rt
-
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         instance_name, _ = os.path.splitext(node_name)
@@ -68,7 +69,17 @@ class OxAbcLoader(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        from pymxs import runtime as rt
-
         node = rt.GetNodeByName(container["instance_node"])
         rt.Delete(node)
+
+
+def get_plugins() -> list:
+    """Get plugin list from 3ds max."""
+    manager = rt.PluginManager
+    count = manager.pluginDllCount
+    plugin_info_list = []
+    for p in range(1, count + 1):
+        plugin_info = manager.pluginDllName(p)
+        plugin_info_list.append(plugin_info)
+
+    return plugin_info_list
