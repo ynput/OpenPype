@@ -258,7 +258,7 @@ class TasksWidget(QtWidgets.QWidget):
             self._folder_selection_changed
         )
         controller.register_event_callback(
-            "controller.expected_selection_changed",
+            "expected_selection_changed",
             self._on_expected_selection_change
         )
 

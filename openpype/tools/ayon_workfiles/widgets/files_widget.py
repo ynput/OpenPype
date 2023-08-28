@@ -36,27 +36,27 @@ class FilesWidget(QtWidgets.QWidget):
         workarea_btns_layout.addWidget(workarea_btn_browse, 1)
         workarea_btns_layout.addWidget(workarea_btn_save, 1)
 
-        publish_btns_widget = QtWidgets.QWidget(btns_widget)
+        published_btns_widget = QtWidgets.QWidget(btns_widget)
         published_btn_copy_n_open = QtWidgets.QPushButton(
-            "Copy && Open", publish_btns_widget
+            "Copy && Open", published_btns_widget
         )
         published_btn_change_context = QtWidgets.QPushButton(
-            "Choose different context", publish_btns_widget
+            "Choose different context", published_btns_widget
         )
         published_btn_cancel = QtWidgets.QPushButton(
-            "Cancel", publish_btns_widget
+            "Cancel", published_btns_widget
         )
 
-        publish_btns_layout = QtWidgets.QHBoxLayout(publish_btns_widget)
-        publish_btns_layout.setContentsMargins(0, 0, 0, 0)
-        publish_btns_layout.addWidget(published_btn_copy_n_open, 1)
-        publish_btns_layout.addWidget(published_btn_change_context, 1)
-        publish_btns_layout.addWidget(published_btn_cancel, 1)
+        published_btns_layout = QtWidgets.QHBoxLayout(published_btns_widget)
+        published_btns_layout.setContentsMargins(0, 0, 0, 0)
+        published_btns_layout.addWidget(published_btn_copy_n_open, 1)
+        published_btns_layout.addWidget(published_btn_change_context, 1)
+        published_btns_layout.addWidget(published_btn_cancel, 1)
 
         btns_layout = QtWidgets.QVBoxLayout(btns_widget)
         btns_layout.setContentsMargins(0, 0, 0, 0)
         btns_layout.addWidget(workarea_btns_widget, 1)
-        btns_layout.addWidget(publish_btns_widget, 1)
+        btns_layout.addWidget(published_btns_widget, 1)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -71,16 +71,39 @@ class FilesWidget(QtWidgets.QWidget):
             "selection.representation.changed",
             self._on_published_repre_changed
         )
+        controller.register_event_callback(
+            "selection.task.changed",
+            self._on_task_changed
+        )
 
         workarea_btn_open.clicked.connect(self._on_workarea_open_clicked)
         workarea_btn_browse.clicked.connect(self._on_workarea_browse_clicked)
         workarea_btn_save.clicked.connect(self._on_workarea_save_clicked)
 
+        published_btn_copy_n_open.clicked.connect(
+            self._on_published_save_clicked)
+        published_btn_change_context.clicked.connect(
+            self._on_published_change_context_clicked)
+        published_btn_cancel.clicked.connect(
+            self._on_published_cancel_clicked)
+
+        self._last_folder_id = None
+        self._last_tak_name = None
+
+        self._pre_select_folder_id = None
+        self._pre_select_task_name = None
+
+        self._select_context_mode = False
+        self._valid_selected_context = False
+        self._valid_representation_id = False
+        self._tmp_text_filter = None
+
         self._controller = controller
         self._files_widget = files_widget
         self._workarea_widget = workarea_widget
+        self._published_widget = published_widget
         self._workarea_btns_widget = workarea_btns_widget
-        self._publish_btns_widget = publish_btns_widget
+        self._published_btns_widget = published_btns_widget
 
         self._workarea_btn_open = workarea_btn_open
         self._workarea_btn_browse = workarea_btn_browse
@@ -95,25 +118,47 @@ class FilesWidget(QtWidgets.QWidget):
         workarea_btn_open.setEnabled(False)
         published_btn_copy_n_open.setEnabled(False)
         published_btn_change_context.setEnabled(False)
-        published_btn_cancel.setEnabled(False)
         published_btn_cancel.setVisible(False)
 
     def set_published_mode(self, published_mode):
+        # Make sure context selection is disabled
+        self._set_select_contex_mode(False)
+        # Change current widget
         self._files_widget.setCurrentWidget((
             self._published_widget
             if published_mode
             else self._workarea_widget
         ))
+        # Pass the mode to the widgets, so they can start/stop handle events
         self._workarea_widget.set_published_mode(published_mode)
         self._published_widget.set_published_mode(published_mode)
 
+        # Change available buttons
         self._workarea_btns_widget.setVisible(not published_mode)
-        self._publish_btns_widget.setVisible(published_mode)
+        self._published_btns_widget.setVisible(published_mode)
 
     def set_text_filter(self, text_filter):
+        if self._select_context_mode:
+            self._tmp_text_filter = text_filter
+            return
         self._workarea_widget.set_text_filter(text_filter)
         self._published_widget.set_text_filter(text_filter)
 
+    def _exec_save_as_dialog(self):
+        """Show SaveAs dialog using currently selected context.
+
+        Returns:
+            Union[dict[str, Any], None]: Result of the dialog.
+        """
+
+        dialog = SaveAsDialog(self._controller, self)
+        dialog.update_context()
+        dialog.exec_()
+        return dialog.get_result()
+
+    # -------------------------------------------------------------
+    # Workare workfiles
+    # -------------------------------------------------------------
     def _on_workarea_open_clicked(self):
         self._workarea_widget.open_current_file()
 
@@ -149,10 +194,7 @@ class FilesWidget(QtWidgets.QWidget):
             self._controller.open_workfile(filepath)
 
     def _on_workarea_save_clicked(self):
-        dialog = SaveAsDialog(self._controller, self)
-        dialog.update_context()
-        dialog.exec_()
-        result = dialog.get_result()
+        result = self._exec_save_as_dialog()
         if result is None:
             return
         self._controller.save_as_workfile(
@@ -167,9 +209,81 @@ class FilesWidget(QtWidgets.QWidget):
         valid_path = event["path"] is not None
         self._workarea_btn_open.setEnabled(valid_path)
 
-    def _on_published_repre_changed(self, event):
-        valid = event["representation_id"] is not None
+    # -------------------------------------------------------------
+    # Published workfiles
+    # -------------------------------------------------------------
+    def _update_published_btns_state(self):
+        valid = self._valid_representation_id and self._valid_selected_context
         self._published_btn_copy_n_open.setEnabled(valid)
         self._published_btn_change_context.setEnabled(valid)
-        self._published_btn_cancel.setEnabled(valid)
-        # self._published_btn_cancel.setVisible(False)
+
+    def _on_published_repre_changed(self, event):
+        self._valid_representation_id = event["representation_id"] is not None
+        self._update_published_btns_state()
+
+    def _on_task_changed(self, event):
+        self._last_folder_id = event["folder_id"]
+        self._last_tak_name = event["task_name"]
+        self._valid_selected_context = (
+            self._last_folder_id is not None
+            and self._last_tak_name is not None
+        )
+        self._update_published_btns_state()
+
+    def _on_published_save_clicked(self):
+        result = self._exec_save_as_dialog()
+        if result is None:
+            return
+
+        repre_info = self._published_widget.get_selected_repre_info()
+        self._controller.copy_workfile_representation(
+            repre_info["representation_id"],
+            repre_info["filepath"],
+            result["folder_id"],
+            result["task_id"],
+            result["workdir"],
+            result["filename"],
+            result["template_key"],
+        )
+
+    def _set_select_contex_mode(self, enabled):
+        if self._select_context_mode is enabled:
+            return
+
+        if enabled:
+            self._pre_select_folder_id = self._last_folder_id
+            self._pre_select_task_name = self._last_tak_name
+        else:
+            self._pre_select_folder_id = None
+            self._pre_select_task_name = None
+        self._select_context_mode = enabled
+        self._published_btn_cancel.setVisible(enabled)
+        self._published_btn_change_context.setVisible(not enabled)
+        self._published_widget.set_select_context_mode(enabled)
+
+        if not enabled and self._tmp_text_filter is not None:
+            self.set_text_filter(self._tmp_text_filter)
+            self._tmp_text_filter = None
+
+    def _on_published_change_context_clicked(self):
+        self._set_select_contex_mode(True)
+
+    def _should_set_pre_select_context(self):
+        if self._pre_select_folder_id is None:
+            return False
+        if self._pre_select_folder_id != self._last_folder_id:
+            return True
+        if self._pre_select_task_name is None:
+            return False
+        return self._pre_select_task_name != self._last_tak_name
+
+    def _on_published_cancel_clicked(self):
+        folder_id = self._pre_select_folder_id
+        task_name = self._pre_select_task_name
+        representation_id = self._published_widget.get_selected_repre_id()
+        should_change_selection = self._should_set_pre_select_context()
+        self._set_select_contex_mode(False)
+        if should_change_selection:
+            self._controller.set_expected_selection(
+                folder_id, task_name, representation_id=representation_id
+            )

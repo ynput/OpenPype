@@ -208,3 +208,16 @@ class AbstractWorkfileController(object):
         template_key,
     ):
         pass
+
+    @abstractmethod
+    def copy_workfile_representation(
+        self,
+        representation_id,
+        representation_filepath,
+        folder_id,
+        task_id,
+        workdir,
+        filename,
+        template_key,
+    ):
+        pass

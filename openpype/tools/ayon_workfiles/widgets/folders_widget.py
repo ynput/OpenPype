@@ -188,7 +188,7 @@ class FoldersWidget(QtWidgets.QWidget):
             self._on_controller_refresh
         )
         controller.register_event_callback(
-            "controller.expected_selection_changed",
+            "expected_selection_changed",
             self._on_expected_selection_change
         )
 

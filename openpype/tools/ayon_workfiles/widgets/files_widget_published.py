@@ -52,9 +52,6 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
         self._last_folder_id = None
         self._last_task_id = None
 
-        self._selected_folder_id = None
-        self._selected_task_id = None
-
         self._add_empty_item()
 
     def clear(self):
@@ -69,6 +66,21 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
         self._published_mode = published_mode
         if published_mode:
             self._fill_items()
+        elif self._context_select_mode:
+            self.set_select_context_mode(False)
+
+    def set_select_context_mode(self, select_mode):
+        if self._context_select_mode is select_mode:
+            return
+        self._context_select_mode = select_mode
+        if not select_mode and self._published_mode:
+            self._fill_items()
+
+    def get_index_by_representation_id(self, representation_id):
+        item = self._items_by_id.get(representation_id)
+        if item is None:
+            return QtCore.QModelIndex()
+        return self.indexFromItem(item)
 
     def _get_missing_context_item(self):
         if self._missing_context_item is None:
@@ -129,24 +141,20 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
         self._empty_item_used = False
 
     def _on_folder_changed(self, event):
-        if self._context_select_mode:
-            self._selected_folder_id = event["folder_id"]
-            self._selected_task_id = None
-            return
-
         self._last_folder_id = event["folder_id"]
         self._last_task_id = None
+        if self._context_select_mode:
+            return
+
         if self._published_mode:
             self._fill_items()
 
     def _on_task_changed(self, event):
-        if self._context_select_mode:
-            self._selected_folder_id = event["folder_id"]
-            self._selected_task_id = event["task_id"]
-            return
-
         self._last_folder_id = event["folder_id"]
         self._last_task_id = event["task_id"]
+        if self._context_select_mode:
+            return
+
         if self._published_mode:
             self._fill_items()
 
@@ -170,7 +178,7 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
         items_to_remove = set(self._items_by_id.keys())
         new_items = []
         for file_item in file_items:
-            repre_id = file_item.filename
+            repre_id = file_item.representation_id
             if repre_id in self._items_by_id:
                 items_to_remove.discard(repre_id)
                 item = self._items_by_id[repre_id]
@@ -180,7 +188,7 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
                 item.setColumnCount(self.columnCount())
                 item.setData(self._file_icon, QtCore.Qt.DecorationRole)
                 item.setData(file_item.filename, QtCore.Qt.DisplayRole)
-                item.setData(file_item.representation_id, REPRE_ID_ROLE)
+                item.setData(repre_id, REPRE_ID_ROLE)
 
             if file_item.exists:
                 flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
@@ -191,7 +199,7 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
             item.setData(file_item.filepath, FILEPATH_ROLE)
             item.setData(file_item.modified, DATE_MODIFIED_ROLE)
 
-            self._items_by_id[file_item.filename] = item
+            self._items_by_id[repre_id] = item
 
         if new_items:
             root_item.appendRows(new_items)
@@ -240,6 +248,41 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
         return super(PublishedFilesModel, self).data(index, role)
 
 
+class SelectContextOverlay(QtWidgets.QFrame):
+    project_selected = QtCore.Signal(str)
+
+    def __init__(self, parent):
+        super(SelectContextOverlay, self).__init__(parent)
+        self.setObjectName("OverlayFrame")
+
+        label_widget = QtWidgets.QLabel(
+            "Please choose context on the left<br/>&lt",
+            self
+        )
+        label_widget.setAlignment(QtCore.Qt.AlignCenter)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.addWidget(label_widget, 1, QtCore.Qt.AlignCenter)
+
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self._parent = parent
+
+    def setVisible(self, visible):
+        super(SelectContextOverlay, self).setVisible(visible)
+        if visible:
+            self._parent.installEventFilter(self)
+            self.resize(self._parent.size())
+        else:
+            self._parent.removeEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.Resize:
+            self.resize(obj.size())
+
+        return super(SelectContextOverlay, self).eventFilter(obj, event)
+
+
 class PublishedFilesWidget(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
 
@@ -267,6 +310,9 @@ class PublishedFilesWidget(QtWidgets.QWidget):
         # about and the date modified is relatively small anyway.
         view.setColumnWidth(0, 330)
 
+        select_overlay = SelectContextOverlay(view)
+        select_overlay.setVisible(False)
+
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(view, 1)
@@ -275,28 +321,43 @@ class PublishedFilesWidget(QtWidgets.QWidget):
         selection_model.selectionChanged.connect(self._on_selection_change)
         view.double_clicked_left.connect(self._on_left_double_click)
 
+        controller.register_event_callback(
+            "expected_selection_changed",
+            self._on_expected_selection_change
+        )
+
         self._view = view
+        self._select_overlay = select_overlay
         self._model = model
         self._proxy_model = proxy_model
         self._time_delegate = time_delegate
         self._controller = controller
 
-        self._published_mode = False
-
     def set_published_mode(self, published_mode):
         self._model.set_published_mode(published_mode)
-        self._published_mode = published_mode
+
+    def set_select_context_mode(self, select_mode):
+        self._model.set_select_context_mode(select_mode)
+        self._select_overlay.setVisible(select_mode)
 
     def set_text_filter(self, text_filter):
         self._proxy_model.setFilterFixedString(text_filter)
 
-    def get_selected_repre_id(self):
+    def get_selected_repre_info(self):
         selection_model = self._view.selectionModel()
+        representation_id = None
+        filepath = None
         for index in selection_model.selectedIndexes():
-            repre_id = index.data(REPRE_ID_ROLE)
-            if repre_id is not None:
-                return repre_id
-        return None
+            representation_id = index.data(REPRE_ID_ROLE)
+            filepath = index.data(FILEPATH_ROLE)
+
+        return {
+            "representation_id": representation_id,
+            "filepath": filepath,
+        }
+
+    def get_selected_repre_id(self):
+        return self.get_selected_repre_info()["representation_id"]
 
     def _on_selection_change(self):
         repre_id = self.get_selected_repre_id()
@@ -305,3 +366,26 @@ class PublishedFilesWidget(QtWidgets.QWidget):
     def _on_left_double_click(self):
         # TODO Request save as dialog
         pass
+
+    def _on_expected_selection_change(self, event):
+        if (
+            event["representation_id_selected"]
+            or not event["folder_selected"]
+            or (event["task_name"] and not event["task_selected"])
+        ):
+            return
+
+        representation_id = event["representation_id"]
+        selected_repre_id = self.get_selected_repre_id()
+        if (
+            representation_id is not None
+            and representation_id != selected_repre_id
+        ):
+            index = self._model.get_index_by_representation_id(representation_id)
+            if index.isValid():
+                proxy_index = self._proxy_model.mapFromSource(index)
+                self._view.setCurrentIndex(proxy_index)
+
+        self._controller.expected_representation_selected(
+            event["folder_id"], event["task_name"], representation_id
+        )

@@ -47,6 +47,12 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
 
         self._add_empty_item()
 
+    def get_index_by_filename(self, filename):
+        item = self._items_by_filename.get(filename)
+        if item is None:
+            return QtCore.QModelIndex()
+        return self.indexFromItem(item)
+
     def _get_missing_context_item(self):
         if self._missing_context_item is None:
             message = "Select folder and task"
@@ -246,6 +252,11 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         selection_model.selectionChanged.connect(self._on_selection_change)
         view.double_clicked_left.connect(self._on_left_double_click)
 
+        controller.register_event_callback(
+            "expected_selection_changed",
+            self._on_expected_selection_change
+        )
+
         self._view = view
         self._model = model
         self._proxy_model = proxy_model
@@ -261,13 +272,20 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
     def set_text_filter(self, text_filter):
         self._proxy_model.setFilterFixedString(text_filter)
 
-    def get_selected_path(self):
+    def _get_selected_info(self):
         selection_model = self._view.selectionModel()
+        filepath = None
+        filename = None
         for index in selection_model.selectedIndexes():
             filepath = index.data(FILEPATH_ROLE)
-            if filepath is not None:
-                return filepath
-        return None
+            filename = index.data(FILENAME_ROLE)
+        return {
+            "filepath": filepath,
+            "filename": filename,
+        }
+
+    def get_selected_path(self):
+        return self._get_selected_info()["filepath"]
 
     def open_current_file(self):
         path = self.get_selected_path()
@@ -280,3 +298,21 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
 
     def _on_left_double_click(self):
         self.open_current_file()
+
+    def _on_expected_selection_change(self, event):
+        if event["workfile_name_selected"]:
+            return
+
+        workfile_name = event["workfile_name"]
+        if (
+            workfile_name is not None
+            and workfile_name != self._get_selected_info()["filename"]
+        ):
+            index = self._model.get_index_by_filename(workfile_name)
+            if index.isValid():
+                proxy_index = self._proxy_model.mapFromSource(index)
+                self._view.setCurrentIndex(proxy_index)
+
+        self._controller.expected_workfile_selected(
+            event["folder_id"], event["task_name"], workfile_name
+        )

@@ -1,8 +1,11 @@
 import os
+import shutil
+
 import ayon_api
 
+from openpype.host import IWorkfileHost
 from openpype.lib import Logger, emit_event
-from openpype.lib.events import EventSystem
+from openpype.lib.events import QueuedEventSystem
 from openpype.settings import get_project_settings
 from openpype.pipeline import Anatomy, registered_host
 from openpype.pipeline.context_tools import change_current_context
@@ -16,22 +19,48 @@ class ExpectedSelection:
     def __init__(self):
         self._folder_id = None
         self._task_name = None
-        self._folder_selected = False
-        self._task_selected = False
+        self._workfile_name = None
+        self._representation_id = None
+        self._folder_selected = True
+        self._task_selected = True
+        self._workfile_name_selected = True
+        self._representation_id_selected = True
 
-    def set_expected_selection(self, folder_id, task_name):
+    def set_expected_selection(
+        self,
+        folder_id,
+        task_name,
+        workfile_name=None,
+        representation_id=None
+    ):
         self._folder_id = folder_id
         self._task_name = task_name
+        self._workfile_name = workfile_name
+        self._representation_id = representation_id
         self._folder_selected = False
         self._task_selected = False
+        self._workfile_name_selected = workfile_name is None
+        self._representation_id_selected = representation_id is None
 
     def get_expected_selection_data(self):
         return {
             "folder_id": self._folder_id,
             "task_name": self._task_name,
+            "workfile_name": self._workfile_name,
+            "representation_id": self._representation_id,
             "folder_selected": self._folder_selected,
             "task_selected": self._task_selected,
+            "workfile_name_selected": self._workfile_name_selected,
+            "representation_id_selected": self._representation_id_selected,
         }
+
+    def is_expected_folder_selected(self, folder_id):
+        return folder_id == self._folder_id and self._folder_selected
+
+    def is_expected_task_selected(self, folder_id, task_name):
+        if not self.is_expected_folder_selected(folder_id):
+            return False
+        return task_name == self._task_name and self._task_selected
 
     def expected_folder_selected(self, folder_id):
         if folder_id != self._folder_id:
@@ -40,13 +69,32 @@ class ExpectedSelection:
         return True
 
     def expected_task_selected(self, folder_id, task_name):
-        if not self.expected_folder_selected(folder_id):
+        if not self.is_expected_folder_selected(folder_id):
             return False
 
         if task_name != self._task_name:
             return False
 
         self._task_selected = True
+        return True
+
+    def expected_workfile_selected(self, folder_id, task_name, workfile_name):
+        if not self.is_expected_task_selected(folder_id, task_name):
+            return False
+
+        if workfile_name != self._workfile_name:
+            return False
+        self._workfile_name_selected = True
+        return True
+
+    def expected_representation_selected(
+        self, folder_id, task_name, representation_id
+    ):
+        if not self.is_expected_task_selected(folder_id, task_name):
+            return False
+        if representation_id != self._representation_id:
+            return False
+        self._representation_id_selected = True
         return True
 
 
@@ -90,7 +138,7 @@ class BaseWorkfileController(AbstractWorkfileController):
         """
 
         if self._event_system is None:
-            self._event_system = EventSystem()
+            self._event_system = QueuedEventSystem()
         return self._event_system
 
     # ----------------------------------------------------
@@ -180,8 +228,16 @@ class BaseWorkfileController(AbstractWorkfileController):
         self._selection_model.set_selected_representation_id(
             representation_id)
 
-    def set_expected_selection(self, folder_id, task_name):
-        self._expected_selection.set_expected_selection(folder_id, task_name)
+    def set_expected_selection(
+        self,
+        folder_id,
+        task_name,
+        workfile_name=None,
+        representation_id=None
+    ):
+        self._expected_selection.set_expected_selection(
+            folder_id, task_name, workfile_name, representation_id
+        )
         self._trigger_expected_selection_changed()
 
     def expected_folder_selected(self, folder_id):
@@ -191,6 +247,20 @@ class BaseWorkfileController(AbstractWorkfileController):
     def expected_task_selected(self, folder_id, task_name):
         if self._expected_selection.expected_task_selected(
             folder_id, task_name
+        ):
+            self._trigger_expected_selection_changed()
+
+    def expected_workfile_selected(self, folder_id, task_name, workfile_name):
+        if self._expected_selection.expected_workfile_selected(
+            folder_id, task_name, workfile_name
+        ):
+            self._trigger_expected_selection_changed()
+
+    def expected_representation_selected(
+        self, folder_id, task_name, representation_id
+    ):
+        if self._expected_selection.expected_representation_selected(
+            folder_id, task_name, representation_id
         ):
             self._trigger_expected_selection_changed()
 
@@ -297,7 +367,7 @@ class BaseWorkfileController(AbstractWorkfileController):
 
     # Controller actions
     def open_workfile(self, filepath):
-        self._emit_event("controller.open_workfile.started")
+        self._emit_event("open_workfile.started")
 
         failed = False
         try:
@@ -308,23 +378,69 @@ class BaseWorkfileController(AbstractWorkfileController):
             self.log.warning("Open of workfile failed", exc_info=True)
 
         self._emit_event(
-            "controller.open_workfile.finished",
+            "open_workfile.finished",
             {"failed": failed},
         )
 
-    def save_as_workfile(self, *args, **kwargs):
-        self._emit_event("controller.save_as.started")
+    def save_as_workfile(
+        self,
+        folder_id,
+        task_id,
+        workdir,
+        filename,
+        template_key,
+    ):
+        self._emit_event("save_as.started")
 
         failed = False
         try:
-            self._save_as_workfile(*args, **kwargs)
+            self._save_as_workfile(
+                folder_id,
+                task_id,
+                workdir,
+                filename,
+                template_key,
+            )
         except Exception:
             failed = True
             # TODO add some visual feedback for user
             self.log.warning("Save as failed", exc_info=True)
 
         self._emit_event(
-            "controller.save_as.finished",
+            "save_as.finished",
+            {"failed": failed},
+        )
+
+    def copy_workfile_representation(
+        self,
+        representation_id,
+        representation_filepath,
+        folder_id,
+        task_id,
+        workdir,
+        filename,
+        template_key,
+    ):
+        self._emit_event("copy_representation.started")
+
+        failed = False
+        try:
+            self._save_as_workfile(
+                folder_id,
+                task_id,
+                workdir,
+                filename,
+                template_key,
+            )
+        except Exception:
+            failed = True
+            # TODO add some visual feedback for user
+            self.log.warning(
+                "Copy of workfile representation failed", exc_info=True
+            )
+
+        self._emit_event(
+            "copy_representation.finished",
             {"failed": failed},
         )
 
@@ -336,7 +452,7 @@ class BaseWorkfileController(AbstractWorkfileController):
     #   or when current context should be used
     def _trigger_expected_selection_changed(self):
         self._emit_event(
-            "controller.expected_selection_changed",
+            "expected_selection_changed",
             self._expected_selection.get_expected_selection_data(),
         )
 
@@ -347,6 +463,7 @@ class BaseWorkfileController(AbstractWorkfileController):
         workdir,
         filename,
         template_key,
+        src_filepath=None,
     ):
         # Trigger before save event
         project_name = self.get_current_project_name()
@@ -386,12 +503,19 @@ class BaseWorkfileController(AbstractWorkfileController):
             )
 
         # Save workfile
-        filepath = os.path.join(workdir, filename)
+        dst_filepath = os.path.join(workdir, filename)
         host = self._host
-        if hasattr(host, "save_workfile"):
-            host.save_workfile(filepath)
+        if src_filepath:
+            shutil.copyfile(src_filepath, dst_filepath)
+            if isinstance(host, IWorkfileHost):
+                host.open_workfile(dst_filepath)
+            else:
+                host.open_file(dst_filepath)
         else:
-            host.save_file(filepath)
+            if isinstance(host, IWorkfileHost):
+                host.save_workfile(dst_filepath)
+            else:
+                host.save_file(dst_filepath)
 
         # Create extra folders
         create_workdir_extra_folders(

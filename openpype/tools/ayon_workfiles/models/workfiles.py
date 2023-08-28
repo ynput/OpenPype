@@ -557,13 +557,61 @@ class PublishWorkfilesModel:
     def __init__(self, controller):
         self._controller = controller
         self._cached_extensions = None
+        self._cached_repre_extensions = None
 
     @property
     def _extensions(self):
         if self._cached_extensions is None:
-            exts = self._controller.get_workfile_extensions()
-            self._cached_extensions = exts or []
+            exts = self._controller.get_workfile_extensions() or []
+            self._cached_extensions = exts
         return self._cached_extensions
+
+    @property
+    def _repre_extensions(self):
+        if self._cached_repre_extensions is None:
+            self._cached_repre_extensions = {
+                ext.lstrip(".") for ext in self._extensions
+            }
+        return self._cached_repre_extensions
+
+    def _file_item_from_representation(
+        self, repre_entity, project_anatomy, task_name=None
+    ):
+        if task_name is not None:
+            task_info = repre_entity["context"].get("task")
+            if not task_info or task_info["name"] != task_name:
+                return None
+
+        # Filter by extension
+        extensions = self._repre_extensions
+        workfile_path = None
+        for repre_file in repre_entity["files"]:
+            ext = (
+                os.path.splitext(repre_file["name"])[1]
+                .lower()
+                .lstrip(".")
+            )
+            if ext in extensions:
+                workfile_path = repre_file["path"]
+                break
+
+        if not workfile_path:
+            return None
+
+        try:
+            workfile_path = workfile_path.format(
+                root=project_anatomy.roots)
+        except Exception as exc:
+            print("Failed to format workfile path: {}".format(exc))
+
+        dirpath, filename = os.path.split(workfile_path)
+        created_at = arrow.get(repre_entity["createdAt"])
+        return FileItem(
+            dirpath,
+            filename,
+            created_at.float_timestamp,
+            repre_entity["id"]
+        )
 
     def get_file_items(self, folder_id, task_name):
         project_name = self._controller.get_current_project_name()
@@ -592,7 +640,6 @@ class PublishWorkfilesModel:
 
         # Query representations of filtered versions and add filter for
         #   extension
-        extensions = {ext.lstrip(".") for ext in self._extensions}
         repre_entities = ayon_api.get_representations(
             project_name,
             version_ids=version_ids
@@ -602,41 +649,11 @@ class PublishWorkfilesModel:
         # Filter queried representations by task name if task is set
         file_items = []
         for repre_entity in repre_entities:
-            # Filter by task name (less expensive validation)
-            if task_name is not None:
-                task_info = repre_entity["context"].get("task")
-                if not task_info or task_info["name"] != task_name:
-                    continue
-
-            # Filter by extension
-            workfile_path = None
-            for repre_file in repre_entity["files"]:
-                ext = (
-                    os.path.splitext(repre_file["name"])[1]
-                    .lower()
-                    .lstrip(".")
-                )
-                if ext in extensions:
-                    workfile_path = repre_file["path"]
-                    break
-
-            if not workfile_path:
-                continue
-
-            try:
-                workfile_path = workfile_path.format(
-                    root=project_anatomy.roots)
-            except Exception as exc:
-                print("Failed to format workfile path: {}".format(exc))
-
-            dirpath, filename = os.path.split(workfile_path)
-            created_at = arrow.get(repre_entity["createdAt"])
-            file_items.append(FileItem(
-                dirpath,
-                filename,
-                created_at.float_timestamp,
-                repre_entity["id"]
-            ))
+            file_item = self._file_item_from_representation(
+                repre_entity, project_anatomy, task_name
+            )
+            if file_item is not None:
+                file_items.append(file_item)
 
         return file_items
 
