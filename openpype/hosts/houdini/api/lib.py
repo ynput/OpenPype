@@ -474,6 +474,11 @@ def maintained_selection():
 def reset_framerange():
     """Set frame range to current asset"""
 
+    # Set new scene fps
+    fps = get_asset_fps()
+    print("Setting scene FPS to {}".format(int(fps)))
+    set_scene_fps(fps)
+
     project_name = get_current_project_name()
     asset_name = get_current_asset_name()
     # Get the asset ID from the database for the asset of current context
