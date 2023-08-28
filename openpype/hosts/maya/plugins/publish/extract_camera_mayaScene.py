@@ -7,6 +7,9 @@ from maya import cmds
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
+from openpype.lib import (
+    BoolDef
+)
 
 
 def massage_ma_file(path):
@@ -102,6 +105,8 @@ class ExtractCameraMayaScene(publish.Extractor):
     families = ["camera", "matchmove"]
     scene_type = "ma"
 
+    keep_image_planes = False
+
     def process(self, instance):
         """Plugin entry point."""
         # get settings
@@ -159,7 +164,8 @@ class ExtractCameraMayaScene(publish.Extractor):
                         baked = lib.bake_to_world_space(
                             transform,
                             frame_range=[start, end],
-                            step=step
+                            step=step,
+                            copy_input_conn=self.keep_image_planes
                         )
                         baked_camera_shapes = set(cmds.ls(baked,
                                                   type="camera",
@@ -222,3 +228,16 @@ class ExtractCameraMayaScene(publish.Extractor):
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, path))
+
+    @classmethod
+    def get_attribute_defs(cls):
+        defs = super(ExtractCameraMayaScene, cls).get_attribute_defs()
+
+        defs.extend([
+            BoolDef("keep_input_conn",
+                    label="Keep Input conn(Image Planes)",
+                    default=cls.keep_input_conn),
+
+        ])
+
+        return defs

@@ -2511,7 +2511,8 @@ def bake_to_world_space(nodes,
                         preserve_outside_keys=False,
                         disable_implicit_control=True,
                         shape=True,
-                        step=1.0):
+                        step=1.0,
+                        copy_input_conn=False):
     """Bake the nodes to world space transformation (incl. other attributes)
 
     Bakes the transforms to world space (while maintaining all its animated
@@ -2572,7 +2573,7 @@ def bake_to_world_space(nodes,
             new_node = cmds.duplicate(node,
                                       name=new_name,
                                       renameChildren=True,
-                                      ic=True)[0]
+                                      ic=copy_input_conn)[0]
 
             # Connect all attributes on the node except for transform
             # attributes
