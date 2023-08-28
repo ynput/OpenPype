@@ -33,7 +33,18 @@ class CreateVDBCache(plugin.HoudiniCreator):
         }
 
         if self.selected_nodes:
-            parms["soppath"] = self.selected_nodes[0].path()
+            sop_path = self.get_sop_node_path(self.selected_nodes[0])
+
+            if sop_path:
+                parms["soppath"] = sop_path
+            else:
+                self.log.debug(
+                    "Selection isn't valid. 'SOP Path' in ROP will be empty."
+                )
+        else:
+            self.log.debug(
+                "No Selection. 'SOP Path' in ROP will be empty."
+            )
 
         instance_node.setParms(parms)
 
@@ -42,3 +53,54 @@ class CreateVDBCache(plugin.HoudiniCreator):
             hou.ropNodeTypeCategory(),
             hou.sopNodeTypeCategory()
         ]
+
+    def get_sop_node_path(self, selected_node):
+        """Get Sop Path of the selected node.
+
+        Although Houdini allows ObjNode path on `sop_path` for the
+        the ROP node, we prefer it set to the SopNode path explicitly.
+        """
+
+        # Allow sop level paths (e.g. /obj/geo1/box1)
+        if isinstance(selected_node, hou.SopNode):
+            self.log.debug(
+                "Valid SopNode selection, 'SOP Path' in ROP will be set to '%s'."
+                % selected_node.path()
+            )
+            return selected_node.path()
+
+        # Allow object level paths to Geometry nodes (e.g. /obj/geo1)
+        # but do not allow other object level nodes types like cameras, etc.
+        elif isinstance(selected_node, hou.ObjNode) and \
+                selected_node.type().name() in ["geo"]:
+
+            # get the output node with the minimum
+            # 'outputidx' or the node with display flag
+            sop_node = self.get_obj_output(selected_node)
+            if sop_node:
+                self.log.debug(
+                    "Valid ObjNode selection, 'SOP Path' in ROP will be set to "
+                    "the child path '%s'."
+                    % sop_node.path()
+                )
+                return sop_node.path()
+
+    def get_obj_output(self, obj_node):
+        """Find output node with the smallest 'outputidx'."""
+
+        outputs = obj_node.subnetOutputs()
+
+        # if obj_node is empty
+        if not outputs:
+            return
+
+        # if obj_node has one output child whether its
+        # sop output node or a node with the render flag
+        elif len(outputs) == 1:
+            return outputs[0]
+
+        # if there are more than one, then it have multiple ouput nodes
+        # return the one with the minimum 'outputidx'
+        else:
+            return min(outputs,
+                       key=lambda node: node.evalParm('outputidx'))
