@@ -4,6 +4,7 @@ from openpype.hosts.max.api.pipeline import containerise
 from openpype.hosts.max.api import lib
 from pymxs import runtime as rt
 
+
 class OxAbcLoader(load.LoaderPlugin):
     """Ornatrix Alembic loader."""
 
