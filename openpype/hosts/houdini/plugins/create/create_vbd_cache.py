@@ -33,18 +33,7 @@ class CreateVDBCache(plugin.HoudiniCreator):
         }
 
         if self.selected_nodes:
-            sop_path = self.get_sop_node_path(self.selected_nodes[0])
-
-            if sop_path:
-                parms["soppath"] = sop_path
-            else:
-                self.log.debug(
-                    "Selection isn't valid. 'SOP Path' in ROP will be empty."
-                )
-        else:
-            self.log.debug(
-                "No Selection. 'SOP Path' in ROP will be empty."
-            )
+            parms["soppath"] = self.get_sop_node_path(self.selected_nodes[0])
 
         instance_node.setParms(parms)
 
@@ -72,10 +61,9 @@ class CreateVDBCache(plugin.HoudiniCreator):
         # Allow object level paths to Geometry nodes (e.g. /obj/geo1)
         # but do not allow other object level nodes types like cameras, etc.
         elif isinstance(selected_node, hou.ObjNode) and \
-                selected_node.type().name() in ["geo"]:
+                selected_node.type().name() == "geo":
 
-            # get the output node with the minimum
-            # 'outputidx' or the node with display flag
+            # Try to find output node.
             sop_node = self.get_obj_output(selected_node)
             if sop_node:
                 self.log.debug(
@@ -84,8 +72,19 @@ class CreateVDBCache(plugin.HoudiniCreator):
                 )
                 return sop_node.path()
 
+        self.log.debug(
+            "Selection isn't valid. 'SOP Path' in ROP will be empty."
+        )
+        return ""
+
     def get_obj_output(self, obj_node):
-        """Find output node with the smallest 'outputidx'."""
+        """Try to find output node.
+
+        If any output nodes are present, return the output node with
+          the minimum 'outputidx'
+        If no output nodes are present, return the node with display flag
+        If no nodes are present at all, return None
+        """
 
         outputs = obj_node.subnetOutputs()
 
@@ -98,7 +97,7 @@ class CreateVDBCache(plugin.HoudiniCreator):
         elif len(outputs) == 1:
             return outputs[0]
 
-        # if there are more than one, then it have multiple ouput nodes
+        # if there are more than one, then it has multiple output nodes
         # return the one with the minimum 'outputidx'
         else:
             return min(outputs,
