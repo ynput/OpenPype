@@ -1,7 +1,8 @@
 import maya.cmds as cmds
-
 import pyblish.api
+
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import PublishValidationError
 
 
 class ValidateInstancerContent(pyblish.api.InstancePlugin):
@@ -52,7 +53,8 @@ class ValidateInstancerContent(pyblish.api.InstancePlugin):
             error = True
 
         if error:
-            raise RuntimeError("Instancer Content is invalid. See log.")
+            raise PublishValidationError(
+                "Instancer Content is invalid. See log.")
 
     def check_geometry_hidden(self, export_members):
 

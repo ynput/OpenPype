@@ -448,7 +448,8 @@ def get_imageio_config(
     host_name,
     project_settings=None,
     anatomy_data=None,
-    anatomy=None
+    anatomy=None,
+    env=None
 ):
     """Returns config data from settings
 
@@ -461,6 +462,7 @@ def get_imageio_config(
         project_settings (Optional[dict]): Project settings.
         anatomy_data (Optional[dict]): anatomy formatting data.
         anatomy (Optional[Anatomy]): Anatomy object.
+        env (Optional[dict]): Environment variables.
 
     Returns:
         dict: config path data or empty dict
@@ -533,13 +535,13 @@ def get_imageio_config(
 
     if override_global_config:
         config_data = _get_config_data(
-            host_ocio_config["filepath"], formatting_data
+            host_ocio_config["filepath"], formatting_data, env
         )
     else:
         # get config path from global
         config_global = imageio_global["ocio_config"]
         config_data = _get_config_data(
-            config_global["filepath"], formatting_data
+            config_global["filepath"], formatting_data, env
         )
 
     if not config_data:
@@ -551,7 +553,7 @@ def get_imageio_config(
     return config_data
 
 
-def _get_config_data(path_list, anatomy_data):
+def _get_config_data(path_list, anatomy_data, env=None):
     """Return first existing path in path list.
 
     If template is used in path inputs,
@@ -561,14 +563,17 @@ def _get_config_data(path_list, anatomy_data):
     Args:
         path_list (list[str]): list of abs paths
         anatomy_data (dict): formatting data
+        env (Optional[dict]): Environment variables.
 
     Returns:
         dict: config data
     """
     formatting_data = deepcopy(anatomy_data)
 
+    environment_vars = env or dict(**os.environ)
+
     # format the path for potential env vars
-    formatting_data.update(dict(**os.environ))
+    formatting_data.update(environment_vars)
 
     # first try host config paths
     for path_ in path_list:

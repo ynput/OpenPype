@@ -5,7 +5,9 @@ import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     RepairAction,
+    PublishValidationError
 )
+
 from openpype.hosts.maya.api import lib
 import openpype.hosts.maya.api.action
 
@@ -48,7 +50,7 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError('{} failed, see log '
+            raise PublishValidationError('{} failed, see log '
                                'information'.format(self.label))
 
     @classmethod

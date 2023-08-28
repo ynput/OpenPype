@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Python wrapper for RoyalRender XML job file."""
+import sys
 from xml.dom import minidom as md
 import attr
 from collections import namedtuple, OrderedDict
@@ -8,8 +9,36 @@ from collections import namedtuple, OrderedDict
 CustomAttribute = namedtuple("CustomAttribute", ["name", "value"])
 
 
+def get_rr_platform():
+    # type: () -> str
+    """Returns name of platform used in rr jobs."""
+    if sys.platform.lower() in ["win32", "win64"]:
+        return "windows"
+    elif sys.platform.lower() == "darwin":
+        return "mac"
+    else:
+        return "linux"
+
+
+class RREnvList(dict):
+    def serialize(self):
+        # <rrEnvList>VariableA=ValueA~~~VariableB=ValueB</rrEnvList>
+        return "~~~".join(
+            ["{}={}".format(k, v) for k, v in sorted(self.items())])
+
+    @staticmethod
+    def parse(data):
+        # type: (str) -> RREnvList
+        """Parse rrEnvList string and return it as RREnvList object."""
+        out = RREnvList()
+        for var in data.split("~~~"):
+            k, v = var.split("=")
+            out[k] = v
+        return out
+
+
 @attr.s
-class RRJob:
+class RRJob(object):
     """Mapping of Royal Render job file to a data class."""
 
     # Required
@@ -35,7 +64,7 @@ class RRJob:
 
     # Is the job enabled for submission?
     # enabled by default
-    IsActive = attr.ib()  # type: str
+    IsActive = attr.ib()  # type: bool
 
     # Sequence settings of this job
     SeqStart = attr.ib()  # type: int
@@ -60,7 +89,7 @@ class RRJob:
 
     # If you render a single file, e.g. Quicktime or Avi, then you have to
     # set this value. Videos have to be rendered at once on one client.
-    ImageSingleOutputFile = attr.ib(default="false")  # type: str
+    ImageSingleOutputFile = attr.ib(default=False)  # type: bool
 
     # Semi-Required (required for some render applications)
     # -----------------------------------------------------
@@ -87,7 +116,7 @@ class RRJob:
 
     # Frame Padding of the frame number in the rendered filename.
     # Some render config files are setting the padding at render time.
-    ImageFramePadding = attr.ib(default=None)  # type: str
+    ImageFramePadding = attr.ib(default=None)  # type: int
 
     # Some render applications support overriding the image format at
     # the render commandline.
@@ -108,7 +137,7 @@ class RRJob:
     # jobs send from this machine. If a job with the PreID was found, then
     # this jobs waits for the other job. Note: This flag can be used multiple
     # times to wait for multiple jobs.
-    WaitForPreID = attr.ib(default=None)  # type: int
+    WaitForPreIDs = attr.ib(factory=list)  # type: list
 
     # List of submitter options per job
     # list item must be of `SubmitterParameter` type
@@ -120,6 +149,9 @@ class RRJob:
     # list item must be of `CustomAttribute` named tuple
     CustomAttributes = attr.ib(factory=list)  # type: list
 
+    # This is used to hold command line arguments for Execute job
+    CustomAddCmdFlags = attr.ib(default=None)  # type: str
+
     # Additional information for subsequent publish script and
     # for better display in rrControl
     UserName = attr.ib(default=None)  # type: str
@@ -129,6 +161,7 @@ class RRJob:
     CustomUserInfo = attr.ib(default=None)  # type: str
     SubmitMachine = attr.ib(default=None)  # type: str
     Color_ID = attr.ib(default=2)  # type: int
+    CompanyProjectName = attr.ib(default=None)  # type: str
 
     RequiredLicenses = attr.ib(default=None)  # type: str
 
@@ -136,6 +169,10 @@ class RRJob:
     Priority = attr.ib(default=50)  # type: int
     TotalFrames = attr.ib(default=None)  # type: int
     Tiled = attr.ib(default=None)  # type: str
+
+    # Environment
+    # only used in RR 8.3 and newer
+    rrEnvList = attr.ib(default=None)  # type: str
 
 
 class SubmitterParameter:
@@ -160,7 +197,7 @@ class SubmitterParameter:
 
 
 @attr.s
-class SubmitFile:
+class SubmitFile(object):
     """Class wrapping Royal Render submission XML file."""
 
     # Syntax version of the submission file.
@@ -169,11 +206,11 @@ class SubmitFile:
     # Delete submission file after processing
     DeleteXML = attr.ib(default=1)  # type: int
 
-    # List of submitter options per job
+    # List of the submitter options per job.
     # list item must be of `SubmitterParameter` type
     SubmitterParameters = attr.ib(factory=list)  # type: list
 
-    # List of job is submission batch.
+    # List of the jobs in submission batch.
     # list item must be of type `RRJob`
     Jobs = attr.ib(factory=list)  # type: list
 
@@ -225,7 +262,7 @@ class SubmitFile:
         # <SubmitterParameter>foo=bar~baz~goo</SubmitterParameter>
         self._process_submitter_parameters(
             self.SubmitterParameters, root, job_file)
-
+        root.appendChild(job_file)
         for job in self.Jobs:  # type: RRJob
             if not isinstance(job, RRJob):
                 raise AttributeError(
@@ -241,16 +278,28 @@ class SubmitFile:
                 job, dict_factory=OrderedDict, filter=filter_data)
             serialized_job.pop("CustomAttributes")
             serialized_job.pop("SubmitterParameters")
+            # we are handling `WaitForPreIDs` separately.
+            wait_pre_ids = serialized_job.pop("WaitForPreIDs", [])
 
             for custom_attr in job_custom_attributes:  # type: CustomAttribute
                 serialized_job["Custom{}".format(
                     custom_attr.name)] = custom_attr.value
 
             for item, value in serialized_job.items():
-                xml_attr = root.create(item)
+                xml_attr = root.createElement(item)
                 xml_attr.appendChild(
-                    root.createTextNode(value)
+                    root.createTextNode(str(value))
                 )
                 xml_job.appendChild(xml_attr)
+
+            # WaitForPreID - can be used multiple times
+            for pre_id in wait_pre_ids:
+                xml_attr = root.createElement("WaitForPreID")
+                xml_attr.appendChild(
+                    root.createTextNode(str(pre_id))
+                )
+                xml_job.appendChild(xml_attr)
+
+            job_file.appendChild(xml_job)
 
         return root.toprettyxml(indent="\t")

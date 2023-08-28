@@ -1,7 +1,9 @@
-import os
-from qtpy import QtWidgets
 from copy import deepcopy
 from pprint import pformat
+
+from qtpy import QtWidgets
+
+from openpype.pipeline import get_current_project_name
 from openpype.tools.utils.host_tools import HostToolsHelper
 
 menu_group_name = 'OpenPype'
@@ -61,10 +63,10 @@ class _FlameMenuApp(object):
             self.framework.prefs_global, self.name)
 
         self.mbox = QtWidgets.QMessageBox()
-
+        project_name = get_current_project_name()
         self.menu = {
             "actions": [{
-                'name': os.getenv("AVALON_PROJECT", "project"),
+                'name': project_name or "project",
                 'isEnabled': False
             }],
             "name": self.menu_group_name

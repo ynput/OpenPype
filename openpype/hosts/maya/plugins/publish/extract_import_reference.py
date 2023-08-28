@@ -8,10 +8,12 @@ import tempfile
 
 from openpype.lib import run_subprocess
 from openpype.pipeline import publish
+from openpype.pipeline.publish import OptionalPyblishPluginMixin
 from openpype.hosts.maya.api import lib
 
 
-class ExtractImportReference(publish.Extractor):
+class ExtractImportReference(publish.Extractor,
+                             OptionalPyblishPluginMixin):
     """
 
         Extract the scene with imported reference.
@@ -32,11 +34,14 @@ class ExtractImportReference(publish.Extractor):
         cls.active = project_setting["deadline"]["publish"]["MayaSubmitDeadline"]["import_reference"] # noqa
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         ext_mapping = (
             instance.context.data["project_settings"]["maya"]["ext_mapping"]
         )
         if ext_mapping:
-            self.log.info("Looking in settings for scene type ...")
+            self.log.debug("Looking in settings for scene type ...")
             # use extension mapping for first family found
             for family in self.families:
                 try:

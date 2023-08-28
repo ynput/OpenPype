@@ -6,6 +6,61 @@
     "is_file": true,
     "children": [
         {
+            "type": "dict",
+            "key": "version_start_category",
+            "label": "Version Start",
+            "collapsible": true,
+            "collapsible_key": true,
+            "children": [
+                {
+                  "type": "list",
+                  "collapsible": true,
+                  "key": "profiles",
+                  "label": "Profiles",
+                  "object_type": {
+                      "type": "dict",
+                      "children": [
+                          {
+                              "key": "host_names",
+                              "label": "Host names",
+                              "type": "hosts-enum",
+                              "multiselection": true
+                          },
+                          {
+                              "key": "task_types",
+                              "label": "Task types",
+                              "type": "task-types-enum"
+                          },
+                          {
+                              "key": "task_names",
+                              "label": "Task names",
+                              "type": "list",
+                              "object_type": "text"
+                          },
+                          {
+                              "key": "families",
+                              "label": "Families",
+                              "type": "list",
+                              "object_type": "text"
+                          },
+                          {
+                              "key": "subsets",
+                              "label": "Subset names",
+                              "type": "list",
+                              "object_type": "text"
+                          },
+                          {
+                              "key": "version_start",
+                              "label": "Version Start",
+                              "type": "number",
+                              "minimum": 0
+                          }
+                      ]
+                  }
+                }
+            ]
+        },
+        {
             "key": "imageio",
             "type": "dict",
             "label": "Color Management",
