@@ -24,6 +24,7 @@ class CashedData:
     remapping = None
     python3compatible = None
     config_version_data = None
+    ocio_config_colorspaces = {}
 
 
 class DeprecatedWarning(DeprecationWarning):
@@ -155,7 +156,7 @@ def get_imageio_colorspace_from_filepath(
 
     # match file rule from path
     colorspace_name = None
-    for _frule_name, file_rule in file_rules.items():
+    for _, file_rule in file_rules.items():
         pattern = file_rule["pattern"]
         extension = file_rule["ext"]
         ext_match = re.match(
@@ -431,16 +432,22 @@ def get_ocio_config_colorspaces(config_path):
     Returns:
         dict: colorspace and family in couple
     """
-    if not compatibility_check():
-        # python environment is not compatible with PyOpenColorIO
-        # needs to be run in subprocess
-        return get_wrapped_with_subprocess(
-            "config", "get_colorspace", in_path=config_path
-        )
+    if not CashedData.ocio_config_colorspaces.get(config_path):
+        if not compatibility_check():
+            # python environment is not compatible with PyOpenColorIO
+            # needs to be run in subprocess
+            CashedData.ocio_config_colorspaces[config_path] = \
+                get_wrapped_with_subprocess(
+                    "config", "get_colorspace", in_path=config_path
+            )
+        else:
+            from openpype.scripts.ocio_wrapper import _get_colorspace_data
 
-    from openpype.scripts.ocio_wrapper import _get_colorspace_data
+            CashedData.ocio_config_colorspaces[config_path] = \
+                _get_colorspace_data(config_path)
 
-    return _get_colorspace_data(config_path)
+    return CashedData.ocio_config_colorspaces[config_path]
+
 
 
 # TODO: remove this in future - backward compatibility
