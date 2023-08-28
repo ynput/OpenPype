@@ -170,14 +170,17 @@ def get_imageio_colorspace_from_filepath(
 
     # if no file rule matched, try to get colorspace
     # from filepath with OCIO v2 way
-    # QUESTION: should we override file rules from our settings and
-    #           in ocio v2 only focus on file rules set in config file?
     if (
         compatibility_check_config_version(config_data["path"], major=2)
         and not colorspace_name
     ):
         colorspace_name = get_colorspace_from_filepath(
             config_data["path"], path)
+
+    # use parse colorspace from filepath as fallback
+    colorspace_name = colorspace_name or parse_colorspace_from_filepath(
+        path, config_path=config_data["path"]
+    )
 
     if not colorspace_name:
         log.info("No imageio file rule matched input path: '{}'".format(
@@ -196,7 +199,8 @@ def get_imageio_colorspace_from_filepath(
 def get_colorspace_from_filepath(config_path, filepath):
     """Get colorspace from file path wrapper.
 
-    Wrapper function for getting colorspace from file path.
+    Wrapper function for getting colorspace from file path
+    with use of OCIO v2 file-rules.
 
     Args:
         config_path (str): path leading to config.ocio file
