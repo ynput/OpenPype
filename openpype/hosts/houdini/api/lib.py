@@ -27,7 +27,7 @@ def get_asset_fps(asset_doc=None):
 
     if asset_doc is None:
         asset_doc = get_current_project_asset(fields=["data.fps"])
-    return asset_doc["data"].get("fps")
+    return asset_doc["data"]["fps"]
 
 
 def set_id(node, unique_id, overwrite=False):
