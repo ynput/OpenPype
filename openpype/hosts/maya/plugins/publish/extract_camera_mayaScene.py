@@ -237,7 +237,7 @@ class ExtractCameraMayaScene(publish.Extractor,
         defs.extend([
             BoolDef("keep_input_connections",
                     label="Keep Input Connections",
-                    tooltip="Preserving input connections will allow Image Planes to stay connected on publish",
+                    tooltip="Preserving input connections will allow Image Planes to stay connected on publish",  # noqa
                     default=cls.keep_input_connections),
 
         ])
