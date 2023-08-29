@@ -75,7 +75,7 @@ class TasksModel(QtGui.QStandardItemModel):
 
     def set_asset_id(self, asset_id):
         asset_doc = None
-        if self._context_is_valid():
+        if asset_id and self._context_is_valid():
             project_name = self._get_current_project()
             asset_doc = get_asset_by_id(
                 project_name, asset_id, fields=["data.tasks"]
