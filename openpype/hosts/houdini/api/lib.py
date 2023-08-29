@@ -181,6 +181,22 @@ def validate_fps():
     return True
 
 
+# Valid JOB Path
+def validate_job_path():
+    """Validate $JOB value.
+
+    Currently, $JOB has the same value as $HIP.
+    """
+
+    job = os.environ["HIP"]
+    current_job = hou.hscript("echo -n `$JOB`")[0]
+
+    if current_job != job:
+        hou.hscript("set JOB=" + job)
+        os.environ["JOB"] = job
+        print("  - set $JOB to " + job)
+
+
 def create_remote_publish_node(force=True):
     """Function to create a remote publish node in /out
 
