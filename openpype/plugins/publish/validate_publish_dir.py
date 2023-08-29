@@ -60,7 +60,7 @@ class ValidatePublishDir(pyblish.api.InstancePlugin):
         host_name = instance.context.data["hostName"]
         anatomy_data = instance.data["anatomyData"]
         family = anatomy_data["family"]
-        family = self.family_mapping.get("family") or family
+        family = self.family_mapping.get(family) or family
         task_info = anatomy_data.get("task") or {}
 
         return get_publish_template_name(
