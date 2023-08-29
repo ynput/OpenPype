@@ -158,7 +158,7 @@ def get_user_links(
         }
         not_linked = {d for d in not_linked if isinstance(d, types)}
 
-    return users_links, not_linked
+    return users_links, all_not_linked
 
 
 def _recursive_collect_user_links(
@@ -267,7 +267,7 @@ def update_scene_containers():
         container[AVALON_PROPERTY] = container_metadata
         container.library = (
             entity.override_library.reference.library
-            if entity.override_library
+            if entity.override_library and entity.override_library.reference
             else entity.library
         )
 
