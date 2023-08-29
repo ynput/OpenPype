@@ -323,9 +323,11 @@ def reset_colorspace():
     Supports in 3dsMax 2024+
 
     """
-    if int(get_max_version) < 2024:
+    if int(get_max_version()) < 2024:
         return
     project_name = get_current_project_name()
+    colorspace_mgr = rt.ColorPipelineMgr
+    colorspace_mgr.Mode = rt.Name("OCIO_Custom")
     ocio_config_path = os.environ.get("OCIO")
     global_imageio = get_project_settings(
         project_name)["global"]["imageio"]
@@ -334,12 +336,10 @@ def reset_colorspace():
         ocio_config_path = ocio_config["filepath"][-1]
 
     max_imageio = get_project_settings(
-        project_name)["global"]["imageio"]
-    if max_imageio["activate_global_color_management"]:
+        project_name)["max"]["imageio"]
+    if max_imageio["activate_host_color_management"]:
         ocio_config = max_imageio["ocio_config"]
         if ocio_config["override_global_config"]:
             ocio_config_path = ocio_config["filepath"][0]
 
-    colorspace_mgr = rt.ColorPipelineMgr
-    colorspace_mgr.Mode = rt.Name("OCIO_Custom")
     colorspace_mgr.OCIOConfigPath = ocio_config_path

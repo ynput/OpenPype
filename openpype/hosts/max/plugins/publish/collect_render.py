@@ -4,6 +4,7 @@ import os
 import pyblish.api
 
 from pymxs import runtime as rt
+from openpype.lib import EnumDef
 from openpype.pipeline import get_current_asset_name
 from openpype.hosts.max.api import colorspace
 from openpype.hosts.max.api.lib import get_max_version, get_current_renderer
@@ -58,9 +59,19 @@ class CollectRender(pyblish.api.InstancePlugin):
         # most of the 3dsmax renderers
         # so this is currently hard coded
         # TODO: add options for redshift/vray ocio config
-        instance.data["colorspaceConfig"] = ""
-        instance.data["colorspaceDisplay"] = "sRGB"
-        instance.data["colorspaceView"] = "ACES 1.0 SDR-video"
+        if int(get_max_version()) >= 2024:
+            display_view_transform = instance.data["ocio_display_view_transform"]
+            display, view_transform = display_view_transform.split("||")
+            colorspace_mgr = rt.ColorPipelineMgr
+            instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
+            instance.data["colorspaceDisplay"] = display
+            instance.data["colorspaceView"] = view_transform
+
+        else:
+            instance.data["colorspaceConfig"] = ""
+            instance.data["colorspaceDisplay"] = "sRGB"
+            instance.data["colorspaceView"] = "ACES 1.0 SDR-video"
+
         instance.data["renderProducts"] = colorspace.ARenderProduct()
         instance.data["publishJobState"] = "Suspended"
         instance.data["attachTo"] = []
