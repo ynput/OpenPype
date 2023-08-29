@@ -118,9 +118,15 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
         go_to_current_btn = QtWidgets.QPushButton(header_widget)
         go_to_current_btn.setIcon(get_go_to_current_icon())
+        go_to_current_btn_sp = go_to_current_btn.sizePolicy()
+        go_to_current_btn_sp.setVerticalPolicy(QtWidgets.QSizePolicy.Minimum)
+        go_to_current_btn.setSizePolicy(go_to_current_btn_sp)
 
         refresh_btn = QtWidgets.QPushButton(header_widget)
         refresh_btn.setIcon(get_refresh_icon())
+        refresh_btn_sp = refresh_btn.sizePolicy()
+        refresh_btn_sp.setVerticalPolicy(QtWidgets.QSizePolicy.Minimum)
+        refresh_btn.setSizePolicy(refresh_btn_sp)
 
         folder_widget = FoldersWidget(controller, col_widget)
 
