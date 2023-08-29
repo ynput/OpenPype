@@ -49,7 +49,11 @@ function New-DockerBuild {
     $startTime = [int][double]::Parse((Get-Date -UFormat %s))
     Write-Color -Text ">>> ", "Building OpenPype using Docker ..." -Color Green, Gray, White
     $variant = $args[0]
-    $dockerfile = "$($repo_root)\Dockerfile.$variant"
+    if ($variant.Length -eq 0) {
+        $dockerfile = "$($repo_root)\Dockerfile"
+    } else {
+        $dockerfile = "$( $repo_root )\Dockerfile.$variant"
+    }
     if (-not (Test-Path -PathType Leaf -Path $dockerfile)) {
         Write-Color -Text "!!! ", "Dockerfile for specifed platform ", "[", $variant, "]", "doesn't exist." -Color Red, Yellow, Cyan, White, Cyan, Yellow
         Restore-Cwd
