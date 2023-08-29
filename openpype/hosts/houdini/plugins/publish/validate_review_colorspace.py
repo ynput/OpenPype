@@ -3,7 +3,7 @@ import pyblish.api
 from openpype.pipeline import PublishValidationError
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.houdini.api.action import SelectROPAction
-from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace
+from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
 
 import os
 import hou

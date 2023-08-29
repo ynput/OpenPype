@@ -2,7 +2,7 @@
 """Creator plugin for creating openGL reviews."""
 from openpype.hosts.houdini.api import plugin
 from openpype.lib import EnumDef, BoolDef, NumberDef
-from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace
+from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
 
 import os
 import hou
