@@ -1,7 +1,10 @@
 from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype import style, resources
-from openpype.tools.utils import PlaceholderLineEdit
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    MessageOverlayObject,
+)
 from openpype.tools.utils.lib import get_qta_icon_by_name_and_color
 
 from .widgets import (
@@ -52,6 +55,8 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
         self._controller = controller
 
+        overlay_messages_widget = MessageOverlayObject(self)
+
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
 
@@ -89,6 +94,16 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
         first_show_timer.timeout.connect(self._on_first_show)
 
+        controller.register_event_callback(
+            "save_as.finished",
+            self._on_save_as_finished,
+        )
+        controller.register_event_callback(
+            "copy_representation.finished",
+            self._on_copy_representation_finished,
+        )
+
+        self._overlay_messages_widget = overlay_messages_widget
         self._home_page_widget = home_page_widget
         self._pages_widget = pages_widget
         self._home_body_widget = home_body_widget
@@ -230,3 +245,25 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
     def _on_refresh_clicked(self):
         self.refresh()
+
+    def _on_save_as_finished(self, event):
+        if event["failed"]:
+            self._overlay_messages_widget.add_message(
+                "Failed to save workfile",
+                "error",
+            )
+        else:
+            self._overlay_messages_widget.add_message(
+                "Workfile saved"
+            )
+
+    def _on_copy_representation_finished(self, event):
+        if event["failed"]:
+            self._overlay_messages_widget.add_message(
+                "Failed to copy published workfile",
+                "error",
+            )
+        else:
+            self._overlay_messages_widget.add_message(
+                "Publish workfile saved"
+            )
