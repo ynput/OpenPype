@@ -1,12 +1,6 @@
-from .side_panel import SidePanelWidget
-from .folders_widget import FoldersWidget
-from .tasks_widget import TasksWidget
-from .files_widget import FilesWidget
+from .window import WorkfilesToolWindow
 
 
 __all__ = (
-    "SidePanelWidget",
-    "FoldersWidget",
-    "TasksWidget",
-    "FilesWidget",
+    "WorkfilesToolWindow",
 )

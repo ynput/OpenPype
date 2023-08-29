@@ -7,13 +7,12 @@ from openpype.tools.utils import (
 )
 from openpype.tools.utils.lib import get_qta_icon_by_name_and_color
 
-from .widgets import (
-    SidePanelWidget,
-    FoldersWidget,
-    TasksWidget,
-    FilesWidget,
-)
-from .control import BaseWorkfileController
+from openpype.tools.ayon_workfiles.control import BaseWorkfileController
+
+from .side_panel import SidePanelWidget
+from .folders_widget import FoldersWidget
+from .tasks_widget import TasksWidget
+from .files_widget import FilesWidget
 
 # TODO move to utils
 # from openpype.tools.utils.lib import (
