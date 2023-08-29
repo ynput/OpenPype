@@ -17,7 +17,7 @@ class OxAbcLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         plugin_list = get_plugins()
-        if "ornatrix.dlo" not in plugin_list:
+        if "ephere.plugins.autodesk.max.ornatrix.dlo" not in plugin_list:
             raise RuntimeError("Ornatrix plugin not "
                                "found/installed in Max yet..")
 
