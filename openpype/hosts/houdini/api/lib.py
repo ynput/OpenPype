@@ -506,7 +506,6 @@ def reset_framerange():
     set_scene_fps(fps)
     hou.playbar.setFrameRange(frame_start, frame_end)
     hou.playbar.setPlaybackRange(frame_start, frame_end)
-    print("Setting current frame to {}".format(frame_start))
     hou.setFrame(frame_start)
 
 
