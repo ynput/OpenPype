@@ -527,7 +527,7 @@
         },
         "CreateRender": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
@@ -547,7 +547,9 @@
         },
         "CreateUnrealSkeletalMesh": {
             "enabled": true,
-            "default_variants": [],
+            "default_variants": [
+                "Main"
+            ],
             "joint_hints": "jnt_org"
         },
         "CreateMultiverseLook": {
@@ -627,55 +629,55 @@
         },
         "CreateMultiverseUsd": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdComp": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdOver": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateAssembly": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateCamera": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateLayout": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMayaScene": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateRenderSetup": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateRig": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main",
                 "Sim",
                 "Cloth"
@@ -683,20 +685,20 @@
         },
         "CreateSetDress": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main",
                 "Anim"
             ]
         },
         "CreateVRayScene": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateYetiRig": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         }
@@ -1469,6 +1471,10 @@
             "namespace": "{asset_name}_{subset}_##_",
             "group_name": "_GRP",
             "display_handle": true
+        },
+        "import_loader": {
+            "namespace": "{asset_name}_{subset}_##_",
+            "group_name": "_GRP"
         }
     },
     "workfile_build": {

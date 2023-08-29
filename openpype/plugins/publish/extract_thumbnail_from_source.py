@@ -128,7 +128,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
         if thumbnail_created:
             return full_output_path
 
-        self.log.warning("Thumbanil has not been created.")
+        self.log.warning("Thumbnail has not been created.")
 
     def _instance_has_thumbnail(self, instance):
         if "representations" not in instance.data:
@@ -147,6 +147,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
         oiio_cmd = get_oiio_tool_args(
             "oiiotool",
             "-a", src_path,
+            "--ch", "R,G,B",
             "-o", dst_path
         )
         self.log.info("Running: {}".format(" ".join(oiio_cmd)))
