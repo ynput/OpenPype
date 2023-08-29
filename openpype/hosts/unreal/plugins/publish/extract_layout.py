@@ -56,7 +56,7 @@ class ExtractLayout(publish.Extractor):
                     self.log.error("AyonAssetContainer not found.")
                     return
 
-                parent_id = eal.get_metadata_tag(asset_container, "parent")
+                parent_id = eal.get_metadata_tag(asset_container, "version_id")
                 family = eal.get_metadata_tag(asset_container, "family")
 
                 self.log.info("Parent: {}".format(parent_id))

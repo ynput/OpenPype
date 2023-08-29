@@ -154,13 +154,6 @@ def _register_events():
     pass
 
 
-def format_string(input_str):
-    string = input_str.replace('\\', '/')
-    string = string.replace('"', '\\"')
-    string = string.replace("'", "\\'")
-    return f'"{string}"'
-
-
 def send_request(request: str, params: dict = None):
     communicator = CommunicationWrapper.communicator
     if ret_value := ast.literal_eval(

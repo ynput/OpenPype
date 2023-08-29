@@ -348,7 +348,7 @@ class LayoutLoader(UnrealBaseLoader):
         if not loader:
             self.log.error(
                 f"No valid loader found for {representation}")
-            return None, None, None, None
+            return None, None, None
 
         assets = load_container(
             loader,
@@ -570,8 +570,8 @@ class LayoutLoader(UnrealBaseLoader):
             "container_name": container_name,
             "asset_name": asset_name,
             "loader": str(self.__class__.__name__),
-            "representation": str(context["representation"]["_id"]),
-            "parent": str(context["representation"]["parent"]),
+            "representation_id": str(context["representation"]["_id"]),
+            "version_id": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"],
             "loaded_assets": loaded_assets
         }
@@ -616,8 +616,8 @@ class LayoutLoader(UnrealBaseLoader):
         loaded_assets = self._process_assets(source_path, asset_dir, sequence)
 
         data = {
-            "representation": str(representation["_id"]),
-            "parent": str(representation["parent"]),
+            "representation_id": str(representation["_id"]),
+            "version_id": str(representation["parent"]),
             "loaded_assets": loaded_assets
         }
         imprint(f"{asset_dir}/{container.get('objectName')}", data)

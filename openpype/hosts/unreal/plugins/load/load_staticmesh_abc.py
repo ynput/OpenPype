@@ -106,8 +106,8 @@ class StaticMeshAlembicLoader(UnrealBaseLoader):
             "container_name": container_name,
             "asset_name": asset_name,
             "loader": self.__class__.__name__,
-            "representation": str(context["representation"]["_id"]),
-            "parent": str(context["representation"]["parent"]),
+            "representation_id": str(context["representation"]["_id"]),
+            "version_id": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"],
             "default_conversion": default_conversion
         }

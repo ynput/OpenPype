@@ -13,6 +13,7 @@ from openpype.hosts.unreal.api.communication_server import (
 )
 from openpype.hosts.unreal.api import UnrealHost
 from openpype.pipeline import install_host
+from openpype.tools.utils import get_openpype_qt_app
 from openpype import style
 
 logging.basicConfig(level=logging.DEBUG)
@@ -29,7 +30,7 @@ def main(launch_args):
 
     # Create QtApplication for tools
     # - QApplicaiton is also main thread/event loop of the server
-    qt_app = QtWidgets.QApplication([])
+    qt_app = get_openpype_qt_app()
 
     unreal_host = UnrealHost()
     install_host(unreal_host)

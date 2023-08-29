@@ -232,8 +232,8 @@ class UnrealBaseLoader(LoaderPlugin):
         container_name = container['objectName']
 
         data = {
-            "representation": str(representation["_id"]),
-            "parent": str(representation["parent"])
+            "representation_id": str(representation["_id"]),
+            "version_id": str(representation["parent"])
         }
 
         imprint(f"{asset_dir}/{container_name}", data)

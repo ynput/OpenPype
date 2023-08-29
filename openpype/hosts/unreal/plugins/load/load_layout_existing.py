@@ -55,8 +55,8 @@ class ExistingLayoutLoader(UnrealBaseLoader):
             "container_name": container_name,
             "asset_name": asset_name,
             "loader": self.__class__.__name__,
-            "representation": representation,
-            "parent": parent,
+            "representation_id": representation,
+            "version_id": parent,
             "family": family
         }
 
@@ -316,8 +316,8 @@ class ExistingLayoutLoader(UnrealBaseLoader):
             "container_name": container_name,
             "asset_name": asset_name,
             "loader": str(self.__class__.__name__),
-            "representation": str(context["representation"]["_id"]),
-            "parent": str(context["representation"]["parent"]),
+            "representation_id": str(context["representation"]["_id"]),
+            "version_id": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"],
             "loaded_assets": containers
         }
@@ -333,8 +333,8 @@ class ExistingLayoutLoader(UnrealBaseLoader):
         containers = self._process(source_path, project_name)
 
         data = {
-            "representation": str(representation["_id"]),
-            "parent": str(representation["parent"]),
+            "representation_id": str(representation["_id"]),
+            "version_id": str(representation["parent"]),
             "loaded_assets": containers
         }
 
