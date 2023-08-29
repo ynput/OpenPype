@@ -106,7 +106,7 @@ class ExtractCameraMayaScene(publish.Extractor,
     families = ["camera", "matchmove"]
     scene_type = "ma"
 
-    keep_input_conn = False
+    keep_input_connections = False
 
     def process(self, instance):
         """Plugin entry point."""
@@ -166,7 +166,7 @@ class ExtractCameraMayaScene(publish.Extractor,
                             transform,
                             frame_range=[start, end],
                             step=step,
-                            copy_input_conn=self.keep_image_planes
+                            copy_input_connections=self.keep_input_connections
                         )
                         baked_camera_shapes = set(cmds.ls(baked,
                                                   type="camera",

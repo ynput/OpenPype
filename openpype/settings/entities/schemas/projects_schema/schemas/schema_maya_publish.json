@@ -1002,7 +1002,7 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "keep_input_conn",
+                    "key": "ExtractCameraMayaScene",
                     "label": "Export Input connections (Image planes)"
                 }
             ]

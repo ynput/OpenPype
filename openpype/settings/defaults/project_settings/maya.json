@@ -1342,7 +1342,7 @@
             "enabled": true,
             "optional": true,
             "active": true,
-            "keep_image_planes": false
+            "keep_input_connections": false
         },
         "ExtractGLB": {
             "enabled": true,
