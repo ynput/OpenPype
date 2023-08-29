@@ -405,7 +405,7 @@
             "enabled": false
         },
         "ExplicitCleanUp": {
-            "enabled": false
+            "enabled": true
         }
     },
     "tools": {
