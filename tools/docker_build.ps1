@@ -60,15 +60,20 @@ function New-DockerBuild {
         Exit-WithCode 1
     }
     Write-Color -Text ">>> ", "Using Dockerfile for ", "[ ", $variant, " ]" -Color Green, Gray, White, Cyan, White
+
+    $build_dir = "$($repo_root)\build"
+    if (-not(Test-Path $build_dir)) {
+        New-Item -ItemType Directory -Path $build_dir
+    }
     Write-Color -Text "--- ", "Cleaning build directory ..." -Color Yellow, Gray
     try {
-        Remove-Item -Recurse -Force "$($repo_root)\build\*"
-    }
-    catch {
+        Remove-Item -Recurse -Force "$($build_dir)\*"
+    } catch {
         Write-Color -Text "!!! ", "Cannot clean build directory, possibly because process is using it." -Color Red, Gray
         Write-Color -Text $_.Exception.Message -Color Red
         Exit-WithCode 1
     }
+
     Write-Color -Text ">>> ", "Running Docker build ..." -Color Green, Gray, White
     docker build --pull --iidfile $repo_root/build/docker-image.id --build-arg BUILD_DATE=$(Get-Date -UFormat %Y-%m-%dT%H:%M:%SZ) --build-arg VERSION=$openpype_version -t pypeclub/openpype:$openpype_version -f $dockerfile .
     if ($LASTEXITCODE -ne 0) {
