@@ -67,6 +67,6 @@ def get_default_display_view_colorspace():
     view = data.get("view")
 
     default_view_space = get_display_view_colorspace_name(config_path,
-                                                            display,
-                                                            view)
+                                                          display,
+                                                          view)
     return default_view_space
