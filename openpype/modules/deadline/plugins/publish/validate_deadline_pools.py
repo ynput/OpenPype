@@ -39,25 +39,28 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
         deadline_url = instance.context.data["defaultDeadline"]
         pools = self.get_pools(deadline_url)
 
-        formatting_data = {
-            "pools_str": ",".join(pools)
-        }
-
+        invalid_pools = {}
         primary_pool = instance.data.get("primaryPool")
         if primary_pool and primary_pool not in pools:
-            msg = "Configured primary '{}' not present on Deadline".format(
-                instance.data["primaryPool"])
-            formatting_data["invalid_value_str"] = msg
-            raise PublishXmlValidationError(self, msg,
-                                            formatting_data=formatting_data)
+            invalid_pools["primary"] = primary_pool
 
         secondary_pool = instance.data.get("secondaryPool")
         if secondary_pool and secondary_pool not in pools:
-            msg = "Configured secondary '{}' not present on Deadline".format(
-                instance.data["secondaryPool"])
-            formatting_data["invalid_value_str"] = msg
-            raise PublishXmlValidationError(self, msg,
-                                            formatting_data=formatting_data)
+            invalid_pools["secondary"] = secondary_pool
+
+        if invalid_pools:
+            message = "\n".join(
+                "{} pool '{}' not available on Deadline".format(key.title(),
+                                                                pool)
+                for key, pool in invalid_pools.items()
+            )
+            raise PublishXmlValidationError(
+                plugin=self,
+                message=message,
+                formatting_data={
+                    "invalid_value_str": message,
+                    "pools_str": ", ".join(pools)
+                })
 
     def get_pools(self, deadline_url):
         if deadline_url not in self.pools_per_url:
