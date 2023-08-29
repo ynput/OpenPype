@@ -26,6 +26,9 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         if not instance.data.get("farm"):
             self.log.debug("Skipping local instance.")
             return
