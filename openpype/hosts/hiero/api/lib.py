@@ -5,7 +5,6 @@ Host specific functions where host api is connected
 from copy import deepcopy
 import os
 import re
-import sys
 import platform
 import functools
 import warnings
@@ -23,16 +22,24 @@ except ImportError:
 
 from openpype.client import get_project
 from openpype.settings import get_project_settings
-from openpype.pipeline import (
-    get_current_project_name, legacy_io, Anatomy
-)
+from openpype.pipeline import Anatomy, get_current_project_name
 from openpype.pipeline.load import filter_containers
 from openpype.lib import Logger
 from . import tags
-
+from .constants import (
+    OPENPYPE_TAG_NAME,
+    DEFAULT_SEQUENCE_NAME,
+    DEFAULT_BIN_NAME
+)
 from openpype.pipeline.colorspace import (
     get_imageio_config
 )
+
+
+class _CTX:
+    has_been_setup = False
+    has_menu = False
+    parent_gui = None
 
 
 class DeprecatedWarning(DeprecationWarning):
@@ -82,23 +89,14 @@ def deprecated(new_destination):
 
 log = Logger.get_logger(__name__)
 
-self = sys.modules[__name__]
-self._has_been_setup = False
-self._has_menu = False
-self._registered_gui = None
-self._parent = None
-self.pype_tag_name = "openpypeData"
-self.default_sequence_name = "openpypeSequence"
-self.default_bin_name = "openpypeBin"
 
-
-def flatten(_list):
-    for item in _list:
-        if isinstance(item, (list, tuple)):
-            for sub_item in flatten(item):
+def flatten(list_):
+    for item_ in list_:
+        if isinstance(item_, (list, tuple)):
+            for sub_item in flatten(item_):
                 yield sub_item
         else:
-            yield item
+            yield item_
 
 
 def get_current_project(remove_untitled=False):
@@ -131,7 +129,7 @@ def get_current_sequence(name=None, new=False):
 
     if new:
         # create new
-        name = name or self.default_sequence_name
+        name = name or DEFAULT_SEQUENCE_NAME
         sequence = hiero.core.Sequence(name)
         root_bin.addItem(hiero.core.BinItem(sequence))
     elif name:
@@ -345,7 +343,7 @@ def get_track_item_tags(track_item):
     # collect all tags which are not openpype tag
     returning_tag_data.extend(
         tag for tag in _tags
-        if tag.name() != self.pype_tag_name
+        if tag.name() != OPENPYPE_TAG_NAME
     )
 
     return returning_tag_data
@@ -385,7 +383,7 @@ def set_track_openpype_tag(track, data=None):
         # if pype tag available then update with input data
         tag = tags.create_tag(
             "{}_{}".format(
-                self.pype_tag_name,
+                OPENPYPE_TAG_NAME,
                 _get_tag_unique_hash()
             ),
             tag_data
@@ -412,7 +410,7 @@ def get_track_openpype_tag(track):
         return None
     for tag in _tags:
         # return only correct tag defined by global name
-        if self.pype_tag_name in tag.name():
+        if OPENPYPE_TAG_NAME in tag.name():
             return tag
 
 
@@ -484,7 +482,7 @@ def get_trackitem_openpype_tag(track_item):
         return None
     for tag in _tags:
         # return only correct tag defined by global name
-        if self.pype_tag_name in tag.name():
+        if OPENPYPE_TAG_NAME in tag.name():
             return tag
 
 
@@ -516,7 +514,7 @@ def set_trackitem_openpype_tag(track_item, data=None):
         # if pype tag available then update with input data
         tag = tags.create_tag(
             "{}_{}".format(
-                self.pype_tag_name,
+                OPENPYPE_TAG_NAME,
                 _get_tag_unique_hash()
             ),
             tag_data
@@ -626,7 +624,7 @@ def get_publish_attribute(tag):
 
 def sync_avalon_data_to_workfile():
     # import session to get project dir
-    project_name = legacy_io.Session["AVALON_PROJECT"]
+    project_name = get_current_project_name()
 
     anatomy = Anatomy(project_name)
     work_template = anatomy.templates["work"]["path"]
@@ -698,29 +696,29 @@ def setup(console=False, port=None, menu=True):
         menu (bool, optional): Display file menu in Hiero.
     """
 
-    if self._has_been_setup:
+    if _CTX.has_been_setup:
         teardown()
 
     add_submission()
 
     if menu:
         add_to_filemenu()
-        self._has_menu = True
+        _CTX.has_menu = True
 
-    self._has_been_setup = True
+    _CTX.has_been_setup = True
     log.debug("pyblish: Loaded successfully.")
 
 
 def teardown():
     """Remove integration"""
-    if not self._has_been_setup:
+    if not _CTX.has_been_setup:
         return
 
-    if self._has_menu:
+    if _CTX.has_menu:
         remove_from_filemenu()
-        self._has_menu = False
+        _CTX.has_menu = False
 
-    self._has_been_setup = False
+    _CTX.has_been_setup = False
     log.debug("pyblish: Integration torn down successfully")
 
 
@@ -821,7 +819,7 @@ class PublishAction(QtWidgets.QAction):
 #     # create root node and save all metadata
 #     root_node = hiero.core.nuke.RootNode()
 #
-#     anatomy = Anatomy(os.environ["AVALON_PROJECT"])
+#     anatomy = Anatomy(get_current_project_name())
 #     work_template = anatomy.templates["work"]["path"]
 #     root_path = anatomy.root_value_for_template(work_template)
 #
@@ -928,7 +926,7 @@ def create_bin(path=None, project=None):
     # get the first loaded project
     project = project or get_current_project()
 
-    path = path or self.default_bin_name
+    path = path or DEFAULT_BIN_NAME
 
     path = path.replace("\\", "/").split("/")
 
@@ -1041,7 +1039,7 @@ def _set_hrox_project_knobs(doc, **knobs):
 
 
 def apply_colorspace_project():
-    project_name = os.getenv("AVALON_PROJECT")
+    project_name = get_current_project_name()
     # get path the the active projects
     project = get_current_project(remove_untitled=True)
     current_file = project.path()
@@ -1110,7 +1108,7 @@ def apply_colorspace_project():
 
 
 def apply_colorspace_clips():
-    project_name = os.getenv("AVALON_PROJECT")
+    project_name = get_current_project_name()
     project = get_current_project(remove_untitled=True)
     clips = project.clips()
 
@@ -1264,7 +1262,7 @@ def check_inventory_versions(track_items=None):
     if not containers:
         return
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     filter_result = filter_containers(containers, project_name)
     for container in filter_result.latest:
         set_track_color(container["_item"], clip_color_last)
@@ -1311,11 +1309,11 @@ def before_project_save(event):
 
 def get_main_window():
     """Acquire Nuke's main window"""
-    if self._parent is None:
+    if _CTX.parent_gui is None:
         top_widgets = QtWidgets.QApplication.topLevelWidgets()
         name = "Foundry::UI::DockMainWindow"
         main_window = next(widget for widget in top_widgets if
                            widget.inherits("QMainWindow") and
                            widget.metaObject().className() == name)
-        self._parent = main_window
-    return self._parent
+        _CTX.parent_gui = main_window
+    return _CTX.parent_gui

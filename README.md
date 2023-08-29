@@ -3,7 +3,7 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-28-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 OpenPype
-====
+========
 
 [![documentation](https://github.com/pypeclub/pype/actions/workflows/documentation.yml/badge.svg)](https://github.com/pypeclub/pype/actions/workflows/documentation.yml) ![GitHub VFX Platform](https://img.shields.io/badge/vfx%20platform-2022-lightgrey?labelColor=303846)
 
@@ -47,7 +47,7 @@ It can be built and ran on all common platforms. We develop and test on the foll
 For more details on requirements visit [requirements documentation](https://openpype.io/docs/dev_requirements)
 
 Building OpenPype
--------------
+-----------------
 
 To build OpenPype you currently need [Python 3.9](https://www.python.org/downloads/) as we are following
 [vfx platform](https://vfxplatform.com). Because of some Linux distros comes with newer Python version
@@ -67,9 +67,9 @@ git clone --recurse-submodules git@github.com:Pypeclub/OpenPype.git
 
 #### To build OpenPype:
 
-1) Run `.\tools\create_env.ps1` to create virtual environment in `.\venv`
+1) Run `.\tools\create_env.ps1` to create virtual environment in `.\venv`.
 2) Run `.\tools\fetch_thirdparty_libs.ps1` to download third-party dependencies like ffmpeg and oiio. Those will be included in build.
-3) Run `.\tools\build.ps1` to build OpenPype executables in `.\build\`
+3) Run `.\tools\build.ps1` to build OpenPype executables in `.\build\`.
 
 To create distributable OpenPype versions, run `./tools/create_zip.ps1` - that will
 create zip file with name `openpype-vx.x.x.zip` parsed from current OpenPype repository and
@@ -88,38 +88,38 @@ some OpenPype dependencies like [CMake](https://cmake.org/) and **XCode Command 
 Easy way of installing everything necessary is to use [Homebrew](https://brew.sh):
 
 1) Install **Homebrew**:
-```sh
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
+   ```sh
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    ```
 
 2) Install **cmake**:
-```sh
-brew install cmake
-```
+   ```sh
+   brew install cmake
+   ```
 
 3) Install [pyenv](https://github.com/pyenv/pyenv):
-```sh
-brew install pyenv
-echo 'eval "$(pyenv init -)"' >> ~/.zshrc
-pyenv init
-exec "$SHELL"
-PATH=$(pyenv root)/shims:$PATH
-```
+   ```sh
+   brew install pyenv
+   echo 'eval "$(pyenv init -)"' >> ~/.zshrc
+   pyenv init
+   exec "$SHELL"
+   PATH=$(pyenv root)/shims:$PATH
+   ```
 
-4) Pull in required Python version 3.9.x
-```sh
-# install Python build dependences
-brew install openssl readline sqlite3 xz zlib
+4) Pull in required Python version 3.9.x:
+   ```sh
+   # install Python build dependences
+   brew install openssl readline sqlite3 xz zlib
 
-# replace with up-to-date 3.9.x version
-pyenv install 3.9.6
-```
+   # replace with up-to-date 3.9.x version
+   pyenv install 3.9.6
+   ```
 
-5) Set local Python version
-```sh
-# switch to OpenPype source directory
-pyenv local 3.9.6
-```
+5) Set local Python version:
+   ```sh
+   # switch to OpenPype source directory
+   pyenv local 3.9.6
+   ```
 
 #### To build OpenPype:
 
@@ -143,6 +143,10 @@ sudo ./tools/docker_build.sh centos7
 ```
 
 If all is successful, you'll find built OpenPype in `./build/` folder.
+
+Docker build can be also started from Windows machine, just use `./tools/docker_build.ps1` instead of shell script.
+
+This could be used even for building linux build (with argument `centos7` or `debian`)
 
 #### Manual build
 You will need [Python >= 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll also need [curl](https://curl.se) on systems that doesn't have one preinstalled.
@@ -241,7 +245,7 @@ pyenv local 3.9.6
 
 
 Running OpenPype
-------------
+----------------
 
 OpenPype can by executed either from live sources (this repository) or from
 *"frozen code"* - executables that can be build using steps described above.
@@ -289,7 +293,7 @@ To run tests, execute `.\tools\run_tests(.ps1|.sh)`.
 
 
 Developer tools
--------------
+---------------
 
 In case you wish to add your own tools to  `.\tools` folder without git tracking, it is possible by adding it with `dev_*` suffix (example: `dev_clear_pyc(.ps1|.sh)`).
 

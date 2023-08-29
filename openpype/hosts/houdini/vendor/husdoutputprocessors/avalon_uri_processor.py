@@ -5,7 +5,7 @@ import husdoutputprocessors.base as base
 import colorbleed.usdlib as usdlib
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline import Anatomy, get_current_project_name
 
 
 class AvalonURIOutputProcessor(base.OutputProcessorBase):
@@ -122,7 +122,7 @@ class AvalonURIOutputProcessor(base.OutputProcessorBase):
 
         """
 
-        PROJECT = legacy_io.Session["AVALON_PROJECT"]
+        PROJECT = get_current_project_name()
         anatomy = Anatomy(PROJECT)
         asset_doc = get_asset_by_name(PROJECT, asset)
         if not asset_doc:

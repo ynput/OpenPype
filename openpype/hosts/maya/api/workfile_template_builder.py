@@ -14,7 +14,7 @@ from openpype.tools.workfile_template_build import (
     WorkfileBuildPlaceholderDialog,
 )
 
-from .lib import read, imprint
+from .lib import read, imprint, get_reference_node, get_main_window
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
 
@@ -173,44 +173,37 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
 
     def create_placeholder(self, placeholder_data):
         selection = cmds.ls(selection=True)
-        if not selection:
-            raise ValueError("Nothing is selected")
         if len(selection) > 1:
             raise ValueError("More then one item are selected")
+
+        parent = selection[0] if selection else None
 
         placeholder_data["plugin_identifier"] = self.identifier
 
         placeholder_name = self._create_placeholder_name(placeholder_data)
 
         placeholder = cmds.spaceLocator(name=placeholder_name)[0]
-        # TODO: this can crash if selection can't be used
-        cmds.parent(placeholder, selection[0])
+        if parent:
+            placeholder = cmds.parent(placeholder, selection[0])[0]
 
-        # get the long name of the placeholder (with the groups)
-        placeholder_full_name = (
-            cmds.ls(selection[0], long=True)[0]
-            + "|"
-            + placeholder.replace("|", "")
-        )
-
-        imprint(placeholder_full_name, placeholder_data)
+        imprint(placeholder, placeholder_data)
 
         # Add helper attributes to keep placeholder info
         cmds.addAttr(
-            placeholder_full_name,
+            placeholder,
             longName="parent",
             hidden=True,
             dataType="string"
         )
         cmds.addAttr(
-            placeholder_full_name,
+            placeholder,
             longName="index",
             hidden=True,
             attributeType="short",
             defaultValue=-1
         )
 
-        cmds.setAttr(placeholder_full_name + ".parent", "", type="string")
+        cmds.setAttr(placeholder + ".parent", "", type="string")
 
     def update_placeholder(self, placeholder_item, placeholder_data):
         node_name = placeholder_item.scene_identifier
@@ -233,7 +226,7 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             if placeholder_data.get("plugin_identifier") != self.identifier:
                 continue
 
-            # TODO do data validations and maybe updgrades if are invalid
+            # TODO do data validations and maybe upgrades if they are invalid
             output.append(
                 LoadPlaceholderItem(node_name, placeholder_data, self)
             )
@@ -250,14 +243,18 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
     def get_placeholder_options(self, options=None):
         return self.get_load_plugin_options(options)
 
-    def cleanup_placeholder(self, placeholder, failed):
+    def post_placeholder_process(self, placeholder, failed):
         """Hide placeholder, add them to placeholder set
         """
-        node = placeholder._scene_identifier
+        node = placeholder.scene_identifier
 
         cmds.sets(node, addElement=PLACEHOLDER_SET)
         cmds.hide(node)
         cmds.setAttr(node + ".hiddenInOutliner", True)
+
+    def delete_placeholder(self, placeholder):
+        """Remove placeholder if building was successful"""
+        cmds.delete(placeholder.scene_identifier)
 
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)
@@ -275,9 +272,24 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             return
 
         roots = cmds.sets(container, q=True)
+        ref_node = None
+        try:
+            ref_node = get_reference_node(roots)
+        except AssertionError as e:
+            self.log.info(e.args[0])
+
         nodes_to_parent = []
         for root in roots:
+            if ref_node:
+                ref_root = cmds.referenceQuery(root, nodes=True)[0]
+                ref_root = (
+                    cmds.listRelatives(ref_root, parent=True, path=True) or
+                    [ref_root]
+                )
+                nodes_to_parent.extend(ref_root)
+                continue
             if root.endswith("_RN"):
+                # Backwards compatibility for hardcoded reference names.
                 refRoot = cmds.referenceQuery(root, n=True)[0]
                 refRoot = cmds.listRelatives(refRoot, parent=True) or [refRoot]
                 nodes_to_parent.extend(refRoot)
@@ -294,10 +306,17 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             matrix=True,
             worldSpace=True
         )
+        scene_parent = cmds.listRelatives(
+            placeholder.scene_identifier, parent=True, fullPath=True
+        )
         for node in set(nodes_to_parent):
             cmds.reorder(node, front=True)
             cmds.reorder(node, relative=placeholder.data["index"])
             cmds.xform(node, matrix=placeholder_form, ws=True)
+            if scene_parent:
+                cmds.parent(node, scene_parent)
+            else:
+                cmds.parent(node, world=True)
 
         holding_sets = cmds.listSets(object=placeholder.scene_identifier)
         if not holding_sets:
@@ -319,8 +338,9 @@ def update_workfile_template(*args):
 def create_placeholder(*args):
     host = registered_host()
     builder = MayaTemplateBuilder(host)
-    window = WorkfileBuildPlaceholderDialog(host, builder)
-    window.exec_()
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
+    window.show()
 
 
 def update_placeholder(*args):
@@ -343,6 +363,7 @@ def update_placeholder(*args):
         raise ValueError("Too many selected nodes")
 
     placeholder_item = placeholder_items[0]
-    window = WorkfileBuildPlaceholderDialog(host, builder)
+    window = WorkfileBuildPlaceholderDialog(host, builder,
+                                            parent=get_main_window())
     window.set_update_mode(placeholder_item)
     window.exec_()

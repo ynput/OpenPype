@@ -1,7 +1,6 @@
 from copy import deepcopy
 import re
 import os
-import sys
 import json
 import platform
 import contextlib
@@ -237,12 +236,20 @@ def get_data_subprocess(config_path, data_type):
         return json.loads(return_json_data)
 
 
-def compatible_python():
-    """Only 3.9 or higher can directly use PyOpenColorIO in ocio_wrapper"""
-    compatible = False
-    if sys.version[0] == 3 and sys.version[1] >= 9:
-        compatible = True
-    return compatible
+def compatibility_check():
+    """checking if user has a compatible PyOpenColorIO >= 2.
+
+    It's achieved by checking if PyOpenColorIO is importable
+    and calling any version 2 specific function
+    """
+    try:
+        import PyOpenColorIO
+
+        # ocio versions lower than 2 will raise AttributeError
+        PyOpenColorIO.GetVersion()
+    except (ImportError, AttributeError):
+        return False
+    return True
 
 
 def get_ocio_config_colorspaces(config_path):
@@ -257,11 +264,14 @@ def get_ocio_config_colorspaces(config_path):
     Returns:
         dict: colorspace and family in couple
     """
-    if compatible_python():
-        from ..scripts.ocio_wrapper import _get_colorspace_data
-        return _get_colorspace_data(config_path)
-    else:
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
         return get_colorspace_data_subprocess(config_path)
+
+    from openpype.scripts.ocio_wrapper import _get_colorspace_data
+
+    return _get_colorspace_data(config_path)
 
 
 def get_colorspace_data_subprocess(config_path):
@@ -290,11 +300,14 @@ def get_ocio_config_views(config_path):
     Returns:
         dict: `display/viewer` and viewer data
     """
-    if compatible_python():
-        from ..scripts.ocio_wrapper import _get_views_data
-        return _get_views_data(config_path)
-    else:
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
         return get_views_data_subprocess(config_path)
+
+    from openpype.scripts.ocio_wrapper import _get_views_data
+
+    return _get_views_data(config_path)
 
 
 def get_views_data_subprocess(config_path):
@@ -312,10 +325,12 @@ def get_views_data_subprocess(config_path):
 
 
 def get_imageio_config(
-    project_name, host_name,
+    project_name,
+    host_name,
     project_settings=None,
     anatomy_data=None,
-    anatomy=None
+    anatomy=None,
+    env=None
 ):
     """Returns config data from settings
 
@@ -325,12 +340,10 @@ def get_imageio_config(
     Args:
         project_name (str): project name
         host_name (str): host name
-        project_settings (dict, optional): project settings.
-                                           Defaults to None.
-        anatomy_data (dict, optional): anatomy formatting data.
-                                       Defaults to None.
-        anatomy (lib.Anatomy, optional): Anatomy object.
-                                         Defaults to None.
+        project_settings (Optional[dict]): Project settings.
+        anatomy_data (Optional[dict]): anatomy formatting data.
+        anatomy (Optional[Anatomy]): Anatomy object.
+        env (Optional[dict]): Environment variables.
 
     Returns:
         dict: config path data or empty dict
@@ -345,40 +358,43 @@ def get_imageio_config(
 
     formatting_data = deepcopy(anatomy_data)
 
-    # add project roots to anatomy data
+    # Add project roots to anatomy data
     formatting_data["root"] = anatomy.roots
     formatting_data["platform"] = platform.system().lower()
 
-    # get colorspace settings
-    # check if global settings group is having activate_global_color_management
-    # key at all. If it does't then default it to False
-    # this is for backward compatibility only
-    # TODO: in future rewrite this to be more explicit
+    # Get colorspace settings
     imageio_global, imageio_host = _get_imageio_settings(
         project_settings, host_name)
 
-    activate_color_management = (
-        imageio_global.get("activate_global_color_management", False)
-        # for already saved overrides from previous version
-        # TODO: remove this in future - backward compatibility
-        or imageio_host.get("ocio_config").get("enabled")
-    )
+    # Host 'ocio_config' is optional
+    host_ocio_config = imageio_host.get("ocio_config") or {}
+
+    # Global color management must be enabled to be able to use host settings
+    activate_color_management = imageio_global.get(
+        "activate_global_color_management")
+    # TODO: remove this in future - backward compatibility
+    # For already saved overrides from previous version look for 'enabled'
+    #   on host settings.
+    if activate_color_management is None:
+        activate_color_management = host_ocio_config.get("enabled", False)
 
     if not activate_color_management:
         # if global settings are disabled return empty dict because
         # it is expected that no colorspace management is needed
-        log.info(
-            "Colorspace management is disabled globally."
-        )
+        log.info("Colorspace management is disabled globally.")
         return {}
 
-    # check if host settings group is having activate_host_color_management
-    # if it does not have activation key then default it to True so it uses
-    # global settings
-    # this is for backward compatibility
+    # Check if host settings group is having 'activate_host_color_management'
+    # - if it does not have activation key then default it to True so it uses
+    #       global settings
+    # This is for backward compatibility.
     # TODO: in future rewrite this to be more explicit
     activate_host_color_management = imageio_host.get(
-        "activate_host_color_management", True)
+        "activate_host_color_management")
+
+    # TODO: remove this in future - backward compatibility
+    if activate_host_color_management is None:
+        activate_host_color_management = host_ocio_config.get("enabled", False)
 
     if not activate_host_color_management:
         # if host settings are disabled return False because
@@ -389,27 +405,24 @@ def get_imageio_config(
         )
         return {}
 
-    config_host = imageio_host.get("ocio_config", {})
-
-    # get config path from either global or host_name
+    # get config path from either global or host settings
     # depending on override flag
     # TODO: in future rewrite this to be more explicit
-    config_data = None
-    override_global_config = (
-        config_host.get("override_global_config")
+    override_global_config = host_ocio_config.get("override_global_config")
+    if override_global_config is None:
         # for already saved overrides from previous version
         # TODO: remove this in future - backward compatibility
-        or config_host.get("enabled")
-    )
+        override_global_config = host_ocio_config.get("enabled")
+
     if override_global_config:
         config_data = _get_config_data(
-            config_host["filepath"], formatting_data
+            host_ocio_config["filepath"], formatting_data, env
         )
     else:
         # get config path from global
         config_global = imageio_global["ocio_config"]
         config_data = _get_config_data(
-            config_global["filepath"], formatting_data
+            config_global["filepath"], formatting_data, env
         )
 
     if not config_data:
@@ -421,7 +434,7 @@ def get_imageio_config(
     return config_data
 
 
-def _get_config_data(path_list, anatomy_data):
+def _get_config_data(path_list, anatomy_data, env=None):
     """Return first existing path in path list.
 
     If template is used in path inputs,
@@ -431,14 +444,17 @@ def _get_config_data(path_list, anatomy_data):
     Args:
         path_list (list[str]): list of abs paths
         anatomy_data (dict): formatting data
+        env (Optional[dict]): Environment variables.
 
     Returns:
         dict: config data
     """
     formatting_data = deepcopy(anatomy_data)
 
+    environment_vars = env or dict(**os.environ)
+
     # format the path for potential env vars
-    formatting_data.update(dict(**os.environ))
+    formatting_data.update(environment_vars)
 
     # first try host config paths
     for path_ in path_list:
@@ -507,34 +523,35 @@ def get_imageio_file_rules(project_name, host_name, project_settings=None):
     frules_host = imageio_host.get("file_rules", {})
 
     # compile file rules dictionary
-    activate_host_rules = (
-        frules_host.get("activate_host_rules")
+    activate_host_rules = frules_host.get("activate_host_rules")
+    if activate_host_rules is None:
         # TODO: remove this in future - backward compatibility
-        or frules_host.get("enabled")
-    )
+        activate_host_rules = frules_host.get("enabled", False)
 
     # return host rules if activated or global rules
     return frules_host["rules"] if activate_host_rules else global_rules
 
 
 def get_remapped_colorspace_to_native(
-        ocio_colorspace_name, host_name, imageio_host_settings):
+    ocio_colorspace_name, host_name, imageio_host_settings
+):
     """Return native colorspace name.
 
     Args:
         ocio_colorspace_name (str | None): ocio colorspace name
+        host_name (str): Host name.
+        imageio_host_settings (dict[str, Any]): ImageIO host settings.
 
     Returns:
-        str: native colorspace name defined in remapping or None
+        Union[str, None]: native colorspace name defined in remapping or None
     """
 
-    if not CashedData.remapping.get(host_name, {}).get("to_native"):
+    CashedData.remapping.setdefault(host_name, {})
+    if CashedData.remapping[host_name].get("to_native") is None:
         remapping_rules = imageio_host_settings["remapping"]["rules"]
-        CashedData.remapping[host_name] = {
-            "to_native": {
-                rule["ocio_name"]: input["host_native_name"]
-                for rule in remapping_rules
-            }
+        CashedData.remapping[host_name]["to_native"] = {
+            rule["ocio_name"]: rule["host_native_name"]
+            for rule in remapping_rules
         }
 
     return CashedData.remapping[host_name]["to_native"].get(
@@ -542,23 +559,25 @@ def get_remapped_colorspace_to_native(
 
 
 def get_remapped_colorspace_from_native(
-        host_native_colorspace_name, host_name, imageio_host_settings):
+    host_native_colorspace_name, host_name, imageio_host_settings
+):
     """Return ocio colorspace name remapped from host native used name.
 
     Args:
         host_native_colorspace_name (str): host native colorspace name
+        host_name (str): Host name.
+        imageio_host_settings (dict[str, Any]): ImageIO host settings.
 
     Returns:
-        str: ocio colorspace name defined in remapping or None
+        Union[str, None]: Ocio colorspace name defined in remapping or None.
     """
 
-    if not CashedData.remapping.get(host_name, {}).get("from_native"):
+    CashedData.remapping.setdefault(host_name, {})
+    if CashedData.remapping[host_name].get("from_native") is None:
         remapping_rules = imageio_host_settings["remapping"]["rules"]
-        CashedData.remapping[host_name] = {
-            "from_native": {
-                input["host_native_name"]: rule["ocio_name"]
-                for rule in remapping_rules
-            }
+        CashedData.remapping[host_name]["from_native"] = {
+            rule["host_native_name"]: rule["ocio_name"]
+            for rule in remapping_rules
         }
 
     return CashedData.remapping[host_name]["from_native"].get(

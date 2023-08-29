@@ -18,7 +18,7 @@ class ModelAbcLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        file_path = os.path.normpath(self.fname)
+        file_path = os.path.normpath(self.filepath_from_context(context))
 
         abc_before = {
             c
@@ -54,22 +54,22 @@ class ModelAbcLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
-        rt.select(node.Children)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Select(node.Children)
 
-        for alembic in rt.selection:
-            abc = rt.getNodeByName(alembic.name)
-            rt.select(abc.Children)
-            for abc_con in rt.selection:
-                container = rt.getNodeByName(abc_con.name)
+        for alembic in rt.Selection:
+            abc = rt.GetNodeByName(alembic.name)
+            rt.Select(abc.Children)
+            for abc_con in rt.Selection:
+                container = rt.GetNodeByName(abc_con.name)
                 container.source = path
-                rt.select(container.Children)
-                for abc_obj in rt.selection:
-                    alembic_obj = rt.getNodeByName(abc_obj.name)
+                rt.Select(container.Children)
+                for abc_obj in rt.Selection:
+                    alembic_obj = rt.GetNodeByName(abc_obj.name)
                     alembic_obj.source = path
 
         with maintained_selection():
-            rt.select(node)
+            rt.Select(node)
 
         lib.imprint(
             container["instance_node"],
@@ -82,8 +82,8 @@ class ModelAbcLoader(load.LoaderPlugin):
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)
 
     @staticmethod
     def get_container_children(parent, type_name):
@@ -98,7 +98,7 @@ class ModelAbcLoader(load.LoaderPlugin):
 
         filtered = []
         for child in list_children(parent):
-            class_type = str(rt.classOf(child.baseObject))
+            class_type = str(rt.ClassOf(child.baseObject))
             if class_type == type_name:
                 filtered.append(child)
 

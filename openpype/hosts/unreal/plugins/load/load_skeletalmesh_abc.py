@@ -78,18 +78,24 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
             asset_name = "{}_{}".format(asset, name)
         else:
             asset_name = "{}".format(name)
-        version = context.get('version').get('name')
+        version = context.get('version')
+        # Check if version is hero version and use different name
+        if not version.get("name") and version.get('type') == "hero_version":
+            name_version = f"{name}_hero"
+        else:
+            name_version = f"{name}_v{version.get('name'):03d}"
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/{asset}/{name}_v{version:03d}", suffix="")
+            f"{root}/{asset}/{name_version}", suffix="")
 
         container_name += suffix
 
         if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
             unreal.EditorAssetLibrary.make_directory(asset_dir)
 
-            task = self.get_task(self.fname, asset_dir, asset_name, False)
+            path = self.filepath_from_context(context)
+            task = self.get_task(path, asset_dir, asset_name, False)
 
             unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 

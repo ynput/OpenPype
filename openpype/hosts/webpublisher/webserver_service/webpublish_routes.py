@@ -216,7 +216,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
                 "extensions": [".tvpp"],
                 "command": "publish",
                 "arguments": {
-                    "targets": ["tvpaint_worker"]
+                    "targets": ["tvpaint_worker", "webpublish"]
                 },
                 "add_to_queue": False
             },
@@ -230,7 +230,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
                     # Make sure targets are set to None for cases that default
                     #   would change
                     # - targets argument is not used in 'publishfromapp'
-                    "targets": ["remotepublish"]
+                    "targets": ["automated", "webpublish"]
                 },
                 # does publish need to be handled by a queue, eg. only
                 # single process running concurrently?
@@ -247,7 +247,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
             "project": content["project_name"],
             "user": content["user"],
 
-            "targets": ["filespublish"]
+            "targets": ["filespublish", "webpublish"]
         }
 
         add_to_queue = False
@@ -293,7 +293,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
             log.debug("Adding to queue")
             self.resource.studio_task_queue.append(args)
         else:
-            subprocess.call(args)
+            subprocess.Popen(args)
 
         return Response(
             status=200,

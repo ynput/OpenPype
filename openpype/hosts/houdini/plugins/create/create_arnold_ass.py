@@ -10,9 +10,10 @@ class CreateArnoldAss(plugin.HoudiniCreator):
     label = "Arnold ASS"
     family = "ass"
     icon = "magic"
-    defaults = ["Main"]
 
     # Default extension: `.ass` or `.ass.gz`
+    # however calling HoudiniCreator.create()
+    # will override it by the value in the project settings
     ext = ".ass"
 
     def create(self, subset_name, instance_data, pre_create_data):

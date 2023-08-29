@@ -6,8 +6,8 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 """
 import os
 from openpype.pipeline import load, get_representation_path
+from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.pipeline import containerise
-from openpype.hosts.max.api import lib
 
 
 class AbcLoader(load.LoaderPlugin):
@@ -23,7 +23,8 @@ class AbcLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        file_path = os.path.normpath(self.fname)
+        file_path = self.filepath_from_context(context)
+        file_path = os.path.normpath(file_path)
 
         abc_before = {
             c
@@ -48,6 +49,10 @@ class AbcLoader(load.LoaderPlugin):
 
         abc_container = abc_containers.pop()
 
+        for abc in rt.GetCurrentSelection():
+            for cam_shape in abc.Children:
+                cam_shape.playbackType = 2
+
         return containerise(
             name, [abc_container], context, loader=self.__class__.__name__
         )
@@ -56,7 +61,7 @@ class AbcLoader(load.LoaderPlugin):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
+        node = rt.GetNodeByName(container["instance_node"])
 
         alembic_objects = self.get_container_children(node, "AlembicObject")
         for alembic_object in alembic_objects:
@@ -67,14 +72,28 @@ class AbcLoader(load.LoaderPlugin):
             {"representation": str(representation["_id"])},
         )
 
+        with maintained_selection():
+            rt.Select(node.Children)
+
+            for alembic in rt.Selection:
+                abc = rt.GetNodeByName(alembic.name)
+                rt.Select(abc.Children)
+                for abc_con in rt.Selection:
+                    container = rt.GetNodeByName(abc_con.name)
+                    container.source = path
+                    rt.Select(container.Children)
+                    for abc_obj in rt.Selection:
+                        alembic_obj = rt.GetNodeByName(abc_obj.name)
+                        alembic_obj.source = path
+
     def switch(self, container, representation):
         self.update(container, representation)
 
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)
 
     @staticmethod
     def get_container_children(parent, type_name):
