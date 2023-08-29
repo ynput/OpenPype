@@ -6,7 +6,7 @@ import ctypes
 import platform
 import logging
 
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtCore, QtGui
 
 from openpype.hosts.unreal.api.communication_server import (
     CommunicationWrapper
