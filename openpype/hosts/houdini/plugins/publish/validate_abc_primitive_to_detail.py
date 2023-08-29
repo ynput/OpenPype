@@ -82,7 +82,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
             return
 
         # Check if the primitive attribute exists
-        frame = instance.data.get("frameStart", 0)
+        frame = instance.data.get("frameStart", hou.intFrame())
         geo = output_node.geometryAtFrame(frame)
 
         # If there are no primitives on the start frame then it might be

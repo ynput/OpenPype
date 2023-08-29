@@ -115,7 +115,7 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
             )
             return [hou.node(instance_node), error]
 
-        frame = instance.data.get("frameStart", 0)
+        frame = instance.data.get("frameStart", hou.intFrame())
         geometry = get_geometry_at_frame(node, frame)
         if geometry is None:
             # No geometry data on this node, maybe the node hasn't cooked?

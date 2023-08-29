@@ -50,7 +50,7 @@ class ValidateAlembicInputNode(pyblish.api.InstancePlugin):
             cls.log.warning("No geometry output node found, skipping check..")
             return
 
-        frame = instance.data.get("frameStart", 0)
+        frame = instance.data.get("frameStart", hou.intFrame())
         geo = output_node.geometryAtFrame(frame)
 
         invalid = False
