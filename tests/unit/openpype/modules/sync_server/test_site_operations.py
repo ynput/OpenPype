@@ -21,7 +21,7 @@ class TestSiteOperation(ModuleUnitTest):
 
     REPRESENTATION_ID = "60e578d0c987036c6a7b741d"
 
-    TEST_FILES = [("1eCwPljuJeOI8A3aisfOIBKKjcmIycTEt",
+    TEST_FILES = [("1FHE70Hi7y05LLT_1O3Y6jGxwZGXKV9zX",
                    "test_site_operations.zip", '')]
 
     @pytest.fixture(scope="module")
