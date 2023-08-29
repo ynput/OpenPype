@@ -658,6 +658,6 @@ def get_display_view_colorspace_subprocess(config_path, display, view):
 
         run_openpype_process(*args, **process_kwargs)
 
-        # return all colorspaces
-        return_json_data = open(tmp_json_path).read()
-        return json.loads(return_json_data)
+        # return default view colorspace name
+        with open(tmp_json_path, "r") as f:
+            return json.load(f)

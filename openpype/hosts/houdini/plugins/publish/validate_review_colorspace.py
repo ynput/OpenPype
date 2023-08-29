@@ -3,6 +3,7 @@ import pyblish.api
 from openpype.pipeline import PublishValidationError
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.houdini.api.action import SelectROPAction
+from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace
 
 import os
 import hou
@@ -38,7 +39,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
 
         rop_node = hou.node(instance.data["instance_node"])
         if os.getenv("OCIO") is None:
-            cls.log.warning(
+            cls.log.debug(
                 "Default Houdini colorspace is used, "
                 " skipping check.."
             )
@@ -71,25 +72,15 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
         used to set colorspace on opengl node to the default view.
         """
 
-        from openpype.pipeline.colorspace import get_display_view_colorspace_name  # noqa
-        from openpype.hosts.houdini.api.lib import get_color_management_preferences  # noqa
-
         rop_node = hou.node(instance.data["instance_node"])
 
-        data = get_color_management_preferences()
-        config_path = data.get("config")
-        display = data.get("display")
-        view = data.get("view")
-
-        cls.log.debug("Get default view colorspace name..")
-
-        default_view_space = get_display_view_colorspace_name(config_path,
-                                                              display, view)
+        # Get default view colorspace name
+        default_view_space = get_default_display_view_colorspace()
 
         rop_node.setParms({"ociocolorspace": default_view_space})
         cls.log.debug(
             "'OCIO Colorspace' parm on '{}' has been set to "
             "the default view color space '{}'"
-            .formate(rop_node, default_view_space)
+            .format(rop_node, default_view_space)
 
         )

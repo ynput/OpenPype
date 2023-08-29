@@ -2,6 +2,7 @@
 """Creator plugin for creating openGL reviews."""
 from openpype.hosts.houdini.api import plugin
 from openpype.lib import EnumDef, BoolDef, NumberDef
+from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace
 
 import os
 import hou
@@ -142,9 +143,8 @@ class CreateReview(plugin.HoudiniCreator):
         # to OpenColorIO
         instance_node.setParms({"colorcorrect": 2})
 
-        self.log.debug("Get default view colorspace name..")
-
-        default_view_space = self.get_default_view_space()
+        # Get default view space for ociocolorspace parm.
+        default_view_space = get_default_display_view_colorspace()
         instance_node.setParms(
             {"ociocolorspace": default_view_space}
         )
@@ -154,21 +154,3 @@ class CreateReview(plugin.HoudiniCreator):
             "the default view color space '{}'"
             .format(instance_node, default_view_space)
         )
-
-        return default_view_space
-
-    def get_default_view_space(self):
-        """Get default view space for ociocolorspace parm."""
-
-        from openpype.pipeline.colorspace import get_display_view_colorspace_name  # noqa
-        from openpype.hosts.houdini.api.lib import get_color_management_preferences  # noqa
-
-        data = get_color_management_preferences()
-        config_path = data.get("config")
-        display = data.get("display")
-        view = data.get("view")
-
-        default_view_space = get_display_view_colorspace_name(config_path,
-                                                              display, view)
-
-        return default_view_space
