@@ -1,3 +1,11 @@
+"""Cache of thumbnails downloaded from AYON server.
+
+Thumbnails are cached to appdirs to predefined directory.
+
+This should be moved to thumbnails logic in pipeline but because it would
+overflow OpenPype logic it's here for now.
+"""
+
 import os
 import time
 import collections
@@ -10,7 +18,7 @@ FileInfo = collections.namedtuple(
 )
 
 
-class ThumbnailCache:
+class AYONThumbnailCache:
     """Cache of thumbnails on local storage.
 
     Thumbnails are cached to appdirs to predefined directory. Each project has
@@ -32,13 +40,14 @@ class ThumbnailCache:
 
     # Lifetime of thumbnails (in seconds)
     # - default 3 days
-    days_alive = 3 * 24 * 60 * 60
+    days_alive = 3
     # Max size of thumbnail directory (in bytes)
     # - default 2 Gb
     max_filesize = 2 * 1024 * 1024 * 1024
 
     def __init__(self, cleanup=True):
         self._thumbnails_dir = None
+        self._days_alive_secs = self.days_alive * 24 * 60 * 60
         if cleanup:
             self.cleanup()
 
@@ -50,7 +59,8 @@ class ThumbnailCache:
         """
 
         if self._thumbnails_dir is None:
-            directory = appdirs.user_data_dir("ayon", "ynput")
+            # TODO use generic function
+            directory = appdirs.user_data_dir("AYON", "Ynput")
             self._thumbnails_dir = os.path.join(directory, "thumbnails")
         return self._thumbnails_dir
 
@@ -121,7 +131,7 @@ class ThumbnailCache:
             for filename in filenames:
                 path = os.path.join(root, filename)
                 modification_time = os.path.getmtime(path)
-                if current_time - modification_time > self.days_alive:
+                if current_time - modification_time > self._days_alive_secs:
                     os.remove(path)
 
     def _max_size_cleanup(self, thumbnails_dir):

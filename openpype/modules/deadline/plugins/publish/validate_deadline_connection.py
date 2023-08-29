@@ -10,7 +10,7 @@ class ValidateDeadlineConnection(pyblish.api.InstancePlugin):
     label = "Validate Deadline Web Service"
     order = pyblish.api.ValidatorOrder
     hosts = ["maya", "nuke"]
-    families = ["renderlayer"]
+    families = ["renderlayer", "render"]
 
     def process(self, instance):
         # get default deadline webservice url from deadline module

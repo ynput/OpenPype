@@ -12,6 +12,9 @@ from openpype.pipeline import (
     legacy_io,
     OpenPypePyblishPluginMixin
 )
+from openpype.pipeline.publish.lib import (
+    replace_with_published_scene_path
+)
 from openpype.pipeline.publish import KnownPublishError
 from openpype.hosts.max.api.lib import (
     get_current_renderer,
@@ -130,8 +133,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                 continue
             job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
         job_info.EnvironmentKeyValue["OPENPYPE_LOG_NO_COLORS"] = "1"
 
         # Add list of expected files to job
@@ -369,7 +372,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if instance.data["renderer"] == "Redshift_Renderer":
             self.log.debug("Using Redshift...published scene wont be used..")
             replace_in_path = False
-        return replace_in_path
+        return replace_with_published_scene_path(
+            instance, replace_in_path)
 
     @staticmethod
     def _iter_expected_files(exp):

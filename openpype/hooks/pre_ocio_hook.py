@@ -1,8 +1,6 @@
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook
 
-from openpype.pipeline.colorspace import (
-    get_imageio_config
-)
+from openpype.pipeline.colorspace import get_imageio_config
 from openpype.pipeline.template_data import get_template_data_with_names
 
 
@@ -10,7 +8,7 @@ class OCIOEnvHook(PreLaunchHook):
     """Set OCIO environment variable for hosts that use OpenColorIO."""
 
     order = 0
-    hosts = [
+    hosts = {
         "substancepainter",
         "fusion",
         "blender",
@@ -20,8 +18,9 @@ class OCIOEnvHook(PreLaunchHook):
         "maya",
         "nuke",
         "hiero",
-        "resolve"
-    ]
+        "resolve",
+    }
+    launch_types = set()
 
     def execute(self):
         """Hook entry method."""
@@ -39,7 +38,8 @@ class OCIOEnvHook(PreLaunchHook):
             host_name=self.host_name,
             project_settings=self.data["project_settings"],
             anatomy_data=template_data,
-            anatomy=self.data["anatomy"]
+            anatomy=self.data["anatomy"],
+            env=self.launch_context.env,
         )
 
         if config_data:
