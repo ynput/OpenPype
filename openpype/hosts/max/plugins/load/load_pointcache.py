@@ -52,7 +52,7 @@ class AbcLoader(load.LoaderPlugin):
 
         for abc in rt.GetCurrentSelection():
             for cam_shape in abc.Children:
-                cam_shape.playbackType = 2
+                cam_shape.playbackType = 0
 
         return containerise(
             name, [abc_container], context, loader=self.__class__.__name__
