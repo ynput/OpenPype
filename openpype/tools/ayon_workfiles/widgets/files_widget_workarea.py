@@ -42,8 +42,8 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         self._empty_root_item = None
         self._empty_item_used = False
         self._published_mode = False
-        self._last_folder_id = None
-        self._last_task_id = None
+        self._selected_folder_id = None
+        self._selected_task_id = None
 
         self._add_empty_item()
 
@@ -118,14 +118,14 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         self._empty_item_used = False
 
     def _on_task_changed(self, event):
-        self._last_folder_id = event["folder_id"]
-        self._last_task_id = event["task_id"]
+        self._selected_folder_id = event["folder_id"]
+        self._selected_task_id = event["task_id"]
         if not self._published_mode:
             self._fill_items()
 
     def _fill_items(self):
-        folder_id = self._last_folder_id
-        task_id = self._last_task_id
+        folder_id = self._selected_folder_id
+        task_id = self._selected_task_id
         if not folder_id or not task_id:
             self._add_missing_context_item()
             return
