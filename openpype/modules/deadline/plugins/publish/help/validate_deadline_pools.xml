@@ -7,8 +7,6 @@
 
 Configured pools don't match available pools in Deadline.
 
-{invalid_value_str}
-
 ### How to repair?
 
 If your instance had deadline pools set on creation, remove or

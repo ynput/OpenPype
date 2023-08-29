@@ -57,10 +57,8 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
             raise PublishXmlValidationError(
                 plugin=self,
                 message=message,
-                formatting_data={
-                    "invalid_value_str": message,
-                    "pools_str": ", ".join(pools)
-                })
+                formatting_data={"pools_str": ", ".join(pools)}
+            )
 
     def get_deadline_url(self, instance):
         # get default deadline webservice url from deadline module
