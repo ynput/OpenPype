@@ -73,7 +73,7 @@ def generate_expected_filepaths(
         file_path (str): Absolute path with any sequential pattern (##, %02d)
 
     Returns:
-        Any[list[str], str]: List of expected absolute paths to files
+        list[str]: List of expected absolute paths to files
             (frames of a sequence)
     """
     files = collect_filepaths_from_sequential_path(
