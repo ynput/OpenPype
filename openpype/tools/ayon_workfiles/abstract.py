@@ -2,6 +2,150 @@ import os
 from abc import ABCMeta, abstractmethod
 
 import six
+from openpype.style import get_default_entity_icon_color
+
+
+class FolderItem:
+    """
+
+    Args:
+        entity_id (str): Folder id.
+        parent_id (Union[str, None]): Parent folder id. If 'None' then project
+            is parent.
+        name (str): Name of folder.
+        label (str): Folder label.
+        icon_name (str): Name of icon from font awesome.
+        icon_color (str): Hex color string that will be used for icon.
+    """
+
+    def __init__(
+        self, entity_id, parent_id, name, label, icon_name, icon_color
+    ):
+        self.entity_id = entity_id
+        self.parent_id = parent_id
+        self.name = name
+        self.icon_name = icon_name or "fa.folder"
+        self.icon_color = icon_color or get_default_entity_icon_color()
+        self.label = label or name
+
+    def to_data(self):
+        return {
+            "entity_id": self.entity_id,
+            "parent_id": self.parent_id,
+            "name": self.name,
+            "label": self.label,
+            "icon_name": self.icon_name,
+            "icon_color": self.icon_color,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        return cls(**data)
+
+
+class TaskItem:
+    """
+
+    Args:
+        task_id (str): Task id.
+        name (str): Name of task.
+        task_type (str): Type of task.
+        parent_id (str): Parent folder id.
+        icon_name (str): Name of icon from font awesome.
+        icon_color (str): Hex color string that will be used for icon.
+    """
+
+    def __init__(
+        self, task_id, name, task_type, parent_id, icon_name, icon_color
+    ):
+        self.task_id = task_id
+        self.name = name
+        self.task_type = task_type
+        self.parent_id = parent_id
+        self.icon_name = icon_name or "fa.male"
+        self.icon_color = icon_color or get_default_entity_icon_color()
+        self._label = None
+
+    @property
+    def id(self):
+        return self.task_id
+
+    @property
+    def label(self):
+        if self._label is None:
+            self._label = "{} ({})".format(self.name, self.task_type)
+        return self._label
+
+    def to_data(self):
+        return {
+            "task_id": self.task_id,
+            "name": self.name,
+            "parent_id": self.parent_id,
+            "task_type": self.task_type,
+            "icon_name": self.icon_name,
+            "icon_color": self.icon_color,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        return cls(**data)
+
+
+class FileItem:
+    def __init__(
+        self,
+        dirpath,
+        filename,
+        modified,
+        representation_id=None,
+        filepath=None,
+        exists=None
+    ):
+        self.filename = filename
+        self.dirpath = dirpath
+        self.modified = modified
+        self.representation_id = representation_id
+        self._filepath = filepath
+        self._exists = exists
+
+    @property
+    def filepath(self):
+        if self._filepath is None:
+            self._filepath = os.path.join(self.dirpath, self.filename)
+        return self._filepath
+
+    @property
+    def exists(self):
+        if self._exists is None:
+            self._exists = os.path.exists(self.filepath)
+        return self._exists
+
+    def to_data(self):
+        return {
+            "filename": self.filename,
+            "dirpath": self.dirpath,
+            "modified": self.modified,
+            "representation_id": self.representation_id,
+            "filepath": self.filepath,
+            "exists": self.exists,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        required_keys = {
+            "filename",
+            "dirpath",
+            "modified",
+            "representation_id"
+        }
+        missing_keys = required_keys - set(data.keys())
+        if missing_keys:
+            raise KeyError("Missing keys: {}".format(missing_keys))
+
+        return cls(**{
+            key: data[key]
+            for key in required_keys
+        })
 
 
 class WorkareaFilepathResult:

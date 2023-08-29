@@ -10,125 +10,41 @@ import contextlib
 
 import ayon_api
 
-from openpype.style import get_default_entity_icon_color
+from openpype.tools.ayon_workfiles.abstract import (
+    FolderItem,
+    TaskItem,
+)
 
 
-class FolderItem:
+def _get_task_items_from_tasks(tasks):
     """
 
-    Args:
-        entity_id (str): Folder id.
-        parent_id (Union[str, None]): Parent folder id. If 'None' then project
-            is parent.
-        name (str): Name of folder.
-        label (str): Folder label.
-        icon_name (str): Name of icon from font awesome.
-        icon_color (str): Hex color string that will be used for icon.
+    Returns:
+        TaskItem: Task item.
     """
 
-    def __init__(
-        self, entity_id, parent_id, name, label, icon_name, icon_color
-    ):
-        self.entity_id = entity_id
-        self.parent_id = parent_id
-        self.name = name
-        self.icon_name = icon_name or "fa.folder"
-        self.icon_color = icon_color or get_default_entity_icon_color()
-        self.label = label or name
-
-    def to_data(self):
-        return {
-            "entity_id": self.entity_id,
-            "parent_id": self.parent_id,
-            "name": self.name,
-            "label": self.label,
-            "icon_name": self.icon_name,
-            "icon_color": self.icon_color,
-        }
-
-    @classmethod
-    def from_data(cls, data):
-        return cls(**data)
-
-    @classmethod
-    def from_hierarchy_item(cls, item):
-        return cls(
-            item["id"],
-            item["parentId"],
-            item["name"],
-            item["label"],
+    output = []
+    for task in tasks:
+        folder_id = task["folderId"]
+        output.append(TaskItem(
+            task["id"],
+            task["name"],
+            task["type"],
+            folder_id,
             None,
-            None,
-        )
+            None
+        ))
+    return output
 
-
-class TaskItem:
-    """
-
-    Args:
-        task_id (str): Task id.
-        name (str): Name of task.
-        task_type (str): Type of task.
-        parent_id (str): Parent folder id.
-        icon_name (str): Name of icon from font awesome.
-        icon_color (str): Hex color string that will be used for icon.
-    """
-
-    def __init__(
-        self, task_id, name, task_type, parent_id, icon_name, icon_color
-    ):
-        self.task_id = task_id
-        self.name = name
-        self.task_type = task_type
-        self.parent_id = parent_id
-        self.icon_name = icon_name or "fa.male"
-        self.icon_color = icon_color or get_default_entity_icon_color()
-        self._label = None
-
-    @property
-    def id(self):
-        return self.task_id
-
-    @property
-    def label(self):
-        if self._label is None:
-            self._label = "{} ({})".format(self.name, self.task_type)
-        return self._label
-
-    def to_data(self):
-        return {
-            "task_id": self.task_id,
-            "name": self.name,
-            "parent_id": self.parent_id,
-            "task_type": self.task_type,
-            "icon_name": self.icon_name,
-            "icon_color": self.icon_color,
-        }
-
-    @classmethod
-    def from_data(cls, data):
-        return cls(**data)
-
-    @classmethod
-    def from_tasks(cls, tasks):
-        """
-
-        Returns:
-            TaskItem: Task item.
-        """
-
-        output = []
-        for task in tasks:
-            folder_id = task["folderId"]
-            output.append(cls(
-                task["id"],
-                task["name"],
-                task["type"],
-                folder_id,
-                None,
-                None
-            ))
-        return output
+def _get_folder_item_from_hierarchy_item(item):
+    return FolderItem(
+        item["id"],
+        item["parentId"],
+        item["name"],
+        item["label"],
+        None,
+        None,
+    )
 
 
 class CacheItem:
@@ -287,7 +203,7 @@ class EntitiesModel(object):
         hierachy_queue = collections.deque(hierarchy["hierarchy"])
         while hierachy_queue:
             item = hierachy_queue.popleft()
-            folder_item = FolderItem.from_hierarchy_item(item)
+            folder_item = _get_folder_item_from_hierarchy_item(item)
             folder_items[folder_item.entity_id] = folder_item
             hierachy_queue.extend(item["children"] or [])
         return folder_items
@@ -314,4 +230,4 @@ class EntitiesModel(object):
             folder_ids=[folder_id],
             fields={"id", "name", "label", "folderId", "type"}
         ))
-        return TaskItem.from_tasks(tasks)
+        return _get_task_items_from_tasks(tasks)

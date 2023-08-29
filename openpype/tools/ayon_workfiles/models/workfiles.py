@@ -20,9 +20,15 @@ from openpype.pipeline.workfile import (
 )
 from openpype.pipeline.version_start import get_versioning_start
 try:
-    from openpype.tools.ayon_workfiles.abstract import WorkareaFilepathResult
+    from openpype.tools.ayon_workfiles.abstract import (
+        WorkareaFilepathResult,
+        FileItem,
+    )
 except Exception:
-    from ayon_workfiles.abstract import WorkareaFilepathResult
+    from ayon_workfiles.abstract import (
+        WorkareaFilepathResult,
+        FileItem,
+    )
 
 
 def get_folder_template_data(folder):
@@ -51,63 +57,6 @@ def get_task_template_data(task):
             "type": task["taskType"]
         }
     }
-
-
-class FileItem:
-    def __init__(
-        self,
-        dirpath,
-        filename,
-        modified,
-        representation_id=None,
-        filepath=None,
-        exists=None
-    ):
-        self.filename = filename
-        self.dirpath = dirpath
-        self.modified = modified
-        self.representation_id = representation_id
-        self._filepath = filepath
-        self._exists = exists
-
-    @property
-    def filepath(self):
-        if self._filepath is None:
-            self._filepath = os.path.join(self.dirpath, self.filename)
-        return self._filepath
-
-    @property
-    def exists(self):
-        if self._exists is None:
-            self._exists = os.path.exists(self.filepath)
-        return self._exists
-
-    def to_data(self):
-        return {
-            "filename": self.filename,
-            "dirpath": self.dirpath,
-            "modified": self.modified,
-            "representation_id": self.representation_id,
-            "filepath": self.filepath,
-            "exists": self.exists,
-        }
-
-    @classmethod
-    def from_data(cls, data):
-        required_keys = {
-            "filename",
-            "dirpath",
-            "modified",
-            "representation_id"
-        }
-        missing_keys = required_keys - set(data.keys())
-        if missing_keys:
-            raise KeyError("Missing keys: {}".format(missing_keys))
-
-        return cls(**{
-            key: data[key]
-            for key in required_keys
-        })
 
 
 class CommentMatcher(object):
