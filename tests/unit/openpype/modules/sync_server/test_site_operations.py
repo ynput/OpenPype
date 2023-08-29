@@ -12,9 +12,12 @@
         removes temporary databases (?)
 """
 import pytest
+from bson.objectid import ObjectId
 
 from tests.lib.testing_classes import ModuleUnitTest
-from bson.objectid import ObjectId
+
+from openpype.modules.sync_server.utils import SiteAlreadyPresentError
+
 
 
 class TestSiteOperation(ModuleUnitTest):
@@ -71,7 +74,7 @@ class TestSiteOperation(ModuleUnitTest):
     @pytest.mark.usefixtures("setup_sync_server_module")
     def test_add_site_again(self, dbcon, setup_sync_server_module):
         """Depends on test_add_site, must throw exception."""
-        with pytest.raises(ValueError):
+        with pytest.raises(SiteAlreadyPresentError):
             setup_sync_server_module.add_site(self.TEST_PROJECT_NAME,
                                               self.REPRESENTATION_ID,
                                               site_name='test_site')
