@@ -2,7 +2,6 @@
 """Creator plugin for creating camera."""
 import os
 from openpype.hosts.max.api import plugin
-from openpype.hosts.max.api.lib import get_max_version
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype.lib import EnumDef
 from pymxs import runtime as rt

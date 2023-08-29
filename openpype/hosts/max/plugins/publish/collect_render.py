@@ -4,7 +4,6 @@ import os
 import pyblish.api
 
 from pymxs import runtime as rt
-from openpype.lib import EnumDef
 from openpype.pipeline import get_current_asset_name
 from openpype.hosts.max.api import colorspace
 from openpype.hosts.max.api.lib import get_max_version, get_current_renderer
@@ -60,7 +59,7 @@ class CollectRender(pyblish.api.InstancePlugin):
         # so this is currently hard coded
         # TODO: add options for redshift/vray ocio config
         if int(get_max_version()) >= 2024:
-            display_view_transform = instance.data["ocio_display_view_transform"]
+            display_view_transform = instance.data["ocio_display_view_transform"]       # noqa
             display, view_transform = display_view_transform.split("||")
             colorspace_mgr = rt.ColorPipelineMgr
             instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
