@@ -25,6 +25,9 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
                 "maxrender"]
     optional = True
 
+    # cache
+    pools_per_url = {}
+
     def process(self, instance):
         if not self.is_active(instance.data):
             return
@@ -33,11 +36,8 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
             self.log.debug("Skipping local instance.")
             return
 
-        # get default deadline webservice url from deadline module
         deadline_url = instance.context.data["defaultDeadline"]
-        self.log.info("deadline_url::{}".format(deadline_url))
-        pools = DeadlineModule.get_deadline_pools(deadline_url, log=self.log)
-        self.log.info("pools::{}".format(pools))
+        pools = self.get_pools(deadline_url)
 
         formatting_data = {
             "pools_str": ",".join(pools)
@@ -58,3 +58,16 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
             formatting_data["invalid_value_str"] = msg
             raise PublishXmlValidationError(self, msg,
                                             formatting_data=formatting_data)
+
+    def get_pools(self, deadline_url):
+        if deadline_url not in self.pools_per_url:
+            self.log.debug(
+                "Querying available pools for Deadline url: {}".format(
+                    deadline_url)
+            )
+            pools = DeadlineModule.get_deadline_pools(deadline_url,
+                                                      log=self.log)
+            self.log.info("Available pools: {}".format(pools))
+            self.pools_per_url[deadline_url] = pools
+
+        return self.pools_per_url[deadline_url]
