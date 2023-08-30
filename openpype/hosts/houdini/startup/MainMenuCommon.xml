@@ -2,7 +2,19 @@
 <mainMenu>
     <menuBar>
         <subMenu id="openpype_menu">
-            <label>OpenPype</label>
+            <labelExpression><![CDATA[
+import os
+return os.environ.get("AVALON_LABEL") or "OpenPype"
+]]></labelExpression>
+            <actionItem id="asset_name">
+                    <labelExpression><![CDATA[
+from openpype.pipeline import get_current_asset_name, get_current_task_name
+label = "{}, {}".format(get_current_asset_name(), get_current_task_name())
+return label
+]]></labelExpression>
+            </actionItem>
+
+            <separatorItem/>
 
             <scriptItem id="openpype_create">
                 <label>Create...</label>
