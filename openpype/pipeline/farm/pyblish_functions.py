@@ -579,18 +579,24 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
 
         # if there are multiple cameras, we need to add camera name
         if isinstance(col, (list, tuple)):
-            cam = [c for c in cameras if c in col[0]]
+            cam = next((c for c in cameras if c in col[0]), None)
         else:
             # in case of single frame
-            cam = [c for c in cameras if c in col]
+            cam = next((cam for cam in cameras if cam in col), None)
         if cam:
             if aov:
                 subset_name = '{}_{}_{}'.format(group_name, cam, aov)
                 if subset == "maxrenderMain":
+                    # Max submit scenes by cameras for multiple camera
+                    # submission, it results to include the camera name inside
+                    # the original subset and i.e group_name
                     subset_name = '{}_{}'.format(group_name, aov)
             else:
                 subset_name = '{}_{}'.format(group_name, cam)
                 if subset == "maxrenderMain":
+                    # Max submit scenes by cameras for multiple camera
+                    # submission, it results to include the camera name inside
+                    # the original subset and i.e group_name
                     subset_name = '{}'.format(group_name)
         else:
             if aov:
