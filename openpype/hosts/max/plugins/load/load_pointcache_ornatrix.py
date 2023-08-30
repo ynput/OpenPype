@@ -22,18 +22,20 @@ class OxAbcLoader(load.LoaderPlugin):
                                "found/installed in Max yet..")
 
         file_path = os.path.normpath(self.filepath_from_context(context))
-        scene_object_before = [obj for obj in rt.rootNode.Children]
         rt.AlembicImport.ImportToRoot = True
         rt.AlembicImport.CustomAttributes = True
         rt.importFile(
             file_path, rt.name("noPrompt"),
             using=rt.Ornatrix_Alembic_Importer)
-        scene_object_after = [obj for obj in rt.rootNode.Children]
-        for scene_object in scene_object_before:
-            scene_object_after = scene_object_after.remove(scene_object)
+
+        scene_object = []
+        for obj in rt.rootNode.Children:
+            obj_type = rt.ClassOf(obj)
+            if str(obj_type).startswith("Ox_"):
+                scene_object.append(obj)
 
         abc_container = rt.Container(name=name)
-        for abc in scene_object_after:
+        for abc in scene_object:
             abc.Parent = abc_container
 
         return containerise(
@@ -48,18 +50,20 @@ class OxAbcLoader(load.LoaderPlugin):
         for children in container.Children:
             rt.Delete(children)
 
-        scene_object_before = [obj for obj in rt.rootNode.Children]
         rt.AlembicImport.ImportToRoot = False
         rt.AlembicImport.CustomAttributes = True
         rt.importFile(
             path, rt.name("noPrompt"),
             using=rt.Ornatrix_Alembic_Importer)
-        scene_object_after = [obj for obj in rt.rootNode.Children]
-        for scene_object in scene_object_before:
-            scene_object_after = scene_object_after.remove(scene_object)
 
-        for scene_object in scene_object_after:
-            scene_object.Parent = container
+        scene_object = []
+        for obj in rt.rootNode.Children:
+            obj_type = rt.ClassOf(obj)
+            if str(obj_type).startswith("Ox_"):
+                scene_object.append(obj)
+
+        for abc in scene_object:
+            abc.Parent = container
 
         lib.imprint(
             container["instance_node"],
