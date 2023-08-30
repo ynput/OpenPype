@@ -59,7 +59,7 @@ class ARenderProduct(object):
 def get_default_display_view_colorspace():
     """Returns the colorspace attribute of the default (display, view) pair.
 
-    """
+    It's used for 'ociocolorspace' parm in OpenGL Node."""
 
     prefs = get_color_management_preferences()
     return get_display_view_colorspace_name(
