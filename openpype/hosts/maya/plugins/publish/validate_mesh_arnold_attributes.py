@@ -40,12 +40,6 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
     arnold_mesh_defaults = None
 
     @classmethod
-    def apply_settings(cls, project_settings, system_settings):
-        # todo: this should not be done this way
-        attr = "defaultRenderGlobals.currentRenderer"
-        cls.active = cmds.getAttr(attr).lower() == "arnold"
-
-    @classmethod
     def get_default_attributes(cls):
 
         if cls.arnold_mesh_defaults is not None:
