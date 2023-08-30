@@ -257,8 +257,7 @@ def parse_colorspace_from_filepath(
     """
     if not colorspaces and not config_path:
         raise ValueError(
-            "You need to provide `config_path` if you don't "
-            "want to provide input `colorspaces`."
+            "Must provide `config_path` if `colorspaces` is not provided."
         )
 
     colorspaces = colorspaces or get_ocio_config_colorspaces(config_path)
