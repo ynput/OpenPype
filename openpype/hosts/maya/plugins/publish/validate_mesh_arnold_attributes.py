@@ -109,6 +109,10 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
         if not self.is_active(instance.data):
             return
 
+        if not cmds.pluginInfo("mtoa", query=True, loaded=True):
+            # Arnold attributes only exist if plug-in is loaded
+            return
+
         invalid = self.get_invalid_attributes(instance, compute=True)
         if invalid:
             raise PublishValidationError(
