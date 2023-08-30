@@ -632,6 +632,7 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
 
     output["max"] = ayon_max
 
+
 def _convert_nuke_knobs(knobs):
     new_knobs = []
     for knob in knobs:
@@ -752,6 +753,17 @@ def _convert_nuke_project_settings(ayon_settings, output):
         if "product_names" in item_filter:
             item_filter["subsets"] = item_filter.pop("product_names")
             item_filter["families"] = item_filter.pop("product_types")
+
+        reformat_nodes_config = item.get("reformat_nodes_config") or {}
+        reposition_nodes = reformat_nodes_config.get(
+            "reposition_nodes") or []
+
+        for reposition_node in reposition_nodes:
+            if "knobs" not in reposition_node:
+                continue
+            reposition_node["knobs"] = _convert_nuke_knobs(
+                reposition_node["knobs"]
+            )
 
         name = item.pop("name")
         new_review_data_outputs[name] = item
