@@ -255,24 +255,49 @@ def parse_colorspace_from_filepath(
     Returns:
         str: name of colorspace
     """
+    def _get_colorspace_match_regex(colorspaces):
+        """Return a regex patter
+
+        Allows to search a colorspace match in a filename
+
+        Args:
+            colorspaces (list): List of colorspace names
+
+        Returns:
+            re.Pattern: regex pattern
+        """
+        pattern = "|".join(
+            # Allow to match spaces also as underscores because the
+            # integrator replaces spaces with underscores in filenames
+            re.escape(colorspace).replace(r"\ ", r"[_ ]") for colorspace in
+            # Sort by longest first so the regex matches longer matches
+            # over smaller matches, e.g. matching 'Output - sRGB' over 'sRGB'
+            sorted(colorspaces, key=len, reverse=True)
+        )
+        return re.compile(pattern)
+
     if not colorspaces and not config_path:
         raise ValueError(
             "Must provide `config_path` if `colorspaces` is not provided."
         )
 
-    colorspaces = colorspaces or get_ocio_config_colorspaces(config_path)
-
-    # match file rule from path
     colorspace_name = None
-    for colorspace_key in colorspaces:
-        # check underscored variant of colorspace name
-        # since we are reformatting it in integrate.py
-        if colorspace_key.replace(" ", "_") in filepath:
-            colorspace_name = colorspace_key
-            break
-        if colorspace_key in filepath:
-            colorspace_name = colorspace_key
-            break
+    colorspaces = colorspaces or get_ocio_config_colorspaces(config_path)
+    underscored_colorspaces = {
+        key.replace(" ", "_"): key for key in colorspaces
+        if " " in key
+    }
+
+    # match colorspace from  filepath
+    regex_pattern = _get_colorspace_match_regex(colorspaces)
+    match = regex_pattern.search(filepath)
+    colorspace = match.group(0) if match else None
+
+    if colorspace:
+        colorspace_name = colorspace
+
+    if colorspace in underscored_colorspaces:
+        colorspace_name = underscored_colorspaces[colorspace]
 
     if not colorspace_name:
         log.info("No matching colorspace in config '{}' for path: '{}'".format(
