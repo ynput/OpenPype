@@ -583,7 +583,7 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         else:
             # in case of single frame
             cam = [c for c in cameras if c in col]
-        if cam:
+        if cam or subset != "maxrenderMain":
             if aov:
                 subset_name = '{}_{}_{}'.format(group_name, cam, aov)
             else:
