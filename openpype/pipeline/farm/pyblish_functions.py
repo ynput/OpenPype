@@ -585,19 +585,13 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             cam = next((cam for cam in cameras if cam in col), None)
         if cam:
             if aov:
+                # if there is duplicatd camera name found in aov,
+                # it would be removed
+                if aov.startswith(cam):
+                    aov = aov.replace(f"{cam}_", "")
                 subset_name = '{}_{}_{}'.format(group_name, cam, aov)
-                if subset == "maxrenderMain":
-                    # Max submit scenes by cameras for multiple camera
-                    # submission, it results to include the camera name inside
-                    # the original subset and i.e group_name
-                    subset_name = '{}_{}'.format(group_name, aov)
             else:
                 subset_name = '{}_{}'.format(group_name, cam)
-                if subset == "maxrenderMain":
-                    # Max submit scenes by cameras for multiple camera
-                    # submission, it results to include the camera name inside
-                    # the original subset and i.e group_name
-                    subset_name = '{}'.format(group_name)
         else:
             if aov:
                 subset_name = '{}_{}'.format(group_name, aov)
