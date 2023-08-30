@@ -1,5 +1,4 @@
 import pyblish.api
-from openpype.pipeline import registered_host
 from openpype.pipeline import publish
 from openpype.lib import EnumDef
 from openpype.pipeline import colorspace
@@ -38,7 +37,7 @@ class CollectColorspace(pyblish.api.InstancePlugin,
 
     @classmethod
     def apply_settings(cls, project_settings):
-        host = registered_host()
+        host = self.create_context.host
         host_name = host.name
         project_name = host.get_current_project_name()
         config_data = colorspace.get_imageio_config(
@@ -49,9 +48,28 @@ class CollectColorspace(pyblish.api.InstancePlugin,
         if config_data:
             filepath = config_data["path"]
             config_items = colorspace.get_ocio_config_colorspaces(filepath)
+            aliases = set()
+            for _, value_ in config_items.items():
+                if value_.get("type") != "colorspace":
+                    continue
+                if not value_.get("aliases"):
+                    continue
+                for alias in value_.get("aliases"):
+                    aliases.add(alias)
+
+            colorspaces = {
+                name
+                for name, data_ in config_items.items()
+                if name not in aliases and data_.get("type") == "colorspace"
+            }
+
             cls.colorspace_items.extend((
-                (name, name) for name in config_items.keys()
+                (name, name) for name in colorspaces
             ))
+            if aliases:
+                cls.colorspace_items.extend((
+                    (name, name) for name in aliases
+                ))
             cls.colorspace_attr_show = True
 
     @classmethod
