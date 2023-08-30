@@ -156,7 +156,7 @@ def get_imageio_colorspace_from_filepath(
 
     # match file rule from path
     colorspace_name = None
-    for _, file_rule in file_rules.items():
+    for file_rule in file_rules.values():
         pattern = file_rule["pattern"]
         extension = file_rule["ext"]
         ext_match = re.match(
