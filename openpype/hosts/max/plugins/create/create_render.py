@@ -35,8 +35,6 @@ class CreateRender(plugin.MaxCreator):
         # set output paths for rendering(mandatory for deadline)
         RenderSettings().render_output(container_name)
         ocio_display = instance.data.get("ocio_display")
-        if ocio_display:
-            self.ocio_display = ocio_display
 
     def get_pre_create_attr_defs(self):
         attrs = super(CreateRender, self).get_pre_create_attr_defs()
