@@ -357,8 +357,8 @@ def get_data_subprocess(config_path, data_type):
         run_openpype_process(*args, **process_kwargs)
 
         # return all colorspaces
-        with open(tmp_json_path, "r") as f:
-            return json.load(f)
+        with open(tmp_json_path, "r") as f_:
+            return json.load(f_)
 
 
 def _get_wrapped_with_subprocess(command_group, command, **kwargs):
@@ -396,8 +396,8 @@ def _get_wrapped_with_subprocess(command_group, command, **kwargs):
         run_openpype_process(*args, **process_kwargs)
 
         # return all colorspaces
-        return_json_data = open(tmp_json_path).read()
-        return json.loads(return_json_data)
+        with open(tmp_json_path, "r") as f_:
+            return json.load(f_)
 
 
 def compatibility_check():
