@@ -175,7 +175,7 @@ def _get_views_data(config_path):
 
 
 def _get_display_view_colorspace_name(config_path, display, view):
-    """get view colorspace name for the given display and view.
+    """Returns the colorspace attribute of the (display, view) pair.
 
     Args:
         config_path (str): path string leading to config.ocio

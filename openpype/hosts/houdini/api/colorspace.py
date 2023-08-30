@@ -57,7 +57,9 @@ class ARenderProduct(object):
 
 
 def get_default_display_view_colorspace():
-    """Get default display view colorspace name. """
+    """Returns the colorspace attribute of the default (display, view) pair.
+
+    """
 
     prefs = get_color_management_preferences()
     return get_display_view_colorspace_name(
