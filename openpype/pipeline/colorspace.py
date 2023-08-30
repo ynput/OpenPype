@@ -115,27 +115,92 @@ def get_ocio_config_script_path():
     )
 
 
-def get_imageio_colorspace_from_filepath(
-    path, host_name, project_name,
+def get_colorspace_name_from_filepath(
+    filepath, host_name, project_name,
     config_data=None, file_rules=None,
     project_settings=None,
     validate=True
 ):
     """Get colorspace name from filepath
 
+    Args:
+        filepath (str): path string, file rule pattern is tested on it
+        host_name (str): host name
+        project_name (str): project name
+        config_data (Optional[dict]): config path and template in dict.
+                                      Defaults to None.
+        file_rules (Optional[dict]): file rule data from settings.
+                                     Defaults to None.
+        project_settings (Optional[dict]): project settings. Defaults to None.
+        validate (Optional[bool]): should resulting colorspace be validated
+                                with config file? Defaults to True.
+
+    Returns:
+        str: name of colorspace
+    """
+    # use ImageIO file rules
+    colorspace_name = get_imageio_file_rules_colorspace_from_filepath(
+        filepath, host_name, project_name,
+        config_data=config_data, file_rules=file_rules,
+        project_settings=project_settings
+    )
+
+    # try to get colorspace from OCIO v2 file rules
+    if (
+        not colorspace_name
+        and compatibility_check_config_version(config_data["path"], major=2)
+    ):
+        colorspace_name = get_config_file_rules_colorspace_from_filepath(
+            config_data["path"], filepath)
+
+    # use parse colorspace from filepath as fallback
+    colorspace_name = colorspace_name or parse_colorspace_from_filepath(
+        filepath, config_path=config_data["path"]
+    )
+
+    if not colorspace_name:
+        log.info("No imageio file rule matched input path: '{}'".format(
+            filepath
+        ))
+        return None
+
+    # validate matching colorspace with config
+    if validate and config_data:
+        validate_imageio_colorspace_in_config(
+            config_data["path"], colorspace_name)
+
+    return colorspace_name
+
+
+# TODO: remove this in future - backward compatibility
+@deprecated("get_imageio_file_rules_colorspace_from_filepath")
+def get_imageio_colorspace_from_filepath(*args, **kwargs):
+    return get_imageio_file_rules_colorspace_from_filepath(*args, **kwargs)
+
+# TODO: remove this in future - backward compatibility
+@deprecated("get_imageio_file_rules_colorspace_from_filepath")
+def get_colorspace_from_filepath(*args, **kwargs):
+    return get_imageio_file_rules_colorspace_from_filepath(*args, **kwargs)
+
+
+def get_imageio_file_rules_colorspace_from_filepath(
+    filepath, host_name, project_name,
+    config_data=None, file_rules=None,
+    project_settings=None
+):
+    """Get colorspace name from filepath
+
     ImageIO Settings file rules are tested for matching rule.
 
     Args:
-        path (str): path string, file rule pattern is tested on it
+        filepath (str): path string, file rule pattern is tested on it
         host_name (str): host name
         project_name (str): project name
-        config_data (dict, optional): config path and template in dict.
+        config_data (Optional[dict]): config path and template in dict.
                                       Defaults to None.
-        file_rules (dict, optional): file rule data from settings.
+        file_rules (Optional[dict]): file rule data from settings.
                                      Defaults to None.
-        project_settings (dict, optional): project settings. Defaults to None.
-        validate (bool, optional): should resulting colorspace be validated
-                                   with config file? Defaults to True.
+        project_settings (Optional[dict]): project settings. Defaults to None.
 
     Returns:
         str: name of colorspace
@@ -160,44 +225,19 @@ def get_imageio_colorspace_from_filepath(
         pattern = file_rule["pattern"]
         extension = file_rule["ext"]
         ext_match = re.match(
-            r".*(?=.{})".format(extension), path
+            r".*(?=.{})".format(extension), filepath
         )
         file_match = re.search(
-            pattern, path
+            pattern, filepath
         )
 
         if ext_match and file_match:
             colorspace_name = file_rule["colorspace"]
 
-    # if no file rule matched, try to get colorspace
-    # from filepath with OCIO v2 way
-    if (
-        compatibility_check_config_version(config_data["path"], major=2)
-        and not colorspace_name
-    ):
-        colorspace_name = get_colorspace_from_filepath(
-            config_data["path"], path)
-
-    # use parse colorspace from filepath as fallback
-    colorspace_name = colorspace_name or parse_colorspace_from_filepath(
-        path, config_path=config_data["path"]
-    )
-
-    if not colorspace_name:
-        log.info("No imageio file rule matched input path: '{}'".format(
-            path
-        ))
-        return None
-
-    # validate matching colorspace with config
-    if validate and config_data:
-        validate_imageio_colorspace_in_config(
-            config_data["path"], colorspace_name)
-
     return colorspace_name
 
 
-def get_colorspace_from_filepath(config_path, filepath):
+def get_config_file_rules_colorspace_from_filepath(config_path, filepath):
     """Get colorspace from file path wrapper.
 
     Wrapper function for getting colorspace from file path
@@ -214,16 +254,16 @@ def get_colorspace_from_filepath(config_path, filepath):
         # python environment is not compatible with PyOpenColorIO
         # needs to be run in subprocess
         result_data = _get_wrapped_with_subprocess(
-            "colorspace", "get_colorspace_from_filepath",
+            "colorspace", "get_config_file_rules_colorspace_from_filepath",
             config_path=config_path,
             filepath=filepath
         )
         if result_data:
             return result_data[0]
 
-    from openpype.scripts.ocio_wrapper import _get_colorspace_from_filepath
+    from openpype.scripts.ocio_wrapper import _get_config_file_rules_colorspace_from_filepath
 
-    result_data = _get_colorspace_from_filepath(config_path, filepath)
+    result_data = _get_config_file_rules_colorspace_from_filepath(config_path, filepath)
 
     if result_data:
         return result_data[0]
