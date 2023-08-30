@@ -252,7 +252,9 @@ DEFAULT_CREATORS_SETTINGS = {
     },
     "CreateUnrealSkeletalMesh": {
         "enabled": True,
-        "default_variants": [],
+        "default_variants": [
+            "Main",
+        ],
         "joint_hints": "jnt_org"
     },
     "CreateMultiverseLook": {
