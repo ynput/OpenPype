@@ -247,9 +247,11 @@ def products_graphql_query(fields):
     query = GraphQlQuery("ProductsQuery")
 
     project_name_var = query.add_variable("projectName", "String!")
-    folder_ids_var = query.add_variable("folderIds", "[String!]")
     product_ids_var = query.add_variable("productIds", "[String!]")
     product_names_var = query.add_variable("productNames", "[String!]")
+    folder_ids_var = query.add_variable("folderIds", "[String!]")
+    product_types_var = query.add_variable("productTypes", "[String!]")
+    statuses_var = query.add_variable("statuses", "[String!]")
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
@@ -258,6 +260,8 @@ def products_graphql_query(fields):
     products_field.set_filter("ids", product_ids_var)
     products_field.set_filter("names", product_names_var)
     products_field.set_filter("folderIds", folder_ids_var)
+    products_field.set_filter("productTypes", product_types_var)
+    products_field.set_filter("statuses", statuses_var)
 
     nested_fields = fields_to_dict(set(fields))
     add_links_fields(products_field, nested_fields)
