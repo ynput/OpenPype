@@ -51,7 +51,7 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
             tmp.append(transform)
 
             mesh = cmds.createNode("mesh", parent=transform)
-            for attr in cmds.listAttr(mesh, string="ai*"):
+            for attr in cmds.listAttr(mesh, string="ai*") or []:
                 plug = "{}.{}".format(mesh, attr)
                 try:
                     defaults[attr] = get_attribute(plug)
