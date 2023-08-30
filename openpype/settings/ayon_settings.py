@@ -616,6 +616,22 @@ def _convert_maya_project_settings(ayon_settings, output):
     output["maya"] = ayon_maya
 
 
+def _convert_3dsmax_project_settings(ayon_settings, output):
+    if "max" not in ayon_settings:
+        return
+
+    ayon_max = ayon_settings["max"]
+    _convert_host_imageio(ayon_max)
+    if "PointCloud" in ayon_max:
+        point_cloud_attribute = ayon_max["PointCloud"]["attribute"]
+        new_point_cloud_attribute = {
+            item["name"]: item["value"]
+            for item in point_cloud_attribute
+        }
+        ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
+
+    output["max"] = ayon_max
+
 def _convert_nuke_knobs(knobs):
     new_knobs = []
     for knob in knobs:
@@ -1261,6 +1277,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_flame_project_settings(ayon_settings, output)
     _convert_fusion_project_settings(ayon_settings, output)
     _convert_maya_project_settings(ayon_settings, output)
+    _convert_3dsmax_project_settings(ayon_settings, output)
     _convert_nuke_project_settings(ayon_settings, output)
     _convert_hiero_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)
