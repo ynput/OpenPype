@@ -461,15 +461,15 @@ class EnumAttrWidget(_BaseAttrDefWidget):
 
     def _multiselection_multivalue_prep(self, values):
         final = None
-        are_same = True
+        multivalue = False
         for value in values:
             value = set(value)
             if final is None:
                 final = value
-            elif not are_same or final != value:
+            elif multivalue or final != value:
                 final |= value
-                are_same = False
-        return list(final), not are_same
+                multivalue = True
+        return list(final), multivalue
 
     def set_value(self, value, multivalue=False):
         if multivalue:
