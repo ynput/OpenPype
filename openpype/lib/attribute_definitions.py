@@ -445,18 +445,19 @@ class EnumDef(AbstractAttrDef):
 
         items = self.prepare_enum_items(items)
         item_values = [item["value"] for item in items]
-        if multiselection and default is None:
-            default = []
+        item_values_set = set(item_values)
+        if multiselection:
+            if default is None:
+                default = []
+            default = list(item_values_set.intersection(default))
 
-        if not multiselection and default not in item_values:
-            for value in item_values:
-                default = value
-                break
+        elif default not in item_values:
+            default = next(iter(item_values), None)
 
         super(EnumDef, self).__init__(key, default=default, **kwargs)
 
         self.items = items
-        self._item_values = set(item_values)
+        self._item_values = item_values_set
         self.multiselection = multiselection
 
     def __eq__(self, other):
@@ -476,9 +477,7 @@ class EnumDef(AbstractAttrDef):
 
         if value is None:
             return copy.deepcopy(self.default)
-        new_value = set(value)
-        rem = new_value - self._item_values
-        return list(new_value - rem)
+        return list(self._item_values.intersection(value))
 
 
     def serialize(self):
