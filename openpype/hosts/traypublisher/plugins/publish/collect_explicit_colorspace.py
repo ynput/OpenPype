@@ -13,6 +13,7 @@ class CollectColorspace(pyblish.api.InstancePlugin,
     label = "Choose representation colorspace"
     order = pyblish.api.CollectorOrder + 0.49
     hosts = ["traypublisher"]
+    families = ["render", "plate", "reference", "image", "online"]
 
     colorspace_items = [
         (None, "Don't override")

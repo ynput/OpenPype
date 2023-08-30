@@ -18,6 +18,7 @@ class ValidateColorspace(pyblish.api.InstancePlugin,
     label = "Validate representation colorspace"
     order = pyblish.api.ValidatorOrder
     hosts = ["traypublisher"]
+    families = ["render", "plate", "reference", "image", "online"]
 
     def process(self, instance):
 
