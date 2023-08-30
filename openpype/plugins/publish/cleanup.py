@@ -69,7 +69,7 @@ class CleanUp(pyblish.api.InstancePlugin):
             skip_cleanup_filepaths.add(os.path.normpath(path))
 
         if self.remove_temp_renders:
-            self.log.info("Cleaning renders new...")
+            self.log.debug("Cleaning renders new...")
             self.clean_renders(instance, skip_cleanup_filepaths)
 
         if [ef for ef in self.exclude_families
@@ -95,7 +95,9 @@ class CleanUp(pyblish.api.InstancePlugin):
             return
 
         if instance.data.get("stagingDir_persistent"):
-            self.log.info("Staging dir: %s should be persistent" % staging_dir)
+            self.log.debug(
+                "Staging dir {} should be persistent".format(staging_dir)
+            )
             return
 
         self.log.info("Removing staging directory {}".format(staging_dir))

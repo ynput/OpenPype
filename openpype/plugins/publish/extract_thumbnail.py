@@ -43,12 +43,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
         # Skip if instance have 'review' key in data set to 'False'
         if not self._is_review_instance(instance):
-            self.log.info("Skipping - no review set on instance.")
+            self.log.debug("Skipping - no review set on instance.")
             return
 
         # Check if already has thumbnail created
         if self._already_has_thumbnail(instance_repres):
-            self.log.info("Thumbnail representation already present.")
+            self.log.debug("Thumbnail representation already present.")
             return
 
         # skip crypto passes.
@@ -58,15 +58,15 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         #       representation that can be determined much earlier and
         #       with better precision.
         if "crypto" in subset_name.lower():
-            self.log.info("Skipping crypto passes.")
+            self.log.debug("Skipping crypto passes.")
             return
 
         filtered_repres = self._get_filtered_repres(instance)
         if not filtered_repres:
-            self.log.info((
-                "Instance don't have representations"
-                " that can be used as source for thumbnail. Skipping"
-            ))
+            self.log.info(
+                "Instance doesn't have representations that can be used "
+                "as source for thumbnail. Skipping thumbnail extraction."
+            )
             return
 
         # Create temp directory for thumbnail
@@ -107,10 +107,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             #    oiiotool isn't available
             if not thumbnail_created:
                 if oiio_supported:
-                    self.log.info((
+                    self.log.debug(
                         "Converting with FFMPEG because input"
                         " can't be read by OIIO."
-                    ))
+                    )
 
                 thumbnail_created = self.create_thumbnail_ffmpeg(
                     full_input_path, full_output_path
@@ -165,8 +165,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 continue
 
             if not repre.get("files"):
-                self.log.info((
-                    "Representation \"{}\" don't have files. Skipping"
+                self.log.debug((
+                    "Representation \"{}\" doesn't have files. Skipping"
                 ).format(repre["name"]))
                 continue
 
@@ -174,7 +174,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def create_thumbnail_oiio(self, src_path, dst_path):
-        self.log.info("Extracting thumbnail {}".format(dst_path))
+        self.log.debug("Extracting thumbnail with OIIO: {}".format(dst_path))
         oiio_cmd = get_oiio_tool_args(
             "oiiotool",
             "-a", src_path,
@@ -192,7 +192,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             return False
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
-        self.log.info("outputting {}".format(dst_path))
+        self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
 
         ffmpeg_path_args = get_ffmpeg_tool_args("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}

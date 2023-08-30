@@ -46,7 +46,7 @@ class ExtractReviewSlate(publish.Extractor):
                 "*": inst_data["slateFrame"]
             }
 
-        self.log.info("_ slates_data: {}".format(pformat(slates_data)))
+        self.log.debug("_ slates_data: {}".format(pformat(slates_data)))
 
         if "reviewToWidth" in inst_data:
             use_legacy_code = True
@@ -76,7 +76,7 @@ class ExtractReviewSlate(publish.Extractor):
             )
             # get slate data
             slate_path = self._get_slate_path(input_file, slates_data)
-            self.log.info("_ slate_path: {}".format(slate_path))
+            self.log.debug("_ slate_path: {}".format(slate_path))
 
             slate_width, slate_height = self._get_slates_resolution(slate_path)
 

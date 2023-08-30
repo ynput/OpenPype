@@ -27,13 +27,13 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
 
         hierarchy_context = context.data.get("hierarchyContext")
         if not hierarchy_context:
-            self.log.info("Skipping")
+            self.log.debug("Skipping ExtractHierarchyToAYON")
             return
 
         project_name = context.data["projectName"]
         hierarchy_context = self._filter_hierarchy(context)
         if not hierarchy_context:
-            self.log.info("All folders were filtered out")
+            self.log.debug("All folders were filtered out")
             return
 
         self.log.debug("Hierarchy_context: {}".format(

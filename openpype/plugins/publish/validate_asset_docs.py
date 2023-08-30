@@ -22,11 +22,11 @@ class ValidateAssetDocs(pyblish.api.InstancePlugin):
             return
 
         if instance.data.get("assetEntity"):
-            self.log.info("Instance has set asset document in its data.")
+            self.log.debug("Instance has set asset document in its data.")
 
         elif instance.data.get("newAssetPublishing"):
             # skip if it is editorial
-            self.log.info("Editorial instance is no need to check...")
+            self.log.debug("Editorial instance has no need to check...")
 
         else:
             raise PublishValidationError((
