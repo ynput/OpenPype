@@ -213,7 +213,7 @@ def get_colorspace_from_filepath(config_path, filepath):
     if not compatibility_check():
         # python environment is not compatible with PyOpenColorIO
         # needs to be run in subprocess
-        result_data = get_wrapped_with_subprocess(
+        result_data = _get_wrapped_with_subprocess(
             "colorspace", "get_colorspace_from_filepath",
             config_path=config_path,
             filepath=filepath
@@ -331,7 +331,7 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
 
 
 # TODO: remove this in future - backward compatibility
-@deprecated("get_wrapped_with_subprocess")
+@deprecated("_get_wrapped_with_subprocess")
 def get_data_subprocess(config_path, data_type):
     """[Deprecated] Get data via subprocess
 
@@ -361,7 +361,7 @@ def get_data_subprocess(config_path, data_type):
         return json.loads(return_json_data)
 
 
-def get_wrapped_with_subprocess(command_group, command, **kwargs):
+def _get_wrapped_with_subprocess(command_group, command, **kwargs):
     """Get data via subprocess
 
     Wrapper for Python 2 hosts.
@@ -427,7 +427,7 @@ def compatibility_check_config_version(config_path, major=1, minor=None):
         else:
             # python environment is not compatible with PyOpenColorIO
             # needs to be run in subprocess
-            CachedData.config_version_data = get_wrapped_with_subprocess(
+            CachedData.config_version_data = _get_wrapped_with_subprocess(
                 "config", "get_version", config_path=config_path
             )
 
@@ -460,7 +460,7 @@ def get_ocio_config_colorspaces(config_path):
             # python environment is not compatible with PyOpenColorIO
             # needs to be run in subprocess
             CachedData.ocio_config_colorspaces[config_path] = \
-                get_wrapped_with_subprocess(
+                _get_wrapped_with_subprocess(
                     "config", "get_colorspace", in_path=config_path
             )
         else:
@@ -473,7 +473,7 @@ def get_ocio_config_colorspaces(config_path):
 
 
 # TODO: remove this in future - backward compatibility
-@deprecated("get_wrapped_with_subprocess")
+@deprecated("_get_wrapped_with_subprocess")
 def get_colorspace_data_subprocess(config_path):
     """[Deprecated] Get colorspace data via subprocess
 
@@ -485,7 +485,7 @@ def get_colorspace_data_subprocess(config_path):
     Returns:
         dict: colorspace and family in couple
     """
-    return get_wrapped_with_subprocess(
+    return _get_wrapped_with_subprocess(
         "config", "get_colorspace", in_path=config_path
     )
 
@@ -505,7 +505,7 @@ def get_ocio_config_views(config_path):
     if not compatibility_check():
         # python environment is not compatible with PyOpenColorIO
         # needs to be run in subprocess
-        return get_wrapped_with_subprocess(
+        return _get_wrapped_with_subprocess(
             "config", "get_views", in_path=config_path
         )
 
@@ -515,7 +515,7 @@ def get_ocio_config_views(config_path):
 
 
 # TODO: remove this in future - backward compatibility
-@deprecated("get_wrapped_with_subprocess")
+@deprecated("_get_wrapped_with_subprocess")
 def get_views_data_subprocess(config_path):
     """[Deprecated] Get viewers data via subprocess
 
@@ -527,7 +527,7 @@ def get_views_data_subprocess(config_path):
     Returns:
         dict: `display/viewer` and viewer data
     """
-    return get_wrapped_with_subprocess(
+    return _get_wrapped_with_subprocess(
         "config", "get_views", in_path=config_path
     )
 
