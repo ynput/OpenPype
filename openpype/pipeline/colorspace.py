@@ -340,25 +340,9 @@ def get_data_subprocess(config_path, data_type):
     Args:
         config_path (str): path leading to config.ocio file
     """
-    with _make_temp_json_file() as tmp_json_path:
-        # Prepare subprocess arguments
-        args = [
-            "run", get_ocio_config_script_path(),
-            "config", data_type,
-            "--in_path", config_path,
-            "--out_path", tmp_json_path
-        ]
-        log.info("Executing: {}".format(" ".join(args)))
-
-        process_kwargs = {
-            "logger": log
-        }
-
-        run_openpype_process(*args, **process_kwargs)
-
-        # return all colorspaces
-        with open(tmp_json_path, "r") as f_:
-            return json.load(f_)
+    return _get_wrapped_with_subprocess(
+        "config", data_type, in_path=config_path,
+    )
 
 
 def _get_wrapped_with_subprocess(command_group, command, **kwargs):
