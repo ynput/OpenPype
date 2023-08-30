@@ -11,7 +11,10 @@ from openpype.pipeline import Anatomy, registered_host
 from openpype.pipeline.context_tools import change_current_context
 from openpype.pipeline.workfile import create_workdir_extra_folders
 
-from .abstract import AbstractWorkfileController
+from .abstract import (
+    AbstractWorkfilesFrontend,
+    AbstractWorkfilesBackend,
+)
 from .models import SelectionModel, EntitiesModel, WorkfilesModel
 
 
@@ -98,7 +101,9 @@ class ExpectedSelection:
         return True
 
 
-class BaseWorkfileController(AbstractWorkfileController):
+class BaseWorkfileController(
+    AbstractWorkfilesFrontend, AbstractWorkfilesBackend
+):
     def __init__(self, host=None):
         if host is None:
             host = registered_host()
@@ -330,7 +335,7 @@ class BaseWorkfileController(AbstractWorkfileController):
         )
 
     def save_workfile_info(self, folder_id, task_id, filepath, note):
-        return self._workfiles_model.save_workfile_info(
+        self._workfiles_model.save_workfile_info(
             folder_id, task_id, filepath, note
         )
 
