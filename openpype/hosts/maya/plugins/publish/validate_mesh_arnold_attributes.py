@@ -47,10 +47,10 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
         # Get default arnold attribute values for mesh type.
         defaults = {}
         with delete_after() as tmp:
-            transform = cmds.createNode("transform")
+            transform = cmds.createNode("transform", skipSelect=True)
             tmp.append(transform)
 
-            mesh = cmds.createNode("mesh", parent=transform)
+            mesh = cmds.createNode("mesh", parent=transform, skipSelect=True)
             arnold_attributes = cmds.listAttr(mesh,
                                               string="ai*",
                                               fromPlugin=True) or []
