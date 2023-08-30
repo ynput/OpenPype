@@ -156,7 +156,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
             return True
         except Exception:
             self.log.warning(
-                "Failed to create thubmnail using oiiotool",
+                "Failed to create thumbnail using oiiotool",
                 exc_info=True
             )
             return False
@@ -179,7 +179,7 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
             return True
         except Exception:
             self.log.warning(
-                "Failed to create thubmnail using ffmpeg",
+                "Failed to create thumbnail using ffmpeg",
                 exc_info=True
             )
             return False
