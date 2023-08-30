@@ -98,9 +98,13 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._btn_note_save.setEnabled(False)
 
     def _set_context(self, folder_id, task_id, filepath):
+        workfile_info = None
         # Check if folder, task and file are selected
-        # NOTE workfile document is not requirement
-        enabled = bool(folder_id) and bool(task_id) and bool(filepath)
+        if bool(folder_id) and bool(task_id) and bool(filepath):
+            workfile_info = self._controller.get_workfile_info(
+                folder_id, task_id, filepath
+            )
+        enabled = workfile_info is not None
 
         self._details_input.setEnabled(enabled)
         self._note_input.setEnabled(enabled)
@@ -110,32 +114,23 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._task_id = task_id
         self._filepath = filepath
 
-        # Disable inputs and remove texts if any required arguments are missing
+        # Disable inputs and remove texts if any required arguments are
+        #   missing
         if not enabled:
             self._orig_note = ""
             self._details_input.setPlainText("")
             self._note_input.setPlainText("")
             return
 
-        workfile_info = self._controller.get_workfile_info(
-            folder_id, task_id, filepath
-        )
-        orig_note = ""
-        if workfile_info:
-            orig_note = workfile_info["attrib"].get("description") or orig_note
-
-        self._orig_note = orig_note
-        self._note_input.setPlainText(orig_note)
-        # Set as empty string
-        self._details_input.setPlainText("")
-
-        filestat = os.stat(filepath)
-        size_value = file_size_to_string(filestat.st_size)
+        note = workfile_info.note
+        size_value = file_size_to_string(workfile_info.filesize)
 
         # Append html string
         datetime_format = "%b %d %Y %H:%M:%S"
-        creation_time = datetime.datetime.fromtimestamp(filestat.st_ctime)
-        modification_time = datetime.datetime.fromtimestamp(filestat.st_mtime)
+        creation_time = datetime.datetime.fromtimestamp(
+            workfile_info.creation_time)
+        modification_time = datetime.datetime.fromtimestamp(
+            workfile_info.modification_time)
         lines = (
             "<b>Size:</b>",
             size_value,
@@ -144,4 +139,9 @@ class SidePanelWidget(QtWidgets.QWidget):
             "<b>Modified:</b>",
             modification_time.strftime(datetime_format)
         )
+        self._orig_note = note
+        self._note_input.setPlainText(note)
+
+        # Set as empty string
+        self._details_input.setPlainText("")
         self._details_input.appendHtml("<br>".join(lines))

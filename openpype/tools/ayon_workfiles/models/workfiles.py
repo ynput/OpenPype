@@ -1,6 +1,7 @@
 import os
 import re
 import copy
+import datetime
 
 import arrow
 import ayon_api
@@ -19,16 +20,11 @@ from openpype.pipeline.workfile import (
     get_last_workfile_with_version,
 )
 from openpype.pipeline.version_start import get_versioning_start
-try:
-    from openpype.tools.ayon_workfiles.abstract import (
-        WorkareaFilepathResult,
-        FileItem,
-    )
-except Exception:
-    from ayon_workfiles.abstract import (
-        WorkareaFilepathResult,
-        FileItem,
-    )
+from openpype.tools.ayon_workfiles.abstract import (
+    WorkareaFilepathResult,
+    FileItem,
+    WorkfileInfo,
+)
 
 
 def get_folder_template_data(folder):
@@ -402,6 +398,7 @@ class WorkfileEntitiesModel:
     def __init__(self, controller):
         self._controller = controller
         self._cache = {}
+        self._items = {}
 
     def _get_workfile_info_identifier(
         self, folder_id, task_id, rootless_path):
@@ -417,6 +414,42 @@ class WorkfileEntitiesModel:
             filename
         ])
 
+    def _prepare_workfile_info_item(
+        self, folder_id, task_id, workfile_info, filepath=None
+    ):
+        if filepath is not None:
+            filepath = workfile_info["path"]
+        note = ""
+        if workfile_info:
+            note = workfile_info["attrib"].get("description") or ""
+
+        filestat = os.stat(filepath)
+        return WorkfileInfo(
+            folder_id,
+            task_id,
+            filepath,
+            filesize=filestat.st_size,
+            creation_time=filestat.st_ctime,
+            modification_time=filestat.st_mtime,
+            note=note
+        )
+
+    def _get_workfile_info(self, folder_id, task_id, identifier):
+        workfile_info = self._cache.get(identifier)
+        if workfile_info is not None:
+            return workfile_info
+
+        for workfile_info in ayon_api.get_workfiles_info(
+            self._controller.get_current_project_name(),
+            task_ids=[task_id],
+            fields=["id", "path", "attrib"],
+        ):
+            workfile_identifier = self._get_workfile_info_identifier(
+                folder_id, task_id, workfile_info["path"]
+            )
+            self._cache[workfile_identifier] = workfile_info
+        return self._cache.get(identifier)
+
     def get_workfile_info(
         self, folder_id, task_id, filepath, rootless_path=None
     ):
@@ -428,33 +461,29 @@ class WorkfileEntitiesModel:
 
         identifier = self._get_workfile_info_identifier(
             folder_id, task_id, rootless_path)
-        info = self._cache.get(identifier)
-        if not info:
-            for workfile_info in ayon_api.get_workfiles_info(
-                self._controller.get_current_project_name(),
-                task_ids=[task_id],
-                fields=["id", "path", "attrib"],
-            ):
-                workfile_identifier = self._get_workfile_info_identifier(
-                    folder_id, task_id, workfile_info["path"]
-                )
-                self._cache[workfile_identifier] = workfile_info
-
-        return self._cache.get(identifier)
+        item = self._items.get(identifier)
+        if item is None:
+            workfile_info = self._get_workfile_info(
+                folder_id, task_id, identifier
+            )
+            item = self._prepare_workfile_info_item(
+                folder_id, task_id, workfile_info, filepath
+            )
+            self._items[identifier] = item
+        return item
 
     def save_workfile_info(self, folder_id, task_id, filepath, note):
         rootless_path = self._get_rootless_path(filepath)
         identifier = self._get_workfile_info_identifier(
             folder_id, task_id, rootless_path
         )
-        workfile_info = self.get_workfile_info(
-            folder_id, task_id, filepath, rootless_path
+        workfile_info = self._get_workfile_info(
+            folder_id, task_id, identifier
         )
         if not workfile_info:
-            workfile_info = self._create_workfile_doc(
+            self._cache[identifier] = self._create_workfile_doc(
                 task_id, rootless_path, note)
-            self._cache[identifier] = workfile_info
-            return workfile_info
+            return
 
         new_workfile_info = copy.deepcopy(workfile_info)
         attrib = new_workfile_info.setdefault("attrib", {})
@@ -623,7 +652,7 @@ class WorkfilesModel:
         )
 
     def save_workfile_info(self, folder_id, task_id, filepath, note):
-        return self._entities_model.save_workfile_info(
+        self._entities_model.save_workfile_info(
             folder_id, task_id, filepath, note
         )
 

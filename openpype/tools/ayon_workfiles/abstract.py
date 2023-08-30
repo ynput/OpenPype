@@ -5,9 +5,69 @@ import six
 from openpype.style import get_default_entity_icon_color
 
 
-class FolderItem:
+class WorkfileInfo:
+    """Information about workarea file with possible additional from database.
+
+    Args:
+        folder_id (str): Folder id.
+        task_id (str): Task id.
+        filepath (str): Filepath.
+        filesize (int): File size.
+        creation_time (int): Creation time (timestamp).
+        modification_time (int): Modification time (timestamp).
+        note (str): Note.
     """
 
+    def __init__(
+        self,
+        folder_id,
+        task_id,
+        filepath,
+        filesize,
+        creation_time,
+        modification_time,
+        note,
+    ):
+        self.folder_id = folder_id
+        self.task_id = task_id
+        self.filepath = filepath
+        self.filesize = filesize
+        self.creation_time = creation_time
+        self.modification_time = modification_time
+        self.note = note
+
+    def to_data(self):
+        """Converts WorkfileInfo item to data.
+
+        Returns:
+            dict[str, Any]: Folder item data.
+        """
+
+        return {
+            "folder_id": self.folder_id,
+            "task_id": self.task_id,
+            "filepath": self.filepath,
+            "filesize": self.filesize,
+            "creation_time": self.creation_time,
+            "modification_time": self.modification_time,
+            "note": self.note,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        """Re-creates WorkfileInfo item from data.
+
+        Args:
+            data (dict[str, Any]): Workfile info item data.
+
+        Returns:
+            WorkfileInfo: Workfile info item.
+        """
+
+        return cls(**data)
+
+
+class FolderItem:
     Args:
         entity_id (str): Folder id.
         parent_id (Union[str, None]): Parent folder id. If 'None' then project
