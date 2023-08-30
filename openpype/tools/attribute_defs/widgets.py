@@ -459,23 +459,23 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         idx = self._input_widget.currentIndex()
         return self._input_widget.itemData(idx)
 
+    def _multiselection_multivalue_prep(self, values):
+        final = None
+        are_same = True
+        for value in values:
+            value = set(value)
+            if final is None:
+                final = value
+            elif not are_same or final != value:
+                final |= value
+                are_same = False
+        return list(final), not are_same
+
     def set_value(self, value, multivalue=False):
         if multivalue:
             if self.multiselection:
-                _value = None
-                are_same = True
-                for v in value:
-                    _v = set(v)
-                    if _value is None:
-                        _value = _v
-                    elif not are_same or _value != _v:
-                        _value |= _v
-                        are_same = False
-                if _value is None:
-                    _value = []
-                else:
-                    value = list(_value)
-                multivalue = not are_same
+                value, multivalue = self._multiselection_multivalue_prep(
+                    value)
             else:
                 set_value = set(value)
                 if len(set_value) == 1:
