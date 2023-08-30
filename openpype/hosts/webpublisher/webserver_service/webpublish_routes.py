@@ -284,7 +284,7 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
                 args.append("--{}".format(key))
                 # Extend list into arguments (targets can be a list)
                 if isinstance(value, (tuple, list)):
-                    args.extend(value)
+                    args.append(" ".join(value))
                 else:
                     args.append(value)
 
