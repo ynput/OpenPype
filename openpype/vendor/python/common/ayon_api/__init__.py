@@ -48,6 +48,11 @@ from ._api import (
     patch,
     delete,
 
+    get_timeout,
+    set_timeout,
+    get_max_retries,
+    set_max_retries,
+
     get_event,
     get_events,
     dispatch_event,
@@ -244,6 +249,11 @@ __all__ = (
     "put",
     "patch",
     "delete",
+
+    "get_timeout",
+    "set_timeout",
+    "get_max_retries",
+    "set_max_retries",
 
     "get_event",
     "get_events",
