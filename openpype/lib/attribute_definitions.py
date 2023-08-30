@@ -434,7 +434,9 @@ class EnumDef(AbstractAttrDef):
 
     type = "enum"
 
-    def __init__(self, key, items, default=None, **kwargs):
+    def __init__(
+        self, key, items, default=None, multiselection=False, **kwargs
+    ):
         if not items:
             raise ValueError((
                 "Empty 'items' value. {} must have"
@@ -443,7 +445,10 @@ class EnumDef(AbstractAttrDef):
 
         items = self.prepare_enum_items(items)
         item_values = [item["value"] for item in items]
-        if default not in item_values:
+        if multiselection and default is None:
+            default = []
+
+        if not multiselection and default not in item_values:
             for value in item_values:
                 default = value
                 break
@@ -452,21 +457,34 @@ class EnumDef(AbstractAttrDef):
 
         self.items = items
         self._item_values = set(item_values)
+        self.multiselection = multiselection
 
     def __eq__(self, other):
         if not super(EnumDef, self).__eq__(other):
             return False
 
-        return self.items == other.items
+        return (
+            self.items == other.items
+            and self.multiselection == other.multiselection
+        )
 
     def convert_value(self, value):
-        if value in self._item_values:
-            return value
-        return self.default
+        if not self.multiselection:
+            if value in self._item_values:
+                return value
+            return self.default
+
+        if value is None:
+            return copy.deepcopy(self.default)
+        new_value = set(value)
+        rem = new_value - self._item_values
+        return list(new_value - rem)
+
 
     def serialize(self):
         data = super(EnumDef, self).serialize()
         data["items"] = copy.deepcopy(self.items)
+        data["multiselection"] = self.multiselection
         return data
 
     @staticmethod
