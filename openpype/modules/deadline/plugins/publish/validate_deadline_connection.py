@@ -18,7 +18,7 @@ class ValidateDeadlineConnection(pyblish.api.InstancePlugin):
         # if custom one is set in instance, use that
         if instance.data.get("deadlineUrl"):
             deadline_url = instance.data.get("deadlineUrl")
-            self.log.info(
+            self.log.debug(
                 "We have deadline URL on instance {}".format(
                     deadline_url))
         assert deadline_url, "Requires Deadline Webservice URL"

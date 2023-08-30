@@ -434,7 +434,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             new_job_info.update(tiles_data["JobInfo"])
             new_plugin_info.update(tiles_data["PluginInfo"])
 
-            self.log.info("hashing {} - {}".format(file_index, file))
+            self.log.debug("hashing {} - {}".format(file_index, file))
             job_hash = hashlib.sha256(
                 ("{}_{}".format(file_index, file)).encode("utf-8"))
 
@@ -450,7 +450,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             )
             file_index += 1
 
-        self.log.info(
+        self.log.debug(
             "Submitting tile job(s) [{}] ...".format(len(frame_payloads)))
 
         # Submit frame tile jobs
@@ -560,7 +560,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         assembly_job_ids = []
         num_assemblies = len(assembly_payloads)
         for i, payload in enumerate(assembly_payloads):
-            self.log.info(
+            self.log.debug(
                 "submitting assembly job {} of {}".format(i + 1,
                                                           num_assemblies)
             )

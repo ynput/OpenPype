@@ -32,9 +32,9 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
 
         # get default deadline webservice url from deadline module
         deadline_url = instance.context.data["defaultDeadline"]
-        self.log.info("deadline_url::{}".format(deadline_url))
+        self.log.debug("deadline_url::{}".format(deadline_url))
         pools = DeadlineModule.get_deadline_pools(deadline_url, log=self.log)
-        self.log.info("pools::{}".format(pools))
+        self.log.debug("pools::{}".format(pools))
 
         formatting_data = {
             "pools_str": ",".join(pools)

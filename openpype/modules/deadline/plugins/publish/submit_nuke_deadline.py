@@ -244,7 +244,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
         # resolve any limit groups
         limit_groups = self.get_limit_groups()
-        self.log.info("Limit groups: `{}`".format(limit_groups))
+        self.log.debug("Limit groups: `{}`".format(limit_groups))
 
         payload = {
             "JobInfo": {
@@ -387,10 +387,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         })
 
         plugin = payload["JobInfo"]["Plugin"]
-        self.log.info("using render plugin : {}".format(plugin))
+        self.log.debug("using render plugin : {}".format(plugin))
 
-        self.log.info("Submitting..")
-        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
+        self.log.debug("Submitting..")
+        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
         # adding expectied files to instance.data
         self.expected_files(
