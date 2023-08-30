@@ -36,6 +36,9 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
 
     optional = True
 
+    # cache (will be `dict` when cached)
+    arnold_mesh_defaults = None
+
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
         # todo: this should not be done this way
@@ -44,6 +47,11 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
 
     @classmethod
     def get_default_attributes(cls):
+
+        if cls.arnold_mesh_defaults is not None:
+            # Use from cache
+            return cls.arnold_mesh_defaults
+
         # Get default arnold attribute values for mesh type.
         defaults = {}
         with delete_after() as tmp:
@@ -61,6 +69,7 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
                 except PublishValidationError:
                     cls.log.debug("Ignoring arnold attribute: {}".format(attr))
 
+        cls.arnold_mesh_defaults = defaults  # assign cache
         return defaults
 
     @classmethod
