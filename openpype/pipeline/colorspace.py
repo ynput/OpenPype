@@ -650,7 +650,7 @@ def get_display_view_colorspace_subprocess(config_path, display, view):
             "--view", view
 
         ]
-        log.info("Executing: {}".format(" ".join(args)))
+        log.debug("Executing: {}".format(" ".join(args)))
 
         process_kwargs = {
             "logger": log

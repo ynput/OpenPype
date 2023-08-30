@@ -57,16 +57,11 @@ class ARenderProduct(object):
 
 
 def get_default_display_view_colorspace():
-    """Get default display view colorspace.
+    """Get default display view colorspace name. """
 
-    It's used for 'ociocolorspace' parm in OpneGL Node."""
-
-    data = get_color_management_preferences()
-    config_path = data.get("config")
-    display = data.get("display")
-    view = data.get("view")
-
-    default_view_space = get_display_view_colorspace_name(config_path,
-                                                          display,
-                                                          view)
-    return default_view_space
+    prefs = get_color_management_preferences()
+    return get_display_view_colorspace_name(
+        config_path=prefs["config"],
+        display=prefs["display"],
+        view=prefs["view"]
+    )
