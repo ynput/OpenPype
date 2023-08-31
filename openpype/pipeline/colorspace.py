@@ -261,9 +261,11 @@ def get_config_file_rules_colorspace_from_filepath(config_path, filepath):
         if result_data:
             return result_data[0]
 
-    from openpype.scripts.ocio_wrapper import _get_config_file_rules_colorspace_from_filepath
+    # TODO: refactor this so it is not imported but part of this file
+    from openpype.scripts.ocio_wrapper import _get_config_file_rules_colorspace_from_filepath  # noqa: E501
 
-    result_data = _get_config_file_rules_colorspace_from_filepath(config_path, filepath)
+    result_data = _get_config_file_rules_colorspace_from_filepath(
+        config_path, filepath)
 
     if result_data:
         return result_data[0]
@@ -424,6 +426,7 @@ def _get_wrapped_with_subprocess(command_group, command, **kwargs):
             return json.load(f_)
 
 
+# TODO: this should be part of ocio_wrapper.py
 def compatibility_check():
     """Making sure PyOpenColorIO is importable"""
     if CachedData.python3compatible is not None:
@@ -439,11 +442,13 @@ def compatibility_check():
     return CachedData.python3compatible
 
 
+# TODO: this should be part of ocio_wrapper.py
 def compatibility_check_config_version(config_path, major=1, minor=None):
     """Making sure PyOpenColorIO config version is compatible"""
 
     if not CachedData.config_version_data:
         if compatibility_check():
+            # TODO: refactor this so it is not imported but part of this file
             from openpype.scripts.ocio_wrapper import _get_version_data
 
             CachedData.config_version_data = _get_version_data(config_path)
@@ -488,6 +493,7 @@ def get_ocio_config_colorspaces(config_path):
                     "config", "get_colorspace", in_path=config_path
             )
         else:
+            # TODO: refactor this so it is not imported but part of this file
             from openpype.scripts.ocio_wrapper import _get_colorspace_data
 
             CachedData.ocio_config_colorspaces[config_path] = \
@@ -533,6 +539,7 @@ def get_ocio_config_views(config_path):
             "config", "get_views", in_path=config_path
         )
 
+    # TODO: refactor this so it is not imported but part of this file
     from openpype.scripts.ocio_wrapper import _get_views_data
 
     return _get_views_data(config_path)

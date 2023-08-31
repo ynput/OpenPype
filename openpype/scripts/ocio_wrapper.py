@@ -264,7 +264,9 @@ def _get_version_data(config_path):
 @click.option("--out_path", required=True,
               help="path where to write output json file",
               type=click.Path())
-def get_config_file_rules_colorspace_from_filepath(config_path, filepath, out_path):
+def get_config_file_rules_colorspace_from_filepath(
+    config_path, filepath, out_path
+):
     """Get colorspace from file path wrapper.
 
     Python 2 wrapped console command
@@ -275,12 +277,14 @@ def get_config_file_rules_colorspace_from_filepath(config_path, filepath, out_pa
         out_path (str): temp json file path string
 
     Example of use:
-    > pyton.exe ./ocio_wrapper.py colorspace get_config_file_rules_colorspace_from_filepath \
+    > pyton.exe ./ocio_wrapper.py \
+        colorspace get_config_file_rules_colorspace_from_filepath \
         --config_path=<path> --filepath=<path> --out_path=<path>
     """
     json_path = Path(out_path)
 
-    colorspace = _get_config_file_rules_colorspace_from_filepath(config_path, filepath)
+    colorspace = _get_config_file_rules_colorspace_from_filepath(
+        config_path, filepath)
 
     with open(json_path, "w") as f_:
         json.dump(colorspace, f_)
