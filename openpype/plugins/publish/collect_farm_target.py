@@ -15,31 +15,21 @@ class CollectFarmTarget(pyblish.api.InstancePlugin):
             return
 
         context = instance.context
-        try:
-            deadline_module = context.data.get("openPypeModules")["deadline"]
-            if deadline_module.enabled:
-                instance.data["toBeRenderedOn"] = "deadline"
-                self.log.debug("Collected render target: deadline")
-        except AttributeError:
-            self.log.error("Cannot get OpenPype Deadline module.")
-            raise AssertionError("OpenPype Deadline module not found.")
 
-        try:
-            royalrender_module = \
-                context.data.get("openPypeModules")["royalrender"]
-            if royalrender_module.enabled:
-                instance.data["toBeRenderedOn"] = "royalrender"
-                self.log.debug("Collected render target: royalrender")
+        farm_name = ""
+        op_modules = context.data.get("openPypeModules")
 
-        except AttributeError:
-            self.log.error("Cannot get OpenPype RoyalRender module.")
-            raise AssertionError("OpenPype RoyalRender module not found.")
+        for farm_renderer in ["deadline", "royalrender", "muster"]:
+            op_module = op_modules.get(farm_renderer, False)
 
-        try:
-            muster_module = context.data.get("openPypeModules")["muster"]
-            if muster_module.enabled:
-                instance.data["toBeRenderedOn"] = "muster"
-                self.log.debug("Collected render target: muster")
-        except AttributeError:
-            self.log.error("Cannot get OpenPype Muster module.")
-            raise AssertionError("OpenPype Muster module not found.")
+            if op_module and op_module.enabled:
+                farm_name = farm_renderer
+            elif not op_module:
+                self.log.error("Cannot get OpenPype {0} module.".format(
+                    farm_renderer))
+
+        if farm_name:
+            self.log.debug("Collected render target: {0}".format(farm_name))
+            instance.data["toBeRenderedOn"] = farm_name
+        else:
+            AssertionError("No OpenPype renderer module found")
