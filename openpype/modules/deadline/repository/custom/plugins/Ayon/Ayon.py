@@ -38,6 +38,7 @@ class AyonDeadlinePlugin(DeadlinePlugin):
         for publish process.
     """
     def __init__(self):
+        super().__init__()
         self.InitializeProcessCallback += self.InitializeProcess
         self.RenderExecutableCallback += self.RenderExecutable
         self.RenderArgumentCallback += self.RenderArgument
@@ -90,7 +91,13 @@ class AyonDeadlinePlugin(DeadlinePlugin):
         # clean '\ ' for MacOS pasting
         if platform.system().lower() == "darwin":
             exe_list = exe_list.replace("\\ ", " ")
-        exe = FileUtils.SearchFileList(exe_list)
+
+        expanded_paths = []
+        for path in exe_list.split(";"):
+            if path.startswith("~"):
+                path = os.path.expanduser(path)
+                expanded_paths.append(path)
+        exe = FileUtils.SearchFileList(";".join(expanded_paths))
 
         if exe == "":
             self.FailRender(

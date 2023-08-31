@@ -18,6 +18,7 @@ Provides:
 import pyblish.api
 
 from openpype.client import get_last_version_by_subset_name
+from openpype.pipeline.version_start import get_versioning_start
 
 
 class CollectPublishedVersion(pyblish.api.ContextPlugin):
@@ -47,9 +48,17 @@ class CollectPublishedVersion(pyblish.api.ContextPlugin):
         version_doc = get_last_version_by_subset_name(project_name,
                                                       workfile_subset_name,
                                                       asset_id)
-        version_int = 1
+
         if version_doc:
-            version_int += int(version_doc["name"])
+            version_int = int(version_doc["name"]) + 1
+        else:
+            version_int = get_versioning_start(
+                project_name,
+                "photoshop",
+                task_name=context.data["task"],
+                task_type=context.data["taskType"],
+                project_settings=context.data["project_settings"]
+            )
 
         self.log.debug(f"Setting {version_int} to context.")
         context.data["version"] = version_int
