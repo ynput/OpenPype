@@ -2140,9 +2140,7 @@ class WorkfileSettings(object):
         """
         output_data = {}
         m_display, m_viewer = get_viewer_config_from_string(monitor_lut)
-        v_display, v_viewer = get_viewer_config_from_string(
-            viewer_lut
-        )
+        v_display, v_viewer = get_viewer_config_from_string(viewer_lut)
 
         # set monitor lut differently for nuke version 14
         if nuke.NUKE_VERSION_MAJOR >= 14:
