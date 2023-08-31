@@ -266,12 +266,14 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
     def _update_size_hint(self):
         if self._custom_text is not None:
             self.update()
+            self.repaint()
             return
         self._lines = {}
 
         items = self.checked_items_text()
         if not items:
             self.update()
+            self.repaint()
             return
 
         option = QtWidgets.QStyleOptionComboBox()
@@ -311,6 +313,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
         self.update()
         self.updateGeometry()
+        self.repaint()
 
     def sizeHint(self):
         value = super(MultiSelectionComboBox, self).sizeHint()
