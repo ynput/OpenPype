@@ -168,7 +168,7 @@ class OverviewWidget(QtWidgets.QFrame):
     def make_sure_animation_is_finished(self):
         if self._change_anim.state() == QtCore.QAbstractAnimation.Running:
             self._change_anim.stop()
-            self._on_change_anim_finished()
+        self._on_change_anim_finished()
 
     def set_state(self, new_state, animate):
         if new_state == self._current_state:
