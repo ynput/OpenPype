@@ -8,7 +8,10 @@ from openpype.lib import Logger, emit_event
 from openpype.lib.events import QueuedEventSystem
 from openpype.settings import get_project_settings
 from openpype.pipeline import Anatomy, registered_host
-from openpype.pipeline.context_tools import change_current_context
+from openpype.pipeline.context_tools import (
+    change_current_context,
+    get_current_host_name,
+)
 from openpype.pipeline.workfile import create_workdir_extra_folders
 
 from .abstract import (
@@ -197,7 +200,10 @@ class BaseWorkfileController(
 
     # Host information
     def get_workfile_extensions(self):
-        return self._host.get_workfile_extensions()
+        host = self._host
+        if isinstance(host, IWorkfileHost):
+            return host.get_workfile_extensions()
+        return host.file_extensions()
 
     def has_unsaved_changes(self):
         host = self._host
@@ -207,7 +213,10 @@ class BaseWorkfileController(
 
     # Current context
     def get_host_name(self):
-        return self._host.name
+        host = self._host
+        if isinstance(host, IWorkfileHost):
+            return host.name
+        return get_current_host_name()
 
     def get_current_project_name(self):
         return self._current_project_name
@@ -219,7 +228,10 @@ class BaseWorkfileController(
         return self._current_task_name
 
     def get_current_workfile(self):
-        return self._host.get_current_workfile()
+        host = self._host
+        if isinstance(host, IWorkfileHost):
+            return host.get_current_workfile()
+        return host.current_file()
 
     # Selection information
     def get_selected_folder_id(self):
@@ -394,7 +406,8 @@ class BaseWorkfileController(
 
         failed = False
         try:
-            self._host.open_workfile(filepath)
+            self._host_open_workfile(filepath)
+
         except Exception:
             failed = True
             # TODO add some visual feedback for user
@@ -406,13 +419,8 @@ class BaseWorkfileController(
         )
 
     def save_current_workfile(self):
-        host = self._host
-        if isinstance(host, IWorkfileHost):
-            current_file = host.get_current_workfile()
-            host.save_workfile(current_file)
-        else:
-            current_file = host.current_file()
-            host.save_file(current_file)
+        current_file = self.get_current_workfile()
+        self._host_save_workfile(current_file)
 
     def save_as_workfile(
         self,
@@ -476,6 +484,21 @@ class BaseWorkfileController(
             {"failed": failed},
         )
 
+    # Helper host methods that resolve 'IWorkfileHost' interface
+    def _host_open_workfile(self, filepath):
+        host = self._host
+        if isinstance(host, IWorkfileHost):
+            host.open_workfile(filepath)
+        else:
+            host.open_file(filepath)
+
+    def _host_save_workfile(self, filepath):
+        host = self._host
+        if isinstance(host, IWorkfileHost):
+            host.save_workfile(filepath)
+        else:
+            host.save_file(filepath)
+
     def _emit_event(self, topic, data=None):
         self.emit_event(topic, data, "controller")
 
@@ -536,18 +559,11 @@ class BaseWorkfileController(
 
         # Save workfile
         dst_filepath = os.path.join(workdir, filename)
-        host = self._host
         if src_filepath:
             shutil.copyfile(src_filepath, dst_filepath)
-            if isinstance(host, IWorkfileHost):
-                host.open_workfile(dst_filepath)
-            else:
-                host.open_file(dst_filepath)
+            self._host_open_workfile(dst_filepath)
         else:
-            if isinstance(host, IWorkfileHost):
-                host.save_workfile(dst_filepath)
-            else:
-                host.save_file(dst_filepath)
+            self._host_save_workfile(dst_filepath)
 
         # Create extra folders
         create_workdir_extra_folders(
