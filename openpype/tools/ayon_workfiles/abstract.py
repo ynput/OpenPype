@@ -345,6 +345,26 @@ class AbstractWorkfilesCommon(object):
 
         pass
 
+    @abstractmethod
+    def is_save_enabled(self):
+        """Is workfile save enabled.
+
+        Returns:
+            bool: True if save is enabled.
+        """
+
+        pass
+
+    @abstractmethod
+    def set_save_enabled(self, enabled):
+        """Enable or disabled workfile save.
+
+        Args:
+            enabled (bool): Enable save workfile when True.
+        """
+
+        pass
+
 
 class AbstractWorkfilesBackend(AbstractWorkfilesCommon):
     # Current context

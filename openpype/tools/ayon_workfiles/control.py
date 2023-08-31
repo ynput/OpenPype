@@ -130,6 +130,7 @@ class BaseWorkfileController(
         self._current_folder_name = None
         self._current_folder_id = None
         self._current_task_name = None
+        self._save_is_enabled = True
 
         # Expected selected folder and task
         self._expected_selection = self._create_expected_selection_obj()
@@ -209,6 +210,31 @@ class BaseWorkfileController(
 
     def register_event_callback(self, topic, callback):
         self.event_system.add_callback(topic, callback)
+
+    def is_save_enabled(self):
+        """Is workfile save enabled.
+
+        Returns:
+            bool: True if save is enabled.
+        """
+
+        return self._save_is_enabled
+
+    def set_save_enabled(self, enabled):
+        """Enable or disabled workfile save.
+
+        Args:
+            enabled (bool): Enable save workfile when True.
+        """
+
+        if self._save_is_enabled == enabled:
+            return
+
+        self._save_is_enabled = enabled
+        self._emit_event(
+            "workfile_save_enable.changed",
+            {"enabled": enabled}
+        )
 
     # Host information
     def get_workfile_extensions(self):

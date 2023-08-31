@@ -84,6 +84,10 @@ class FilesWidget(QtWidgets.QWidget):
             "copy_representation.finished",
             self._on_copy_representation_finished,
         )
+        controller.register_event_callback(
+            "workfile_save_enable.changed",
+            self._on_workfile_save_enabled_change,
+        )
 
         workarea_widget.open_current_requested.connect(
             self._on_current_open_requests)
@@ -109,6 +113,7 @@ class FilesWidget(QtWidgets.QWidget):
         self._valid_selected_context = False
         self._valid_representation_id = False
         self._tmp_text_filter = None
+        self._is_save_enabled = True
 
         self._controller = controller
         self._files_widget = files_widget
@@ -133,7 +138,6 @@ class FilesWidget(QtWidgets.QWidget):
         published_btn_cancel.setVisible(False)
 
     def set_published_mode(self, published_mode):
-        """"""
         # Make sure context selection is disabled
         self._set_select_contex_mode(False)
         # Change current widget
@@ -241,9 +245,17 @@ class FilesWidget(QtWidgets.QWidget):
     # Published workfiles
     # -------------------------------------------------------------
     def _update_published_btns_state(self):
-        valid = self._valid_representation_id and self._valid_selected_context
-        self._published_btn_copy_n_open.setEnabled(valid)
-        self._published_btn_change_context.setEnabled(valid)
+        enabled = (
+            self._valid_representation_id
+            and self._valid_selected_context
+            and self._is_save_enabled
+        )
+        self._published_btn_copy_n_open.setEnabled(enabled)
+        self._published_btn_change_context.setEnabled(enabled)
+
+    def _update_workarea_btns_state(self):
+        enabled = self._is_save_enabled
+        self._workarea_btn_save.setEnabled(enabled)
 
     def _on_published_repre_changed(self, event):
         self._valid_representation_id = event["representation_id"] is not None
@@ -331,6 +343,12 @@ class FilesWidget(QtWidgets.QWidget):
 
         if not event["failed"]:
             self._set_select_contex_mode(False)
+
+    def _on_workfile_save_enabled_change(self, event):
+        enabled = event["enabled"]
+        self._is_save_enabled = enabled
+        self._update_published_btns_state()
+        self._update_workarea_btns_state()
 
     def _save_changes_prompt(self):
         """Ask user if wants to save changes to current file.

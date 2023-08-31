@@ -74,7 +74,10 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self.setWindowTitle(self.title)
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
-        self.setWindowFlags(self.windowFlags() | QtCore.Qt.Window)
+        flags = self.windowFlags() | QtCore.Qt.Window
+        self.setWindowFlags(flags)
+
+        self._default_window_flags = flags
 
         self._folder_widget = None
         self._folder_filter_input = None
@@ -82,7 +85,7 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self._files_widget = None
 
         self._first_show = True
-        self._first_refresh = False
+        self._controller_refreshed = False
         self._context_to_set = None
         # Host validation should happen only once
         self._host_is_valid = None
@@ -141,6 +144,10 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         controller.register_event_callback(
             "open_workfile.finished",
             self._on_open_finished
+        )
+        controller.register_event_callback(
+            "controller.refresh.started",
+            self._on_controller_refresh_started,
         )
         controller.register_event_callback(
             "controller.refresh.finished",
@@ -219,6 +226,7 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         files_filter_input.setPlaceholderText("Filter files..")
 
         published_checkbox = QtWidgets.QCheckBox("Published", header_widget)
+        published_checkbox.setToolTip("Show published workfiles")
 
         header_layout = QtWidgets.QHBoxLayout(header_widget)
         header_layout.setContentsMargins(0, 0, 0, 0)
@@ -245,10 +253,49 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
         return col_widget
 
-    def ensure_visible(self):
+    def set_window_on_top(self, on_top):
+        """Set window on top of other windows.
+
+        Args:
+            on_top (bool): Show on top of other windows.
+        """
+
+        flags = self._default_window_flags
+        if on_top:
+            flags |= QtCore.Qt.WindowStaysOnTopHint
+        if self.windowFlags() != flags:
+            self.setWindowFlags(flags)
+
+    def ensure_visible(self, use_context=True, save=True, on_top=False):
+        """Ensure the window is visible.
+
+        This method expects arguments for compatibility with previous variant
+            of Workfiles tool.
+
+        Args:
+            use_context (Optional[bool]): DEPRECATED: This argument is
+                ignored.
+            save (Optional[bool]): Allow to save workfiles.
+            on_top (Optional[bool]): Show on top of other windows.
+        """
+
+        save = True if save is None else save
+        on_top = False if on_top is None else on_top
+
+        is_visible = self.isVisible()
+        self._controller.set_save_enabled(save)
+        self.set_window_on_top(on_top)
+
         self.show()
         self.raise_()
         self.activateWindow()
+        if is_visible:
+            self.refresh()
+
+    def refresh(self):
+        """Trigger refresh of workfiles tool controller."""
+
+        self._controller.refresh()
 
     def showEvent(self, event):
         super(WorkfilesToolWindow, self).showEvent(event)
@@ -256,10 +303,6 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
             self._first_show = False
             self._first_show_timer.start()
             self.setStyleSheet(style.load_stylesheet())
-
-    def _on_first_show(self):
-        if not self._first_refresh:
-            self.refresh()
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -271,6 +314,10 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         """
 
         pass
+
+    def _on_first_show(self):
+        if not self._controller_refreshed:
+            self.refresh()
 
     def _on_file_text_filter_change(self, text):
         self._files_widget.set_text_filter(text)
@@ -285,12 +332,6 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self._files_widget.set_published_mode(published_mode)
         self._side_panel.set_published_mode(published_mode)
 
-    def refresh(self):
-        """Trigger refresh of workfiles tool controller."""
-
-        self._first_refresh = True
-        self._controller.refresh()
-
     def _on_folder_filter_change(self, text):
         self._folder_widget.set_name_filer(text)
 
@@ -300,11 +341,16 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
     def _on_refresh_clicked(self):
         self.refresh()
 
+    def _on_controller_refresh_started(self):
+        self._controller_refreshed = True
+
     def _on_controller_refresh_finished(self):
-        if self._host_is_valid is not None:
+        if self._host_is_valid is None:
+            self._host_is_valid = self._controller.is_host_valid()
+            self._overlay_invalid_host.setVisible(not self._host_is_valid)
+
+        if not self._host_is_valid:
             return
-        self._host_is_valid = self._controller.is_host_valid()
-        self._overlay_invalid_host.setVisible(not self._host_is_valid)
 
     def _on_save_as_finished(self, event):
         if event["failed"]:
