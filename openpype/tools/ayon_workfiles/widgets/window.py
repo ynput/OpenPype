@@ -13,6 +13,7 @@ from .side_panel import SidePanelWidget
 from .folders_widget import FoldersWidget
 from .tasks_widget import TasksWidget
 from .files_widget import FilesWidget
+from .utils import BaseOverlayFrame
 
 # TODO move to utils
 # from openpype.tools.utils.lib import (
@@ -27,6 +28,29 @@ def get_go_to_current_icon():
     return get_qta_icon_by_name_and_color(
         "fa.arrow-down", style.get_default_tools_icon_color()
     )
+
+
+class InvalidHostOverlay(BaseOverlayFrame):
+    def __init__(self, parent):
+        super(InvalidHostOverlay, self).__init__(parent)
+
+        label_widget = QtWidgets.QLabel(
+            (
+                "Workfiles tool is not supported in this host/DCCs."
+                "<br/><br/>This may be caused by a bug."
+                " Please contact your TD for more information."
+            ),
+            self
+        )
+        label_widget.setAlignment(QtCore.Qt.AlignCenter)
+        label_widget.setObjectName("OverlayFrameLabel")
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addStretch(2)
+        layout.addWidget(label_widget, 0, QtCore.Qt.AlignCenter)
+        layout.addStretch(3)
+
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
 
 class WorkfilesToolWindow(QtWidgets.QWidget):
@@ -60,10 +84,10 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self._first_show = True
         self._first_refresh = False
         self._context_to_set = None
+        # Host validation should happen only once
+        self._host_is_valid = None
 
         self._controller = controller
-
-        overlay_messages_widget = MessageOverlayObject(self)
 
         # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
@@ -96,6 +120,10 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(pages_widget, 1)
 
+        overlay_messages_widget = MessageOverlayObject(self)
+        overlay_invalid_host = InvalidHostOverlay(self)
+        overlay_invalid_host.setVisible(False)
+
         first_show_timer = QtCore.QTimer()
         first_show_timer.setSingleShot(True)
         first_show_timer.setInterval(50)
@@ -114,8 +142,13 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
             "open_workfile.finished",
             self._on_open_finished
         )
+        controller.register_event_callback(
+            "controller.refresh.finished",
+            self._on_controller_refresh_finished,
+        )
 
         self._overlay_messages_widget = overlay_messages_widget
+        self._overlay_invalid_host = overlay_invalid_host
         self._home_page_widget = home_page_widget
         self._pages_widget = pages_widget
         self._home_body_widget = home_body_widget
@@ -266,6 +299,12 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
     def _on_refresh_clicked(self):
         self.refresh()
+
+    def _on_controller_refresh_finished(self):
+        if self._host_is_valid is not None:
+            return
+        self._host_is_valid = self._controller.is_host_valid()
+        self._overlay_invalid_host.setVisible(not self._host_is_valid)
 
     def _on_save_as_finished(self, event):
         if event["failed"]:

@@ -7,7 +7,7 @@ from openpype.style import (
 )
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 
-from .utils import TreeView
+from .utils import TreeView, BaseOverlayFrame
 
 
 REPRE_ID_ROLE = QtCore.Qt.UserRole + 1
@@ -249,7 +249,7 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
         return super(PublishedFilesModel, self).data(index, role)
 
 
-class SelectContextOverlay(QtWidgets.QFrame):
+class SelectContextOverlay(BaseOverlayFrame):
     """Overlay for files view when user should select context.
 
     Todos:
@@ -258,7 +258,6 @@ class SelectContextOverlay(QtWidgets.QFrame):
 
     def __init__(self, parent):
         super(SelectContextOverlay, self).__init__(parent)
-        self.setObjectName("OverlayFrame")
 
         label_widget = QtWidgets.QLabel(
             "Please choose context on the left<br/>&lt",
@@ -271,22 +270,6 @@ class SelectContextOverlay(QtWidgets.QFrame):
         layout.addWidget(label_widget, 1, QtCore.Qt.AlignCenter)
 
         label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
-        self._parent = parent
-
-    def setVisible(self, visible):
-        super(SelectContextOverlay, self).setVisible(visible)
-        if visible:
-            self._parent.installEventFilter(self)
-            self.resize(self._parent.size())
-        else:
-            self._parent.removeEventFilter(self)
-
-    def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.Resize:
-            self.resize(obj.size())
-
-        return super(SelectContextOverlay, self).eventFilter(obj, event)
 
 
 class PublishedFilesWidget(QtWidgets.QWidget):
