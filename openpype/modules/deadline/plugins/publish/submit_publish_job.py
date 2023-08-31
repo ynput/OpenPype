@@ -98,7 +98,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
              "celaction", "aftereffects", "harmony"]
 
-    families = ["render.farm", "prerender.farm",
+    families = ["render.farm", "render.frames_farm",
+                "prerender.farm", "prerender.frames_farm",
                 "renderlayer", "imagesequence",
                 "vrayscene", "maxrender",
                 "arnold_rop", "mantra_rop",
@@ -121,7 +122,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_SG_USER"
+        "OPENPYPE_SG_USER",
+        "KITSU_LOGIN",
+        "KITSU_PWD"
     ]
 
     # custom deadline attributes
@@ -299,7 +302,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 payload["JobInfo"]["JobDependency{}".format(
                     job_index)] = assembly_id  # noqa: E501
                 job_index += 1
-        else:
+        elif job.get("_id"):
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
         for index, (key_, value_) in enumerate(environment.items()):
@@ -475,6 +478,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
 
+        deadline_publish_job_id = None
         if submission_type == "deadline":
             # get default deadline webservice url from deadline module
             self.deadline_url = instance.context.data["defaultDeadline"]

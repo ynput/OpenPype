@@ -343,6 +343,7 @@ class TextAttrWidget(_BaseAttrDefWidget):
         return self._input_widget.text()
 
     def set_value(self, value, multivalue=False):
+        block_signals = False
         if multivalue:
             set_value = set(value)
             if None in set_value:
@@ -352,13 +353,18 @@ class TextAttrWidget(_BaseAttrDefWidget):
             if len(set_value) == 1:
                 value = tuple(set_value)[0]
             else:
+                block_signals = True
                 value = "< Multiselection >"
 
         if value != self.current_value():
+            if block_signals:
+                self._input_widget.blockSignals(True)
             if self.multiline:
                 self._input_widget.setPlainText(value)
             else:
                 self._input_widget.setText(value)
+            if block_signals:
+                self._input_widget.blockSignals(False)
 
 
 class BoolAttrWidget(_BaseAttrDefWidget):
@@ -391,7 +397,9 @@ class BoolAttrWidget(_BaseAttrDefWidget):
                 set_value.add(self.attr_def.default)
 
             if len(set_value) > 1:
+                self._input_widget.blockSignals(True)
                 self._input_widget.setCheckState(QtCore.Qt.PartiallyChecked)
+                self._input_widget.blockSignals(False)
                 return
             value = tuple(set_value)[0]
 
