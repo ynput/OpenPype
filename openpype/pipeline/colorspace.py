@@ -138,6 +138,16 @@ def get_colorspace_name_from_filepath(
     Returns:
         str: name of colorspace
     """
+    project_settings, config_data, file_rules = _get_context_settings(
+        host_name, project_name,
+        config_data=config_data, file_rules=file_rules,
+        project_settings=project_settings
+    )
+
+    if not config_data:
+        # in case global or host color management is not enabled
+        return None
+
     # use ImageIO file rules
     colorspace_name = get_imageio_file_rules_colorspace_from_filepath(
         filepath, host_name, project_name,
@@ -183,6 +193,28 @@ def get_colorspace_from_filepath(*args, **kwargs):
     return get_imageio_file_rules_colorspace_from_filepath(*args, **kwargs)
 
 
+def _get_context_settings(
+    host_name, project_name,
+    config_data=None, file_rules=None,
+    project_settings=None
+):
+    project_settings = project_settings or get_project_settings(
+        project_name
+    )
+
+    config_data = config_data or get_imageio_config(
+        project_name, host_name, project_settings)
+
+    # in case host color management is not enabled
+    if not config_data:
+        return (None, None, None)
+
+    file_rules = file_rules or get_imageio_file_rules(
+        project_name, host_name, project_settings)
+
+    return project_settings, config_data, file_rules
+
+
 def get_imageio_file_rules_colorspace_from_filepath(
     filepath, host_name, project_name,
     config_data=None, file_rules=None,
@@ -205,19 +237,15 @@ def get_imageio_file_rules_colorspace_from_filepath(
     Returns:
         str: name of colorspace
     """
-    if not any([config_data, file_rules]):
-        project_settings = project_settings or get_project_settings(
-            project_name
-        )
-        config_data = get_imageio_config(
-            project_name, host_name, project_settings)
+    project_settings, config_data, file_rules = _get_context_settings(
+        host_name, project_name,
+        config_data=config_data, file_rules=file_rules,
+        project_settings=project_settings
+    )
 
-        # in case host color management is not enabled
-        if not config_data:
-            return None
-
-        file_rules = get_imageio_file_rules(
-            project_name, host_name, project_settings)
+    if not config_data:
+        # in case global or host color management is not enabled
+        return None
 
     # match file rule from path
     colorspace_name = None
