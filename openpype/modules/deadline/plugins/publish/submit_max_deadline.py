@@ -31,6 +31,7 @@ class MaxPluginInfo(object):
     Version = attr.ib(default=None)  # Mandatory for Deadline
     SaveFile = attr.ib(default=True)
     IgnoreInputs = attr.ib(default=True)
+    Camera = attr.ib(default=None)
 
 
 class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
@@ -154,7 +155,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             SceneFile=self.scene_path,
             Version=instance.data["maxversion"],
             SaveFile=True,
-            IgnoreInputs=True
+            IgnoreInputs=True,
+            Camera=instance.data["cameras"][0]
         )
 
         plugin_payload = attr.asdict(plugin_info)
@@ -238,7 +240,9 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if renderer == "Redshift_Renderer":
             plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
                 "separateAovFiles")
-
+        if instance.data["cameras"]:
+            plugin_info["Camera0"] = None
+            plugin_info["Camera1"] = instance.data["cameras"][0]
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 

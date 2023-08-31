@@ -13,8 +13,7 @@ class ValidateViewportCamera(pyblish.api.InstancePlugin,
                              OptionalPyblishPluginMixin):
     """Validates Viewport Camera
 
-    Check if the renderable camera in scene used as viewport
-    camera for rendering
+    Check if the renderable camera used for rendering
     """
 
     order = pyblish.api.ValidatorOrder
@@ -27,11 +26,9 @@ class ValidateViewportCamera(pyblish.api.InstancePlugin,
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        cameras_in_scene = [c for c in rt.Objects
-                            if rt.classOf(c) in rt.Camera.Classes]
-        if rt.viewport.getCamera() not in cameras_in_scene:
+        if not instance.data["cameras"]:
             raise PublishValidationError(
-                "Cameras in Scene not used as viewport camera"
+                "No renderable Camera found in scene."
             )
 
     @classmethod
@@ -39,10 +36,11 @@ class ValidateViewportCamera(pyblish.api.InstancePlugin,
 
         rt.viewport.setType(rt.Name("view_camera"))
         camera = rt.viewport.GetCamera()
-        cls.log.info(f"Camera {camera} set as viewport camera")
+        cls.log.info(f"Camera {camera} set as renderable camera")
         renderer_class = get_current_renderer()
         renderer = str(renderer_class).split(":")[0]
         if renderer == "Arnold":
             arv = rt.MAXToAOps.ArnoldRenderView()
             arv.setOption("Camera", str(camera))
             arv.close()
+        instance.data["cameras"] = [camera.name]

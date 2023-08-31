@@ -34,6 +34,9 @@ class CollectRender(pyblish.api.InstancePlugin):
         aovs = RenderProducts().get_aovs(instance.name)
         files_by_aov.update(aovs)
 
+        camera = rt.viewport.GetCamera()
+        instance.data["cameras"] = [camera.name] or None
+
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()
             instance.data["files"] = list()
