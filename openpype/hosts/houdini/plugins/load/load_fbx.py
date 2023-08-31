@@ -7,8 +7,6 @@ however this one includes extra comments for demonstration.
 
 This plugin is part of publish process guide.
 """
-import os
-
 from openpype.pipeline import (
     load,
     get_representation_path,
