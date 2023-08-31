@@ -265,6 +265,7 @@ class SelectContextOverlay(QtWidgets.QFrame):
             self
         )
         label_widget.setAlignment(QtCore.Qt.AlignCenter)
+        label_widget.setObjectName("OverlayFrameLabel")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(label_widget, 1, QtCore.Qt.AlignCenter)
