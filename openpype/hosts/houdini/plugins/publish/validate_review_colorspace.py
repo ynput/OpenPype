@@ -13,7 +13,7 @@ import hou
 
 
 class SetDefaultViewSpaceAction(RepairAction):
-    label = "Set default view space"
+    label = "Set default view colorspace"
     icon = "mdi.monitor"
 
 
@@ -33,6 +33,10 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
     optional = True
 
     def process(self, instance):
+
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(
