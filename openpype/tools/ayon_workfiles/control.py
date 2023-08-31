@@ -110,7 +110,16 @@ class BaseWorkfileController(
     def __init__(self, host=None):
         if host is None:
             host = registered_host()
+
+        host_is_valid = False
+        if host is not None:
+            missing_methods = (
+                IWorkfileHost.get_missing_workfile_methods(host)
+            )
+            host_is_valid = len(missing_methods) == 0
+
         self._host = host
+        self._host_is_valid = host_is_valid
 
         self._project_anatomy = None
         self._project_settings = None
@@ -134,6 +143,9 @@ class BaseWorkfileController(
         if self._log is None:
             self._log = Logger.get_logger("WorkfilesUI")
         return self._log
+
+    def is_host_valid(self):
+        return self._host_is_valid
 
     def _create_expected_selection_obj(self):
         return ExpectedSelection()
@@ -364,6 +376,10 @@ class BaseWorkfileController(
         )
 
     def refresh(self):
+        if not self._host_is_valid:
+            self._emit_event("controller.refresh.started")
+            self._emit_event("controller.refresh.finished")
+            return
         expected_folder_id = self.get_selected_folder_id()
         expected_task_name = self.get_selected_task_name()
 

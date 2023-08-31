@@ -113,7 +113,10 @@ class WorkareaModel:
 
     def __init__(self, controller):
         self._controller = controller
-        self._extensions = controller.get_workfile_extensions()
+        extensions = None
+        if controller.is_host_valid():
+            extensions = controller.get_workfile_extensions()
+        self._extensions = extensions
         self._base_data = None
         self._fill_data_by_folder_id = {}
         self._task_data_by_folder_id = {}

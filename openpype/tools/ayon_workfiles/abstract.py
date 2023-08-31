@@ -324,7 +324,25 @@ class WorkareaFilepathResult:
 @six.add_metaclass(ABCMeta)
 class AbstractWorkfilesCommon(object):
     @abstractmethod
+    def is_host_valid(self):
+        """Host is valid for workfiles tool work.
+
+        Returns:
+            bool: True if host is valid.
+        """
+
+        pass
+
+    @abstractmethod
     def get_workfile_extensions(self):
+        """Get possible workfile extensions.
+
+        Defined by host implementation.
+
+        Returns:
+            Iterable[str]: List of extensions.
+        """
+
         pass
 
 
