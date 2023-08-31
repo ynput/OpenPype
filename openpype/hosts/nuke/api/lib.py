@@ -2107,8 +2107,9 @@ class WorkfileSettings(object):
 
         # set ocio config path
         if config_data:
+            config_path = config_data["path"].replace("\\", "/")
             log.info("OCIO config path found: `{}`".format(
-                config_data["path"]))
+                config_path))
 
             # check if there's a mismatch between environment and settings
             correct_settings = self._is_settings_matching_environment(
@@ -2177,6 +2178,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         """
         # replace path with env var if possible
         ocio_path = self._replace_ocio_path_with_env_var(config_data)
+        ocio_path = ocio_path.replace("\\", "/")
 
         log.info("Setting OCIO config path to: `{}`".format(
             ocio_path))
@@ -2232,7 +2234,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         Returns:
             str: OCIO config path with environment variable TCL expression
         """
-        config_path = config_data["path"]
+        config_path = config_data["path"].replace("\\", "/")
         config_template = config_data["template"]
 
         included_vars = self._get_included_vars(config_template)
