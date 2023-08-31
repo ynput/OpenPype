@@ -7,12 +7,12 @@ from openpype.pipeline.publish import (
 
 
 class ValidatePublishDir(pyblish.api.InstancePlugin):
-    """Validates if 'publishDir' is a project directory
+    """Validates if files are being published into a project directory
 
-    'publishDir' is collected based on publish templates. In specific cases
-    ('source' template) source folder of items is used as a 'publishDir', this
-    validates if it is inside any project dir for the project.
-    (eg. files are not published from local folder, unaccessible for studio'
+    In specific cases ('source' template - in place publishing) source folder
+    of published items is used as a regular `publish` dir.
+    This validates if it is inside any project dir for the project.
+    (eg. files are not published from local folder, inaccessible for studio')
 
     """
 
@@ -44,6 +44,8 @@ class ValidatePublishDir(pyblish.api.InstancePlugin):
 
         anatomy = instance.context.data["anatomy"]
 
+        # original_dirname must be convertable to rootless path
+        # in other case it is path inside of root folder for the project
         success, _ = anatomy.find_root_template_from_path(original_dirname)
 
         formatting_data = {
@@ -56,11 +58,12 @@ class ValidatePublishDir(pyblish.api.InstancePlugin):
                                             formatting_data=formatting_data)
 
     def _get_template_name_from_instance(self, instance):
+        """Find template which will be used during integration."""
         project_name = instance.context.data["projectName"]
         host_name = instance.context.data["hostName"]
         anatomy_data = instance.data["anatomyData"]
         family = anatomy_data["family"]
-        family = self.family_mapping.get("family") or family
+        family = self.family_mapping.get(family) or family
         task_info = anatomy_data.get("task") or {}
 
         return get_publish_template_name(

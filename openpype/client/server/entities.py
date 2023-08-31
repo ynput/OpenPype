@@ -83,10 +83,10 @@ def _get_subsets(
         project_name,
         subset_ids,
         subset_names,
-        folder_ids,
-        names_by_folder_ids,
-        active,
-        fields
+        folder_ids=folder_ids,
+        names_by_folder_ids=names_by_folder_ids,
+        active=active,
+        fields=fields,
     ):
         yield convert_v4_subset_to_v3(subset)
 
