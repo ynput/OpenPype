@@ -119,14 +119,15 @@ class TimersManager(
         self.auto_stop = auto_stop
         self.time_show_message = full_time - message_time
         self.time_stop_timer = full_time
+        self.time_show_message = 10
+        self.time_stop_timer = 15
 
         self.is_running = False
         self.last_task = None
 
         # Tray attributes
-        self._signal_handler = None
         self._widget_user_idle = None
-        self._idle_manager = None
+        self._idle_thread = None
 
         self._connectors_by_module_id = {}
         self._modules_by_id = {}
@@ -135,38 +136,46 @@ class TimersManager(
         if not self.auto_stop:
             return
 
-        from .idle_threads import IdleManager
-        from .widget_user_idle import WidgetUserIdle, SignalHandler
+        from .idle_threads import IdleThread
+        from .widget_user_idle import WidgetUserIdle
 
-        signal_handler = SignalHandler(self)
-        idle_manager = IdleManager()
+        idle_thread = IdleThread()
+        idle_thread.add_reset_callback(self._on_idle_time_reset)
+        idle_thread.add_time_callback(
+            self.time_show_message, self._on_idle_time_message_show
+        )
+        idle_thread.add_time_callback(
+            self.time_stop_timer, self._on_idle_time_stop_timer
+        )
+
         widget_user_idle = WidgetUserIdle(self)
         widget_user_idle.set_countdown_start(
             self.time_stop_timer - self.time_show_message
         )
 
-        idle_manager.signal_reset_timer.connect(
-            widget_user_idle.reset_countdown
-        )
-        idle_manager.add_time_signal(
-            self.time_show_message, signal_handler.signal_show_message
-        )
-        idle_manager.add_time_signal(
-            self.time_stop_timer, signal_handler.signal_stop_timers
-        )
-
-        self._signal_handler = signal_handler
         self._widget_user_idle = widget_user_idle
-        self._idle_manager = idle_manager
+        self._idle_thread = idle_thread
+
+    def _on_idle_time_message_show(self):
+        self.execute_in_main_thread(self.show_message)
+
+    def _on_idle_time_stop_timer(self):
+        self.execute_in_main_thread(self.stop_timers)
+
+    def _on_idle_time_reset(self):
+        if self._widget_user_idle is not None:
+            self.execute_in_main_thread(
+                self._widget_user_idle.reset_countdown
+            )
 
     def tray_start(self, *_a, **_kw):
-        if self._idle_manager:
-            self._idle_manager.start()
+        if self._idle_thread is not None:
+            self._idle_thread.start()
 
     def tray_exit(self):
-        if self._idle_manager:
-            self._idle_manager.stop()
-            self._idle_manager.wait()
+        if self._idle_thread is not None:
+            self._idle_thread.stop()
+            self._idle_thread.join()
 
     def get_timer_data_for_path(self, task_path):
         """Convert string path to a timer data.

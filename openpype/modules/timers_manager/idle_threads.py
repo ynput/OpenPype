@@ -1,160 +1,162 @@
 import time
-from qtpy import QtCore
-from pynput import mouse, keyboard
+import platform
+import threading
 
 from openpype.lib import Logger
 
 
-class IdleItem:
-    """Python object holds information if state of idle changed.
+def get_idle_time():
+    return None
 
-    This item is used to be independent from Qt objects.
-    """
-    def __init__(self):
-        self.changed = False
+
+if platform.system().lower() == "windows":
+    try:
+        import win32api
+
+        def _windows_get_idle_time():
+            return int((
+                win32api.GetTickCount() - win32api.GetLastInputInfo()) / 1000)
+
+        get_idle_time = _windows_get_idle_time
+
+    except BaseException:
+        pass
+
+
+class IdleCallback(object):
+    def __init__(self, func, idle_time):
+        self._func = func
+        self._triggered = False
+        self._idle_time = idle_time
 
     def reset(self):
-        self.changed = False
+        self._triggered = False
 
-    def set_changed(self, changed=True):
-        self.changed = changed
+    def trigger(self, idle_time):
+        if self._triggered or idle_time < self._idle_time:
+            return
+
+        self._triggered = True
+        self._func()
 
 
-class IdleManager(QtCore.QThread):
-    """ Measure user's idle time in seconds.
-    Idle time resets on keyboard/mouse input.
-    Is able to emit signals at specific time idle.
+class IdleThreadState(object):
+    """Helper to handle state of a thread.
+
+    Python thread may not handle attributes as expected. e.g. having an
+    attribute 'stopped' and changing it from different thread may not
+    be propagated correctly. Using middle object will cause that code in
+    'run' won't look into cache but into the memory pointer.
     """
-    time_signals = {}
-    idle_time = 0
-    signal_reset_timer = QtCore.Signal()
 
     def __init__(self):
-        super(IdleManager, self).__init__()
-        self.log = Logger.get_logger(self.__class__.__name__)
-        self.signal_reset_timer.connect(self._reset_time)
-
-        self.idle_item = IdleItem()
-
         self._is_running = False
-        self._mouse_thread = None
-        self._keyboard_thread = None
+        self._stopped = False
 
-    def add_time_signal(self, emit_time, signal):
+    def get_is_running(self):
+        return self._is_running
+
+    def set_is_running(self, is_running):
+        self._is_running = is_running
+
+    def get_stopped(self):
+        return self._stopped
+
+    def set_stopped(self, stopped):
+        self._stopped = stopped
+
+    is_running = property(get_is_running, set_is_running)
+    stopped = property(get_stopped, set_stopped)
+
+
+class IdleThread(threading.Thread):
+    """ Measure user's idle time in seconds.
+
+    Use OS built-in functions to get idle time and trigger a callback when
+    needed.
+    """
+
+    def __init__(self):
+        super(IdleThread, self).__init__()
+        self.log = Logger.get_logger(self.__class__.__name__)
+
+        self._idle_time = 0
+        self._callbacks = []
+        self._reset_callbacks = []
+        self._idle_thread_state = IdleThreadState()
+
+    def add_time_callback(self, emit_time, func):
         """ If any module want to use IdleManager, need to use add_time_signal
 
         Args:
-            emit_time(int): Time when signal will be emitted.
-            signal(QtCore.Signal): Signal that will be emitted
-                (without objects).
+            emit_time (int): Time when signal will be emitted.
+            func (Function): Function callback.
         """
-        if emit_time not in self.time_signals:
-            self.time_signals[emit_time] = []
-        self.time_signals[emit_time].append(signal)
+
+        self._callbacks.append(IdleCallback(func, emit_time))
+
+    def add_reset_callback(self, func):
+        self._reset_callbacks.append(func)
 
     @property
     def is_running(self):
-        return self._is_running
+        """Thread is running.
 
-    def _reset_time(self):
-        self.idle_time = 0
+        Returns:
+            bool: Thread is running.
+        """
 
-    def stop(self):
-        self._is_running = False
+        return self._idle_thread_state.is_running
 
-    def _on_mouse_destroy(self):
-        self._mouse_thread = None
-
-    def _on_keyboard_destroy(self):
-        self._keyboard_thread = None
+    @property
+    def idle_time(self):
+        return self._idle_time
 
     def run(self):
-        self.log.info('IdleManager has started')
-        self._is_running = True
+        self._idle_thread_state.is_running = True
+        self.log.info("IdleManager has started")
 
-        thread_mouse = MouseThread(self.idle_item)
-        thread_keyboard = KeyboardThread(self.idle_item)
+        while True:
+            print(self._idle_thread_state.stopped)
+            if self._idle_thread_state.stopped:
+                break
 
-        thread_mouse.destroyed.connect(self._on_mouse_destroy)
-        thread_keyboard.destroyed.connect(self._on_keyboard_destroy)
-
-        self._mouse_thread = thread_mouse
-        self._keyboard_thread = thread_keyboard
-
-        thread_mouse.start()
-        thread_keyboard.start()
-
-        # Main loop here is each second checked if idle item changed state
-        while self._is_running:
-            if self.idle_item.changed:
-                self.idle_item.reset()
-                self.signal_reset_timer.emit()
-            else:
-                self.idle_time += 1
-
-            if self.idle_time in self.time_signals:
-                for signal in self.time_signals[self.idle_time]:
-                    signal.emit()
+            idle_time = get_idle_time()
+            if idle_time is None:
+                self._idle_time = None
+                break
+            self._set_idle_time(idle_time)
             time.sleep(1)
 
-        self._post_run()
-        self.log.info('IdleManager has stopped')
-
-    def _post_run(self):
-        # Stop threads if still exist
-        if self._mouse_thread is not None:
-            self._mouse_thread.signal_stop.emit()
-            self._mouse_thread.terminate()
-            self._mouse_thread.wait()
-
-        if self._keyboard_thread is not None:
-            self._keyboard_thread.signal_stop.emit()
-            self._keyboard_thread.terminate()
-            self._keyboard_thread.wait()
-
-
-class MouseThread(QtCore.QThread):
-    """Listens user's mouse movement."""
-    signal_stop = QtCore.Signal()
-
-    def __init__(self, idle_item):
-        super(MouseThread, self).__init__()
-        self.signal_stop.connect(self.stop)
-        self.m_listener = None
-        self.idle_item = idle_item
+        self._idle_thread_state.is_running = False
+        self.log.info("IdleManager has stopped")
 
     def stop(self):
-        if self.m_listener is not None:
-            self.m_listener.stop()
+        """Stop the thread.
 
-    def on_move(self, *args, **kwargs):
-        self.idle_item.set_changed()
+        This will cause that the thread should stop in next 0.3 seconds.
+        """
 
-    def run(self):
-        self.m_listener = mouse.Listener(on_move=self.on_move)
-        self.m_listener.start()
+        self._idle_thread_state.stopped = True
 
+    def _reset(self, skip_callbacks=False):
+        if not skip_callbacks:
+            for callback in self._callbacks:
+                callback.reset()
 
-class KeyboardThread(QtCore.QThread):
-    """Listens user's keyboard input
-    """
-    signal_stop = QtCore.Signal()
+        for func in self._reset_callbacks:
+            func()
 
-    def __init__(self, idle_item):
-        super(KeyboardThread, self).__init__()
-        self.signal_stop.connect(self.stop)
-        self.k_listener = None
-        self.idle_item = idle_item
+    def _set_idle_time(self, idle_time):
+        if self._idle_time == idle_time:
+            if idle_time == 0:
+                self._reset(skip_callbacks=True)
+            return
 
-    def stop(self):
-        if self.k_listener is not None:
-            listener = self.k_listener
-            self.k_listener = None
-            listener.stop()
+        previous_idle_time = self._idle_time
+        self._idle_time = idle_time
+        if previous_idle_time > idle_time:
+            self._reset()
 
-    def on_press(self, *args, **kwargs):
-        self.idle_item.set_changed()
-
-    def run(self):
-        self.k_listener = keyboard.Listener(on_press=self.on_press)
-        self.k_listener.start()
+        for callback in self._callbacks:
+            callback.trigger(idle_time)
