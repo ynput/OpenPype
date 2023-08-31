@@ -48,8 +48,8 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
 
             # Skip if instance asset does not match
             instance_asset_name = instance.data.get("asset")
-            instances_by_asset_name[instance_asset_name] = instance
 
+            instances_by_asset_name[instance_asset_name].append(instance)
         project_doc = context.data["projectEntity"]
         asset_docs = get_assets(
             project_name, asset_names=instances_by_asset_name.keys()
