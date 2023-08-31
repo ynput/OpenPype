@@ -1,7 +1,6 @@
 import os
 import re
 import copy
-import datetime
 
 import arrow
 import ayon_api
@@ -175,7 +174,6 @@ class WorkareaModel:
         if workdir is not None:
             return workdir
 
-        # TODO use entity model to get task info
         workdir_data = self._prepare_fill_data(folder_id, task_id)
 
         workdir = get_workdir_with_workdir_data(
@@ -188,7 +186,6 @@ class WorkareaModel:
 
     def get_file_items(self, folder_id, task_id):
         items = []
-        # TODO finish implementation
         if not folder_id or not task_id:
             return items
 
@@ -595,6 +592,7 @@ class PublishWorkfilesModel:
         )
 
     def get_file_items(self, folder_id, task_name):
+        # TODO refactor to use less server API calls
         project_name = self._controller.get_current_project_name()
         # Get subset docs of asset
         product_entities = ayon_api.get_products(
@@ -709,5 +707,4 @@ class WorkfilesModel:
             list[FileItem]: List of files for published workfiles.
         """
 
-        # TODO implement
         return self._published_model.get_file_items(folder_id, task_name)

@@ -179,7 +179,6 @@ class BaseWorkfileController(
     # ----------------------------------------------------
     @property
     def project_settings(self):
-        # TODO add cache timeout? It is refreshed on 'Refresh' button click.
         if self._project_settings is None:
             self._project_settings = get_project_settings(
                 self.get_current_project_name())
@@ -187,7 +186,6 @@ class BaseWorkfileController(
 
     @property
     def project_anatomy(self):
-        # TODO add cache timeout? It is refreshed on 'Refresh' button click.
         if self._project_anatomy is None:
             self._project_anatomy = Anatomy(self.get_current_project_name())
         return self._project_anatomy
@@ -452,7 +450,6 @@ class BaseWorkfileController(
 
         except Exception:
             failed = True
-            # TODO add some visual feedback for user
             self.log.warning("Open of workfile failed", exc_info=True)
 
         self._emit_event(
@@ -485,7 +482,6 @@ class BaseWorkfileController(
             )
         except Exception:
             failed = True
-            # TODO add some visual feedback for user
             self.log.warning("Save as failed", exc_info=True)
 
         self._emit_event(
@@ -516,7 +512,6 @@ class BaseWorkfileController(
             )
         except Exception:
             failed = True
-            # TODO add some visual feedback for user
             self.log.warning(
                 "Copy of workfile representation failed", exc_info=True
             )

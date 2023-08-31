@@ -211,7 +211,7 @@ class FileItem:
     Args:
         dirpath (str): Directory path of file.
         filename (str): Filename.
-        modified (int): Modified timestamp.
+        modified (float): Modified timestamp.
         representation_id (Optional[str]): Representation id of published
             workfile.
         filepath (Optional[str]): Prepared filepath.
