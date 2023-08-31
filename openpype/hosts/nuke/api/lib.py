@@ -3371,10 +3371,9 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
     Returns:
         str: viewer config string
     """
-    if display:
-        if path_like:
-            return "{}/{}".format(display, viewer)
-        else:
-            return "{} ({})".format(viewer, display)
-    else:
+    if not display:
         return viewer
+
+    if path_like:
+        return "{}/{}".format(display, viewer)
+    return "{} ({})".format(viewer, display)
