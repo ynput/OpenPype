@@ -17,18 +17,23 @@ class RepairActionBase(pyblish.api.Action):
     def repair_knob(self, context, instances, state):
         create_context = context.data["create_context"]
         for instance in instances:
-            files_remove = [
+            files_to_remove = [
+                # create full path to file
                 os.path.join(instance.data["outputDir"], f_)
+                # iterate representations from instance data
                 for r_ in instance.data.get("representations", [])
+                # make sure that the representation has files in list
+                if r_.get("files") and isinstance(r_.get("files"), list)
+                # iterate files from representation files list
                 for f_ in r_.get("files", [])
             ]
-            self.log.info("Files to be removed: {}".format(files_remove))
-            for f_ in files_remove:
+            self.log.info("Files to be removed: {}".format(files_to_remove))
+            for f_ in files_to_remove:
                 os.remove(f_)
                 self.log.debug("removing file: {}".format(f_))
 
             # Reset the render knob
-            instance_id = instance.data["instance_id"]
+            instance_id = instance.data.get("instance_id")
             created_instance = create_context.get_instance_by_id(
                 instance_id
             )
