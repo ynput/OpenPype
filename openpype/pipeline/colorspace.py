@@ -617,7 +617,7 @@ def get_colorspace_settings_from_publish_context(context_data):
     Returns:
         tuple | bool: config, file rules or None
     """
-    if "imageioSettings" in context_data:
+    if "imageioSettings" in context_data and context_data["imageioSettings"]:
         return context_data["imageioSettings"]
 
     project_name = context_data["projectName"]
@@ -631,14 +631,13 @@ def get_colorspace_settings_from_publish_context(context_data):
         anatomy_data=anatomy_data
     )
 
-    # in case host color management is not enabled
-    if not config_data:
-        return None
-
-    file_rules = get_imageio_file_rules(
-        project_name, host_name,
-        project_settings=project_settings_
-    )
+    # caching invalid state, so it's not recalculated all the time
+    file_rules = None
+    if config_data:
+        file_rules = get_imageio_file_rules(
+            project_name, host_name,
+            project_settings=project_settings_
+        )
 
     # caching settings for future instance processing
     context_data["imageioSettings"] = (config_data, file_rules)
@@ -649,7 +648,6 @@ def get_colorspace_settings_from_publish_context(context_data):
 def set_colorspace_data_to_representation(
     representation, context_data,
     colorspace=None,
-    colorspace_settings=None,
     log=None
 ):
     """Sets colorspace data to representation.
@@ -657,12 +655,7 @@ def set_colorspace_data_to_representation(
     Args:
         representation (dict): publishing representation
         context_data (publish.Context.data): publishing context data
-        config_data (dict): host resolved config data
-        file_rules (dict): host resolved file rules data
         colorspace (str, optional): colorspace name. Defaults to None.
-        colorspace_settings (tuple[dict, dict], optional):
-            Settings for config_data and file_rules.
-            Defaults to None.
         log (logging.Logger, optional): logger instance. Defaults to None.
 
     Example:
@@ -691,21 +684,13 @@ def set_colorspace_data_to_representation(
         )
         return
 
-    if colorspace_settings is None:
-        colorspace_settings = get_colorspace_settings_from_publish_context(
-            context_data)
+    # get colorspace settings
+    config_data, file_rules = get_colorspace_settings_from_publish_context(
+        context_data)
 
     # in case host color management is not enabled
-    if not colorspace_settings:
-        log.warning("Host's colorspace management is disabled.")
-        return
-
-    # unpack colorspace settings
-    config_data, file_rules = colorspace_settings
-
     if not config_data:
-        # warn in case no colorspace path was defined
-        log.warning("No colorspace management was defined")
+        log.warning("Host's colorspace management is disabled.")
         return
 
     log.debug("Config data is: `{}`".format(config_data))

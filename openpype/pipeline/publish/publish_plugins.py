@@ -319,19 +319,13 @@ class ColormanagedPyblishPluginMixin(object):
     def set_representation_colorspace(
         self, representation, context,
         colorspace=None,
-        colorspace_settings=None
     ):
         """Sets colorspace data to representation.
 
         Args:
             representation (dict): publishing representation
             context (publish.Context): publishing context
-            config_data (dict): host resolved config data
-            file_rules (dict): host resolved file rules data
             colorspace (str, optional): colorspace name. Defaults to None.
-            colorspace_settings (tuple[dict, dict], optional):
-                Settings for config_data and file_rules.
-                Defaults to None.
 
         Example:
             ```
@@ -348,10 +342,10 @@ class ColormanagedPyblishPluginMixin(object):
             ```
 
         """
+
         # using cached settings if available
         set_colorspace_data_to_representation(
             representation, context.data,
             colorspace,
-            colorspace_settings,
             log=self.log
         )
