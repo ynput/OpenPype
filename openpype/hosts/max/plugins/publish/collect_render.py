@@ -35,9 +35,7 @@ class CollectRender(pyblish.api.InstancePlugin):
         files_by_aov.update(aovs)
 
         camera = rt.viewport.GetCamera()
-        instance.data["cameras"] = None
-        if camera:
-            instance.data["cameras"] = [camera.name]
+        instance.data["cameras"] = [camera.name] if camera else None        # noqa
 
         if "expectedFiles" not in instance.data:
             instance.data["expectedFiles"] = list()
