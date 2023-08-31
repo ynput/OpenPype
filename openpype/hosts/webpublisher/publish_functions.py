@@ -65,8 +65,7 @@ def cli_publish(project_name, batch_path, user_email, targets):
         if isinstance(targets, str):
             targets = [targets]
         for target in targets:
-            for target_item in target.split(" "):
-                pyblish.api.register_target(target_item)
+            pyblish.api.register_target(target)
 
     install_host(webpublisher_host)
 
