@@ -6,6 +6,7 @@ from openpype.style import (
     get_disabled_entity_icon_color,
 )
 from openpype.tools.utils.delegates import PrettyTimeDelegate
+
 from .utils import TreeView
 
 
@@ -18,7 +19,7 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
     """A model for displaying files.
 
     Args:
-        controller (AbstractControl): The control object.
+        controller (AbstractWorkfilesFrontend): The control object.
     """
 
     def __init__(self, controller):
@@ -249,7 +250,11 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
 
 
 class SelectContextOverlay(QtWidgets.QFrame):
-    project_selected = QtCore.Signal(str)
+    """Overlay for files view when user should select context.
+
+    Todos:
+        The look of this overlay should be improved, it is "not nice" now.
+    """
 
     def __init__(self, parent):
         super(SelectContextOverlay, self).__init__(parent)
@@ -284,6 +289,13 @@ class SelectContextOverlay(QtWidgets.QFrame):
 
 
 class PublishedFilesWidget(QtWidgets.QWidget):
+    """Published workfiles widget.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
+        parent (QtWidgets.QWidget): The parent widget.
+    """
+
     selection_changed = QtCore.Signal()
     save_as_requested = QtCore.Signal()
 

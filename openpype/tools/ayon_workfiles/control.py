@@ -120,17 +120,29 @@ class BaseWorkfileController(
         self._current_task_name = None
 
         # Expected selected folder and task
-        self._expected_selection = ExpectedSelection()
+        self._expected_selection = self._create_expected_selection_obj()
 
-        self._selection_model = SelectionModel(self)
-        self._entities_model = EntitiesModel(self)
-        self._workfiles_model = WorkfilesModel(self)
+        self._selection_model = self._create_selection_model()
+        self._entities_model = self._create_entities_model()
+        self._workfiles_model = self._create_workfiles_model()
 
     @property
     def log(self):
         if self._log is None:
             self._log = Logger.get_logger("WorkfilesUI")
         return self._log
+
+    def _create_expected_selection_obj(self):
+        return ExpectedSelection()
+
+    def _create_selection_model(self):
+        return SelectionModel(self)
+
+    def _create_entities_model(self):
+        return EntitiesModel(self)
+
+    def _create_workfiles_model(self):
+        return WorkfilesModel(self)
 
     @property
     def event_system(self):

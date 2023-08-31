@@ -14,17 +14,31 @@ from .constants import ITEM_ID_ROLE, ITEM_NAME_ROLE
 SENDER_NAME = "qt_folders_model"
 
 
-class RefreshThread(QtCore.QThread):
+class FoldersRefreshThread(QtCore.QThread):
+    """Thread for refreshing folders.
+
+    Call controller to get folders and emit signal when finished.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
+    """
+
     refresh_finished = QtCore.Signal(str)
 
     def __init__(self, controller):
-        super(RefreshThread, self).__init__()
+        super(FoldersRefreshThread, self).__init__()
         self._id = uuid.uuid4().hex
         self._controller = controller
         self._result = None
 
     @property
     def id(self):
+        """Thread id.
+
+        Returns:
+            str: Unique id of the thread.
+        """
+
         return self._id
 
     def run(self):
@@ -36,6 +50,12 @@ class RefreshThread(QtCore.QThread):
 
 
 class FoldersModel(QtGui.QStandardItemModel):
+    """Folders model which cares about refresh of folders.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
+    """
+
     refreshed = QtCore.Signal()
 
     def __init__(self, controller):
@@ -53,10 +73,21 @@ class FoldersModel(QtGui.QStandardItemModel):
 
     @property
     def is_refreshing(self):
+        """Model is refreshing.
+
+        Returns:
+            bool: True if model is refreshing.
+        """
         return self._is_refreshing
 
     @property
     def has_content(self):
+        """Has at least one folder.
+
+        Returns:
+            bool: True if model has at least one folder.
+        """
+
         return self._has_content
 
     def clear(self):
@@ -66,21 +97,45 @@ class FoldersModel(QtGui.QStandardItemModel):
         super(FoldersModel, self).clear()
 
     def get_index_by_id(self, item_id):
+        """Get index by folder id.
+
+        Returns:
+            QtCore.QModelIndex: Index of the folder. Can be invalid if folder
+                is not available.
+        """
         item = self._items_by_id.get(item_id)
         if item is None:
             return QtCore.QModelIndex()
         return self.indexFromItem(item)
 
     def refresh(self):
+        """Refresh folders items.
+
+        Refresh start thread because it can cause that controller can
+        start query from database if folders are not cached.
+        """
+
         self._is_refreshing = True
 
-        thread = RefreshThread(self._controller)
+        thread = FoldersRefreshThread(self._controller)
         self._current_refresh_thread = thread.id
         self._refresh_threads[thread.id] = thread
         thread.refresh_finished.connect(self._on_refresh_thread)
         thread.start()
 
     def _on_refresh_thread(self, thread_id):
+        """Callback when refresh thread is finished.
+
+        Technically can be running multiple refresh threads at the same time,
+        to avoid using values from wrong thread, we check if thread id is
+        current refresh thread id.
+
+        Folders are stored by id.
+
+        Args:
+            thread_id (str): Thread id.
+        """
+
         thread = self._refresh_threads.pop(thread_id)
         if thread_id != self._current_refresh_thread:
             return
@@ -159,6 +214,15 @@ class FoldersModel(QtGui.QStandardItemModel):
 
 
 class FoldersWidget(QtWidgets.QWidget):
+    """Folders widget.
+
+    Widget that handles folders view, model and selection.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
+        parent (QtWidgets.QWidget): The parent widget.
+    """
+
     def __init__(self, controller, parent):
         super(FoldersWidget, self).__init__(parent)
 
@@ -175,10 +239,6 @@ class FoldersWidget(QtWidgets.QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(folders_view, 1)
 
-        controller.register_event_callback(
-            "folders.refresh.started",
-            self._on_folders_refresh_started
-        )
         controller.register_event_callback(
             "folders.refresh.finished",
             self._on_folders_refresh_finished
@@ -202,8 +262,6 @@ class FoldersWidget(QtWidgets.QWidget):
         self._folders_model = folders_model
         self._folders_proxy_model = folders_proxy_model
 
-        self._last_project = None
-
         self._expected_selection = None
 
     def set_name_filer(self, name):
@@ -211,10 +269,6 @@ class FoldersWidget(QtWidgets.QWidget):
 
     def _clear(self):
         self._folders_model.clear()
-
-    def _on_folders_refresh_started(self, event):
-        if self._last_project != event["project_name"]:
-            self._clear()
 
     def _on_folders_refresh_finished(self, event):
         if event["sender"] != SENDER_NAME:

@@ -21,6 +21,17 @@ def file_size_to_string(file_size):
 
 
 class SidePanelWidget(QtWidgets.QWidget):
+    """Details about selected workfile.
+
+    Todos:
+        At this moment only shows created and modified date of file
+            or its size.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
+        parent (QtWidgets.QWidget): The parent widget.
+    """
+
     published_workfile_message = (
         "<b>INFO</b>: Opened published workfiles will be stored in"
         " temp directory on your machine. Current temp size: <b>{}</b>."
@@ -73,6 +84,12 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._set_context(None, None, None)
 
     def set_published_mode(self, published_mode):
+        """Change published mode.
+
+        Args:
+            published_mode (bool): Published mode enabled.
+        """
+
         self._artist_note_widget.setVisible(not published_mode)
 
     def _on_selection_change(self, event):

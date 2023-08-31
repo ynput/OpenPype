@@ -30,7 +30,15 @@ def get_go_to_current_icon():
 
 
 class WorkfilesToolWindow(QtWidgets.QWidget):
-    """WorkFiles Window"""
+    """WorkFiles Window.
+
+    Main windows of workfiles tool.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): Frontend controller.
+        parent (Optional[QtWidgets.QWidget]): Parent widget.
+    """
+
     title = "Work Files"
 
     def __init__(self, controller=None, parent=None):
@@ -50,6 +58,7 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self._files_widget = None
 
         self._first_show = True
+        self._first_refresh = False
         self._context_to_set = None
 
         self._controller = controller
@@ -212,7 +221,8 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
             self.setStyleSheet(style.load_stylesheet())
 
     def _on_first_show(self):
-        self.refresh()
+        if not self._first_refresh:
+            self.refresh()
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -229,11 +239,19 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self._files_widget.set_text_filter(text)
 
     def _on_published_checkbox_changed(self):
+        """Publish mode changed.
+
+        Tell children widgets about it so they can handle the mode.
+        """
+
         published_mode = self._published_checkbox.isChecked()
         self._files_widget.set_published_mode(published_mode)
         self._side_panel.set_published_mode(published_mode)
 
     def refresh(self):
+        """Trigger refresh of workfiles tool controller."""
+
+        self._first_refresh = True
         self._controller.refresh()
 
     def _on_folder_filter_change(self, text):

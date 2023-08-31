@@ -90,11 +90,13 @@ class SubversionLineEdit(QtWidgets.QWidget):
 
 
 class SaveAsDialog(QtWidgets.QDialog):
-    """Name Window to define a unique filename inside a root folder
+    """Save as dialog to define a unique filename inside workdir.
 
-    The filename will be based on the "workfile" template defined in the
-    project["config"]["template"].
+    The filename is calculated in controller where UI sends values from
+    dialog inputs.
 
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
     """
 
     def __init__(self, controller, parent):
@@ -228,6 +230,9 @@ class SaveAsDialog(QtWidgets.QDialog):
         # apply focus to this line edit (e.g. Houdini)
         subversion_input.setFocus()
 
+    def get_result(self):
+        return self._result
+
     def update_context(self):
         # Add version only if template contains version key
         # - since the version can be padded with "{version:0>4}" we only search
@@ -328,9 +333,6 @@ class SaveAsDialog(QtWidgets.QDialog):
 
     def _on_cancel_pressed(self):
         self.close()
-
-    def get_result(self):
-        return self._result
 
     def _update_filename(self):
         result = self._controller.fill_workarea_filepath(

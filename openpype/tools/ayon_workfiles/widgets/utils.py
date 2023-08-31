@@ -7,6 +7,9 @@ class TreeView(QtWidgets.QTreeView):
 
     Tree view have deselectable mode, which allows to deselect items by
     clicking on item area without any items.
+
+    Todos:
+        Add to tools utils.
     """
 
     double_clicked_left = QtCore.Signal()

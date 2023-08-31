@@ -15,10 +15,10 @@ DATE_MODIFIED_ROLE = QtCore.Qt.UserRole + 3
 
 
 class WorkAreaFilesModel(QtGui.QStandardItemModel):
-    """A model for displaying files.
+    """A model for workare workfiles.
 
     Args:
-        controller (AbstractControl): The control object.
+        controller (AbstractWorkfilesFrontend): The control object.
     """
 
     def __init__(self, controller):
@@ -45,7 +45,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         self._selected_folder_id = None
         self._selected_task_id = None
 
-        self._add_empty_item()
+        self._add_missing_context_item()
 
     def get_index_by_filename(self, filename):
         item = self._items_by_filename.get(filename)
@@ -218,6 +218,13 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
 
 
 class WorkAreaFilesWidget(QtWidgets.QWidget):
+    """Workarea files widget.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
+        parent (QtWidgets.QWidget): The parent widget.
+    """
+
     selection_changed = QtCore.Signal()
     open_current_requested = QtCore.Signal()
 
@@ -267,10 +274,24 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         self._published_mode = False
 
     def set_published_mode(self, published_mode):
+        """Set the published mode.
+
+        Widget should ignore most of events when in published mode is enabled.
+
+        Args:
+            published_mode (bool): The published mode.
+        """
+
         self._model.set_published_mode(published_mode)
         self._published_mode = published_mode
 
     def set_text_filter(self, text_filter):
+        """Set the text filter.
+
+        Args:
+            text_filter (str): The text filter.
+        """
+
         self._proxy_model.setFilterFixedString(text_filter)
 
     def _get_selected_info(self):
@@ -286,6 +307,12 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         }
 
     def get_selected_path(self):
+        """Selected filepath.
+
+        Returns:
+            Union[str, None]: The selected filepath or None if nothing is
+                selected.
+        """
         return self._get_selected_info()["filepath"]
 
     def _on_selection_change(self):

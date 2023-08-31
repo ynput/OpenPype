@@ -9,7 +9,12 @@ from .files_widget_published import PublishedFilesWidget
 
 
 class FilesWidget(QtWidgets.QWidget):
-    """A widget displaying files that allows to save and open files."""
+    """A widget displaying files that allows to save and open files.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
+        parent (QtWidgets.QWidget): The parent widget.
+    """
 
     def __init__(self, controller, parent):
         super(FilesWidget, self).__init__(parent)
@@ -94,8 +99,8 @@ class FilesWidget(QtWidgets.QWidget):
         published_btn_cancel.clicked.connect(
             self._on_published_cancel_clicked)
 
-        self._last_folder_id = None
-        self._last_tak_name = None
+        self._selected_folder_id = None
+        self._selected_tak_name = None
 
         self._pre_select_folder_id = None
         self._pre_select_task_name = None
@@ -128,6 +133,7 @@ class FilesWidget(QtWidgets.QWidget):
         published_btn_cancel.setVisible(False)
 
     def set_published_mode(self, published_mode):
+        """"""
         # Make sure context selection is disabled
         self._set_select_contex_mode(False)
         # Change current widget
@@ -164,7 +170,7 @@ class FilesWidget(QtWidgets.QWidget):
         return dialog.get_result()
 
     # -------------------------------------------------------------
-    # Workare workfiles
+    # Workarea workfiles
     # -------------------------------------------------------------
     def _open_workfile(self, filepath):
         if self._controller.has_unsaved_changes():
@@ -244,11 +250,11 @@ class FilesWidget(QtWidgets.QWidget):
         self._update_published_btns_state()
 
     def _on_task_changed(self, event):
-        self._last_folder_id = event["folder_id"]
-        self._last_tak_name = event["task_name"]
+        self._selected_folder_id = event["folder_id"]
+        self._selected_tak_name = event["task_name"]
         self._valid_selected_context = (
-            self._last_folder_id is not None
-            and self._last_tak_name is not None
+            self._selected_folder_id is not None
+            and self._selected_tak_name is not None
         )
         self._update_published_btns_state()
 
@@ -276,8 +282,8 @@ class FilesWidget(QtWidgets.QWidget):
             return
 
         if enabled:
-            self._pre_select_folder_id = self._last_folder_id
-            self._pre_select_task_name = self._last_tak_name
+            self._pre_select_folder_id = self._selected_folder_id
+            self._pre_select_task_name = self._selected_tak_name
         else:
             self._pre_select_folder_id = None
             self._pre_select_task_name = None
@@ -296,11 +302,11 @@ class FilesWidget(QtWidgets.QWidget):
     def _should_set_pre_select_context(self):
         if self._pre_select_folder_id is None:
             return False
-        if self._pre_select_folder_id != self._last_folder_id:
+        if self._pre_select_folder_id != self._selected_folder_id:
             return True
         if self._pre_select_task_name is None:
             return False
-        return self._pre_select_task_name != self._last_tak_name
+        return self._pre_select_task_name != self._selected_tak_name
 
     def _on_published_cancel_clicked(self):
         folder_id = self._pre_select_folder_id
@@ -314,10 +320,26 @@ class FilesWidget(QtWidgets.QWidget):
             )
 
     def _on_copy_representation_finished(self, event):
+        """Callback for when copy representation is finished.
+
+        Make sure that select context mode is disabled when representation
+        copy is finished.
+
+        Args:
+            event (Event): Event object.
+        """
+
         if not event["failed"]:
             self._set_select_contex_mode(False)
 
     def _save_changes_prompt(self):
+        """Ask user if wants to save changes to current file.
+
+        Returns:
+            Union[bool, None]: True if user wants to save changes, False if
+                user does not want to save changes, None if user cancels
+                operation.
+        """
         messagebox = QtWidgets.QMessageBox(parent=self)
         messagebox.setWindowFlags(
             messagebox.windowFlags() | QtCore.Qt.FramelessWindowHint

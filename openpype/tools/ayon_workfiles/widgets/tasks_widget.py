@@ -15,6 +15,15 @@ SENDER_NAME = "qt_tasks_model"
 
 
 class RefreshThread(QtCore.QThread):
+    """Thread for refreshing tasks.
+
+    Call controller to get tasks and emit signal when finished.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
+        folder_id (str): Folder id.
+    """
+
     refresh_finished = QtCore.Signal(str)
 
     def __init__(self, controller, folder_id):
@@ -38,6 +47,12 @@ class RefreshThread(QtCore.QThread):
 
 
 class TasksModel(QtGui.QStandardItemModel):
+    """Tasks model which cares about refresh of tasks by folder id.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): The control object.
+    """
+
     refreshed = QtCore.Signal()
 
     def __init__(self, controller):
@@ -69,15 +84,34 @@ class TasksModel(QtGui.QStandardItemModel):
         super(TasksModel, self).clear()
 
     def refresh(self, folder_id):
+        """Refresh tasks for folder.
+
+        Args:
+            folder_id (Union[str, None]): Folder id.
+        """
+
         self._refresh(folder_id)
 
     def get_index_by_name(self, task_name):
+        """Find item by name and return its index.
+
+        Returns:
+            QtCore.QModelIndex: Index of item. Is invalid if task is not
+                found by name.
+        """
+
         item = self._items_by_name.get(task_name)
         if item is None:
             return QtCore.QModelIndex()
         return self.indexFromItem(item)
 
     def get_last_folder_id(self):
+        """Get last refreshed folder id.
+
+        Returns:
+            Union[str, None]: Folder id.
+        """
+
         return self._last_folder_id
 
     def _get_invalid_selection_item(self):
@@ -154,6 +188,19 @@ class TasksModel(QtGui.QStandardItemModel):
         thread.start()
 
     def _on_refresh_thread(self, thread_id):
+        """Callback when refresh thread is finished.
+
+        Technically can be running multiple refresh threads at the same time,
+        to avoid using values from wrong thread, we check if thread id is
+        current refresh thread id.
+
+        Tasks are stored by name, so if a folder has same task name as
+        previously selected folder it keeps the selection.
+
+        Args:
+            thread_id (str): Thread id.
+        """
+
         thread = self._refresh_threads.pop(thread_id)
         if thread_id != self._current_refresh_thread:
             return
@@ -207,10 +254,22 @@ class TasksModel(QtGui.QStandardItemModel):
 
     @property
     def is_refreshing(self):
+        """Model is refreshing.
+
+        Returns:
+            bool: Model is refreshing
+        """
+
         return self._is_refreshing
 
     @property
     def has_content(self):
+        """Model has content.
+
+        Returns:
+            bools: Have at least one task.
+        """
+
         return self._has_content
 
     def headerData(self, section, orientation, role):
@@ -228,6 +287,14 @@ class TasksModel(QtGui.QStandardItemModel):
 
 
 class TasksWidget(QtWidgets.QWidget):
+    """Tasks widget.
+
+    Widget that handles tasks view, model and selection.
+
+    Args:
+        controller (AbstractWorkfilesFrontend): Workfiles controller.
+    """
+
     def __init__(self, controller, parent):
         super(TasksWidget, self).__init__(parent)
 
@@ -244,10 +311,6 @@ class TasksWidget(QtWidgets.QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(tasks_view, 1)
 
-        controller.register_event_callback(
-            "tasks.refresh.started",
-            self._on_tasks_refresh_started
-        )
         controller.register_event_callback(
             "tasks.refresh.finished",
             self._on_tasks_refresh_finished
@@ -271,7 +334,6 @@ class TasksWidget(QtWidgets.QWidget):
         self._tasks_model = tasks_model
         self._tasks_proxy_model = tasks_proxy_model
 
-        self._selected_project = None
         self._selected_folder_id = None
 
         self._expected_selection_data = None
@@ -279,19 +341,19 @@ class TasksWidget(QtWidgets.QWidget):
     def _clear(self):
         self._tasks_model.clear()
 
-    def _on_tasks_refresh_started(self, event):
-        if self._selected_project == event["project_name"]:
-            return
-
-        if self._selected_project is not None:
-            self._clear()
-        self._selected_project = event["project_name"]
-
     def _on_tasks_refresh_finished(self, event):
+        """Tasks were refreshed in controller.
+
+        Ignore if refresh was triggered by tasks model, or refreshed folder is
+        not the same as currently selected folder.
+
+        Args:
+            event (Event): Event object.
+        """
+
         # Refresh only if current folder id is the same
         if (
             event["sender"] == SENDER_NAME
-            or event["project_name"] != self._selected_project
             or event["folder_id"] != self._selected_folder_id
         ):
             return
