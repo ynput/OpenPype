@@ -174,7 +174,6 @@ class CollectFarmRender(publish.AbstractCollectRender):
                 outputFormat=info[1],
                 outputStartFrame=info[3],
                 leadingZeros=info[2],
-                toBeRenderedOn='deadline',
                 ignoreFrameHandleCheck=True
 
             )
