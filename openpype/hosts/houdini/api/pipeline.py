@@ -25,7 +25,6 @@ from openpype.lib import (
     emit_event,
 )
 
-from .lib import get_asset_fps
 
 log = logging.getLogger("openpype.hosts.houdini")
 
@@ -384,11 +383,6 @@ def _set_context_settings():
     Returns:
         None
     """
-
-    # Set new scene fps
-    fps = get_asset_fps()
-    print("Setting scene FPS to %i" % fps)
-    lib.set_scene_fps(fps)
 
     lib.reset_framerange()
 
