@@ -42,6 +42,9 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
     def _fill_instance_entities(self, context, project_name):
         instances_by_asset_name = collections.defaultdict(list)
         for instance in context:
+            if instance.data.get("publish") is False:
+                continue
+
             instance_entity = instance.data.get("assetEntity")
             if instance_entity:
                 continue
