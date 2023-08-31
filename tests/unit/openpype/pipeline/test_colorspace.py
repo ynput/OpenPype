@@ -227,7 +227,7 @@ class TestPipelineColorspace(TestPipeline):
         expected_hiero = "Gamma 2.2 Rec.709 - Texture"
 
         # switch to python 2 compatibility mode
-        colorspace.CashedData.python3compatible = False
+        colorspace.CachedData.python3compatible = False
 
         nuke_colorspace = colorspace.get_imageio_colorspace_from_filepath(
             nuke_filepath,
@@ -248,7 +248,7 @@ class TestPipelineColorspace(TestPipeline):
             f"Not matching colorspace {expected_hiero}")
 
         # return to python 3 compatibility mode
-        colorspace.CashedData.python3compatible = None
+        colorspace.CachedData.python3compatible = None
 
 
 test_case = TestPipelineColorspace()
