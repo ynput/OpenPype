@@ -110,6 +110,10 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
             "copy_representation.finished",
             self._on_copy_representation_finished,
         )
+        controller.register_event_callback(
+            "open_workfile.finished",
+            self._on_open_finished
+        )
 
         self._overlay_messages_widget = overlay_messages_widget
         self._home_page_widget = home_page_widget
@@ -284,3 +288,12 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
             self._overlay_messages_widget.add_message(
                 "Publish workfile saved"
             )
+
+    def _on_open_finished(self, event):
+        if event["failed"]:
+            self._overlay_messages_widget.add_message(
+                "Failed to open workfile",
+                "error",
+            )
+        else:
+            self.close()
