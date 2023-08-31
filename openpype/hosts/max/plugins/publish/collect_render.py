@@ -58,6 +58,10 @@ class CollectRender(pyblish.api.InstancePlugin):
         # most of the 3dsmax renderers
         # so this is currently hard coded
         # TODO: add options for redshift/vray ocio config
+        instance.data["colorspaceConfig"] = ""
+        instance.data["colorspaceDisplay"] = "sRGB"
+        instance.data["colorspaceView"] = "ACES 1.0 SDR-video"
+
         if int(get_max_version()) >= 2024:
             display_view_transform = instance.data["ocio_display_view_transform"]       # noqa
             display, view_transform = display_view_transform.split("||")
@@ -65,11 +69,6 @@ class CollectRender(pyblish.api.InstancePlugin):
             instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
             instance.data["colorspaceDisplay"] = display
             instance.data["colorspaceView"] = view_transform
-
-        else:
-            instance.data["colorspaceConfig"] = ""
-            instance.data["colorspaceDisplay"] = "sRGB"
-            instance.data["colorspaceView"] = "ACES 1.0 SDR-video"
 
         instance.data["renderProducts"] = colorspace.ARenderProduct()
         instance.data["publishJobState"] = "Suspended"

@@ -341,5 +341,8 @@ def reset_colorspace():
         ocio_config = max_imageio["ocio_config"]
         if ocio_config["override_global_config"]:
             ocio_config_path = ocio_config["filepath"][0]
+            if not ocio_config_path:
+                # use the default ocio config path instead
+                ocio_config_path = ocio_config["filepath"][-1]
 
     colorspace_mgr.OCIOConfigPath = ocio_config_path
