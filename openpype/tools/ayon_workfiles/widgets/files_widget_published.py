@@ -306,7 +306,7 @@ class PublishedFilesWidget(QtWidgets.QWidget):
         view.setSortingEnabled(True)
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         # Smaller indentation
-        view.setIndentation(3)
+        view.setIndentation(0)
 
         model = PublishedFilesModel(controller)
         proxy_model = QtCore.QSortFilterProxyModel()

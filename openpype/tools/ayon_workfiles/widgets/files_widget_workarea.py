@@ -235,7 +235,7 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         view.setSortingEnabled(True)
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         # Smaller indentation
-        view.setIndentation(3)
+        view.setIndentation(0)
 
         model = WorkAreaFilesModel(controller)
         proxy_model = QtCore.QSortFilterProxyModel()
