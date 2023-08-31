@@ -464,9 +464,8 @@ def apply_plugin_settings_automatically(plugin, settings, logger=None):
 
     for option, value in settings.items():
         if logger:
-            logger.debug("Plugin {} - Attr: {} -> {}".format(
-                option, value, plugin.__name__
-            ))
+            logger.debug("Plugin %s - Attr: %s -> %s",
+                         plugin.__name__, option, value)
         setattr(plugin, option, value)
 
 

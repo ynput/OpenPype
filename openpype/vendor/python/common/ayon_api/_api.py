@@ -474,6 +474,26 @@ def delete(*args, **kwargs):
     return con.delete(*args, **kwargs)
 
 
+def get_timeout(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_timeout(*args, **kwargs)
+
+
+def set_timeout(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.set_timeout(*args, **kwargs)
+
+
+def get_max_retries(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_max_retries(*args, **kwargs)
+
+
+def set_max_retries(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.set_max_retries(*args, **kwargs)
+
+
 def get_event(*args, **kwargs):
     con = get_server_api_connection()
     return con.get_event(*args, **kwargs)
