@@ -26,8 +26,8 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
     """Unreal Static Meshes with collisions. """
 
     # you should set
-    identifier = "io.openpype.creators.houdini.unrealstaticmesh"
-    label = "Unreal - Static Mesh"
+    identifier = "io.openpype.creators.houdini.unrealstaticmesh.fbx"
+    label = "Unreal - Static Mesh (FBX)"
     family = "staticMesh"
     icon = "fa5s.cubes"
 
