@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.houdini.api.action import SelectROPAction
 from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
@@ -14,7 +17,8 @@ class SetDefaultViewSpaceAction(RepairAction):
     icon = "mdi.monitor"
 
 
-class ValidateReviewColorspace(pyblish.api.InstancePlugin):
+class ValidateReviewColorspace(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Validate Review Colorspace parameters.
 
     It checks if 'OCIO Colorspace' parameter was set to valid value.
@@ -25,6 +29,8 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin):
     hosts = ["houdini"]
     label = "Validate Review Colorspace"
     actions = [SetDefaultViewSpaceAction, SelectROPAction]
+
+    optional = True
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
