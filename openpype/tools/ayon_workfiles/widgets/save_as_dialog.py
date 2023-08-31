@@ -1,11 +1,5 @@
-import os
-import copy
-
 from qtpy import QtWidgets, QtCore
 
-from openpype.pipeline.workfile import get_last_workfile_with_version
-
-from openpype.pipeline import get_current_host_name
 from openpype.tools.utils import PlaceholderLineEdit
 
 

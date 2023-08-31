@@ -401,7 +401,8 @@ class WorkfileEntitiesModel:
         self._items = {}
 
     def _get_workfile_info_identifier(
-        self, folder_id, task_id, rootless_path):
+        self, folder_id, task_id, rootless_path
+    ):
         return "_".join([folder_id, task_id, rootless_path])
 
     def _get_rootless_path(self, filepath):

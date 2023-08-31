@@ -15,6 +15,7 @@ from .tasks_widget import TasksWidget
 from .files_widget import FilesWidget
 from .utils import BaseOverlayFrame
 
+
 # TODO move to utils
 # from openpype.tools.utils.lib import (
 #     get_refresh_icon, get_go_to_current_icon)

@@ -36,6 +36,7 @@ def _get_task_items_from_tasks(tasks):
         ))
     return output
 
+
 def _get_folder_item_from_hierarchy_item(item):
     return FolderItem(
         item["id"],

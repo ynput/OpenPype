@@ -167,7 +167,8 @@ class BaseWorkfileController(
         Is used for communication with UI. Event system is created on demand.
 
         Returns:
-            QueuedEventSystem: Event system which can trigger callbacks for topics.
+            QueuedEventSystem: Event system which can trigger callbacks
+                for topics.
         """
 
         if self._event_system is None:

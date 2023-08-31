@@ -377,7 +377,8 @@ class PublishedFilesWidget(QtWidgets.QWidget):
             representation_id is not None
             and representation_id != selected_repre_id
         ):
-            index = self._model.get_index_by_representation_id(representation_id)
+            index = self._model.get_index_by_representation_id(
+                representation_id)
             if index.isValid():
                 proxy_index = self._proxy_model.mapFromSource(index)
                 self._view.setCurrentIndex(proxy_index)
