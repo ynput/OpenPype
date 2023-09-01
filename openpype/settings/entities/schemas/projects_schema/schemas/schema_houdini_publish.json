@@ -45,8 +45,8 @@
               "label": "ValidateContainers"
           },
           {
-            "key": "ValidateFBXPrimitiveHierarchyPaths",
-            "label": "Validate Path Attribute for FBX"
+            "key": "ValidateUnrealStaticMeshName",
+            "label": "Validate Unreal Static Mesh Name"
           }
       ]
     }

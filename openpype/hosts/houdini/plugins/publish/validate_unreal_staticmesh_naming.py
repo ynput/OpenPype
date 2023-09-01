@@ -14,7 +14,7 @@ import hou
 
 class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
                                    OptionalPyblishPluginMixin):
-    """Validate name of Unreal Static Mesh
+    """Validate name of Unreal Static Mesh.
 
     This validator checks if output node name has a collision prefix:
             - UBX
@@ -44,6 +44,10 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
         cls.static_mesh_prefix = settings["static_mesh_prefix"]
 
     def process(self, instance):
+
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             nodes = [n.path() for n in invalid if isinstance(n, hou.Node)]

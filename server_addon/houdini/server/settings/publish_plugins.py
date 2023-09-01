@@ -164,9 +164,9 @@ class PublishPluginsModel(BaseSettingsModel):
     ValidateContainers: ValidateContainersModel = Field(
         default_factory=ValidateContainersModel,
         title="Validate Latest Containers.")
-    ValidateFBXPrimitiveHierarchyPaths: ValidateContainersModel = Field(
+    ValidateUnrealStaticMeshName: ValidateContainersModel = Field(
         default_factory=ValidateContainersModel,
-        title="Validate Path Attribute for FBX.")
+        title="Validate Unreal Static Mesh Name.")
 
 
 DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
@@ -187,7 +187,7 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
         "optional": True,
         "active": True
     },
-    "ValidateFBXPrimitiveHierarchyPaths": {
+    "ValidateUnrealStaticMeshName": {
         "enabled": True,
         "optional": True,
         "active": True

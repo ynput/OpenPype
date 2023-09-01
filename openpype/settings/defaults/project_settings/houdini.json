@@ -111,7 +111,7 @@
             "optional": true,
             "active": true
         },
-        "ValidateFBXPrimitiveHierarchyPaths": {
+        "ValidateUnrealStaticMeshName": {
             "enabled": true,
             "optional": true,
             "active": true
