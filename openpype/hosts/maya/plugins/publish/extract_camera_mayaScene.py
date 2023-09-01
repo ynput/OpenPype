@@ -148,7 +148,7 @@ class ExtractCameraMayaScene(publish.Extractor,
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
         transforms = cmds.listRelatives(list(cameras),
-                                       parent=True, fullPath=True)
+                                        parent=True, fullPath=True)
 
         # Define extract output file path
         dir_path = self.staging_dir(instance)
@@ -161,9 +161,9 @@ class ExtractCameraMayaScene(publish.Extractor,
                 with lib.suspended_refresh():
                     if bake_to_worldspace:
                         self.log.info(
-                            "Performing camera bakes: {}".format(transform))
+                            "Performing camera bakes: {}".format(transforms))
                         baked = lib.bake_to_world_space(
-                            transform,
+                            transforms,
                             frame_range=[start, end],
                             step=step,
                             copy_input_connections=self.keep_input_connections
