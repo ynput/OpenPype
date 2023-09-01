@@ -2041,6 +2041,7 @@ class WorkfileSettings(object):
         )
 
         workfile_settings = imageio_host["workfile"]
+        viewer_process_settings = imageio_host["viewer"]["viewerProcess"]
 
         if not config_data:
             # TODO: backward compatibility for old projects - remove later
@@ -2091,6 +2092,15 @@ class WorkfileSettings(object):
         workfile_settings.pop("colorManagement", None)
         workfile_settings.pop("OCIO_config", None)
 
+        # get monitor lut from settings respecting Nuke version differences
+        monitor_lut = workfile_settings.pop("monitorLut", None)
+        monitor_lut_data = self._get_monitor_settings(
+            viewer_process_settings, monitor_lut)
+
+        # set monitor related knobs luts (MonitorOut, Thumbnails)
+        for knob, value_ in monitor_lut_data.items():
+            workfile_settings[knob] = value_
+
         # then set the rest
         for knob, value_ in workfile_settings.items():
             # skip unfilled ocio config path
@@ -2107,8 +2117,9 @@ class WorkfileSettings(object):
 
         # set ocio config path
         if config_data:
+            config_path = config_data["path"].replace("\\", "/")
             log.info("OCIO config path found: `{}`".format(
-                config_data["path"]))
+                config_path))
 
             # check if there's a mismatch between environment and settings
             correct_settings = self._is_settings_matching_environment(
@@ -2117,6 +2128,40 @@ class WorkfileSettings(object):
             # if there's no mismatch between environment and settings
             if correct_settings:
                 self._set_ocio_config_path_to_workfile(config_data)
+
+    def _get_monitor_settings(self, viewer_lut, monitor_lut):
+        """ Get monitor settings from viewer and monitor lut
+
+        Args:
+            viewer_lut (str): viewer lut string
+            monitor_lut (str): monitor lut string
+
+        Returns:
+            dict: monitor settings
+        """
+        output_data = {}
+        m_display, m_viewer = get_viewer_config_from_string(monitor_lut)
+        v_display, v_viewer = get_viewer_config_from_string(viewer_lut)
+
+        # set monitor lut differently for nuke version 14
+        if nuke.NUKE_VERSION_MAJOR >= 14:
+            output_data["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            output_data["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=False)
+
+        if nuke.NUKE_VERSION_MAJOR == 13:
+            output_data["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            output_data["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=True)
+        if nuke.NUKE_VERSION_MAJOR <= 12:
+            output_data["monitorLut"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=True)
+
+        return output_data
 
     def _is_settings_matching_environment(self, config_data):
         """ Check if OCIO config path is different from environment
@@ -2177,6 +2222,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         """
         # replace path with env var if possible
         ocio_path = self._replace_ocio_path_with_env_var(config_data)
+        ocio_path = ocio_path.replace("\\", "/")
 
         log.info("Setting OCIO config path to: `{}`".format(
             ocio_path))
@@ -2232,7 +2278,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         Returns:
             str: OCIO config path with environment variable TCL expression
         """
-        config_path = config_data["path"]
+        config_path = config_data["path"].replace("\\", "/")
         config_template = config_data["template"]
 
         included_vars = self._get_included_vars(config_template)
@@ -3320,11 +3366,11 @@ def get_viewer_config_from_string(input_string):
         display = split[0]
     elif "(" in viewer:
         pattern = r"([\w\d\s\.\-]+).*[(](.*)[)]"
-        result = re.findall(pattern, viewer)
+        result_ = re.findall(pattern, viewer)
         try:
-            result = result.pop()
-            display = str(result[1]).rstrip()
-            viewer = str(result[0]).rstrip()
+            result_ = result_.pop()
+            display = str(result_[1]).rstrip()
+            viewer = str(result_[0]).rstrip()
         except IndexError:
             raise IndexError((
                 "Viewer Input string is not correct. "
@@ -3332,3 +3378,22 @@ def get_viewer_config_from_string(input_string):
             ).format(input_string))
 
     return (display, viewer)
+
+
+def create_viewer_profile_string(viewer, display=None, path_like=False):
+    """Convert viewer and display to string
+
+    Args:
+        viewer (str): viewer name
+        display (Optional[str]): display name
+        path_like (Optional[bool]): if True, return path like string
+
+    Returns:
+        str: viewer config string
+    """
+    if not display:
+        return viewer
+
+    if path_like:
+        return "{}/{}".format(display, viewer)
+    return "{} ({})".format(viewer, display)

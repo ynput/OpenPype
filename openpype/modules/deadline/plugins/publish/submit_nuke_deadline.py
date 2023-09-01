@@ -97,7 +97,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         instance.data["suspend_publish"] = instance.data["attributeValues"][
             "suspend_publish"]
 
-        instance.data["toBeRenderedOn"] = "deadline"
         families = instance.data["families"]
 
         node = instance.data["transientData"]["node"]
