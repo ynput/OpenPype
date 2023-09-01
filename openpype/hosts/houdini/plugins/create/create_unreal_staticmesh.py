@@ -73,6 +73,13 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
         """Add settings for users. """
 
         attrs = super().get_pre_create_attr_defs()
+        createsubnetroot = BoolDef("createsubnetroot",
+                                     tooltip="Create an extra root for the Export node "
+                                             "when it’s a subnetwork. This causes the "
+                                             "exporting subnetwork node to be "
+                                             "represented in the FBX file.",
+                                     default=False,
+                                     label="Create Root for Subnet")
         vcformat = EnumDef("vcformat",
                            items={
                                0: "Maya Compatible (MC)",
@@ -88,7 +95,7 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
                                 default=False,
                                 label="Convert Units")
 
-        return attrs + [vcformat, convert_units]
+        return attrs + [createsubnetroot, vcformat, convert_units]
 
     # Overrides BaseCreator.get_dynamic_data()
     def get_dynamic_data(
@@ -123,13 +130,17 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
         # 5. get Valid Frame Range
         trange = 1
 
+        # 6. get createsubnetroot
+        createsubnetroot = pre_create_data.get("createsubnetroot")
+
         # parms dictionary
         parms = {
             "startnode": selection,
             "sopoutput": output_path,
             "vcformat": vcformat,
             "convertunits": convertunits,
-            "trange": trange
+            "trange": trange,
+            "createsubnetroot": createsubnetroot
         }
 
         return parms
@@ -149,36 +160,23 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
         if self.selected_nodes:
             selected_node = self.selected_nodes[0]
 
-            # Although Houdini allows ObjNode path on `startnode` for the
-            # the ROP node we prefer it set to the SopNode path explicitly
-
-            # Allow sop level paths (e.g. /obj/geo1/box1)
+            # Accept sop level nodes (e.g. /obj/geo1/box1)
             if isinstance(selected_node, hou.SopNode):
                 selection = selected_node.path()
                 self.log.debug(
                     "Valid SopNode selection, 'Export' in filmboxfbx"
-                    " will be set to '%s'."
-                    % selected_node
+                    " will be set to '%s'.", selected_node
                 )
 
-            # Allow object level paths to Geometry nodes (e.g. /obj/geo1)
-            # but do not allow other object level nodes types like cameras.
-            elif isinstance(selected_node, hou.ObjNode) and \
-                    selected_node.type().name() in ["geo"]:
+            # Accept object level nodes (e.g. /obj/geo1)
+            elif isinstance(selected_node, hou.ObjNode):
+                selection = selected_node.path()
+                self.log.debug(
+                    "Valid ObjNode selection, 'Export' in filmboxfbx "
+                    "will be set to the child path '%s'.", selection
+                )
 
-                # get the output node with the minimum
-                # 'outputidx' or the node with display flag
-                sop_path = self.get_obj_output(selected_node)
-
-                if sop_path:
-                    selection = sop_path.path()
-                    self.log.debug(
-                        "Valid ObjNode selection, 'Export' in filmboxfbx "
-                        "will be set to the child path '%s'."
-                        % sop_path
-                    )
-
-            if not selection:
+            else:
                 self.log.debug(
                     "Selection isn't valid. 'Export' in "
                     "filmboxfbx will be empty."
@@ -189,25 +187,3 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
             )
 
         return selection
-
-    def get_obj_output(self, obj_node):
-        """Find output node with the smallest 'outputidx'
-        or return the node with the render flag instead.
-        """
-
-        outputs = obj_node.subnetOutputs()
-
-        # if obj_node is empty
-        if not outputs:
-            return
-
-        # if obj_node has one output child whether its
-        # sop output node or a node with the render flag
-        elif len(outputs) == 1:
-            return outputs[0]
-
-        # if there are more than one, then it have multiple ouput nodes
-        # return the one with the minimum 'outputidx'
-        else:
-            return min(outputs,
-                       key=lambda node: node.evalParm('outputidx'))
