@@ -80,7 +80,6 @@ class EntitiesModel(object):
         folders_cache = CacheItem()
         folders_cache.set_invalid({})
         self._folders_cache = folders_cache
-        self._folder_id_by_path = {}
         self._tasks_cache = {}
 
         self._folders_by_id = {}
@@ -93,20 +92,12 @@ class EntitiesModel(object):
     def reset(self):
         self._folders_cache.set_invalid({})
         self._tasks_cache = {}
-        self._folder_id_by_path = {}
 
         self._folders_by_id = {}
         self._tasks_by_id = {}
 
     def refresh(self):
         self._refresh_folders_cache()
-
-    def get_folder_id(self, folder_path):
-        return self._folder_id_by_path.get(folder_path)
-
-    def get_folder_path(self, folder_id):
-        folder_items = self._folders_cache.get_data()
-        return folder_items.get(folder_id)
 
     def get_folder_items(self, sender):
         if not self._folders_cache.is_valid:
