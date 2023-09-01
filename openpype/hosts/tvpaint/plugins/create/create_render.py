@@ -139,7 +139,7 @@ class CreateRenderlayer(TVPaintCreator):
     # - Mark by default instance for review
     mark_for_review = True
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["tvpaint"]["create"]["create_render_layer"]
         )
