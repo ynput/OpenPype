@@ -1,11 +1,7 @@
 import copy
 import collections
 
-from abc import (
-    ABCMeta,
-    abstractmethod,
-    abstractproperty
-)
+from abc import ABCMeta, abstractmethod
 
 import six
 
@@ -84,7 +80,8 @@ class SubsetConvertorPlugin(object):
     def host(self):
         return self._create_context.host
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def identifier(self):
         """Converted identifier.
 
@@ -231,7 +228,8 @@ class BaseCreator:
 
         return self.family
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def family(self):
         """Family that plugin represents."""
 
