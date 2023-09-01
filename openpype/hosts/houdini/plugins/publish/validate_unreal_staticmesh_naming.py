@@ -99,8 +99,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
         if instance.data.get("subset") != subset_name:
             invalid.append(rop_node)
             cls.log.error(
-                    "Invalid subset name on rop node '%s' should be '%s'.",
-                    rop_node.path(), subset_name
+                "Invalid subset name on rop node '%s' should be '%s'.",
+                rop_node.path(), subset_name
             )
 
         return invalid
