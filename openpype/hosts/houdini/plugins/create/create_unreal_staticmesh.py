@@ -74,12 +74,13 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
 
         attrs = super().get_pre_create_attr_defs()
         createsubnetroot = BoolDef("createsubnetroot",
-                                     tooltip="Create an extra root for the Export node "
-                                             "when it’s a subnetwork. This causes the "
-                                             "exporting subnetwork node to be "
-                                             "represented in the FBX file.",
-                                     default=False,
-                                     label="Create Root for Subnet")
+                                   tooltip="Create an extra root for the "
+                                           "Export node when it’s a "
+                                           "subnetwork. This causes the "
+                                           "exporting subnetwork node to be "
+                                           "represented in the FBX file.",
+                                   default=False,
+                                   label="Create Root for Subnet")
         vcformat = EnumDef("vcformat",
                            items={
                                0: "Maya Compatible (MC)",

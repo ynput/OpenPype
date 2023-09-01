@@ -74,8 +74,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
                         invalid.append(child)
                         cls.log.error(
                             "Invalid name: Child node '%s' in '%s' "
-                            "has a collision prefix '%s'"
-                            , child.name(), output_node.path(), prefix
+                            "has a collision prefix '%s'",
+                            child.name(), output_node.path(), prefix
                         )
                         break
         else:
@@ -85,8 +85,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
                     invalid.append(output_node)
                     cls.log.error(
                         "Invalid name: output node '%s' "
-                        "has a collision prefix '%s'"
-                        , output_node.name(), prefix
+                        "has a collision prefix '%s'",
+                        output_node.name(), prefix
                     )
 
         # Check subset name
@@ -99,8 +99,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
         if instance.data.get("subset") != subset_name:
             invalid.append(rop_node)
             cls.log.error(
-                    "Invalid subset name on rop node '%s' should be '%s'."
-                    , rop_node.path(), subset_name
+                    "Invalid subset name on rop node '%s' should be '%s'.",
+                    rop_node.path(), subset_name
             )
 
         return invalid
