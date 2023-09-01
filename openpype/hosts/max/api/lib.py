@@ -15,6 +15,33 @@ from pymxs import runtime as rt
 JSON_PREFIX = "JSON::"
 
 
+class Context:
+    main_window = None
+    context_label = None
+    project_name = os.getenv("AVALON_PROJECT")
+    # Workfile related code
+    workfiles_launched = False
+    workfiles_tool_timer = None
+
+
+
+def get_main_window():
+    """Acquire Max's main window"""
+    from qtpy import QtWidgets
+    if Context.main_window is None:
+
+        top_widgets = QtWidgets.QApplication.topLevelWidgets()
+        name = "QmaxApplicationWindow"
+        for widget in top_widgets:
+            if (
+                widget.inherits("QMainWindow")
+                and widget.metaObject().className() == name
+            ):
+                Context.main_window = widget
+                break
+    return Context.main_window
+
+
 def imprint(node_name: str, data: dict) -> bool:
     node = rt.GetNodeByName(node_name)
     if not node:
@@ -346,3 +373,18 @@ def reset_colorspace():
                 ocio_config_path = ocio_config["filepath"][-1]
 
     colorspace_mgr.OCIOConfigPath = ocio_config_path
+
+
+def check_colorspace():
+    parent = get_main_window()
+    if int(get_max_version()) >= 2024:
+        color_mgr = rt.ColorPipelineMgr
+        if color_mgr.Mode != rt.Name("OCIO_Custom"):
+            from openpype.widgets import popup
+            dialog = popup.Popup(parent=parent)
+            dialog.setWindowTitle("Warning: Wrong OCIO Mode")
+            dialog.setMessage("This scene has wrong OCIO "
+                              "Mode setting.")
+            dialog.widgets["button"].setText("Fix")
+            dialog.on_clicked.connect(reset_colorspace)
+            dialog.show()

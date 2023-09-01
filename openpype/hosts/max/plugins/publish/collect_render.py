@@ -66,7 +66,8 @@ class CollectRender(pyblish.api.InstancePlugin):
         instance.data["colorspaceView"] = "ACES 1.0 SDR-video"
 
         if int(get_max_version()) >= 2024:
-            display_view_transform = instance.data["ocio_display_view_transform"]       # noqa
+            creator_attribute = instance.data["creator_attributes"]
+            display_view_transform = creator_attribute["ocio_display_view_transform"]       # noqa
             display, view_transform = display_view_transform.split("||")
             colorspace_mgr = rt.ColorPipelineMgr
             instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
