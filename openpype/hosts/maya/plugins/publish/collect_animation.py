@@ -82,12 +82,6 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
             user_defined_attributes = set()
             for node in hierarchy:
                 attrs = cmds.listAttr(node, userDefined=True) or list()
-                shapes = cmds.listRelatives(node, shapes=True) or list()
-                for shape in shapes:
-                    attrs.extend(
-                        cmds.listAttr(shape, userDefined=True) or list()
-                    )
-
                 user_defined_attributes.update(attrs)
 
             instance.data["userDefinedAttributes"] = list(
