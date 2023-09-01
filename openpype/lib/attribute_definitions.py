@@ -482,7 +482,6 @@ class EnumDef(AbstractAttrDef):
             return copy.deepcopy(self.default)
         return list(self._item_values.intersection(value))
 
-
     def serialize(self):
         data = super(EnumDef, self).serialize()
         data["items"] = copy.deepcopy(self.items)
