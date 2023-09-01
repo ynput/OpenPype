@@ -30,10 +30,6 @@ class CreateSaver(NewCreator):
     instance_attributes = [
         "reviewable"
     ]
-    default_variants = [
-        "Main",
-        "Mask"
-    ]
 
     # TODO: This should be renamed together with Nuke so it is aligned
     temp_rendering_path_template = (
