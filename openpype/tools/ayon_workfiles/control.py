@@ -523,6 +523,22 @@ class BaseWorkfileController(
             {"failed": failed},
         )
 
+    def duplicate_workfile(self, src_filepath, workdir, filename):
+        self._emit_event("workfile_duplicate.started")
+
+        failed = False
+        try:
+            dst_filepath = os.path.join(workdir, filename)
+            shutil.copy(src_filepath, dst_filepath)
+        except Exception:
+            failed = True
+            self.log.warning("Duplication of workfile failed", exc_info=True)
+
+        self._emit_event(
+            "workfile_duplicate.finished",
+            {"failed": failed},
+        )
+
     # Helper host methods that resolve 'IWorkfileHost' interface
     def _host_open_workfile(self, filepath):
         host = self._host

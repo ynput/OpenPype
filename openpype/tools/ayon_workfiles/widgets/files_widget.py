@@ -91,6 +91,8 @@ class FilesWidget(QtWidgets.QWidget):
 
         workarea_widget.open_current_requested.connect(
             self._on_current_open_requests)
+        workarea_widget.duplicate_requested.connect(
+            self._on_duplicate_request)
         workarea_btn_open.clicked.connect(self._on_workarea_open_clicked)
         workarea_btn_browse.clicked.connect(self._on_workarea_browse_clicked)
         workarea_btn_save.clicked.connect(self._on_workarea_save_clicked)
@@ -193,6 +195,20 @@ class FilesWidget(QtWidgets.QWidget):
 
     def _on_current_open_requests(self):
         self._on_workarea_open_clicked()
+
+    def _on_duplicate_request(self):
+        filepath = self._workarea_widget.get_selected_path()
+        if filepath is None:
+            return
+
+        result = self._exec_save_as_dialog()
+        if result is None:
+            return
+        self._controller.duplicate_workfile(
+            filepath,
+            result["workdir"],
+            result["filename"]
+        )
 
     def _on_workarea_browse_clicked(self):
         extnsions = self._controller.get_workfile_extensions()

@@ -30,6 +30,10 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             "selection.task.changed",
             self._on_task_changed
         )
+        controller.register_event_callback(
+            "workfile_duplicate.finished",
+            self._on_duplicate_finished
+        )
 
         self._file_icon = qtawesome.icon(
             "fa.file-o",
@@ -120,6 +124,13 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
     def _on_task_changed(self, event):
         self._selected_folder_id = event["folder_id"]
         self._selected_task_id = event["task_id"]
+        if not self._published_mode:
+            self._fill_items()
+
+    def _on_duplicate_finished(self, event):
+        if event["failed"]:
+            return
+
         if not self._published_mode:
             self._fill_items()
 
@@ -227,6 +238,7 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
 
     selection_changed = QtCore.Signal()
     open_current_requested = QtCore.Signal()
+    duplicate_requested = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(WorkAreaFilesWidget, self).__init__(parent)
@@ -259,6 +271,7 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         selection_model = view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
         view.double_clicked_left.connect(self._on_left_double_click)
+        view.customContextMenuRequested.connect(self._on_context_menu)
 
         controller.register_event_callback(
             "expected_selection_changed",
@@ -321,6 +334,31 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
 
     def _on_left_double_click(self):
         self.open_current_requested.emit()
+
+    def _on_context_menu(self, point):
+        index = self._view.indexAt(point)
+        if not index.isValid():
+            return
+
+        if not index.flags() & QtCore.Qt.ItemIsEnabled:
+            return
+
+        menu = QtWidgets.QMenu(self)
+
+        # Duplicate
+        action = QtWidgets.QAction("Duplicate", menu)
+        tip = "Duplicate selected file."
+        action.setToolTip(tip)
+        action.setStatusTip(tip)
+        action.triggered.connect(self._on_duplicate_pressed)
+        menu.addAction(action)
+
+        # Show the context action menu
+        global_point = self._view.mapToGlobal(point)
+        _ = menu.exec_(global_point)
+
+    def _on_duplicate_pressed(self):
+        self.duplicate_requested.emit()
 
     def _on_expected_selection_change(self, event):
         if event["workfile_name_selected"]:
