@@ -45,6 +45,9 @@ class OCIOEnvHook(PreLaunchHook):
         if config_data:
             ocio_path = config_data["path"]
 
+            if self.host_name in ["nuke", "hiero"]:
+                ocio_path = ocio_path.replace("\\", "/")
+
             self.log.info(
                 f"Setting OCIO environment to config path: {ocio_path}")
 
