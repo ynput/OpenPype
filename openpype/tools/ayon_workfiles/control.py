@@ -3,6 +3,7 @@ import shutil
 
 import ayon_api
 
+from openpype.client import get_asset_by_id
 from openpype.host import IWorkfileHost
 from openpype.lib import Logger, emit_event
 from openpype.lib.events import QueuedEventSystem
@@ -589,8 +590,10 @@ class BaseWorkfileController(
             folder_id != self.get_current_folder_id()
             or task_name != self.get_current_task_name()
         ):
+            # Use OpenPype asset-like object
+            asset_doc = get_asset_by_id(project_name, folder["id"])
             change_current_context(
-                folder,
+                asset_doc,
                 task["name"],
                 template_key=template_key
             )
