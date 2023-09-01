@@ -58,8 +58,15 @@ def get_instance_attr_defs(cls):
                 label="Apply Euler Filter"),
         BoolDef("preRoll",
                 label="Start from preroll start frame"),
-        NumberDef("preRollStartFrame",
-                  label="Start frame for preroll"),
+        NumberDef(
+            "preRollStartFrame",
+            label="Start frame for preroll",
+            tooltip=(
+                "The frame to start scene evaluation at. This is used to set"
+                " the starting frame for time dependent translations and can"
+                " be used to evaluate run-up that isn't actually translated."
+            )
+        ),
         BoolDef("refresh",
                 label="Refresh viewport during export"),
         BoolDef("stripNamespaces",
