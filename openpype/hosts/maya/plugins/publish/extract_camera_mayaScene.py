@@ -162,17 +162,23 @@ class ExtractCameraMayaScene(publish.Extractor,
                     if bake_to_worldspace:
                         self.log.info(
                             "Performing camera bakes: {}".format(transforms))
+                        attr_values = self.get_attr_values_from_data(
+                            instance.data)
+                        keep_input_connections = attr_values.get("keep_input_connections")  # noqa
                         baked = lib.bake_to_world_space(
                             transforms,
                             frame_range=[start, end],
                             step=step,
-                            copy_input_connections=self.keep_input_connections
+                            copy_input_connections=keep_input_connections
                         )
                         baked_camera_shapes = set(cmds.ls(baked,
                                                   type="camera",
                                                   dag=True,
                                                   shapes=True,
                                                   long=True))
+
+                        for cam in baked_camera_shapes:
+                            self.ensure_image_plane_attachment(cam)
 
                         members.update(baked_camera_shapes)
                         members.difference_update(cameras)
@@ -211,8 +217,8 @@ class ExtractCameraMayaScene(publish.Extractor,
                               expressions=False)
 
                     # Delete the baked hierarchy
-                    if bake_to_worldspace:
-                        cmds.delete(baked)
+                    # if bake_to_worldspace:
+                    #     cmds.delete(baked)
                     if self.scene_type == "ma":
                         massage_ma_file(path)
 
@@ -243,3 +249,14 @@ class ExtractCameraMayaScene(publish.Extractor,
         ])
 
         return defs
+
+    def ensure_image_plane_attachment(self, camera):
+        image_planes = cmds.listConnections(camera, type="imagePlane")
+        if not image_planes:
+            return
+
+        image_planes = [x.split("->")[1] for x in image_planes]
+        for image_plane in image_planes:
+            self.log.debug("reattaching {}".format(image_plane))
+            cmds.imagePlane(image_plane, edit=True, detach=True)
+            cmds.imagePlane(image_plane, edit=True, camera=camera)
