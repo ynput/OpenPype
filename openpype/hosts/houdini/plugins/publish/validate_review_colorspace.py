@@ -37,15 +37,15 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
         if not self.is_active(instance.data):
             return
 
-        invalid = self.get_invalid(instance)
-        if invalid:
+        invalid_nodes, message = self.get_invalid_with_message(instance)
+        if invalid_nodes:
             raise PublishValidationError(
-                ("'OCIO Colorspace' parameter is not valid."),
+                message,
                 title=self.label
             )
 
     @classmethod
-    def get_invalid(cls, instance):
+    def get_invalid_with_message(cls, instance):
 
         rop_node = hou.node(instance.data["instance_node"])
         if os.getenv("OCIO") is None:
@@ -53,26 +53,31 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
                 "Default Houdini colorspace is used, "
                 " skipping check.."
             )
-            return
+            return None, None
 
         if rop_node.evalParm("colorcorrect") != 2:
             # any colorspace settings other than default requires
             # 'Color Correct' parm to be set to 'OpenColorIO'
-            rop_node.setParms({"colorcorrect": 2})
-            cls.log.debug(
-                "'Color Correct' parm on '{}' has been set to"
-                " 'OpenColorIO'".format(rop_node)
+            error = (
+                "'Color Correction' parm on '{}' ROP must be set to"
+                " 'OpenColorIO'".format(rop_node.path())
             )
+            return rop_node , error
 
         if rop_node.evalParm("ociocolorspace") not in \
                 hou.Color.ocio_spaces():
 
-            cls.log.error(
-                "'OCIO Colorspace' value on '{}' is not valid, "
-                "select a valid option from the dropdown menu."
-                .format(rop_node)
+            error = (
+                "Invalid value: Colorspace name doesn't exist.\n"
+                "Check 'OCIO Colorspace' parameter on '{}' ROP"
+                .format(rop_node.path())
             )
-            return rop_node
+            return rop_node, error
+
+    @classmethod
+    def get_invalid(cls, instance):
+        nodes, _ = cls.get_invalid_with_message(instance)
+        return nodes
 
     @classmethod
     def repair(cls, instance):
@@ -83,6 +88,13 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
         """
 
         rop_node = hou.node(instance.data["instance_node"])
+
+        if rop_node.evalParm("colorcorrect") != 2:
+            rop_node.setParms({"colorcorrect": 2})
+            cls.log.debug(
+                "'Color Correction' parm on '{}' has been set to"
+                " 'OpenColorIO'".format(rop_node.path())
+            )
 
         # Get default view colorspace name
         default_view_space = get_default_display_view_colorspace()
