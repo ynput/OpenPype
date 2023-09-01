@@ -147,7 +147,6 @@ class CollectFarmRender(publish.AbstractCollectRender):
                 attachTo=False,
                 setMembers=[node],
                 publish=info[4],
-                review=False,
                 renderer=None,
                 priority=50,
                 name=node.split("/")[1],
