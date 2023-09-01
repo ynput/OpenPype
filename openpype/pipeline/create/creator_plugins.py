@@ -193,7 +193,9 @@ class BaseCreator:
     # QUESTION make this required?
     host_name = None
 
-    def __init__(self, project_settings, create_context, headless=False):
+    def __init__(
+        self, project_settings, system_settings, create_context, headless=False
+    ):
         # Reference to CreateContext
         self.create_context = create_context
         self.project_settings = project_settings
@@ -202,13 +204,26 @@ class BaseCreator:
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
 
+        expect_system_settings = False
         if is_func_signature_supported(
             self.apply_settings, project_settings
         ):
             self.apply_settings(project_settings)
         else:
+            expect_system_settings = True
             # Backwards compatibility for system settings
-            self.apply_settings(project_settings, {})
+            self.apply_settings(project_settings, system_settings)
+
+        init_overriden = self.__class__.__init__ is not BaseCreator.__init__
+        if init_overriden or expect_system_settings:
+            self.log.warning((
+                "WARNING: Source - Create plugin {}."
+                " System settings argument will not be passed to"
+                " '__init__' and 'apply_settings' methods in future versions"
+                " of OpenPype. Planned version to drop the support"
+                " is 3.15.6 or 3.16.0. Please contact Ynput core team if you"
+                " need to keep system settings."
+            ).format(self.__class__.__name__))
 
     def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings.

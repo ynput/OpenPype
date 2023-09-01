@@ -16,7 +16,6 @@ from openpype.settings import (
     get_system_settings,
     get_project_settings
 )
-from openpype.lib import is_func_signature_supported
 from openpype.lib.attribute_definitions import (
     UnknownDef,
     serialize_attr_defs,
@@ -1799,15 +1798,12 @@ class CreateContext:
                 ).format(creator_class.host_name, self.host_name))
                 continue
 
-            if is_func_signature_supported(
-                creator_class, project_settings, self, self.headless
-            ):
-                creator = creator_class(project_settings, self, self.headless)
-            else:
-                # Backwards compatibility to pass system settings to creators
-                creator = creator_class(
-                    project_settings, system_settings, self, self.headless
-                )
+            creator = creator_class(
+                project_settings,
+                system_settings,
+                self,
+                self.headless
+            )
 
             if not creator.enabled:
                 disabled_creators[creator_identifier] = creator
