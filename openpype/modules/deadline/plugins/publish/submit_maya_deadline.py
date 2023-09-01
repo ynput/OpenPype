@@ -299,7 +299,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         first_file = next(iter_expected_files(expected_files))
         output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"
 
         # Patch workfile (only when use_published is enabled)
         if self.use_published:
