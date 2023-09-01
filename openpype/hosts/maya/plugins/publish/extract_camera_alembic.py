@@ -42,6 +42,8 @@ class ExtractCameraAlembic(publish.Extractor,
 
         # Define extract output file path
         dir_path = self.staging_dir(instance)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
         filename = "{0}.abc".format(instance.name)
         path = os.path.join(dir_path, filename)
 
