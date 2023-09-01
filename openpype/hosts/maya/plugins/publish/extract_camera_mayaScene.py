@@ -147,7 +147,7 @@ class ExtractCameraMayaScene(publish.Extractor,
 
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
-        transform = cmds.listRelatives(list(cameras),
+        transforms = cmds.listRelatives(list(cameras),
                                        parent=True, fullPath=True)
 
         # Define extract output file path
