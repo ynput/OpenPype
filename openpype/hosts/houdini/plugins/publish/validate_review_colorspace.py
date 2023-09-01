@@ -62,7 +62,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
                 "'Color Correction' parm on '{}' ROP must be set to"
                 " 'OpenColorIO'".format(rop_node.path())
             )
-            return rop_node , error
+            return rop_node, error
 
         if rop_node.evalParm("ociocolorspace") not in \
                 hou.Color.ocio_spaces():
