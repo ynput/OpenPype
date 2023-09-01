@@ -43,7 +43,7 @@ class CreateRender(plugin.MaxCreator):
                 for view in sorted(views):
                     ocio_display_view_transform_list.append({
                         "value": "||".join((display, view))
-                })
+                    })
                     if display == "ACES" and view == "sRGB":
                         display_view_default = "{0}||{1}".format(
                             display, view

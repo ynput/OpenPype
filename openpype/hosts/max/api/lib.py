@@ -24,7 +24,6 @@ class Context:
     workfiles_tool_timer = None
 
 
-
 def get_main_window():
     """Acquire Max's main window"""
     from qtpy import QtWidgets
