@@ -41,6 +41,8 @@ def get_instance_attr_defs(cls):
                   label="Priority for farm"),
         BoolDef("noNormals",
                 label="Include normals"),
+        BoolDef("writeNormals",
+                label="Write Normals"),
         BoolDef("includeUserDefinedAttributes",
                 label="Include User Defined Attributes"),
         TextDef("attr",

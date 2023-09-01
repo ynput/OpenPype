@@ -60,7 +60,11 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
 
         # Alembic and Multiverse share the same attribute functionality but
         # different names.
-        instance.data["writeNormals"] = not instance.data["noNormals"]
+        instance.data["writeNormals"] = (
+            instance.data.get("writeNormals") or
+            not instance.data.get("noNormals") or
+            False
+        )
 
         # Backwards compatibility for attributes.
         backwards_mapping = {
