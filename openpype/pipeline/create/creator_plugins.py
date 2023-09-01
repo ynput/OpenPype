@@ -10,7 +10,7 @@ from abc import (
 import six
 
 from openpype.settings import get_system_settings, get_project_settings
-from openpype.lib import Logger
+from openpype.lib import Logger, is_func_signature_supported
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -161,7 +161,6 @@ class BaseCreator:
 
     Args:
         project_settings (Dict[str, Any]): Project settings.
-        system_settings (Dict[str, Any]): System settings.
         create_context (CreateContext): Context which initialized creator.
         headless (bool): Running in headless mode.
     """
@@ -197,9 +196,7 @@ class BaseCreator:
     # QUESTION make this required?
     host_name = None
 
-    def __init__(
-        self, project_settings, system_settings, create_context, headless=False
-    ):
+    def __init__(self, project_settings, create_context, headless=False):
         # Reference to CreateContext
         self.create_context = create_context
         self.project_settings = project_settings
@@ -208,10 +205,20 @@ class BaseCreator:
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
 
-        self.apply_settings(project_settings, system_settings)
+        if is_func_signature_supported(
+            self.apply_settings, project_settings
+        ):
+            self.apply_settings(project_settings)
+        else:
+            # Backwards compatibility for system settings
+            self.apply_settings(project_settings, {})
 
-    def apply_settings(self, project_settings, system_settings):
-        """Method called on initialization of plugin to apply settings."""
+    def apply_settings(self, project_settings):
+        """Method called on initialization of plugin to apply settings.
+
+        Args:
+            project_settings (dict[str, Any]): Project settings.
+        """
 
         pass
 
