@@ -81,10 +81,8 @@ class CreateAnimation(plugin.MayaHiddenCreator):
 
         return defs
 
-    def apply_settings(self, project_settings, system_settings):
-        super(CreateAnimation, self).apply_settings(
-            project_settings, system_settings
-        )
+    def apply_settings(self, project_settings):
+        super(CreateAnimation, self).apply_settings(project_settings)
         # Hardcoding creator to be enabled due to existing settings would
         # disable the creator causing the creator plugin to not be
         # discoverable.
