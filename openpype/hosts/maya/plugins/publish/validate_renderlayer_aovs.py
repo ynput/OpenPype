@@ -1,6 +1,5 @@
 import pyblish.api
 
-import openpype.hosts.maya.api.action
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import PublishValidationError
@@ -26,7 +25,6 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
     label = "Render Passes / AOVs Are Registered"
     hosts = ["maya"]
     families = ["renderlayer"]
-    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
