@@ -20,7 +20,12 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
     label = "Collect Animation Output Geometry"
     hosts = ["maya"]
 
-    ignore_type = ["constraints"]
+    ignore_type = ["constraint",
+                   # Ignore deformers
+                   "deformFunc",
+                   "clusterHandle",
+                   "baseLattice",
+                   "lattice"]
 
     def process(self, instance):
         """Collect the hierarchy nodes"""
