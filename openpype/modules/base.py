@@ -373,10 +373,12 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
     addons_info = _get_ayon_addons_information()
     if not addons_info:
         return v3_addons_to_skip
-    addons_dir = os.path.join(
-        appdirs.user_data_dir("AYON", "Ynput"),
-        "addons"
-    )
+    addons_dir = os.environ.get("AYON_ADDONS_DIR")
+    if not addons_dir:
+        addons_dir = os.path.join(
+            appdirs.user_data_dir("AYON", "Ynput"),
+            "addons"
+        )
     if not os.path.exists(addons_dir):
         log.warning("Addons directory does not exists. Path \"{}\"".format(
             addons_dir

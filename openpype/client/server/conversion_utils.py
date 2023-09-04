@@ -1074,7 +1074,7 @@ def convert_update_folder_to_v4(project_name, asset_id, update_data, con):
     parent_id = None
     tasks = None
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.pop("attrib", {})
     if "type" in update_data:
         new_update_data["active"] = update_data["type"] == "asset"
 
@@ -1113,6 +1113,9 @@ def convert_update_folder_to_v4(project_name, asset_id, update_data, con):
         print("Folder has new data: {}".format(new_data))
         new_update_data["data"] = new_data
 
+    if attribs:
+        new_update_data["attrib"] = attribs
+
     if has_task_changes:
         raise ValueError("Task changes of folder are not implemented")
 
@@ -1126,7 +1129,7 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
     full_update_data = _from_flat_dict(update_data)
     data = full_update_data.get("data")
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.pop("attrib", {})
     if data:
         if "family" in data:
             family = data.pop("family")
@@ -1148,9 +1151,6 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
             elif value is not REMOVED_VALUE:
                 new_data[key] = value
 
-    if attribs:
-        new_update_data["attribs"] = attribs
-
     if "name" in update_data:
         new_update_data["name"] = update_data["name"]
 
@@ -1165,6 +1165,9 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
         new_update_data["folderId"] = update_data["parent"]
 
     flat_data = _to_flat_dict(new_update_data)
+    if attribs:
+        flat_data["attrib"] = attribs
+
     if new_data:
         print("Subset has new data: {}".format(new_data))
         flat_data["data"] = new_data
@@ -1179,7 +1182,7 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
     full_update_data = _from_flat_dict(update_data)
     data = full_update_data.get("data")
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.pop("attrib", {})
     if data:
         if "author" in data:
             new_update_data["author"] = data.pop("author")
@@ -1196,9 +1199,6 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
             elif value is not REMOVED_VALUE:
                 new_data[key] = value
 
-    if attribs:
-        new_update_data["attribs"] = attribs
-
     if "name" in update_data:
         new_update_data["version"] = update_data["name"]
 
@@ -1213,6 +1213,9 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
         new_update_data["productId"] = update_data["parent"]
 
     flat_data = _to_flat_dict(new_update_data)
+    if attribs:
+        flat_data["attrib"] = attribs
+
     if new_data:
         print("Version has new data: {}".format(new_data))
         flat_data["data"] = new_data
@@ -1252,7 +1255,7 @@ def convert_update_representation_to_v4(
     data = full_update_data.get("data")
 
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.pop("attrib", {})
     if data:
         for key, value in data.items():
             if key in folder_attributes:
@@ -1309,6 +1312,9 @@ def convert_update_representation_to_v4(
         new_update_data["files"] = new_files
 
     flat_data = _to_flat_dict(new_update_data)
+    if attribs:
+        flat_data["attrib"] = attribs
+
     if new_data:
         print("Representation has new data: {}".format(new_data))
         flat_data["data"] = new_data

@@ -139,7 +139,7 @@ def get_transferable_representations(instance):
     to_transfer = []
 
     for representation in instance.data.get("representations", []):
-        if "publish_on_farm" not in representation.get("tags"):
+        if "publish_on_farm" not in representation.get("tags", []):
             continue
 
         trans_rep = representation.copy()
@@ -265,8 +265,7 @@ def create_skeleton_instance(
                 instance_skeleton_data[v] = instance.data.get(v)
 
     representations = get_transferable_representations(instance)
-    instance_skeleton_data["representations"] = []
-    instance_skeleton_data["representations"] += representations
+    instance_skeleton_data["representations"] = representations
 
     persistent = instance.data.get("stagingDir_persistent") is True
     instance_skeleton_data["stagingDir_persistent"] = persistent
@@ -568,9 +567,15 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             col = list(cols[0])
 
         # create subset name `familyTaskSubset_AOV`
-        group_name = 'render{}{}{}{}'.format(
-            task[0].upper(), task[1:],
-            subset[0].upper(), subset[1:])
+        # TODO refactor/remove me
+        family = skeleton["family"]
+        if not subset.startswith(family):
+            group_name = '{}{}{}{}{}'.format(
+                family,
+                task[0].upper(), task[1:],
+                subset[0].upper(), subset[1:])
+        else:
+            group_name = subset
 
         # if there are multiple cameras, we need to add camera name
         if isinstance(col, (list, tuple)):

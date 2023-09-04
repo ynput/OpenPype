@@ -22,10 +22,10 @@ from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
     get_representation_path,
-
-    legacy_io,
 )
 from openpype.pipeline.load import LoadError
+from openpype.client import get_asset_by_name
+from openpype.pipeline.create import get_subset_name
 
 from . import lib
 from .lib import imprint, read
@@ -405,14 +405,21 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 # No existing scene instance node for this layer. Note that
                 # this instance will not have the `instance_node` data yet
                 # until it's been saved/persisted at least once.
-                # TODO: Correctly define the subset name using templates
-                prefix = self.layer_instance_prefix or self.family
-                subset_name = "{}{}".format(prefix, layer.name())
+                project_name = self.create_context.get_current_project_name()
+
                 instance_data = {
-                    "asset": legacy_io.Session["AVALON_ASSET"],
-                    "task": legacy_io.Session["AVALON_TASK"],
+                    "asset": self.create_context.get_current_asset_name(),
+                    "task": self.create_context.get_current_task_name(),
                     "variant": layer.name(),
                 }
+                asset_doc = get_asset_by_name(project_name,
+                                              instance_data["asset"])
+                subset_name = self.get_subset_name(
+                    layer.name(),
+                    instance_data["task"],
+                    asset_doc,
+                    project_name)
+
                 instance = CreatedInstance(
                     family=self.family,
                     subset_name=subset_name,
@@ -518,6 +525,22 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 node = instance.data.get("instance_node")
                 if node and cmds.objExists(node):
                     cmds.delete(node)
+
+    def get_subset_name(
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
+    ):
+        # creator.family != 'render' as expected
+        return get_subset_name(self.layer_instance_prefix,
+                               variant,
+                               task_name,
+                               asset_doc,
+                               project_name)
 
 
 class Loader(LoaderPlugin):
