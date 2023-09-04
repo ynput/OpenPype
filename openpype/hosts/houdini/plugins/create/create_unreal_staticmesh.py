@@ -1,21 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Creator plugin for creating Unreal Static Meshes.
-
-Unreal Static Meshes will be published as FBX.
-
-Filmbox by default expects an ObjNode
-however, we set the sop node explictly
-to eleminate any confusion.
-
-This will make Filmbox to ignore any object transformations!
-
-get_obj_output selects
-the output sop with mimimum idx
-or the node with render flag isntead.
-
-This plugin is part of publish process guide.
-"""
-
+"""Creator for Unreal Static Meshes."""
 from openpype.hosts.houdini.api import plugin
 from openpype.lib import BoolDef, EnumDef
 
@@ -25,30 +9,23 @@ import hou
 class CreateUnrealStaticMesh(plugin.HoudiniCreator):
     """Unreal Static Meshes with collisions. """
 
-    # you should set
     identifier = "io.openpype.creators.houdini.unrealstaticmesh.fbx"
     label = "Unreal - Static Mesh (FBX)"
     family = "staticMesh"
     icon = "fa5s.cubes"
 
-    # optional to set
-    default_variant = "Main"
-    # 'default_variants' will be overriden by settings.
-    default_variants = ["Main", "Test"]
+    default_variants = ["Main"]
 
-    # Overrides HoudiniCreator.create()
     def create(self, subset_name, instance_data, pre_create_data):
 
-        # set node type
         instance_data.update({"node_type": "filmboxfbx"})
 
-        # create instance (calls HoudiniCreator.create())
         instance = super(CreateUnrealStaticMesh, self).create(
             subset_name,
             instance_data,
             pre_create_data)
 
-        # get the created node
+        # get the created rop node
         instance_node = hou.node(instance.get("instance_node"))
 
         # get parms
@@ -61,21 +38,19 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
         to_lock = ["family", "id"]
         self.lock_parameters(instance_node, to_lock)
 
-    # Overrides HoudiniCreator.get_network_categories()
     def get_network_categories(self):
         return [
             hou.ropNodeTypeCategory(),
             hou.sopNodeTypeCategory()
         ]
 
-    # Overrides HoudiniCreator.get_pre_create_attr_defs()
     def get_pre_create_attr_defs(self):
         """Add settings for users. """
 
         attrs = super().get_pre_create_attr_defs()
         createsubnetroot = BoolDef("createsubnetroot",
                                    tooltip="Create an extra root for the "
-                                           "Export node when it’s a "
+                                           "Export node when it's a "
                                            "subnetwork. This causes the "
                                            "exporting subnetwork node to be "
                                            "represented in the FBX file.",
@@ -98,7 +73,6 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
 
         return attrs + [createsubnetroot, vcformat, convert_units]
 
-    # Overrides BaseCreator.get_dynamic_data()
     def get_dynamic_data(
         self, variant, task_name, asset_doc, project_name, host_name, instance
     ):
@@ -113,7 +87,7 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
         return dynamic_data
 
     def get_parms(self, subset_name, pre_create_data):
-        """Get parameters values for this specific node."""
+        """Get parameters values. """
 
         # 1. get output path
         output_path = hou.text.expandString(
