@@ -1,6 +1,15 @@
 import os
 from openpype.pipeline import load, get_representation_path
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import (
+    containerise,
+    import_custom_attribute_data,
+    update_custom_attribute_data
+)
+from openpype.hosts.max.api.lib import (
+    unique_namespace,
+    get_namespace,
+    object_transform_set
+)
 from openpype.hosts.max.api import lib
 from pymxs import runtime as rt
 
@@ -14,6 +23,7 @@ class OxAbcLoader(load.LoaderPlugin):
     order = -10
     icon = "code-fork"
     color = "orange"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         plugin_list = get_plugins()
@@ -34,21 +44,37 @@ class OxAbcLoader(load.LoaderPlugin):
             if str(obj_type).startswith("Ox_"):
                 scene_object.append(obj)
 
-        abc_container = rt.Container(name=name)
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+
+        abc_container = rt.Container()
         for abc in scene_object:
             abc.Parent = abc_container
+            abc.name = f"{namespace}:{abc.name}"
+        # rename the abc container with namespace
+        abc_container_name = f"{namespace}:{name}_{self.postfix}"
+        abc_container.name = abc_container_name
+        import_custom_attribute_data(
+            abc_container, abc_container.Children)
 
         return containerise(
-            name, [abc_container], context, loader=self.__class__.__name__
+            name, [abc_container], context,
+            namespace, loader=self.__class__.__name__
         )
 
     def update(self, container, representation):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
-        instance_name, _ = os.path.splitext(node_name)
-        container = rt.getNodeByName(instance_name)
-        for children in container.Children:
-            rt.Delete(children)
+        namespace, name = get_namespace(node_name)
+        sub_node_name = f"{namespace}:{name}_{self.postfix}"
+        inst_container = rt.getNodeByName(sub_node_name)
+        rt.Select(inst_container.Children)
+        transform_data = object_transform_set(inst_container.Children)
+        for prev_obj in rt.selection:
+            if rt.isValidNode(prev_obj):
+                rt.Delete(prev_obj)
 
         rt.AlembicImport.ImportToRoot = False
         rt.AlembicImport.CustomAttributes = True
@@ -61,9 +87,13 @@ class OxAbcLoader(load.LoaderPlugin):
             obj_type = rt.ClassOf(obj)
             if str(obj_type).startswith("Ox_"):
                 scene_object.append(obj)
-
+        update_custom_attribute_data(
+            inst_container, scene_object.Children)
         for abc in scene_object:
             abc.Parent = container
+            abc.name = f"{namespace}:{abc.name}"
+            abc.pos = transform_data[f"{abc.name}.transform"]
+            abc.scale = transform_data[f"{abc.name}.scale"]
 
         lib.imprint(
             container["instance_node"],
