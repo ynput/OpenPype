@@ -2452,32 +2452,42 @@ def reset_scene_resolution():
     set_scene_resolution(width, height, pixelAspect)
 
 
-def set_context_settings():
+def set_context_settings(
+        fps=True,
+        resolution=True,
+        frame_range=True,
+        colorspace=True
+):
     """Apply the project settings from the project definition
 
     Settings can be overwritten by an asset if the asset.data contains
     any information regarding those settings.
 
-    Examples of settings:
-        fps
-        resolution
-        renderer
+    Args:
+        fps (bool): Whether to set the scene FPS.
+        resolution (bool): Whether to set the render resolution.
+        frame_range (bool): Whether to reset the time slide frame ranges.
+        colorspace (bool): Whether to reset the colorspace.
 
     Returns:
         None
+
     """
 
+    if fps:
+        # Set project fps
+        set_scene_fps(get_fps_for_current_context())
 
-    # Set project fps
-    set_scene_fps(get_fps_for_current_context())
-
-    reset_scene_resolution()
+    if resolution:
+        reset_scene_resolution()
 
     # Set frame range.
-    reset_frame_range()
+    if frame_range:
+        reset_frame_range()
 
     # Set colorspace
-    set_colorspace()
+    if colorspace:
+        set_colorspace()
 
 
 # Valid FPS
