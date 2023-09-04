@@ -83,9 +83,8 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
         default_view_space = get_default_display_view_colorspace()
 
         rop_node.setParms({"ociocolorspace": default_view_space})
-        cls.log.debug(
+        cls.log.info(
             "'OCIO Colorspace' parm on '{}' has been set to "
             "the default view color space '{}'"
             .format(rop_node, default_view_space)
-
         )

@@ -195,7 +195,7 @@ def _get_display_view_colorspace_name(config_path, display, view):
     if not config_path.is_file():
         raise IOError("Input path should be `config.ocio` file")
 
-    config = ocio.Config().CreateFromFile(str(config_path))
+    config = ocio.Config.CreateFromFile(str(config_path))
     colorspace = config.getDisplayViewColorSpaceName(display, view)
 
     return colorspace
