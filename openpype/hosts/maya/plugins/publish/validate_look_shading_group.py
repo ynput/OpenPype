@@ -42,10 +42,18 @@ class ValidateShadingEngine(pyblish.api.InstancePlugin):
                 shape, destination=True, type="shadingEngine"
             ) or []
             for shading_engine in shading_engines:
-                name = (
-                    cmds.listConnections(shading_engine + ".surfaceShader")[0]
-                    + "SG"
+                materials = cmds.listConnections(
+                    shading_engine + ".surfaceShader",
+                    source=True, destination=False
                 )
+                if not materials:
+                    cls.log.warning(
+                        "Shading engine '{}' has no material connected to its "
+                        ".surfaceShader attribute.".format(shading_engine))
+                    continue
+
+                material = materials[0]  # there should only ever be one input
+                name = material + "SG"
                 if shading_engine != name:
                     invalid.append(shading_engine)
 
