@@ -60,7 +60,7 @@ def get_tool_resolution(tool, frame):
 class ValidateSaverResolution(
     pyblish.api.InstancePlugin, OptionalPyblishPluginMixin
 ):
-    """Validate that the saver input resolution matches the projects"""
+    """Validate that the saver input resolution matches the asset resolution"""
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Saver Resolution"
