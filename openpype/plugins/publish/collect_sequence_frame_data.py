@@ -52,5 +52,5 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
                 "frameEnd": repres_frames[-1],
                 "handleStart": 0,
                 "handleEnd": 0,
-                "fps": instance.context.data["projectEntity"]["data"]["fps"]
+                "fps": instance.context.data["assetEntity"]["data"]["fps"]
             }
