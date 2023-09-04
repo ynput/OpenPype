@@ -316,7 +316,6 @@ def set_timeline(frameStart, frameEnd):
 
 def unique_namespace(namespace, format="%02d",
                      prefix="", suffix="", con_suffix="CON"):
-    from pymxs import runtime as rt
     """Return unique namespace
 
     Arguments:
@@ -336,7 +335,7 @@ def unique_namespace(namespace, format="%02d",
 
     def current_namespace():
         current = namespace
-        # When inside a namespace Maya adds no trailing :
+        # When inside a namespace Max adds no trailing :
         if not current.endswith(":"):
             current += ":"
         return current
