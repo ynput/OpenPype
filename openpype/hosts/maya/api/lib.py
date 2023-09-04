@@ -4003,17 +4003,26 @@ def len_flattened(components):
     return n
 
 
-def get_all_children(nodes):
+def get_all_children(nodes, ignore_intermediate_objects=False):
     """Return all children of `nodes` including each instanced child.
     Using maya.cmds.listRelatives(allDescendents=True) includes only the first
     instance. As such, this function acts as an optimal replacement with a
     focus on a fast query.
+
+    Args:
+        nodes (iterable): List of nodes to get children for.
+        ignore_intermediate_objects (bool): Ignore any children that
+            are intermediate objects.
+
+    Returns:
+        set: Children of input nodes.
 
     """
 
     sel = OpenMaya.MSelectionList()
     traversed = set()
     iterator = OpenMaya.MItDag(OpenMaya.MItDag.kDepthFirst)
+    fn_dag = OpenMaya.MFnDagNode()
     for node in nodes:
 
         if node in traversed:
@@ -4030,6 +4039,13 @@ def get_all_children(nodes):
         iterator.next()  # noqa: B305
         while not iterator.isDone():
 
+            if ignore_intermediate_objects:
+                fn_dag.setObject(iterator.currentItem())
+                if fn_dag.isIntermediateObject:
+                    iterator.prune()
+                    iterator.next()  # noqa: B305
+                    continue
+
             path = iterator.fullPathName()
 
             if path in traversed:
@@ -4040,7 +4056,7 @@ def get_all_children(nodes):
             traversed.add(path)
             iterator.next()  # noqa: B305
 
-    return list(traversed)
+    return traversed
 
 
 def get_capture_preset(task_name, task_type, subset, project_settings, log):
