@@ -249,7 +249,7 @@ class ExtractSlateFrame(publish.Extractor):
 
         # Add file to representation files
         # - get write node
-        write_node = instance.data["writeNode"]
+        write_node = instance.data["transientData"]["writeNode"]
         # - evaluate filepaths for first frame and slate frame
         first_filename = os.path.basename(
             write_node["file"].evaluate(first_frame))
