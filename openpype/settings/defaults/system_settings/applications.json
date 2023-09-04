@@ -1168,15 +1168,9 @@
                     "linux": []
                 },
                 "arguments": {
-                    "windows": [
-                        "--python-use-system-env"
-                    ],
-                    "darwin": [
-                        "--python-use-system-env"
-                    ],
-                    "linux": [
-                        "--python-use-system-env"
-                    ]
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
                 },
                 "environment": {}
             },
@@ -1189,15 +1183,9 @@
                     "linux": []
                 },
                 "arguments": {
-                    "windows": [
-                        "--python-use-system-env"
-                    ],
-                    "darwin": [
-                        "--python-use-system-env"
-                    ],
-                    "linux": [
-                        "--python-use-system-env"
-                    ]
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
                 },
                 "environment": {}
             },
@@ -1210,15 +1198,9 @@
                     "linux": []
                 },
                 "arguments": {
-                    "windows": [
-                        "--python-use-system-env"
-                    ],
-                    "darwin": [
-                        "--python-use-system-env"
-                    ],
-                    "linux": [
-                        "--python-use-system-env"
-                    ]
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
                 },
                 "environment": {}
             },
