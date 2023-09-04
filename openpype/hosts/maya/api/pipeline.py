@@ -376,7 +376,7 @@ def _ls():
         """Helper to iterate a maya iterator"""
         while not iterator.isDone():
             yield iterator.thisNode()
-            iterator.next()
+            iterator.next()  # noqa: B305
 
     ids = {AVALON_CONTAINER_ID,
            # Backwards compatibility

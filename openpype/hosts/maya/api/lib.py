@@ -1299,7 +1299,7 @@ def get_id_required_nodes(referenced_nodes=False,
     def iterate(maya_iterator):
         while not maya_iterator.isDone():
             yield maya_iterator.thisNode()
-            maya_iterator.next()
+            maya_iterator.next()  # noqa: B305
 
     # `readOnly` flag is obsolete as of Maya 2016 therefore we explicitly
     # remove default nodes and reference nodes
