@@ -719,10 +719,10 @@ class RenderProductsArnold(ARenderProducts):
         ]
 
         # AOVs > Legacy > Maya Render View > Mode
-        aovs_enabled = bool(
-            self._get_attr("defaultArnoldRenderOptions.aovMode")
+        aovs_disabled = (
+            self._get_attr("defaultArnoldRenderOptions.aovMode") == "disabled"
         )
-        if not aovs_enabled:
+        if aovs_disabled:
             return beauty_products
 
         # Common > File Output > Merge AOVs or <RenderPass>
