@@ -648,15 +648,10 @@ def get_display_view_colorspace_subprocess(config_path, display, view):
             "--out_path", tmp_json_path,
             "--display", display,
             "--view", view
-
         ]
         log.debug("Executing: {}".format(" ".join(args)))
 
-        process_kwargs = {
-            "logger": log
-        }
-
-        run_openpype_process(*args, **process_kwargs)
+        run_openpype_process(*args, logger=log)
 
         # return default view colorspace name
         with open(tmp_json_path, "r") as f:

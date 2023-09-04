@@ -225,7 +225,7 @@ def get_display_view_colorspace_name(in_path, out_path,
                                      display, view):
     """Aggregate view colorspace name to file.
 
-    Wrapper command for processes without acces to OpenColorIO
+    Wrapper command for processes without access to OpenColorIO
 
     Args:
         in_path (str): config file path string
@@ -239,15 +239,14 @@ def get_display_view_colorspace_name(in_path, out_path,
         --out_path=<path> --display=<display> --view=<view>
     """
 
-    json_path = Path(out_path)
-
     out_data = _get_display_view_colorspace_name(in_path,
-                                                 display, view)
+                                                 display,
+                                                 view)
 
-    with open(json_path, "w") as f:
+    with open(out_path, "w") as f:
         json.dump(out_data, f)
 
-    print(f"Display view colorspace saved to '{json_path}'")
+    print(f"Display view colorspace saved to '{out_path}'")
 
 if __name__ == '__main__':
     main()
