@@ -52,8 +52,9 @@ class ExtractBurnin(publish.Extractor):
         "photoshop",
         "flame",
         "houdini",
-        "max"
-        # "resolve"
+        "max",
+        "blender",
+        "unreal"
     ]
 
     optional = True

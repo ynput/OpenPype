@@ -1,8 +1,16 @@
 import os
 
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import (
+    unique_namespace,
+    get_namespace,
+    object_transform_set
+)
 from openpype.hosts.max.api.lib import maintained_selection
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import (
+    containerise,
+    import_custom_attribute_data
+)
 from openpype.pipeline import get_representation_path, load
 
 
@@ -15,6 +23,7 @@ class ModelUSDLoader(load.LoaderPlugin):
     order = -10
     icon = "code-fork"
     color = "orange"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -30,11 +39,24 @@ class ModelUSDLoader(load.LoaderPlugin):
         rt.LogLevel = rt.Name("info")
         rt.USDImporter.importFile(filepath,
                                   importOptions=import_options)
-
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
         asset = rt.GetNodeByName(name)
+        import_custom_attribute_data(asset, asset.Children)
+        for usd_asset in asset.Children:
+            usd_asset.name = f"{namespace}:{usd_asset.name}"
+
+        asset_name = f"{namespace}:{name}_{self.postfix}"
+        asset.name = asset_name
+        # need to get the correct container after renamed
+        asset = rt.GetNodeByName(asset_name)
+
 
         return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
+            name, [asset], context,
+            namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
@@ -42,11 +64,16 @@ class ModelUSDLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.GetNodeByName(node_name)
+        namespace, name = get_namespace(node_name)
+        sub_node_name = f"{namespace}:{name}_{self.postfix}"
+        transform_data = None
         for n in node.Children:
-            for r in n.Children:
-                rt.Delete(r)
+            rt.Select(n.Children)
+            transform_data = object_transform_set(n.Children)
+            for prev_usd_asset in rt.selection:
+                if rt.isValidNode(prev_usd_asset):
+                    rt.Delete(prev_usd_asset)
             rt.Delete(n)
-        instance_name, _ = node_name.split("_")
 
         import_options = rt.USDImporter.CreateOptions()
         base_filename = os.path.basename(path)
@@ -55,11 +82,20 @@ class ModelUSDLoader(load.LoaderPlugin):
 
         rt.LogPath = log_filepath
         rt.LogLevel = rt.Name("info")
-        rt.USDImporter.importFile(path,
-                                  importOptions=import_options)
+        rt.USDImporter.importFile(
+            path, importOptions=import_options)
 
-        asset = rt.GetNodeByName(instance_name)
+        asset = rt.GetNodeByName(name)
         asset.Parent = node
+        import_custom_attribute_data(asset, asset.Children)
+        for children in asset.Children:
+            children.name = f"{namespace}:{children.name}"
+            children.pos = transform_data[
+                f"{children.name}.transform"]
+            children.scale = transform_data[
+                f"{children.name}.scale"]
+
+        asset.name = sub_node_name
 
         with maintained_selection():
             rt.Select(node)

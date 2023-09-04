@@ -1803,10 +1803,7 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
 
     def __init__(self, local_site_id=None):
         # Get mongo connection
-        from openpype.lib import (
-            OpenPypeMongoConnection,
-            get_local_site_id
-        )
+        from openpype.lib import get_local_site_id
 
         if local_site_id is None:
             local_site_id = get_local_site_id()

@@ -13,6 +13,7 @@ from .create import (
     BaseCreator,
     Creator,
     AutoCreator,
+    HiddenCreator,
     CreatedInstance,
     CreatorError,
 
@@ -93,7 +94,7 @@ from .context_tools import (
     get_current_host_name,
     get_current_project_name,
     get_current_asset_name,
-    get_current_task_name,
+    get_current_task_name
 )
 install = install_host
 uninstall = uninstall_host
@@ -114,6 +115,7 @@ __all__ = (
     "BaseCreator",
     "Creator",
     "AutoCreator",
+    "HiddenCreator",
     "CreatedInstance",
     "CreatorError",
 

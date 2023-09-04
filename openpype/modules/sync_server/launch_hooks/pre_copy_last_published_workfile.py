@@ -1,12 +1,8 @@
 import os
 import shutil
 
-from openpype.client.entities import (
-    get_representations,
-    get_project
-)
-
-from openpype.lib import PreLaunchHook
+from openpype.client.entities import get_representations
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.lib.profiles_filtering import filter_profiles
 from openpype.modules.sync_server.sync_server import (
     download_last_published_workfile,
@@ -32,6 +28,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
                   "nuke", "nukeassist", "nukex", "hiero", "nukestudio",
                   "maya", "harmony", "celaction", "flame", "fusion",
                   "houdini", "tvpaint"]
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         """Check if local workfile doesn't exist, else copy it.
@@ -119,6 +116,18 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             "task": {"name": task_name, "type": task_type}
         }
 
+        # Add version filter
+        workfile_version = self.launch_context.data.get("workfile_version", -1)
+        if workfile_version > 0 and workfile_version not in {None, "last"}:
+            context_filters["version"] = self.launch_context.data[
+                "workfile_version"
+            ]
+
+            # Only one version will be matched
+            version_index = 0
+        else:
+            version_index = workfile_version
+
         workfile_representations = list(get_representations(
             project_name,
             context_filters=context_filters
@@ -136,9 +145,10 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             lambda r: r["context"].get("version") is not None,
             workfile_representations
         )
-        workfile_representation = max(
+        # Get workfile version
+        workfile_representation = sorted(
             filtered_repres, key=lambda r: r["context"]["version"]
-        )
+        )[version_index]
 
         # Copy file and substitute path
         last_published_workfile_path = download_last_published_workfile(

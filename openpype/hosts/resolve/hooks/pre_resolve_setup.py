@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import platform
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.hosts.resolve.utils import setup
 
 
@@ -30,7 +30,8 @@ class PreLaunchResolveSetup(PreLaunchHook):
 
     """
 
-    app_groups = ["resolve"]
+    app_groups = {"resolve"}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         current_platform = platform.system().lower()
