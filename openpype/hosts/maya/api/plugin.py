@@ -446,7 +446,7 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
 
             creator_identifier = cmds.getAttr(node + ".creator_identifier")
             if creator_identifier == self.identifier:
-                self.log.info("Found node: {}".format(node))
+                self.log.debug("Found layer instance node: {}".format(node))
                 return node
 
     def _create_layer_instance_node(self, layer):
