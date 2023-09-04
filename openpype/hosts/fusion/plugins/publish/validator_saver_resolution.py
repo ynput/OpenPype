@@ -70,6 +70,9 @@ class ValidateSaverResolution(
     actions = [SelectInvalidAction]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         resolution = self.get_resolution(instance)
         expected_resolution = self.get_expected_resolution(instance)
         if resolution != expected_resolution:
