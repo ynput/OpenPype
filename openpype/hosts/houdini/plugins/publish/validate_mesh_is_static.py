@@ -8,6 +8,7 @@ from openpype.pipeline import (
 from openpype.pipeline.publish import ValidateContentsOrder
 
 from openpype.hosts.houdini.api.action import SelectInvalidAction
+from openpype.hosts.houdini.api.lib import get_output_children
 
 import hou
 
@@ -47,24 +48,14 @@ class ValidateMeshIsStatic(pyblish.api.InstancePlugin,
             )
             return
 
+        all_outputs = get_output_children(output_node)
 
-
-        if output_node.name().isTimeDependent():
-            invalid.append(output_node)
-            cls.log.error(
-                "Output node '%s' is time dependent.",
-                output_node.name()
-            )
-
-        if output_node.childTypeCategory() == hou.objNodeTypeCategory():
-            for child in output_node.children():
-                    if output_node.name().isTimeDependent():
-                        invalid.append(child)
-                        cls.log.error(
-                            "Child node '%s' in '%s' "
-                            "his time dependent.",
-                            child.name(), output_node.path()
-                        )
-                        break
+        for output in all_outputs:
+            if output.isTimeDependent():
+                invalid.append(output)
+                cls.log.error(
+                    "Output node '%s' is time dependent.",
+                    output.path()
+                )
 
         return invalid

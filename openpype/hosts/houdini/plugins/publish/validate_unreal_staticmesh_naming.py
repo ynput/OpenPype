@@ -8,6 +8,7 @@ from openpype.pipeline import (
 from openpype.pipeline.publish import ValidateContentsOrder
 
 from openpype.hosts.houdini.api.action import SelectInvalidAction
+from openpype.hosts.houdini.api.lib import get_output_children
 
 import hou
 
@@ -69,28 +70,26 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
             )
             return
 
+        if not rop_node.evalParm('buildfrompath'):
+            # This validator doesn't support naming check if
+            # building hierarchy from path' is used
+            cls.log.info(
+                "Using 'Build Hierarchy from Path Attribute', skipping check.."
+            )
+            return
+
         # Check nodes names
-        if output_node.childTypeCategory() == hou.objNodeTypeCategory():
-            for child in output_node.children():
-                for prefix in cls.collision_prefixes:
-                    if child.name().startswith(prefix):
-                        invalid.append(child)
-                        cls.log.error(
-                            "Invalid name: Child node '%s' in '%s' "
-                            "has a collision prefix '%s'",
-                            child.name(), output_node.path(), prefix
-                        )
-                        break
-        else:
-            cls.log.debug(output_node.name())
+        all_outputs = get_output_children(output_node, include_sops=False)
+        for output in all_outputs:
             for prefix in cls.collision_prefixes:
-                if output_node.name().startswith(prefix):
-                    invalid.append(output_node)
+                if output.name().startswith(prefix):
+                    invalid.append(output)
                     cls.log.error(
-                        "Invalid name: output node '%s' "
-                        "has a collision prefix '%s'",
-                        output_node.name(), prefix
+                        "Invalid node name: Node '%s' "
+                        "includes a collision prefix '%s'",
+                        output.path(), prefix
                     )
+                    break
 
         # Check subset name
         subset_name = "{}_{}{}".format(
@@ -107,30 +106,3 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
             )
 
         return invalid
-
-    def get_outputs(self, output_node):
-
-        if output_node.childTypeCategory() == hou.objNodeTypeCategory():
-            out_list = [output_node]
-            for child in output_node.children():
-                out_list += self.get_outputs(child)
-
-            return out_list
-
-        elif output_node.childTypeCategory() == hou.sopNodeTypeCategory():
-            return [output_node, self.get_obj_output(output_node)]
-
-    def get_obj_output(self, obj_node):
-        """Find sop output node,   """
-
-        outputs = obj_node.subnetOutputs()
-
-        if not outputs:
-            return
-
-        elif len(outputs) == 1:
-            return outputs[0]
-
-        else:
-            return min(outputs,
-                       key=lambda node: node.evalParm('outputidx'))

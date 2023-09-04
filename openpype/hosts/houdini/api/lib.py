@@ -649,3 +649,42 @@ def get_color_management_preferences():
         "display": hou.Color.ocio_defaultDisplay(),
         "view": hou.Color.ocio_defaultView()
     }
+
+
+def get_obj_node_output(obj_node):
+    """Find output node.
+
+    get the output node with the minimum 'outputidx'
+     or the node with display flag.
+    """
+
+    outputs = obj_node.subnetOutputs()
+    if not outputs:
+        return
+
+    elif len(outputs) == 1:
+        return outputs[0]
+
+    else:
+        return min(outputs,
+                    key=lambda node: node.evalParm('outputidx'))
+
+
+def get_output_children(output_node, include_sops=True):
+    """Recursively return a list of all output nodes
+    contained in this node including this node.
+
+    It works in a similar manner to output_node.allNodes().
+    """
+    out_list = [output_node]
+
+    if output_node.childTypeCategory() == hou.objNodeTypeCategory():
+        for child in output_node.children():
+            out_list += get_output_children(child, include_sops=include_sops)
+
+    elif include_sops and output_node.childTypeCategory() == hou.sopNodeTypeCategory():
+        out =  get_obj_node_output(output_node)
+        if out:
+            out_list += [out]
+
+    return out_list
