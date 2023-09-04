@@ -200,7 +200,7 @@ def import_custom_attribute_data(container: str, selections: list):
     nodes = {}
     for i in selections:
         nodes = {
-            str(i) : rt.NodeTransformMonitor(node=i),
+            str(i): rt.NodeTransformMonitor(node=i),
         }
     # Setting the property
     rt.setProperty(
