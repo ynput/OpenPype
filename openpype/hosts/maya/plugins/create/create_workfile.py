@@ -2,7 +2,7 @@
 """Creator plugin for creating workfiles."""
 from openpype.pipeline import CreatedInstance, AutoCreator
 from openpype.client import get_asset_by_name
-from openpype.hosts.maya.api import plugin
+from openpype.hosts.maya.api import plugin, lib
 from maya import cmds
 
 
@@ -72,15 +72,16 @@ class CreateWorkfile(plugin.MayaCreatorBase, AutoCreator):
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
-        for created_inst, _changes in update_list:
-            data = created_inst.data_to_store()
-            node = data.get("instance_node")
-            if not node:
-                node = self.create_node()
-                created_inst["instance_node"] = node
+        with lib.undo_chunk():
+            for created_inst, _changes in update_list:
                 data = created_inst.data_to_store()
+                node = data.get("instance_node")
+                if not node:
+                    node = self.create_node()
+                    created_inst["instance_node"] = node
+                    data = created_inst.data_to_store()
 
-            self.imprint_instance_node(node, data)
+                self.imprint_instance_node(node, data)
 
     def create_node(self):
         node = cmds.sets(empty=True, name="workfileMain")
