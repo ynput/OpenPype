@@ -554,7 +554,10 @@ class CollectLook(pyblish.api.InstancePlugin):
                     self.log.warning("Attribute '{}' is mixed-type and is "
                                      "not supported yet.".format(attribute))
                     continue
-                if cmds.getAttr(attribute, type=True) == "message":
+                if cmds.getAttr(attribute, type=True) in [
+                    "message",
+                    "TdataCompound"
+                ]:
                     continue
                 node_attributes[attr] = cmds.getAttr(attribute, asString=True)
             # Only include if there are any properties we care about
@@ -589,6 +592,8 @@ class CollectLook(pyblish.api.InstancePlugin):
                 node,
                 attribute
             ))
+            if not source:
+                continue
             computed_attribute = "{}.{}".format(node, attribute)
             if attribute == "fileTextureName":
                 computed_attribute = node + ".computedFileTextureNamePattern"
