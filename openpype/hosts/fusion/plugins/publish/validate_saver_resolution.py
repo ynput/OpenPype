@@ -78,10 +78,10 @@ class ValidateSaverResolution(
         if resolution != expected_resolution:
             raise PublishValidationError(
                 "The input's resolution does not match "
-                "the asset's resolution {}.\n\n"
-                "The input's resolution is {}".format(
-                    expected_resolution,
-                    resolution,
+                "the asset's resolution {}x{}.\n\n"
+                "The input's resolution is {}x{}.".format(
+                    expected_resolution[0], expected_resolution[1],
+                    resolution[0], resolution[1]
                 )
             )
 
