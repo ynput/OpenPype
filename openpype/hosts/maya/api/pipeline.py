@@ -576,7 +576,8 @@ def on_save():
     _remove_workfile_lock()
 
     # Generate ids of the current context on nodes in the scene
-    nodes = lib.get_id_required_nodes(referenced_nodes=False)
+    nodes = lib.get_id_required_nodes(referenced_nodes=False,
+                                      existing_ids=False)
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
 

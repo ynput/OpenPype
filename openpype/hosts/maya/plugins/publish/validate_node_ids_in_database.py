@@ -40,16 +40,12 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
         invalid = []
 
         # Get all id required nodes
-        id_required_nodes = lib.get_id_required_nodes(referenced_nodes=True,
+        id_required_nodes = lib.get_id_required_nodes(referenced_nodes=False,
                                                       nodes=instance[:])
+        if not id_required_nodes:
+            return
 
-        # check ids against database ids
-        project_name = legacy_io.active_project()
-        asset_docs = get_assets(project_name, fields=["_id"])
-        db_asset_ids = {
-            str(asset_doc["_id"])
-            for asset_doc in asset_docs
-        }
+        db_asset_ids = cls._get_project_asset_ids(instance)
 
         # Get all asset IDs
         for node in id_required_nodes:
@@ -65,3 +61,22 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
                 invalid.append(node)
 
         return invalid
+
+    @classmethod
+    def _get_project_asset_ids(self, instance):
+        # We query the database only for the first instance instead of
+        # per instance by storing a cache in the context
+        key = "__cache_project_asset_ids_str"
+        if key in instance.context.data:
+            return instance.context.data[key]
+
+        # check ids against database
+        project_name = legacy_io.active_project()
+        asset_docs = get_assets(project_name, fields=["_id"])
+        db_asset_ids = {
+            str(asset_doc["_id"])
+            for asset_doc in asset_docs
+        }
+
+        instance.context.data[key] = db_asset_ids
+        return db_asset_ids
