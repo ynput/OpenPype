@@ -13,11 +13,16 @@ import openpype.hosts.maya.api.plugin
 class SetFrameRangeLoader(load.LoaderPlugin):
     """Set frame range excluding pre- and post-handles"""
 
-    families = ["animation",
-                "camera",
-                "proxyAbc",
-                "pointcache"]
-    representations = ["abc"]
+    families = [
+        "animation",
+        "camera",
+        "proxyAbc",
+        "pointcache",
+        "vdbcache",
+        "usd",
+        "yeticache"
+    ]
+    representations = ["abc", "vdb", "usd", "fur"]
 
     label = "Set frame range"
     order = 11
@@ -48,11 +53,16 @@ class SetFrameRangeLoader(load.LoaderPlugin):
 class SetFrameRangeWithHandlesLoader(load.LoaderPlugin):
     """Set frame range including pre- and post-handles"""
 
-    families = ["animation",
-                "camera",
-                "proxyAbc",
-                "pointcache"]
-    representations = ["abc"]
+    families = [
+        "animation",
+        "camera",
+        "proxyAbc",
+        "pointcache"
+        "vdbcache",
+        "usd",
+        "yeticache"
+    ]
+    representations = ["abc", "vdb", "usd", "fur"]
 
     label = "Set frame range (with handles)"
     order = 12
@@ -94,21 +104,7 @@ class ImportMayaLoader(openpype.hosts.maya.api.plugin.Loader):
 
     """
     representations = ["ma", "mb", "obj"]
-    families = [
-        "model",
-        "pointcache",
-        "proxyAbc",
-        "animation",
-        "mayaAscii",
-        "mayaScene",
-        "setdress",
-        "layout",
-        "camera",
-        "rig",
-        "camerarig",
-        "staticMesh",
-        "workfile"
-    ]
+    families = ["*"]
 
     label = "Import"
     order = 10
