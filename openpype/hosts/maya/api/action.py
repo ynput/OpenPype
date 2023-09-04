@@ -4,7 +4,10 @@ from __future__ import absolute_import
 import pyblish.api
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline.publish import get_errored_instances_from_context
+from openpype.pipeline.publish import (
+    get_errored_instances_from_context,
+    get_errored_plugins_from_context
+)
 
 
 class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
@@ -116,14 +119,22 @@ class SelectInvalidAction(pyblish.api.Action):
         # Get the invalid nodes for the plug-ins
         self.log.info("Finding invalid nodes..")
         invalid = list()
-        for instance in errored_instances:
-            invalid_nodes = plugin.get_invalid(instance)
-            if invalid_nodes:
-                if isinstance(invalid_nodes, (list, tuple)):
-                    invalid.extend(invalid_nodes)
-                else:
-                    self.log.warning("Plug-in returned to be invalid, "
-                                     "but has no selectable nodes.")
+        if issubclass(plugin, pyblish.api.ContextPlugin):
+            errored_plugins = get_errored_plugins_from_context(context)
+            if plugin in errored_plugins:
+                invalid = plugin.get_invalid(context)
+        else:
+            errored_instances = get_errored_instances_from_context(
+                context, plugin=plugin
+            )
+            for instance in errored_instances:
+                invalid_nodes = plugin.get_invalid(instance)
+                if invalid_nodes:
+                    if isinstance(invalid_nodes, (list, tuple)):
+                        invalid.extend(invalid_nodes)
+                    else:
+                        self.log.warning("Plug-in returned to be invalid, "
+                                         "but has no selectable nodes.")
 
         # Ensure unique (process each node only once)
         invalid = list(set(invalid))
