@@ -25,13 +25,8 @@ def has_shape_children(node):
         return False
 
     # Check if there are any shapes at all
-    shapes = cmds.ls(allDescendents, shapes=True)
+    shapes = cmds.ls(allDescendents, shapes=True, noIntermediate=True)
     if not shapes:
-        return False
-
-    # Check if all descendent shapes are intermediateObjects;
-    # if so we consider this node a null node and return False.
-    if all(cmds.getAttr('{0}.intermediateObject'.format(x)) for x in shapes):
         return False
 
     return True
