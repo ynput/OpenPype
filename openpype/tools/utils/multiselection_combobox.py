@@ -75,11 +75,11 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
     def set_placeholder_text(self, text):
         self._placeholder_text = text
+        self._update_size_hint()
 
     def set_custom_text(self, text):
         self._custom_text = text
-        self.update()
-        self.updateGeometry()
+        self._update_size_hint()
 
     def focusInEvent(self, event):
         self.focused_in.emit()
@@ -266,7 +266,6 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
     def _update_size_hint(self):
         if self._custom_text is not None:
             self.update()
-            self.repaint()
             return
         self._lines = {}
 
@@ -313,7 +312,6 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
         self.update()
         self.updateGeometry()
-        self.repaint()
 
     def sizeHint(self):
         value = super(MultiSelectionComboBox, self).sizeHint()
