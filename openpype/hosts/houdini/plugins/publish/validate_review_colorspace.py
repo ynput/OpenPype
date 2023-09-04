@@ -39,7 +39,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
 
         if os.getenv("OCIO") is None:
             self.log.debug(
-                "Default Houdini colorspace is used, "
+                "Using Houdini's Default Color Management, "
                 " skipping check.."
             )
             return
