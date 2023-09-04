@@ -3,7 +3,8 @@
 import pyblish.api
 
 from pymxs import runtime as rt
-from openpype.lib import BoolDef
+from openpype.lib import BoolDef, EnumDef
+from openpype.hosts.max.api.lib import get_max_version
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 
@@ -43,6 +44,16 @@ class CollectReview(pyblish.api.InstancePlugin,
             "dspSafeFrame": attr_values.get("dspSafeFrame"),
             "dspFrameNums": attr_values.get("dspFrameNums")
         }
+
+        if int(get_max_version()) >= 2024:
+            display_view_transform = attr_values.get(
+                "ocio_display_view_transform")
+            display, view_transform = display_view_transform.split("||")
+            colorspace_mgr = rt.ColorPipelineMgr
+            instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
+            instance.data["colorspaceDisplay"] = display
+            instance.data["colorspaceView"] = view_transform
+
         # Enable ftrack functionality
         instance.data.setdefault("families", []).append('ftrack')
 
@@ -54,8 +65,28 @@ class CollectReview(pyblish.api.InstancePlugin,
 
     @classmethod
     def get_attribute_defs(cls):
-
+        ocio_display_view_transform_list = ["sRGB||ACES 1.0 SDR-video"]
+        display_view_default = ""
+        if int(get_max_version()) >= 2024:
+            display_view_default = ""
+            ocio_display_view_transform_list = []
+            colorspace_mgr = rt.ColorPipelineMgr
+            displays = colorspace_mgr.GetDisplayList()
+            for display in sorted(displays):
+                views = colorspace_mgr.GetViewList(display)
+                for view in sorted(views):
+                    ocio_display_view_transform_list.append({
+                        "value": "||".join((display, view))
+                    })
+                    if display == "ACES" and view == "sRGB":
+                        display_view_default = "{0}||{1}".format(
+                            display, view
+                        )
         return [
+            EnumDef("ocio_display_view_transform",
+                    ocio_display_view_transform_list,
+                    default=display_view_default,
+                    label="OCIO Displays and Views"),
             BoolDef("dspGeometry",
                     label="Geometry",
                     default=True),
