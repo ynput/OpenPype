@@ -1127,10 +1127,17 @@ class RenderProductsRedshift(ARenderProducts):
         use_ref_aovs = self.render_instance.data.get(
             "useReferencedAovs", False) or False
 
-        aovs = cmds.ls(type="RedshiftAOV")
-        if not use_ref_aovs:
-            ref_aovs = cmds.ls(type="RedshiftAOV", referencedNodes=True)
-            aovs = list(set(aovs) - set(ref_aovs))
+        # Advanced > AOVs > Mode (allow global AOV disable)
+        aovs_enabled = (
+            self._get_attr("redshiftOptions.aovGlobalEnableMode") != "Disable"
+        )
+        if aovs_enabled:
+            aovs = cmds.ls(type="RedshiftAOV")
+            if not use_ref_aovs:
+                ref_aovs = cmds.ls(type="RedshiftAOV", referencedNodes=True)
+                aovs = list(set(aovs) - set(ref_aovs))
+        else:
+            aovs = []
 
         products = []
         light_groups_enabled = False
