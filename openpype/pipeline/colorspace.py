@@ -20,7 +20,7 @@ log = Logger.get_logger(__name__)
 
 
 class CachedData:
-    remapping = None
+    remapping = {}
     allowed_exts = {
         ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
     }
