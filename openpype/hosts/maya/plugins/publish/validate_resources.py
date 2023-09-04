@@ -9,11 +9,14 @@ from openpype.pipeline.publish import (
 
 
 class ValidateResources(pyblish.api.InstancePlugin):
-    """Validates mapped resources.
+    """Validates used resources.
 
-    These are external files to the current application, for example
+    Resources are external files to the current application, for example
     these could be textures, image planes, cache files or other linked
     media.
+
+    Each resource to be transferred must have a unique filename to ensure
+    the unique name is preserved when publishing it to the publish destination.
 
     This validates:
         - The resources have unique filenames (without extension)
@@ -47,12 +50,11 @@ class ValidateResources(pyblish.api.InstancePlugin):
         for basename, sources in basenames.items():
             if len(sources) > 1:
                 invalid_resources.extend(sources)
-
                 self.log.error(
-                    "Non-unique resource name: {0}"
-                    "{0} (sources: {1})".format(
+                    "Non-unique resource name '{0}' with "
+                    "multiple sources: {1}".format(
                         basename,
-                        list(sources)
+                        ", ".join(sources)
                     )
                 )
 

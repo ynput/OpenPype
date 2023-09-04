@@ -44,7 +44,7 @@ class ExtractModel(publish.Extractor,
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
-                    self.log.info(
+                    self.log.debug(
                         "Using {} as scene type".format(self.scene_type))
                     break
                 except KeyError:
@@ -56,7 +56,7 @@ class ExtractModel(publish.Extractor,
         path = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction ...")
+        self.log.debug("Performing extraction..")
 
         # Get only the shape contents we need in such a way that we avoid
         # taking along intermediateObjects
@@ -102,4 +102,5 @@ class ExtractModel(publish.Extractor,
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
+        self.log.debug("Extracted instance '%s' to: %s" % (instance.name,
+                                                           path))

@@ -105,7 +105,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
                     "family": cmds.getAttr("{}.family".format(s)),
                 }
             )
-            self.log.info(" -> attach render to: {}".format(s))
+            self.log.debug(" -> attach render to: {}".format(s))
 
         layer_name = layer.name()
 
@@ -137,14 +137,13 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         has_cameras = any(product.camera for product in render_products)
         assert has_cameras, "No render cameras found."
 
-        self.log.info("multipart: {}".format(
-            multipart))
-        assert expected_files, "no file names were generated, this is a bug"
-        self.log.info(
-            "expected files: {}".format(
-                json.dumps(expected_files, indent=4, sort_keys=True)
-            )
-        )
+        assert expected_files, "no file names were generated, this is bug"
+        for render_product in render_products:
+            self.log.debug(render_product)
+        self.log.debug("multipart: {}".format(multipart))
+        self.log.debug("expected files: {}".format(
+            json.dumps(expected_files, indent=4, sort_keys=True)
+        ))
 
         # if we want to attach render to subset, check if we have AOV's
         # in expectedFiles. If so, raise error as we cannot attach AOV
@@ -175,7 +174,6 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
                 publish_meta_path = os.path.dirname(full_path)
             aov_dict[aov_first_key] = full_paths
         full_exp_files = [aov_dict]
-        self.log.info(full_exp_files)
 
         if publish_meta_path is None:
             raise KnownPublishError("Unable to detect any expected output "
@@ -227,8 +225,9 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         if platform.system().lower() in ["linux", "darwin"]:
             common_publish_meta_path = "/" + common_publish_meta_path
 
-        self.log.info(
-            "Publish meta path: {}".format(common_publish_meta_path))
+        self.log.debug(
+            "Publish meta path: {}".format(common_publish_meta_path)
+        )
 
         # Get layer specific settings, might be overrides
         colorspace_data = lib.get_color_management_preferences()
@@ -300,7 +299,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         )
         if rr_settings["enabled"]:
             data["rrPathName"] = instance.data.get("rrPathName")
-            self.log.info(data["rrPathName"])
+            self.log.debug(data["rrPathName"])
 
         if self.sync_workfile_version:
             data["version"] = context.data["version"]

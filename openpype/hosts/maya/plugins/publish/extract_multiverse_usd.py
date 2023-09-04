@@ -150,7 +150,6 @@ class ExtractMultiverseUsd(publish.Extractor):
         return options
 
     def get_default_options(self):
-        self.log.info("ExtractMultiverseUsd get_default_options")
         return self.default_options
 
     def filter_members(self, members):
@@ -173,19 +172,19 @@ class ExtractMultiverseUsd(publish.Extractor):
         # Parse export options
         options = self.get_default_options()
         options = self.parse_overrides(instance, options)
-        self.log.info("Export options: {0}".format(options))
+        self.log.debug("Export options: {0}".format(options))
 
         # Perform extraction
-        self.log.info("Performing extraction ...")
+        self.log.debug("Performing extraction..")
 
         with maintained_selection():
             members = instance.data("setMembers")
-            self.log.info('Collected objects: {}'.format(members))
+            self.log.debug('Collected objects: {}'.format(members))
             members = self.filter_members(members)
             if not members:
                 self.log.error('No members!')
                 return
-            self.log.info(' - filtered: {}'.format(members))
+            self.log.debug(' - filtered: {}'.format(members))
 
             import multiverse
 
@@ -229,7 +228,7 @@ class ExtractMultiverseUsd(publish.Extractor):
                 self.log.debug(" - {}={}".format(key, value))
                 setattr(asset_write_opts, key, value)
 
-            self.log.info('WriteAsset: {} / {}'.format(file_path, members))
+            self.log.debug('WriteAsset: {} / {}'.format(file_path, members))
             multiverse.WriteAsset(file_path, members, asset_write_opts)
 
         if "representations" not in instance.data:
@@ -243,7 +242,7 @@ class ExtractMultiverseUsd(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance {} to {}".format(
+        self.log.debug("Extracted instance {} to {}".format(
             instance.name, file_path))
 
 

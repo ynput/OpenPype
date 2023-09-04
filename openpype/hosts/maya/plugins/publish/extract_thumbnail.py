@@ -24,7 +24,7 @@ class ExtractThumbnail(publish.Extractor):
     families = ["review"]
 
     def process(self, instance):
-        self.log.info("Extracting capture..")
+        self.log.debug("Extracting capture..")
 
         camera = instance.data["review_camera"]
 
@@ -96,7 +96,7 @@ class ExtractThumbnail(publish.Extractor):
         filename = "{0}".format(instance.name)
         path = os.path.join(dst_staging, filename)
 
-        self.log.info("Outputting images to %s" % path)
+        self.log.debug("Outputting images to %s" % path)
 
         preset["filename"] = path
         preset["overwrite"] = True
@@ -159,7 +159,7 @@ class ExtractThumbnail(publish.Extractor):
 
         _, thumbnail = os.path.split(playblast)
 
-        self.log.info("file list  {}".format(thumbnail))
+        self.log.debug("filename: {}".format(thumbnail))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

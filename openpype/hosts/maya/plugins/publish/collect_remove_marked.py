@@ -13,7 +13,6 @@ class CollectRemoveMarked(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        self.log.debug(context)
         # make ftrack publishable
         instances_to_remove = []
         for instance in context:

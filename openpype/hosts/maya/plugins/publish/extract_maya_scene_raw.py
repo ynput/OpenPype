@@ -34,7 +34,7 @@ class ExtractMayaSceneRaw(publish.Extractor):
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
-                    self.log.info(
+                    self.log.debug(
                         "Using {} as scene type".format(self.scene_type))
                     break
                 except KeyError:
@@ -63,7 +63,7 @@ class ExtractMayaSceneRaw(publish.Extractor):
             selection += self._get_loaded_containers(members)
 
         # Perform extraction
-        self.log.info("Performing extraction ...")
+        self.log.debug("Performing extraction..")
         with maintained_selection():
             cmds.select(selection, noExpand=True)
             cmds.file(path,
@@ -87,7 +87,8 @@ class ExtractMayaSceneRaw(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
+        self.log.debug("Extracted instance '%s' to: %s" % (instance.name,
+                                                           path))
 
     @staticmethod
     def _get_loaded_containers(members):

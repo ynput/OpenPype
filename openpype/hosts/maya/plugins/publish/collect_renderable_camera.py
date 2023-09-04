@@ -21,11 +21,11 @@ class CollectRenderableCamera(pyblish.api.InstancePlugin):
         else:
             layer = instance.data["renderlayer"]
 
-        self.log.info("layer: {}".format(layer))
         cameras = cmds.ls(type="camera", long=True)
-        renderable = [c for c in cameras if
-                      get_attr_in_layer("%s.renderable" % c, layer)]
+        renderable = [cam for cam in cameras if
+                      get_attr_in_layer("{}.renderable".format(cam), layer)]
 
-        self.log.info("Found cameras %s: %s" % (len(renderable), renderable))
+        self.log.debug("Found %s renderable cameras: %s",
+                       len(renderable), ", ".join(renderable))
 
         instance.data["cameras"] = renderable

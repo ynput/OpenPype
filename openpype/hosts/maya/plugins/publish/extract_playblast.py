@@ -48,7 +48,7 @@ class ExtractPlayblast(publish.Extractor):
         self.log.debug("playblast path  {}".format(path))
 
     def process(self, instance):
-        self.log.info("Extracting capture..")
+        self.log.debug("Extracting capture..")
 
         # get scene fps
         fps = instance.data.get("fps") or instance.context.data.get("fps")
@@ -62,7 +62,7 @@ class ExtractPlayblast(publish.Extractor):
         if end is None:
             end = cmds.playbackOptions(query=True, animationEndTime=True)
 
-        self.log.info("start: {}, end: {}".format(start, end))
+        self.log.debug("start: {}, end: {}".format(start, end))
 
         # get cameras
         camera = instance.data["review_camera"]
@@ -119,7 +119,7 @@ class ExtractPlayblast(publish.Extractor):
         filename = "{0}".format(instance.name)
         path = os.path.join(stagingdir, filename)
 
-        self.log.info("Outputting images to %s" % path)
+        self.log.debug("Outputting images to %s" % path)
 
         preset["filename"] = path
         preset["overwrite"] = True
@@ -234,11 +234,11 @@ class ExtractPlayblast(publish.Extractor):
         frame_collection = None
         for collection in collections:
             filebase = collection.format("{head}").rstrip(".")
-            self.log.debug("collection head {}".format(filebase))
+            self.log.debug("Collection head {}".format(filebase))
             if filebase in filename:
                 frame_collection = collection
-                self.log.info(
-                    "we found collection of interest {}".format(
+                self.log.debug(
+                    "Found collection of interest {}".format(
                         str(frame_collection)))
 
         if "representations" not in instance.data:

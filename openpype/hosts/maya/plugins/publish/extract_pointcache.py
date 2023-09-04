@@ -47,10 +47,8 @@ class ExtractAlembic(publish.Extractor):
 
         self.log.debug("Extracting pointcache..")
         dirname = self.staging_dir(instance)
-
-        parent_dir = self.staging_dir(instance)
         filename = "{name}.abc".format(**instance.data)
-        path = os.path.join(parent_dir, filename)
+        path = os.path.join(dirname, filename)
 
         options = {
             "step": instance.data.get("step", 1.0),
@@ -109,11 +107,11 @@ class ExtractAlembic(publish.Extractor):
 
         instance.context.data["cleanupFullPaths"].append(path)
 
-        self.log.info("Extracted {} to {}".format(instance, dirname))
+        self.log.debug("Extracted {} to {}".format(instance, dirname))
 
         # Extract proxy.
         if not instance.data.get("proxy"):
-            self.log.info("No proxy nodes found. Skipping proxy extraction.")
+            self.log.debug("No proxy nodes found. Skipping proxy extraction.")
             return
 
         path = path.replace(".abc", "_proxy.abc")

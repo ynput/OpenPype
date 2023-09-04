@@ -62,9 +62,9 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         asset_doc = context.data["assetEntity"]
         asset_fps = mayalib.convert_to_maya_fps(asset_doc["data"]["fps"])
 
-        self.log.info('Units (linear): {0}'.format(linearunits))
-        self.log.info('Units (angular): {0}'.format(angularunits))
-        self.log.info('Units (time): {0} FPS'.format(fps))
+        self.log.debug('Units (linear): {0}'.format(linearunits))
+        self.log.debug('Units (angular): {0}'.format(angularunits))
+        self.log.debug('Units (time): {0} FPS'.format(fps))
 
         invalid = []
 
