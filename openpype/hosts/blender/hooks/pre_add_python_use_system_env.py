@@ -4,7 +4,7 @@ from openpype.lib.applications import PreLaunchHook
 class AddPythonUseSystemEnvArg(PreLaunchHook):
     """Add `--python-use-system-env` arg to blender launch."""
 
-    # Append after file argument
+    # Append before file argument from add last workfile (at order 10)
     order = 5
     app_groups = {"blender"}
     launch_types = set()
