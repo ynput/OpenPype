@@ -85,5 +85,5 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
         # Add review family if the instance is marked as 'review'
         # This could be done through a 'review' Creator attribute.
         if instance.data.get("review", False):
-            self.log.info("Adding review family..")
+            self.log.debug("Adding review family..")
             instance.data["families"].append("review")
