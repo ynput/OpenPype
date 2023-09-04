@@ -247,9 +247,11 @@ def products_graphql_query(fields):
     query = GraphQlQuery("ProductsQuery")
 
     project_name_var = query.add_variable("projectName", "String!")
-    folder_ids_var = query.add_variable("folderIds", "[String!]")
     product_ids_var = query.add_variable("productIds", "[String!]")
     product_names_var = query.add_variable("productNames", "[String!]")
+    folder_ids_var = query.add_variable("folderIds", "[String!]")
+    product_types_var = query.add_variable("productTypes", "[String!]")
+    statuses_var = query.add_variable("statuses", "[String!]")
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
@@ -258,6 +260,8 @@ def products_graphql_query(fields):
     products_field.set_filter("ids", product_ids_var)
     products_field.set_filter("names", product_names_var)
     products_field.set_filter("folderIds", folder_ids_var)
+    products_field.set_filter("productTypes", product_types_var)
+    products_field.set_filter("statuses", statuses_var)
 
     nested_fields = fields_to_dict(set(fields))
     add_links_fields(products_field, nested_fields)
@@ -451,6 +455,31 @@ def events_graphql_query(fields):
     query_queue = collections.deque()
     for key, value in nested_fields.items():
         query_queue.append((key, value, events_field))
+
+    while query_queue:
+        item = query_queue.popleft()
+        key, value, parent = item
+        field = parent.add_field(key)
+        if value is FIELD_VALUE:
+            continue
+
+        for k, v in value.items():
+            query_queue.append((k, v, field))
+    return query
+
+
+def users_graphql_query(fields):
+    query = GraphQlQuery("Users")
+    names_var = query.add_variable("userNames", "[String!]")
+
+    users_field = query.add_field_with_edges("users")
+    users_field.set_filter("names", names_var)
+
+    nested_fields = fields_to_dict(set(fields))
+
+    query_queue = collections.deque()
+    for key, value in nested_fields.items():
+        query_queue.append((key, value, users_field))
 
     while query_queue:
         item = query_queue.popleft()

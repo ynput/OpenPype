@@ -226,8 +226,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                 continue
             job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
         job_info.EnvironmentKeyValue["OPENPYPE_LOG_NO_COLORS"] = "1"
 
         # Adding file dependencies.
@@ -300,7 +300,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         first_file = next(iter_expected_files(expected_files))
         output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"
 
         # Patch workfile (only when use_published is enabled)
         if self.use_published:

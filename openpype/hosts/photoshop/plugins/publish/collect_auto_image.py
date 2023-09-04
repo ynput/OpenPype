@@ -6,8 +6,6 @@ from openpype.pipeline.create import get_subset_name
 
 class CollectAutoImage(pyblish.api.ContextPlugin):
     """Creates auto image in non artist based publishes (Webpublisher).
-
-    'remotepublish' should be renamed to 'autopublish' or similar in the future
     """
 
     label = "Collect Auto Image"
@@ -15,7 +13,7 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.2
 
-    targets = ["remotepublish"]
+    targets = ["automated"]
 
     def process(self, context):
         family = "image"

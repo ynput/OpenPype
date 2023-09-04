@@ -6,7 +6,7 @@ import pyblish.util
 from openpype.lib import Logger
 from openpype.lib.applications import (
     ApplicationManager,
-    get_app_environments_for_context,
+    LaunchTypes,
 )
 from openpype.pipeline import install_host
 from openpype.hosts.webpublisher.api import WebpublisherHost
@@ -34,7 +34,7 @@ def cli_publish(project_name, batch_path, user_email, targets):
 
     Args:
         project_name (str): project to publish (only single context is
-            expected per call of remotepublish
+            expected per call of 'publish')
         batch_path (str): Path batch folder. Contains subfolders with
             resources (workfile, another subfolder 'renders' etc.)
         user_email (string): email address for webpublisher - used to
@@ -49,8 +49,8 @@ def cli_publish(project_name, batch_path, user_email, targets):
     if not batch_path:
         raise RuntimeError("No publish paths specified")
 
-    log = Logger.get_logger("remotepublish")
-    log.info("remotepublish command")
+    log = Logger.get_logger("Webpublish")
+    log.info("Webpublish command")
 
     # Register target and host
     webpublisher_host = WebpublisherHost()
@@ -107,7 +107,7 @@ def cli_publish_from_app(
 
     Args:
         project_name (str): project to publish (only single context is
-            expected per call of remotepublish
+            expected per call of publish
         batch_path (str): Path batch folder. Contains subfolders with
             resources (workfile, another subfolder 'renders' etc.)
         host_name (str): 'photoshop'
@@ -117,9 +117,9 @@ def cli_publish_from_app(
             (to choose validator for example)
     """
 
-    log = Logger.get_logger("RemotePublishFromApp")
+    log = Logger.get_logger("PublishFromApp")
 
-    log.info("remotepublishphotoshop command")
+    log.info("Webpublish photoshop command")
 
     task_data = get_task_data(batch_path)
 
@@ -156,22 +156,31 @@ def cli_publish_from_app(
     found_variant_key = find_variant_key(application_manager, host_name)
     app_name = "{}/{}".format(host_name, found_variant_key)
 
+    data = {
+        "last_workfile_path": workfile_path,
+        "start_last_workfile": True,
+        "project_name": project_name,
+        "asset_name": asset_name,
+        "task_name": task_name,
+        "launch_type": LaunchTypes.automated,
+    }
+    launch_context = application_manager.create_launch_context(
+        app_name, **data)
+    launch_context.run_prelaunch_hooks()
+
     # must have for proper launch of app
-    env = get_app_environments_for_context(
-        project_name,
-        asset_name,
-        task_name,
-        app_name
-    )
+    env = launch_context.env
     print("env:: {}".format(env))
+    env["OPENPYPE_PUBLISH_DATA"] = batch_path
+    # must pass identifier to update log lines for a batch
+    env["BATCH_LOG_ID"] = str(_id)
+    env["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
+    env["USER_EMAIL"] = user_email
+
     os.environ.update(env)
 
-    os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
-    # must pass identifier to update log lines for a batch
-    os.environ["BATCH_LOG_ID"] = str(_id)
-    os.environ["HEADLESS_PUBLISH"] = 'true'  # to use in app lib
-    os.environ["USER_EMAIL"] = user_email
-
+    # Why is this here? Registered host in this process does not affect
+    #   regitered host in launched process.
     pyblish.api.register_host(host_name)
     if targets:
         if isinstance(targets, str):
@@ -184,15 +193,7 @@ def cli_publish_from_app(
         os.environ["PYBLISH_TARGETS"] = os.pathsep.join(
             set(current_targets))
 
-    data = {
-        "last_workfile_path": workfile_path,
-        "start_last_workfile": True,
-        "project_name": project_name,
-        "asset_name": asset_name,
-        "task_name": task_name
-    }
-
-    launched_app = application_manager.launch(app_name, **data)
+    launched_app = application_manager.launch_with_context(launch_context)
 
     timeout = get_timeout(project_name, host_name, task_type)
 

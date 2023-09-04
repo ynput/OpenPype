@@ -1,4 +1,3 @@
-import os
 import copy
 import collections
 
@@ -20,6 +19,7 @@ from openpype.pipeline.plugin_discover import (
     deregister_plugin_path
 )
 
+from .constants import DEFAULT_VARIANT_VALUE
 from .subset_name import get_subset_name
 from .utils import get_next_versions_for_instances
 from .legacy_create import LegacyCreator
@@ -517,7 +517,7 @@ class Creator(BaseCreator):
     default_variants = []
 
     # Default variant used in 'get_default_variant'
-    default_variant = None
+    _default_variant = None
 
     # Short description of family
     # - may not be used if `get_description` is overriden
@@ -542,6 +542,21 @@ class Creator(BaseCreator):
     # Precreate attribute definitions showed before creation
     # - similar to instance attribute definitions
     pre_create_attr_defs = []
+
+    def __init__(self, *args, **kwargs):
+        cls = self.__class__
+
+        # Fix backwards compatibility for plugins which override
+        #   'default_variant' attribute directly
+        if not isinstance(cls.default_variant, property):
+            # Move value from 'default_variant' to '_default_variant'
+            self._default_variant = self.default_variant
+            # Create property 'default_variant' on the class
+            cls.default_variant = property(
+                cls._get_default_variant_wrap,
+                cls._set_default_variant_wrap
+            )
+        super(Creator, self).__init__(*args, **kwargs)
 
     @property
     def show_order(self):
@@ -595,10 +610,10 @@ class Creator(BaseCreator):
     def get_default_variants(self):
         """Default variant values for UI tooltips.
 
-        Replacement of `defatults` attribute. Using method gives ability to
-        have some "logic" other than attribute values.
+        Replacement of `default_variants` attribute. Using method gives
+        ability to have some "logic" other than attribute values.
 
-        By default returns `default_variants` value.
+        By default, returns `default_variants` value.
 
         Returns:
             List[str]: Whisper variants for user input.
@@ -606,17 +621,63 @@ class Creator(BaseCreator):
 
         return copy.deepcopy(self.default_variants)
 
-    def get_default_variant(self):
+    def get_default_variant(self, only_explicit=False):
         """Default variant value that will be used to prefill variant input.
 
         This is for user input and value may not be content of result from
         `get_default_variants`.
 
-        Can return `None`. In that case first element from
-        `get_default_variants` should be used.
+        Note:
+            This method does not allow to have empty string as
+                default variant.
+
+        Args:
+            only_explicit (Optional[bool]): If True, only explicit default
+                variant from '_default_variant' will be returned.
+
+        Returns:
+            str: Variant value.
         """
 
-        return self.default_variant
+        if only_explicit or self._default_variant:
+            return self._default_variant
+
+        for variant in self.get_default_variants():
+            return variant
+        return DEFAULT_VARIANT_VALUE
+
+    def _get_default_variant_wrap(self):
+        """Default variant value that will be used to prefill variant input.
+
+        Wrapper for 'get_default_variant'.
+
+        Notes:
+            This method is wrapper for 'get_default_variant'
+                for 'default_variant' property, so creator can override
+                the method.
+
+        Returns:
+            str: Variant value.
+        """
+
+        return self.get_default_variant()
+
+    def _set_default_variant_wrap(self, variant):
+        """Set default variant value.
+
+        This method is needed for automated settings overrides which are
+        changing attributes based on keys in settings.
+
+        Args:
+            variant (str): New default variant value.
+        """
+
+        self._default_variant = variant
+
+    default_variant = property(
+        _get_default_variant_wrap,
+        _set_default_variant_wrap
+    )
 
     def get_pre_create_attr_defs(self):
         """Plugin attribute definitions needed for creation.

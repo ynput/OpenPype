@@ -27,7 +27,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_job_delay = "00:00:08:00"
 
     def process(self, instance):
-        instance.data["toBeRenderedOn"] = "deadline"
+
         context = instance.context
 
         # get default deadline webservice url from deadline module
