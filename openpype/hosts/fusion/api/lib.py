@@ -2,7 +2,7 @@ import os
 import sys
 import re
 import contextlib
-import imp
+from importlib.machinery import ExtensionFileLoader, ModuleSpec
 
 from openpype.lib import Logger
 from openpype.client import (
@@ -334,6 +334,15 @@ def get_frame_path(path):
     return filename, padding, ext
 
 
+def load_dynamic(name, path):
+    if name in sys.modules:
+        return sys.modules[name]
+    loader = ExtensionFileLoader(name, path)
+
+    spec = ModuleSpec(name=name, loader=loader, origin=path)
+    return loader.create_module(spec)
+
+
 def _load_fusuionscriptlib():
     try:
         import fusionscript as script_module
@@ -351,7 +360,7 @@ def _load_fusuionscriptlib():
         if not os.path.isfile(lib_path):
             print("[Fusion] [Library Does Not Exist on Disk]", lib_path)
 
-        bmd = imp.load_dynamic("fusionscript", lib_path)
+        bmd = load_dynamic("fusionscript", lib_path)
 
         if not bmd:
             raise ImportError(
