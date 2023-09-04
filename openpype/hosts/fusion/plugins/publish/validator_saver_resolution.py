@@ -96,7 +96,7 @@ class ValidateSaverResolution(
     @classmethod
     def get_resolution(cls, instance):
         saver = instance.data["tool"]
-        first_frame = saver.GetAttrs("TOOLNT_Region_Start")[1]
+        first_frame = instance.data["frameStartHandle"]
         return get_tool_resolution(saver, frame=first_frame)
 
     @classmethod
