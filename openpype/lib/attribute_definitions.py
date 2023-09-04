@@ -424,7 +424,10 @@ class TextDef(AbstractAttrDef):
 
 
 class EnumDef(AbstractAttrDef):
-    """Enumeration of single item from items.
+    """Enumeration of items.
+
+    Enumeration of single item from items. Or list of items if multiselection
+    is enabled.
 
     Args:
         items (Union[list[str], list[dict[str, Any]]): Items definition that
