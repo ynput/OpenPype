@@ -9,6 +9,7 @@ import pyblish.api
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError,
 )
 from openpype.hosts.maya.api import lib
 from openpype.settings.lib import convert_to_int_or_float
@@ -97,17 +98,20 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         invalid = self.get_invalid(instance)
-        assert invalid is False, ("Invalid render settings "
-                                  "found for '{}'!".format(instance.name))
+        if invalid:
+            raise PublishValidationError(
+                title="Invalid Render Settings",
+                message=("Invalid render settings found "
+                         "for '{}'!".format(instance.name))
+            )
 
     @classmethod
     def get_invalid(cls, instance):
 
         invalid = False
-        multipart = False
 
         renderer = instance.data['renderer']
-        layer = instance.data['setMembers']
+        layer = instance.data['renderlayer']
         cameras = instance.data.get("cameras", [])
 
         # Get the node attributes for current renderer
@@ -259,16 +263,18 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
-        for attribute, data in cls.get_nodes(instance, renderer).items():
+        for data in cls.get_nodes(instance, renderer):
             for node in data["nodes"]:
                 try:
                     render_value = cmds.getAttr(
-                        "{}.{}".format(node, attribute)
+                        "{}.{}".format(node, data["attribute"])
                     )
-                except RuntimeError:
+                except PublishValidationError:
                     invalid = True
                     cls.log.error(
-                        "Cannot get value of {}.{}".format(node, attribute)
+                        "Cannot get value of {}.{}".format(
+                            node, data["attribute"]
+                        )
                     )
                 else:
                     if render_value not in data["values"]:
@@ -276,7 +282,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         cls.log.error(
                             "Invalid value {} set on {}.{}. Expecting "
                             "{}".format(
-                                render_value, node, attribute, data["values"]
+                                render_value,
+                                node,
+                                data["attribute"],
+                                data["values"]
                             )
                         )
 
@@ -290,7 +299,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 "{}_render_attributes".format(renderer)
             ) or []
         )
-        result = {}
+        result = []
         for attr, values in OrderedDict(validation_settings).items():
             values = [convert_to_int_or_float(v) for v in values if v]
 
@@ -320,7 +329,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 )
                 continue
 
-            result[attribute_name] = {"nodes": nodes, "values": values}
+            result.append(
+                {
+                    "attribute": attribute_name,
+                    "nodes": nodes,
+                    "values": values
+                }
+            )
 
         return result
 
@@ -335,11 +350,11 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             "{aov_separator}", instance.data.get("aovSeparator", "_")
         )
 
-        for attribute, data in cls.get_nodes(instance, renderer).items():
+        for data in cls.get_nodes(instance, renderer):
             if not data["values"]:
                 continue
             for node in data["nodes"]:
-                lib.set_attribute(attribute, data["values"][0], node)
+                lib.set_attribute(data["attribute"], data["values"][0], node)
 
         with lib.renderlayer(layer_node):
             default = lib.RENDER_ATTRS['default']
@@ -349,6 +364,17 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cmds.setAttr("defaultRenderGlobals.animation", True)
 
             # Repair prefix
+            if renderer == "arnold":
+                multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
+                if multipart:
+                    separator_variations = [
+                        "_<RenderPass>",
+                        "<RenderPass>_",
+                        "<RenderPass>",
+                    ]
+                    for variant in separator_variations:
+                        default_prefix = default_prefix.replace(variant, "")
+
             if renderer != "renderman":
                 node = render_attrs["node"]
                 prefix_attr = render_attrs["prefix"]

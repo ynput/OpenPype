@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 """Unreal launching and project tools."""
 
+import json
 import os
 import platform
-import json
-
+import re
+import subprocess
+from collections import OrderedDict
+from distutils import dir_util
+from pathlib import Path
 from typing import List
 
-import openpype
-from distutils import dir_util
-import subprocess
-import re
-from pathlib import Path
-from collections import OrderedDict
 from openpype.settings import get_project_settings
 
 
@@ -180,6 +178,7 @@ def _parse_launcher_locations(install_json_path: str) -> dict:
 
 
 def create_unreal_project(project_name: str,
+                          unreal_project_name: str,
                           ue_version: str,
                           pr_dir: Path,
                           engine_path: Path,
@@ -194,7 +193,8 @@ def create_unreal_project(project_name: str,
     folder and enable this plugin.
 
     Args:
-        project_name (str): Name of the project.
+        project_name (str): Name of the project in AYON.
+        unreal_project_name (str): Name of the project in Unreal.
         ue_version (str): Unreal engine version (like 4.23).
         pr_dir (Path): Path to directory where project will be created.
         engine_path (Path): Path to Unreal Engine installation.
@@ -212,8 +212,12 @@ def create_unreal_project(project_name: str,
     Returns:
         None
 
+    Deprecated:
+        since 3.16.0
+
     """
     env = env or os.environ
+
     preset = get_project_settings(project_name)["unreal"]["project_setup"]
     ue_id = ".".join(ue_version.split(".")[:2])
     # get unreal engine identifier
@@ -231,7 +235,7 @@ def create_unreal_project(project_name: str,
     ue_editor_exe: Path = get_editor_exe_path(engine_path, ue_version)
     cmdlet_project: Path = get_path_to_cmdlet_project(ue_version)
 
-    project_file = pr_dir / f"{project_name}.uproject"
+    project_file = pr_dir / f"{unreal_project_name}.uproject"
 
     print("--- Generating a new project ...")
     commandlet_cmd = [f'{ue_editor_exe.as_posix()}',
@@ -252,8 +256,9 @@ def create_unreal_project(project_name: str,
     return_code = gen_process.wait()
 
     if return_code and return_code != 0:
-        raise RuntimeError(f'Failed to generate \'{project_name}\' project! '
-                           f'Exited with return code {return_code}')
+        raise RuntimeError(
+            (f"Failed to generate '{unreal_project_name}' project! "
+             f"Exited with return code {return_code}"))
 
     print("--- Project has been generated successfully.")
 
@@ -283,7 +288,7 @@ def create_unreal_project(project_name: str,
         subprocess.run(command1)
 
         command2 = [u_build_tool.as_posix(),
-                    f"-ModuleWithSuffix={project_name},3555", arch,
+                    f"-ModuleWithSuffix={unreal_project_name},3555", arch,
                     "Development", "-TargetType=Editor",
                     f'-Project={project_file}',
                     f'{project_file}',
@@ -364,11 +369,11 @@ def get_compatible_integration(
 
 def get_path_to_cmdlet_project(ue_version: str) -> Path:
     cmd_project = Path(
-        os.path.abspath(os.getenv("OPENPYPE_ROOT")))
+        os.path.dirname(os.path.abspath(__file__)))
 
     # For now, only tested on Windows (For Linux and Mac
     # it has to be implemented)
-    cmd_project /= f"openpype/hosts/unreal/integration/UE_{ue_version}"
+    cmd_project /= f"integration/UE_{ue_version}"
 
     # if the integration doesn't exist for current engine version
     # try to find the closest to it.
@@ -422,6 +427,36 @@ def get_build_id(engine_path: Path, ue_version: str) -> str:
 
         if loaded_modules.get("BuildId"):
             return "{" + loaded_modules.get("BuildId") + "}"
+
+
+def check_built_plugin_existance(plugin_path) -> bool:
+    if not plugin_path:
+        return False
+
+    integration_plugin_path = Path(plugin_path)
+
+    if not integration_plugin_path.is_dir():
+        raise RuntimeError("Path to the integration plugin is null!")
+
+    if not (integration_plugin_path / "Binaries").is_dir() \
+            or not (integration_plugin_path / "Intermediate").is_dir():
+        return False
+
+    return True
+
+
+def copy_built_plugin(engine_path: Path, plugin_path: Path) -> None:
+    ayon_plugin_path: Path = engine_path / "Engine/Plugins/Marketplace/Ayon"
+
+    if not ayon_plugin_path.is_dir():
+        ayon_plugin_path.mkdir(parents=True, exist_ok=True)
+
+        engine_plugin_config_path: Path = ayon_plugin_path / "Config"
+        engine_plugin_config_path.mkdir(exist_ok=True)
+
+        dir_util._path_created = {}
+
+    dir_util.copy_tree(plugin_path.as_posix(), ayon_plugin_path.as_posix())
 
 
 def check_plugin_existence(engine_path: Path, env: dict = None) -> bool:

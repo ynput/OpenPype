@@ -1,14 +1,11 @@
 import re
 
 from openpype.pipeline import get_representation_path
-from openpype.hosts.aftereffects.api import (
-    AfterEffectsLoader,
-    containerise
-)
+from openpype.hosts.aftereffects import api
 from openpype.hosts.aftereffects.api.lib import get_unique_layer_name
 
 
-class FileLoader(AfterEffectsLoader):
+class FileLoader(api.AfterEffectsLoader):
     """Load images
 
     Stores the imported asset in a container named after the asset.
@@ -32,39 +29,39 @@ class FileLoader(AfterEffectsLoader):
 
         import_options = {}
 
-        file = self.fname
+        path = self.filepath_from_context(context)
 
         repr_cont = context["representation"]["context"]
-        if "#" not in file:
+        if "#" not in path:
             frame = repr_cont.get("frame")
             if frame:
                 padding = len(frame)
-                file = file.replace(frame, "#" * padding)
+                path = path.replace(frame, "#" * padding)
                 import_options['sequence'] = True
 
-        if not file:
+        if not path:
             repr_id = context["representation"]["_id"]
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
-        file = file.replace("\\", "/")
-        if '.psd' in file:
+        path = path.replace("\\", "/")
+        if '.psd' in path:
             import_options['ImportAsType'] = 'ImportAsType.COMP'
 
-        comp = stub.import_file(self.fname, stub.LOADED_ICON + comp_name,
+        comp = stub.import_file(path, stub.LOADED_ICON + comp_name,
                                 import_options)
 
         if not comp:
             self.log.warning(
-                "Representation id `{}` is failing to load".format(file))
+                "Representation `{}` is failing to load".format(path))
             self.log.warning("Check host app for alert error.")
             return
 
         self[:] = [comp]
         namespace = namespace or comp_name
 
-        return containerise(
+        return api.containerise(
             name,
             namespace,
             comp,

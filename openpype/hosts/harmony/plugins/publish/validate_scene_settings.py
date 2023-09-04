@@ -67,7 +67,9 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         expected_settings["frameEndHandle"] = expected_settings["frameEnd"] +\
             expected_settings["handleEnd"]
 
-        if (any(re.search(pattern, os.getenv('AVALON_TASK'))
+        task_name = instance.context.data["task"]
+
+        if (any(re.search(pattern, task_name)
                 for pattern in self.skip_resolution_check)):
             self.log.info("Skipping resolution check because of "
                           "task name and pattern {}".format(

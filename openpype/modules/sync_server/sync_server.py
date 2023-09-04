@@ -237,8 +237,7 @@ def download_last_published_workfile(
     last_published_workfile_path = get_representation_path_with_anatomy(
         workfile_representation, anatomy
     )
-    if (not last_published_workfile_path or
-            not os.path.exists(last_published_workfile_path)):
+    if not last_published_workfile_path:
         return
 
     # If representation isn't available on remote site, then return.
@@ -537,8 +536,8 @@ class SyncServerThread(threading.Thread):
                     _site_is_working(self.module, project_name, remote_site,
                                      remote_site_config)]):
             self.log.debug(
-                "Some of the sites {} - {} is not working properly".format(
-                    local_site, remote_site
+                "Some of the sites {} - {} in {} is not working properly".format(  # noqa
+                    local_site, remote_site, project_name
                 )
             )
 

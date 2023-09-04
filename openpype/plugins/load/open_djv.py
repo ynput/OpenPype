@@ -19,12 +19,13 @@ class OpenInDJV(load.LoaderPlugin):
 
     djv_list = existing_djv_path()
     families = ["*"] if djv_list else []
-    representations = [
+    representations = ["*"]
+    extensions = {
         "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
         "mp4", "m4v", "mxf", "iff", "z", "ifl", "jpeg", "jpg", "jfif", "lut",
         "1dl", "exr", "pic", "png", "ppm", "pnm", "pgm", "pbm", "rla", "rpf",
         "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img", "h264",
-    ]
+    }
 
     label = "Open in DJV"
     order = -10
@@ -32,8 +33,10 @@ class OpenInDJV(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        directory = os.path.dirname(self.fname)
         import clique
+
+        path = self.filepath_from_context(context)
+        directory = os.path.dirname(path)
 
         pattern = clique.PATTERNS["frames"]
         files = os.listdir(directory)
@@ -47,7 +50,7 @@ class OpenInDJV(load.LoaderPlugin):
             sequence = collections[0]
             first_image = list(sequence)[0]
         else:
-            first_image = self.fname
+            first_image = path
         filepath = os.path.normpath(os.path.join(directory, first_image))
 
         self.log.info("Opening : {}".format(filepath))

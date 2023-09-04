@@ -159,9 +159,42 @@
                     "collapsible": true,
                     "children": [
                         {
+                            "type": "label",
+                            "label": "Nodes attribute will be deprecated in future releases. Use reposition_nodes instead."
+                        },
+                        {
                             "type": "raw-json",
                             "key": "nodes",
-                            "label": "Nodes"
+                            "label": "Nodes [depricated]"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Reposition knobs supported only. You can add multiple reformat nodes <br/>and set their knobs. Order of reformat nodes is important. First reformat node <br/>will be applied first and last reformat node will be applied last."
+                        },
+                        {
+                            "key": "reposition_nodes",
+                            "type": "list",
+                            "label": "Reposition nodes",
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "node_class",
+                                        "label": "Node class",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "type": "schema_template",
+                                        "name": "template_nuke_knob_inputs",
+                                        "template_data": [
+                                            {
+                                                "label": "Node knobs",
+                                                "key": "knobs"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }
@@ -274,26 +307,6 @@
                             },
                             {
                                 "type": "separator"
-                            },
-                            {
-                                "type": "label",
-                                "label": "Currently we are supporting also multiple reposition nodes. <br/>Older single reformat node is still supported <br/>and if it is activated then preference will <br/>be on it. If you want to use multiple reformat <br/>nodes then you need to disable single reformat <br/>node and enable multiple <b>Reformat nodes</b> <a href=\"settings://project_settings/nuke/publish/ExtractReviewDataMov/outputs/baking/reformat_nodes_config/enabled\"><b>here</b></a>."
-                            },
-                            {
-                                "type": "boolean",
-                                "key": "reformat_node_add",
-                                "label": "Add Reformat Node",
-                                "default": false
-                            },
-                            {
-                                "type": "schema_template",
-                                "name": "template_nuke_knob_inputs",
-                                "template_data": [
-                                    {
-                                        "label": "Reformat Node Knobs",
-                                        "key": "reformat_node_config"
-                                    }
-                                ]
                             },
                             {
                                 "key": "reformat_nodes_config",

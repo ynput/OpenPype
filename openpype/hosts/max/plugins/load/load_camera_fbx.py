@@ -1,14 +1,12 @@
 import os
-from openpype.pipeline import (
-    load,
-    get_representation_path
-)
+
+from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.pipeline import containerise
-from openpype.hosts.max.api import lib
+from openpype.pipeline import get_representation_path, load
 
 
 class FbxLoader(load.LoaderPlugin):
-    """Fbx Loader"""
+    """Fbx Loader."""
 
     families = ["camera"]
     representations = ["fbx"]
@@ -19,9 +17,35 @@ class FbxLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        filepath = os.path.normpath(self.fname)
+        filepath = self.filepath_from_context(context)
+        filepath = os.path.normpath(filepath)
+        rt.FBXImporterSetParam("Animation", True)
+        rt.FBXImporterSetParam("Camera", True)
+        rt.FBXImporterSetParam("AxisConversionMethod", True)
+        rt.FBXImporterSetParam("Preserveinstances", True)
+        rt.ImportFile(
+            filepath,
+            rt.name("noPrompt"),
+            using=rt.FBXIMP)
 
-        fbx_import_cmd = (
+        container = rt.GetNodeByName(f"{name}")
+        if not container:
+            container = rt.Container()
+            container.name = f"{name}"
+
+        for selection in rt.GetCurrentSelection():
+            selection.Parent = container
+
+        return containerise(
+            name, [container], context, loader=self.__class__.__name__)
+
+    def update(self, container, representation):
+        from pymxs import runtime as rt
+
+        path = get_representation_path(representation)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Select(node.Children)
+        fbx_reimport_cmd = (
             f"""
 
 FBXImporterSetParam "Animation" true
@@ -30,35 +54,22 @@ FBXImporterSetParam "AxisConversionMethod" true
 FbxExporterSetParam "UpAxis" "Y"
 FbxExporterSetParam "Preserveinstances" true
 
-importFile @"{filepath}" #noPrompt using:FBXIMP
+importFile @"{path}" #noPrompt using:FBXIMP
         """)
+        rt.Execute(fbx_reimport_cmd)
 
-        self.log.debug(f"Executing command: {fbx_import_cmd}")
-        rt.execute(fbx_import_cmd)
-
-        container_name = f"{name}_CON"
-
-        asset = rt.getNodeByName(f"{name}")
-
-        return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
-
-    def update(self, container, representation):
-        from pymxs import runtime as rt
-
-        path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
-
-        fbx_objects = self.get_container_children(node)
-        for fbx_object in fbx_objects:
-            fbx_object.source = path
+        with maintained_selection():
+            rt.Select(node)
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)

@@ -1,0 +1,55 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:asset-3.0",
+    "description": "A unit of data",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "schema",
+        "type",
+        "name",
+        "data"
+    ],
+
+    "properties": {
+        "schema": {
+            "description": "Schema identifier for payload",
+            "type": "string",
+            "enum": ["openpype:asset-3.0"],
+            "example": "openpype:asset-3.0"
+        },
+        "type": {
+            "description": "The type of document",
+            "type": "string",
+            "enum": ["asset"],
+            "example": "asset"
+        },
+        "parent": {
+            "description": "Unique identifier to parent document",
+            "example": "592c33475f8c1b064c4d1696"
+        },
+        "name": {
+            "description": "Name of asset",
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.]*$",
+            "example": "Bruce"
+        },
+        "silo": {
+            "description": "Group or container of asset",
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.]*$",
+            "example": "assets"
+        },
+        "data": {
+            "description": "Document metadata",
+            "type": "object",
+            "example": {"key": "value"}
+        }
+    },
+
+    "definitions": {}
+}

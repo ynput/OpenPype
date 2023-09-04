@@ -249,7 +249,6 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         Authenticate with Muster, collect all data, prepare path for post
         render publish job and submit job to farm.
         """
-        instance.data["toBeRenderedOn"] = "muster"
         # setup muster environment
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
 
@@ -265,6 +264,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
 
         context = instance.context
         workspace = context.data["workspaceDir"]
+        project_name = context.data["projectName"]
+        asset_name = context.data["asset"]
 
         filepath = None
 
@@ -288,7 +289,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         comment = context.data.get("comment", "")
         scene = os.path.splitext(filename)[0]
         dirname = os.path.join(workspace, "renders")
-        renderlayer = instance.data['setMembers']       # rs_beauty
+        renderlayer = instance.data['renderlayer']       # rs_beauty
         renderlayer_name = instance.data['subset']      # beauty
         renderglobals = instance.data["renderGlobals"]
         # legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
@@ -371,8 +372,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "jobId": -1,
                     "startOn": 0,
                     "parentId": -1,
-                    "project": os.environ.get('AVALON_PROJECT') or scene,
-                    "shot": os.environ.get('AVALON_ASSET') or scene,
+                    "project": project_name or scene,
+                    "shot": asset_name or scene,
                     "camera": instance.data.get("cameras")[0],
                     "dependMode": 0,
                     "packetSize": 4,
@@ -546,3 +547,9 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
+
+
+# TODO: Remove hack to avoid this plug-in in new publisher
+#       This plug-in should actually be in dedicated module
+if not os.environ.get("MUSTER_REST_URL"):
+    del MayaSubmitMuster

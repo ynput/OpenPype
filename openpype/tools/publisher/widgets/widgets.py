@@ -9,6 +9,7 @@ import collections
 from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.lib.attribute_definitions import UnknownDef
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
@@ -40,6 +41,41 @@ from ..constants import (
     INPUTS_LAYOUT_VSPACING,
 )
 
+FA_PREFIXES = ["", "fa.", "fa5.", "fa5b.", "fa5s.", "ei.", "mdi."]
+
+
+def parse_icon_def(
+    icon_def, default_width=None, default_height=None, color=None
+):
+    if not icon_def:
+        return None
+
+    if isinstance(icon_def, QtGui.QPixmap):
+        return icon_def
+
+    color = color or "white"
+    default_width = default_width or 512
+    default_height = default_height or 512
+
+    if isinstance(icon_def, QtGui.QIcon):
+        return icon_def.pixmap(default_width, default_height)
+
+    try:
+        if os.path.exists(icon_def):
+            return QtGui.QPixmap(icon_def)
+    except Exception:
+        # TODO logging
+        pass
+
+    for prefix in FA_PREFIXES:
+        try:
+            icon_name = "{}{}".format(prefix, icon_def)
+            icon = qtawesome.icon(icon_name, color=color)
+            return icon.pixmap(default_width, default_height)
+        except Exception:
+            # TODO logging
+            continue
+
 
 class PublishPixmapLabel(PixmapLabel):
     def _get_pix_size(self):
@@ -54,7 +90,6 @@ class IconValuePixmapLabel(PublishPixmapLabel):
     Handle icon parsing from creators/instances. Using of QAwesome module
     of path to images.
     """
-    fa_prefixes = ["", "fa."]
     default_size = 200
 
     def __init__(self, icon_def, parent):
@@ -77,31 +112,9 @@ class IconValuePixmapLabel(PublishPixmapLabel):
         return pix
 
     def _parse_icon_def(self, icon_def):
-        if not icon_def:
-            return self._default_pixmap()
-
-        if isinstance(icon_def, QtGui.QPixmap):
-            return icon_def
-
-        if isinstance(icon_def, QtGui.QIcon):
-            return icon_def.pixmap(self.default_size, self.default_size)
-
-        try:
-            if os.path.exists(icon_def):
-                return QtGui.QPixmap(icon_def)
-        except Exception:
-            # TODO logging
-            pass
-
-        for prefix in self.fa_prefixes:
-            try:
-                icon_name = "{}{}".format(prefix, icon_def)
-                icon = qtawesome.icon(icon_name, color="white")
-                return icon.pixmap(self.default_size, self.default_size)
-            except Exception:
-                # TODO logging
-                continue
-
+        icon = parse_icon_def(icon_def, self.default_size, self.default_size)
+        if icon:
+            return icon
         return self._default_pixmap()
 
 
@@ -692,6 +705,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         style.drawControl(
             QtWidgets.QStyle.CE_ComboBoxLabel, opt, painter, self
         )
+        painter.end()
 
     def is_valid(self):
         """Are all selected items valid."""
@@ -1103,10 +1117,16 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         main_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
         main_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         main_layout.addRow("Variant", variant_input)
-        main_layout.addRow("Asset", asset_value_widget)
+        main_layout.addRow(
+            "Folder" if AYON_SERVER_ENABLED else "Asset",
+            asset_value_widget)
         main_layout.addRow("Task", task_value_widget)
-        main_layout.addRow("Family", family_value_widget)
-        main_layout.addRow("Subset", subset_value_widget)
+        main_layout.addRow(
+            "Product type" if AYON_SERVER_ENABLED else "Family",
+            family_value_widget)
+        main_layout.addRow(
+            "Product name" if AYON_SERVER_ENABLED else "Subset",
+            subset_value_widget)
         main_layout.addRow(btns_layout)
 
         variant_input.value_changed.connect(self._on_variant_change)

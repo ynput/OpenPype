@@ -1,8 +1,6 @@
 import os
-from pathlib import Path
-
+import re
 from openpype.modules import IHostAddon, OpenPypeModule
-from .lib import get_compatible_integration
 
 UNREAL_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -14,13 +12,38 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
     def initialize(self, module_settings):
         self.enabled = True
 
+    def get_global_environments(self):
+        return {
+            "AYON_UNREAL_ROOT": UNREAL_ROOT_DIR,
+        }
+
     def add_implementation_envs(self, env, app):
         """Modify environments to contain all required for implementation."""
         # Set AYON_UNREAL_PLUGIN required for Unreal implementation
+        # Imports are in this method for Python 2 compatiblity of an addon
+        from pathlib import Path
+
+        from .lib import get_compatible_integration
+
+        from openpype.widgets.message_window import Window
+
+        pattern = re.compile(r'^\d+-\d+$')
+
+        if not pattern.match(app.name):
+            msg = (
+                "Unreal application key in the settings must be in format"
+                "'5-0' or '5-1'"
+            )
+            Window(
+                parent=None,
+                title="Unreal application name format",
+                message=msg,
+                level="critical")
+            raise ValueError(msg)
 
         ue_version = app.name.replace("-", ".")
         unreal_plugin_path = os.path.join(
-            UNREAL_ROOT_DIR, "integration", f"UE_{ue_version}", "Ayon"
+            UNREAL_ROOT_DIR, "integration", "UE_{}".format(ue_version), "Ayon"
         )
         if not Path(unreal_plugin_path).exists():
             compatible_versions = get_compatible_integration(
@@ -36,7 +59,8 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
 
         # Set default environments if are not set via settings
         defaults = {
-            "OPENPYPE_LOG_NO_COLORS": "True"
+            "OPENPYPE_LOG_NO_COLORS": "True",
+            "UE_PYTHONPATH": os.environ.get("PYTHONPATH", ""),
         }
         for key, value in defaults.items():
             if not env.get(key):

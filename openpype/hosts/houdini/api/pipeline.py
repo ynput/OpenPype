@@ -25,7 +25,6 @@ from openpype.lib import (
     emit_event,
 )
 
-from .lib import get_asset_fps
 
 log = logging.getLogger("openpype.hosts.houdini")
 
@@ -93,7 +92,7 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             import hdefereval # noqa, hdefereval is only available in ui mode
             hdefereval.executeDeferred(creator_node_shelves.install)
 
-    def has_unsaved_changes(self):
+    def workfile_has_unsaved_changes(self):
         return hou.hipFile.hasUnsavedChanges()
 
     def get_workfile_extensions(self):
@@ -384,11 +383,6 @@ def _set_context_settings():
     Returns:
         None
     """
-
-    # Set new scene fps
-    fps = get_asset_fps()
-    print("Setting scene FPS to %i" % fps)
-    lib.set_scene_fps(fps)
 
     lib.reset_framerange()
 

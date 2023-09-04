@@ -4,7 +4,7 @@ from pprint import pformat
 import pyblish.api
 
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     run_subprocess,
 )
 from openpype.pipeline import publish
@@ -32,7 +32,7 @@ class ExtractTrimVideoAudio(publish.Extractor):
             instance.data["representations"] = list()
 
         # get ffmpet path
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_tool_args = get_ffmpeg_tool_args("ffmpeg")
 
         # get staging dir
         staging_dir = self.staging_dir(instance)
@@ -76,8 +76,7 @@ class ExtractTrimVideoAudio(publish.Extractor):
                     if "trimming" not in fml
                 ]
 
-            ffmpeg_args = [
-                ffmpeg_path,
+            ffmpeg_args = ffmpeg_tool_args + [
                 "-ss", str(clip_start_h / fps),
                 "-i", video_file_path,
                 "-t", str(clip_dur_h / fps)

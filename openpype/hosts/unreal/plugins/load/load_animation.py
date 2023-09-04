@@ -26,7 +26,7 @@ class AnimationFBXLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
-    def _process(self, asset_dir, asset_name, instance_name):
+    def _process(self, path, asset_dir, asset_name, instance_name):
         automated = False
         actor = None
 
@@ -55,7 +55,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         asset_doc = get_current_project_asset(fields=["data.fps"])
 
-        task.set_editor_property('filename', self.fname)
+        task.set_editor_property('filename', path)
         task.set_editor_property('destination_path', asset_dir)
         task.set_editor_property('destination_name', asset_name)
         task.set_editor_property('replace_existing', False)
@@ -156,7 +156,7 @@ class AnimationFBXLoader(plugin.Loader):
             package_paths=[f"{root}/{hierarchy[0]}"],
             recursive_paths=False)
         levels = ar.get_assets(_filter)
-        master_level = levels[0].get_full_name()
+        master_level = levels[0].get_asset().get_path_name()
 
         hierarchy_dir = root
         for h in hierarchy:
@@ -168,7 +168,7 @@ class AnimationFBXLoader(plugin.Loader):
             package_paths=[f"{hierarchy_dir}/"],
             recursive_paths=True)
         levels = ar.get_assets(_filter)
-        level = levels[0].get_full_name()
+        level = levels[0].get_asset().get_path_name()
 
         unreal.EditorLevelLibrary.save_all_dirty_levels()
         unreal.EditorLevelLibrary.load_level(level)
@@ -177,14 +177,15 @@ class AnimationFBXLoader(plugin.Loader):
 
         EditorAssetLibrary.make_directory(asset_dir)
 
-        libpath = self.fname.replace("fbx", "json")
+        path = self.filepath_from_context(context)
+        libpath = path.replace(".fbx", ".json")
 
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
         instance_name = data.get("instance_name")
 
-        animation = self._process(asset_dir, asset_name, instance_name)
+        animation = self._process(path, asset_dir, asset_name, instance_name)
 
         asset_content = EditorAssetLibrary.list_assets(
             hierarchy_dir, recursive=True, include_folder=False)

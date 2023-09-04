@@ -21,12 +21,9 @@
                         },
                         {
                             "type": "list",
-                            "key": "statuses_name_change",
-                            "label": "Statuses",
-                            "object_type": {
-                                "type": "text",
-                                "multiline": false
-                            }
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
                         }
                     ]
                 },
@@ -1058,7 +1055,7 @@
                 {
                     "type": "dict",
                     "key": "IntegrateFtrackFarmStatus",
-                    "label": "Integrate Ftrack Farm Status",
+                    "label": "Ftrack Status To Farm",
                     "children": [
                         {
                             "type": "label",
@@ -1068,7 +1065,7 @@
                             "type": "list",
                             "collapsible": true,
                             "key": "farm_status_profiles",
-                            "label": "Farm status profiles",
+                            "label": "Profiles",
                             "use_label_wrap": true,
                             "object_type": {
                                 "type": "dict",
@@ -1112,6 +1109,142 @@
                                     }
                                 ]
                             }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "ftrack_task_status_local_publish",
+                    "label": "Ftrack Status Local Integration",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Change status of task when is integrated locally"
+                        },
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "status_profiles",
+                            "label": "Profiles",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "host_names",
+                                        "label": "Host names",
+                                        "type": "hosts-enum",
+                                        "multiselection": true
+                                    },
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "task_names",
+                                        "label": "Task names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "families",
+                                        "label": "Families",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "subset_names",
+                                        "label": "Subset names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "status_name",
+                                        "label": "Status name",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "ftrack_task_status_on_farm_publish",
+                    "label": "Ftrack Status On Farm",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Change status of task when it's subset is integrated on farm"
+                        },
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "status_profiles",
+                            "label": "Profiles",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "host_names",
+                                        "label": "Host names",
+                                        "type": "hosts-enum",
+                                        "multiselection": true
+                                    },
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "task_names",
+                                        "label": "Task names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "families",
+                                        "label": "Families",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "subset_names",
+                                        "label": "Subset names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "status_name",
+                                        "label": "Status name",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "IntegrateFtrackTaskStatus",
+                    "label": "Integrate Ftrack Task Status",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Apply collected task statuses. This plugin can run before or after version integration. Some status automations may conflict with status changes on versions because of wrong order."
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "after_version_statuses",
+                            "label": "After version integration"
                         }
                     ]
                 }

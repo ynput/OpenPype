@@ -2,7 +2,7 @@
 
 import bpy
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_task_name
 from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
@@ -34,7 +34,7 @@ class CreateRig(plugin.Creator):
         asset_group = bpy.data.objects.new(name=name, object_data=None)
         asset_group.empty_display_type = 'SINGLE_ARROW'
         instances.objects.link(asset_group)
-        self.data['task'] = legacy_io.Session.get('AVALON_TASK')
+        self.data['task'] = get_current_task_name()
         lib.imprint(asset_group, self.data)
 
         # Add selected objects to instance
@@ -42,7 +42,9 @@ class CreateRig(plugin.Creator):
             bpy.context.view_layer.objects.active = asset_group
             selected = lib.get_selection()
             for obj in selected:
-                obj.select_set(True)
+                if obj.parent in selected:
+                    obj.select_set(False)
+                    continue
             selected.append(asset_group)
             bpy.ops.object.parent_set(keep_transform=True)
 

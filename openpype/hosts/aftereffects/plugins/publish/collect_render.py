@@ -66,19 +66,19 @@ class CollectAERender(publish.AbstractCollectRender):
 
             comp_id = int(inst.data["members"][0])
 
-            work_area_info = CollectAERender.get_stub().get_work_area(comp_id)
+            comp_info = CollectAERender.get_stub().get_comp_properties(
+                comp_id)
 
-            if not work_area_info:
+            if not comp_info:
                 self.log.warning("Orphaned instance, deleting metadata")
-                inst_id = inst.get("instance_id") or str(comp_id)
+                inst_id = inst.data.get("instance_id") or str(comp_id)
                 CollectAERender.get_stub().remove_instance(inst_id)
                 continue
 
-            frame_start = work_area_info.workAreaStart
-            frame_end = round(work_area_info.workAreaStart +
-                              float(work_area_info.workAreaDuration) *
-                              float(work_area_info.frameRate)) - 1
-            fps = work_area_info.frameRate
+            frame_start = comp_info.frameStart
+            frame_end = round(comp_info.frameStart +
+                              comp_info.framesDuration) - 1
+            fps = comp_info.frameRate
             # TODO add resolution when supported by extension
 
             task_name = inst.data.get("task")  # legacy
@@ -138,7 +138,6 @@ class CollectAERender(publish.AbstractCollectRender):
                 fam = "render.farm"
                 if fam not in instance.families:
                     instance.families.append(fam)
-                instance.toBeRenderedOn = "deadline"
                 instance.renderer = "aerender"
                 instance.farm = True  # to skip integrate
                 if "review" in instance.families:

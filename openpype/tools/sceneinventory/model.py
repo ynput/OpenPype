@@ -15,7 +15,7 @@ from openpype.client import (
     get_representation_by_id,
 )
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     schema,
     HeroVersionType,
     registered_host,
@@ -24,11 +24,7 @@ from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
 from openpype.modules import ModulesManager
 
-from .lib import (
-    get_site_icons,
-    walk_hierarchy,
-    get_progress_for_repre
-)
+from .lib import walk_hierarchy
 
 
 class InventoryModel(TreeModel):
@@ -54,8 +50,10 @@ class InventoryModel(TreeModel):
         self._default_icon_color = get_default_entity_icon_color()
 
         manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
-        self.sync_enabled = sync_server.enabled
+        sync_server = manager.modules_by_name.get("sync_server")
+        self.sync_enabled = (
+            sync_server is not None and sync_server.enabled
+        )
         self._site_icons = {}
         self.active_site = self.remote_site = None
         self.active_provider = self.remote_provider = None
@@ -63,7 +61,7 @@ class InventoryModel(TreeModel):
         if not self.sync_enabled:
             return
 
-        project_name = legacy_io.current_project()
+        project_name = get_current_project_name()
         active_site = sync_server.get_active_site(project_name)
         remote_site = sync_server.get_remote_site(project_name)
 
@@ -80,12 +78,15 @@ class InventoryModel(TreeModel):
                 project_name, remote_site
             )
 
-        # self.sync_server = sync_server
+        self.sync_server = sync_server
         self.active_site = active_site
         self.active_provider = active_provider
         self.remote_site = remote_site
         self.remote_provider = remote_provider
-        self._site_icons = get_site_icons()
+        self._site_icons = {
+            provider: QtGui.QIcon(icon_path)
+            for provider, icon_path in sync_server.get_site_icons().items()
+        }
         if "active_site" not in self.Columns:
             self.Columns.append("active_site")
         if "remote_site" not in self.Columns:
@@ -321,7 +322,7 @@ class InventoryModel(TreeModel):
         """
 
         # NOTE: @iLLiCiTiT this need refactor
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
 
         self.beginResetModel()
 
@@ -445,7 +446,7 @@ class InventoryModel(TreeModel):
             group_node["group"] = subset["data"].get("subsetGroup")
 
             if self.sync_enabled:
-                progress = get_progress_for_repre(
+                progress = self.sync_server.get_progress_for_repre(
                     representation, self.active_site, self.remote_site
                 )
                 group_node["active_site"] = self.active_site

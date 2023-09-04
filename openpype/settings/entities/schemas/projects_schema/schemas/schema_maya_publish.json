@@ -164,7 +164,7 @@
                 },
                 {
                     "key": "exclude_families",
-                    "label": "Families",
+                    "label": "Exclude Families",
                     "type": "list",
                     "object_type": "text"
                 }

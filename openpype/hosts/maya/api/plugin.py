@@ -1,125 +1,68 @@
+import json
 import os
-import re
-
-from maya import cmds
+from abc import ABCMeta
 
 import qargparse
+import six
+from maya import cmds
+from maya.app.renderSetup.model import renderSetup
 
-from openpype.lib import Logger
+from openpype.lib import BoolDef, Logger
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
+    AVALON_CONTAINER_ID,
+    Anatomy,
+
+    CreatedInstance,
+    Creator as NewCreator,
+    AutoCreator,
+    HiddenCreator,
+
+    CreatorError,
     LegacyCreator,
     LoaderPlugin,
     get_representation_path,
-    AVALON_CONTAINER_ID,
-    Anatomy,
 )
 from openpype.pipeline.load import LoadError
-from openpype.settings import get_project_settings
-from .pipeline import containerise
+from openpype.client import get_asset_by_name
+from openpype.pipeline.create import get_subset_name
+
 from . import lib
+from .lib import imprint, read
+from .pipeline import containerise
+
+log = Logger.get_logger()
 
 
-def get_reference_node(members, log=None):
+def _get_attr(node, attr, default=None):
+    """Helper to get attribute which allows attribute to not exist."""
+    if not cmds.attributeQuery(attr, node=node, exists=True):
+        return default
+    return cmds.getAttr("{}.{}".format(node, attr))
+
+
+# Backwards compatibility: these functions has been moved to lib.
+def get_reference_node(*args, **kwargs):
     """Get the reference node from the container members
-    Args:
-        members: list of node names
 
-    Returns:
-        str: Reference node name.
-
+    Deprecated:
+        This function was moved and will be removed in 3.16.x.
     """
-
-    # Collect the references without .placeHolderList[] attributes as
-    # unique entries (objects only) and skipping the sharedReferenceNode.
-    references = set()
-    for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
-
-        # Ignore any `:sharedReferenceNode`
-        if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
-            continue
-
-        # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
-        if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
-            continue
-
-        references.add(ref)
-
-    assert references, "No reference node found in container"
-
-    # Get highest reference node (least parents)
-    highest = min(references,
-                  key=lambda x: len(get_reference_node_parents(x)))
-
-    # Warn the user when we're taking the highest reference node
-    if len(references) > 1:
-        if not log:
-            log = Logger.get_logger(__name__)
-
-        log.warning("More than one reference node found in "
-                    "container, using highest reference node: "
-                    "%s (in: %s)", highest, list(references))
-
-    return highest
+    msg = "Function 'get_reference_node' has been moved."
+    log.warning(msg)
+    cmds.warning(msg)
+    return lib.get_reference_node(*args, **kwargs)
 
 
-def get_reference_node_parents(ref):
-    """Return all parent reference nodes of reference node
-
-    Args:
-        ref (str): reference node.
-
-    Returns:
-        list: The upstream parent reference nodes.
-
+def get_reference_node_parents(*args, **kwargs):
     """
-    parent = cmds.referenceQuery(ref,
-                                 referenceNode=True,
-                                 parent=True)
-    parents = []
-    while parent:
-        parents.append(parent)
-        parent = cmds.referenceQuery(parent,
-                                     referenceNode=True,
-                                     parent=True)
-    return parents
-
-
-def get_custom_namespace(custom_namespace):
-    """Return unique namespace.
-
-    The input namespace can contain a single group
-    of '#' number tokens to indicate where the namespace's
-    unique index should go. The amount of tokens defines
-    the zero padding of the number, e.g ### turns into 001.
-
-    Warning: Note that a namespace will always be
-        prefixed with a _ if it starts with a digit
-
-    Example:
-        >>> get_custom_namespace("myspace_##_")
-        # myspace_01_
-        >>> get_custom_namespace("##_myspace")
-        # _01_myspace
-        >>> get_custom_namespace("myspace##")
-        # myspace01
-
+    Deprecated:
+        This function was moved and will be removed in 3.16.x.
     """
-    split = re.split("([#]+)", custom_namespace, 1)
-
-    if len(split) == 3:
-        base, padding, suffix = split
-        padding = "%0{}d".format(len(padding))
-    else:
-        base = split[0]
-        padding = "%02d"  # default padding
-        suffix = ""
-
-    return lib.unique_namespace(
-        base,
-        format=padding,
-        prefix="_" if not base or base[0].isdigit() else "",
-        suffix=suffix
-    )
+    msg = "Function 'get_reference_node_parents' has been moved."
+    log.warning(msg)
+    cmds.warning(msg)
+    return lib.get_reference_node_parents(*args, **kwargs)
 
 
 class Creator(LegacyCreator):
@@ -138,8 +81,519 @@ class Creator(LegacyCreator):
         return instance
 
 
+@six.add_metaclass(ABCMeta)
+class MayaCreatorBase(object):
+
+    @staticmethod
+    def cache_subsets(shared_data):
+        """Cache instances for Creators to shared data.
+
+        Create `maya_cached_subsets` key when needed in shared data and
+        fill it with all collected instances from the scene under its
+        respective creator identifiers.
+
+        If legacy instances are detected in the scene, create
+        `maya_cached_legacy_subsets` there and fill it with
+        all legacy subsets under family as a key.
+
+        Args:
+            Dict[str, Any]: Shared data.
+
+        Return:
+            Dict[str, Any]: Shared data dictionary.
+
+        """
+        if shared_data.get("maya_cached_subsets") is None:
+            cache = dict()
+            cache_legacy = dict()
+
+            for node in cmds.ls(type="objectSet"):
+
+                if _get_attr(node, attr="id") != "pyblish.avalon.instance":
+                    continue
+
+                creator_id = _get_attr(node, attr="creator_identifier")
+                if creator_id is not None:
+                    # creator instance
+                    cache.setdefault(creator_id, []).append(node)
+                else:
+                    # legacy instance
+                    family = _get_attr(node, attr="family")
+                    if family is None:
+                        # must be a broken instance
+                        continue
+
+                    cache_legacy.setdefault(family, []).append(node)
+
+            shared_data["maya_cached_subsets"] = cache
+            shared_data["maya_cached_legacy_subsets"] = cache_legacy
+        return shared_data
+
+    def imprint_instance_node(self, node, data):
+
+        # We never store the instance_node as value on the node since
+        # it's the node name itself
+        data.pop("instance_node", None)
+
+        # We store creator attributes at the root level and assume they
+        # will not clash in names with `subset`, `task`, etc. and other
+        # default names. This is just so these attributes in many cases
+        # are still editable in the maya UI by artists.
+        # pop to move to end of dict to sort attributes last on the node
+        creator_attributes = data.pop("creator_attributes", {})
+        data.update(creator_attributes)
+
+        # We know the "publish_attributes" will be complex data of
+        # settings per plugins, we'll store this as a flattened json structure
+        # pop to move to end of dict to sort attributes last on the node
+        data["publish_attributes"] = json.dumps(
+            data.pop("publish_attributes", {})
+        )
+
+        # Since we flattened the data structure for creator attributes we want
+        # to correctly detect which flattened attributes should end back in the
+        # creator attributes when reading the data from the node, so we store
+        # the relevant keys as a string
+        data["__creator_attributes_keys"] = ",".join(creator_attributes.keys())
+
+        # Kill any existing attributes just so we can imprint cleanly again
+        for attr in data.keys():
+            if cmds.attributeQuery(attr, node=node, exists=True):
+                cmds.deleteAttr("{}.{}".format(node, attr))
+
+        return imprint(node, data)
+
+    def read_instance_node(self, node):
+        node_data = read(node)
+
+        # Never care about a cbId attribute on the object set
+        # being read as 'data'
+        node_data.pop("cbId", None)
+
+        # Move the relevant attributes into "creator_attributes" that
+        # we flattened originally
+        node_data["creator_attributes"] = {}
+        creator_attribute_keys = node_data.pop("__creator_attributes_keys",
+                                               "").split(",")
+        for key in creator_attribute_keys:
+            if key in node_data:
+                node_data["creator_attributes"][key] = node_data.pop(key)
+
+        publish_attributes = node_data.get("publish_attributes")
+        if publish_attributes:
+            node_data["publish_attributes"] = json.loads(publish_attributes)
+
+        # Explicitly re-parse the node name
+        node_data["instance_node"] = node
+
+        return node_data
+
+    def _default_collect_instances(self):
+        self.cache_subsets(self.collection_shared_data)
+        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        for node in cached_subsets.get(self.identifier, []):
+            node_data = self.read_instance_node(node)
+
+            created_instance = CreatedInstance.from_existing(node_data, self)
+            self._add_instance_to_context(created_instance)
+
+    def _default_update_instances(self, update_list):
+        for created_inst, _changes in update_list:
+            data = created_inst.data_to_store()
+            node = data.get("instance_node")
+
+            self.imprint_instance_node(node, data)
+
+    def _default_remove_instances(self, instances):
+        """Remove specified instance from the scene.
+
+        This is only removing `id` parameter so instance is no longer
+        instance, because it might contain valuable data for artist.
+
+        """
+        for instance in instances:
+            node = instance.data.get("instance_node")
+            if node:
+                cmds.delete(node)
+
+            self._remove_instance_from_context(instance)
+
+
+@six.add_metaclass(ABCMeta)
+class MayaCreator(NewCreator, MayaCreatorBase):
+
+    settings_name = None
+
+    def create(self, subset_name, instance_data, pre_create_data):
+
+        members = list()
+        if pre_create_data.get("use_selection"):
+            members = cmds.ls(selection=True)
+
+        with lib.undo_chunk():
+            instance_node = cmds.sets(members, name=subset_name)
+            instance_data["instance_node"] = instance_node
+            instance = CreatedInstance(
+                self.family,
+                subset_name,
+                instance_data,
+                self)
+            self._add_instance_to_context(instance)
+
+            self.imprint_instance_node(instance_node,
+                                       data=instance.data_to_store())
+            return instance
+
+    def collect_instances(self):
+        return self._default_collect_instances()
+
+    def update_instances(self, update_list):
+        return self._default_update_instances(update_list)
+
+    def remove_instances(self, instances):
+        return self._default_remove_instances(instances)
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection",
+                    label="Use selection",
+                    default=True)
+        ]
+
+    def apply_settings(self, project_settings, system_settings):
+        """Method called on initialization of plugin to apply settings."""
+
+        settings_name = self.settings_name
+        if settings_name is None:
+            settings_name = self.__class__.__name__
+
+        settings = project_settings["maya"]["create"]
+        settings = settings.get(settings_name)
+        if settings is None:
+            self.log.debug(
+                "No settings found for {}".format(self.__class__.__name__)
+            )
+            return
+
+        for key, value in settings.items():
+            setattr(self, key, value)
+
+
+class MayaAutoCreator(AutoCreator, MayaCreatorBase):
+    """Automatically triggered creator for Maya.
+
+    The plugin is not visible in UI, and 'create' method does not expect
+        any arguments.
+    """
+
+    def collect_instances(self):
+        return self._default_collect_instances()
+
+    def update_instances(self, update_list):
+        return self._default_update_instances(update_list)
+
+    def remove_instances(self, instances):
+        return self._default_remove_instances(instances)
+
+
+class MayaHiddenCreator(HiddenCreator, MayaCreatorBase):
+    """Hidden creator for Maya.
+
+    The plugin is not visible in UI, and it does not have strictly defined
+        arguments for 'create' method.
+    """
+
+    def create(self, *args, **kwargs):
+        return MayaCreator.create(self, *args, **kwargs)
+
+    def collect_instances(self):
+        return self._default_collect_instances()
+
+    def update_instances(self, update_list):
+        return self._default_update_instances(update_list)
+
+    def remove_instances(self, instances):
+        return self._default_remove_instances(instances)
+
+
+def ensure_namespace(namespace):
+    """Make sure the namespace exists.
+
+    Args:
+        namespace (str): The preferred namespace name.
+
+    Returns:
+        str: The generated or existing namespace
+
+    """
+    exists = cmds.namespace(exists=namespace)
+    if exists:
+        return namespace
+    else:
+        return cmds.namespace(add=namespace)
+
+
+class RenderlayerCreator(NewCreator, MayaCreatorBase):
+    """Creator which creates an instance per renderlayer in the workfile.
+
+    Create and manages renderlayer subset per renderLayer in workfile.
+    This generates a singleton node in the scene which, if it exists, tells the
+    Creator to collect Maya rendersetup renderlayers as individual instances.
+    As such, triggering create doesn't actually create the instance node per
+    layer but only the node which tells the Creator it may now collect
+    an instance per renderlayer.
+
+    """
+
+    # These are required to be overridden in subclass
+    singleton_node_name = ""
+
+    # These are optional to be overridden in subclass
+    layer_instance_prefix = None
+
+    def _get_singleton_node(self, return_all=False):
+        nodes = lib.lsattr("pre_creator_identifier", self.identifier)
+        if nodes:
+            return nodes if return_all else nodes[0]
+
+    def create(self, subset_name, instance_data, pre_create_data):
+        # A Renderlayer is never explicitly created using the create method.
+        # Instead, renderlayers from the scene are collected. Thus "create"
+        # would only ever be called to say, 'hey, please refresh collect'
+        self.create_singleton_node()
+
+        # if no render layers are present, create default one with
+        # asterisk selector
+        rs = renderSetup.instance()
+        if not rs.getRenderLayers():
+            render_layer = rs.createRenderLayer("Main")
+            collection = render_layer.createCollection("defaultCollection")
+            collection.getSelector().setPattern('*')
+
+        # By RenderLayerCreator.create we make it so that the renderlayer
+        # instances directly appear even though it just collects scene
+        # renderlayers. This doesn't actually 'create' any scene contents.
+        self.collect_instances()
+
+    def create_singleton_node(self):
+        if self._get_singleton_node():
+            raise CreatorError("A Render instance already exists - only "
+                               "one can be configured.")
+
+        with lib.undo_chunk():
+            node = cmds.sets(empty=True, name=self.singleton_node_name)
+            lib.imprint(node, data={
+                "pre_creator_identifier": self.identifier
+            })
+
+        return node
+
+    def collect_instances(self):
+
+        # We only collect if the global render instance exists
+        if not self._get_singleton_node():
+            return
+
+        rs = renderSetup.instance()
+        layers = rs.getRenderLayers()
+        for layer in layers:
+            layer_instance_node = self.find_layer_instance_node(layer)
+            if layer_instance_node:
+                data = self.read_instance_node(layer_instance_node)
+                instance = CreatedInstance.from_existing(data, creator=self)
+            else:
+                # No existing scene instance node for this layer. Note that
+                # this instance will not have the `instance_node` data yet
+                # until it's been saved/persisted at least once.
+                project_name = self.create_context.get_current_project_name()
+
+                instance_data = {
+                    "asset": self.create_context.get_current_asset_name(),
+                    "task": self.create_context.get_current_task_name(),
+                    "variant": layer.name(),
+                }
+                asset_doc = get_asset_by_name(project_name,
+                                              instance_data["asset"])
+                subset_name = self.get_subset_name(
+                    layer.name(),
+                    instance_data["task"],
+                    asset_doc,
+                    project_name)
+
+                instance = CreatedInstance(
+                    family=self.family,
+                    subset_name=subset_name,
+                    data=instance_data,
+                    creator=self
+                )
+
+            instance.transient_data["layer"] = layer
+            self._add_instance_to_context(instance)
+
+    def find_layer_instance_node(self, layer):
+        connected_sets = cmds.listConnections(
+            "{}.message".format(layer.name()),
+            source=False,
+            destination=True,
+            type="objectSet"
+        ) or []
+
+        for node in connected_sets:
+            if not cmds.attributeQuery("creator_identifier",
+                                       node=node,
+                                       exists=True):
+                continue
+
+            creator_identifier = cmds.getAttr(node + ".creator_identifier")
+            if creator_identifier == self.identifier:
+                self.log.info("Found node: {}".format(node))
+                return node
+
+    def _create_layer_instance_node(self, layer):
+
+        # We only collect if a CreateRender instance exists
+        create_render_set = self._get_singleton_node()
+        if not create_render_set:
+            raise CreatorError("Creating a renderlayer instance node is not "
+                               "allowed if no 'CreateRender' instance exists")
+
+        namespace = "_{}".format(self.singleton_node_name)
+        namespace = ensure_namespace(namespace)
+
+        name = "{}:{}".format(namespace, layer.name())
+        render_set = cmds.sets(name=name, empty=True)
+
+        # Keep an active link with the renderlayer so we can retrieve it
+        # later by a physical maya connection instead of relying on the layer
+        # name
+        cmds.addAttr(render_set, longName="renderlayer", at="message")
+        cmds.connectAttr("{}.message".format(layer.name()),
+                         "{}.renderlayer".format(render_set), force=True)
+
+        # Add the set to the 'CreateRender' set.
+        cmds.sets(render_set, forceElement=create_render_set)
+
+        return render_set
+
+    def update_instances(self, update_list):
+        # We only generate the persisting layer data into the scene once
+        # we save with the UI on e.g. validate or publish
+        for instance, _changes in update_list:
+            instance_node = instance.data.get("instance_node")
+
+            # Ensure a node exists to persist the data to
+            if not instance_node:
+                layer = instance.transient_data["layer"]
+                instance_node = self._create_layer_instance_node(layer)
+                instance.data["instance_node"] = instance_node
+
+            self.imprint_instance_node(instance_node,
+                                       data=instance.data_to_store())
+
+    def imprint_instance_node(self, node, data):
+        # Do not ever try to update the `renderlayer` since it'll try
+        # to remove the attribute and recreate it but fail to keep it a
+        # message attribute link. We only ever imprint that on the initial
+        # node creation.
+        # TODO: Improve how this is handled
+        data.pop("renderlayer", None)
+        data.get("creator_attributes", {}).pop("renderlayer", None)
+
+        return super(RenderlayerCreator, self).imprint_instance_node(node,
+                                                                     data=data)
+
+    def remove_instances(self, instances):
+        """Remove specified instances from the scene.
+
+        This is only removing `id` parameter so instance is no longer
+        instance, because it might contain valuable data for artist.
+
+        """
+        # Instead of removing the single instance or renderlayers we instead
+        # remove the CreateRender node this creator relies on to decide whether
+        # it should collect anything at all.
+        nodes = self._get_singleton_node(return_all=True)
+        if nodes:
+            cmds.delete(nodes)
+
+        # Remove ALL the instances even if only one gets deleted
+        for instance in list(self.create_context.instances):
+            if instance.get("creator_identifier") == self.identifier:
+                self._remove_instance_from_context(instance)
+
+                # Remove the stored settings per renderlayer too
+                node = instance.data.get("instance_node")
+                if node and cmds.objExists(node):
+                    cmds.delete(node)
+
+    def get_subset_name(
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
+    ):
+        # creator.family != 'render' as expected
+        return get_subset_name(self.layer_instance_prefix,
+                               variant,
+                               task_name,
+                               asset_doc,
+                               project_name)
+
+
 class Loader(LoaderPlugin):
     hosts = ["maya"]
+
+    def get_custom_namespace_and_group(self, context, options, loader_key):
+        """Queries Settings to get custom template for namespace and group.
+
+        Group template might be empty >> this forces to not wrap imported items
+        into separate group.
+
+        Args:
+            context (dict)
+            options (dict): artist modifiable options from dialog
+            loader_key (str): key to get separate configuration from Settings
+                ('reference_loader'|'import_loader')
+        """
+        options["attach_to_root"] = True
+
+        asset = context['asset']
+        subset = context['subset']
+        settings = get_project_settings(context['project']['name'])
+        custom_naming = settings['maya']['load'][loader_key]
+
+        if not custom_naming['namespace']:
+            raise LoadError("No namespace specified in "
+                            "Maya ReferenceLoader settings")
+        elif not custom_naming['group_name']:
+            self.log.debug("No custom group_name, no group will be created.")
+            options["attach_to_root"] = False
+
+        formatting_data = {
+            "asset_name": asset['name'],
+            "asset_type": asset['type'],
+            "folder": {
+                "name": asset["name"],
+            },
+            "subset": subset['name'],
+            "family": (
+                subset['data'].get('family') or
+                subset['data']['families'][0]
+            )
+        }
+
+        custom_namespace = custom_naming['namespace'].format(
+            **formatting_data
+        )
+
+        custom_group_name = custom_naming['group_name'].format(
+            **formatting_data
+        )
+
+        return custom_group_name, custom_namespace, options
 
 
 class ReferenceLoader(Loader):
@@ -180,43 +634,18 @@ class ReferenceLoader(Loader):
         namespace=None,
         options=None
     ):
-        assert os.path.exists(self.fname), "%s does not exist." % self.fname
+        path = self.filepath_from_context(context)
+        assert os.path.exists(path), "%s does not exist." % path
 
-        asset = context['asset']
-        subset = context['subset']
-        settings = get_project_settings(context['project']['name'])
-        custom_naming = settings['maya']['load']['reference_loader']
-        loaded_containers = []
-
-        if not custom_naming['namespace']:
-            raise LoadError("No namespace specified in "
-                            "Maya ReferenceLoader settings")
-        elif not custom_naming['group_name']:
-            raise LoadError("No group name specified in "
-                            "Maya ReferenceLoader settings")
-
-        formatting_data = {
-            "asset_name": asset['name'],
-            "asset_type": asset['type'],
-            "subset": subset['name'],
-            "family": (
-                subset['data'].get('family') or
-                subset['data']['families'][0]
-            )
-        }
-
-        custom_namespace = custom_naming['namespace'].format(
-            **formatting_data
-        )
-
-        custom_group_name = custom_naming['group_name'].format(
-            **formatting_data
-        )
+        custom_group_name, custom_namespace, options = \
+            self.get_custom_namespace_and_group(context, options,
+                                                "reference_loader")
 
         count = options.get("count") or 1
 
+        loaded_containers = []
         for c in range(0, count):
-            namespace = get_custom_namespace(custom_namespace)
+            namespace = lib.get_custom_namespace(custom_namespace)
             group_name = "{}:{}".format(
                 namespace,
                 custom_group_name
@@ -243,7 +672,7 @@ class ReferenceLoader(Loader):
             if not nodes:
                 return
 
-            ref_node = get_reference_node(nodes, self.log)
+            ref_node = lib.get_reference_node(nodes, self.log)
             container = containerise(
                 name=name,
                 namespace=namespace,
@@ -264,6 +693,7 @@ class ReferenceLoader(Loader):
 
     def update(self, container, representation):
         from maya import cmds
+
         from openpype.hosts.maya.api.lib import get_container_members
 
         node = container["objectName"]
@@ -272,7 +702,7 @@ class ReferenceLoader(Loader):
 
         # Get reference node from container members
         members = get_container_members(node)
-        reference_node = get_reference_node(members, self.log)
+        reference_node = lib.get_reference_node(members, self.log)
         namespace = cmds.referenceQuery(reference_node, namespace=True)
 
         file_type = {
@@ -420,7 +850,7 @@ class ReferenceLoader(Loader):
 
         # Assume asset has been referenced
         members = cmds.sets(node, query=True)
-        reference_node = get_reference_node(members, self.log)
+        reference_node = lib.get_reference_node(members, self.log)
 
         assert reference_node, ("Imported container not supported; "
                                 "container must be referenced.")
