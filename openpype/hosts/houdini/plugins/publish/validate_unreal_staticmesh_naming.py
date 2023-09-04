@@ -107,3 +107,30 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
             )
 
         return invalid
+
+    def get_outputs(self, output_node):
+
+        if output_node.childTypeCategory() == hou.objNodeTypeCategory():
+            out_list = [output_node]
+            for child in output_node.children():
+                out_list += self.get_outputs(child)
+
+            return out_list
+
+        elif output_node.childTypeCategory() == hou.sopNodeTypeCategory():
+            return [output_node, self.get_obj_output(output_node)]
+
+    def get_obj_output(self, obj_node):
+        """Find sop output node,   """
+
+        outputs = obj_node.subnetOutputs()
+
+        if not outputs:
+            return
+
+        elif len(outputs) == 1:
+            return outputs[0]
+
+        else:
+            return min(outputs,
+                       key=lambda node: node.evalParm('outputidx'))
