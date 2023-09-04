@@ -3,7 +3,10 @@
 from maya import cmds
 import pyblish.api
 
-from openpype.pipeline.publish import ValidateMeshOrder
+from openpype.pipeline.publish import (
+    ValidateMeshOrder,
+    PublishValidationError
+)
 import openpype.hosts.maya.api.action
 
 
@@ -22,8 +25,8 @@ class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin):
         invalid = []
         meshes = cmds.ls(instance, type="mesh", long=True)
         for mesh in meshes:
-            faces = cmds.polyEvaluate(mesh, f=True)
-            tris = cmds.polyEvaluate(mesh, t=True)
+            faces = cmds.polyEvaluate(mesh, face=True)
+            tris = cmds.polyEvaluate(mesh, triangle=True)
             if faces != tris:
                 invalid.append(mesh)
 
@@ -31,5 +34,5 @@ class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
-        assert len(invalid) == 0, (
-            "Found meshes without triangles")
+        if invalid:
+            raise PublishValidationError("Found meshes without triangles")

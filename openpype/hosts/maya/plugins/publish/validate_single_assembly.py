@@ -1,5 +1,8 @@
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateSingleAssembly(pyblish.api.InstancePlugin):
@@ -30,7 +33,11 @@ class ValidateSingleAssembly(pyblish.api.InstancePlugin):
         # ensure unique (somehow `maya.cmds.ls` doesn't manage that)
         assemblies = set(assemblies)
 
-        assert len(assemblies) > 0, (
-            "One assembly required for: %s (currently empty?)" % instance)
-        assert len(assemblies) < 2, (
-            'Multiple assemblies found: %s' % assemblies)
+        if len(assemblies) == 0:
+            raise PublishValidationError(
+                "One assembly required for: %s (currently empty?)" % instance
+            )
+        elif len(assemblies) > 1:
+            raise PublishValidationError(
+                'Multiple assemblies found: %s' % assemblies
+            )

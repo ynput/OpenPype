@@ -5,7 +5,8 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateMeshOrder,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 
 
@@ -48,8 +49,9 @@ class ValidateColorSets(pyblish.api.Validator,
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Meshes found with "
-                             "Color Sets: {0}".format(invalid))
+            raise PublishValidationError(
+                "Meshes found with Color Sets: {0}".format(invalid)
+            )
 
     @classmethod
     def repair(cls, instance):

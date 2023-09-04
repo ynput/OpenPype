@@ -76,5 +76,6 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(
-                ("Meshes found in instance with vertices that "
-                 "have no edges: {}").format(invalid))
+                "Meshes found in instance with vertices that "
+                "have no edges: {}".format(invalid)
+            )

@@ -2,7 +2,10 @@ from maya import cmds
 
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateMeshOrder
+from openpype.pipeline.publish import (
+    ValidateMeshOrder,
+    PublishValidationError
+)
 
 
 class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
@@ -18,6 +21,16 @@ class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
     label = 'Mesh Lamina Faces'
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
+    description = (
+        "## Meshes with Lamina Faces\n"
+        "Detected meshes with lamina faces. <b>Lamina faces</b> are faces "
+        "that share all of their edges and thus are merged together on top of "
+        "each other.\n\n"
+        "### How to repair?\n"
+        "You can repair them by using Maya's modeling tool `Mesh > Cleanup..` "
+        "and select to cleanup matching polygons for lamina faces."
+    )
+
     @staticmethod
     def get_invalid(instance):
         meshes = cmds.ls(instance, type='mesh', long=True)
@@ -32,5 +45,7 @@ class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Meshes found with lamina faces: "
-                             "{0}".format(invalid))
+            raise PublishValidationError(
+                "Meshes found with lamina faces: {0}".format(invalid),
+                description=self.description
+            )

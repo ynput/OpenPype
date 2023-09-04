@@ -2,7 +2,10 @@ from maya import cmds
 
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateUniqueNames(pyblish.api.Validator):
@@ -35,5 +38,6 @@ class ValidateUniqueNames(pyblish.api.Validator):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise ValueError("Nodes found with none unique names. "
-                             "values: {0}".format(invalid))
+            raise PublishValidationError(
+                "Nodes found with non-unique names: {0}".format(invalid)
+            )

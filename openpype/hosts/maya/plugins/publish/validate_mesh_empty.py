@@ -51,5 +51,5 @@ class ValidateMeshEmpty(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(
-                "Meshes found in instance without any vertices: %s" % invalid
+                "Meshes found without any vertices: {}".format(invalid)
             )

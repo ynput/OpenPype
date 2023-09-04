@@ -31,19 +31,25 @@ class ValidateSubsetName(pyblish.api.InstancePlugin):
 
         # Ensure subset data
         if subset is None:
-            raise PublishValidationError("Instance is missing subset "
-                               "name: {0}".format(subset))
+            raise PublishValidationError(
+                "Instance is missing subset name: {0}".format(subset)
+            )
 
         if not isinstance(subset, six.string_types):
-            raise TypeError("Instance subset name must be string, "
-                            "got: {0} ({1})".format(subset, type(subset)))
+            raise PublishValidationError(
+                "Instance subset name must be string, got: "
+                "{0} ({1})".format(subset, type(subset))
+            )
 
         # Ensure is not empty subset
         if not subset:
-            raise ValueError("Instance subset name is "
-                             "empty: {0}".format(subset))
+            raise PublishValidationError(
+                "Instance subset name is empty: {0}".format(subset)
+            )
 
         # Validate subset characters
         if not validate_name(subset):
-            raise ValueError("Instance subset name contains invalid "
-                             "characters: {0}".format(subset))
+            raise PublishValidationError(
+                "Instance subset name contains invalid characters: "
+                "{0}".format(subset)
+            )

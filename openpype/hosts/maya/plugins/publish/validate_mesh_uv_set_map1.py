@@ -5,6 +5,7 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateMeshOrder,
+    PublishValidationError,
     OptionalPyblishPluginMixin
 )
 
@@ -55,8 +56,9 @@ class ValidateMeshUVSetMap1(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise ValueError("Meshes found without 'map1' "
-                             "UV set: {0}".format(invalid))
+            raise PublishValidationError(
+                "Meshes found without 'map1' UV set: {0}".format(invalid)
+            )
 
     @classmethod
     def repair(cls, instance):

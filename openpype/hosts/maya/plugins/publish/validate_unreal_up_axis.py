@@ -6,7 +6,8 @@ import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     RepairAction,
-    OptionalPyblishPluginMixin
+    OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 
 
@@ -26,9 +27,10 @@ class ValidateUnrealUpAxis(pyblish.api.ContextPlugin,
         if not self.is_active(context.data):
             return
 
-        assert cmds.upAxis(q=True, axis=True) == "z", (
-            "Invalid axis set as up axis"
-        )
+        if cmds.upAxis(q=True, axis=True) != "z":
+            raise PublishValidationError(
+                "Invalid axis set as up axis"
+            )
 
     @classmethod
     def repair(cls, instance):

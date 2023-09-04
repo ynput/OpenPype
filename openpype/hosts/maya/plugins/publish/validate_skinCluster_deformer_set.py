@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateSkinclusterDeformerSet(pyblish.api.InstancePlugin):
@@ -26,8 +29,10 @@ class ValidateSkinclusterDeformerSet(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Invalid skinCluster relationships "
-                             "found on meshes: {0}".format(invalid))
+            raise PublishValidationError(
+                "Invalid skinCluster relationships found on meshes: "
+                "{0}".format(invalid)
+            )
 
     @classmethod
     def get_invalid(cls, instance):

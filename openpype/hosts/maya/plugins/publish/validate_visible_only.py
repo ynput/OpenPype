@@ -30,8 +30,10 @@ class ValidateAlembicVisibleOnly(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             start, end = self.get_frame_range(instance)
-            raise PublishValidationError("No visible nodes found in "
-                               "frame range {}-{}.".format(start, end))
+            raise PublishValidationError(
+                "No visible nodes found in frame range {}-{}.".format(start,
+                                                                      end)
+            )
 
     @classmethod
     def get_invalid(cls, instance):

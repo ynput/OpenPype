@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateMeshOrder,
+    PublishValidationError
+)
 
 
 class ValidateMeshNgons(pyblish.api.Validator):
@@ -16,11 +19,20 @@ class ValidateMeshNgons(pyblish.api.Validator):
 
     """
 
-    order = ValidateContentsOrder
+    order = ValidateMeshOrder
     hosts = ["maya"]
     families = ["model"]
     label = "Mesh ngons"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
+
+    description = (
+        "## Meshes with NGONs Faces\n"
+        "Detected meshes with NGON faces. <b>NGONS<b> are faces that "
+        "with more than four sides.\n\n"
+        "### How to repair?\n"
+        "You can repair them by usings Maya's modeling tool Mesh > Cleanup.. "
+        "and select to cleanup matching polygons for lamina faces."
+    )
 
     @staticmethod
     def get_invalid(instance):
@@ -42,5 +54,7 @@ class ValidateMeshNgons(pyblish.api.Validator):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise ValueError("Meshes found with n-gons"
-                             "values: {0}".format(invalid))
+            raise PublishValidationError(
+                "Meshes found with n-gons: {0}".format(invalid),
+                description=self.description
+            )

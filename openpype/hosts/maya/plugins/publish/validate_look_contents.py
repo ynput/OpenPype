@@ -36,8 +36,9 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
             raise PublishValidationError("Instance is empty")
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("'{}' has invalid look "
-                               "content".format(instance.name))
+            raise PublishValidationError(
+                "'{}' has invalid look content".format(instance.name)
+            )
 
     @classmethod
     def get_invalid(cls, instance):
@@ -69,8 +70,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         lookdata = instance.data["lookData"]
         for key in keys:
             if key not in lookdata:
-                cls.log.error("Look Data has no key "
-                              "'{}'".format(key))
+                cls.log.error("Look Data has no key '{}'".format(key))
                 invalid.add(instance.name)
 
         # Validate at least one single relationship is collected

@@ -27,7 +27,7 @@ class ValidateStepSize(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        objset = instance.data['name']
+        objset = instance.data['instance_node']
         step = instance.data.get("step", 1.0)
 
         if step < cls.MIN or step > cls.MAX:
@@ -44,4 +44,5 @@ class ValidateStepSize(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(
-                "Invalid instances found: {0}".format(invalid))
+                "Instance found with invalid step size: {0}".format(invalid)
+            )

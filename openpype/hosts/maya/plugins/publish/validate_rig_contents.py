@@ -26,29 +26,37 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
         objectsets = ("controls_SET", "out_SET")
         missing = [obj for obj in objectsets if obj not in instance]
-        assert not missing, ("%s is missing %s" % (instance, missing))
+        if missing:
+            raise PublishValidationError(
+                "%s is missing sets: %s" % (instance, missing)
+            )
 
         # Ensure there are at least some transforms or dag nodes
         # in the rig instance
         set_members = instance.data['setMembers']
         if not cmds.ls(set_members, type="dagNode", long=True):
             raise PublishValidationError(
-                ("No dag nodes in the pointcache instance. "
-                 "(Empty instance?)"))
+                "No dag nodes in the pointcache instance. "
+                "(Empty instance?)"
+            )
 
         # Ensure contents in sets and retrieve long path for all objects
         output_content = cmds.sets("out_SET", query=True) or []
-        assert output_content, "Must have members in rig out_SET"
+        if not output_content:
+            raise PublishValidationError("Must have members in rig out_SET")
         output_content = cmds.ls(output_content, long=True)
 
         controls_content = cmds.sets("controls_SET", query=True) or []
-        assert controls_content, "Must have members in rig controls_SET"
+        if not controls_content:
+            raise PublishValidationError(
+                "Must have members in rig controls_SET"
+            )
         controls_content = cmds.ls(controls_content, long=True)
 
         # Validate members are inside the hierarchy from root node
-        root_node = cmds.ls(set_members, assemblies=True)
-        hierarchy = cmds.listRelatives(root_node, allDescendents=True,
-                                       fullPath=True)
+        root_nodes = cmds.ls(set_members, assemblies=True, long=True)
+        hierarchy = cmds.listRelatives(root_nodes, allDescendents=True,
+                                       fullPath=True) + root_nodes
         hierarchy = set(hierarchy)
 
         invalid_hierarchy = []

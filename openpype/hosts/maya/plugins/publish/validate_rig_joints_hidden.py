@@ -7,6 +7,7 @@ from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 
@@ -38,9 +39,11 @@ class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Visible joints found: {0}".format(invalid))
+            raise PublishValidationError(
+                "Visible joints found: {0}".format(invalid)
+            )
 
     @classmethod
     def repair(cls, instance):
-        import maya.mel as mel
+        from maya import mel
         mel.eval("HideJoints")

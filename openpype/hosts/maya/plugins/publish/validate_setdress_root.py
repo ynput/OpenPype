@@ -1,5 +1,8 @@
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateSetdressRoot(pyblish.api.InstancePlugin):
@@ -20,4 +23,6 @@ class ValidateSetdressRoot(pyblish.api.InstancePlugin):
         root = cmds.ls(set_member, assemblies=True, long=True)
 
         if not root or root[0] not in set_member:
-            raise Exception("Setdress top root node is not being published.")
+            raise PublishValidationError(
+                "Setdress top root node is not being published."
+            )

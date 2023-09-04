@@ -3,7 +3,11 @@ from maya import cmds
 
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
-    PublishValidationError, RepairAction, ValidateContentsOrder)
+    KnownPublishError,
+    PublishValidationError,
+    RepairAction,
+    ValidateContentsOrder
+)
 
 
 class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
@@ -32,7 +36,10 @@ class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
             return
 
         vray_settings = cmds.ls("vraySettings", type="VRaySettingsNode")
-        assert vray_settings, "Please ensure a VRay Settings Node is present"
+        if not vray_settings:
+            raise KnownPublishError(
+                "Please ensure a VRay Settings Node is present"
+            )
 
         renderlayer = instance.data['renderlayer']
 
@@ -44,14 +51,15 @@ class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
         # during batch mode we invalidate the instance
         if not lib.get_attr_in_layer(self.ignored_attr, layer=renderlayer):
             raise PublishValidationError(
-                ("Renderlayer has distributed rendering enabled "
-                 "but is not set to ignore in batch mode."))
+                "Renderlayer has distributed rendering enabled "
+                "but is not set to ignore in batch mode."
+            )
 
     @classmethod
     def repair(cls, instance):
 
         renderlayer = instance.data.get("renderlayer")
         with lib.renderlayer(renderlayer):
-            cls.log.info("Enabling Distributed Rendering "
-                         "ignore in batch mode..")
+            cls.log.debug("Enabling Distributed Rendering "
+                          "ignore in batch mode..")
             cmds.setAttr(cls.ignored_attr, True)

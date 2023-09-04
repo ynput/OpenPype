@@ -31,7 +31,10 @@ class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise PublishValidationError("Invalid nodes %s" % (invalid,))
+            raise PublishValidationError(
+                "Found referenced nodes with reference edits applied"
+                " to their `cbId` attributees: {}".format(invalid)
+            )
 
     @staticmethod
     def get_invalid(instance):

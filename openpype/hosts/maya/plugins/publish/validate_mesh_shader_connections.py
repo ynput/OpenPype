@@ -103,8 +103,10 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise PublishValidationError("Shapes found with invalid shader "
-                               "connections: {0}".format(invalid))
+            raise PublishValidationError(
+                "Shapes found with invalid shader connections: "
+                "{0}".format(invalid)
+            )
 
     @staticmethod
     def get_invalid(instance):

@@ -47,10 +47,10 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
 
         context = instance.context
         if instance.data.get("tileRendering"):
-            self.log.info((
+            self.log.debug(
                 "Skipping frame range validation because "
                 "tile rendering is enabled."
-            ))
+            )
             return
 
         frame_start_handle = int(context.data.get("frameStartHandle"))
@@ -68,8 +68,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         inst_handle_end = int(instance.data.get("handleEnd"))
 
         # basic sanity checks
-        assert frame_start_handle <= frame_end_handle, (
-            "start frame is lower then end frame")
+        if frame_start_handle > frame_end_handle:
+            raise PublishValidationError("End frame is lower then start frame")
 
         # compare with data on instance
         errors = []

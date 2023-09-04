@@ -60,14 +60,18 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
 
         controllers_sets = [i for i in instance if i == "controls_SET"]
         controls = cmds.sets(controllers_sets, query=True)
-        assert controls, "Must have 'controls_SET' in rig instance"
+        if not controls:
+            raise PublishValidationError(
+                "Must have 'controls_SET' in rig instance"
+            )
 
         # Ensure all controls are within the top group
         lookup = set(instance[:])
-        assert all(control in lookup for control in cmds.ls(controls,
-                                                            long=True)), (
-            "All controls must be inside the rig's group."
-        )
+        if not all(control in lookup for control in cmds.ls(controls,
+                                                            long=True)):
+            raise PublishValidationError(
+                "All controls must be inside the rig's group."
+            )
 
         # Validate all controls
         has_connections = list()

@@ -4,7 +4,10 @@ import pyblish.api
 import types
 from maya import cmds
 
-from openpype.pipeline.publish import RepairContextAction
+from openpype.pipeline.publish import (
+    RepairContextAction,
+    PublishValidationError
+)
 
 
 class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
@@ -54,7 +57,7 @@ class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
                 self.log.error((
                     "'Use referenced' not enabled in Vray Render Settings."
                 ))
-                raise AssertionError("Invalid render settings")
+                raise PublishValidationError("Invalid render settings")
 
     @classmethod
     def repair(cls, context):

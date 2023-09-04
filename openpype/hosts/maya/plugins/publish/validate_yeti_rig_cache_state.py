@@ -1,3 +1,5 @@
+import inspect
+
 import pyblish.api
 import maya.cmds as cmds
 import openpype.hosts.maya.api.action
@@ -5,7 +7,6 @@ from openpype.pipeline.publish import (
     RepairAction,
     PublishValidationError
 )
-
 
 
 class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
@@ -27,7 +28,10 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Nodes have incorrect I/O settings")
+            raise PublishValidationError(
+                "Nodes have incorrect I/O settings",
+                description=inspect.cleandoc(self.__class__.__doc__)
+            )
 
     @classmethod
     def get_invalid(cls, instance):
