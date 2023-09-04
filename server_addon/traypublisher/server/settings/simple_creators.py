@@ -288,5 +288,22 @@ DEFAULT_SIMPLE_CREATORS = [
         "allow_multiple_items": True,
         "allow_version_control": False,
         "extensions": []
+    },
+    {
+        "product_type": "audio",
+        "identifier": "",
+        "label": "Audio ",
+        "icon": "fa5s.file-audio",
+        "default_variants": [
+            "Main"
+        ],
+        "description": "Audio product",
+        "detailed_description": "Audio files for review or final delivery",
+        "allow_sequences": False,
+        "allow_multiple_items": False,
+        "allow_version_control": False,
+        "extensions": [
+            ".wav"
+        ]
     }
 ]
