@@ -53,20 +53,10 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin,
             return
 
         invalid = self.get_invalid(instance)
-
         if invalid:
-
-            message = "Nodes found with multiple UV sets: {0}".format(invalid)
-
-            # Maya 2017 and up allows multiple UV sets in Alembic exports
-            # so we allow it, yet just warn the user to ensure they know about
-            # the other UV sets.
-            allowed = int(cmds.about(version=True)) >= 2017
-
-            if allowed:
-                self.log.warning(message)
-            else:
-                raise ValueError(message)
+            self.log.warning(
+                "Meshes found with multiple UV sets: {0}".format(invalid)
+            )
 
     @classmethod
     def repair(cls, instance):
