@@ -543,6 +543,9 @@ def list_instances(creator_id=None):
 
     For SubsetManager
 
+    Args:
+        creator_id (Optional[str]): creator identifier
+
     Returns:
         (list) of dictionaries matching instances format
     """
@@ -575,10 +578,13 @@ def list_instances(creator_id=None):
         if creator_id and instance_data["creator_identifier"] != creator_id:
             continue
 
-        if instance_data["instance_id"] in instance_ids:
+        instance_id = instance_data.get("instance_id")
+        if not instance_id:
+            pass
+        elif instance_id in instance_ids:
             instance_data.pop("instance_id")
         else:
-            instance_ids.add(instance_data["instance_id"])
+            instance_ids.add(instance_id)
 
         # node name could change, so update subset name data
         _update_subset_name_data(instance_data, node)
