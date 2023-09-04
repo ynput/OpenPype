@@ -53,8 +53,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
             nodes = [n.path() for n in invalid if isinstance(n, hou.Node)]
             raise PublishValidationError(
                 "See log for details. "
-                "Invalid nodes: {0}".format(nodes),
-                title=self.label
+                "Invalid nodes: {0}".format(nodes)
             )
 
     @classmethod
@@ -64,7 +63,11 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
 
         rop_node = hou.node(instance.data["instance_node"])
         output_node = instance.data.get("output_node")
-        cls.log.debug(cls.collision_prefixes)
+        if output_node is None:
+            cls.log.debug(
+                "No Output Node, skipping check.."
+            )
+            return
 
         # Check nodes names
         if output_node.childTypeCategory() == hou.objNodeTypeCategory():

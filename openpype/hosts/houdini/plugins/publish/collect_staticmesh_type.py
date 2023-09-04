@@ -16,5 +16,5 @@ class CollectStaticMeshType(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         if instance.data["creator_identifier"] == "io.openpype.creators.houdini.unrealstaticmesh.fbx":  # noqa: E501
-            # Marking this instance as FBX which triggers the FBX extractor.
+            # Marking this instance as FBX triggers the FBX extractor.
             instance.data["families"] += ["fbx"]

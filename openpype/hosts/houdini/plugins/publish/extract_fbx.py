@@ -1,15 +1,8 @@
-"""Extract FilmBox FBX.
-
-Extractors are used to generate output and
-update representation dictionary.
-
-This plugin is part of publish process guide.
-"""
+# -*- coding: utf-8 -*-
+"""Fbx Extractor for houdini. """
 
 import os
-
 import pyblish.api
-
 from openpype.pipeline import publish
 from openpype.hosts.houdini.api.lib import render_rop
 
@@ -22,10 +15,8 @@ class ExtractFBX(publish.Extractor):
     families = ["fbx"]
     hosts = ["houdini"]
 
-    # Usually you will use this value as default
     order = pyblish.api.ExtractorOrder + 0.1
 
-    # overrides Extractor.process()
     def process(self, instance):
 
         # get rop node

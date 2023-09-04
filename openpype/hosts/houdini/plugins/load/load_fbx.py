@@ -1,12 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Fbx Loader for houdini.
-
-It's almost a copy of
-'load_bgeo.py'and 'load_alembic.py'
-however this one includes extra comments for demonstration.
-
-This plugin is part of publish process guide.
-"""
+"""Fbx Loader for houdini. """
 from openpype.pipeline import (
     load,
     get_representation_path,
@@ -15,16 +8,16 @@ from openpype.hosts.houdini.api import pipeline
 
 
 class FbxLoader(load.LoaderPlugin):
-    """Load fbx files to Houdini."""
+    """Load fbx files. """
 
     label = "Load FBX"
-    families = ["staticMesh", "fbx"]
-    representations = ["fbx"]
-
-    # Usually you will use these value as default
-    order = -10
     icon = "code-fork"
     color = "orange"
+
+    order = -10
+
+    families = ["staticMesh", "fbx"]
+    representations = ["fbx"]
 
     def load(self, context, name=None, namespace=None, data=None):
 
