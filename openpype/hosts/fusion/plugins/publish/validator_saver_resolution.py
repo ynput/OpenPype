@@ -5,10 +5,56 @@ from openpype.pipeline import (
 )
 
 from openpype.hosts.fusion.api.action import SelectInvalidAction
-from openpype.hosts.fusion.api import (
-    get_current_comp,
-    comp_lock_and_undo_chunk,
-)
+from openpype.hosts.fusion.api import comp_lock_and_undo_chunk
+
+
+def get_tool_resolution(tool, frame):
+    """Return the 2D input resolution to a Fusion tool
+
+    If the current tool hasn't been rendered its input resolution
+    hasn't been saved. To combat this, add an expression in
+    the comments field to read the resolution
+
+    Args
+        tool (Fusion Tool): The tool to query input resolution
+        frame (int): The frame to query the resolution on.
+
+    Returns:
+        tuple: width, height as 2-tuple of integers
+
+    """
+    comp = tool.Composition
+
+    # False undo removes the undo-stack from the undo list
+    with comp_lock_and_undo_chunk(comp, "Read resolution", False):
+        # Save old comment
+        old_comment = ""
+        has_expression = False
+        if tool["Comments"][frame] != "":
+            if tool["Comments"].GetExpression() is not None:
+                has_expression = True
+                old_comment = tool["Comments"].GetExpression()
+                tool["Comments"].SetExpression(None)
+            else:
+                old_comment = tool["Comments"][frame]
+                tool["Comments"][frame] = ""
+
+        # Get input width
+        tool["Comments"].SetExpression("self.Input.OriginalWidth")
+        width = int(tool["Comments"][frame])
+
+        # Get input height
+        tool["Comments"].SetExpression("self.Input.OriginalHeight")
+        height = int(tool["Comments"][frame])
+
+        # Reset old comment
+        tool["Comments"].SetExpression(None)
+        if has_expression:
+            tool["Comments"].SetExpression(old_comment)
+        else:
+            tool["Comments"][frame] = old_comment
+
+        return width, height
 
 
 class ValidateSaverResolution(
@@ -23,74 +69,34 @@ class ValidateSaverResolution(
     optional = True
     actions = [SelectInvalidAction]
 
-    @classmethod
-    def get_invalid(cls, instance, wrong_resolution=None):
-        """Validate if the saver rescive the expected resolution"""
-        if wrong_resolution is None:
-            wrong_resolution = []
-
-        saver = instance[0]
-        firstFrame = saver.GetAttrs("TOOLNT_Region_Start")[1]
-        comp = get_current_comp()
-
-        # If the current saver hasn't bin rendered its input resolution
-        # hasn't bin saved. To combat this, add an expression in
-        # the comments field to read the resolution
-
-        # False undo removes the undo-stack from the undo list
-        with comp_lock_and_undo_chunk(comp, "Read resolution", False):
-            # Save old comment
-            oldComment = ""
-            hasExpression = False
-            if saver["Comments"][firstFrame] != "":
-                if saver["Comments"].GetExpression() is not None:
-                    hasExpression = True
-                    oldComment = saver["Comments"].GetExpression()
-                    saver["Comments"].SetExpression(None)
-                else:
-                    oldComment = saver["Comments"][firstFrame]
-                    saver["Comments"][firstFrame] = ""
-
-            # Get input width
-            saver["Comments"].SetExpression("self.Input.OriginalWidth")
-            width = int(saver["Comments"][firstFrame])
-
-            # Get input height
-            saver["Comments"].SetExpression("self.Input.OriginalHeight")
-            height = int(saver["Comments"][firstFrame])
-
-            # Reset old comment
-            saver["Comments"].SetExpression(None)
-            if hasExpression:
-                saver["Comments"].SetExpression(oldComment)
-            else:
-                saver["Comments"][firstFrame] = oldComment
-
-        # Time to compare!
-        wrong_resolution.append("{}x{}".format(width, height))
-        entityData = instance.data["assetEntity"]["data"]
-        if entityData["resolutionWidth"] != width:
-            return [saver]
-        if entityData["resolutionHeight"] != height:
-            return [saver]
-
-        return []
-
     def process(self, instance):
-        if not self.is_active(instance.data):
-            return
-
-        wrong_resolution = []
-        invalid = self.get_invalid(instance, wrong_resolution)
-        if invalid:
-            entityData = instance.data["assetEntity"]["data"]
+        resolution = self.get_resolution(instance)
+        expected_resolution = self.get_expected_resolution(instance)
+        if resolution != expected_resolution:
             raise PublishValidationError(
-                "The input's resolution does not match"
-                " the asset's resolution of {}x{}.\n\n"
+                "The input's resolution does not match "
+                "the asset's resolution {}.\n\n"
                 "The input's resolution is {}".format(
-                    entityData["resolutionWidth"],
-                    entityData["resolutionHeight"],
-                    wrong_resolution[0],
-                ),
-                title=self.label,
+                    expected_resolution,
+                    resolution,
+                )
             )
+
+    @classmethod
+    def get_invalid(cls, instance):
+        resolution = cls.get_resolution(instance)
+        expected_resolution = cls.get_expected_resolution(instance)
+        if resolution != expected_resolution:
+            saver = instance.data["tool"]
+            return [saver]
+
+    @classmethod
+    def get_resolution(cls, instance):
+        saver = instance.data["tool"]
+        first_frame = saver.GetAttrs("TOOLNT_Region_Start")[1]
+        return get_tool_resolution(saver, frame=first_frame)
+
+    @classmethod
+    def get_expected_resolution(cls, instance):
+        data = instance.data["assetEntity"]["data"]
+        return data["resolutionWidth"], data["resolutionHeight"]
