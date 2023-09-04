@@ -197,19 +197,18 @@ def import_custom_attribute_data(container: str, selections: list):
     rt.addModifier(container, modifier)
     container.modifiers[0].name = "OP Data"
     rt.custAttributes.add(container.modifiers[0], attrs)
-    node_list = []
-    sel_list = []
+    nodes = {}
     for i in selections:
-        node_ref = rt.NodeTransformMonitor(node=i)
-        node_list.append(node_ref)
-        sel_list.append(str(i))
+        nodes = {
+            str(i) : rt.NodeTransformMonitor(node=i),
+        }
     # Setting the property
     rt.setProperty(
         container.modifiers[0].openPypeData,
-        "all_handles", node_list)
+        "all_handles", nodes.values())
     rt.setProperty(
         container.modifiers[0].openPypeData,
-        "sel_list", sel_list)
+        "sel_list", nodes.keys())
 
 
 def update_custom_attribute_data(container: str, selections: list):
