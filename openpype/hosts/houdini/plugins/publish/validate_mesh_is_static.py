@@ -14,7 +14,7 @@ import hou
 
 
 class ValidateMeshIsStatic(pyblish.api.InstancePlugin,
-                                   OptionalPyblishPluginMixin):
+                           OptionalPyblishPluginMixin):
     """Validate mesh is static.
 
     It checks if output node is time dependant.

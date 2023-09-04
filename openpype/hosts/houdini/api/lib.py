@@ -667,7 +667,7 @@ def get_obj_node_output(obj_node):
 
     else:
         return min(outputs,
-                    key=lambda node: node.evalParm('outputidx'))
+                   key=lambda node: node.evalParm('outputidx'))
 
 
 def get_output_children(output_node, include_sops=True):
@@ -682,8 +682,9 @@ def get_output_children(output_node, include_sops=True):
         for child in output_node.children():
             out_list += get_output_children(child, include_sops=include_sops)
 
-    elif include_sops and output_node.childTypeCategory() == hou.sopNodeTypeCategory():
-        out =  get_obj_node_output(output_node)
+    elif include_sops and \
+            output_node.childTypeCategory() == hou.sopNodeTypeCategory():
+        out = get_obj_node_output(output_node)
         if out:
             out_list += [out]
 
