@@ -123,7 +123,7 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
         )
 
         look_outliner.menu_apply_action.connect(self.on_process_selected)
-        remove_unused_btn.clicked.connect(remove_unused_looks)
+        remove_unused_btn.clicked.connect(self.on_remove_unused_looks)
 
         # Open widgets
         self.asset_outliner = asset_outliner
@@ -282,6 +282,9 @@ class MayaLookAssignerWindow(QtWidgets.QWidget):
         end = time.time()
 
         self.echo("Finished assigning.. ({0:.3f}s)".format(end - start))
+
+    def on_remove_unused_looks(self):
+        remove_unused_looks()
 
 
 def show():
