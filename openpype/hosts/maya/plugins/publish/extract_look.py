@@ -591,8 +591,8 @@ class ExtractLook(publish.Extractor):
         resources = instance.data["resources"]
         color_management = lib.get_color_management_preferences()
 
-        # Temporary disable all hardlinking, due to the feature not being used
-        # or properly working.
+        # TODO: Temporary disable all hardlinking, due to the feature not being
+        # used or properly working.
         self.log.info(
             "Forcing copy instead of hardlink."
         )
