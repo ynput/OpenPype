@@ -654,8 +654,19 @@ def get_color_management_preferences():
 def get_obj_node_output(obj_node):
     """Find output node.
 
-    get the output node with the minimum 'outputidx'
-     or the node with display flag.
+    If the node has any output node return the 
+    output node with the minimum `outputidx`.
+    When no output is present return the node
+    with the display flag set. If no output node is
+    detected then None is returned.
+    
+    Arguments:
+        node (hou.Node): The node to retrieve a single
+            the output node for.
+    
+    Returns:
+        Optional[hou.Node]: The child output node.
+        
     """
 
     outputs = obj_node.subnetOutputs()
