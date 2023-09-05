@@ -20,6 +20,26 @@ def usd_export_attributes(nodes, attrs=None, attr_prefixes=None, mapping=None):
     to autogenerate such an attribute during the export to include attributes
     for the export.
 
+    Arguments:
+        nodes (List[str]): Nodes to process.
+        attrs (Optional[List[str]]): Full name of attributes to include.
+        attr_prefixes (Optional[List[str]]): Prefixes of attributes to include.
+        mapping (Optional[Dict[Dict]]): A mapping per attribute name for the
+            conversion to a USD attribute, including renaming, defining type,
+            converting attribute precision, etc. This match the usual
+            `USD_UserExportedAttributesJson` json mapping of `mayaUSDExport`.
+            When no mapping provided for an attribute it will use `{}` as
+            value.
+
+    Examples:
+          >>> with usd_export_attributes(
+          >>>     ["pCube1"], attrs="myDoubleAttributeAsFloat", mapping={
+          >>>         "myDoubleAttributeAsFloat": {
+          >>>           "usdAttrName": "my:namespace:attrib",
+          >>>           "translateMayaDoubleToUsdSinglePrecision": True,
+          >>>         }
+          >>> })
+
     """
     # todo: this might be better done with a custom export chaser
     #   see `chaser` argument for `mayaUSDExport`
