@@ -52,7 +52,7 @@ def find_paths_by_hash(texture_hash):
 
     """
     if AYON_SERVER_ENABLED:
-        raise ValueError(
+        raise KnownPublishError(
             "This is a bug. \"find_paths_by_hash\" is not compatible with "
             "AYON."
         )
