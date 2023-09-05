@@ -23,23 +23,6 @@ class ExtMappingItemModel(BaseSettingsModel):
     value: str = Field(title="Extension")
 
 
-class PublishGUIFilterItemModel(BaseSettingsModel):
-    _layout = "compact"
-    name: str = Field(title="Name")
-    value: bool = Field(True, title="Active")
-
-
-class PublishGUIFiltersModel(BaseSettingsModel):
-    _layout = "compact"
-    name: str = Field(title="Name")
-    value: list[PublishGUIFilterItemModel] = Field(default_factory=list)
-
-    @validator("value")
-    def validate_unique_outputs(cls, value):
-        ensure_unique_names(value)
-        return value
-
-
 class MayaSettings(BaseSettingsModel):
     """Maya Project Settings."""
 
@@ -76,9 +59,6 @@ class MayaSettings(BaseSettingsModel):
     templated_workfile_build: TemplatedProfilesModel = Field(
         default_factory=TemplatedProfilesModel,
         title="Templated Workfile Build Settings")
-    filters: list[PublishGUIFiltersModel] = Field(
-        default_factory=list,
-        title="Publish GUI Filters")
 
     @validator("filters", "ext_mapping")
     def validate_unique_outputs(cls, value):
@@ -122,20 +102,5 @@ DEFAULT_MAYA_SETTING = {
     "publish": DEFAULT_PUBLISH_SETTINGS,
     "load": DEFAULT_LOADERS_SETTING,
     "workfile_build": DEFAULT_WORKFILE_SETTING,
-    "templated_workfile_build": DEFAULT_TEMPLATED_WORKFILE_SETTINGS,
-    "filters": [
-        {
-            "name": "preset 1",
-            "value": [
-                {"name": "ValidateNoAnimation", "value": False},
-                {"name": "ValidateShapeDefaultNames", "value": False},
-            ]
-        },
-        {
-            "name": "preset 2",
-            "value": [
-                {"name": "ValidateNoAnimation", "value": False},
-            ]
-        },
-    ]
+    "templated_workfile_build": DEFAULT_TEMPLATED_WORKFILE_SETTINGS
 }
