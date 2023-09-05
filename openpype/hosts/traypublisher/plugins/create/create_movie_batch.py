@@ -36,7 +36,7 @@ class BatchMovieCreator(TrayPublishCreator):
     # Position batch creator after simple creators
     order = 110
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         creator_settings = (
             project_settings["traypublisher"]["create"]["BatchMovieCreator"]
         )
