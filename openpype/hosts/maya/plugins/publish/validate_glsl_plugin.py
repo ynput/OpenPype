@@ -3,6 +3,7 @@ import pyblish.api
 from maya import cmds
 
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
     PublishValidationError,
     RepairAction,
     ValidateContentsOrder,
