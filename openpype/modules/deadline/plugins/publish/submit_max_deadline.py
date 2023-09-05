@@ -176,7 +176,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         first_file = next(self._iter_expected_files(files))
         output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"
 
         filename = os.path.basename(filepath)
 
@@ -247,7 +246,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if renderer == "Redshift_Renderer":
             plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
                 "separateAovFiles")
-
+        if instance.data["cameras"]:
+            plugin_info["Camera0"] = None
+            plugin_info["Camera"] = instance.data["cameras"][0]
+            plugin_info["Camera1"] = instance.data["cameras"][0]
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 

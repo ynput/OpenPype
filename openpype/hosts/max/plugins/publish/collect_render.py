@@ -34,6 +34,9 @@ class CollectRender(pyblish.api.InstancePlugin):
         aovs = RenderProducts().get_aovs(instance.name)
         files_by_aov.update(aovs)
 
+        camera = rt.viewport.GetCamera()
+        instance.data["cameras"] = [camera.name] if camera else None        # noqa
+
         if instance.data.get("multiCamera"):
             cameras = instance.data.get("members")
             if not cameras:
