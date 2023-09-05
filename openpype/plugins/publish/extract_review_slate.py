@@ -14,10 +14,13 @@ from openpype.lib import (
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
 )
-from openpype.pipeline import publish
+from openpype.pipeline.publish import (
+    Extractor,
+    KnownPublishError
+)
 
 
-class ExtractReviewSlate(publish.Extractor):
+class ExtractReviewSlate(Extractor):
     """
     Will add slate frame at the start of the video files
     """
@@ -93,9 +96,10 @@ class ExtractReviewSlate(publish.Extractor):
 
             # Raise exception of any stream didn't define input resolution
             if input_width is None:
-                raise AssertionError((
+                raise KnownPublishError(
                     "FFprobe couldn't read resolution from input file: \"{}\""
-                ).format(input_path))
+                    .format(input_path)
+                )
 
             (
                 audio_codec,
