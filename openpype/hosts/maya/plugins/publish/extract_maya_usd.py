@@ -32,6 +32,7 @@ class ExtractMayaUsd(publish.Extractor):
 
         # TODO: Support more `mayaUSDExport` parameters
         return {
+            "defaultUSDFormat": str,
             "stripNamespaces": bool,
             "mergeTransformAndShape": bool,
             "exportDisplayColor": bool,
@@ -52,6 +53,7 @@ class ExtractMayaUsd(publish.Extractor):
 
         # TODO: Support more `mayaUSDExport` parameters
         return {
+            "defaultUSDFormat": "usdc",
             "stripNamespaces": False,
             "mergeTransformAndShape": False,
             "exportDisplayColor": False,
