@@ -43,7 +43,7 @@ class ExtractMayaUsd(publish.Extractor):
             "exportRefsAsInstanceable": bool,
             "eulerFilter": bool,
             "renderableOnly": bool,
-            #"worldspace": bool,
+            # "worldspace": bool,
         }
 
     @property
@@ -63,7 +63,7 @@ class ExtractMayaUsd(publish.Extractor):
             "exportRefsAsInstanceable": False,
             "eulerFilter": True,
             "renderableOnly": False,
-            #"worldspace": False
+            # "worldspace": False
         }
 
     def parse_overrides(self, instance, options):
