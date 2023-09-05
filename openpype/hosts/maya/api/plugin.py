@@ -260,7 +260,7 @@ class MayaCreator(NewCreator, MayaCreatorBase):
                     default=True)
         ]
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         settings_name = self.settings_name

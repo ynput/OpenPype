@@ -57,28 +57,31 @@ def create_interactive(creator_identifier, **kwargs):
         list: The created instances.
 
     """
-
-    # TODO Use Qt instead
-    result, variant = hou.ui.readInput('Define variant name',
-                                       buttons=("Ok", "Cancel"),
-                                       initial_contents='Main',
-                                       title="Define variant",
-                                       help="Set the variant for the "
-                                            "publish instance",
-                                       close_choice=1)
-    if result == 1:
-        # User interrupted
-        return
-    variant = variant.strip()
-    if not variant:
-        raise RuntimeError("Empty variant value entered.")
-
     host = registered_host()
     context = CreateContext(host)
     creator = context.manual_creators.get(creator_identifier)
     if not creator:
-        raise RuntimeError("Invalid creator identifier: "
-                           "{}".format(creator_identifier))
+        raise RuntimeError("Invalid creator identifier: {}".format(
+            creator_identifier)
+        )
+
+    # TODO Use Qt instead
+    result, variant = hou.ui.readInput(
+        "Define variant name",
+        buttons=("Ok", "Cancel"),
+        initial_contents=creator.get_default_variant(),
+        title="Define variant",
+        help="Set the variant for the publish instance",
+        close_choice=1
+    )
+
+    if result == 1:
+        # User interrupted
+        return
+
+    variant = variant.strip()
+    if not variant:
+        raise RuntimeError("Empty variant value entered.")
 
     # TODO: Once more elaborate unique create behavior should exist per Creator
     #   instead of per network editor area then we should move this from here
