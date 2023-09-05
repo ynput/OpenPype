@@ -59,6 +59,9 @@ class HdaLoader(load.LoaderPlugin):
         def_paths = [d.libraryFilePath() for d in defs]
         new = def_paths.index(file_path)
         defs[new].setIsPreferred(True)
+        hda_node.setParms({
+            "representation": str(representation["_id"])
+        })
 
     def remove(self, container):
         node = container["node"]
