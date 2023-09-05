@@ -579,11 +579,8 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
             group_name = subset
 
         # if there are multiple cameras, we need to add camera name
-        if isinstance(col, (list, tuple)):
-            cam = next((c for c in cameras if c in col[0]), None)
-        else:
-            # in case of single frame
-            cam = next((cam for cam in cameras if cam in col), None)
+        expected_filepath = col[0] if isinstance(col, (list, tuple)) else col
+        cam = next((cam for cam in cameras if cam in expected_filepath), None)
         if cam:
             if aov:
                 # if there is duplicatd camera name found in aov,
