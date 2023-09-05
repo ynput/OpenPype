@@ -2,6 +2,7 @@
 """Library of functions useful for 3dsmax pipeline."""
 import os
 import contextlib
+import logging
 import json
 from typing import Any, Dict, Union
 
@@ -13,6 +14,7 @@ from openpype.pipeline.context_tools import (
 from pymxs import runtime as rt
 
 JSON_PREFIX = "JSON::"
+log = logging.getLogger("openpype.hosts.max")
 
 
 class Context:
@@ -28,7 +30,6 @@ def get_main_window():
     """Acquire Max's main window"""
     from qtpy import QtWidgets
     if Context.main_window is None:
-
         top_widgets = QtWidgets.QApplication.topLevelWidgets()
         name = "QmaxApplicationWindow"
         for widget in top_widgets:
@@ -376,6 +377,9 @@ def reset_colorspace():
 
 def check_colorspace():
     parent = get_main_window()
+    if parent is None:
+        log.info("Skipping outdated pop-up "
+                 "because Max main window can't be found.")
     if int(get_max_version()) >= 2024:
         color_mgr = rt.ColorPipelineMgr
         if color_mgr.Mode != rt.Name("OCIO_Custom"):
@@ -387,3 +391,98 @@ def check_colorspace():
             dialog.widgets["button"].setText("Fix")
             dialog.on_clicked.connect(reset_colorspace)
             dialog.show()
+
+
+def unique_namespace(namespace, format="%02d",
+                     prefix="", suffix="", con_suffix="CON"):
+    """Return unique namespace
+
+    Arguments:
+        namespace (str): Name of namespace to consider
+        format (str, optional): Formatting of the given iteration number
+        suffix (str, optional): Only consider namespaces with this suffix.
+        con_suffix: max only, for finding the name of the master container
+
+    >>> unique_namespace("bar")
+    # bar01
+    >>> unique_namespace(":hello")
+    # :hello01
+    >>> unique_namespace("bar:", suffix="_NS")
+    # bar01_NS:
+
+    """
+
+    def current_namespace():
+        current = namespace
+        # When inside a namespace Max adds no trailing :
+        if not current.endswith(":"):
+            current += ":"
+        return current
+
+    # Always check against the absolute namespace root
+    # There's no clash with :x if we're defining namespace :a:x
+    ROOT = ":" if namespace.startswith(":") else current_namespace()
+
+    # Strip trailing `:` tokens since we might want to add a suffix
+    start = ":" if namespace.startswith(":") else ""
+    end = ":" if namespace.endswith(":") else ""
+    namespace = namespace.strip(":")
+    if ":" in namespace:
+        # Split off any nesting that we don't uniqify anyway.
+        parents, namespace = namespace.rsplit(":", 1)
+        start += parents + ":"
+        ROOT += start
+
+    iteration = 1
+    increment_version = True
+    while increment_version:
+        nr_namespace = namespace + format % iteration
+        unique = prefix + nr_namespace + suffix
+        container_name = f"{unique}:{namespace}{con_suffix}"
+        if not rt.getNodeByName(container_name):
+            name_space = start + unique + end
+            increment_version = False
+            return name_space
+        else:
+            increment_version = True
+        iteration += 1
+
+
+def get_namespace(container_name):
+    """Get the namespace and name of the sub-container
+
+    Args:
+        container_name (str): the name of master container
+
+    Raises:
+        RuntimeError: when there is no master container found
+
+    Returns:
+        namespace (str): namespace of the sub-container
+        name (str): name of the sub-container
+    """
+    node = rt.getNodeByName(container_name)
+    if not node:
+        raise RuntimeError("Master Container Not Found..")
+    name = rt.getUserProp(node, "name")
+    namespace = rt.getUserProp(node, "namespace")
+    return namespace, name
+
+
+def object_transform_set(container_children):
+    """A function which allows to store the transform of
+    previous loaded object(s)
+    Args:
+        container_children(list): A list of nodes
+
+    Returns:
+        transform_set (dict): A dict with all transform data of
+        the previous loaded object(s)
+    """
+    transform_set = {}
+    for node in container_children:
+        name = f"{node.name}.transform"
+        transform_set[name] = node.pos
+        name = f"{node.name}.scale"
+        transform_set[name] = node.scale
+    return transform_set
