@@ -129,11 +129,33 @@ class MayaCreatorBase(object):
             shared_data["maya_cached_legacy_subsets"] = cache_legacy
         return shared_data
 
+    def get_publish_families(self):
+        """Return families for the instances of this creator.
+
+        Allow a Creator to define multiple families so that a creator can
+        e.g. specify `usd` and `usdMaya` and another USD creator can also
+        specify `usd` but apply different extractors like `usdMultiverse`.
+
+        There is no need to override this method if you only have the
+        primary family defined by the `family` property as that will always
+        be set.
+
+        Returns:
+            list: families for instances of this creator
+
+        """
+        return []
+
     def imprint_instance_node(self, node, data):
 
         # We never store the instance_node as value on the node since
         # it's the node name itself
         data.pop("instance_node", None)
+
+        # Don't store `families` since it's up to the creator itself
+        # to define the initial publish families - not a stored attribute of
+        # `families`
+        data.pop("families", None)
 
         # We store creator attributes at the root level and assume they
         # will not clash in names with `subset`, `task`, etc. and other
@@ -186,6 +208,11 @@ class MayaCreatorBase(object):
         # Explicitly re-parse the node name
         node_data["instance_node"] = node
 
+        # If the creator plug-in specifies
+        families = self.get_publish_families()
+        if families:
+            node_data["families"] = families
+
         return node_data
 
     def _default_collect_instances(self):
@@ -229,6 +256,14 @@ class MayaCreator(NewCreator, MayaCreatorBase):
         members = list()
         if pre_create_data.get("use_selection"):
             members = cmds.ls(selection=True)
+
+        # Allow a Creator to define multiple families
+        publish_families = self.get_publish_families()
+        if publish_families:
+            families = instance_data.setdefault("families", [])
+            for family in self.get_publish_families():
+                if family not in families:
+                    families.append(family)
 
         with lib.undo_chunk():
             instance_node = cmds.sets(members, name=subset_name)
