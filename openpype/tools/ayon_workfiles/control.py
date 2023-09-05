@@ -12,6 +12,7 @@ from openpype.pipeline import Anatomy, registered_host
 from openpype.pipeline.context_tools import (
     change_current_context,
     get_current_host_name,
+    get_global_context,
 )
 from openpype.pipeline.workfile import create_workdir_extra_folders
 
@@ -256,6 +257,11 @@ class BaseWorkfileController(
             return host.name
         return get_current_host_name()
 
+    def _get_host_current_context(self):
+        if hasattr(self._host, "get_current_context"):
+            return self._host.get_current_context()
+        return get_global_context()
+
     def get_current_project_name(self):
         return self._current_project_name
 
@@ -411,7 +417,7 @@ class BaseWorkfileController(
 
         self._emit_event("controller.refresh.started")
 
-        context = self._host.get_current_context()
+        context = self._get_host_current_context()
 
         project_name = context["project_name"]
         folder_name = context["asset_name"]
