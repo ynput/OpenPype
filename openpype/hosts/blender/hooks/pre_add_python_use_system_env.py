@@ -1,4 +1,4 @@
-from openpype.lib.applications import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class AddPythonUseSystemEnvArg(PreLaunchHook):
@@ -7,7 +7,7 @@ class AddPythonUseSystemEnvArg(PreLaunchHook):
     # Append before file argument from add last workfile (at order 10)
     order = 5
     app_groups = {"blender"}
-    launch_types = set()
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
 
