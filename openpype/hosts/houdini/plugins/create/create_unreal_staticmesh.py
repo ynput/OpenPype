@@ -29,7 +29,10 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
         instance_node = hou.node(instance.get("instance_node"))
 
         # prepare parms
-        output_path = hou.text.expandString("$HIP/pyblish/{}.fbx".format(subset_name))
+        output_path = hou.text.expandString(
+            "$HIP/pyblish/{}.fbx".format(subset_name)
+        )
+
         parms = {
             "startnode": self.get_selection(),
             "sopoutput": output_path,

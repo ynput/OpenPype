@@ -28,7 +28,7 @@ class ExtractFBX(publish.Extractor):
         file_name = os.path.basename(output_node)
 
         # render rop
-        self.log.debug("Writing FBX '%s' to '%s'",file_name, staging_dir)
+        self.log.debug("Writing FBX '%s' to '%s'", file_name, staging_dir)
         render_rop(ropnode)
 
         # prepare representation
@@ -36,7 +36,7 @@ class ExtractFBX(publish.Extractor):
             "name": "fbx",
             "ext": "fbx",
             "files": file_name,
-            "stagingDir": staging_dir,
+            "stagingDir": staging_dir
         }
 
         # A single frame may also be rendered without start/end frame.

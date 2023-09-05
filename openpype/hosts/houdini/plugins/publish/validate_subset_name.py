@@ -33,7 +33,6 @@ class ValidateSubsetName(pyblish.api.InstancePlugin,
 
     optional = True
 
-
     def process(self, instance):
 
         if not self.is_active(instance.data):
@@ -60,7 +59,7 @@ class ValidateSubsetName(pyblish.api.InstancePlugin,
             variant=instance.data["variant"],
             task_name=instance.data["task"],
             asset_doc=instance.data["assetEntity"],
-            dynamic_data={"asset":instance.data["asset"]}
+            dynamic_data={"asset": instance.data["asset"]}
         )
 
         if instance.data.get("subset") != subset_name:
@@ -82,7 +81,7 @@ class ValidateSubsetName(pyblish.api.InstancePlugin,
             variant=instance.data["variant"],
             task_name=instance.data["task"],
             asset_doc=instance.data["assetEntity"],
-            dynamic_data={"asset":instance.data["asset"]}
+            dynamic_data={"asset": instance.data["asset"]}
         )
 
         instance.data["subset"] = subset_name
