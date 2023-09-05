@@ -26,10 +26,10 @@ def get_usd_ids_cache(path):
         attr = prim.GetAttribute("userProperties:cbId")
         if not attr.IsValid():
             continue
-        path = str(prim.GetPath())
         value = attr.Get()
         if not value:
             continue
+        path = str(prim.GetPath())
         ids[path] = value
 
     cache = defaultdict(list)
