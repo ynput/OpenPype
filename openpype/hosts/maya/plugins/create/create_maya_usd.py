@@ -1,7 +1,8 @@
 from openpype.hosts.maya.api import plugin, lib
 from openpype.lib import (
     BoolDef,
-    EnumDef
+    EnumDef,
+    TextDef
 )
 
 
@@ -33,7 +34,18 @@ class CreateMayaUsd(plugin.MayaCreator):
                     default=True),
             BoolDef("mergeTransformAndShape",
                     label="Merge Transform and Shape",
-                    default=True)
+                    default=True),
+            BoolDef("includeUserDefinedAttributes",
+                    label="Include User Defined Attributes",
+                    default=False),
+            TextDef("attr",
+                    label="Custom Attributes",
+                    default="",
+                    placeholder="attr1, attr2"),
+            TextDef("attrPrefix",
+                    label="Custom Attributes Prefix",
+                    default="",
+                    placeholder="prefix1, prefix2")
         ])
 
         return defs

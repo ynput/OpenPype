@@ -1,11 +1,95 @@
 import os
 import six
+import json
+import contextlib
 
 from maya import cmds
 
 import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
+
+
+@contextlib.contextmanager
+def usd_export_attributes(nodes, attrs=None, attr_prefixes=None, mapping=None):
+    """Define attributes for the given nodes that should be exported.
+
+    MayaUSDExport will export custom attributes if the Maya node has a
+    string attribute `USD_UserExportedAttributesJson` that provides an
+    export mapping for the maya attributes. This context manager will try
+    to autogenerate such an attribute during the export to include attributes
+    for the export.
+
+    """
+    # todo: this might be better done with a custom export chaser
+    #   see `chaser` argument for `mayaUSDExport`
+
+    import maya.api.OpenMaya as om
+
+    if not attrs and not attr_prefixes:
+        # context manager does nothing
+        yield
+        return
+
+    if attrs is None:
+        attrs = []
+    if attr_prefixes is None:
+        attr_prefixes = []
+    if mapping is None:
+        mapping = {}
+
+    usd_json_attr = "USD_UserExportedAttributesJson"
+    strings = attrs + ["{}*".format(prefix) for prefix in attr_prefixes]
+    context_state = {}
+    for node in set(nodes):
+        node_attrs = cmds.listAttr(node, st=strings)
+        if not node_attrs:
+            # Nothing to do for this node
+            continue
+
+        node_attr_data = {}
+        for node_attr in set(node_attrs):
+            node_attr_data[node_attr] = mapping.get(node_attr, {})
+
+        if cmds.attributeQuery(usd_json_attr, node=node, exists=True):
+            existing_node_attr_value = cmds.getAttr(
+                "{}.{}".format(node, usd_json_attr)
+            )
+            if existing_node_attr_value and existing_node_attr_value != "{}":
+                # Any existing attribute mappings in an existing
+                # `USD_UserExportedAttributesJson` attribute always take
+                # precedence over what this function tries to imprint
+                existing_node_attr_data = json.loads(existing_node_attr_value)
+                node_attr_data.update(existing_node_attr_data)
+
+        context_state[node] = json.dumps(node_attr_data)
+
+    sel = om.MSelectionList()
+    dg_mod = om.MDGModifier()
+    fn_string = om.MFnStringData()
+    fn_typed = om.MFnTypedAttribute()
+    try:
+        for node, value in context_state.items():
+            data = fn_string.create(value)
+            sel.clear()
+            if cmds.attributeQuery(usd_json_attr, node=node, exists=True):
+                # Set the attribute value
+                sel.add("{}.{}".format(node, usd_json_attr))
+                plug = sel.getPlug(0)
+                dg_mod.newPlugValue(plug, data)
+            else:
+                # Create attribute with the value as default value
+                sel.add(node)
+                node_obj = sel.getDependNode(0)
+                attr_obj = fn_typed.create(usd_json_attr,
+                                           usd_json_attr,
+                                           om.MFnData.kString,
+                                           data)
+                dg_mod.addAttribute(node_obj, attr_obj)
+        dg_mod.doIt()
+        yield
+    finally:
+        dg_mod.undoIt()
 
 
 class ExtractMayaUsd(publish.Extractor):
@@ -126,13 +210,30 @@ class ExtractMayaUsd(publish.Extractor):
         start = instance.data["frameStartHandle"]
         end = instance.data["frameEndHandle"]
 
+        def parse_attr_str(attr_str):
+            result = list()
+            for attr in attr_str.split(","):
+                attr = attr.strip()
+                if not attr:
+                    continue
+                result.append(attr)
+            return result
+
+        attrs = parse_attr_str(instance.data.get("attr", ""))
+        attrs += instance.data.get("userDefinedAttributes", [])
+        attrs += ["cbId"]
+        attr_prefixes = parse_attr_str(instance.data.get("attrPrefix", ""))
+
+        self.log.debug('Exporting USD: {} / {}'.format(file_path, members))
         with maintained_selection():
-            self.log.debug('Exporting USD: {} / {}'.format(file_path, members))
-            cmds.mayaUSDExport(file=file_path,
-                               frameRange=(start, end),
-                               frameStride=instance.data.get("step", 1.0),
-                               exportRoots=members,
-                               **options)
+            with usd_export_attributes(instance[:],
+                                       attrs=attrs,
+                                       attr_prefixes=attr_prefixes):
+                cmds.mayaUSDExport(file=file_path,
+                                   frameRange=(start, end),
+                                   frameStride=instance.data.get("step", 1.0),
+                                   exportRoots=members,
+                                   **options)
 
         representation = {
             'name': "usd",
