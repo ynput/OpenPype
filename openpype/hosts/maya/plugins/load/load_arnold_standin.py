@@ -32,8 +32,8 @@ def get_current_session_fps():
 class ArnoldStandinLoader(load.LoaderPlugin):
     """Load as Arnold standin"""
 
-    families = ["ass", "animation", "model", "proxyAbc", "pointcache"]
-    representations = ["ass", "abc"]
+    families = ["ass", "animation", "model", "proxyAbc", "pointcache", "usd"]
+    representations = ["ass", "abc", "usda", "usdc", "usd"]
 
     label = "Load as Arnold standin"
     order = -5
