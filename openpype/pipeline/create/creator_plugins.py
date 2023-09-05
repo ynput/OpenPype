@@ -214,8 +214,16 @@ class BaseCreator:
             # Backwards compatibility for system settings
             self.apply_settings(project_settings, system_settings)
 
-        init_overriden = self._method_is_overriden("__init__")
-        if init_overriden or expect_system_settings:
+        init_use_base = any(
+            self.__class__.__init__ is cls.__init__
+            for cls in {
+                BaseCreator,
+                Creator,
+                HiddenCreator,
+                AutoCreator,
+            }
+        )
+        if not init_use_base or expect_system_settings:
             self.log.warning((
                 "WARNING: Source - Create plugin {}."
                 " System settings argument will not be passed to"
@@ -224,19 +232,6 @@ class BaseCreator:
                 " is 3.16.6 or 3.17.0. Please contact Ynput core team if you"
                 " need to keep system settings."
             ).format(self.__class__.__name__))
-
-    def _method_is_overriden(self, method_name):
-        """Check if method is overriden on objects class.
-
-        Implemented for deprecation warning validation on init.
-
-        Returns:
-            bool: True if method is overriden on objects class.
-        """
-
-        cls_method = getattr(BaseCreator, method_name)
-        obj_method = getattr(self.__class__, method_name)
-        return cls_method is not obj_method
 
     def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings.
@@ -591,11 +586,6 @@ class Creator(BaseCreator):
             )
         super(Creator, self).__init__(*args, **kwargs)
 
-    def _method_is_overriden(self, method_name):
-        cls_method = getattr(Creator, method_name)
-        obj_method = getattr(self.__class__, method_name)
-        return cls_method is not obj_method
-
     @property
     def show_order(self):
         """Order in which is creator shown in UI.
@@ -738,11 +728,6 @@ class HiddenCreator(BaseCreator):
     def create(self, instance_data, source_data):
         pass
 
-    def _method_is_overriden(self, method_name):
-        cls_method = getattr(HiddenCreator, method_name)
-        obj_method = getattr(self.__class__, method_name)
-        return cls_method is not obj_method
-
 
 class AutoCreator(BaseCreator):
     """Creator which is automatically triggered without user interaction.
@@ -753,11 +738,6 @@ class AutoCreator(BaseCreator):
     def remove_instances(self, instances):
         """Skip removement."""
         pass
-
-    def _method_is_overriden(self, method_name):
-        cls_method = getattr(AutoCreator, method_name)
-        obj_method = getattr(self.__class__, method_name)
-        return cls_method is not obj_method
 
 
 def discover_creator_plugins(*args, **kwargs):
