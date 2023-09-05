@@ -111,7 +111,7 @@ class ExtractMayaUsd(publish.Extractor):
         # Parse export options
         options = self.default_options
         options = self.parse_overrides(instance, options)
-        self.log.info("Export options: {0}".format(options))
+        self.log.debug("Export options: {0}".format(options))
 
         # Perform extraction
         self.log.debug("Performing extraction ...")
