@@ -6,7 +6,7 @@ import pyblish.api
 class CollectUserDefinedAttributes(pyblish.api.InstancePlugin):
     """Collect user defined attributes for nodes in instance."""
 
-    order = pyblish.api.CollectorOrder + 0.4
+    order = pyblish.api.CollectorOrder + 0.45
     families = ["pointcache", "animation", "usd"]
     label = "Collect User Defined Attributes"
     hosts = ["maya"]
