@@ -4,11 +4,13 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
+class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin,
+                                   OptionalPyblishPluginMixin):
     """Validate if any node has a connection to a default shader.
 
     This checks whether the look has any members of:

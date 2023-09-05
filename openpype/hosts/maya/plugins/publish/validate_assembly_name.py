@@ -1,12 +1,15 @@
-import pyblish.api
 import maya.cmds as cmds
+import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
 )
 
 
-class ValidateAssemblyName(pyblish.api.InstancePlugin):
+class ValidateAssemblyName(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
     """ Ensure Assembly name ends with `GRP`
 
     Check if assembly name ends with `_GRP` string.

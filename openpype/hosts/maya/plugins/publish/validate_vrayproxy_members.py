@@ -1,15 +1,15 @@
 import pyblish.api
-
 from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
 )
 
 
-
-class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
+class ValidateVrayProxyMembers(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Validate whether the V-Ray Proxy instance has shape members"""
 
     order = pyblish.api.ValidatorOrder

@@ -9,7 +9,8 @@ from openpype.hosts.maya.api.lib import get_id, set_id
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
@@ -18,7 +19,8 @@ def get_basename(node):
     return node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
 
 
-class ValidateRigOutputIds(pyblish.api.InstancePlugin):
+class ValidateRigOutputIds(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
     """Validate rig output ids.
 
     Ids must share the same id as similarly named nodes in the scene. This is

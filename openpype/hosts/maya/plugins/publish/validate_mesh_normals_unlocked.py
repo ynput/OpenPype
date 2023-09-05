@@ -1,13 +1,13 @@
-from maya import cmds
 import maya.api.OpenMaya as om2
-
 import pyblish.api
+from maya import cmds
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateMeshOrder,
-    OptionalPyblishPluginMixin,
-    PublishValidationError
 )
 
 

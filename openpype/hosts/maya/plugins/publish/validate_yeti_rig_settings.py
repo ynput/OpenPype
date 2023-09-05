@@ -1,9 +1,13 @@
 import pyblish.api
 
-from openpype.pipeline.publish import PublishValidationError
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+)
 
 
-class ValidateYetiRigSettings(pyblish.api.InstancePlugin):
+class ValidateYetiRigSettings(pyblish.api.InstancePlugin,
+                              OptionalPyblishPluginMixin):
     """Validate Yeti Rig Settings have collected input connections.
 
     The input connections are collected for the nodes in the `input_SET`.

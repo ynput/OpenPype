@@ -1,17 +1,17 @@
 import pyblish.api
-
 from maya import cmds
+from maya.app.renderSetup.model.override import AbsOverride
+
+from openpype.hosts.maya.api.lib_rendersetup import (
+    get_attr_in_layer,
+    get_attr_overrides,
+)
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError,
-    OptionalPyblishPluginMixin
 )
-from openpype.hosts.maya.api.lib_rendersetup import (
-    get_attr_overrides,
-    get_attr_in_layer,
-)
-from maya.app.renderSetup.model.override import AbsOverride
 
 
 class ValidateFrameRange(pyblish.api.InstancePlugin,

@@ -1,15 +1,17 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateShadingEngine(pyblish.api.InstancePlugin):
+class ValidateShadingEngine(pyblish.api.InstancePlugin,
+                            OptionalPyblishPluginMixin):
     """Validate all shading engines are named after the surface material.
 
     Shading engines should be named "{surface_shader}SG"

@@ -1,12 +1,15 @@
 import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
+class ValidateInstanceHasMembers(pyblish.api.InstancePlugin,
+                                 OptionalPyblishPluginMixin):
     """Validates instance objectSet has *any* members."""
 
     order = ValidateContentsOrder

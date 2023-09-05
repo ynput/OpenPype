@@ -3,7 +3,10 @@ import re
 
 import pyblish.api
 
-from openpype.pipeline.publish import PublishValidationError
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+)
 
 VERBOSE = False
 
@@ -36,7 +39,8 @@ def filter_ticks(files):
     return tick_files, ticks
 
 
-class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
+class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin,
+                                   OptionalPyblishPluginMixin):
     """Validates all instancer particle systems are cached correctly.
 
     This means they should have the files/frames as required by the start-end

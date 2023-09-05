@@ -1,14 +1,15 @@
 import pyblish.api
 
-from openpype.pipeline.publish import (
-    ValidatePipelineOrder,
-    PublishXmlValidationError
-)
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishXmlValidationError,
+    ValidatePipelineOrder,
+)
 
 
-class ValidateNodeIDs(pyblish.api.InstancePlugin):
+class ValidateNodeIDs(pyblish.api.InstancePlugin, OptionalPyblishPluginMixin):
     """Validate nodes have a Colorbleed Id.
 
     When IDs are missing from nodes *save your scene* and they should be

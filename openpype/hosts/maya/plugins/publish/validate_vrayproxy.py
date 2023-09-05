@@ -1,9 +1,10 @@
 import pyblish.api
 
-from openpype.pipeline import KnownPublishError
+from openpype.pipeline import KnownPublishError, OptionalPyblishPluginMixin
 
 
-class ValidateVrayProxy(pyblish.api.InstancePlugin):
+class ValidateVrayProxy(pyblish.api.InstancePlugin,
+                        OptionalPyblishPluginMixin):
 
     order = pyblish.api.ValidatorOrder
     label = "VRay Proxy Settings"

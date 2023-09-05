@@ -1,18 +1,18 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
-
+import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
-    PublishValidationError
+    ValidateContentsOrder,
 )
 
-from openpype.hosts.maya.api import lib
-import openpype.hosts.maya.api.action
 
-
-class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
+class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin,
+                                             OptionalPyblishPluginMixin):
     """Validate rig control curves have no keyable arnold attributes.
 
     The Arnold plug-in will create curve attributes like:

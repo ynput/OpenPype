@@ -5,10 +5,14 @@ from openpype.client import get_assets
 from openpype.hosts.maya.api import lib
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
-    PublishValidationError, ValidatePipelineOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidatePipelineOrder,
+)
 
 
-class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
+class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin,
+                                OptionalPyblishPluginMixin):
     """Validate if the CB Id is related to an asset in the database
 
     All nodes with the `cbId` attribute will be validated to ensure that

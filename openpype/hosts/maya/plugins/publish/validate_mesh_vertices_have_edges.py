@@ -4,10 +4,14 @@ from maya import cmds
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import len_flattened
 from openpype.pipeline.publish import (
-    PublishValidationError, RepairAction, ValidateMeshOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    RepairAction,
+    ValidateMeshOrder,
+)
 
 
-class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
+class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin, OptionalPyblishPluginMixin):
     """Validate meshes have only vertices that are connected to edges.
 
     Maya can have invalid geometry with vertices that have no edges or
@@ -20,7 +24,7 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
     and merge the components.
 
     To find these invalid vertices select all vertices of the mesh
-    that are visible in the viewport (drag to select), afterwards
+    that are visible in the viewport (drag to select), afterward
     invert your selection (Ctrl + Shift + I). The remaining selection
     contains the invalid vertices.
 

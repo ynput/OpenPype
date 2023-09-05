@@ -1,11 +1,16 @@
 import pyblish.api
+
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
-    ValidateContentsOrder, PublishValidationError, RepairAction
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    RepairAction,
+    ValidateContentsOrder,
 )
 
 
-class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin):
+class ValidateArnoldSceneSourceCbid(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """Validate Arnold Scene Source Cbid.
 
     It is required for the proxy and content nodes to share the same cbid.

@@ -2,10 +2,14 @@ import pyblish.api
 from maya import cmds
 
 from openpype.pipeline.publish import (
-    PublishValidationError, ValidateContentsOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidateContentsOrder,
+)
 
 
-class ValidateRigContents(pyblish.api.InstancePlugin):
+class ValidateRigContents(pyblish.api.InstancePlugin,
+                          OptionalPyblishPluginMixin):
     """Ensure rig contains pipeline-critical content
 
     Every rig must contain at least two object sets:

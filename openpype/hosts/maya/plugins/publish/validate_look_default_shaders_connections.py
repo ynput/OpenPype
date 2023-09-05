@@ -1,13 +1,15 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
+class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin,
+                                            OptionalPyblishPluginMixin):
     """Validate default shaders in the scene have their default connections.
 
     For example the lambert1 could potentially be disconnected from the

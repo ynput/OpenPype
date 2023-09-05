@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from maya import cmds
 import pyblish.api
+from maya import cmds
 
-from openpype.pipeline.publish import ValidateMeshOrder
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    ValidateMeshOrder,
+)
 
 
-class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin):
+class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin, OptionalPyblishPluginMixin):
     """Validate if mesh is made of triangles for Unreal Engine"""
 
     order = ValidateMeshOrder

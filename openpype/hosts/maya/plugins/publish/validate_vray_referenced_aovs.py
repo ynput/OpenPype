@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 """Validate if there are AOVs pulled from references."""
-import pyblish.api
 import types
+
+import pyblish.api
 from maya import cmds
 
-from openpype.pipeline.publish import RepairContextAction
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    RepairContextAction,
+)
 
 
-class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
+class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin,
+                                 OptionalPyblishPluginMixin):
     """Validate whether the V-Ray Render Elements (AOVs) include references.
 
     This will check if there are AOVs pulled from references. If

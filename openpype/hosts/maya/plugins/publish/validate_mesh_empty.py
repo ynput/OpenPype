@@ -1,15 +1,17 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateMeshOrder,
-    PublishValidationError
 )
 
 
-class ValidateMeshEmpty(pyblish.api.InstancePlugin):
+class ValidateMeshEmpty(pyblish.api.InstancePlugin,
+                        OptionalPyblishPluginMixin):
     """Validate meshes have some vertices.
 
     Its possible to have meshes without any vertices. To replicate

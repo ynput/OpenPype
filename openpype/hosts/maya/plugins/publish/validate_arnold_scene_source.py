@@ -1,10 +1,14 @@
 import pyblish.api
+
 from openpype.pipeline.publish import (
-    ValidateContentsOrder, PublishValidationError
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidateContentsOrder,
 )
 
 
-class ValidateArnoldSceneSource(pyblish.api.InstancePlugin):
+class ValidateArnoldSceneSource(pyblish.api.InstancePlugin,
+                                OptionalPyblishPluginMixin):
     """Validate Arnold Scene Source.
 
     We require at least 1 root node/parent for the meshes. This is to ensure we

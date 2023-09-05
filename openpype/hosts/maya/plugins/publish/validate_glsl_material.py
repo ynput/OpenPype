@@ -1,15 +1,18 @@
 import os
-from maya import cmds
 
 import pyblish.api
-from openpype.pipeline.publish import (
-    RepairAction,
-    ValidateContentsOrder
-)
+from maya import cmds
+
 from openpype.pipeline import PublishValidationError
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
-class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
+class ValidateGLSLMaterial(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
     """
     Validate if the asset uses GLSL Shader
     """

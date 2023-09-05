@@ -1,11 +1,14 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    ValidateContentsOrder,
+)
 
 
-class ValidateUniqueNames(pyblish.api.Validator):
+class ValidateUniqueNames(pyblish.api.Validator, OptionalPyblishPluginMixin):
     """transform names should be unique
 
     ie: using cmds.ls(someNodeName) should always return shortname

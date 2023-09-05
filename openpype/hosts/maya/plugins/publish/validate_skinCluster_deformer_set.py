@@ -1,12 +1,15 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
-
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    ValidateContentsOrder,
+)
 
 
-class ValidateSkinclusterDeformerSet(pyblish.api.InstancePlugin):
+class ValidateSkinclusterDeformerSet(pyblish.api.InstancePlugin,
+                                     OptionalPyblishPluginMixin):
     """Validate skinClusters on meshes have valid member relationships.
 
     In rare cases it can happen that a mesh has a skinCluster in its history

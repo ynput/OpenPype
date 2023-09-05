@@ -1,16 +1,19 @@
 from collections import defaultdict
-from maya import cmds
 
 import pyblish.api
+from maya import cmds
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
+class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin,
+                                   OptionalPyblishPluginMixin):
     """Validate nodes in look have no reference edits to cbId.
 
     Note:

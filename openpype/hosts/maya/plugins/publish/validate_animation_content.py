@@ -1,8 +1,9 @@
 import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     PublishValidationError,
-    ValidateContentsOrder
+    ValidateContentsOrder,
 )
 
 

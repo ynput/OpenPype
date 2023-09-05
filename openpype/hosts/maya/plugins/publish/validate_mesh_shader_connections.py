@@ -1,11 +1,12 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateMeshOrder,
-    PublishValidationError
 )
 
 
@@ -79,7 +80,8 @@ def disconnect(node_a, node_b):
             cmds.disconnectAttr(source, input)
 
 
-class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
+class ValidateMeshShaderConnections(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """Ensure mesh shading engine connections are valid.
 
     In some scenarios Maya keeps connections to multiple shaders even if just

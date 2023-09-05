@@ -1,17 +1,17 @@
-from maya import cmds
-
 import pyblish.api
+from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
-    PublishValidationError
+    ValidateContentsOrder,
 )
 
 
-class ValidateShapeZero(pyblish.api.Validator):
+class ValidateShapeZero(pyblish.api.Validator, OptionalPyblishPluginMixin):
     """Shape components may not have any "tweak" values
 
     To solve this issue, try freezing the shapes.

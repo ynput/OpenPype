@@ -1,19 +1,19 @@
-from maya import cmds
 import pyblish.api
+from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import (
-    maintained_selection,
     delete_after,
-    undo_chunk,
     get_attribute,
-    set_attribute
+    maintained_selection,
+    set_attribute,
+    undo_chunk,
 )
 from openpype.pipeline.publish import (
     OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateMeshOrder,
-    PublishValidationError
 )
 
 

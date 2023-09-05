@@ -1,16 +1,17 @@
-from maya import cmds
-
 import pyblish.api
+from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
     RepairAction,
     ValidateContentsOrder,
 )
 
 
-class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
+class ValidateRigJointsHidden(pyblish.api.InstancePlugin,
+                              OptionalPyblishPluginMixin):
     """Validate all joints are hidden visually.
 
     This includes being hidden:

@@ -1,15 +1,17 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateModelContent(pyblish.api.InstancePlugin):
+class ValidateModelContent(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
     """Adheres to the content of 'model' family
 
     - Must have one top group. (configurable)

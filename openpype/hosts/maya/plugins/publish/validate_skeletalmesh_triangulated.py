@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
-
-from openpype.hosts.maya.api.action import (
-    SelectInvalidAction,
-)
-from openpype.pipeline.publish import (
-    RepairAction,
-    ValidateContentsOrder,
-    PublishValidationError
-)
-
-
 from maya import cmds
 
+from openpype.hosts.maya.api.action import SelectInvalidAction
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    RepairAction,
+    ValidateContentsOrder,
+)
 
-class ValidateSkeletalMeshTriangulated(pyblish.api.InstancePlugin):
+
+class ValidateSkeletalMeshTriangulated(pyblish.api.InstancePlugin,
+                                       OptionalPyblishPluginMixin):
     """Validates that the geometry has been triangulated."""
 
     order = ValidateContentsOrder

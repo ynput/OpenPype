@@ -5,7 +5,10 @@ from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    OptionalPyblishPluginMixin, PublishValidationError, ValidateContentsOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidateContentsOrder,
+)
 
 
 class ValidateShaderName(pyblish.api.InstancePlugin,

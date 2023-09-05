@@ -1,11 +1,12 @@
 import maya.cmds as cmds
-
 import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
@@ -37,7 +38,8 @@ def has_shape_children(node):
     return True
 
 
-class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
+class ValidateNoNullTransforms(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Ensure no null transforms are in the scene.
 
     Warning:

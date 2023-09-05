@@ -1,15 +1,16 @@
-from maya import cmds
-
 import pyblish.api
+from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
     PublishValidationError,
+    ValidateContentsOrder,
 )
 
 
-class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
+class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin,
+                                     OptionalPyblishPluginMixin):
     """Ensure no default (startup) cameras are to be rendered."""
 
     order = ValidateContentsOrder

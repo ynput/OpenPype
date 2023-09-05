@@ -3,15 +3,15 @@
 from __future__ import absolute_import
 
 import pyblish.api
+from maya import cmds
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError,
-    OptionalPyblishPluginMixin
 )
-
-from maya import cmds
 
 
 class ValidateInstanceInContext(pyblish.api.InstancePlugin,

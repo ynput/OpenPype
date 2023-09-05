@@ -1,10 +1,14 @@
 import pyblish.api
-
 from maya import cmds
-from openpype.pipeline.publish import context_plugin_should_run
+
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    context_plugin_should_run,
+)
 
 
-class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin):
+class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin,
+                                             OptionalPyblishPluginMixin):
     """Validate if current render layer has a renderable camera
 
     There is a bug in Redshift which occurs when the current render layer

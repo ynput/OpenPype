@@ -1,18 +1,19 @@
 import os
 
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
-
-from openpype.hosts.maya.api.lib import pairwise
 from openpype.hosts.maya.api.action import SelectInvalidAction
+from openpype.hosts.maya.api.lib import pairwise
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
+class ValidatePluginPathAttributes(pyblish.api.InstancePlugin,
+                                   OptionalPyblishPluginMixin):
     """
     Validate plug-in path attributes point to existing file paths.
     """

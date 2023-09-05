@@ -1,15 +1,18 @@
 from collections import defaultdict
 
 import pyblish.api
-from openpype.pipeline.publish import (
-    ValidatePipelineOrder,
-    PublishValidationError
-)
+
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidatePipelineOrder,
+)
 
 
-class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
+class ValidateNodeIdsUnique(pyblish.api.InstancePlugin,
+                            OptionalPyblishPluginMixin):
     """Validate the nodes in the instance have a unique Colorbleed Id
 
     Here we ensure that what has been added to the instance is unique

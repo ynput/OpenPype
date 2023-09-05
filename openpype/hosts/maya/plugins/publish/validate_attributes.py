@@ -5,8 +5,11 @@ from maya import cmds
 
 from openpype.hosts.maya.api.lib import set_attribute
 from openpype.pipeline.publish import (
-    OptionalPyblishPluginMixin, PublishValidationError, RepairAction,
-    ValidateContentsOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
 class ValidateAttributes(pyblish.api.InstancePlugin,

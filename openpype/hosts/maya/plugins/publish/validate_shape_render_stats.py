@@ -1,15 +1,16 @@
 import pyblish.api
-
 from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
     RepairAction,
     ValidateMeshOrder,
 )
 
 
-class ValidateShapeRenderStats(pyblish.api.Validator):
+class ValidateShapeRenderStats(pyblish.api.Validator,
+                               OptionalPyblishPluginMixin):
     """Ensure all render stats are set to the default values."""
 
     order = ValidateMeshOrder

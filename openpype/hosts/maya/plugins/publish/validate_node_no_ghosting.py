@@ -1,12 +1,15 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
-
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    ValidateContentsOrder,
+)
 
 
-class ValidateNodeNoGhosting(pyblish.api.InstancePlugin):
+class ValidateNodeNoGhosting(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     """Ensure nodes do not have ghosting enabled.
 
     If one would publish towards a non-Maya format it's likely that stats

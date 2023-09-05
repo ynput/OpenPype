@@ -1,15 +1,15 @@
 import math
-from six.moves import xrange
 
-from maya import cmds
 import maya.api.OpenMaya as om
 import pyblish.api
+from maya import cmds
+from six.moves import xrange
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    ValidateMeshOrder,
     OptionalPyblishPluginMixin,
-    PublishValidationError
+    PublishValidationError,
+    ValidateMeshOrder,
 )
 
 

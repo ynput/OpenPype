@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
-
-from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    PublishXmlValidationError,
-)
-
 from maya import cmds
 
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishXmlValidationError,
+    ValidateContentsOrder,
+)
 
-class ValidateSkeletalMeshHierarchy(pyblish.api.InstancePlugin):
+
+class ValidateSkeletalMeshHierarchy(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """Validates that nodes has common root."""
 
     order = ValidateContentsOrder

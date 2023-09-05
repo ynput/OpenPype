@@ -6,12 +6,14 @@ from maya import cmds
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
+class ValidateRenderSingleCamera(pyblish.api.InstancePlugin,
+                                 OptionalPyblishPluginMixin):
     """Validate renderable camera count for layer and <Camera> token.
 
     Pipeline is supporting multiple renderable cameras per layer, but image

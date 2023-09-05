@@ -1,10 +1,14 @@
 import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
 )
 
-class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin):
+
+class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin,
+                                 OptionalPyblishPluginMixin):
     """Ensure namespaces are not nested
 
     In the outliner an item in a normal namespace looks as following:

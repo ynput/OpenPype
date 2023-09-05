@@ -4,7 +4,10 @@ from maya import cmds
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import maintained_selection
 from openpype.pipeline.publish import (
-    OptionalPyblishPluginMixin, PublishValidationError, ValidateContentsOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidateContentsOrder,
+)
 
 
 class ValidateCycleError(pyblish.api.InstancePlugin,

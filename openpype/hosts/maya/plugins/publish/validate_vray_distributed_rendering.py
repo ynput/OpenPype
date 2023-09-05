@@ -3,10 +3,15 @@ from maya import cmds
 
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
-    PublishValidationError, RepairAction, ValidateContentsOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
-class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
+class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin,
+                                       OptionalPyblishPluginMixin):
     """Validate V-Ray Distributed Rendering is ignored in batch mode.
 
     Whenever Distributed Rendering is enabled for V-Ray in the render settings

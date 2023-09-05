@@ -1,12 +1,16 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    ValidateContentsOrder,
+)
 
 
-class ValidateMeshNgons(pyblish.api.Validator):
+class ValidateMeshNgons(pyblish.api.Validator,
+                        OptionalPyblishPluginMixin):
     """Ensure that meshes don't have ngons
 
     Ngon are faces with more than 4 sides.

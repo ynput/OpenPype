@@ -2,13 +2,16 @@ import os
 from collections import defaultdict
 
 import pyblish.api
+
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateResources(pyblish.api.InstancePlugin):
+class ValidateResources(pyblish.api.InstancePlugin,
+                        OptionalPyblishPluginMixin):
     """Validates mapped resources.
 
     These are external files to the current application, for example

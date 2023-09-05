@@ -1,15 +1,16 @@
-from maya import cmds
-
 import pyblish.api
+from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateTransformZero(pyblish.api.Validator):
+class ValidateTransformZero(pyblish.api.Validator,
+                            OptionalPyblishPluginMixin):
     """Transforms can't have any values
 
     To solve this issue, try freezing the transforms. So long

@@ -1,14 +1,16 @@
-import pyblish.api
 import maya.cmds as cmds
+import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
-    PublishValidationError
 )
 
 
-
-class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
+class ValidateYetiRigCacheState(pyblish.api.InstancePlugin,
+                                OptionalPyblishPluginMixin):
     """Validate the I/O attributes of the node
 
     Every pgYetiMaya cache node per instance should have:

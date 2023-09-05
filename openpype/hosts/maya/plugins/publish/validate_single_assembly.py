@@ -1,8 +1,13 @@
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    ValidateContentsOrder,
+)
 
 
-class ValidateSingleAssembly(pyblish.api.InstancePlugin):
+class ValidateSingleAssembly(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     """Ensure the content of the instance is grouped in a single hierarchy
 
     The instance must have a single root node containing all the content.

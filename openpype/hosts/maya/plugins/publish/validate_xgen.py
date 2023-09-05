@@ -1,13 +1,17 @@
 import json
 
 import maya.cmds as cmds
+import pyblish.api
 import xgenm
 
-import pyblish.api
-from openpype.pipeline.publish import PublishValidationError
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+)
 
 
-class ValidateXgen(pyblish.api.InstancePlugin):
+class ValidateXgen(pyblish.api.InstancePlugin,
+                   OptionalPyblishPluginMixin):
     """Validate Xgen data."""
 
     label = "Validate Xgen"

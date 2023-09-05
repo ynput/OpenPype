@@ -6,12 +6,12 @@ import pyblish.api
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline import legacy_io
-from openpype.settings import get_project_settings
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
     OptionalPyblishPluginMixin,
-    PublishValidationError
+    PublishValidationError,
+    ValidateContentsOrder,
 )
+from openpype.settings import get_project_settings
 
 
 class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,

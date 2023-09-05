@@ -1,10 +1,14 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    ValidateContentsOrder,
+)
 
 
-class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
+class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin,
+                                        OptionalPyblishPluginMixin):
     """Check if the render script callbacks will be used during the rendering
 
     In order to ensure the render tasks are executed properly we need to check

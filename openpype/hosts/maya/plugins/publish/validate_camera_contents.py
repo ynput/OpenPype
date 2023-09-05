@@ -3,10 +3,14 @@ from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError, ValidateContentsOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidateContentsOrder,
+)
 
 
-class ValidateCameraContents(pyblish.api.InstancePlugin):
+class ValidateCameraContents(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     """Validates Camera instance contents.
 
     A Camera instance may only hold a SINGLE camera's transform, nothing else.

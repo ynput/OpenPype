@@ -1,11 +1,13 @@
 import pyblish.api
 
 from openpype.pipeline.publish import (
-    ValidateContentsOrder, PublishValidationError
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidateContentsOrder,
 )
 
 
-class ValidateReview(pyblish.api.InstancePlugin):
+class ValidateReview(pyblish.api.InstancePlugin, OptionalPyblishPluginMixin):
     """Validate review."""
 
     order = ValidateContentsOrder

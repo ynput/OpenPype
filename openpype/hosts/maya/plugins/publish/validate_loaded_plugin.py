@@ -1,14 +1,17 @@
 import os
-import pyblish.api
+
 import maya.cmds as cmds
+import pyblish.api
 
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairContextAction,
-    PublishValidationError
 )
 
 
-class ValidateLoadedPlugin(pyblish.api.ContextPlugin):
+class ValidateLoadedPlugin(pyblish.api.ContextPlugin,
+                           OptionalPyblishPluginMixin):
     """Ensure there are no unauthorized loaded plugins"""
 
     label = "Loaded Plugin"

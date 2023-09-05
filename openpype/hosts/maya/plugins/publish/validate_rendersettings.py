@@ -3,15 +3,16 @@
 import re
 from collections import OrderedDict
 
+import pyblish.api
 from maya import cmds, mel
 
-import pyblish.api
+from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError,
 )
-from openpype.hosts.maya.api import lib
 
 
 def convert_to_int_or_float(string_value):
@@ -36,7 +37,8 @@ def get_redshift_image_format_labels():
     return mel.eval("{0}={0}".format(var))
 
 
-class ValidateRenderSettings(pyblish.api.InstancePlugin):
+class ValidateRenderSettings(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     """Validates the global render settings
 
     * File Name Prefix must start with: `<Scene>`

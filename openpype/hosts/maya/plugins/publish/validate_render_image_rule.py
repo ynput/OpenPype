@@ -2,10 +2,15 @@ import pyblish.api
 from maya import cmds
 
 from openpype.pipeline.publish import (
-    PublishValidationError, RepairAction, ValidateContentsOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
-class ValidateRenderImageRule(pyblish.api.InstancePlugin):
+class ValidateRenderImageRule(pyblish.api.InstancePlugin,
+                              OptionalPyblishPluginMixin):
     """Validates Maya Workpace "images" file rule matches project settings.
 
     This validates against the configured default render image folder:

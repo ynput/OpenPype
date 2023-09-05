@@ -3,10 +3,14 @@ from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError, ValidateContentsOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidateContentsOrder,
+)
 
 
-class ValidateSingleShader(pyblish.api.InstancePlugin):
+class ValidateSingleShader(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
     """Validate all nurbsSurfaces and meshes have exactly one shader assigned.
 
     This will error if a shape has no shaders or more than one shader.

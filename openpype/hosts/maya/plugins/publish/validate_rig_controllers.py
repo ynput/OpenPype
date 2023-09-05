@@ -1,17 +1,18 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
-
-from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    RepairAction,
-    PublishValidationError
-)
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import undo_chunk
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
-class ValidateRigControllers(pyblish.api.InstancePlugin):
+class ValidateRigControllers(pyblish.api.InstancePlugin,
+                             OptionalPyblishPluginMixin):
     """Validate rig controllers.
 
     Controls must have the transformation attributes on their default

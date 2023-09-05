@@ -1,10 +1,13 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
-from openpype.pipeline.publish import PublishValidationError
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+)
 
 
-class ValidateVray(pyblish.api.InstancePlugin):
+class ValidateVray(pyblish.api.InstancePlugin, OptionalPyblishPluginMixin):
     """Validate general Vray setup."""
 
     order = pyblish.api.ValidatorOrder

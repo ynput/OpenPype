@@ -1,16 +1,18 @@
 import maya.cmds as cmds
-
 import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
+class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin,
+                                OptionalPyblishPluginMixin):
     """Validate if deformed shapes have related IDs to the original shapes
 
     When a deformer is applied in the scene on a referenced mesh that already

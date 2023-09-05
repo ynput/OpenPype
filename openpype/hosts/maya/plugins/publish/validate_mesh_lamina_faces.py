@@ -1,11 +1,15 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateMeshOrder
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    ValidateMeshOrder,
+)
 
 
-class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
+class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin,
+                              OptionalPyblishPluginMixin):
     """Validate meshes don't have lamina faces.
 
     Lamina faces share all of their edges.

@@ -1,17 +1,18 @@
 import maya.cmds as cmds
-
 import pyblish.api
 
 import openpype.hosts.maya.api.lib as mayalib
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishXmlValidationError,
     RepairContextAction,
     ValidateSceneOrder,
-    PublishXmlValidationError
 )
 
 
-class ValidateMayaUnits(pyblish.api.ContextPlugin):
+class ValidateMayaUnits(pyblish.api.ContextPlugin,
+                        OptionalPyblishPluginMixin):
     """Check if the Maya units are set correct"""
 
     order = ValidateSceneOrder

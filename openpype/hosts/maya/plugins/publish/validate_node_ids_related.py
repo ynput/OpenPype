@@ -3,7 +3,10 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
-    OptionalPyblishPluginMixin, PublishValidationError, ValidatePipelineOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidatePipelineOrder,
+)
 
 
 class ValidateNodeIDsRelated(pyblish.api.InstancePlugin,

@@ -2,17 +2,19 @@ import os
 import types
 
 import maya.cmds as cmds
+import pyblish.api
 from mtoa.core import createOptions
 
-import pyblish.api
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
+class ValidateAssRelativePaths(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Ensure exporting ass file has set relative texture paths"""
 
     order = ValidateContentsOrder

@@ -4,10 +4,14 @@ import pyblish.api
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    PublishValidationError, ValidatePipelineOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidatePipelineOrder,
+)
 
 
-class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
+class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin,
+                                        OptionalPyblishPluginMixin):
     """Validate the relational nodes of the look data to ensure every node is
     unique.
 

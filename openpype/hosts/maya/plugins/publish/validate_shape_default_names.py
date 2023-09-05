@@ -1,14 +1,13 @@
 import re
 
-from maya import cmds
-
 import pyblish.api
+from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
     RepairAction,
-    OptionalPyblishPluginMixin
+    ValidateContentsOrder,
 )
 
 

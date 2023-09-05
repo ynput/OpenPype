@@ -2,12 +2,14 @@ import pyblish.api
 
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
     PublishValidationError,
-    ValidateContentsOrder
+    ValidateContentsOrder,
 )
 
 
-class ValidateStepSize(pyblish.api.InstancePlugin):
+class ValidateStepSize(pyblish.api.InstancePlugin,
+                       OptionalPyblishPluginMixin):
     """Validates the step size for the instance is in a valid range.
 
     For example the `step` size should never be lower or equal to zero.

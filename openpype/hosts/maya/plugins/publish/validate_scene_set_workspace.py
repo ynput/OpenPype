@@ -4,7 +4,10 @@ import maya.cmds as cmds
 import pyblish.api
 
 from openpype.pipeline.publish import (
-    PublishValidationError, ValidatePipelineOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidatePipelineOrder,
+)
 
 
 def is_subdir(path, root_dir):
@@ -26,7 +29,8 @@ def is_subdir(path, root_dir):
         return True
 
 
-class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin):
+class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin,
+                                OptionalPyblishPluginMixin):
     """Validate the scene is inside the currently set Maya workspace"""
 
     order = ValidatePipelineOrder

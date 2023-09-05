@@ -1,10 +1,11 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
@@ -15,7 +16,8 @@ def _as_report_list(values, prefix="- ", suffix="\n"):
     return prefix + (suffix + prefix).join(values)
 
 
-class ValidateNoDefaultCameras(pyblish.api.InstancePlugin):
+class ValidateNoDefaultCameras(pyblish.api.InstancePlugin,
+                               OptionalPyblishPluginMixin):
     """Ensure no default (startup) cameras are in the instance.
 
     This might be unnecessary. In the past there were some issues with

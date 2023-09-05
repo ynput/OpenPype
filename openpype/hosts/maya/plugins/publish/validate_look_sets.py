@@ -1,13 +1,16 @@
 import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateLookSets(pyblish.api.InstancePlugin):
+class ValidateLookSets(pyblish.api.InstancePlugin,
+                       OptionalPyblishPluginMixin):
     """Validate if any sets relationships are not being collected.
 
     A shader can be assigned to a node that is missing a Colorbleed ID.

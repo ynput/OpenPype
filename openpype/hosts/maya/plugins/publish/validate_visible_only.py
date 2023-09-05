@@ -1,14 +1,16 @@
 import pyblish.api
 
-from openpype.hosts.maya.api.lib import iter_visible_nodes_in_range
 import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api.lib import iter_visible_nodes_in_range
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateContentsOrder,
-    PublishValidationError
 )
 
 
-class ValidateAlembicVisibleOnly(pyblish.api.InstancePlugin):
+class ValidateAlembicVisibleOnly(pyblish.api.InstancePlugin,
+                                 OptionalPyblishPluginMixin):
     """Validates at least a single node is visible in frame range.
 
     This validation only validates if the `visibleOnly` flag is enabled

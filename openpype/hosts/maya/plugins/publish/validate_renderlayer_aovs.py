@@ -3,10 +3,14 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.client import get_subset_by_name
 from openpype.pipeline import legacy_io
-from openpype.pipeline.publish import PublishValidationError
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+)
 
 
-class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
+class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin,
+                              OptionalPyblishPluginMixin):
     """Validate created AOVs / RenderElement is registered in the database
 
     Each render element is registered as a subset which is formatted based on

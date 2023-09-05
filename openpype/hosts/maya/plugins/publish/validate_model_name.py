@@ -11,10 +11,14 @@ from maya import cmds
 import openpype.hosts.maya.api.action
 from openpype.client.mongo import OpenPypeMongoConnection
 from openpype.hosts.maya.api.shader_definition_editor import (
-    DEFINITION_FILENAME)
+    DEFINITION_FILENAME,
+)
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
-    OptionalPyblishPluginMixin, PublishValidationError, ValidateContentsOrder)
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidateContentsOrder,
+)
 
 
 class ValidateModelName(pyblish.api.InstancePlugin,

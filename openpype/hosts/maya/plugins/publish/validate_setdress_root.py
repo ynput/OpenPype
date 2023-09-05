@@ -1,8 +1,13 @@
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    ValidateContentsOrder,
+)
 
 
-class ValidateSetdressRoot(pyblish.api.InstancePlugin):
+class ValidateSetdressRoot(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
     """Validate if set dress top root node is published."""
 
     order = ValidateContentsOrder

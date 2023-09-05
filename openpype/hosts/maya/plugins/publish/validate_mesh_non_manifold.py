@@ -1,10 +1,11 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
     ValidateMeshOrder,
-    PublishValidationError
 )
 
 
@@ -15,7 +16,8 @@ def _as_report_list(values, prefix="- ", suffix="\n"):
     return prefix + (suffix + prefix).join(values)
 
 
-class ValidateMeshNonManifold(pyblish.api.Validator):
+class ValidateMeshNonManifold(pyblish.api.Validator,
+                              OptionalPyblishPluginMixin):
     """Ensure that meshes don't have non-manifold edges or vertices
 
     To debug the problem on the meshes you can use Maya's modeling

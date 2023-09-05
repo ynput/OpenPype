@@ -1,13 +1,13 @@
 import maya.cmds as cmds
-
 import pyblish.api
-from openpype.pipeline.publish import (
-    RepairAction,
-    ValidateContentsOrder,
-    PublishValidationError
-)
 
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    RepairAction,
+    ValidateContentsOrder,
+)
 
 
 def _as_report_list(values, prefix="- ", suffix="\n"):
@@ -24,7 +24,8 @@ def get_namespace(node_name):
     return node_name.rpartition(":")[0]
 
 
-class ValidateNoNamespace(pyblish.api.InstancePlugin):
+class ValidateNoNamespace(pyblish.api.InstancePlugin,
+                          OptionalPyblishPluginMixin):
     """Ensure the nodes don't have a namespace"""
 
     order = ValidateContentsOrder

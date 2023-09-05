@@ -1,13 +1,13 @@
+import pyblish.api
 from maya import cmds
 
-import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import (
-    ValidateMeshOrder,
-    OptionalPyblishPluginMixin,
-    PublishValidationError
-)
 from openpype.hosts.maya.api.lib import len_flattened
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError,
+    ValidateMeshOrder,
+)
 
 
 class ValidateMeshHasUVs(pyblish.api.InstancePlugin,

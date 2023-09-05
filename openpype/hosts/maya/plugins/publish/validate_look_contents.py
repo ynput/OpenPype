@@ -1,15 +1,16 @@
 import pyblish.api
+from maya import cmds  # noqa
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
     PublishValidationError,
-    ValidateContentsOrder
+    ValidateContentsOrder,
 )
 
 
-from maya import cmds  # noqa
-
-
-class ValidateLookContents(pyblish.api.InstancePlugin):
+class ValidateLookContents(pyblish.api.InstancePlugin,
+                           OptionalPyblishPluginMixin):
     """Validate look instance contents
 
     Rules:

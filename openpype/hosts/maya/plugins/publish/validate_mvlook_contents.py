@@ -1,12 +1,13 @@
 import os
+
 import pyblish.api
+
 import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
     OptionalPyblishPluginMixin,
-    PublishValidationError
+    PublishValidationError,
+    ValidateContentsOrder,
 )
-
 
 COLOUR_SPACES = ['sRGB', 'linear', 'auto']
 MIPMAP_EXTENSIONS = ['tdl']

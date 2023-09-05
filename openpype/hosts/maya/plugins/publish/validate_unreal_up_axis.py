@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from maya import cmds
 import pyblish.api
+from maya import cmds
 
 from openpype.pipeline.publish import (
-    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
     RepairAction,
-    OptionalPyblishPluginMixin
+    ValidateContentsOrder,
 )
 
 
