@@ -11,7 +11,8 @@ from openpype.pipeline.publish import (
 )
 
 
-class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin, OptionalPyblishPluginMixin):
+class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """Validate meshes have only vertices that are connected to edges.
 
     Maya can have invalid geometry with vertices that have no edges or

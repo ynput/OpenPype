@@ -10,7 +10,8 @@ from openpype.pipeline.publish import (
 )
 
 
-class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin, OptionalPyblishPluginMixin):
+class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin,
+                                     OptionalPyblishPluginMixin):
     """Validate if mesh is made of triangles for Unreal Engine"""
 
     order = ValidateMeshOrder
