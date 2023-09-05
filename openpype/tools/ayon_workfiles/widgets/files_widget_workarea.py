@@ -34,6 +34,10 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             "workfile_duplicate.finished",
             self._on_duplicate_finished
         )
+        controller.register_event_callback(
+            "save_as.finished",
+            self._on_save_as_finished
+        )
 
         self._file_icon = qtawesome.icon(
             "fa.file-o",
@@ -128,6 +132,13 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             self._fill_items()
 
     def _on_duplicate_finished(self, event):
+        if event["failed"]:
+            return
+
+        if not self._published_mode:
+            self._fill_items()
+
+    def _on_save_as_finished(self, event):
         if event["failed"]:
             return
 
