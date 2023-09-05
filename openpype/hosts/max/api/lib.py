@@ -11,7 +11,9 @@ from openpype.pipeline import get_current_project_name
 from openpype.settings import get_project_settings
 from openpype.pipeline.context_tools import (
     get_current_project, get_current_project_asset)
+from openpype.style import load_stylesheet
 from pymxs import runtime as rt
+
 
 JSON_PREFIX = "JSON::"
 log = logging.getLogger("openpype.hosts.max")
@@ -389,9 +391,9 @@ def check_colorspace():
             dialog.setMessage("This scene has wrong OCIO "
                               "Mode setting.")
             dialog.setButtonText("Fix")
+            dialog.setStyleSheet(load_stylesheet())
             dialog.on_clicked.connect(reset_colorspace)
             dialog.show()
-
 
 def unique_namespace(namespace, format="%02d",
                      prefix="", suffix="", con_suffix="CON"):
