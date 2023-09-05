@@ -334,12 +334,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
             payload = self._get_vray_render_payload(payload_data)
 
-        elif "assscene" in instance.data["families"]:
-            self.log.debug("Submitting Arnold .ass standalone render..")
-            ass_export_payload = self._get_arnold_export_payload(payload_data)
-            export_job = self.submit(ass_export_payload)
-
-            payload = self._get_arnold_render_payload(payload_data)
         else:
             self.log.debug("Submitting MayaBatch render..")
             payload = self._get_maya_payload(payload_data)
@@ -632,53 +626,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             "UseLegacyRenderLayers": True,
             "OutputFilePath": os.path.dirname(vray_scene)
         }
-
-        return job_info, attr.asdict(plugin_info)
-
-    def _get_arnold_export_payload(self, data):
-
-        try:
-            from openpype.scripts import export_maya_ass_job
-        except Exception:
-            raise AssertionError(
-                "Expected module 'export_maya_ass_job' to be available")
-
-        module_path = export_maya_ass_job.__file__
-        if module_path.endswith(".pyc"):
-            module_path = module_path[: -len(".pyc")] + ".py"
-
-        script = os.path.normpath(module_path)
-
-        job_info = copy.deepcopy(self.job_info)
-        job_info.Name = self._job_info_label("Export")
-
-        # Force a single frame Python job
-        job_info.Plugin = "Python"
-        job_info.Frames = 1
-
-        renderlayer = self._instance.data["setMembers"]
-
-        # add required env vars for the export script
-        envs = {
-            "AVALON_APP_NAME": os.environ.get("AVALON_APP_NAME"),
-            "OPENPYPE_ASS_EXPORT_RENDER_LAYER": renderlayer,
-            "OPENPYPE_ASS_EXPORT_SCENE_FILE": self.scene_path,
-            "OPENPYPE_ASS_EXPORT_OUTPUT": job_info.OutputFilename[0],
-            "OPENPYPE_ASS_EXPORT_START": int(self._instance.data["frameStartHandle"]),  # noqa
-            "OPENPYPE_ASS_EXPORT_END":  int(self._instance.data["frameEndHandle"]),  # noqa
-            "OPENPYPE_ASS_EXPORT_STEP": 1
-        }
-        for key, value in envs.items():
-            if not value:
-                continue
-            job_info.EnvironmentKeyValue[key] = value
-
-        plugin_info = PythonPluginInfo(
-            ScriptFile=script,
-            Version="3.6",
-            Arguments="",
-            SingleFrameOnly="True"
-        )
 
         return job_info, attr.asdict(plugin_info)
 

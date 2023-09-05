@@ -38,6 +38,7 @@ from .models import (
 from .overlay_messages import (
     MessageOverlayObject,
 )
+from .multiselection_combobox import MultiSelectionComboBox
 
 
 __all__ = (
@@ -78,4 +79,6 @@ __all__ = (
     "RecursiveSortFilterProxyModel",
 
     "MessageOverlayObject",
+
+    "MultiSelectionComboBox",
 )
