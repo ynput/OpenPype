@@ -14,13 +14,11 @@ from openpype.lib import (
     get_ffmpeg_codec_args,
     get_ffmpeg_format_args,
 )
-from openpype.pipeline.publish import (
-    Extractor,
-    KnownPublishError
-)
+from openpype.pipeline import publish
+from openpype.pipeline.publish import KnownPublishError
 
 
-class ExtractReviewSlate(Extractor):
+class ExtractReviewSlate(publish.Extractor):
     """
     Will add slate frame at the start of the video files
     """
