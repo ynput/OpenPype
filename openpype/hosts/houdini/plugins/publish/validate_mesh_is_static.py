@@ -17,7 +17,7 @@ class ValidateMeshIsStatic(pyblish.api.InstancePlugin,
                            OptionalPyblishPluginMixin):
     """Validate mesh is static.
 
-    It checks if output node is time dependant.
+    It checks if output node is time dependent.
     """
 
     families = ["staticMesh"]

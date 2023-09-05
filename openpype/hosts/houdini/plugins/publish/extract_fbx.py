@@ -21,40 +21,17 @@ class ExtractFBX(publish.Extractor):
 
         # get rop node
         ropnode = hou.node(instance.data.get("instance_node"))
+        output_node = ropnode.evalParm("sopoutput")
+
+        # get staging_dir and file_name
+        staging_dir = os.path.normpath(os.path.dirname(output_node))
+        file_name = os.path.basename(output_node)
 
         # render rop
+        self.log.debug("Writing FBX '%s' to '%s'",file_name, staging_dir)
         render_rop(ropnode)
 
-        # get required data
-        file_name, staging_dir = self.get_paths_data(ropnode)
-        representation = self.get_representation(instance,
-                                                 file_name,
-                                                 staging_dir)
-
-        # set value type for 'representations' key to list
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
-
-        # update instance data
-        instance.data["stagingDir"] = staging_dir
-        instance.data["representations"].append(representation)
-
-    def get_paths_data(self, ropnode):
-        # Get the filename from the filename parameter
-        output = ropnode.evalParm("sopoutput")
-
-        staging_dir = os.path.normpath(os.path.dirname(output))
-
-        file_name = os.path.basename(output)
-
-        self.log.info("Writing FBX '%s' to '%s'" % (file_name,
-                                                    staging_dir))
-
-        return file_name, staging_dir
-
-    def get_representation(self, instance,
-                           file_name, staging_dir):
-
+        # prepare representation
         representation = {
             "name": "fbx",
             "ext": "fbx",
@@ -67,4 +44,10 @@ class ExtractFBX(publish.Extractor):
             representation["frameStart"] = instance.data["frameStart"]
             representation["frameEnd"] = instance.data["frameEnd"]
 
-        return representation
+        # set value type for 'representations' key to list
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        # update instance data
+        instance.data["stagingDir"] = staging_dir
+        instance.data["representations"].append(representation)

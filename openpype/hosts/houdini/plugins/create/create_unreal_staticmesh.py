@@ -28,8 +28,18 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
         # get the created rop node
         instance_node = hou.node(instance.get("instance_node"))
 
-        # get parms
-        parms = self.get_parms(subset_name, pre_create_data)
+        # prepare parms
+        output_path = hou.text.expandString("$HIP/pyblish/{}.fbx".format(subset_name))
+        parms = {
+            "startnode": self.get_selection(),
+            "sopoutput": output_path,
+            # vertex cache format
+            "vcformat": pre_create_data.get("vcformat"),
+            "convertunits": pre_create_data.get("convertunits"),
+            # set render range to use frame range start-end frame
+            "trange": 1,
+            "createsubnetroot": pre_create_data.get("createsubnetroot")
+        }
 
         # set parms
         instance_node.setParms(parms)
@@ -47,7 +57,7 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
     def get_pre_create_attr_defs(self):
         """Add settings for users. """
 
-        attrs = super().get_pre_create_attr_defs()
+        attrs = super(CreateUnrealStaticMesh, self).get_pre_create_attr_defs()
         createsubnetroot = BoolDef("createsubnetroot",
                                    tooltip="Create an extra root for the "
                                            "Export node when it's a "
@@ -85,40 +95,6 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
         )
         dynamic_data["asset"] = asset_doc["name"]
         return dynamic_data
-
-    def get_parms(self, subset_name, pre_create_data):
-        """Get parameters values. """
-
-        # 1. get output path
-        output_path = hou.text.expandString(
-            "$HIP/pyblish/{}.fbx".format(subset_name))
-
-        # 2. get selection
-        selection = self.get_selection()
-
-        # 3. get Vertex Cache Format
-        vcformat = pre_create_data.get("vcformat")
-
-        # 4. get convert_units
-        convertunits = pre_create_data.get("convertunits")
-
-        # 5. get Valid Frame Range
-        trange = 1
-
-        # 6. get createsubnetroot
-        createsubnetroot = pre_create_data.get("createsubnetroot")
-
-        # parms dictionary
-        parms = {
-            "startnode": selection,
-            "sopoutput": output_path,
-            "vcformat": vcformat,
-            "convertunits": convertunits,
-            "trange": trange,
-            "createsubnetroot": createsubnetroot
-        }
-
-        return parms
 
     def get_selection(self):
         """Selection Logic.

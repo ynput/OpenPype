@@ -146,5 +146,5 @@ class FbxLoader(load.LoaderPlugin):
         # Set new position for children nodes
         parent_node.layoutChildren()
 
-        # Retrun all the nodes
+        # Return all the nodes
         return [parent_node, file_node, attribdelete, null]

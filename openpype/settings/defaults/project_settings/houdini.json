@@ -111,6 +111,16 @@
             "optional": true,
             "active": true
         },
+        "ValidateSubsetName": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshIsStatic": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateUnrealStaticMeshName": {
             "enabled": true,
             "optional": true,

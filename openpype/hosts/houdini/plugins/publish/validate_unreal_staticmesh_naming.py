@@ -35,9 +35,12 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
     actions = [SelectInvalidAction]
 
     optional = True
+    collision_prefixes = []
+    static_mesh_prefix = ""
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
+
         settings = (
             project_settings["houdini"]["create"]["CreateUnrealStaticMesh"]
         )
@@ -51,7 +54,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            nodes = [n.path() for n in invalid if isinstance(n, hou.Node)]
+            nodes = [n.path() for n in invalid]
             raise PublishValidationError(
                 "See log for details. "
                 "Invalid nodes: {0}".format(nodes)
@@ -70,7 +73,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
             )
             return
 
-        if not rop_node.evalParm('buildfrompath'):
+        if rop_node.evalParm("buildfrompath"):
             # This validator doesn't support naming check if
             # building hierarchy from path' is used
             cls.log.info(
@@ -90,19 +93,5 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
                         output.path(), prefix
                     )
                     break
-
-        # Check subset name
-        subset_name = "{}_{}{}".format(
-            cls.static_mesh_prefix,
-            instance.data["asset"],
-            instance.data.get("variant", "")
-        )
-
-        if instance.data.get("subset") != subset_name:
-            invalid.append(rop_node)
-            cls.log.error(
-                "Invalid subset name on rop node '%s' should be '%s'.",
-                rop_node.path(), subset_name
-            )
 
         return invalid

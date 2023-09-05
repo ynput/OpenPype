@@ -164,6 +164,12 @@ class PublishPluginsModel(BaseSettingsModel):
     ValidateContainers: ValidateContainersModel = Field(
         default_factory=ValidateContainersModel,
         title="Validate Latest Containers.")
+    ValidateSubsetName: ValidateContainersModel = Field(
+        default_factory=ValidateContainersModel,
+        title="Validate Subset Name.")
+    ValidateMeshIsStatic: ValidateContainersModel = Field(
+        default_factory=ValidateContainersModel,
+        title="Validate Mesh is Static.")
     ValidateUnrealStaticMeshName: ValidateContainersModel = Field(
         default_factory=ValidateContainersModel,
         title="Validate Unreal Static Mesh Name.")
@@ -183,6 +189,16 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
         ]
     },
     "ValidateContainers": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateSubsetName": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateMeshIsStatic": {
         "enabled": True,
         "optional": True,
         "active": True

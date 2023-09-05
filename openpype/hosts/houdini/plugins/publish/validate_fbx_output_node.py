@@ -9,12 +9,13 @@ from openpype.hosts.houdini.api.action import (
 import hou
 
 
-class ValidateOutputNode(pyblish.api.InstancePlugin):
+class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
     """Validate the instance Output Node.
 
     This will ensure:
         - The Output Node Path is set.
         - The Output Node Path refers to an existing object.
+        - The Output Node is a Sop or Obj node.
     """
 
     order = pyblish.api.ValidatorOrder
