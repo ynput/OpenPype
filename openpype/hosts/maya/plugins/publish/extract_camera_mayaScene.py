@@ -217,8 +217,8 @@ class ExtractCameraMayaScene(publish.Extractor,
                               expressions=False)
 
                     # Delete the baked hierarchy
-                    # if bake_to_worldspace:
-                    #     cmds.delete(baked)
+                    if bake_to_worldspace:
+                        cmds.delete(baked)
                     if self.scene_type == "ma":
                         massage_ma_file(path)
 
