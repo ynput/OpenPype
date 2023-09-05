@@ -548,8 +548,7 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
     instances = []
     # go through AOVs in expected files
     for aov, files in exp_files[0].items():
-        cols, rem = clique.assemble(
-            files, patterns=[clique.PATTERNS['frames']])
+        cols, rem = clique.assemble(files)
         # we shouldn't have any reminders. And if we do, it should
         # be just one item for single frame renders.
         if not cols and rem:
