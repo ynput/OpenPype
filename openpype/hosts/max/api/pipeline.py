@@ -171,3 +171,53 @@ def containerise(name: str, nodes: list, context,
     if not lib.imprint(container_name, data):
         print(f"imprinting of {container_name} failed.")
     return container
+
+
+def load_custom_attribute_data():
+    """Re-loading the Openpype/AYON custom parameter built by the creator
+
+    Returns:
+        attribute: re-loading the custom OP attributes set in Maxscript
+    """
+    return rt.Execute(MS_CUSTOM_ATTRIB)
+
+
+def import_custom_attribute_data(container: str, selections: list):
+    """Importing the Openpype/AYON custom parameter built by the creator
+
+    Args:
+        container (str): target container which adds custom attributes
+        selections (list): nodes to be added into
+        group in custom attributes
+    """
+    attrs = load_custom_attribute_data()
+    modifier = rt.EmptyModifier()
+    rt.addModifier(container, modifier)
+    container.modifiers[0].name = "OP Data"
+    rt.custAttributes.add(container.modifiers[0], attrs)
+    node_list = []
+    sel_list = []
+    for i in selections:
+        node_ref = rt.NodeTransformMonitor(node=i)
+        node_list.append(node_ref)
+        sel_list.append(str(i))
+
+    # Setting the property
+    rt.setProperty(
+        container.modifiers[0].openPypeData,
+        "all_handles", node_list)
+    rt.setProperty(
+        container.modifiers[0].openPypeData,
+        "sel_list", sel_list)
+
+def update_custom_attribute_data(container: str, selections: list):
+    """Updating the Openpype/AYON custom parameter built by the creator
+
+    Args:
+        container (str): target container which adds custom attributes
+        selections (list): nodes to be added into
+        group in custom attributes
+    """
+    if container.modifiers[0].name == "OP Data":
+        rt.deleteModifier(container, container.modifiers[0])
+    import_custom_attribute_data(container, selections)

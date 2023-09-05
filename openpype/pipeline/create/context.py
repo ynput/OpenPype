@@ -1774,7 +1774,7 @@ class CreateContext:
         self.creator_discover_result = report
         for creator_class in report.plugins:
             if inspect.isabstract(creator_class):
-                self.log.info(
+                self.log.debug(
                     "Skipping abstract Creator {}".format(str(creator_class))
                 )
                 continue
@@ -1804,6 +1804,7 @@ class CreateContext:
                 self,
                 self.headless
             )
+
             if not creator.enabled:
                 disabled_creators[creator_identifier] = creator
                 continue
