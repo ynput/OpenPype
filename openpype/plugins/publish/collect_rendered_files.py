@@ -91,12 +91,12 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
         # now we can just add instances from json file and we are done
         for instance_data in data.get("instances"):
 
-            self.log.info("  - processing instance for {}".format(
+            self.log.debug("  - processing instance for {}".format(
                 instance_data.get("subset")))
             instance = self._context.create_instance(
                 instance_data.get("subset")
             )
-            self.log.info("Filling stagingDir...")
+            self.log.debug("Filling stagingDir...")
 
             self._fill_staging_dir(instance_data, anatomy)
             instance.data.update(instance_data)
@@ -121,7 +121,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                         "offset": 0
                     }]
                 })
-                self.log.info(
+                self.log.debug(
                     f"Adding audio to instance: {instance.data['audio']}")
 
     def process(self, context):
@@ -137,11 +137,11 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
         # Using already collected Anatomy
         anatomy = context.data["anatomy"]
-        self.log.info("Getting root setting for project \"{}\"".format(
+        self.log.debug("Getting root setting for project \"{}\"".format(
             anatomy.project_name
         ))
 
-        self.log.info("anatomy: {}".format(anatomy.roots))
+        self.log.debug("anatomy: {}".format(anatomy.roots))
         try:
             session_is_set = False
             for path in paths:
@@ -156,7 +156,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                     if remapped:
                         session_data["AVALON_WORKDIR"] = remapped
 
-                    self.log.info("Setting session using data from file")
+                    self.log.debug("Setting session using data from file")
                     legacy_io.Session.update(session_data)
                     os.environ.update(session_data)
                     session_is_set = True

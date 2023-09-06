@@ -35,12 +35,12 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin,
         publishMipMap = instance.data["publishMipMap"]
         enforced = True
         if intent in self.enforced_intents:
-            self.log.info("This validation will be enforced: '{}'"
-                          .format(intent))
+            self.log.debug("This validation will be enforced: '{}'"
+                           .format(intent))
         else:
             enforced = False
-            self.log.info("This validation will NOT be enforced: '{}'"
-                          .format(intent))
+            self.log.debug("This validation will NOT be enforced: '{}'"
+                           .format(intent))
 
         if not instance[:]:
             raise PublishValidationError("Instance is empty")
@@ -75,8 +75,9 @@ class ValidateMvLookContents(pyblish.api.InstancePlugin,
                         self.log.warning(msg)
 
         if invalid:
-            raise PublishValidationError("'{}' has invalid look "
-                               "content".format(instance.name))
+            raise PublishValidationError(
+                "'{}' has invalid look content".format(instance.name)
+            )
 
     def valid_file(self, fname):
         self.log.debug("Checking validity of '{}'".format(fname))
