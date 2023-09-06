@@ -55,12 +55,29 @@ class CreateMayaUsd(plugin.MayaCreator):
                     default="usdc"),
             BoolDef("stripNamespaces",
                     label="Strip Namespaces",
+                    tooltip=(
+                        "Remove namespaces during export. By default, "
+                        "namespaces are exported to the USD file in the "
+                        "following format: nameSpaceExample_pPlatonic1"
+                    ),
                     default=True),
             BoolDef("mergeTransformAndShape",
                     label="Merge Transform and Shape",
+                    tooltip=(
+                        "Combine Maya transform and shape into a single USD"
+                        "prim that has transform and geometry, for all"
+                        " \"geometric primitives\" (gprims).\n"
+                        "This results in smaller and faster scenes. Gprims "
+                        "will be \"unpacked\" back into transform and shape "
+                        "nodes when imported into Maya from USD."
+                    ),
                     default=True),
             BoolDef("includeUserDefinedAttributes",
                     label="Include User Defined Attributes",
+                    tooltip=(
+                        "Whether to include all custom maya attributes found "
+                        "on nodes as metadata (userProperties) in USD."
+                    ),
                     default=False),
             TextDef("attr",
                     label="Custom Attributes",
@@ -73,6 +90,12 @@ class CreateMayaUsd(plugin.MayaCreator):
             EnumDef("jobContext",
                     label="Job Context",
                     items=self.cache["jobContextItems"],
+                    tooltip=(
+                        "Specifies an additional export context to handle.\n"
+                        "These usually contain extra schemas, primitives,\n"
+                        "and materials that are to be exported for a "
+                        "specific\ntask, a target renderer for example."
+                    ),
                     multiselection=True),
         ])
 
