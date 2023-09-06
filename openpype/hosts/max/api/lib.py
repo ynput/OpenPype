@@ -382,7 +382,7 @@ def check_colorspace():
                 dialog = popup.Popup(parent=parent)
                 dialog.setWindowTitle("Warning: Wrong OCIO Mode")
                 dialog.setMessage("This scene has wrong OCIO "
-                                    "Mode setting.")
+                                  "Mode setting.")
                 dialog.setButtonText("Fix")
                 dialog.setStyleSheet(load_stylesheet())
                 dialog.on_clicked.connect(reset_colorspace)
