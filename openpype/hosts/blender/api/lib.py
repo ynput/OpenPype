@@ -340,8 +340,15 @@ def maintained_time():
         bpy.context.scene.frame_current = current_time
 
 
-def download_last_workfile() -> str:
+def download_last_workfile(
+    project_name: str, asset_name: str, task_name: str
+) -> str:
     """Download last workfile and return its path.
+
+    Args:
+        project_name (str): Name of project.
+        asset_name (str): Name of asset.
+        task_name (str): Name of task.
 
     Returns:
         str: Path to last workfile.
@@ -354,9 +361,6 @@ def download_last_workfile() -> str:
     if not sync_server or not sync_server.enabled:
         raise RuntimeError("Sync server module is not enabled or available")
 
-    project_name = get_current_project_name()
-    task_name = get_current_task_name()
-    asset_name = get_current_asset_name()
     anatomy = Anatomy(project_name)
     asset_doc = get_asset_by_name(
         project_name,
@@ -436,6 +440,51 @@ def download_last_workfile() -> str:
             "No published workfile for task " f"'{task_name}' and host blender"
         )
 
+    # Download and get last workfile
+    last_published_workfile_path = download_last_published_workfile(
+        "blender",
+        project_name,
+        task_name,
+        workfile_representation,
+        int(
+            (
+                sync_server.sync_project_settings[project_name]["config"][
+                    "retry_cnt"
+                ]
+            )
+        ),
+        anatomy=anatomy,
+    )
+
+    if (
+        not last_published_workfile_path
+        or not Path(last_published_workfile_path).exists()
+    ):
+        raise OSError("Failed to download last published workfile")
+
+    return last_published_workfile_path, last_version_doc["data"]["time"]
+
+
+def save_as_local_workfile(
+    project_name: str, asset_name: str, task_name: str, filepath: Path
+) -> str:
+    """Save given filepath as local workfile.
+
+    Args:
+        project_name (str): Name of project.
+        asset_name (str): Name of asset.
+        task_name (str): Name of task.
+        filepath (Path): Path to save file as workfile.
+
+    Returns:
+        str: Path to saved local workfile.
+    """
+    anatomy = Anatomy(project_name)
+    asset_doc = get_asset_by_name(
+        project_name,
+        asset_name,
+    )
+
     # Get workfile template data
     workfile_data = get_template_data(
         get_project(project_name, inactive=False),
@@ -463,32 +512,10 @@ def download_last_workfile() -> str:
         get_workfile_template_key(task_name, "blender", project_name)
     ]["path"]
 
-    # Download and get last workfile
-    last_published_workfile_path = download_last_published_workfile(
-        "blender",
-        project_name,
-        task_name,
-        workfile_representation,
-        int(
-            (
-                sync_server.sync_project_settings[project_name]["config"][
-                    "retry_cnt"
-                ]
-            )
-        ),
-        anatomy=anatomy,
-    )
-
-    if (
-        not last_published_workfile_path
-        or not Path(last_published_workfile_path).exists()
-    ):
-        raise OSError("Failed to download last published workfile")
-
     # Download and copy last published workfile to local workfile path
     shutil.copy(
-        last_published_workfile_path,
+        filepath,
         local_workfile_path,
     )
 
-    return local_workfile_path, last_version_doc["data"]["time"]
+    return local_workfile_path
