@@ -148,6 +148,7 @@ class ExtractMayaUsd(publish.Extractor):
             "exportRefsAsInstanceable": bool,
             "eulerFilter": bool,
             "renderableOnly": bool,
+            "jobContext": (list, None)  # optional list
             # "worldspace": bool,
         }
 
@@ -169,6 +170,7 @@ class ExtractMayaUsd(publish.Extractor):
             "exportRefsAsInstanceable": False,
             "eulerFilter": True,
             "renderableOnly": False,
+            "jobContext": None
             # "worldspace": False
         }
 
