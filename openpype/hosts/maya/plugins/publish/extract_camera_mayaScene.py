@@ -133,8 +133,7 @@ class ExtractCameraMayaScene(publish.Extractor):
         # get cameras
         members = cmds.ls(instance.data['setMembers'], leaf=True, shapes=True,
                           long=True, dag=True)
-        cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
-                          dag=True, type="camera")
+        cameras = cmds.ls(members, type="camera")
 
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
