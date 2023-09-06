@@ -10,12 +10,7 @@ import bpy
 import addon_utils
 from openpype.lib import Logger
 from openpype.modules import ModulesManager
-from openpype.pipeline import (
-    Anatomy,
-    get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name,
-)
+from openpype.pipeline import Anatomy
 from openpype.pipeline.template_data import (
     get_template_data,
 )
