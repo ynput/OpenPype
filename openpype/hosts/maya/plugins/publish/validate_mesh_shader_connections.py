@@ -36,7 +36,7 @@ def get_invalid_sets(shapes):
                 # Bugfix: When querying `maya.cmds.sets` with `nodesOnly=True`
                 # instanced members will always return the first instance path
                 # even though that might not be the actual member of the set
-                # To resolve this we `maya.cmds.sets` regularly and filter to
+                # To resolve this we `maya.cmds.sets` as usual and filter to
                 # objects using `maya.cmds.ls` with `objectsOnly`
                 members = cmds.sets(set_, query=True)
                 members = cmds.ls(members, objectsOnly=True, long=True)
