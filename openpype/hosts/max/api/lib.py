@@ -313,6 +313,14 @@ def get_max_version():
     return max_info[7]
 
 
+def is_HEADLESS():
+    """Check if 3dsMax runs in batch mode.
+    If it returns True, it runs in 3dsbatch.exe
+    If it returns False, it runs in 3dsmax.exe
+    """
+    return rt.maxops.isInNonInteractiveMode()
+
+
 @contextlib.contextmanager
 def viewport_camera(camera):
     original = rt.viewport.getCamera()
@@ -372,15 +380,16 @@ def check_colorspace():
         config_enabled = global_imageio["activate_global_color_management"] or (        # noqa
             max_config_data)
         if config_enabled and color_mgr.Mode != rt.Name("OCIO_Custom"):
-            from openpype.widgets import popup
-            dialog = popup.Popup(parent=parent)
-            dialog.setWindowTitle("Warning: Wrong OCIO Mode")
-            dialog.setMessage("This scene has wrong OCIO "
-                            "Mode setting.")
-            dialog.setButtonText("Fix")
-            dialog.setStyleSheet(load_stylesheet())
-            dialog.on_clicked.connect(reset_colorspace)
-            dialog.show()
+            if not is_HEADLESS:
+                from openpype.widgets import popup
+                dialog = popup.Popup(parent=parent)
+                dialog.setWindowTitle("Warning: Wrong OCIO Mode")
+                dialog.setMessage("This scene has wrong OCIO "
+                                  "Mode setting.")
+                dialog.setButtonText("Fix")
+                dialog.setStyleSheet(load_stylesheet())
+                dialog.on_clicked.connect(reset_colorspace)
+                dialog.show()
 
 def unique_namespace(namespace, format="%02d",
                      prefix="", suffix="", con_suffix="CON"):
