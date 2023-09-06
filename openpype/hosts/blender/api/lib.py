@@ -14,6 +14,7 @@ from openpype.hosts.blender.api.utils import (
     assign_loader_to_datablocks,
     build_op_basename,
     ensure_unique_name,
+    get_all_outliner_children,
     get_instanced_collections,
 )
 from openpype.lib import Logger
@@ -104,6 +105,8 @@ def get_user_links(
 ) -> Tuple[Set[bpy.types.ID], Set[bpy.types.ID]]:
     """Return all datablocks linked to the user datablock recursively.
 
+    Outliner types are processed separately to avoid over deep links.
+
     Args:
         user_datablock (bpy.types.ID): Datablock to get links from
 
@@ -116,13 +119,14 @@ def get_user_links(
 
     # Get all datablocks from blend file
     all_datablocks = set()
-    for datacol in dir(bpy.data):
+    for datacol_name in dir(bpy.data):
+        datacol = getattr(bpy.data, datacol_name)
         if not isinstance(
-            getattr(bpy.data, datacol),
+            datacol,
             bpy.types.bpy_prop_collection,
-        ):
+        ) and datacol not in {bpy.data.collections, bpy.data.objects}:
             continue
-        all_datablocks.update(getattr(bpy.data, datacol))
+        all_datablocks.update(datacol)
 
     users_links = {}
     user_map = bpy.data.user_map(subset=all_datablocks)
@@ -130,14 +134,16 @@ def get_user_links(
     all_not_linked = user_map.keys()
     for user in users_datablocks:
         current_user_links = users_links.setdefault(user, {user})
+
+        # Collect outliner datablocks first
+        if isinstance(user, tuple(BL_OUTLINER_TYPES)):
+            current_user_links |= get_all_outliner_children(user)
+
         not_linked = set()
         for datablock in all_not_linked:
-            # Substitute scene collection with scene
-            if (
-                isinstance(datablock, bpy.types.Collection)
-                and datablock == bpy.context.scene.collection
-            ):
-                user = bpy.context.scene
+            # Skip outliner datablocks
+            if isinstance(datablock, tuple(BL_OUTLINER_TYPES)):
+                continue
 
             # Recursive search
             _recursive_collect_user_links(
@@ -149,6 +155,17 @@ def get_user_links(
             )
         all_not_linked -= current_user_links
 
+    # Merge datablocks of users used by other users into theirs
+    used_user_map = {}
+    for user, datablocks in users_links.items():
+        for other_user in users_links:
+            if other_user in datablocks and other_user != user:
+                used_user_map.setdefault(user, []).append(other_user)
+    for user, used_users in used_user_map.items():
+        for used_user in used_users:
+            users_links[user] |= users_links[used_user]
+            del users_links[used_user]
+
     # Filter datablocks by types
     if types:
         types = tuple(types)
@@ -156,7 +173,7 @@ def get_user_links(
             user: {d for d in datablocks if isinstance(d, types)}
             for user, datablocks in users_links.items()
         }
-        not_linked = {d for d in not_linked if isinstance(d, types)}
+        all_not_linked = {d for d in all_not_linked if isinstance(d, types)}
 
     return users_links, all_not_linked
 
@@ -170,6 +187,9 @@ def _recursive_collect_user_links(
 ):
     """Collect recursively all datablocks linked to the user datablock.
 
+    If the datablock and its user are both outliner types, we are encountering
+    an over deep reference.
+
     Args:
         datablock (bpy.types.ID): Datablock currently tested.
         target_user_datablock (bpy.types.ID): Datablock to get links from.
@@ -177,10 +197,13 @@ def _recursive_collect_user_links(
         exclude (set): Set of datablocks to exclude from search.
         user_map (dict): User map of all datablocks in blend file.
     """
-
     for user in user_map.get(datablock, []):
         # Check not self reference to avoid infinite loop
-        if user == datablock:
+        if (
+            user == datablock
+            or isinstance(user, tuple(BL_OUTLINER_TYPES))
+            and isinstance(datablock, tuple(BL_OUTLINER_TYPES))
+        ):
             continue
         elif user == target_user_datablock:
             links.add(datablock)
@@ -190,10 +213,7 @@ def _recursive_collect_user_links(
             )
 
         # Add datablock to links if user is linked to target datablock
-        if (
-            user.get(AVALON_PROPERTY, {}).get("id") != AVALON_CONTAINER_ID
-            and user in links
-        ):
+        if user in links:
             links.add(datablock)
         else:
             exclude.add(datablock)
@@ -230,8 +250,8 @@ def update_scene_containers():
         )
     ]
 
-    containers_loaders = assign_loader_to_datablocks(containerized_datablocks)
     containers_datablocks = get_user_links(containerized_datablocks)[0]
+    containers_loaders = assign_loader_to_datablocks(containers_datablocks)
 
     for entity, datablocks in containers_datablocks.items():
         # Get container metadata
