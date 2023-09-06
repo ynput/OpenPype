@@ -1,16 +1,18 @@
 """Shared functionalities for Blender files data manipulation."""
 import itertools
 from pathlib import Path
-from typing import List, Optional, Set, Union, Iterator
+from typing import Dict, List, Optional, Set, Union, Iterator
 from collections.abc import Iterable
 
 import bpy
+from openpype.client.entities import get_representations
 from openpype.pipeline.constants import AVALON_CONTAINER_ID, AVALON_INSTANCE_ID
+from openpype.pipeline.context_tools import get_current_project_name
 from openpype.pipeline.load.plugins import (
     LoaderPlugin,
     discover_loader_plugins,
 )
-from openpype.pipeline.load.utils import loaders_from_representation
+from openpype.pipeline.load.utils import loaders_from_repre_context
 
 
 # Key for metadata dict
@@ -232,7 +234,7 @@ def unlink_from_collection(
         collection.objects.unlink(entity)
 
 
-def get_loader_name(loaders: List[LoaderPlugin], load_type: str) -> str:
+def get_loader_by_name(loaders: List[LoaderPlugin], load_type: str) -> str:
     """Get loader name from list by requested load type.
 
     Args:
@@ -243,12 +245,14 @@ def get_loader_name(loaders: List[LoaderPlugin], load_type: str) -> str:
         str: Loader name
     """
     return next(
-        (l.__name__ for l in loaders if l.__name__.startswith(load_type)),
+        (l for l in loaders if l.__name__.startswith(load_type)),
         None,
     )
 
 
-def assign_loader_to_datablocks(datablocks: List[bpy.types.ID]):
+def assign_loader_to_datablocks(
+    datablocks: List[bpy.types.ID],
+) -> Dict[bpy.types.ID, LoaderPlugin]:
     """Assign loader name to container datablocks loaded outside of OP.
 
     For example if you link a container using Blender's file tools.
@@ -259,13 +263,34 @@ def assign_loader_to_datablocks(datablocks: List[bpy.types.ID]):
     datablocks_to_skip = set()
     all_loaders = discover_loader_plugins()
     all_instanced_collections = get_instanced_collections()
+    containers_loaders = {}
+
+    # Get all representations in scene in one DB call
+    project_name = get_current_project_name()
+    representations = {
+        str(repre_doc["_id"]): repre_doc
+        for repre_doc in get_representations(
+            project_name,
+            representation_ids={
+                d[AVALON_PROPERTY]["representation"]
+                for d in datablocks
+                if d.get(AVALON_PROPERTY)
+            },
+        )
+    }
+
+    # Assign loaders to containers
     for datablock in datablocks:
         if datablock in datablocks_to_skip:
             continue
 
         # Get avalon data
         avalon_data = datablock.get(AVALON_PROPERTY)
-        if not avalon_data or avalon_data.get("id") == AVALON_INSTANCE_ID:
+        if (
+            not avalon_data
+            or avalon_data.get("id") == AVALON_INSTANCE_ID
+            or avalon_data.get("loader")
+        ):
             continue
 
         # Skip all children of container
@@ -274,25 +299,38 @@ def assign_loader_to_datablocks(datablocks: List[bpy.types.ID]):
         if hasattr(datablock, "all_objects"):
             datablocks_to_skip.update(datablock.all_objects)
 
+        # Build fake representation context
+        fake_repre_context = {
+            "project": {
+                "name": project_name,
+            },
+            "subset": {
+                "data": {"family": avalon_data["family"]},
+                "schema": "openpype:subset-3.0",
+            },
+            "representation": representations.get(
+                avalon_data["representation"]
+            ),
+        }
         # Get available loaders
-        loaders = loaders_from_representation(
-            all_loaders, avalon_data.get("representation")
-        )
+        loaders = loaders_from_repre_context(all_loaders, fake_repre_context)
         if datablock.library or datablock.override_library:
             # Instance loader, an instance in OP is necessarily a link
-            if datablock in all_instanced_collections:
-                loader_name = get_loader_name(loaders, "Instance")
-            # Link loader
-            else:
-                loader_name = get_loader_name(loaders, "Link")
+            loader_type = (
+                "Instance"
+                if datablock in all_instanced_collections
+                else "Link"
+            )
         else:  # Append loader
-            loader_name = get_loader_name(loaders, "Append")
-        datablock[AVALON_PROPERTY]["loader"] = loader_name or ""
+            loader_type = "Append"
 
-        # Set to related container
-        container = bpy.context.window_manager.openpype_containers.get(datablock.name)
-        if container and container.get(AVALON_PROPERTY):
-            container[AVALON_PROPERTY]["loader"] = loader_name
+        # Get loader
+        loader = get_loader_by_name(loaders, loader_type)
+        if loader:
+            datablock[AVALON_PROPERTY]["loader"] = loader.__name__ or ""
+        containers_loaders[datablock] = loader
+
+    return containers_loaders
 
 
 def transfer_stack(
