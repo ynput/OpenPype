@@ -51,6 +51,14 @@ class MayaUsdLoader(load.LoaderPlugin):
             cmds.connectAttr("time1.outTime", "{}.time".format(proxy))
             cmds.setAttr("{}.filePath".format(proxy), path, type="string")
 
+            # By default, we force the proxy to not use a shared stage because
+            # when doing so Maya will quite easily allow to save into the
+            # loaded usd file. Since we are loading published files we want to
+            # avoid altering them. Unshared stages also save their edits into
+            # the workfile as an artist might expect it to do.
+            cmds.setAttr("{}.shareStage".format(proxy), False)
+            # cmds.setAttr("{}.shareStage".format(proxy), lock=True)
+
         nodes = [transform, proxy]
         self[:] = nodes
 
