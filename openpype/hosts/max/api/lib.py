@@ -7,7 +7,7 @@ import json
 from typing import Any, Dict, Union
 
 import six
-from openpype.pipeline import get_current_project_name
+from openpype.pipeline import get_current_project_name, colorspace
 from openpype.settings import get_project_settings
 from openpype.pipeline.context_tools import (
     get_current_project, get_current_project_asset)
@@ -19,29 +19,18 @@ JSON_PREFIX = "JSON::"
 log = logging.getLogger("openpype.hosts.max")
 
 
-class Context:
-    main_window = None
-    context_label = None
-    project_name = os.getenv("AVALON_PROJECT")
-    # Workfile related code
-    workfiles_launched = False
-    workfiles_tool_timer = None
-
-
 def get_main_window():
     """Acquire Max's main window"""
     from qtpy import QtWidgets
-    if Context.main_window is None:
-        top_widgets = QtWidgets.QApplication.topLevelWidgets()
-        name = "QmaxApplicationWindow"
-        for widget in top_widgets:
-            if (
-                widget.inherits("QMainWindow")
-                and widget.metaObject().className() == name
-            ):
-                Context.main_window = widget
-                break
-    return Context.main_window
+    top_widgets = QtWidgets.QApplication.topLevelWidgets()
+    name = "QmaxApplicationWindow"
+    for widget in top_widgets:
+        if (
+            widget.inherits("QMainWindow")
+            and widget.metaObject().className() == name
+        ):
+            return widget
+    raise RuntimeError('Count not find 3dsMax main window.')
 
 
 def imprint(node_name: str, data: dict) -> bool:
@@ -356,23 +345,15 @@ def reset_colorspace():
         return
     project_name = get_current_project_name()
     colorspace_mgr = rt.ColorPipelineMgr
-    colorspace_mgr.Mode = rt.Name("OCIO_Custom")
-    ocio_config_path = os.environ.get("OCIO")
-    global_imageio = get_project_settings(
-        project_name)["global"]["imageio"]
-    if global_imageio["activate_global_color_management"]:
-        ocio_config = global_imageio["ocio_config"]
-        ocio_config_path = ocio_config["filepath"][-1]
+    project_settings = get_project_settings(project_name)
 
-    max_imageio = get_project_settings(
-        project_name)["max"]["imageio"]
-    if max_imageio["activate_host_color_management"]:
-        ocio_config = max_imageio["ocio_config"]
-        if ocio_config["override_global_config"]:
-            ocio_config_path = ocio_config["filepath"][0]
-            if not ocio_config_path:
-                # use the default ocio config path instead
-                ocio_config_path = ocio_config["filepath"][-1]
+    max_config_data = colorspace.get_imageio_config(
+        project_name, "max", project_settings)
+    if max_config_data:
+        ocio_config_path = max_config_data["path"]
+        colorspace_mgr = rt.ColorPipelineMgr
+        colorspace_mgr.Mode = rt.Name("OCIO_Custom")
+        colorspace_mgr.OCIOConfigPath = ocio_config_path
 
     colorspace_mgr.OCIOConfigPath = ocio_config_path
 
@@ -384,12 +365,20 @@ def check_colorspace():
                  "because Max main window can't be found.")
     if int(get_max_version()) >= 2024:
         color_mgr = rt.ColorPipelineMgr
-        if color_mgr.Mode != rt.Name("OCIO_Custom"):
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(
+        project_name)
+        global_imageio = project_settings["global"]["imageio"]
+        max_config_data = colorspace.get_imageio_config(
+        project_name, "max", project_settings)
+        config_enabled = global_imageio["activate_global_color_management"] or (
+            max_config_data)
+        if config_enabled and color_mgr.Mode != rt.Name("OCIO_Custom"):
             from openpype.widgets import popup
             dialog = popup.Popup(parent=parent)
             dialog.setWindowTitle("Warning: Wrong OCIO Mode")
             dialog.setMessage("This scene has wrong OCIO "
-                              "Mode setting.")
+                            "Mode setting.")
             dialog.setButtonText("Fix")
             dialog.setStyleSheet(load_stylesheet())
             dialog.on_clicked.connect(reset_colorspace)

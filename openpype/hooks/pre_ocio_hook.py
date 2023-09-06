@@ -13,7 +13,7 @@ class OCIOEnvHook(PreLaunchHook):
         "fusion",
         "blender",
         "aftereffects",
-        "max", "3dsmax",
+        "3dsmax",
         "houdini",
         "maya",
         "nuke",

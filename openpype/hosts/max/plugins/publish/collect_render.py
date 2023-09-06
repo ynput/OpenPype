@@ -36,7 +36,11 @@ class CollectRender(pyblish.api.InstancePlugin):
 
         camera = rt.viewport.GetCamera()
         if instance.data.get("members"):
-            camera = instance.data["members"][-1]
+            camera_list = [member for member in instance.data["members"]
+                           if rt.ClassOf(member) == rt.Camera.Classes]
+            if camera_list:
+                camera = camera_list[-1]
+
         instance.data["cameras"] = [camera.name] if camera else None        # noqa
 
         if "expectedFiles" not in instance.data:
@@ -70,7 +74,7 @@ class CollectRender(pyblish.api.InstancePlugin):
         if int(get_max_version()) >= 2024:
             creator_attribute = instance.data["creator_attributes"]
             display_view_transform = creator_attribute["ocio_display_view_transform"]       # noqa
-            display, view_transform = display_view_transform.split("||")
+            display, view_transform = display_view_transform.split("||", 1)
             colorspace_mgr = rt.ColorPipelineMgr
             instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
             instance.data["colorspaceDisplay"] = display

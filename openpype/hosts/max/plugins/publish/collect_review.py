@@ -48,7 +48,7 @@ class CollectReview(pyblish.api.InstancePlugin,
         if int(get_max_version()) >= 2024:
             display_view_transform = attr_values.get(
                 "ocio_display_view_transform")
-            display, view_transform = display_view_transform.split("||")
+            display, view_transform = display_view_transform.split("||", 1)
             colorspace_mgr = rt.ColorPipelineMgr
             instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
             instance.data["colorspaceDisplay"] = display
@@ -65,27 +65,27 @@ class CollectReview(pyblish.api.InstancePlugin,
 
     @classmethod
     def get_attribute_defs(cls):
-        ocio_display_view_transform_list = ["sRGB||ACES 1.0 SDR-video"]
-        display_view_default = ""
+        default_value = ""
+        display_views = []
         if int(get_max_version()) >= 2024:
-            display_view_default = ""
-            ocio_display_view_transform_list = []
             colorspace_mgr = rt.ColorPipelineMgr
             displays = colorspace_mgr.GetDisplayList()
             for display in sorted(displays):
                 views = colorspace_mgr.GetViewList(display)
                 for view in sorted(views):
-                    ocio_display_view_transform_list.append({
+                    display_views.append({
                         "value": "||".join((display, view))
                     })
                     if display == "ACES" and view == "sRGB":
-                        display_view_default = "{0}||{1}".format(
+                        default_value = "{0}||{1}".format(
                             display, view
                         )
+        else:
+            display_views = ["sRGB||ACES 1.0 SDR-video"]
         return [
             EnumDef("ocio_display_view_transform",
-                    ocio_display_view_transform_list,
-                    default=display_view_default,
+                    items=display_views,
+                    default=default_value,
                     label="OCIO Displays and Views"),
             BoolDef("dspGeometry",
                     label="Geometry",
