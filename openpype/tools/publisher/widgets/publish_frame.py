@@ -2,7 +2,7 @@ import os
 import json
 import time
 
-from Qt import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore
 
 from .widgets import (
     StopBtn,
@@ -230,7 +230,7 @@ class PublishFrame(QtWidgets.QWidget):
         self._shrunken = shrunk
 
         anim_is_running = (
-            self._shrunk_anim.state() == self._shrunk_anim.Running
+            self._shrunk_anim.state() == QtCore.QAbstractAnimation.Running
         )
         if not self.isVisible():
             if anim_is_running:

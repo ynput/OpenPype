@@ -26,10 +26,11 @@ class NameDef:
 
 
 class NumberDef:
-    def __init__(self, minimum=None, maximum=None, decimals=None):
+    def __init__(self, minimum=None, maximum=None, decimals=None, step=None):
         self.minimum = 0 if minimum is None else minimum
         self.maximum = 999999999 if maximum is None else maximum
         self.decimals = 0 if decimals is None else decimals
+        self.step = 1 if decimals is None else step
 
 
 class TypeDef:
@@ -71,16 +72,16 @@ class HierarchyView(QtWidgets.QTreeView):
     column_delegate_defs = {
         "name": NameDef(),
         "type": TypeDef(),
-        "frameStart": NumberDef(1),
-        "frameEnd": NumberDef(1),
-        "fps": NumberDef(1, decimals=2),
+        "frameStart": NumberDef(0),
+        "frameEnd": NumberDef(0),
+        "fps": NumberDef(1, decimals=3, step=1),
         "resolutionWidth": NumberDef(0),
         "resolutionHeight": NumberDef(0),
         "handleStart": NumberDef(0),
         "handleEnd": NumberDef(0),
         "clipIn": NumberDef(1),
         "clipOut": NumberDef(1),
-        "pixelAspect": NumberDef(0, decimals=2),
+        "pixelAspect": NumberDef(0, decimals=2, step=0.01),
         "tools_env": ToolsDef()
     }
 
@@ -95,6 +96,10 @@ class HierarchyView(QtWidgets.QTreeView):
         "type": {
             "stretch": QtWidgets.QHeaderView.Interactive,
             "width": 140
+        },
+        "fps": {
+            "stretch": QtWidgets.QHeaderView.Interactive,
+            "width": 65
         },
         "tools_env": {
             "stretch": QtWidgets.QHeaderView.Interactive,
@@ -134,9 +139,9 @@ class HierarchyView(QtWidgets.QTreeView):
         main_delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(main_delegate)
         self.setAlternatingRowColors(True)
-        self.setSelectionMode(HierarchyView.ExtendedSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.setEditTriggers(HierarchyView.AllEditTriggers)
+        self.setEditTriggers(QtWidgets.QAbstractItemView.AllEditTriggers)
 
         column_delegates = {}
         column_key_to_index = {}
@@ -148,7 +153,8 @@ class HierarchyView(QtWidgets.QTreeView):
                 delegate = NumberDelegate(
                     item_type.minimum,
                     item_type.maximum,
-                    item_type.decimals
+                    item_type.decimals,
+                    item_type.step
                 )
 
             elif isinstance(item_type, TypeDef):

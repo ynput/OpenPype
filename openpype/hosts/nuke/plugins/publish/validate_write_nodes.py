@@ -5,10 +5,13 @@ from openpype.hosts.nuke.api.lib import (
     set_node_knobs_from_settings,
     color_gui_to_int
 )
-from openpype.pipeline import PublishXmlValidationError
+
+from openpype.pipeline.publish import (
+    PublishXmlValidationError,
+    OptionalPyblishPluginMixin,
+)
 
 
-@pyblish.api.log
 class RepairNukeWriteNodeAction(pyblish.api.Action):
     label = "Repair"
     on = "failed"
@@ -18,10 +21,15 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
         instances = get_errored_instances_from_context(context)
 
         for instance in instances:
-            write_group_node = instance[0]
+            child_nodes = (
+                instance.data.get("transientData", {}).get("childNodes")
+                or instance
+            )
+
+            write_group_node = instance.data["transientData"]["node"]
             # get write node from inside of group
             write_node = None
-            for x in instance:
+            for x in child_nodes:
                 if x.Class() == "Write":
                     write_node = x
 
@@ -32,7 +40,10 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
             self.log.info("Node attributes were fixed")
 
 
-class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
+class ValidateNukeWriteNode(
+    OptionalPyblishPluginMixin,
+    pyblish.api.InstancePlugin
+):
     """ Validate Write node's knobs.
 
     Compare knobs on write node inside the render group
@@ -42,16 +53,24 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     optional = True
     families = ["render"]
-    label = "Write Node"
+    label = "Validate write node"
     actions = [RepairNukeWriteNodeAction]
     hosts = []
 
     def process(self, instance):
-        write_group_node = instance[0]
+        if not self.is_active(instance.data):
+            return
+
+        child_nodes = (
+            instance.data.get("transientData", {}).get("childNodes")
+            or instance
+        )
+
+        write_group_node = instance.data["transientData"]["node"]
 
         # get write node from inside of group
         write_node = None
-        for x in instance:
+        for x in child_nodes:
             if x.Class() == "Write":
                 write_node = x
 
@@ -60,17 +79,31 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
 
         correct_data = get_write_node_template_attr(write_group_node)
 
-        if correct_data:
-            check_knobs = correct_data["knobs"]
-        else:
-            return
-
         check = []
         self.log.debug("__ write_node: {}".format(
             write_node
         ))
+        self.log.debug("__ correct_data: {}".format(
+            correct_data
+        ))
 
-        for knob_data in check_knobs:
+        for knob_data in correct_data["knobs"]:
+            knob_type = knob_data["type"]
+            self.log.debug("__ knob_type: {}".format(
+                knob_type
+            ))
+
+            if (
+                knob_type == "__legacy__"
+            ):
+                raise PublishXmlValidationError(
+                    self, (
+                        "Please update data in settings 'project_settings"
+                        "/nuke/imageio/nodes/requiredNodes'"
+                    ),
+                    key="legacy"
+                )
+
             key = knob_data["name"]
             value = knob_data["value"]
             node_value = write_node[key].value()

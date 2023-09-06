@@ -1,5 +1,9 @@
 import os
 
+import maya.cmds as cmds
+
+from openpype.hosts.maya.api.pipeline import containerise
+from openpype.hosts.maya.api.lib import unique_namespace
 from openpype.pipeline import (
     load,
     get_representation_path
@@ -11,18 +15,14 @@ class GpuCacheLoader(load.LoaderPlugin):
     """Load Alembic as gpuCache"""
 
     families = ["model", "animation", "proxyAbc", "pointcache"]
-    representations = ["abc"]
+    representations = ["abc", "gpu_cache"]
 
-    label = "Import Gpu Cache"
+    label = "Load Gpu Cache"
     order = -5
     icon = "code-fork"
     color = "orange"
 
     def load(self, context, name, namespace, data):
-
-        import maya.cmds as cmds
-        from openpype.hosts.maya.api.pipeline import containerise
-        from openpype.hosts.maya.api.lib import unique_namespace
 
         asset = context['asset']['name']
         namespace = namespace or unique_namespace(
@@ -42,10 +42,9 @@ class GpuCacheLoader(load.LoaderPlugin):
         c = colors.get('model')
         if c is not None:
             cmds.setAttr(root + ".useOutlinerColor", 1)
-            cmds.setAttr(root + ".outlinerColor",
-                (float(c[0])/255),
-                (float(c[1])/255),
-                (float(c[2])/255)
+            cmds.setAttr(
+                root + ".outlinerColor",
+                (float(c[0]) / 255), (float(c[1]) / 255), (float(c[2]) / 255)
             )
 
         # Create transform with shape
@@ -74,9 +73,6 @@ class GpuCacheLoader(load.LoaderPlugin):
             loader=self.__class__.__name__)
 
     def update(self, container, representation):
-
-        import maya.cmds as cmds
-
         path = get_representation_path(representation)
 
         # Update the cache
@@ -96,7 +92,6 @@ class GpuCacheLoader(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        import maya.cmds as cmds
         members = cmds.sets(container['objectName'], query=True)
         cmds.lockNode(members, lock=False)
         cmds.delete([container['objectName']] + members)

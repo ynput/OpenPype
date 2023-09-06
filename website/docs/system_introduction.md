@@ -15,9 +15,9 @@ various usage scenarios.
 
 ## Studio Preparation
 
-You can find detailed breakdown of technical requirements [here](dev_requirements), but in general OpenPype should be able
+You can find a detailed breakdown of technical requirements [here](dev_requirements), but in general OpenPype should be able
 to operate in most studios fairly quickly. The main obstacles are usually related to workflows and habits, that
-might not be fully compatible with what OpenPype is expecting or enforcing. It is recommended to go through artists [key concepts](artist_concepts) to get idea about basics.
+might not be fully compatible with what OpenPype is expecting or enforcing. It is recommended to go through artists [key concepts](artist_concepts) to get comfortable with the basics.
 
 Keep in mind that if you run into any workflows that are not supported, it's usually just because we haven't hit 
 that particular case and it can most likely be added upon request. 

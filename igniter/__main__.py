@@ -2,8 +2,7 @@
 """Open install dialog."""
 
 import sys
-from Qt import QtWidgets  # noqa
-from Qt.QtCore import Signal  # noqa
+from qtpy import QtWidgets
 
 from .install_dialog import InstallDialog
 

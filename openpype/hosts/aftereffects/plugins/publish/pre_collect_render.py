@@ -1,6 +1,6 @@
 import json
 import pyblish.api
-from openpype.hosts.aftereffects.api import list_instances
+from openpype.hosts.aftereffects.api import AfterEffectsHost
 
 
 class PreCollectRender(pyblish.api.ContextPlugin):
@@ -25,7 +25,7 @@ class PreCollectRender(pyblish.api.ContextPlugin):
             self.log.debug("Not applicable for New Publisher, skip")
             return
 
-        for inst in list_instances():
+        for inst in AfterEffectsHost().list_instances():
             if inst.get("creator_attributes"):
                 raise ValueError("Instance created in New publisher, "
                                  "cannot be published in Pyblish.\n"

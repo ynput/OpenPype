@@ -192,3 +192,6 @@ class CameraLoader(load.LoaderPlugin):
 
         new_node.moveToGoodPosition()
         return new_node
+
+    def switch(self, container, representation):
+        self.update(container, representation)

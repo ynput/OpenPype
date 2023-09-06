@@ -4,8 +4,9 @@ from .icons import (
     get_icon
 )
 from .widgets import (
-    StopBtn,
+    SaveBtn,
     ResetBtn,
+    StopBtn,
     ValidateBtn,
     PublishBtn,
     CreateNextPageOverlay,
@@ -25,8 +26,9 @@ __all__ = (
     "get_pixmap",
     "get_icon",
 
-    "StopBtn",
+    "SaveBtn",
     "ResetBtn",
+    "StopBtn",
     "ValidateBtn",
     "PublishBtn",
     "CreateNextPageOverlay",

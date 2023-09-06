@@ -889,7 +889,8 @@ class ApplicationLaunchContext:
         self.modules_manager = ModulesManager()
 
         # Logger
-        logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
+        logger_name = "{}-{}".format(self.__class__.__name__,
+                                     self.application.full_name)
         self.log = Logger.get_logger(logger_name)
 
         self.executable = executable
@@ -908,24 +909,25 @@ class ApplicationLaunchContext:
             self.launch_args.extend(self.data.pop("app_args"))
 
         # Handle launch environemtns
-        env = self.data.pop("env", None)
-        if env is not None and not isinstance(env, dict):
+        src_env = self.data.pop("env", None)
+        if src_env is not None and not isinstance(src_env, dict):
             self.log.warning((
                 "Passed `env` kwarg has invalid type: {}. Expected: `dict`."
                 " Using `os.environ` instead."
-            ).format(str(type(env))))
-            env = None
+            ).format(str(type(src_env))))
+            src_env = None
 
-        if env is None:
-            env = os.environ
+        if src_env is None:
+            src_env = os.environ
 
-        # subprocess.Popen keyword arguments
-        self.kwargs = {
-            "env": {
-                key: str(value)
-                for key, value in env.items()
-            }
+        ignored_env = {"QT_API", }
+        env = {
+            key: str(value)
+            for key, value in src_env.items()
+            if key not in ignored_env
         }
+        # subprocess.Popen keyword arguments
+        self.kwargs = {"env": env}
 
         if platform.system().lower() == "windows":
             # Detach new process from currently running process on Windows
@@ -967,7 +969,7 @@ class ApplicationLaunchContext:
         """Helper to collect application launch hooks from addons.
 
         Module have to have implemented 'get_launch_hook_paths' method which
-        can expect appliction as argument or nothing.
+        can expect application as argument or nothing.
 
         Returns:
             List[str]: Paths to launch hook directories.
@@ -1245,7 +1247,7 @@ class ApplicationLaunchContext:
             args_len_str = " ({})".format(len(args))
         self.log.info(
             "Launching \"{}\" with args{}: {}".format(
-                self.app_name, args_len_str, args
+                self.application.full_name, args_len_str, args
             )
         )
         self.launch_args = args
@@ -1270,7 +1272,9 @@ class ApplicationLaunchContext:
                     exc_info=True
                 )
 
-        self.log.debug("Launch of {} finished.".format(self.app_name))
+        self.log.debug("Launch of {} finished.".format(
+            self.application.full_name
+        ))
 
         return self.process
 
@@ -1368,6 +1372,7 @@ def get_app_environments_for_context(
 
     from openpype.modules import ModulesManager
     from openpype.pipeline import AvalonMongoDB, Anatomy
+    from openpype.lib.openpype_version import is_running_staging
 
     # Avalon database connection
     dbcon = AvalonMongoDB()
@@ -1404,6 +1409,8 @@ def get_app_environments_for_context(
         "env": env
     })
     data["env"].update(anatomy.root_environments())
+    if is_running_staging():
+        data["env"]["OPENPYPE_IS_STAGING"] = "1"
 
     prepare_app_environments(data, env_group, modules_manager)
     prepare_context_environments(data, env_group, modules_manager)
@@ -1504,8 +1511,8 @@ def prepare_app_environments(
         if key in source_env:
             source_env[key] = value
 
-    # `added_env_keys` has debug purpose
-    added_env_keys = {app.group.name, app.name}
+    # `app_and_tool_labels` has debug purpose
+    app_and_tool_labels = [app.full_name]
     # Environments for application
     environments = [
         app.group.environment,
@@ -1528,15 +1535,14 @@ def prepare_app_environments(
         for group_name in sorted(groups_by_name.keys()):
             group = groups_by_name[group_name]
             environments.append(group.environment)
-            added_env_keys.add(group_name)
             for tool_name in sorted(tool_by_group_name[group_name].keys()):
                 tool = tool_by_group_name[group_name][tool_name]
                 environments.append(tool.environment)
-                added_env_keys.add(tool.name)
+                app_and_tool_labels.append(tool.full_name)
 
     log.debug(
         "Will add environments for apps and tools: {}".format(
-            ", ".join(added_env_keys)
+            ", ".join(app_and_tool_labels)
         )
     )
 

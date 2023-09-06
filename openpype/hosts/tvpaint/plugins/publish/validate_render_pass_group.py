@@ -85,6 +85,5 @@ class ValidateLayersGroup(pyblish.api.InstancePlugin):
                 ),
                 "expected_group": correct_group["name"],
                 "layer_names": ", ".join(invalid_layer_names)
-
             }
         )

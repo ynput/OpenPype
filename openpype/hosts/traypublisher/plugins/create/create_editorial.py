@@ -1,6 +1,5 @@
 import os
 from copy import deepcopy
-from pprint import pformat
 import opentimelineio as otio
 from openpype.client import (
     get_asset_by_name,
@@ -13,9 +12,7 @@ from openpype.hosts.traypublisher.api.plugin import (
 from openpype.hosts.traypublisher.api.editorial import (
     ShotMetadataSolver
 )
-
 from openpype.pipeline import CreatedInstance
-
 from openpype.lib import (
     get_ffprobe_data,
     convert_ffprobe_fps_value,
@@ -33,14 +30,14 @@ from openpype.lib import (
 CLIP_ATTR_DEFS = [
     EnumDef(
         "fps",
-        items={
-            "from_selection": "From selection",
-            23.997: "23.976",
-            24: "24",
-            25: "25",
-            29.97: "29.97",
-            30: "30"
-        },
+        items=[
+            {"value": "from_selection", "label": "From selection"},
+            {"value": 23.997, "label": "23.976"},
+            {"value": 24, "label": "24"},
+            {"value": 25, "label": "25"},
+            {"value": 29.97, "label": "29.97"},
+            {"value": 30, "label": "30"}
+        ],
         label="FPS"
     ),
     NumberDef(
@@ -70,14 +67,12 @@ class EditorialClipInstanceCreatorBase(HiddenTrayPublishCreator):
     host_name = "traypublisher"
 
     def create(self, instance_data, source_data=None):
-        self.log.info(f"instance_data: {instance_data}")
         subset_name = instance_data["subset"]
 
         # Create new instance
         new_instance = CreatedInstance(
             self.family, subset_name, instance_data, self
         )
-        self.log.info(f"instance_data: {pformat(new_instance.data)}")
 
         self._store_new_instance(new_instance)
 
@@ -223,8 +218,6 @@ or updating already created. Publishing will create OTIO file.
         asset_name = instance_data["asset"]
         asset_doc = get_asset_by_name(self.project_name, asset_name)
 
-        self.log.info(pre_create_data["fps"])
-
         if pre_create_data["fps"] == "from_selection":
             # get asset doc data attributes
             fps = asset_doc["data"]["fps"]
@@ -239,34 +232,43 @@ or updating already created. Publishing will create OTIO file.
         sequence_path_data = pre_create_data["sequence_filepath_data"]
         media_path_data = pre_create_data["media_filepaths_data"]
 
-        sequence_path = self._get_path_from_file_data(sequence_path_data)
+        sequence_paths = self._get_path_from_file_data(
+            sequence_path_data, multi=True)
         media_path = self._get_path_from_file_data(media_path_data)
 
-        # get otio timeline
-        otio_timeline = self._create_otio_timeline(
-            sequence_path, fps)
+        first_otio_timeline = None
+        for seq_path in sequence_paths:
+            # get otio timeline
+            otio_timeline = self._create_otio_timeline(
+                seq_path, fps)
 
-        # Create all clip instances
-        clip_instance_properties.update({
-            "fps": fps,
-            "parent_asset_name": asset_name,
-            "variant": instance_data["variant"]
-        })
+            # Create all clip instances
+            clip_instance_properties.update({
+                "fps": fps,
+                "parent_asset_name": asset_name,
+                "variant": instance_data["variant"]
+            })
 
-        # create clip instances
-        self._get_clip_instances(
-            otio_timeline,
-            media_path,
-            clip_instance_properties,
-            family_presets=allowed_family_presets
+            # create clip instances
+            self._get_clip_instances(
+                otio_timeline,
+                media_path,
+                clip_instance_properties,
+                allowed_family_presets,
+                os.path.basename(seq_path),
+                first_otio_timeline
+            )
 
-        )
+            if not first_otio_timeline:
+                # assign otio timeline for multi file to layer
+                first_otio_timeline = otio_timeline
 
         # create otio editorial instance
         self._create_otio_instance(
-            subset_name, instance_data,
-            sequence_path, media_path,
-            otio_timeline
+            subset_name,
+            instance_data,
+            seq_path, media_path,
+            first_otio_timeline
         )
 
     def _create_otio_instance(
@@ -281,7 +283,7 @@ or updating already created. Publishing will create OTIO file.
 
         Args:
             subset_name (str): name of subset
-            data (dict): instnance data
+            data (dict): instance data
             sequence_path (str): path to sequence file
             media_path (str): path to media file
             otio_timeline (otio.Timeline): otio timeline object
@@ -313,18 +315,18 @@ or updating already created. Publishing will create OTIO file.
         kwargs = {}
         if extension == ".edl":
             # EDL has no frame rate embedded so needs explicit
-            # frame rate else 24 is asssumed.
+            # frame rate else 24 is assumed.
             kwargs["rate"] = fps
             kwargs["ignore_timecode_mismatch"] = True
 
-        self.log.info(f"kwargs: {kwargs}")
         return otio.adapters.read_from_file(sequence_path, **kwargs)
 
-    def _get_path_from_file_data(self, file_path_data):
+    def _get_path_from_file_data(self, file_path_data, multi=False):
         """Converting creator path data to single path string
 
         Args:
             file_path_data (FileDefItem): creator path data inputs
+            multi (bool): switch to multiple files mode
 
         Raises:
             FileExistsError: in case nothing had been set
@@ -332,25 +334,31 @@ or updating already created. Publishing will create OTIO file.
         Returns:
             str: path string
         """
-        # TODO: just temporarly solving only one media file
-        if isinstance(file_path_data, list):
-            file_path_data = file_path_data.pop()
+        return_path_list = []
 
-        if len(file_path_data["filenames"]) == 0:
+
+        if isinstance(file_path_data, list):
+            return_path_list = [
+                os.path.join(f["directory"], f["filenames"][0])
+                for f in file_path_data
+            ]
+
+        if not return_path_list:
             raise FileExistsError(
                 f"File path was not added: {file_path_data}")
 
-        return os.path.join(
-            file_path_data["directory"], file_path_data["filenames"][0])
+        return return_path_list if multi else return_path_list[0]
 
     def _get_clip_instances(
         self,
         otio_timeline,
         media_path,
         instance_data,
-        family_presets
+        family_presets,
+        sequence_file_name,
+        first_otio_timeline=None
     ):
-        """Helping function fro creating clip instance
+        """Helping function for creating clip instance
 
         Args:
             otio_timeline (otio.Timeline): otio timeline object
@@ -368,17 +376,15 @@ or updating already created. Publishing will create OTIO file.
         media_data = self._get_media_source_metadata(media_path)
 
         for track in tracks:
-            self.log.debug(f"track.name: {track.name}")
+            track.name = f"{sequence_file_name} - {otio_timeline.name}"
             try:
                 track_start_frame = (
                     abs(track.source_range.start_time.value)
                 )
-                self.log.debug(f"track_start_frame: {track_start_frame}")
                 track_start_frame -= self.timeline_frame_start
             except AttributeError:
                 track_start_frame = 0
 
-            self.log.debug(f"track_start_frame: {track_start_frame}")
 
             for clip in track.each_child():
                 if not self._validate_clip_for_processing(clip):
@@ -400,10 +406,6 @@ or updating already created. Publishing will create OTIO file.
                     "instance_label": None,
                     "instance_id": None
                 }
-                self.log.info((
-                    "Creating subsets from presets: \n"
-                    f"{pformat(family_presets)}"
-                ))
 
                 for _fpreset in family_presets:
                     # exclude audio family if no audio stream
@@ -419,7 +421,10 @@ or updating already created. Publishing will create OTIO file.
                         deepcopy(base_instance_data),
                         parenting_data
                     )
-                    self.log.debug(f"{pformat(dict(instance.data))}")
+
+            # add track to first otioTimeline if it is in input args
+            if first_otio_timeline:
+                first_otio_timeline.tracks.append(deepcopy(track))
 
     def _restore_otio_source_range(self, otio_clip):
         """Infusing source range.
@@ -460,7 +465,6 @@ or updating already created. Publishing will create OTIO file.
             target_url=media_path,
             available_range=available_range
         )
-
         otio_clip.media_reference = media_reference
 
     def _get_media_source_metadata(self, path):
@@ -481,7 +485,6 @@ or updating already created. Publishing will create OTIO file.
             media_data = get_ffprobe_data(
                 path, self.log
             )
-            self.log.debug(f"__ media_data: {pformat(media_data)}")
 
             # get video stream data
             video_stream = media_data["streams"][0]
@@ -524,7 +527,7 @@ or updating already created. Publishing will create OTIO file.
 
         Args:
             otio_clip (otio.Clip): otio clip object
-            preset (dict): sigle family preset
+            preset (dict): single family preset
             instance_data (dict): instance data
             parenting_data (dict): shot instance parent data
 
@@ -588,9 +591,6 @@ or updating already created. Publishing will create OTIO file.
 
         # get variant name from preset or from inharitance
         _variant_name = preset.get("variant") or variant_name
-
-        self.log.debug(f"__ family: {family}")
-        self.log.debug(f"__ preset: {preset}")
 
         # subset name
         subset_name = "{}{}".format(
@@ -722,17 +722,13 @@ or updating already created. Publishing will create OTIO file.
         clip_in += track_start_frame
         clip_out = otio_clip.range_in_parent().end_time_inclusive().value
         clip_out += track_start_frame
-        self.log.info(f"clip_in: {clip_in} | clip_out: {clip_out}")
 
         # add offset in case there is any
-        self.log.debug(f"__ timeline_offset: {timeline_offset}")
         if timeline_offset:
             clip_in += timeline_offset
             clip_out += timeline_offset
 
         clip_duration = otio_clip.duration().value
-        self.log.info(f"clip duration: {clip_duration}")
-
         source_in = otio_clip.trimmed_range().start_time.value
         source_out = source_in + clip_duration
 
@@ -762,7 +758,6 @@ or updating already created. Publishing will create OTIO file.
         Returns:
             list: lit of dict with preset items
         """
-        self.log.debug(f"__ pre_create_data: {pre_create_data}")
         return [
             {"family": "shot"},
             *[
@@ -772,7 +767,7 @@ or updating already created. Publishing will create OTIO file.
         ]
 
     def _validate_clip_for_processing(self, otio_clip):
-        """Validate otio clip attribues
+        """Validate otio clip attributes
 
         Args:
             otio_clip (otio.Clip): otio clip object
@@ -833,7 +828,7 @@ or updating already created. Publishing will create OTIO file.
                     ".fcpxml"
                 ],
                 allow_sequences=False,
-                single_item=True,
+                single_item=False,
                 label="Sequence file",
             ),
             FileDef(
@@ -848,7 +843,7 @@ or updating already created. Publishing will create OTIO file.
                 single_item=False,
                 label="Media files",
             ),
-            # TODO: perhpas better would be timecode and fps input
+            # TODO: perhaps better would be timecode and fps input
             NumberDef(
                 "timeline_offset",
                 default=0,

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import unreal
 
+from openpype.pipeline import get_current_project_name
 from openpype.pipeline import Anatomy
 from openpype.hosts.unreal.api import pipeline
 import pyblish.api
@@ -72,8 +73,8 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
                     new_data["level"] = data.get("level")
                     new_data["output"] = s.get('output')
                     new_data["fps"] = seq.get_display_rate().numerator
-                    new_data["frameStart"] = s.get('frame_range')[0]
-                    new_data["frameEnd"] = s.get('frame_range')[1]
+                    new_data["frameStart"] = int(s.get('frame_range')[0])
+                    new_data["frameEnd"] = int(s.get('frame_range')[1])
                     new_data["sequence"] = seq.get_path_name()
                     new_data["master_sequence"] = data["master_sequence"]
                     new_data["master_level"] = data["master_level"]
@@ -81,12 +82,13 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
                     self.log.debug(f"new instance data: {new_data}")
 
                     try:
-                        project = os.environ.get("AVALON_PROJECT")
+                        project = get_current_project_name()
                         anatomy = Anatomy(project)
                         root = anatomy.roots['renders']
-                    except Exception:
-                        raise Exception(
-                            "Could not find render root in anatomy settings.")
+                    except Exception as e:
+                        raise Exception((
+                            "Could not find render root "
+                            "in anatomy settings.")) from e
 
                     render_dir = f"{root}/{project}/{s.get('output')}"
                     render_path = Path(render_dir)

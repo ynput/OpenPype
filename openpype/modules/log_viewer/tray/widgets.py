@@ -11,7 +11,7 @@ class SearchComboBox(QtWidgets.QComboBox):
         super(SearchComboBox, self).__init__(parent)
 
         self.setEditable(True)
-        self.setInsertPolicy(self.NoInsert)
+        self.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
         self.lineEdit().setPlaceholderText(placeholder)
 
         # Apply completer settings

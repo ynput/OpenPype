@@ -1,7 +1,7 @@
 import collections
 from abc import abstractmethod, abstractproperty
 
-from Qt import QtCore
+from qtpy import QtCore
 
 from openpype.lib.events import Event
 from openpype.pipeline.create import CreatedInstance
@@ -136,10 +136,7 @@ class QtRemotePublishController(BasePublisherController):
 
         created_instances = {}
         for serialized_data in serialized_instances:
-            item = CreatedInstance.deserialize_on_remote(
-                serialized_data,
-                self._creator_items
-            )
+            item = CreatedInstance.deserialize_on_remote(serialized_data)
             created_instances[item.id] = item
 
         self._created_instances = created_instances

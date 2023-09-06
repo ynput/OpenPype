@@ -23,7 +23,7 @@ class ValidateContainers(OptionalPyblishPluginMixin,
 
     """Containers are must be updated to latest version on publish."""
 
-    label = "Validate Containers"
+    label = "Validate Outdated Containers"
     order = pyblish.api.ValidatorOrder
     hosts = ["maya", "houdini", "nuke", "harmony", "photoshop", "aftereffects"]
     optional = True
@@ -35,4 +35,6 @@ class ValidateContainers(OptionalPyblishPluginMixin,
 
         if any_outdated_containers():
             msg = "There are outdated containers in the scene."
-            raise PublishXmlValidationError(self, msg)
+            # NOTE hornet updated to generating warning instead of publish error
+            # raise PublishXmlValidationError(self, msg)
+            self.log.info(msg)

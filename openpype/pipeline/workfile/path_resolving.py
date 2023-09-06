@@ -132,9 +132,9 @@ def get_workdir_with_workdir_data(
             project_settings
         )
 
-    anatomy_filled = anatomy.format(workdir_data)
+    template_obj = anatomy.templates_obj[template_key]["folder"]
     # Output is TemplateResult object which contain useful data
-    output = anatomy_filled[template_key]["folder"]
+    output = template_obj.format_strict(workdir_data)
     if output:
         return output.normalized()
     return output

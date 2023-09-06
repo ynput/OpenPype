@@ -415,7 +415,7 @@ class CreateRender(Creator):
         #    - 'asset' - asset name
         #    - 'task' - task name
         #    - 'variant' - variant
-        #    - 'family' - instnace family
+        #    - 'family' - instance family
 
         # Check if should use selection or not
         if pre_create_data.get("use_selection"):

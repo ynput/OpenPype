@@ -5,6 +5,8 @@ import shutil
 import pyblish.api
 import re
 
+from openpype.tests.lib import is_in_tests
+
 
 class CleanUp(pyblish.api.InstancePlugin):
     """Cleans up the staging directory after a successful publish.
@@ -44,6 +46,9 @@ class CleanUp(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
+        if is_in_tests():
+            # let automatic test process clean up temporary data
+            return
         # Get the errored instances
         failed = []
         for result in instance.context.data["results"]:
@@ -86,6 +91,10 @@ class CleanUp(pyblish.api.InstancePlugin):
 
         if not os.path.exists(staging_dir):
             self.log.info("No staging directory found: %s" % staging_dir)
+            return
+
+        if instance.data.get("stagingDir_persistent"):
+            self.log.info("Staging dir: %s should be persistent" % staging_dir)
             return
 
         self.log.info("Removing staging directory {}".format(staging_dir))

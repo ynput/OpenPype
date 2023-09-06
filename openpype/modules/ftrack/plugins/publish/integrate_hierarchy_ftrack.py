@@ -20,7 +20,7 @@ def get_pype_attr(session, split_hierarchical=True):
     cust_attrs_query = (
         "select id, entity_type, object_type_id, is_hierarchical, default"
         " from CustomAttributeConfiguration"
-        # Kept `pype` for Backwards Compatiblity
+        # Kept `pype` for Backwards Compatibility
         " where group.name in (\"pype\", \"{}\")"
     ).format(CUST_ATTR_GROUP)
     all_avalon_attr = session.query(cust_attrs_query).all()
@@ -378,7 +378,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     existing_tasks.append(task_name_low)
 
                     for instance in instances_by_task_name[task_name_low]:
-                        instance["ftrackTask"] = child
+                        instance.data["ftrackTask"] = child
 
             for task_name in tasks:
                 task_type = tasks[task_name]["type"]

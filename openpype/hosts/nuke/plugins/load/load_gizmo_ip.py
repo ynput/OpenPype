@@ -26,8 +26,9 @@ from openpype.hosts.nuke.api import (
 class LoadGizmoInputProcess(load.LoaderPlugin):
     """Loading colorspace soft effect exported from nukestudio"""
 
-    representations = ["gizmo"]
     families = ["gizmo"]
+    representations = ["*"]
+    extension = {"gizmo"}
 
     label = "Load Gizmo - Input Process"
     order = 0

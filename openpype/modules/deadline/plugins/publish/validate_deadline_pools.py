@@ -17,10 +17,19 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
 
     label = "Validate Deadline Pools"
     order = pyblish.api.ValidatorOrder
-    families = []
+    families = ["rendering",
+                "render.farm",
+                "renderFarm",
+                "renderlayer",
+                "maxrender"]    # hornet: deadline submission without publish
+    hosts = ["maya"]
     optional = True
 
     def process(self, instance):
+        if not instance.data.get("farm"):
+            self.log.info("Skipping local instance.")
+            return
+
         # get default deadline webservice url from deadline module
         deadline_url = instance.context.data["defaultDeadline"]
         self.log.info("deadline_url::{}".format(deadline_url))

@@ -16,6 +16,13 @@ from openpype.pipeline import (
 from openpype.pipeline.load import any_outdated_containers
 import openpype.hosts.aftereffects
 
+from openpype.host import (
+    HostBase,
+    IWorkfileHost,
+    ILoadHost,
+    IPublishHost
+)
+
 from .launch_logic import get_stub, ConnectionNotEstablishedYet
 
 log = Logger.get_logger(__name__)
@@ -30,27 +37,142 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 
 
-def install():
-    print("Installing Pype config...")
+class AfterEffectsHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
+    name = "aftereffects"
 
-    pyblish.api.register_host("aftereffects")
-    pyblish.api.register_plugin_path(PUBLISH_PATH)
+    def __init__(self):
+        self._stub = None
+        super(AfterEffectsHost, self).__init__()
 
-    register_loader_plugin_path(LOAD_PATH)
-    register_creator_plugin_path(CREATE_PATH)
-    log.info(PUBLISH_PATH)
+    @property
+    def stub(self):
+        """
+            Handle pulling stub from PS to run operations on host
+        Returns:
+            (AEServerStub) or None
+        """
+        if self._stub:
+            return self._stub
 
-    pyblish.api.register_callback(
-        "instanceToggled", on_pyblish_instance_toggled
-    )
+        try:
+            stub = get_stub()  # only after Photoshop is up
+        except ConnectionNotEstablishedYet:
+            print("Not connected yet, ignoring")
+            return
 
-    register_event_callback("application.launched", application_launch)
+        if not stub.get_active_document_name():
+            return
 
+        self._stub = stub
+        return self._stub
 
-def uninstall():
-    pyblish.api.deregister_plugin_path(PUBLISH_PATH)
-    deregister_loader_plugin_path(LOAD_PATH)
-    deregister_creator_plugin_path(CREATE_PATH)
+    def install(self):
+        print("Installing Pype config...")
+
+        pyblish.api.register_host("aftereffects")
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
+        log.info(PUBLISH_PATH)
+
+        pyblish.api.register_callback(
+            "instanceToggled", on_pyblish_instance_toggled
+        )
+
+        register_event_callback("application.launched", application_launch)
+
+    def get_workfile_extensions(self):
+        return [".aep"]
+
+    def save_workfile(self, dst_path=None):
+        self.stub.saveAs(dst_path, True)
+
+    def open_workfile(self, filepath):
+        self.stub.open(filepath)
+
+        return True
+
+    def get_current_workfile(self):
+        try:
+            full_name = get_stub().get_active_document_full_name()
+            if full_name and full_name != "null":
+                return os.path.normpath(full_name).replace("\\", "/")
+        except ValueError:
+            print("Nothing opened")
+            pass
+
+        return None
+
+    def get_containers(self):
+        return ls()
+
+    def get_context_data(self):
+        meta = self.stub.get_metadata()
+        for item in meta:
+            if item.get("id") == "publish_context":
+                item.pop("id")
+                return item
+
+        return {}
+
+    def update_context_data(self, data, changes):
+        item = data
+        item["id"] = "publish_context"
+        self.stub.imprint(item["id"], item)
+
+    # created instances section
+    def list_instances(self):
+        """List all created instances from current workfile which
+        will be published.
+
+        Pulls from File > File Info
+
+        For SubsetManager
+
+        Returns:
+            (list) of dictionaries matching instances format
+        """
+        stub = self.stub
+        if not stub:
+            return []
+
+        instances = []
+        layers_meta = stub.get_metadata()
+
+        for instance in layers_meta:
+            if instance.get("id") == "pyblish.avalon.instance":
+                instances.append(instance)
+        return instances
+
+    def remove_instance(self, instance):
+        """Remove instance from current workfile metadata.
+
+        Updates metadata of current file in File > File Info and removes
+        icon highlight on group layer.
+
+        For SubsetManager
+
+        Args:
+            instance (dict): instance representation from subsetmanager model
+        """
+        stub = self.stub
+
+        if not stub:
+            return
+
+        inst_id = instance.get("instance_id") or instance.get("uuid")  # legacy
+        if not inst_id:
+            log.warning("No instance identifier for {}".format(instance))
+            return
+
+        stub.remove_instance(inst_id)
+
+        if instance.get("members"):
+            item = stub.get_item(instance["members"][0])
+            if item:
+                stub.rename_item(item.id,
+                                 item.name.replace(stub.PUBLISH_ICON, ''))
 
 
 def application_launch():
@@ -61,35 +183,6 @@ def application_launch():
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle layer visibility on instance toggles."""
     instance[0].Visible = new_value
-
-
-def get_asset_settings(asset_doc):
-    """Get settings on current asset from database.
-
-    Returns:
-        dict: Scene data.
-
-    """
-    asset_data = asset_doc["data"]
-    fps = asset_data.get("fps")
-    frame_start = asset_data.get("frameStart")
-    frame_end = asset_data.get("frameEnd")
-    handle_start = asset_data.get("handleStart")
-    handle_end = asset_data.get("handleEnd")
-    resolution_width = asset_data.get("resolutionWidth")
-    resolution_height = asset_data.get("resolutionHeight")
-    duration = (frame_end - frame_start + 1) + handle_start + handle_end
-
-    return {
-        "fps": fps,
-        "frameStart": frame_start,
-        "frameEnd": frame_end,
-        "handleStart": handle_start,
-        "handleEnd": handle_end,
-        "resolutionWidth": resolution_width,
-        "resolutionHeight": resolution_height,
-        "duration": duration
-    }
 
 
 def ls():
@@ -191,102 +284,17 @@ def containerise(name,
     return comp
 
 
-# created instances section
-def list_instances():
-    """
-        List all created instances from current workfile which
-        will be published.
+def cache_and_get_instances(creator):
+    """Cache instances in shared data.
 
-        Pulls from File > File Info
-
-        For SubsetManager
-
-        Returns:
-            (list) of dictionaries matching instances format
-    """
-    stub = _get_stub()
-    if not stub:
-        return []
-
-    instances = []
-    layers_meta = stub.get_metadata()
-
-    for instance in layers_meta:
-        if instance.get("id") == "pyblish.avalon.instance":
-            instances.append(instance)
-    return instances
-
-
-def remove_instance(instance):
-    """
-        Remove instance from current workfile metadata.
-
-        Updates metadata of current file in File > File Info and removes
-        icon highlight on group layer.
-
-        For SubsetManager
-
-        Args:
-            instance (dict): instance representation from subsetmanager model
-    """
-    stub = _get_stub()
-
-    if not stub:
-        return
-
-    inst_id = instance.get("instance_id") or instance.get("uuid")  # legacy
-    if not inst_id:
-        log.warning("No instance identifier for {}".format(instance))
-        return
-
-    stub.remove_instance(inst_id)
-
-    if instance.get("members"):
-        item = stub.get_item(instance["members"][0])
-        if item:
-            stub.rename_item(item.id,
-                             item.name.replace(stub.PUBLISH_ICON, ''))
-
-
-# new publisher section
-def get_context_data():
-    meta = _get_stub().get_metadata()
-    for item in meta:
-        if item.get("id") == "publish_context":
-            item.pop("id")
-            return item
-
-    return {}
-
-
-def update_context_data(data, changes):
-    item = data
-    item["id"] = "publish_context"
-    _get_stub().imprint(item["id"], item)
-
-
-def get_context_title():
-    """Returns title for Creator window"""
-
-    project_name = legacy_io.Session["AVALON_PROJECT"]
-    asset_name = legacy_io.Session["AVALON_ASSET"]
-    task_name = legacy_io.Session["AVALON_TASK"]
-    return "{}/{}/{}".format(project_name, asset_name, task_name)
-
-
-def _get_stub():
-    """
-        Handle pulling stub from PS to run operations on host
+    Storing all instances as a list as legacy instances might be still present.
+    Args:
+        creator (Creator): Plugin which would like to get instances from host.
     Returns:
-        (AEServerStub) or None
+        List[]: list of all instances stored in metadata
     """
-    try:
-        stub = get_stub()  # only after Photoshop is up
-    except ConnectionNotEstablishedYet:
-        print("Not connected yet, ignoring")
-        return
-
-    if not stub.get_active_document_name():
-        return
-
-    return stub
+    shared_key = "openpype.photoshop.instances"
+    if shared_key not in creator.collection_shared_data:
+        creator.collection_shared_data[shared_key] = \
+            creator.host.list_instances()
+    return creator.collection_shared_data[shared_key]

@@ -1,4 +1,4 @@
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 from .report_items import (
     PublishReport

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Overused Color group</title>
+<description>## One Color group is used by multiple Render Layers
+
+Single color group used by multiple Render Layers would cause clashes of rendered TVPaint layers. The same layers would be used for output files of both groups.
+
+### Missing layer names
+
+{groups_information}
+
+### How to repair?
+
+Refresh, go to 'Publish' tab and go through Render Layers and change their groups to not clash each other. If you reach limit of TVPaint color groups there is nothing you can do about it to fix the issue.
+</description>
+</error>
+</root>

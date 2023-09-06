@@ -23,9 +23,9 @@ class ExtractReviewData(publish.Extractor):
         representations = instance.data.get("representations", [])
 
         # review can be removed since `ProcessSubmittedJobOnFarm` will create
-        # reviable representation if needed
+        # reviewable representation if needed
         if (
-            "render.farm" in instance.data["families"]
+            instance.data.get("farm")
             and "review" in instance.data["families"]
         ):
             instance.data["families"].remove("review")

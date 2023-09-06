@@ -24,8 +24,10 @@ from openpype.client import (
     get_version_by_name,
 )
 from openpype.lib import source_hash
-from openpype.lib.file_transaction import FileTransaction
-from openpype.pipeline import legacy_io
+from openpype.lib.file_transaction import (
+    FileTransaction,
+    DuplicateDestinationError
+)
 from openpype.pipeline.publish import (
     KnownPublishError,
     get_publish_template_name,
@@ -81,10 +83,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     families = ["workfile",
                 "pointcache",
+                "pointcloud",
                 "proxyAbc",
                 "camera",
                 "animation",
                 "model",
+                "maxScene",
                 "mayaAscii",
                 "mayaScene",
                 "setdress",
@@ -132,7 +136,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsdComposition",
                 "mvUsdOverride",
                 "simpleUnrealTexture",
-                "online"
+                "online",
+                "uasset"
                 ]
 
     default_template_name = "publish"
@@ -158,6 +163,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "Instance is marked to be processed on farm. Skipping")
             return
 
+        # Instance is marked to not get integrated
+        if not instance.data.get("integrate", True):
+            self.log.info("Instance is marked to skip integrating. Skipping")
+            return
+
         filtered_repres = self.filter_representations(instance)
         # Skip instance if there are not representations to integrate
         #   all representations should not be integrated
@@ -168,9 +178,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             ).format(instance.data["family"]))
             return
 
-        file_transactions = FileTransaction(log=self.log)
+        file_transactions = FileTransaction(log=self.log,
+                                            # Enforce unique transfers
+                                            allow_queue_replacements=False)
         try:
             self.register(instance, file_transactions, filtered_repres)
+        except DuplicateDestinationError as exc:
+            # Raise DuplicateDestinationError as KnownPublishError
+            # and rollback the transactions
+            file_transactions.rollback()
+            six.reraise(KnownPublishError,
+                        KnownPublishError(exc),
+                        sys.exc_info()[2])
         except Exception:
             # clean destination
             # todo: preferably we'd also rollback *any* changes to the database
@@ -244,7 +263,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def register(self, instance, file_transactions, filtered_repres):
-        project_name = legacy_io.active_project()
+        project_name = instance.context.data["projectName"]
 
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
@@ -269,6 +288,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             instance, op_session, subset, project_name
         )
         instance.data["versionEntity"] = version
+
+        anatomy = instance.context.data["anatomy"]
 
         # Get existing representations (if any)
         existing_repres_by_name = {
@@ -303,13 +324,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # .ma representation. Those destination paths are pre-defined, etc.
         # todo: should we move or simplify this logic?
         resource_destinations = set()
-        for src, dst in instance.data.get("transfers", []):
-            file_transactions.add(src, dst, mode=FileTransaction.MODE_COPY)
-            resource_destinations.add(os.path.abspath(dst))
 
-        for src, dst in instance.data.get("hardlinks", []):
-            file_transactions.add(src, dst, mode=FileTransaction.MODE_HARDLINK)
-            resource_destinations.add(os.path.abspath(dst))
+        file_copy_modes = [
+            ("transfers", FileTransaction.MODE_COPY),
+            ("hardlinks", FileTransaction.MODE_HARDLINK)
+        ]
+        for files_type, copy_mode in file_copy_modes:
+            for src, dst in instance.data.get(files_type, []):
+                self._validate_path_in_project_roots(anatomy, dst)
+
+                file_transactions.add(src, dst, mode=copy_mode)
+                resource_destinations.add(os.path.abspath(dst))
 
         # Bulk write to the database
         # We write the subset and version to the database before the File
@@ -342,7 +367,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Compute the resource file infos once (files belonging to the
         # version instance instead of an individual representation) so
         # we can re-use those file infos per representation
-        anatomy = instance.context.data["anatomy"]
         resource_file_infos = self.get_files_info(resource_destinations,
                                                   sites=sites,
                                                   anatomy=anatomy)
@@ -393,7 +417,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.debug("{}".format(op_session.to_data()))
         op_session.commit()
 
-        # Backwards compatibility
+        # Backwards compatibility used in hero integration.
         # todo: can we avoid the need to store this?
         instance.data["published_representations"] = {
             p["representation"]["_id"]: p for p in prepared_representations
@@ -501,6 +525,43 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         return version_doc
 
+    def _validate_repre_files(self, files, is_sequence_representation):
+        """Validate representation files before transfer preparation.
+
+        Check if files contain only filenames instead of full paths and check
+        if sequence don't contain more than one sequence or has remainders.
+
+        Args:
+            files (Union[str, List[str]]): Files from representation.
+            is_sequence_representation (bool): Files are for sequence.
+
+        Raises:
+            KnownPublishError: If validations don't pass.
+        """
+
+        if not files:
+            return
+
+        if not is_sequence_representation:
+            files = [files]
+
+        if any(os.path.isabs(fname) for fname in files):
+            raise KnownPublishError("Given file names contain full paths")
+
+        if not is_sequence_representation:
+            return
+
+        src_collections, remainders = clique.assemble(files)
+        if len(files) < 2 or len(src_collections) != 1 or remainders:
+            raise KnownPublishError((
+                "Files of representation does not contain proper"
+                " sequence files.\nCollected collections: {}"
+                "\nCollected remainders: {}"
+            ).format(
+                ", ".join([str(col) for col in src_collections]),
+                ", ".join([str(rem) for rem in remainders])
+            ))
+
     def prepare_representation(self, repre,
                                template_name,
                                existing_repres_by_name,
@@ -529,6 +590,32 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
 
+        # allow overwriting existing version
+        template_data["version"] = version["name"]
+
+        # add template data for colorspaceData
+        if repre.get("colorspaceData"):
+            colorspace = repre["colorspaceData"]["colorspace"]
+            # replace spaces with underscores
+            # pipeline.colorspace.parse_colorspace_from_filepath
+            # is checking it with underscores too
+            colorspace = colorspace.replace(" ", "_")
+            template_data["colorspace"] = colorspace
+
+        stagingdir = repre.get("stagingDir")
+        if not stagingdir:
+            # Fall back to instance staging dir if not explicitly
+            # set for representation in the instance
+            self.log.debug((
+                "Representation uses instance staging dir: {}"
+            ).format(instance_stagingdir))
+            stagingdir = instance_stagingdir
+
+        if not stagingdir:
+            raise KnownPublishError(
+                "No staging directory set for representation: {}".format(repre)
+            )
+
         # optionals
         # retrieve additional anatomy data from representation if exists
         for key, anatomy_key in {
@@ -548,20 +635,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             if value is not None:
                 template_data[anatomy_key] = value
 
-        stagingdir = repre.get("stagingDir")
-        if not stagingdir:
-            # Fall back to instance staging dir if not explicitly
-            # set for representation in the instance
-            self.log.debug((
-                "Representation uses instance staging dir: {}"
-            ).format(instance_stagingdir))
-            stagingdir = instance_stagingdir
-
-        if not stagingdir:
-            raise KnownPublishError(
-                "No staging directory set for representation: {}".format(repre)
-            )
-
         self.log.debug("Anatomy template name: {}".format(template_name))
         anatomy = instance.context.data["anatomy"]
         publish_template_category = anatomy.templates[template_name]
@@ -569,22 +642,83 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         is_udim = bool(repre.get("udim"))
 
-        is_sequence_representation = isinstance(files, (list, tuple))
-        if is_sequence_representation:
-            # Collection of files (sequence)
-            if any(os.path.isabs(fname) for fname in files):
-                raise KnownPublishError("Given file names contain full paths")
+        # handle publish in place
+        if "{originalDirname}" in template:
+            # store as originalDirname only original value without project root
+            # if instance collected originalDirname is present, it should be
+            # used for all represe
+            # from temp to final
+            original_directory = (
+                instance.data.get("originalDirname") or instance_stagingdir)
 
-            src_collections, remainders = clique.assemble(files)
-            if len(files) < 2 or len(src_collections) != 1 or remainders:
+            _rootless = self.get_rootless_path(anatomy, original_directory)
+            if _rootless == original_directory:
                 raise KnownPublishError((
-                    "Files of representation does not contain proper"
-                    " sequence files.\nCollected collections: {}"
-                    "\nCollected remainders: {}"
-                ).format(
-                    ", ".join([str(col) for col in src_collections]),
-                    ", ".join([str(rem) for rem in remainders])
+                        "Destination path '{}' ".format(original_directory) +
+                        "must be in project dir"
                 ))
+            relative_path_start = _rootless.rfind('}') + 2
+            without_root = _rootless[relative_path_start:]
+            template_data["originalDirname"] = without_root
+
+        is_sequence_representation = isinstance(files, (list, tuple))
+        # hornet - fix mixed digit frame range
+        # this validator is an opaque call to an outside library verifying something verified earlier in the publish process
+        # the outside library has the mixed digit frame range bug - the pipeline functions fine without it
+        #self._validate_repre_files(files, is_sequence_representation)
+
+        # Output variables of conditions below:
+        # - transfers (List[Tuple[str, str]]): src -> dst filepaths to copy
+        # - repre_context (Dict[str, Any]): context data used to fill template
+        # - template_data (Dict[str, Any]): source data used to fill template
+        #   - to add required data to 'repre_context' not used for
+        #       formatting
+        path_template_obj = anatomy.templates_obj[template_name]["path"]
+
+        # Treat template with 'orignalBasename' in special way
+        if "{originalBasename}" in template:
+            # Remove 'frame' from template data
+            template_data.pop("frame", None)
+
+            # Find out first frame string value
+            first_index_padded = None
+            if not is_udim and is_sequence_representation:
+                col = clique.assemble(files)[0][0]
+                sorted_frames = tuple(sorted(col.indexes))
+                # First frame used for end value
+                first_frame = sorted_frames[0]
+                # Get last frame for padding
+                last_frame = sorted_frames[-1]
+                # Use padding from collection of length of last frame as string
+                padding = max(col.padding, len(str(last_frame)))
+                first_index_padded = get_frame_padded(
+                    frame=first_frame,
+                    padding=padding
+                )
+
+            # Convert files to list for single file as remaining part is only
+            #   transfers creation (iteration over files)
+            if not is_sequence_representation:
+                files = [files]
+
+            repre_context = None
+            transfers = []
+            for src_file_name in files:
+                template_data["originalBasename"], _ = os.path.splitext(
+                    src_file_name)
+
+                dst = path_template_obj.format_strict(template_data)
+                src = os.path.join(stagingdir, src_file_name)
+                transfers.append((src, dst))
+                if repre_context is None:
+                    repre_context = dst.used_values
+
+            if not is_udim and first_index_padded is not None:
+                repre_context["frame"] = first_index_padded
+
+        elif is_sequence_representation:
+            # Collection of files (sequence)
+            src_collections, remainders = clique.assemble(files)
 
             src_collection = src_collections[0]
             destination_indexes = list(src_collection.indexes)
@@ -605,9 +739,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # that `frameStart` index instead. Thus if that frame start
                 # differs from the collection we want to shift the destination
                 # frame indices from the source collection.
+                # In case source are published in place we need to
+                # skip renumbering
                 repre_frame_start = repre.get("frameStart")
                 if repre_frame_start is not None:
-                    index_frame_start = int(repre["frameStart"])
+                    index_frame_start = int(repre_frame_start)
                     # Shift destination sequence to the start frame
                     destination_indexes = [
                         index_frame_start + idx
@@ -631,8 +767,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     template_data["udim"] = index
                 else:
                     template_data["frame"] = index
-                anatomy_filled = anatomy.format(template_data)
-                template_filled = anatomy_filled[template_name]["path"]
+                template_filled = path_template_obj.format_strict(
+                    template_data
+                )
                 dst_filepaths.append(template_filled)
                 if repre_context is None:
                     self.log.debug(
@@ -663,38 +800,25 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         else:
             # Single file
-            fname = files
-            if os.path.isabs(fname):
-                self.log.error(
-                    "Filename in representation is filepath {}".format(fname)
-                )
-                raise KnownPublishError(
-                    "This is a bug. Representation file name is full path"
-                )
-
             # Manage anatomy template data
             template_data.pop("frame", None)
             if is_udim:
                 template_data["udim"] = repre["udim"][0]
-
             # Construct destination filepath from template
-            anatomy_filled = anatomy.format(template_data)
-            template_filled = anatomy_filled[template_name]["path"]
+            template_filled = path_template_obj.format_strict(template_data)
             repre_context = template_filled.used_values
             dst = os.path.normpath(template_filled)
 
             # Single file transfer
-            src = os.path.join(stagingdir, fname)
+            src = os.path.join(stagingdir, files)
             transfers = [(src, dst)]
 
         # todo: Are we sure the assumption each representation
         #       ends up in the same folder is valid?
         if not instance.data.get("publishDir"):
-            instance.data["publishDir"] = (
-                anatomy_filled
-                [template_name]
-                ["folder"]
-            )
+            template_obj = anatomy.templates_obj[template_name]["folder"]
+            template_filled = template_obj.format_strict(template_data)
+            instance.data["publishDir"] = template_filled
 
         for key in self.db_representation_context_keys:
             # Also add these values to the context even if not used by the
@@ -726,6 +850,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #       and the actual representation entity for the database
         data = repre.get("data", {})
         data.update({"path": published_path, "template": template})
+
+        # add colorspace data if any exists on representation
+        if repre.get("colorspaceData"):
+            data["colorspaceData"] = repre["colorspaceData"]
+
         repre_doc = new_representation_doc(
             repre["name"], version["_id"], repre_context, data, repre_id
         )
@@ -787,7 +916,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Include optional data if present in
         optionals = [
-            "frameStart", "frameEnd", "step", "handles",
+            "frameStart", "frameEnd", "step",
             "handleEnd", "handleStart", "sourceHashes"
         ]
         for key in optionals:
@@ -805,11 +934,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         """Return anatomy template name to use for integration"""
 
         # Anatomy data is pre-filled by Collectors
-
-        project_name = legacy_io.active_project()
+        context = instance.context
+        project_name = context.data["projectName"]
 
         # Task can be optional in anatomy data
-        host_name = instance.context.data["hostName"]
+        host_name = context.data["hostName"]
         anatomy_data = instance.data["anatomyData"]
         family = anatomy_data["family"]
         task_info = anatomy_data.get("task") or {}
@@ -820,7 +949,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             family,
             task_name=task_info.get("name"),
             task_type=task_info.get("type"),
-            project_settings=instance.context.data["project_settings"],
+            project_settings=context.data["project_settings"],
             logger=self.log
         )
 
@@ -890,3 +1019,21 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             "hash": source_hash(path),
             "sites": sites
         }
+
+    def _validate_path_in_project_roots(self, anatomy, file_path):
+        """Checks if 'file_path' starts with any of the roots.
+
+        Used to check that published path belongs to project, eg. we are not
+        trying to publish to local only folder.
+        Args:
+            anatomy (Anatomy)
+            file_path (str)
+        Raises
+            (KnownPublishError)
+        """
+        path = self.get_rootless_path(anatomy, file_path)
+        if not path:
+            raise KnownPublishError((
+                "Destination path '{}' ".format(file_path) +
+                "must be in project dir"
+            ))

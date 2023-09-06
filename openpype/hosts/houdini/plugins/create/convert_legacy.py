@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Convertor for legacy Houdini subsets."""
+"""Converter for legacy Houdini subsets."""
 from openpype.pipeline.create.creator_plugins import SubsetConvertorPlugin
 from openpype.hosts.houdini.api.lib import imprint
 
@@ -7,7 +7,7 @@ from openpype.hosts.houdini.api.lib import imprint
 class HoudiniLegacyConvertor(SubsetConvertorPlugin):
     """Find and convert any legacy subsets in the scene.
 
-    This Convertor will find all legacy subsets in the scene and will
+    This Converter will find all legacy subsets in the scene and will
     transform them to the current system. Since the old subsets doesn't
     retain any information about their original creators, the only mapping
     we can do is based on their families.

@@ -15,11 +15,11 @@ All the information also applies to **_Nuke Studio_**(NKS), but for simplicity w
 
 ## OpenPype global tools
 
--   [Work Files](artist_tools.md#workfiles)
--   [Create](artist_tools.md#creator)
--   [Load](artist_tools.md#loader)
--   [Manage (Inventory)](artist_tools.md#inventory)
--   [Publish](artist_tools.md#publisher)
+-   [Work Files](artist_tools_workfiles)
+-   [Create](artist_tools_creator)
+-   [Load](artist_tools_loader)
+-   [Manage (Inventory)](artist_tools_inventory)
+-   [Publish](artist_tools_publisher)
 
 
 ## Hiero specific tools
@@ -231,14 +231,14 @@ All published instances that will replace the place holder must contain unique i
 ![Create menu](assets/nuke_publishedinstance.png)
 
 
-The informations about these objects are given by the user by filling the extra attributes of the Place Holder
+The information about these objects are given by the user by filling the extra attributes of the Place Holder
 
 ![Create menu](assets/nuke_fillingExtraAttributes.png)
 
 
 
 ### Update Place Holder
-This tool alows the user to change the information provided in the extra attributes of the selected Place Holder.
+This tool allows the user to change the information provided in the extra attributes of the selected Place Holder.
 
 ![Create menu](assets/nuke_updatePlaceHolder.png)
 
@@ -250,7 +250,7 @@ This tool imports the template used and replaces the existed PlaceHolders with t
 ![Create menu](assets/nuke_buildWorfileFromTemplate.png)
 
 #### Result
-- Replace `PLACEHOLDER` node in the template with the published instance corresponding to the informations provided in extra attributes of the Place Holder
+- Replace `PLACEHOLDER` node in the template with the published instance corresponding to the information provided in extra attributes of the Place Holder
 
 ![Create menu](assets/nuke_buildworkfile.png)
 

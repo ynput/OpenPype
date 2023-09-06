@@ -440,8 +440,9 @@ class RootEntity(BaseItemEntity):
                 os.makedirs(dirpath)
 
             self.log.debug("Saving data to: {}\n{}".format(subpath, value))
+            data = json.dumps(value, indent=4) + "\n"
             with open(output_path, "w") as file_stream:
-                json.dump(value, file_stream, indent=4)
+                file_stream.write(data)
 
         dynamic_values_item = self.collect_dynamic_schema_entities()
         dynamic_values_item.save_values()

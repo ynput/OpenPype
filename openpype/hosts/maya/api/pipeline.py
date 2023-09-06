@@ -98,6 +98,11 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
 
             return
 
+        # NOTE Hornet hotfix for workspace
+        from openpype.hpipe import maya_fix
+        maya_fix.fix_workspace()
+        # END
+
         _set_project()
         self._register_callbacks()
 
@@ -514,6 +519,9 @@ def check_lock_on_current_file():
 
     # add the lock file when opening the file
     filepath = current_file()
+    # Skip if current file is 'untitled'
+    if not filepath:
+        return
 
     if is_workfile_locked(filepath):
         # add lockfile dialog
@@ -680,10 +688,12 @@ def before_workfile_save(event):
 
 def after_workfile_save(event):
     workfile_name = event["filename"]
-    if handle_workfile_locks():
-        if workfile_name:
-            if not is_workfile_locked(workfile_name):
-                create_workfile_lock(workfile_name)
+    if (
+        handle_workfile_locks()
+        and workfile_name
+        and not is_workfile_locked(workfile_name)
+    ):
+        create_workfile_lock(workfile_name)
 
 
 class MayaDirmap(HostDirmap):

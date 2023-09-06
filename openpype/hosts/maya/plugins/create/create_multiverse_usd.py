@@ -6,7 +6,7 @@ class CreateMultiverseUsd(plugin.Creator):
 
     name = "mvUsdMain"
     label = "Multiverse USD Asset"
-    family = "mvUsd"
+    family = "usd"
     icon = "cubes"
 
     def __init__(self, *args, **kwargs):

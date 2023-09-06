@@ -47,8 +47,8 @@ class TextureCopy:
             "hierarchy": hierarchy
         }
         anatomy = Anatomy(project_name)
-        anatomy_filled = anatomy.format(template_data)
-        return anatomy_filled['texture']['path']
+        template_obj = anatomy.templates_obj["texture"]["path"]
+        return template_obj.format_strict(template_data)
 
     def _get_version(self, path):
         versions = [0]

@@ -2,14 +2,12 @@ import copy
 import os
 import re
 
-from openpype.client import get_assets, get_asset_by_name
 from openpype.lib import (
     FileDef,
     BoolDef,
 )
 from openpype.pipeline import (
     CreatedInstance,
-    CreatorError
 )
 from openpype.pipeline.create import (
     get_subset_name,
@@ -17,6 +15,9 @@ from openpype.pipeline.create import (
 )
 
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
+from openpype.hosts.traypublisher.batch_parsing import (
+    get_asset_doc_from_file_name
+)
 
 
 class BatchMovieCreator(TrayPublishCreator):
@@ -32,12 +33,12 @@ class BatchMovieCreator(TrayPublishCreator):
 
     create_allow_context_change = False
     version_regex = re.compile(r"^(.+)_v([0-9]+)$")
+    # Position batch creator after simple creators
+    order = 110
 
-    def __init__(self, project_settings, *args, **kwargs):
-        super(BatchMovieCreator, self).__init__(project_settings,
-                                                *args, **kwargs)
+    def apply_settings(self, project_settings, system_settings):
         creator_settings = (
-            project_settings["traypublisher"]["BatchMovieCreator"]
+            project_settings["traypublisher"]["create"]["BatchMovieCreator"]
         )
         self.default_variants = creator_settings["default_variants"]
         self.default_tasks = creator_settings["default_tasks"]
@@ -57,8 +58,8 @@ class BatchMovieCreator(TrayPublishCreator):
             filepath = os.path.join(file_info["directory"], file_name)
             instance_data["creator_attributes"] = {"filepath": filepath}
 
-            asset_doc, version = self.get_asset_doc_from_file_name(
-                file_name, self.project_name)
+            asset_doc, version = get_asset_doc_from_file_name(
+                file_name, self.project_name, self.version_regex)
 
             subset_name, task_name = self._get_subset_and_task(
                 asset_doc, data["variant"], self.project_name)
@@ -70,62 +71,6 @@ class BatchMovieCreator(TrayPublishCreator):
             new_instance = CreatedInstance(self.family, subset_name,
                                            instance_data, self)
             self._store_new_instance(new_instance)
-
-    def get_asset_doc_from_file_name(self, source_filename, project_name):
-        """Try to parse out asset name from file name provided.
-
-        Artists might provide various file name formats.
-        Currently handled:
-            - chair.mov
-            - chair_v001.mov
-            - my_chair_to_upload.mov
-        """
-        version = None
-        asset_name = os.path.splitext(source_filename)[0]
-        # Always first check if source filename is in assets
-        matching_asset_doc = self._get_asset_by_name_case_not_sensitive(
-            project_name, asset_name)
-
-        if matching_asset_doc is None:
-            matching_asset_doc, version = (
-                self._parse_with_version(project_name, asset_name))
-
-        if matching_asset_doc is None:
-            matching_asset_doc = self._parse_containing(project_name,
-                                                        asset_name)
-
-        if matching_asset_doc is None:
-            raise CreatorError(
-                "Cannot guess asset name from {}".format(source_filename))
-
-        return matching_asset_doc, version
-
-    def _parse_with_version(self, project_name, asset_name):
-        """Try to parse asset name from a file name containing version too
-
-        Eg. 'chair_v001.mov' >> 'chair', 1
-        """
-        self.log.debug((
-           "Asset doc by \"{}\" was not found, trying version regex."
-        ).format(asset_name))
-
-        matching_asset_doc = version_number = None
-
-        regex_result = self.version_regex.findall(asset_name)
-        if regex_result:
-            _asset_name, _version_number = regex_result[0]
-            matching_asset_doc = self._get_asset_by_name_case_not_sensitive(
-                project_name, _asset_name)
-            if matching_asset_doc:
-                version_number = int(_version_number)
-
-        return matching_asset_doc, version_number
-
-    def _parse_containing(self, project_name, asset_name):
-        """Look if file name contains any existing asset name"""
-        for asset_doc in get_assets(project_name, fields=["name"]):
-            if asset_doc["name"].lower() in asset_name.lower():
-                return get_asset_by_name(project_name, asset_doc["name"])
 
     def _get_subset_and_task(self, asset_doc, variant, project_name):
         """Create subset name according to standard template process"""
@@ -204,16 +149,3 @@ class BatchMovieCreator(TrayPublishCreator):
         File names must then contain only asset name, or asset name + version.
         (eg. 'chair.mov', 'chair_v001.mov', not really safe `my_chair_v001.mov`
         """
-
-    def _get_asset_by_name_case_not_sensitive(self, project_name, asset_name):
-        """Handle more cases in file names"""
-        asset_name = re.compile(asset_name, re.IGNORECASE)
-
-        assets = list(get_assets(project_name, asset_names=[asset_name]))
-        if assets:
-            if len(assets) > 1:
-                self.log.warning("Too many records found for {}".format(
-                    asset_name))
-                return
-
-            return assets.pop()

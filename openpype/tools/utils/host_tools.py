@@ -38,7 +38,6 @@ class HostToolsHelper:
         self._subset_manager_tool = None
         self._scene_inventory_tool = None
         self._library_loader_tool = None
-        self._look_assigner_tool = None
         self._experimental_tools_dialog = None
 
     @property
@@ -219,27 +218,6 @@ class HostToolsHelper:
 
         raise ImportError("No Pyblish GUI found")
 
-    def get_look_assigner_tool(self, parent):
-        """Create, cache and return look assigner tool window."""
-        if self._look_assigner_tool is None:
-            from openpype.tools.mayalookassigner import MayaLookAssignerWindow
-
-            mayalookassigner_window = MayaLookAssignerWindow(parent)
-            self._look_assigner_tool = mayalookassigner_window
-        return self._look_assigner_tool
-
-    def show_look_assigner(self, parent=None):
-        """Look manager is Maya specific tool for look management."""
-
-        with qt_app_context():
-            look_assigner_tool = self.get_look_assigner_tool(parent)
-            look_assigner_tool.show()
-
-            # Pull window to the front.
-            look_assigner_tool.raise_()
-            look_assigner_tool.activateWindow()
-            look_assigner_tool.showNormal()
-
     def get_experimental_tools_dialog(self, parent=None):
         """Dialog of experimental tools.
 
@@ -315,9 +293,6 @@ class HostToolsHelper:
         elif tool_name == "sceneinventory":
             return self.get_scene_inventory_tool(parent, *args, **kwargs)
 
-        elif tool_name == "lookassigner":
-            return self.get_look_assigner_tool(parent, *args, **kwargs)
-
         elif tool_name == "publish":
             self.log.info("Can't return publish tool window.")
 
@@ -355,9 +330,6 @@ class HostToolsHelper:
 
         elif tool_name == "sceneinventory":
             self.show_scene_inventory(parent, *args, **kwargs)
-
-        elif tool_name == "lookassigner":
-            self.show_look_assigner(parent, *args, **kwargs)
 
         elif tool_name == "publish":
             self.show_publish(parent, *args, **kwargs)
@@ -434,10 +406,6 @@ def show_subset_manager(parent=None):
 
 def show_scene_inventory(parent=None):
     _SingletonPoint.show_tool_by_name("sceneinventory", parent)
-
-
-def show_look_assigner(parent=None):
-    _SingletonPoint.show_tool_by_name("lookassigner", parent)
 
 
 def show_publish(parent=None):

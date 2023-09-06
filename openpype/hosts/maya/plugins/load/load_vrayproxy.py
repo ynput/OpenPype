@@ -81,10 +81,11 @@ class VRayProxyLoader(load.LoaderPlugin):
         c = colors.get(family)
         if c is not None:
             cmds.setAttr("{0}.useOutlinerColor".format(group_node), 1)
-            cmds.setAttr("{0}.outlinerColor".format(group_node),
-                (float(c[0])/255),
-                (float(c[1])/255),
-                (float(c[2])/255)
+            cmds.setAttr(
+                "{0}.outlinerColor".format(group_node),
+                (float(c[0]) / 255),
+                (float(c[1]) / 255),
+                (float(c[2]) / 255)
             )
 
         return containerise(
@@ -101,7 +102,7 @@ class VRayProxyLoader(load.LoaderPlugin):
         assert cmds.objExists(node), "Missing container"
 
         members = cmds.sets(node, query=True) or []
-        vraymeshes = cmds.ls(members, type="VRayMesh")
+        vraymeshes = cmds.ls(members, type="VRayProxy")
         assert vraymeshes, "Cannot find VRayMesh in container"
 
         #  get all representations for this version

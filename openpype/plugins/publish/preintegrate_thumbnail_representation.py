@@ -60,6 +60,8 @@ class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
         if not found_profile:
             return
 
+        thumbnail_repre.setdefault("tags", [])
+
         if not found_profile["integrate_thumbnail"]:
             if "delete" not in thumbnail_repre["tags"]:
                 thumbnail_repre["tags"].append("delete")

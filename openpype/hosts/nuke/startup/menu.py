@@ -1,13 +1,16 @@
+from openpype.pipeline import install_host
+from openpype.hosts.nuke.api import NukeHost
+
+host = NukeHost()
+install_host(host)
+
+# TODO horent:old heck with output format, see hornet commit 153ccd9
 import nuke
 import os
 
-
 import DeadlineNukeClient
 
-
 from openpype.lib import Logger
-
-from openpype.pipeline import install_host
 from openpype.hosts.nuke import api
 from openpype.hosts.nuke.api.lib import (
     on_script_load,
@@ -19,65 +22,47 @@ from openpype.hosts.nuke.api.lib import (
 from openpype.settings import get_project_settings
 
 log = Logger.get_logger(__name__)
+# dict mapping extension to list of exposed parameters from write node to top level group node
+knobMatrix = { 'exr': ['autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
+                'png': ['datatype'],
+                'dpx': ['datatype'],
+                'tiff': ['datatype', 'compression'],
+                'jpeg': []
+}
+universalKnobs = ['colorspace', 'views','first', 'last','use_limit']
 
-
-install_host(api)
-
+knobMatrix = {key: universalKnobs + value for key, value in knobMatrix.items()}
+#list of key-value tuples for write node knob presets based on file extension
+presets = {
+    'exr' : [ ("colorspace", 'ACES - ACEScg'), ('channels', 'all'), ('datatype', '16 bit half') ],
+    'png' : [ ("colorspace", 'Output - Rec.709'), ('channels', 'rgba'), ('datatype','16 bit') ],
+    'dpx' : [ ("colorspace", 'Output - Rec.709'), ('channels', 'rgb'), ('datatype','10 bit'), ('big endian', True) ],
+    'jpeg' : [ ("colorspace", 'Output - sRGB'), ('channels', 'rgb') ]
+           }
 # fix ffmpeg settings on script
-nuke.addOnScriptLoad(on_script_load)
 
 # set checker for last versions on loaded containers
-nuke.addOnScriptLoad(check_inventory_versions)
-nuke.addOnScriptSave(check_inventory_versions)
-
-# # set apply all workfile settings on script load and save
-nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
-
-nuke.addFilenameFilter(dirmap_file_name_filter)
 
 log.info('Automatic syncing of write file knob to script version')
 
 
-def add_scripts_menu():
-    try:
-        from scriptsmenu import launchfornuke
-    except ImportError:
-        log.warning(
-            "Skipping studio.menu install, because "
-            "'scriptsmenu' module seems unavailable."
-        )
-        return
-
-    # load configuration of custom menu
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-    config = project_settings["nuke"]["scriptsmenu"]["definition"]
-    _menu = project_settings["nuke"]["scriptsmenu"]["name"]
-
-    if not config:
-        log.warning("Skipping studio menu, no definition found.")
-        return
-
-    # run the launcher for Maya menu
-    studio_menu = launchfornuke.main(title=_menu.title())
-
-    # apply configuration
-    studio_menu.build_from_configuration(studio_menu, config)
-
-
-add_scripts_menu()
-
-add_scripts_gizmo()
-
-
+def apply_format_presets():
+    node = nuke.thisNode()
+    knob = nuke.thisKnob()
+    if knob.name() == 'file_type':
+        if knob.value() in presets.keys():
+            for preset in presets[knob.value()]:
+                if node.knob(preset[0]):
+                    node.knob(preset[0]).setValue(preset[1])
 # Hornet- helper to switch file extension to filetype
 def writes_ver_sync():
     ''' Callback synchronizing version of publishable write nodes
     '''
     try:
-	print('Hornet- syncing version to write nodes')
+        print('Hornet- syncing version to write nodes')
         #rootVersion = pype.get_version_from_path(nuke.root().name())
         pattern = re.compile(r"[\._]v([0-9]+)", re.IGNORECASE)
-        rootVersion = pattern.findall(nuke.root().name())[0]    
+        rootVersion = pattern.findall(nuke.root().name())[0]
         padding = len(rootVersion)
         new_version = "v" + str("{" + ":0>{}".format(padding) + "}").format(
             int(rootVersion)
@@ -88,9 +73,7 @@ def writes_ver_sync():
         return
     groupnodes = [node.nodes() for node in nuke.allNodes() if node.Class() == 'Group']
     allnodes = [node for group in groupnodes for node in group] + nuke.allNodes()
-    print(allnodes)
     for each in allnodes:
-        print('node')
         if each.Class() == 'Write':
             # check if the node is avalon tracked
             if each.name().startswith('inside_'):
@@ -137,24 +120,20 @@ def switchExtension():
         old = filek.value()
         pre,ext = os.path.splitext(old)
         filek.setValue(pre + '.' + knb.value())
-knobMatrix = { 'exr': ['colorspace','raw', 'write_ACES_compliant_EXR', 'autocrop', 'datatype', 'heroview', 'metadata', 'interleave'],
-		'png': ['colorspace', 'raw','datatype'],
-		'tiff': ['colorspace','raw','datatype', 'compression'],
-		'mov': ['colorspace','raw','mov64_codec', 'mov64_fps', 'mov64_encoder' ],
-        'dpx': ['colorspace', 'datatype', 'transfer', 'bigEndian']
-}
+
 def embedOptions():
-    nde = nuke.thisNode() 
+    nde = nuke.thisNode()
     knb = nuke.thisKnob()
     log.info(' knob of type' + str(knb.Class()))
     htab = nuke.Tab_Knob('htab','Hornet')
+    htab.setName('htab')
     if knb == nde.knob('file_type'):
         group = nuke.toNode('.'.join(['root'] + nde.fullName().split('.')[:-1]))
         ftype = knb.value()
     else:
         return
-	if ftype not in knobMatrix.keys():
-		return
+    if ftype not in knobMatrix.keys():
+        return
     allTrackedKnobs = [ value for sublist in knobMatrix.values() for value in sublist]
     allTrackedKnobs.append("file_type")
     allTrackedKnobs.append("file")
@@ -172,7 +151,7 @@ def embedOptions():
         if knob.name() in ['beginoutput','endoutput','beginpipeline','beginoutput','endpipeline','htab']:
             group.removeKnob(knob)
     for knob in allScriptKnobs:
-        if knob.name() in ["submit","publish", "readfrom"]:
+        if knob.name() in ["submit","publish", "readfrom", 'clear']:
             group.removeKnob(knob)
     for knob in allMultiKnobs:
         if knob.name() == "File output":
@@ -180,9 +159,9 @@ def embedOptions():
     for knob in allTextKnobs:
         if knob.name() in ['tempwarn','reviewwarn','dlinewarn','div']:
             group.removeKnob(knob)
-    while group.knob('htab'):
-        group.removeKnob(group.knob('htab'))
-    group.addKnob(htab)
+    names = [knob.name() for knob in group.allKnobs()]
+    if not 'htab' in names:
+        group.addKnob(htab)
     beginGroup = nuke.Tab_Knob('beginoutput', 'Output', nuke.TABBEGINGROUP)
     group.addKnob(beginGroup)
 
@@ -205,13 +184,21 @@ def embedOptions():
             link.makeLink(nde.name(), kname)
             link.setName(kname)
             link.setFlag(0x1000)
+            if kname in ['first','last']:
+                link.setLabel(kname + ' frame')
+            if kname == 'use_limit':
+                link.setLabel('use frame range')
             group.addKnob(link)
+    log.info("links made")
+
+
     endGroup = nuke.Tab_Knob('endoutput', None, nuke.TABENDGROUP)
     group.addKnob(endGroup)
     beginGroup = nuke.Tab_Knob('beginpipeline', 'Rendering and Pipeline', nuke.TABBEGINGROUP)
     group.addKnob(beginGroup)
     sub = nuke.PyScript_Knob('submit', 'Submit to Deadline', "DeadlineNukeClient.main()")
-    pub = nuke.PyScript_Knob('publish', 'Publish', "from openpype.tools.utils import host_tools;host_tools.show_publish()")
+    clr = nuke.PyScript_Knob('clear', 'Clear Temp Outputs', "import os;fpath = os.path.dirname(nuke.thisNode().knob('File output').value());[os.remove(os.path.join(fpath, f)) for f in os.listdir(fpath)]")
+    pub = nuke.PyScript_Knob('publish', 'Publish', "from openpype.tools.utils import host_tools;host_tools.show_publisher(parent=(main_window if nuke.NUKE_VERSION_MAJOR >= 14 else None),tab='Publish')")
     readfrom_src = "import write_to_read;write_to_read.write_to_read(nuke.thisNode(), allow_relative=False)"
     readfrom = nuke.PyScript_Knob('readfrom', 'Read From Rendered', readfrom_src)
     link = nuke.Link_Knob('render')
@@ -222,18 +209,31 @@ def embedOptions():
     div = nuke.Text_Knob('div','','')
     group.addKnob(sub)
     group.addKnob(readfrom)
+    group.addKnob(clr)
     group.addKnob(div)
     group.addKnob(pub)
     tempwarn = nuke.Text_Knob('tempwarn', '', '- all rendered files are TEMPORARY and WILL BE OVERWRITTEN unless published ')
-    reviewwarn = nuke.Text_Knob('reviewwarn', '', '- Check "Review" in the OpenPype tab to automatically generate an FTrack Review on Publish')
-    dlinewarn = nuke.Text_Knob('dlinewarn', '', '- Deadline Submission settings are available in the Deadline Tab')
+    #reviewwarn = nuke.Text_Knob('reviewwarn', '', '- Check "Review" in the OpenPype tab to automatically generate an FTrack Review on Publish')
+    #dlinewarn = nuke.Text_Knob('dlinewarn', '', '- Deadline Submission settings are available in the Deadline Tab')
     group.addKnob(tempwarn)
-    group.addKnob(reviewwarn)
-    group.addKnob(dlinewarn)
+    #group.addKnob(reviewwarn)
+    #group.addKnob(dlinewarn)
     endGroup = nuke.Tab_Knob('endpipeline', None, nuke.TABENDGROUP)
     group.addKnob(endGroup)
 
-		
+def enable_disable_frame_range():
+    nde = nuke.thisNode()
+    knb = nuke.thisKnob()
+    if not nde.knob('use_limit') or not knb.name() == 'use_limit':
+        return
+    group = nuke.toNode('.'.join(['root'] + nde.fullName().split('.')[:-1]))
+    enable = nde.knob('use_limit').value()
+    group.knobs()['first'].setEnabled(enable)
+    group.knobs()['last'].setEnabled(enable)
+
+
 nuke.addKnobChanged(switchExtension, nodeClass='Write')
 nuke.addKnobChanged(embedOptions, nodeClass='Write')
+nuke.addKnobChanged(apply_format_presets, nodeClass='Write')
+nuke.addKnobChanged(enable_disable_frame_range, nodeClass='Write')
 nuke.addOnScriptSave(writes_ver_sync)

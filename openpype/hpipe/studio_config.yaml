@@ -1,0 +1,11 @@
+---
+dev: T:/dev/_dev
+prod: T:/dev/_builds
+beta: T:/dev/_builds
+superusers:
+  - josepht
+  - johnk
+  # - kevinp
+  # - ruiz
+  # - josephc
+  # - evans

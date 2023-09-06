@@ -1,5 +1,3 @@
-from bson.objectid import ObjectId
-
 import pyblish.api
 
 from openpype.pipeline import registered_host
@@ -97,10 +95,15 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
     label = "Collect Inputs"
     order = pyblish.api.CollectorOrder + 0.2
     hosts = ["fusion"]
+    families = ["render"]
 
     def process(self, instance):
 
         # Get all upstream and include itself
+        if not any(instance[:]):
+            self.log.debug("No tool found in instance, skipping..")
+            return
+
         tool = instance[0]
         nodes = list(iter_upstream(tool))
         nodes.append(tool)
@@ -108,7 +111,6 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
         # Collect containers for the given set of nodes
         containers = collect_input_containers(nodes)
 
-        inputs = [ObjectId(c["representation"]) for c in containers]
+        inputs = [c["representation"] for c in containers]
         instance.data["inputRepresentations"] = inputs
-
         self.log.info("Collected inputs: %s" % inputs)

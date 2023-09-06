@@ -6,6 +6,7 @@ from .constants import (
 
 from .subset_name import (
     TaskNotSetError,
+    get_subset_name_template,
     get_subset_name,
 )
 
@@ -46,6 +47,7 @@ __all__ = (
     "PRE_CREATE_THUMBNAIL_KEY",
 
     "TaskNotSetError",
+    "get_subset_name_template",
     "get_subset_name",
 
     "CreatorError",

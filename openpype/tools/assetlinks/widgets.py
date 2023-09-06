@@ -6,7 +6,7 @@ from openpype.client import (
     get_output_link_versions,
 )
 
-from Qt import QtWidgets
+from qtpy import QtWidgets
 
 
 class SimpleLinkView(QtWidgets.QWidget):

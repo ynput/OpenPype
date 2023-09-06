@@ -5,6 +5,8 @@ import shutil
 from tests.lib.testing_classes import (
     HostFixtures,
     PublishTest,
+    DeadlinePublishTest
+
 )
 
 
@@ -44,3 +46,7 @@ class AEHostFixtures(HostFixtures):
 
 class AELocalPublishTestClass(AEHostFixtures, PublishTest):
     """Testing class for local publishes."""
+
+
+class AEDeadlinePublishTestClass(AEHostFixtures, DeadlinePublishTest):
+    """Testing class for Deadline publishes."""

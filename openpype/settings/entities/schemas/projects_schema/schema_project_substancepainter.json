@@ -1,0 +1,35 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "substancepainter",
+    "label": "Substance Painter",
+    "is_file": true,
+    "children": [
+        {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (ImageIO)",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_config"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_imageio_file_rules"
+                }
+
+            ]
+        },
+        {
+            "type": "dict-modifiable",
+            "key": "shelves",
+            "label": "Shelves",
+            "use_label_wrap": true,
+            "object_type": {
+                "type": "text"
+            }
+        }
+    ]
+}

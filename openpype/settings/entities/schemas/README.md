@@ -350,7 +350,7 @@ How output of the schema could look like on save:
 - number input, can be used for both integer and float
     - key `"decimal"` defines how many decimal places will be used, 0 is for integer input (Default: `0`)
     - key `"minimum"` as minimum allowed number to enter (Default: `-99999`)
-    - key `"maxium"` as maximum allowed number to enter (Default: `99999`)
+    - key `"maximum"` as maximum allowed number to enter (Default: `99999`)
 - key `"steps"` will change single step value of UI inputs (using arrows and wheel scroll)
 - for UI it is possible to show slider to enable this option set `show_slider` to `true`
 ```
@@ -380,6 +380,7 @@ How output of the schema could look like on save:
 - simple text input
     - key `"multiline"` allows to enter multiple lines of text (Default: `False`)
     - key `"placeholder"` allows to show text inside input when is empty (Default: `None`)
+    - key `"minimum_lines_count"` allows to define minimum size hint for UI. Can be 0-n lines.
 
 ```
 {

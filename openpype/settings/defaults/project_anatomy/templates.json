@@ -53,11 +53,21 @@
             "file": "{originalBasename}<.{@frame}><_{udim}>.{ext}",
             "path": "{@folder}/{@file}"
         },
+        "source": {
+            "folder": "{root[work]}/{originalDirname}",
+            "file": "{originalBasename}.{ext}",
+            "path": "{@folder}/{@file}"
+        },
+        "transient": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{family}/{subset}"
+        },
         "__dynamic_keys_labels__": {
             "maya2unreal": "Maya to Unreal",
             "simpleUnrealTextureHero": "Simple Unreal Texture - Hero",
             "simpleUnrealTexture": "Simple Unreal Texture",
-            "online": "online"
+            "online": "online",
+            "source": "source",
+            "transient": "transient"
         }
     }
 }

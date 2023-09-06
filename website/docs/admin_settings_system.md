@@ -13,18 +13,23 @@ Settings applicable to the full studio.
 
 ![general_settings](assets/settings/settings_system_general.png)
 
-**`Studio Name`** - Full name of the studio (can be used as variable on some places)
+### Studio Name
+Full name of the studio (can be used as variable on some places)
 
-**`Studio Code`** - Studio acronym or a short code (can be used as variable on some places)
+### Studio Code
+Studio acronym or a short code (can be used as variable on some places)
 
-**`Admin Password`** - After setting admin password, normal user won't have access to OpenPype settings
+### Admin Password
+After setting admin password, normal user won't have access to OpenPype settings
 and Project Manager GUI. Please keep in mind that this is a studio wide password and it is meant purely
 as a simple barrier to prevent artists from accidental setting changes.
 
-**`Environment`** - Globally applied environment variables that will be appended to any OpenPype process in the studio.
+### Environment
+Globally applied environment variables that will be appended to any OpenPype process in the studio.
 
-**`Disk mapping`** - Platform dependent configuration for mapping of virtual disk(s) on an artist's OpenPype machines before OP starts up.
-Uses `subst` command, if configured volume character in `Destination` field already exists, no re-mapping is done for that character(volume).
+### Disk mapping
+- Platform dependent configuration for mapping of virtual disk(s) on an artist's OpenPype machines before OP starts up.
+- Uses `subst` command, if configured volume character in `Destination` field already exists, no re-mapping is done for that character(volume).
 
 ### FFmpeg and OpenImageIO tools
 We bundle FFmpeg tools for all platforms and OpenImageIO tools for Windows and Linux. By default, bundled tools are used, but it is possible to set environment variables `OPENPYPE_FFMPEG_PATHS` and `OPENPYPE_OIIO_PATHS` in system settings environments to look for them in different directory.
@@ -171,4 +176,4 @@ In the image before you can see that we set most of the environment variables in
 In this example MTOA will automatically will the `MAYA_VERSION`(which is set by Maya Application environment) and `MTOA_VERSION` into the `MTOA` variable. We then use the `MTOA` to set all the other variables needed for it to function within Maya.
 ![tools](assets/settings/tools_01.png)
 
-All of the tools defined in here can then be assigned to projects. You can also change the tools versions on any project level all the way down to individual asset or shot overrides. So if you just need to upgrade you render plugin for a single shot, while not risking the incompatibilities on the rest of the project, it is possible.
+All the tools defined in here can then be assigned to projects. You can also change the tools versions on any project level all the way down to individual asset or shot overrides. So if you just need to upgrade you render plugin for a single shot, while not risking the incompatibilities on the rest of the project, it is possible.

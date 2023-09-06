@@ -4,11 +4,13 @@ import copy
 import logging
 import collections
 import time
+import os
 
 import appdirs
 from qtpy import QtCore, QtGui
 import qtawesome
 
+from openpype.hpipe import config
 from openpype.client import (
     get_projects,
     get_project,
@@ -19,6 +21,7 @@ from openpype.lib.applications import (
     CUSTOM_LAUNCH_APP_GROUPS,
     ApplicationManager
 )
+from openpype.settings import get_project_settings
 from openpype.pipeline import discover_launcher_actions
 from openpype.tools.utils.lib import (
     DynamicQThread,
@@ -91,9 +94,14 @@ class ActionModel(QtGui.QStandardItemModel):
 
         project_name = self.dbcon.active_project()
         project_doc = get_project(project_name, fields=["config.apps"])
+        config_data = config.ConfigReader()
+        if os.getenv('USERNAME') not in config_data.superusers:
+            project_doc["config"]["apps"] = [x for x in  project_doc["config"]["apps"] if '-dev' not in x['name']]
         if not project_doc:
             return actions
 
+        project_settings = get_project_settings(project_name)
+        only_available = project_settings["applications"]["only_available"]
         self.application_manager.refresh()
         for app_def in project_doc["config"]["apps"]:
             app_name = app_def["name"]
@@ -102,6 +110,9 @@ class ActionModel(QtGui.QStandardItemModel):
                 continue
 
             if app.group.name in CUSTOM_LAUNCH_APP_GROUPS:
+                continue
+
+            if only_available and not app.find_executable():
                 continue
 
             # Get from app definition, if not there from app in project

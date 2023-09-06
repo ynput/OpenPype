@@ -29,7 +29,7 @@ from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 
 class CollectInstanceCommentDef(
-    pyblish.api.ContextPlugin,
+    pyblish.api.InstancePlugin,
     OpenPypePyblishPluginMixin
 ):
     label = "Comment per instance"
@@ -73,7 +73,9 @@ class CollectComment(
     """
 
     label = "Collect Instance Comment"
-    order = pyblish.api.CollectorOrder + 0.49
+    # TODO change to CollectorOrder after Pyblish is purged
+    # Pyblish allows modifying comment after collect phase
+    order = pyblish.api.ExtractorOrder - 0.49
 
     def process(self, context):
         context_comment = self.cleanup_comment(context.data.get("comment"))
