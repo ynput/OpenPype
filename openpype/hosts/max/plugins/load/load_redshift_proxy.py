@@ -5,8 +5,15 @@ from openpype.pipeline import (
     load,
     get_representation_path
 )
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.pipeline import (
+    containerise,
+    import_custom_attribute_data,
+    update_custom_attribute_data
+)
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import (
+    unique_namespace, get_namespace
+)
 
 
 class RedshiftProxyLoader(load.LoaderPlugin):
@@ -18,6 +25,7 @@ class RedshiftProxyLoader(load.LoaderPlugin):
     order = -9
     icon = "code-fork"
     color = "white"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -30,24 +38,32 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         if collections:
             rs_proxy.is_sequence = True
 
-        container = rt.container()
-        container.name = name
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+        container = rt.Container(
+            name=f"{namespace}:{name}_{self.postfix}")
         rs_proxy.Parent = container
-
-        asset = rt.getNodeByName(name)
+        rs_proxy.name = f"{namespace}:{rs_proxy.name}"
+        import_custom_attribute_data(container, [rs_proxy])
 
         return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
+            name, [container], context,
+            namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
-        for children in node.Children:
-            children_node = rt.getNodeByName(children.name)
-            for proxy in children_node.Children:
-                proxy.file = path
+        namespace, name = get_namespace(container["instance_node"])
+        sub_node_name = f"{namespace}:{name}_{self.postfix}"
+        inst_container = rt.getNodeByName(sub_node_name)
+
+        update_custom_attribute_data(
+            inst_container, inst_container.Children)
+        for proxy in inst_container.Children:
+            proxy.file = path
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
