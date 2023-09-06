@@ -441,15 +441,13 @@ class WM_OT_CheckWorkfileUpToDate(bpy.types.Operator):
             asset_name = get_current_asset_name()
             task_name = get_current_task_name()
 
-            # Download and copy locally last workfile
+            # Download, copy locally and open last workfile
             last_workfile_path, last_published_time = download_last_workfile(
                 project_name, asset_name, task_name
             )
-            local_workfile_path = save_as_local_workfile(
+            if local_workfile_path := save_as_local_workfile(
                 project_name, asset_name, task_name, last_workfile_path
-            )
-
-            if local_workfile_path:
+            ):
                 bpy.ops.wm.open_mainfile(filepath=local_workfile_path)
 
                 # Update variables
