@@ -46,7 +46,7 @@ class ExtractImportReference(publish.Extractor,
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
-                    self.log.info(
+                    self.log.debug(
                         "Using {} as scene type".format(self.scene_type))
                     break
 
@@ -69,7 +69,7 @@ class ExtractImportReference(publish.Extractor,
         reference_path = os.path.join(dir_path, ref_scene_name)
         tmp_path = os.path.dirname(current_name) + "/" + ref_scene_name
 
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         # This generates script for mayapy to take care of reference
         # importing outside current session. It is passing current scene
@@ -111,7 +111,7 @@ print("*** Done")
         # process until handles are closed by context manager.
         with tempfile.TemporaryDirectory() as tmp_dir_name:
             tmp_script_path = os.path.join(tmp_dir_name, "import_ref.py")
-            self.log.info("Using script file: {}".format(tmp_script_path))
+            self.log.debug("Using script file: {}".format(tmp_script_path))
             with open(tmp_script_path, "wt") as tmp:
                 tmp.write(script)
 
@@ -149,9 +149,9 @@ print("*** Done")
             "stagingDir": os.path.dirname(current_name),
             "outputName": "imported"
         }
-        self.log.info("%s" % ref_representation)
+        self.log.debug(ref_representation)
 
         instance.data["representations"].append(ref_representation)
 
-        self.log.info("Extracted instance '%s' to : '%s'" % (ref_scene_name,
-                                                             reference_path))
+        self.log.debug("Extracted instance '%s' to : '%s'" % (ref_scene_name,
+                                                              reference_path))

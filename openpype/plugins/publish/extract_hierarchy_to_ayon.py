@@ -32,7 +32,7 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
 
         hierarchy_context = context.data.get("hierarchyContext")
         if not hierarchy_context:
-            self.log.debug("Skipping")
+            self.log.debug("Skipping ExtractHierarchyToAYON")
             return
 
         project_name = context.data["projectName"]

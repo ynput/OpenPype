@@ -303,6 +303,28 @@ def on_save():
         lib.set_id(node, new_id, overwrite=False)
 
 
+def _show_outdated_content_popup():
+    # Get main window
+    parent = lib.get_main_window()
+    if parent is None:
+        log.info("Skipping outdated content pop-up "
+                 "because Houdini window can't be found.")
+    else:
+        from openpype.widgets import popup
+
+        # Show outdated pop-up
+        def _on_show_inventory():
+            from openpype.tools.utils import host_tools
+            host_tools.show_scene_inventory(parent=parent)
+
+        dialog = popup.Popup(parent=parent)
+        dialog.setWindowTitle("Houdini scene has outdated content")
+        dialog.setMessage("There are outdated containers in "
+                          "your Houdini scene.")
+        dialog.on_clicked.connect(_on_show_inventory)
+        dialog.show()
+
+
 def on_open():
 
     if not hou.isUIAvailable():
@@ -316,28 +338,18 @@ def on_open():
     lib.validate_fps()
 
     if any_outdated_containers():
-        from openpype.widgets import popup
-
-        log.warning("Scene has outdated content.")
-
-        # Get main window
         parent = lib.get_main_window()
         if parent is None:
-            log.info("Skipping outdated content pop-up "
-                     "because Houdini window can't be found.")
+            # When opening Houdini with last workfile on launch the UI hasn't
+            # initialized yet completely when the `on_open` callback triggers.
+            # We defer the dialog popup to wait for the UI to become available.
+            # We assume it will open because `hou.isUIAvailable()` returns True
+            import hdefereval
+            hdefereval.executeDeferred(_show_outdated_content_popup)
         else:
+            _show_outdated_content_popup()
 
-            # Show outdated pop-up
-            def _on_show_inventory():
-                from openpype.tools.utils import host_tools
-                host_tools.show_scene_inventory(parent=parent)
-
-            dialog = popup.Popup(parent=parent)
-            dialog.setWindowTitle("Houdini scene has outdated content")
-            dialog.setMessage("There are outdated containers in "
-                              "your Houdini scene.")
-            dialog.on_clicked.connect(_on_show_inventory)
-            dialog.show()
+        log.warning("Scene has outdated content.")
 
 
 def on_new():
