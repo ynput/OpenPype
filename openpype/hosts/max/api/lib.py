@@ -374,18 +374,15 @@ def check_colorspace():
         color_mgr = rt.ColorPipelineMgr
         project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
-        global_imageio = project_settings["global"]["imageio"]
         max_config_data = colorspace.get_imageio_config(
             project_name, "max", project_settings)
-        config_enabled = global_imageio["activate_global_color_management"] or (        # noqa
-            max_config_data)
-        if config_enabled and color_mgr.Mode != rt.Name("OCIO_Custom"):
-            if not is_HEADLESS:
+        if max_config_data and color_mgr.Mode != rt.Name("OCIO_Custom"):
+            if not is_HEADLESS():
                 from openpype.widgets import popup
                 dialog = popup.Popup(parent=parent)
                 dialog.setWindowTitle("Warning: Wrong OCIO Mode")
                 dialog.setMessage("This scene has wrong OCIO "
-                                  "Mode setting.")
+                                    "Mode setting.")
                 dialog.setButtonText("Fix")
                 dialog.setStyleSheet(load_stylesheet())
                 dialog.on_clicked.connect(reset_colorspace)
