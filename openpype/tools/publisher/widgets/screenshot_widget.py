@@ -31,7 +31,6 @@ class ScreenMarquee(QtWidgets.QDialog):
         fade_anim.setEndValue(50)
         fade_anim.setDuration(200)
         fade_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-        fade_anim.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
 
         fade_anim.valueChanged.connect(self._on_fade_anim)
 
