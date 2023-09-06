@@ -31,12 +31,17 @@ class CreateMayaUsd(plugin.MayaCreator):
                 cmds.loadPlugin("mayaUsdPlugin", quiet=True)
                 job_context_items = {
                     cmds.mayaUSDListJobContexts(jobContext=name): name
-                    for name in cmds.mayaUSDListJobContexts(export=True)
+                    for name in cmds.mayaUSDListJobContexts(export=True) or []
                 }
             except RuntimeError:
                 # Likely `mayaUsdPlugin` plug-in not available
                 self.log.warning("Unable to retrieve available job "
                                  "contexts for `mayaUsdPlugin` exports")
+
+            if not job_context_items:
+                # enumdef multiselection may not be empty
+                job_context_items = ["<placeholder; do not use>"]
+
             self.cache["jobContextItems"] = job_context_items
 
         defs = lib.collect_animation_defs()
