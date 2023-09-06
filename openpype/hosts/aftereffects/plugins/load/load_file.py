@@ -31,13 +31,8 @@ class FileLoader(api.AfterEffectsLoader):
 
         path = self.filepath_from_context(context)
 
-        repr_cont = context["representation"]["context"]
-        if "#" not in path:
-            frame = repr_cont.get("frame")
-            if frame:
-                padding = len(frame)
-                path = path.replace(frame, "#" * padding)
-                import_options['sequence'] = True
+        if len(context["representation"].get("files")) > 1:
+            import_options['sequence'] = True
 
         if not path:
             repr_id = context["representation"]["_id"]
