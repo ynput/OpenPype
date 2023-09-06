@@ -161,8 +161,17 @@ class MayaCreatorBase(object):
         # will not clash in names with `subset`, `task`, etc. and other
         # default names. This is just so these attributes in many cases
         # are still editable in the maya UI by artists.
-        # pop to move to end of dict to sort attributes last on the node
+        # note: pop to move to end of dict to sort attributes last on the node
         creator_attributes = data.pop("creator_attributes", {})
+
+        # We only flatten value types which `imprint` function supports
+        json_creator_attributes = {}
+        for key, value in dict(creator_attributes).items():
+            if isinstance(value, (list, tuple, dict)):
+                creator_attributes.pop(key)
+                json_creator_attributes[key] = value
+
+        # Flatten remaining creator attributes to the node itself
         data.update(creator_attributes)
 
         # We know the "publish_attributes" will be complex data of
@@ -171,6 +180,10 @@ class MayaCreatorBase(object):
         data["publish_attributes"] = json.dumps(
             data.pop("publish_attributes", {})
         )
+
+        # Persist the non-flattened creator attributes (special value types,
+        # like multiselection EnumDef)
+        data["creator_attributes"] = json.dumps(json_creator_attributes)
 
         # Since we flattened the data structure for creator attributes we want
         # to correctly detect which flattened attributes should end back in the
@@ -192,15 +205,22 @@ class MayaCreatorBase(object):
         # being read as 'data'
         node_data.pop("cbId", None)
 
+        # Make sure we convert any creator attributes from the json string
+        creator_attributes = node_data.get("creator_attributes")
+        if creator_attributes:
+            node_data["creator_attributes"] = json.loads(creator_attributes)
+        else:
+            node_data["creator_attributes"] = {}
+
         # Move the relevant attributes into "creator_attributes" that
         # we flattened originally
-        node_data["creator_attributes"] = {}
         creator_attribute_keys = node_data.pop("__creator_attributes_keys",
                                                "").split(",")
         for key in creator_attribute_keys:
             if key in node_data:
                 node_data["creator_attributes"][key] = node_data.pop(key)
 
+        # Make sure we convert any publish attributes from the json string
         publish_attributes = node_data.get("publish_attributes")
         if publish_attributes:
             node_data["publish_attributes"] = json.loads(publish_attributes)
