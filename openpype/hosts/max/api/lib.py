@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Library of functions useful for 3dsmax pipeline."""
-import os
 import contextlib
 import logging
 import json
@@ -366,12 +365,11 @@ def check_colorspace():
     if int(get_max_version()) >= 2024:
         color_mgr = rt.ColorPipelineMgr
         project_name = get_current_project_name()
-        project_settings = get_project_settings(
-        project_name)
+        project_settings = get_project_settings(project_name)
         global_imageio = project_settings["global"]["imageio"]
         max_config_data = colorspace.get_imageio_config(
-        project_name, "max", project_settings)
-        config_enabled = global_imageio["activate_global_color_management"] or (
+            project_name, "max", project_settings)
+        config_enabled = global_imageio["activate_global_color_management"] or (        # noqa
             max_config_data)
         if config_enabled and color_mgr.Mode != rt.Name("OCIO_Custom"):
             from openpype.widgets import popup
