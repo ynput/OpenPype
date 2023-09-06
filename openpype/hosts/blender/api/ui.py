@@ -85,6 +85,11 @@ class SCENE_PT_OpenpypeInstancesManager(bpy.types.Panel):
     bl_context = "scene"
 
     def draw(self, context):
+        # Check not playing
+        if context.screen.is_animation_playing:
+            self.layout.label(text="Not available while playing")
+            return
+
         layout = self.layout
 
         # Exit if no any instance
@@ -152,7 +157,10 @@ class SCENE_PT_OpenpypeDatablocksManager(bpy.types.Panel):
     @classmethod
     def poll(cls, context):
         # Don't display if no datablock ref in instance
-        return len(context.scene.openpype_instances) > 0
+        return (
+            len(context.scene.openpype_instances) > 0
+            and not context.screen.is_animation_playing
+        )
 
     def draw(self, context):
         layout = self.layout
