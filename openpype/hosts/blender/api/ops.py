@@ -16,10 +16,14 @@ import bpy
 import bpy.utils.previews
 
 from openpype import style
-from openpype.pipeline import get_current_asset_name, get_current_task_name
+from openpype.pipeline import (
+    get_current_asset_name,
+    get_current_project_name,
+    get_current_task_name,
+)
 from openpype.tools.utils import host_tools
 from openpype.modules.base import ModulesManager
-from .lib import download_last_workfile
+from .lib import download_last_workfile, save_as_local_workfile
 from . import pipeline
 from .workio import (
     OpenFileCacher,
@@ -432,9 +436,21 @@ class WM_OT_CheckWorkfileUpToDate(bpy.types.Operator):
                 )
                 return {"CANCELLED"}
 
-            last_workfile_path, last_published_time = download_last_workfile()
-            if last_workfile_path:
-                bpy.ops.wm.open_mainfile(filepath=last_workfile_path)
+            # Get current project, asset and task names
+            project_name = get_current_project_name()
+            asset_name = get_current_asset_name()
+            task_name = get_current_task_name()
+
+            # Download and copy locally last workfile
+            last_workfile_path, last_published_time = download_last_workfile(
+                project_name, asset_name, task_name
+            )
+            local_workfile_path = save_as_local_workfile(
+                project_name, asset_name, task_name, last_workfile_path
+            )
+
+            if local_workfile_path:
+                bpy.ops.wm.open_mainfile(filepath=local_workfile_path)
 
                 # Update variables
                 context.scene["op_published_time"] = last_published_time
