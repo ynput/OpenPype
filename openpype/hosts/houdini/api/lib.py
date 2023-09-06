@@ -661,7 +661,9 @@ def get_current_asset_doc():
     return asset_doc
 
 
-def get_resolution_from_data(doc):
+def get_resolution_from_doc(doc):
+    """Get resolution from the given asset document. """
+
     if not doc or "data" not in doc:
         print("Entered document is not valid. \"{}\"".format(str(doc)))
         return None
@@ -683,7 +685,7 @@ def set_camera_resolution(camera, asset_doc=None):
     if not asset_doc:
         asset_doc = get_current_asset_doc()
 
-    resolution = get_resolution_from_data(asset_doc)
+    resolution = get_resolution_from_doc(asset_doc)
 
     if resolution:
         print("Setting camera resolution: {} -> {}x{}".format(
@@ -696,9 +698,11 @@ def set_camera_resolution(camera, asset_doc=None):
 def get_camera_from_container(container):
     """Get camera from container node. """
 
-    cameras = container.recursiveGlob("*",
-                                    filter=hou.nodeTypeFilter.ObjCamera,
-                                    include_subnets=False)
+    cameras = container.recursiveGlob(
+        "*",
+        filter=hou.nodeTypeFilter.ObjCamera,
+        include_subnets=False
+    )
 
     assert len(cameras) == 1, "Camera instance must have only one camera"
     return cameras[0]

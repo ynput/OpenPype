@@ -4,6 +4,7 @@ from openpype.hosts.houdini.api.lib import (
     set_camera_resolution
 )
 
+
 class SetCameraResolution(InventoryAction):
 
     label = "Set Camera Resolution"

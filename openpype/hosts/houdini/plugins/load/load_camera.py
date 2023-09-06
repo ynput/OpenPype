@@ -34,13 +34,13 @@ def transfer_non_default_values(src, dest, ignore=None):
     """
 
     ignore_types = {
-            hou.parmTemplateType.Toggle,
-            hou.parmTemplateType.Menu,
-            hou.parmTemplateType.Button,
-            hou.parmTemplateType.FolderSet,
-            hou.parmTemplateType.Separator,
-            hou.parmTemplateType.Label,
-        }
+        hou.parmTemplateType.Toggle,
+        hou.parmTemplateType.Menu,
+        hou.parmTemplateType.Button,
+        hou.parmTemplateType.FolderSet,
+        hou.parmTemplateType.Separator,
+        hou.parmTemplateType.Label,
+    }
 
     src.updateParmStates()
 
