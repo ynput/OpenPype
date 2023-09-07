@@ -5,6 +5,7 @@ from openpype.hosts.houdini.api.lib import (
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 
+
 class SetCameraResolution(InventoryAction):
 
     label = "Set Camera Resolution"
