@@ -667,6 +667,9 @@ def convert_v4_representation_to_v3(representation):
             _c_folder = context["folder"]
             context["asset"] = _c_folder["name"]
 
+        elif "asset" in context and "folder" not in context:
+            context["folder"] = {"name": context["asset"]}
+
         if "product" in context:
             _c_product = context.pop("product")
             context["family"] = _c_product["type"]
