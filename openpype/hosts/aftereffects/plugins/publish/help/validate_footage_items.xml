@@ -5,10 +5,10 @@
 <description>
 ## Footage item missing
 
- FootageItem {name} contains missing {path}
+ FootageItem `{name}` contains missing `{path}`. Render will not produce any frames.
 ### How to repair?
 
-Remove FootageItem.
+Remove FootageItem or provide missing file.
 </description>
 </error>
 </root>

@@ -3,7 +3,6 @@
 Requires:
 """
 import os
-import re
 
 import pyblish.api
 
@@ -19,11 +18,11 @@ class ValidateFootageItems(OptionalPyblishPluginMixin,
     """
         Validates if FootageItems contained in composition exist.
 
-    AE fails silently and doesn't render anything. This validator tries to
-    check existence of files.
-    It will not protect from missing frame though (as AE api doesn't provide
-    this information and it cannot be told how many frames should be there
-    easily). Missing frame is replaced by placeholder.
+    AE fails silently and doesn't render anything if footage item file is
+    missing. This validator tries to check existence of the files.
+    It will not protect from missing frame in multiframes though
+    (as AE api doesn't provide this information and it cannot be told how many
+    frames should be there easily). Missing frame is replaced by placeholder.
     """
 
     order = pyblish.api.ValidatorOrder
@@ -31,7 +30,6 @@ class ValidateFootageItems(OptionalPyblishPluginMixin,
     families = ["render.farm", "render.local", "render"]
     hosts = ["aftereffects"]
     optional = True
-
 
     def process(self, instance):
         """Plugin entry point."""
@@ -48,8 +46,7 @@ class ValidateFootageItems(OptionalPyblishPluginMixin,
 
             path = footage_item.path
             if path and not os.path.exists(path):
-
                 msg = f"File {path} not found."
-                formatting = {"name": "comp", "path": path}
+                formatting = {"name": footage_item.name, "path": path}
                 raise PublishXmlValidationError(self, msg,
                                                 formatting_data=formatting)
