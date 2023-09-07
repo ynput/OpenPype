@@ -27,6 +27,9 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
 
         self.setColumnCount(2)
 
+        self.setHeaderData(0, QtCore.Qt.Horizontal, "Name")
+        self.setHeaderData(1, QtCore.Qt.Horizontal, "Date Modified")
+
         controller.register_event_callback(
             "selection.task.changed",
             self._on_task_changed
@@ -55,11 +58,13 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
 
         self._add_empty_item()
 
-    def clear(self):
-        self._items_by_id = {}
+    def _clear_items(self):
         self._remove_missing_context_item()
         self._remove_empty_item()
-        super(PublishedFilesModel, self).clear()
+        if self._items_by_id:
+            root = self.invisibleRootItem()
+            root.removeRows(0, root.rowCount())
+            self._items_by_id = {}
 
     def set_published_mode(self, published_mode):
         if self._published_mode == published_mode:
@@ -100,7 +105,7 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
     def _add_missing_context_item(self):
         if self._missing_context_used:
             return
-        self.clear()
+        self._clear_items()
         root_item = self.invisibleRootItem()
         root_item.appendRow(self._get_missing_context_item())
         self._missing_context_used = True
@@ -129,7 +134,7 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
     def _add_empty_item(self):
         if self._empty_item_used:
             return
-        self.clear()
+        self._clear_items()
         root_item = self.invisibleRootItem()
         root_item.appendRow(self._get_empty_root_item())
         self._empty_item_used = True
@@ -217,21 +222,6 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
         if index.column() != 0:
             index = self.index(index.row(), 0, index.parent())
         return super(PublishedFilesModel, self).flags(index)
-
-    def headerData(self, section, orientation, role):
-        # Show nice labels in the header
-        if (
-            role == QtCore.Qt.DisplayRole
-            and orientation == QtCore.Qt.Horizontal
-        ):
-            if section == 0:
-                return "Name"
-            elif section == 1:
-                return "Date modified"
-
-        return super(PublishedFilesModel, self).headerData(
-            section, orientation, role
-        )
 
     def data(self, index, role=None):
         if role is None:
