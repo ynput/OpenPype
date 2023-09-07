@@ -651,16 +651,6 @@ def get_color_management_preferences():
     }
 
 
-def get_current_asset_doc():
-    """Get asset document of the current asset. """
-
-    project_name = get_current_project_name()
-    asset_name = get_current_asset_name()
-    asset_doc = get_asset_by_name(project_name, asset_name)
-
-    return asset_doc
-
-
 def get_resolution_from_doc(doc):
     """Get resolution from the given asset document. """
 
@@ -683,7 +673,7 @@ def set_camera_resolution(camera, asset_doc=None):
     """Apply resolution to camera from asset document of the publish"""
 
     if not asset_doc:
-        asset_doc = get_current_asset_doc()
+        asset_doc = get_current_project_asset()
 
     resolution = get_resolution_from_doc(asset_doc)
 
