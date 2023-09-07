@@ -484,6 +484,7 @@ class WorkfileEntitiesModel:
         if not workfile_info:
             self._cache[identifier] = self._create_workfile_doc(
                 task_id, rootless_path, note)
+            self._items.pop(identifier, None)
             return
 
         new_workfile_info = copy.deepcopy(workfile_info)
@@ -493,6 +494,7 @@ class WorkfileEntitiesModel:
             workfile_info, new_workfile_info
         )
         self._cache[identifier] = new_workfile_info
+        self._items.pop(identifier, None)
         if not update_data:
             return
 
