@@ -14,6 +14,7 @@ class NodesModel(BaseSettingsModel):
     """
     _layout = "expanded"
     plugins: list[str] = Field(
+        default_factory=list,
         title="Used in plugins"
     )
     # TODO: rename `nukeNodeClass` to `nuke_node_class`
@@ -25,6 +26,7 @@ class NodesModel(BaseSettingsModel):
     in nuke integration. We could not support v3 style of settings.
     """
     knobs: list[KnobModel] = Field(
+        default_factory=list,
         title="Knobs",
     )
 

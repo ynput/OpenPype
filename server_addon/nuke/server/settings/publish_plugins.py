@@ -46,6 +46,7 @@ class NodeModel(BaseSettingsModel):
     - We could not support v3 style of settings.
     """
     knobs: list[KnobModel] = Field(
+        default_factory=list,
         title="Knobs",
     )
 
@@ -105,6 +106,7 @@ class ExtractThumbnailModel(BaseSettingsModel):
     """
 
     nodes: list[NodeModel] = Field(
+        default_factory=list,
         title="Nodes (deprecated)"
     )
     reposition_nodes: list[ThumbnailRepositionNodeModel] = Field(
@@ -177,6 +179,7 @@ class ExtractReviewDataMovModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     viewer_lut_raw: bool = Field(title="Viewer lut raw")
     outputs: list[BakingStreamModel] = Field(
+        default_factory=list,
         title="Baking streams"
     )
 

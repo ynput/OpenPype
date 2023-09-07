@@ -37,6 +37,7 @@ class PrenodeModel(BaseSettingsModel):
     - We could not support v3 style of settings.
     """
     knobs: list[KnobModel] = Field(
+        default_factory=list,
         title="Knobs",
     )
 
@@ -66,6 +67,7 @@ class CreateWriteRenderModel(BaseSettingsModel):
       (we could not support v3 style of settings)
     """
     prenodes: list[PrenodeModel] = Field(
+        default_factory=list,
         title="Preceding nodes",
     )
 
@@ -95,6 +97,7 @@ class CreateWritePrerenderModel(BaseSettingsModel):
       (we could not support v3 style of settings)
     """
     prenodes: list[PrenodeModel] = Field(
+        default_factory=list,
         title="Preceding nodes",
     )
 
@@ -124,6 +127,7 @@ class CreateWriteImageModel(BaseSettingsModel):
       (we could not support v3 style of settings)
     """
     prenodes: list[PrenodeModel] = Field(
+        default_factory=list,
         title="Preceding nodes",
     )
 
