@@ -721,3 +721,58 @@ def set_colorspace_data_to_representation(
 
         # update data key
         representation["colorspaceData"] = colorspace_data
+
+
+def get_display_view_colorspace_name(config_path, display, view):
+    """Returns the colorspace attribute of the (display, view) pair.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+    Returns:
+        view color space name (str) e.g. "Output - sRGB"
+    """
+
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
+        return get_display_view_colorspace_subprocess(config_path,
+                                                      display, view)
+
+    from openpype.scripts.ocio_wrapper import _get_display_view_colorspace_name  # noqa
+
+    return _get_display_view_colorspace_name(config_path, display, view)
+
+
+def get_display_view_colorspace_subprocess(config_path, display, view):
+    """Returns the colorspace attribute of the (display, view) pair
+        via subprocess.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+    Returns:
+        view color space name (str) e.g. "Output - sRGB"
+    """
+
+    with _make_temp_json_file() as tmp_json_path:
+        # Prepare subprocess arguments
+        args = [
+            "run", get_ocio_config_script_path(),
+            "config", "get_display_view_colorspace_name",
+            "--in_path", config_path,
+            "--out_path", tmp_json_path,
+            "--display", display,
+            "--view", view
+        ]
+        log.debug("Executing: {}".format(" ".join(args)))
+
+        run_openpype_process(*args, logger=log)
+
+        # return default view colorspace name
+        with open(tmp_json_path, "r") as f:
+            return json.load(f)
