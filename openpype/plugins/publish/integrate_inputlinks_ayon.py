@@ -1,7 +1,11 @@
 import collections
 
 import pyblish.api
-from ayon_api import create_link, make_sure_link_type_exists
+from ayon_api import (
+    create_link,
+    make_sure_link_type_exists,
+    get_versions_links,
+)
 
 from openpype import AYON_SERVER_ENABLED
 
@@ -124,6 +128,33 @@ class IntegrateInputLinksAYON(pyblish.api.ContextPlugin):
                     version_entity["_id"],
                 )
 
+    def _get_existing_links(self, project_name, link_type, entity_ids):
+        """Find all existing links for given version ids.
+
+        Args:
+            project_name (str): Name of project.
+            link_type (str): Type of link.
+            entity_ids (set[str]): Set of version ids.
+
+        Returns:
+            dict[str, set[str]]: Existing links by version id.
+        """
+
+        output = collections.defaultdict(set)
+        if not entity_ids:
+            return output
+
+        existing_in_links = get_versions_links(
+            project_name, entity_ids, [link_type], "output"
+        )
+
+        for entity_id, links in existing_in_links.items():
+            if not links:
+                continue
+            for link in links:
+                output[entity_id].add(link["entityId"])
+        return output
+
     def create_links_on_server(self, context, new_links):
         """Create new links on server.
 
@@ -150,8 +181,16 @@ class IntegrateInputLinksAYON(pyblish.api.ContextPlugin):
                 _input_id, _output_id = item
                 mapping[_input_id].add(_output_id)
 
+            existing_links_by_in_id = self._get_existing_links(
+                project_name, link_type, set(mapping.keys())
+            )
+
             for input_id, output_ids in mapping.items():
+                existing_links = existing_links_by_in_id[input_id]
                 for output_id in output_ids:
+                    # Skip creation of link if already exists
+                    if output_id in existing_links:
+                        continue
                     create_link(
                         project_name,
                         link_type,
