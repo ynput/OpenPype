@@ -27,8 +27,10 @@ class CreateRig(plugin.MayaCreator):
         # change name
         pointcache = cmds.sets(name=subset_name + "_out_SET", empty=True)
         if pre_create_data.get("fbx_enabled"):
-            skeleton = cmds.sets(name=subset_name + "_skeleton_SET", empty=True)
-            skeleton_mesh = cmds.sets(name=subset_name + "_skeletonMesh_SET", empty=True)
+            skeleton = cmds.sets(
+                name=subset_name + "_skeleton_SET", empty=True)
+            skeleton_mesh = cmds.sets(
+                name=subset_name + "_skeletonMesh_SET", empty=True)
             cmds.sets([controls, pointcache,
                        skeleton, skeleton_mesh], forceElement=instance_node)
         else:

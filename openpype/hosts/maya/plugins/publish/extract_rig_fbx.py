@@ -40,11 +40,10 @@ class ExtractRigFBX(publish.Extractor):
 
         self.log.debug("Extracting FBX to: {0}".format(path))
 
-        control_rigs = instance.data.get("control_rigs",[])
+        control_rigs = instance.data.get("control_rigs", [])
         skeletal_mesh = instance.data.get("skeleton_mesh", [])
         members = control_rigs + skeletal_mesh
         self._to_extract(instance, path, members)
-
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -68,11 +67,12 @@ class ExtractRigFBX(publish.Extractor):
                 "outputName": "fbxanim"
             }
             instance.data["representations"].append(representation)
-            self.log.debug("Extract animated FBX successful to: {0}".format(path))
+            self.log.debug(
+                "Extract animated FBX successful to: {0}".format(path))
 
     def _to_extract(self, instance, path, members):
         fbx_exporter = fbx.FBXExtractor(log=self.log)
-        control_rigs = instance.data.get("control_rigs",[])
+        control_rigs = instance.data.get("control_rigs", [])
         skeletal_mesh = instance.data.get("skeleton_mesh", [])
         static_sets = control_rigs + skeletal_mesh
         if members == static_sets:
