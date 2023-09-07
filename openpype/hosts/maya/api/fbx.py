@@ -63,6 +63,7 @@ class FBXExtractor:
             "embeddedTextures": bool,
             "inputConnections": bool,
             "upAxis": str,  # x, y or z,
+            "referencedAssetsContent": bool,
             "triangulate": bool
         }
 
@@ -104,7 +105,8 @@ class FBXExtractor:
             "embeddedTextures": False,
             "inputConnections": True,
             "upAxis": "y",
-            "triangulate": False
+            "referencedAssetsContent": False,
+            "triangulate": False,
         }
 
     def __init__(self, log=None):
