@@ -369,6 +369,9 @@ class WorkareaModel:
         fill_data["version"] = version
         fill_data["ext"] = extension.lstrip(".")
 
+        if comment:
+            fill_data["comment"] = comment
+
         filename = file_template.format(fill_data)
         if not filename.solved:
             filename = None
@@ -377,9 +380,6 @@ class WorkareaModel:
         if filename:
             filepath = os.path.join(workdir, filename)
             exists = os.path.exists(filepath)
-
-        if comment:
-            fill_data["comment"] = comment
 
         return WorkareaFilepathResult(
             workdir,
