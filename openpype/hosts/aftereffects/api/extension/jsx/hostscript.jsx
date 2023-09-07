@@ -215,6 +215,8 @@ function _getItem(item, comps, folders, footages){
      * Refactor
      */
     var item_type = '';
+    var path = '';
+    var containing_comps = [];
     if (item instanceof FolderItem){
         item_type = 'folder';
         if (!folders){
@@ -222,9 +224,15 @@ function _getItem(item, comps, folders, footages){
         }
     }
     if (item instanceof FootageItem){
-        item_type = 'footage';
         if (!footages){
             return "{}";
+        }
+        item_type = 'footage';
+        path = item.file.fsName;
+        if (item.usedIn){
+            for (j = 0; j < item.usedIn.length; ++j){
+                containing_comps.push(item.usedIn[j].id);
+            }
         }
     }
     if (item instanceof CompItem){
@@ -236,7 +244,9 @@ function _getItem(item, comps, folders, footages){
 
     var item = {"name": item.name,
                 "id": item.id,
-                "type": item_type};
+                "type": item_type,
+                "path": path,
+                "containing_comps": containing_comps};
     return JSON.stringify(item);
 }
 
