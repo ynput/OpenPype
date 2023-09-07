@@ -138,7 +138,6 @@ class CollectAERender(publish.AbstractCollectRender):
                 fam = "render.farm"
                 if fam not in instance.families:
                     instance.families.append(fam)
-                instance.toBeRenderedOn = "deadline"
                 instance.renderer = "aerender"
                 instance.farm = True  # to skip integrate
                 if "review" in instance.families:

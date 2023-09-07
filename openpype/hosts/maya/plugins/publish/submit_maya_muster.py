@@ -215,9 +215,9 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         :rtype: int
         :raises: Exception if template ID isn't found
         """
-        self.log.info("Trying to find template for [{}]".format(renderer))
+        self.log.debug("Trying to find template for [{}]".format(renderer))
         mapped = _get_template_id(renderer)
-        self.log.info("got id [{}]".format(mapped))
+        self.log.debug("got id [{}]".format(mapped))
         return self._templates.get(mapped)
 
     def _submit(self, payload):
@@ -249,7 +249,6 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         Authenticate with Muster, collect all data, prepare path for post
         render publish job and submit job to farm.
         """
-        instance.data["toBeRenderedOn"] = "muster"
         # setup muster environment
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
 
@@ -454,8 +453,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
 
         self.preflight_check(instance)
 
-        self.log.info("Submitting ...")
-        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
+        self.log.debug("Submitting ...")
+        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
         response = self._submit(payload)
         # response = requests.post(url, json=payload)

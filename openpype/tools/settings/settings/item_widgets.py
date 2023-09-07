@@ -4,6 +4,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.sliders import NiceSlider
 from openpype.tools.settings import CHILD_OFFSET
+from openpype.tools.utils import MultiSelectionComboBox
 from openpype.settings.entities.exceptions import BaseInvalidValue
 
 from .widgets import (
@@ -15,7 +16,6 @@ from .widgets import (
     SettingsNiceCheckbox,
     SettingsLineEdit
 )
-from .multiselection_combobox import MultiSelectionComboBox
 from .wrapper_widgets import (
     WrapperWidget,
     CollapsibleWrapper,
