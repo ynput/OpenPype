@@ -663,8 +663,8 @@ def convert_v4_representation_to_v3(representation):
         if isinstance(context, six.string_types):
             context = json.loads(context)
 
-        if "folder" in context:
-            _c_folder = context.pop("folder")
+        if "asset" not in context and "folder" in context:
+            _c_folder = context["folder"]
             context["asset"] = _c_folder["name"]
 
         if "product" in context:
@@ -959,9 +959,11 @@ def convert_create_representation_to_v4(representation, con):
     converted_representation["files"] = new_files
 
     context = representation["context"]
-    context["folder"] = {
-        "name": context.pop("asset", None)
-    }
+    if "folder" not in context:
+        context["folder"] = {
+            "name": context.get("asset")
+        }
+
     context["product"] = {
         "type": context.pop("family", None),
         "name": context.pop("subset", None),
@@ -1285,7 +1287,7 @@ def convert_update_representation_to_v4(
 
     if "context" in update_data:
         context = update_data["context"]
-        if "asset" in context:
+        if "folder" not in context and "asset" in context:
             context["folder"] = {"name": context.pop("asset")}
 
         if "family" in context or "subset" in context:
