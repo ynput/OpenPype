@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Footage item missing</title>
+<description>
+## Footage item missing
+
+ FootageItem {name} contains missing {path}
+### How to repair?
+
+Remove FootageItem.
+</description>
+</error>
+</root>
