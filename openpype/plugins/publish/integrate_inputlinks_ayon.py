@@ -144,16 +144,22 @@ class IntegrateInputLinksAYON(pyblish.api.ContextPlugin):
 
         # Create link themselves
         for link_type, items in new_links.items():
+            mapping = collections.defaultdict(set)
+            # Make sure there are no duplicates of src > dst ids
             for item in items:
-                input_id, output_id = item
-                create_link(
-                    project_name,
-                    link_type,
-                    input_id,
-                    "version",
-                    output_id,
-                    "version"
-                )
+                _input_id, _output_id = item
+                mapping[_input_id].add(_output_id)
+
+            for input_id, output_ids in mapping.items():
+                for output_id in output_ids:
+                    create_link(
+                        project_name,
+                        link_type,
+                        input_id,
+                        "version",
+                        output_id,
+                        "version"
+                    )
 
 
 if not AYON_SERVER_ENABLED:
