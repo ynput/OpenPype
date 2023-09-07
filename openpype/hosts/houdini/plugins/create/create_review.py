@@ -2,7 +2,6 @@
 """Creator plugin for creating openGL reviews."""
 from openpype.hosts.houdini.api import plugin
 from openpype.lib import EnumDef, BoolDef, NumberDef
-from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
 
 import os
 import hou
@@ -87,7 +86,8 @@ class CreateReview(plugin.HoudiniCreator):
 
         # Set OCIO Colorspace to the default output colorspace
         #  if there's OCIO
-        self.set_colorcorrect_to_default_view_space(instance_node)
+        if os.getenv("OCIO"):
+            self.set_colorcorrect_to_default_view_space(instance_node)
 
         to_lock = ["id", "family"]
 
@@ -134,13 +134,9 @@ class CreateReview(plugin.HoudiniCreator):
     def set_colorcorrect_to_default_view_space(self,
                                                instance_node):
         """Set ociocolorspace to the default output space."""
+        from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
 
-        if os.getenv("OCIO") is None:
-            # No OCIO, skip setting ociocolorspace
-            return
-
-        # if there's OCIO then set Color Correction parameter
-        # to OpenColorIO
+        # set Color Correction parameter to OpenColorIO
         instance_node.setParms({"colorcorrect": 2})
 
         # Get default view space for ociocolorspace parm.

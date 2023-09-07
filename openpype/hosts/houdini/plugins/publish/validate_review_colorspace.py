@@ -6,7 +6,6 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.houdini.api.action import SelectROPAction
-from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
 
 import os
 import hou
@@ -69,6 +68,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
         It is a helper action more than a repair action,
         used to set colorspace on opengl node to the default view.
         """
+        from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
 
         rop_node = hou.node(instance.data["instance_node"])
 
