@@ -26,6 +26,9 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
 
         self.setColumnCount(2)
 
+        self.setHeaderData(0, QtCore.Qt.Horizontal, "Name")
+        self.setHeaderData(1, QtCore.Qt.Horizontal, "Date Modified")
+
         controller.register_event_callback(
             "selection.task.changed",
             self._on_task_changed
@@ -202,21 +205,6 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
         if index.column() != 0:
             index = self.index(index.row(), 0, index.parent())
         return super(WorkAreaFilesModel, self).flags(index)
-
-    def headerData(self, section, orientation, role):
-        # Show nice labels in the header
-        if (
-            role == QtCore.Qt.DisplayRole
-            and orientation == QtCore.Qt.Horizontal
-        ):
-            if section == 0:
-                return "Name"
-            elif section == 1:
-                return "Date modified"
-
-        return super(WorkAreaFilesModel, self).headerData(
-            section, orientation, role
-        )
 
     def data(self, index, role=None):
         if role is None:
