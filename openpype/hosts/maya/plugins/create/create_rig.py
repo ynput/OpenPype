@@ -1,7 +1,6 @@
 from maya import cmds
 
 from openpype.hosts.maya.api import plugin
-from openpype.lib import BoolDef
 
 
 class CreateRig(plugin.MayaCreator):

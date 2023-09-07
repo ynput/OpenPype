@@ -136,7 +136,6 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
         return invalid
 
-
     def validate_skeleton_sets(self, instance):
         objectsets = ("skeletonAnim_SET", "skeletonMesh_SET")
         missing = [obj for obj in objectsets if obj not in instance]
