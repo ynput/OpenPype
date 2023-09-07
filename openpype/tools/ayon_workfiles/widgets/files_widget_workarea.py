@@ -75,7 +75,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
             self._missing_context_item = item
         return self._missing_context_item
 
-    def _clear(self):
+    def _clear_items(self):
         self._remove_missing_context_item()
         self._remove_empty_item()
         if self._items_by_filename:
@@ -86,7 +86,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
     def _add_missing_context_item(self):
         if self._missing_context_used:
             return
-        self._clear()
+        self._clear_items()
         root_item = self.invisibleRootItem()
         root_item.appendRow(self._get_missing_context_item())
         self._missing_context_used = True
@@ -115,7 +115,7 @@ class WorkAreaFilesModel(QtGui.QStandardItemModel):
     def _add_empty_item(self):
         if self._empty_item_used:
             return
-        self._clear()
+        self._clear_items()
         root_item = self.invisibleRootItem()
         root_item.appendRow(self._get_empty_root_item())
         self._empty_item_used = True
