@@ -58,6 +58,8 @@ class BuilderProfileModel(BaseSettingsModel):
 
 
 class WorkfileBuilderModel(BaseSettingsModel):
+    """[deprecated] use Template Workfile Build Settings instead.
+    """
     create_first_version: bool = Field(
         title="Create first workfile")
     custom_templates: list[CustomTemplateModel] = Field(

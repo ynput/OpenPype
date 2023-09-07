@@ -28,11 +28,9 @@ def nuke_product_types_enum():
 
 
 class NodeModel(BaseSettingsModel):
-    # TODO: missing in host api
     name: str = Field(
         title="Node name"
     )
-    # TODO: `nodeclass` rename to `nuke_node_class`
     nodeclass: str = Field(
         "",
         title="Node class"
@@ -41,10 +39,6 @@ class NodeModel(BaseSettingsModel):
         "",
         title="Incoming dependency"
     )
-    """# TODO: Changes in host api:
-    - Need complete rework of knob types in nuke integration.
-    - We could not support v3 style of settings.
-    """
     knobs: list[KnobModel] = Field(
         default_factory=list,
         title="Knobs",
@@ -100,10 +94,6 @@ class ExtractThumbnailModel(BaseSettingsModel):
     use_rendered: bool = Field(title="Use rendered images")
     bake_viewer_process: bool = Field(title="Bake view process")
     bake_viewer_input_process: bool = Field(title="Bake viewer input process")
-    """# TODO: needs to rewrite from v3 to ayon
-    - `nodes` in v3 was dict but now `prenodes` is list of dict
-    - also later `nodes` should be `prenodes`
-    """
 
     nodes: list[NodeModel] = Field(
         default_factory=list,
@@ -216,12 +206,6 @@ class ExctractSlateFrameParamModel(BaseSettingsModel):
 
 class ExtractSlateFrameModel(BaseSettingsModel):
     viewer_lut_raw: bool = Field(title="Viewer lut raw")
-    """# TODO: v3 api different model:
-    - not possible to replicate v3 model:
-        {"name": [bool, str]}
-    - not it is:
-        {"name": {"enabled": bool, "template": str}}
-    """
     key_value_mapping: ExctractSlateFrameParamModel = Field(
         title="Key value mapping",
         default_factory=ExctractSlateFrameParamModel
@@ -290,7 +274,6 @@ class PublishPuginsModel(BaseSettingsModel):
         title="Extract Slate Frame",
         default_factory=ExtractSlateFrameModel
     )
-    # TODO: plugin should be renamed - `workfile` not `script`
     IncrementScriptVersion: IncrementScriptVersionModel = Field(
         title="Increment Workfile Version",
         default_factory=IncrementScriptVersionModel,
