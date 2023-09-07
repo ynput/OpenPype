@@ -61,7 +61,10 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         controllers_sets = [i for i in instance if i == "controls_SET"]
         controls = cmds.sets(controllers_sets, query=True)
         assert controls, "Must have 'controls_SET' in rig instance"
-
+        skeletonAnim_sets = [i for i in instance if i == "skeletonAnim_SET"]
+        if skeletonAnim_sets:
+            skeleton_controls = cmds.sets(skeletonAnim_sets, query=True)
+            controls += skeleton_controls
         # Ensure all controls are within the top group
         lookup = set(instance[:])
         assert all(control in lookup for control in cmds.ls(controls,
@@ -184,6 +187,9 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         # Use a single undo chunk
         with undo_chunk():
             controls = cmds.sets("controls_SET", query=True)
+            anim_skeleton = cmds.sets("skeletonAnim_SET", query=True)
+            if anim_skeleton:
+                controls = controls + anim_skeleton
             for control in controls:
 
                 # Lock visibility

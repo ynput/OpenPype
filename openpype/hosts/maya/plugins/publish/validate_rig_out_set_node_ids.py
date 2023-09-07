@@ -47,7 +47,21 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
 
         invalid = []
 
-        out_set = next(x for x in instance if x.endswith("out_SET"))
+        out_set_invalid = cls.get_invalid_not_by_sets(instance)
+        if out_set_invalid:
+            invalid += out_set_invalid
+
+        skeletonmesh_invalid = cls.get_invalid_not_by_sets(
+            instance, set_name="skeletonMesh_SET")
+        if skeletonmesh_invalid:
+            invalid += skeletonmesh_invalid
+
+        return invalid
+
+    @classmethod
+    def get_invalid_not_by_sets(cls, instance, set_name="out_SET"):
+        invalid = []
+        out_set = next(x for x in instance if x.endswith(set_name))
         members = cmds.sets(out_set, query=True)
         shapes = cmds.ls(members,
                          dag=True,
@@ -55,7 +69,8 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
                          shapes=True,
                          long=True,
                          noIntermediate=True)
-
+        if not shapes:
+            return
         for shape in shapes:
             sibling_id = lib.get_id_from_sibling(
                 shape,

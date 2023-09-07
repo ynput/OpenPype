@@ -21,8 +21,8 @@ class ExtractRigFBX(publish.Extractor,
 
     """
     order = pyblish.api.ExtractorOrder
-    label = "Extract Rig (FBX)"
-    families = ["rig"]
+    label = "Extract Animation (FBX)"
+    families = ["animation"]
 
     def process(self, instance):
         if not self.is_active(instance.data):
@@ -35,9 +35,10 @@ class ExtractRigFBX(publish.Extractor,
         # The export requires forward slashes because we need
         # to format it into a string in a mel expression
         fbx_exporter = fbx.FBXExtractor(log=self.log)
-        out_set = instance.data.get("skeleton_mesh", [])
+        out_set = instance.data.get("animated_skeleton", [])
 
         instance.data["constraints"] = True
+        instance.data["animationOnly"] = True
 
         fbx_exporter.set_options_from_instance(instance)
 
@@ -52,7 +53,8 @@ class ExtractRigFBX(publish.Extractor,
             'ext': 'fbx',
             'files': filename,
             "stagingDir": staging_dir,
+            "outputName": "fbxanim"
         }
         instance.data["representations"].append(representation)
 
-        self.log.debug("Extract FBX successful to: {0}".format(path))
+        self.log.debug("Extract animated FBX successful to: {0}".format(path))

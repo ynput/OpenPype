@@ -80,6 +80,9 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
                            % invalid_geometry)
             error = True
 
+        invalid = self.validate_skeleton_sets(instance)
+        if invalid:
+            error = True
         if error:
             raise PublishValidationError(
                 "Invalid rig content. See log for details.")
@@ -91,7 +94,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         Checks if the node types of the set members valid
 
         Args:
-            set_members: list of nodes of the controls_set
+            set_members: list of nodes of the controls_SET
             hierarchy: list of nodes which reside under the root node
 
         Returns:
@@ -118,7 +121,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         Checks if the node types of the set members valid
 
         Args:
-            set_members: list of nodes of the controls_set
+            set_members: list of nodes of the controls_SET
             hierarchy: list of nodes which reside under the root node
 
         Returns:
@@ -132,3 +135,62 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
                 invalid.append(node)
 
         return invalid
+
+
+    def validate_skeleton_sets(self, instance):
+        objectsets = ("skeletonAnim_SET", "skeletonMesh_SET")
+        missing = [obj for obj in objectsets if obj not in instance]
+        if missing:
+            self.log.debug("%s is missing %s" % (instance, missing))
+
+        # Ensure there are at least some transforms or dag nodes
+        # in the rig instance
+        set_members = instance.data['setMembers']
+        if not cmds.ls(set_members, type="dagNode", long=True):
+            self.log.debug("Skipping empty instance...")
+            return
+        # Ensure contents in sets and retrieve long path for all objects
+        output_content = cmds.sets(
+            "skeletonMesh_SET", query=True) or []
+        output_content = cmds.ls(output_content, long=True)
+
+        controls_content = cmds.sets(
+            "skeletonAnim_SET", query=True) or []
+        controls_content = cmds.ls(controls_content, long=True)
+
+        # Validate members are inside the hierarchy from root node
+        root_node = cmds.ls(set_members, assemblies=True)
+        hierarchy = cmds.listRelatives(root_node, allDescendents=True,
+                                       fullPath=True)
+        hierarchy = set(hierarchy)
+
+        invalid_hierarchy = []
+        if output_content:
+            for node in output_content:
+                if node not in hierarchy:
+                    invalid_hierarchy.append(node)
+            invalid_geometry = self.validate_geometry(output_content)
+        if controls_content:
+            for node in controls_content:
+                if node not in hierarchy:
+                    invalid_hierarchy.append(node)
+            invalid_controls = self.validate_controls(controls_content)
+
+        error = False
+        if invalid_hierarchy:
+            self.log.error("Found nodes which reside outside of root group "
+                           "while they are set up for publishing."
+                           "\n%s" % invalid_hierarchy)
+            error = True
+
+        if invalid_controls:
+            self.log.error("Only transforms can be part of the controls_SET."
+                           "\n%s" % invalid_controls)
+            error = True
+
+        if invalid_geometry:
+            self.log.error("Only meshes can be part of the out_SET\n%s"
+                           % invalid_geometry)
+            error = True
+
+        return error

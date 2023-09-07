@@ -40,17 +40,23 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance, compute=False):
         invalid_matches = cls.get_invalid_matches(instance, compute=compute)
+
+        invalid_skeleton_matches = cls.get_invalid_matches(
+            instance, compute=compute, set_name="skeletonMesh_SET")
+        invalid_matches.update(invalid_skeleton_matches)
         return list(invalid_matches.keys())
 
     @classmethod
-    def get_invalid_matches(cls, instance, compute=False):
+    def get_invalid_matches(cls, instance, compute=False, set_name="out_SET"):
         invalid = {}
 
         if compute:
-            out_set = next(x for x in instance if "out_SET" in x)
+            out_set = next(x for x in instance if set_name in x)
 
             instance_nodes = cmds.sets(out_set, query=True, nodesOnly=True)
             instance_nodes = cmds.ls(instance_nodes, long=True)
+            if not instance_nodes:
+                return
             for node in instance_nodes:
                 shapes = cmds.listRelatives(node, shapes=True, fullPath=True)
                 if shapes:

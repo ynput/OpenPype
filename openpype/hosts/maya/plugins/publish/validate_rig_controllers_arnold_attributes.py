@@ -56,7 +56,8 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        controllers_sets = [i for i in instance if i == "controls_SET"]
+        controllers_sets = [i for i in instance
+                            if i == "controls_SET"]
         if not controllers_sets:
             return []
 
