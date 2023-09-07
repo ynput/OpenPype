@@ -98,7 +98,7 @@ class CameraLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
 
         # Format file name, Houdini only wants forward slashes
-        file_path = self.fname.replace("\\", "/")
+        file_path = self.filepath_from_context(context).replace("\\", "/")
 
         # Get the root node
         obj = hou.node("/obj")
