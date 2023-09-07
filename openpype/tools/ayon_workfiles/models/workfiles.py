@@ -416,13 +416,11 @@ class WorkfileEntitiesModel:
         ])
 
     def _prepare_workfile_info_item(
-        self, folder_id, task_id, workfile_info, filepath=None
+        self, folder_id, task_id, workfile_info, filepath
     ):
         note = ""
         if workfile_info:
             note = workfile_info["attrib"].get("description") or ""
-            if filepath is None:
-                filepath = workfile_info["path"]
 
         filestat = os.stat(filepath)
         return WorkfileInfo(
