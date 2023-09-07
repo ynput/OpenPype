@@ -16,7 +16,6 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
     targets = ["automated"]
 
     def process(self, context):
-        family = "image"
         for instance in context:
             creator_identifier = instance.data.get("creator_identifier")
             if creator_identifier and creator_identifier == "auto_image":

@@ -48,7 +48,6 @@ class LoadClip(opfapi.ClipLoader):
         self.fpd = fproject.current_workspace.desktop
 
         # load clip to timeline and get main variables
-        namespace = namespace
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
