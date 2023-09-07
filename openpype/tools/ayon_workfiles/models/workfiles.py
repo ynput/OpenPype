@@ -480,7 +480,7 @@ class WorkfileEntitiesModel:
             folder_id, task_id, identifier
         )
         if not workfile_info:
-            self._cache[identifier] = self._create_workfile_doc(
+            self._cache[identifier] = self._create_workfile_info_entity(
                 task_id, rootless_path, note)
             self._items.pop(identifier, None)
             return
@@ -504,7 +504,7 @@ class WorkfileEntitiesModel:
         )
         session.commit()
 
-    def _create_workfile_doc(self, task_id, rootless_path, note):
+    def _create_workfile_info_entity(self, task_id, rootless_path, note):
         extension = os.path.splitext(rootless_path)[1]
 
         project_name = self._controller.get_current_project_name()
