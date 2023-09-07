@@ -724,7 +724,7 @@ def get_ffprobe_data(path_to_file, logger=None):
     """
     if not logger:
         logger = logging.getLogger(__name__)
-    logger.info(
+    logger.debug(
         "Getting information about input \"{}\".".format(path_to_file)
     )
     ffprobe_args = get_ffmpeg_tool_args("ffprobe")
