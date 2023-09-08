@@ -24,6 +24,7 @@ class CollectRigFbx(pyblish.api.InstancePlugin):
             if i.lower().endswith("skeletonmesh_set")
         ]
         if skeleton_sets or skeleton_mesh_sets:
+            instance.data["families"].append("rig.fbx")
             instance.data["skeleton_mesh"] = []
             for skeleton_set in skeleton_sets:
                 skeleton_content = cmds.ls(

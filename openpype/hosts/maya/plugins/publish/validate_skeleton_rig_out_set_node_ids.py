@@ -23,9 +23,9 @@ class ValidateSkeletonRigOutSetNodeIds(pyblish.api.InstancePlugin):
     """
 
     order = ValidateContentsOrder
-    families = ["rig"]
+    families = ["rig.fbx"]
     hosts = ['maya']
-    label = 'Rig Out Set Node Ids'
+    label = 'Skeleton Rig Out Set Node Ids'
     actions = [
         openpype.hosts.maya.api.action.SelectInvalidAction,
         RepairAction

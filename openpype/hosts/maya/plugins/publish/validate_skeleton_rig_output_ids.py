@@ -26,9 +26,9 @@ class ValidateSkeletonRigOutputIds(pyblish.api.InstancePlugin):
 
     """
     order = ValidateContentsOrder + 0.05
-    label = "Rig Output Ids"
+    label = "Skeleton Rig Output Ids"
     hosts = ["maya"]
-    families = ["rig"]
+    families = ["rig.fbx"]
     actions = [RepairAction,
                openpype.hosts.maya.api.action.SelectInvalidAction]
 

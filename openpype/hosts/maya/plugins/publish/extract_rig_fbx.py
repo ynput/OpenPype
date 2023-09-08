@@ -22,7 +22,7 @@ class ExtractRigFBX(publish.Extractor,
     """
     order = pyblish.api.ExtractorOrder
     label = "Extract Rig (FBX)"
-    families = ["rig"]
+    families = ["rig.fbx"]
 
     def process(self, instance):
         if not self.is_active(instance.data):

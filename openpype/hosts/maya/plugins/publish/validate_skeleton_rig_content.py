@@ -17,9 +17,9 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
     """
 
     order = ValidateContentsOrder
-    label = "Rig Contents"
+    label = "Skeleton Rig Contents"
     hosts = ["maya"]
-    families = ["rig"]
+    families = ["rig.fbx"]
 
     accepted_output = ["mesh", "transform"]
     accepted_controllers = ["transform"]
@@ -27,9 +27,13 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         objectsets = ["skeletonAnim_SET", "skeletonMesh_SET"]
-        missing = [obj for obj in objectsets if obj not in instance]
+        missing = [
+            key for key in objectsets if key not in instance.data["rig_sets"]
+        ]
         if missing:
-            self.log.debug("%s is missing %s" % (instance, missing))
+            self.log.debug(
+                "%s is missing sets: %s" % (instance, ", ".join(missing))
+            )
             return
 
         controls_set = instance.data["rig_sets"]["skeletonAnim_SET"]
