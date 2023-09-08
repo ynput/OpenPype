@@ -13,22 +13,8 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.2
 
-    targets = ["automated"]
-
     def process(self, context):
-        for instance in context:
-            creator_identifier = instance.data.get("creator_identifier")
-            if creator_identifier and creator_identifier == "auto_image":
-                self.log.debug("Auto image instance found, won't create new")
-                return
-
-        project_name = context.data["anatomyData"]["project"]["name"]
         proj_settings = context.data["project_settings"]
-        task_name = context.data["anatomyData"]["task"]["name"]
-        host_name = context.data["hostName"]
-        asset_doc = context.data["assetEntity"]
-        asset_name = asset_doc["name"]
-
         auto_creator = proj_settings.get(
             "photoshop", {}).get(
             "create", {}).get(
@@ -37,6 +23,22 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
         if not auto_creator or not auto_creator["enabled"]:
             self.log.debug("Auto image creator disabled, won't create new")
             return
+
+        for instance in context:
+            creator_identifier = instance.data.get("creator_identifier")
+            if creator_identifier and creator_identifier == "auto_image":
+                self.log.debug("Auto image instance found, won't create new")
+                # refresh existing auto image instance with current visible
+                publishable_ids = [layer.id for layer in photoshop.stub().get_layers()  # noqa
+                                   if layer.visible]
+                instance.data["ids"] = publishable_ids
+                return
+
+        project_name = context.data["anatomyData"]["project"]["name"]
+        task_name = context.data["anatomyData"]["task"]["name"]
+        host_name = context.data["hostName"]
+        asset_doc = context.data["assetEntity"]
+        asset_name = asset_doc["name"]
 
         stub = photoshop.stub()
         stored_items = stub.get_layers_metadata()

@@ -118,3 +118,15 @@ class AutoImageCreator(PSAutoCreator):
         Artist might disable this instance from publishing or from creating
         review for it though.
         """
+
+    def collect_instances(self):
+        """Overwrite method to refresh all visible layer ids."""
+        for instance_data in cache_and_get_instances(self):
+            creator_id = instance_data.get("creator_identifier")
+
+            if creator_id == self.identifier:
+                instance = CreatedInstance.from_existing(
+                    instance_data, self
+                )
+                self._add_instance_to_context(instance)
+
