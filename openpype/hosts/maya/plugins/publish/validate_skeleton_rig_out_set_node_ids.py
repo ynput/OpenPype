@@ -61,7 +61,7 @@ class ValidateSkeletonRigOutSetNodeIds(pyblish.api.InstancePlugin):
                          long=True,
                          noIntermediate=True)
         if not shapes:
-            return
+            return []
         for shape in shapes:
             sibling_id = lib.get_id_from_sibling(
                 shape,

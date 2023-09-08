@@ -62,7 +62,7 @@ class ValidateSkeletonRigOutputIds(pyblish.api.InstancePlugin):
 
             instance_nodes = cmds.ls(instance_nodes, long=True)
             if not instance_nodes:
-                return
+                return {}
             for node in instance_nodes:
                 shapes = cmds.listRelatives(node, shapes=True, fullPath=True)
                 if shapes:
