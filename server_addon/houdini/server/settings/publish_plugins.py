@@ -167,14 +167,14 @@ class PublishPluginsModel(BaseSettingsModel):
     ValidateContainers: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Latest Containers.")
-    ValidateSubsetName: ValidateContainersModel = Field(
-        default_factory=ValidateContainersModel,
+    ValidateSubsetName: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
         title="Validate Subset Name.")
-    ValidateMeshIsStatic: ValidateContainersModel = Field(
-        default_factory=ValidateContainersModel,
+    ValidateMeshIsStatic: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
         title="Validate Mesh is Static.")
-    ValidateUnrealStaticMeshName: ValidateContainersModel = Field(
-        default_factory=ValidateContainersModel,
+    ValidateUnrealStaticMeshName: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
         title="Validate Unreal Static Mesh Name.")
 
 
