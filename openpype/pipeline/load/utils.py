@@ -645,7 +645,7 @@ def get_representation_path(representation, root=None, dbcon=None):
         try:
             context = representation["context"]
             context["root"] = root
-            context['folder'] = {'name': context['asset']}
+            context["folder"] = {"name": context["asset"]}
 
             path = StringTemplate.format_strict_template(
                 template, context
