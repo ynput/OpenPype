@@ -11,8 +11,8 @@ import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import undo_chunk
 
 
-class ValidateRigControllers(pyblish.api.InstancePlugin):
-    """Validate rig controllers.
+class ValidateSkeletonRigControllers(pyblish.api.InstancePlugin):
+    """Validate rig controller for skeletonAnim_SET
 
     Controls must have the transformation attributes on their default
     values of translate zero, rotate zero and scale one when they are
@@ -58,25 +58,20 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-
-        controls_set = instance.data["rig_sets"].get("controls_SET")
-        if not controls_set:
-            cls.log.error(
-                "Must have 'controls_SET' in rig instance"
+        skeleton_set = instance.data["rig_sets"].get("skeletonAnim_SET")
+        if not skeleton_set:
+            cls.log.info(
+                "No 'skeletonAnim_SET' in rig instance"
             )
-            return [instance.data["instance_node"]]
-
-        controls = cmds.sets(controls_set, query=True)
-
-        # Ensure all controls are within the top group
+            return
+        controls = cmds.sets(skeleton_set, query=True)
         lookup = set(instance[:])
         if not all(control in lookup for control in cmds.ls(controls,
                                                             long=True)):
             cls.log.error(
                 "All controls must be inside the rig's group."
             )
-            return [controls_set]
-
+            return [controls]
         # Validate all controls
         has_connections = list()
         has_unlocked_visibility = list()
@@ -188,20 +183,17 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-
-        controls_set = instance.data["rig_sets"].get("controls_SET")
-        if not controls_set:
+        skeleton_set = instance.data["rig_sets"].get("skeletonAnim_SET")
+        if not skeleton_set:
             cls.log.error(
-                "Unable to repair because no 'controls_SET' found in rig "
+                "Unable to repair because no 'skeletonAnim_SET' found in rig "
                 "instance: {}".format(instance)
             )
             return
-
         # Use a single undo chunk
         with undo_chunk():
-            controls = cmds.sets(controls_set, query=True)
+            controls = cmds.sets(skeleton_set, query=True)
             for control in controls:
-
                 # Lock visibility
                 attr = "{}.visibility".format(control)
                 locked = cmds.getAttr(attr, lock=True)

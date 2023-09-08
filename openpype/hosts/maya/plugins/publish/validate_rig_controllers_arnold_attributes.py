@@ -63,13 +63,6 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
         controls = cmds.sets(controls_set, query=True) or []
         if not controls:
             return []
-        skeleton_set = instance.data["rig_sets"].get("skeletonAnim_SET")
-        if not skeleton_set:
-            return []
-
-        skeleton_controls = cmds.sets(skeleton_set, query=True) or []
-        if skeleton_controls:
-            controls += skeleton_controls
 
         shapes = cmds.ls(controls,
                          dag=True,

@@ -7,12 +7,12 @@ from openpype.pipeline.publish import (
 )
 
 
-class ValidateRigContents(pyblish.api.InstancePlugin):
-    """Ensure rig contains pipeline-critical content
+class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
+    """Ensure skeleton rigs contains pipeline-critical content
 
-    Every rig must contain at least two object sets:
-        "controls_SET" - Set of all animatable controls
-        "out_SET" - Set of all cacheable meshes
+    The rigs optionally contain at least two object sets:
+        "skeletonAnim_SET" - Set of only bone hierarchies
+        "skeletonMesh_SET" - Set of all cacheable meshes
 
     """
 
@@ -26,58 +26,46 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        # Find required sets by suffix
-        required = ["controls_SET", "out_SET"]
-        missing = [
-            key for key in required if key not in instance.data["rig_sets"]
-        ]
+        objectsets = ["skeletonAnim_SET", "skeletonMesh_SET"]
+        missing = [obj for obj in objectsets if obj not in instance]
         if missing:
-            raise PublishValidationError(
-                "%s is missing sets: %s" % (instance, ", ".join(missing))
-            )
+            self.log.debug("%s is missing %s" % (instance, missing))
+            return
 
-        controls_set = instance.data["rig_sets"]["controls_SET"]
-        out_set = instance.data["rig_sets"]["out_SET"]
-
+        controls_set = instance.data["rig_sets"]["skeletonAnim_SET"]
+        out_set = instance.data["rig_sets"]["skeletonMesh_SET"]
         # Ensure there are at least some transforms or dag nodes
         # in the rig instance
         set_members = instance.data['setMembers']
         if not cmds.ls(set_members, type="dagNode", long=True):
-            raise PublishValidationError(
-                "No dag nodes in the pointcache instance. "
-                "(Empty instance?)"
-            )
-
+            self.log.debug("Skipping empty instance...")
+            return
         # Ensure contents in sets and retrieve long path for all objects
-        output_content = cmds.sets(out_set, query=True) or []
-        if not output_content:
-            raise PublishValidationError("Must have members in rig out_SET")
+        output_content = cmds.sets(
+            out_set, query=True) or []
         output_content = cmds.ls(output_content, long=True)
 
-        controls_content = cmds.sets(controls_set, query=True) or []
-        if not controls_content:
-            raise PublishValidationError(
-                "Must have members in rig controls_SET"
-            )
+        controls_content = cmds.sets(
+            controls_set, query=True) or []
         controls_content = cmds.ls(controls_content, long=True)
 
         # Validate members are inside the hierarchy from root node
-        root_nodes = cmds.ls(set_members, assemblies=True, long=True)
-        hierarchy = cmds.listRelatives(root_nodes, allDescendents=True,
-                                       fullPath=True) + root_nodes
+        root_node = cmds.ls(set_members, assemblies=True)
+        hierarchy = cmds.listRelatives(root_node, allDescendents=True,
+                                       fullPath=True)
         hierarchy = set(hierarchy)
 
         invalid_hierarchy = []
-        for node in output_content:
-            if node not in hierarchy:
-                invalid_hierarchy.append(node)
-        for node in controls_content:
-            if node not in hierarchy:
-                invalid_hierarchy.append(node)
-
-        # Additional validations
-        invalid_geometry = self.validate_geometry(output_content)
-        invalid_controls = self.validate_controls(controls_content)
+        if output_content:
+            for node in output_content:
+                if node not in hierarchy:
+                    invalid_hierarchy.append(node)
+            invalid_geometry = self.validate_geometry(output_content)
+        if controls_content:
+            for node in controls_content:
+                if node not in hierarchy:
+                    invalid_hierarchy.append(node)
+            invalid_controls = self.validate_controls(controls_content)
 
         error = False
         if invalid_hierarchy:
@@ -87,12 +75,12 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
             error = True
 
         if invalid_controls:
-            self.log.error("Only transforms can be part of the controls_SET."
+            self.log.error("Only transforms can be part of the skeletonAnim_SET."
                            "\n%s" % invalid_controls)
             error = True
 
         if invalid_geometry:
-            self.log.error("Only meshes can be part of the out_SET\n%s"
+            self.log.error("Only meshes can be part of the skeletonMesh_SET\n%s"
                            % invalid_geometry)
             error = True
 
@@ -107,7 +95,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         Checks if the node types of the set members valid
 
         Args:
-            set_members: list of nodes of the controls_set
+            set_members: list of nodes of the controls_SET
             hierarchy: list of nodes which reside under the root node
 
         Returns:
@@ -134,7 +122,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         Checks if the node types of the set members valid
 
         Args:
-            set_members: list of nodes of the controls_set
+            set_members: list of nodes of the controls_SET
             hierarchy: list of nodes which reside under the root node
 
         Returns:

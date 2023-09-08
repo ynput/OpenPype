@@ -11,8 +11,9 @@ from openpype.pipeline.publish import (
 )
 
 
-class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
-    """Validate if deformed shapes have related IDs to the original shapes.
+class ValidateSkeletonRigOutSetNodeIds(pyblish.api.InstancePlugin):
+    """Validate if deformed shapes have related IDs to the original shapes
+    from skeleton set.
 
     When a deformer is applied in the scene on a referenced mesh that already
     had deformers then Maya will create a new shape node for the mesh that
@@ -46,19 +47,21 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
         """Get all nodes which do not match the criteria"""
 
-        out_set = instance.data["rig_sets"].get("out_SET")
-        if not out_set:
+        skeletonMesh_set = instance.data["rig_sets"].get(
+            "skeletonMesh_SET")
+        if not skeletonMesh_set:
             return []
 
         invalid = []
-        members = cmds.sets(out_set, query=True)
+        members = cmds.sets(skeletonMesh_set, query=True)
         shapes = cmds.ls(members,
                          dag=True,
                          leaf=True,
                          shapes=True,
                          long=True,
                          noIntermediate=True)
-
+        if not shapes:
+            return
         for shape in shapes:
             sibling_id = lib.get_id_from_sibling(
                 shape,

@@ -18,8 +18,8 @@ def get_basename(node):
     return node.rsplit("|", 1)[-1].rsplit(":", 1)[-1]
 
 
-class ValidateRigOutputIds(pyblish.api.InstancePlugin):
-    """Validate rig output ids.
+class ValidateSkeletonRigOutputIds(pyblish.api.InstancePlugin):
+    """Validate rig output ids from the skeleton sets.
 
     Ids must share the same id as similarly named nodes in the scene. This is
     to ensure the id from the model is preserved through animation.
@@ -40,6 +40,10 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance, compute=False):
         invalid_matches = cls.get_invalid_matches(instance, compute=compute)
+
+        invalid_skeleton_matches = cls.get_invalid_matches(
+            instance, compute=compute, set_name="skeletonMesh_SET")
+        invalid_matches.update(invalid_skeleton_matches)
         return list(invalid_matches.keys())
 
     @classmethod
@@ -47,13 +51,18 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
         invalid = {}
 
         if compute:
-            out_set = instance.data["rig_sets"].get("out_SET")
-            if not out_set:
+            skeletonMesh_set = instance.data["rig_sets"].get(
+                "skeletonMesh_SET")
+            if not skeletonMesh_set:
                 instance.data["mismatched_output_ids"] = invalid
                 return invalid
 
-            instance_nodes = cmds.sets(out_set, query=True, nodesOnly=True)
+            instance_nodes = cmds.sets(
+                    skeletonMesh_set, query=True, nodesOnly=True)
+
             instance_nodes = cmds.ls(instance_nodes, long=True)
+            if not instance_nodes:
+                return
             for node in instance_nodes:
                 shapes = cmds.listRelatives(node, shapes=True, fullPath=True)
                 if shapes:
