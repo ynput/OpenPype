@@ -75,13 +75,13 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
             error = True
 
         if invalid_controls:
-            self.log.error("Only transforms can be part of the skeletonAnim_SET."
-                           "\n%s" % invalid_controls)
+            self.log.error("Only transforms can be part of the "
+                           "skeletonAnim_SET. \n%s" % invalid_controls)
             error = True
 
         if invalid_geometry:
-            self.log.error("Only meshes can be part of the skeletonMesh_SET\n%s"
-                           % invalid_geometry)
+            self.log.error("Only meshes can be part of the "
+                           "skeletonMesh_SET\n%s" % invalid_geometry)
             error = True
 
         if error:

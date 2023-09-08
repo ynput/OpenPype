@@ -58,7 +58,7 @@ class ValidateSkeletonRigOutputIds(pyblish.api.InstancePlugin):
                 return invalid
 
             instance_nodes = cmds.sets(
-                    skeletonMesh_set, query=True, nodesOnly=True)
+                skeletonMesh_set, query=True, nodesOnly=True)
 
             instance_nodes = cmds.ls(instance_nodes, long=True)
             if not instance_nodes:
