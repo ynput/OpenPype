@@ -182,7 +182,7 @@ def _recursive_collect_user_links(
     datablock: bpy.types.ID,
     target_user_datablock: bpy.types.ID,
     links: set,
-    exclude: set,
+    not_linked: set,
     user_map: dict,
 ):
     """Collect recursively all datablocks linked to the user datablock.
@@ -194,9 +194,15 @@ def _recursive_collect_user_links(
         datablock (bpy.types.ID): Datablock currently tested.
         target_user_datablock (bpy.types.ID): Datablock to get links from.
         links (set): Set of datablocks linked to the user datablock.
-        exclude (set): Set of datablocks to exclude from search.
+        not_linked (set): Set of datablocks processed but not linked to the
+            user datablock.
         user_map (dict): User map of all datablocks in blend file.
     """
+    # Meant to avoid infinite loop, because of circular references
+    # cannot process twice the same datablock
+    if datablock in not_linked:
+        return
+
     for user in user_map.get(datablock, []):
         # Check not self reference to avoid infinite loop
         if (
@@ -207,16 +213,16 @@ def _recursive_collect_user_links(
             continue
         elif user == target_user_datablock:
             links.add(datablock)
-        elif user not in links | exclude:
+        elif user not in links | not_linked:
+            not_linked.add(datablock)
             _recursive_collect_user_links(
-                user, target_user_datablock, links, exclude, user_map
+                user, target_user_datablock, links, not_linked, user_map
             )
 
         # Add datablock to links if user is linked to target datablock
         if user in links:
             links.add(datablock)
-        else:
-            exclude.add(datablock)
+            break
 
 
 def update_scene_containers():
