@@ -105,7 +105,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "review",
                 "rendersetup",
                 "rig",
-                "rig.fbx",
                 "plate",
                 "look",
                 "audio",
