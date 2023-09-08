@@ -119,14 +119,28 @@ class AutoImageCreator(PSAutoCreator):
         review for it though.
         """
 
-    def collect_instances(self):
-        """Overwrite method to refresh all visible layer ids."""
-        for instance_data in cache_and_get_instances(self):
-            creator_id = instance_data.get("creator_identifier")
+    def get_subset_name(
+            self,
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name=None,
+            instance=None
+    ):
+        dynamic_data = prepare_template_data({"layer": "{layer}"})
+        subset_name = get_subset_name(
+            self.family, variant, task_name, asset_doc,
+            project_name, host_name, dynamic_data=dynamic_data
+        )
+        return self._clean_subset_name(subset_name)
 
-            if creator_id == self.identifier:
-                instance = CreatedInstance.from_existing(
-                    instance_data, self
-                )
-                self._add_instance_to_context(instance)
-
+    def _clean_subset_name(self, subset_name):
+        """Clean all variants leftover {layer} from subset name."""
+        dynamic_data = prepare_template_data({"layer": "{layer}"})
+        for value in dynamic_data.values():
+            if value in subset_name:
+                return (subset_name.replace(value, "")
+                        .replace("__", "_")
+                        .replace("..", "."))
+        return subset_name
