@@ -93,6 +93,11 @@
                 "$JOB"
             ]
         },
+        "ValidateReviewColorspace": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateContainers": {
             "enabled": true,
             "optional": true,

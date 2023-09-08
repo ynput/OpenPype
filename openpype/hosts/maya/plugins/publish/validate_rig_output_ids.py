@@ -51,9 +51,23 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
         invalid = {}
 
         if compute:
-            out_set = next(x for x in instance if set_name in x)
+            out_set = instance.data["rig_sets"].get("out_SET")
+            if not out_set:
+                instance.data["mismatched_output_ids"] = invalid
+                return invalid
 
             instance_nodes = cmds.sets(out_set, query=True, nodesOnly=True)
+
+            skeletonMesh_set = instance.data["rig_sets"].get(
+                "skeletonMesh_SET")
+            if not skeletonMesh_set:
+                instance.data["mismatched_output_ids"] = invalid
+                return invalid
+            else:
+                skeletonMesh_nodes = cmds.sets(
+                    skeletonMesh_set, query=True, nodesOnly=True)
+                instance_nodes += skeletonMesh_nodes
+
             instance_nodes = cmds.ls(instance_nodes, long=True)
             if not instance_nodes:
                 return

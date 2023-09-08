@@ -38,30 +38,23 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
         # if a deformer has been created on the shape
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError("Nodes found with mismatching "
-                               "IDs: {0}".format(invalid))
+            raise PublishValidationError(
+                "Nodes found with mismatching IDs: {0}".format(invalid)
+            )
 
     @classmethod
     def get_invalid(cls, instance):
         """Get all nodes which do not match the criteria"""
 
+        out_set = instance.data["rig_sets"].get("out_SET")
+        if not out_set:
+            return []
+        skeletonMesh_set = instance.data["rig_sets"].get(
+            "skeletonMesh_SET")
+        if skeletonMesh_set:
+            out_set += skeletonMesh_set
+
         invalid = []
-
-        out_set_invalid = cls.get_invalid_not_by_sets(instance)
-        if out_set_invalid:
-            invalid += out_set_invalid
-
-        skeletonmesh_invalid = cls.get_invalid_not_by_sets(
-            instance, set_name="skeletonMesh_SET")
-        if skeletonmesh_invalid:
-            invalid += skeletonmesh_invalid
-
-        return invalid
-
-    @classmethod
-    def get_invalid_not_by_sets(cls, instance, set_name="out_SET"):
-        invalid = []
-        out_set = next(x for x in instance if x.endswith(set_name))
         members = cmds.sets(out_set, query=True)
         shapes = cmds.ls(members,
                          dag=True,

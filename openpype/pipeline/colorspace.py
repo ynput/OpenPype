@@ -13,12 +13,17 @@ from openpype.lib import (
     Logger
 )
 from openpype.pipeline import Anatomy
+from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
+
 
 log = Logger.get_logger(__name__)
 
 
-class CashedData:
-    remapping = None
+class CachedData:
+    remapping = {}
+    allowed_exts = {
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    }
 
 
 @contextlib.contextmanager
@@ -546,15 +551,15 @@ def get_remapped_colorspace_to_native(
         Union[str, None]: native colorspace name defined in remapping or None
     """
 
-    CashedData.remapping.setdefault(host_name, {})
-    if CashedData.remapping[host_name].get("to_native") is None:
+    CachedData.remapping.setdefault(host_name, {})
+    if CachedData.remapping[host_name].get("to_native") is None:
         remapping_rules = imageio_host_settings["remapping"]["rules"]
-        CashedData.remapping[host_name]["to_native"] = {
+        CachedData.remapping[host_name]["to_native"] = {
             rule["ocio_name"]: rule["host_native_name"]
             for rule in remapping_rules
         }
 
-    return CashedData.remapping[host_name]["to_native"].get(
+    return CachedData.remapping[host_name]["to_native"].get(
         ocio_colorspace_name)
 
 
@@ -572,15 +577,15 @@ def get_remapped_colorspace_from_native(
         Union[str, None]: Ocio colorspace name defined in remapping or None.
     """
 
-    CashedData.remapping.setdefault(host_name, {})
-    if CashedData.remapping[host_name].get("from_native") is None:
+    CachedData.remapping.setdefault(host_name, {})
+    if CachedData.remapping[host_name].get("from_native") is None:
         remapping_rules = imageio_host_settings["remapping"]["rules"]
-        CashedData.remapping[host_name]["from_native"] = {
+        CachedData.remapping[host_name]["from_native"] = {
             rule["host_native_name"]: rule["ocio_name"]
             for rule in remapping_rules
         }
 
-    return CashedData.remapping[host_name]["from_native"].get(
+    return CachedData.remapping[host_name]["from_native"].get(
         host_native_colorspace_name)
 
 
@@ -601,3 +606,173 @@ def _get_imageio_settings(project_settings, host_name):
     imageio_host = project_settings.get(host_name, {}).get("imageio", {})
 
     return imageio_global, imageio_host
+
+
+def get_colorspace_settings_from_publish_context(context_data):
+    """Returns solved settings for the host context.
+
+    Args:
+        context_data (publish.Context.data): publishing context data
+
+    Returns:
+        tuple | bool: config, file rules or None
+    """
+    if "imageioSettings" in context_data and context_data["imageioSettings"]:
+        return context_data["imageioSettings"]
+
+    project_name = context_data["projectName"]
+    host_name = context_data["hostName"]
+    anatomy_data = context_data["anatomyData"]
+    project_settings_ = context_data["project_settings"]
+
+    config_data = get_imageio_config(
+        project_name, host_name,
+        project_settings=project_settings_,
+        anatomy_data=anatomy_data
+    )
+
+    # caching invalid state, so it's not recalculated all the time
+    file_rules = None
+    if config_data:
+        file_rules = get_imageio_file_rules(
+            project_name, host_name,
+            project_settings=project_settings_
+        )
+
+    # caching settings for future instance processing
+    context_data["imageioSettings"] = (config_data, file_rules)
+
+    return config_data, file_rules
+
+
+def set_colorspace_data_to_representation(
+    representation, context_data,
+    colorspace=None,
+    log=None
+):
+    """Sets colorspace data to representation.
+
+    Args:
+        representation (dict): publishing representation
+        context_data (publish.Context.data): publishing context data
+        colorspace (str, optional): colorspace name. Defaults to None.
+        log (logging.Logger, optional): logger instance. Defaults to None.
+
+    Example:
+        ```
+        {
+            # for other publish plugins and loaders
+            "colorspace": "linear",
+            "config": {
+                # for future references in case need
+                "path": "/abs/path/to/config.ocio",
+                # for other plugins within remote publish cases
+                "template": "{project[root]}/path/to/config.ocio"
+            }
+        }
+        ```
+
+    """
+    log = log or Logger.get_logger(__name__)
+
+    file_ext = representation["ext"]
+
+    # check if `file_ext` in lower case is in CachedData.allowed_exts
+    if file_ext.lstrip(".").lower() not in CachedData.allowed_exts:
+        log.debug(
+            "Extension '{}' is not in allowed extensions.".format(file_ext)
+        )
+        return
+
+    # get colorspace settings
+    config_data, file_rules = get_colorspace_settings_from_publish_context(
+        context_data)
+
+    # in case host color management is not enabled
+    if not config_data:
+        log.warning("Host's colorspace management is disabled.")
+        return
+
+    log.debug("Config data is: `{}`".format(config_data))
+
+    project_name = context_data["projectName"]
+    host_name = context_data["hostName"]
+    project_settings = context_data["project_settings"]
+
+    # get one filename
+    filename = representation["files"]
+    if isinstance(filename, list):
+        filename = filename[0]
+
+    # get matching colorspace from rules
+    colorspace = colorspace or get_imageio_colorspace_from_filepath(
+        filename, host_name, project_name,
+        config_data=config_data,
+        file_rules=file_rules,
+        project_settings=project_settings
+    )
+
+    # infuse data to representation
+    if colorspace:
+        colorspace_data = {
+            "colorspace": colorspace,
+            "config": config_data
+        }
+
+        # update data key
+        representation["colorspaceData"] = colorspace_data
+
+
+def get_display_view_colorspace_name(config_path, display, view):
+    """Returns the colorspace attribute of the (display, view) pair.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+    Returns:
+        view color space name (str) e.g. "Output - sRGB"
+    """
+
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
+        return get_display_view_colorspace_subprocess(config_path,
+                                                      display, view)
+
+    from openpype.scripts.ocio_wrapper import _get_display_view_colorspace_name  # noqa
+
+    return _get_display_view_colorspace_name(config_path, display, view)
+
+
+def get_display_view_colorspace_subprocess(config_path, display, view):
+    """Returns the colorspace attribute of the (display, view) pair
+        via subprocess.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+    Returns:
+        view color space name (str) e.g. "Output - sRGB"
+    """
+
+    with _make_temp_json_file() as tmp_json_path:
+        # Prepare subprocess arguments
+        args = [
+            "run", get_ocio_config_script_path(),
+            "config", "get_display_view_colorspace_name",
+            "--in_path", config_path,
+            "--out_path", tmp_json_path,
+            "--display", display,
+            "--view", view
+        ]
+        log.debug("Executing: {}".format(" ".join(args)))
+
+        run_openpype_process(*args, logger=log)
+
+        # return default view colorspace name
+        with open(tmp_json_path, "r") as f:
+            return json.load(f)

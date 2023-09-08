@@ -2,7 +2,9 @@ import pyblish.api
 from maya import cmds
 
 from openpype.pipeline.publish import (
-    PublishValidationError, ValidateContentsOrder)
+    PublishValidationError,
+    ValidateContentsOrder
+)
 
 
 class ValidateRigContents(pyblish.api.InstancePlugin):
@@ -24,31 +26,45 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        objectsets = ("controls_SET", "out_SET")
-        missing = [obj for obj in objectsets if obj not in instance]
-        assert not missing, ("%s is missing %s" % (instance, missing))
+        # Find required sets by suffix
+        required = ["controls_SET", "out_SET"]
+        missing = [
+            key for key in required if key not in instance.data["rig_sets"]
+        ]
+        if missing:
+            raise PublishValidationError(
+                "%s is missing sets: %s" % (instance, ", ".join(missing))
+            )
+
+        controls_set = instance.data["rig_sets"]["controls_SET"]
+        out_set = instance.data["rig_sets"]["out_SET"]
 
         # Ensure there are at least some transforms or dag nodes
         # in the rig instance
         set_members = instance.data['setMembers']
         if not cmds.ls(set_members, type="dagNode", long=True):
             raise PublishValidationError(
-                ("No dag nodes in the pointcache instance. "
-                 "(Empty instance?)"))
+                "No dag nodes in the pointcache instance. "
+                "(Empty instance?)"
+            )
 
         # Ensure contents in sets and retrieve long path for all objects
-        output_content = cmds.sets("out_SET", query=True) or []
-        assert output_content, "Must have members in rig out_SET"
+        output_content = cmds.sets(out_set, query=True) or []
+        if not output_content:
+            raise PublishValidationError("Must have members in rig out_SET")
         output_content = cmds.ls(output_content, long=True)
 
-        controls_content = cmds.sets("controls_SET", query=True) or []
-        assert controls_content, "Must have members in rig controls_SET"
+        controls_content = cmds.sets(controls_set, query=True) or []
+        if not controls_content:
+            raise PublishValidationError(
+                "Must have members in rig controls_SET"
+            )
         controls_content = cmds.ls(controls_content, long=True)
 
         # Validate members are inside the hierarchy from root node
-        root_node = cmds.ls(set_members, assemblies=True)
-        hierarchy = cmds.listRelatives(root_node, allDescendents=True,
-                                       fullPath=True)
+        root_nodes = cmds.ls(set_members, assemblies=True, long=True)
+        hierarchy = cmds.listRelatives(root_nodes, allDescendents=True,
+                                       fullPath=True) + root_nodes
         hierarchy = set(hierarchy)
 
         invalid_hierarchy = []
@@ -137,11 +153,13 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         return invalid
 
     def validate_skeleton_sets(self, instance):
-        objectsets = ("skeletonAnim_SET", "skeletonMesh_SET")
+        objectsets = ["skeletonAnim_SET", "skeletonMesh_SET"]
         missing = [obj for obj in objectsets if obj not in instance]
         if missing:
             self.log.debug("%s is missing %s" % (instance, missing))
 
+        controls_set = instance.data["rig_sets"]["skeletonAnim_SET"]
+        out_set = instance.data["rig_sets"]["skeletonMesh_SET"]
         # Ensure there are at least some transforms or dag nodes
         # in the rig instance
         set_members = instance.data['setMembers']
@@ -150,11 +168,11 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
             return
         # Ensure contents in sets and retrieve long path for all objects
         output_content = cmds.sets(
-            "skeletonMesh_SET", query=True) or []
+            out_set, query=True) or []
         output_content = cmds.ls(output_content, long=True)
 
         controls_content = cmds.sets(
-            "skeletonAnim_SET", query=True) or []
+            controls_set, query=True) or []
         controls_content = cmds.ls(controls_content, long=True)
 
         # Validate members are inside the hierarchy from root node

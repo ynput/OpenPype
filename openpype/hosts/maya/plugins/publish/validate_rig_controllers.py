@@ -52,26 +52,44 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise PublishValidationError('{} failed, see log '
-                               'information'.format(self.label))
+            raise PublishValidationError(
+                '{} failed, see log information'.format(self.label)
+            )
 
     @classmethod
     def get_invalid(cls, instance):
 
-        controllers_sets = [i for i in instance if i == "controls_SET"]
-        controls = cmds.sets(controllers_sets, query=True)
-        assert controls, "Must have 'controls_SET' in rig instance"
-        skeletonAnim_sets = [i for i in instance if i == "skeletonAnim_SET"]
-        if skeletonAnim_sets:
-            skeleton_controls = cmds.sets(skeletonAnim_sets, query=True)
-            controls += skeleton_controls
+        controls_set = instance.data["rig_sets"].get("controls_SET")
+        if not controls_set:
+            cls.log.error(
+                "Must have 'controls_SET' in rig instance"
+            )
+            return [instance.data["instance_node"]]
+
+        controls = cmds.sets(controls_set, query=True)
+
         # Ensure all controls are within the top group
         lookup = set(instance[:])
-        assert all(control in lookup for control in cmds.ls(controls,
-                                                            long=True)), (
-            "All controls must be inside the rig's group."
-        )
+        if not all(control in lookup for control in cmds.ls(controls,
+                                                            long=True)):
+            cls.log.error(
+                "All controls must be inside the rig's group."
+            )
+            return [controls_set]
+        skeleton_set = instance.data["rig_sets"].get("skeletonAnim_SET")
+        if not skeleton_set:
+            cls.log.info(
+                "No 'skeletonAnim_SET' in rig instance"
+            )
+        skeleton_controls = cmds.sets(skeleton_set, query=True)
+        if not all(control in lookup for control in cmds.ls(skeleton_controls,
+                                                            long=True)):
+            cls.log.error(
+                "All controls must be inside the rig's group."
+            )
+            return [skeleton_controls]
 
+        controls += skeleton_controls
         # Validate all controls
         has_connections = list()
         has_unlocked_visibility = list()
@@ -184,12 +202,26 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
 
+        controls_set = instance.data["rig_sets"].get("controls_SET")
+        if not controls_set:
+            cls.log.error(
+                "Unable to repair because no 'controls_SET' found in rig "
+                "instance: {}".format(instance)
+            )
+            return
+        skeleton_set = instance.data["rig_sets"].get("skeletonAnim_SET")
+        if not skeleton_set:
+            cls.log.error(
+                "Unable to repair because no 'skeletonAnim_SET' found in rig "
+                "instance: {}".format(instance)
+            )
+            return
         # Use a single undo chunk
         with undo_chunk():
-            controls = cmds.sets("controls_SET", query=True)
-            anim_skeleton = cmds.sets("skeletonAnim_SET", query=True)
-            if anim_skeleton:
-                controls = controls + anim_skeleton
+            controls = cmds.sets(controls_set, query=True)
+            if skeleton_set:
+                skeleton_controls = cmds.sets(skeleton_set, query=True)
+                controls += skeleton_controls
             for control in controls:
 
                 # Lock visibility
