@@ -31,7 +31,6 @@ class ScreenMarquee(QtWidgets.QDialog):
         fade_anim.setEndValue(50)
         fade_anim.setDuration(200)
         fade_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-        fade_anim.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
 
         fade_anim.valueChanged.connect(self._on_fade_anim)
 
@@ -46,7 +45,7 @@ class ScreenMarquee(QtWidgets.QDialog):
         for screen in QtWidgets.QApplication.screens():
             screen.geometryChanged.connect(self._fit_screen_geometry)
 
-        self._opacity = fade_anim.currentValue()
+        self._opacity = fade_anim.startValue()
         self._click_pos = None
         self._capture_rect = None
 
