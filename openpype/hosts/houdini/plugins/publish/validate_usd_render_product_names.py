@@ -24,7 +24,7 @@ class ValidateUSDRenderProductNames(pyblish.api.InstancePlugin):
 
             if not os.path.isabs(filepath):
                 invalid.append(
-                    "Output file path is not " "absolute path: %s" % filepath
+                    "Output file path is not absolute path: %s" % filepath
                 )
 
         if invalid:

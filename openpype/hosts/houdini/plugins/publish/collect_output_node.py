@@ -1,5 +1,7 @@
 import pyblish.api
 
+from openpype.pipeline.publish import KnownPublishError
+
 
 class CollectOutputSOPPath(pyblish.api.InstancePlugin):
     """Collect the out node's SOP/COP Path value."""
@@ -63,8 +65,8 @@ class CollectOutputSOPPath(pyblish.api.InstancePlugin):
             out_node = node.parm("startnode").evalAsNode()
 
         else:
-            raise ValueError(
-                "ROP node type '%s' is" " not supported." % node_type
+            raise KnownPublishError(
+                "ROP node type '{}' is not supported.".format(node_type)
             )
 
         if not out_node:

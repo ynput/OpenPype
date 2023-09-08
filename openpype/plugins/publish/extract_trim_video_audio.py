@@ -36,7 +36,7 @@ class ExtractTrimVideoAudio(publish.Extractor):
 
         # get staging dir
         staging_dir = self.staging_dir(instance)
-        self.log.info("Staging dir set to: `{}`".format(staging_dir))
+        self.log.debug("Staging dir set to: `{}`".format(staging_dir))
 
         # Generate mov file.
         fps = instance.data["fps"]
@@ -59,7 +59,7 @@ class ExtractTrimVideoAudio(publish.Extractor):
             extensions = [output_file_type]
 
         for ext in extensions:
-            self.log.info("Processing ext: `{}`".format(ext))
+            self.log.debug("Processing ext: `{}`".format(ext))
 
             if not ext.startswith("."):
                 ext = "." + ext
@@ -98,7 +98,7 @@ class ExtractTrimVideoAudio(publish.Extractor):
             ffmpeg_args.append(clip_trimed_path)
 
             joined_args = " ".join(ffmpeg_args)
-            self.log.info(f"Processing: {joined_args}")
+            self.log.debug(f"Processing: {joined_args}")
             run_subprocess(
                 ffmpeg_args, logger=self.log
             )

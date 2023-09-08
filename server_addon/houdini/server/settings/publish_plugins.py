@@ -151,7 +151,7 @@ class ValidateWorkfilePathsModel(BaseSettingsModel):
     )
 
 
-class ValidateContainersModel(BaseSettingsModel):
+class BasicValidateModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
     active: bool = Field(title="Active")
@@ -161,8 +161,11 @@ class PublishPluginsModel(BaseSettingsModel):
     ValidateWorkfilePaths: ValidateWorkfilePathsModel = Field(
         default_factory=ValidateWorkfilePathsModel,
         title="Validate workfile paths settings.")
-    ValidateContainers: ValidateContainersModel = Field(
-        default_factory=ValidateContainersModel,
+    ValidateReviewColorspace: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Review Colorspace.")
+    ValidateContainers: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
         title="Validate Latest Containers.")
     ValidateSubsetName: ValidateContainersModel = Field(
         default_factory=ValidateContainersModel,
@@ -187,6 +190,11 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
             "$HIP",
             "$JOB"
         ]
+    },
+    "ValidateReviewColorspace": {
+        "enabled": True,
+        "optional": True,
+        "active": True
     },
     "ValidateContainers": {
         "enabled": True,

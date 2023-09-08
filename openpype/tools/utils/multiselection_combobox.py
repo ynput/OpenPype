@@ -1,9 +1,10 @@
 from qtpy import QtCore, QtGui, QtWidgets
-from openpype.tools.utils.lib import (
+
+from .lib import (
     checkstate_int_to_enum,
     checkstate_enum_to_int,
 )
-from openpype.tools.utils.constants import (
+from .constants import (
     CHECKED_INT,
     UNCHECKED_INT,
     ITEM_IS_USER_TRISTATE,
@@ -60,12 +61,25 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         self._block_mouse_release_timer = QtCore.QTimer(self, singleShot=True)
         self._initial_mouse_pos = None
         self._separator = separator
-        self.placeholder_text = placeholder
-        self.delegate = ComboItemDelegate(self)
-        self.setItemDelegate(self.delegate)
+        self._placeholder_text = placeholder
+        delegate = ComboItemDelegate(self)
+        self.setItemDelegate(delegate)
 
-        self.lines = {}
-        self.item_height = None
+        self._lines = {}
+        self._item_height = None
+        self._custom_text = None
+        self._delegate = delegate
+
+    def get_placeholder_text(self):
+        return self._placeholder_text
+
+    def set_placeholder_text(self, text):
+        self._placeholder_text = text
+        self._update_size_hint()
+
+    def set_custom_text(self, text):
+        self._custom_text = text
+        self._update_size_hint()
 
     def focusInEvent(self, event):
         self.focused_in.emit()
@@ -158,7 +172,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         if new_state is not None:
             model.setData(current_index, new_state, QtCore.Qt.CheckStateRole)
             self.view().update(current_index)
-            self.update_size_hint()
+            self._update_size_hint()
             self.value_changed.emit()
             return True
 
@@ -182,25 +196,33 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         self.initStyleOption(option)
         painter.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, option)
 
-        # draw the icon and text
         items = self.checked_items_text()
-        if not items:
-            option.currentText = self.placeholder_text
+        # draw the icon and text
+        draw_text = True
+        combotext = None
+        if self._custom_text is not None:
+            combotext = self._custom_text
+        elif not items:
+            combotext = self._placeholder_text
+        else:
+            draw_text = False
+        if draw_text:
+            option.currentText = combotext
             option.palette.setCurrentColorGroup(QtGui.QPalette.Disabled)
             painter.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, option)
             return
 
         font_metricts = self.fontMetrics()
 
-        if self.item_height is None:
+        if self._item_height is None:
             self.updateGeometry()
             self.update()
             return
 
-        for line, items in self.lines.items():
+        for line, items in self._lines.items():
             top_y = (
                 option.rect.top()
-                + (line * self.item_height)
+                + (line * self._item_height)
                 + self.top_bottom_margins
             )
             left_x = option.rect.left() + self.left_offset
@@ -210,7 +232,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
                 label_rect.moveTop(top_y)
                 label_rect.moveLeft(left_x)
-                label_rect.setHeight(self.item_height)
+                label_rect.setHeight(self._item_height)
                 label_rect.setWidth(
                     label_rect.width() + self.left_right_padding
                 )
@@ -239,14 +261,18 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
     def resizeEvent(self, *args, **kwargs):
         super(MultiSelectionComboBox, self).resizeEvent(*args, **kwargs)
-        self.update_size_hint()
+        self._update_size_hint()
 
-    def update_size_hint(self):
-        self.lines = {}
+    def _update_size_hint(self):
+        if self._custom_text is not None:
+            self.update()
+            return
+        self._lines = {}
 
         items = self.checked_items_text()
         if not items:
             self.update()
+            self.repaint()
             return
 
         option = QtWidgets.QStyleOptionComboBox()
@@ -259,7 +285,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         total_width = option.rect.width() - btn_rect.width()
 
         line = 0
-        self.lines = {line: []}
+        self._lines = {line: []}
 
         font_metricts = self.fontMetrics()
         default_left_x = 0 + self.left_offset
@@ -270,18 +296,18 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             right_x = left_x + width
             if right_x > total_width:
                 left_x = int(default_left_x)
-                if self.lines.get(line):
+                if self._lines.get(line):
                     line += 1
-                    self.lines[line] = [item]
+                    self._lines[line] = [item]
                     left_x += width
                 else:
-                    self.lines[line] = [item]
+                    self._lines[line] = [item]
                     line += 1
             else:
-                if line in self.lines:
-                    self.lines[line].append(item)
+                if line in self._lines:
+                    self._lines[line].append(item)
                 else:
-                    self.lines[line] = [item]
+                    self._lines[line] = [item]
                 left_x = left_x + width + self.item_spacing
 
         self.update()
@@ -289,18 +315,20 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
     def sizeHint(self):
         value = super(MultiSelectionComboBox, self).sizeHint()
-        lines = len(self.lines)
-        if lines == 0:
-            lines = 1
+        lines = 1
+        if self._custom_text is None:
+            lines = len(self._lines)
+            if lines == 0:
+                lines = 1
 
-        if self.item_height is None:
-            self.item_height = (
+        if self._item_height is None:
+            self._item_height = (
                 self.fontMetrics().height()
                 + (2 * self.top_bottom_padding)
                 + (2 * self.top_bottom_margins)
             )
         value.setHeight(
-            (lines * self.item_height)
+            (lines * self._item_height)
             + (2 * self.top_bottom_margins)
         )
         return value
@@ -316,7 +344,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             else:
                 check_state = UNCHECKED_INT
             self.setItemData(idx, check_state, QtCore.Qt.CheckStateRole)
-        self.update_size_hint()
+        self._update_size_hint()
 
     def value(self):
         items = list()
