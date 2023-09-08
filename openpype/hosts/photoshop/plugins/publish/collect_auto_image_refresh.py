@@ -1,7 +1,6 @@
 import pyblish.api
 
 from openpype.hosts.photoshop import api as photoshop
-from openpype.pipeline.create import get_subset_name
 
 
 class CollectAutoImageRefresh(pyblish.api.ContextPlugin):
@@ -12,7 +11,6 @@ class CollectAutoImageRefresh(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.2
-
 
     def process(self, context):
         for instance in context:
