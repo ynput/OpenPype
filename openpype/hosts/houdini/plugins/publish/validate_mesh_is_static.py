@@ -30,7 +30,7 @@ class ValidateMeshIsStatic(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            nodes = [n.path() for n in invalid if isinstance(n, hou.Node)]
+            nodes = [n.path() for n in invalid]
             raise PublishValidationError(
                 "See log for details. "
                 "Invalid nodes: {0}".format(nodes)
