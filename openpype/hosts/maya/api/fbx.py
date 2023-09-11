@@ -64,8 +64,7 @@ class FBXExtractor:
             "embeddedTextures": bool,
             "inputConnections": bool,
             "upAxis": str,  # x, y or z,
-            "triangulate": bool,
-            "exportFileVersion": str
+            "triangulate": bool
         }
 
     @property
@@ -106,8 +105,7 @@ class FBXExtractor:
             "embeddedTextures": False,
             "inputConnections": True,
             "upAxis": "y",
-            "triangulate": False,
-            "exportFileVersion": "FBX201000"
+            "triangulate": False
         }
 
     def __init__(self, log=None):
