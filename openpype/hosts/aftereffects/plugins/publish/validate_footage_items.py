@@ -34,9 +34,6 @@ class ValidateFootageItems(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
-        # Skip the instance if is not active by data on the instance
-        if not self.is_active(instance.data):
-            return
 
         comp_id = instance.data["comp_id"]
         for footage_item in get_stub().get_items(comps=False, folders=False,
