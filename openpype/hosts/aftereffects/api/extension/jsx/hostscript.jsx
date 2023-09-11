@@ -228,7 +228,9 @@ function _getItem(item, comps, folders, footages){
             return "{}";
         }
         item_type = 'footage';
-        path = item.file.fsName;
+        if (item.file){
+            path = item.file.fsName;
+        }
         if (item.usedIn){
             for (j = 0; j < item.usedIn.length; ++j){
                 containing_comps.push(item.usedIn[j].id);
