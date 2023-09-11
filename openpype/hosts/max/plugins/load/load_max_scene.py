@@ -1,7 +1,11 @@
 import os
 
 from openpype.hosts.max.api import lib
-from openpype.hosts.max.api.lib import unique_namespace
+from openpype.hosts.max.api.lib import (
+    unique_namespace,
+    get_namespace,
+    object_transform_set
+)
 from openpype.hosts.max.api.pipeline import (
     containerise, import_custom_attribute_data,
     update_custom_attribute_data
@@ -20,6 +24,7 @@ class MaxSceneLoader(load.LoaderPlugin):
     order = -8
     icon = "code-fork"
     color = "green"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -29,6 +34,7 @@ class MaxSceneLoader(load.LoaderPlugin):
         path = path.replace('\\', '/')
         rt.MergeMaxFile(path, quiet=True, includeFullGroup=True)
         max_objects = rt.getLastMergedNodes()
+        max_object_names = [obj.name for obj in max_objects]
         # implement the OP/AYON custom attributes before load
         max_container = []
 
@@ -36,10 +42,13 @@ class MaxSceneLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-        container = rt.Container(name=f"{namespace}:{name}")
+        container_name = f"{namespace}:{name}_{self.postfix}"
+        container = rt.Container(name=container_name)
         import_custom_attribute_data(container, max_objects)
         max_container.append(container)
         max_container.extend(max_objects)
+        for max_obj, obj_name in zip(max_objects, max_object_names):
+            max_obj.name = f"{namespace}:{obj_name}"
         return containerise(
             name, max_container, context,
             namespace, loader=self.__class__.__name__)
@@ -51,33 +60,31 @@ class MaxSceneLoader(load.LoaderPlugin):
         node_name = container["instance_node"]
 
         node = rt.getNodeByName(node_name)
-        param_container = node_name.split("_CON")[0]
-
+        namespace, name = get_namespace(node_name)
+        sub_container_name = f"{namespace}:{name}_{self.postfix}"
         # delete the old container with attribute
         # delete old duplicate
-        prev_max_object_names = [obj.name for obj
-                                 in rt.getLastMergedNodes()]
+        rt.Select(node.Children)
+        transform_data = object_transform_set(node.Children)
+        for prev_max_obj in rt.GetCurrentSelection():
+            if rt.isValidNode(prev_max_obj) and prev_max_obj.name != sub_container_name:  # noqa
+                rt.Delete(prev_max_obj)
         rt.MergeMaxFile(path, rt.Name("deleteOldDups"))
 
         current_max_objects = rt.getLastMergedNodes()
         current_max_object_names = [obj.name for obj
                                     in current_max_objects]
-        for name in current_max_object_names:
-            idx = rt.findItem(prev_max_object_names, name)
-            if idx:
-                prev_max_object_names = rt.deleteItem(
-                    prev_max_object_names, idx)
-        for object_name in prev_max_object_names:
-            prev_max_object = rt.getNodeByName(object_name)
-            rt.Delete(prev_max_object)
-
+        sub_container = rt.getNodeByName(sub_container_name)
+        update_custom_attribute_data(sub_container, current_max_objects)
         for max_object in current_max_objects:
             max_object.Parent = node
-        for children in node.Children:
-            if rt.classOf(children) == rt.Container:
-                if children.name == param_container:
-                    update_custom_attribute_data(
-                        children, current_max_objects)
+        for max_obj, obj_name in zip(current_max_objects,
+                                     current_max_object_names):
+            max_obj.name = f"{namespace}:{obj_name}"
+            max_obj.pos = transform_data[
+                f"{max_obj.name}.transform"]
+            max_obj.scale = transform_data[
+                f"{max_obj.name}.scale"]
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])

@@ -6,12 +6,18 @@ from ayon_server.settings import BaseSettingsModel
 # Creator Plugins
 class CreatorModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
-    defaults: list[str] = Field(title="Default Products")
+    default_variants: list[str] = Field(
+        title="Default Products",
+        default_factory=list,
+    )
 
 
 class CreateArnoldAssModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
-    defaults: list[str] = Field(title="Default Products")
+    default_variants: list[str] = Field(
+        title="Default Products",
+        default_factory=list,
+    )
     ext: str = Field(Title="Extension")
 
 
@@ -54,49 +60,49 @@ class CreatePluginsModel(BaseSettingsModel):
 DEFAULT_HOUDINI_CREATE_SETTINGS = {
     "CreateArnoldAss": {
         "enabled": True,
-        "default_variants": [],
+        "default_variants": ["Main"],
         "ext": ".ass"
     },
     "CreateAlembicCamera": {
         "enabled": True,
-        "defaults": []
+        "default_variants": ["Main"]
     },
     "CreateCompositeSequence": {
         "enabled": True,
-        "defaults": []
+        "default_variants": ["Main"]
     },
     "CreatePointCache": {
         "enabled": True,
-        "defaults": []
+        "default_variants": ["Main"]
     },
     "CreateRedshiftROP": {
         "enabled": True,
-        "defaults": []
+        "default_variants": ["Main"]
     },
     "CreateRemotePublish": {
         "enabled": True,
-        "defaults": []
+        "default_variants": ["Main"]
     },
     "CreateVDBCache": {
         "enabled": True,
-        "defaults": []
+        "default_variants": ["Main"]
     },
     "CreateUSD": {
         "enabled": False,
-        "defaults": []
+        "default_variants": ["Main"]
     },
     "CreateUSDModel": {
         "enabled": False,
-        "defaults": []
+        "default_variants": ["Main"]
     },
     "USDCreateShadingWorkspace": {
         "enabled": False,
-        "defaults": []
+        "default_variants": ["Main"]
     },
     "CreateUSDRender": {
         "enabled": False,
-        "defaults": []
-    }
+        "default_variants": ["Main"]
+    },
 }
 
 
@@ -114,7 +120,7 @@ class ValidateWorkfilePathsModel(BaseSettingsModel):
     )
 
 
-class ValidateContainersModel(BaseSettingsModel):
+class BasicValidateModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
     active: bool = Field(title="Active")
@@ -124,8 +130,11 @@ class PublishPluginsModel(BaseSettingsModel):
     ValidateWorkfilePaths: ValidateWorkfilePathsModel = Field(
         default_factory=ValidateWorkfilePathsModel,
         title="Validate workfile paths settings.")
-    ValidateContainers: ValidateContainersModel = Field(
-        default_factory=ValidateContainersModel,
+    ValidateReviewColorspace: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Review Colorspace.")
+    ValidateContainers: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
         title="Validate Latest Containers.")
 
 
@@ -141,6 +150,11 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
             "$HIP",
             "$JOB"
         ]
+    },
+    "ValidateReviewColorspace": {
+        "enabled": True,
+        "optional": True,
+        "active": True
     },
     "ValidateContainers": {
         "enabled": True,

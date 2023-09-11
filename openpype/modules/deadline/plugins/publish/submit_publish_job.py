@@ -3,7 +3,7 @@
 import os
 import json
 import re
-from copy import copy, deepcopy
+from copy import deepcopy
 import requests
 import clique
 
@@ -16,6 +16,7 @@ from openpype.client import (
 from openpype.pipeline import publish, legacy_io
 from openpype.lib import EnumDef, is_running_from_build
 from openpype.tests.lib import is_in_tests
+from openpype.pipeline.version_start import get_versioning_start
 
 from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
@@ -97,7 +98,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
              "celaction", "aftereffects", "harmony"]
 
-    families = ["render.farm", "prerender.farm",
+    families = ["render.farm", "render.frames_farm",
+                "prerender.farm", "prerender.frames_farm",
                 "renderlayer", "imagesequence",
                 "vrayscene", "maxrender",
                 "arnold_rop", "mantra_rop",
@@ -120,7 +122,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_SG_USER"
+        "OPENPYPE_SG_USER",
+        "KITSU_LOGIN",
+        "KITSU_PWD"
     ]
 
     # custom deadline attributes
@@ -210,7 +214,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             environment["OPENPYPE_PUBLISH_JOB"] = "1"
             environment["OPENPYPE_RENDER_JOB"] = "0"
             environment["OPENPYPE_REMOTE_PUBLISH"] = "0"
-            deadline_plugin = "Openpype"
+            deadline_plugin = "OpenPype"
             # Add OpenPype version if we are running from build.
             if is_running_from_build():
                 self.environ_keys.append("OPENPYPE_VERSION")
@@ -298,7 +302,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 payload["JobInfo"]["JobDependency{}".format(
                     job_index)] = assembly_id  # noqa: E501
                 job_index += 1
-        else:
+        elif job.get("_id"):
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
         for index, (key_, value_) in enumerate(environment.items()):
@@ -313,7 +317,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # remove secondary pool
         payload["JobInfo"].pop("SecondaryPool", None)
 
-        self.log.info("Submitting Deadline job ...")
+        self.log.debug("Submitting Deadline publish job ...")
 
         url = "{}/api/jobs".format(self.deadline_url)
         response = requests.post(url, json=payload, timeout=10)
@@ -450,7 +454,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             import getpass
 
             render_job = {}
-            self.log.info("Faking job data ...")
+            self.log.debug("Faking job data ...")
             render_job["Props"] = {}
             # Render job doesn't exist because we do not have prior submission.
             # We still use data from it so lets fake it.
@@ -474,6 +478,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
 
+        deadline_publish_job_id = None
         if submission_type == "deadline":
             # get default deadline webservice url from deadline module
             self.deadline_url = instance.context.data["defaultDeadline"]
@@ -566,7 +571,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if version:
                 version = int(version["name"]) + 1
             else:
-                version = 1
+                version = get_versioning_start(
+                    project_name,
+                    template_data["app"],
+                    task_name=template_data["task"]["name"],
+                    task_type=template_data["task"]["type"],
+                    family="render",
+                    subset=subset,
+                    project_settings=context.data["project_settings"]
+                )
 
         host_name = context.data["hostName"]
         task_info = template_data.get("task") or {}

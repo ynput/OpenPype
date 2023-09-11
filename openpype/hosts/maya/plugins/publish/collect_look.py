@@ -356,8 +356,9 @@ class CollectLook(pyblish.api.InstancePlugin):
             # Thus the data will be limited to only what we need.
             self.log.debug("obj_set {}".format(sets[obj_set]))
             if not sets[obj_set]["members"]:
-                self.log.info(
-                    "Removing redundant set information: {}".format(obj_set))
+                self.log.debug(
+                    "Removing redundant set information: {}".format(obj_set)
+                )
                 sets.pop(obj_set, None)
 
         self.log.debug("Gathering attribute changes to instance members..")
@@ -396,9 +397,9 @@ class CollectLook(pyblish.api.InstancePlugin):
                     if con:
                         materials.extend(con)
 
-            self.log.info("Found materials:\n{}".format(materials))
+            self.log.debug("Found materials:\n{}".format(materials))
 
-            self.log.info("Found the following sets:\n{}".format(look_sets))
+            self.log.debug("Found the following sets:\n{}".format(look_sets))
             # Get the entire node chain of the look sets
             # history = cmds.listHistory(look_sets)
             history = []
@@ -456,7 +457,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         instance.extend(shader for shader in look_sets if shader
                         not in instance_lookup)
 
-        self.log.info("Collected look for %s" % instance)
+        self.log.debug("Collected look for %s" % instance)
 
     def collect_sets(self, instance):
         """Collect all objectSets which are of importance for publishing
@@ -593,7 +594,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             if attribute == "fileTextureName":
                 computed_attribute = node + ".computedFileTextureNamePattern"
 
-            self.log.info("  - file source: {}".format(source))
+            self.log.debug("  - file source: {}".format(source))
             color_space_attr = "{}.colorSpace".format(node)
             try:
                 color_space = cmds.getAttr(color_space_attr)
@@ -621,7 +622,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                                     dependNode=True)
                 )
             if not source and cmds.nodeType(node) in pxr_nodes:
-                self.log.info("Renderman: source is empty, skipping...")
+                self.log.debug("Renderman: source is empty, skipping...")
                 continue
             # We replace backslashes with forward slashes because V-Ray
             # can't handle the UDIM files with the backslashes in the
@@ -630,14 +631,14 @@ class CollectLook(pyblish.api.InstancePlugin):
 
             files = get_file_node_files(node)
             if len(files) == 0:
-                self.log.error("No valid files found from node `%s`" % node)
+                self.log.debug("No valid files found from node `%s`" % node)
 
-            self.log.info("collection of resource done:")
-            self.log.info("  - node: {}".format(node))
-            self.log.info("  - attribute: {}".format(attribute))
-            self.log.info("  - source: {}".format(source))
-            self.log.info("  - file: {}".format(files))
-            self.log.info("  - color space: {}".format(color_space))
+            self.log.debug("collection of resource done:")
+            self.log.debug("  - node: {}".format(node))
+            self.log.debug("  - attribute: {}".format(attribute))
+            self.log.debug("  - source: {}".format(source))
+            self.log.debug("  - file: {}".format(files))
+            self.log.debug("  - color space: {}".format(color_space))
 
             # Define the resource
             yield {

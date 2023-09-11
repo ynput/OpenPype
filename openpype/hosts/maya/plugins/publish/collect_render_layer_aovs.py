@@ -37,7 +37,7 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
 
         # Get renderer
         renderer = instance.data["renderer"]
-        self.log.info("Renderer found: {}".format(renderer))
+        self.log.debug("Renderer found: {}".format(renderer))
 
         rp_node_types = {"vray": ["VRayRenderElement", "VRayRenderElementSet"],
                          "arnold": ["aiAOV"],
@@ -66,8 +66,8 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
 
             result.append(render_pass)
 
-        self.log.info("Found {} render elements / AOVs for "
-                      "'{}'".format(len(result), instance.data["subset"]))
+        self.log.debug("Found {} render elements / AOVs for "
+                       "'{}'".format(len(result), instance.data["subset"]))
 
         instance.data["renderPasses"] = result
 

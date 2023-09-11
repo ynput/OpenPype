@@ -125,7 +125,7 @@ class ValidateModelName(pyblish.api.InstancePlugin,
         r = re.compile(regex)
 
         for obj in filtered:
-            cls.log.info("testing: {}".format(obj))
+            cls.log.debug("testing: {}".format(obj))
             m = r.match(obj)
             if m is None:
                 cls.log.error("invalid name on: {}".format(obj))

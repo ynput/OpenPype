@@ -37,7 +37,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
     )
 
     @classmethod
-    def apply_settings(cls, project_settings, system_settings):
+    def apply_settings(cls, project_settings):
         """Apply project settings to creator"""
         settings = (
             project_settings["maya"]["publish"]["ValidateMayaUnits"]

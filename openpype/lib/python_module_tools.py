@@ -270,8 +270,8 @@ def is_func_signature_supported(func, *args, **kwargs):
 
     Args:
         func (function): A function where the signature should be tested.
-        *args (tuple[Any]): Positional arguments for function signature.
-        **kwargs (dict[str, Any]): Keyword arguments for function signature.
+        *args (Any): Positional arguments for function signature.
+        **kwargs (Any): Keyword arguments for function signature.
 
     Returns:
         bool: Function can pass in arguments.

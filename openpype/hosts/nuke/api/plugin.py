@@ -327,6 +327,7 @@ class NukeWriteCreator(NukeCreator):
             "frames": "Use existing frames"
         }
         if ("farm_rendering" in self.instance_attributes):
+            rendering_targets["frames_farm"] = "Use existing frames - farm"
             rendering_targets["farm"] = "Farm rendering"
 
         return EnumDef(
@@ -378,11 +379,7 @@ class NukeWriteCreator(NukeCreator):
                 sys.exc_info()[2]
             )
 
-    def apply_settings(
-        self,
-        project_settings,
-        system_settings
-    ):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings

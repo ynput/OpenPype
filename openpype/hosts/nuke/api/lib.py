@@ -2041,6 +2041,7 @@ class WorkfileSettings(object):
         )
 
         workfile_settings = imageio_host["workfile"]
+        viewer_process_settings = imageio_host["viewer"]["viewerProcess"]
 
         if not config_data:
             # TODO: backward compatibility for old projects - remove later
@@ -2076,13 +2077,29 @@ class WorkfileSettings(object):
                         str(workfile_settings["OCIO_config"]))
 
         else:
-            # set values to root
+            # OCIO config path is defined from prelaunch hook
             self._root_node["colorManagement"].setValue("OCIO")
+
+            # print previous settings in case some were found in workfile
+            residual_path = self._root_node["customOCIOConfigPath"].value()
+            if residual_path:
+                log.info("Residual OCIO config path found: `{}`".format(
+                    residual_path
+                ))
 
         # we dont need the key anymore
         workfile_settings.pop("customOCIOConfigPath", None)
         workfile_settings.pop("colorManagement", None)
         workfile_settings.pop("OCIO_config", None)
+
+        # get monitor lut from settings respecting Nuke version differences
+        monitor_lut = workfile_settings.pop("monitorLut", None)
+        monitor_lut_data = self._get_monitor_settings(
+            viewer_process_settings, monitor_lut)
+
+        # set monitor related knobs luts (MonitorOut, Thumbnails)
+        for knob, value_ in monitor_lut_data.items():
+            workfile_settings[knob] = value_
 
         # then set the rest
         for knob, value_ in workfile_settings.items():
@@ -2100,9 +2117,70 @@ class WorkfileSettings(object):
 
         # set ocio config path
         if config_data:
-            current_ocio_path = os.getenv("OCIO")
-            if current_ocio_path != config_data["path"]:
-                message = """
+            config_path = config_data["path"].replace("\\", "/")
+            log.info("OCIO config path found: `{}`".format(
+                config_path))
+
+            # check if there's a mismatch between environment and settings
+            correct_settings = self._is_settings_matching_environment(
+                config_data)
+
+            # if there's no mismatch between environment and settings
+            if correct_settings:
+                self._set_ocio_config_path_to_workfile(config_data)
+
+    def _get_monitor_settings(self, viewer_lut, monitor_lut):
+        """ Get monitor settings from viewer and monitor lut
+
+        Args:
+            viewer_lut (str): viewer lut string
+            monitor_lut (str): monitor lut string
+
+        Returns:
+            dict: monitor settings
+        """
+        output_data = {}
+        m_display, m_viewer = get_viewer_config_from_string(monitor_lut)
+        v_display, v_viewer = get_viewer_config_from_string(viewer_lut)
+
+        # set monitor lut differently for nuke version 14
+        if nuke.NUKE_VERSION_MAJOR >= 14:
+            output_data["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            output_data["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=False)
+
+        if nuke.NUKE_VERSION_MAJOR == 13:
+            output_data["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            output_data["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=True)
+        if nuke.NUKE_VERSION_MAJOR <= 12:
+            output_data["monitorLut"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=True)
+
+        return output_data
+
+    def _is_settings_matching_environment(self, config_data):
+        """ Check if OCIO config path is different from environment
+
+        Args:
+            config_data (dict): OCIO config data from settings
+
+        Returns:
+            bool: True if settings are matching environment, False otherwise
+        """
+        current_ocio_path = os.environ["OCIO"]
+        settings_ocio_path = config_data["path"]
+
+        # normalize all paths to forward slashes
+        current_ocio_path = current_ocio_path.replace("\\", "/")
+        settings_ocio_path = settings_ocio_path.replace("\\", "/")
+
+        if current_ocio_path != settings_ocio_path:
+            message = """
 It seems like there's a mismatch between the OCIO config path set in your Nuke
 settings and the actual path set in your OCIO environment.
 
@@ -2120,12 +2198,119 @@ Please note the paths for your reference:
 
 Reopening Nuke should synchronize these paths and resolve any discrepancies.
 """
-                nuke.message(
-                    message.format(
-                        env_path=current_ocio_path,
-                        settings_path=config_data["path"]
-                    )
+            nuke.message(
+                message.format(
+                    env_path=current_ocio_path,
+                    settings_path=settings_ocio_path
                 )
+            )
+            return False
+
+        return True
+
+    def _set_ocio_config_path_to_workfile(self, config_data):
+        """ Set OCIO config path to workfile
+
+        Path set into nuke workfile. It is trying to replace path with
+        environment variable if possible. If not, it will set it as it is.
+        It also saves the script to apply the change, but only if it's not
+        empty Untitled script.
+
+        Args:
+            config_data (dict): OCIO config data from settings
+
+        """
+        # replace path with env var if possible
+        ocio_path = self._replace_ocio_path_with_env_var(config_data)
+        ocio_path = ocio_path.replace("\\", "/")
+
+        log.info("Setting OCIO config path to: `{}`".format(
+            ocio_path))
+
+        self._root_node["customOCIOConfigPath"].setValue(
+            ocio_path
+        )
+        self._root_node["OCIO_config"].setValue("custom")
+
+        # only save script if it's not empty
+        if self._root_node["name"].value() != "":
+            log.info("Saving script to apply OCIO config path change.")
+            nuke.scriptSave()
+
+    def _get_included_vars(self, config_template):
+        """ Get all environment variables included in template
+
+        Args:
+            config_template (str): OCIO config template from settings
+
+        Returns:
+            list: list of environment variables included in template
+        """
+        # resolve all environments for whitelist variables
+        included_vars = [
+            "BUILTIN_OCIO_ROOT",
+        ]
+
+        # include all project root related env vars
+        for env_var in os.environ:
+            if env_var.startswith("OPENPYPE_PROJECT_ROOT_"):
+                included_vars.append(env_var)
+
+        # use regex to find env var in template with format {ENV_VAR}
+        # this way we make sure only template used env vars are included
+        env_var_regex = r"\{([A-Z0-9_]+)\}"
+        env_var = re.findall(env_var_regex, config_template)
+        if env_var:
+            included_vars.append(env_var[0])
+
+        return included_vars
+
+    def _replace_ocio_path_with_env_var(self, config_data):
+        """ Replace OCIO config path with environment variable
+
+        Environment variable is added as TCL expression to path. TCL expression
+        is also replacing backward slashes found in path for windows
+        formatted values.
+
+        Args:
+            config_data (str): OCIO config dict from settings
+
+        Returns:
+            str: OCIO config path with environment variable TCL expression
+        """
+        config_path = config_data["path"].replace("\\", "/")
+        config_template = config_data["template"]
+
+        included_vars = self._get_included_vars(config_template)
+
+        # make sure we return original path if no env var is included
+        new_path = config_path
+
+        for env_var in included_vars:
+            env_path = os.getenv(env_var)
+            if not env_path:
+                continue
+
+            # it has to be directory current process can see
+            if not os.path.isdir(env_path):
+                continue
+
+            # make sure paths are in same format
+            env_path = env_path.replace("\\", "/")
+            path = config_path.replace("\\", "/")
+
+            # check if env_path is in path and replace to first found positive
+            if env_path in path:
+                # with regsub we make sure path format of slashes is correct
+                resub_expr = (
+                    "[regsub -all {{\\\\}} [getenv {}] \"/\"]").format(env_var)
+
+                new_path = path.replace(
+                    env_path, resub_expr
+                )
+                break
+
+        return new_path
 
     def set_writes_colorspace(self):
         ''' Adds correct colorspace to write node dict
@@ -2239,7 +2424,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
                             knobs["to"]))
 
     def set_colorspace(self):
-        ''' Setting colorpace following presets
+        ''' Setting colorspace following presets
         '''
         # get imageio
         nuke_colorspace = get_nuke_imageio_settings()
@@ -2247,17 +2432,16 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         log.info("Setting colorspace to workfile...")
         try:
             self.set_root_colorspace(nuke_colorspace)
-        except AttributeError:
-            msg = "set_colorspace(): missing `workfile` settings in template"
+        except AttributeError as _error:
+            msg = "Set Colorspace to workfile error: {}".format(_error)
             nuke.message(msg)
 
         log.info("Setting colorspace to viewers...")
         try:
             self.set_viewers_colorspace(nuke_colorspace["viewer"])
-        except AttributeError:
-            msg = "set_colorspace(): missing `viewer` settings in template"
+        except AttributeError as _error:
+            msg = "Set Colorspace to viewer error: {}".format(_error)
             nuke.message(msg)
-            log.error(msg)
 
         log.info("Setting colorspace to write nodes...")
         try:
@@ -3182,11 +3366,11 @@ def get_viewer_config_from_string(input_string):
         display = split[0]
     elif "(" in viewer:
         pattern = r"([\w\d\s\.\-]+).*[(](.*)[)]"
-        result = re.findall(pattern, viewer)
+        result_ = re.findall(pattern, viewer)
         try:
-            result = result.pop()
-            display = str(result[1]).rstrip()
-            viewer = str(result[0]).rstrip()
+            result_ = result_.pop()
+            display = str(result_[1]).rstrip()
+            viewer = str(result_[0]).rstrip()
         except IndexError:
             raise IndexError((
                 "Viewer Input string is not correct. "
@@ -3194,3 +3378,22 @@ def get_viewer_config_from_string(input_string):
             ).format(input_string))
 
     return (display, viewer)
+
+
+def create_viewer_profile_string(viewer, display=None, path_like=False):
+    """Convert viewer and display to string
+
+    Args:
+        viewer (str): viewer name
+        display (Optional[str]): display name
+        path_like (Optional[bool]): if True, return path like string
+
+    Returns:
+        str: viewer config string
+    """
+    if not display:
+        return viewer
+
+    if path_like:
+        return "{}/{}".format(display, viewer)
+    return "{} ({})".format(viewer, display)

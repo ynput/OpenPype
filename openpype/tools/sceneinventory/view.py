@@ -55,7 +55,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         manager = ModulesManager()
         sync_server = manager.modules_by_name.get("sync_server")
-        sync_enabled = sync_server is not None and self.sync_server.enabled
+        sync_enabled = sync_server is not None and sync_server.enabled
 
         self.sync_server = sync_server
         self.sync_enabled = sync_enabled
