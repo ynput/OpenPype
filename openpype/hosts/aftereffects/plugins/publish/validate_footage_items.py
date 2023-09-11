@@ -13,8 +13,7 @@ from openpype.pipeline import (
 from openpype.hosts.aftereffects.api import get_stub
 
 
-class ValidateFootageItems(OptionalPyblishPluginMixin,
-                           pyblish.api.InstancePlugin):
+class ValidateFootageItems(pyblish.api.InstancePlugin):
     """
         Validates if FootageItems contained in composition exist.
 
