@@ -124,8 +124,6 @@ def _convert_applications_system_settings(
 
     # Applications settings
     ayon_apps = addon_settings["applications"]
-    if "adsk_3dsmax" in ayon_apps:
-        ayon_apps["3dsmax"] = ayon_apps.pop("adsk_3dsmax")
 
     additional_apps = ayon_apps.pop("additional_apps")
     applications = _convert_applications_groups(
@@ -302,6 +300,10 @@ def convert_system_settings(ayon_settings, default_settings, addon_versions):
 
     if "core" in ayon_settings:
         _convert_general(ayon_settings, output, default_settings)
+
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
 
     for key, value in default_settings.items():
         if key not in output:
@@ -601,11 +603,34 @@ def _convert_maya_project_settings(ayon_settings, output):
     reference_loader = ayon_maya_load["reference_loader"]
     reference_loader["namespace"] = (
         reference_loader["namespace"]
-        .replace("{folder[name]}", "{asset_name}")
         .replace("{product[name]}", "{subset}")
     )
 
+    if ayon_maya_load.get("import_loader"):
+        import_loader = ayon_maya_load["import_loader"]
+        import_loader["namespace"] = (
+            import_loader["namespace"]
+            .replace("{product[name]}", "{subset}")
+        )
+
     output["maya"] = ayon_maya
+
+
+def _convert_3dsmax_project_settings(ayon_settings, output):
+    if "max" not in ayon_settings:
+        return
+
+    ayon_max = ayon_settings["max"]
+    _convert_host_imageio(ayon_max)
+    if "PointCloud" in ayon_max:
+        point_cloud_attribute = ayon_max["PointCloud"]["attribute"]
+        new_point_cloud_attribute = {
+            item["name"]: item["value"]
+            for item in point_cloud_attribute
+        }
+        ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
+
+    output["max"] = ayon_max
 
 
 def _convert_nuke_knobs(knobs):
@@ -646,6 +671,9 @@ def _convert_nuke_knobs(knobs):
 
         elif knob_type == "vector_3d":
             value = [value["x"], value["y"], value["z"]]
+
+        elif knob_type == "box":
+            value = [value["x"], value["y"], value["r"], value["t"]]
 
         new_knob[value_key] = value
     return new_knobs
@@ -725,6 +753,17 @@ def _convert_nuke_project_settings(ayon_settings, output):
         if "product_names" in item_filter:
             item_filter["subsets"] = item_filter.pop("product_names")
             item_filter["families"] = item_filter.pop("product_types")
+
+        reformat_nodes_config = item.get("reformat_nodes_config") or {}
+        reposition_nodes = reformat_nodes_config.get(
+            "reposition_nodes") or []
+
+        for reposition_node in reposition_nodes:
+            if "knobs" not in reposition_node:
+                continue
+            reposition_node["knobs"] = _convert_nuke_knobs(
+                reposition_node["knobs"]
+            )
 
         name = item.pop("name")
         new_review_data_outputs[name] = item
@@ -1250,6 +1289,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_flame_project_settings(ayon_settings, output)
     _convert_fusion_project_settings(ayon_settings, output)
     _convert_maya_project_settings(ayon_settings, output)
+    _convert_3dsmax_project_settings(ayon_settings, output)
     _convert_nuke_project_settings(ayon_settings, output)
     _convert_hiero_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)
@@ -1264,6 +1304,10 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_slack_project_settings(ayon_settings, output)
 
     _convert_global_project_settings(ayon_settings, output, default_settings)
+
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
 
     for key, value in default_settings.items():
         if key not in output:

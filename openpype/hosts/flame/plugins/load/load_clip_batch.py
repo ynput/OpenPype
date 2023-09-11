@@ -45,7 +45,6 @@ class LoadClipBatch(opfapi.ClipLoader):
         self.batch = options.get("batch") or flame.batch
 
         # load clip to timeline and get main variables
-        namespace = namespace
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)

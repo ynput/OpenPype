@@ -78,3 +78,21 @@ Index=4
 Label=Harmony 20 Render Executable
 Description=The path to the Harmony Render executable file used for rendering. Enter alternative paths on separate lines.
 Default=c:\Program Files (x86)\Toon Boom Animation\Toon Boom Harmony 20 Premium\win64\bin\HarmonyPremium.exe;/Applications/Toon Boom Harmony 20 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium;/usr/local/ToonBoomAnimation/harmonyPremium_20/lnx86_64/bin/HarmonyPremium
+
+[Harmony_RenderExecutable_21]
+Type=multilinemultifilename
+Category=Render Executables
+CategoryOrder=0
+Index=4
+Label=Harmony 21 Render Executable
+Description=The path to the Harmony Render executable file used for rendering. Enter alternative paths on separate lines.
+Default=c:\Program Files (x86)\Toon Boom Animation\Toon Boom Harmony 21 Premium\win64\bin\HarmonyPremium.exe;/Applications/Toon Boom Harmony 21 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium;/usr/local/ToonBoomAnimation/harmonyPremium_21/lnx86_64/bin/HarmonyPremium
+
+[Harmony_RenderExecutable_22]
+Type=multilinemultifilename
+Category=Render Executables
+CategoryOrder=0
+Index=4
+Label=Harmony 22 Render Executable
+Description=The path to the Harmony Render executable file used for rendering. Enter alternative paths on separate lines.
+Default=c:\Program Files (x86)\Toon Boom Animation\Toon Boom Harmony 22 Premium\win64\bin\HarmonyPremium.exe;/Applications/Toon Boom Harmony 22 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium;/usr/local/ToonBoomAnimation/harmonyPremium_22/lnx86_64/bin/HarmonyPremium

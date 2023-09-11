@@ -77,7 +77,7 @@ class ExtractXgen(publish.Extractor):
             xgenm.exportPalette(
                 instance.data["xgmPalette"].replace("|", ""), temp_xgen_path
             )
-            self.log.info("Extracted to {}".format(temp_xgen_path))
+            self.log.debug("Extracted to {}".format(temp_xgen_path))
 
             # Import xgen onto the duplicate.
             with maintained_selection():
@@ -118,7 +118,7 @@ class ExtractXgen(publish.Extractor):
                         expressions=True
                     )
 
-            self.log.info("Extracted to {}".format(maya_filepath))
+            self.log.debug("Extracted to {}".format(maya_filepath))
 
         if os.path.exists(temp_xgen_path):
             os.remove(temp_xgen_path)

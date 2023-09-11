@@ -15,6 +15,7 @@ from openpype.lib import (
     get_ffmpeg_format_args,
 )
 from openpype.pipeline import publish
+from openpype.pipeline.publish import KnownPublishError
 
 
 class ExtractReviewSlate(publish.Extractor):
@@ -46,7 +47,7 @@ class ExtractReviewSlate(publish.Extractor):
                 "*": inst_data["slateFrame"]
             }
 
-        self.log.info("_ slates_data: {}".format(pformat(slates_data)))
+        self.log.debug("_ slates_data: {}".format(pformat(slates_data)))
 
         if "reviewToWidth" in inst_data:
             use_legacy_code = True
@@ -76,7 +77,7 @@ class ExtractReviewSlate(publish.Extractor):
             )
             # get slate data
             slate_path = self._get_slate_path(input_file, slates_data)
-            self.log.info("_ slate_path: {}".format(slate_path))
+            self.log.debug("_ slate_path: {}".format(slate_path))
 
             slate_width, slate_height = self._get_slates_resolution(slate_path)
 
@@ -85,14 +86,18 @@ class ExtractReviewSlate(publish.Extractor):
                 input_width,
                 input_height,
                 input_timecode,
-                input_frame_rate
+                input_frame_rate,
+                input_pixel_aspect
             ) = self._get_video_metadata(streams)
+            if input_pixel_aspect:
+                pixel_aspect = input_pixel_aspect
 
             # Raise exception of any stream didn't define input resolution
             if input_width is None:
-                raise AssertionError((
+                raise KnownPublishError(
                     "FFprobe couldn't read resolution from input file: \"{}\""
-                ).format(input_path))
+                    .format(input_path)
+                )
 
             (
                 audio_codec,
@@ -419,6 +424,7 @@ class ExtractReviewSlate(publish.Extractor):
         input_width = None
         input_height = None
         input_frame_rate = None
+        input_pixel_aspect = None
         for stream in streams:
             if stream.get("codec_type") != "video":
                 continue
@@ -436,6 +442,16 @@ class ExtractReviewSlate(publish.Extractor):
             input_width = width
             input_height = height
 
+            input_pixel_aspect = stream.get("sample_aspect_ratio")
+            if input_pixel_aspect is not None:
+                try:
+                    input_pixel_aspect = float(
+                        eval(str(input_pixel_aspect).replace(':', '/')))
+                except Exception:
+                    self.log.debug(
+                        "__Converting pixel aspect to float failed: {}".format(
+                            input_pixel_aspect))
+
             tags = stream.get("tags") or {}
             input_timecode = tags.get("timecode") or ""
 
@@ -446,7 +462,8 @@ class ExtractReviewSlate(publish.Extractor):
             input_width,
             input_height,
             input_timecode,
-            input_frame_rate
+            input_frame_rate,
+            input_pixel_aspect
         )
 
     def _get_audio_metadata(self, streams):

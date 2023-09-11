@@ -20,7 +20,7 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
     label = "Collect Auto Review"
     hosts = ["photoshop"]
     order = pyblish.api.CollectorOrder + 0.2
-    targets = ["remotepublish"]
+    targets = ["automated"]
 
     publish = True
 

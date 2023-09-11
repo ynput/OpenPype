@@ -12,7 +12,6 @@ class ImportReference(InventoryAction):
     color = "#d8d8d8"
 
     def process(self, containers):
-        references = cmds.ls(type="reference")
         for container in containers:
             if container["loader"] != "ReferenceLoader":
                 print("Not a reference, skipping")
