@@ -28,23 +28,15 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        invalid = self.get_invalid_categorized(instance)
+        invalid = self.get_invalid(instance)
         if invalid:
             raise PublishValidationError(
                 "Output node(s) are incorrect",
                 title="Invalid output node(s)"
             )
+
     @classmethod
     def get_invalid(cls, instance):
-        out = cls.get_invalid_categorized(instance).values()
-        invalid = []
-        for row in out:
-            invalid += row
-        return invalid
-
-
-    @classmethod
-    def get_invalid_categorized(cls, instance):
         output_node = instance.data.get("output_node")
 
         # Check if The Output Node Path is set and
@@ -58,27 +50,47 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
 
             return [rop_node]
 
-        # Check if the Output Node is a Sop or Obj node
-        #  also, make a dictionary of all geo obj nodes
-        #  and their sop output node.
-        all_outputs = {}
-        # if user selects an ObjSubnet or an ObjNetwork
+        # Check if the Output Node is a Sop or an Obj node
+        #  also, list all sop output nodes inside as well as
+        #  invalid empty nodes.
+        all_out_sops = []
+        invalid = defaultdict(list)
+
+        # if output_node is an ObjSubnet or an ObjNetwork
         if output_node.childTypeCategory() == hou.objNodeTypeCategory():
-            all_outputs.update({output_node : {}})
             for node in output_node.allSubChildren():
                 if node.type().name() == "geo":
                     out = get_obj_node_output(node)
-                    all_outputs[output_node].update({node: out})
+                    if out:
+                        all_out_sops.append(out)
+                    else:
+                        invalid["empty_objs"].append(node)
+                        cls.log.error(
+                            "Geo Obj Node '%s' is empty!"
+                            , node.path()
+                        )
+            if not all_out_sops:
+                invalid["empty_objs"].append(output_node)
+                cls.log.error(
+                    "Output Node '%s' is empty!"
+                    , node.path()
+                )
 
-        # elif user selects a geometry ObjNode
+        # elif output_node is an ObjNode
         elif output_node.type().name() == "geo":
             out = get_obj_node_output(output_node)
-            all_outputs.update({output_node: out})
+            if out:
+                all_out_sops.append(out)
+            else:
+                invalid["empty_objs"].append(node)
+                cls.log.error(
+                    "Output Node '%s' is empty!"
+                    , node.path()
+                )
 
-        # elif user selects a SopNode
+        # elif output_node is a SopNode
         elif output_node.type().category().name() == "Sop":
-            # expetional case because output_node is not an obj node
-            all_outputs.update({output_node: output_node})
+                all_out_sops.append(output_node)
 
         # Then it's wrong node type
         else:
@@ -90,19 +102,15 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
             )
             return [output_node]
 
-        # Check if geo obj node have geometry.
-        #  return geo obj node if their sop output node
-        valid = {}
-        invalid = defaultdict(list)
-        cls.filter_inner_dict(all_outputs, valid, invalid)
-
+        # Check if all output sop nodes have geometry
+        #  and don't contain invalid prims
         invalid_prim_types = ["VDB", "Volume"]
-        for obj_node, sop_node in valid.items():
+        for sop_node in all_out_sops:
             # Empty Geometry test
             if not hasattr(sop_node, "geometry"):
                 invalid["empty_geometry"].append(sop_node)
                 cls.log.error(
-                    "Sop node '%s' includes no geometry."
+                    "Sop node '%s' doesn't include any prims."
                     , sop_node.path()
                 )
                 continue
@@ -112,7 +120,7 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
             if len(geo.iterPrims()) == 0:
                 invalid["empty_geometry"].append(sop_node)
                 cls.log.error(
-                    "Sop node '%s' includes no geometry."
+                    "Sop node '%s' doesn't include any prims."
                     , sop_node.path()
                 )
                 continue
@@ -127,21 +135,4 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
                     )
 
         if invalid:
-            return invalid
-
-    @classmethod
-    def filter_inner_dict(cls, d: dict, valid: dict, invalid: dict):
-        """Parse the dictionary and filter items to valid and invalid.
-
-        Invalid items have empty values like {}, None
-        Valid dictionary is a flattened dictionary that includes
-          the valid inner items.
-        """
-
-        for k, v in d.items():
-            if not v:
-                invalid["empty_objs"].append(k)
-            elif isinstance(v, dict):
-                cls.filter_inner_dict(v, valid, invalid)
-            else:
-                valid.update({k:v})
+            return [output_node]
