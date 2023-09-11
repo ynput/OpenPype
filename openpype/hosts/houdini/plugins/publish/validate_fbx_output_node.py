@@ -17,6 +17,7 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
         - The Output Node Path refers to an existing object.
         - The Output Node is a Sop or Obj node.
         - The Output Node has geometry data.
+        - The Output Node doesn't include invalid primitive types.
     """
 
     order = pyblish.api.ValidatorOrder
