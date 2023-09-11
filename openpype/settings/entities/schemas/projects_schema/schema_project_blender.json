@@ -140,7 +140,7 @@
                                 "label": "Type",
                                 "type": "enum",
                                 "multiselection": false,
-                                "defaults": "color",
+                                "default": "COLOR",
                                 "enum_items": [
                                     {"COLOR": "Color"},
                                     {"VALUE": "Value"}

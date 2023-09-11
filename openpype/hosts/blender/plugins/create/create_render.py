@@ -3,13 +3,11 @@ import os
 
 import bpy
 
+from openpype.settings import get_project_settings
 from openpype.pipeline import (
     get_current_project_name,
+    get_current_task_name,
 )
-from openpype.settings import (
-    get_project_settings,
-)
-from openpype.pipeline import get_current_task_name
 from openpype.hosts.blender.api import plugin, lib
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
@@ -76,9 +74,7 @@ class CreateRenderlayer(plugin.Creator):
             instance (pyblish.api.Instance): The instance to publish.
             ext (str): The image format to render.
         """
-        output_file = os.path.join(output_path, name)
-
-        render_product = f"{output_file}.####"
+        render_product = f"{os.path.join(output_path, name)}.####"
         render_product = render_product.replace("\\", "/")
 
         return render_product

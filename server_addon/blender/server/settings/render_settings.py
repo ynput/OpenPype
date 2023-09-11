@@ -57,7 +57,7 @@ class CustomPassesModel(BaseSettingsModel):
 
     attribute: str = Field("", title="Attribute name")
     value: str = Field(
-        "Color",
+        "COLOR",
         title="Type",
         enum_resolver=custom_passes_types_enum
     )

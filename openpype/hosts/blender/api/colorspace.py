@@ -12,12 +12,12 @@ class LayerMetadata(object):
 
 @attr.s
 class RenderProduct(object):
-    """Getting Colorspace as
-    Specific Render Product Parameter for submitting
+    """
+    Getting Colorspace as Specific Render Product Parameter for submitting
     publish job.
     """
-    colorspace = attr.ib()                      # colorspace
-    view = attr.ib()
+    colorspace = attr.ib()  # colorspace
+    view = attr.ib()        # OCIO view transform
     productName = attr.ib(default=None)
 
 
