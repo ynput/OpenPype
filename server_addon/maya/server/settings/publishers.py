@@ -660,13 +660,29 @@ class PublishersModel(BaseSettingsModel):
         default_factory=BasicValidateModel,
         title="Validate Skeletal Mesh Top Node",
     )
+    ValidateSkeletonRigContents: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Skeleton Rig Contents"
+    )
+    ValidateSkeletonRigControllers: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Skeleton Rig Controllers"
+    )
     ValidateSkinclusterDeformerSet: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Skincluster Deformer Relationships",
     )
+    ValidateSkeletonRigOutputIds: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Skeleton Rig Output Ids"
+    )
     ValidateRigOutSetNodeIds: ValidateRigOutSetNodeIdsModel = Field(
         default_factory=ValidateRigOutSetNodeIdsModel,
         title="Validate Rig Out Set Node Ids",
+    )
+    ValidateSkeletonRigOutSetNodeIds: ValidateRigOutSetNodeIdsModel = Field(
+        default_factory=ValidateRigOutSetNodeIdsModel,
+        title="Validate Skeleton Rig Out Set Node Ids",
     )
     # Rig - END
     ValidateCameraAttributes: BasicValidateModel = Field(
@@ -1163,6 +1179,16 @@ DEFAULT_PUBLISH_SETTINGS = {
         "optional": False,
         "active": True
     },
+    "ValidateSkeletonRigContents": {
+        "enabled": False,
+        "optional": True,
+        "active": True
+    },
+    "ValidateSkeletonRigControllers": {
+        "enabled": False,
+        "optional": True,
+        "active": True
+    },
     "ValidateSkinclusterDeformerSet": {
         "enabled": True,
         "optional": False,
@@ -1172,6 +1198,16 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": False,
         "allow_history_only": False
+    },
+    "ValidateSkeletonRigOutSetNodeIds": {
+        "enabled": False,
+        "optional": False,
+        "allow_history_only": False
+    },
+    "ValidateSkeletonRigOutputIds": {
+        "enabled": False,
+        "optional": True,
+        "active": True
     },
     "ValidateCameraAttributes": {
         "enabled": False,

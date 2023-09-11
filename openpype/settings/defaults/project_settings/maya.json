@@ -1140,6 +1140,16 @@
             "optional": false,
             "active": true
         },
+        "ValidateSkeletonRigContents": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateSkeletonRigControllers": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateSkinclusterDeformerSet": {
             "enabled": true,
             "optional": false,
@@ -1149,6 +1159,16 @@
             "enabled": true,
             "optional": false,
             "allow_history_only": false
+        },
+        "ValidateSkeletonRigOutSetNodeIds": {
+            "enabled": false,
+            "optional": false,
+            "allow_history_only": false
+        },
+        "ValidateSkeletonRigOutputIds": {
+            "enabled": false,
+            "optional": true,
+            "active": true
         },
         "ValidateCameraAttributes": {
             "enabled": false,

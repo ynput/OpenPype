@@ -809,9 +809,47 @@
                             "key": "ValidateSkeletalMeshHierarchy",
                             "label": "Validate Skeletal Mesh Top Node"
                         },
-                         {
+                        {
+                            "key": "ValidateSkeletonRigContents",
+                            "label": "ValidateSkeleton Rig Contents"
+                        },
+                        {
+                            "key": "ValidateSkeletonRigControllers",
+                            "label": "Validate Skeleton Rig Controllers"
+                        },
+                        {
                             "key": "ValidateSkinclusterDeformerSet",
                             "label": "Validate Skincluster Deformer Relationships"
+                        },
+                        {
+                            "key": "ValidateSkeletonRigOutputIds",
+                            "label": "Validate Skeleton Rig Output Ids"
+                        }
+                    ]
+                },
+
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "ValidateRigOutSetNodeIds",
+                    "label": "Validate Rig Out Set Node Ids",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "allow_history_only",
+                            "label": "Allow history only"
                         }
                     ]
                 },
@@ -819,8 +857,8 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
-                    "key": "ValidateRigOutSetNodeIds",
-                    "label": "Validate Rig Out Set Node Ids",
+                    "key": "ValidateSkeletonRigOutSetNodeIds",
+                    "label": "Validate Skeleton Rig Out Set Node Ids",
                     "is_group": true,
                     "children": [
                         {
