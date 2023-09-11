@@ -19,7 +19,9 @@ class ValidateFootageItems(OptionalPyblishPluginMixin,
         Validates if FootageItems contained in composition exist.
 
     AE fails silently and doesn't render anything if footage item file is
-    missing. This validator tries to check existence of the files.
+    missing. This will result in nonresponsiveness of AE UI as it expects
+    reaction from user, but it will not provide dialog.
+    This validator tries to check existence of the files.
     It will not protect from missing frame in multiframes though
     (as AE api doesn't provide this information and it cannot be told how many
     frames should be there easily). Missing frame is replaced by placeholder.
