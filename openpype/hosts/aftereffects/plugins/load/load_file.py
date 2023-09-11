@@ -31,7 +31,7 @@ class FileLoader(api.AfterEffectsLoader):
 
         path = self.filepath_from_context(context)
 
-        if isinstance(context["representation"].get("files"), list):
+        if len(context["representation"]["files"]) > 1:
             import_options['sequence'] = True
 
         if not path:
