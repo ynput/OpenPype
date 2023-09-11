@@ -1,5 +1,6 @@
 from openpype.lib import Logger
 from openpype.lib.events import QueuedEventSystem
+from openpype.settings import get_project_settings
 from openpype.tools.ayon_utils.models import ProjectsModel, HierarchyModel
 
 from .abstract import AbstractLauncherFrontEnd, AbstractLauncherBackend
@@ -10,7 +11,6 @@ class BaseLauncherController(
     AbstractLauncherFrontEnd, AbstractLauncherBackend
 ):
     def __init__(self):
-        self._project_anatomy = {}
         self._project_settings = {}
         self._event_system = None
         self._log = None
@@ -66,7 +66,18 @@ class BaseLauncherController(
         return self._hierarchy_model.get_task_items(
             project_name, folder_id, sender)
 
+    # Project settings for applications actions
+    def get_project_settings(self, project_name):
+        if project_name in self._project_settings:
+            return self._project_settings[project_name]
+        settings = get_project_settings(project_name)
+        self._project_settings[project_name] = settings
+        return settings
+
     # Entity for backend
+    def get_project_entity(self, project_name):
+        return self._projects_model.get_project_entity(project_name)
+
     def get_folder_entity(self, project_name, folder_id):
         return self._hierarchy_model.get_folder_entity(
             project_name, folder_id)
@@ -101,6 +112,13 @@ class BaseLauncherController(
         return self._actions_model.get_action_items(
             project_name, folder_id, task_id)
 
+    def set_application_force_not_open_workfile(
+        self, project_name, folder_id, task_id, action_id, enabled
+    ):
+        self._actions_model.set_application_force_not_open_workfile(
+            project_name, folder_id, task_id, action_id, enabled
+        )
+
     def trigger_action(self, project_name, folder_id, task_id, identifier):
         self._actions_model.trigger_action(
             project_name, folder_id, task_id, identifier)
@@ -110,7 +128,6 @@ class BaseLauncherController(
         self._emit_event("controller.refresh.started")
 
         self._project_settings = {}
-        self._project_anatomy = {}
 
         self._projects_model.reset()
         self._hierarchy_model.reset()

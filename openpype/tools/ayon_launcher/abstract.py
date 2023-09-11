@@ -16,6 +16,14 @@ class AbstractLauncherBackend(AbstractLauncherCommon):
         pass
 
     @abstractmethod
+    def get_project_settings(self, project_name):
+        pass
+
+    @abstractmethod
+    def get_project_entity(self, project_name):
+        pass
+
+    @abstractmethod
     def get_folder_entity(self, project_name, folder_id):
         pass
 
@@ -41,6 +49,12 @@ class AbstractLauncherFrontEnd(AbstractLauncherCommon):
     # Actions
     @abstractmethod
     def get_action_items(self, project_name, folder_id, task_id):
+        pass
+
+    @abstractmethod
+    def set_application_force_not_open_workfile(
+        self, project_name, folder_id, task_id, action_id, enabled
+    ):
         pass
 
     @abstractmethod

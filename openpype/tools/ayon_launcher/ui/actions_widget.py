@@ -1,20 +1,24 @@
 import os
 import time
 import collections
+from math import ceil
 
 from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.flickcharm import FlickCharm
 from openpype.tools.utils.lib import get_qta_icon_by_name_and_color
 
+from .resources import get_options_image_path
+
 ANIMATION_LEN = 7
 
 ACTION_ID_ROLE = QtCore.Qt.UserRole + 1
 ACTION_IS_APPLICATION_ROLE = QtCore.Qt.UserRole + 2
 ACTION_IS_GROUP_ROLE = QtCore.Qt.UserRole + 3
-ANIMATION_START_ROLE = QtCore.Qt.UserRole + 4
-ANIMATION_STATE_ROLE = QtCore.Qt.UserRole + 5
-FORCE_NOT_OPEN_WORKFILE_ROLE = QtCore.Qt.UserRole + 6
+ACTION_SORT_ROLE = QtCore.Qt.UserRole + 4
+ANIMATION_START_ROLE = QtCore.Qt.UserRole + 5
+ANIMATION_STATE_ROLE = QtCore.Qt.UserRole + 6
+FORCE_NOT_OPEN_WORKFILE_ROLE = QtCore.Qt.UserRole + 7
 
 
 class _IconsCache:
@@ -46,10 +50,15 @@ class _IconsCache:
         if icon_type == "path":
             path = icon_def["path"]
             if os.path.exists(path):
-                icon = QtGui.QPixmap(path)
+                icon = QtGui.QIcon(path)
+
         elif icon_type == "awesome":
-            icon = get_qta_icon_by_name_and_color(
-                icon_def["name"], icon_def["color"])
+            icon_name = icon_def["name"]
+            icon_color = icon_def["color"]
+            icon = get_qta_icon_by_name_and_color(icon_name, icon_color)
+            if icon is None:
+                icon = get_qta_icon_by_name_and_color(
+                    "fa.{}".format(icon_name), icon_color)
         if icon is None:
             icon = cls.get_default()
         cls._cache[cache_key] = icon
@@ -57,7 +66,9 @@ class _IconsCache:
 
     @classmethod
     def get_default(cls):
-        return QtGui.QPixmap()
+        pix = QtGui.QPixmap(512, 512)
+        pix.fill(QtCore.Qt.transparent)
+        return QtGui.QIcon(pix)
 
 
 class ActionsQtModel(QtGui.QStandardItemModel):
@@ -95,7 +106,22 @@ class ActionsQtModel(QtGui.QStandardItemModel):
 
         self._selected_project_name = None
         self._selected_folder_id = None
-        self._seleted_task_id = None
+        self._selected_task_id = None
+
+    def get_selected_project_name(self):
+        return self._selected_project_name
+
+    def get_selected_folder_id(self):
+        return self._selected_folder_id
+
+    def get_selected_task_id(self):
+        return self._selected_task_id
+
+    def get_group_items(self, action_id):
+        return self._groups_by_id[action_id]
+
+    def get_item_by_id(self, action_id):
+        return self._items_by_id.get(action_id)
 
     def _clear_items(self):
         self._items_by_id = {}
@@ -107,7 +133,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         items = self._controller.get_action_items(
             self._selected_project_name,
             self._selected_folder_id,
-            self._seleted_task_id,
+            self._selected_task_id,
         )
         self._clear_items()
         if not items:
@@ -115,41 +141,42 @@ class ActionsQtModel(QtGui.QStandardItemModel):
 
         root_item = self.invisibleRootItem()
 
-        single_variant_items = []
+        all_action_items_info = []
         items_by_label = collections.defaultdict(list)
         for item in items:
             if not item.variant_label:
-                single_variant_items.append(item)
+                all_action_items_info.append((item, False))
             else:
                 items_by_label[item.label].append(item)
 
-        new_items = []
         groups_by_id = {}
-        items_by_id = {}
         for label, action_items in items_by_label.items():
             first_item = next(iter(action_items))
-            if len(action_items) == 1:
-                single_variant_items.append(first_item)
-                continue
-            icon = _IconsCache.get_icon(first_item.icon)
-            item = QtGui.QStandardItem()
-            item.setFlags(QtCore.Qt.ItemIsEnabled)
-            item.setData(first_item.label, QtCore.Qt.DisplayRole)
-            item.setData(icon, QtCore.Qt.DecorationRole)
-            item.setData(True, ACTION_IS_GROUP_ROLE)
-            item.setData(first_item.identifier, ACTION_ID_ROLE)
-            groups_by_id[first_item.identifier] = item
-            new_items.append(item)
+            all_action_items_info.append((first_item, len(action_items) > 1))
+            groups_by_id[first_item.identifier] = action_items
 
-        for action_item in single_variant_items:
+        new_items = []
+        items_by_id = {}
+        for action_item_info in all_action_items_info:
+            action_item, is_group = action_item_info
             icon = _IconsCache.get_icon(action_item.icon)
+            if is_group:
+                label = action_item.label
+            else:
+                label = action_item.full_label
 
             item = QtGui.QStandardItem()
             item.setFlags(QtCore.Qt.ItemIsEnabled)
-            item.setData(action_item.full_label, QtCore.Qt.DisplayRole)
+            item.setData(label, QtCore.Qt.DisplayRole)
             item.setData(icon, QtCore.Qt.DecorationRole)
-            item.setData(False, ACTION_IS_GROUP_ROLE)
+            item.setData(is_group, ACTION_IS_GROUP_ROLE)
+            item.setData(action_item.order, ACTION_SORT_ROLE)
             item.setData(action_item.identifier, ACTION_ID_ROLE)
+            item.setData(
+                action_item.is_application, ACTION_IS_APPLICATION_ROLE)
+            item.setData(
+                action_item.force_not_open_workfile,
+                FORCE_NOT_OPEN_WORKFILE_ROLE)
             items_by_id[action_item.identifier] = item
             new_items.append(item)
 
@@ -162,25 +189,25 @@ class ActionsQtModel(QtGui.QStandardItemModel):
     def _on_controller_refresh_finished(self):
         self._selected_project_name = None
         self._selected_folder_id = None
-        self._seleted_task_id = None
+        self._selected_task_id = None
         self.refresh()
 
     def _on_selection_project_changed(self, event):
         self._selected_project_name = event["project_name"]
         self._selected_folder_id = None
-        self._seleted_task_id = None
+        self._selected_task_id = None
         self.refresh()
 
     def _on_selection_folder_changed(self, event):
         self._selected_project_name = event["project_name"]
         self._selected_folder_id = event["folder_id"]
-        self._seleted_task_id = None
+        self._selected_task_id = None
         self.refresh()
 
     def _on_selection_task_changed(self, event):
         self._selected_project_name = event["project_name"]
         self._selected_folder_id = event["folder_id"]
-        self._seleted_task_id = event["task_id"]
+        self._selected_task_id = event["task_id"]
         self.refresh()
 
 
@@ -309,8 +336,17 @@ class ActionsWidget(QtWidgets.QWidget):
         view.setSpacing(0)
         view.setWordWrap(True)
 
+        # Make view flickable
+        flick = FlickCharm(parent=view)
+        flick.activateOn(view)
+
         model = ActionsQtModel(controller)
-        view.setModel(model)
+
+        proxy_model = QtCore.QSortFilterProxyModel()
+        proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+        proxy_model.setSourceModel(model)
+        view.setModel(proxy_model)
 
         delegate = ActionDelegate(self)
         view.setItemDelegate(delegate)
@@ -319,60 +355,40 @@ class ActionsWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(view)
 
-        self._animated_items = set()
-
         animation_timer = QtCore.QTimer()
-        animation_timer.setInterval(50)
+        animation_timer.setInterval(40)
         animation_timer.timeout.connect(self._on_animation)
-        self._animation_timer = animation_timer
-
-        # Make view flickable
-        flick = FlickCharm(parent=view)
-        flick.activateOn(view)
-
-        self.set_row_height(1)
 
         view.clicked.connect(self._on_clicked)
         view.customContextMenuRequested.connect(self._on_context_menu)
 
+        self._animated_items = set()
+        self._animation_timer = animation_timer
+
         self._context_menu = None
-        self._discover_on_menu = False
+
         self._flick = flick
         self._view = view
         self._model = model
+        self._proxy_model = proxy_model
 
-    def discover_actions(self):
-        if self._context_menu is not None:
-            self._discover_on_menu = True
-            return
+        self._set_row_height(1)
 
-        if self._animation_timer.isActive():
-            self._animation_timer.stop()
-        self.model.discover()
-
-    def filter_actions(self):
-        if self._animation_timer.isActive():
-            self._animation_timer.stop()
-        self.model.filter_actions()
-
-    def set_row_height(self, rows):
+    def _set_row_height(self, rows):
         self.setMinimumHeight(rows * 75)
-
-    def _on_projects_refresh(self):
-        self.discover_actions()
 
     def _on_animation(self):
         time_now = time.time()
         for action_id in tuple(self._animated_items):
-            item = self._model.items_by_id.get(action_id)
-            if not item:
-                self._animated_items.remove(action_id)
+            item = self._model.get_item_by_id(action_id)
+            if item is None:
+                self._animated_items.discard(action_id)
                 continue
 
             start_time = item.data(ANIMATION_START_ROLE)
-            if (time_now - start_time) > ANIMATION_LEN:
+            if start_time is None or (time_now - start_time) > ANIMATION_LEN:
                 item.setData(0, ANIMATION_STATE_ROLE)
-                self._animated_items.remove(action_id)
+                self._animated_items.discard(action_id)
 
         if not self._animated_items:
             self._animation_timer.stop()
@@ -381,13 +397,14 @@ class ActionsWidget(QtWidgets.QWidget):
 
     def _start_animation(self, index):
         # Offset refresh timout
-        action_id = index.data(ACTION_ID_ROLE)
-        item = self.model.items_by_id.get(action_id)
-        if item:
-            item.setData(time.time(), ANIMATION_START_ROLE)
-            item.setData(1, ANIMATION_STATE_ROLE)
-            self._animated_items.add(action_id)
-            self._animation_timer.start()
+        model_index = self._proxy_model.mapToSource(index)
+        if not model_index.isValid():
+            return
+        action_id = model_index.data(ACTION_ID_ROLE)
+        self._model.setData(model_index, time.time(), ANIMATION_START_ROLE)
+        self._model.setData(model_index, 1, ANIMATION_STATE_ROLE)
+        self._animated_items.add(action_id)
+        self._animation_timer.start()
 
     def _on_context_menu(self, point):
         """Creates menu to force skip opening last workfile."""
@@ -399,15 +416,17 @@ class ActionsWidget(QtWidgets.QWidget):
             return
 
         menu = QtWidgets.QMenu(self._view)
-        checkbox = QtWidgets.QCheckBox("Skip opening last workfile.",
-                                       menu)
+        checkbox = QtWidgets.QCheckBox(
+            "Skip opening last workfile.", menu)
         if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
             checkbox.setChecked(True)
 
         action_id = index.data(ACTION_ID_ROLE)
         checkbox.stateChanged.connect(
-            lambda: self.on_checkbox_changed(checkbox.isChecked(),
-                                             action_id))
+            lambda: self._on_checkbox_changed(
+                action_id, checkbox.isChecked()
+            )
+        )
         action = QtWidgets.QWidgetAction(menu)
         action.setDefaultWidget(checkbox)
 
@@ -417,87 +436,53 @@ class ActionsWidget(QtWidgets.QWidget):
         global_point = self.mapToGlobal(point)
         menu.exec_(global_point)
         self._context_menu = None
-        if self._discover_on_menu:
-            self._discover_on_menu = False
-            self.discover_actions()
 
-    def on_checkbox_changed(self, is_checked, action_id):
-        self._model.update_force_not_open_workfile_settings(
-            is_checked, action_id)
-        self._view.update()
+    def _on_checkbox_changed(self, action_id, is_checked):
         if self._context_menu is not None:
             self._context_menu.close()
+
+        project_name = self._model.get_selected_project_name()
+        folder_id = self._model.get_selected_folder_id()
+        task_id = self._model.get_selected_task_id()
+        self._controller.set_application_force_not_open_workfile(
+            project_name, folder_id, task_id, action_id, is_checked)
+        self._model.refresh()
 
     def _on_clicked(self, index):
         if not index or not index.isValid():
             return
 
         is_group = index.data(ACTION_IS_GROUP_ROLE)
+        action_id = index.data(ACTION_ID_ROLE)
+
+        project_name = self._model.get_selected_project_name()
+        folder_id = self._model.get_selected_folder_id()
+        task_id = self._model.get_selected_task_id()
+
         if not is_group:
-            action_id = index.data(ACTION_ID_ROLE)
             self._controller.trigger_action(
-                project_name, folder_id, task_name, action_id)
+                project_name, folder_id, task_id, action_id
+            )
             self._start_animation(index)
             return
 
-        actions = index.data(ACTION_ROLE)
+        action_items = self._model.get_group_items(action_id)
 
         menu = QtWidgets.QMenu(self)
         actions_mapping = {}
 
-        if is_variant_group:
-            for action in actions:
-                menu_action = QtWidgets.QAction(
-                    lib.get_action_label(action)
-                )
-                menu.addAction(menu_action)
-                actions_mapping[menu_action] = action
-        else:
-            by_variant_label = collections.defaultdict(list)
-            orders = []
-            for action in actions:
-                # Label variants
-                label = getattr(action, "label", None)
-                label_variant = getattr(action, "label_variant", None)
-                if label_variant and not label:
-                    label_variant = None
-
-                if not label_variant:
-                    orders.append(action)
-                    continue
-
-                if label not in orders:
-                    orders.append(label)
-                by_variant_label[label].append(action)
-
-            for action_item in orders:
-                actions = by_variant_label.get(action_item)
-                if not actions:
-                    action = action_item
-                elif len(actions) == 1:
-                    action = actions[0]
-                else:
-                    action = None
-
-                if action:
-                    menu_action = QtWidgets.QAction(action.full_label)
-                    menu.addAction(menu_action)
-                    actions_mapping[menu_action] = action
-                    continue
-
-                sub_menu = QtWidgets.QMenu(label, menu)
-                for action in actions:
-                    menu_action = QtWidgets.QAction(action.full_label)
-                    sub_menu.addAction(menu_action)
-                    actions_mapping[menu_action] = action
-
-                menu.addMenu(sub_menu)
+        for action_item in action_items:
+            menu_action = QtWidgets.QAction(action_item.full_label)
+            menu.addAction(menu_action)
+            actions_mapping[menu_action] = action_item
 
         result = menu.exec_(QtGui.QCursor.pos())
         if not result:
             return
 
-        action = actions_mapping[result]
+        action_item = actions_mapping[result]
 
+        self._controller.trigger_action(
+            project_name, folder_id, task_id, action_item.identifier
+        )
         self._start_animation(index)
-        self.action_clicked.emit(action)
