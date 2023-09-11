@@ -185,9 +185,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
 
 
 class ActionDelegate(QtWidgets.QStyledItemDelegate):
-    extender_lines = 2
-    extender_bg_brush = QtGui.QBrush(QtGui.QColor(100, 100, 100, 160))
-    extender_fg = QtGui.QColor(255, 255, 255, 160)
+    _cached_extender = {}
 
     def __init__(self, *args, **kwargs):
         super(ActionDelegate, self).__init__(*args, **kwargs)
@@ -213,7 +211,6 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
         painter.save()
 
         painter.setBrush(QtCore.Qt.transparent)
-        painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
         gradient = QtGui.QConicalGradient()
         gradient.setCenter(QtCore.QPointF(anim_rect.center()))
@@ -241,20 +238,36 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
 
         painter.restore()
 
+    @classmethod
+    def _get_extender_pixmap(cls, size):
+        pix = cls._cached_extender.get(size)
+        if pix is not None:
+            return pix
+        pix = QtGui.QPixmap(get_options_image_path()).scaled(
+            size, size,
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+        cls._cached_extender[size] = pix
+        return pix
+
     def paint(self, painter, option, index):
+        painter.setRenderHints(
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
+        )
+
         if index.data(ANIMATION_STATE_ROLE):
             self._draw_animation(painter, option, index)
 
         super(ActionDelegate, self).paint(painter, option, index)
 
         if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
-            rect = QtCore.QRectF(option.rect.x(), option.rect.height(),
-                                 5, 5)
-            painter.setPen(QtCore.Qt.transparent)
+            rect = QtCore.QRectF(
+                option.rect.x(), option.rect.height(), 5, 5)
+            painter.setPen(QtCore.Qt.NoPen)
             painter.setBrush(QtGui.QColor(200, 0, 0))
             painter.drawEllipse(rect)
-
-            painter.setBrush(self.extender_bg_brush)
 
         if not index.data(ACTION_IS_GROUP_ROLE):
             return
@@ -266,38 +279,14 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
         )
         item_x = option.rect.x() - x_offset
 
-        tenth_width = int(grid_size.width() / 10)
-        tenth_height = int(grid_size.height() / 10)
+        tenth_size = int(grid_size.width() / 10)
+        extender_size = int(tenth_size * 2.4)
 
-        extender_width = tenth_width * 2
-        extender_height = tenth_height * 2
+        extender_x = item_x + tenth_size
+        extender_y = option.rect.y() + tenth_size
 
-        exteder_rect = QtCore.QRectF(
-            item_x + tenth_width,
-            option.rect.y() + tenth_height,
-            extender_width,
-            extender_height
-        )
-        path = QtGui.QPainterPath()
-        path.addRoundedRect(exteder_rect, 2, 2)
-
-        painter.fillPath(path, self.extender_bg_brush)
-
-        painter.setPen(self.extender_fg)
-        painter.drawPath(path)
-
-        divider = (2 * self.extender_lines) + 1
-        extender_offset = int(extender_width / 6)
-        line_height = round(extender_height / divider)
-        line_width = extender_width - (extender_offset * 2) + 1
-        pos_x = exteder_rect.x() + extender_offset
-        pos_y = exteder_rect.y() + line_height
-        for _ in range(self.extender_lines):
-            line_rect = QtCore.QRectF(
-                pos_x, pos_y, line_width, line_height
-            )
-            painter.fillRect(line_rect, self.extender_fg)
-            pos_y += 2 * line_height
+        pix = self._get_extender_pixmap(extender_size)
+        painter.drawPixmap(extender_x, extender_y, pix)
 
 
 class ActionsWidget(QtWidgets.QWidget):
