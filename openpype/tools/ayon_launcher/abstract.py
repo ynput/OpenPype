@@ -46,6 +46,64 @@ class AbstractLauncherFrontEnd(AbstractLauncherCommon):
     def get_task_items(self, project_name, folder_id, sender=None):
         pass
 
+    @abstractmethod
+    def get_selected_project_name(self):
+        """Selected project name.
+
+        Returns:
+            str: Selected project name.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_selected_folder_id(self):
+        """Selected folder id.
+
+        Returns:
+            str: Selected folder id.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_selected_task_id(self):
+        """Selected task id.
+
+        Returns:
+            str: Selected task id.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_selected_task_name(self):
+        """Selected task name.
+
+        Returns:
+            str: Selected task name.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_selected_context(self):
+        """Get whole selected context.
+
+        Example:
+            {
+                "project_name": self.get_selected_project_name(),
+                "folder_id": self.get_selected_folder_id(),
+                "task_id": self.get_selected_task_id(),
+                "task_name": self.get_selected_task_name(),
+            }
+
+        Returns:
+            dict[str, Union[str, None]]: Selected context.
+        """
+
+        pass
+
     # Actions
     @abstractmethod
     def get_action_items(self, project_name, folder_id, task_id):

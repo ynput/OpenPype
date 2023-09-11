@@ -187,9 +187,10 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         self._items_by_id = items_by_id
 
     def _on_controller_refresh_finished(self):
-        self._selected_project_name = None
-        self._selected_folder_id = None
-        self._selected_task_id = None
+        context = self._controller.get_selected_context()
+        self._selected_project_name = context["project_name"]
+        self._selected_folder_id = context["folder_id"]
+        self._selected_task_id = context["task_id"]
         self.refresh()
 
     def _on_selection_project_changed(self, event):

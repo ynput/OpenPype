@@ -4,7 +4,6 @@ from openpype import style
 from openpype import resources
 
 from openpype.tools.ayon_launcher.control import BaseLauncherController
-# from .lib import get_action_label
 
 from .projects_widget import ProjectsWidget
 from .hierarchy_page import HierarchyPage

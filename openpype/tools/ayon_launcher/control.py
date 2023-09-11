@@ -107,6 +107,14 @@ class BaseLauncherController(
     def set_selected_task(self, task_id, task_name):
         self._selection_model.set_selected_task(task_id, task_name)
 
+    def get_selected_context(self):
+        return {
+            "project_name": self.get_selected_project_name(),
+            "folder_id": self.get_selected_folder_id(),
+            "task_id": self.get_selected_task_id(),
+            "task_name": self.get_selected_task_name(),
+        }
+
     # Actions
     def get_action_items(self, project_name, folder_id, task_id):
         return self._actions_model.get_action_items(
@@ -132,6 +140,7 @@ class BaseLauncherController(
         self._projects_model.reset()
         self._hierarchy_model.reset()
 
+        self._actions_model.refresh()
         self._projects_model.refresh()
 
         self._emit_event("controller.refresh.finished")
