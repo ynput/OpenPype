@@ -10,8 +10,6 @@ from openpype.pipeline.publish import ValidateContentsOrder
 from openpype.hosts.houdini.api.action import SelectInvalidAction
 from openpype.hosts.houdini.api.lib import get_output_children
 
-import hou
-
 
 class ValidateMeshIsStatic(pyblish.api.InstancePlugin,
                            OptionalPyblishPluginMixin):

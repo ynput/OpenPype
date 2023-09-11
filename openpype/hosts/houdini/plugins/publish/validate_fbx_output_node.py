@@ -67,14 +67,14 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
                     else:
                         invalid.append(node)  # empty_objs
                         cls.log.error(
-                            "Geo Obj Node '%s' is empty!"
-                            , node.path()
+                            "Geo Obj Node '%s' is empty!",
+                            node.path()
                         )
             if not all_out_sops:
                 invalid.append(output_node)  # empty_objs
                 cls.log.error(
-                    "Output Node '%s' is empty!"
-                    , node.path()
+                    "Output Node '%s' is empty!",
+                    node.path()
                 )
 
         # elif output_node is an ObjNode
@@ -85,21 +85,21 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
             else:
                 invalid.append(node)  # empty_objs
                 cls.log.error(
-                    "Output Node '%s' is empty!"
-                    , node.path()
+                    "Output Node '%s' is empty!",
+                    node.path()
                 )
 
         # elif output_node is a SopNode
         elif output_node.type().category().name() == "Sop":
-                all_out_sops.append(output_node)
+            all_out_sops.append(output_node)
 
         # Then it's a wrong node type
         else:
             cls.log.error(
                 "Output node %s is not a SOP or OBJ Geo or OBJ SubNet node. "
-                "Instead found category type: %s %s"
-                , output_node.path(), output_node.type().category().name()
-                , output_node.type().name()
+                "Instead found category type: %s %s",
+                output_node.path(), output_node.type().category().name(),
+                output_node.type().name()
             )
             return [output_node]
 
@@ -111,8 +111,8 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
             if not hasattr(sop_node, "geometry"):
                 invalid.append(sop_node)  # empty_geometry
                 cls.log.error(
-                    "Sop node '%s' doesn't include any prims."
-                    , sop_node.path()
+                    "Sop node '%s' doesn't include any prims.",
+                    sop_node.path()
                 )
                 continue
 
@@ -121,8 +121,8 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
             if len(geo.iterPrims()) == 0:
                 invalid.append(sop_node)  # empty_geometry
                 cls.log.error(
-                    "Sop node '%s' doesn't include any prims."
-                    , sop_node.path()
+                    "Sop node '%s' doesn't include any prims.",
+                    sop_node.path()
                 )
                 continue
 
@@ -131,8 +131,8 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
                 if geo.countPrimType(prim_type) > 0:
                     invalid.append(sop_node)  # invalid_prims
                     cls.log.error(
-                        "Sop node '%s' includes invalid prims of type '%s'."
-                        , sop_node.path(), prim_type
+                        "Sop node '%s' includes invalid prims of type '%s'.",
+                        sop_node.path(), prim_type
                     )
 
         if invalid:
