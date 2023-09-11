@@ -8,7 +8,7 @@ class CollectFbxAnimation(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.2
     label = "Collect Fbx Animation"
-    families = ["rig"]
+    families = ["animation"]
 
     def process(self, instance):
         frame = cmds.currentTime(query=True)
