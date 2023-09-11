@@ -6,7 +6,6 @@ from openpype.hosts.houdini.api.action import (
     SelectROPAction,
 )
 from openpype.hosts.houdini.api.lib import get_obj_node_output
-from collections import defaultdict
 import hou
 
 
@@ -30,8 +29,10 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
+            nodes = [n.path() for n in invalid]
             raise PublishValidationError(
-                "Output node(s) are incorrect",
+                "See log for details. "
+                "Invalid nodes: {0}".format(nodes),
                 title="Invalid output node(s)"
             )
 
@@ -54,7 +55,7 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
         #  also, list all sop output nodes inside as well as
         #  invalid empty nodes.
         all_out_sops = []
-        invalid = defaultdict(list)
+        invalid = []
 
         # if output_node is an ObjSubnet or an ObjNetwork
         if output_node.childTypeCategory() == hou.objNodeTypeCategory():
@@ -64,13 +65,13 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
                     if out:
                         all_out_sops.append(out)
                     else:
-                        invalid["empty_objs"].append(node)
+                        invalid.append(node)  # empty_objs
                         cls.log.error(
                             "Geo Obj Node '%s' is empty!"
                             , node.path()
                         )
             if not all_out_sops:
-                invalid["empty_objs"].append(output_node)
+                invalid.append(output_node)  # empty_objs
                 cls.log.error(
                     "Output Node '%s' is empty!"
                     , node.path()
@@ -82,7 +83,7 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
             if out:
                 all_out_sops.append(out)
             else:
-                invalid["empty_objs"].append(node)
+                invalid.append(node)  # empty_objs
                 cls.log.error(
                     "Output Node '%s' is empty!"
                     , node.path()
@@ -92,7 +93,7 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
         elif output_node.type().category().name() == "Sop":
                 all_out_sops.append(output_node)
 
-        # Then it's wrong node type
+        # Then it's a wrong node type
         else:
             cls.log.error(
                 "Output node %s is not a SOP or OBJ Geo or OBJ SubNet node. "
@@ -108,7 +109,7 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
         for sop_node in all_out_sops:
             # Empty Geometry test
             if not hasattr(sop_node, "geometry"):
-                invalid["empty_geometry"].append(sop_node)
+                invalid.append(sop_node)  # empty_geometry
                 cls.log.error(
                     "Sop node '%s' doesn't include any prims."
                     , sop_node.path()
@@ -118,7 +119,7 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
             frame = instance.data.get("frameStart", 0)
             geo = sop_node.geometryAtFrame(frame)
             if len(geo.iterPrims()) == 0:
-                invalid["empty_geometry"].append(sop_node)
+                invalid.append(sop_node)  # empty_geometry
                 cls.log.error(
                     "Sop node '%s' doesn't include any prims."
                     , sop_node.path()
@@ -128,11 +129,11 @@ class ValidateFBXOutputNode(pyblish.api.InstancePlugin):
             # Invalid Prims test
             for prim_type in invalid_prim_types:
                 if geo.countPrimType(prim_type) > 0:
-                    invalid["invalid_prims"].append(sop_node)
+                    invalid.append(sop_node)  # invalid_prims
                     cls.log.error(
-                        "Sop node '%s' includes invliad prims of type '%s'."
+                        "Sop node '%s' includes invalid prims of type '%s'."
                         , sop_node.path(), prim_type
                     )
 
         if invalid:
-            return [output_node]
+            return invalid
