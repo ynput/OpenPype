@@ -7,8 +7,7 @@ import os
 import pyblish.api
 
 from openpype.pipeline import (
-    PublishXmlValidationError,
-    OptionalPyblishPluginMixin
+    PublishXmlValidationError
 )
 from openpype.hosts.aftereffects.api import get_stub
 
