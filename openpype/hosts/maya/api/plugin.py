@@ -738,7 +738,6 @@ class ReferenceLoader(Loader):
             loaded_containers.append(container)
             self._organize_containers(nodes, container)
             c += 1
-            namespace = None
 
         return loaded_containers
 

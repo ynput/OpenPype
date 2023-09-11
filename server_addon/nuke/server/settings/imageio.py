@@ -9,22 +9,17 @@ from .common import KnobModel
 
 
 class NodesModel(BaseSettingsModel):
-    """# TODO: This needs to be somehow labeled in settings panel
-    or at least it could show gist of configuration
-    """
     _layout = "expanded"
     plugins: list[str] = Field(
+        default_factory=list,
         title="Used in plugins"
     )
-    # TODO: rename `nukeNodeClass` to `nuke_node_class`
     nukeNodeClass: str = Field(
         title="Nuke Node Class",
     )
 
-    """ # TODO: Need complete rework of knob types
-    in nuke integration. We could not support v3 style of settings.
-    """
     knobs: list[KnobModel] = Field(
+        default_factory=list,
         title="Knobs",
     )
 
@@ -170,7 +165,7 @@ class ImageIOSettings(BaseSettingsModel):
     _isGroup: bool = True
 
     """# TODO: enhance settings with host api:
-    to restruture settings for simplification.
+    to restructure settings for simplification.
 
     now: nuke/imageio/viewer/viewerProcess
     future: nuke/imageio/viewer
@@ -193,7 +188,7 @@ class ImageIOSettings(BaseSettingsModel):
     )
 
     """# TODO: enhance settings with host api:
-    to restruture settings for simplification.
+    to restructure settings for simplification.
 
     now: nuke/imageio/baking/viewerProcess
     future: nuke/imageio/baking
@@ -215,9 +210,9 @@ class ImageIOSettings(BaseSettingsModel):
         title="Nodes"
     )
     """# TODO: enhance settings with host api:
-    - old settings are using `regexInputs` key but we
+    - [ ] old settings are using `regexInputs` key but we
       need to rename to `regex_inputs`
-    - no need for `inputs` middle part. It can stay
+    - [ ] no need for `inputs` middle part. It can stay
       directly on `regex_inputs`
     """
     regexInputs: RegexInputsModel = Field(
