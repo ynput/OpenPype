@@ -30,7 +30,6 @@ class CollectRender(pyblish.api.InstancePlugin):
         asset = get_current_asset_name()
 
         files_by_aov = RenderProducts().get_beauty(instance.name)
-        folder = folder.replace("\\", "/")
         aovs = RenderProducts().get_aovs(instance.name)
         files_by_aov.update(aovs)
 

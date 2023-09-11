@@ -16,11 +16,10 @@ class ExtractRedshiftProxy(publish.Extractor):
     families = ["redshiftproxy"]
 
     def process(self, instance):
-        container = instance.data["instance_node"]
         start = int(instance.context.data.get("frameStart"))
         end = int(instance.context.data.get("frameEnd"))
 
-        self.log.info("Extracting Redshift Proxy...")
+        self.log.debug("Extracting Redshift Proxy...")
         stagingdir = self.staging_dir(instance)
         rs_filename = "{name}.rs".format(**instance.data)
         rs_filepath = os.path.join(stagingdir, rs_filename)

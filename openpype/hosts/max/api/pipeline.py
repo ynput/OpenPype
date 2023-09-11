@@ -200,19 +200,20 @@ def import_custom_attribute_data(container: str, selections: list):
     rt.addModifier(container, modifier)
     container.modifiers[0].name = "OP Data"
     rt.custAttributes.add(container.modifiers[0], attrs)
-    nodes = {}
+    node_list = []
+    sel_list = []
     for i in selections:
-        nodes = {
-            str(i): rt.NodeTransformMonitor(node=i),
-        }
+        node_ref = rt.NodeTransformMonitor(node=i)
+        node_list.append(node_ref)
+        sel_list.append(str(i))
+
     # Setting the property
     rt.setProperty(
         container.modifiers[0].openPypeData,
-        "all_handles", nodes.values())
+        "all_handles", node_list)
     rt.setProperty(
         container.modifiers[0].openPypeData,
-        "sel_list", nodes.keys())
-
+        "sel_list", sel_list)
 
 def update_custom_attribute_data(container: str, selections: list):
     """Updating the Openpype/AYON custom parameter built by the creator

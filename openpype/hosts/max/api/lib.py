@@ -313,7 +313,7 @@ def get_max_version():
     return max_info[7]
 
 
-def is_HEADLESS():
+def is_headless():
     """Check if 3dsMax runs in batch mode.
     If it returns True, it runs in 3dsbatch.exe
     If it returns False, it runs in 3dsmax.exe
@@ -377,7 +377,7 @@ def check_colorspace():
         max_config_data = colorspace.get_imageio_config(
             project_name, "max", project_settings)
         if max_config_data and color_mgr.Mode != rt.Name("OCIO_Custom"):
-            if not is_HEADLESS():
+            if not is_headless():
                 from openpype.widgets import popup
                 dialog = popup.Popup(parent=parent)
                 dialog.setWindowTitle("Warning: Wrong OCIO Mode")

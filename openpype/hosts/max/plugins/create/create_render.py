@@ -15,7 +15,11 @@ class CreateRender(plugin.MaxCreator):
     icon = "gear"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        sel_obj = list(rt.selection)
+        from pymxs import runtime as rt
+        file = rt.maxFileName
+        filename, _ = os.path.splitext(file)
+        instance_data["AssetName"] = filename
+
         instance = super(CreateRender, self).create(
             subset_name,
             instance_data,
