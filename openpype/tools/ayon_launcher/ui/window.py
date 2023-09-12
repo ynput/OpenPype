@@ -12,7 +12,8 @@ from .actions_widget import ActionsWidget
 
 class LauncherWindow(QtWidgets.QWidget):
     """Launcher interface"""
-    message_timeout = 5000
+    message_interval = 5000
+    refresh_interval = 10000
 
     def __init__(self, controller=None, parent=None):
         super(LauncherWindow, self).__init__(parent)
@@ -94,10 +95,14 @@ class LauncherWindow(QtWidgets.QWidget):
         layout.addWidget(footer_widget, 0)
 
         message_timer = QtCore.QTimer()
-        message_timer.setInterval(self.message_timeout)
+        message_timer.setInterval(self.message_interval)
         message_timer.setSingleShot(True)
 
+        refresh_timer = QtCore.QTimer()
+        refresh_timer.setInterval(self.refresh_interval)
+
         message_timer.timeout.connect(self._on_message_timeout)
+        refresh_timer.timeout.connect(self._on_refresh_timeout)
 
         controller.register_event_callback(
             "selection.project.changed",
@@ -107,6 +112,7 @@ class LauncherWindow(QtWidgets.QWidget):
         self._controller = controller
 
         self._is_on_projects_page = True
+        self._window_is_active = False
 
         self._pages_layout = pages_layout
         self._projects_page = projects_page
@@ -114,26 +120,45 @@ class LauncherWindow(QtWidgets.QWidget):
         self._actions_widget = actions_widget
 
         self._message_label = message_label
-        self._message_timer = message_timer
         # self._action_history = action_history
+
+        self._message_timer = message_timer
+        self._refresh_timer = refresh_timer
 
         self.resize(520, 740)
 
     def showEvent(self, event):
         super(LauncherWindow, self).showEvent(event)
+        self._window_is_active = True
+        self._refresh_timer.start()
         self._controller.refresh()
 
+    def closeEvent(self, event):
+        super(LauncherWindow, self).closeEvent(event)
+        self._window_is_active = False
+        self._refresh_timer.stop()
+
     def changeEvent(self, event):
-        if event.type() == QtCore.QEvent.ActivationChange:
-            pass
-            # self._launcher_model.set_active(self.isActiveWindow())
+        if event.type() in (
+            QtCore.QEvent.Type.WindowStateChange,
+            QtCore.QEvent.ActivationChange,
+        ):
+            is_active = self.isActiveWindow() and not self.isMinimized()
+            self._window_is_active = is_active
+            if is_active:
+                self._on_refresh_timeout()
+                self._refresh_timer.start()
+            else:
+                self._refresh_timer.stop()
+
         super(LauncherWindow, self).changeEvent(event)
 
     def _on_refresh_timeout(self):
         # Stop timer if widget is not visible
-        if not self.isVisible():
+        if self._window_is_active:
             self._controller.refresh()
-            # self._launcher_model.stop_refresh_timer()
+        else:
+            self._refresh_timer.stop()
 
     def _on_message_timeout(self):
         self._message_label.setText("")
