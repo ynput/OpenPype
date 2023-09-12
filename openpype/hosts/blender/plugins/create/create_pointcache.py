@@ -32,7 +32,6 @@ class CreatePointcache(plugin.BlenderCreator):
 
         collection[AVALON_PROPERTY] = instance_node = {
             "name": collection.name,
-            "datablock": collection,
         }
 
         instance_data.update(

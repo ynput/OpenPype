@@ -237,7 +237,6 @@ class BlenderCreator(Creator):
 
         collection["instance_node"] = instance_node = {
             "name": collection.name,
-            "datablock": collection,
         }
 
         instance_data["instance_node"] = instance_node
@@ -267,9 +266,7 @@ class BlenderCreator(Creator):
 
         for instance_data in cached_subsets.get(self.identifier, []):
             # Process only instances that were created by this creator
-            data = {}
-            for key, value in instance_data.items():
-                data[key] = value
+            data = instance_data.to_dict()
             creator_id = data.get('creator_identifier')
 
             if creator_id == self.identifier:

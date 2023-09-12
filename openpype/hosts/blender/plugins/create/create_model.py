@@ -49,7 +49,6 @@ class CreateModel(plugin.BlenderCreator):
 
         asset_group[AVALON_PROPERTY] = instance_node = {
             "name": asset_group.name,
-            "datablock": asset_group,
         }
 
         instance_data.update(
