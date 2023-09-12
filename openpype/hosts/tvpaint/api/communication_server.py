@@ -319,19 +319,19 @@ class QtTVPaintRpc(BaseTVPaintRpc):
     async def workfiles_tool(self):
         log.info("Triggering Workfile tool")
         item = MainThreadItem(self.tools_helper.show_workfiles)
-        self._execute_in_main_thread(item)
+        self._execute_in_main_thread(item, wait=False)
         return
 
     async def loader_tool(self):
         log.info("Triggering Loader tool")
         item = MainThreadItem(self.tools_helper.show_loader)
-        self._execute_in_main_thread(item)
+        self._execute_in_main_thread(item, wait=False)
         return
 
     async def publish_tool(self):
         log.info("Triggering Publish tool")
         item = MainThreadItem(self.tools_helper.show_publisher_tool)
-        self._execute_in_main_thread(item)
+        self._execute_in_main_thread(item, wait=False)
         return
 
     async def scene_inventory_tool(self):
@@ -350,13 +350,13 @@ class QtTVPaintRpc(BaseTVPaintRpc):
     async def library_loader_tool(self):
         log.info("Triggering Library loader tool")
         item = MainThreadItem(self.tools_helper.show_library_loader)
-        self._execute_in_main_thread(item)
+        self._execute_in_main_thread(item, wait=False)
         return
 
     async def experimental_tools(self):
         log.info("Triggering Library loader tool")
         item = MainThreadItem(self.tools_helper.show_experimental_tools_dialog)
-        self._execute_in_main_thread(item)
+        self._execute_in_main_thread(item, wait=False)
         return
 
     async def _async_execute_in_main_thread(self, item, **kwargs):
