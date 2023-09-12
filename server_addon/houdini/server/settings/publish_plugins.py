@@ -130,6 +130,9 @@ class PublishPluginsModel(BaseSettingsModel):
     ValidateWorkfilePaths: ValidateWorkfilePathsModel = Field(
         default_factory=ValidateWorkfilePathsModel,
         title="Validate workfile paths settings.")
+    HoudiniIncrementCurrentFile: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Increment Current File.")
     ValidateReviewColorspace: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Review Colorspace.")
@@ -150,6 +153,11 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
             "$HIP",
             "$JOB"
         ]
+    },
+    "HoudiniIncrementCurrentFile": {
+        "enabled": True,
+        "optional": True,
+        "active": True
     },
     "ValidateReviewColorspace": {
         "enabled": True,

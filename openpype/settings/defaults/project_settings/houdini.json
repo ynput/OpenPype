@@ -93,6 +93,11 @@
                 "$JOB"
             ]
         },
+        "HoudiniIncrementCurrentFile": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateReviewColorspace": {
             "enabled": true,
             "optional": true,

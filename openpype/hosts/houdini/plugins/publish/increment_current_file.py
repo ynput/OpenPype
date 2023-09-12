@@ -1,20 +1,23 @@
 import pyblish.api
 
 from openpype.lib import version_up
-from openpype.pipeline import registered_host
+from openpype.pipeline import (
+    registered_host,
+    OptionalPyblishPluginMixin
+)
 from openpype.pipeline.publish import get_errored_plugins_from_context
-from openpype.hosts.houdini.api import HoudiniHost
 from openpype.pipeline.publish import KnownPublishError
 
 
-class IncrementCurrentFile(pyblish.api.ContextPlugin):
+class HoudiniIncrementCurrentFile(pyblish.api.ContextPlugin,
+                                  OptionalPyblishPluginMixin):
     """Increment the current file.
 
     Saves the current scene with an increased version number.
 
     """
 
-    label = "Increment current file"
+    label = "Increment Current File"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["houdini"]
     families = ["workfile",
@@ -26,6 +29,8 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin):
     optional = True
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
 
         errored_plugins = get_errored_plugins_from_context(context)
         if any(
@@ -38,7 +43,7 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin):
             )
 
         # Filename must not have changed since collecting
-        host = registered_host()  # type: HoudiniHost
+        host = registered_host()
         current_file = host.current_file()
         if context.data["currentFile"] != current_file:
             raise KnownPublishError(
