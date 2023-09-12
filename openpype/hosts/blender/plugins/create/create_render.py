@@ -177,18 +177,21 @@ class CreateRenderlayer(plugin.Creator):
         # Create a new output node
         output = tree.nodes.new("CompositorNodeOutputFile")
 
+        aov_file_products = []
+
         if ext == "exr" and multilayer:
             output.layer_slots.clear()
             filepath = f"{name}{aov_sep}AOVs.####"
             output.base_path = os.path.join(output_path, filepath)
+
+            aov_file_products.append(
+                ("AOVs", os.path.join(output_path, filepath)))
         else:
             output.file_slots.clear()
             output.base_path = output_path
 
         image_settings = bpy.context.scene.render.image_settings
         output.format.file_format = image_settings.file_format
-
-        aov_file_products = []
 
         # For each active render pass, we add a new socket to the output node
         # and link it
