@@ -121,11 +121,8 @@ class MayaFixtures(HostFixtures):
         with open(logging_path, "r") as f:
             logging_output = f.read()
 
-        print(logging_output)
-        print(publish_finished)
-
         # Check for pyblish errors.
-        error_regex = r"pyblish \(ERROR\)((.|\n)*)"
+        error_regex = r"pyblish \(ERROR\)((.|\n)*?)((pyblish \())"
         matches = re.findall(error_regex, logging_output)
         assert not matches, matches[0][0]
 
@@ -136,6 +133,11 @@ class MayaFixtures(HostFixtures):
         error_regex = r"// Error((.|\n)*)"
         matches = re.findall(error_regex, logging_output)
         assert not matches, matches[0][0]
+
+        print(("-" * 50) + "LOGGING" + ("-" * 50))
+        print(logging_output)
+        print(("-" * 50) + "PUBLISH" + ("-" * 50))
+        print(publish_finished)
 
 
 class MayaPublishTest(MayaFixtures, PublishTest):
