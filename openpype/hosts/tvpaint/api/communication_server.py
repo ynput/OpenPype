@@ -11,7 +11,7 @@ import filecmp
 import tempfile
 import threading
 import shutil
-from queue import Queue
+
 from contextlib import closing
 
 from aiohttp import web
@@ -867,7 +867,7 @@ class QtCommunicator(BaseCommunicator):
 
     def __init__(self, qt_app):
         super().__init__()
-        self.callback_queue = Queue()
+        self.callback_queue = collections.deque()
         self.qt_app = qt_app
 
     def _create_routes(self):
@@ -880,14 +880,14 @@ class QtCommunicator(BaseCommunicator):
 
     def execute_in_main_thread(self, main_thread_item, wait=True):
         """Add `MainThreadItem` to callback queue and wait for result."""
-        self.callback_queue.put(main_thread_item)
+        self.callback_queue.append(main_thread_item)
         if wait:
             return main_thread_item.wait()
         return
 
     async def async_execute_in_main_thread(self, main_thread_item, wait=True):
         """Add `MainThreadItem` to callback queue and wait for result."""
-        self.callback_queue.put(main_thread_item)
+        self.callback_queue.append(main_thread_item)
         if wait:
             return await main_thread_item.async_wait()
 
@@ -904,9 +904,9 @@ class QtCommunicator(BaseCommunicator):
             self._exit()
             return None
 
-        if self.callback_queue.empty():
-            return None
-        return self.callback_queue.get()
+        if self.callback_queue:
+            return self.callback_queue.popleft()
+        return None
 
     def _on_client_connect(self):
         super()._on_client_connect()
