@@ -297,8 +297,6 @@ class PypeCommands:
                 app_variant (str): variant (eg 2020 for AE), empty if use
                     latest installed version
         """
-        start_time = time.time()
-        end_time_msg = "\"run_test\" took {} seconds to execute."
         if folder:
             folder = " ".join(list(folder))
         else:
@@ -322,6 +320,12 @@ class PypeCommands:
 
         if openpype_mongo:
             args.extend(["--openpype_mongo", openpype_mongo])
+        else:
+            msg = (
+                "Either provide uri to MongoDB through environment variable"
+                " OPENPYPE_MONGO or the command flag --openpype_mongo"
+            )
+            assert not os.environ.get("OPENPYPE_MONGO"), msg
 
         if data_folder:
             args.extend(["--data_folder", data_folder])
