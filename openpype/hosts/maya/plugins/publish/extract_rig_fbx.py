@@ -2,7 +2,6 @@
 import os
 
 from maya import cmds  # noqa
-import maya.mel as mel  # noqa
 import pyblish.api
 
 from openpype.pipeline import publish
@@ -22,12 +21,17 @@ class ExtractRigFBX(publish.Extractor,
     """
     order = pyblish.api.ExtractorOrder
     label = "Extract Rig (FBX)"
-    families = ["rig.fbx"]
+    families = ["rig"]
 
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        # Define output path
+        if "rig.fbx" not in instance.data["families"]:
+            self.log.debug("No object inside skeletonMesh_set..Skipping..")
+            return
+        if not cmds.loadPlugin("fbxmaya", query=True):
+            cmds.loadPlugin("fbxmaya", quiet=True)
+
         staging_dir = self.staging_dir(instance)
         filename = "{0}.fbx".format(instance.name)
         path = os.path.join(staging_dir, filename)
@@ -46,6 +50,7 @@ class ExtractRigFBX(publish.Extractor,
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
+        self.log.debug("Families: {}".format(instance.data["families"]))
 
         representation = {
             'name': 'fbx',
@@ -54,5 +59,6 @@ class ExtractRigFBX(publish.Extractor,
             "stagingDir": staging_dir,
         }
         instance.data["representations"].append(representation)
+        self.log.debug("Representation: {}".format(representation))
 
         self.log.debug("Extract FBX successful to: {0}".format(path))

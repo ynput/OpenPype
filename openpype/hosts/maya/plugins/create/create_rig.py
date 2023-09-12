@@ -25,7 +25,7 @@ class CreateRig(plugin.MayaCreator):
         # change name (_out_SET -> _geo_SET)
         pointcache = cmds.sets(name=subset_name + "_out_SET", empty=True)
         skeleton = cmds.sets(
-            name=subset_name + "skeletonAnim_SET", empty=True)
+            name=subset_name + "_skeletonAnim_SET", empty=True)
         skeleton_mesh = cmds.sets(
             name=subset_name + "_skeletonMesh_SET", empty=True)
         cmds.sets([controls, pointcache,
