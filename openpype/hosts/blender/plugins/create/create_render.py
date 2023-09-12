@@ -177,34 +177,29 @@ class CreateRenderlayer(plugin.Creator):
         # Create a new output node
         output = tree.nodes.new("CompositorNodeOutputFile")
 
-        aov_file_products = []
-
-        if ext == "exr" and multilayer:
-            output.layer_slots.clear()
-            filepath = f"{name}{aov_sep}AOVs.####"
-            output.base_path = os.path.join(output_path, filepath)
-
-            aov_file_products.append(
-                ("AOVs", os.path.join(output_path, filepath)))
-        else:
-            output.file_slots.clear()
-            output.base_path = output_path
-
         image_settings = bpy.context.scene.render.image_settings
         output.format.file_format = image_settings.file_format
+
+        # In case of a multilayer exr, we don't need to use the output node,
+        # because the blender render already outputs a multilayer exr.
+        if ext == "exr" and multilayer:
+            output.layer_slots.clear()
+            return []
+
+        output.file_slots.clear()
+        output.base_path = output_path
+
+        aov_file_products = []
 
         # For each active render pass, we add a new socket to the output node
         # and link it
         for render_pass in passes:
-            if ext == "exr" and multilayer:
-                output.layer_slots.new(render_pass.name)
-            else:
-                filepath = f"{name}{aov_sep}{render_pass.name}.####"
+            filepath = f"{name}{aov_sep}{render_pass.name}.####"
 
-                output.file_slots.new(filepath)
+            output.file_slots.new(filepath)
 
-                aov_file_products.append(
-                    (render_pass.name, os.path.join(output_path, filepath)))
+            aov_file_products.append(
+                (render_pass.name, os.path.join(output_path, filepath)))
 
             node_input = output.inputs[-1]
 
