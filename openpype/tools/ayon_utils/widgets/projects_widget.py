@@ -58,6 +58,7 @@ class ProjectsModel(QtGui.QStandardItemModel):
     def _refresh(self):
         if self._is_refreshing:
             return
+        self._is_refreshing = True
         refresh_thread = RefreshThread(
             "projects", self._query_project_items
         )
