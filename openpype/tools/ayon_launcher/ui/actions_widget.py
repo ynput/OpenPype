@@ -31,7 +31,6 @@ class ActionsQtModel(QtGui.QStandardItemModel):
     def __init__(self, controller):
         super(ActionsQtModel, self).__init__()
 
-
         controller.register_event_callback(
             "controller.refresh.finished",
             self._on_controller_refresh_finished,
@@ -85,8 +84,8 @@ class ActionsQtModel(QtGui.QStandardItemModel):
             self._selected_folder_id,
             self._selected_task_id,
         )
-        self._clear_items()
         if not items:
+            self._clear_items()
             self.refreshed.emit()
             return
 
@@ -116,23 +115,31 @@ class ActionsQtModel(QtGui.QStandardItemModel):
             else:
                 label = action_item.full_label
 
-            item = QtGui.QStandardItem()
+            item = self._items_by_id.get(action_item.identifier)
+            if item is None:
+                item = QtGui.QStandardItem()
+                item.setData(action_item.identifier, ACTION_ID_ROLE)
+                new_items.append(item)
+
             item.setFlags(QtCore.Qt.ItemIsEnabled)
             item.setData(label, QtCore.Qt.DisplayRole)
             item.setData(icon, QtCore.Qt.DecorationRole)
             item.setData(is_group, ACTION_IS_GROUP_ROLE)
             item.setData(action_item.order, ACTION_SORT_ROLE)
-            item.setData(action_item.identifier, ACTION_ID_ROLE)
             item.setData(
                 action_item.is_application, ACTION_IS_APPLICATION_ROLE)
             item.setData(
                 action_item.force_not_open_workfile,
                 FORCE_NOT_OPEN_WORKFILE_ROLE)
             items_by_id[action_item.identifier] = item
-            new_items.append(item)
 
         if new_items:
             root_item.appendRows(new_items)
+
+        to_remove = set(self._items_by_id.keys()) - set(items_by_id.keys())
+        for identifier in to_remove:
+            item = self._items_by_id.pop(identifier)
+            root_item.removeRow(item.row())
 
         self._groups_by_id = groups_by_id
         self._items_by_id = items_by_id
