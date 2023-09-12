@@ -26,6 +26,8 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         controller (AbstractLauncherFrontEnd): Controller instance.
     """
 
+    refreshed = QtCore.Signal()
+
     def __init__(self, controller):
         super(ActionsQtModel, self).__init__()
 
@@ -85,6 +87,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         )
         self._clear_items()
         if not items:
+            self.refreshed.emit()
             return
 
         root_item = self.invisibleRootItem()
@@ -133,6 +136,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
 
         self._groups_by_id = groups_by_id
         self._items_by_id = items_by_id
+        self.refreshed.emit()
 
     def _on_controller_refresh_finished(self):
         context = self._controller.get_selected_context()
@@ -293,6 +297,7 @@ class ActionsWidget(QtWidgets.QWidget):
 
         proxy_model = QtCore.QSortFilterProxyModel()
         proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        proxy_model.setSortRole(ACTION_SORT_ROLE)
 
         proxy_model.setSourceModel(model)
         view.setModel(proxy_model)
@@ -310,6 +315,7 @@ class ActionsWidget(QtWidgets.QWidget):
 
         view.clicked.connect(self._on_clicked)
         view.customContextMenuRequested.connect(self._on_context_menu)
+        model.refreshed.connect(self._on_model_refresh)
 
         self._animated_items = set()
         self._animation_timer = animation_timer
@@ -325,6 +331,9 @@ class ActionsWidget(QtWidgets.QWidget):
 
     def _set_row_height(self, rows):
         self.setMinimumHeight(rows * 75)
+
+    def _on_model_refresh(self):
+        self._proxy_model.sort(0)
 
     def _on_animation(self):
         time_now = time.time()
