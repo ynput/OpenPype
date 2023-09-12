@@ -23,6 +23,8 @@ class CollectFbxAnimation(pyblish.api.InstancePlugin):
             instance.data["families"].append("animation.fbx")
             for skeleton_set in skeleton_sets:
                 skeleton_content = cmds.sets(skeleton_set, query=True)
-                self.log.debug(f"Collected Animated Skeleton Set: {skeleton_content}")
+                self.log.debug(
+                    "Collected animated "
+                    f"skeleton data: {skeleton_content}")
                 if skeleton_content:
                     instance.data["animated_skeleton"] += skeleton_content

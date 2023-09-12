@@ -24,7 +24,8 @@ class CollectRigFbx(pyblish.api.InstancePlugin):
             if i.lower().endswith("skeletonmesh_set")
         ]
         if not skeleton_sets and skeleton_mesh_sets:
-            self.log.debug("no skeleton_set or skeleton_mesh set was found....")
+            self.log.debug(
+                "no skeleton_set or skeleton_mesh set was found....")
             return
         instance.data["skeleton_mesh"] = []
         if skeleton_sets:
@@ -32,11 +33,14 @@ class CollectRigFbx(pyblish.api.InstancePlugin):
                 skeleton_content = cmds.sets(skeleton_set, query=True)
                 if skeleton_content:
                     instance.data["animated_rigs"] += skeleton_content
-                    self.log.debug(f"Collected Skeleton Set: {skeleton_content}")
+                    self.log.debug(f"Collected skeleton data: {skeleton_content}")
         if skeleton_mesh_sets:
             instance.data["families"].append("rig.fbx")
             for skeleton_mesh_set in skeleton_mesh_sets:
-                skeleton_mesh_content = cmds.sets(skeleton_mesh_set, query=True)
+                skeleton_mesh_content = cmds.sets(
+                    skeleton_mesh_set, query=True)
                 if skeleton_mesh_content:
                     instance.data["skeleton_mesh"] += skeleton_mesh_content
-                    self.log.debug(f"Collected SkeletonMesh Set: {skeleton_mesh_content}")
+                    self.log.debug(
+                        "Collected skeleton "
+                        f"mesh Set: {skeleton_mesh_content}")
