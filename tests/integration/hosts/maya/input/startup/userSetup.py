@@ -34,6 +34,8 @@ def main():
         import pyblish.util
         pyblish.util.publish()
 
+        return
+
     if not bool(os.environ.get("KEEP_APP_OPEN")):
         cmds.evalDeferred("setup_pyblish_logging()", evaluateNext=True)
         cmds.evalDeferred(
