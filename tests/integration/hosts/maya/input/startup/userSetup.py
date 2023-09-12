@@ -1,8 +1,6 @@
-import sys
 import os
 import logging
-
-sys.stderr = sys.stdout
+import sys
 
 MAYA_STANDALONE = False
 try:
@@ -17,12 +15,8 @@ from maya import cmds  # noqa: E402
 
 
 def setup_pyblish_logging():
-    # Fetch the logger Pyblish uses for all of its messages
     log = logging.getLogger("pyblish")
-
-    # Do what `basicConfig` does, except explicitly
-    # and with control over where and how messages go
-    hnd = logging.StreamHandler()
+    hnd = logging.StreamHandler(sys.stdout)
     fmt = logging.Formatter(
         "pyblish (%(levelname)s) (line: %(lineno)d) %(name)s:"
         "\n%(message)s"
@@ -40,15 +34,12 @@ def main():
         import pyblish.util
         pyblish.util.publish()
 
-        return
-
     if not bool(os.environ.get("KEEP_APP_OPEN")):
         cmds.evalDeferred("setup_pyblish_logging()", evaluateNext=True)
         cmds.evalDeferred(
             "import pyblish.util;pyblish.util.publish()", lowestPriority=True
         )
 
-    print("finished OpenPype usersetup for testing")
     if not bool(os.environ.get("KEEP_APP_OPEN")) and not MAYA_STANDALONE:
         cmds.evalDeferred("cmds.quit(force=True)", lowestPriority=True)
 
