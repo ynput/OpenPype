@@ -1,7 +1,7 @@
 from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.ayon_utils.models import PROJECTS_MODEL_SENDER
-from .utils import RefreshThread
+from .utils import RefreshThread, get_qt_icon
 
 PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 1
 PROJECT_IS_ACTIVE_ROLE = QtCore.Qt.UserRole + 2
@@ -87,8 +87,11 @@ class ProjectsModel(QtGui.QStandardItemModel):
             items_to_remove.discard(project_name)
             item = self._project_items.get(project_name)
             if item is None:
-                item = QtGui.QStandardItem(project_name)
+                item = QtGui.QStandardItem()
                 new_items.append(item)
+            icon = get_qt_icon(project_item.icon)
+            item.setData(project_name, QtCore.Qt.DisplayRole)
+            item.setData(icon, QtCore.Qt.DecorationRole)
             item.setData(project_name, PROJECT_NAME_ROLE)
             item.setData(project_item.active, PROJECT_IS_ACTIVE_ROLE)
             self._project_items[project_name] = item

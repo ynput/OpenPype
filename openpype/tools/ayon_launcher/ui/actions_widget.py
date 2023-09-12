@@ -1,12 +1,10 @@
-import os
 import time
 import collections
-from math import ceil
 
 from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.flickcharm import FlickCharm
-from openpype.tools.utils.lib import get_qta_icon_by_name_and_color
+from openpype.tools.ayon_utils.widgets import get_qt_icon
 
 from .resources import get_options_image_path
 
@@ -19,56 +17,6 @@ ACTION_SORT_ROLE = QtCore.Qt.UserRole + 4
 ANIMATION_START_ROLE = QtCore.Qt.UserRole + 5
 ANIMATION_STATE_ROLE = QtCore.Qt.UserRole + 6
 FORCE_NOT_OPEN_WORKFILE_ROLE = QtCore.Qt.UserRole + 7
-
-
-class _IconsCache:
-    """Cache for icons."""
-
-    _cache = {}
-    _default = None
-
-    @classmethod
-    def _get_cache_key(cls, icon_def):
-        parts = []
-        icon_type = icon_def["type"]
-        if icon_type == "path":
-            parts = [icon_type, icon_def["path"]]
-
-        elif icon_type == "awesome":
-            parts = [icon_type, icon_def["name"], icon_def["color"]]
-        return "|".join(parts)
-
-    @classmethod
-    def get_icon(cls, icon_def):
-        icon_type = icon_def["type"]
-        cache_key = cls._get_cache_key(icon_def)
-        cache = cls._cache.get(cache_key)
-        if cache is not None:
-            return cache
-
-        icon = None
-        if icon_type == "path":
-            path = icon_def["path"]
-            if os.path.exists(path):
-                icon = QtGui.QIcon(path)
-
-        elif icon_type == "awesome":
-            icon_name = icon_def["name"]
-            icon_color = icon_def["color"]
-            icon = get_qta_icon_by_name_and_color(icon_name, icon_color)
-            if icon is None:
-                icon = get_qta_icon_by_name_and_color(
-                    "fa.{}".format(icon_name), icon_color)
-        if icon is None:
-            icon = cls.get_default()
-        cls._cache[cache_key] = icon
-        return icon
-
-    @classmethod
-    def get_default(cls):
-        pix = QtGui.QPixmap(512, 512)
-        pix.fill(QtCore.Qt.transparent)
-        return QtGui.QIcon(pix)
 
 
 class ActionsQtModel(QtGui.QStandardItemModel):
@@ -159,7 +107,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         items_by_id = {}
         for action_item_info in all_action_items_info:
             action_item, is_group = action_item_info
-            icon = _IconsCache.get_icon(action_item.icon)
+            icon = get_qt_icon(action_item.icon)
             if is_group:
                 label = action_item.label
             else:

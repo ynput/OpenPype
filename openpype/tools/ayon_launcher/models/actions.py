@@ -227,18 +227,21 @@ def get_action_icon(action):
         dict[str, str]: Icon info.
     """
 
-    icon_name = action.icon
-    if not icon_name:
+    icon = action.icon
+    if not icon:
         return {
-            "type": "awesome",
+            "type": "awesome-font",
             "name": "fa.cube",
             "color": "white"
         }
 
-    icon_path = resources.get_resource(icon_name)
+    if isinstance(icon, dict):
+        return icon
+
+    icon_path = resources.get_resource(icon)
     if not os.path.exists(icon_path):
         try:
-            icon_path = icon_name.format(resources.RESOURCES_DIR)
+            icon_path = icon.format(resources.RESOURCES_DIR)
         except Exception:
             pass
 
@@ -249,8 +252,8 @@ def get_action_icon(action):
         }
 
     return {
-        "type": "awesome",
-        "name": icon_name,
+        "type": "awesome-font",
+        "name": icon,
         "color": action.color or "white"
     }
 

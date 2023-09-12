@@ -7,7 +7,7 @@ import six
 
 from openpype.style import get_default_entity_icon_color
 
-from .cache import CacheItem, NestedCacheItem
+from .cache import NestedCacheItem
 
 HIERARCHY_MODEL_SENDER = "hierarchy.model"
 
@@ -35,13 +35,18 @@ class FolderItem:
     """
 
     def __init__(
-        self, entity_id, parent_id, name, label, icon_name, icon_color
+        self, entity_id, parent_id, name, label, icon
     ):
         self.entity_id = entity_id
         self.parent_id = parent_id
         self.name = name
-        self.icon_name = icon_name or "fa.folder"
-        self.icon_color = icon_color or get_default_entity_icon_color()
+        if not icon:
+            icon = {
+                "type": "awesome-font",
+                "name": "fa.folder",
+                "color": get_default_entity_icon_color()
+            }
+        self.icon = icon
         self.label = label or name
 
     def to_data(self):
@@ -56,8 +61,7 @@ class FolderItem:
             "parent_id": self.parent_id,
             "name": self.name,
             "label": self.label,
-            "icon_name": self.icon_name,
-            "icon_color": self.icon_color,
+            "icon": self.icon,
         }
 
     @classmethod
@@ -92,14 +96,20 @@ class TaskItem:
     """
 
     def __init__(
-        self, task_id, name, task_type, parent_id, icon_name, icon_color
+        self, task_id, name, task_type, parent_id, icon
     ):
         self.task_id = task_id
         self.name = name
         self.task_type = task_type
         self.parent_id = parent_id
-        self.icon_name = icon_name or "fa.male"
-        self.icon_color = icon_color or get_default_entity_icon_color()
+        if icon is None:
+            icon = {
+                "type": "awesome-font",
+                "name": "fa.male",
+                "color": get_default_entity_icon_color()
+            }
+        self.icon = icon
+
         self._label = None
 
     @property
@@ -136,8 +146,7 @@ class TaskItem:
             "name": self.name,
             "parent_id": self.parent_id,
             "task_type": self.task_type,
-            "icon_name": self.icon_name,
-            "icon_color": self.icon_color,
+            "icon": self.icon,
         }
 
     @classmethod
@@ -169,7 +178,6 @@ def _get_task_items_from_tasks(tasks):
             task["name"],
             task["type"],
             folder_id,
-            None,
             None
         ))
     return output
@@ -181,8 +189,7 @@ def _get_folder_item_from_hierarchy_item(item):
         item["parentId"],
         item["name"],
         item["label"],
-        None,
-        None,
+        None
     )
 
 

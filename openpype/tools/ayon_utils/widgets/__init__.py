@@ -14,6 +14,10 @@ from .tasks_widget import (
     TasksWidget,
     TasksModel,
 )
+from .utils import (
+    get_qt_icon,
+    RefreshThread,
+)
 
 
 __all__ = (
@@ -27,4 +31,7 @@ __all__ = (
 
     "TasksWidget",
     "TasksModel",
+
+    "get_qt_icon",
+    "RefreshThread",
 )

@@ -4,6 +4,8 @@ from abc import ABCMeta, abstractmethod
 import ayon_api
 import six
 
+from openpype.style import get_default_entity_icon_color
+
 from .cache import CacheItem
 
 PROJECTS_MODEL_SENDER = "projects.model"
@@ -28,9 +30,16 @@ class ProjectItem:
             is parent.
     """
 
-    def __init__(self, name, active):
+    def __init__(self, name, active, icon=None):
         self.name = name
         self.active = active
+        if icon is None:
+            icon = {
+                "type": "awesome-font",
+                "name": "fa.map",
+                "color": get_default_entity_icon_color(),
+            }
+        self.icon = icon
 
     def to_data(self):
         """Converts folder item to data.
@@ -42,6 +51,7 @@ class ProjectItem:
         return {
             "name": self.name,
             "active": self.active,
+            "icon": self.icon,
         }
 
     @classmethod

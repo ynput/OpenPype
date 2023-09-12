@@ -1,7 +1,5 @@
-import uuid
 import collections
 
-import qtawesome
 from qtpy import QtWidgets, QtGui, QtCore
 
 from openpype.tools.utils import (
@@ -9,7 +7,7 @@ from openpype.tools.utils import (
     DeselectableTreeView,
 )
 
-from .utils import RefreshThread
+from .utils import RefreshThread, get_qt_icon
 
 SENDER_NAME = "qt_folders_model"
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
@@ -187,10 +185,7 @@ class FoldersModel(QtGui.QStandardItemModel):
                 else:
                     is_new = self._parent_id_by_id[item_id] != parent_id
 
-                icon = qtawesome.icon(
-                    folder_item.icon_name,
-                    color=folder_item.icon_color,
-                )
+                icon = get_qt_icon(folder_item.icon)
                 item.setData(item_id, ITEM_ID_ROLE)
                 item.setData(folder_item.name, ITEM_NAME_ROLE)
                 item.setData(folder_item.label, QtCore.Qt.DisplayRole)

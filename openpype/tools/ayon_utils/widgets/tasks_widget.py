@@ -1,11 +1,10 @@
-import uuid
 import qtawesome
 from qtpy import QtWidgets, QtGui, QtCore
 
 from openpype.style import get_disabled_entity_icon_color
 from openpype.tools.utils import DeselectableTreeView
 
-from .utils import RefreshThread
+from .utils import RefreshThread, get_qt_icon
 
 SENDER_NAME = "qt_tasks_model"
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
@@ -100,10 +99,11 @@ class TasksModel(QtGui.QStandardItemModel):
         if self._invalid_selection_item is None:
             item = QtGui.QStandardItem("Select a folder")
             item.setFlags(QtCore.Qt.NoItemFlags)
-            icon = qtawesome.icon(
-                "fa.times",
-                color=get_disabled_entity_icon_color()
-            )
+            icon = get_qt_icon({
+                "type": "awesome-font",
+                "name": "fa.times",
+                "color": get_disabled_entity_icon_color(),
+            })
             item.setData(icon, QtCore.Qt.DecorationRole)
             self._invalid_selection_item = item
         return self._invalid_selection_item
@@ -111,10 +111,11 @@ class TasksModel(QtGui.QStandardItemModel):
     def _get_empty_task_item(self):
         if self._empty_tasks_item is None:
             item = QtGui.QStandardItem("No task")
-            icon = qtawesome.icon(
-                "fa.exclamation-circle",
-                color=get_disabled_entity_icon_color()
-            )
+            icon = get_qt_icon({
+                "type": "awesome-font",
+                "name": "fa.exclamation-circle",
+                "color": get_disabled_entity_icon_color(),
+            })
             item.setData(icon, QtCore.Qt.DecorationRole)
             item.setFlags(QtCore.Qt.NoItemFlags)
             self._empty_tasks_item = item
@@ -225,10 +226,7 @@ class TasksModel(QtGui.QStandardItemModel):
                 self._items_by_name[name] = item
 
             # TODO cache locally
-            icon = qtawesome.icon(
-                task_item.icon_name,
-                color=task_item.icon_color,
-            )
+            icon = get_qt_icon(task_item.icon)
             item.setData(task_item.label, QtCore.Qt.DisplayRole)
             item.setData(name, ITEM_NAME_ROLE)
             item.setData(task_item.id, ITEM_ID_ROLE)
