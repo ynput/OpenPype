@@ -348,12 +348,20 @@ class ActionsModel:
     def trigger_action(self, project_name, folder_id, task_id, identifier):
         session = self._prepare_session(project_name, folder_id, task_id)
         failed = False
+        error_message = None
+        action_label = identifier
+        action_items = self._get_action_items(project_name)
         try:
+            action = self._actions[identifier]
+            action_item = action_items[identifier]
+            action_label = action_item.full_label
             self._controller.emit_event(
                 "action.trigger.started",
-                {"identifier": identifier,}
+                {
+                    "identifier": identifier,
+                    "full_label": action_label,
+                }
             )
-            action = self._actions[identifier]
             if isinstance(action, ApplicationAction):
                 per_action = self._get_no_last_workfile_for_context(
                     project_name, folder_id, task_id
@@ -361,13 +369,19 @@ class ActionsModel:
                 force_not_open_workfile = per_action.get(identifier, False)
                 action.data["start_last_workfile"] = force_not_open_workfile
             action.process(session)
-        except Exception:
+        except Exception as exc:
             self.log.warning("Action trigger failed.", exc_info=True)
             failed = True
+            error_message = str(exc)
 
         self._controller.emit_event(
             "action.trigger.finished",
-            {"identifier": identifier, "failed": failed,}
+            {
+                "identifier": identifier,
+                "failed": failed,
+                "error_message": error_message,
+                "full_label": action_label,
+            }
         )
 
     def _get_no_last_workfile_reg_data(self):

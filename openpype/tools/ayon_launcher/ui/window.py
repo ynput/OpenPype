@@ -118,6 +118,14 @@ class LauncherWindow(QtWidgets.QWidget):
             "selection.project.changed",
             self._on_project_selection_change,
         )
+        controller.register_event_callback(
+            "action.trigger.started",
+            self._on_action_trigger_started,
+        )
+        controller.register_event_callback(
+            "action.trigger.finished",
+            self._on_action_trigger_finished,
+        )
 
         self._controller = controller
 
@@ -187,6 +195,14 @@ class LauncherWindow(QtWidgets.QWidget):
 
         elif self._is_on_projects_page:
             self._go_to_hierarchy_page(project_name)
+
+    def _on_action_trigger_started(self, event):
+        self._echo("Running action: {}".format(event["full_label"]))
+
+    def _on_action_trigger_finished(self, event):
+        if not event["failed"]:
+            return
+        self._echo("Failed: {}".format(event["error_message"]))
 
     def _is_page_slide_anim_running(self):
         return (
