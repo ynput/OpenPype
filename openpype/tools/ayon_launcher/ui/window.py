@@ -131,6 +131,7 @@ class LauncherWindow(QtWidgets.QWidget):
 
         self._is_on_projects_page = True
         self._window_is_active = False
+        self._refresh_on_activate = False
 
         self._pages_widget = pages_widget
         self._pages_layout = pages_layout
@@ -151,7 +152,8 @@ class LauncherWindow(QtWidgets.QWidget):
     def showEvent(self, event):
         super(LauncherWindow, self).showEvent(event)
         self._window_is_active = True
-        self._refresh_timer.start()
+        if not self._refresh_timer.isActive():
+            self._refresh_timer.start()
         self._controller.refresh()
 
     def closeEvent(self, event):
@@ -166,11 +168,10 @@ class LauncherWindow(QtWidgets.QWidget):
         ):
             is_active = self.isActiveWindow() and not self.isMinimized()
             self._window_is_active = is_active
-            if is_active:
+            if is_active and self._refresh_on_activate:
+                self._refresh_on_activate = False
                 self._on_refresh_timeout()
                 self._refresh_timer.start()
-            else:
-                self._refresh_timer.stop()
 
         super(LauncherWindow, self).changeEvent(event)
 
@@ -179,7 +180,7 @@ class LauncherWindow(QtWidgets.QWidget):
         if self._window_is_active:
             self._controller.refresh()
         else:
-            self._refresh_timer.stop()
+            self._refresh_on_activate = True
 
     def _echo(self, message):
         self._message_label.setText(str(message))
