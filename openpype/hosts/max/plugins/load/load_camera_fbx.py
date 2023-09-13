@@ -81,7 +81,7 @@ class FbxLoader(load.LoaderPlugin):
                 fbx_object.pos = transform_data[
                     f"{fbx_object.name}.transform"] or fbx_object.pos
                 fbx_object.scale = transform_data[
-                    f"{fbx_object.name}.scale"] or  fbx_object.scale
+                    f"{fbx_object.name}.scale"] or fbx_object.scale
 
         with maintained_selection():
             rt.Select(node)

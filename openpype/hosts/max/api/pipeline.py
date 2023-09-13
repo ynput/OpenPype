@@ -166,8 +166,6 @@ def containerise(name: str, nodes: list, context,
     }
     container_name = f"{namespace}:{name}{suffix}"
     container = rt.container(name=container_name)
-    #for node in nodes:
-    #    node.Parent = container
     import_custom_attribute_data(container, nodes)
     if not lib.imprint(container_name, data):
         print(f"imprinting of {container_name} failed.")
@@ -211,6 +209,7 @@ def import_custom_attribute_data(container: str, selections: list):
         container.modifiers[0].openPypeData,
         "sel_list", sel_list)
 
+
 def update_custom_attribute_data(container: str, selections: list):
     """Updating the Openpype/AYON custom parameter built by the creator
 
@@ -222,6 +221,7 @@ def update_custom_attribute_data(container: str, selections: list):
     if container.modifiers[0].name == "OP Data":
         rt.deleteModifier(container, container.modifiers[0])
     import_custom_attribute_data(container, selections)
+
 
 def get_previous_loaded_object(container: str):
     """Get previous loaded_object through the OP data
