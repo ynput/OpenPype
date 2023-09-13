@@ -18,7 +18,6 @@ class AbstractHierarchyController:
         pass
 
 
-
 class ProjectItem:
     """Item representing folder entity on a server.
 
@@ -100,11 +99,6 @@ class ProjectsModel(object):
 
     def refresh(self):
         self._refresh_projects_cache()
-
-    def reset(self):
-        self._projects_cache.set_invalid()
-        self._project_items_by_name = {}
-        self._projects_by_name = {}
 
     def get_project_items(self, sender):
         if not self._projects_cache.is_valid:
