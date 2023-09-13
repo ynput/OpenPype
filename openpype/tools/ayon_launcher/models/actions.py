@@ -276,15 +276,7 @@ class ActionsModel:
         self._actions = None
         self._action_items = {}
 
-        self._launcher_applications_reg = OpenPypeSettingsRegistry(
-            "launcher_applications")
-
-        try:
-            _ = self._launcher_applications_reg.get_item(
-                self._not_open_workfile_reg_key)
-        except ValueError:
-            self._launcher_applications_reg.set_item(
-                self._not_open_workfile_reg_key, {})
+        self._launcher_tool_reg = OpenPypeSettingsRegistry("launcher_tool")
 
     @property
     def log(self):
@@ -341,7 +333,7 @@ class ActionsModel:
         folder_data = project_data.setdefault(folder_id, {})
         task_data = folder_data.setdefault(task_id, {})
         task_data[action_id] = enabled
-        self._launcher_applications_reg.set_item(
+        self._launcher_tool_reg.set_item(
             self._not_open_workfile_reg_key, no_workfile_reg_data
         )
 
@@ -386,11 +378,11 @@ class ActionsModel:
 
     def _get_no_last_workfile_reg_data(self):
         try:
-            no_workfile_reg_data = self._launcher_applications_reg.get_item(
+            no_workfile_reg_data = self._launcher_tool_reg.get_item(
                 self._not_open_workfile_reg_key)
         except ValueError:
             no_workfile_reg_data = {}
-            self._launcher_applications_reg.set_item(
+            self._launcher_tool_reg.set_item(
                 self._not_open_workfile_reg_key, no_workfile_reg_data)
         return no_workfile_reg_data
 
