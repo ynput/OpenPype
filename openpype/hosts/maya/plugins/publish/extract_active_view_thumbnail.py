@@ -4,6 +4,9 @@ import maya.api.OpenMayaUI as omui
 import pyblish.api
 import tempfile
 
+from openpype.hosts.maya.lib import IS_HEADLESS
+
+
 
 class ExtractActiveViewThumbnail(pyblish.api.InstancePlugin):
     """Set instance thumbnail to a screengrab of current active viewport.
@@ -19,6 +22,13 @@ class ExtractActiveViewThumbnail(pyblish.api.InstancePlugin):
     hosts = ["maya"]
 
     def process(self, instance):
+        if IS_HEADLESS:
+            self.log.debug(
+                "Skip extraction of active view thumbnail, due to being in"
+                "headless mode."
+            )
+            return
+
         thumbnail = instance.data.get("thumbnailPath")
         if not thumbnail:
             view_thumbnail = self.get_view_thumbnail(instance)
