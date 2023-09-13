@@ -40,7 +40,7 @@ class FBXExtractor:
         the option is not included and a warning is logged.
 
         """
-
+        #TODO: add skeletonDefinition
         return {
             "cameras": bool,
             "smoothingGroups": bool,
@@ -65,7 +65,8 @@ class FBXExtractor:
             "inputConnections": bool,
             "upAxis": str,  # x, y or z,
             "triangulate": bool,
-            "FileVersion": str
+            "FileVersion": str,
+            "skeletonDefinitions": bool
         }
 
     @property
@@ -107,7 +108,8 @@ class FBXExtractor:
             "inputConnections": True,
             "upAxis": "y",
             "triangulate": False,
-            "fileVersion": "FBX202000"
+            "fileVersion": "FBX202000",
+            "skeletonDefinitions": False
         }
 
     def __init__(self, log=None):

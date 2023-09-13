@@ -42,6 +42,7 @@ class ExtractRigFBX(publish.Extractor,
         out_set = instance.data.get("animated_skeleton", [])
 
         instance.data["constraints"] = True
+        instance.data["skeletonDefinitions"] = True
         instance.data["animationOnly"] = True
 
         fbx_exporter.set_options_from_instance(instance)

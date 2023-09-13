@@ -824,6 +824,10 @@
                         {
                             "key": "ValidateSkeletonRigOutputIds",
                             "label": "Validate Skeleton Rig Output Ids"
+                        },
+                        {
+                            "key": "ValidateSkeletonTopGroupHierarchy",
+                            "label": "Validate Skeleton Top Group Hierarchy"
                         }
                     ]
                 },

@@ -42,6 +42,7 @@ class ExtractRigFBX(publish.Extractor,
         out_set = instance.data.get("skeleton_mesh", [])
 
         instance.data["constraints"] = True
+        instance.data["skeletonDefinitions"] = True
 
         fbx_exporter.set_options_from_instance(instance)
 
@@ -50,7 +51,6 @@ class ExtractRigFBX(publish.Extractor,
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
-        self.log.debug("Families: {}".format(instance.data["families"]))
 
         representation = {
             'name': 'fbx',
@@ -59,6 +59,5 @@ class ExtractRigFBX(publish.Extractor,
             "stagingDir": staging_dir,
         }
         instance.data["representations"].append(representation)
-        self.log.debug("Representation: {}".format(representation))
 
         self.log.debug("Extract FBX successful to: {0}".format(path))

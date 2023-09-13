@@ -676,6 +676,10 @@ class PublishersModel(BaseSettingsModel):
         default_factory=BasicValidateModel,
         title="Validate Skeleton Rig Output Ids"
     )
+    ValidateSkeletonTopGroupHierarchy: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Skeleton Top Group Hierarchy",
+    )
     ValidateRigOutSetNodeIds: ValidateRigOutSetNodeIdsModel = Field(
         default_factory=ValidateRigOutSetNodeIdsModel,
         title="Validate Rig Out Set Node Ids",
@@ -1205,6 +1209,11 @@ DEFAULT_PUBLISH_SETTINGS = {
         "allow_history_only": False
     },
     "ValidateSkeletonRigOutputIds": {
+        "enabled": False,
+        "optional": True,
+        "active": True
+    },
+    "ValidateSkeletonTopGroupHierarchy": {
         "enabled": False,
         "optional": True,
         "active": True
