@@ -60,8 +60,7 @@ class MaxSceneLoader(load.LoaderPlugin):
         # delete old duplicate
         # use the modifier OP data to delete the data
         node_list = get_previous_loaded_object(node)
-        rt.Select(node_list)
-        prev_max_objects = rt.GetCurrentSelection()
+        prev_max_objects = rt.getLastMergedNodes()
         transform_data = object_transform_set(prev_max_objects)
         for prev_max_obj in prev_max_objects:
             if rt.isValidNode(prev_max_obj):  # noqa
@@ -77,9 +76,9 @@ class MaxSceneLoader(load.LoaderPlugin):
             max_obj.name = f"{namespace}:{obj_name}"
             if max_obj in node_list:
                 max_obj.pos = transform_data[
-                    f"{max_obj.name}.transform"] or max_obj.pos
+                    f"{max_obj.name}.transform"] or 0
                 max_obj.scale = transform_data[
-                    f"{max_obj.name}.scale"] or max_obj.scale
+                    f"{max_obj.name}.scale"] or 0
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

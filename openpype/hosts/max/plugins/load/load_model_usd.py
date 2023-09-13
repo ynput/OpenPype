@@ -93,9 +93,9 @@ class ModelUSDLoader(load.LoaderPlugin):
             usd_objects.append(children)
             if children in node_list:
                 children.pos = transform_data[
-                    f"{children.name}.transform"] or children.pos
+                    f"{children.name}.transform"] or 0
                 children.scale = transform_data[
-                    f"{children.name}.scale"] or children.scale
+                    f"{children.name}.scale"] or 0
 
         asset.name = f"{namespace}:{asset.name}"
         usd_objects.append(asset)

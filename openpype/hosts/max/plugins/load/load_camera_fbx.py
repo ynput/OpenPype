@@ -79,9 +79,9 @@ class FbxLoader(load.LoaderPlugin):
             fbx_object.name = f"{namespace}:{fbx_object.name}"
             if fbx_object in node_list:
                 fbx_object.pos = transform_data[
-                    f"{fbx_object.name}.transform"] or fbx_object.pos
+                    f"{fbx_object.name}.transform"] or 0
                 fbx_object.scale = transform_data[
-                    f"{fbx_object.name}.scale"] or fbx_object.scale
+                    f"{fbx_object.name}.scale"] or 0
 
         with maintained_selection():
             rt.Select(node)

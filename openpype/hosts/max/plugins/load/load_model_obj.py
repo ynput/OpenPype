@@ -68,9 +68,9 @@ class ObjLoader(load.LoaderPlugin):
             selection.name = f"{namespace}:{selection.name}"
             if selection in node_list:
                 selection.pos = transform_data[
-                    f"{selection.name}.transform"] or selection.pos
+                    f"{selection.name}.transform"] or 0
                 selection.scale = transform_data[
-                    f"{selection.name}.scale"] or selection.scale
+                    f"{selection.name}.scale"] or 0
         update_custom_attribute_data(node, selections)
         with maintained_selection():
             rt.Select(node)
