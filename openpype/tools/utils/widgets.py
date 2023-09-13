@@ -810,6 +810,40 @@ class VerticalExpandButton(QtWidgets.QPushButton):
         self.setSizePolicy(sp)
 
 
+class SquareButton(QtWidgets.QPushButton):
+    """Make button square shape.
+
+    Change width to match height on resize.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(SquareButton, self).__init__(*args, **kwargs)
+
+        sp = self.sizePolicy()
+        sp.setVerticalPolicy(QtWidgets.QSizePolicy.Minimum)
+        sp.setHorizontalPolicy(QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(sp)
+        self._ideal_width = None
+
+    def showEvent(self, event):
+        super(SquareButton, self).showEvent(event)
+        self._ideal_width = self.height()
+        self.updateGeometry()
+
+    def resizeEvent(self, event):
+        super(SquareButton, self).resizeEvent(event)
+        self._ideal_width = self.height()
+        self.updateGeometry()
+
+    def sizeHint(self):
+        sh = super(SquareButton, self).sizeHint()
+        ideal_width = self._ideal_width
+        if ideal_width is None:
+            ideal_width = sh.height()
+        sh.setWidth(ideal_width)
+        return sh
+
+
 class RefreshButton(VerticalExpandButton):
     def __init__(self, parent=None):
         super(RefreshButton, self).__init__(parent)

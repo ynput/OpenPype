@@ -16,6 +16,7 @@ from .widgets import (
     PixmapButton,
     SeparatorWidget,
     VerticalExpandButton,
+    SquareButton,
     RefreshButton,
     GoToCurrentButton,
 )
@@ -64,6 +65,7 @@ __all__ = (
     "SeparatorWidget",
 
     "VerticalExpandButton",
+    "SquareButton",
     "RefreshButton",
     "GoToCurrentButton",
 
