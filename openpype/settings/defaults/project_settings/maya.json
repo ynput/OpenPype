@@ -1170,6 +1170,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateSkeletonTopGroupHierarchy": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateCameraAttributes": {
             "enabled": false,
             "optional": true,
