@@ -11,10 +11,6 @@ class CollectFbxAnimation(pyblish.api.InstancePlugin):
     families = ["animation"]
 
     def process(self, instance):
-        frame = cmds.currentTime(query=True)
-        instance.data["frameStart"] = frame
-        instance.data["frameEnd"] = frame
-
         skeleton_sets = [
             i for i in instance
             if i.lower().endswith("skeletonanim_set")
