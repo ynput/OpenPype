@@ -1,4 +1,3 @@
-import qtawesome
 from qtpy import QtWidgets, QtGui, QtCore
 
 from openpype.style import get_disabled_entity_icon_color
