@@ -12,9 +12,9 @@ class CollectInstanceNodeFrameRange(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        node_path = instance.data.get("instance_node")
-        node = hou.node(node_path) if node_path else None
-        if not node_path or not node:
+        # workfile does not have instance node
+        node = instance.data["transientData"].get("instance_node")
+        if not node:
             self.log.debug("No instance node found for instance: "
                            "{}".format(instance))
             return

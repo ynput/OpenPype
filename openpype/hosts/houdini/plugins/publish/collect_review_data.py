@@ -23,8 +23,7 @@ class CollectHoudiniReviewData(pyblish.api.InstancePlugin):
         instance.data.setdefault("families", []).append('ftrack')
 
         # Get the camera from the rop node to collect the focal length
-        ropnode_path = instance.data["instance_node"]
-        ropnode = hou.node(ropnode_path)
+        ropnode = instance.data["transientData"]["instance_node"]
 
         camera_path = ropnode.parm("camera").eval()
         camera_node = hou.node(camera_path)

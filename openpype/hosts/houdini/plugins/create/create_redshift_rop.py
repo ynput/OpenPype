@@ -29,7 +29,7 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)
 
-        instance_node = hou.node(instance.get("instance_node"))
+        instance_node = instance.transient_data["instance_node"]
 
         basename = instance_node.name()
 

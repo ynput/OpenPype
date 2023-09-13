@@ -24,7 +24,7 @@ class ValidateAlembicROPFaceSets(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        rop = hou.node(instance.data["instance_node"])
+        rop = instance.data["transientData"]["instance_node"]
         facesets = rop.parm("facesets").eval()
 
         # 0 = No Face Sets

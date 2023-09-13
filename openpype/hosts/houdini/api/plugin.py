@@ -186,12 +186,12 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
 
             self.customize_node_look(instance_node)
 
-            instance_data["instance_node"] = instance_node.path()
             instance = CreatedInstance(
                 self.family,
                 subset_name,
                 instance_data,
                 self)
+            instance.transient_data["instance_node"] = instance_node
             self._add_instance_to_context(instance)
             imprint(instance_node, instance.data_to_store())
             return instance
@@ -225,11 +225,12 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             created_instance = CreatedInstance.from_existing(
                 read(instance), self
             )
+            created_instance.transient_data["instance_node"] = instance
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
         for created_inst, changes in update_list:
-            instance_node = hou.node(created_inst.get("instance_node"))
+            instance_node = created_inst.transient_data["instance_node"]
 
             new_values = {
                 key: changes[key].new_value
@@ -249,7 +250,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
 
         """
         for instance in instances:
-            instance_node = hou.node(instance.data.get("instance_node"))
+            instance_node = instance.transient_data["instance_node"]
             if instance_node:
                 instance_node.destroy()
 

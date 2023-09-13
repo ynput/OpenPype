@@ -42,7 +42,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         output_node = instance.data.get("output_node")
-        rop_node = hou.node(instance.data["instance_node"])
+        rop_node = instance.data["transientData"]["instance_node"]
 
         if output_node is None:
             cls.log.error(
@@ -132,7 +132,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
         used to add a default single value for the path.
         """
 
-        rop_node = hou.node(instance.data["instance_node"])
+        rop_node = instance.data["transientData"]["instance_node"]
         output_node = rop_node.parm("sop_path").evalAsNode()
 
         if not output_node:

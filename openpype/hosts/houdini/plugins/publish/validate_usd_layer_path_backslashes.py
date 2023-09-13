@@ -28,7 +28,7 @@ class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        rop = hou.node(instance.data.get("instance_node"))
+        rop = instance.data["transientData"]["instance_node"]
         lop_path = hou_usdlib.get_usd_rop_loppath(rop)
         stage = lop_path.stage(apply_viewport_overrides=False)
 

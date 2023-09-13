@@ -18,7 +18,7 @@ class ExtractUSD(publish.Extractor):
 
     def process(self, instance):
 
-        ropnode = hou.node(instance.data.get("instance_node"))
+        ropnode = instance.data["transientData"]["instance_node"]
 
         # Get the filename from the filename parameter
         output = ropnode.evalParm("lopoutput")

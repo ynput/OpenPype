@@ -66,8 +66,7 @@ class HoudiniLegacyConvertor(SubsetConvertorPlugin):
             if family in self.family_to_id:
                 for subset in subsets:
                     data = {
-                        "creator_identifier": self.family_to_id[family],
-                        "instance_node": subset.path()
+                        "creator_identifier": self.family_to_id[family]
                     }
                     if family == "pointcache":
                         data["families"] = ["abc"]

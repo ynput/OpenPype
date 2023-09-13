@@ -124,7 +124,7 @@ def create_interactive(creator_identifier, **kwargs):
         # Select the new instance
         for instance_id in new:
             instance = after[instance_id]
-            node = hou.node(instance.get("instance_node"))
+            node = instance.transient_data["instance_node"]
             node.setCurrent(True)
 
     return list(new)

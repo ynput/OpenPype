@@ -27,7 +27,7 @@ class CreateCompositeSequence(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
 
-        instance_node = hou.node(instance.get("instance_node"))
+        instance_node = instance.transient_data["instance_node"]
         filepath = "{}{}".format(
             hou.text.expandString("$HIP/pyblish/"),
             "{}.$F4{}".format(subset_name, self.ext)

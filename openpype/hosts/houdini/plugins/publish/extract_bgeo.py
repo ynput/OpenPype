@@ -18,7 +18,7 @@ class ExtractBGEO(publish.Extractor):
 
     def process(self, instance):
 
-        ropnode = hou.node(instance.data["instance_node"])
+        ropnode = instance.data["transientData"]["instance_node"]
 
         # Get the filename from the filename parameter
         output = ropnode.evalParm("sopoutput")

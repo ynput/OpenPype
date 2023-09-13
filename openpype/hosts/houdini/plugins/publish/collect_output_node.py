@@ -24,7 +24,7 @@ class CollectOutputSOPPath(pyblish.api.InstancePlugin):
 
         import hou
 
-        node = hou.node(instance.data["instance_node"])
+        node = instance.data["transientData"]["instance_node"]
 
         # Get sop path
         node_type = node.type().name()

@@ -41,7 +41,7 @@ class ValidateFileExtension(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         # Get ROP node from instance
-        node = hou.node(instance.data["instance_node"])
+        node = instance.data["transientData"]["instance_node"]
 
         # Create lookup for current family in instance
         families = []

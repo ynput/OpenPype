@@ -61,11 +61,7 @@ class SelectROPAction(pyblish.api.Action):
         self.log.info("Finding ROP nodes..")
         rop_nodes = list()
         for instance in errored_instances:
-            node_path = instance.data.get("instance_node")
-            if not node_path:
-                continue
-
-            node = hou.node(node_path)
+            node = instance.data.get("instance_node")
             if not node:
                 continue
 

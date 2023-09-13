@@ -27,7 +27,7 @@ class CreateArnoldAss(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)  # type: plugin.CreatedInstance
 
-        instance_node = hou.node(instance.get("instance_node"))
+        instance_node = instance.transient_data["instance_node"]
 
         # Hide Properties Tab on Arnold ROP since that's used
         # for rendering instead of .ass Archive Export

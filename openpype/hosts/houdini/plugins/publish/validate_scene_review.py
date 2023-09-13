@@ -18,7 +18,7 @@ class ValidateSceneReview(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         report = []
-        instance_node = hou.node(instance.data.get("instance_node"))
+        instance_node = instance.data["transientData"]["instance_node"]
 
         invalid = self.get_invalid_scene_path(instance_node)
         if invalid:

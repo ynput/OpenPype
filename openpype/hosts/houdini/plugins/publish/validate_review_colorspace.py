@@ -43,7 +43,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
             )
             return
 
-        rop_node = hou.node(instance.data["instance_node"])
+        rop_node = instance.data["transientData"]["instance_node"]
         if rop_node.evalParm("colorcorrect") != 2:
             # any colorspace settings other than default requires
             # 'Color Correct' parm to be set to 'OpenColorIO'
@@ -70,7 +70,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
         """
         from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
 
-        rop_node = hou.node(instance.data["instance_node"])
+        rop_node = instance.data["transientData"]["instance_node"]
 
         if rop_node.evalParm("colorcorrect") != 2:
             rop_node.setParms({"colorcorrect": 2})

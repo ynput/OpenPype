@@ -21,7 +21,7 @@ class CollectUsdLayers(pyblish.api.InstancePlugin):
             self.log.debug("No output node found..")
             return
 
-        rop_node = hou.node(instance.data["instance_node"])
+        rop_node = instance.data["transientData"]["instance_node"]
 
         save_layers = []
         for layer in usdlib.get_configured_save_layers(rop_node):
@@ -56,7 +56,7 @@ class CollectUsdLayers(pyblish.api.InstancePlugin):
             layer_inst.data["subset"] = "__stub__"
             layer_inst.data["label"] = label
             layer_inst.data["asset"] = instance.data["asset"]
-            layer_inst.data["instance_node"] = instance.data["instance_node"]
+            layer_inst.data["instance_node"] = instance.data["transientData"]["instance_node"]
             # include same USD ROP
             layer_inst.append(rop_node)
             # include layer data

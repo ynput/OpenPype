@@ -34,7 +34,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
         import hou  # noqa
         output_node = instance.data.get("output_node")
-        rop_node = hou.node(instance.data["instance_node"])
+        rop_node = instance.data["transientData"]["instance_node"]
         if output_node is None:
             cls.log.error(
                 "SOP Output node in '%s' does not exist. "

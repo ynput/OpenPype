@@ -98,7 +98,7 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
                 "Invalid VDB content: {}".format(message),
                 formatting_data={
                     "message": message,
-                    "rop_path": instance.data.get("instance_node"),
+                    "rop_path": instance.data["transientData"]["instance_node"].path(),
                     "sop_path": output_path
                 }
             )
@@ -111,9 +111,9 @@ class ValidateVDBOutputNode(pyblish.api.InstancePlugin):
             instance_node = instance.data.get("instance_node")
             error = (
                 "SOP path is not correctly set on "
-                "ROP node `{}`.".format(instance_node)
+                "ROP node `{}`.".format(instance_node.path())
             )
-            return [hou.node(instance_node), error]
+            return [instance_node, error]
 
         frame = instance.data.get("frameStart", 0)
         geometry = get_geometry_at_frame(node, frame)

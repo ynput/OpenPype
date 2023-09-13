@@ -25,7 +25,7 @@ class CreateAlembicCamera(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
 
-        instance_node = hou.node(instance.get("instance_node"))
+        instance_node = instance.transient_data["instance_node"]
         parms = {
             "filename": hou.text.expandString(
                 "$HIP/pyblish/{}.abc".format(subset_name)),

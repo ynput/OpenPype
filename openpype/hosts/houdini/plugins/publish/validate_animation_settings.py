@@ -38,7 +38,7 @@ class ValidateAnimationSettings(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        node = hou.node(instance.data["instance_node"])
+        node = instance.data["transientData"]["instance_node"]
         # Check trange parm, 0 means Render Current Frame
         frame_range = node.evalParm("trange")
         if frame_range == 0:

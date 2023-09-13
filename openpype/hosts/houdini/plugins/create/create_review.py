@@ -27,7 +27,7 @@ class CreateReview(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)
 
-        instance_node = hou.node(instance.get("instance_node"))
+        instance_node = instance.transient_data["instance_node"]
 
         frame_range = hou.playbar.frameRange()
 

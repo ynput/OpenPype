@@ -1,5 +1,4 @@
 import pyblish.api
-import hou
 
 
 class CollectInstanceActiveState(pyblish.api.InstancePlugin):
@@ -25,7 +24,7 @@ class CollectInstanceActiveState(pyblish.api.InstancePlugin):
 
         # Check bypass state and reverse
         active = True
-        node = hou.node(instance.data.get("instance_node"))
+        node = instance.data["transientData"]["instance_node"]
         if hasattr(node, "isBypassed"):
             active = not node.isBypassed()
 

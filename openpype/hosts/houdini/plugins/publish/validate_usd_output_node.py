@@ -36,7 +36,7 @@ class ValidateUSDOutputNode(pyblish.api.InstancePlugin):
         output_node = instance.data["output_node"]
 
         if output_node is None:
-            node = hou.node(instance.data.get("instance_node"))
+            node = instance.data["transientData"]["instance_node"]
             cls.log.error(
                 "USD node '%s' LOP path does not exist. "
                 "Ensure a valid LOP path is set." % node.path()

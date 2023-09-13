@@ -30,7 +30,7 @@ class CreateVrayROP(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)  # type: CreatedInstance
 
-        instance_node = hou.node(instance.get("instance_node"))
+        instance_node = instance.transient_data["instance_node"]
 
         # Add IPR for Vray
         basename = instance_node.name()

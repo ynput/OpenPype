@@ -30,7 +30,7 @@ class CreateArnoldRop(plugin.HoudiniCreator):
             instance_data,
             pre_create_data)  # type: plugin.CreatedInstance
 
-        instance_node = hou.node(instance.get("instance_node"))
+        instance_node = instance.transient_data["instance_node"]
 
         ext = pre_create_data.get("image_format")
 

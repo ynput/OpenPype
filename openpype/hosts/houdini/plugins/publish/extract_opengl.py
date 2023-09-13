@@ -16,7 +16,7 @@ class ExtractOpenGL(publish.Extractor):
     hosts = ["houdini"]
 
     def process(self, instance):
-        ropnode = hou.node(instance.data.get("instance_node"))
+        ropnode = instance.data["transientData"]["instance_node"]
 
         output = ropnode.evalParm("picture")
         staging_dir = os.path.normpath(os.path.dirname(output))

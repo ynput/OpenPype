@@ -37,6 +37,6 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        rop = hou.node(instance.data["instance_node"])
+        rop = instance.data["transientData"]["instance_node"]
         if hasattr(rop, "isBypassed") and rop.isBypassed():
             return [rop]

@@ -15,7 +15,7 @@ class ExtractHDA(publish.Extractor):
 
     def process(self, instance):
         self.log.info(pformat(instance.data))
-        hda_node = hou.node(instance.data.get("instance_node"))
+        hda_node = instance.data["transientData"]["instance_node"]
         hda_def = hda_node.type().definition()
         hda_options = hda_def.options()
         hda_options.setSaveInitialParmsAndContents(True)
