@@ -174,5 +174,79 @@ def _get_views_data(config_path):
     return data
 
 
+def _get_display_view_colorspace_name(config_path, display, view):
+    """Returns the colorspace attribute of the (display, view) pair.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+
+    Raises:
+        IOError: Input config does not exist.
+
+    Returns:
+        view color space name (str) e.g. "Output - sRGB"
+    """
+
+    config_path = Path(config_path)
+
+    if not config_path.is_file():
+        raise IOError("Input path should be `config.ocio` file")
+
+    config = ocio.Config.CreateFromFile(str(config_path))
+    colorspace = config.getDisplayViewColorSpaceName(display, view)
+
+    return colorspace
+
+
+@config.command(
+    name="get_display_view_colorspace_name",
+    help=(
+        "return default view colorspace name "
+        "for the given display and view "
+        "--path input arg is required"
+    )
+)
+@click.option("--in_path", required=True,
+              help="path where to read ocio config file",
+              type=click.Path(exists=True))
+@click.option("--out_path", required=True,
+              help="path where to write output json file",
+              type=click.Path())
+@click.option("--display", required=True,
+              help="display name",
+              type=click.STRING)
+@click.option("--view", required=True,
+              help="view name",
+              type=click.STRING)
+def get_display_view_colorspace_name(in_path, out_path,
+                                     display, view):
+    """Aggregate view colorspace name to file.
+
+    Wrapper command for processes without access to OpenColorIO
+
+    Args:
+        in_path (str): config file path string
+        out_path (str): temp json file path string
+        display (str): display name e.g. "ACES"
+        view (str): view name e.g. "sRGB"
+
+    Example of use:
+    > pyton.exe ./ocio_wrapper.py config \
+        get_display_view_colorspace_name --in_path=<path> \
+        --out_path=<path> --display=<display> --view=<view>
+    """
+
+    out_data = _get_display_view_colorspace_name(in_path,
+                                                 display,
+                                                 view)
+
+    with open(out_path, "w") as f:
+        json.dump(out_data, f)
+
+    print(f"Display view colorspace saved to '{out_path}'")
+
 if __name__ == '__main__':
     main()

@@ -281,7 +281,6 @@ class CollectMultiverseLookData(pyblish.api.InstancePlugin):
                                         long=True)
             nodes.update(nodes_of_interest)
 
-        files = []
         sets = {}
         instance.data["resources"] = []
         publishMipMap = instance.data["publishMipMap"]

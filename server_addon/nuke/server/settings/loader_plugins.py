@@ -6,10 +6,6 @@ class LoadImageModel(BaseSettingsModel):
     enabled: bool = Field(
         title="Enabled"
     )
-    """# TODO: v3 api used `_representation`
-    New api is hiding it so it had to be renamed
-    to `representations_include`
-    """
     representations_include: list[str] = Field(
         default_factory=list,
         title="Include representations"
@@ -33,10 +29,6 @@ class LoadClipModel(BaseSettingsModel):
     enabled: bool = Field(
         title="Enabled"
     )
-    """# TODO: v3 api used `_representation`
-    New api is hiding it so it had to be renamed
-    to `representations_include`
-    """
     representations_include: list[str] = Field(
         default_factory=list,
         title="Include representations"

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Footage item missing</title>
+<description>
+## Footage item missing
+
+ FootageItem `{name}` contains missing `{path}`. Render will not produce any frames and AE will stop react to any integration
+### How to repair?
+
+Remove `{name}` or provide missing file.
+</description>
+</error>
+</root>
