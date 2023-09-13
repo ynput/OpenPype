@@ -21,11 +21,11 @@ class ExtractFBX(publish.Extractor):
 
         # get rop node
         ropnode = hou.node(instance.data.get("instance_node"))
-        output_node = ropnode.evalParm("sopoutput")
+        output_file = ropnode.evalParm("sopoutput")
 
         # get staging_dir and file_name
-        staging_dir = os.path.normpath(os.path.dirname(output_node))
-        file_name = os.path.basename(output_node)
+        staging_dir = os.path.normpath(os.path.dirname(output_file))
+        file_name = os.path.basename(output_file)
 
         # render rop
         self.log.debug("Writing FBX '%s' to '%s'", file_name, staging_dir)
