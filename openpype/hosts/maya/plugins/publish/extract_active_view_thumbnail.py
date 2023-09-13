@@ -7,7 +7,6 @@ import tempfile
 from openpype.hosts.maya.lib import IS_HEADLESS
 
 
-
 class ExtractActiveViewThumbnail(pyblish.api.InstancePlugin):
     """Set instance thumbnail to a screengrab of current active viewport.
 
