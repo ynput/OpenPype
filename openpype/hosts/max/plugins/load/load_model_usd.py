@@ -73,7 +73,7 @@ class ModelUSDLoader(load.LoaderPlugin):
         rt.Select(node_list)
         prev_objects = [sel for sel in rt.GetCurrentSelection()
                         if sel != rt.Container
-                        and sel.name == node_name]
+                        and sel.name != node_name]
         transform_data = object_transform_set(prev_objects)
         for n in prev_objects:
             rt.Delete(n)

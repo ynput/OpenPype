@@ -75,7 +75,7 @@ class FbxLoader(load.LoaderPlugin):
             path, rt.name("noPrompt"), using=rt.FBXIMP)
         current_fbx_objects = [sel for sel in rt.GetCurrentSelection()
                                if sel != rt.Container
-                               and sel.name == node_name]
+                               and sel.name != node_name]
 
         update_custom_attribute_data(node, current_fbx_objects)
         for fbx_object in current_fbx_objects:
