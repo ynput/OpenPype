@@ -464,9 +464,8 @@ def apply_plugin_settings_automatically(plugin, settings, logger=None):
 
     for option, value in settings.items():
         if logger:
-            logger.debug("Plugin {} - Attr: {} -> {}".format(
-                option, value, plugin.__name__
-            ))
+            logger.debug("Plugin %s - Attr: %s -> %s",
+                         plugin.__name__, option, value)
         setattr(plugin, option, value)
 
 
@@ -953,6 +952,7 @@ def replace_with_published_scene_path(instance, replace_in_path=True):
 
     return file_path
 
+
 def add_repre_files_for_cleanup(instance, repre):
     """ Explicitly mark repre files to be deleted.
 
@@ -961,7 +961,16 @@ def add_repre_files_for_cleanup(instance, repre):
     """
     files = repre["files"]
     staging_dir = repre.get("stagingDir")
-    if not staging_dir or instance.data.get("stagingDir_persistent"):
+
+    # first make sure representation level is not persistent
+    if (
+        not staging_dir
+        or repre.get("stagingDir_persistent")
+    ):
+        return
+
+    # then look into instance level if it's not persistent
+    if instance.data.get("stagingDir_persistent"):
         return
 
     if isinstance(files, str):

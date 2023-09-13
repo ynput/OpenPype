@@ -22,8 +22,6 @@ class ExtractCameraAlembic(publish.Extractor, OptionalPyblishPluginMixin):
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
-        container = instance.data["instance_node"]
-
         self.log.info("Extracting Camera ...")
 
         stagingdir = self.staging_dir(instance)

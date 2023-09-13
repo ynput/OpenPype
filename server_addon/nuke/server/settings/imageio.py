@@ -9,22 +9,17 @@ from .common import KnobModel
 
 
 class NodesModel(BaseSettingsModel):
-    """# TODO: This needs to be somehow labeled in settings panel
-    or at least it could show gist of configuration
-    """
     _layout = "expanded"
     plugins: list[str] = Field(
+        default_factory=list,
         title="Used in plugins"
     )
-    # TODO: rename `nukeNodeClass` to `nuke_node_class`
     nukeNodeClass: str = Field(
         title="Nuke Node Class",
     )
 
-    """ # TODO: Need complete rework of knob types
-    in nuke integration. We could not support v3 style of settings.
-    """
     knobs: list[KnobModel] = Field(
+        default_factory=list,
         title="Knobs",
     )
 
@@ -66,22 +61,6 @@ def ocio_configs_switcher_enum():
 
 class WorkfileColorspaceSettings(BaseSettingsModel):
     """Nuke workfile colorspace preset. """
-    """# TODO: enhance settings with host api:
-    we need to add mapping to resolve properly keys.
-    Nuke is excpecting camel case key names,
-    but for better code consistency we need to
-    be  using snake_case:
-
-    color_management = colorManagement
-    ocio_config = OCIO_config
-    working_space_name = workingSpaceLUT
-    monitor_name = monitorLut
-    monitor_out_name = monitorOutLut
-    int_8_name = int8Lut
-    int_16_name = int16Lut
-    log_name = logLut
-    float_name = floatLut
-    """
 
     colorManagement: Literal["Nuke", "OCIO"] = Field(
         title="Color Management"
@@ -99,18 +78,6 @@ class WorkfileColorspaceSettings(BaseSettingsModel):
     )
     monitorLut: str = Field(
         title="Monitor"
-    )
-    int8Lut: str = Field(
-        title="8-bit files"
-    )
-    int16Lut: str = Field(
-        title="16-bit files"
-    )
-    logLut: str = Field(
-        title="Log files"
-    )
-    floatLut: str = Field(
-        title="Float files"
     )
 
 
@@ -170,7 +137,7 @@ class ImageIOSettings(BaseSettingsModel):
     _isGroup: bool = True
 
     """# TODO: enhance settings with host api:
-    to restruture settings for simplification.
+    to restructure settings for simplification.
 
     now: nuke/imageio/viewer/viewerProcess
     future: nuke/imageio/viewer
@@ -193,7 +160,7 @@ class ImageIOSettings(BaseSettingsModel):
     )
 
     """# TODO: enhance settings with host api:
-    to restruture settings for simplification.
+    to restructure settings for simplification.
 
     now: nuke/imageio/baking/viewerProcess
     future: nuke/imageio/baking
@@ -215,9 +182,9 @@ class ImageIOSettings(BaseSettingsModel):
         title="Nodes"
     )
     """# TODO: enhance settings with host api:
-    - old settings are using `regexInputs` key but we
+    - [ ] old settings are using `regexInputs` key but we
       need to rename to `regex_inputs`
-    - no need for `inputs` middle part. It can stay
+    - [ ] no need for `inputs` middle part. It can stay
       directly on `regex_inputs`
     """
     regexInputs: RegexInputsModel = Field(
@@ -238,10 +205,6 @@ DEFAULT_IMAGEIO_SETTINGS = {
         "OCIO_config": "nuke-default",
         "workingSpaceLUT": "linear",
         "monitorLut": "sRGB",
-        "int8Lut": "sRGB",
-        "int16Lut": "sRGB",
-        "logLut": "Cineon",
-        "floatLut": "linear"
     },
     "nodes": {
         "requiredNodes": [

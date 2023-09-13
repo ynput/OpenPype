@@ -547,7 +547,14 @@ def get_ayon_executable():
     # clean '\ ' for MacOS pasting
     if platform.system().lower() == "darwin":
         exe_list = exe_list.replace("\\ ", " ")
-    return exe_list
+
+    # Expand user paths
+    expanded_paths = []
+    for path in exe_list.split(";"):
+        if path.startswith("~"):
+            path = os.path.expanduser(path)
+        expanded_paths.append(path)
+    return ";".join(expanded_paths)
 
 
 def inject_render_job_id(deadlinePlugin):

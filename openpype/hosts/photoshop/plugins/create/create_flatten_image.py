@@ -4,6 +4,7 @@ from openpype.lib import BoolDef
 import openpype.hosts.photoshop.api as api
 from openpype.hosts.photoshop.lib import PSAutoCreator
 from openpype.pipeline.create import get_subset_name
+from openpype.lib import prepare_template_data
 from openpype.client import get_asset_by_name
 
 
@@ -37,19 +38,14 @@ class AutoImageCreator(PSAutoCreator):
         asset_doc = get_asset_by_name(project_name, asset_name)
 
         if existing_instance is None:
-            subset_name = get_subset_name(
-                self.family, self.default_variant, task_name, asset_doc,
+            subset_name = self.get_subset_name(
+                self.default_variant, task_name, asset_doc,
                 project_name, host_name
             )
 
-            publishable_ids = [layer.id for layer in api.stub().get_layers()
-                               if layer.visible]
             data = {
                 "asset": asset_name,
                 "task": task_name,
-                # ids are "virtual" layers, won't get grouped as 'members' do
-                # same difference in color coded layers in WP
-                "ids": publishable_ids
             }
 
             if not self.active_on_create:
@@ -69,8 +65,8 @@ class AutoImageCreator(PSAutoCreator):
             existing_instance["asset"] != asset_name
             or existing_instance["task"] != task_name
         ):
-            subset_name = get_subset_name(
-                self.family, self.default_variant, task_name, asset_doc,
+            subset_name = self.get_subset_name(
+                self.default_variant, task_name, asset_doc,
                 project_name, host_name
             )
 
@@ -98,7 +94,7 @@ class AutoImageCreator(PSAutoCreator):
             )
         ]
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["photoshop"]["create"]["AutoImageCreator"]
         )
@@ -118,3 +114,29 @@ class AutoImageCreator(PSAutoCreator):
         Artist might disable this instance from publishing or from creating
         review for it though.
         """
+
+    def get_subset_name(
+            self,
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name=None,
+            instance=None
+    ):
+        dynamic_data = prepare_template_data({"layer": "{layer}"})
+        subset_name = get_subset_name(
+            self.family, variant, task_name, asset_doc,
+            project_name, host_name, dynamic_data=dynamic_data
+        )
+        return self._clean_subset_name(subset_name)
+
+    def _clean_subset_name(self, subset_name):
+        """Clean all variants leftover {layer} from subset name."""
+        dynamic_data = prepare_template_data({"layer": "{layer}"})
+        for value in dynamic_data.values():
+            if value in subset_name:
+                return (subset_name.replace(value, "")
+                        .replace("__", "_")
+                        .replace("..", "."))
+        return subset_name

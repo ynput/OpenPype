@@ -205,7 +205,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 cmds.setAttr("{}.selectHandleZ".format(group_name), cz)
 
             if family == "rig":
-                self._post_process_rig(name, namespace, context, options)
+                self._post_process_rig(namespace, context, options)
             else:
                 if "translate" in options:
                     if not attach_to_root and new_nodes:
@@ -229,7 +229,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         members = get_container_members(container)
         self._lock_camera_transforms(members)
 
-    def _post_process_rig(self, name, namespace, context, options):
+    def _post_process_rig(self, namespace, context, options):
 
         nodes = self[:]
         create_rig_animation_instance(

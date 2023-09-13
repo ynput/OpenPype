@@ -29,24 +29,24 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
         representations_new = []
 
         for repre in representations:
-            self.log.info(
+            self.log.debug(
                 "Processing representation {}".format(repre.get("name")))
             tags = repre.get("tags", [])
             if "toScanline" not in tags:
-                self.log.info(" - missing toScanline tag")
+                self.log.debug(" - missing toScanline tag")
                 continue
 
             # run only on exrs
             if repre.get("ext") != "exr":
-                self.log.info("- not EXR files")
+                self.log.debug("- not EXR files")
                 continue
 
             if not isinstance(repre['files'], (list, tuple)):
                 input_files = [repre['files']]
-                self.log.info("We have a single frame")
+                self.log.debug("We have a single frame")
             else:
                 input_files = repre['files']
-                self.log.info("We have a sequence")
+                self.log.debug("We have a sequence")
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
 
@@ -68,7 +68,7 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
                 ]
 
                 subprocess_exr = " ".join(oiio_cmd)
-                self.log.info(f"running: {subprocess_exr}")
+                self.log.debug(f"running: {subprocess_exr}")
                 run_subprocess(subprocess_exr, logger=self.log)
 
                 # raise error if there is no ouptput

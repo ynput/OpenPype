@@ -1,5 +1,6 @@
 import pyblish.api
 
+from openpype.pipeline.publish import PublishValidationError
 from openpype.hosts.houdini.api import lib
 import hou
 
@@ -30,7 +31,7 @@ class ValidateAnimationSettings(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "Output settings do no match for '%s'" % instance
             )
 
