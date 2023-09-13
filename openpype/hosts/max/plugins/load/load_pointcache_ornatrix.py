@@ -1,6 +1,6 @@
 import os
 from openpype.pipeline import load, get_representation_path
-from openpype.pipeline.load import LoaderError
+from openpype.pipeline.load import LoadError
 from openpype.hosts.max.api.pipeline import (
     containerise,
     import_custom_attribute_data,
@@ -30,8 +30,8 @@ class OxAbcLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         plugin_list = get_plugins()
         if "ephere.plugins.autodesk.max.ornatrix.dlo" not in plugin_list:
-            raise LoaderError("Ornatrix plugin not "
-                              "found/installed in Max yet..")
+            raise LoadError("Ornatrix plugin not "
+                            "found/installed in Max yet..")
 
         file_path = os.path.normpath(self.filepath_from_context(context))
         rt.AlembicImport.ImportToRoot = True
