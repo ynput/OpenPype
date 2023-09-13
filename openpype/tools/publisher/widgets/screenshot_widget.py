@@ -140,7 +140,7 @@ class ScreenMarquee(QtWidgets.QDialog):
             self._capture_rect = None
             self.close()
             return
-        return super(ScreenMarquee, self).mousePressEvent(event)
+        return super(ScreenMarquee, self).keyPressEvent(event)
 
     def showEvent(self, event):
         self._fit_screen_geometry()
