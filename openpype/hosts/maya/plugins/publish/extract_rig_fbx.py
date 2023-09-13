@@ -21,14 +21,14 @@ class ExtractRigFBX(publish.Extractor,
     """
     order = pyblish.api.ExtractorOrder
     label = "Extract Rig (FBX)"
-    families = ["rig.fbx"]
+    families = ["rig"]
 
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        if not cmds.loadPlugin("fbxmaya", query=True):
-            cmds.loadPlugin("fbxmaya", quiet=True)
-
+        if "rig.fbx" not in instance.data["families"]:
+            self.log.debug("No object inside skeletonMesh_set..Skipping..")
+            return
         staging_dir = self.staging_dir(instance)
         filename = "{0}.fbx".format(instance.name)
         path = os.path.join(staging_dir, filename)

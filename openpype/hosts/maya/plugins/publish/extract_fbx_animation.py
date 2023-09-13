@@ -21,13 +21,14 @@ class ExtractRigFBX(publish.Extractor,
     """
     order = pyblish.api.ExtractorOrder
     label = "Extract Animation (FBX)"
-    families = ["animation.fbx"]
+    families = ["animation"]
 
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        if not cmds.loadPlugin("fbxmaya", query=True):
-            cmds.loadPlugin("fbxmaya", quiet=True)
+        if "animation.fbx" not in instance.data["families"]:
+            self.log.debug("No object inside skeletonAnim_set..Skipping..")
+            return
         # Define output path
         staging_dir = self.staging_dir(instance)
         filename = "{0}.fbx".format(instance.name)
