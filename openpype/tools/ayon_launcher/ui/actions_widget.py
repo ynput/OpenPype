@@ -100,7 +100,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
                 items_by_label[item.label].append(item)
 
         groups_by_id = {}
-        for label, action_items in items_by_label.items():
+        for action_items in items_by_label.values():
             first_item = next(iter(action_items))
             all_action_items_info.append((first_item, len(action_items) > 1))
             groups_by_id[first_item.identifier] = action_items
