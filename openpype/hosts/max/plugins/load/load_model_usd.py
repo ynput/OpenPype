@@ -1,12 +1,13 @@
 import os
 
 from pymxs import runtime as rt
-
+from openpype.pipeline.load import LoadError
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import (
     unique_namespace,
     get_namespace,
-    object_transform_set
+    object_transform_set,
+    get_plugins
 )
 from openpype.hosts.max.api.lib import maintained_selection
 from openpype.hosts.max.api.pipeline import (
@@ -29,6 +30,9 @@ class ModelUSDLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         # asset_filepath
+        plugin_info = get_plugins()
+        if "usdimport.dli" not in plugin_info:
+            raise LoadError("No USDImporter loaded/installed in Max..")
         filepath = os.path.normpath(self.filepath_from_context(context))
         import_options = rt.USDImporter.CreateOptions()
         base_filename = os.path.basename(filepath)

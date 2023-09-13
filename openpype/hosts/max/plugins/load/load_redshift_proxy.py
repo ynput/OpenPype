@@ -5,6 +5,7 @@ from openpype.pipeline import (
     load,
     get_representation_path
 )
+from openpype.pipeline.load import LoadError
 from openpype.hosts.max.api.pipeline import (
     containerise,
     update_custom_attribute_data,
@@ -12,7 +13,8 @@ from openpype.hosts.max.api.pipeline import (
 )
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import (
-    unique_namespace
+    unique_namespace,
+    get_plugins
 )
 
 
@@ -28,7 +30,9 @@ class RedshiftProxyLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
-
+        plugin_info = get_plugins()
+        if "redshift4max.dlr" not in plugin_info:
+            raise LoadError("Redshift not loaded/installed in Max..")
         filepath = self.filepath_from_context(context)
         rs_proxy = rt.RedshiftProxy()
         rs_proxy.file = filepath

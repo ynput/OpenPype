@@ -2,7 +2,8 @@ import os
 
 from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.lib import (
-    unique_namespace
+    unique_namespace,
+
 )
 from openpype.hosts.max.api.pipeline import (
     containerise,
@@ -25,7 +26,6 @@ class PointCloudLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         """load point cloud by tyCache"""
         from pymxs import runtime as rt
-
         filepath = os.path.normpath(self.filepath_from_context(context))
         obj = rt.tyCache()
         obj.filename = filepath
