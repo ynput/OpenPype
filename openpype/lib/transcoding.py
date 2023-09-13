@@ -315,6 +315,92 @@ def parse_oiio_xml_output(xml_string, logger=None):
     return output
 
 
+def get_channels_info_by_layer_name(channel_names):
+    """Get channels info grouped by layer name.
+
+    Finds all layers in channel names and returns list of dictionaries with
+    information about channels in layer.
+    Example output (not real world example):
+        [
+            {
+                "name": "Main",
+                "review_channels": {
+                    "R": "Main.red",
+                    "G": "Main.green",
+                    "B": "Main.blue",
+                    "A": None,
+                },
+                "channel_names": {
+                    "Main.red": "red",
+                    "Main.green": "green",
+                    "Main.blue": "blue",
+                    "Main.z": "z"
+                }
+            },
+            {
+                "name": "Composed",
+                "review_channels": {
+                    "R": "Composed.R",
+                    "G": "Composed.G",
+                    "B": "Composed.B",
+                    "A": "Composed.A",
+                },
+                "channel_names": {
+                    "Composed.R": "R",
+                    "Composed.G": "G",
+                    "Composed.B": "B",
+                    "Composed.A": "A",
+                }
+            },
+            ...
+        ]
+
+    Args:
+        channel_names (list[str]): List of channel names.
+
+    Returns:
+        list[dict]: List of channels information.
+    """
+
+    layer_names_order = []
+    rgba_by_layer_name = collections.defaultdict(dict)
+    channels_by_layer_name = collections.defaultdict(dict)
+    for channel_name in channel_names:
+        name_parts = channel_name.split(".")
+        last_part = name_parts.pop(-1)
+        layer_name = ".".join(name_parts)
+        channels_by_layer_name[layer_name][channel_name] = last_part
+        rgb_part = last_part.lower()
+        if layer_name not in layer_names_order:
+            layer_names_order.append(layer_name)
+        if rgb_part in ("r", "red"):
+            rgba_by_layer_name[layer_name]["R"] = channel_name
+        elif rgb_part in ("g", "green"):
+            rgba_by_layer_name[layer_name]["G"] = channel_name
+        elif rgb_part in ("b", "blue"):
+            rgba_by_layer_name[layer_name]["B"] = channel_name
+        elif rgb_part in ("a", "alpha"):
+            rgba_by_layer_name[layer_name]["A"] = channel_name
+
+    if "" in layer_names_order:
+        layer_names_order.remove("")
+        layer_names_order.insert(0, "")
+    output = []
+    for layer_name in layer_names_order:
+        rgba_layer_info = rgba_by_layer_name[layer_name]
+        output.append({
+            "name": layer_name,
+            "review_channels": {
+                "R": rgba_layer_info.get("R"),
+                "G": rgba_layer_info.get("G"),
+                "B": rgba_layer_info.get("B"),
+                "A": rgba_layer_info.get("A"),
+            },
+            "channel_names": channels_by_layer_name[layer_name],
+        })
+    return output
+
+
 def get_convert_rgb_channels(channel_names):
     """Get first available RGB(A) group from channels info.
 
@@ -344,37 +430,52 @@ def get_convert_rgb_channels(channel_names):
         tuple: Tuple of 4 channel names defying channel names for R, G, B, A
             where A can be None.
     """
-    rgb_by_main_name = collections.defaultdict(dict)
-    main_name_order = [""]
-    for channel_name in channel_names:
-        name_parts = channel_name.split(".")
-        rgb_part = name_parts.pop(-1).lower()
-        main_name = ".".join(name_parts)
-        if rgb_part in ("r", "red"):
-            rgb_by_main_name[main_name]["R"] = channel_name
-        elif rgb_part in ("g", "green"):
-            rgb_by_main_name[main_name]["G"] = channel_name
-        elif rgb_part in ("b", "blue"):
-            rgb_by_main_name[main_name]["B"] = channel_name
-        elif rgb_part in ("a", "alpha"):
-            rgb_by_main_name[main_name]["A"] = channel_name
-        else:
+
+    channels_info = get_channels_info_by_layer_name(channel_names)
+    for item in channels_info:
+        review_channels = item["review_channels"]
+        red = review_channels["R"]
+        green = review_channels["G"]
+        blue = review_channels["B"]
+        alpha = review_channels["A"]
+        if not red or not green or not blue:
             continue
-        if main_name not in main_name_order:
-            main_name_order.append(main_name)
+        return (red, green, blue, alpha)
+    return None
 
-    output = None
-    for main_name in main_name_order:
-        colors = rgb_by_main_name.get(main_name) or {}
-        red = colors.get("R")
-        green = colors.get("G")
-        blue = colors.get("B")
-        alpha = colors.get("A")
-        if red is not None and green is not None and blue is not None:
-            output = (red, green, blue, alpha)
-            break
 
-    return output
+def get_review_layer_name(src_filepath):
+    """Find layer name that could be used for review.
+
+    Args:
+        src_filepath (str): Path to input file.
+
+    Returns:
+        Union[str, None]: Layer name of None.
+    """
+
+    ext = os.path.splitext(src_filepath)[-1].lower()
+    if ext != ".exr":
+        return None
+
+    # Load info about file from oiio tool
+    input_info = get_oiio_info_for_input(src_filepath)
+    if not input_info:
+        return None
+
+    channel_names = input_info["channelnames"]
+    channels_info = get_channels_info_by_layer_name(channel_names)
+    for item in channels_info:
+        review_channels = item["review_channels"]
+        red = review_channels["R"]
+        green = review_channels["G"]
+        blue = review_channels["B"]
+        if not red or not green or not blue:
+            continue
+        # Layer name can be '', when review channels are 'R', 'G', 'B'
+        #   without layer
+        return item["name"] or None
+    return None
 
 
 def should_convert_for_ffmpeg(src_filepath):
@@ -395,7 +496,7 @@ def should_convert_for_ffmpeg(src_filepath):
     if not is_oiio_supported():
         return None
 
-    # Load info about info from oiio tool
+    # Load info about file from oiio tool
     input_info = get_oiio_info_for_input(src_filepath)
     if not input_info:
         return None
