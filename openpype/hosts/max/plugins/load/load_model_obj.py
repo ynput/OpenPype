@@ -55,7 +55,9 @@ class ObjLoader(load.LoaderPlugin):
         namespace, _ = get_namespace(node_name)
         node_list = get_previous_loaded_object(node)
         rt.Select(node_list)
-        previous_objects = rt.GetCurrentSelection()
+        previous_objects = [sel for sel in rt.GetCurrentSelection()
+                            if sel != rt.Container
+                            and sel.name == node_name]
         transform_data = object_transform_set(previous_objects)
         for prev_obj in previous_objects:
             if rt.isValidNode(prev_obj):

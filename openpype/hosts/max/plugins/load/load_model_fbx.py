@@ -56,7 +56,9 @@ class FbxModelLoader(load.LoaderPlugin):
 
         node_list = get_previous_loaded_object(node)
         rt.Select(node_list)
-        prev_fbx_objects = rt.GetCurrentSelection()
+        prev_fbx_objects = [sel for sel in rt.GetCurrentSelection()
+                            if sel != rt.Container
+                            and sel.name == node_name]
         transform_data = object_transform_set(prev_fbx_objects)
         for prev_fbx_obj in prev_fbx_objects:
             if rt.isValidNode(prev_fbx_obj):
