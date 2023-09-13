@@ -7,6 +7,10 @@ InitInfo = collections.namedtuple(
 )
 
 
+def _default_factory_func():
+    return None
+
+
 class CacheItem:
     """Simple cache item with lifetime and default value.
 
@@ -22,7 +26,7 @@ class CacheItem:
         self._lifetime = lifetime
         self._last_update = None
         if default_factory is None:
-            default_factory = lambda: None
+            default_factory = _default_factory_func
         self._default_factory = default_factory
         self._data = default_factory()
 
