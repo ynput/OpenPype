@@ -22,13 +22,13 @@ class ExtractRig(publish.Extractor):
             instance.context.data["project_settings"]["maya"]["ext_mapping"]
         )
         if ext_mapping:
-            self.log.info("Looking in settings for scene type ...")
+            self.log.debug("Looking in settings for scene type ...")
             # use extension mapping for first family found
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
-                    self.log.info(
-                        "Using {} as scene type".format(self.scene_type))
+                    self.log.debug(
+                        "Using '.{}' as scene type".format(self.scene_type))
                     break
                 except AttributeError:
                     # no preset found
@@ -39,7 +39,7 @@ class ExtractRig(publish.Extractor):
         path = os.path.join(dir_path, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction ...")
+        self.log.debug("Performing extraction ...")
         with maintained_selection():
             cmds.select(instance, noExpand=True)
             cmds.file(path,
@@ -63,4 +63,4 @@ class ExtractRig(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
+        self.log.debug("Extracted instance '%s' to: %s", instance.name, path)

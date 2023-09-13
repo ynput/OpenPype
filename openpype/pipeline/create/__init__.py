@@ -2,6 +2,7 @@ from .constants import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     DEFAULT_SUBSET_TEMPLATE,
     PRE_CREATE_THUMBNAIL_KEY,
+    DEFAULT_VARIANT_VALUE,
 )
 
 from .utils import (
@@ -50,6 +51,7 @@ __all__ = (
     "SUBSET_NAME_ALLOWED_SYMBOLS",
     "DEFAULT_SUBSET_TEMPLATE",
     "PRE_CREATE_THUMBNAIL_KEY",
+    "DEFAULT_VARIANT_VALUE",
 
     "get_last_versions_for_instances",
     "get_next_versions_for_instances",
@@ -73,6 +75,8 @@ __all__ = (
     "deregister_creator_plugin",
     "register_creator_plugin_path",
     "deregister_creator_plugin_path",
+
+    "cache_and_get_instances",
 
     "CreatedInstance",
     "CreateContext",

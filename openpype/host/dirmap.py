@@ -32,19 +32,26 @@ class HostDirmap(object):
     """
 
     def __init__(
-        self, host_name, project_name, project_settings=None, sync_module=None
+        self,
+        host_name,
+        project_name,
+        project_settings=None,
+        sync_module=None
     ):
         self.host_name = host_name
         self.project_name = project_name
         self._project_settings = project_settings
-        self._sync_module = sync_module  # to limit reinit of Modules
+        self._sync_module = sync_module
+        # to limit reinit of Modules
+        self._sync_module_discovered = sync_module is not None
         self._log = None
 
     @property
     def sync_module(self):
-        if self._sync_module is None:
+        if not self._sync_module_discovered:
+            self._sync_module_discovered = True
             manager = ModulesManager()
-            self._sync_module = manager["sync_server"]
+            self._sync_module = manager.get("sync_server")
         return self._sync_module
 
     @property
@@ -149,23 +156,27 @@ class HostDirmap(object):
             Returns:
                 dict : { "source-path": [XXX], "destination-path": [YYYY]}
         """
-        project_name = os.getenv("AVALON_PROJECT")
+        project_name = self.project_name
 
+        sync_module = self.sync_module
         mapping = {}
-        if (not self.sync_module.enabled or
-                project_name not in self.sync_module.get_enabled_projects()):
+        if (
+            sync_module is None
+            or not sync_module.enabled
+            or project_name not in sync_module.get_enabled_projects()
+        ):
             return mapping
 
-        active_site = self.sync_module.get_local_normalized_site(
-            self.sync_module.get_active_site(project_name))
-        remote_site = self.sync_module.get_local_normalized_site(
-            self.sync_module.get_remote_site(project_name))
+        active_site = sync_module.get_local_normalized_site(
+            sync_module.get_active_site(project_name))
+        remote_site = sync_module.get_local_normalized_site(
+            sync_module.get_remote_site(project_name))
         self.log.debug(
             "active {} - remote {}".format(active_site, remote_site)
         )
 
         if active_site == "local" and active_site != remote_site:
-            sync_settings = self.sync_module.get_sync_project_setting(
+            sync_settings = sync_module.get_sync_project_setting(
                 project_name,
                 exclude_locals=False,
                 cached=False)
@@ -179,7 +190,7 @@ class HostDirmap(object):
             self.log.debug("remote overrides {}".format(remote_overrides))
 
             current_platform = platform.system().lower()
-            remote_provider = self.sync_module.get_provider_for_site(
+            remote_provider = sync_module.get_provider_for_site(
                 project_name, remote_site
             )
             # dirmap has sense only with regular disk provider, in the workfile

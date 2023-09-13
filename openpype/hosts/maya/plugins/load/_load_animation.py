@@ -33,15 +33,23 @@ class AbcLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             suffix="_abc"
         )
 
+        attach_to_root = options.get("attach_to_root", True)
+        group_name = options["group_name"]
+
+        # no group shall be created
+        if not attach_to_root:
+            group_name = namespace
+
         # hero_001 (abc)
         # asset_counter{optional}
-        file_url = self.prepare_root_value(self.fname,
+        path = self.filepath_from_context(context)
+        file_url = self.prepare_root_value(path,
                                            context["project"]["name"])
         nodes = cmds.file(file_url,
                           namespace=namespace,
                           sharedReferenceFile=False,
-                          groupReference=True,
-                          groupName=options['group_name'],
+                          groupReference=attach_to_root,
+                          groupName=group_name,
                           reference=True,
                           returnNewNodes=True)
 

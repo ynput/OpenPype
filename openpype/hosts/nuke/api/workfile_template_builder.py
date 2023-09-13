@@ -25,7 +25,8 @@ from .lib import (
     select_nodes,
     duplicate_node,
     node_tempfile,
-    get_main_window
+    get_main_window,
+    WorkfileSettings,
 )
 
 PLACEHOLDER_SET = "PLACEHOLDERS_SET"
@@ -112,6 +113,11 @@ class NukePlaceholderPlugin(PlaceholderPlugin):
                 value = knob.getValue()
             placeholder_data[key] = value
         return placeholder_data
+
+    def delete_placeholder(self, placeholder):
+        """Remove placeholder if building was successful"""
+        placeholder_node = nuke.toNode(placeholder.scene_identifier)
+        nuke.delete(placeholder_node)
 
 
 class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
@@ -274,14 +280,6 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
 
         placeholder.data["nb_children"] += 1
         reset_selection()
-
-        # remove placeholders marked as delete
-        if (
-            placeholder.data.get("delete")
-            and not placeholder.data.get("keep_placeholder")
-        ):
-            self.log.debug("Deleting node: {}".format(placeholder_node.name()))
-            nuke.delete(placeholder_node)
 
         # go back to root group
         nuke.root().begin()
@@ -689,14 +687,6 @@ class NukePlaceholderCreatePlugin(
         placeholder.data["nb_children"] += 1
         reset_selection()
 
-        # remove placeholders marked as delete
-        if (
-            placeholder.data.get("delete")
-            and not placeholder.data.get("keep_placeholder")
-        ):
-            self.log.debug("Deleting node: {}".format(placeholder_node.name()))
-            nuke.delete(placeholder_node)
-
         # go back to root group
         nuke.root().begin()
 
@@ -954,6 +944,9 @@ class NukePlaceholderCreatePlugin(
 def build_workfile_template(*args, **kwargs):
     builder = NukeTemplateBuilder(registered_host())
     builder.build_template(*args, **kwargs)
+
+    # set all settings to shot context default
+    WorkfileSettings().set_context_settings()
 
 
 def update_workfile_template(*args):

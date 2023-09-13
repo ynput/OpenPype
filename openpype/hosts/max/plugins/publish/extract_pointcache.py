@@ -54,9 +54,7 @@ class ExtractAlembic(publish.Extractor):
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
-        container = instance.data["instance_node"]
-
-        self.log.info("Extracting pointcache ...")
+        self.log.debug("Extracting pointcache ...")
 
         parent_dir = self.staging_dir(instance)
         file_name = "{name}.abc".format(**instance.data)

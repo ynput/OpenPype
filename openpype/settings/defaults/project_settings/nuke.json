@@ -28,11 +28,7 @@
             "colorManagement": "Nuke",
             "OCIO_config": "nuke-default",
             "workingSpaceLUT": "linear",
-            "monitorLut": "sRGB",
-            "int8Lut": "sRGB",
-            "int16Lut": "sRGB",
-            "logLut": "Cineon",
-            "floatLut": "linear"
+            "monitorLut": "sRGB"
         },
         "nodes": {
             "requiredNodes": [
@@ -465,34 +461,6 @@
                     "viewer_process_override": "",
                     "bake_viewer_process": true,
                     "bake_viewer_input_process": true,
-                    "reformat_node_add": false,
-                    "reformat_node_config": [
-                        {
-                            "type": "text",
-                            "name": "type",
-                            "value": "to format"
-                        },
-                        {
-                            "type": "text",
-                            "name": "format",
-                            "value": "HD_1080"
-                        },
-                        {
-                            "type": "text",
-                            "name": "filter",
-                            "value": "Lanczos6"
-                        },
-                        {
-                            "type": "bool",
-                            "name": "black_outside",
-                            "value": true
-                        },
-                        {
-                            "type": "bool",
-                            "name": "pbb",
-                            "value": false
-                        }
-                    ],
                     "reformat_nodes_config": {
                         "enabled": false,
                         "reposition_nodes": [

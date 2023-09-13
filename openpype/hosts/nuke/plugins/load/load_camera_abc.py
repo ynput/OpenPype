@@ -5,8 +5,8 @@ from openpype.client import (
     get_last_version_by_subset_id
 )
 from openpype.pipeline import (
-    legacy_io,
     load,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api import (
@@ -57,7 +57,7 @@ class AlembicCameraLoader(load.LoaderPlugin):
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = self.fname.replace("\\", "/")
+        file = self.filepath_from_context(context).replace("\\", "/")
 
         with maintained_selection():
             camera_node = nuke.createNode(
@@ -66,8 +66,6 @@ class AlembicCameraLoader(load.LoaderPlugin):
                     object_name, file),
                 inpanel=False
             )
-            # hide property panel
-            camera_node.hideControlPanel()
 
             camera_node.forceValidate()
             camera_node["frame_rate"].setValue(float(fps))
@@ -110,12 +108,10 @@ class AlembicCameraLoader(load.LoaderPlugin):
             None
         """
         # Get version from io
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         object_name = container['objectName']
-        # get corresponding node
-        camera_node = nuke.toNode(object_name)
 
         # get main variables
         version_data = version_doc.get("data", {})
@@ -182,7 +178,7 @@ class AlembicCameraLoader(load.LoaderPlugin):
         """ Coloring a node by correct color by actual version
         """
         # get all versions in list
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         last_version_doc = get_last_version_by_subset_id(
             project_name, version_doc["parent"], fields=["_id"]
         )

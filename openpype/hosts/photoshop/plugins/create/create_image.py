@@ -94,12 +94,17 @@ class ImageCreator(Creator):
                     name = self._clean_highlights(stub, directory)
                     layer_names_in_hierarchy.append(name)
 
-            data.update({"subset": subset_name})
-            data.update({"members": [str(group.id)]})
-            data.update({"layer_name": layer_name})
-            data.update({"long_name": "_".join(layer_names_in_hierarchy)})
+            data_update = {
+                "subset": subset_name,
+                "members": [str(group.id)],
+                "layer_name": layer_name,
+                "long_name": "_".join(layer_names_in_hierarchy)
+            }
+            data.update(data_update)
 
-            creator_attributes = {"mark_for_review": self.mark_for_review}
+            mark_for_review = (pre_create_data.get("mark_for_review") or
+                               self.mark_for_review)
+            creator_attributes = {"mark_for_review": mark_for_review}
             data.update({"creator_attributes": creator_attributes})
 
             if not self.active_on_create:
@@ -124,8 +129,6 @@ class ImageCreator(Creator):
 
             if creator_id == self.identifier:
                 instance_data = self._handle_legacy(instance_data)
-                layer = api.stub().get_layer(instance_data["members"][0])
-                instance_data["layer"] = layer
                 instance = CreatedInstance.from_existing(
                     instance_data, self
                 )
@@ -171,7 +174,7 @@ class ImageCreator(Creator):
             )
         ]
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["photoshop"]["create"]["ImageCreator"]
         )
