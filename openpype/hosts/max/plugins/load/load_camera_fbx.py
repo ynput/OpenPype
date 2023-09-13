@@ -8,7 +8,7 @@ from openpype.hosts.max.api.lib import (
 )
 from openpype.hosts.max.api.pipeline import (
     containerise,
-    import_custom_attribute_data,
+    get_previous_loaded_object,
     update_custom_attribute_data
 )
 from openpype.pipeline import get_representation_path, load
@@ -22,7 +22,6 @@ class FbxLoader(load.LoaderPlugin):
     order = -9
     icon = "code-fork"
     color = "white"
-    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -42,17 +41,13 @@ class FbxLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-        container = rt.container(
-            name=f"{namespace}:{name}_{self.postfix}")
         selections = rt.GetCurrentSelection()
-        import_custom_attribute_data(container, selections)
 
         for selection in selections:
-            selection.Parent = container
             selection.name = f"{namespace}:{selection.name}"
 
         return containerise(
-            name, [container], context,
+            name, selections, context,
             namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
@@ -61,12 +56,13 @@ class FbxLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
-        namespace, name = get_namespace(node_name)
-        sub_node_name = f"{namespace}:{name}_{self.postfix}"
-        inst_container = rt.getNodeByName(sub_node_name)
-        rt.Select(inst_container.Children)
-        transform_data = object_transform_set(inst_container.Children)
-        for prev_fbx_obj in rt.selection:
+        namespace, _ = get_namespace(node_name)
+
+        node_list = get_previous_loaded_object(node)
+        rt.Select(node_list)
+        prev_fbx_objects = rt.GetCurrentSelection()
+        transform_data = object_transform_set(prev_fbx_objects)
+        for prev_fbx_obj in prev_fbx_objects:
             if rt.isValidNode(prev_fbx_obj):
                 rt.Delete(prev_fbx_obj)
 
@@ -78,20 +74,14 @@ class FbxLoader(load.LoaderPlugin):
         rt.ImportFile(
             path, rt.name("noPrompt"), using=rt.FBXIMP)
         current_fbx_objects = rt.GetCurrentSelection()
+        update_custom_attribute_data(node, current_fbx_objects)
         for fbx_object in current_fbx_objects:
-            if fbx_object.Parent != inst_container:
-                fbx_object.Parent = inst_container
-                fbx_object.name = f"{namespace}:{fbx_object.name}"
+            fbx_object.name = f"{namespace}:{fbx_object.name}"
+            if fbx_object in node_list:
                 fbx_object.pos = transform_data[
-                    f"{fbx_object.name}.transform"]
+                    f"{fbx_object.name}.transform"] or fbx_object.pos
                 fbx_object.scale = transform_data[
-                    f"{fbx_object.name}.scale"]
-
-        for children in node.Children:
-            if rt.classOf(children) == rt.Container:
-                if children.name == sub_node_name:
-                    update_custom_attribute_data(
-                        children, current_fbx_objects)
+                    f"{fbx_object.name}.scale"] or  fbx_object.scale
 
         with maintained_selection():
             rt.Select(node)
