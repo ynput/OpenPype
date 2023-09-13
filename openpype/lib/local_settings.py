@@ -497,11 +497,11 @@ class OpenPypeSettingsRegistry(JSONSettingRegistry):
         if AYON_SERVER_ENABLED:
             vendor = "Ynput"
             product = "AYON"
-            default_name = "openpype_settings"
+            default_name = "AYON_settings"
         else:
             vendor = "pypeclub"
             product = "openpype"
-            default_name = "AYON_settings"
+            default_name = "openpype_settings"
         self.vendor = vendor
         self.product = product
         if not name:
