@@ -40,7 +40,7 @@ class FBXExtractor:
         the option is not included and a warning is logged.
 
         """
-        #TODO: add skeletonDefinition
+
         return {
             "cameras": bool,
             "smoothingGroups": bool,
