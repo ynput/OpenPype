@@ -3,7 +3,7 @@ from openpype.pipeline import load, get_representation_path
 from openpype.pipeline.load import LoadError
 from openpype.hosts.max.api.pipeline import (
     containerise,
-    import_custom_attribute_data,
+    get_previous_loaded_object,
     update_custom_attribute_data
 )
 
@@ -50,7 +50,7 @@ class OxAbcLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-        abc_container =[]
+        abc_container = []
         for abc in scene_object:
             abc.name = f"{namespace}:{abc.name}"
             abc_container.append(abc)
@@ -64,11 +64,12 @@ class OxAbcLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         namespace, name = get_namespace(node_name)
-        sub_node_name = f"{namespace}:{name}_{self.postfix}"
-        inst_container = rt.getNodeByName(sub_node_name)
-        rt.Select(inst_container.Children)
-        transform_data = object_transform_set(inst_container.Children)
-        for prev_obj in rt.selection:
+        node = rt.getNodeByName(node_name)
+        node_list = get_previous_loaded_object(node)
+        rt.Select(node_list)
+        selections = rt.getCurrentSelection()
+        transform_data = object_transform_set(selections)
+        for prev_obj in selections:
             if rt.isValidNode(prev_obj):
                 rt.Delete(prev_obj)
 
@@ -92,8 +93,7 @@ class OxAbcLoader(load.LoaderPlugin):
             if ox_transform in transform_data.keys():
                 abc.pos = transform_data[ox_transform] or 0
                 abc.scale = transform_data[f"{abc.name}.scale"] or 0
-        update_custom_attribute_data(
-            inst_container, ox_abc_objects)
+        update_custom_attribute_data(node, ox_abc_objects)
         lib.imprint(
             container["instance_node"],
             {"representation": str(representation["_id"])},
