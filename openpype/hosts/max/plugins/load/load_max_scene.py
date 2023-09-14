@@ -52,7 +52,6 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node_name = container["instance_node"]
-        print(node_name)
         node = rt.getNodeByName(node_name)
         namespace, _ = get_namespace(node_name)
         # delete the old container with attribute
@@ -61,7 +60,6 @@ class MaxSceneLoader(load.LoaderPlugin):
         node_list = get_previous_loaded_object(node)
         rt.select(node_list)
         prev_max_objects = rt.GetCurrentSelection()
-        print(f"{node_list}")
         transform_data = object_transform_set(prev_max_objects)
 
         for prev_max_obj in prev_max_objects:
@@ -76,7 +74,7 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         max_objects = []
         for max_obj, obj_name in zip(current_max_objects,
-                                    current_max_object_names):
+                                     current_max_object_names):
             max_obj.name = f"{namespace}:{obj_name}"
             max_objects.append(max_obj)
             max_transform = f"{max_obj.name}.transform"
