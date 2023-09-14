@@ -417,18 +417,23 @@ def get_convert_rgb_channels(channel_names):
     # Not ideal situation
     channels_info: [
         "beauty.red",
-        "beuaty.green",
+        "beauty.green",
         "beauty.blue",
         "depth.Z"
     ]
     ```
     Result will be `("beauty.red", "beauty.green", "beauty.blue", None)`
 
+    Args:
+        channel_names (list[str]): List of channel names.
+        preferred_layer_names (Optional[list[str]]): List of layer names that
+            should be used as preferred. If None, then first layer with RGB
+            is used.
+
     Returns:
-        NoneType: There is not channel combination that matches RGB
-            combination.
-        tuple: Tuple of 4 channel names defying channel names for R, G, B, A
-            where A can be None.
+        Union[NoneType, tuple[str, str, str, Union[str, None]]]: Tuple of
+            4 channel names defying channel names for R, G, B, A or None
+            if there is not any layer with RGB combination.
     """
 
     channels_info = get_review_info_by_layer_name(channel_names)
