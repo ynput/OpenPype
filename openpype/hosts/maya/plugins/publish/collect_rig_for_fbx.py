@@ -8,6 +8,7 @@ class CollectRigFbx(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.2
     label = "Collect rig for fbx"
+    hosts = ["maya"]
     families = ["rig"]
 
     def process(self, instance):

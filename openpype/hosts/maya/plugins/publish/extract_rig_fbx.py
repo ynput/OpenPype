@@ -21,18 +21,15 @@ class ExtractRigFBX(publish.Extractor,
     """
     order = pyblish.api.ExtractorOrder
     label = "Extract Rig (FBX)"
-    families = ["rig"]
+    hosts = ["maya"]
+    families = ["rig.fbx"]
 
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        if "rig.fbx" not in instance.data["families"]:
-            self.log.debug("No object inside skeletonMesh_set..Skipping..")
-            return
         staging_dir = self.staging_dir(instance)
         filename = "{0}.fbx".format(instance.name)
         path = os.path.join(staging_dir, filename)
-
         # The export requires forward slashes because we need
         # to format it into a string in a mel expression
         fbx_exporter = fbx.FBXExtractor(log=self.log)
