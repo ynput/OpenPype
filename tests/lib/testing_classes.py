@@ -351,7 +351,7 @@ class PublishTest(ModuleUnitTest):
 
         application_manager = ApplicationManager()
 
-        if app_variant == "*":
+        if app_variant == "all":
             func = application_manager.find_all_available_variants_for_group
             variants = func(app_group)
             app_variants = [x.name for x in variants]

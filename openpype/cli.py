@@ -310,7 +310,11 @@ def run(script):
               default=None)
 @click.option("-a",
               "--app_variant",
-              help="Provide specific app variant for test, empty for latest",
+              help=(
+                  "Provide specific app variant for test, empty for latest. "
+                  "Supports wildcard \"all\" to test all available app "
+                  "variants."
+              ),
               default=None)
 @click.option("-t",
               "--timeout",
