@@ -60,7 +60,7 @@ class AudioLoader(load.LoaderPlugin):
         audio_node = audio_nodes[0]
 
         current_sound = cmds.timeControl(
-            mel.eval("$tmpVar=$gPlayBackSlider"),
+            mel.eval("$gPlayBackSlider=$gPlayBackSlider"),
             query=True,
             sound=True
         )
