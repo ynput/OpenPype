@@ -25,19 +25,6 @@ class DirmapSettings(BaseSettingsModel):
     )
 
 
-"""# TODO:
-nuke is having originally implemented
-following data inputs:
-
-"nuke-dirmap": {
-    "enabled": false,
-    "paths": {
-        "source-path": [],
-        "destination-path": []
-    }
-}
-"""
-
 DEFAULT_DIRMAP_SETTINGS = {
     "enabled": False,
     "paths": {

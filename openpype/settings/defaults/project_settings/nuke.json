@@ -28,11 +28,7 @@
             "colorManagement": "Nuke",
             "OCIO_config": "nuke-default",
             "workingSpaceLUT": "linear",
-            "monitorLut": "sRGB",
-            "int8Lut": "sRGB",
-            "int16Lut": "sRGB",
-            "logLut": "Cineon",
-            "floatLut": "linear"
+            "monitorLut": "sRGB"
         },
         "nodes": {
             "requiredNodes": [

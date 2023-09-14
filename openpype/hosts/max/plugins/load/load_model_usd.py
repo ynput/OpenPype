@@ -1,15 +1,19 @@
 import os
 
+from pymxs import runtime as rt
+from openpype.pipeline.load import LoadError
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import (
     unique_namespace,
     get_namespace,
-    object_transform_set
+    object_transform_set,
+    get_plugins
 )
 from openpype.hosts.max.api.lib import maintained_selection
 from openpype.hosts.max.api.pipeline import (
     containerise,
-    import_custom_attribute_data
+    get_previous_loaded_object,
+    update_custom_attribute_data
 )
 from openpype.pipeline import get_representation_path, load
 
@@ -23,16 +27,16 @@ class ModelUSDLoader(load.LoaderPlugin):
     order = -10
     icon = "code-fork"
     color = "orange"
-    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
-        from pymxs import runtime as rt
-
         # asset_filepath
+        plugin_info = get_plugins()
+        if "usdimport.dli" not in plugin_info:
+            raise LoadError("No USDImporter loaded/installed in Max..")
         filepath = os.path.normpath(self.filepath_from_context(context))
         import_options = rt.USDImporter.CreateOptions()
         base_filename = os.path.basename(filepath)
-        filename, ext = os.path.splitext(base_filename)
+        _, ext = os.path.splitext(base_filename)
         log_filepath = filepath.replace(ext, "txt")
 
         rt.LogPath = log_filepath
@@ -44,35 +48,34 @@ class ModelUSDLoader(load.LoaderPlugin):
             suffix="_",
         )
         asset = rt.GetNodeByName(name)
-        import_custom_attribute_data(asset, asset.Children)
+        usd_objects = []
+
         for usd_asset in asset.Children:
             usd_asset.name = f"{namespace}:{usd_asset.name}"
+            usd_objects.append(usd_asset)
 
-        asset_name = f"{namespace}:{name}_{self.postfix}"
+        asset_name = f"{namespace}:{name}"
         asset.name = asset_name
         # need to get the correct container after renamed
         asset = rt.GetNodeByName(asset_name)
-
+        usd_objects.append(asset)
 
         return containerise(
-            name, [asset], context,
+            name, usd_objects, context,
             namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
-        from pymxs import runtime as rt
-
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.GetNodeByName(node_name)
         namespace, name = get_namespace(node_name)
-        sub_node_name = f"{namespace}:{name}_{self.postfix}"
-        transform_data = None
-        for n in node.Children:
-            rt.Select(n.Children)
-            transform_data = object_transform_set(n.Children)
-            for prev_usd_asset in rt.selection:
-                if rt.isValidNode(prev_usd_asset):
-                    rt.Delete(prev_usd_asset)
+        node_list = get_previous_loaded_object(node)
+        rt.Select(node_list)
+        prev_objects = [sel for sel in rt.GetCurrentSelection()
+                        if sel != rt.Container
+                        and sel.name != node_name]
+        transform_data = object_transform_set(prev_objects)
+        for n in prev_objects:
             rt.Delete(n)
 
         import_options = rt.USDImporter.CreateOptions()
@@ -86,17 +89,19 @@ class ModelUSDLoader(load.LoaderPlugin):
             path, importOptions=import_options)
 
         asset = rt.GetNodeByName(name)
-        asset.Parent = node
-        import_custom_attribute_data(asset, asset.Children)
+        usd_objects = []
         for children in asset.Children:
             children.name = f"{namespace}:{children.name}"
-            children.pos = transform_data[
-                f"{children.name}.transform"]
-            children.scale = transform_data[
-                f"{children.name}.scale"]
+            usd_objects.append(children)
+            children_transform = f"{children.name}.transform"
+            if children_transform in transform_data.keys():
+                children.pos = transform_data[children_transform] or 0
+                children.scale = transform_data[
+                    f"{children.name}.scale"] or 0
 
-        asset.name = sub_node_name
-
+        asset.name = f"{namespace}:{asset.name}"
+        usd_objects.append(asset)
+        update_custom_attribute_data(node, usd_objects)
         with maintained_selection():
             rt.Select(node)
 
@@ -108,7 +113,5 @@ class ModelUSDLoader(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        from pymxs import runtime as rt
-
         node = rt.GetNodeByName(container["instance_node"])
         rt.Delete(node)

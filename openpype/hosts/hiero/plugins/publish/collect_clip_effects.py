@@ -43,7 +43,6 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
             if review and review_track_index == _track_index:
                 continue
             for sitem in sub_track_items:
-                effect = None
                 # make sure this subtrack item is relative of track item
                 if ((track_item not in sitem.linkedItems())
                         and (len(sitem.linkedItems()) > 0)):
@@ -53,7 +52,6 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
                     continue
 
                 effect = self.add_effect(_track_index, sitem)
-
                 if effect:
                     effects.update(effect)
 
