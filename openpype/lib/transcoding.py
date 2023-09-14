@@ -315,7 +315,7 @@ def parse_oiio_xml_output(xml_string, logger=None):
     return output
 
 
-def get_channels_info_by_layer_name(channel_names):
+def get_review_info_by_layer_name(channel_names):
     """Get channels info grouped by layer name.
 
     Finds all layers in channel names and returns list of dictionaries with
@@ -329,12 +329,6 @@ def get_channels_info_by_layer_name(channel_names):
                     "G": "Main.green",
                     "B": "Main.blue",
                     "A": None,
-                },
-                "channel_names": {
-                    "Main.red": "red",
-                    "Main.green": "green",
-                    "Main.blue": "blue",
-                    "Main.z": "z"
                 }
             },
             {
@@ -344,12 +338,6 @@ def get_channels_info_by_layer_name(channel_names):
                     "G": "Composed.G",
                     "B": "Composed.B",
                     "A": "Composed.A",
-                },
-                "channel_names": {
-                    "Composed.R": "R",
-                    "Composed.G": "G",
-                    "Composed.B": "B",
-                    "Composed.A": "A",
                 }
             },
             ...
@@ -365,38 +353,50 @@ def get_channels_info_by_layer_name(channel_names):
     layer_names_order = []
     rgba_by_layer_name = collections.defaultdict(dict)
     channels_by_layer_name = collections.defaultdict(dict)
+
     for channel_name in channel_names:
-        name_parts = channel_name.split(".")
-        last_part = name_parts.pop(-1)
-        layer_name = ".".join(name_parts)
+        layer_name = ""
+        last_part = channel_name
+        if "." in channel_name:
+            layer_name, last_part = channel_name.rsplit(".", 1)
+
         channels_by_layer_name[layer_name][channel_name] = last_part
-        rgb_part = last_part.lower()
+        if last_part.lower() not in {
+            "r", "red",
+            "g", "green",
+            "b", "blue",
+            "a", "alpha"
+        }:
+            continue
+
         if layer_name not in layer_names_order:
             layer_names_order.append(layer_name)
-        if rgb_part in ("r", "red"):
-            rgba_by_layer_name[layer_name]["R"] = channel_name
-        elif rgb_part in ("g", "green"):
-            rgba_by_layer_name[layer_name]["G"] = channel_name
-        elif rgb_part in ("b", "blue"):
-            rgba_by_layer_name[layer_name]["B"] = channel_name
-        elif rgb_part in ("a", "alpha"):
-            rgba_by_layer_name[layer_name]["A"] = channel_name
+        # R, G, B or A
+        channel = last_part[0].upper()
+        rgba_by_layer_name[layer_name][channel] = channel_name
 
+    # Put empty layer to the beginning of the list
+    # - if input has R, G, B, A channels they should be used for review
     if "" in layer_names_order:
         layer_names_order.remove("")
         layer_names_order.insert(0, "")
+
     output = []
     for layer_name in layer_names_order:
         rgba_layer_info = rgba_by_layer_name[layer_name]
+        red = rgba_layer_info.get("R")
+        green = rgba_layer_info.get("G")
+        blue = rgba_layer_info.get("B")
+        if not red or not green or not blue:
+            continue
         output.append({
             "name": layer_name,
             "review_channels": {
-                "R": rgba_layer_info.get("R"),
-                "G": rgba_layer_info.get("G"),
-                "B": rgba_layer_info.get("B"),
+                "R": red,
+                "G": green,
+                "B": blue,
                 "A": rgba_layer_info.get("A"),
-            },
-            "channel_names": channels_by_layer_name[layer_name],
+            }
         })
     return output
 
@@ -431,16 +431,15 @@ def get_convert_rgb_channels(channel_names):
             where A can be None.
     """
 
-    channels_info = get_channels_info_by_layer_name(channel_names)
+    channels_info = get_review_info_by_layer_name(channel_names)
     for item in channels_info:
         review_channels = item["review_channels"]
-        red = review_channels["R"]
-        green = review_channels["G"]
-        blue = review_channels["B"]
-        alpha = review_channels["A"]
-        if not red or not green or not blue:
-            continue
-        return (red, green, blue, alpha)
+        return (
+            review_channels["R"],
+            review_channels["G"],
+            review_channels["B"],
+            review_channels["A"]
+        )
     return None
 
 
@@ -464,14 +463,8 @@ def get_review_layer_name(src_filepath):
         return None
 
     channel_names = input_info["channelnames"]
-    channels_info = get_channels_info_by_layer_name(channel_names)
+    channels_info = get_review_info_by_layer_name(channel_names)
     for item in channels_info:
-        review_channels = item["review_channels"]
-        red = review_channels["R"]
-        green = review_channels["G"]
-        blue = review_channels["B"]
-        if not red or not green or not blue:
-            continue
         # Layer name can be '', when review channels are 'R', 'G', 'B'
         #   without layer
         return item["name"] or None
