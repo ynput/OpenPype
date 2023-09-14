@@ -387,7 +387,7 @@ def inject_openpype_environment(deadlinePlugin):
 
         if "PATH" in contents:
             PATH = contents["PATH"]
-            print(f">>> Set 'PATH' Environment to: {PATH}")
+            print(f">>> Setting 'PATH' Environment to: {PATH}")
             os.environ["PATH"] = PATH
 
         script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
@@ -516,7 +516,7 @@ def inject_ayon_environment(deadlinePlugin):
 
         if "PATH" in contents:
             PATH = contents["PATH"]
-            print(f">>> Set 'PATH' Environment to: {PATH}")
+            print(f">>> Setting 'PATH' Environment to: {PATH}")
             os.environ["PATH"] = PATH
 
         script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
