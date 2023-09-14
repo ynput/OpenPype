@@ -10,7 +10,8 @@ from openpype.hosts.max.api.pipeline import (
 from openpype.hosts.max.api.lib import (
     unique_namespace,
     get_namespace,
-    object_transform_set
+    object_transform_set,
+    get_plugins
 )
 from openpype.hosts.max.api import lib
 from pymxs import runtime as rt
@@ -105,15 +106,3 @@ class OxAbcLoader(load.LoaderPlugin):
     def remove(self, container):
         node = rt.GetNodeByName(container["instance_node"])
         rt.Delete(node)
-
-
-def get_plugins() -> list:
-    """Get plugin list from 3ds max."""
-    manager = rt.PluginManager
-    count = manager.pluginDllCount
-    plugin_info_list = []
-    for p in range(1, count + 1):
-        plugin_info = manager.pluginDllName(p)
-        plugin_info_list.append(plugin_info)
-
-    return plugin_info_list
