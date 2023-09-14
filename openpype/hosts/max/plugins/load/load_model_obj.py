@@ -55,9 +55,7 @@ class ObjLoader(load.LoaderPlugin):
         namespace, _ = get_namespace(node_name)
         node_list = get_previous_loaded_object(node)
         rt.Select(node_list)
-        previous_objects = [sel for sel in rt.GetCurrentSelection()
-                            if sel != rt.Container
-                            and sel.name == node_name]
+        previous_objects = rt.GetCurrentSelection()
         transform_data = object_transform_set(previous_objects)
         for prev_obj in previous_objects:
             if rt.isValidNode(prev_obj):
@@ -68,9 +66,9 @@ class ObjLoader(load.LoaderPlugin):
         selections = rt.GetCurrentSelection()
         for selection in selections:
             selection.name = f"{namespace}:{selection.name}"
-            if selection in node_list:
-                selection.pos = transform_data[
-                    f"{selection.name}.transform"] or 0
+            selection_transform = f"{selection.name}.transform"
+            if selection_transform in transform_data.keys():
+                selection.pos = transform_data[selection_transform] or 0
                 selection.scale = transform_data[
                     f"{selection.name}.scale"] or 0
         update_custom_attribute_data(node, selections)

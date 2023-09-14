@@ -52,13 +52,13 @@ class FbxModelLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
+        if not node:
+            rt.Container(name=node_name)
         namespace, _ = get_namespace(node_name)
 
         node_list = get_previous_loaded_object(node)
         rt.Select(node_list)
-        prev_fbx_objects = [sel for sel in rt.GetCurrentSelection()
-                            if sel != rt.Container
-                            and sel.name != node_name]
+        prev_fbx_objects = rt.GetCurrentSelection()
         transform_data = object_transform_set(prev_fbx_objects)
         for prev_fbx_obj in prev_fbx_objects:
             if rt.isValidNode(prev_fbx_obj):
@@ -70,18 +70,19 @@ class FbxModelLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.importFile(path, rt.name("noPrompt"), using=rt.FBXIMP)
         current_fbx_objects = rt.GetCurrentSelection()
-        update_custom_attribute_data(node, current_fbx_objects)
+        fbx_objects = []
         for fbx_object in current_fbx_objects:
             fbx_object.name = f"{namespace}:{fbx_object.name}"
-            if fbx_object in node_list:
-                fbx_object.pos = transform_data[
-                    f"{fbx_object.name}.transform"] or 0
+            fbx_objects.append(fbx_object)
+            fbx_transform = f"{fbx_object.name}.transform"
+            if fbx_transform in transform_data.keys():
+                fbx_object.pos = transform_data[fbx_transform] or 0
                 fbx_object.scale = transform_data[
                     f"{fbx_object.name}.scale"] or 0
 
         with maintained_selection():
             rt.Select(node)
-
+        update_custom_attribute_data(node, fbx_objects)
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

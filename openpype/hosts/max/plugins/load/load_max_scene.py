@@ -43,7 +43,6 @@ class MaxSceneLoader(load.LoaderPlugin):
         for max_obj, obj_name in zip(max_objects, max_object_names):
             max_obj.name = f"{namespace}:{obj_name}"
             max_container.append(rt.getNodeByName(max_obj.name))
-
         return containerise(
             name, max_container, context,
             namespace, loader=self.__class__.__name__)
@@ -53,32 +52,40 @@ class MaxSceneLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node_name = container["instance_node"]
-
+        print(node_name)
         node = rt.getNodeByName(node_name)
         namespace, _ = get_namespace(node_name)
         # delete the old container with attribute
         # delete old duplicate
         # use the modifier OP data to delete the data
         node_list = get_previous_loaded_object(node)
-        prev_max_objects = rt.getLastMergedNodes()
+        rt.select(node_list)
+        prev_max_objects = rt.GetCurrentSelection()
+        print(f"{node_list}")
         transform_data = object_transform_set(prev_max_objects)
+
         for prev_max_obj in prev_max_objects:
             if rt.isValidNode(prev_max_obj):  # noqa
                 rt.Delete(prev_max_obj)
-        rt.MergeMaxFile(path, rt.Name("deleteOldDups"))
+        rt.MergeMaxFile(path, quiet=True)
 
         current_max_objects = rt.getLastMergedNodes()
+
         current_max_object_names = [obj.name for obj
                                     in current_max_objects]
-        update_custom_attribute_data(node, current_max_objects)
+
+        max_objects = []
         for max_obj, obj_name in zip(current_max_objects,
-                                     current_max_object_names):
+                                    current_max_object_names):
             max_obj.name = f"{namespace}:{obj_name}"
-            if max_obj in node_list:
-                max_obj.pos = transform_data[
-                    f"{max_obj.name}.transform"] or 0
+            max_objects.append(max_obj)
+            max_transform = f"{max_obj.name}.transform"
+            if max_transform in transform_data.keys():
+                max_obj.pos = transform_data[max_transform] or 0
                 max_obj.scale = transform_data[
                     f"{max_obj.name}.scale"] or 0
+
+        update_custom_attribute_data(node, max_objects)
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })

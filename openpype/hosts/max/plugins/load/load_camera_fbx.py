@@ -73,22 +73,18 @@ class FbxLoader(load.LoaderPlugin):
         rt.FBXImporterSetParam("Preserveinstances", True)
         rt.ImportFile(
             path, rt.name("noPrompt"), using=rt.FBXIMP)
-        current_fbx_objects = [sel for sel in rt.GetCurrentSelection()
-                               if sel != rt.Container
-                               and sel.name != node_name]
-
-        update_custom_attribute_data(node, current_fbx_objects)
+        current_fbx_objects = rt.GetCurrentSelection()
+        fbx_objects = []
         for fbx_object in current_fbx_objects:
             fbx_object.name = f"{namespace}:{fbx_object.name}"
-            if fbx_object in node_list:
-                fbx_object.pos = transform_data[
-                    f"{fbx_object.name}.transform"] or 0
+            fbx_objects.append(fbx_object)
+            fbx_transform = f"{fbx_object.name}.transform"
+            if fbx_transform in transform_data.keys():
+                fbx_object.pos = transform_data[fbx_transform] or 0
                 fbx_object.scale = transform_data[
                     f"{fbx_object.name}.scale"] or 0
 
-        with maintained_selection():
-            rt.Select(node)
-
+        update_custom_attribute_data(node, fbx_objects)
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
