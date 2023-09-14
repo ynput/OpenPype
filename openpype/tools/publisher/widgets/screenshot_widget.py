@@ -62,16 +62,18 @@ class ScreenMarquee(QtWidgets.QDialog):
         # tool region accept mouse events.
         painter.setBrush(QtGui.QColor(0, 0, 0, self._opacity))
         painter.setPen(QtCore.Qt.NoPen)
-        painter.drawRect(event.rect())
+        rect = event.rect()
+        fill_path = QtGui.QPainterPath()
+        fill_path.addRect(rect)
 
         # Clear the capture area
         if click_pos is not None:
+            sub_path = QtGui.QPainterPath()
             capture_rect = QtCore.QRect(click_pos, mouse_pos)
-            painter.setCompositionMode(
-                QtGui.QPainter.CompositionMode_Clear)
-            painter.drawRect(capture_rect)
-            painter.setCompositionMode(
-                QtGui.QPainter.CompositionMode_SourceOver)
+            sub_path.addRect(capture_rect)
+            fill_path = fill_path.subtracted(sub_path)
+
+        painter.drawPath(fill_path)
 
         pen_color = QtGui.QColor(255, 255, 255, 64)
         pen = QtGui.QPen(pen_color, 1, QtCore.Qt.DotLine)
