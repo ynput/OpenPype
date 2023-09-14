@@ -13,7 +13,7 @@ from openpype.pipeline import (
     CreatedInstance
 )
 from openpype.lib import BoolDef
-from .lib import imprint, read, lsattr
+from .lib import imprint, read, lsattr, add_self_publish_button
 
 
 class OpenPypeCreatorError(CreatorError):
@@ -194,6 +194,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
                 self)
             self._add_instance_to_context(instance)
             imprint(instance_node, instance.data_to_store())
+            add_self_publish_button(instance_node)
             return instance
 
         except hou.Error as er:

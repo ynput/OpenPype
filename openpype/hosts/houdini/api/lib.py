@@ -649,3 +649,65 @@ def get_color_management_preferences():
         "display": hou.Color.ocio_defaultDisplay(),
         "view": hou.Color.ocio_defaultView()
     }
+
+
+def publisher_show_and_publish():
+    """Open publisher window and trigger publishing action. """
+
+    from openpype.tools.utils.host_tools import get_tool_by_name
+
+    main_window = get_main_window()
+    publisher_window = get_tool_by_name(
+        tool_name="publisher",
+        parent=main_window
+    )
+
+    publisher_window.set_current_tab("publish")
+    publisher_window.make_sure_is_visible()
+    publisher_window._reset_on_show = False
+
+    publisher_window._controller.reset()
+    publisher_window._controller.publish()
+
+
+def self_publish():
+    """Self publish from ROP nodes. """
+    from openpype.pipeline import registered_host
+    from openpype.pipeline.create import CreateContext
+
+    current_node = hou.node(".").path()
+
+    host = registered_host()
+    context = CreateContext(host, reset=True)
+
+    for instance in context.instances:
+        node_path = instance.data.get("instance_node")
+        if not node_path:
+            continue
+        print(node_path)
+
+        if current_node == node_path:
+            instance["active"] = True
+        else:
+            instance["active"] = False
+
+    context.save_changes()
+    publisher_show_and_publish()
+
+def add_self_publish_button(node):
+    """Adds a self publish button in the rop node. """
+    label = os.environ.get("AVALON_LABEL") or "OpenPype"
+
+    button_parm = hou.ButtonParmTemplate(
+        "{}_publish".format(label.lower()),
+        "{} Publish".format(label),
+        script_callback="from openpype.hosts.houdini.api.lib import "
+                        "self_publish; self_publish()",
+        script_callback_language=hou.scriptLanguage.Python,
+        join_with_next=True
+    )
+
+    template = node.parmTemplateGroup()
+    template.insertBefore((0,), button_parm)
+    # parm_group.append(button_parm)
+    node.setParmTemplateGroup(template)
