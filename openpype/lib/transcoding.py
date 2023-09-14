@@ -409,7 +409,7 @@ def get_convert_rgb_channels(channel_names):
     # Ideal situation
     channels_info: [
         "R", "G", "B", "A"
-    }
+    ]
     ```
     Result will be `("R", "G", "B", "A")`
 
@@ -426,9 +426,6 @@ def get_convert_rgb_channels(channel_names):
 
     Args:
         channel_names (list[str]): List of channel names.
-        preferred_layer_names (Optional[list[str]]): List of layer names that
-            should be used as preferred. If None, then first layer with RGB
-            is used.
 
     Returns:
         Union[NoneType, tuple[str, str, str, Union[str, None]]]: Tuple of
