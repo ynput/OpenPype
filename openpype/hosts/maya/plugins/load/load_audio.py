@@ -59,15 +59,23 @@ class AudioLoader(load.LoaderPlugin):
         assert audio_nodes is not None, "Audio node not found."
         audio_node = audio_nodes[0]
 
+        current_sound = cmds.timeControl(
+            mel.eval("$tmpVar=$gPlayBackSlider"),
+            query=True,
+            sound=True
+        )
+        activate_sound = current_sound == audio_node
+
         path = get_representation_path(representation)
         cmds.setAttr("{}.filename".format(audio_node), path, type="string")
 
-        cmds.timeControl(
-            mel.eval("$tmpVar=$gPlayBackSlider"),
-            edit=True,
-            sound=audio_node,
-            displaySound=True
-        )
+        if activate_sound:
+            cmds.timeControl(
+                mel.eval("$tmpVar=$gPlayBackSlider"),
+                edit=True,
+                sound=audio_node,
+                displaySound=True
+            )
 
         cmds.setAttr(
             container["objectName"] + ".representation",
