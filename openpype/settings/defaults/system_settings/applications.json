@@ -138,7 +138,7 @@
         "enabled": true,
         "label": "MayaPy",
         "icon": "{}/app_icons/maya.png",
-        "host_name": "mayapy",
+        "host_name": "maya",
         "environment": {
             "MAYA_DISABLE_CLIC_IPM": "Yes",
             "MAYA_DISABLE_CIP": "Yes",
