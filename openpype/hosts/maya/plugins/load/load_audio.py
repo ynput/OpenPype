@@ -71,7 +71,7 @@ class AudioLoader(load.LoaderPlugin):
 
         if activate_sound:
             cmds.timeControl(
-                mel.eval("$tmpVar=$gPlayBackSlider"),
+                mel.eval("$gPlayBackSlider=$gPlayBackSlider"),
                 edit=True,
                 sound=audio_node,
                 displaySound=True
