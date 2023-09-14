@@ -62,7 +62,7 @@ class FusionAddon(OpenPypeModule, IHostAddon):
 
     def add_implementation_envs(self, env, app):
         # Set default values if are not already set via settings
-        app_version = app.name
+        app_version = get_fusion_version(app.name)
         if int(app_version) < 18:
             python_path = env["PYTHONPATH"]
             python_path_parts = []
