@@ -558,7 +558,9 @@ class PublishTest(ModuleUnitTest):
         data_folder, _, _ = setup_fixture
 
         metadata_json = glob.glob(
-            os.path.join(data_folder, "output_" + app_variant, "**/*_metadata.json"),
+            os.path.join(
+                data_folder, "output_" + app_variant, "**/*_metadata.json"
+            ),
             recursive=True
         )
         if not metadata_json:
