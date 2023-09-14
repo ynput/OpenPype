@@ -75,7 +75,7 @@ class ScreenMarquee(QtWidgets.QDialog):
 
         painter.drawPath(fill_path)
 
-        pen_color = QtGui.QColor(255, 255, 255, 64)
+        pen_color = QtGui.QColor(255, 255, 255, self._opacity)
         pen = QtGui.QPen(pen_color, 1, QtCore.Qt.DotLine)
         painter.setPen(pen)
 
