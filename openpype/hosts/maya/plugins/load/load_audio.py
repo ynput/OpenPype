@@ -84,7 +84,8 @@ class AudioLoader(load.LoaderPlugin):
             project_name, version["parent"], fields=["parent"]
         )
         asset = get_asset_by_id(
-            project_name, subset["parent"],
+            project_name,
+            subset["parent"],
             fields=["parent", "data.frameStart", "data.frameEnd"]
         )
 
