@@ -694,6 +694,7 @@ def self_publish():
     context.save_changes()
     publisher_show_and_publish()
 
+
 def add_self_publish_button(node):
     """Adds a self publish button in the rop node. """
     label = os.environ.get("AVALON_LABEL") or "OpenPype"
