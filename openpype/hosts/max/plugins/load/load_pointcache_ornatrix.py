@@ -50,19 +50,13 @@ class OxAbcLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-
-        abc_container = rt.Container()
+        abc_container =[]
         for abc in scene_object:
-            abc.Parent = abc_container
             abc.name = f"{namespace}:{abc.name}"
-        # rename the abc container with namespace
-        abc_container_name = f"{namespace}:{name}_{self.postfix}"
-        abc_container.name = abc_container_name
-        import_custom_attribute_data(
-            abc_container, abc_container.Children)
+            abc_container.append(abc)
 
         return containerise(
-            name, [abc_container], context,
+            name, abc_container, context,
             namespace, loader=self.__class__.__name__
         )
 
@@ -89,14 +83,17 @@ class OxAbcLoader(load.LoaderPlugin):
             obj_type = rt.ClassOf(obj)
             if str(obj_type).startswith("Ox_"):
                 scene_object.append(obj)
-        update_custom_attribute_data(
-            inst_container, scene_object.Children)
+        ox_abc_objects = []
         for abc in scene_object:
             abc.Parent = container
             abc.name = f"{namespace}:{abc.name}"
-            abc.pos = transform_data[f"{abc.name}.transform"]
-            abc.scale = transform_data[f"{abc.name}.scale"]
-
+            ox_abc_objects.append(abc)
+            ox_transform = f"{abc.name}.transform"
+            if ox_transform in transform_data.keys():
+                abc.pos = transform_data[ox_transform] or 0
+                abc.scale = transform_data[f"{abc.name}.scale"] or 0
+        update_custom_attribute_data(
+            inst_container, ox_abc_objects)
         lib.imprint(
             container["instance_node"],
             {"representation": str(representation["_id"])},
