@@ -1,21 +1,14 @@
 import os
 import sys
 
-# ugly hack if using Python 3.6 which clashes with distributed libraries
-# todo remove when not necessary
-try:
-    import urllib3
-except (ImportError, SyntaxError):
-    import openpype.hosts.fusion
-    FUSION_HOST_DIR = os.path.abspath(openpype.hosts.fusion.__file__)
+if sys.version_info < (3, 7):
+    from openpype import PACKAGE_DIR
+    FUSION_HOST_DIR = os.path.join(PACKAGE_DIR, "hosts", "fusion")
 
-    python_path = os.environ["PYTHONPATH"]
-    python_path_parts = []
-    if python_path:
-        python_path_parts = python_path.split(os.pathsep)
     vendor_path = os.path.join(FUSION_HOST_DIR, "vendor")
-    python_path_parts.insert(0, vendor_path)
-    os.environ["PYTHONPATH"] = os.pathsep.join(python_path_parts)
+    print("openpype_menu vendor_path::{}".format(vendor_path))
+    if vendor_path not in sys.path:
+        sys.path.insert(0, vendor_path)
 
     print(f"Added vendorized libraries from {vendor_path}")
 
