@@ -26,14 +26,6 @@ class ScreenMarquee(QtWidgets.QDialog):
         self.setCursor(QtCore.Qt.CrossCursor)
         self.setMouseTracking(True)
 
-        fade_anim = QtCore.QVariantAnimation()
-        fade_anim.setStartValue(0)
-        fade_anim.setEndValue(50)
-        fade_anim.setDuration(200)
-        fade_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-
-        fade_anim.valueChanged.connect(self._on_fade_anim)
-
         app = QtWidgets.QApplication.instance()
         if hasattr(app, "screenAdded"):
             app.screenAdded.connect(self._on_screen_added)
@@ -45,11 +37,9 @@ class ScreenMarquee(QtWidgets.QDialog):
         for screen in QtWidgets.QApplication.screens():
             screen.geometryChanged.connect(self._fit_screen_geometry)
 
-        self._opacity = fade_anim.startValue()
+        self._opacity = 50
         self._click_pos = None
         self._capture_rect = None
-
-        self._fade_anim = fade_anim
 
     def get_captured_pixmap(self):
         if self._capture_rect is None:
@@ -144,7 +134,6 @@ class ScreenMarquee(QtWidgets.QDialog):
 
     def showEvent(self, event):
         self._fit_screen_geometry()
-        self._fade_anim.start()
 
     def _fit_screen_geometry(self):
         # Compute the union of all screen geometries, and resize to fit.
@@ -152,12 +141,6 @@ class ScreenMarquee(QtWidgets.QDialog):
         for screen in QtWidgets.QApplication.screens():
             workspace_rect = workspace_rect.united(screen.geometry())
         self.setGeometry(workspace_rect)
-
-    def _on_fade_anim(self):
-        """Animation callback for opacity."""
-
-        self._opacity = self._fade_anim.currentValue()
-        self.repaint()
 
     def _on_screen_added(self):
         for screen in QtGui.QGuiApplication.screens():
