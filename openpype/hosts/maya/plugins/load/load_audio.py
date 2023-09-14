@@ -61,6 +61,14 @@ class AudioLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         cmds.setAttr("{}.filename".format(audio_node), path, type="string")
+
+        cmds.timeControl(
+            mel.eval("$tmpVar=$gPlayBackSlider"),
+            edit=True,
+            sound=audio_node,
+            displaySound=True
+        )
+
         cmds.setAttr(
             container["objectName"] + ".representation",
             str(representation["_id"]),
@@ -76,7 +84,7 @@ class AudioLoader(load.LoaderPlugin):
             project_name, version["parent"], fields=["parent"]
         )
         asset = get_asset_by_id(
-            project_name, subset["parent"], fields=["parent"]
+            project_name, subset["parent"], fields=["parent", "data"]
         )
 
         source_start = 1 - asset["data"]["frameStart"]
