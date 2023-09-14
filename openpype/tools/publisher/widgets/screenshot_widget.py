@@ -84,7 +84,6 @@ class ScreenMarquee(QtWidgets.QDialog):
         painter.setPen(pen)
 
         # Draw cropping markers at click position
-        rect = event.rect()
         if click_pos is not None:
             painter.drawLine(
                 rect.left(), click_pos.y(),
@@ -104,6 +103,7 @@ class ScreenMarquee(QtWidgets.QDialog):
             mouse_pos.x(), rect.top(),
             mouse_pos.x(), rect.bottom()
         )
+        painter.end()
 
     def mousePressEvent(self, event):
         """Mouse click event"""
@@ -134,6 +134,7 @@ class ScreenMarquee(QtWidgets.QDialog):
         if event.key() == QtCore.Qt.Key_Escape:
             self._click_pos = None
             self._capture_rect = None
+            event.accept()
             self.close()
             return
         return super(ScreenMarquee, self).keyPressEvent(event)
