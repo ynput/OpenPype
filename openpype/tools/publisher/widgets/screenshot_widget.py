@@ -57,6 +57,10 @@ class ScreenMarquee(QtWidgets.QDialog):
             click_pos = self.mapFromGlobal(self._click_pos)
 
         painter = QtGui.QPainter(self)
+        painter.setRenderHints(
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
+        )
 
         # Draw background. Aside from aesthetics, this makes the full
         # tool region accept mouse events.
