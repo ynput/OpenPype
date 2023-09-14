@@ -5,7 +5,7 @@ import sys
 # todo remove when not necessary
 try:
     import requests
-except ImportError:
+except (ImportError, SyntaxError):
     FUSION_HOST_DIR = os.path.abspath(os.path.join(
         os.path.dirname(__file__), '..', '..'
     ))
