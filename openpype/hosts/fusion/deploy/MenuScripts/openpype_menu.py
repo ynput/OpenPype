@@ -4,11 +4,10 @@ import sys
 # ugly hack if using Python 3.6 which clashes with distributed libraries
 # todo remove when not necessary
 try:
-    import requests
+    import urllib3
 except (ImportError, SyntaxError):
-    FUSION_HOST_DIR = os.path.abspath(os.path.join(
-        os.path.dirname(__file__), '..', '..'
-    ))
+    import openpype.hosts.fusion
+    FUSION_HOST_DIR = os.path.abspath(openpype.hosts.fusion.__file__)
 
     python_path = os.environ["PYTHONPATH"]
     python_path_parts = []
