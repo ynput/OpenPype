@@ -361,7 +361,7 @@ class PublishTest(ModuleUnitTest):
             variant = func(app_group)
             app_variants.append(variant.name)
 
-        if app_variant:
+        if app_variant and app_variant != "all":
             app_variants.append(app_variant)
 
         return app_variants
