@@ -30,7 +30,7 @@ class AudioLoader(load.LoaderPlugin):
             file=context["representation"]["data"]["path"], offset=start_frame
         )
         cmds.timeControl(
-            mel.eval("$tmpVar=$gPlayBackSlider"),
+            mel.eval("$gPlayBackSlider=$gPlayBackSlider"),
             edit=True,
             sound=sound_node,
             displaySound=True
