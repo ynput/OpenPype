@@ -70,6 +70,7 @@ class AudioLoader(load.LoaderPlugin):
         cmds.setAttr("{}.filename".format(audio_node), path, type="string")
 
         if activate_sound:
+            # maya by default deactivates it from timeline on file change
             cmds.timeControl(
                 mel.eval("$gPlayBackSlider=$gPlayBackSlider"),
                 edit=True,
