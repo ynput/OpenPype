@@ -10,8 +10,14 @@ import json
 import six
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import get_current_project_name, get_current_asset_name
+from openpype.pipeline import (
+    get_current_project_name,
+    get_current_asset_name,
+    registered_host
+)
 from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.tools.utils.host_tools import get_tool_by_name
+from openpype.pipeline.create import CreateContext
 
 import hou
 
@@ -652,9 +658,7 @@ def get_color_management_preferences():
 
 
 def publisher_show_and_publish():
-    """Open publisher window and trigger publishing action. """
-
-    from openpype.tools.utils.host_tools import get_tool_by_name
+    """Open publisher window and trigger publishing action."""
 
     main_window = get_main_window()
     publisher_window = get_tool_by_name(
@@ -671,9 +675,7 @@ def publisher_show_and_publish():
 
 
 def self_publish():
-    """Self publish from ROP nodes. """
-    from openpype.pipeline import registered_host
-    from openpype.pipeline.create import CreateContext
+    """Self publish from ROP nodes."""
 
     current_node = hou.node(".").path()
 
@@ -684,19 +686,16 @@ def self_publish():
         node_path = instance.data.get("instance_node")
         if not node_path:
             continue
-        print(node_path)
 
-        if current_node == node_path:
-            instance["active"] = True
-        else:
-            instance["active"] = False
+        instance["active"] = current_node == node_path
 
     context.save_changes()
     publisher_show_and_publish()
 
 
 def add_self_publish_button(node):
-    """Adds a self publish button in the rop node. """
+    """Adds a self publish button in the rop node."""
+
     label = os.environ.get("AVALON_LABEL") or "OpenPype"
 
     button_parm = hou.ButtonParmTemplate(
@@ -710,5 +709,4 @@ def add_self_publish_button(node):
 
     template = node.parmTemplateGroup()
     template.insertBefore((0,), button_parm)
-    # parm_group.append(button_parm)
     node.setParmTemplateGroup(template)
