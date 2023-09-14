@@ -62,7 +62,7 @@ development tools like [CMake](https://cmake.org/) and [Visual Studio](https://v
 
 #### Clone repository:
 ```sh
-git clone --recurse-submodules git@github.com:Pypeclub/OpenPype.git
+git clone --recurse-submodules git@github.com:ynput/OpenPype.git
 ```
 
 #### To build OpenPype:
@@ -143,6 +143,10 @@ sudo ./tools/docker_build.sh centos7
 ```
 
 If all is successful, you'll find built OpenPype in `./build/` folder.
+
+Docker build can be also started from Windows machine, just use `./tools/docker_build.ps1` instead of shell script.
+
+This could be used even for building linux build (with argument `centos7` or `debian`)
 
 #### Manual build
 You will need [Python >= 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll also need [curl](https://curl.se) on systems that doesn't have one preinstalled.

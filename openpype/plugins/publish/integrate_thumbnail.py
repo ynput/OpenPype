@@ -41,7 +41,9 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
     def process(self, context):
         if AYON_SERVER_ENABLED:
-            self.log.info("AYON is enabled. Skipping v3 thumbnail integration")
+            self.log.debug(
+                "AYON is enabled. Skipping v3 thumbnail integration"
+            )
             return
 
         # Filter instances which can be used for integration
@@ -74,14 +76,14 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
         thumbnail_template = anatomy.templates["publish"]["thumbnail"]
         if not thumbnail_template:
-            self.log.info("Thumbnail template is not filled. Skipping.")
+            self.log.debug("Thumbnail template is not filled. Skipping.")
             return
 
         if (
             not thumbnail_root
             and thumbnail_root_format_key in thumbnail_template
         ):
-            self.log.warning(("{} is not set. Skipping.").format(env_key))
+            self.log.warning("{} is not set. Skipping.".format(env_key))
             return
 
         # Collect verion ids from all filtered instance

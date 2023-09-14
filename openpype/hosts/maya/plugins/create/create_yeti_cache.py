@@ -13,8 +13,7 @@ class CreateYetiCache(plugin.MayaCreator):
     family = "yeticache"
     icon = "pagelines"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateYetiCache, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
         defs = [
             NumberDef("preroll",
@@ -36,3 +35,5 @@ class CreateYetiCache(plugin.MayaCreator):
                       default=3,
                       decimals=0)
         )
+
+        return defs

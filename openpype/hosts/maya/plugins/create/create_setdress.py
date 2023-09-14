@@ -9,7 +9,7 @@ class CreateSetDress(plugin.MayaCreator):
     label = "Set Dress"
     family = "setdress"
     icon = "cubes"
-    defaults = ["Main", "Anim"]
+    default_variants = ["Main", "Anim"]
 
     def get_instance_attr_defs(self):
         return [

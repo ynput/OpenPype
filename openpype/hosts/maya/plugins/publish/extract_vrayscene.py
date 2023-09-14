@@ -20,13 +20,13 @@ class ExtractVrayscene(publish.Extractor):
     def process(self, instance):
         """Plugin entry point."""
         if instance.data.get("exportOnFarm"):
-            self.log.info("vrayscenes will be exported on farm.")
+            self.log.debug("vrayscenes will be exported on farm.")
             raise NotImplementedError(
                 "exporting vrayscenes is not implemented")
 
         # handle sequence
         if instance.data.get("vraySceneMultipleFiles"):
-            self.log.info("vrayscenes will be exported on farm.")
+            self.log.debug("vrayscenes will be exported on farm.")
             raise NotImplementedError(
                 "exporting vrayscene sequences not implemented yet")
 
@@ -40,7 +40,6 @@ class ExtractVrayscene(publish.Extractor):
         layer_name = instance.data.get("layer")
 
         staging_dir = self.staging_dir(instance)
-        self.log.info("staging: {}".format(staging_dir))
         template = cmds.getAttr("{}.vrscene_filename".format(node))
         start_frame = instance.data.get(
             "frameStartHandle") if instance.data.get(
@@ -56,21 +55,21 @@ class ExtractVrayscene(publish.Extractor):
             staging_dir, "vrayscene", *formatted_name.split("/"))
 
         # Write out vrscene file
-        self.log.info("Writing: '%s'" % file_path)
+        self.log.debug("Writing: '%s'" % file_path)
         with maintained_selection():
             if "*" not in instance.data["setMembers"]:
-                self.log.info(
+                self.log.debug(
                     "Exporting: {}".format(instance.data["setMembers"]))
                 set_members = instance.data["setMembers"]
                 cmds.select(set_members, noExpand=True)
             else:
-                self.log.info("Exporting all ...")
+                self.log.debug("Exporting all ...")
                 set_members = cmds.ls(
                     long=True, objectsOnly=True,
                     geometry=True, lights=True, cameras=True)
                 cmds.select(set_members, noExpand=True)
 
-            self.log.info("Appending layer name {}".format(layer_name))
+            self.log.debug("Appending layer name {}".format(layer_name))
             set_members.append(layer_name)
 
             export_in_rs_layer(
@@ -93,8 +92,8 @@ class ExtractVrayscene(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s"
-                      % (instance.name, staging_dir))
+        self.log.debug("Extracted instance '%s' to: %s"
+                       % (instance.name, staging_dir))
 
     @staticmethod
     def format_vray_output_filename(

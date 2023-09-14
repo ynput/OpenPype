@@ -14,8 +14,14 @@ import pyblish.api
 
 from maya import cmds  # noqa
 
-from openpype.lib.vendor_bin_utils import find_executable
-from openpype.lib import source_hash, run_subprocess, get_oiio_tools_path
+from openpype.lib import (
+    find_executable,
+    source_hash,
+    run_subprocess,
+    get_oiio_tool_args,
+    ToolNotFoundError,
+)
+
 from openpype.pipeline import legacy_io, publish, KnownPublishError
 from openpype.hosts.maya.api import lib
 from openpype import AYON_SERVER_ENABLED
@@ -273,12 +279,11 @@ class MakeTX(TextureProcessor):
 
         """
 
-        maketx_path = get_oiio_tools_path("maketx")
-
-        if not maketx_path:
-            raise AssertionError(
-                "OIIO 'maketx' tool not found. Result: {}".format(maketx_path)
-            )
+        try:
+            maketx_args = get_oiio_tool_args("maketx")
+        except ToolNotFoundError:
+            raise KnownPublishError(
+                "OpenImageIO is not available on the machine")
 
         # Define .tx filepath in staging if source file is not .tx
         fname, ext = os.path.splitext(os.path.basename(source))
@@ -308,7 +313,7 @@ class MakeTX(TextureProcessor):
 
             render_colorspace = color_management["rendering_space"]
 
-            self.log.info("tx: converting colorspace {0} "
+            self.log.debug("tx: converting colorspace {0} "
                           "-> {1}".format(colorspace,
                                           render_colorspace))
             args.extend(["--colorconvert", colorspace, render_colorspace])
@@ -332,10 +337,9 @@ class MakeTX(TextureProcessor):
         if not os.path.exists(resources_dir):
             os.makedirs(resources_dir)
 
-        self.log.info("Generating .tx file for %s .." % source)
+        self.log.debug("Generating .tx file for %s .." % source)
 
-        subprocess_args = [
-            maketx_path,
+        subprocess_args = maketx_args + [
             "-v",  # verbose
             "-u",  # update mode
             # --checknan doesn't influence the output file but aborts the
@@ -423,7 +427,7 @@ class ExtractLook(publish.Extractor):
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
-                    self.log.info(
+                    self.log.debug(
                         "Using {} as scene type".format(self.scene_type))
                     break
                 except KeyError:
@@ -455,7 +459,7 @@ class ExtractLook(publish.Extractor):
         relationships = lookdata["relationships"]
         sets = list(relationships.keys())
         if not sets:
-            self.log.info("No sets found for the look")
+            self.log.debug("No sets found for the look")
             return
 
         # Specify texture processing executables to activate
@@ -487,7 +491,7 @@ class ExtractLook(publish.Extractor):
         remap = results["attrRemap"]
 
         # Extract in correct render layer
-        self.log.info("Extracting look maya scene file: {}".format(maya_path))
+        self.log.debug("Extracting look maya scene file: {}".format(maya_path))
         layer = instance.data.get("renderlayer", "defaultRenderLayer")
         with lib.renderlayer(layer):
             # TODO: Ensure membership edits don't become renderlayer overrides
@@ -513,12 +517,12 @@ class ExtractLook(publish.Extractor):
                             )
 
         # Write the JSON data
-        self.log.info("Extract json..")
         data = {
             "attributes": lookdata["attributes"],
             "relationships": relationships
         }
 
+        self.log.debug("Extracting json file: {}".format(json_path))
         with open(json_path, "w") as f:
             json.dump(data, f)
 
@@ -559,8 +563,8 @@ class ExtractLook(publish.Extractor):
         # Source hash for the textures
         instance.data["sourceHashes"] = hashes
 
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          maya_path))
+        self.log.debug("Extracted instance '%s' to: %s" % (instance.name,
+                                                           maya_path))
 
     def _set_resource_result_colorspace(self, resource, colorspace):
         """Update resource resulting colorspace after texture processing"""
@@ -597,6 +601,13 @@ class ExtractLook(publish.Extractor):
             "Forcing copy instead of hardlink."
         )
         force_copy = True
+
+        if not force_copy and platform.system().lower() == "windows":
+            # Temporary fix to NOT create hardlinks on windows machines
+            self.log.warning(
+                "Forcing copy instead of hardlink due to issues on Windows..."
+            )
+            force_copy = True
 
         destinations_cache = {}
 
@@ -671,11 +682,11 @@ class ExtractLook(publish.Extractor):
                 destination = get_resource_destination_cached(source)
                 if force_copy or texture_result.transfer_mode == COPY:
                     transfers.append((source, destination))
-                    self.log.info('file will be copied {} -> {}'.format(
+                    self.log.debug('file will be copied {} -> {}'.format(
                         source, destination))
                 elif texture_result.transfer_mode == HARDLINK:
                     hardlinks.append((source, destination))
-                    self.log.info('file will be hardlinked {} -> {}'.format(
+                    self.log.debug('file will be hardlinked {} -> {}'.format(
                         source, destination))
 
                 # Store the hashes from hash to destination to include in the
@@ -707,7 +718,7 @@ class ExtractLook(publish.Extractor):
                 color_space_attr = "{}.colorSpace".format(node)
                 remap[color_space_attr] = resource["result_color_space"]
 
-        self.log.info("Finished remapping destinations ...")
+        self.log.debug("Finished remapping destinations ...")
 
         return {
             "fileTransfers": transfers,
@@ -815,8 +826,8 @@ class ExtractLook(publish.Extractor):
             if not processed_result:
                 raise RuntimeError("Texture Processor {} returned "
                                    "no result.".format(processor))
-            self.log.info("Generated processed "
-                          "texture: {}".format(processed_result.path))
+            self.log.debug("Generated processed "
+                           "texture: {}".format(processed_result.path))
 
             # TODO: Currently all processors force copy instead of allowing
             #       hardlinks using source hashes. This should be refactored
@@ -827,7 +838,7 @@ class ExtractLook(publish.Extractor):
         if not force_copy:
             existing = self._get_existing_hashed_texture(filepath)
             if existing:
-                self.log.info("Found hash in database, preparing hardlink..")
+                self.log.debug("Found hash in database, preparing hardlink..")
                 return TextureResult(
                     path=filepath,
                     file_hash=texture_hash,
