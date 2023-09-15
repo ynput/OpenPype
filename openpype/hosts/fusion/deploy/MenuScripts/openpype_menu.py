@@ -2,11 +2,13 @@ import os
 import sys
 
 if sys.version_info < (3, 7):
+    # hack to handle discrepancy between distributed libraries and Python 3.6
+    # mostly because wrong version of urllib3
+    # TODO remove when not necessary
     from openpype import PACKAGE_DIR
     FUSION_HOST_DIR = os.path.join(PACKAGE_DIR, "hosts", "fusion")
 
     vendor_path = os.path.join(FUSION_HOST_DIR, "vendor")
-    print("openpype_menu vendor_path::{}".format(vendor_path))
     if vendor_path not in sys.path:
         sys.path.insert(0, vendor_path)
 
