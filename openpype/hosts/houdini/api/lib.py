@@ -688,19 +688,17 @@ def self_publish():
             continue
 
         active = current_node == node_path
-        if not active:
-            continue
-
         instance["active"] = active
 
-        result, comment = hou.ui.readInput(
-            "Add Publish Note",
-            buttons=("Ok", "Cancel"),
-            title="Publish Note",
-            close_choice=1
-        )
-        if not result:
-            instance.data["comment"] = comment
+        if active:
+            result, comment = hou.ui.readInput(
+                "Add Publish Note",
+                buttons=("Ok", "Cancel"),
+                title="Publish Note",
+                close_choice=1
+            )
+            if not result:
+                instance.data["comment"] = comment
 
     context.save_changes()
     publisher_show_and_publish()
