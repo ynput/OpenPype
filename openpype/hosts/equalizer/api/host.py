@@ -4,17 +4,30 @@ note:
     3dequalizer 7.1v2 uses Python 3.7.9
 
 """
-from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
-from openpype.tools.utils import get_openpype_qt_app
-from qtpy import QtWidgets
-import re
 import json
-import tde4  # noqa: F401
+import os
+import re
 
+import pyblish.api
+import tde4  # noqa: F401
+from qtpy import QtWidgets
+
+from openpype.host import HostBase, ILoadHost, IPublishHost, IWorkfileHost
+from openpype.hosts.equalizer import EQUALIZER_HOST_DIR
+from openpype.pipeline import (
+    register_creator_plugin_path,
+    register_loader_plugin_path
+)
+from openpype.tools.utils import get_openpype_qt_app
 
 CONTEXT_REGEX = re.compile(
     r"AYON_CONTEXT::(?P<context>(?:\n|.)*?)::AYON_CONTEXT_END",
     re.MULTILINE)
+PLUGINS_DIR = os.path.join(EQUALIZER_HOST_DIR, "plugins")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
@@ -115,6 +128,12 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         app = get_openpype_qt_app()
         app.setQuitOnLastWindowClosed(False)
         self._qapp = app
+
+        pyblish.api.register_host("equalizer")
+
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
 
         tde4.setTimerCallbackFunction("EqualizerHost._timer", 100)
 
