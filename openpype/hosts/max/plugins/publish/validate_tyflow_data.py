@@ -3,7 +3,7 @@ from openpype.pipeline import PublishValidationError
 from pymxs import runtime as rt
 
 
-class ValidatePointCloud(pyblish.api.InstancePlugin):
+class ValidateTyFlowData(pyblish.api.InstancePlugin):
     """Validate that TyFlow plugins or
     relevant operators being set correctly."""
 

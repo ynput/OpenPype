@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating TyCache."""
 from openpype.hosts.max.api import plugin
-from openpype.pipeline import EnumDef
+from openpype.lib import EnumDef
 
 
 class CreateTyCache(plugin.MaxCreator):
@@ -12,7 +12,8 @@ class CreateTyCache(plugin.MaxCreator):
     icon = "gear"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        instance_data = pre_create_data.get("tycache_type")
+        instance_data["tycache_type"] = pre_create_data.get(
+            "tycache_type")
         super(CreateTyCache, self).create(
             subset_name,
             instance_data,

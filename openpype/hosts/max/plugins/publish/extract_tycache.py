@@ -5,7 +5,6 @@ from pymxs import runtime as rt
 
 from openpype.hosts.max.api import maintained_selection
 from openpype.pipeline import publish
-from openpype.lib import EnumDef
 
 
 class ExtractTyCache(publish.Extractor):
@@ -61,7 +60,7 @@ class ExtractTyCache(publish.Extractor):
             "stagingDir": stagingdir
         }
         instance.data["representations"].append(representation)
-        self.log.info(f"Extracted instance '{instance.name}' to: {path}")
+        self.log.info(f"Extracted instance '{instance.name}' to: {filenames}")
 
     def get_file(self, filepath, start_frame, end_frame):
         filenames = []
