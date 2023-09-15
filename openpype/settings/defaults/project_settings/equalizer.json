@@ -1,0 +1,15 @@
+{
+    "create": {
+        "CreateMatchMove": {
+            "enabled": true,
+            "default_variants": [
+                "CameraTrack",
+                "ObjectTrack",
+                "PointTrack",
+                "Stabilize",
+                "SurveyTrack",
+                "UserTrack"
+            ]
+        }
+    }
+}
