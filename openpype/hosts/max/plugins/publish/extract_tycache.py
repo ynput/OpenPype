@@ -38,16 +38,20 @@ class ExtractTyCache(publish.Extractor):
         filename = "{name}.tyc".format(**instance.data)
         path = os.path.join(stagingdir, filename)
         filenames = self.get_file(path, start, end)
+        additional_attributes = instance.data.get("tyc_attrs", {})
+
         with maintained_selection():
             job_args = None
             if instance.data["tycache_type"] == "tycache":
                 job_args = self.export_particle(
                     instance.data["members"],
-                    start, end, path)
+                    start, end, path,
+                    additional_attributes)
             elif instance.data["tycache_type"] == "tycachespline":
                 job_args = self.export_particle(
                     instance.data["members"],
                     start, end, path,
+                    additional_attributes,
                     tycache_spline_enabled=True)
 
             for job in job_args:
@@ -74,7 +78,8 @@ class ExtractTyCache(publish.Extractor):
         return filenames
 
     def export_particle(self, members, start, end,
-                        filepath, tycache_spline_enabled=False):
+                        filepath, additional_attributes,
+                        tycache_spline_enabled=False):
         """Sets up all job arguments for attributes.
 
         Those attributes are to be exported in MAX Script.
@@ -94,8 +99,7 @@ class ExtractTyCache(publish.Extractor):
         for operator in opt_list:
             if tycache_spline_enabled:
                 export_mode = f'{operator}.exportMode=3'
-                has_tyc_spline = f'{operator}.tycacheSplines=true'
-                job_args.extend([export_mode, has_tyc_spline])
+                job_args.append(export_mode)
             else:
                 export_mode = f'{operator}.exportMode=2'
                 job_args.append(export_mode)
@@ -107,6 +111,11 @@ class ExtractTyCache(publish.Extractor):
             tycache_filename = f'{operator}.tyCacheFilename="{filepath}"'
             job_args.append(tycache_filename)
             # TODO: add the additional job args for tycache attributes
+            if additional_attributes:
+                additional_args = self.get_additional_attribute_args(
+                    operator, additional_attributes
+                )
+                job_args.extend(additional_args)
             tycache_export = f"{operator}.exportTyCache()"
             job_args.append(tycache_export)
 
@@ -137,3 +146,24 @@ class ExtractTyCache(publish.Extractor):
                     opt_list.append(opt)
 
         return opt_list
+
+    def get_additional_attribute_args(self, operator, attrs):
+        """Get Additional args with the attributes pre-set by user
+
+        Args:
+            operator (str): export particle operator
+            attrs (dict): a dict which stores the additional attributes
+            added by user
+
+        Returns:
+            additional_args(list): a list of additional args for MAX script
+        """
+        additional_args = []
+        for key, value in attrs.items():
+            tyc_attribute = None
+            if isinstance(value, bool):
+                tyc_attribute = f"{operator}.{key}=True"
+            elif isinstance(value, str):
+                tyc_attribute = f"{operator}.{key}={value}"
+            additional_args.append(tyc_attribute)
+        return additional_args
