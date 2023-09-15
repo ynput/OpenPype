@@ -27,7 +27,7 @@ class BlenderPluginInfo():
 class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     label = "Submit Render to Deadline"
     hosts = ["blender"]
-    families = ["renderlayer"]
+    families = ["render.farm"]
 
     use_published = True
     priority = 50

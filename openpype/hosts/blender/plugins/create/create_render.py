@@ -1,6 +1,4 @@
 """Create render."""
-import os
-
 import bpy
 
 from openpype.pipeline import get_current_task_name
@@ -14,7 +12,7 @@ class CreateRenderlayer(plugin.Creator):
 
     name = "renderingMain"
     label = "Render"
-    family = "renderlayer"
+    family = "render"
     icon = "eye"
 
     def process(self):

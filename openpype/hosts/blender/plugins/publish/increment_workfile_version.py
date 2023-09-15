@@ -10,7 +10,7 @@ class IncrementWorkfileVersion(pyblish.api.ContextPlugin):
     optional = True
     hosts = ["blender"]
     families = ["animation", "model", "rig", "action", "layout", "blendScene",
-                "renderlayer"]
+                "render"]
 
     def process(self, context):
 

@@ -8,7 +8,7 @@ class ValidateRenderCameraIsSet(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     hosts = ["blender"]
-    families = ["renderlayer"]
+    families = ["render"]
     label = "Validate Render Camera Is Set"
     optional = False
 

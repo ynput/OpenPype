@@ -19,7 +19,7 @@ class ValidateDeadlinePublish(pyblish.api.InstancePlugin,
     """
 
     order = ValidateContentsOrder
-    families = ["renderlayer"]
+    families = ["render.farm"]
     hosts = ["blender"]
     label = "Validate Render Output for Deadline"
     optional = True
