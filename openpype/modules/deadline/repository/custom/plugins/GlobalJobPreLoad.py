@@ -388,9 +388,8 @@ def inject_openpype_environment(deadlinePlugin):
         if "PATH" in contents:
             # Set os.environ[PATH] so studio settings' path entries
             # can be used to define search path for executables.
-            PATH = contents["PATH"]
-            print(f">>> Setting 'PATH' Environment to: {PATH}")
-            os.environ["PATH"] = PATH
+            print(f">>> Setting 'PATH' Environment to: {contents['PATH']}")
+            os.environ["PATH"] = contents["PATH"]
 
         script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
         if script_url:
@@ -519,9 +518,8 @@ def inject_ayon_environment(deadlinePlugin):
         if "PATH" in contents:
             # Set os.environ[PATH] so studio settings' path entries
             # can be used to define search path for executables.
-            PATH = contents["PATH"]
-            print(f">>> Setting 'PATH' Environment to: {PATH}")
-            os.environ["PATH"] = PATH
+            print(f">>> Setting 'PATH' Environment to: {contents['PATH']}")
+            os.environ["PATH"] = contents["PATH"]
 
         script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
         if script_url:
