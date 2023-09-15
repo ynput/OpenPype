@@ -73,6 +73,11 @@ class PublishPuginsModel(BaseSettingsModel):
         title="Validate Render Camera Is Set",
         section="Validators"
     )
+    ValidateDeadlinePublish: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Validate Render Output for Deadline",
+        section="Validators"
+    )
     ValidateMeshHasUvs: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Validate Mesh Has Uvs"
@@ -145,6 +150,11 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "exclude_families": []
     },
     "ValidateRenderCameraIsSet": {
+        "enabled": True,
+        "optional": False,
+        "active": True
+    },
+    "ValidateDeadlinePublish": {
         "enabled": True,
         "optional": False,
         "active": True

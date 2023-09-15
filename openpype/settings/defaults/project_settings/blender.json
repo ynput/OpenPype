@@ -46,6 +46,11 @@
             "optional": false,
             "active": true
         },
+        "ValidateDeadlinePublish": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ValidateMeshHasUvs": {
             "enabled": true,
             "optional": true,
