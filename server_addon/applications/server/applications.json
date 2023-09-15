@@ -1089,7 +1089,7 @@
                     "name": "4-26",
                     "label": "4.26",
                     "executables": {},
-                    "arguments": {},
+                    "arguments": [],
                     "environment": "{}"
                 }
             ]
@@ -1123,9 +1123,11 @@
             "label": "3DEqualizer",
             "icon": "{}/app_icons/3de4.png",
             "host_name": "equalizer",
-            "environment": {},
-            "variants": {
-                "7-1v2": {
+            "environment": "{}",
+            "variants": [
+                {
+                    "name": "7-1v2",
+                    "label": "7.1v2",
                     "use_python_2": false,
                     "executables": {
                         "windows": [
@@ -1139,9 +1141,9 @@
                         "darwin": [],
                         "linux": []
                     },
-                    "environment": {}
+                    "environment": "{}"
                 }
-            }
+            ]
         },
         "additional_apps": []
     }

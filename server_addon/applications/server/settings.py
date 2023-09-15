@@ -168,6 +168,8 @@ class ApplicationsSettings(BaseSettingsModel):
         default_factory=AppGroupWithPython, title="Celaction 2D")
     unreal: AppGroup = Field(
         default_factory=AppGroupWithPython, title="Unreal Editor")
+    equalizer: AppGroup = Field(
+        default_factory=AppGroupWithPython, title="3DEqualizer")
     additional_apps: list[AdditionalAppGroup] = Field(
         default_factory=list, title="Additional Applications")
 
