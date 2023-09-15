@@ -422,6 +422,12 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
                 ]
             },
             {
+                "name": "blender",
+                "value": [
+                    ".*([Bb]eauty).*"
+                ]
+            },
+            {
                 "name": "aftereffects",
                 "value": [
                     ".*"

@@ -121,6 +121,9 @@
                 "maya": [
                     ".*([Bb]eauty).*"
                 ],
+                "blender": [
+                    ".*([Bb]eauty).*"
+                ],
                 "aftereffects": [
                     ".*"
                 ],

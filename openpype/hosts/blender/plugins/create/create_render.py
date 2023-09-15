@@ -62,7 +62,7 @@ class CreateRenderlayer(plugin.Creator):
                         ["multilayer_exr"])
 
     @staticmethod
-    def get_render_product(output_path, name):
+    def get_render_product(output_path, name, aov_sep):
         """
         Generate the path to the render product. Blender interprets the `#`
         as the frame number, when it renders.
@@ -74,7 +74,8 @@ class CreateRenderlayer(plugin.Creator):
             instance (pyblish.api.Instance): The instance to publish.
             ext (str): The image format to render.
         """
-        render_product = f"{os.path.join(output_path, name)}.####"
+        filepath = os.path.join(output_path, name)
+        render_product = f"{filepath}{aov_sep}beauty.####"
         render_product = render_product.replace("\\", "/")
 
         return render_product
@@ -233,17 +234,16 @@ class CreateRenderlayer(plugin.Creator):
         ext = self.get_image_format(settings)
         multilayer = self.get_multilayer(settings)
 
+        self.set_render_format(ext, multilayer)
         aov_list, custom_passes = self.set_render_passes(settings)
 
         output_path = os.path.join(file_path, render_folder, file_name)
 
-        render_product = self.get_render_product(output_path, name)
+        render_product = self.get_render_product(output_path, name, aov_sep)
         aov_file_product = self.set_node_tree(
             output_path, name, aov_sep, ext, multilayer)
 
-        # We set the render path, the format and the camera
         bpy.context.scene.render.filepath = render_product
-        self.set_render_format(ext, multilayer)
 
         render_settings = {
             "render_folder": render_folder,
@@ -254,6 +254,7 @@ class CreateRenderlayer(plugin.Creator):
             "custom_passes": custom_passes,
             "render_product": render_product,
             "aov_file_product": aov_file_product,
+            "review": True,
         }
 
         self.imprint_render_settings(asset_group, render_settings)

@@ -82,6 +82,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         render_product = render_data.get("render_product")
         aov_file_product = render_data.get("aov_file_product")
         ext = render_data.get("image_format")
+        multilayer = render_data.get("multilayer_exr")
 
         frame_start = context.data["frameStart"]
         frame_end = context.data["frameEnd"]
@@ -105,6 +106,8 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
             "frameEndHandle": frame_handle_end,
             "fps": context.data["fps"],
             "byFrameStep": bpy.context.scene.frame_step,
+            "review": render_data.get("review", False),
+            "multipartExr": ext == "exr" and multilayer,
             "farm": True,
             "expectedFiles": [expected_files],
             # OCIO not currently implemented in Blender, but the following
