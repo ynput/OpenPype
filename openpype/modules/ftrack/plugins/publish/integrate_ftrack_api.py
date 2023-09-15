@@ -27,8 +27,8 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
     def process(self, instance):
         component_list = instance.data.get("ftrackComponentsList")
         if not component_list:
-            self.log.info(
-                "Instance don't have components to integrate to Ftrack."
+            self.log.debug(
+                "Instance doesn't have components to integrate to Ftrack."
                 " Skipping."
             )
             return
@@ -37,7 +37,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         task_entity, parent_entity = self.get_instance_entities(
             instance, context)
         if parent_entity is None:
-            self.log.info((
+            self.log.debug((
                 "Skipping ftrack integration. Instance \"{}\" does not"
                 " have specified ftrack entities."
             ).format(str(instance)))
@@ -323,7 +323,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             "type_id": asset_type_id,
             "context_id": parent_id
         }
-        self.log.info("Created new Asset with data: {}.".format(asset_data))
+        self.log.debug("Created new Asset with data: {}.".format(asset_data))
         session.create("Asset", asset_data)
         session.commit()
         return self._query_asset(session, asset_name, asset_type_id, parent_id)
@@ -353,7 +353,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         status_name = asset_version_data.pop("status_name", None)
 
         # Try query asset version by criteria (asset id and version)
-        version = asset_version_data.get("version") or 0
+        version = asset_version_data.get("version") or "0"
         asset_version_entity = self._query_asset_version(
             session, version, asset_id
         )
@@ -384,7 +384,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             if comment:
                 new_asset_version_data["comment"] = comment
 
-            self.log.info("Created new AssetVersion with data {}".format(
+            self.log.debug("Created new AssetVersion with data {}".format(
                 new_asset_version_data
             ))
             session.create("AssetVersion", new_asset_version_data)
@@ -555,7 +555,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 location=location
             )
             data["component"] = component_entity
-            self.log.info(
+            self.log.debug(
                 (
                     "Created new Component with path: {0}, data: {1},"
                     " metadata: {2}, location: {3}"

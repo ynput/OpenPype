@@ -3,6 +3,7 @@ import os
 import re
 import copy
 import inspect
+import collections
 import logging
 import weakref
 from uuid import uuid4
@@ -340,8 +341,8 @@ class EventSystem(object):
         event.emit()
         return event
 
-    def emit_event(self, event):
-        """Emit event object.
+    def _process_event(self, event):
+        """Process event topic and trigger callbacks.
 
         Args:
             event (Event): Prepared event with topic and data.
@@ -355,6 +356,91 @@ class EventSystem(object):
 
         for callback in invalid_callbacks:
             self._registered_callbacks.remove(callback)
+
+    def emit_event(self, event):
+        """Emit event object.
+
+        Args:
+            event (Event): Prepared event with topic and data.
+        """
+
+        self._process_event(event)
+
+
+class QueuedEventSystem(EventSystem):
+    """Events are automatically processed in queue.
+
+    If callback triggers another event, the event is not processed until
+    all callbacks of previous event are processed.
+
+    Allows to implement custom event process loop by changing 'auto_execute'.
+
+    Note:
+        This probably should be default behavior of 'EventSystem'. Changing it
+            now could cause problems in existing code.
+
+    Args:
+        auto_execute (Optional[bool]): If 'True', events are processed
+            automatically. Custom loop calling 'process_next_event'
+            must be implemented when set to 'False'.
+    """
+
+    def __init__(self, auto_execute=True):
+        super(QueuedEventSystem, self).__init__()
+        self._event_queue = collections.deque()
+        self._current_event = None
+        self._auto_execute = auto_execute
+
+    def __len__(self):
+        return self.count()
+
+    def count(self):
+        """Get number of events in queue.
+
+        Returns:
+            int: Number of events in queue.
+        """
+
+        return len(self._event_queue)
+
+    def process_next_event(self):
+        """Process next event in queue.
+
+        Should be used only if 'auto_execute' is set to 'False'. Only single
+            event is processed.
+
+        Returns:
+            Union[Event, None]: Processed event.
+        """
+
+        if self._current_event is not None:
+            raise ValueError("An event is already in progress.")
+
+        if not self._event_queue:
+            return None
+        event = self._event_queue.popleft()
+        self._current_event = event
+        self._process_event(event)
+        self._current_event = None
+        return event
+
+    def emit_event(self, event):
+        """Emit event object.
+
+        Args:
+           event (Event): Prepared event with topic and data.
+        """
+
+        if not self._auto_execute or self._current_event is not None:
+            self._event_queue.append(event)
+            return
+
+        self._event_queue.append(event)
+        while self._event_queue:
+            event = self._event_queue.popleft()
+            self._current_event = event
+            self._process_event(event)
+        self._current_event = None
 
 
 class GlobalEventSystem:

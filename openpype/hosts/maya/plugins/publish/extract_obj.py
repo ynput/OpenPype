@@ -30,7 +30,7 @@ class ExtractObj(publish.Extractor):
         # The export requires forward slashes because we need to
         # format it into a string in a mel expression
 
-        self.log.info("Extracting OBJ to: {0}".format(path))
+        self.log.debug("Extracting OBJ to: {0}".format(path))
 
         members = instance.data("setMembers")
         members = cmds.ls(members,
@@ -39,8 +39,8 @@ class ExtractObj(publish.Extractor):
                           type=("mesh", "nurbsCurve"),
                           noIntermediate=True,
                           long=True)
-        self.log.info("Members: {0}".format(members))
-        self.log.info("Instance: {0}".format(instance[:]))
+        self.log.debug("Members: {0}".format(members))
+        self.log.debug("Instance: {0}".format(instance[:]))
 
         if not cmds.pluginInfo('objExport', query=True, loaded=True):
             cmds.loadPlugin('objExport')
@@ -74,4 +74,4 @@ class ExtractObj(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extract OBJ successful to: {0}".format(path))
+        self.log.debug("Extract OBJ successful to: {0}".format(path))

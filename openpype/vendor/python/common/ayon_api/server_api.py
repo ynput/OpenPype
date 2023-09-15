@@ -2,6 +2,7 @@ import os
 import re
 import io
 import json
+import time
 import logging
 import collections
 import platform
@@ -26,6 +27,8 @@ except ImportError:
         from json import JSONDecodeError as RequestsJSONDecodeError
 
 from .constants import (
+    SERVER_TIMEOUT_ENV_KEY,
+    SERVER_RETRIES_ENV_KEY,
     DEFAULT_PRODUCT_TYPE_FIELDS,
     DEFAULT_PROJECT_FIELDS,
     DEFAULT_FOLDER_FIELDS,
@@ -127,6 +130,8 @@ class RestApiResponse(object):
 
     @property
     def text(self):
+        if self._response is None:
+            return self.detail
         return self._response.text
 
     @property
@@ -135,6 +140,8 @@ class RestApiResponse(object):
 
     @property
     def headers(self):
+        if self._response is None:
+            return {}
         return self._response.headers
 
     @property
@@ -148,6 +155,8 @@ class RestApiResponse(object):
 
     @property
     def content(self):
+        if self._response is None:
+            return b""
         return self._response.content
 
     @property
@@ -339,7 +348,11 @@ class ServerAPI(object):
             variable value 'AYON_CERT_FILE' by default.
         create_session (Optional[bool]): Create session for connection if
             token is available. Default is True.
+        timeout (Optional[float]): Timeout for requests.
+        max_retries (Optional[int]): Number of retries for requests.
     """
+    _default_timeout = 10.0
+    _default_max_retries = 3
 
     def __init__(
         self,
@@ -352,6 +365,8 @@ class ServerAPI(object):
         ssl_verify=None,
         cert=None,
         create_session=True,
+        timeout=None,
+        max_retries=None,
     ):
         if not base_url:
             raise ValueError("Invalid server URL {}".format(str(base_url)))
@@ -369,6 +384,13 @@ class ServerAPI(object):
             or "production"
         )
         self._sender = sender
+
+        self._timeout = None
+        self._max_retries = None
+
+        # Set timeout and max retries based on passed values
+        self.set_timeout(timeout)
+        self.set_max_retries(max_retries)
 
         if ssl_verify is None:
             # Custom AYON env variable for CA file or 'True'
@@ -473,6 +495,87 @@ class ServerAPI(object):
 
     ssl_verify = property(get_ssl_verify, set_ssl_verify)
     cert = property(get_cert, set_cert)
+
+    @classmethod
+    def get_default_timeout(cls):
+        """Default value for requests timeout.
+
+        First looks for environment variable SERVER_TIMEOUT_ENV_KEY which
+        can affect timeout value. If not available then use class
+        attribute '_default_timeout'.
+
+        Returns:
+            float: Timeout value in seconds.
+        """
+
+        try:
+            return float(os.environ.get(SERVER_TIMEOUT_ENV_KEY))
+        except (ValueError, TypeError):
+            pass
+
+        return cls._default_timeout
+
+    @classmethod
+    def get_default_max_retries(cls):
+        """Default value for requests max retries.
+
+        First looks for environment variable SERVER_RETRIES_ENV_KEY, which
+        can affect max retries value. If not available then use class
+        attribute '_default_max_retries'.
+
+        Returns:
+            int: Max retries value.
+        """
+
+        try:
+            return int(os.environ.get(SERVER_RETRIES_ENV_KEY))
+        except (ValueError, TypeError):
+            pass
+
+        return cls._default_max_retries
+
+    def get_timeout(self):
+        """Current value for requests timeout.
+
+        Returns:
+            float: Timeout value in seconds.
+        """
+
+        return self._timeout
+
+    def set_timeout(self, timeout):
+        """Change timeout value for requests.
+
+        Args:
+            timeout (Union[float, None]): Timeout value in seconds.
+        """
+
+        if timeout is None:
+            timeout = self.get_default_timeout()
+        self._timeout = float(timeout)
+
+    def get_max_retries(self):
+        """Current value for requests max retries.
+
+        Returns:
+            int: Max retries value.
+        """
+
+        return self._max_retries
+
+    def set_max_retries(self, max_retries):
+        """Change max retries value for requests.
+
+        Args:
+            max_retries (Union[int, None]): Max retries value.
+        """
+
+        if max_retries is None:
+            max_retries = self.get_default_max_retries()
+        self._max_retries = int(max_retries)
+
+    timeout = property(get_timeout, set_timeout)
+    max_retries = property(get_max_retries, set_max_retries)
 
     @property
     def access_token(self):
@@ -890,9 +993,17 @@ class ServerAPI(object):
         for attr, filter_value in filters.items():
             query.set_variable_value(attr, filter_value)
 
+        # Backwards compatibility for server 0.3.x
+        #   - will be removed in future releases
+        major, minor, _, _, _ = self.server_version_tuple
+        access_groups_field = "accessGroups"
+        if major == 0 and minor <= 3:
+            access_groups_field = "roles"
+
         for parsed_data in query.continuous_query(self):
             for user in parsed_data["users"]:
-                user["roles"] = json.loads(user["roles"])
+                user[access_groups_field] = json.loads(
+                    user[access_groups_field])
                 yield user
 
     def get_user(self, username=None):
@@ -1004,6 +1115,10 @@ class ServerAPI(object):
         logout_from_server(self._base_url, self._access_token)
 
     def _do_rest_request(self, function, url, **kwargs):
+        kwargs.setdefault("timeout", self.timeout)
+        max_retries = kwargs.get("max_retries", self.max_retries)
+        if max_retries < 1:
+            max_retries = 1
         if self._session is None:
             # Validate token if was not yet validated
             #    - ignore validation if we're in middle of
@@ -1023,38 +1138,54 @@ class ServerAPI(object):
         elif isinstance(function, RequestType):
             function = self._session_functions_mapping[function]
 
-        try:
-            response = function(url, **kwargs)
+        response = None
+        new_response = None
+        for _ in range(max_retries):
+            try:
+                response = function(url, **kwargs)
+                break
 
-        except ConnectionRefusedError:
-            new_response = RestApiResponse(
-                None,
-                {"detail": "Unable to connect the server. Connection refused"}
-            )
-        except requests.exceptions.ConnectionError:
-            new_response = RestApiResponse(
-                None,
-                {"detail": "Unable to connect the server. Connection error"}
-            )
+            except ConnectionRefusedError:
+                # Server may be restarting
+                new_response = RestApiResponse(
+                    None,
+                    {"detail": "Unable to connect the server. Connection refused"}
+                )
+            except requests.exceptions.Timeout:
+                # Connection timed out
+                new_response = RestApiResponse(
+                    None,
+                    {"detail": "Connection timed out."}
+                )
+            except requests.exceptions.ConnectionError:
+                # Other connection error (ssl, etc) - does not make sense to
+                #   try call server again
+                new_response = RestApiResponse(
+                    None,
+                    {"detail": "Unable to connect the server. Connection error"}
+                )
+                break
+
+            time.sleep(0.1)
+
+        if new_response is not None:
+            return new_response
+
+        content_type = response.headers.get("Content-Type")
+        if content_type == "application/json":
+            try:
+                new_response = RestApiResponse(response)
+            except JSONDecodeError:
+                new_response = RestApiResponse(
+                    None,
+                    {
+                        "detail": "The response is not a JSON: {}".format(
+                            response.text)
+                    }
+                )
+
         else:
-            content_type = response.headers.get("Content-Type")
-            if content_type == "application/json":
-                try:
-                    new_response = RestApiResponse(response)
-                except JSONDecodeError:
-                    new_response = RestApiResponse(
-                        None,
-                        {
-                            "detail": "The response is not a JSON: {}".format(
-                                response.text)
-                        }
-                    )
-
-            elif content_type in ("image/jpeg", "image/png"):
-                new_response = RestApiResponse(response)
-
-            else:
-                new_response = RestApiResponse(response)
+            new_response = RestApiResponse(response)
 
         self.log.debug("Response {}".format(str(new_response)))
         return new_response
@@ -1747,7 +1878,15 @@ class ServerAPI(object):
             entity_type_defaults = DEFAULT_WORKFILE_INFO_FIELDS
 
         elif entity_type == "user":
-            entity_type_defaults = DEFAULT_USER_FIELDS
+            entity_type_defaults = set(DEFAULT_USER_FIELDS)
+            # Backwards compatibility for server 0.3.x
+            #   - will be removed in future releases
+            major, minor, _, _, _ = self.server_version_tuple
+            if major == 0 and minor <= 3:
+                entity_type_defaults.discard("accessGroups")
+                entity_type_defaults.discard("defaultAccessGroups")
+                entity_type_defaults.add("roles")
+                entity_type_defaults.add("defaultRoles")
 
         else:
             raise ValueError("Unknown entity type \"{}\"".format(entity_type))
@@ -2124,7 +2263,12 @@ class ServerAPI(object):
                 server.
         """
 
-        result = self.get("desktop/dependency_packages")
+        endpoint = "desktop/dependencyPackages"
+        major, minor, _, _, _ = self.server_version_tuple
+        if major == 0 and minor <= 3:
+            endpoint = "desktop/dependency_packages"
+
+        result = self.get(endpoint)
         result.raise_for_status()
         return result.data
 
@@ -3810,6 +3954,8 @@ class ServerAPI(object):
         product_ids=None,
         product_names=None,
         folder_ids=None,
+        product_types=None,
+        statuses=None,
         names_by_folder_ids=None,
         active=True,
         fields=None,
@@ -3828,6 +3974,10 @@ class ServerAPI(object):
                 filtering.
             folder_ids (Optional[Iterable[str]]): Ids of task parents.
                 Use 'None' if folder is direct child of project.
+            product_types (Optional[Iterable[str]]): Product types used for
+                filtering.
+            statuses (Optional[Iterable[str]]): Product statuses used for
+                filtering.
             names_by_folder_ids (Optional[dict[str, Iterable[str]]]): Product
                 name filtering by folder id.
             active (Optional[bool]): Filter active/inactive products.
@@ -3862,6 +4012,18 @@ class ServerAPI(object):
             if not filter_folder_ids:
                 return
 
+        filter_product_types = None
+        if product_types is not None:
+            filter_product_types = set(product_types)
+            if not filter_product_types:
+                return
+
+        filter_statuses = None
+        if statuses is not None:
+            filter_statuses = set(statuses)
+            if not filter_statuses:
+                return
+
         # This will disable 'folder_ids' and 'product_names' filters
         #   - maybe could be enhanced in future?
         if names_by_folder_ids is not None:
@@ -3881,7 +4043,7 @@ class ServerAPI(object):
             fields = set(fields) | {"id"}
             if "attrib" in fields:
                 fields.remove("attrib")
-                fields |= self.get_attributes_fields_for_type("folder")
+                fields |= self.get_attributes_fields_for_type("product")
         else:
             fields = self.get_default_fields_for_type("product")
 
@@ -3907,6 +4069,12 @@ class ServerAPI(object):
         }
         if filter_folder_ids:
             filters["folderIds"] = list(filter_folder_ids)
+
+        if filter_product_types:
+            filters["productTypes"] = list(filter_product_types)
+
+        if filter_statuses:
+            filters["statuses"] = list(filter_statuses)
 
         if product_ids:
             filters["productIds"] = list(product_ids)
