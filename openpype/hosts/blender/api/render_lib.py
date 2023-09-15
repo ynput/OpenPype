@@ -13,12 +13,13 @@ def get_default_render_folder(settings):
                     ["RenderSettings"]
                     ["default_render_image_folder"])
 
+
 def get_aov_separator(settings):
     """Get aov separator from blender settings."""
 
     aov_sep = (settings["blender"]
-                        ["RenderSettings"]
-                        ["aov_separator"])
+                       ["RenderSettings"]
+                       ["aov_separator"])
 
     if aov_sep == "dash":
         return "-"
@@ -29,6 +30,7 @@ def get_aov_separator(settings):
     else:
         raise ValueError(f"Invalid aov separator: {aov_sep}")
 
+
 def get_image_format(settings):
     """Get image format from blender settings."""
 
@@ -36,12 +38,14 @@ def get_image_format(settings):
                     ["RenderSettings"]
                     ["image_format"])
 
+
 def get_multilayer(settings):
     """Get multilayer from blender settings."""
 
     return (settings["blender"]
                     ["RenderSettings"]
                     ["multilayer_exr"])
+
 
 def get_render_product(output_path, name, aov_sep):
     """
@@ -60,6 +64,7 @@ def get_render_product(output_path, name, aov_sep):
     render_product = render_product.replace("\\", "/")
 
     return render_product
+
 
 def set_render_format(ext, multilayer):
     # Set Blender to save the file with the right extension
@@ -85,14 +90,15 @@ def set_render_format(ext, multilayer):
     elif ext == "tif":
         image_settings.file_format = "TIFF"
 
+
 def set_render_passes(settings):
     aov_list = (settings["blender"]
                         ["RenderSettings"]
                         ["aov_list"])
 
     custom_passes = (settings["blender"]
-                                ["RenderSettings"]
-                                ["custom_passes"])
+                             ["RenderSettings"]
+                             ["custom_passes"])
 
     vl = bpy.context.view_layer
 
@@ -121,6 +127,7 @@ def set_render_passes(settings):
         aov.type = cp[1].get("type", "VALUE")
 
     return aov_list, custom_passes
+
 
 def set_node_tree(output_path, name, aov_sep, ext, multilayer):
     # Set the scene to use the compositor node tree to render
@@ -187,6 +194,7 @@ def set_node_tree(output_path, name, aov_sep, ext, multilayer):
 
     return aov_file_products
 
+
 def imprint_render_settings(node, data):
     RENDER_DATA = "render_data"
     if not node.get(RENDER_DATA):
@@ -195,6 +203,7 @@ def imprint_render_settings(node, data):
         if value is None:
             continue
         node[RENDER_DATA][key] = value
+
 
 def prepare_rendering(asset_group):
     name = asset_group.name
