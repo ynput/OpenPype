@@ -107,8 +107,7 @@ class ExtractTyCache(publish.Extractor):
             filepath = filepath.replace("\\", "/")
             tycache_filename = f'{operator}.tyCacheFilename="{filepath}"'
             job_args.append(tycache_filename)
-            additional_args = self.get_custom_attr(operator)
-            job_args.extend(iter(additional_args))
+            # TODO: add the additional job args for tycache attributes
             tycache_export = f"{operator}.exportTyCache()"
             job_args.append(tycache_export)
 
@@ -139,65 +138,3 @@ class ExtractTyCache(publish.Extractor):
                     opt_list.append(opt)
 
         return opt_list
-
-    def get_custom_attr(operators):
-        additonal_args =
-        ]
-
-
-    @classmethod
-    def get_attribute_defs(cls):
-        tycache_enum ={
-            "Age": "tycacheChanAge",
-            "Groups": "tycacheChanGroups",
-        }
-        return [
-            EnumDef("dspGeometry",
-                    items=tycache_enum,
-                    default="",
-                    multiselection=True)
-        ]
-
-
-"""
-.exportMode : integer
-.frameStart : integer
-.frameEnd : integer
-
-  .tycacheChanAge : boolean
-  .tycacheChanGroups : boolean
-  .tycacheChanPos : boolean
-  .tycacheChanRot : boolean
-  .tycacheChanScale : boolean
-  .tycacheChanVel : boolean
-  .tycacheChanSpin : boolean
-  .tycacheChanShape : boolean
-  .tycacheChanMatID : boolean
-  .tycacheChanMapping : boolean
-  .tycacheChanMaterials : boolean
-  .tycacheChanCustomFloat : boolean
-  .tycacheChanCustomVector : boolean
-  .tycacheChanCustomTM : boolean
-  .tycacheChanPhysX : boolean
-  .tycacheMeshBackup : boolean
-  .tycacheCreateObject : boolean
-  .tycacheCreateObjectIfNotCreated : boolean
-  .tycacheLayer : string
-  .tycacheObjectName : string
-  .tycacheAdditionalCloth : boolean
-  .tycacheAdditionalSkin : boolean
-  .tycacheAdditionalSkinID : boolean
-  .tycacheAdditionalSkinIDValue : integer
-  .tycacheAdditionalTerrain : boolean
-  .tycacheAdditionalVDB : boolean
-  .tycacheAdditionalSplinePaths : boolean
-  .tycacheAdditionalTyMesher : boolean
-  .tycacheAdditionalGeo : boolean
-  .tycacheAdditionalObjectList_deprecated : node array
-  .tycacheAdditionalObjectList : maxObject array
-  .tycacheAdditionalGeoActivateModifiers : boolean
-  .tycacheSplinesAdditionalSplines : boolean
-  .tycacheSplinesAdditionalSplinesObjectList_deprecated : node array
-  .tycacheSplinesAdditionalObjectList : maxObject array
-
-"""
