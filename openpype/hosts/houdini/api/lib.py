@@ -657,7 +657,7 @@ def get_color_management_preferences():
     }
 
 
-def publisher_show_and_publish(comment = ""):
+def publisher_show_and_publish(comment=""):
     """Open publisher window and trigger publishing action."""
 
     main_window = get_main_window()

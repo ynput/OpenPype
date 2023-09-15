@@ -261,7 +261,9 @@ class HostToolsHelper:
             dialog.activateWindow()
             dialog.showNormal()
 
-    def get_publisher_tool(self, parent=None, controller=None, reset_on_show=None):
+    def get_publisher_tool(
+        self, parent=None, controller=None, reset_on_show=None
+    ):
         """Create, cache and return publisher window."""
 
         if self._publisher_tool is None:
