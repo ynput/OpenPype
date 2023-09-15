@@ -388,6 +388,20 @@ class PublisherWindow(QtWidgets.QDialog):
     def controller(self):
         return self._controller
 
+    @property
+    def reset_on_show(self):
+        return self._reset_on_show
+
+    @reset_on_show.setter
+    def reset_on_show(self, value):
+        self._reset_on_show = value
+
+    def set_comment_input_text(self, text=""):
+        self._comment_input.setText(text)
+
+    def click_publish(self):
+        self._on_publish_clicked()
+
     def make_sure_is_visible(self):
         if self._window_is_visible:
             self.setWindowState(QtCore.Qt.WindowActive)

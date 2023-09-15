@@ -657,21 +657,22 @@ def get_color_management_preferences():
     }
 
 
-def publisher_show_and_publish():
+def publisher_show_and_publish(comment = ""):
     """Open publisher window and trigger publishing action."""
 
     main_window = get_main_window()
     publisher_window = get_tool_by_name(
         tool_name="publisher",
-        parent=main_window
+        parent=main_window,
+        reset_on_show=False
     )
 
     publisher_window.set_current_tab("publish")
     publisher_window.make_sure_is_visible()
-    publisher_window._reset_on_show = False
-
-    publisher_window._controller.reset()
-    publisher_window._controller.publish()
+    publisher_window.reset_on_show = False
+    publisher_window.set_comment_input_text(comment)
+    publisher_window.reset()
+    publisher_window.click_publish()
 
 
 def self_publish():
@@ -689,19 +690,18 @@ def self_publish():
 
         active = current_node == node_path
         instance["active"] = active
-
-        if active:
-            result, comment = hou.ui.readInput(
-                "Add Publish Note",
-                buttons=("Ok", "Cancel"),
-                title="Publish Note",
-                close_choice=1
-            )
-            if not result:
-                instance.data["comment"] = comment
+        hou.node(node_path).parm("active").set(active)
 
     context.save_changes()
-    publisher_show_and_publish()
+
+    result, comment = hou.ui.readInput(
+        "Add Publish Note",
+        buttons=("Ok", "Cancel"),
+        title="Publish Note",
+        close_choice=1
+    )
+
+    publisher_show_and_publish(comment)
 
 
 def add_self_publish_button(node):
