@@ -12,7 +12,6 @@ class CreateTyCache(plugin.MaxCreator):
     icon = "gear"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        from pymxs import runtime as rt
         instance_data = pre_create_data.get("tycache_type")
         super(CreateTyCache, self).create(
             subset_name,
@@ -24,11 +23,10 @@ class CreateTyCache(plugin.MaxCreator):
 
         tycache_format_enum = ["tycache", "tycachespline"]
 
-
         return attrs + [
 
             EnumDef("tycache_type",
                     tycache_format_enum,
                     default="tycache",
                     label="TyCache Type")
-            ]
+        ]

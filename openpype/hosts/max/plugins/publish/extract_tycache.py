@@ -5,6 +5,7 @@ from pymxs import runtime as rt
 
 from openpype.hosts.max.api import maintained_selection
 from openpype.pipeline import publish
+from openpype.lib import EnumDef
 
 
 class ExtractTyCache(publish.Extractor):
@@ -93,7 +94,7 @@ class ExtractTyCache(publish.Extractor):
         opt_list = self.get_operators(members)
         for operator in opt_list:
             if tycache_spline_enabled:
-                export_mode =  f'{operator}.exportMode=3'
+                export_mode = f'{operator}.exportMode=3'
                 has_tyc_spline = f'{operator}.tycacheSplines=true'
                 job_args.extend([export_mode, has_tyc_spline])
             else:
@@ -133,11 +134,30 @@ class ExtractTyCache(publish.Extractor):
                 sub_anim = rt.GetSubAnim(obj, anim_name)
                 boolean = rt.IsProperty(sub_anim, "Export_Particles")
                 if boolean:
-                        event_name = sub_anim.Name
-                        opt = f"${member.Name}.{event_name}.export_particles"
-                        opt_list.append(opt)
+                    event_name = sub_anim.Name
+                    opt = f"${member.Name}.{event_name}.export_particles"
+                    opt_list.append(opt)
 
         return opt_list
+
+    def get_custom_attr(operators):
+        additonal_args =
+        ]
+
+
+    @classmethod
+    def get_attribute_defs(cls):
+        tycache_enum ={
+            "Age": "tycacheChanAge",
+            "Groups": "tycacheChanGroups",
+        }
+        return [
+            EnumDef("dspGeometry",
+                    items=tycache_enum,
+                    default="",
+                    multiselection=True)
+        ]
+
 
 """
 .exportMode : integer
