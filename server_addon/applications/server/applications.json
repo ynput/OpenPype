@@ -1118,6 +1118,31 @@
                 }
             ]
         },
+        "equalizer": {
+            "enabled": true,
+            "label": "3DEqualizer",
+            "icon": "{}/app_icons/3de4.png",
+            "host_name": "equalizer",
+            "environment": {},
+            "variants": {
+                "7-1v2": {
+                    "use_python_2": false,
+                    "executables": {
+                        "windows": [
+                            "C:\\Program Files\\3DE4_win64_r7.1v2\\bin\\3DE4.exe"
+                        ],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "arguments": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "environment": {}
+                }
+            }
+        },
         "additional_apps": []
     }
 }
