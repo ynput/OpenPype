@@ -37,13 +37,7 @@ class CreateLook(plugin.MayaCreator):
                     label="Convert textures to .rstex",
                     tooltip="Whether to generate Redshift .rstex files for "
                             "your textures",
-                    default=self.rs_tex),
-            BoolDef("forceCopy",
-                    label="Force Copy",
-                    tooltip="Enable users to force a copy instead of hardlink."
-                            "\nNote: On Windows copy is always forced due to "
-                            "bugs in windows' implementation of hardlinks.",
-                    default=False)
+                    default=self.rs_tex)
         ]
 
     def get_pre_create_attr_defs(self):

@@ -1,6 +1,243 @@
 # Changelog
 
 
+## [3.16.6](https://github.com/ynput/OpenPype/tree/3.16.6)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.5...3.16.6)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Workfiles tool: Refactor workfiles tool (for AYON) <a href="https://github.com/ynput/OpenPype/pull/5550">#5550</a></summary>
+
+Refactored workfiles tool to new tool. Separated backend and frontend logic. Refactored logic is AYON-centric and is used only in AYON mode, so it does not affect OpenPype.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: added validator for missing files in FootageItems <a href="https://github.com/ynput/OpenPype/pull/5590">#5590</a></summary>
+
+Published composition in AE could contain multiple FootageItems as a layers. If FootageItem contains imported file and it doesn't exist, render triggered by Publish process will silently fail and no output is generated. This could cause failure later in the process with unclear reason. (In `ExtractReview`).This PR adds validation to protect from this.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Yeti Cache Include viewport preview settings from source <a href="https://github.com/ynput/OpenPype/pull/5561">#5561</a></summary>
+
+When publishing and loading yeti caches persist the display output and preview colors + settings to ensure consistency in the view
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: validate colorspace in review rop <a href="https://github.com/ynput/OpenPype/pull/5322">#5322</a></summary>
+
+Adding a validator that checks if 'OCIO Colorspace' parameter on  review rop was set to a valid value.It is a step towards managing colorspace in review ropvalid values are the ones in the dropdown menuthis validator also provides some helper actions This PR is related to #4836 and #4833
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Colorspace: adding abstraction of publishing related functions <a href="https://github.com/ynput/OpenPype/pull/5497">#5497</a></summary>
+
+The functionality of Colorspace has been abstracted for greater usability.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: removing redundant workfile colorspace attributes <a href="https://github.com/ynput/OpenPype/pull/5580">#5580</a></summary>
+
+Nuke root workfile colorspace data type knobs are long time configured automatically via config roles or the default values are also working well. Therefore there is no need for pipeline managed knobs.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Less verbose logs for Ftrack integration in artist facing logs <a href="https://github.com/ynput/OpenPype/pull/5596">#5596</a></summary>
+
+- Reduce artist-facing logs for component integration for Ftrack
+- Avoid "Comment is not set" log in artist facing report for Kitsu and Ftrack
+- Remove info log about `ffprobe` inspecting a file (changed to debug log)
+- interesting to see however that it ffprobes the same jpeg twice - but maybe once for thumbnail?
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Fix rig validators for new out_SET and controls_SET names  <a href="https://github.com/ynput/OpenPype/pull/5595">#5595</a></summary>
+
+Fix usage of `out_SET` and `controls_SET` since #5310 because they can now be prefixed by the subset name.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher: set default frame values to sequential data <a href="https://github.com/ynput/OpenPype/pull/5530">#5530</a></summary>
+
+We are inheriting  default frame handles and fps data either from project or setting them to 0. This is just for case a production will decide not to injest the sequential representations with asset based metadata.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Screenshot opacity value fix <a href="https://github.com/ynput/OpenPype/pull/5576">#5576</a></summary>
+
+Fix opacity value.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: fix imports of image sequences <a href="https://github.com/ynput/OpenPype/pull/5581">#5581</a></summary>
+
+#4602 broke imports of image sequences.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Fix representation context conversion <a href="https://github.com/ynput/OpenPype/pull/5591">#5591</a></summary>
+
+Do not fix `"folder"` key in representation context until it is needed.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>ayon-nuke: default factory to lists  <a href="https://github.com/ynput/OpenPype/pull/5594">#5594</a></summary>
+
+Default factory were missing in settings schemas for complicated objects like lists and it was causing settings to be failing saving.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Fix look assigner showing no asset if 'not found' representations are present <a href="https://github.com/ynput/OpenPype/pull/5597">#5597</a></summary>
+
+Fix Maya Look assigner failing to show any content if it finds an invalid container for which it can't find the asset in the current project. (This can happen when e.g. loading something from a library project).There was logic already to avoid this but there was a bug where it used variable `_id` which did not exist and likely had to be `asset_id`.I've fixed that and improved the logged message a bit, e.g.:
+```
+// Warning: openpype.hosts.maya.tools.mayalookassigner.commands : Id found on 22 nodes for which no asset is found database, skipping '641d78ec85c3c5b102e836b0'
+```
+Example not found representation in Loader:The issue isn't necessarily related to NOT FOUND representations but in essence boils down to finding nodes with asset ids that do not exist in the current project which could very well just be local meshes in your scene.**Note:**I've excluded logging the nodes themselves because that tends to be a very long list of nodes. Only downside to removing that is that it's unclear which nodes are related to that `id`. If there are any ideas on how to still provide a concise informational message about that that'd be great so I could add it. Things I had considered:
+- Report the containers, issue here is that it's about asset ids on nodes which don't HAVE to be in containers - it could be local geometry
+- Report the namespaces, issue here is that it could be nodes without namespaces (plus potentially not about ALL nodes in a namespace)
+- Report the short names of the nodes; it's shorter and readable but still likely a lot of nodes.@tokejepsen @LiborBatek any other ideas?
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: fixed blank Flatten image <a href="https://github.com/ynput/OpenPype/pull/5600">#5600</a></summary>
+
+Flatten image is simplified publishing approach where all visible layers are "flatten" and published together. This image could be used as a reference etc.This is implemented by auto creator which wasn't updated after first publish. This would result in missing newly created layers after `auto_image` instance was created.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Remove Hardcoded Subset Name for Reviews <a href="https://github.com/ynput/OpenPype/pull/5603">#5603</a></summary>
+
+Fixes hardcoded subset name for Reviews in Blender.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Fix tool callbacks <a href="https://github.com/ynput/OpenPype/pull/5608">#5608</a></summary>
+
+Do not wait for callback to finish.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Chore: Remove unused variables and cleanup <a href="https://github.com/ynput/OpenPype/pull/5588">#5588</a></summary>
+
+Removing some unused variables. In some cases the unused variables _seemed like they should've been used - maybe?_ so please **double check the code whether it doesn't hint to an already existing bug**.Also tweaked some other small bugs in code + tweaked logging levels.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Chore: Loader log deprecation warning for 'fname' attribute <a href="https://github.com/ynput/OpenPype/pull/5587">#5587</a></summary>
+
+Since https://github.com/ynput/OpenPype/pull/4602 the `fname` attribute on the `LoaderPlugin` should've been deprecated and set for removal over time. However, no deprecation warning was logged whatsoever and thus one usage appears to have sneaked in (fixed with this PR) and a new one tried to sneak in with a recent PR
+
+
+___
+
+</details>
+
+
+
+
 ## [3.16.5](https://github.com/ynput/OpenPype/tree/3.16.5)
 
 
