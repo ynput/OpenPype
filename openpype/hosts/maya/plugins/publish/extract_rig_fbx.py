@@ -9,8 +9,8 @@ from openpype.pipeline.publish import OptionalPyblishPluginMixin
 from openpype.hosts.maya.api import fbx
 
 
-class ExtractRigFBX(publish.Extractor,
-                    OptionalPyblishPluginMixin):
+class ExtractSkeletonMesh(publish.Extractor,
+                          OptionalPyblishPluginMixin):
     """Extract Rig in FBX format from Maya.
 
     This extracts the rig in fbx with the constraints
@@ -20,16 +20,18 @@ class ExtractRigFBX(publish.Extractor,
 
     """
     order = pyblish.api.ExtractorOrder
-    label = "Extract Rig (FBX)"
+    label = "Extract Skeleton Mesh"
     hosts = ["maya"]
     families = ["rig.fbx"]
 
     def process(self, instance):
         if not self.is_active(instance.data):
             return
+        # Define output path
         staging_dir = self.staging_dir(instance)
         filename = "{0}.fbx".format(instance.name)
         path = os.path.join(staging_dir, filename)
+
         # The export requires forward slashes because we need
         # to format it into a string in a mel expression
         fbx_exporter = fbx.FBXExtractor(log=self.log)
@@ -41,7 +43,7 @@ class ExtractRigFBX(publish.Extractor,
         fbx_exporter.set_options_from_instance(instance)
 
         # Export
-        fbx_exporter.export(out_set, path)
+        fbx_exporter.export(out_set, path.replace("\\", "/"))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -50,8 +52,8 @@ class ExtractRigFBX(publish.Extractor,
             'name': 'fbx',
             'ext': 'fbx',
             'files': filename,
-            "stagingDir": staging_dir,
+            "stagingDir": staging_dir
         }
         instance.data["representations"].append(representation)
 
-        self.log.debug("Extract FBX successful to: {0}".format(path))
+        self.log.debug("Extract animated FBX successful to: {0}".format(path))

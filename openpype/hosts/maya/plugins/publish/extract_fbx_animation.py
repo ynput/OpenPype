@@ -44,7 +44,7 @@ class ExtractRigFBX(publish.Extractor,
         fbx_exporter.set_options_from_instance(instance)
 
         # Export
-        fbx_exporter.export(out_set, path)
+        fbx_exporter.export(out_set, path.replace("\\", "/"))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

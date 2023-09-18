@@ -4109,6 +4109,14 @@ def create_rig_animation_instance(
     assert output, "No out_SET in rig, this is a bug."
     assert controls, "No controls_SET in rig, this is a bug."
 
+    anim_skeleton = next((node for node in nodes if
+                          node.endswith("skeletonAnim_SET")), None)
+    if not anim_skeleton:
+        log.debug("No skeletonAnim_SET in rig")
+    skeleton_mesh = next((node for node in nodes if
+                          node.endswith("skeletonMesh_SET")), None)
+    if not skeleton_mesh:
+        log.debug("No skeletonMesh_SET in rig")
     # Find the roots amongst the loaded nodes
     roots = (
         cmds.ls(nodes, assemblies=True, long=True) or
@@ -4142,10 +4150,14 @@ def create_rig_animation_instance(
 
     host = registered_host()
     create_context = CreateContext(host)
-
     # Create the animation instance
+    rig_sets = [output, controls]
+    if anim_skeleton:
+        rig_sets.append(anim_skeleton)
+    if skeleton_mesh:
+        rig_sets.append(skeleton_mesh)
     with maintained_selection():
-        cmds.select([output, controls] + roots, noExpand=True)
+        cmds.select(rig_sets + roots, noExpand=True)
         create_context.create(
             creator_identifier=creator_identifier,
             variant=namespace,

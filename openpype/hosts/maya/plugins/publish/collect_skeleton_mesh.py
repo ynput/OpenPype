@@ -3,11 +3,11 @@ from maya import cmds  # noqa
 import pyblish.api
 
 
-class CollectRigFbx(pyblish.api.InstancePlugin):
-    """Collect Unreal Skeletal Mesh."""
+class CollectSkeletonMesh(pyblish.api.InstancePlugin):
+    """Collect Static Rig Data for FBX Extractor."""
 
     order = pyblish.api.CollectorOrder + 0.2
-    label = "Collect rig for fbx"
+    label = "Collect Skeleton Mesh"
     hosts = ["maya"]
     families = ["rig"]
 
@@ -29,16 +29,9 @@ class CollectRigFbx(pyblish.api.InstancePlugin):
                 "no skeleton_set or skeleton_mesh set was found....")
             return
         instance.data["skeleton_mesh"] = []
-        instance.data["animated_rigs"] = []
-        if skeleton_sets:
-            for skeleton_set in skeleton_sets:
-                skeleton_content = cmds.sets(skeleton_set, query=True)
-                if skeleton_content:
-                    instance.data["animated_rigs"] += skeleton_content
-                    self.log.debug("Collected skeleton"
-                                   f" data: {skeleton_content}")
+
         if skeleton_mesh_sets:
-            instance.data["families"].append("rig.fbx")
+            instance.data["families"] += ["rig.fbx"]
             for skeleton_mesh_set in skeleton_mesh_sets:
                 skeleton_mesh_content = cmds.sets(
                     skeleton_mesh_set, query=True)

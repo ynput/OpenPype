@@ -4,7 +4,7 @@ import pyblish.api
 
 
 class CollectFbxAnimation(pyblish.api.InstancePlugin):
-    """Collect Unreal Skeletal Mesh."""
+    """Collect Animated Rig Data for FBX Extractor."""
 
     order = pyblish.api.CollectorOrder + 0.2
     label = "Collect Fbx Animation"
@@ -17,7 +17,8 @@ class CollectFbxAnimation(pyblish.api.InstancePlugin):
             if i.lower().endswith("skeletonanim_set")
         ]
         if skeleton_sets:
-            instance.data["families"].append("animation.fbx")
+            instance.data["families"] += ["animation.fbx"]
+            instance.data["animated_skeleton"] = []
             for skeleton_set in skeleton_sets:
                 skeleton_content = cmds.sets(skeleton_set, query=True)
                 self.log.debug(
