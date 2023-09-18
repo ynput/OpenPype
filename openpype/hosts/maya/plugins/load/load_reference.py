@@ -117,7 +117,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             family = context["representation"]["context"]["family"]
         except ValueError:
             family = "model"
-        print(f"family：{family}")
+
         project_name = context["project"]["name"]
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)

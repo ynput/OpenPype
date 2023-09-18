@@ -4100,7 +4100,7 @@ def create_rig_animation_instance(
     """
     if options is None:
         options = {}
-    name =  context["representation"]["name"]
+    name = context["representation"]["name"]
     output = next((node for node in nodes if
                    node.endswith("out_SET")), None)
     controls = next((node for node in nodes if
