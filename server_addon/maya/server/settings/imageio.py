@@ -39,7 +39,10 @@ class ImageIOFileRulesModel(BaseSettingsModel):
 
 
 class ColorManagementPreferenceV2Model(BaseSettingsModel):
-    """Color Management Preference v2 (Maya 2022+)."""
+    """Color Management Preference v2 (Maya 2022+).
+
+    Please migrate all to 'imageio/workfile' and enable it.
+    """
 
     enabled: bool = Field(True, title="Use Color Management Preference v2")
 
@@ -91,7 +94,7 @@ class ImageIOSettings(BaseSettingsModel):
     )
     colorManagementPreference: ColorManagementPreferenceModel = Field(
         default_factory=ColorManagementPreferenceModel,
-        title="DEPRECATED: Color Management Preference"
+        title="DEPRECATED: Color Management Preference (legacy)"
     )
 
 
