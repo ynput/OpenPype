@@ -21,8 +21,9 @@ class FbxLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
 
-        # get file path
-        file_path = self.get_file_path(context=context)
+        # get file path from context
+        file_path = self.filepath_from_context(context)
+        file_path = file_path.replace("\\", "/")
 
         # get necessary data
         namespace, node_name = self.get_node_name(context, name, namespace)
@@ -56,8 +57,9 @@ class FbxLoader(load.LoaderPlugin):
             self.log.error("Could not find node of type `file`")
             return
 
-        # Update the file path
-        file_path = self.get_file_path(representation=representation)
+        # Update the file path from representation
+        file_path = get_representation_path(representation)
+        file_path = file_path.replace("\\", "/")
 
         file_node.setParms({"file": file_path})
 
@@ -71,19 +73,6 @@ class FbxLoader(load.LoaderPlugin):
 
     def switch(self, container, representation):
         self.update(container, representation)
-
-    def get_file_path(self, context=None, representation=None):
-        """Return formatted file path."""
-
-        # Format file name, Houdini only wants forward slashes
-        if context:
-            file_path = self.filepath_from_context(context)
-        elif representation:
-            file_path = get_representation_path(representation)
-        else:
-            return ""
-
-        return file_path.replace("\\", "/")
 
     def get_node_name(self, context, name=None, namespace=None):
         """Define node name."""
