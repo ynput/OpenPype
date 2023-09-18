@@ -7,7 +7,7 @@ class AbcLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     families = ["animation",
                 "camera",
                 "pointcache"]
-    representations = ["abc"]
+    representations = ["abc", "fbx"]
 
     label = "Reference animation"
     order = -10

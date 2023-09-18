@@ -54,7 +54,6 @@ class FBXExtractor:
             "bakeComplexEnd": int,
             "bakeComplexStep": int,
             "bakeResampleAnimation": bool,
-            "animationOnly": bool,
             "useSceneName": bool,
             "quaternion": str,  # "euler"
             "shapes": bool,

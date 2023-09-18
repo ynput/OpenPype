@@ -2,7 +2,6 @@
 import os
 
 from maya import cmds  # noqa
-import maya.mel as mel
 import pyblish.api
 
 from openpype.pipeline import publish
@@ -52,8 +51,7 @@ class ExtractRigFBX(publish.Extractor,
             'name': 'fbx',
             'ext': 'fbx',
             'files': filename,
-            "stagingDir": staging_dir,
-            "outputName": "fbxanim"
+            "stagingDir": staging_dir
         }
         instance.data["representations"].append(representation)
 

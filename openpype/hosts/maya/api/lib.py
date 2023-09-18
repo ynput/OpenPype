@@ -4100,14 +4100,14 @@ def create_rig_animation_instance(
     """
     if options is None:
         options = {}
-
+    name =  context["representation"]["name"]
     output = next((node for node in nodes if
                    node.endswith("out_SET")), None)
     controls = next((node for node in nodes if
                      node.endswith("controls_SET")), None)
-
-    assert output, "No out_SET in rig, this is a bug."
-    assert controls, "No controls_SET in rig, this is a bug."
+    if name != "fbx":
+        assert output, "No out_SET in rig, this is a bug."
+        assert controls, "No controls_SET in rig, this is a bug."
 
     anim_skeleton = next((node for node in nodes if
                           node.endswith("skeletonAnim_SET")), None)
