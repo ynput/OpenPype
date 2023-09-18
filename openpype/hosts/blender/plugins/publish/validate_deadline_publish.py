@@ -34,7 +34,7 @@ class ValidateDeadlinePublish(pyblish.api.InstancePlugin,
         if filename not in bpy.context.scene.render.filepath:
             raise PublishValidationError(
                 "Render output folder "
-                "doesn't match the max scene name! "
+                "doesn't match the blender scene name! "
                 "Use Repair action to "
                 "fix the folder file path.."
             )
