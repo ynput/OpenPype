@@ -128,12 +128,11 @@ class MayaFixtures(HostFixtures):
 
         matches = re.findall(error_regex, publish_finished)
         assert not matches, matches[0][0]
-        """
+
         # Check for python errors.
         error_regex = r"// Error((.|\n)*)"
         matches = re.findall(error_regex, logging_output)
         assert not matches, matches[0][0]
-        """
 
 
 class MayaPublishTest(MayaFixtures, PublishTest):
