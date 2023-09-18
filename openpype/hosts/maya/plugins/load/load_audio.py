@@ -27,7 +27,7 @@ class AudioLoader(load.LoaderPlugin):
 
         start_frame = cmds.playbackOptions(query=True, min=True)
         sound_node = cmds.sound(
-            file=context["representation"]["data"]["path"], offset=start_frame
+            file=self.filepath_from_context(context), offset=start_frame
         )
         cmds.timeControl(
             mel.eval("$gPlayBackSlider=$gPlayBackSlider"),
