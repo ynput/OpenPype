@@ -2,7 +2,7 @@ import pyblish.api
 
 from openpype.lib import version_up
 from openpype.pipeline import registered_host
-from openpype.action import get_errored_plugins_from_data
+from openpype.pipeline.publish import get_errored_plugins_from_context
 from openpype.hosts.houdini.api import HoudiniHost
 from openpype.pipeline.publish import KnownPublishError
 
@@ -27,7 +27,7 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        errored_plugins = get_errored_plugins_from_data(context)
+        errored_plugins = get_errored_plugins_from_context(context)
         if any(
             plugin.__name__ == "HoudiniSubmitPublishDeadline"
             for plugin in errored_plugins
@@ -40,9 +40,10 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin):
         # Filename must not have changed since collecting
         host = registered_host()  # type: HoudiniHost
         current_file = host.current_file()
-        assert (
-            context.data["currentFile"] == current_file
-        ), "Collected filename mismatches from current scene name."
+        if context.data["currentFile"] != current_file:
+            raise KnownPublishError(
+                "Collected filename mismatches from current scene name."
+            )
 
         new_filepath = version_up(current_file)
         host.save_workfile(new_filepath)

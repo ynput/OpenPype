@@ -26,10 +26,10 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
         # Skip process if is not in list of source hosts in which this
         #    plugin should run
         if src_host_name not in self.allowed_hosts:
-            self.log.info((
+            self.log.debug(
                 "Source host \"{}\" is not in list of enabled hosts {}."
-                " Skipping"
-            ).format(str(src_host_name), str(self.allowed_hosts)))
+                " Skipping".format(src_host_name, self.allowed_hosts)
+            )
             return
 
         self.log.debug("Preparing filepaths to remove")
@@ -47,7 +47,7 @@ class CleanUpFarm(pyblish.api.ContextPlugin):
                         dirpaths_to_remove.add(os.path.normpath(staging_dir))
 
         if not dirpaths_to_remove:
-            self.log.info("Nothing to remove. Skipping")
+            self.log.debug("Nothing to remove. Skipping")
             return
 
         self.log.debug("Filepaths to remove are:\n{}".format(

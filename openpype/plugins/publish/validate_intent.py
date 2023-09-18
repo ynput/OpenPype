@@ -1,7 +1,7 @@
-import os
 import pyblish.api
 
 from openpype.lib import filter_profiles
+from openpype.pipeline.publish import PublishValidationError
 
 
 class ValidateIntent(pyblish.api.ContextPlugin):
@@ -51,12 +51,10 @@ class ValidateIntent(pyblish.api.ContextPlugin):
             ))
             return
 
-        msg = (
-            "Please make sure that you select the intent of this publish."
-        )
-
         intent = context.data.get("intent") or {}
         self.log.debug(str(intent))
         intent_value = intent.get("value")
         if not intent_value:
-            raise AssertionError(msg)
+            raise PublishValidationError(
+                "Please make sure that you select the intent of this publish."
+            )

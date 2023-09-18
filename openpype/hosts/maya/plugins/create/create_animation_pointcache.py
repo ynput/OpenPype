@@ -128,6 +128,9 @@ class CreateAnimation(plugin.MayaHiddenCreator):
     def get_instance_attr_defs(self):
         return get_instance_attr_defs(self)
 
+    def apply_settings(self, project_settings):
+        super(CreateAnimation, self).apply_settings(project_settings)
+
 
 class CreatePointCache(plugin.MayaCreator):
     """Alembic pointcache for animated data"""
@@ -153,3 +156,6 @@ class CreatePointCache(plugin.MayaCreator):
         # For Arnold standin proxy
         proxy_set = cmds.sets(name=instance_node + "_proxy_SET", empty=True)
         cmds.sets(proxy_set, forceElement=instance_node)
+
+    def apply_settings(self, project_settings):
+        super(CreatePointCache, self).apply_settings(project_settings)

@@ -37,6 +37,9 @@ class AEItem(object):
     height = attr.ib(default=None)
     is_placeholder = attr.ib(default=False)
     uuid = attr.ib(default=False)
+    path = attr.ib(default=False)  # path to FootageItem to validate
+    # list of composition Footage is in
+    containing_comps = attr.ib(factory=list)
 
 
 class AfterEffectsServerStub():
@@ -704,7 +707,10 @@ class AfterEffectsServerStub():
                           d.get("instance_id"),
                           d.get("width"),
                           d.get("height"),
-                          d.get("is_placeholder"))
+                          d.get("is_placeholder"),
+                          d.get("uuid"),
+                          d.get("path"),
+                          d.get("containing_comps"),)
 
             ret.append(item)
         return ret

@@ -1,16 +1,12 @@
 import copy
 import collections
 
-from abc import (
-    ABCMeta,
-    abstractmethod,
-    abstractproperty
-)
+from abc import ABCMeta, abstractmethod
 
 import six
 
 from openpype.settings import get_system_settings, get_project_settings
-from openpype.lib import Logger
+from openpype.lib import Logger, is_func_signature_supported
 from openpype.pipeline.plugin_discover import (
     discover,
     register_plugin,
@@ -84,7 +80,8 @@ class SubsetConvertorPlugin(object):
     def host(self):
         return self._create_context.host
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def identifier(self):
         """Converted identifier.
 
@@ -161,7 +158,6 @@ class BaseCreator:
 
     Args:
         project_settings (Dict[str, Any]): Project settings.
-        system_settings (Dict[str, Any]): System settings.
         create_context (CreateContext): Context which initialized creator.
         headless (bool): Running in headless mode.
     """
@@ -208,10 +204,41 @@ class BaseCreator:
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
 
-        self.apply_settings(project_settings, system_settings)
+        expect_system_settings = False
+        if is_func_signature_supported(
+            self.apply_settings, project_settings
+        ):
+            self.apply_settings(project_settings)
+        else:
+            expect_system_settings = True
+            # Backwards compatibility for system settings
+            self.apply_settings(project_settings, system_settings)
 
-    def apply_settings(self, project_settings, system_settings):
-        """Method called on initialization of plugin to apply settings."""
+        init_use_base = any(
+            self.__class__.__init__ is cls.__init__
+            for cls in {
+                BaseCreator,
+                Creator,
+                HiddenCreator,
+                AutoCreator,
+            }
+        )
+        if not init_use_base or expect_system_settings:
+            self.log.warning((
+                "WARNING: Source - Create plugin {}."
+                " System settings argument will not be passed to"
+                " '__init__' and 'apply_settings' methods in future versions"
+                " of OpenPype. Planned version to drop the support"
+                " is 3.16.6 or 3.17.0. Please contact Ynput core team if you"
+                " need to keep system settings."
+            ).format(self.__class__.__name__))
+
+    def apply_settings(self, project_settings):
+        """Method called on initialization of plugin to apply settings.
+
+        Args:
+            project_settings (dict[str, Any]): Project settings.
+        """
 
         pass
 
@@ -224,7 +251,8 @@ class BaseCreator:
 
         return self.family
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def family(self):
         """Family that plugin represents."""
 

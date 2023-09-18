@@ -91,8 +91,6 @@ class ExtractThumbnail(publish.Extractor):
 
         if collection:
             # get path
-            fname = os.path.basename(collection.format(
-                "{head}{padding}{tail}"))
             fhead = collection.format("{head}")
 
             thumb_fname = list(collection)[mid_frame]

@@ -279,7 +279,7 @@ class MayaCreator(NewCreator, MayaCreatorBase):
                     default=True)
         ]
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
         apply_settings(self, project_settings, system_settings)
 
@@ -700,7 +700,6 @@ class ReferenceLoader(Loader):
             loaded_containers.append(container)
             self._organize_containers(nodes, container)
             c += 1
-            namespace = None
 
         return loaded_containers
 
