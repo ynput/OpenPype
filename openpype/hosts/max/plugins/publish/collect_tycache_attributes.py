@@ -1,6 +1,6 @@
 import pyblish.api
 
-from openpype.lib import EnumDef
+from openpype.lib import EnumDef, TextDef
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 
@@ -20,51 +20,54 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
         if tycache_boolean_attributes:
             for attrs in tycache_boolean_attributes:
                 all_tyc_attributes_dict[attrs] = True
-        self.log.debug(f"Found tycache attributes: {tycache_boolean_attributes}")
+        tyc_layer_attr = attr_values.get("tycache_layer")
+        if tyc_layer_attr:
+            all_tyc_attributes_dict["tycacheLayer"] = (
+                tyc_layer_attr)
+        tyc_objname_attr = attr_values.get("tycache_objname")
+        if tyc_objname_attr:
+            all_tyc_attributes_dict["tycache_objname"] = (
+                tyc_objname_attr)
+        self.log.debug(
+            f"Found tycache attributes: {all_tyc_attributes_dict}")
 
     @classmethod
     def get_attribute_defs(cls):
-        tyc_attr_enum = ["tycacheChanAge", "tycacheChanGroups", "tycacheChanPos",
-                         "tycacheChanRot", "tycacheChanScale", "tycacheChanVel",
-                         "tycacheChanSpin", "tycacheChanShape", "tycacheChanMatID",
-                         "tycacheChanMapping", "tycacheChanMaterials",
-                         "tycacheChanCustomFloat"
+        # TODO: Support the attributes with maxObject array
+        tyc_attr_enum = ["tycacheChanAge", "tycacheChanGroups",
+                         "tycacheChanPos", "tycacheChanRot",
+                         "tycacheChanScale", "tycacheChanVel",
+                         "tycacheChanSpin", "tycacheChanShape",
+                         "tycacheChanMatID", "tycacheChanMapping",
+                         "tycacheChanMaterials", "tycacheChanCustomFloat"
+                         "tycacheChanCustomVector", "tycacheChanCustomTM",
+                         "tycacheChanPhysX", "tycacheMeshBackup",
+                         "tycacheCreateObjectIfNotCreated",
+                         "tycacheAdditionalCloth",
+                         "tycacheAdditionalSkin",
+                         "tycacheAdditionalSkinID",
+                         "tycacheAdditionalSkinIDValue",
+                         "tycacheAdditionalTerrain",
+                         "tycacheAdditionalVDB",
+                         "tycacheAdditionalSplinePaths",
+                         "tycacheAdditionalGeo",
+                         "tycacheAdditionalGeoActivateModifiers",
+                         "tycacheSplines",
+                         "tycacheSplinesAdditionalSplines"
                          ]
 
         return [
             EnumDef("all_tyc_attrs",
                     tyc_attr_enum,
                     default=None,
-                    multiselection=True
-
-            )
+                    multiselection=True,
+                    label="TyCache Attributes"),
+            TextDef("tycache_layer",
+                    label="TyCache Layer",
+                    tooltip="Name of tycache layer",
+                    default=""),
+            TextDef("tycache_objname",
+                    label="TyCache Object Name",
+                    tooltip="TyCache Object Name",
+                    default="")
         ]
-"""
-
-  .tycacheChanCustomFloat : boolean
-  .tycacheChanCustomVector : boolean
-  .tycacheChanCustomTM : boolean
-  .tycacheChanPhysX : boolean
-  .tycacheMeshBackup : boolean
-  .tycacheCreateObject : boolean
-  .tycacheCreateObjectIfNotCreated : boolean
-  .tycacheLayer : string
-  .tycacheObjectName : string
-  .tycacheAdditionalCloth : boolean
-  .tycacheAdditionalSkin : boolean
-  .tycacheAdditionalSkinID : boolean
-  .tycacheAdditionalSkinIDValue : integer
-  .tycacheAdditionalTerrain : boolean
-  .tycacheAdditionalVDB : boolean
-  .tycacheAdditionalSplinePaths : boolean
-  .tycacheAdditionalTyMesher : boolean
-  .tycacheAdditionalGeo : boolean
-  .tycacheAdditionalObjectList_deprecated : node array
-  .tycacheAdditionalObjectList : maxObject array
-  .tycacheAdditionalGeoActivateModifiers : boolean
-  .tycacheSplines: boolean
-  .tycacheSplinesAdditionalSplines : boolean
-  .tycacheSplinesAdditionalSplinesObjectList_deprecated : node array
-  .tycacheSplinesAdditionalObjectList : maxObject array
-
-"""
