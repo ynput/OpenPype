@@ -66,7 +66,8 @@ class FBXExtractor:
             "upAxis": str,  # x, y or z,
             "triangulate": bool,
             "FileVersion": str,
-            "skeletonDefinitions": bool
+            "skeletonDefinitions": bool,
+            "referencedAssetsContent": bool
         }
 
     @property
@@ -97,7 +98,6 @@ class FBXExtractor:
             "bakeComplexEnd": end_frame,
             "bakeComplexStep": 1,
             "bakeResampleAnimation": True,
-            "animationOnly": False,
             "useSceneName": False,
             "quaternion": "euler",
             "shapes": True,
@@ -109,7 +109,8 @@ class FBXExtractor:
             "upAxis": "y",
             "triangulate": False,
             "fileVersion": "FBX202000",
-            "skeletonDefinitions": False
+            "skeletonDefinitions": False,
+            "referencedAssetsContent": False
         }
 
     def __init__(self, log=None):

@@ -2,6 +2,7 @@
 import os
 
 from maya import cmds  # noqa
+import maya.mel as mel
 import pyblish.api
 
 from openpype.pipeline import publish
@@ -36,14 +37,12 @@ class ExtractRigFBX(publish.Extractor,
         # to format it into a string in a mel expression
         fbx_exporter = fbx.FBXExtractor(log=self.log)
         out_set = instance.data.get("animated_skeleton", [])
-
+        # Export
         instance.data["constraints"] = True
         instance.data["skeletonDefinitions"] = True
-        instance.data["animationOnly"] = True
+        instance.data["referencedAssetsContent"] = True
 
         fbx_exporter.set_options_from_instance(instance)
-
-        # Export
         fbx_exporter.export(out_set, path.replace("\\", "/"))
 
         if "representations" not in instance.data:
