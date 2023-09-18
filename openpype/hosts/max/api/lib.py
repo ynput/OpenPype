@@ -407,3 +407,19 @@ def object_transform_set(container_children):
         name = f"{node.name}.scale"
         transform_set[name] = node.scale
     return transform_set
+
+
+def get_plugins() -> list:
+    """Get all loaded plugins in 3dsMax
+
+    Returns:
+        plugin_info_list: a list of loaded plugins
+    """
+    manager = rt.PluginManager
+    count = manager.pluginDllCount
+    plugin_info_list = []
+    for p in range(1, count + 1):
+        plugin_info = manager.pluginDllName(p)
+        plugin_info_list.append(plugin_info)
+
+    return plugin_info_list
