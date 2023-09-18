@@ -18,7 +18,7 @@ class AudioLoader(load.LoaderPlugin):
     """Specific loader of audio."""
 
     families = ["audio"]
-    label = "Import audio"
+    label = "Load audio"
     representations = ["wav"]
     icon = "volume-up"
     color = "orange"
