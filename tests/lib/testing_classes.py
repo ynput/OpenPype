@@ -49,6 +49,7 @@ class ModuleUnitTest(BaseTest):
     ASSET_NAME = "test_asset"
     TASK_NAME = "test_task"
 
+    EXPECTED_FOLDER = None
     DATA_FOLDER = None
     INPUT_DUMPS = None
     INPUT_ENVIRONMENT_JSON = None
@@ -510,7 +511,9 @@ class PublishTest(ModuleUnitTest):
             Compares only presence, not size nor content!
         """
         data_folder, output_folder, _ = setup_fixture
-        expected_dir_base = os.path.join(data_folder, "expected")
+        expected_dir_base = self.EXPECTED_FOLDER
+        if expected_dir_base is None:
+            expected_dir_base = os.path.join(data_folder, "expected")
 
         print("Comparing published:'{}' : expected:'{}'".format(
             output_folder, expected_dir_base))

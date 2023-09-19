@@ -27,9 +27,8 @@ class TestPublishInMaya(MayaPublishTest):
     """
     PERSIST = False
 
-    INPUT_DUMPS = os.path.join(
-        os.path.dirname(__file__), "input", "dumps"
-    )
+    EXPECTED_FOLDER = os.path.join(os.path.dirname(__file__), "expected")
+    INPUT_DUMPS = os.path.join(os.path.dirname(__file__), "input", "dumps")
     INPUT_ENVIRONMENT_JSON = os.path.join(
         os.path.dirname(__file__), "input", "env_vars", "env_var.json"
     )
@@ -37,9 +36,7 @@ class TestPublishInMaya(MayaPublishTest):
         os.path.dirname(__file__), "input", "workfile"
     )
 
-    FILES = [
-        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
-    ]
+    FILES = []
 
     def test_db_asserts(self, dbcon, deadline_finished):
         """Host and input data dependent expected results in DB."""
