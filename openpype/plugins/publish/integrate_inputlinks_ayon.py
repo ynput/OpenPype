@@ -189,6 +189,8 @@ class IntegrateInputLinksAYON(pyblish.api.ContextPlugin):
                 existing_links = existing_links_by_in_id[input_id]
                 for output_id in output_ids:
                     # Skip creation of link if already exists
+                    # NOTE: AYON server does not support
+                    #     to have same links
                     if output_id in existing_links:
                         continue
                     create_link(
