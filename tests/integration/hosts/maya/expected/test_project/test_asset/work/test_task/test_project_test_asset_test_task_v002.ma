@@ -180,12 +180,12 @@ createNode objectSet -n "modelMain";
 	addAttr -ci true -sn "instance_id" -ln "instance_id" -dt "string";
 	addAttr -ci true -sn "writeColorSets" -ln "writeColorSets" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "writeFaceSets" -ln "writeFaceSets" -min 0 -max 1 -at "bool";
-	addAttr -ci true -sn "includeParentHierarchy" -ln "includeParentHierarchy" -min 
+	addAttr -ci true -sn "includeParentHierarchy" -ln "includeParentHierarchy" -min
 		0 -max 1 -at "bool";
 	addAttr -ci true -sn "attr" -ln "attr" -dt "string";
 	addAttr -ci true -sn "attrPrefix" -ln "attrPrefix" -dt "string";
 	addAttr -ci true -sn "publish_attributes" -ln "publish_attributes" -dt "string";
-	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys" 
+	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys"
 		-dt "string";
 	setAttr ".ihi" 0;
 	setAttr ".cbId" -type "string" "60df31e2be2b48bd3695c056:7364ea6776c9";
@@ -242,7 +242,7 @@ createNode objectSet -n "workfileMain";
 	addAttr -ci true -sn "task" -ln "task" -dt "string";
 	addAttr -ci true -sn "instance_id" -ln "instance_id" -dt "string";
 	addAttr -ci true -sn "publish_attributes" -ln "publish_attributes" -dt "string";
-	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys" 
+	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys"
 		-dt "string";
 	setAttr ".ihi" 0;
 	setAttr ".hio" yes;
@@ -293,17 +293,17 @@ createNode objectSet -n "_renderingMain:Main";
 	addAttr -ci true -sn "instance_id" -ln "instance_id" -dt "string";
 	addAttr -ci true -sn "review" -ln "review" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "extendFrames" -ln "extendFrames" -min 0 -max 1 -at "bool";
-	addAttr -ci true -sn "overrideExistingFrame" -ln "overrideExistingFrame" -min 0 
+	addAttr -ci true -sn "overrideExistingFrame" -ln "overrideExistingFrame" -min 0
 		-max 1 -at "bool";
 	addAttr -ci true -sn "tileRendering" -ln "tileRendering" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "tilesX" -ln "tilesX" -at "long";
 	addAttr -ci true -sn "tilesY" -ln "tilesY" -at "long";
 	addAttr -ci true -sn "convertToScanline" -ln "convertToScanline" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "useReferencedAovs" -ln "useReferencedAovs" -min 0 -max 1 -at "bool";
-	addAttr -ci true -sn "renderSetupIncludeLights" -ln "renderSetupIncludeLights" -min 
+	addAttr -ci true -sn "renderSetupIncludeLights" -ln "renderSetupIncludeLights" -min
 		0 -max 1 -at "bool";
 	addAttr -ci true -sn "publish_attributes" -ln "publish_attributes" -dt "string";
-	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys" 
+	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys"
 		-dt "string";
 	addAttr -ci true -sn "cbId" -ln "cbId" -dt "string";
 	setAttr ".ihi" 0;
