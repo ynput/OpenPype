@@ -869,6 +869,11 @@ class ExporterReviewMov(ExporterReview):
         r_node["origlast"].setValue(self.last_frame)
         r_node["colorspace"].setValue(self.write_colorspace)
 
+        # do not rely on defaults, set explicitly
+        # to be sure it is set correctly
+        r_node["frame_mode"].setValue("expression")
+        r_node["frame"].setValue("")
+
         if read_raw:
             r_node["raw"].setValue(1)
 
