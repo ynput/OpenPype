@@ -401,7 +401,7 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
         addon_dir = os.path.join(addons_dir, folder_name)
         if not os.path.exists(addon_dir):
             log.debug((
-                "Addon {} {} does not have available code."
+                "No localized client code found for addon {} {}."
             ).format(addon_name, addon_version))
             continue
 
