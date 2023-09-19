@@ -63,7 +63,7 @@ class ModuleUnitTest(BaseTest):
         },
         "settings": {
             "name": "openpype_tests",
-            "collections": ["logs"]
+            "collections": []
         }
     }
 
@@ -124,6 +124,9 @@ class ModuleUnitTest(BaseTest):
         )
 
         for _, data in cls.DATABASE_NAMES.items():
+            if not data["collections"]:
+                continue
+
             database_handler.setup_from_dump(
                 data["name"],
                 backup_directory,
