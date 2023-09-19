@@ -108,11 +108,16 @@ class ExtractSequence(pyblish.api.Extractor):
             "Files will be rendered to folder: {}".format(output_dir)
         )
 
+        # Fill tags and new families from project settings
+        tags = []
         if instance.data["family"] == "review":
+            tags.append("review")
             result = self.render_review(
                 output_dir, mark_in, mark_out, scene_bg_color
             )
         else:
+            if "review" in instance.data["families"]:
+                tags.append("review")
             # Render output
             result = self.render(
                 output_dir,
@@ -138,11 +143,6 @@ class ExtractSequence(pyblish.api.Extractor):
             mark_out,
             output_frame_start
         )
-
-        # Fill tags and new families from project settings
-        tags = []
-        if "review" in instance.data["families"]:
-            tags.append("review")
 
         # Sequence of one frame
         single_file = len(repre_files) == 1
