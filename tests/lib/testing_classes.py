@@ -15,7 +15,7 @@ import zipfile
 import time
 
 from tests.lib.database_handler import DataBaseHandler
-from common.ayon_common.distribution.file_handler import RemoteFileHandler
+from tests.lib.file_handler import RemoteFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
