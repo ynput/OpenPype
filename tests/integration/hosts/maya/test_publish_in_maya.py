@@ -95,7 +95,7 @@ class TestPublishInMaya(MayaPublishTest):
 
         asserts.append(
             DBAssert.count_of_types(
-                dbcon, "subset", 1, name="renderTest_taskRenderMain_beauty"
+                dbcon, "subset", 1, name="renderMain_beauty"
             )
         )
 
@@ -105,7 +105,7 @@ class TestPublishInMaya(MayaPublishTest):
                 "representation",
                 1,
                 additional_args={
-                    "context.subset": "renderTest_taskRenderMain_beauty",
+                    "context.subset": "renderMain_beauty",
                     "context.ext": "exr"
                 }
             )
@@ -117,7 +117,7 @@ class TestPublishInMaya(MayaPublishTest):
                 "representation",
                 1,
                 additional_args={
-                    "context.subset": "renderTest_taskRenderMain_beauty",
+                    "context.subset": "renderMain_beauty",
                     "context.ext": "jpg"
                 }
             )
@@ -129,7 +129,7 @@ class TestPublishInMaya(MayaPublishTest):
                 "representation",
                 1,
                 additional_args={
-                    "context.subset": "renderTest_taskRenderMain_beauty",
+                    "context.subset": "renderMain_beauty",
                     "context.ext": "png"
                 }
             )
