@@ -748,7 +748,19 @@ def _convert_nuke_project_settings(ayon_settings, output):
     )
 
     new_review_data_outputs = {}
-    for item in ayon_publish["ExtractReviewDataMov"]["outputs"]:
+    outputs_settings = None
+    # just in case that the users having old presets in outputs setting
+    deprecrated_review_settings = ayon_publish["ExtractReviewDataMov"]
+    current_review_settings = (
+        ayon_publish["ExtractReviewDataBakingStreams"]
+    )
+    if deprecrated_review_settings["outputs"] == (
+        current_review_settings["outputs"]):
+        outputs_settings = current_review_settings["outputs"]
+    else:
+        outputs_settings = deprecrated_review_settings["outputs"]
+
+    for item in outputs_settings:
         item_filter = item["filter"]
         if "product_names" in item_filter:
             item_filter["subsets"] = item_filter.pop("product_names")
@@ -767,7 +779,12 @@ def _convert_nuke_project_settings(ayon_settings, output):
 
         name = item.pop("name")
         new_review_data_outputs[name] = item
-    ayon_publish["ExtractReviewDataMov"]["outputs"] = new_review_data_outputs
+
+    if deprecrated_review_settings["outputs"] == (
+        current_review_settings["outputs"]):
+        current_review_settings["outputs"] = new_review_data_outputs
+    else:
+        deprecrated_review_settings["outputs"] = new_review_data_outputs
 
     collect_instance_data = ayon_publish["CollectInstanceData"]
     if "sync_workfile_version_on_product_types" in collect_instance_data:

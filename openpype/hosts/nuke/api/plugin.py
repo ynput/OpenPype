@@ -21,6 +21,9 @@ from openpype.pipeline import (
     CreatedInstance,
     get_current_task_name
 )
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS
+)
 from .lib import (
     INSTANCE_DATA_KNOB,
     Knobby,
@@ -801,6 +804,8 @@ class ExporterReviewMov(ExporterReview):
         self.log.info("File info was set...")
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
+        if self.ext != VIDEO_EXTENSIONS:
+            self.file = os.path.basename(self.path_in)
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
 

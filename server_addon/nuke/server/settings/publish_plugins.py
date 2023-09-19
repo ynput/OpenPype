@@ -165,7 +165,7 @@ class BakingStreamModel(BaseSettingsModel):
         title="Custom tags", default_factory=list)
 
 
-class ExtractReviewDataMovModel(BaseSettingsModel):
+class ExtractReviewBakingStreamsModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     viewer_lut_raw: bool = Field(title="Viewer lut raw")
     outputs: list[BakingStreamModel] = Field(
@@ -266,9 +266,9 @@ class PublishPuginsModel(BaseSettingsModel):
         title="Extract Review Data Lut",
         default_factory=ExtractReviewDataLutModel
     )
-    ExtractReviewDataMov: ExtractReviewDataMovModel = Field(
-        title="Extract Review Data Mov",
-        default_factory=ExtractReviewDataMovModel
+    ExtractReviewDataBakingStreams: ExtractReviewBakingStreamsModel = Field(
+        title="Extract Review Data Baking Streams",
+        default_factory=ExtractReviewBakingStreamsModel
     )
     ExtractSlateFrame: ExtractSlateFrameModel = Field(
         title="Extract Slate Frame",
@@ -410,7 +410,7 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
     "ExtractReviewDataLut": {
         "enabled": False
     },
-    "ExtractReviewDataMov": {
+    "ExtractReviewDataBakingStreams": {
         "enabled": True,
         "viewer_lut_raw": False,
         "outputs": [

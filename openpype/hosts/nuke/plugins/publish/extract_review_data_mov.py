@@ -8,7 +8,7 @@ from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import maintained_selection
 
 
-class ExtractReviewDataMov(publish.Extractor):
+class ExtractReviewDataBakingStreams(publish.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
