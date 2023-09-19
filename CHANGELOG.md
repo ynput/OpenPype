@@ -1,10 +1,10 @@
 # Changelog
 
 
-## [3.16.8](https://github.com/ynput/OpenPype/tree/3.16.8)
+## [3.17.0](https://github.com/ynput/OpenPype/tree/3.17.0)
 
 
-[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.7...3.16.8)
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.7...3.17.0)
 
 ### **🚀 Enhancements**
 
