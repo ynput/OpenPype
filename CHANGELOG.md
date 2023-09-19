@@ -1,6 +1,257 @@
 # Changelog
 
 
+## [3.16.7](https://github.com/ynput/OpenPype/tree/3.16.7)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.6...3.16.7)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Maya: Extract active view as thumbnail when no thumbnail set <a href="https://github.com/ynput/OpenPype/pull/5426">#5426</a></summary>
+
+This sets the Maya instance's thumbnail to the current active view if no thumbnail was set yet.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Implement USD publish and load using native `mayaUsdPlugin` <a href="https://github.com/ynput/OpenPype/pull/5573">#5573</a></summary>
+
+Implement Creator and Loaders for extraction and loading of USD files using Maya's own `mayaUsdPlugin`.Also adds support to load a `usd` file into an Arnold Standin (`aiStandin`) and assigning looks to it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Ignore separated modules <a href="https://github.com/ynput/OpenPype/pull/5619">#5619</a></summary>
+
+Do not load already separated modules from default directory.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Reduce amount of code for Collect Looks <a href="https://github.com/ynput/OpenPype/pull/5253">#5253</a></summary>
+
+- Refactor `get_file_node_files` because popping from `paths` by index should have been done in reversed order anyway. It's now changed to not need popping at all.
+- Removed unused `RENDERER_NODE_TYPES` and if-branch which collected `node_attrs` list which was unused + collected members which was also done outside of the if branch and thus generated no extra data.
+- Collected all materials from look set attributes at once instead of multiple queries
+- Collected all file nodes in history from a single query instead of per type
+- Restructured assignment of `instance.data["resources"]` to be more readable
+- Cached `PXR_NODES` only ones (Note: plugin load is checked on discovery of the collect look plugin) instead of querying plugin load and its nodes per file node per attribute
+- Removed some debug logs or combined some messages
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Mark deprecated settings in Maya <a href="https://github.com/ynput/OpenPype/pull/5627">#5627</a></summary>
+
+Added deprecated info to docstrings of maya colormanagement settings.Resolves: https://github.com/ynput/OpenPype/issues/5556
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: switching versions of maxScene maintain parentage/links with the loaders <a href="https://github.com/ynput/OpenPype/pull/5424">#5424</a></summary>
+
+When using scene inventory to manage or update the version of the loading objects, the linked modifiers or parentage of the objects would be kept.Meanwhile, loaded objects from all loaders no longer parented to the container with OP Data.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3ds max: small tweaks to obj extractor and model publishing flow <a href="https://github.com/ynput/OpenPype/pull/5605">#5605</a></summary>
+
+There migh be situation where OBJ Extractor passes without failure, but no obj file is produced. This is adding simple check directly into the extractor to catch it earlier then in the integration phase. Also switched `Validate USD Plugin` to optional, because it was always run no matter if the Extract USD was enabled or not, hindering testing (and publishing).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Plugin can be reopened <a href="https://github.com/ynput/OpenPype/pull/5610">#5610</a></summary>
+
+TVPaint plugin can be reopened.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Remove context prompt <a href="https://github.com/ynput/OpenPype/pull/5632">#5632</a></summary>
+
+More of a plea than a PR, but could we please remove the context prompt in Maya when switching tasks?
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Create a desktop icon is checked <a href="https://github.com/ynput/OpenPype/pull/5636">#5636</a></summary>
+
+In OP Installer `Create a desktop icon` is checked by default. 
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Extract look is not AYON compatible - OP-5375 <a href="https://github.com/ynput/OpenPype/pull/5341">#5341</a></summary>
+
+The textures that would use hardlinking are going through texture processors. Currently all texture processors are hardcoded to copy texture instead of respecting the settings of forcing to copy.The texture processors were last modified 4 months ago, so effectively all clients that are on any pipeline updated in the last 4 months wont be utilizing hardlinking at all, since the hardcoded texture processors will copy texture no matter the OS.This opts for completely disabling the hardlinking feature, while we figure out what to do about it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Multiverse USD Override inherit from correct new style creator <a href="https://github.com/ynput/OpenPype/pull/5566">#5566</a></summary>
+
+Fix Creator for Multiverse USD Override by inheriting from correct new style creator class type
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Bug Fix  Alembic Loaders with Ornatrix <a href="https://github.com/ynput/OpenPype/pull/5434">#5434</a></summary>
+
+Bugfix the alembic loader with both ornatrix alembic and max alembic supportsAdd the ornatrix alembic loaders for loading the alembic with Ornatrix-related modifiers.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Avoid creation of duplicated links <a href="https://github.com/ynput/OpenPype/pull/5593">#5593</a></summary>
+
+Handle cases when an existing link should be recreated and do not create the same link multitple times during single publishing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Extract Review: Multilayer specification for ffmpeg <a href="https://github.com/ynput/OpenPype/pull/5613">#5613</a></summary>
+
+Extract review is specifying layer name when exr is multilayer.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fussion: added support for Fusion 17 <a href="https://github.com/ynput/OpenPype/pull/5614">#5614</a></summary>
+
+Fusion 17 still uses Python 3.6 which causes issues with some our delivered libraries. Vendorized necessary set for Python 3.6
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Fix screenshot widget <a href="https://github.com/ynput/OpenPype/pull/5615">#5615</a></summary>
+
+Use correct super method name.EDITED:Removed fade animation which is not triggered at some cases, e.g. in Nuke the animation does not start. I do expect that is caused by `exec_` on the dialog, which blocks event processing to the animation, even when I've added the window as parent it still didn't trigger registered callback.Modified how the "empty" space is not filled by using paths instead of clear mode on painter. Added render hints to add antialiasing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: auto_images without alpha will not fail <a href="https://github.com/ynput/OpenPype/pull/5620">#5620</a></summary>
+
+ExtractReview caused issue on `auto_image` instance without alpha channel, this fixes it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix - _id key used instead of id in get_last_version_by_subset_name <a href="https://github.com/ynput/OpenPype/pull/5626">#5626</a></summary>
+
+Just 'id' is not returned because value in fields. Caused KeyError.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: create symlinks for ssl libs on Centos 7 <a href="https://github.com/ynput/OpenPype/pull/5633">#5633</a></summary>
+
+Docker build was missing `libssl.1.1.so` and `libcrypto.1.1.so` symlinks needed by the executable itself, because Python is now explicitly built with OpenSSL 1.1.1
+
+
+___
+
+</details>
+
+### **📃 Documentation**
+
+
+<details>
+<summary>Documentation/local settings <a href="https://github.com/ynput/OpenPype/pull/5102">#5102</a></summary>
+
+I completed the "Working with local settings" page. I updated the screenshot, wrote an explanation for each empty category, and if available, linked the more detailed pages already existing. I also added the "Environments" category.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.16.6](https://github.com/ynput/OpenPype/tree/3.16.6)
 
 
