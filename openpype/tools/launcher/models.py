@@ -276,10 +276,13 @@ class ActionModel(QtGui.QStandardItemModel):
             key=lambda action: (action.order, lib.get_action_label(action))
         )
 
-    def update_force_not_open_workfile_settings(self, is_checked, action_id):
+    def update_context_menu_settings(
+        self, item_name: str, is_checked: bool, action_id: str
+    ):
         """Store/remove config for forcing to skip opening last workfile.
 
         Args:
+            item_name (str): Context menu item name.
             is_checked (bool): True to add, False to remove
             action_id (str)
         """
@@ -296,7 +299,7 @@ class ActionModel(QtGui.QStandardItemModel):
             for action in actions
         ]
 
-        stored = self.launcher_registry.get_item("force_not_open_workfile")
+        stored = self.launcher_registry.get_item(item_name)
         for actual_data in action_actions_data:
             if is_checked:
                 stored.append(actual_data)
@@ -307,7 +310,7 @@ class ActionModel(QtGui.QStandardItemModel):
                         final_values.append(config)
                 stored = final_values
 
-        self.launcher_registry.set_item("force_not_open_workfile", stored)
+        self.launcher_registry.set_item(item_name, stored)
         self.launcher_registry._get_item.cache_clear()
         self.change_action_item(action_item, is_checked)
 

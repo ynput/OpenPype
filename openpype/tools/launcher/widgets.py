@@ -27,7 +27,8 @@ from .constants import (
     ANIMATION_START_ROLE,
     ANIMATION_STATE_ROLE,
     ANIMATION_LEN,
-    FORCE_NOT_OPEN_WORKFILE_ROLE
+    FORCE_NOT_OPEN_WORKFILE_ROLE,
+    FORCE_DOWNLOAD_LAST_WORKFILE_ROLE,
 )
 
 
@@ -284,11 +285,34 @@ class ActionBar(QtWidgets.QWidget):
 
         action_id = index.data(ACTION_ID_ROLE)
         checkbox.stateChanged.connect(
-            lambda: self.on_checkbox_changed(checkbox.isChecked(),
-                                             action_id))
+            lambda: self.on_checkbox_changed(
+                "force_not_open_workfile",
+                checkbox.isChecked(),
+                action_id,
+            )
+        )
         action = QtWidgets.QWidgetAction(menu)
         action.setDefaultWidget(checkbox)
 
+        menu.addAction(action)
+
+        force_download_checkbox = QtWidgets.QCheckBox(
+            "Force download last workfile.", menu
+        )
+
+        if index.data(FORCE_DOWNLOAD_LAST_WORKFILE_ROLE):
+            force_download_checkbox.setChecked(True)
+
+        force_download_checkbox.stateChanged.connect(
+            lambda: self.on_checkbox_changed(
+                "force_download_last_workfile",
+                force_download_checkbox.isChecked(),
+                action_id,
+            )
+        )
+
+        action = QtWidgets.QWidgetAction(menu)
+        action.setDefaultWidget(force_download_checkbox)
         menu.addAction(action)
 
         self._context_menu = menu
@@ -299,9 +323,10 @@ class ActionBar(QtWidgets.QWidget):
             self._discover_on_menu = False
             self.discover_actions()
 
-    def on_checkbox_changed(self, is_checked, action_id):
-        self.model.update_force_not_open_workfile_settings(is_checked,
-                                                           action_id)
+    def on_checkbox_changed(self, item_name, is_checked, action_id):
+        self.model.update_context_menu_settings(
+            item_name, is_checked, action_id
+        )
         self.view.update()
         if self._context_menu is not None:
             self._context_menu.close()
@@ -313,6 +338,9 @@ class ActionBar(QtWidgets.QWidget):
         is_group = index.data(GROUP_ROLE)
         is_variant_group = index.data(VARIANT_GROUP_ROLE)
         force_not_open_workfile = index.data(FORCE_NOT_OPEN_WORKFILE_ROLE)
+        force_download_last_workfile = index.data(
+            FORCE_DOWNLOAD_LAST_WORKFILE_ROLE
+        )
         if not is_group and not is_variant_group:
             action = index.data(ACTION_ROLE)
             # Change data of application action
