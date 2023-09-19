@@ -38,7 +38,21 @@ class MayaFixtures(HostFixtures):
         args = []
 
         if self.running_in_mayapy(app_group):
-            args = ["-I", self.get_usersetup_path()]
+            # Attempts to run MayaPy in 2022 has failed.
+            msg = "Maya 2022 and older is not supported through MayaPy"
+            assert int(app_variant) > 2022, msg
+
+            # Maya 2023+ can isolate from the users environment. Although the
+            # command flag is present in older versions of Maya, it does not
+            # work resulting a fatal python error:
+            # Fatal Python error: initfsencoding: unable to load the file
+            #    system codec
+            # ModuleNotFoundError: No module named 'encodings'
+            args.append("-I")
+
+            # MayaPy can only be passed a python script, so Maya scene opening
+            # will happen post launch.
+            args.append(self.get_usersetup_path())
 
         yield args
 
