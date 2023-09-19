@@ -2316,13 +2316,12 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         ''' Adds correct colorspace to write node dict
 
         '''
-        for node in nuke.allNodes(filter="Group"):
+        for node in nuke.allNodes(filter="Group", group=self._root_node):
+            log.info("Setting colorspace to `{}`".format(node.name()))
 
             # get data from avalon knob
             avalon_knob_data = read_avalon_data(node)
             node_data = get_node_data(node, INSTANCE_DATA_KNOB)
-
-            if avalon_knob_data.get("id") != "pyblish.avalon.instance":
 
             if (
                 # backward compatibility
@@ -2349,7 +2348,6 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
                 and "creator_identifier" not in node_data
             ):
                 continue
-
 
             nuke_imageio_writes = None
             if avalon_knob_data:
