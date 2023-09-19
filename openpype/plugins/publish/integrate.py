@@ -301,6 +301,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             )
         }
 
+        is_symlink_mode = False
+        hierarchy_data = instance.data.get("hierarchyData")
+        if hierarchy_data:
+            is_symlink_mode = hierarchy_data.get("symlink")
+
         # Prepare all representations
         prepared_representations = []
         for repre in filtered_repres:
@@ -315,7 +320,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
             for src, dst in prepared["transfers"]:
                 # todo: add support for hardlink transfers
-                file_transactions.add(src, dst)
+                if is_symlink_mode:
+                    file_transactions.add(
+                        src,
+                        dst,
+                        mode=FileTransaction.MODE_SYMLINK
+                    )
+                else:
+                    file_transactions.add(src, dst)
 
             prepared_representations.append(prepared)
 
@@ -327,7 +339,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         file_copy_modes = [
             ("transfers", FileTransaction.MODE_COPY),
-            ("hardlinks", FileTransaction.MODE_HARDLINK)
+            ("hardlinks", FileTransaction.MODE_HARDLINK),
+            ("symlinks", FileTransaction.MODE_SYMLINK)
         ]
         for files_type, copy_mode in file_copy_modes:
             for src, dst in instance.data.get(files_type, []):

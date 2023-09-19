@@ -70,10 +70,9 @@ class LinkAsGroup(load.LoaderPlugin):
         # P = nuke.nodes.LiveGroup("file {}".format(file))
         P = nuke.createNode(
             "Precomp",
-            "file {}".format(file))
-
-        # hide property panel
-        P.hideControlPanel()
+            "file {}".format(file),
+            inpanel=False
+        )
 
         # Set colorspace defined in version data
         colorspace = context["version"]["data"].get("colorspace", None)

@@ -553,7 +553,9 @@ def add_write_node_legacy(name, **kwarg):
 
     w = nuke.createNode(
         "Write",
-        "name {}".format(name))
+        "name {}".format(name),
+        inpanel=False
+    )
 
     w["file"].setValue(kwarg["file"])
 
@@ -589,7 +591,9 @@ def add_write_node(name, file_path, knobs, **kwarg):
 
     w = nuke.createNode(
         "Write",
-        "name {}".format(name))
+        "name {}".format(name),
+        inpanel=False
+    )
 
     w["file"].setValue(file_path)
 
@@ -1192,8 +1196,10 @@ def create_prenodes(
 
         # create node
         now_node = nuke.createNode(
-            nodeclass, "name {}".format(name))
-        now_node.hideControlPanel()
+            nodeclass,
+            "name {}".format(name),
+            inpanel=False
+        )
 
         # add for dependency linking
         for_dependency[name] = {
@@ -1317,12 +1323,17 @@ def create_write_node(
             input_name = str(input.name()).replace(" ", "")
             # if connected input node was defined
             prev_node = nuke.createNode(
-                "Input", "name {}".format(input_name))
+                "Input",
+                "name {}".format(input_name),
+                inpanel=False
+            )
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
-                "Input", "name {}".format("rgba"))
-        prev_node.hideControlPanel()
+                "Input",
+                "name {}".format("rgba"),
+                inpanel=False
+            )
 
         # creating pre-write nodes `prenodes`
         last_prenode = create_prenodes(
@@ -1342,15 +1353,13 @@ def create_write_node(
             imageio_writes["knobs"],
             **data
         )
-        write_node.hideControlPanel()
         # connect to previous node
         now_node.setInput(0, prev_node)
 
         # switch actual node to previous
         prev_node = now_node
 
-        now_node = nuke.createNode("Output", "name Output1")
-        now_node.hideControlPanel()
+        now_node = nuke.createNode("Output", "name Output1", inpanel=False)
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -1517,8 +1526,10 @@ def create_write_node_legacy(
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
-                "Input", "name {}".format("rgba"))
-        prev_node.hideControlPanel()
+                "Input",
+                "name {}".format("rgba"),
+                inpanel=False
+            )
         # creating pre-write nodes `prenodes`
         if prenodes:
             for node in prenodes:
@@ -1530,8 +1541,10 @@ def create_write_node_legacy(
 
                 # create node
                 now_node = nuke.createNode(
-                    klass, "name {}".format(pre_node_name))
-                now_node.hideControlPanel()
+                    klass,
+                    "name {}".format(pre_node_name),
+                    inpanel=False
+                )
 
                 # add data to knob
                 for _knob in knobs:
@@ -1561,14 +1574,18 @@ def create_write_node_legacy(
                     if isinstance(dependent, (tuple or list)):
                         for i, node_name in enumerate(dependent):
                             input_node = nuke.createNode(
-                                "Input", "name {}".format(node_name))
-                            input_node.hideControlPanel()
+                                "Input",
+                                "name {}".format(node_name),
+                                inpanel=False
+                            )
                             now_node.setInput(1, input_node)
 
                     elif isinstance(dependent, str):
                         input_node = nuke.createNode(
-                            "Input", "name {}".format(node_name))
-                        input_node.hideControlPanel()
+                            "Input",
+                            "name {}".format(node_name),
+                            inpanel=False
+                        )
                         now_node.setInput(0, input_node)
 
                 else:
@@ -1583,15 +1600,13 @@ def create_write_node_legacy(
             "inside_{}".format(name),
             **_data
         )
-        write_node.hideControlPanel()
         # connect to previous node
         now_node.setInput(0, prev_node)
 
         # switch actual node to previous
         prev_node = now_node
 
-        now_node = nuke.createNode("Output", "name Output1")
-        now_node.hideControlPanel()
+        now_node = nuke.createNode("Output", "name Output1", inpanel=False)
 
         # connect to previous node
         now_node.setInput(0, prev_node)

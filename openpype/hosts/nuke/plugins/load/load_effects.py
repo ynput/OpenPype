@@ -88,10 +88,9 @@ class LoadEffects(load.LoaderPlugin):
 
         GN = nuke.createNode(
             "Group",
-            "name {}_1".format(object_name))
-
-        # hide property panel
-        GN.hideControlPanel()
+            "name {}_1".format(object_name),
+            inpanel=False
+        )
 
         # adding content to the group node
         with GN:
