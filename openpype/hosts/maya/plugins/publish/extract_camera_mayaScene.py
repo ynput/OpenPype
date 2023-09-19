@@ -106,12 +106,12 @@ class ExtractCameraMayaScene(publish.Extractor):
             instance.context.data["project_settings"]["maya"]["ext_mapping"]
         )
         if ext_mapping:
-            self.log.info("Looking in settings for scene type ...")
+            self.log.debug("Looking in settings for scene type ...")
             # use extension mapping for first family found
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
-                    self.log.info(
+                    self.log.debug(
                         "Using {} as scene type".format(self.scene_type))
                     break
                 except KeyError:
@@ -133,8 +133,7 @@ class ExtractCameraMayaScene(publish.Extractor):
         # get cameras
         members = cmds.ls(instance.data['setMembers'], leaf=True, shapes=True,
                           long=True, dag=True)
-        cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
-                          dag=True, type="camera")
+        cameras = cmds.ls(members, type="camera")
 
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
@@ -151,7 +150,7 @@ class ExtractCameraMayaScene(publish.Extractor):
             with lib.evaluation("off"):
                 with lib.suspended_refresh():
                     if bake_to_worldspace:
-                        self.log.info(
+                        self.log.debug(
                             "Performing camera bakes: {}".format(transform))
                         baked = lib.bake_to_world_space(
                             transform,
@@ -163,9 +162,6 @@ class ExtractCameraMayaScene(publish.Extractor):
                                                dag=True,
                                                shapes=True,
                                                long=True)
-
-                        members = members + baked_camera_shapes
-                        members.remove(camera)
                     else:
                         baked_camera_shapes = cmds.ls(cameras,
                                                       type="camera",
@@ -186,8 +182,8 @@ class ExtractCameraMayaScene(publish.Extractor):
                         unlock(plug)
                         cmds.setAttr(plug, value)
 
-                    self.log.info("Performing extraction..")
-                    cmds.select(cmds.ls(members, dag=True,
+                    self.log.debug("Performing extraction..")
+                    cmds.select(cmds.ls(baked, dag=True,
                                         shapes=True, long=True), noExpand=True)
                     cmds.file(path,
                               force=True,
@@ -217,5 +213,5 @@ class ExtractCameraMayaScene(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '{0}' to: {1}".format(
+        self.log.debug("Extracted instance '{0}' to: {1}".format(
             instance.name, path))
