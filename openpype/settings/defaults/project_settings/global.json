@@ -115,8 +115,8 @@
                                 0,
                                 255
                             ],
-                            "width": 1920,
-                            "height": 1080,
+                            "width": 0,
+                            "height": 0,
                             "scale_pixel_aspect": true,
                             "bg_color": [
                                 0,
