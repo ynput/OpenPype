@@ -2320,23 +2320,51 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
 
             # get data from avalon knob
             avalon_knob_data = read_avalon_data(node)
+            node_data = get_node_data(node, INSTANCE_DATA_KNOB)
 
             if avalon_knob_data.get("id") != "pyblish.avalon.instance":
+
+            if (
+                # backward compatibility
+                # TODO: remove this once old avalon data api will be removed
+                avalon_knob_data
+                and avalon_knob_data.get("id") != "pyblish.avalon.instance"
+            ):
+                continue
+            elif (
+                node_data
+                and node_data.get("id") != "pyblish.avalon.instance"
+            ):
                 continue
 
-            if "creator" not in avalon_knob_data:
+            if (
+                # backward compatibility
+                # TODO: remove this once old avalon data api will be removed
+                avalon_knob_data
+                and "creator" not in avalon_knob_data
+            ):
+                continue
+            elif (
+                node_data
+                and "creator_identifier" not in node_data
+            ):
                 continue
 
-            # establish families
-            families = [avalon_knob_data["family"]]
-            if avalon_knob_data.get("families"):
-                families.append(avalon_knob_data.get("families"))
 
-            nuke_imageio_writes = get_imageio_node_setting(
-                node_class=avalon_knob_data["families"],
-                plugin_name=avalon_knob_data["creator"],
-                subset=avalon_knob_data["subset"]
-            )
+            nuke_imageio_writes = None
+            if avalon_knob_data:
+                # establish families
+                families = [avalon_knob_data["family"]]
+                if avalon_knob_data.get("families"):
+                    families.append(avalon_knob_data.get("families"))
+
+                nuke_imageio_writes = get_imageio_node_setting(
+                    node_class=avalon_knob_data["families"],
+                    plugin_name=avalon_knob_data["creator"],
+                    subset=avalon_knob_data["subset"]
+                )
+            elif node_data:
+                nuke_imageio_writes = get_write_node_template_attr(node)
 
             log.debug("nuke_imageio_writes: `{}`".format(nuke_imageio_writes))
 
