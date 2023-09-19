@@ -15,11 +15,6 @@ from openpype.pipeline import (
 from openpype.pipeline.publish.lib import (
     replace_with_published_scene_path
 )
-from openpype.hosts.max.api.lib import (
-    get_current_renderer,
-    get_multipass_setting
-)
-from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import is_running_from_build
