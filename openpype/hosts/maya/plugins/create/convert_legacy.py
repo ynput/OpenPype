@@ -2,6 +2,8 @@ from openpype.pipeline.create.creator_plugins import SubsetConvertorPlugin
 from openpype.hosts.maya.api import plugin
 from openpype.hosts.maya.api.lib import read
 
+from openpype.client import get_asset_by_name
+
 from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
@@ -51,7 +53,7 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
         # From all current new style manual creators find the mapping
         # from family to identifier
         family_to_id = {}
-        for identifier, creator in self.create_context.manual_creators.items():
+        for identifier, creator in self.create_context.creators.items():
             family = getattr(creator, "family", None)
             if not family:
                 continue
@@ -70,7 +72,6 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
         # logic was thus to be live to the current task to begin with.
         data = dict()
         data["task"] = self.create_context.get_current_task_name()
-
         for family, instance_nodes in legacy.items():
             if family not in family_to_id:
                 self.log.warning(
@@ -81,7 +82,7 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
                 continue
 
             creator_id = family_to_id[family]
-            creator = self.create_context.manual_creators[creator_id]
+            creator = self.create_context.creators[creator_id]
             data["creator_identifier"] = creator_id
 
             if isinstance(creator, plugin.RenderlayerCreator):
@@ -135,6 +136,18 @@ class MayaLegacyConvertor(SubsetConvertorPlugin,
             # The family gets converted to the new family (this is due to
             # "rendering" family being converted to "renderlayer" family)
             original_data["family"] = creator.family
+
+            # recreate subset name as without it would be
+            # `renderingMain` vs correct `renderMain`
+            project_name = self.create_context.get_current_project_name()
+            asset_doc = get_asset_by_name(project_name,
+                                          original_data["asset"])
+            subset_name = creator.get_subset_name(
+                original_data["variant"],
+                data["task"],
+                asset_doc,
+                project_name)
+            original_data["subset"] = subset_name
 
             # Convert to creator attributes when relevant
             creator_attributes = {}

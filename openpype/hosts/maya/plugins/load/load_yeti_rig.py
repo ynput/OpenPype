@@ -19,8 +19,15 @@ class YetiRigLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     def process_reference(
         self, context, name=None, namespace=None, options=None
     ):
-        group_name = options['group_name']
         path = self.filepath_from_context(context)
+
+        attach_to_root = options.get("attach_to_root", True)
+        group_name = options["group_name"]
+
+        # no group shall be created
+        if not attach_to_root:
+            group_name = namespace
+
         with lib.maintained_selection():
             file_url = self.prepare_root_value(
                 path, context["project"]["name"]
@@ -30,7 +37,7 @@ class YetiRigLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 namespace=namespace,
                 reference=True,
                 returnNewNodes=True,
-                groupReference=True,
+                groupReference=attach_to_root,
                 groupName=group_name
             )
 

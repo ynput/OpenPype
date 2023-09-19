@@ -6,6 +6,7 @@ from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     PRE_CREATE_THUMBNAIL_KEY,
+    DEFAULT_VARIANT_VALUE,
     TaskNotSetError,
 )
 
@@ -626,7 +627,7 @@ class CreateWidget(QtWidgets.QWidget):
 
         default_variants = creator_item.default_variants
         if not default_variants:
-            default_variants = ["Main"]
+            default_variants = [DEFAULT_VARIANT_VALUE]
 
         default_variant = creator_item.default_variant
         if not default_variant:
@@ -642,7 +643,7 @@ class CreateWidget(QtWidgets.QWidget):
             elif variant:
                 self.variant_hints_menu.addAction(variant)
 
-        variant_text = default_variant or "Main"
+        variant_text = default_variant or DEFAULT_VARIANT_VALUE
         # Make sure subset name is updated to new plugin
         if variant_text == self.variant_input.text():
             self._on_variant_change()

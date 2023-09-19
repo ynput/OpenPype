@@ -57,9 +57,9 @@ class ExtractUnrealSkeletalMeshAbc(publish.Extractor):
         # to format it into a string in a mel expression
         path = path.replace('\\', '/')
 
-        self.log.info("Extracting ABC to: {0}".format(path))
-        self.log.info("Members: {0}".format(nodes))
-        self.log.info("Instance: {0}".format(instance[:]))
+        self.log.debug("Extracting ABC to: {0}".format(path))
+        self.log.debug("Members: {0}".format(nodes))
+        self.log.debug("Instance: {0}".format(instance[:]))
 
         options = {
             "step": instance.data.get("step", 1.0),
@@ -74,7 +74,7 @@ class ExtractUnrealSkeletalMeshAbc(publish.Extractor):
             "worldSpace": instance.data.get("worldSpace", True)
         }
 
-        self.log.info("Options: {}".format(options))
+        self.log.debug("Options: {}".format(options))
 
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.
@@ -105,4 +105,4 @@ class ExtractUnrealSkeletalMeshAbc(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extract ABC successful to: {0}".format(path))
+        self.log.debug("Extract ABC successful to: {0}".format(path))

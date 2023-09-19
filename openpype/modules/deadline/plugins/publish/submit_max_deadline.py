@@ -12,6 +12,14 @@ from openpype.pipeline import (
     legacy_io,
     OpenPypePyblishPluginMixin
 )
+from openpype.pipeline.publish.lib import (
+    replace_with_published_scene_path
+)
+from openpype.hosts.max.api.lib import (
+    get_current_renderer,
+    get_multipass_setting
+)
+from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import is_running_from_build
@@ -125,8 +133,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                 continue
             job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
         job_info.EnvironmentKeyValue["OPENPYPE_LOG_NO_COLORS"] = "1"
 
         # Add list of expected files to job
@@ -168,7 +176,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         first_file = next(self._iter_expected_files(files))
         output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"
 
         filename = os.path.basename(filepath)
 
@@ -236,7 +243,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if renderer == "Redshift_Renderer":
             plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
                 "separateAovFiles")
-
+        if instance.data["cameras"]:
+            plugin_info["Camera0"] = None
+            plugin_info["Camera"] = instance.data["cameras"][0]
+            plugin_info["Camera1"] = instance.data["cameras"][0]
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 
@@ -247,7 +257,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if instance.data["renderer"] == "Redshift_Renderer":
             self.log.debug("Using Redshift...published scene wont be used..")
             replace_in_path = False
-            return replace_in_path
+        return replace_with_published_scene_path(
+            instance, replace_in_path)
 
     @staticmethod
     def _iter_expected_files(exp):

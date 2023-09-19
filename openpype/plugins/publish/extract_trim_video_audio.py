@@ -4,7 +4,7 @@ from pprint import pformat
 import pyblish.api
 
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     run_subprocess,
 )
 from openpype.pipeline import publish
@@ -32,11 +32,11 @@ class ExtractTrimVideoAudio(publish.Extractor):
             instance.data["representations"] = list()
 
         # get ffmpet path
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_tool_args = get_ffmpeg_tool_args("ffmpeg")
 
         # get staging dir
         staging_dir = self.staging_dir(instance)
-        self.log.info("Staging dir set to: `{}`".format(staging_dir))
+        self.log.debug("Staging dir set to: `{}`".format(staging_dir))
 
         # Generate mov file.
         fps = instance.data["fps"]
@@ -59,7 +59,7 @@ class ExtractTrimVideoAudio(publish.Extractor):
             extensions = [output_file_type]
 
         for ext in extensions:
-            self.log.info("Processing ext: `{}`".format(ext))
+            self.log.debug("Processing ext: `{}`".format(ext))
 
             if not ext.startswith("."):
                 ext = "." + ext
@@ -76,8 +76,7 @@ class ExtractTrimVideoAudio(publish.Extractor):
                     if "trimming" not in fml
                 ]
 
-            ffmpeg_args = [
-                ffmpeg_path,
+            ffmpeg_args = ffmpeg_tool_args + [
                 "-ss", str(clip_start_h / fps),
                 "-i", video_file_path,
                 "-t", str(clip_dur_h / fps)
@@ -99,7 +98,7 @@ class ExtractTrimVideoAudio(publish.Extractor):
             ffmpeg_args.append(clip_trimed_path)
 
             joined_args = " ".join(ffmpeg_args)
-            self.log.info(f"Processing: {joined_args}")
+            self.log.debug(f"Processing: {joined_args}")
             run_subprocess(
                 ffmpeg_args, logger=self.log
             )

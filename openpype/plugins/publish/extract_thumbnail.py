@@ -1,10 +1,11 @@
 import os
+import subprocess
 import tempfile
 
 import pyblish.api
 from openpype.lib import (
-    get_ffmpeg_tool_path,
-    get_oiio_tools_path,
+    get_ffmpeg_tool_args,
+    get_oiio_tool_args,
     is_oiio_supported,
 
     run_subprocess,
@@ -42,12 +43,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
         # Skip if instance have 'review' key in data set to 'False'
         if not self._is_review_instance(instance):
-            self.log.info("Skipping - no review set on instance.")
+            self.log.debug("Skipping - no review set on instance.")
             return
 
         # Check if already has thumbnail created
         if self._already_has_thumbnail(instance_repres):
-            self.log.info("Thumbnail representation already present.")
+            self.log.debug("Thumbnail representation already present.")
             return
 
         # skip crypto passes.
@@ -57,15 +58,15 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         #       representation that can be determined much earlier and
         #       with better precision.
         if "crypto" in subset_name.lower():
-            self.log.info("Skipping crypto passes.")
+            self.log.debug("Skipping crypto passes.")
             return
 
         filtered_repres = self._get_filtered_repres(instance)
         if not filtered_repres:
-            self.log.info((
-                "Instance don't have representations"
-                " that can be used as source for thumbnail. Skipping"
-            ))
+            self.log.info(
+                "Instance doesn't have representations that can be used "
+                "as source for thumbnail. Skipping thumbnail extraction."
+            )
             return
 
         # Create temp directory for thumbnail
@@ -106,10 +107,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             #    oiiotool isn't available
             if not thumbnail_created:
                 if oiio_supported:
-                    self.log.info((
+                    self.log.debug(
                         "Converting with FFMPEG because input"
                         " can't be read by OIIO."
-                    ))
+                    )
 
                 thumbnail_created = self.create_thumbnail_ffmpeg(
                     full_input_path, full_output_path
@@ -164,8 +165,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 continue
 
             if not repre.get("files"):
-                self.log.info((
-                    "Representation \"{}\" don't have files. Skipping"
+                self.log.debug((
+                    "Representation \"{}\" doesn't have files. Skipping"
                 ).format(repre["name"]))
                 continue
 
@@ -173,13 +174,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def create_thumbnail_oiio(self, src_path, dst_path):
-        self.log.info("Extracting thumbnail {}".format(dst_path))
-        oiio_tool_path = get_oiio_tools_path()
-        oiio_cmd = [
-            oiio_tool_path,
+        self.log.debug("Extracting thumbnail with OIIO: {}".format(dst_path))
+        oiio_cmd = get_oiio_tool_args(
+            "oiiotool",
             "-a", src_path,
             "-o", dst_path
-        ]
+        )
         self.log.debug("running: {}".format(" ".join(oiio_cmd)))
         try:
             run_subprocess(oiio_cmd, logger=self.log)
@@ -192,29 +192,29 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             return False
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
-        self.log.info("outputting {}".format(dst_path))
+        self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
 
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path_args = get_ffmpeg_tool_args("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
 
-        jpeg_items = []
-        jpeg_items.append(path_to_subprocess_arg(ffmpeg_path))
-        # override file if already exists
-        jpeg_items.append("-y")
+        jpeg_items = [
+            subprocess.list2cmdline(ffmpeg_path_args)
+        ]
         # flag for large file sizes
         max_int = 2147483647
-        jpeg_items.append("-analyzeduration {}".format(max_int))
-        jpeg_items.append("-probesize {}".format(max_int))
+        jpeg_items.extend([
+            "-y",
+            "-analyzeduration", str(max_int),
+            "-probesize", str(max_int),
+        ])
         # use same input args like with mov
         jpeg_items.extend(ffmpeg_args.get("input") or [])
         # input file
-        jpeg_items.append("-i {}".format(
-            path_to_subprocess_arg(src_path)
-        ))
+        jpeg_items.extend(["-i", path_to_subprocess_arg(src_path)])
         # output arguments from presets
         jpeg_items.extend(ffmpeg_args.get("output") or [])
         # we just want one frame from movie files
-        jpeg_items.append("-vframes 1")
+        jpeg_items.extend(["-vframes", "1"])
         # output file
         jpeg_items.append(path_to_subprocess_arg(dst_path))
         subprocess_command = " ".join(jpeg_items)
@@ -225,7 +225,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             return True
         except Exception:
             self.log.warning(
-                "Failed to create thubmnail using ffmpeg",
+                "Failed to create thumbnail using ffmpeg",
                 exc_info=True
             )
             return False

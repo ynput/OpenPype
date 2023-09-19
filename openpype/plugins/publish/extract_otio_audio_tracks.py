@@ -1,7 +1,7 @@
 import os
 import pyblish
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     run_subprocess
 )
 import tempfile
@@ -18,9 +18,6 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
     order = pyblish.api.ExtractorOrder - 0.44
     label = "Extract OTIO Audio Tracks"
     hosts = ["hiero", "resolve", "flame"]
-
-    # FFmpeg tools paths
-    ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
     def process(self, context):
         """Convert otio audio track's content to audio representations
@@ -90,13 +87,13 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
                 # temp audio file
                 audio_fpath = self.create_temp_file(name)
 
-                cmd = [
-                    self.ffmpeg_path,
+                cmd = get_ffmpeg_tool_args(
+                    "ffmpeg",
                     "-ss", str(start_sec),
                     "-t", str(duration_sec),
                     "-i", audio_file,
                     audio_fpath
-                ]
+                )
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(" ".join(cmd)))
@@ -211,13 +208,13 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         max_duration_sec = max(end_secs)
 
         # create empty cmd
-        cmd = [
-            self.ffmpeg_path,
+        cmd = get_ffmpeg_tool_args(
+            "ffmpeg",
             "-f", "lavfi",
             "-i", "anullsrc=channel_layout=stereo:sample_rate=48000",
             "-t", str(max_duration_sec),
             empty_fpath
-        ]
+        )
 
         # generate empty with ffmpeg
         # run subprocess
@@ -296,7 +293,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
             filters_tmp_filepath = tmp_file.name
             tmp_file.write(",".join(filters))
 
-        args = [self.ffmpeg_path]
+        args = get_ffmpeg_tool_args("ffmpeg")
         args.extend(input_args)
         args.extend([
             "-filter_complex_script", filters_tmp_filepath,

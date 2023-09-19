@@ -23,7 +23,7 @@ class ExtractLayout(publish.Extractor):
         stagingdir = self.staging_dir(instance)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -64,7 +64,7 @@ class ExtractLayout(publish.Extractor):
                 fields=["parent", "context.family"]
             )
 
-            self.log.info(representation)
+            self.log.debug(representation)
 
             version_id = representation.get("parent")
             family = representation.get("context").get("family")
@@ -159,5 +159,5 @@ class ExtractLayout(publish.Extractor):
         }
         instance.data["representations"].append(json_representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, json_representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, json_representation)

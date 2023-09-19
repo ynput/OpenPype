@@ -1774,7 +1774,7 @@ class CreateContext:
         self.creator_discover_result = report
         for creator_class in report.plugins:
             if inspect.isabstract(creator_class):
-                self.log.info(
+                self.log.debug(
                     "Skipping abstract Creator {}".format(str(creator_class))
                 )
                 continue
@@ -1804,6 +1804,7 @@ class CreateContext:
                 self,
                 self.headless
             )
+
             if not creator.enabled:
                 disabled_creators[creator_identifier] = creator
                 continue
@@ -1979,7 +1980,11 @@ class CreateContext:
         if pre_create_data is None:
             pre_create_data = {}
 
-        precreate_attr_defs = creator.get_pre_create_attr_defs() or []
+        precreate_attr_defs = []
+        # Hidden creators do not have or need the pre-create attributes.
+        if isinstance(creator, Creator):
+            precreate_attr_defs = creator.get_pre_create_attr_defs()
+
         # Create default values of precreate data
         _pre_create_data = get_default_values(precreate_attr_defs)
         # Update passed precreate data to default values
@@ -2121,7 +2126,7 @@ class CreateContext:
 
     def reset_instances(self):
         """Reload instances"""
-        self._instances_by_id = {}
+        self._instances_by_id = collections.OrderedDict()
 
         # Collect instances
         error_message = "Collection of instances for creator {} failed. {}"

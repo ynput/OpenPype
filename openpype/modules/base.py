@@ -59,6 +59,14 @@ IGNORED_DEFAULT_FILENAMES = (
     "example_addons",
     "default_modules",
 )
+# Modules that won't be loaded in AYON mode from "./openpype/modules"
+# - the same modules are ignored in "./server_addon/create_ayon_addons.py"
+IGNORED_FILENAMES_IN_AYON = {
+    "ftrack",
+    "shotgrid",
+    "sync_server",
+    "slack",
+}
 
 
 # Inherit from `object` for Python 2 hosts
@@ -373,10 +381,12 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
     addons_info = _get_ayon_addons_information()
     if not addons_info:
         return v3_addons_to_skip
-    addons_dir = os.path.join(
-        appdirs.user_data_dir("AYON", "Ynput"),
-        "addons"
-    )
+    addons_dir = os.environ.get("AYON_ADDONS_DIR")
+    if not addons_dir:
+        addons_dir = os.path.join(
+            appdirs.user_data_dir("AYON", "Ynput"),
+            "addons"
+        )
     if not os.path.exists(addons_dir):
         log.warning("Addons directory does not exists. Path \"{}\"".format(
             addons_dir
@@ -390,9 +400,9 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
         folder_name = "{}_{}".format(addon_name, addon_version)
         addon_dir = os.path.join(addons_dir, folder_name)
         if not os.path.exists(addon_dir):
-            log.warning((
-                "Directory for addon {} {} does not exists. Path \"{}\""
-            ).format(addon_name, addon_version, addon_dir))
+            log.debug((
+                "No localized client code found for addon {} {}."
+            ).format(addon_name, addon_version))
             continue
 
         sys.path.insert(0, addon_dir)
@@ -481,6 +491,10 @@ def _load_modules():
 
         is_in_current_dir = dirpath == current_dir
         is_in_host_dir = dirpath == hosts_dir
+        ignored_current_dir_filenames = set(IGNORED_DEFAULT_FILENAMES)
+        if AYON_SERVER_ENABLED:
+            ignored_current_dir_filenames |= IGNORED_FILENAMES_IN_AYON
+
         for filename in os.listdir(dirpath):
             # Ignore filenames
             if filename in IGNORED_FILENAMES:
@@ -488,7 +502,7 @@ def _load_modules():
 
             if (
                 is_in_current_dir
-                and filename in IGNORED_DEFAULT_FILENAMES
+                and filename in ignored_current_dir_filenames
             ):
                 continue
 

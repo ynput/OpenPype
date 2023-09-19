@@ -7,7 +7,11 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 import os
 from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api import lib, maintained_selection
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.lib import unique_namespace
+from openpype.hosts.max.api.pipeline import (
+    containerise,
+    get_previous_loaded_object
+)
 
 
 class AbcLoader(load.LoaderPlugin):
@@ -33,7 +37,7 @@ class AbcLoader(load.LoaderPlugin):
         }
 
         rt.AlembicImport.ImportToRoot = False
-        rt.importFile(file_path, rt.name("noPrompt"))
+        rt.importFile(file_path, rt.name("noPrompt"), using=rt.AlembicImport)
 
         abc_after = {
             c
@@ -48,13 +52,27 @@ class AbcLoader(load.LoaderPlugin):
             self.log.error("Something failed when loading.")
 
         abc_container = abc_containers.pop()
-
-        for abc in rt.GetCurrentSelection():
+        selections = rt.GetCurrentSelection()
+        for abc in selections:
             for cam_shape in abc.Children:
                 cam_shape.playbackType = 2
 
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+        abc_objects = []
+        for abc_object in abc_container.Children:
+            abc_object.name = f"{namespace}:{abc_object.name}"
+            abc_objects.append(abc_object)
+        # rename the abc container with namespace
+        abc_container_name = f"{namespace}:{name}"
+        abc_container.name = abc_container_name
+        abc_objects.append(abc_container)
+
         return containerise(
-            name, [abc_container], context, loader=self.__class__.__name__
+            name, abc_objects, context,
+            namespace, loader=self.__class__.__name__
         )
 
     def update(self, container, representation):
@@ -62,29 +80,23 @@ class AbcLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
-
-        alembic_objects = self.get_container_children(node, "AlembicObject")
-        for alembic_object in alembic_objects:
-            alembic_object.source = path
-
-        lib.imprint(
-            container["instance_node"],
-            {"representation": str(representation["_id"])},
-        )
-
+        abc_container = [n for n in get_previous_loaded_object(node)
+                         if rt.ClassOf(n) == rt.AlembicContainer]
         with maintained_selection():
-            rt.Select(node.Children)
+            rt.Select(abc_container)
 
             for alembic in rt.Selection:
                 abc = rt.GetNodeByName(alembic.name)
                 rt.Select(abc.Children)
-                for abc_con in rt.Selection:
-                    container = rt.GetNodeByName(abc_con.name)
-                    container.source = path
-                    rt.Select(container.Children)
-                    for abc_obj in rt.Selection:
-                        alembic_obj = rt.GetNodeByName(abc_obj.name)
-                        alembic_obj.source = path
+                for abc_con in abc.Children:
+                    abc_con.source = path
+                    rt.Select(abc_con.Children)
+                    for abc_obj in abc_con.Children:
+                        abc_obj.source = path
+        lib.imprint(
+            container["instance_node"],
+            {"representation": str(representation["_id"])},
+        )
 
     def switch(self, container, representation):
         self.update(container, representation)

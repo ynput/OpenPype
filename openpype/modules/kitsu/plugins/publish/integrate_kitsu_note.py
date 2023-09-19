@@ -121,7 +121,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
                 publish_comment = self.format_publish_comment(instance)
 
             if not publish_comment:
-                self.log.info("Comment is not set.")
+                self.log.debug("Comment is not set.")
             else:
                 self.log.debug("Comment is `{}`".format(publish_comment))
 

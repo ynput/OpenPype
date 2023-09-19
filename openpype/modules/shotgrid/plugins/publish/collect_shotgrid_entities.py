@@ -1,7 +1,5 @@
-import os
-
 import pyblish.api
-from openpype.lib.mongo import OpenPypeMongoConnection
+from openpype.client.mongo import OpenPypeMongoConnection
 
 
 class CollectShotgridEntities(pyblish.api.ContextPlugin):

@@ -19,7 +19,7 @@ import clique
 from pyblish import api
 
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     run_subprocess,
 )
 from openpype.pipeline import publish
@@ -341,8 +341,6 @@ class ExtractOTIOReview(publish.Extractor):
         Returns:
             otio.time.TimeRange: trimmed available range
         """
-        # get rendering app path
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
         # create path  and frame start to destination
         output_path, out_frame_start = self._get_ffmpeg_output()
@@ -351,7 +349,7 @@ class ExtractOTIOReview(publish.Extractor):
             out_frame_start += end_offset
 
         # start command list
-        command = [ffmpeg_path]
+        command = get_ffmpeg_tool_args("ffmpeg")
 
         input_extension = None
         if sequence:

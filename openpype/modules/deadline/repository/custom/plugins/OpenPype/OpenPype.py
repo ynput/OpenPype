@@ -39,7 +39,6 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
     """
     def __init__(self):
         super().__init__()
-
         self.InitializeProcessCallback += self.InitializeProcess
         self.RenderExecutableCallback += self.RenderExecutable
         self.RenderArgumentCallback += self.RenderArgument
