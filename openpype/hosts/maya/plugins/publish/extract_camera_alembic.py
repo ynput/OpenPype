@@ -85,7 +85,9 @@ class ExtractCameraAlembic(publish.Extractor):
                     transform = cmds.listRelatives(
                         member, parent=True, fullPath=True)
                     transform = transform[0] if transform else member
-                    job_str += ' -root {0}'.format(transform)
+
+                    if transform not in camera_root:
+                        job_str += ' -root {0}'.format(transform)
 
             job_str += ' -file "{0}"'.format(path)
 
