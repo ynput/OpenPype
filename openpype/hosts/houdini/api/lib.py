@@ -649,3 +649,50 @@ def get_color_management_preferences():
         "display": hou.Color.ocio_defaultDisplay(),
         "view": hou.Color.ocio_defaultView()
     }
+
+
+def get_resolution_from_doc(doc):
+    """Get resolution from the given asset document. """
+
+    if not doc or "data" not in doc:
+        print("Entered document is not valid. \"{}\"".format(str(doc)))
+        return None
+
+    resolution_width = doc["data"].get("resolutionWidth")
+    resolution_height = doc["data"].get("resolutionHeight")
+
+    # Make sure both width and height are set
+    if resolution_width is None or resolution_height is None:
+        print("No resolution information found for \"{}\"".format(doc["name"]))
+        return None
+
+    return int(resolution_width), int(resolution_height)
+
+
+def set_camera_resolution(camera, asset_doc=None):
+    """Apply resolution to camera from asset document of the publish"""
+
+    if not asset_doc:
+        asset_doc = get_current_project_asset()
+
+    resolution = get_resolution_from_doc(asset_doc)
+
+    if resolution:
+        print("Setting camera resolution: {} -> {}x{}".format(
+            camera.name(), resolution[0], resolution[1]
+        ))
+        camera.parm("resx").set(resolution[0])
+        camera.parm("resy").set(resolution[1])
+
+
+def get_camera_from_container(container):
+    """Get camera from container node. """
+
+    cameras = container.recursiveGlob(
+        "*",
+        filter=hou.nodeTypeFilter.ObjCamera,
+        include_subnets=False
+    )
+
+    assert len(cameras) == 1, "Camera instance must have only one camera"
+    return cameras[0]
