@@ -9,7 +9,7 @@ from openpype.hosts.fusion.api import (
 )
 
 
-class FusionLoadAlembicMesh(load.LoaderPlugin):
+class FusionLoadUSD(load.LoaderPlugin):
     """Load USD into Fusion
 
     Support for USD was added since Fusion 18.5
