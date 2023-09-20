@@ -6,11 +6,11 @@ from openpype.lib import BoolDef, EnumDef
 import hou
 
 
-class CreateUnrealStaticMesh(plugin.HoudiniCreator):
-    """Unreal Static Meshes with collisions. """
+class CreateStaticMesh(plugin.HoudiniCreator):
+    """Static Meshes as FBX. """
 
-    identifier = "io.openpype.creators.houdini.unrealstaticmesh.fbx"
-    label = "Unreal - Static Mesh (FBX)"
+    identifier = "io.openpype.creators.houdini.staticmesh.fbx"
+    label = "Static Mesh (FBX)"
     family = "staticMesh"
     icon = "fa5s.cubes"
 
@@ -20,7 +20,7 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
 
         instance_data.update({"node_type": "filmboxfbx"})
 
-        instance = super(CreateUnrealStaticMesh, self).create(
+        instance = super(CreateStaticMesh, self).create(
             subset_name,
             instance_data,
             pre_create_data)
@@ -60,7 +60,7 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
     def get_pre_create_attr_defs(self):
         """Add settings for users. """
 
-        attrs = super(CreateUnrealStaticMesh, self).get_pre_create_attr_defs()
+        attrs = super(CreateStaticMesh, self).get_pre_create_attr_defs()
         createsubnetroot = BoolDef("createsubnetroot",
                                    tooltip="Create an extra root for the "
                                            "Export node when it's a "
@@ -93,7 +93,7 @@ class CreateUnrealStaticMesh(plugin.HoudiniCreator):
         The default subset name templates for Unreal include {asset} and thus
         we should pass that along as dynamic data.
         """
-        dynamic_data = super(CreateUnrealStaticMesh, self).get_dynamic_data(
+        dynamic_data = super(CreateStaticMesh, self).get_dynamic_data(
             variant, task_name, asset_doc, project_name, host_name, instance
         )
         dynamic_data["asset"] = asset_doc["name"]

@@ -21,7 +21,7 @@ class CreateArnoldAssModel(BaseSettingsModel):
     ext: str = Field(Title="Extension")
 
 
-class CreateUnrealStaticMeshModel(BaseSettingsModel):
+class CreateStaticMeshModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     default_variants: list[str] = Field(
         default_factory=list,
@@ -39,9 +39,9 @@ class CreatePluginsModel(BaseSettingsModel):
         default_factory=CreateArnoldAssModel,
         title="Create Alembic Camera")
     # "-" is not compatible in the new model
-    CreateUnrealStaticMesh: CreateUnrealStaticMeshModel = Field(
-        default_factory=CreateUnrealStaticMeshModel,
-        title="Create Unreal_Static Mesh"
+    CreateStaticMesh: CreateStaticMeshModel = Field(
+        default_factory=CreateStaticMeshModel,
+        title="Create Static Mesh"
     )
     CreateAlembicCamera: CreatorModel = Field(
         default_factory=CreatorModel,
@@ -81,7 +81,7 @@ DEFAULT_HOUDINI_CREATE_SETTINGS = {
         "default_variants": ["Main"],
         "ext": ".ass"
     },
-    "CreateUnrealStaticMesh": {
+    "CreateStaticMesh": {
         "enabled": True,
         "default_variants": [
             "Main"
@@ -212,7 +212,7 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
         "active": True
     },
     "ValidateUnrealStaticMeshName": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
         "active": True
     }

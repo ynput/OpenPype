@@ -42,8 +42,8 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "CreateUnrealStaticMesh",
-            "label": "Create Unreal - Static Mesh",
+            "key": "CreateStaticMesh",
+            "label": "Create Static Mesh",
             "checkbox_key": "enabled",
             "children": [
                 {

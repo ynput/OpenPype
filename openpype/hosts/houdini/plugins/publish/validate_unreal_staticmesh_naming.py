@@ -42,7 +42,7 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
     def apply_settings(cls, project_settings, system_settings):
 
         settings = (
-            project_settings["houdini"]["create"]["CreateUnrealStaticMesh"]
+            project_settings["houdini"]["create"]["CreateStaticMesh"]
         )
         cls.collision_prefixes = settings["collision_prefixes"]
         cls.static_mesh_prefix = settings["static_mesh_prefix"]

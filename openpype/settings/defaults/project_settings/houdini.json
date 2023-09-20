@@ -19,7 +19,7 @@
             ],
             "ext": ".ass"
         },
-        "CreateUnrealStaticMesh": {
+        "CreateStaticMesh": {
             "enabled": true,
             "default_variants": [
                 "Main"
@@ -127,7 +127,7 @@
             "active": true
         },
         "ValidateUnrealStaticMeshName": {
-            "enabled": true,
+            "enabled": false,
             "optional": true,
             "active": true
         }
