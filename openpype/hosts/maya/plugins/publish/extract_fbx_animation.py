@@ -5,12 +5,10 @@ from maya import cmds  # noqa
 import pyblish.api
 
 from openpype.pipeline import publish
-from openpype.pipeline.publish import OptionalPyblishPluginMixin
 from openpype.hosts.maya.api import fbx
 
 
-class ExtractRigFBX(publish.Extractor,
-                    OptionalPyblishPluginMixin):
+class ExtractFBXAnimation(publish.Extractor):
     """Extract Rig in FBX format from Maya.
 
     This extracts the rig in fbx with the constraints
@@ -25,8 +23,6 @@ class ExtractRigFBX(publish.Extractor,
     families = ["animation.fbx"]
 
     def process(self, instance):
-        if not self.is_active(instance.data):
-            return
         # Define output path
         staging_dir = self.staging_dir(instance)
         filename = "{0}.fbx".format(instance.name)

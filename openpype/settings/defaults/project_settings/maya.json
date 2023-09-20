@@ -707,6 +707,9 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
+        "CollectFbxAnimation": {
+            "enabled": true
+        },
         "CollectFbxCamera": {
             "enabled": false
         },
@@ -1141,7 +1144,7 @@
             "active": true
         },
         "ValidateSkeletonRigContents": {
-            "enabled": false,
+            "enabled": true,
             "optional": true,
             "active": true
         },

@@ -4113,6 +4113,7 @@ def create_rig_animation_instance(
                           node.endswith("skeletonAnim_SET")), None)
     if not anim_skeleton:
         log.debug("No skeletonAnim_SET in rig")
+
     skeleton_mesh = next((node for node in nodes if
                           node.endswith("skeletonMesh_SET")), None)
     if not skeleton_mesh:
@@ -4128,8 +4129,9 @@ def create_rig_animation_instance(
     if custom_subset:
         formatting_data = {
             # TODO remove 'asset_type' and replace 'asset_name' with 'asset'
-            "asset_name": context['asset']['name'],
-            "asset_type": context['asset']['type'],
+            # "asset_name": context['asset']['name'],
+            # "asset_type": context['asset']['type'],
+            "asset": context["asset"],
             "subset": context['subset']['name'],
             "family": (
                 context['subset']['data'].get('family') or

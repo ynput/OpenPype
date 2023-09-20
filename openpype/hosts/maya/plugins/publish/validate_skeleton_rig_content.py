@@ -12,7 +12,8 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
 
     The rigs optionally contain at least two object sets:
         "skeletonAnim_SET" - Set of only bone hierarchies
-        "skeletonMesh_SET" - Set of all cacheable meshes
+        "skeletonMesh_SET" - Set of the skinned meshes
+                             with bone hierarchies
 
     """
 
@@ -21,11 +22,10 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["rig.fbx"]
 
-    accepted_output = ["mesh", "transform"]
-    accepted_controllers = ["transform"]
+    accepted_output = ["mesh", "transform", "locator"]
+    accepted_controllers = ["transform", "locator"]
 
     def process(self, instance):
-
         objectsets = ["skeletonAnim_SET", "skeletonMesh_SET"]
         missing = [
             key for key in objectsets if key not in instance.data["rig_sets"]
@@ -36,8 +36,8 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
             )
             return
 
-        controls_set = instance.data["rig_sets"]["skeletonAnim_SET"]
-        out_set = instance.data["rig_sets"]["skeletonMesh_SET"]
+        skeleton_anim_set = instance.data["rig_sets"]["skeletonAnim_SET"]
+        skeleton_mesh_set = instance.data["rig_sets"]["skeletonMesh_SET"]
         # Ensure there are at least some transforms or dag nodes
         # in the rig instance
         set_members = instance.data['setMembers']
@@ -45,13 +45,13 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
             self.log.debug("Skipping empty instance...")
             return
         # Ensure contents in sets and retrieve long path for all objects
-        output_content = cmds.sets(
-            out_set, query=True) or []
-        output_content = cmds.ls(output_content, long=True)
+        skeleton_mesh_content = cmds.sets(
+            skeleton_mesh_set, query=True) or []
+        skeleton_mesh_content = cmds.ls(skeleton_mesh_content, long=True)
 
-        controls_content = cmds.sets(
-            controls_set, query=True) or []
-        controls_content = cmds.ls(controls_content, long=True)
+        skeleton_anim_content = cmds.sets(
+            skeleton_anim_set, query=True) or []
+        skeleton_anim_content = cmds.ls(skeleton_anim_content, long=True)
 
         # Validate members are inside the hierarchy from root node
         root_node = cmds.ls(set_members, assemblies=True)
@@ -60,16 +60,16 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
         hierarchy = set(hierarchy)
 
         invalid_hierarchy = []
-        if output_content:
-            for node in output_content:
+        if skeleton_mesh_content:
+            for node in skeleton_mesh_content:
                 if node not in hierarchy:
                     invalid_hierarchy.append(node)
-            invalid_geometry = self.validate_geometry(output_content)
-        if controls_content:
-            for node in controls_content:
+            invalid_geometry = self.validate_geometry(skeleton_mesh_content)
+        if skeleton_anim_content:
+            for node in skeleton_anim_content:
                 if node not in hierarchy:
                     invalid_hierarchy.append(node)
-            invalid_controls = self.validate_controls(controls_content)
+            invalid_controls = self.validate_controls(skeleton_anim_content)
 
         error = False
         if invalid_hierarchy:
@@ -99,7 +99,7 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
         Checks if the node types of the set members valid
 
         Args:
-            set_members: list of nodes of the controls_SET
+            set_members: list of nodes of the skeleton_mesh_set
             hierarchy: list of nodes which reside under the root node
 
         Returns:
@@ -126,7 +126,7 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
         Checks if the node types of the set members valid
 
         Args:
-            set_members: list of nodes of the controls_SET
+            set_members: list of nodes of the skeleton_anim_set
             hierarchy: list of nodes which reside under the root node
 
         Returns:

@@ -24,6 +24,20 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CollectFbxAnimation",
+            "label": "Collect Fbx Animation",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "CollectFbxCamera",
             "label": "Collect Camera for FBX export",
             "checkbox_key": "enabled",

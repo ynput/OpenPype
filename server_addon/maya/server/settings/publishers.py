@@ -129,6 +129,10 @@ class CollectMayaRenderModel(BaseSettingsModel):
     )
 
 
+class CollectFbxAnimationModel(BaseSettingsModel):
+    enabled: bool = Field(title="Collect Fbx Animation")
+
+
 class CollectFbxCameraModel(BaseSettingsModel):
     enabled: bool = Field(title="CollectFbxCamera")
 
@@ -363,6 +367,10 @@ class PublishersModel(BaseSettingsModel):
         default_factory=CollectMayaRenderModel,
         title="Collect Render Layers",
         section="Collectors"
+    )
+    CollectFbxAnimation: CollectFbxAnimationModel = Field(
+        default_factory=CollectFbxAnimationModel,
+        title="Collect FBX Animation",
     )
     CollectFbxCamera: CollectFbxCameraModel = Field(
         default_factory=CollectFbxCameraModel,
@@ -767,6 +775,9 @@ DEFAULT_SUFFIX_NAMING = {
 DEFAULT_PUBLISH_SETTINGS = {
     "CollectMayaRender": {
         "sync_workfile_version": False
+    },
+    "CollectFbxAnimation": {
+        "enabled": True
     },
     "CollectFbxCamera": {
         "enabled": False
@@ -1184,7 +1195,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "active": True
     },
     "ValidateSkeletonRigContents": {
-        "enabled": False,
+        "enabled": True,
         "optional": True,
         "active": True
     },
