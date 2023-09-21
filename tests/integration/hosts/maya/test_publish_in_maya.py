@@ -1,6 +1,8 @@
 import os
 import shutil
 import re
+import json
+from collections import defaultdict
 
 import pytest
 
@@ -142,7 +144,9 @@ class TestPublishInMaya(MayaFixtures, PublishTest):
     """
     PERSIST = False
 
-    EXPECTED_FOLDER = os.path.join(os.path.dirname(__file__), "expected")
+    EXPECTED_FOLDER = os.path.join(
+        os.path.dirname(__file__), "expected", "files"
+    )
     INPUT_DUMPS = os.path.join(os.path.dirname(__file__), "input", "dumps")
     INPUT_ENVIRONMENT_JSON = os.path.join(
         os.path.dirname(__file__), "input", "env_vars", "env_var.json"
@@ -184,106 +188,121 @@ class TestPublishInMaya(MayaFixtures, PublishTest):
         matches = re.findall(error_regex, logging_output)
         assert not matches, matches[0][0]
 
+    def count_of_types(self, dbcon, queried_type, **kwargs):
+        """Queries 'dbcon' and counts documents of type 'queried_type'
+
+            Args:
+                dbcon (AvalonMongoDB)
+                queried_type (str): type of document ("asset", "version"...)
+                expected (int): number of documents found
+                any number of additional keyword arguments
+
+                special handling of argument additional_args (dict)
+                    with additional args like
+                    {"context.subset": "XXX"}
+        """
+        args = {"type": queried_type}
+        for key, val in kwargs.items():
+            if key == "additional_args":
+                args.update(val)
+            else:
+                args[key] = val
+
+        return dbcon.count_documents(args)
+
     def test_db_asserts(self, dbcon, deadline_finished):
         """Host and input data dependent expected results in DB."""
-        print("test_db_asserts")
+
+        expected_data = None
+        json_path = os.path.join(
+            os.path.dirname(__file__),
+            "expected",
+            "avalon_tests.test_project.json"
+        )
+        with open(json_path, "r") as f:
+            expected_data = json.load(f)
+
+        expected_entities = {
+            "subset": [],
+            "version": [],
+            "representation": [],
+            "hero_version": []
+        }
+        for entity in expected_data:
+            if entity["type"] in expected_entities.keys():
+                expected_entities[entity["type"]].append(entity)
+
         asserts = []
-        asserts.append(DBAssert.count_of_types(dbcon, "version", 3))
 
-        asserts.append(
-            DBAssert.count_of_types(dbcon, "version", 0, name={"$ne": 1})
-        )
-
-        asserts.append(
-            DBAssert.count_of_types(dbcon, "subset", 1, name="modelMain")
-        )
-
-        asserts.append(
-            DBAssert.count_of_types(
-                dbcon, "subset", 1, name="workfileTest_task"
+        for entity_type, entities in expected_entities.items():
+            # Ensure entity counts are correct.
+            current = self.count_of_types(dbcon, entity_type)
+            expected = len(entities)
+            msg = (
+                "{} count is not the same as expected. Current: {}."
+                " Expected: {}.".format(entity_type, current, expected)
             )
+            if current != expected:
+                asserts.append(msg)
+
+        # Ensure there is only 1 version of each subset.
+        current = self.count_of_types(dbcon, "version", name={"$ne": 1})
+        expected = 0
+        msg = (
+            "Found versions that are not the first (1) version. Only one"
+            " version per subset expected."
         )
+        if current != expected:
+            asserts.append(msg)
 
-        asserts.append(DBAssert.count_of_types(dbcon, "representation", 8))
-
-        asserts.append(
-            DBAssert.count_of_types(
-                dbcon,
-                "representation",
-                2,
-                additional_args={
-                    "context.subset": "modelMain", "context.ext": "abc"
-                }
+        # Ensure names of subset entities are the same.
+        subset_names = [x["name"] for x in expected_entities["subset"]]
+        for name in subset_names:
+            current = self.count_of_types(
+                dbcon, entity_type, type="subset", name=name
             )
-        )
+            msg = "Subset with name \"{}\" was not found.".format(name)
+            if current != 1:
+                asserts.append(msg)
 
-        asserts.append(
-            DBAssert.count_of_types(
-                dbcon,
-                "representation",
-                2,
-                additional_args={
-                    "context.subset": "modelMain", "context.ext": "ma"
-                }
+        # Ensure correct amount of representations by their context.
+        context_keys = [
+            "asset",
+            "family",
+            "subset",
+            "ext",
+            "representation",
+        ]
+        temp = []
+        representation_contexts = defaultdict(list)
+        for entity in expected_entities["representation"]:
+            context = {}
+            for key in context_keys:
+                context["context." + key] = entity["context"][key]
+
+            index = len(temp)
+            if context in temp:
+                index = temp.index(context)
+            else:
+                temp.append(context)
+
+            representation_contexts[index].append(context)
+
+        for _, contexts in representation_contexts.items():
+            context = contexts[0]
+            current = self.count_of_types(
+                dbcon, "representation", additional_args=context
             )
-        )
-
-        asserts.append(
-            DBAssert.count_of_types(
-                dbcon,
-                "representation",
-                1,
-                additional_args={
-                    "context.subset": "workfileTest_task", "context.ext": "ma"
-                }
+            expected = len(contexts)
+            msg = (
+                "Representation(s) with context as below was not found."
+                " Current: {}."
+                " Expected: {}.\n{}".format(current, expected, context)
             )
-        )
+            if current != expected:
+                asserts.append(msg)
 
-        asserts.append(
-            DBAssert.count_of_types(
-                dbcon, "subset", 1, name="renderMain_beauty"
-            )
-        )
-
-        asserts.append(
-            DBAssert.count_of_types(
-                dbcon,
-                "representation",
-                1,
-                additional_args={
-                    "context.subset": "renderMain_beauty",
-                    "context.ext": "exr"
-                }
-            )
-        )
-
-        asserts.append(
-            DBAssert.count_of_types(
-                dbcon,
-                "representation",
-                1,
-                additional_args={
-                    "context.subset": "renderMain_beauty",
-                    "context.ext": "jpg"
-                }
-            )
-        )
-
-        asserts.append(
-            DBAssert.count_of_types(
-                dbcon,
-                "representation",
-                1,
-                additional_args={
-                    "context.subset": "renderMain_beauty",
-                    "context.ext": "png"
-                }
-            )
-        )
-
-        failures = [x for x in asserts if x is not None]
-        msg = "Failures:\n" + "\n".join(failures)
-        assert not failures, msg
+        assert asserts == [], "\n".join(asserts)
 
 
 if __name__ == "__main__":

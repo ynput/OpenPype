@@ -502,7 +502,7 @@ class PublishTest(ModuleUnitTest):
     def test_folder_structure_same(
         self,
         dbcon,
-        publish_finished,
+        deadline_finished,
         setup_fixture,
         skip_compare_folders
     ):
