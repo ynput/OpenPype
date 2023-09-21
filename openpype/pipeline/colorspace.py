@@ -365,11 +365,11 @@ def parse_colorspace_from_filepath(
     match = regex_pattern.search(filepath)
     colorspace = match.group(0) if match else None
 
-    if colorspace:
-        return colorspace
-
     if colorspace in underscored_colorspaces:
         return underscored_colorspaces[colorspace]
+
+    if colorspace:
+        return colorspace
 
     log.info("No matching colorspace in config '{}' for path: '{}'".format(
         config_path, filepath
