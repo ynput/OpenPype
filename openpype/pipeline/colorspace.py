@@ -341,7 +341,7 @@ def parse_colorspace_from_filepath(
         pattern = "|".join(
             # Allow to match spaces also as underscores because the
             # integrator replaces spaces with underscores in filenames
-            re.escape(colorspace).replace(r"\ ", r"[_ ]") for colorspace in
+            re.escape(colorspace) for colorspace in
             # Sort by longest first so the regex matches longer matches
             # over smaller matches, e.g. matching 'Output - sRGB' over 'sRGB'
             sorted(colorspaces, key=len, reverse=True)
@@ -355,21 +355,19 @@ def parse_colorspace_from_filepath(
 
     colorspace_name = None
     colorspaces = colorspaces or get_ocio_config_colorspaces(config_path)
-    underscored_colorspaces = {
-        key.replace(" ", "_"): key for key in colorspaces
+    underscored_colorspaces = list({
+        key.replace(" ", "_") for key in colorspaces
         if " " in key
-    }
+    })
 
     # match colorspace from  filepath
-    regex_pattern = _get_colorspace_match_regex(colorspaces)
+    regex_pattern = _get_colorspace_match_regex(
+        colorspaces + underscored_colorspaces)
     match = regex_pattern.search(filepath)
     colorspace = match.group(0) if match else None
 
     if colorspace:
         colorspace_name = colorspace
-
-    if colorspace in underscored_colorspaces:
-        colorspace_name = underscored_colorspaces[colorspace]
 
     if not colorspace_name:
         log.info("No matching colorspace in config '{}' for path: '{}'".format(
