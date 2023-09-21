@@ -17,6 +17,7 @@ from openpype.hosts.maya.api.lib import (
 )
 from openpype.hosts.maya.api.pipeline import containerise
 
+
 def is_sequence(files):
     sequence = False
     collections, remainder = clique.assemble(files, minimum_items=1)
@@ -29,11 +30,12 @@ def get_current_session_fps():
     session_fps = float(legacy_io.Session.get('AVALON_FPS', 25))
     return convert_to_maya_fps(session_fps)
 
+
 class ArnoldStandinLoader(load.LoaderPlugin):
     """Load as Arnold standin"""
 
-    families = ["ass", "animation", "model", "proxyAbc", "pointcache"]
-    representations = ["ass", "abc"]
+    families = ["ass", "animation", "model", "proxyAbc", "pointcache", "usd"]
+    representations = ["ass", "abc", "usda", "usdc", "usd"]
 
     label = "Load as Arnold standin"
     order = -5
