@@ -442,11 +442,7 @@ def _get_wrapped_with_subprocess(command_group, command, **kwargs):
 
         log.info("Executing: {}".format(" ".join(args)))
 
-        process_kwargs = {
-            "logger": log
-        }
-
-        run_openpype_process(*args, **process_kwargs)
+        run_openpype_process(*args, logger=log)
 
         # return all colorspaces
         with open(tmp_json_path, "r") as f_:
