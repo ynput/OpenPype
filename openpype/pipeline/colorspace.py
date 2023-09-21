@@ -24,7 +24,7 @@ log = Logger.get_logger(__name__)
 
 class CachedData:
     remapping = None
-    has_compatible_ocio_package  = None
+    has_compatible_ocio_package = None
     config_version_data = None
     ocio_config_colorspaces = {}
 
@@ -452,14 +452,14 @@ def _get_wrapped_with_subprocess(command_group, command, **kwargs):
 # TODO: this should be part of ocio_wrapper.py
 def compatibility_check():
     """Making sure PyOpenColorIO is importable"""
-    if CachedData.has_compatible_ocio_package  is not None:
+    if CachedData.has_compatible_ocio_package is not None:
         return CachedData.has_compatible_ocio_package
 
     try:
         import PyOpenColorIO  # noqa: F401
-        CachedData.has_compatible_ocio_package  = True
+        CachedData.has_compatible_ocio_package = True
     except ImportError:
-        CachedData.has_compatible_ocio_package  = False
+        CachedData.has_compatible_ocio_package = False
 
     # compatible
     return CachedData.has_compatible_ocio_package
