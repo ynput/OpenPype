@@ -384,16 +384,15 @@ def download_last_workfile(
         )
 
     # Match subset wich has `task_name` in its name
-    low_task_name = task_name.lower()
     if len(filtered_subsets) > 1:
         for subset in filtered_subsets:
-            if low_task_name in subset["name"].lower():
+            if task_name.lower() in subset["name"].lower():
                 subset_id = subset["_id"]  # What if none is found?
     else:
         subset_id = filtered_subsets[0]["_id"]
 
     if subset_id is None:
-        print(
+        log.exception(
             f"Not any matched subset for task '{task_name}'"
             f" of '{asset_name}'"
         )
@@ -404,7 +403,7 @@ def download_last_workfile(
         project_name, subset_id, fields=["_id", "name", "data"]
     )
     if not last_version_doc:
-        print("Subset does not have any version")
+        log.exception("Subset does not have any version")
         return
 
     workfile_representations = list(
