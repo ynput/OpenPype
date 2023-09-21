@@ -140,10 +140,14 @@ class ExtractReview(publish.Extractor):
         _, ext = os.path.splitext(repre_file["files"])
         if ext != ".jpg":
             im = Image.open(source_file_path)
-            # without this it produces messy low quality jpg
-            rgb_im = Image.new("RGBA", (im.width, im.height), "#ffffff")
-            rgb_im.alpha_composite(im)
-            rgb_im.convert("RGB").save(os.path.join(staging_dir, img_file))
+            if (im.mode in ('RGBA', 'LA') or (
+                    im.mode == 'P' and 'transparency' in im.info)):
+                # without this it produces messy low quality jpg
+                rgb_im = Image.new("RGBA", (im.width, im.height), "#ffffff")
+                rgb_im.alpha_composite(im)
+                rgb_im.convert("RGB").save(os.path.join(staging_dir, img_file))
+            else:
+                im.save(os.path.join(staging_dir, img_file))
         else:
             # handles already .jpg
             shutil.copy(source_file_path,
