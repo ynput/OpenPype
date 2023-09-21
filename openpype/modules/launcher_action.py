@@ -49,7 +49,7 @@ class LauncherAction(OpenPypeModule, ITrayAction):
                 " environment variable will be removed in future versions."
                 " Please consider using 'OpenPypeModule' to define custom"
                 " action paths. Planned version to drop the support"
-                " is 3.16.7 or 3.17.0 ."
+                " is 3.17.2 or 3.18.0 ."
             )
 
         for path in paths_str.split(os.pathsep):
