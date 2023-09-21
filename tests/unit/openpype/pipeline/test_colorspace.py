@@ -227,7 +227,7 @@ class TestPipelineColorspace(TestPipeline):
         expected_hiero = "Gamma 2.2 Rec.709 - Texture"
 
         # switch to python 2 compatibility mode
-        colorspace.CachedData.python3compatible = False
+        colorspace.CachedData.has_compatible_ocio_package  = False
 
         nuke_colorspace = colorspace.get_colorspace_name_from_filepath(
             nuke_filepath,
