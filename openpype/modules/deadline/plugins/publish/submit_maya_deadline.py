@@ -290,7 +290,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     def process_submission(self):
 
         instance = self._instance
-        context = instance.context
 
         filepath = self.scene_path  # publish if `use_publish` else workfile
 
@@ -306,13 +305,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             self._patch_workfile()
 
         # Gather needed data ------------------------------------------------
-        workspace = context.data["workspaceDir"]
-        default_render_file = instance.context.data.get('project_settings')\
-            .get('maya')\
-            .get('RenderSettings')\
-            .get('default_render_image_folder')
         filename = os.path.basename(filepath)
-        dirname = os.path.join(workspace, default_render_file)
+        dirname = os.path.join(
+            cmds.workspace(query=True, rootDirectory=True),
+            cmds.workspace(fileRuleEntry="images")
+        )
 
         # Fill in common data to payload ------------------------------------
         # TODO: Replace these with collected data from CollectRender
@@ -427,7 +424,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             new_job_info.update(tiles_data["JobInfo"])
             new_plugin_info.update(tiles_data["PluginInfo"])
 
-            self.log.info("hashing {} - {}".format(file_index, file))
+            self.log.debug("hashing {} - {}".format(file_index, file))
             job_hash = hashlib.sha256(
                 ("{}_{}".format(file_index, file)).encode("utf-8"))
 
@@ -443,7 +440,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             )
             file_index += 1
 
-        self.log.info(
+        self.log.debug(
             "Submitting tile job(s) [{}] ...".format(len(frame_payloads)))
 
         # Submit frame tile jobs
@@ -553,7 +550,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         assembly_job_ids = []
         num_assemblies = len(assembly_payloads)
         for i, payload in enumerate(assembly_payloads):
-            self.log.info(
+            self.log.debug(
                 "submitting assembly job {} of {}".format(i + 1,
                                                           num_assemblies)
             )
