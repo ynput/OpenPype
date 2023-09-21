@@ -108,9 +108,13 @@ class HoudiniCacheSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         job_info.Group = attr_values.get("group", self.group)
 
         keys = [
-            "FTRACK_API_USER",
-            "FTRACK_API_KEY",
-            "FTRACK_SERVER"
+            "OPENPYPE_SG_USER",
+            "AVALON_PROJECT",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "AVALON_APP_NAME",
+            "OPENPYPE_DEV",
+            "OPENPYPE_LOG_NO_COLORS",
         ]
 
         # Add OpenPype version if we are running from build.
@@ -128,6 +132,8 @@ class HoudiniCacheSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
             if not value:
                 continue
             job_info.EnvironmentKeyValue[key] = value
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
 
         return job_info
 
