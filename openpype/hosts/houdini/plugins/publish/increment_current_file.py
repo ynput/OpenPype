@@ -22,7 +22,8 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin):
                 "arnold_rop",
                 "mantra_rop",
                 "karma_rop",
-                "usdrender"]
+                "usdrender",
+                "publish.hou"]
     optional = True
 
     def process(self, context):

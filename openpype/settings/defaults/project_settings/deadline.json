@@ -99,6 +99,14 @@
             "deadline_chunk_size": 10,
             "deadline_job_delay": "00:00:00:00"
         },
+        "ProcessSubmittedCacheJobOnFarm": {
+            "enabled": true,
+            "deadline_department": "",
+            "deadline_pool": "",
+            "deadline_group": "",
+            "deadline_chunk_size": 1,
+            "deadline_priority": 50
+        },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,
             "deadline_department": "",

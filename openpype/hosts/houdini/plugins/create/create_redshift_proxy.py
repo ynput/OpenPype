@@ -2,6 +2,7 @@
 """Creator plugin for creating Redshift proxies."""
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance
+from openpype.lib import BoolDef
 
 
 class CreateRedshiftProxy(plugin.HoudiniCreator):
@@ -24,6 +25,9 @@ class CreateRedshiftProxy(plugin.HoudiniCreator):
         # TODO: Somehow enforce so that it only shows the original limited
         #       attributes of the Redshift_Proxy_Output node type
         instance_data.update({"node_type": "Redshift_Proxy_Output"})
+        creator_attributes = instance_data.setdefault(
+            "creator_attributes", dict())
+        creator_attributes["farm"] = pre_create_data["farm"]
 
         instance = super(CreateRedshiftProxy, self).create(
             subset_name,
@@ -44,3 +48,15 @@ class CreateRedshiftProxy(plugin.HoudiniCreator):
         # Lock some Avalon attributes
         to_lock = ["family", "id", "prim_to_detail_pattern"]
         self.lock_parameters(instance_node, to_lock)
+
+    def get_instance_attr_defs(self):
+        return [
+            BoolDef("farm",
+                    label="Submitting to Farm",
+                    default=False)
+        ]
+
+    def get_pre_create_attr_defs(self):
+        attrs = super().get_pre_create_attr_defs()
+        # Use same attributes as for instance attributes
+        return attrs + self.get_instance_attr_defs()

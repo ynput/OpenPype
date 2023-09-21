@@ -8,6 +8,31 @@
       "type": "dict",
       "collapsible": true,
       "checkbox_key": "enabled",
+      "key": "CollectChunkSize",
+      "label": "Collect Chunk Size",
+      "is_group": true,
+      "children": [
+        {
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        },
+        {
+          "type": "boolean",
+          "key": "optional",
+          "label": "Optional"
+        },
+        {
+            "type": "number",
+            "key": "chunk_size",
+            "label": "Frames Per Task"
+        }
+      ]
+    },
+    {
+      "type": "dict",
+      "collapsible": true,
+      "checkbox_key": "enabled",
       "key": "ValidateWorkfilePaths",
       "label": "Validate Workfile Paths",
       "is_group": true,

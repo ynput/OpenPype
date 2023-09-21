@@ -14,9 +14,12 @@ class ExtractRedshiftProxy(publish.Extractor):
     label = "Extract Redshift Proxy"
     families = ["redshiftproxy"]
     hosts = ["houdini"]
+    targets = ["local", "remote"]
 
     def process(self, instance):
-
+        if instance.data.get("farm"):
+            self.log.debug("Should be processed on farm, skipping.")
+            return
         ropnode = hou.node(instance.data.get("instance_node"))
 
         # Get the filename from the filename parameter

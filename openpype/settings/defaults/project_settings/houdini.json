@@ -81,6 +81,11 @@
         }
     },
     "publish": {
+        "CollectChunkSize": {
+            "enabled": true,
+            "optional": true,
+            "chunk_size": 999999
+        },
         "ValidateWorkfilePaths": {
             "enabled": true,
             "optional": true,

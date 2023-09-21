@@ -107,6 +107,12 @@ DEFAULT_HOUDINI_CREATE_SETTINGS = {
 
 
 # Publish Plugins
+class CollectChunkSizeModel(BaseSettingsModel):
+    enabled: bool = Field(title="Enabled")
+    optional: bool = Field(title="Optional")
+    chunk_size: int = Field(title="Frame Per Task")
+
+
 class ValidateWorkfilePathsModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
@@ -127,6 +133,10 @@ class BasicValidateModel(BaseSettingsModel):
 
 
 class PublishPluginsModel(BaseSettingsModel):
+    CollectChunkSize: CollectChunkSizeModel = Field(
+        default_factory=CollectChunkSizeModel,
+        title="Collect Chunk Size"
+    )
     ValidateWorkfilePaths: ValidateWorkfilePathsModel = Field(
         default_factory=ValidateWorkfilePathsModel,
         title="Validate workfile paths settings.")
@@ -139,6 +149,11 @@ class PublishPluginsModel(BaseSettingsModel):
 
 
 DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
+    "CollectChunkSize": {
+        "enabled": True,
+        "optional": True,
+        "chunk_size": 999999
+    },
     "ValidateWorkfilePaths": {
         "enabled": True,
         "optional": True,
