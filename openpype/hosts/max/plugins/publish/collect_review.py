@@ -47,7 +47,7 @@ class CollectReview(pyblish.api.InstancePlugin,
 
         if int(get_max_version()) >= 2024:
             colorspace_mgr = rt.ColorPipelineMgr      # noqa
-            display =  next(
+            display = next(
                 (display for display in colorspace_mgr.GetDisplayList()))
             view_transform = next(
                 (view for view in colorspace_mgr.GetViewList(display)))
