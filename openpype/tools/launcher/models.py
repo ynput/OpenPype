@@ -4,6 +4,7 @@ import copy
 import logging
 import collections
 import time
+from typing import List, Dict
 
 import appdirs
 from qtpy import QtCore, QtGui
@@ -71,6 +72,10 @@ class ActionModel(QtGui.QStandardItemModel):
             _ = self.launcher_registry.get_item("force_not_open_workfile")
         except ValueError:
             self.launcher_registry.set_item("force_not_open_workfile", [])
+        try:
+            _ = self.launcher_registry.get_item("force_download_last_workfile")
+        except ValueError:
+            self.launcher_registry.set_item("force_download_last_workfile", [])
 
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
@@ -227,15 +232,26 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.beginResetModel()
 
-        stored = self.launcher_registry.get_item("force_not_open_workfile")
+        stored_force_not_open_workfile = self.launcher_registry.get_item(
+            "force_not_open_workfile"
+        )
+        stored_force_download_last_workfile = self.launcher_registry.get_item(
+            "force_download_last_workfile"
+        )
         items = []
         for order in sorted(items_by_order.keys()):
             for item in items_by_order[order]:
                 item_id = str(uuid.uuid4())
                 item.setData(item_id, ACTION_ID_ROLE)
 
-                if self.is_force_not_open_workfile(item,
-                                                   stored):
+                if (
+                    self.is_force_not_open_workfile(
+                        item, stored_force_not_open_workfile
+                    )
+                    or self.is_force_not_open_workfile(
+                        item, stored_force_download_last_workfile
+                    )
+                ):
                     self.change_action_item(item, True)
 
                 self.items_by_id[item_id] = item
