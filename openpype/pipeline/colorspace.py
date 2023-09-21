@@ -353,29 +353,28 @@ def parse_colorspace_from_filepath(
             "Must provide `config_path` if `colorspaces` is not provided."
         )
 
-    colorspace_name = None
     colorspaces = colorspaces or get_ocio_config_colorspaces(config_path)
-    underscored_colorspaces = list({
-        key.replace(" ", "_") for key in colorspaces
+    underscored_colorspaces = {
+        key.replace(" ", "_"): key for key in colorspaces
         if " " in key
-    })
+    }
 
     # match colorspace from  filepath
     regex_pattern = _get_colorspace_match_regex(
-        colorspaces + underscored_colorspaces)
+        colorspaces + underscored_colorspaces.keys())
     match = regex_pattern.search(filepath)
     colorspace = match.group(0) if match else None
 
     if colorspace:
-        colorspace_name = colorspace
+        return colorspace
 
-    if not colorspace_name:
-        log.info("No matching colorspace in config '{}' for path: '{}'".format(
-            config_path, filepath
-        ))
-        return None
+    if colorspace in underscored_colorspaces:
+        return underscored_colorspaces[colorspace]
 
-    return colorspace_name
+    log.info("No matching colorspace in config '{}' for path: '{}'".format(
+        config_path, filepath
+    ))
+    return None
 
 
 def validate_imageio_colorspace_in_config(config_path, colorspace_name):
