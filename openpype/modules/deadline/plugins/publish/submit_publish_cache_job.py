@@ -70,9 +70,14 @@ class ProcessSubmittedCacheJobOnFarm(pyblish.api.InstancePlugin,
     ]
 
     environ_keys = [
+        "FTRACK_API_USER",
+        "FTRACK_API_KEY",
+        "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
         "OPENPYPE_SG_USER",
+        "KITSU_LOGIN",
+        "KITSU_PWD"
     ]
 
     # custom deadline attributes

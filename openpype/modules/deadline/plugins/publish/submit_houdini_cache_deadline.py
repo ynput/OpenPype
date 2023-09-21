@@ -108,6 +108,9 @@ class HoudiniCacheSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         job_info.Group = attr_values.get("group", self.group)
 
         keys = [
+            "FTRACK_API_KEY",
+            "FTRACK_API_USER",
+            "FTRACK_SERVER",
             "OPENPYPE_SG_USER",
             "AVALON_PROJECT",
             "AVALON_ASSET",
