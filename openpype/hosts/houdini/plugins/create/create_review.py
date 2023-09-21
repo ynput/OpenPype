@@ -3,6 +3,9 @@
 from openpype.hosts.houdini.api import plugin
 from openpype.lib import EnumDef, BoolDef, NumberDef
 
+import os
+import hou
+
 
 class CreateReview(plugin.HoudiniCreator):
     """Review with OpenGL ROP"""
@@ -13,7 +16,6 @@ class CreateReview(plugin.HoudiniCreator):
     icon = "video-camera"
 
     def create(self, subset_name, instance_data, pre_create_data):
-        import hou
 
         instance_data.pop("active", None)
         instance_data.update({"node_type": "opengl"})
@@ -82,6 +84,11 @@ class CreateReview(plugin.HoudiniCreator):
 
         instance_node.setParms(parms)
 
+        # Set OCIO Colorspace to the default output colorspace
+        #  if there's OCIO
+        if os.getenv("OCIO"):
+            self.set_colorcorrect_to_default_view_space(instance_node)
+
         to_lock = ["id", "family"]
 
         self.lock_parameters(instance_node, to_lock)
@@ -123,3 +130,23 @@ class CreateReview(plugin.HoudiniCreator):
                       minimum=0.0001,
                       decimals=3)
         ]
+
+    def set_colorcorrect_to_default_view_space(self,
+                                               instance_node):
+        """Set ociocolorspace to the default output space."""
+        from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
+
+        # set Color Correction parameter to OpenColorIO
+        instance_node.setParms({"colorcorrect": 2})
+
+        # Get default view space for ociocolorspace parm.
+        default_view_space = get_default_display_view_colorspace()
+        instance_node.setParms(
+            {"ociocolorspace": default_view_space}
+        )
+
+        self.log.debug(
+            "'OCIO Colorspace' parm on '{}' has been set to "
+            "the default view color space '{}'"
+            .format(instance_node, default_view_space)
+        )

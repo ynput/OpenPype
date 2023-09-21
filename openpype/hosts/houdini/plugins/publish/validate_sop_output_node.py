@@ -24,7 +24,7 @@ class ValidateSopOutputNode(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     families = ["pointcache", "vdbcache"]
     hosts = ["houdini"]
-    label = "Validate Output Node"
+    label = "Validate Output Node (SOP)"
     actions = [SelectROPAction, SelectInvalidAction]
 
     def process(self, instance):
