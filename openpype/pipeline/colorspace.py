@@ -483,7 +483,7 @@ def compatibility_check_config_version(config_path, major=1, minor=None):
             CachedData.config_version_data[config_path] = \
                 _get_wrapped_with_subprocess(
                     "config", "get_version", config_path=config_path
-                )
+            )
 
     # check major version
     if CachedData.config_version_data[config_path]["major"] != major:
