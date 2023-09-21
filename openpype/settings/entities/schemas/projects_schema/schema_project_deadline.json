@@ -534,6 +534,46 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "ProcessSubmittedCacheJobOnFarm",
+                    "label": "ProcessSubmittedCacheJobOnFarm",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_department",
+                            "label": "Deadline department"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool",
+                            "label": "Deadline Pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_group",
+                            "label": "Deadline Group"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_chunk_size",
+                            "label": "Deadline Chunk Size"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_priority",
+                            "label": "Deadline Priotity"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "ProcessSubmittedJobOnFarm",
                     "label": "ProcessSubmittedJobOnFarm",
                     "checkbox_key": "enabled",

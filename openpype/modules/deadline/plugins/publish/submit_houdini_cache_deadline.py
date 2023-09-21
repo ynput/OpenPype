@@ -128,8 +128,6 @@ class HoudiniCacheSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
             if not value:
                 continue
             job_info.EnvironmentKeyValue[key] = value
-        # to recognize render jobs
-        job_info.add_render_job_env_var()
 
         return job_info
 
