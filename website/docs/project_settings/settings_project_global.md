@@ -343,6 +343,10 @@ One of the key advantages of this feature is that it allows users to choose the 
 
 In some cases, these DCCs (Nuke, Houdini, Maya) automatically add a rendering path during the creation stage, which is then used in publishing. Creators and extractors of such DCCs need to use these profiles to fill paths in DCC's nodes to use this functionality.
 
+:::note
+Maya's setting `project_settings/maya/RenderSettings/default_render_image_folder` is be overwritten by the custom staging dir.
+:::
+
 The custom staging folder uses a path template configured in `project_anatomy/templates/others` with `transient` being a default example path that could be used. The template requires a 'folder' key for it to be usable as custom staging folder.
 
 ##### Known issues
