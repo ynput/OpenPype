@@ -3,7 +3,7 @@
 import pyblish.api
 
 from pymxs import runtime as rt
-from openpype.lib import BoolDef, EnumDef
+from openpype.lib import BoolDef
 from openpype.hosts.max.api.lib import get_max_version
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
@@ -46,10 +46,9 @@ class CollectReview(pyblish.api.InstancePlugin,
         }
 
         if int(get_max_version()) >= 2024:
-            display_view_transform = attr_values.get(
-                "ocio_display_view_transform")
-            display, view_transform = display_view_transform.split("||", 1)
-            colorspace_mgr = rt.ColorPipelineMgr
+            colorspace_mgr = rt.ColorPipelineMgr      # noqa
+            display =  next((display for display in colorspace_mgr.GetDisplayList()))
+            view_transform = next((view for view in colorspace_mgr.GetViewList(display)))
             instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
             instance.data["colorspaceDisplay"] = display
             instance.data["colorspaceView"] = view_transform
@@ -65,28 +64,7 @@ class CollectReview(pyblish.api.InstancePlugin,
 
     @classmethod
     def get_attribute_defs(cls):
-        default_value = ""
-        display_views = []
-        if int(get_max_version()) >= 2024:
-            colorspace_mgr = rt.ColorPipelineMgr
-            displays = colorspace_mgr.GetDisplayList()
-            for display in sorted(displays):
-                views = colorspace_mgr.GetViewList(display)
-                for view in sorted(views):
-                    display_views.append({
-                        "value": "||".join((display, view))
-                    })
-                    if display == "ACES" and view == "sRGB":
-                        default_value = "{0}||{1}".format(
-                            display, view
-                        )
-        else:
-            display_views = ["sRGB||ACES 1.0 SDR-video"]
         return [
-            EnumDef("ocio_display_view_transform",
-                    items=display_views,
-                    default=default_value,
-                    label="OCIO Displays and Views"),
             BoolDef("dspGeometry",
                     label="Geometry",
                     default=True),
