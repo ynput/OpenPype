@@ -185,6 +185,8 @@ def update_op_assets(
             tasks_list = gazu.task.all_tasks_for_asset(item)
         elif item_type == "Shot":
             tasks_list = gazu.task.all_tasks_for_shot(item)
+        elif item_type == "Sequence":
+            tasks_list = gazu.task.all_tasks_for_sequence(item)
         item_data["tasks"] = {
             t["task_type_name"]: {
                 "type": t["task_type_name"],
