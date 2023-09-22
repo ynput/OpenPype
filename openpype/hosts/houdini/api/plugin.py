@@ -168,7 +168,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
     """Base class for most of the Houdini creator plugins."""
     selected_nodes = []
     settings_name = None
-    _add_self_publish_button = False
+    add_publish_button = False
 
     def create(self, subset_name, instance_data, pre_create_data):
         try:
@@ -196,7 +196,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             self._add_instance_to_context(instance)
             imprint(instance_node, instance.data_to_store())
 
-            if self._add_self_publish_button:
+            if self.add_publish_button:
                 add_self_publish_button(instance_node)
 
             return instance
@@ -305,7 +305,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
         """Method called on initialization of plugin to apply settings."""
 
         # Apply General Settings
-        self._add_self_publish_button = \
+        self.add_publish_button = \
             project_settings["houdini"]["general"]["add_self_publish_button"]
 
         # Apply Creator Settings

@@ -776,6 +776,16 @@ def publisher_show_and_publish(comment=""):
 def self_publish():
     """Self publish from ROP nodes."""
 
+    result, comment = hou.ui.readInput(
+        "Add Publish Comment",
+        buttons=("Publish", "Cancel"),
+        title="Publish comment",
+        close_choice=1
+    )
+
+    if result:
+        return
+
     current_node = hou.node(".").path()
 
     host = registered_host()
@@ -792,18 +802,11 @@ def self_publish():
 
     context.save_changes()
 
-    result, comment = hou.ui.readInput(
-        "Add Publish Note",
-        buttons=("Ok", "Cancel"),
-        title="Publish Note",
-        close_choice=1
-    )
-
     publisher_show_and_publish(comment)
 
 
 def add_self_publish_button(node):
-    """Adds a self publish button in the rop node."""
+    """Adds a self publish button to the rop node."""
 
     label = os.environ.get("AVALON_LABEL") or "OpenPype"
 
