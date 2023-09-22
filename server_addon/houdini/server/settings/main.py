@@ -81,7 +81,7 @@ class HoudiniSettings(BaseSettingsModel):
 
 
 DEFAULT_VALUES = {
-    "general" : DEFAULT_GENERAL_SETTINGS,
+    "general": DEFAULT_GENERAL_SETTINGS,
     "shelves": [],
     "create": DEFAULT_HOUDINI_CREATE_SETTINGS,
     "publish": DEFAULT_HOUDINI_PUBLISH_SETTINGS
