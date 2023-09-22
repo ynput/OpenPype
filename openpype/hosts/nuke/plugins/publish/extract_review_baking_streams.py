@@ -16,7 +16,7 @@ class ExtractReviewDataBakingStreams(publish.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder + 0.01
-    label = "Extract Review Data Mov"
+    label = "Extract Review Data Baking Streams"
 
     families = ["review"]
     hosts = ["nuke"]
@@ -24,6 +24,34 @@ class ExtractReviewDataBakingStreams(publish.Extractor):
     # presets
     viewer_lut_raw = None
     outputs = {}
+
+    @classmethod
+    def apply_settings(cls, project_settings):
+        """just in case there are some old presets
+        in deprecrated ExtractReviewDataMov Plugins
+        """
+        nuke_publish = project_settings["nuke"]["publish"]
+        deprecrated_review_settings = nuke_publish["ExtractReviewDataMov"]
+        current_review_settings = (
+            nuke_publish["ExtractReviewDataBakingStreams"]
+        )
+        if deprecrated_review_settings["viewer_lut_raw"] == (
+            current_review_settings["viewer_lut_raw"]
+        ):
+            cls.viewer_lut_raw = (
+                current_review_settings["viewer_lut_raw"]
+            )
+        else:
+            cls.viewer_lut_raw = (
+                deprecrated_review_settings["viewer_lut_raw"]
+            )
+
+        if deprecrated_review_settings["outputs"] == (
+            current_review_settings["outputs"]
+        ):
+            cls.outputs = current_review_settings["outputs"]
+        else:
+            cls.outputs = deprecrated_review_settings["outputs"]
 
     def process(self, instance):
         families = set(instance.data["families"])

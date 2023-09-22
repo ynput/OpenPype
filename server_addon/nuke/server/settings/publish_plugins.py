@@ -165,6 +165,18 @@ class BakingStreamModel(BaseSettingsModel):
         title="Custom tags", default_factory=list)
 
 
+class ExtractReviewDataMovModel(BaseSettingsModel):
+    """[deprecated] use Extract Review Data Baking
+    Streams instead.
+    """
+    enabled: bool = Field(title="Enabled")
+    viewer_lut_raw: bool = Field(title="Viewer lut raw")
+    outputs: list[BakingStreamModel] = Field(
+        default_factory=list,
+        title="Baking streams"
+    )
+
+
 class ExtractReviewBakingStreamsModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     viewer_lut_raw: bool = Field(title="Viewer lut raw")
@@ -265,6 +277,10 @@ class PublishPuginsModel(BaseSettingsModel):
     ExtractReviewDataLut: ExtractReviewDataLutModel = Field(
         title="Extract Review Data Lut",
         default_factory=ExtractReviewDataLutModel
+    )
+    ExtractReviewDataMov: ExtractReviewDataMovModel = Field(
+        title="Extract Review Data Mov",
+        default_factory=ExtractReviewDataMovModel
     )
     ExtractReviewDataBakingStreams: ExtractReviewBakingStreamsModel = Field(
         title="Extract Review Data Baking Streams",
@@ -409,6 +425,61 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
     },
     "ExtractReviewDataLut": {
         "enabled": False
+    },
+    "ExtractReviewDataMov": {
+        "enabled": True,
+        "viewer_lut_raw": False,
+        "outputs": [
+            {
+                "name": "baking",
+                "filter": {
+                    "task_types": [],
+                    "product_types": [],
+                    "product_names": []
+                },
+                "read_raw": False,
+                "viewer_process_override": "",
+                "bake_viewer_process": True,
+                "bake_viewer_input_process": True,
+                "reformat_nodes_config": {
+                    "enabled": False,
+                    "reposition_nodes": [
+                        {
+                            "node_class": "Reformat",
+                            "knobs": [
+                                {
+                                    "type": "text",
+                                    "name": "type",
+                                    "text": "to format"
+                                },
+                                {
+                                    "type": "text",
+                                    "name": "format",
+                                    "text": "HD_1080"
+                                },
+                                {
+                                    "type": "text",
+                                    "name": "filter",
+                                    "text": "Lanczos6"
+                                },
+                                {
+                                    "type": "bool",
+                                    "name": "black_outside",
+                                    "boolean": True
+                                },
+                                {
+                                    "type": "bool",
+                                    "name": "pbb",
+                                    "boolean": False
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "extension": "mov",
+                "add_custom_tags": []
+            }
+        ]
     },
     "ExtractReviewDataBakingStreams": {
         "enabled": True,

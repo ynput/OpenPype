@@ -804,8 +804,13 @@ class ExporterReviewMov(ExporterReview):
         self.log.info("File info was set...")
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
-        if self.ext != VIDEO_EXTENSIONS:
-            self.file = os.path.basename(self.path_in)
+        if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
+            filename = os.path.basename(self.path_in)
+            self.file = filename
+            if ".{}".format(self.ext) not in self.file:
+                wrg_ext = filename.split(".")[-1]
+                self.file = filename.replace(wrg_ext, self.ext)
+
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
 
@@ -926,7 +931,7 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug("Path: {}".format(self.path))
         write_node["file"].setValue(str(self.path))
         write_node["file_type"].setValue(str(self.ext))
-
+        self.log.debug("{0}".format(self.ext))
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
         # TODO shouldn't this come from settings on outputs?
         try:
