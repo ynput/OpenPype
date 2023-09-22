@@ -653,6 +653,57 @@ def get_color_management_preferences():
     }
 
 
+def get_obj_node_output(obj_node):
+    """Find output node.
+
+    If the node has any output node return the
+    output node with the minimum `outputidx`.
+    When no output is present return the node
+    with the display flag set. If no output node is
+    detected then None is returned.
+
+    Arguments:
+        node (hou.Node): The node to retrieve a single
+            the output node for.
+
+    Returns:
+        Optional[hou.Node]: The child output node.
+
+    """
+
+    outputs = obj_node.subnetOutputs()
+    if not outputs:
+        return
+
+    elif len(outputs) == 1:
+        return outputs[0]
+
+    else:
+        return min(outputs,
+                   key=lambda node: node.evalParm('outputidx'))
+
+
+def get_output_children(output_node, include_sops=True):
+    """Recursively return a list of all output nodes
+    contained in this node including this node.
+
+    It works in a similar manner to output_node.allNodes().
+    """
+    out_list = [output_node]
+
+    if output_node.childTypeCategory() == hou.objNodeTypeCategory():
+        for child in output_node.children():
+            out_list += get_output_children(child, include_sops=include_sops)
+
+    elif include_sops and \
+            output_node.childTypeCategory() == hou.sopNodeTypeCategory():
+        out = get_obj_node_output(output_node)
+        if out:
+            out_list += [out]
+
+    return out_list
+
+
 def get_resolution_from_doc(doc):
     """Get resolution from the given asset document. """
 
