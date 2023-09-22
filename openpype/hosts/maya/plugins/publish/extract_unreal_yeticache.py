@@ -1,5 +1,4 @@
 import os
-import json
 
 from maya import cmds
 
