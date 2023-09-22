@@ -808,8 +808,8 @@ class ExporterReviewMov(ExporterReview):
             filename = os.path.basename(self.path_in)
             self.file = filename
             if ".{}".format(self.ext) not in self.file:
-                wrg_ext = filename.split(".")[-1]
-                self.file = filename.replace(wrg_ext, self.ext)
+                original_ext = filename.split(".")[-1]
+                self.file = filename.replace(original_ext, self.ext)
 
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
