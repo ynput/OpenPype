@@ -240,23 +240,65 @@ class HierarchyModel(object):
             self._refresh_tasks_cache(project_name, folder_id, sender)
         return task_cache.get_data()
 
+    def get_folder_entities(self, project_name, folder_ids):
+        """Get folder entities by ids.
+
+        Args:
+            project_name (str): Project name.
+            folder_ids (Iterable[str]): Folder ids.
+
+        Returns:
+            dict[str, Any]: Folder entities by id.
+        """
+
+        output = {}
+        folder_ids = set(folder_ids)
+        if not project_name or not folder_ids:
+            return output
+
+        folder_ids_to_query = set()
+        for folder_id in folder_ids:
+            cache = self._folders_by_id[project_name][folder_id]
+            if cache.is_valid:
+                output[folder_id] = cache.get_data()
+            elif folder_id:
+                folder_ids_to_query.add(folder_id)
+            else:
+                output[folder_id] = None
+        self._query_folder_entities(project_name, folder_ids_to_query)
+        for folder_id in folder_ids_to_query:
+            cache = self._folders_by_id[project_name][folder_id]
+            output[folder_id] = cache.get_data()
+        return output
+
     def get_folder_entity(self, project_name, folder_id):
-        cache = self._folders_by_id[project_name][folder_id]
-        if not cache.is_valid:
-            entity = None
-            if folder_id:
-                entity = ayon_api.get_folder_by_id(project_name, folder_id)
-            cache.update_data(entity)
-        return cache.get_data()
+        output = self.get_folder_entities(project_name, {folder_id})
+        return output[folder_id]
+
+    def get_task_entities(self, project_name, task_ids):
+        output = {}
+        task_ids = set(task_ids)
+        if not project_name or not task_ids:
+            return output
+
+        task_ids_to_query = set()
+        for task_id in task_ids:
+            cache = self._tasks_by_id[project_name][task_id]
+            if cache.is_valid:
+                output[task_id] = cache.get_data()
+            elif task_id:
+                task_ids_to_query.add(task_id)
+            else:
+                output[task_id] = None
+        self._query_task_entities(project_name, task_ids_to_query)
+        for task_id in task_ids_to_query:
+            cache = self._tasks_by_id[project_name][task_id]
+            output[task_id] = cache.get_data()
+        return output
 
     def get_task_entity(self, project_name, task_id):
-        cache = self._tasks_by_id[project_name][task_id]
-        if not cache.is_valid:
-            entity = None
-            if task_id:
-                entity = ayon_api.get_task_by_id(project_name, task_id)
-            cache.update_data(entity)
-        return cache.get_data()
+        output = self.get_task_entities(project_name, {task_id})
+        return output[task_id]
 
     @contextlib.contextmanager
     def _folder_refresh_event_manager(self, project_name, sender):
@@ -325,6 +367,25 @@ class HierarchyModel(object):
             folder_items[folder_item.entity_id] = folder_item
             hierachy_queue.extend(item["children"] or [])
         return folder_items
+
+    def _query_folder_entities(self, project_name, folder_ids):
+        if not project_name or not folder_ids:
+            return
+        project_cache = self._folders_by_id[project_name]
+        folders = ayon_api.get_folders(project_name, folder_ids=folder_ids)
+        for folder in folders:
+            folder_id = folder["id"]
+            project_cache[folder_id].update_data(folder)
+
+    def _query_task_entities(self, project_name, task_ids):
+        if not project_name or not task_ids:
+            return
+
+        project_cache = self._tasks_by_id[project_name]
+        tasks = ayon_api.get_folders(project_name, task_ids=task_ids)
+        for task in tasks:
+            task_id = task["id"]
+            project_cache[task_id].update_data(task)
 
     def _refresh_tasks_cache(self, project_name, folder_id, sender=None):
         if folder_id in self._tasks_refreshing:

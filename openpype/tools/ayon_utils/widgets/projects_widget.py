@@ -19,6 +19,11 @@ class ProjectsModel(QtGui.QStandardItemModel):
         self._empty_item = None
         self._empty_item_added = False
 
+        self._select_item = None
+        self._select_item_added = False
+
+        self._select_item_visible = None
+
         self._is_refreshing = False
         self._refresh_thread = None
 
@@ -31,6 +36,12 @@ class ProjectsModel(QtGui.QStandardItemModel):
 
     def has_content(self):
         return len(self._project_items) > 0
+
+    def set_select_item_visible(self, visible):
+        if self._select_item_visible is visible:
+            return
+        self._select_item_visible = visible
+        self._add_select_item()
 
     def _add_empty_item(self):
         item = self._get_empty_item()
@@ -54,6 +65,29 @@ class ProjectsModel(QtGui.QStandardItemModel):
             item.setFlags(QtCore.Qt.NoItemFlags)
             self._empty_item = item
         return self._empty_item
+
+    def _add_select_item(self):
+        item = self._get_select_item()
+        if not self._select_item_added:
+            root_item = self.invisibleRootItem()
+            root_item.appendRow(item)
+            self._select_item_added = True
+
+    def _remove_select_item(self):
+        if not self._select_item_added:
+            return
+
+        root_item = self.invisibleRootItem()
+        item = self._get_select_item()
+        root_item.takeRow(item.row())
+        self._select_item_added = False
+
+    def _get_select_item(self):
+        if self._select_item is None:
+            item = QtGui.QStandardItem("< Select project >")
+            item.setEditable(False)
+            self._select_item = item
+        return self._select_item
 
     def _refresh(self):
         if self._is_refreshing:
@@ -88,6 +122,7 @@ class ProjectsModel(QtGui.QStandardItemModel):
             item = self._project_items.get(project_name)
             if item is None:
                 item = QtGui.QStandardItem()
+                item.setEditable(False)
                 new_items.append(item)
             icon = get_qt_icon(project_item.icon)
             item.setData(project_name, QtCore.Qt.DisplayRole)
@@ -137,6 +172,9 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
 
     def filterAcceptsRow(self, source_row, source_parent):
         index = self.sourceModel().index(source_row, 0, source_parent)
+        project_name = index.data(PROJECT_NAME_ROLE)
+        if project_name is None:
+            return True
         string_pattern = self.filterRegularExpression().pattern()
         if (
             self._filter_inactive
@@ -145,9 +183,7 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
             return False
 
         if string_pattern:
-            project_name = index.data(PROJECT_IS_ACTIVE_ROLE)
-            if project_name is not None:
-                return string_pattern.lower() in project_name.lower()
+            return string_pattern.lower() in project_name.lower()
 
         return super(ProjectSortFilterProxy, self).filterAcceptsRow(
             source_row, source_parent
@@ -159,10 +195,10 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
     def is_active_filter_enabled(self):
         return self._filter_inactive
 
-    def set_active_filter_enabled(self, value):
-        if self._filter_inactive == value:
+    def set_active_filter_enabled(self, enabled):
+        if self._filter_inactive == enabled:
             return
-        self._filter_inactive = value
+        self._filter_inactive = enabled
         self.invalidateFilter()
 
 
@@ -263,6 +299,15 @@ class ProjectsCombobox(QtWidgets.QWidget):
         if idx < 0:
             return None
         return self._projects_combobox.itemData(idx, PROJECT_NAME_ROLE)
+
+    def set_select_item_visible(self, visible):
+        self._projects_model.set_select_item_visible(visible)
+
+    def is_active_filter_enabled(self):
+        return self._projects_proxy_model.is_active_filter_enabled()
+
+    def set_active_filter_enabled(self, enabled):
+        return self._projects_proxy_model.set_active_filter_enabled(enabled)
 
     def _on_current_index_changed(self, idx):
         if not self._listen_selection_change:

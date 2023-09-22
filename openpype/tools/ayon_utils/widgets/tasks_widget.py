@@ -5,7 +5,7 @@ from openpype.tools.utils import DeselectableTreeView
 
 from .utils import RefreshThread, get_qt_icon
 
-SENDER_NAME = "qt_tasks_model"
+TASKS_MODEL_SENDER_NAME = "qt_tasks_model"
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
 PARENT_ID_ROLE = QtCore.Qt.UserRole + 2
 ITEM_NAME_ROLE = QtCore.Qt.UserRole + 3
@@ -362,7 +362,7 @@ class TasksWidget(QtWidgets.QWidget):
 
         # Refresh only if current folder id is the same
         if (
-            event["sender"] == SENDER_NAME
+            event["sender"] == TASKS_MODEL_SENDER_NAME
             or event["folder_id"] != self._selected_folder_id
         ):
             return

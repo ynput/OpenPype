@@ -9,7 +9,7 @@ from openpype.tools.utils import (
 
 from .utils import RefreshThread, get_qt_icon
 
-SENDER_NAME = "qt_folders_model"
+FOLDERS_MODEL_SENDER_NAME = "qt_folders_model"
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
 ITEM_NAME_ROLE = QtCore.Qt.UserRole + 2
 
@@ -112,7 +112,7 @@ class FoldersModel(QtGui.QStandardItemModel):
             project_name,
             self._controller.get_folder_items,
             project_name,
-            SENDER_NAME
+            FOLDERS_MODEL_SENDER_NAME
         )
         self._current_refresh_thread = thread
         self._refresh_threads[thread.id] = thread
@@ -141,6 +141,21 @@ class FoldersModel(QtGui.QStandardItemModel):
             return
 
         self._fill_items(thread.get_result())
+
+    def _fill_item_data(self, item, folder_item):
+        """
+
+        Args:
+            item (QtGui.QStandardItem): Item to fill data.
+            folder_item (FolderItem): Folder item.
+        """
+
+        icon = get_qt_icon(folder_item.icon)
+        item.setData(folder_item.entity_id, ITEM_ID_ROLE)
+        item.setData(folder_item.name, ITEM_NAME_ROLE)
+        item.setData(folder_item.label, QtCore.Qt.DisplayRole)
+        item.setData(icon, QtCore.Qt.DecorationRole)
+
 
     def _fill_items(self, folder_items_by_id):
         if not folder_items_by_id:
@@ -195,11 +210,7 @@ class FoldersModel(QtGui.QStandardItemModel):
                 else:
                     is_new = self._parent_id_by_id[item_id] != parent_id
 
-                icon = get_qt_icon(folder_item.icon)
-                item.setData(item_id, ITEM_ID_ROLE)
-                item.setData(folder_item.name, ITEM_NAME_ROLE)
-                item.setData(folder_item.label, QtCore.Qt.DisplayRole)
-                item.setData(icon, QtCore.Qt.DecorationRole)
+                self._fill_item_data(item, folder_item)
                 if is_new:
                     new_items.append(item)
                 self._items_by_id[item_id] = item
@@ -320,7 +331,7 @@ class FoldersWidget(QtWidgets.QWidget):
         self._folders_model.set_project_name(project_name)
 
     def _on_folders_refresh_finished(self, event):
-        if event["sender"] != SENDER_NAME:
+        if event["sender"] != FOLDERS_MODEL_SENDER_NAME:
             self._set_project_name(event["project_name"])
 
     def _on_controller_refresh(self):
