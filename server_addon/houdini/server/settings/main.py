@@ -5,6 +5,10 @@ from ayon_server.settings import (
     MultiplatformPathListModel,
 )
 
+from .general import (
+    GeneralSettingsModel,
+    DEFAULT_GENERAL_SETTINGS
+)
 from .imageio import HoudiniImageIOModel
 from .publish_plugins import (
     PublishPluginsModel,
@@ -52,6 +56,10 @@ class ShelvesModel(BaseSettingsModel):
 
 
 class HoudiniSettings(BaseSettingsModel):
+    general: GeneralSettingsModel = Field(
+        default_factory=GeneralSettingsModel,
+        title="General"
+    )
     imageio: HoudiniImageIOModel = Field(
         default_factory=HoudiniImageIOModel,
         title="Color Management (ImageIO)"
@@ -73,6 +81,7 @@ class HoudiniSettings(BaseSettingsModel):
 
 
 DEFAULT_VALUES = {
+    "general" : DEFAULT_GENERAL_SETTINGS,
     "shelves": [],
     "create": DEFAULT_HOUDINI_CREATE_SETTINGS,
     "publish": DEFAULT_HOUDINI_PUBLISH_SETTINGS

@@ -1,0 +1,14 @@
+{
+    "type": "dict",
+    "key": "general",
+    "label": "General",
+    "collapsible": true,
+    "is_group": true,
+    "children": [
+        {
+            "type": "boolean",
+            "key": "add_self_publish_button",
+            "label": "Add Self Publish Button"
+        }
+    ]
+}

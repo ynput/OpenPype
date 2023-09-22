@@ -6,6 +6,10 @@
     "is_file": true,
     "children": [
         {
+            "type": "schema",
+            "name": "schema_houdini_general"
+        },
+        {
             "key": "imageio",
             "type": "dict",
             "label": "Color Management (OCIO managed)",

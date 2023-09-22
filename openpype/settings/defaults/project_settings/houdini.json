@@ -1,4 +1,7 @@
 {
+    "general": {
+        "add_self_publish_button": false
+    },
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {
