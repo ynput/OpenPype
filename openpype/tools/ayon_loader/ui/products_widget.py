@@ -1,4 +1,4 @@
-from qtpy import QtWidgets
+from qtpy import QtWidgets, QtCore
 
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 from openpype.tools.utils import (
@@ -56,9 +56,16 @@ class ProductsWidget(QtWidgets.QWidget):
         self._controller = controller
 
         products_view = DeselectableTreeView(self)
+        # TODO - define custom object name in style
+        products_view.setObjectName("SubsetView")
         products_view.setSelectionMode(
             QtWidgets.QAbstractItemView.ExtendedSelection
         )
+        products_view.setAllColumnsShowFocus(True)
+        # TODO - add context menu
+        products_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        products_view.setSortingEnabled(True)
+        products_view.sortByColumn(1, QtCore.Qt.AscendingOrder)
         products_view.setAlternatingRowColors(True)
 
         products_model = ProductsModel(controller)

@@ -1,13 +1,16 @@
 import collections
 from qtpy import QtGui, QtCore
 
+from openpype.tools.ayon_utils.widgets import get_qt_icon
+
 PRODUCTS_MODEL_SENDER_NAME = "qt_products_model"
 
 FOLDER_LABEL_ROLE = QtCore.Qt.UserRole + 1
 FOLDER_ID_ROLE = QtCore.Qt.UserRole + 2
-PRODUCT_ID_ROLE = QtCore.Qt.UserRole + 6
-PRODUCT_NAME_ROLE = QtCore.Qt.UserRole + 7
-PRODUCT_TYPE_ROLE = QtCore.Qt.UserRole + 8
+PRODUCT_ID_ROLE = QtCore.Qt.UserRole + 5
+PRODUCT_NAME_ROLE = QtCore.Qt.UserRole + 6
+PRODUCT_TYPE_ROLE = QtCore.Qt.UserRole + 7
+PRODUCT_TYPE_ICON_ROLE = QtCore.Qt.UserRole + 8
 VERSION_ID_ROLE = QtCore.Qt.UserRole + 9
 VERSION_HERO_ROLE = QtCore.Qt.UserRole + 10
 VERSION_NAME_ROLE = QtCore.Qt.UserRole + 11
@@ -82,7 +85,10 @@ class ProductsModel(QtGui.QStandardItemModel):
             return super(ProductsModel, self).data(index, role)
 
         if role == QtCore.Qt.DecorationRole:
-            return None
+            if col == 1:
+                role = PRODUCT_TYPE_ICON_ROLE
+            else:
+                return None
 
         if (
             role == VERSION_NAME_EDIT_ROLE
@@ -101,7 +107,7 @@ class ProductsModel(QtGui.QStandardItemModel):
         if role == QtCore.Qt.DisplayRole:
             if not index.data(PRODUCT_ID_ROLE):
                 pass
-            elif col == col == self.version_col:
+            elif col == self.version_col:
                 role = VERSION_NAME_ROLE
             elif col == 1:
                 role = PRODUCT_TYPE_ROLE
@@ -230,10 +236,14 @@ class ProductsModel(QtGui.QStandardItemModel):
         if model_item is None:
             product_id = product_item.product_id
             model_item = QtGui.QStandardItem(product_item.product_name)
+            icon = get_qt_icon(product_item.product_icon)
+            product_type_icon = get_qt_icon(product_item.product_type_icon)
             model_item.setColumnCount(self.columnCount())
+            model_item.setData(icon, QtCore.Qt.DecorationRole)
             model_item.setData(product_id, PRODUCT_ID_ROLE)
             model_item.setData(product_item.product_name, PRODUCT_NAME_ROLE)
             model_item.setData(product_item.product_type, PRODUCT_TYPE_ROLE)
+            model_item.setData(product_type_icon, PRODUCT_TYPE_ICON_ROLE)
             model_item.setData(product_item.folder_id, FOLDER_ID_ROLE)
             model_item.setData(product_item.folder_label, FOLDER_LABEL_ROLE)
 

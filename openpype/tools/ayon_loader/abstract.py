@@ -81,17 +81,21 @@ class ProductItem:
         product_id,
         product_type,
         product_name,
+        product_icon,
+        product_type_icon,
+        group_name,
         folder_id,
         folder_label,
-        group_name,
-        version_items
+        version_items,
     ):
         self.product_id = product_id
         self.product_type = product_type
         self.product_name = product_name
+        self.product_icon = product_icon
+        self.product_type_icon = product_type_icon
+        self.group_name = group_name
         self.folder_id = folder_id
         self.folder_label = folder_label
-        self.group_name = group_name
         self.version_items = version_items
 
     def to_data(self):
@@ -99,9 +103,11 @@ class ProductItem:
             "product_id": self.product_id,
             "product_type": self.product_type,
             "product_name": self.product_name,
+            "product_icon": self.product_icon,
+            "product_type_icon": self.product_type_icon,
+            "group_name": self.group_name,
             "folder_id": self.folder_id,
             "folder_label": self.folder_label,
-            "group_name": self.group_name,
             "version_items": [
                 version_item.to_data()
                 for version_item in self.version_items

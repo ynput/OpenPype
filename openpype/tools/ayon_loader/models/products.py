@@ -4,6 +4,7 @@ import contextlib
 import arrow
 import ayon_api
 
+from openpype.style import get_default_entity_icon_color
 from openpype.tools.ayon_utils.models import NestedCacheItem
 from openpype.tools.ayon_loader.abstract import (
     VersionItem,
@@ -61,10 +62,23 @@ def version_item_from_entity(version):
     )
 
 
-def product_item_from_entity(product_entity, version_entities, folder_label):
+def product_item_from_entity(
+    product_entity,
+    version_entities,
+    product_type_items_by_name,
+    folder_label,
+):
     product_attribs = product_entity["attrib"]
     group = product_attribs.get("productGroup")
+    product_type = product_entity["productType"]
+    product_type_item = product_type_items_by_name[product_type]
+    product_type_icon = product_type_item.icon
 
+    product_icon = {
+        "type": "awesome-font",
+        "name": "fa.file-o",
+        "color": get_default_entity_icon_color(),
+    }
     version_items = [
         version_item_from_entity(version_entity)
         for version_entity in version_entities
@@ -72,11 +86,13 @@ def product_item_from_entity(product_entity, version_entities, folder_label):
 
     return ProductItem(
         product_id=product_entity["id"],
-        product_type=product_entity["productType"],
+        product_type=product_type,
         product_name=product_entity["name"],
+        product_icon=product_icon,
+        product_type_icon=product_type_icon,
+        group_name=group,
         folder_id=product_entity["folderId"],
         folder_label=folder_label,
-        group_name=group,
         version_items=version_items,
     )
 
@@ -171,6 +187,11 @@ class ProductsModel:
         if not project_name or not folder_ids:
             return
 
+        product_type_items = self.get_product_type_items(project_name)
+        product_type_items_by_name = {
+            product_type_item.name: product_type_item
+            for product_type_item in product_type_items
+        }
         with self._product_refresh_event_manager(
             project_name, folder_ids, sender
         ):
@@ -200,7 +221,10 @@ class ProductsModel:
                 if not versions:
                     continue
                 product_item = product_item_from_entity(
-                    product, versions, folder_item.label
+                    product,
+                    versions,
+                    product_type_items_by_name,
+                    folder_item.label,
                 )
                 items_by_folder_id[product_item.folder_id][product_id] = (
                     product_item
