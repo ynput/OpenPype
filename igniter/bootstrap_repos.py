@@ -589,7 +589,7 @@ class BootstrapRepos:
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [
-            "openpype", "schema", "LICENSE"
+            "openpype", "LICENSE"
         ]
 
         # dummy progress reporter
