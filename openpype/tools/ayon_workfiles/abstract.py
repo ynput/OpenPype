@@ -443,6 +443,16 @@ class AbstractWorkfilesBackend(AbstractWorkfilesCommon):
         pass
 
     @abstractmethod
+    def get_project_entity(self):
+        """Get current project entity.
+
+        Returns:
+            dict[str, Any]: Project entity data.
+        """
+
+        pass
+
+    @abstractmethod
     def get_folder_entity(self, folder_id):
         """Get folder entity by id.
 
