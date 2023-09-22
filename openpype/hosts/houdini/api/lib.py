@@ -773,8 +773,37 @@ def publisher_show_and_publish(comment=""):
     publisher_window.click_publish()
 
 
+def find_rop_input_dependencies(input_tuple):
+    """Self publish from ROP nodes.
+
+    Arguments:
+        tuple (hou.RopNode.inputDependencies) which can be a nested tuples
+        represents the input dependencies of the ROP node, consisting of ROPs,
+        and the frames that need to be be rendered prior to rendering the ROP.
+
+    Returns:
+        list of the RopNode.path() that can be found inside
+        the input tuple.
+    """
+
+    out_list = []
+    if isinstance(input_tuple[0], hou.RopNode):
+        return input_tuple[0].path()
+
+    if isinstance(input_tuple[0], tuple):
+        for item in input_tuple:
+            out_list.append(find_rop_input_dependencies(item))
+
+    return out_list
+
+
 def self_publish():
-    """Self publish from ROP nodes."""
+    """Self publish from ROP nodes.
+
+    Firstly, it gets the node and its dependencies.
+    Then, it deactivates all other ROPs
+    And finaly, it triggers the publishing action.
+    """
 
     result, comment = hou.ui.readInput(
         "Add Publish Comment",
@@ -786,7 +815,11 @@ def self_publish():
     if result:
         return
 
-    current_node = hou.node(".").path()
+    current_node = hou.node(".")
+    inputs_paths = find_rop_input_dependencies(
+        current_node.inputDependencies()
+    )
+    inputs_paths.append(current_node.path())
 
     host = registered_host()
     context = CreateContext(host, reset=True)
@@ -796,7 +829,7 @@ def self_publish():
         if not node_path:
             continue
 
-        active = current_node == node_path
+        active = node_path in inputs_paths
         instance["active"] = active
         hou.node(node_path).parm("active").set(active)
 
