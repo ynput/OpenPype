@@ -354,8 +354,12 @@ class ActionModel(QtGui.QStandardItemModel):
         """
         tooltip = item.data(QtCore.Qt.ToolTipRole)
         if checked:
-            # TODO: Force download last workfile tooltip.
-            tooltip += " (Not opening last workfile)"
+            tooltip += (
+                " (Not opening last workfile)" if (
+                    checkbox_role == FORCE_NOT_OPEN_WORKFILE_ROLE
+                )
+                else " (Force download last workfile)"
+            )
 
         item.setData(tooltip, QtCore.Qt.ToolTipRole)
         item.setData(checked, checkbox_role)
