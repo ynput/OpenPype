@@ -8,6 +8,7 @@ from openpype.tools.ayon_loader.control import LoaderController
 
 from .folders_widget import LoaderFoldersWidget
 from .products_widget import ProductsWidget
+from .product_types_widget import ProductTypesView
 
 
 class LoaderWindow(QtWidgets.QWidget):
@@ -35,11 +36,14 @@ class LoaderWindow(QtWidgets.QWidget):
 
         folders_widget = LoaderFoldersWidget(controller, context_widget)
 
+        product_types_widget = ProductTypesView(controller, context_widget)
+
         context_layout = QtWidgets.QVBoxLayout(context_widget)
         context_layout.setContentsMargins(0, 0, 0, 0)
         context_layout.addWidget(projects_combobox, 0)
         context_layout.addWidget(folders_filter_input, 0)
         context_layout.addWidget(folders_widget, 1)
+        context_layout.addWidget(product_types_widget, 1)
 
         # Subset + version selection item
         products_wrap_widget = QtWidgets.QWidget(main_splitter)
@@ -69,12 +73,18 @@ class LoaderWindow(QtWidgets.QWidget):
         show_timer.timeout.connect(self._on_show_timer)
 
         folders_filter_input.textChanged.connect(
-            self._on_folder_filete_change)
+            self._on_folder_filete_change
+        )
+        product_types_widget.filter_changed.connect(
+            self._on_product_type_filter_change
+        )
 
         self._projects_combobox = projects_combobox
 
         self._folders_filter_input = folders_filter_input
         self._folders_widget = folders_widget
+
+        self._product_types_widget = product_types_widget
 
         self._products_filter_input = products_filter_input
         self._products_widget = products_widget
@@ -117,3 +127,8 @@ class LoaderWindow(QtWidgets.QWidget):
 
     def _on_folder_filete_change(self, text):
         self._folders_widget.set_name_filer(text)
+
+    def _on_product_type_filter_change(self):
+        self._products_widget.set_product_type_filter(
+            self._product_types_widget.get_filter_info()
+        )

@@ -118,6 +118,24 @@ class ProductItem:
         return cls(**data)
 
 
+class ProductTypeItem:
+    def __init__(self, name, icon, checked):
+        self.name = name
+        self.icon = icon
+        self.checked = checked
+
+    def to_data(self):
+        return {
+            "name": self.name,
+            "icon": self.icon,
+            "checked": self.checked,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        return cls(**data)
+
+
 @six.add_metaclass(ABCMeta)
 class AbstractController:
     @abstractmethod
@@ -131,6 +149,10 @@ class AbstractController:
     # Model wrapper calls
     @abstractmethod
     def get_project_items(self):
+        pass
+
+    @abstractmethod
+    def get_product_type_items(self, project_name):
         pass
 
     # Selection model wrapper calls

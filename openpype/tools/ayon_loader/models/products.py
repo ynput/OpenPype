@@ -5,7 +5,11 @@ import arrow
 import ayon_api
 
 from openpype.tools.ayon_utils.models import NestedCacheItem
-from openpype.tools.ayon_loader.abstract import VersionItem, ProductItem
+from openpype.tools.ayon_loader.abstract import (
+    VersionItem,
+    ProductItem,
+    ProductTypeItem,
+)
 
 PRODUCTS_MODEL_SENDER = "products.model"
 
@@ -77,6 +81,19 @@ def product_item_from_entity(product_entity, version_entities, folder_label):
     )
 
 
+def product_type_item_from_data(product_type_data):
+    # TODO implement icon implementation
+    # icon = product_type_data["icon"]
+    # color = product_type_data["color"]
+    icon = {
+        "type": "awesome-font",
+        "name": "fa.folder",
+        "color": "#0091B2",
+    }
+    # TODO implement checked logic
+    return ProductTypeItem(product_type_data["name"], icon, True)
+
+
 class RepreItem:
     def __init__(self, repre_id, version_id):
         self.repre_id = repre_id
@@ -94,6 +111,8 @@ class ProductsModel:
     def __init__(self, controller):
         self._controller = controller
 
+        self._product_type_items_cache = NestedCacheItem(
+            levels=1, default_factory=list)
         self._product_items_cache = NestedCacheItem(
             levels=2, default_factory=dict)
         self._repre_items_cache = NestedCacheItem(
@@ -102,6 +121,16 @@ class ProductsModel:
     def reset(self):
         self._product_items_cache.reset()
         self._repre_items_cache.reset()
+
+    def get_product_type_items(self, project_name):
+        cache = self._product_type_items_cache[project_name]
+        if not cache.is_valid:
+            product_types = ayon_api.get_project_product_types(project_name)
+            cache.update_data([
+                product_type_item_from_data(product_type)
+                for product_type in product_types
+            ])
+        return cache.get_data()
 
     def get_product_items(self, project_name, folder_ids, sender):
         if not project_name or not folder_ids:

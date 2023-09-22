@@ -59,6 +59,9 @@ class LoaderController(AbstractController):
         return self._products_model.get_product_items(
             project_name, folder_ids, sender)
 
+    def get_product_type_items(self, project_name):
+        return self._products_model.get_product_type_items(project_name)
+
     def get_folder_entity(self, project_name, folder_id):
         self._hierarchy_model.get_folder_entity(project_name, folder_id)
 

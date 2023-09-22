@@ -40,11 +40,11 @@ class ProductsModel(QtGui.QStandardItemModel):
 
     version_col = column_labels.index("Version")
     published_time_col = column_labels.index("Time")
+    folders_label_col = column_labels.index("Folder")
 
     def __init__(self, controller):
         super(ProductsModel, self).__init__()
         self.setColumnCount(len(self.column_labels))
-        # self.setColumnCount(5)
         for idx, label in enumerate(self.column_labels):
             self.setHeaderData(idx, QtCore.Qt.Horizontal, label)
         self._controller = controller
@@ -256,6 +256,7 @@ class ProductsModel(QtGui.QStandardItemModel):
         product_ids_to_remove = (
             set(self._items_by_id.keys()) - set(product_items_by_id.keys())
         )
+
         items_to_remove = [
             self._items_by_id.pop(product_id)
             for product_id in product_ids_to_remove
