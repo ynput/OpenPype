@@ -62,7 +62,8 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "effect",
                 "staticMesh",
                 "skeletalMesh",
-                "xgen"
+                "xgen",
+                "ue_yeticache"
                 ]
 
     def process(self, instance):
