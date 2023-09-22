@@ -278,21 +278,23 @@ class ActionBar(QtWidgets.QWidget):
             return
 
         menu = QtWidgets.QMenu(self.view)
-        checkbox = QtWidgets.QCheckBox("Skip opening last workfile.",
-                                       menu)
+        force_not_open_checkbox = QtWidgets.QCheckBox(
+            "Skip opening last workfile.", menu
+        )
         if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
-            checkbox.setChecked(True)
+            force_not_open_checkbox.setChecked(True)
 
         action_id = index.data(ACTION_ID_ROLE)
-        checkbox.stateChanged.connect(
+        force_not_open_checkbox.stateChanged.connect(
             lambda: self.on_checkbox_changed(
                 "force_not_open_workfile",
-                checkbox.isChecked(),
+                force_not_open_checkbox.isChecked(),
                 action_id,
+                FORCE_NOT_OPEN_WORKFILE_ROLE,
             )
         )
         action = QtWidgets.QWidgetAction(menu)
-        action.setDefaultWidget(checkbox)
+        action.setDefaultWidget(force_not_open_checkbox)
 
         menu.addAction(action)
 
@@ -308,6 +310,7 @@ class ActionBar(QtWidgets.QWidget):
                 "force_download_last_workfile",
                 force_download_checkbox.isChecked(),
                 action_id,
+                FORCE_DOWNLOAD_LAST_WORKFILE_ROLE,
             )
         )
 
@@ -323,9 +326,23 @@ class ActionBar(QtWidgets.QWidget):
             self._discover_on_menu = False
             self.discover_actions()
 
-    def on_checkbox_changed(self, item_name, is_checked, action_id):
+    def on_checkbox_changed(
+        self,
+        item_name: str,
+        is_checked: bool,
+        action_id: str,
+        role: QtCore.Qt.UserRole,
+    ):
+        """Event triggered when context menu checkbox is ticked or unticked.
+
+        Args:
+            item_name (str): Checkbox item name.
+            is_checked (bool): True if checkbox is ticked on.
+            action_id (str): Launcher action identifier.
+            role (QtCore.Qt.UserRole): Checkbox Qt user role.
+        """
         self.model.update_context_menu_settings(
-            item_name, is_checked, action_id
+            item_name, is_checked, action_id, role
         )
         self.view.update()
         if self._context_menu is not None:
