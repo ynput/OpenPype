@@ -5,8 +5,8 @@ from openpype.tools.ayon_utils.widgets import get_qt_icon
 
 PRODUCTS_MODEL_SENDER_NAME = "qt_products_model"
 
-FOLDER_LABEL_ROLE = QtCore.Qt.UserRole + 1
-FOLDER_ID_ROLE = QtCore.Qt.UserRole + 2
+FOLDER_LABEL_ROLE = QtCore.Qt.UserRole + 2
+FOLDER_ID_ROLE = QtCore.Qt.UserRole + 3
 PRODUCT_ID_ROLE = QtCore.Qt.UserRole + 5
 PRODUCT_NAME_ROLE = QtCore.Qt.UserRole + 6
 PRODUCT_TYPE_ROLE = QtCore.Qt.UserRole + 7
@@ -106,8 +106,8 @@ class ProductsModel(QtGui.QStandardItemModel):
 
         if role == QtCore.Qt.DisplayRole:
             if not index.data(PRODUCT_ID_ROLE):
-                pass
-            elif col == self.version_col:
+                return None
+            if col == self.version_col:
                 role = VERSION_NAME_ROLE
             elif col == 1:
                 role = PRODUCT_TYPE_ROLE
@@ -172,26 +172,11 @@ class ProductsModel(QtGui.QStandardItemModel):
 
         self._product_items_by_id = {}
 
-    def _remove_items(self, items):
-        root_item = self.invisibleRootItem()
-        for item in items:
-            if item is None:
-                continue
-            row = item.row()
-            if row < 0:
-                continue
-            parent = item.parent()
-            if parent is None:
-                parent = root_item
-            parent.takeRow(row)
-
     def _get_group_model_item(self, group_name):
-        if group_name is None:
-            return self.invisibleRootItem()
-
         model_item = self._group_items_by_name.get(group_name)
         if model_item is None:
             model_item = QtGui.QStandardItem(group_name)
+            model_item.setEditable(False)
             model_item.setColumnCount(self.columnCount())
             self._group_items_by_name[group_name] = model_item
         return model_item
@@ -200,6 +185,7 @@ class ProductsModel(QtGui.QStandardItemModel):
         model_item = self._merged_items_by_id.get(path)
         if model_item is None:
             model_item = QtGui.QStandardItem(path)
+            model_item.setEditable(False)
             model_item.setColumnCount(self.columnCount())
             self._merged_items_by_id[path] = model_item
         return model_item
@@ -236,6 +222,7 @@ class ProductsModel(QtGui.QStandardItemModel):
         if model_item is None:
             product_id = product_item.product_id
             model_item = QtGui.QStandardItem(product_item.product_name)
+            model_item.setEditable(False)
             icon = get_qt_icon(product_item.product_icon)
             product_type_icon = get_qt_icon(product_item.product_type_icon)
             model_item.setColumnCount(self.columnCount())
@@ -253,6 +240,7 @@ class ProductsModel(QtGui.QStandardItemModel):
         return model_item
 
     def refresh(self, project_name, folder_ids):
+        self._clear()
         product_items = self._controller.get_product_items(
             project_name,
             folder_ids,
@@ -262,20 +250,6 @@ class ProductsModel(QtGui.QStandardItemModel):
             product_item.product_id: product_item
             for product_item in product_items
         }
-        # Remove product items that are not available
-        product_ids_to_remove = (
-            set(self._items_by_id.keys()) - set(product_items_by_id.keys())
-        )
-
-        items_to_remove = [
-            self._items_by_id.pop(product_id)
-            for product_id in product_ids_to_remove
-        ]
-        (
-            self._product_items_by_id.pop(product_id)
-            for product_id in product_ids_to_remove
-        )
-        self._remove_items(items_to_remove)
 
         # Prepare product groups
         product_name_matches_by_group = collections.defaultdict(dict)
@@ -292,17 +266,12 @@ class ProductsModel(QtGui.QStandardItemModel):
             group[product_name].append(product_item)
 
         group_names = set(product_name_matches_by_group.keys())
-        has_root_items = None in group_names
-        if has_root_items:
-            group_names.remove(None)
-        s_group_names = list(sorted(group_names))
-        if has_root_items:
-            s_group_names.insert(0, None)
 
         root_item = self.invisibleRootItem()
+        new_root_items = []
         merged_paths = set()
-        for group_name in s_group_names:
-            key_parts = ["M"]
+        for group_name in group_names:
+            key_parts = []
             if group_name:
                 key_parts.append(group_name)
 
@@ -317,48 +286,185 @@ class ProductsModel(QtGui.QStandardItemModel):
                     merged_paths.add(path)
                     merged_product_items[path] = product_items
 
+            parent_item = None
+            if group_name:
+                parent_item = self._get_group_model_item(group_name)
+
             new_items = []
-            parent_item = self._get_group_model_item(group_name)
-            c_parent_item = None
-            if parent_item is not root_item:
-                c_parent_item = parent_item
+            if parent_item is not None and parent_item.row() < 0:
+                new_root_items.append(parent_item)
 
             for product_item in top_items:
                 item = self._get_product_model_item(product_item)
-                if (
-                    item.row() < 0
-                    or item.parent() is not c_parent_item
-                ):
-                    new_items.append(item)
+                new_items.append(item)
 
             for path, product_items in merged_product_items.items():
                 merged_item = self._get_merged_model_item(path)
-                if merged_item.parent() is not parent_item:
-                    new_items.append(merged_item)
+                new_items.append(merged_item)
 
                 new_merged_items = []
                 for product_item in product_items:
                     item = self._get_product_model_item(product_item)
-                    if item.parent() is not merged_item:
-                        new_merged_items.append(item)
+                    new_merged_items.append(item)
 
                 if new_merged_items:
                     merged_item.appendRows(new_merged_items)
 
-            if new_items:
+            if not new_items:
+                continue
+
+            if parent_item is None:
+                new_root_items.extend(new_items)
+            else:
                 parent_item.appendRows(new_items)
 
-        merged_item_ids_to_remove = (
-            set(self._merged_items_by_id.keys()) - merged_paths
-        )
-        self._remove_items(
-            self._merged_items_by_id.pop(item_id)
-            for item_id in merged_item_ids_to_remove
-        )
-        group_names_to_remove = (
-            set(self._group_items_by_name.keys()) - set(s_group_names)
-        )
-        self._remove_items(
-            self._group_items_by_name.pop(group_name)
-            for group_name in group_names_to_remove
-        )
+        root_item.appendRows(new_root_items)
+    # ---------------------------------
+    #   This implementation does not call '_clear' at the start
+    #       but is more complex and probably slower
+    # ---------------------------------
+    # def _remove_items(self, items):
+    #     if not items:
+    #         return
+    #     root_item = self.invisibleRootItem()
+    #     for item in items:
+    #         row = item.row()
+    #         if row < 0:
+    #             continue
+    #         parent = item.parent()
+    #         if parent is None:
+    #             parent = root_item
+    #         parent.removeRow(row)
+    #
+    # def _remove_group_items(self, group_names):
+    #     group_items = [
+    #         self._group_items_by_name.pop(group_name)
+    #         for group_name in group_names
+    #     ]
+    #     self._remove_items(group_items)
+    #
+    # def _remove_merged_items(self, paths):
+    #     merged_items = [
+    #         self._merged_items_by_id.pop(path)
+    #         for path in paths
+    #     ]
+    #     self._remove_items(merged_items)
+    #
+    # def _remove_product_items(self, product_ids):
+    #     product_items = []
+    #     for product_id in product_ids:
+    #         self._product_items_by_id.pop(product_id)
+    #         product_items.append(self._items_by_id.pop(product_id))
+    #     self._remove_items(product_items)
+    #
+    # def _add_to_new_items(self, item, parent_item, new_items, root_item):
+    #     if item.row() < 0:
+    #         new_items.append(item)
+    #     else:
+    #         item_parent = item.parent()
+    #         if item_parent is not parent_item:
+    #             if item_parent is None:
+    #                 item_parent = root_item
+    #             item_parent.takeRow(item.row())
+    #             new_items.append(item)
+
+    # def refresh(self, project_name, folder_ids):
+    #     product_items = self._controller.get_product_items(
+    #         project_name,
+    #         folder_ids,
+    #         sender=PRODUCTS_MODEL_SENDER_NAME
+    #     )
+    #     product_items_by_id = {
+    #         product_item.product_id: product_item
+    #         for product_item in product_items
+    #     }
+    #     # Remove product items that are not available
+    #     product_ids_to_remove = (
+    #         set(self._items_by_id.keys()) - set(product_items_by_id.keys())
+    #     )
+    #     self._remove_product_items(product_ids_to_remove)
+    #
+    #     # Prepare product groups
+    #     product_name_matches_by_group = collections.defaultdict(dict)
+    #     for product_item in product_items_by_id.values():
+    #         group_name = None
+    #         if self._grouping_enabled:
+    #             group_name = product_item.group_name
+    #
+    #         product_name = product_item.product_name
+    #         group = product_name_matches_by_group[group_name]
+    #         if product_name not in group:
+    #             group[product_name] = [product_item]
+    #             continue
+    #         group[product_name].append(product_item)
+    #
+    #     group_names = set(product_name_matches_by_group.keys())
+    #
+    #     root_item = self.invisibleRootItem()
+    #     new_root_items = []
+    #     merged_paths = set()
+    #     for group_name in group_names:
+    #         key_parts = []
+    #         if group_name:
+    #             key_parts.append(group_name)
+    #
+    #         groups = product_name_matches_by_group[group_name]
+    #         merged_product_items = {}
+    #         top_items = []
+    #         for product_name, product_items in groups.items():
+    #             if len(product_items) == 1:
+    #                 top_items.append(product_items[0])
+    #             else:
+    #                 path = "/".join(key_parts + [product_name])
+    #                 merged_paths.add(path)
+    #                 merged_product_items[path] = product_items
+    #
+    #         parent_item = None
+    #         if group_name:
+    #             parent_item = self._get_group_model_item(group_name)
+    #
+    #         new_items = []
+    #         if parent_item is not None and parent_item.row() < 0:
+    #             new_root_items.append(parent_item)
+    #
+    #         for product_item in top_items:
+    #             item = self._get_product_model_item(product_item)
+    #             self._add_to_new_items(
+    #                 item, parent_item, new_items, root_item
+    #             )
+    #
+    #         for path, product_items in merged_product_items.items():
+    #             merged_item = self._get_merged_model_item(path)
+    #             self._add_to_new_items(
+    #                 merged_item, parent_item, new_items, root_item
+    #             )
+    #
+    #             new_merged_items = []
+    #             for product_item in product_items:
+    #                 item = self._get_product_model_item(product_item)
+    #                 self._add_to_new_items(
+    #                     item, merged_item, new_merged_items, root_item
+    #                 )
+    #
+    #             if new_merged_items:
+    #                 merged_item.appendRows(new_merged_items)
+    #
+    #         if not new_items:
+    #             continue
+    #
+    #         if parent_item is not None:
+    #             parent_item.appendRows(new_items)
+    #             continue
+    #
+    #         new_root_items.extend(new_items)
+    #
+    #     root_item.appendRows(new_root_items)
+    #
+    #     merged_item_ids_to_remove = (
+    #         set(self._merged_items_by_id.keys()) - merged_paths
+    #     )
+    #     group_names_to_remove = (
+    #         set(self._group_items_by_name.keys()) - set(group_names)
+    #     )
+    #     self._remove_merged_items(merged_item_ids_to_remove)
+    #     self._remove_group_items(group_names_to_remove)
