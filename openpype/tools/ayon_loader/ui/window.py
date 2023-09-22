@@ -48,14 +48,23 @@ class LoaderWindow(QtWidgets.QWidget):
         # Subset + version selection item
         products_wrap_widget = QtWidgets.QWidget(main_splitter)
 
-        products_filter_input = PlaceholderLineEdit(products_wrap_widget)
+        products_inputs_widget = QtWidgets.QWidget(products_wrap_widget)
+
+        products_filter_input = PlaceholderLineEdit(products_inputs_widget)
         products_filter_input.setPlaceholderText("Product name filter...")
+        product_group_checkbox = QtWidgets.QCheckBox(
+            "Enable grouping", products_inputs_widget)
 
         products_widget = ProductsWidget(controller, products_wrap_widget)
 
+        products_inputs_layout = QtWidgets.QHBoxLayout(products_inputs_widget)
+        products_inputs_layout.setContentsMargins(0, 0, 0, 0)
+        products_inputs_layout.addWidget(products_filter_input, 1)
+        products_inputs_layout.addWidget(product_group_checkbox, 0)
+
         products_wrap_layout = QtWidgets.QVBoxLayout(products_wrap_widget)
         products_wrap_layout.setContentsMargins(0, 0, 0, 0)
-        products_wrap_layout.addWidget(products_filter_input, 0)
+        products_wrap_layout.addWidget(products_inputs_widget, 0)
         products_wrap_layout.addWidget(products_widget, 1)
 
         main_splitter.addWidget(context_widget)
@@ -78,6 +87,8 @@ class LoaderWindow(QtWidgets.QWidget):
         product_types_widget.filter_changed.connect(
             self._on_product_type_filter_change
         )
+        product_group_checkbox.stateChanged.connect(
+            self._on_product_group_change)
 
         self._projects_combobox = projects_combobox
 
@@ -87,6 +98,7 @@ class LoaderWindow(QtWidgets.QWidget):
         self._product_types_widget = product_types_widget
 
         self._products_filter_input = products_filter_input
+        self._product_group_checkbox = product_group_checkbox
         self._products_widget = products_widget
 
         self._controller = controller
@@ -127,6 +139,11 @@ class LoaderWindow(QtWidgets.QWidget):
 
     def _on_folder_filete_change(self, text):
         self._folders_widget.set_name_filer(text)
+
+    def _on_product_group_change(self):
+        self._products_widget.set_enable_grouping(
+            self._product_group_checkbox.isChecked()
+        )
 
     def _on_product_type_filter_change(self):
         self._products_widget.set_product_type_filter(

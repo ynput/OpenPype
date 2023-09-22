@@ -61,6 +61,9 @@ class ProductsModel(QtGui.QStandardItemModel):
         self._product_items_by_id = {}
         self._grouping_enabled = False
 
+        self._last_project_name = None
+        self._last_folder_ids = []
+
     def flags(self, index):
         # Make the version column editable
         if index.column() == self.version_col and index.data(PRODUCT_ID_ROLE):
@@ -169,7 +172,6 @@ class ProductsModel(QtGui.QStandardItemModel):
         self._items_by_id = {}
         self._group_items_by_name = {}
         self._merged_items_by_id = {}
-
         self._product_items_by_id = {}
 
     def _get_group_model_item(self, group_name):
@@ -239,8 +241,21 @@ class ProductsModel(QtGui.QStandardItemModel):
         self._set_version_data_to_product_item(model_item, last_version)
         return model_item
 
+    def set_enable_grouping(self, enable_grouping):
+        if enable_grouping is self._grouping_enabled:
+            return
+        self._grouping_enabled = enable_grouping
+        # Ignore change if groups are not available
+        if not self._group_items_by_name:
+            return
+        self.refresh(self._last_project_name, self._last_folder_ids)
+
     def refresh(self, project_name, folder_ids):
         self._clear()
+
+        self._last_project_name = project_name
+        self._last_folder_ids = folder_ids
+
         product_items = self._controller.get_product_items(
             project_name,
             folder_ids,

@@ -137,6 +137,9 @@ class ProductsWidget(QtWidgets.QWidget):
             product_type_filters
         )
 
+    def set_enable_grouping(self, enable_grouping):
+        self._products_model.set_enable_grouping(enable_grouping)
+
     def _refresh_model(self):
         self._products_model.refresh(
             self._selected_project_name,
