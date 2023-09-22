@@ -28,30 +28,18 @@ class ExtractReviewDataBakingStreams(publish.Extractor):
     @classmethod
     def apply_settings(cls, project_settings):
         """just in case there are some old presets
-        in deprecrated ExtractReviewDataMov Plugins
+        in deprecated ExtractReviewDataMov Plugins
         """
         nuke_publish = project_settings["nuke"]["publish"]
-        deprecrated_review_settings = nuke_publish["ExtractReviewDataMov"]
-        current_review_settings = (
-            nuke_publish["ExtractReviewDataBakingStreams"]
-        )
-        if deprecrated_review_settings["viewer_lut_raw"] == (
-            current_review_settings["viewer_lut_raw"]
-        ):
-            cls.viewer_lut_raw = (
-                current_review_settings["viewer_lut_raw"]
-            )
+        deprecated_setting = nuke_publish["ExtractReviewDataMov"]
+        current_setting = nuke_publish["ExtractReviewDataBakingStreams"]
+        if not deprecated_setting["enabled"]:
+            if current_setting["enabled"]:
+                cls.viewer_lut_raw = current_setting["viewer_lut_raw"]
+                cls.outputs = current_setting["outputs"]
         else:
-            cls.viewer_lut_raw = (
-                deprecrated_review_settings["viewer_lut_raw"]
-            )
-
-        if deprecrated_review_settings["outputs"] == (
-            current_review_settings["outputs"]
-        ):
-            cls.outputs = current_review_settings["outputs"]
-        else:
-            cls.outputs = deprecrated_review_settings["outputs"]
+            cls.viewer_lut_raw = deprecated_setting["viewer_lut_raw"]
+            cls.outputs = deprecated_setting["outputs"]
 
     def process(self, instance):
         families = set(instance.data["families"])
