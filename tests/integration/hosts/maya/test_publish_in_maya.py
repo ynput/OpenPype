@@ -6,7 +6,6 @@ from collections import defaultdict
 
 import pytest
 
-from tests.lib.assert_classes import DBAssert
 from tests.lib.testing_classes import HostFixtures, PublishTest
 
 
