@@ -225,7 +225,6 @@ class PypeCommands:
         app_variant,
         timeout,
         setup_only,
-        class_names,
         dump_databases
     ):
         """

@@ -306,9 +306,6 @@ def run(script):
               help="Only create dbs, do not run tests",
               is_flag=True,
               default=False)
-@click.option("--class_name",
-              help="Specific test class to setup.",
-              multiple=True)
 @click.option("--dump_databases",
               help="Dump all databases to data folder.",
               is_flag=True,
@@ -325,7 +322,6 @@ def runtests(
     app_variant,
     timeout,
     setup_only,
-    class_name,
     dump_databases
 ):
     """Run all automatic tests after proper initialization via start.py"""
@@ -341,7 +337,6 @@ def runtests(
         app_variant,
         timeout,
         setup_only,
-        class_name,
         dump_databases
     )
 
