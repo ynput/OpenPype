@@ -157,10 +157,10 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
 
         # append full path
         aov_dict = {}
-        default_render_folder = context.data.get("project_settings")\
-            .get("maya")\
-            .get("RenderSettings")\
-            .get("default_render_image_folder") or ""
+        image_directory = os.path.join(
+            cmds.workspace(query=True, rootDirectory=True),
+            cmds.workspace(fileRuleEntry="images")
+        )
         # replace relative paths with absolute. Render products are
         # returned as list of dictionaries.
         publish_meta_path = None
@@ -168,8 +168,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             full_paths = []
             aov_first_key = list(aov.keys())[0]
             for file in aov[aov_first_key]:
-                full_path = os.path.join(workspace, default_render_folder,
-                                         file)
+                full_path = os.path.join(image_directory, file)
                 full_path = full_path.replace("\\", "/")
                 full_paths.append(full_path)
                 publish_meta_path = os.path.dirname(full_path)

@@ -235,6 +235,8 @@ def convert_v4_project_to_v3(project):
         new_task_types = {}
         for task_type in task_types:
             name = task_type.pop("name")
+            # Change 'shortName' to 'short_name'
+            task_type["short_name"] = task_type.pop("shortName", None)
             new_task_types[name] = task_type
 
         config["tasks"] = new_task_types
