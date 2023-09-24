@@ -3398,6 +3398,7 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
         return "{}/{}".format(display, viewer)
     return "{} ({})".format(viewer, display)
 
+
 def get_file_with_name_and_hashes(original_path, name):
     """Function to get the ranmed filename with frame hashes
 
