@@ -3397,3 +3397,21 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
     if path_like:
         return "{}/{}".format(display, viewer)
     return "{} ({})".format(viewer, display)
+
+def get_file_with_name_and_hashes(original_path, name):
+    """Function to get the ranmed filename with frame hashes
+
+    Args:
+        original_path (str): the filename with frame hashes
+        name (str): the name of the tags
+
+    Returns:
+        filename: the renamed filename with the tag
+    """
+    filename = os.path.basename(original_path)
+    fhead = filename.split(".")[0]
+    if "#" in fhead:
+        fhead = fhead.replace("#", "")[:-1]
+    new_fhead = "{}.{}".format(fhead, name)
+    filename = filename.replace(fhead, new_fhead)
+    return filename

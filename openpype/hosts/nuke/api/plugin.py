@@ -38,7 +38,8 @@ from .lib import (
     get_node_data,
     get_view_process_node,
     get_viewer_config_from_string,
-    deprecated
+    deprecated,
+    get_file_with_name_and_hashes
 )
 from .pipeline import (
     list_instances,
@@ -805,11 +806,12 @@ class ExporterReviewMov(ExporterReview):
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
         if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
-            filename = os.path.basename(self.path_in)
+            filename = get_file_with_name_and_hashes(
+                self.path_in, self.name)
             self.file = filename
             if ".{}".format(self.ext) not in self.file:
                 original_ext = filename.split(".")[-1]
-                self.file = filename.replace(original_ext, self.ext)
+                self.file = filename.replace(original_ext, ext)
 
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
@@ -931,7 +933,6 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug("Path: {}".format(self.path))
         write_node["file"].setValue(str(self.path))
         write_node["file_type"].setValue(str(self.ext))
-        self.log.debug("{0}".format(self.ext))
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
         # TODO shouldn't this come from settings on outputs?
         try:
