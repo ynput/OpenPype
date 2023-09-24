@@ -14,7 +14,8 @@ class CollectOutputSOPPath(pyblish.api.InstancePlugin):
         "imagesequence",
         "usd",
         "usdrender",
-        "redshiftproxy"
+        "redshiftproxy",
+        "staticMesh"
     ]
 
     hosts = ["houdini"]
@@ -59,6 +60,10 @@ class CollectOutputSOPPath(pyblish.api.InstancePlugin):
 
         elif node_type == "Redshift_Proxy_Output":
             out_node = node.parm("RS_archive_sopPath").evalAsNode()
+
+        elif node_type == "filmboxfbx":
+            out_node = node.parm("startnode").evalAsNode()
+
         else:
             raise KnownPublishError(
                 "ROP node type '{}' is not supported.".format(node_type)
