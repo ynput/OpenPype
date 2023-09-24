@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from maya import cmds  # noqa
 import pyblish.api
-from openpype.lib import BoolDef
 from openpype.pipeline import OptionalPyblishPluginMixin
+
 
 class CollectFbxAnimation(pyblish.api.InstancePlugin,
                           OptionalPyblishPluginMixin):
