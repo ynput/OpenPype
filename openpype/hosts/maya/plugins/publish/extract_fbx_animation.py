@@ -30,6 +30,8 @@ class ExtractFBXAnimation(publish.Extractor):
 
         # The export requires forward slashes because we need
         # to format it into a string in a mel expression
+
+
         fbx_exporter = fbx.FBXExtractor(log=self.log)
         out_set = instance.data.get("animated_skeleton", [])
         # Export
@@ -38,7 +40,21 @@ class ExtractFBXAnimation(publish.Extractor):
         instance.data["referencedAssetsContent"] = True
 
         fbx_exporter.set_options_from_instance(instance)
-        fbx_exporter.export(out_set, path.replace("\\", "/"))
+
+        out_set_name = next(out for out in out_set)
+        # temporarily disable namespace
+        namespace = out_set_name.split(":")[0]
+        new_out_set = out_set_name.replace(
+            f"{namespace}:", "")
+        cmds.namespace(set=':')
+        cmds.namespace(set=namespace)
+        cmds.namespace(rel=True)
+
+        fbx_exporter.export(
+            new_out_set, path.replace("\\", "/"))
+        # restore namespace after export
+        cmds.namespace(set=':')
+        cmds.namespace(rel=False)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
