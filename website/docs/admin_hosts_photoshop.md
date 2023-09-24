@@ -33,7 +33,6 @@ Provides list of [variants](artist_concepts.md#variant) that will be shown to an
 Provides simplified publishing process. It will create single `image` instance for artist automatically. This instance will
 produce flatten image from all visible layers in a workfile.
 
-- Subset template for flatten image - provide template for subset name for this instance (example `imageBeauty`)
 - Review - should be separate review created for this instance
 
 ### Create Review
@@ -111,11 +110,11 @@ Set Byte limit for review file. Applicable if gigantic `image` instances are pro
 
 #### Extract jpg Options
 
-Handles tags for produced `.jpg` representation. `Create review` and `Add review to Ftrack` are defaults. 
+Handles tags for produced `.jpg` representation. `Create review` and `Add review to Ftrack` are defaults.
 
 #### Extract mov Options
 
-Handles tags for produced `.mov` representation. `Create review` and `Add review to Ftrack` are defaults. 
+Handles tags for produced `.mov` representation. `Create review` and `Add review to Ftrack` are defaults.
 
 
 ### Workfile Builder
