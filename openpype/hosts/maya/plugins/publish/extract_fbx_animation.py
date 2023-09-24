@@ -30,8 +30,6 @@ class ExtractFBXAnimation(publish.Extractor):
 
         # The export requires forward slashes because we need
         # to format it into a string in a mel expression
-
-
         fbx_exporter = fbx.FBXExtractor(log=self.log)
         out_set = instance.data.get("animated_skeleton", [])
         # Export
