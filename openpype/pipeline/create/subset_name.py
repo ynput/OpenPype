@@ -112,6 +112,10 @@ def get_subset_name(
             for project. Settings are queried if not passed.
         family_filter (Optional[str]): Use different family for subset template
             filtering. Value of 'family' is used when not passed.
+
+    Raises:
+        KeyError if filled template contains placeholder key which is not
+            collected.
     """
 
     if not family:
@@ -154,4 +158,10 @@ def get_subset_name(
         for key, value in dynamic_data.items():
             fill_pairs[key] = value
 
-    return template.format(**prepare_template_data(fill_pairs))
+    try:
+        return template.format(**prepare_template_data(fill_pairs))
+    except KeyError as exp:
+        error = "Value for '{}' key is missing in template '{}'.".format(
+            str(exp), template)
+        error += "Collected values are {}".format(fill_pairs)
+        raise KeyError(error)
