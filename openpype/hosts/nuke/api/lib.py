@@ -3415,8 +3415,8 @@ def get_head_filename_without_hashes(original_path, name):
         e.g. "renderAssetMain.baking.####.exr"
     """
     filename = os.path.basename(original_path)
-    fhead = filename.split(".")[0]
-    tmp_fhead = re.sub("\d", "#", fhead)
+    fhead = os.path.splitext(filename)[0].strip(".")
+    tmp_fhead = re.sub(r"\d", "#", fhead)
     if "#" in tmp_fhead:
         fhead = tmp_fhead.replace("#", "").rstrip(".")
     new_fhead = "{}.{}".format(fhead, name)
