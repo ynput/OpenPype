@@ -808,6 +808,10 @@
                             "label": "Validate Rig Controllers"
                         },
                         {
+                            "key": "ValidateAnimatedReferenceRig",
+                            "label": "Validate Animated Reference Rig"
+                        },
+                        {
                             "key": "ValidateAnimationContent",
                             "label": "Validate Animation Content"
                         },

@@ -1123,6 +1123,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateAnimatedReferenceRig": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ValidateAnimationContent": {
             "enabled": true,
             "optional": false,

@@ -652,6 +652,10 @@ class PublishersModel(BaseSettingsModel):
         default_factory=BasicValidateModel,
         title="Validate Rig Controllers",
     )
+    ValidateAnimatedReferenceRig: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Animated Reference Rig",
+    )
     ValidateAnimationContent: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Animation Content",
@@ -1172,6 +1176,11 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ValidateRigControllers": {
         "enabled": False,
         "optional": True,
+        "active": True
+    },
+    "ValidateAnimatedReferenceRig": {
+        "enabled": True,
+        "optional": False,
         "active": True
     },
     "ValidateAnimationContent": {
