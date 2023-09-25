@@ -29,6 +29,7 @@ VERSION_AVAILABLE_ROLE = QtCore.Qt.UserRole + 20
 
 
 class ProductsModel(QtGui.QStandardItemModel):
+    refreshed = QtCore.Signal()
     column_labels = [
         "Product name",
         "Product type",
@@ -82,6 +83,21 @@ class ProductsModel(QtGui.QStandardItemModel):
 
         self._last_project_name = None
         self._last_folder_ids = []
+
+    def get_product_item_indexes(self):
+        return [
+            item.index()
+            for item in self._items_by_id.values()
+        ]
+
+    def set_enable_grouping(self, enable_grouping):
+        if enable_grouping is self._grouping_enabled:
+            return
+        self._grouping_enabled = enable_grouping
+        # Ignore change if groups are not available
+        if not self._group_items_by_name:
+            return
+        self.refresh(self._last_project_name, self._last_folder_ids)
 
     def flags(self, index):
         # Make the version column editable
@@ -174,13 +190,18 @@ class ProductsModel(QtGui.QStandardItemModel):
                 index = self.index(index.row(), 0, index.parent())
             product_id = index.data(PRODUCT_ID_ROLE)
             product_item = self._product_items_by_id[product_id]
-            version_item = product_item.get_version_by_id(value)
-            if version_item is None:
+            final_version_item = None
+            for version_item in product_item.version_items:
+                if version_item.version_id == value:
+                    final_version_item = version_item
+                    break
+
+            if final_version_item is None:
                 return False
-            if index.data(VERSION_ID_ROLE) == version_item.version_id:
+            if index.data(VERSION_ID_ROLE) == final_version_item.version_id:
                 return True
             item = self.itemFromIndex(index)
-            self._set_version_data_to_product_item(item, version_item)
+            self._set_version_data_to_product_item(item, final_version_item)
             return True
         return super(ProductsModel, self).setData(index, value, role)
 
@@ -275,15 +296,6 @@ class ProductsModel(QtGui.QStandardItemModel):
             self._items_by_id[product_id] = model_item
         self._set_version_data_to_product_item(model_item, last_version)
         return model_item
-
-    def set_enable_grouping(self, enable_grouping):
-        if enable_grouping is self._grouping_enabled:
-            return
-        self._grouping_enabled = enable_grouping
-        # Ignore change if groups are not available
-        if not self._group_items_by_name:
-            return
-        self.refresh(self._last_project_name, self._last_folder_ids)
 
     def refresh(self, project_name, folder_ids):
         self._clear()
@@ -381,7 +393,10 @@ class ProductsModel(QtGui.QStandardItemModel):
             else:
                 parent_item.appendRows(new_items)
 
-        root_item.appendRows(new_root_items)
+        if new_root_items:
+            root_item.appendRows(new_root_items)
+
+        self.refreshed.emit()
     # ---------------------------------
     #   This implementation does not call '_clear' at the start
     #       but is more complex and probably slower

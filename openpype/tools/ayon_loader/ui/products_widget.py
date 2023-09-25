@@ -1,3 +1,4 @@
+import collections
 from qtpy import QtWidgets, QtCore
 
 from openpype.tools.utils.delegates import PrettyTimeDelegate
@@ -11,6 +12,7 @@ from .products_model import (
     PRODUCTS_MODEL_SENDER_NAME,
     PRODUCT_TYPE_ROLE,
     GROUP_TYPE_ROLE,
+    PRODUCT_ID_ROLE,
 )
 from .products_delegates import VersionDelegate
 
@@ -111,9 +113,9 @@ class ProductsWidget(QtWidgets.QWidget):
         for idx, width in enumerate(self.default_widths):
             products_view.setColumnWidth(idx, width)
 
-        # version_delegate = VersionDelegate()
-        # products_view.setItemDelegateForColumn(
-        #     products_model.version_col, version_delegate)
+        version_delegate = VersionDelegate()
+        products_view.setItemDelegateForColumn(
+            products_model.version_col, version_delegate)
 
         time_delegate = PrettyTimeDelegate()
         products_view.setItemDelegateForColumn(
@@ -122,6 +124,11 @@ class ProductsWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(products_view, 1)
+
+        products_proxy_model.rowsInserted.connect(self._on_rows_inserted)
+        products_proxy_model.rowsMoved.connect(self._on_rows_moved)
+        products_proxy_model.rowsRemoved.connect(self._on_rows_removed)
+        products_model.refreshed.connect(self._on_refresh)
 
         controller.register_event_callback(
             "selection.folders.changed",
@@ -143,6 +150,9 @@ class ProductsWidget(QtWidgets.QWidget):
         self._products_view = products_view
         self._products_model = products_model
         self._products_proxy_model = products_proxy_model
+
+        self._version_delegate = version_delegate
+        self._time_delegate = time_delegate
 
         self._selected_project_name = None
         self._selected_folder_ids = set()
@@ -173,6 +183,41 @@ class ProductsWidget(QtWidgets.QWidget):
 
     def set_enable_grouping(self, enable_grouping):
         self._products_model.set_enable_grouping(enable_grouping)
+
+    def _fill_version_editor(self):
+        model = self._products_proxy_model
+        index_queue = collections.deque()
+        for row in range(model.rowCount()):
+            index_queue.append((row, None))
+
+        version_col = self._products_model.version_col
+        while index_queue:
+            (row, parent_index) = index_queue.popleft()
+            args = [row, 0]
+            if parent_index is not None:
+                args.append(parent_index)
+            index = model.index(*args)
+            rows = model.rowCount(index)
+            for row in range(rows):
+                index_queue.append((row, index))
+
+            product_id = model.data(index, PRODUCT_ID_ROLE)
+            if product_id is not None:
+                args[1] = version_col
+                v_index = model.index(*args)
+                self._products_view.openPersistentEditor(v_index)
+
+    def _on_refresh(self):
+        self._fill_version_editor()
+
+    def _on_rows_inserted(self):
+        self._fill_version_editor()
+
+    def _on_rows_moved(self):
+        self._fill_version_editor()
+
+    def _on_rows_removed(self):
+        self._fill_version_editor()
 
     def _refresh_model(self):
         self._products_model.refresh(

@@ -14,9 +14,9 @@ from .products_model import (
 class VersionComboBox(QtWidgets.QComboBox):
     value_changed = QtCore.Signal(str)
 
-    def __init__(self, subset_id, parent):
+    def __init__(self, product_id, parent):
         super(VersionComboBox, self).__init__(parent)
-        self._subset_id = subset_id
+        self._product_id = product_id
         self._items_by_id = {}
 
         self._current_id = None
@@ -46,7 +46,7 @@ class VersionComboBox(QtWidgets.QComboBox):
             item = self._items_by_id.get(version_id)
             if item is None:
                 label = format_version(
-                    version_item.version, version_item.is_hero
+                    abs(version_item.version), version_item.is_hero
                 )
                 item = QtGui.QStandardItem(label)
                 item.setData(version_id, QtCore.Qt.UserRole)
@@ -65,25 +65,22 @@ class VersionComboBox(QtWidgets.QComboBox):
         if value == self._current_id:
             return
         self._current_id = value
-        self.value_changed.emit(self._subset_id)
+        self.value_changed.emit(self._product_id)
 
 
 class VersionDelegate(QtWidgets.QStyledItemDelegate):
     """A delegate that display version integer formatted as version string."""
 
     version_changed = QtCore.Signal()
-    first_run = False
 
     def __init__(self, *args, **kwargs):
         super(VersionDelegate, self).__init__(*args, **kwargs)
-        self._editor_by_subset_id = {}
+        self._editor_by_product_id = {}
 
     def displayText(self, value, locale):
-        if isinstance(value, HeroVersionType):
-            return format_version(value, True)
         if not isinstance(value, numbers.Integral):
             return "N/A"
-        return format_version(value)
+        return format_version(abs(value), value < 0)
 
     def paint(self, painter, option, index):
         fg_color = index.data(QtCore.Qt.ForegroundRole)
@@ -130,18 +127,18 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
         painter.restore()
 
     def createEditor(self, parent, option, index):
-        subset_id = index.data(PRODUCT_ID_ROLE)
-        if not subset_id:
+        product_id = index.data(PRODUCT_ID_ROLE)
+        if not product_id:
             return
 
-        editor = VersionComboBox(subset_id, parent)
-        self._editor_by_subset_id[subset_id] = editor
+        editor = VersionComboBox(product_id, parent)
+        self._editor_by_product_id[product_id] = editor
         editor.value_changed.connect(self._on_editor_change)
 
         return editor
 
-    def _on_editor_change(self, subset_id):
-        editor = self._editor_by_subset_id[subset_id]
+    def _on_editor_change(self, product_id):
+        editor = self._editor_by_product_id[product_id]
 
         # Update model data
         self.commitData.emit(editor)
