@@ -183,8 +183,6 @@ class MakeRSTexBin(TextureProcessor):
                 raise RuntimeError("OCIO config not found at: "
                                    "{}".format(config_path))
 
-            # render_colorspace = color_management["rendering_space"]
-
             self.log.debug("converting colorspace {0} to redshift render "
                            "colorspace".format(colorspace))
             subprocess_args.extend(["-cs", colorspace])
