@@ -177,7 +177,7 @@ def get_colorspace_name_from_filepath(
         return None
 
     # validate matching colorspace with config
-    if validate and config_data:
+    if validate:
         validate_imageio_colorspace_in_config(
             config_data["path"], colorspace_name)
 
