@@ -762,11 +762,12 @@ def validate_job_path():
     if project_settings["houdini"]["general"]["job_path"]["enabled"]:
 
         # get and resolve job path template
-        job_path_template = project_settings["houdini"]["general"]["job_path"]["path"]
+        job_path_template = \
+            project_settings["houdini"]["general"]["job_path"]["path"]
         job_path = StringTemplate.format_template(
             job_path_template, get_current_context_template_data()
         )
-        job_path = job_path.replace("\\","/")
+        job_path = job_path.replace("\\", "/")
 
         if job_path == "":
             # Set JOB path to HIP path if JOB path is enabled

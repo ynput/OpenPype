@@ -17,6 +17,6 @@ class GeneralSettingsModel(BaseSettingsModel):
 DEFAULT_GENERAL_SETTINGS = {
     "JobPath": {
         "enabled": True,
-        "path": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}"
+        "path": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}"  # noqa
     }
 }
