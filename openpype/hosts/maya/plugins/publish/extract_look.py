@@ -176,7 +176,6 @@ class MakeRSTexBin(TextureProcessor):
             source
         ]
 
-
         # if color management is enabled we pass color space information
         if color_management["enabled"]:
             config_path = color_management["config"]
