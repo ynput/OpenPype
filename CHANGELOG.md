@@ -1,6 +1,379 @@
 # Changelog
 
 
+## [3.17.0](https://github.com/ynput/OpenPype/tree/3.17.0)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.7...3.17.0)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Chore: Remove schema from OpenPype root <a href="https://github.com/ynput/OpenPype/pull/5355">#5355</a></summary>
+
+Remove unused schema directory in root of repository which was moved inside openpype/pipeline/schema.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Igniter: Allow custom Qt scale factor rounding policy <a href="https://github.com/ynput/OpenPype/pull/5554">#5554</a></summary>
+
+Do not force `PassThrough` rounding policy if different policy is defined via env variable.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Chore: Lower urllib3 to support older OpenSSL <a href="https://github.com/ynput/OpenPype/pull/5538">#5538</a></summary>
+
+Lowered `urllib3` to `1.26.16` to support older OpenSSL.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Do not try to add schema to zip files <a href="https://github.com/ynput/OpenPype/pull/5557">#5557</a></summary>
+
+Do not add `schema` folder to zip file. This fixes issue cause by https://github.com/ynput/OpenPype/pull/5355 .
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Lower click dependency version <a href="https://github.com/ynput/OpenPype/pull/5629">#5629</a></summary>
+
+Lower click version to support older versions of python.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Bump certifi from 2023.5.7 to 2023.7.22 <a href="https://github.com/ynput/OpenPype/pull/5351">#5351</a></summary>
+
+Bumps [certifi](https://github.com/certifi/python-certifi) from 2023.5.7 to 2023.7.22.
+<details>
+<summary>Commits</summary>
+<ul>
+<li><a href="https://github.com/certifi/python-certifi/commit/8fb96ed81f71e7097ed11bc4d9b19afd7ea5c909"><code>8fb96ed</code></a> 2023.07.22</li>
+<li><a href="https://github.com/certifi/python-certifi/commit/afe77220e0eaa722593fc5d294213ff5275d1b40"><code>afe7722</code></a> Bump actions/setup-python from 4.6.1 to 4.7.0 (<a href="https://redirect.github.com/certifi/python-certifi/issues/230">#230</a>)</li>
+<li><a href="https://github.com/certifi/python-certifi/commit/2038739ad56abec7aaddfa90ad2ce6b3ed7f5c7b"><code>2038739</code></a> Bump dessant/lock-threads from 3.0.0 to 4.0.1 (<a href="https://redirect.github.com/certifi/python-certifi/issues/229">#229</a>)</li>
+<li><a href="https://github.com/certifi/python-certifi/commit/44df761f4c09d19f32b3cc09208a739043a5e25b"><code>44df761</code></a> Hash pin Actions and enable dependabot (<a href="https://redirect.github.com/certifi/python-certifi/issues/228">#228</a>)</li>
+<li>See full diff in <a href="https://github.com/certifi/python-certifi/compare/2023.05.07...2023.07.22">compare view</a></li>
+</ul>
+</details>
+<br />
+
+
+[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=certifi&package-manager=pip&previous-version=2023.5.7&new-version=2023.7.22)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)
+
+You can trigger a rebase of this PR by commenting `@dependabot rebase`.
+
+[//]: # (dependabot-automerge-start)
+[//]: # (dependabot-automerge-end)
+
+---
+
+<details>
+<summary>Dependabot commands and options</summary>
+<br />
+
+You can trigger Dependabot actions by commenting on this PR:
+- `@dependabot rebase` will rebase this PR
+- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it
+- `@dependabot merge` will merge this PR after your CI passes on it
+- `@dependabot squash and merge` will squash and merge this PR after your CI passes on it
+- `@dependabot cancel merge` will cancel a previously requested merge and block automerging
+- `@dependabot reopen` will reopen this PR if it is closed
+- `@dependabot close` will close this PR and stop Dependabot recreating it. You can achieve the same result by closing it manually
+- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)
+- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)
+You can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/ynput/OpenPype/network/alerts).
+
+</details>
+
+> **Note**
+> Automatic rebases have been disabled on this pull request as it has been open for over 30 days.
+
+___
+
+</details>
+
+
+
+
+## [3.16.7](https://github.com/ynput/OpenPype/tree/3.16.7)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.16.6...3.16.7)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Maya: Extract active view as thumbnail when no thumbnail set <a href="https://github.com/ynput/OpenPype/pull/5426">#5426</a></summary>
+
+This sets the Maya instance's thumbnail to the current active view if no thumbnail was set yet.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Implement USD publish and load using native `mayaUsdPlugin` <a href="https://github.com/ynput/OpenPype/pull/5573">#5573</a></summary>
+
+Implement Creator and Loaders for extraction and loading of USD files using Maya's own `mayaUsdPlugin`.Also adds support to load a `usd` file into an Arnold Standin (`aiStandin`) and assigning looks to it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Ignore separated modules <a href="https://github.com/ynput/OpenPype/pull/5619">#5619</a></summary>
+
+Do not load already separated modules from default directory.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Reduce amount of code for Collect Looks <a href="https://github.com/ynput/OpenPype/pull/5253">#5253</a></summary>
+
+- Refactor `get_file_node_files` because popping from `paths` by index should have been done in reversed order anyway. It's now changed to not need popping at all.
+- Removed unused `RENDERER_NODE_TYPES` and if-branch which collected `node_attrs` list which was unused + collected members which was also done outside of the if branch and thus generated no extra data.
+- Collected all materials from look set attributes at once instead of multiple queries
+- Collected all file nodes in history from a single query instead of per type
+- Restructured assignment of `instance.data["resources"]` to be more readable
+- Cached `PXR_NODES` only ones (Note: plugin load is checked on discovery of the collect look plugin) instead of querying plugin load and its nodes per file node per attribute
+- Removed some debug logs or combined some messages
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Mark deprecated settings in Maya <a href="https://github.com/ynput/OpenPype/pull/5627">#5627</a></summary>
+
+Added deprecated info to docstrings of maya colormanagement settings.Resolves: https://github.com/ynput/OpenPype/issues/5556
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: switching versions of maxScene maintain parentage/links with the loaders <a href="https://github.com/ynput/OpenPype/pull/5424">#5424</a></summary>
+
+When using scene inventory to manage or update the version of the loading objects, the linked modifiers or parentage of the objects would be kept.Meanwhile, loaded objects from all loaders no longer parented to the container with OP Data.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>3ds max: small tweaks to obj extractor and model publishing flow <a href="https://github.com/ynput/OpenPype/pull/5605">#5605</a></summary>
+
+There migh be situation where OBJ Extractor passes without failure, but no obj file is produced. This is adding simple check directly into the extractor to catch it earlier then in the integration phase. Also switched `Validate USD Plugin` to optional, because it was always run no matter if the Extract USD was enabled or not, hindering testing (and publishing).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Plugin can be reopened <a href="https://github.com/ynput/OpenPype/pull/5610">#5610</a></summary>
+
+TVPaint plugin can be reopened.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Remove context prompt <a href="https://github.com/ynput/OpenPype/pull/5632">#5632</a></summary>
+
+More of a plea than a PR, but could we please remove the context prompt in Maya when switching tasks?
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: Create a desktop icon is checked <a href="https://github.com/ynput/OpenPype/pull/5636">#5636</a></summary>
+
+In OP Installer `Create a desktop icon` is checked by default. 
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Extract look is not AYON compatible - OP-5375 <a href="https://github.com/ynput/OpenPype/pull/5341">#5341</a></summary>
+
+The textures that would use hardlinking are going through texture processors. Currently all texture processors are hardcoded to copy texture instead of respecting the settings of forcing to copy.The texture processors were last modified 4 months ago, so effectively all clients that are on any pipeline updated in the last 4 months wont be utilizing hardlinking at all, since the hardcoded texture processors will copy texture no matter the OS.This opts for completely disabling the hardlinking feature, while we figure out what to do about it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Multiverse USD Override inherit from correct new style creator <a href="https://github.com/ynput/OpenPype/pull/5566">#5566</a></summary>
+
+Fix Creator for Multiverse USD Override by inheriting from correct new style creator class type
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Bug Fix  Alembic Loaders with Ornatrix <a href="https://github.com/ynput/OpenPype/pull/5434">#5434</a></summary>
+
+Bugfix the alembic loader with both ornatrix alembic and max alembic supportsAdd the ornatrix alembic loaders for loading the alembic with Ornatrix-related modifiers.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Avoid creation of duplicated links <a href="https://github.com/ynput/OpenPype/pull/5593">#5593</a></summary>
+
+Handle cases when an existing link should be recreated and do not create the same link multitple times during single publishing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Extract Review: Multilayer specification for ffmpeg <a href="https://github.com/ynput/OpenPype/pull/5613">#5613</a></summary>
+
+Extract review is specifying layer name when exr is multilayer.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fussion: added support for Fusion 17 <a href="https://github.com/ynput/OpenPype/pull/5614">#5614</a></summary>
+
+Fusion 17 still uses Python 3.6 which causes issues with some our delivered libraries. Vendorized necessary set for Python 3.6
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Fix screenshot widget <a href="https://github.com/ynput/OpenPype/pull/5615">#5615</a></summary>
+
+Use correct super method name.EDITED:Removed fade animation which is not triggered at some cases, e.g. in Nuke the animation does not start. I do expect that is caused by `exec_` on the dialog, which blocks event processing to the animation, even when I've added the window as parent it still didn't trigger registered callback.Modified how the "empty" space is not filled by using paths instead of clear mode on painter. Added render hints to add antialiasing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: auto_images without alpha will not fail <a href="https://github.com/ynput/OpenPype/pull/5620">#5620</a></summary>
+
+ExtractReview caused issue on `auto_image` instance without alpha channel, this fixes it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix - _id key used instead of id in get_last_version_by_subset_name <a href="https://github.com/ynput/OpenPype/pull/5626">#5626</a></summary>
+
+Just 'id' is not returned because value in fields. Caused KeyError.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: create symlinks for ssl libs on Centos 7 <a href="https://github.com/ynput/OpenPype/pull/5633">#5633</a></summary>
+
+Docker build was missing `libssl.1.1.so` and `libcrypto.1.1.so` symlinks needed by the executable itself, because Python is now explicitly built with OpenSSL 1.1.1
+
+
+___
+
+</details>
+
+### **📃 Documentation**
+
+
+<details>
+<summary>Documentation/local settings <a href="https://github.com/ynput/OpenPype/pull/5102">#5102</a></summary>
+
+I completed the "Working with local settings" page. I updated the screenshot, wrote an explanation for each empty category, and if available, linked the more detailed pages already existing. I also added the "Environments" category.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.16.6](https://github.com/ynput/OpenPype/tree/3.16.6)
 
 

@@ -193,6 +193,9 @@ class BaseWorkfileController(
             self._project_anatomy = Anatomy(self.get_current_project_name())
         return self._project_anatomy
 
+    def get_project_entity(self):
+        return self._entities_model.get_project_entity()
+
     def get_folder_entity(self, folder_id):
         return self._entities_model.get_folder_entity(folder_id)
 

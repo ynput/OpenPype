@@ -36,7 +36,7 @@ WizardStyle=modern
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [InstallDelete]
 ; clean everything in previous installation folder
@@ -53,4 +53,3 @@ Name: "{autodesktop}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"
 
 [Run]
 Filename: "{app}\openpype_gui.exe"; Description: "{cm:LaunchProgram,OpenPype}"; Flags: nowait postinstall skipifsilent
-

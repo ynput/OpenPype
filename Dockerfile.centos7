@@ -109,6 +109,8 @@ RUN source $HOME/.bashrc \
 RUN cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.9/lib \
     && cp /usr/lib64/openssl11/libssl* ./build/exe.linux-x86_64-3.9/lib \
     && cp /usr/lib64/openssl11/libcrypto* ./build/exe.linux-x86_64-3.9/lib \
+    && ln -sr ./build/exe.linux-x86_64-3.9/lib/libssl.so ./build/exe.linux-x86_64-3.9/lib/libssl.1.1.so \
+    && ln -sr ./build/exe.linux-x86_64-3.9/lib/libcrypto.so ./build/exe.linux-x86_64-3.9/lib/libcrypto.1.1.so \
     && cp /root/.pyenv/versions/${OPENPYPE_PYTHON_VERSION}/lib/libpython* ./build/exe.linux-x86_64-3.9/lib \
     && cp /usr/lib64/libxcb* ./build/exe.linux-x86_64-3.9/vendor/python/PySide2/Qt/lib
 

@@ -140,6 +140,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "online",
                 "uasset",
                 "blendScene",
+                "yeticacheUE",
                 "tycache"
                 ]
 
