@@ -588,6 +588,12 @@ class ExporterReview(object):
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
+
+            # make sure slate frame is not included
+            frame_start_handle = self.instance.data["frameStartHandle"]
+            if frame_start_handle > self.first_frame:
+                self.first_frame = frame_start_handle
+
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
