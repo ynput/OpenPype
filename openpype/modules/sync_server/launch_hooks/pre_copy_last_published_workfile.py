@@ -10,6 +10,8 @@ from openpype.modules.sync_server.sync_server import (
 from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.workfile.path_resolving import (
     get_workfile_template_key,
+    get_last_workfile_with_version,
+    get_workdir,
 )
 from openpype.settings.lib import get_project_settings
 
@@ -49,7 +51,9 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         # Check there is no workfile available
         last_workfile = self.data.get("last_workfile_path")
-        if os.path.exists(last_workfile):
+        if os.path.exists(last_workfile) and not self.data.get(
+            "force_download_last_workfile"
+        ):
             self.log.debug(
                 "Last workfile exists. Skipping {} process.".format(
                     self.__class__.__name__
@@ -179,7 +183,22 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         extension = last_published_workfile_path.split(".")[-1]
         workfile_data["version"] = (
-                workfile_representation["context"]["version"] + 1)
+            get_last_workfile_with_version(
+                get_workdir(
+                    project_doc,
+                    asset_doc,
+                    task_name,
+                    host_name,
+                    anatomy=anatomy,
+                    template_key=template_key,
+                    project_settings=project_settings,
+                ),
+                anatomy.templates[template_key]["file"],
+                workfile_data,
+                [extension],
+            )[1]
+            or workfile_representation["context"]["version"]
+        ) + 1
         workfile_data["ext"] = extension
 
         anatomy_result = anatomy.format(workfile_data)

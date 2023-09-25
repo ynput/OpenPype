@@ -441,6 +441,11 @@ class ActionBar(QtWidgets.QWidget):
             else:
                 action.data.pop("start_last_workfile", None)
 
+            if force_download_last_workfile:
+                action.data["force_download_last_workfile"] = True
+            else:
+                action.data.pop("force_download_last_workfile", None)
+
         self._start_animation(index)
         self.action_clicked.emit(action)
 
