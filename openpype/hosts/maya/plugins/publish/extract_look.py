@@ -185,8 +185,7 @@ class MakeRSTexBin(TextureProcessor):
 
             self.log.debug("converting colorspace {0} to redshift render "
                            "colorspace".format(colorspace))
-            subprocess_args.extend(["-cs", colorspace])
-
+            subprocess_args.extend(["-cs", '"{}"'.format(colorspace)])
 
         hash_args = ["rstex"]
         texture_hash = source_hash(source, *hash_args)
