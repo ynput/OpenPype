@@ -39,7 +39,7 @@ class ExtractYetiCache(publish.Extractor):
             kwargs.update({"samples": samples})
 
         self.log.debug(f"Writing out cache {start_frame} - {end_frame}")
-        filename = "{0}.abc".format(instance.name)
+        filename = f"{instance.name}.abc"
         path = os.path.join(dirname, filename)
         cmds.pgYetiCommand(yeti_nodes,
                            writeAlembic=path,
