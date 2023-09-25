@@ -1,4 +1,10 @@
 {
+    "general": {
+        "job_path": {
+            "enabled": true,
+            "path": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}"
+        }
+    },
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {

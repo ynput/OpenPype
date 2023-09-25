@@ -1,0 +1,28 @@
+{
+    "type": "dict",
+    "key": "general",
+    "label": "General",
+    "collapsible": true,
+    "is_group": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "job_path",
+            "label": "JOB Path",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "text",
+                    "key": "path",
+                    "label": "Path"
+                }
+            ]
+        }
+    ]
+}
