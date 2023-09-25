@@ -70,7 +70,7 @@ class AudioLoader(load.LoaderPlugin):
 
         # The source start + end does not automatically update itself to the
         # length of thew new audio file, even though maya does do that when
-        # when creating a new audio node. So to update we compute it manually.
+        # creating a new audio node. So to update we compute it manually.
         # This would however override any source start and source end a user
         # might have done on the original audio node after load.
         audio_frame_count = cmds.getAttr("{}.frameCount".format(audio_node))
