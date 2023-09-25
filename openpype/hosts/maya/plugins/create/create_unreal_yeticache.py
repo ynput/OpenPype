@@ -9,7 +9,7 @@ class CreateYetiCache(plugin.MayaCreator):
     """Output for procedural plugin nodes of Yeti """
 
     identifier = "io.openpype.creators.maya.unrealyeticache"
-    label = "Unreal Yeti Cache"
+    label = "Unreal - Yeti Cache"
     family = "yeticacheUE"
     icon = "pagelines"
 

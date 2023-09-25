@@ -90,18 +90,20 @@ class YetiLoader(plugin.Loader):
         asset = context.get('asset').get('name')
         suffix = "_CON"
         asset_name = f"{asset}_{name}" if asset else f"{name}"
-        version = context.get('version')
-        # Check if version is hero version and use different name
-        if not version.get("name") and version.get('type') == "hero_version":
-            name_version = f"{name}_hero"
-        else:
-            name_version = f"{name}_v{version.get('name'):03d}"
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/{asset}/{name_version}", suffix="")
+            f"{root}/{asset}/{name}", suffix="")
 
-        container_name += suffix
+        unique_number = 1
+        while unreal.EditorAssetLibrary.does_directory_exist(
+            f"{asset_dir}_{unique_number:02}"
+        ):
+            unique_number += 1
+
+        asset_dir = f"{asset_dir}_{unique_number:02}"
+        container_name = f"{container_name}_{unique_number:02}{suffix}"
+
 
         if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
             unreal.EditorAssetLibrary.make_directory(asset_dir)
