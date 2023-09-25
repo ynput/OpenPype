@@ -176,6 +176,21 @@ class MakeRSTexBin(TextureProcessor):
             source
         ]
 
+
+        # if color management is enabled we pass color space information
+        if color_management["enabled"]:
+            config_path = color_management["config"]
+            if not os.path.exists(config_path):
+                raise RuntimeError("OCIO config not found at: "
+                                   "{}".format(config_path))
+
+            # render_colorspace = color_management["rendering_space"]
+
+            self.log.debug("converting colorspace {0} to redshift render "
+                           "colorspace".format(colorspace))
+            subprocess_args.extend(["-cs", colorspace])
+
+
         hash_args = ["rstex"]
         texture_hash = source_hash(source, *hash_args)
 
