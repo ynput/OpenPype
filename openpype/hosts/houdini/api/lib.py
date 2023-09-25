@@ -9,9 +9,14 @@ import json
 
 import six
 
+from openpype.lib import StringTemplate
 from openpype.client import get_asset_by_name
+from openpype.settings import get_current_project_settings
 from openpype.pipeline import get_current_project_name, get_current_asset_name
-from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.context_tools import (
+    get_current_context_template_data,
+    get_current_project_asset
+)
 
 import hou
 
@@ -747,3 +752,31 @@ def get_camera_from_container(container):
 
     assert len(cameras) == 1, "Camera instance must have only one camera"
     return cameras[0]
+
+
+def validate_job_path():
+    """Validate job path to ensure it matches the settings."""
+
+    project_settings = get_current_project_settings()
+
+    if project_settings["houdini"]["general"]["job_path"]["enabled"]:
+
+        # get and resolve job path template
+        job_path_template = project_settings["houdini"]["general"]["job_path"]["path"]
+        job_path = StringTemplate.format_template(
+            job_path_template, get_current_context_template_data()
+        )
+        job_path = job_path.replace("\\","/")
+
+        if job_path == "":
+            # Set JOB path to HIP path if JOB path is enabled
+            # and has empty value.
+            job_path = os.environ["HIP"]
+
+        current_job = hou.hscript("echo -n `$JOB`")[0]
+        if current_job != job_path:
+            hou.hscript("set JOB=" + job_path)
+            os.environ["JOB"] = job_path
+            print("  - set $JOB to " + job_path)
+    else:
+        print("  - JOB Path is disabled, Skipping Check...")
