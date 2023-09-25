@@ -591,6 +591,11 @@ class ExporterReview(object):
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
+
+            first = self.instance.data.get("frameStartHandle", None)
+            if first:
+                if first > self.first_frame:
+                    self.first_frame = first
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
