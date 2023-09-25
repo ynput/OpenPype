@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Loader for Yeti Cache."""
 import os
+import json
 
 from openpype.pipeline import (
     get_representation_path,
@@ -36,6 +37,28 @@ class YetiLoader(plugin.Loader):
 
         return task
 
+    @staticmethod
+    def is_groom_module_active():
+        """
+        Check if Groom plugin is active.
+
+        This is a workaround, because the Unreal python API don't have
+        any method to check if plugin is active.
+        """
+        prj_file = unreal.Paths.get_project_file_path()
+
+        with open(prj_file, "r") as fp:
+            data = json.load(fp)
+
+        plugins = data.get("Plugins")
+
+        if not plugins:
+            return False
+
+        plugin_names = [p.get("Name") for p in plugins]
+
+        return "HairStrands" in plugin_names
+
     def load(self, context, name, namespace, options):
         """Load and containerise representation into Content Browser.
 
@@ -58,6 +81,10 @@ class YetiLoader(plugin.Loader):
             list(str): list of container content
 
         """
+        # Check if Groom plugin is active
+        if not self.is_groom_module_active():
+            raise RuntimeError("Groom plugin is not activated.")
+
         # Create directory for asset and Ayon container
         root = "/Game/Ayon/Assets"
         asset = context.get('asset').get('name')
