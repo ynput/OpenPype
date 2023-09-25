@@ -3400,7 +3400,7 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
 
 
 def get_head_filename_without_hashes(original_path, name):
-    """Function to get the ranmed head filename without frame hashes
+    """Function to get the renamed head filename without frame hashes
     To avoid the system being confused on finding the filename with
     frame hashes if the head of the filename has the hashed symbol
 
