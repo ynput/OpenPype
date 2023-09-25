@@ -49,7 +49,8 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             self.log.debug("Sync server module is not enabled or available")
             return
 
-        # Check there is no workfile available
+        # Skip if there are local workfiles
+        # and force download last workfile is active
         last_workfile = self.data.get("last_workfile_path")
         if os.path.exists(last_workfile) and not self.data.get(
             "force_download_last_workfile"
@@ -182,6 +183,9 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         )
 
         extension = last_published_workfile_path.split(".")[-1]
+
+        # Use last local workfile version + 1
+        # or last published workfile version + 1
         workfile_data["version"] = (
             get_last_workfile_with_version(
                 get_workdir(
