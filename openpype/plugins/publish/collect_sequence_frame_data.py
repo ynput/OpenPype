@@ -28,6 +28,10 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
 
     def get_frame_data_from_repre_sequence(self, instance):
         repres = instance.data.get("representations")
+        parent_entity = (
+            instance.context.data.get("assetEntity")
+            or instance.context.data["projectEntity"]
+        )
         if repres:
             first_repre = repres[0]
             if "ext" not in first_repre:
@@ -52,5 +56,5 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
                 "frameEnd": repres_frames[-1],
                 "handleStart": 0,
                 "handleEnd": 0,
-                "fps": instance.context.data["assetEntity"]["data"]["fps"]
+                "fps": parent_entity["data"]["fps"]
             }
