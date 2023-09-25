@@ -27,6 +27,9 @@ class CachedData:
     has_compatible_ocio_package = None
     config_version_data = {}
     ocio_config_colorspaces = {}
+    allowed_exts = {
+        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
+    }
 
 
 class DeprecatedWarning(DeprecationWarning):
@@ -361,7 +364,7 @@ def parse_colorspace_from_filepath(
 
     # match colorspace from  filepath
     regex_pattern = _get_colorspace_match_regex(
-        colorspaces + underscored_colorspaces.keys())
+        list(colorspaces) + list(underscored_colorspaces))
     match = regex_pattern.search(filepath)
     colorspace = match.group(0) if match else None
 
