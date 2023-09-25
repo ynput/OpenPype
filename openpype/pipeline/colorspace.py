@@ -328,7 +328,7 @@ def parse_colorspace_from_filepath(
         str: name of colorspace
     """
     def _get_colorspace_match_regex(colorspaces):
-        """Return a regex patter
+        """Return a regex pattern
 
         Allows to search a colorspace match in a filename
 
