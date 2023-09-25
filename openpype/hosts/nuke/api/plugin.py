@@ -817,7 +817,7 @@ class ExporterReviewMov(ExporterReview):
                 self.path_in, self.name)
             self.file = filename
             if ".{}".format(self.ext) not in self.file:
-                original_ext = filename.split(".")[-1]
+                original_ext = os.path.splitext(filename)[-1].strip(".")    # noqa
                 self.file = filename.replace(original_ext, ext)
 
         self.path = os.path.join(
