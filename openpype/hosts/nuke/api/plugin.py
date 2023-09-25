@@ -39,7 +39,7 @@ from .lib import (
     get_view_process_node,
     get_viewer_config_from_string,
     deprecated,
-    get_file_with_name_and_hashes
+    get_head_filename_without_hashes
 )
 from .pipeline import (
     list_instances,
@@ -813,7 +813,7 @@ class ExporterReviewMov(ExporterReview):
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
         if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
-            filename = get_file_with_name_and_hashes(
+            filename = get_head_filename_without_hashes(
                 self.path_in, self.name)
             self.file = filename
             if ".{}".format(self.ext) not in self.file:

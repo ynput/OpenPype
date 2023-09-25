@@ -3399,8 +3399,10 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
     return "{} ({})".format(viewer, display)
 
 
-def get_file_with_name_and_hashes(original_path, name):
-    """Function to get the ranmed filename with frame hashes
+def get_head_filename_without_hashes(original_path, name):
+    """Function to get the ranmed head filename without frame hashes
+    To avoid the system being confused on finding the filename with
+    frame hashes if the head of the filename has the hashed symbol
 
     Args:
         original_path (str): the filename with frame hashes
