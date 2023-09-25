@@ -13,7 +13,7 @@ class ExtractYetiCache(publish.Extractor):
 
     label = "Extract Yeti Cache"
     hosts = ["maya"]
-    families = ["ue_yeticache"]
+    families = ["yeticacheUE"]
 
     def process(self, instance):
 
