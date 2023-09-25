@@ -580,8 +580,9 @@ class ExporterReview(object):
     def get_file_info(self):
         if self.collection:
             # get path
-            self.fname = os.path.basename(self.collection.format(
-                "{head}{padding}{tail}"))
+            self.fname = os.path.basename(
+                self.collection.format("{head}{padding}{tail}")
+            )
             self.fhead = self.collection.format("{head}")
 
             # get first and last frame
@@ -590,8 +591,8 @@ class ExporterReview(object):
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
-            self.first_frame = self.instance.data.get("frameStartHandle", None)
-            self.last_frame = self.instance.data.get("frameEndHandle", None)
+            self.first_frame = self.instance.data["frameStartHandle"]
+            self.last_frame = self.instance.data["frameEndHandle"]
 
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
