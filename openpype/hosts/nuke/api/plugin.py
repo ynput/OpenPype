@@ -39,7 +39,8 @@ from .lib import (
     get_view_process_node,
     get_viewer_config_from_string,
     deprecated,
-    get_head_filename_without_hashes
+    get_head_filename_without_hashes,
+    get_filenames_without_hash
 )
 from .pipeline import (
     list_instances,
@@ -638,6 +639,10 @@ class ExporterReview(object):
                 "frameStart": self.first_frame,
                 "frameEnd": self.last_frame,
             })
+        if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
+            filenames = get_filenames_without_hash(
+                self.file, self.first_frame, self.last_frame)
+            repre["files"] = filenames
 
         if self.multiple_presets:
             repre["outputName"] = self.name

@@ -3456,3 +3456,27 @@ def get_head_filename_without_hashes(original_path, name):
     new_fhead = "{}.{}".format(fhead, name)
     filename = filename.replace(fhead, new_fhead)
     return filename
+
+
+def get_filenames_without_hash(filename, frame_start, frame_end):
+    """Get filenames without frame hash
+        i.e. "renderCompositingMain.baking.0001.exr"
+
+    Args:
+        filename (str): filename with frame hash
+        frame_start (str): start of the frame
+        frame_end (str): end of the frame
+
+    Returns:
+        filenames(list): list of filename
+    """
+    filenames = []
+    for frame in range(int(frame_start), (int(frame_end) + 1)):
+        if "#" in filename:
+            # use regex to convert #### to {:0>4}
+            def replace(match):
+                return "{{:0>{}}}".format(len(match.group()))
+            filename_without_hashes = re.sub("#+", replace, filename)
+            new_filename = filename_without_hashes.format(frame)
+            filenames.append(new_filename)
+    return filenames
