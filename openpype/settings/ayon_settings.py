@@ -1102,7 +1102,7 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
         "studio_name",
         "studio_code",
     ):
-        ayon_core.pop(key)
+        ayon_core.pop(key, None)
 
     # Publish conversion
     ayon_publish = ayon_core["publish"]
@@ -1138,6 +1138,27 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             if "output_height" in output_def:
                 output_def["height"] = output_def.pop("output_height")
 
+        profile["outputs"] = new_outputs
+
+    # ExtractOIIOTranscode plugin
+    extract_oiio_transcode = ayon_publish["ExtractOIIOTranscode"]
+    extract_oiio_transcode_profiles = extract_oiio_transcode["profiles"]
+    for profile in extract_oiio_transcode_profiles:
+        new_outputs = {}
+        name_counter = {}
+        for output in profile["outputs"]:
+            if "name" in output:
+                name = output.pop("name")
+            else:
+                # Backwards compatibility for setting without 'name' in model
+                name = output["extension"]
+                if name in new_outputs:
+                    name_counter[name] += 1
+                    name = "{}_{}".format(name, name_counter[name])
+                else:
+                    name_counter[name] = 0
+
+            new_outputs[name] = output
         profile["outputs"] = new_outputs
 
     # Extract Burnin plugin

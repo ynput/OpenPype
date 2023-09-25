@@ -659,17 +659,6 @@ def on_task_changed():
         lib.set_context_settings()
         lib.update_content_on_context_change()
 
-    msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        get_current_project_name(),
-        get_current_asset_name(),
-        get_current_task_name()
-    )
-
-    lib.show_message(
-        "Context was changed",
-        ("Context was changed to:\n{}".format(msg)),
-    )
-
 
 def before_workfile_open():
     if handle_workfile_locks():

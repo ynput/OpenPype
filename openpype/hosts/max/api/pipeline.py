@@ -18,7 +18,6 @@ from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.plugin import MS_CUSTOM_ATTRIB
 from openpype.hosts.max import MAX_HOST_DIR
 
-
 from pymxs import runtime as rt  # noqa
 
 log = logging.getLogger("openpype.hosts.max")
