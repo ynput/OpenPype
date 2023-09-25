@@ -25,8 +25,12 @@ class LoaderWindow(QtWidgets.QWidget):
             controller = LoaderController()
 
         main_splitter = QtWidgets.QSplitter(self)
+
+        context_splitter = QtWidgets.QSplitter(main_splitter)
+        context_splitter.setOrientation(QtCore.Qt.Vertical)
+
         # Context selection widget
-        context_widget = QtWidgets.QWidget(main_splitter)
+        context_widget = QtWidgets.QWidget(context_splitter)
 
         projects_combobox = ProjectsCombobox(controller, context_widget)
         projects_combobox.set_select_item_visible(True)
@@ -36,14 +40,18 @@ class LoaderWindow(QtWidgets.QWidget):
 
         folders_widget = LoaderFoldersWidget(controller, context_widget)
 
-        product_types_widget = ProductTypesView(controller, context_widget)
+        product_types_widget = ProductTypesView(controller, context_splitter)
 
         context_layout = QtWidgets.QVBoxLayout(context_widget)
         context_layout.setContentsMargins(0, 0, 0, 0)
         context_layout.addWidget(projects_combobox, 0)
         context_layout.addWidget(folders_filter_input, 0)
         context_layout.addWidget(folders_widget, 1)
-        context_layout.addWidget(product_types_widget, 1)
+
+        context_splitter.addWidget(context_widget)
+        context_splitter.addWidget(product_types_widget)
+        context_splitter.setStretchFactor(0, 65)
+        context_splitter.setStretchFactor(1, 35)
 
         # Subset + version selection item
         products_wrap_widget = QtWidgets.QWidget(main_splitter)
@@ -68,7 +76,7 @@ class LoaderWindow(QtWidgets.QWidget):
         products_wrap_layout.addWidget(products_inputs_widget, 0)
         products_wrap_layout.addWidget(products_widget, 1)
 
-        main_splitter.addWidget(context_widget)
+        main_splitter.addWidget(context_splitter)
         main_splitter.addWidget(products_wrap_widget)
 
         main_splitter.setStretchFactor(0, 3)
