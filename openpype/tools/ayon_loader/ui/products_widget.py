@@ -10,6 +10,7 @@ from .products_model import (
     ProductsModel,
     PRODUCTS_MODEL_SENDER_NAME,
     PRODUCT_TYPE_ROLE,
+    GROUP_TYPE_ROLE,
 )
 from .products_delegates import VersionDelegate
 
@@ -19,6 +20,7 @@ class ProductsProxyModel(RecursiveSortFilterProxyModel):
         super(ProductsProxyModel, self).__init__(parent)
 
         self._product_type_filters = {}
+        self._ascending_sort = True
 
     def set_product_type_filters(self, product_type_filters):
         self._product_type_filters = product_type_filters
@@ -27,11 +29,42 @@ class ProductsProxyModel(RecursiveSortFilterProxyModel):
     def filterAcceptsRow(self, source_row, source_parent):
         source_model = self.sourceModel()
         index = source_model.index(source_row, 0, source_parent)
-        product_type = source_model.data(index, PRODUCT_TYPE_ROLE)
-        if not self._product_type_filters.get(product_type, True):
-            return False
+        product_types_s = source_model.data(index, PRODUCT_TYPE_ROLE)
+        product_types = []
+        if product_types_s:
+            product_types = product_types_s.split("|")
+
+        for product_type in product_types:
+            if not self._product_type_filters.get(product_type, True):
+                return False
         return super(ProductsProxyModel, self).filterAcceptsRow(
             source_row, source_parent)
+
+    def lessThan(self, left, right):
+        l_model = left.model()
+        r_model = right.model()
+        left_group_type = l_model.data(left, GROUP_TYPE_ROLE)
+        right_group_type = r_model.data(right, GROUP_TYPE_ROLE)
+        # Groups are always on top, merged product types are below
+        #   and items without group at the bottom
+        # QUESTION Do we need to do it this way?
+        if left_group_type != right_group_type:
+            if left_group_type is None:
+                output = False
+            elif right_group_type is None:
+                output = True
+            else:
+                output = left_group_type < right_group_type
+            if not self._ascending_sort:
+                output = not output
+            return output
+        return super(ProductsProxyModel, self).lessThan(left, right)
+
+    def sort(self, column, order=None):
+        if order is None:
+            order = QtCore.Qt.AscendingOrder
+        self._ascending_sort = order == QtCore.Qt.AscendingOrder
+        super(ProductsProxyModel, self).sort(column, order)
 
 
 class ProductsWidget(QtWidgets.QWidget):
@@ -65,6 +98,7 @@ class ProductsWidget(QtWidgets.QWidget):
         # TODO - add context menu
         products_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         products_view.setSortingEnabled(True)
+        # Sort by product type
         products_view.sortByColumn(1, QtCore.Qt.AscendingOrder)
         products_view.setAlternatingRowColors(True)
 

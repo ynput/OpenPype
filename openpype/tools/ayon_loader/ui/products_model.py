@@ -1,10 +1,13 @@
 import collections
+
+import qtawesome
 from qtpy import QtGui, QtCore
 
 from openpype.tools.ayon_utils.widgets import get_qt_icon
 
 PRODUCTS_MODEL_SENDER_NAME = "qt_products_model"
 
+GROUP_TYPE_ROLE = QtCore.Qt.UserRole + 1
 FOLDER_LABEL_ROLE = QtCore.Qt.UserRole + 2
 FOLDER_ID_ROLE = QtCore.Qt.UserRole + 3
 PRODUCT_ID_ROLE = QtCore.Qt.UserRole + 5
@@ -40,6 +43,21 @@ class ProductsModel(QtGui.QStandardItemModel):
         "In scene",
         "Availability",
     ]
+    merged_items_colors = [
+        ("#{0:02x}{1:02x}{2:02x}".format(*c), QtGui.QColor(*c))
+        for c in [
+            (55, 161, 222),   # Light Blue
+            (231, 176, 0),    # Yellow
+            (154, 13, 255),   # Purple
+            (130, 184, 30),   # Light Green
+            (211, 79, 63),    # Light Red
+            (179, 181, 182),  # Grey
+            (194, 57, 179),   # Pink
+            (0, 120, 215),    # Dark Blue
+            (0, 204, 106),    # Dark Green
+            (247, 99, 12),    # Orange
+        ]
+    ]
 
     version_col = column_labels.index("Version")
     published_time_col = column_labels.index("Time")
@@ -60,6 +78,7 @@ class ProductsModel(QtGui.QStandardItemModel):
         # product item objects (they have version information)
         self._product_items_by_id = {}
         self._grouping_enabled = False
+        self._reset_merge_color = False
 
         self._last_project_name = None
         self._last_folder_ids = []
@@ -102,7 +121,7 @@ class ProductsModel(QtGui.QStandardItemModel):
             product_item = self._product_items_by_id.get(product_id)
             if product_item is None:
                 return None
-            return product_item.versions
+            return product_item.version_items
 
         if role == QtCore.Qt.EditRole:
             return None
@@ -165,6 +184,17 @@ class ProductsModel(QtGui.QStandardItemModel):
             return True
         return super(ProductsModel, self).setData(index, value, role)
 
+    def _get_next_color(self):
+        return next(self._color_iter())
+
+    def _color_iter(self):
+        while True:
+            for color in self.merged_items_colors:
+                if self._reset_merge_color:
+                    self._reset_merge_color = False
+                    break
+                yield color
+
     def _clear(self):
         root_item = self.invisibleRootItem()
         root_item.removeRows(0, root_item.rowCount())
@@ -173,23 +203,28 @@ class ProductsModel(QtGui.QStandardItemModel):
         self._group_items_by_name = {}
         self._merged_items_by_id = {}
         self._product_items_by_id = {}
+        self._reset_merge_color = True
 
     def _get_group_model_item(self, group_name):
         model_item = self._group_items_by_name.get(group_name)
         if model_item is None:
             model_item = QtGui.QStandardItem(group_name)
+            model_item.setData(0, GROUP_TYPE_ROLE)
             model_item.setEditable(False)
             model_item.setColumnCount(self.columnCount())
             self._group_items_by_name[group_name] = model_item
         return model_item
 
-    def _get_merged_model_item(self, path):
+    def _get_merged_model_item(self, path, count):
         model_item = self._merged_items_by_id.get(path)
         if model_item is None:
-            model_item = QtGui.QStandardItem(path)
+            model_item = QtGui.QStandardItem()
+            model_item.setData(1, GROUP_TYPE_ROLE)
             model_item.setEditable(False)
             model_item.setColumnCount(self.columnCount())
             self._merged_items_by_id[path] = model_item
+        label = "{} ({})".format(path, count)
+        model_item.setData(label, QtCore.Qt.DisplayRole)
         return model_item
 
     def _set_version_data_to_product_item(self, model_item, version_item):
@@ -293,7 +328,9 @@ class ProductsModel(QtGui.QStandardItemModel):
             groups = product_name_matches_by_group[group_name]
             merged_product_items = {}
             top_items = []
+            group_product_types = set()
             for product_name, product_items in groups.items():
+                group_product_types |= {p.product_type for p in product_items}
                 if len(product_items) == 1:
                     top_items.append(product_items[0])
                 else:
@@ -304,6 +341,8 @@ class ProductsModel(QtGui.QStandardItemModel):
             parent_item = None
             if group_name:
                 parent_item = self._get_group_model_item(group_name)
+                parent_item.setData(
+                    "|".join(group_product_types), PRODUCT_TYPE_ROLE)
 
             new_items = []
             if parent_item is not None and parent_item.row() < 0:
@@ -314,14 +353,23 @@ class ProductsModel(QtGui.QStandardItemModel):
                 new_items.append(item)
 
             for path, product_items in merged_product_items.items():
-                merged_item = self._get_merged_model_item(path)
+                (merged_color_hex, merged_color_qt) = self._get_next_color()
+                merged_color = qtawesome.icon(
+                    "fa.circle", color=merged_color_qt)
+                merged_item = self._get_merged_model_item(
+                    path, len(product_items))
+                merged_item.setData(merged_color, QtCore.Qt.DecorationRole)
                 new_items.append(merged_item)
 
+                merged_product_types = set()
                 new_merged_items = []
                 for product_item in product_items:
                     item = self._get_product_model_item(product_item)
                     new_merged_items.append(item)
+                    merged_product_types.add(product_item.product_type)
 
+                merged_item.setData(
+                    "|".join(merged_product_types), PRODUCT_TYPE_ROLE)
                 if new_merged_items:
                     merged_item.appendRows(new_merged_items)
 

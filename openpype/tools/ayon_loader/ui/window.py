@@ -54,6 +54,7 @@ class LoaderWindow(QtWidgets.QWidget):
         products_filter_input.setPlaceholderText("Product name filter...")
         product_group_checkbox = QtWidgets.QCheckBox(
             "Enable grouping", products_inputs_widget)
+        product_group_checkbox.setChecked(True)
 
         products_widget = ProductsWidget(controller, products_wrap_widget)
 
