@@ -616,6 +616,23 @@ def _convert_maya_project_settings(ayon_settings, output):
     output["maya"] = ayon_maya
 
 
+def _convert_3dsmax_project_settings(ayon_settings, output):
+    if "max" not in ayon_settings:
+        return
+
+    ayon_max = ayon_settings["max"]
+    _convert_host_imageio(ayon_max)
+    if "PointCloud" in ayon_max:
+        point_cloud_attribute = ayon_max["PointCloud"]["attribute"]
+        new_point_cloud_attribute = {
+            item["name"]: item["value"]
+            for item in point_cloud_attribute
+        }
+        ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
+
+    output["max"] = ayon_max
+
+
 def _convert_nuke_knobs(knobs):
     new_knobs = []
     for knob in knobs:
@@ -736,6 +753,17 @@ def _convert_nuke_project_settings(ayon_settings, output):
         if "product_names" in item_filter:
             item_filter["subsets"] = item_filter.pop("product_names")
             item_filter["families"] = item_filter.pop("product_types")
+
+        reformat_nodes_config = item.get("reformat_nodes_config") or {}
+        reposition_nodes = reformat_nodes_config.get(
+            "reposition_nodes") or []
+
+        for reposition_node in reposition_nodes:
+            if "knobs" not in reposition_node:
+                continue
+            reposition_node["knobs"] = _convert_nuke_knobs(
+                reposition_node["knobs"]
+            )
 
         name = item.pop("name")
         new_review_data_outputs[name] = item
@@ -1074,7 +1102,7 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
         "studio_name",
         "studio_code",
     ):
-        ayon_core.pop(key)
+        ayon_core.pop(key, None)
 
     # Publish conversion
     ayon_publish = ayon_core["publish"]
@@ -1110,6 +1138,27 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             if "output_height" in output_def:
                 output_def["height"] = output_def.pop("output_height")
 
+        profile["outputs"] = new_outputs
+
+    # ExtractOIIOTranscode plugin
+    extract_oiio_transcode = ayon_publish["ExtractOIIOTranscode"]
+    extract_oiio_transcode_profiles = extract_oiio_transcode["profiles"]
+    for profile in extract_oiio_transcode_profiles:
+        new_outputs = {}
+        name_counter = {}
+        for output in profile["outputs"]:
+            if "name" in output:
+                name = output.pop("name")
+            else:
+                # Backwards compatibility for setting without 'name' in model
+                name = output["extension"]
+                if name in new_outputs:
+                    name_counter[name] += 1
+                    name = "{}_{}".format(name, name_counter[name])
+                else:
+                    name_counter[name] = 0
+
+            new_outputs[name] = output
         profile["outputs"] = new_outputs
 
     # Extract Burnin plugin
@@ -1261,6 +1310,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_flame_project_settings(ayon_settings, output)
     _convert_fusion_project_settings(ayon_settings, output)
     _convert_maya_project_settings(ayon_settings, output)
+    _convert_3dsmax_project_settings(ayon_settings, output)
     _convert_nuke_project_settings(ayon_settings, output)
     _convert_hiero_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)

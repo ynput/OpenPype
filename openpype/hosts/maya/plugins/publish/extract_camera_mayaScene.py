@@ -120,7 +120,7 @@ class ExtractCameraMayaScene(publish.Extractor,
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
-                    self.log.info(
+                    self.log.debug(
                         "Using {} as scene type".format(self.scene_type))
                     break
                 except KeyError:
@@ -165,6 +165,7 @@ class ExtractCameraMayaScene(publish.Extractor,
                         attr_values = self.get_attr_values_from_data(
                             instance.data)
                         keep_input_connections = attr_values.get("keep_input_connections")  # noqa
+
                         baked = lib.bake_to_world_space(
                             transforms,
                             frame_range=[start, end],
@@ -233,7 +234,7 @@ class ExtractCameraMayaScene(publish.Extractor,
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '{0}' to: {1}".format(
+        self.log.debug("Extracted instance '{0}' to: {1}".format(
             instance.name, path))
 
     @classmethod
