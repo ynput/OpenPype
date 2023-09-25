@@ -754,10 +754,9 @@ def _convert_nuke_project_settings(ayon_settings, output):
     current_review_settings = (
         ayon_publish["ExtractReviewDataBakingStreams"]
     )
-    if deprecrated_review_settings["outputs"] == (
-        current_review_settings["outputs"]
-    ):
-        outputs_settings = current_review_settings["outputs"]
+    if not deprecrated_review_settings["enabled"]:
+        if current_review_settings["enabled"]:
+            outputs_settings = current_review_settings["outputs"]
     else:
         outputs_settings = deprecrated_review_settings["outputs"]
 
