@@ -34,6 +34,16 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
             raise PublishValidationError(f"{report}")
 
     def get_tyflow_object(self, instance):
+        """Get the nodes which are not tyFlow object(s)
+        and editable mesh(es)
+
+        Args:
+            instance (str): instance node
+
+        Returns:
+            invalid(list): list of invalid nodes which are not
+            tyFlow object(s) and editable mesh(es).
+        """
         invalid = []
         container = instance.data["instance_node"]
         self.log.info(f"Validating tyFlow container for {container}")
@@ -51,6 +61,16 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
         return invalid
 
     def get_tyflow_operator(self, instance):
+        """_summary_
+
+        Args:
+            instance (str): instance node
+
+        Returns:
+            invalid(list): list of invalid nodes which do
+            not consist of Export Particle Operators as parts
+            of the node connections
+        """
         invalid = []
         container = instance.data["instance_node"]
         self.log.info(f"Validating tyFlow object for {container}")

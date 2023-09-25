@@ -67,6 +67,25 @@ class ExtractTyCache(publish.Extractor):
         self.log.info(f"Extracted instance '{instance.name}' to: {filenames}")
 
     def get_file(self, filepath, start_frame, end_frame):
+        """Get file names for tyFlow in tyCache format.
+
+        Set the filenames accordingly to the tyCache file
+        naming extension(.tyc) for the publishing purpose
+
+        Actual File Output from tyFlow in tyCache format:
+        <SceneFile>_<frame>.tyc
+
+        e.g. tyFlow_cloth_CCCS_blobbyFill_001_00004.tyc
+
+        Args:
+            fileapth (str): Output directory.
+            start_frame (int): Start frame.
+            end_frame (int): End frame.
+
+        Returns:
+            filenames(list): list of filenames
+
+        """
         filenames = []
         filename = os.path.basename(filepath)
         orig_name, _ = os.path.splitext(filename)
