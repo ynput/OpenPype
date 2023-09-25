@@ -183,9 +183,16 @@ class MakeRSTexBin(TextureProcessor):
                 raise RuntimeError("OCIO config not found at: "
                                    "{}".format(config_path))
 
+            if not os.getenv("OCIO"):
+                self.log.warning(
+                    "OCIO environment variable not set."
+                    "Setting it with OCIO config from OpenPype/AYON Settings."
+                )
+                os.environ["OCIO"] = config_path
+
             self.log.debug("converting colorspace {0} to redshift render "
                            "colorspace".format(colorspace))
-            subprocess_args.extend(["-cs", '"{}"'.format(colorspace)])
+            subprocess_args.extend(["-cs", colorspace])
 
         hash_args = ["rstex"]
         texture_hash = source_hash(source, *hash_args)
@@ -197,10 +204,11 @@ class MakeRSTexBin(TextureProcessor):
 
         self.log.debug(" ".join(subprocess_args))
         try:
-            run_subprocess(subprocess_args)
+            output = run_subprocess(subprocess_args, logger=self.log)
         except Exception:
             self.log.error("Texture .rstexbin conversion failed",
                            exc_info=True)
+            self.log.debug(output)
             raise
 
         return TextureResult(
