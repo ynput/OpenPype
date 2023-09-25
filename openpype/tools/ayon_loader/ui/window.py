@@ -91,10 +91,13 @@ class LoaderWindow(QtWidgets.QWidget):
         show_timer.timeout.connect(self._on_show_timer)
 
         folders_filter_input.textChanged.connect(
-            self._on_folder_filete_change
+            self._on_folder_filter_change
         )
         product_types_widget.filter_changed.connect(
             self._on_product_type_filter_change
+        )
+        products_filter_input.textChanged.connect(
+            self._on_product_filter_change
         )
         product_group_checkbox.stateChanged.connect(
             self._on_product_group_change)
@@ -146,13 +149,16 @@ class LoaderWindow(QtWidgets.QWidget):
             self._reset_on_show = False
             self._controller.reset()
 
-    def _on_folder_filete_change(self, text):
+    def _on_folder_filter_change(self, text):
         self._folders_widget.set_name_filer(text)
 
     def _on_product_group_change(self):
         self._products_widget.set_enable_grouping(
             self._product_group_checkbox.isChecked()
         )
+
+    def _on_product_filter_change(self, text):
+        self._products_widget.set_name_filer(text)
 
     def _on_product_type_filter_change(self):
         self._products_widget.set_product_type_filter(
