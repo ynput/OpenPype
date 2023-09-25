@@ -584,23 +584,25 @@ class ExporterReview(object):
     def get_file_info(self):
         if self.collection:
             # get path
-            self.fname = os.path.basename(self.collection.format(
-                "{head}{padding}{tail}"))
+            self.fname = os.path.basename(
+                self.collection.format("{head}{padding}{tail}")
+            )
             self.fhead = self.collection.format("{head}")
 
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
 
-            first = self.instance.data.get("frameStartHandle", None)
-            if first:
-                if first > self.first_frame:
-                    self.first_frame = first
+            # make sure slate frame is not included
+            frame_start_handle = self.instance.data["frameStartHandle"]
+            if frame_start_handle > self.first_frame:
+                self.first_frame = frame_start_handle
+
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
-            self.first_frame = self.instance.data.get("frameStartHandle", None)
-            self.last_frame = self.instance.data.get("frameEndHandle", None)
+            self.first_frame = self.instance.data["frameStartHandle"]
+            self.last_frame = self.instance.data["frameEndHandle"]
 
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
@@ -885,6 +887,11 @@ class ExporterReviewMov(ExporterReview):
         r_node["last"].setValue(self.last_frame)
         r_node["origlast"].setValue(self.last_frame)
         r_node["colorspace"].setValue(self.write_colorspace)
+
+        # do not rely on defaults, set explicitly
+        # to be sure it is set correctly
+        r_node["frame_mode"].setValue("expression")
+        r_node["frame"].setValue("")
 
         if read_raw:
             r_node["raw"].setValue(1)
