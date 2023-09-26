@@ -2624,9 +2624,17 @@ def bake_to_world_space(nodes,
             for attr in transform_attrs:
                 cmds.setAttr('{0}.{1}'.format(new_node, attr), lock=False)
 
+            scale_keys = _remove_scale_keys(node)
+
             # Constraints
             delete_bin.extend(cmds.parentConstraint(node, new_node, mo=False))
             delete_bin.extend(cmds.scaleConstraint(node, new_node, mo=False))
+
+            # resetting scale keys on original node
+            for orig_node_attr, frame, _ in scale_keys:
+                log.debug("resetting key::{} at {}".format(orig_node_attr,
+                                                           frame))
+                cmds.setKeyframe(orig_node_attr, time=(frame,))
 
             world_space_nodes.append(new_node)
 
@@ -2639,6 +2647,39 @@ def bake_to_world_space(nodes,
              shape=shape)
 
     return world_space_nodes
+
+
+def _remove_scale_keys(node):
+    """Reset keys on scale attributes on source node.
+
+    Constraint parenting doesn't work with scale attributes. This method
+    removes keys, they need to be set again after constraint parenting.
+    """
+    scale_attrs = set(["sx", "sy", "sz"])
+
+    saved_keys = []
+    orig_key_value = [1.0]
+    key_value_changed = False
+    for attr in scale_attrs:
+        orig_node_attr = '{0}.{1}'.format(node, attr)
+        frames = cmds.keyframe(orig_node_attr, query=True) or []
+        for frame in frames:
+            curr_key_value = cmds.keyframe(orig_node_attr, lastSelected=True,
+                                           valueChange=True, query=True)
+            saved_keys.append((orig_node_attr, frame, curr_key_value))
+            if orig_key_value != curr_key_value:
+                key_value_changed = True
+                break
+
+    if key_value_changed:
+        raise RuntimeError("{} scale keys contain non default values.".format(node) +  # noqa
+                           "These cannot be baked out. Please remove keys for " +  # noqa
+                           "scale attributes")
+
+    for orig_node_attr, frame, _ in saved_keys:
+        cmds.cutKey(orig_node_attr, time=(frame,), option="keys")
+
+    return saved_keys
 
 
 def load_capture_preset(data=None):
