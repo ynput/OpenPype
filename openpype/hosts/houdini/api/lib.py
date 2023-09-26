@@ -779,4 +779,5 @@ def update_job_var_context():
         if current_job != job_path:
             hou.hscript("set JOB=" + job_path)
             os.environ["JOB"] = job_path
-            print("  - set $JOB to " + job_path)
+            print("  - Context changed, update $JOB respectively to "
+                  + job_path)
