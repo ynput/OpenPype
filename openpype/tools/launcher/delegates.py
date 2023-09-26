@@ -3,7 +3,8 @@ from qtpy import QtCore, QtWidgets, QtGui
 from .constants import (
     ANIMATION_START_ROLE,
     ANIMATION_STATE_ROLE,
-    FORCE_NOT_OPEN_WORKFILE_ROLE
+    FORCE_NOT_OPEN_WORKFILE_ROLE,
+    FORCE_DOWNLOAD_LAST_WORKFILE_ROLE,
 )
 
 
@@ -71,11 +72,24 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
 
         super(ActionDelegate, self).paint(painter, option, index)
 
+        # Add skip opening last workfile marker
         if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
             rect = QtCore.QRectF(option.rect.x(), option.rect.height(),
                                  5, 5)
             painter.setPen(QtCore.Qt.transparent)
             painter.setBrush(QtGui.QColor(200, 0, 0))
+            painter.drawEllipse(rect)
+
+            painter.setBrush(self.extender_bg_brush)
+
+        # Add force download last workfile marker
+        if index.data(FORCE_DOWNLOAD_LAST_WORKFILE_ROLE):
+            rect = QtCore.QRectF(
+                option.rect.width(), option.rect.height(), 5, 5
+            )
+
+            painter.setPen(QtCore.Qt.transparent)
+            painter.setBrush(QtGui.QColor(0, 200, 0))
             painter.drawEllipse(rect)
 
             painter.setBrush(self.extender_bg_brush)

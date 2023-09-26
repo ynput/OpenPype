@@ -278,6 +278,8 @@ class ActionBar(QtWidgets.QWidget):
             return
 
         menu = QtWidgets.QMenu(self.view)
+
+        # Create skip opening last workfile checkbox
         force_not_open_checkbox = QtWidgets.QCheckBox(
             "Skip opening last workfile.", menu
         )
@@ -298,6 +300,7 @@ class ActionBar(QtWidgets.QWidget):
 
         menu.addAction(action)
 
+        # Create force download last workfile checkbox
         force_download_checkbox = QtWidgets.QCheckBox(
             "Force download last workfile.", menu
         )
@@ -436,6 +439,7 @@ class ActionBar(QtWidgets.QWidget):
 
         action = actions_mapping[result]
         if issubclass(action, ApplicationAction):
+            # Set skip opening last workfile status in action data
             if force_not_open_workfile:
                 action.data["start_last_workfile"] = False
             else:
