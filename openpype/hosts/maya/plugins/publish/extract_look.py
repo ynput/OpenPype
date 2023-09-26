@@ -204,11 +204,10 @@ class MakeRSTexBin(TextureProcessor):
 
         self.log.debug(" ".join(subprocess_args))
         try:
-            output = run_subprocess(subprocess_args, logger=self.log)
-        except Exception:
+            run_subprocess(subprocess_args, logger=self.log)
+        except Exception as e:
             self.log.error("Texture .rstexbin conversion failed",
                            exc_info=True)
-            self.log.debug(output)
             raise
 
         return TextureResult(
@@ -491,7 +490,7 @@ class ExtractLook(publish.Extractor):
             "rstex": MakeRSTexBin
         }.items():
             if instance.data.get(key, False):
-                processor = Processor()
+                processor = Processor(log=self.log)
                 processor.apply_settings(context.data["system_settings"],
                                          context.data["project_settings"])
                 processors.append(processor)
