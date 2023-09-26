@@ -2630,11 +2630,7 @@ def bake_to_world_space(nodes,
             delete_bin.extend(cmds.parentConstraint(node, new_node, mo=False))
             delete_bin.extend(cmds.scaleConstraint(node, new_node, mo=False))
 
-            # resetting scale keys on original node
-            for orig_node_attr, frame, _ in scale_keys:
-                log.debug("resetting key::{} at {}".format(orig_node_attr,
-                                                           frame))
-                cmds.setKeyframe(orig_node_attr, time=(frame,))
+            _set_scale_keys(scale_keys)
 
             world_space_nodes.append(new_node)
 
@@ -2650,36 +2646,60 @@ def bake_to_world_space(nodes,
 
 
 def _remove_scale_keys(node):
-    """Reset keys on scale attributes on source node.
+    """Remove keys on scale attributes on source camera.
 
-    Constraint parenting doesn't work with scale attributes. This method
+    Constraint parenting doesn't work with keyed scale attributes. This method
     removes keys, they need to be set again after constraint parenting.
+    Args:
+        node (str): identifier of original camera
+    Returns
+        (dict): {camera.scaleAttribute : [time1, time2]}
+    Raises:
+        RuntimeError: when scale key is non default (eg. != 1.0)
     """
     scale_attrs = set(["sx", "sy", "sz"])
 
-    saved_keys = []
-    orig_key_value = [1.0]
-    key_value_changed = False
+    saved_keys = {}
+    default_scale_value = 1.0
     for attr in scale_attrs:
         orig_node_attr = '{0}.{1}'.format(node, attr)
-        frames = cmds.keyframe(orig_node_attr, query=True) or []
-        for frame in frames:
-            curr_key_value = cmds.keyframe(orig_node_attr, lastSelected=True,
-                                           valueChange=True, query=True)
-            saved_keys.append((orig_node_attr, frame, curr_key_value))
-            if orig_key_value != curr_key_value:
-                key_value_changed = True
-                break
 
-    if key_value_changed:
-        raise RuntimeError("{} scale keys contain non default values.".format(node) +  # noqa
-                           "These cannot be baked out. Please remove keys for " +  # noqa
-                           "scale attributes")
+        times = cmds.keyframe(orig_node_attr, query=True, timeChange=True)
+        log.info("times::{}".format(times))
+        if not times:
+            continue
+        else:
+            values = cmds.keyframe(orig_node_attr, query=True,
+                                   valueChange=True)
+            log.debug(values)
+            invalid_times = [time for time, value in zip(times, values) if
+                             value != default_scale_value]
+            if invalid_times:
+                raise RuntimeError(
+                    "{} scale keys contain non default values at {}.".format(
+                        node, invalid_times) +
+                    "These cannot be baked out. Please remove keys for " +
+                    "scale attributes")
+        saved_keys[orig_node_attr] = [(time, time) for time in times]
 
-    for orig_node_attr, frame, _ in saved_keys:
-        cmds.cutKey(orig_node_attr, time=(frame,), option="keys")
+    for orig_node_attr, times in saved_keys.items():
+        log.debug("removing::{} at {}".format(orig_node_attr, times))
+        cmds.cutKey(orig_node_attr, time=times, option="keys")
 
     return saved_keys
+
+
+def _set_scale_keys(scale_keys):
+    """Adds keys back on scale attributes on source camera.
+
+    Args:
+        (dict): {camera.scaleAttribute : [(time1, time1), (time2, time2)]}
+    """
+    for orig_node_attr, times in scale_keys.items():
+        log.debug("setting key::{} at {}".format(orig_node_attr,
+                                                 times))
+        cleaned_times = [time[0] for time in times]
+        cmds.setKeyframe(orig_node_attr, time=cleaned_times)
 
 
 def load_capture_preset(data=None):
