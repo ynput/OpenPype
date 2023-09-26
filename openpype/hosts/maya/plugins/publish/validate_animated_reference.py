@@ -38,9 +38,10 @@ class ValidateAnimatedReferenceRig(pyblish.api.InstancePlugin):
         invalid_controls = self.validate_controls(animated_sets)
         if invalid_controls:
             raise PublishValidationError(
-                    "All the content in skeleton_Anim_SET"
-                    " should be the transforms"
-                )
+                "All the content in skeleton_Anim_SET"
+                " should be the transforms"
+            )
+
     def validate_controls(self, set_members):
         """Check if the controller set passes the validations
 
