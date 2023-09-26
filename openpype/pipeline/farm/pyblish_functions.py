@@ -582,11 +582,13 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         cam = next((cam for cam in cameras if cam in expected_filepath), None)
         if cam:
             if aov:
-                # if there is duplicatd camera name found in aov,
-                # it would be removed
-                if aov.startswith(cam):
-                    aov = aov.replace(f"{cam}_", "")
-                subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                # Multiple cameras publishing in some hosts such as 3dsMax
+                # have aov data set to "Camera001_beauty" to differentiate
+                # the render output files
+                if not aov.startswith(cam):
+                    subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                else:
+                    subset_name = '{}_{}'.format(group_name, aov)
             else:
                 subset_name = '{}_{}'.format(group_name, cam)
         else:
@@ -594,7 +596,6 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
                 subset_name = '{}_{}'.format(group_name, aov)
             else:
                 subset_name = '{}'.format(group_name)
-
         if isinstance(col, (list, tuple)):
             staging = os.path.dirname(col[0])
         else:
