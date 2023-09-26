@@ -252,6 +252,12 @@ class ExtractCameraMayaScene(publish.Extractor,
         return defs
 
     def ensure_image_plane_attachment(self, camera):
+        """Reattaches image planes to baked cameras.
+
+        Baked cameras are duplicates of original ones, even with
+        `keep_input_connections` the connection of image plane is still on the
+        original one. This attaches it to duplicated camera properly.
+        """
         image_planes = cmds.listConnections(camera, type="imagePlane")
         if not image_planes:
             return
