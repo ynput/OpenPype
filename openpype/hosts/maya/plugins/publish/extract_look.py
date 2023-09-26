@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
+import sys
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 import contextlib
@@ -205,10 +206,10 @@ class MakeRSTexBin(TextureProcessor):
         self.log.debug(" ".join(subprocess_args))
         try:
             run_subprocess(subprocess_args, logger=self.log)
-        except Exception as e:
+        except Exception:
             self.log.error("Texture .rstexbin conversion failed",
                            exc_info=True)
-            raise
+            six.reraise(*sys.exc_info())
 
         return TextureResult(
             path=destination,
