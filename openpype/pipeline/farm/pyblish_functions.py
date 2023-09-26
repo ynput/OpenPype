@@ -108,12 +108,15 @@ def get_time_data_from_instance_or_context(instance):
 
     """
     return TimeData(
-        start=(instance.data.get("frameStart") or
-               instance.context.data.get("frameStart")),
-        end=(instance.data.get("frameEnd") or
-             instance.context.data.get("frameEnd")),
-        fps=(instance.data.get("fps") or
-             instance.context.data.get("fps")),
+        start=instance.data.get(
+            "frameStart", instance.context.data.get("frameStart")
+        ),
+        end=instance.data.get(
+            "frameEnd", instance.context.data.get("frameEnd")
+        ),
+        fps=instance.data.get(
+            "fps", instance.context.data.get("fps")
+        ),
         handle_start=instance.data.get(
             "handleStart", instance.context.data.get("handleStart")
         ),
