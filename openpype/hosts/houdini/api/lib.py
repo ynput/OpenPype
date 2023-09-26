@@ -776,6 +776,12 @@ def update_job_var_context():
             job_path = os.environ["HIP"]
 
         current_job = hou.hscript("echo -n `$JOB`")[0]
+
+        # sync both environment variables.
+        # because when opening new file $JOB is overridden with
+        # the value saved in the HIP file but os.environ["JOB"] is not!
+        os.environ["JOB"] = current_job
+
         if current_job != job_path:
             hou.hscript("set JOB=" + job_path)
             os.environ["JOB"] = job_path
