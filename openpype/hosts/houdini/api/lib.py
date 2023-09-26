@@ -758,12 +758,12 @@ def validate_job_path():
     """Validate job path to ensure it matches the settings."""
 
     project_settings = get_current_project_settings()
+    project_settings = project_settings["houdini"]["general"]["update_job_var_context"]
 
-    if project_settings["houdini"]["general"]["job_path"]["enabled"]:
+    if project_settings["enabled"]:
 
         # get and resolve job path template
-        job_path_template = \
-            project_settings["houdini"]["general"]["job_path"]["path"]
+        job_path_template = project_settings["job_path"]
         job_path = StringTemplate.format_template(
             job_path_template, get_current_context_template_data()
         )

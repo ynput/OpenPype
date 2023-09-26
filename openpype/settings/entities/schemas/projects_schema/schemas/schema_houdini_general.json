@@ -9,8 +9,8 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
-            "key": "job_path",
-            "label": "JOB Path",
+            "key": "update_job_var_context",
+            "label": "Update $JOB on context change",
             "children": [
                 {
                     "type": "boolean",
@@ -19,8 +19,8 @@
                 },
                 {
                     "type": "text",
-                    "key": "path",
-                    "label": "Path"
+                    "key": "job_path",
+                    "label": "JOB Path"
                 }
             ]
         }

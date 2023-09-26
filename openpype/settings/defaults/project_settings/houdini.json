@@ -1,8 +1,8 @@
 {
     "general": {
-        "job_path": {
+        "update_job_var_context": {
             "enabled": true,
-            "path": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}"
+            "job_path": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}"
         }
     },
     "imageio": {
