@@ -301,7 +301,7 @@ def on_save():
     log.info("Running callback on save..")
 
     # Validate $JOB value
-    lib.validate_job_path()
+    lib.update_job_var_context()
 
     nodes = lib.get_id_required_nodes()
     for node, new_id in lib.generate_ids(nodes):
@@ -339,7 +339,7 @@ def on_open():
     log.info("Running callback on open..")
 
     # Validate $JOB value
-    lib.validate_job_path()
+    lib.update_job_var_context()
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset

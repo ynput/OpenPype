@@ -754,11 +754,12 @@ def get_camera_from_container(container):
     return cameras[0]
 
 
-def validate_job_path():
+def update_job_var_context():
     """Validate job path to ensure it matches the settings."""
 
     project_settings = get_current_project_settings()
-    project_settings = project_settings["houdini"]["general"]["update_job_var_context"]
+    project_settings = \
+        project_settings["houdini"]["general"]["update_job_var_context"]
 
     if project_settings["enabled"]:
 
@@ -779,5 +780,3 @@ def validate_job_path():
             hou.hscript("set JOB=" + job_path)
             os.environ["JOB"] = job_path
             print("  - set $JOB to " + job_path)
-    else:
-        print("  - JOB Path is disabled, Skipping Check...")
