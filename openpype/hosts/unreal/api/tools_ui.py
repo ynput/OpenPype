@@ -62,6 +62,7 @@ class ToolsBtnsWidget(QtWidgets.QWidget):
 
 class ToolsDialog(QtWidgets.QDialog):
     """Dialog with tool buttons that will stay opened until user close it."""
+
     def __init__(self, *args, **kwargs):
         super(ToolsDialog, self).__init__(*args, **kwargs)
 
@@ -98,6 +99,7 @@ class ToolsDialog(QtWidgets.QDialog):
 
 class ToolsPopup(ToolsDialog):
     """Popup with tool buttons that will close when loose focus."""
+
     def __init__(self, *args, **kwargs):
         super(ToolsPopup, self).__init__(*args, **kwargs)
 
@@ -134,7 +136,8 @@ class WindowCache:
 
             cls._popup.show()
             unreal.parent_external_window_to_slate(
-                cls._popup.winId(), unreal.SlateParentWindowSearchMethod.ACTIVE_WINDOW)
+                cls._popup.winId(), 
+                unreal.SlateParentWindowSearchMethod.ACTIVE_WINDOW)
 
     @classmethod
     def show_dialog(cls):
@@ -147,7 +150,8 @@ class WindowCache:
             cls._dialog.raise_()
             cls._dialog.activateWindow()
             unreal.parent_external_window_to_slate(
-                cls._dialog.winId(), unreal.SlateParentWindowSearchMethod.ACTIVE_WINDOW)
+                cls._dialog.winId(), 
+                unreal.SlateParentWindowSearchMethod.ACTIVE_WINDOW)
 
 
 def show_tools_popup():
