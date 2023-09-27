@@ -201,7 +201,7 @@ class ExtractCameraMayaScene(publish.Extractor,
                         unlock(plug)
                         cmds.setAttr(plug, value)
 
-                    with attached_image_planes(sorted(cameras),
+                    with transfer_image_planes(sorted(cameras),
                                                sorted(baked_camera_shapes)):
 
                         self.log.info("Performing extraction..")
@@ -255,7 +255,7 @@ class ExtractCameraMayaScene(publish.Extractor,
 
 
 @contextlib.contextmanager
-def attached_image_planes(source_cameras, baked_cameras):
+def transfer_image_planes(source_cameras, target_cameras):
     """Reattaches image planes to baked or original cameras.
 
     Baked cameras are duplicates of original ones, even with
@@ -264,25 +264,33 @@ def attached_image_planes(source_cameras, baked_cameras):
     export it reattaches it back to original to keep image plane in workfile.
     """
     originals = {}
-    cameras = {baked: source for baked, source in zip(baked_cameras,
-                                                      source_cameras)
-               if source != baked}
     try:
-        for baked_camera, source_camera in cameras.items():
-            image_planes = cmds.listConnections(baked_camera,
+        for source_camera, target_camera in zip(source_cameras,
+                                                target_cameras):
+            if source_camera == target_camera:
+                continue
+
+            image_planes = cmds.listConnections(source_camera,
                                                 type="imagePlane")
             if not image_planes:
                 continue
 
-            originals[source_camera] = []
+            # Split of the parent path they are attached - we want
+            # the image plane node name.
+            # TODO: Does this still mean the image plane name is unique?
             image_planes = [x.split("->", 1)[1] for x in image_planes]
+
+            originals[source_camera] = image_planes
             for image_plane in image_planes:
-                originals[source_camera].append(image_plane)
-                cmds.imagePlane(image_plane, edit=True, detach=True)
-                cmds.imagePlane(image_plane, edit=True, camera=baked_camera)
+                _attach_image_plane(target_camera, image_plane)
+
         yield
     finally:
         for camera, image_planes in originals.items():
             for image_plane in image_planes:
-                cmds.imagePlane(image_plane, edit=True, detach=True)
-                cmds.imagePlane(image_plane, edit=True, camera=camera)
+                _attach_image_plane(camera, image_plane)
+
+
+def _attach_image_plane(camera, image_plane):
+    cmds.imagePlane(image_plane, edit=True, detach=True)
+    cmds.imagePlane(image_plane, edit=True, camera=camera)
