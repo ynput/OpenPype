@@ -91,7 +91,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
         (
             current_selection = selectByName title:"Select Objects to remove
             from the Container" buttontext:"Remove" filter: nodes_to_rmv
-            if current_selection == undefined or current_selection.count == 0 then return False
+            if current_selection == undefined or current_selection.count == 0 then return False     # noqa
             temp_arr = #()
             i_node_arr = #()
             new_i_node_arr = #()
