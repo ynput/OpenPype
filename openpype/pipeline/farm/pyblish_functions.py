@@ -579,7 +579,7 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
 
         # if there are multiple cameras, we need to add camera name
         expected_filepath = col[0] if isinstance(col, (list, tuple)) else col
-        cam = next((cam for cam in cameras if cam in expected_filepath), None)
+        cam = next(iter(cam for cam in cameras if cam in expected_filepath), None)
         if cam:
             if aov:
                 # Multiple cameras publishing in some hosts such as 3dsMax
