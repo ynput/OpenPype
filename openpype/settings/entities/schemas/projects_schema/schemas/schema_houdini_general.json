@@ -9,8 +9,8 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
-            "key": "update_job_var_context",
-            "label": "Update $JOB on context change",
+            "key": "update_houdini_var_context",
+            "label": "Update Houdini Vars on context change",
             "children": [
                 {
                     "type": "boolean",
@@ -18,9 +18,14 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "text",
-                    "key": "job_path",
-                    "label": "JOB Path"
+                    "type": "dict-modifiable",
+                    "key": "houdini_vars",
+                    "label": "Houdini Vars",
+                    "collapsible": false,
+                    "object_type": {
+                        "type": "path",
+                        "multiplatform": false
+                    }
                 }
             ]
         }

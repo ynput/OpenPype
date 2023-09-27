@@ -755,48 +755,58 @@ def get_camera_from_container(container):
     return cameras[0]
 
 
-def update_job_var_context():
-    """Update $JOB to match current context.
+def update_houdini_vars_context():
+    """Update Houdini vars to match current context.
 
     This will only do something if the setting is enabled in project settings.
     """
 
     project_settings = get_current_project_settings()
-    job_var_settings = \
-        project_settings["houdini"]["general"]["update_job_var_context"]
+    houdini_vars_settings = \
+        project_settings["houdini"]["general"]["update_houdini_var_context"]
 
-    if job_var_settings["enabled"]:
+    if houdini_vars_settings["enabled"]:
+        houdini_vars = houdini_vars_settings["houdini_vars"]
 
-        # get and resolve job path template
-        job_path = StringTemplate.format_template(
-            job_var_settings["job_path"],
-            get_current_context_template_data()
-        )
-        job_path = job_path.replace("\\", "/")
+        # Remap AYON settings structure to OpenPype settings structure
+        # It allows me to use the same logic for both AYON and OpenPype
+        if isinstance(houdini_vars, list):
+            items = {}
+            for item in houdini_vars:
+                items.update({item["var"]: item["path"]})
 
-        if job_path == "":
-            # Set JOB path to HIP path if JOB path is enabled
-            # and has empty value.
-            job_path = os.environ["HIP"]
+            houdini_vars = items
 
-        current_job = hou.hscript("echo -n `$JOB`")[0]
+        for var, path in houdini_vars.items():
+            # get and resolve job path template
+            path = StringTemplate.format_template(
+                path,
+                get_current_context_template_data()
+            )
+            path = path.replace("\\", "/")
 
-        # sync both environment variables.
-        # because when opening new file $JOB is overridden with
-        # the value saved in the HIP file but os.environ["JOB"] is not!
-        os.environ["JOB"] = current_job
+            if var == "JOB" and path == "":
+                # sync $JOB to $HIP if $JOB is empty
+                path = os.environ["HIP"]
 
-        if current_job != job_path:
-            hou.hscript("set JOB=" + job_path)
-            os.environ["JOB"] = job_path
+            current_path = hou.hscript("echo -n `${}`".format(var))[0]
 
-            try:
-                os.makedirs(job_path)
-            except OSError as e:
-                if e.errno != errno.EEXIST:
-                    print(
-                        "  - Failed to create JOB dir. Maybe due to "
-                        "insufficient permissions."
-                    )
+            # sync both environment variables.
+            # because houdini doesn't do that by default
+            # on opening new files
+            os.environ[var] = current_path
 
-            print("  - Updated $JOB to {}".format(job_path))
+            if current_path != path:
+                hou.hscript("set {}={}".format(var, path))
+                os.environ[var] = path
+
+                try:
+                    os.makedirs(path)
+                except OSError as e:
+                    if e.errno != errno.EEXIST:
+                        print(
+                            "  - Failed to create {} dir. Maybe due to "
+                            "insufficient permissions.".format(var)
+                        )
+
+                print("  - Updated ${} to {}".format(var, path))

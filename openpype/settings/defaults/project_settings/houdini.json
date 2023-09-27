@@ -1,8 +1,10 @@
 {
     "general": {
-        "update_job_var_context": {
+        "update_houdini_var_context": {
             "enabled": true,
-            "job_path": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}"
+            "houdini_vars":{
+                "JOB": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}"
+            }
         }
     },
     "imageio": {
