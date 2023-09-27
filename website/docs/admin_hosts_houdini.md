@@ -17,7 +17,7 @@ JOB Path can be:
 - Openpype template path
     > This allows dynamic values for assets or shots.<br>
     > Using template keys is supported but formatting keys capitalization variants is not,
-    >   e.g. {Asset} and {ASSET} won't work
+    >   e.g. `{Asset}` and `{ASSET}` won't work
 - Empty
     > In this case, JOB will be synced to HIP
 
