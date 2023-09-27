@@ -2665,13 +2665,11 @@ def _remove_scale_keys(node):
         orig_node_attr = '{0}.{1}'.format(node, attr)
 
         times = cmds.keyframe(orig_node_attr, query=True, timeChange=True)
-        log.info("times::{}".format(times))
         if not times:
             continue
         else:
             values = cmds.keyframe(orig_node_attr, query=True,
                                    valueChange=True)
-            log.debug(values)
             invalid_times = [time for time, value in zip(times, values) if
                              value != default_scale_value]
             if invalid_times:
@@ -2683,7 +2681,6 @@ def _remove_scale_keys(node):
         saved_keys[orig_node_attr] = [(time, time) for time in times]
 
     for orig_node_attr, times in saved_keys.items():
-        log.debug("removing::{} at {}".format(orig_node_attr, times))
         cmds.cutKey(orig_node_attr, time=times, option="keys")
 
     return saved_keys
@@ -2696,8 +2693,6 @@ def _set_scale_keys(scale_keys):
         (dict): {camera.scaleAttribute : [(time1, time1), (time2, time2)]}
     """
     for orig_node_attr, times in scale_keys.items():
-        log.debug("setting key::{} at {}".format(orig_node_attr,
-                                                 times))
         cleaned_times = [time[0] for time in times]
         cmds.setKeyframe(orig_node_attr, time=cleaned_times)
 
