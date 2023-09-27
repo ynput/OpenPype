@@ -33,13 +33,13 @@ class ExtractReviewDataBakingStreams(publish.Extractor):
         nuke_publish = project_settings["nuke"]["publish"]
         deprecated_setting = nuke_publish["ExtractReviewDataMov"]
         current_setting = nuke_publish["ExtractReviewDataBakingStreams"]
-        if not deprecated_setting["enabled"]:
-            if current_setting["enabled"]:
-                cls.viewer_lut_raw = current_setting["viewer_lut_raw"]
-                cls.outputs = current_setting["outputs"]
-        else:
+        if deprecated_setting["enabled"]:
+            # Use deprecated settings if they are still enabled
             cls.viewer_lut_raw = deprecated_setting["viewer_lut_raw"]
             cls.outputs = deprecated_setting["outputs"]
+        elif current_setting["enabled"]:
+            cls.viewer_lut_raw = current_setting["viewer_lut_raw"]
+            cls.outputs = current_setting["outputs"]
 
     def process(self, instance):
         families = set(instance.data["families"])

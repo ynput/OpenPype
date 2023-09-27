@@ -818,9 +818,13 @@ class ExporterReviewMov(ExporterReview):
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
         if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
+            # filename would be with frame hashes if
+            # the file extension is not in video format
             filename = get_head_filename_without_hashes(
                 self.path_in, self.name)
             self.file = filename
+            # make sure the filename are in
+            # correct image output format
             if ".{}".format(self.ext) not in self.file:
                 original_ext = os.path.splitext(filename)[-1].strip(".")    # noqa
                 self.file = filename.replace(original_ext, ext)

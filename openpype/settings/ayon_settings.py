@@ -754,11 +754,10 @@ def _convert_nuke_project_settings(ayon_settings, output):
     current_review_settings = (
         ayon_publish["ExtractReviewDataBakingStreams"]
     )
-    if not deprecrated_review_settings["enabled"]:
-        if current_review_settings["enabled"]:
-            outputs_settings = current_review_settings["outputs"]
-    else:
+    if deprecrated_review_settings["enabled"]:
         outputs_settings = deprecrated_review_settings["outputs"]
+    elif current_review_settings["enabled"]:
+        outputs_settings = current_review_settings["outputs"]
 
     for item in outputs_settings:
         item_filter = item["filter"]
@@ -780,12 +779,10 @@ def _convert_nuke_project_settings(ayon_settings, output):
         name = item.pop("name")
         new_review_data_outputs[name] = item
 
-    if deprecrated_review_settings["outputs"] == (
-        current_review_settings["outputs"]
-    ):
-        current_review_settings["outputs"] = new_review_data_outputs
-    else:
+    if deprecrated_review_settings["enabled"]:
         deprecrated_review_settings["outputs"] = new_review_data_outputs
+    elif current_review_settings["enabled"]:
+        current_review_settings["outputs"] = new_review_data_outputs
 
     collect_instance_data = ayon_publish["CollectInstanceData"]
     if "sync_workfile_version_on_product_types" in collect_instance_data:

@@ -3463,7 +3463,7 @@ def get_filenames_without_hash(filename, frame_start, frame_end):
         frame_end (str): end of the frame
 
     Returns:
-        filenames(list): list of filename
+        list: filename per frame of the sequence
     """
     filenames = []
     for frame in range(int(frame_start), (int(frame_end) + 1)):
