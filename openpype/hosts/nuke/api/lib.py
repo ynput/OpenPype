@@ -3430,15 +3430,20 @@ def get_head_filename_without_hashes(original_path, name):
     To avoid the system being confused on finding the filename with
     frame hashes if the head of the filename has the hashed symbol
 
+    Examples:
+        >>> get_head_filename_without_hashes("render.####.exr", "baking")
+        render.baking.####.exr
+        >>> get_head_filename_without_hashes("render.%d.exr", "tag")
+        render.tag.%d.exr
+        >>> get_head_filename_without_hashes("exr.####.exr", "foo")
+        exr.foo.%04d.exr
+
     Args:
         original_path (str): the filename with frame hashes
-            e.g. "renderCompositingMain.####.exr"
         name (str): the name of the tags
-            e.g. "baking"
 
     Returns:
         str: the renamed filename with the tag
-            e.g. "renderCompositingMain.baking.####.exr"
     """
     filename = os.path.basename(original_path)
 
