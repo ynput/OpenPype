@@ -1,4 +1,5 @@
 import sys
+import unreal
 from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import (
@@ -68,10 +69,6 @@ class ToolsDialog(QtWidgets.QDialog):
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
 
-        self.setWindowFlags(
-            QtCore.Qt.Window
-            | QtCore.Qt.WindowStaysOnTopHint
-        )
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         tools_widget = ToolsBtnsWidget(self)
@@ -103,11 +100,6 @@ class ToolsPopup(ToolsDialog):
     """Popup with tool buttons that will close when loose focus."""
     def __init__(self, *args, **kwargs):
         super(ToolsPopup, self).__init__(*args, **kwargs)
-
-        self.setWindowFlags(
-            QtCore.Qt.FramelessWindowHint
-            | QtCore.Qt.Popup
-        )
 
     def showEvent(self, event):
         super(ToolsPopup, self).showEvent(event)
@@ -141,6 +133,8 @@ class WindowCache:
                 cls._popup = ToolsPopup()
 
             cls._popup.show()
+            unreal.parent_external_window_to_slate(
+                cls._popup.winId(), unreal.SlateParentWindowSearchMethod.ACTIVE_WINDOW)
 
     @classmethod
     def show_dialog(cls):
@@ -152,6 +146,8 @@ class WindowCache:
             cls._dialog.show()
             cls._dialog.raise_()
             cls._dialog.activateWindow()
+            unreal.parent_external_window_to_slate(
+                cls._dialog.winId(), unreal.SlateParentWindowSearchMethod.ACTIVE_WINDOW)
 
 
 def show_tools_popup():
