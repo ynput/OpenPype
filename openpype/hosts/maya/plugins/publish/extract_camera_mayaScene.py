@@ -219,6 +219,8 @@ class ExtractCameraMayaScene(publish.Extractor,
 
                     # Delete the baked hierarchy
                     if bake_to_worldspace:
+                        for cam in baked_camera_shapes:
+                            self.ensure_image_plane_attachment(cam, True)
                         cmds.delete(baked)
                     if self.scene_type == "ma":
                         massage_ma_file(path)
@@ -251,16 +253,22 @@ class ExtractCameraMayaScene(publish.Extractor,
 
         return defs
 
-    def ensure_image_plane_attachment(self, camera):
-        """Reattaches image planes to baked cameras.
+    def ensure_image_plane_attachment(self, camera, reattach=False):
+        """Reattaches image planes to baked or original cameras.
 
         Baked cameras are duplicates of original ones, even with
         `keep_input_connections` the connection of image plane is still on the
         original one. This attaches it to duplicated camera properly.
+        If 'reattach' it attaches back image plane to original camera.
+        TODO figure out use of some context manager
+        (`delete_after` doesnt work)
         """
         image_planes = cmds.listConnections(camera, type="imagePlane")
         if not image_planes:
             return
+        if reattach:
+            # find original camera name
+            camera = camera[0:camera.find("_baked")]
 
         image_planes = [x.split("->")[1] for x in image_planes]
         for image_plane in image_planes:
