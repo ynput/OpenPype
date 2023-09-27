@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import errno
 import re
 import uuid
 import logging
@@ -786,7 +787,14 @@ def update_job_var_context():
             hou.hscript("set JOB=" + job_path)
             os.environ["JOB"] = job_path
 
-            os.makedirs(job_path, exist_ok=True)
+            try:
+                os.makedirs(job_path)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    print(
+                            "  - Failed to create JOB dir. Maybe due to "
+                            "insufficient permissions."
+                    )
 
             print("  - Context changed, update $JOB respectively to "
                   + job_path)
