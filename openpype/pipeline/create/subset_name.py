@@ -161,7 +161,7 @@ def get_subset_name(
     try:
         return template.format(**prepare_template_data(fill_pairs))
     except KeyError as exp:
-        error = "Value for '{}' key is missing in template '{}'.".format(
-            str(exp), template)
-        error += "Collected values are {}".format(fill_pairs)
-        raise KeyError(error)
+        raise KeyError(
+            "Value for {} key is missing in template '{}'."
+            " Available values are {}".format(str(exp), template, fill_pairs)
+        )
