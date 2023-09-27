@@ -9,7 +9,7 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
     start and end frame respectively
     """
 
-    order = pyblish.api.CollectorOrder + 0.2
+    order = pyblish.api.CollectorOrder + 0.490
     label = "Collect Sequence Frame Data"
     families = ["plate", "pointcache",
                 "vdbcache", "online",
@@ -18,21 +18,22 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         frame_data = self.get_frame_data_from_repre_sequence(instance)
+
         if not frame_data:
             # if no dict data skip collecting the frame range data
             return
+
         for key, value in frame_data.items():
-            if key not in instance.data:
-                instance.data[key] = value
-                self.log.debug(f"Collected Frame range data '{key}':{value} ")
+            instance.data[key] = value
+            self.log.debug(f"Collected Frame range data '{key}':{value} ")
+
+        test_keys = {key: value for key, value in instance.data.items() if key in frame_data}
+        self.log.debug(f"Final Instance frame data: {test_keys}")
+
 
     def get_frame_data_from_repre_sequence(self, instance):
         repres = instance.data.get("representations")
-        parent_entity = instance.data.get("assetEntity")
-
-        if not parent_entity:
-            self.log.warning("Cannot find parent entity data")
-            return
+        asset_data = instance.data["assetEntity"]["data"]
 
         if repres:
             first_repre = repres[0]
@@ -58,5 +59,5 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
                 "frameEnd": repres_frames[-1],
                 "handleStart": 0,
                 "handleEnd": 0,
-                "fps": parent_entity["data"]["fps"]
+                "fps": asset_data["fps"]
             }
