@@ -1,22 +1,32 @@
 import pyblish.api
 import clique
 
+from openpype.pipeline import OptionalPyblishPluginMixin
 
-class CollectSequenceFrameData(pyblish.api.InstancePlugin):
-    """Collect Sequence Frame Data
+
+class CollectSequenceFrameData(
+    pyblish.api.InstancePlugin,
+    OptionalPyblishPluginMixin
+):
+    """Collect Original Sequence Frame Data
+
     If the representation includes files with frame numbers,
     then set `frameStart` and `frameEnd` for the instance to the
     start and end frame respectively
     """
 
-    order = pyblish.api.CollectorOrder + 0.490
-    label = "Collect Sequence Frame Data"
+    order = pyblish.api.CollectorOrder + 0.4905
+    label = "Collect Original Sequence Frame Data"
     families = ["plate", "pointcache",
                 "vdbcache", "online",
                 "render"]
     hosts = ["traypublisher"]
+    optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         frame_data = self.get_frame_data_from_repre_sequence(instance)
 
         if not frame_data:
