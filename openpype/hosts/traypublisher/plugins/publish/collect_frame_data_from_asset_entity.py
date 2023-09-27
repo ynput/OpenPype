@@ -34,4 +34,5 @@ class CollectFrameDataFromAssetEntity(
             "handleEnd"
         ):
             instance.data[key] = asset_data[key]
-            self.log.debug(f"Collected Frame range data '{key}':{asset_data[key]} ")
+            self.log.debug(
+                f"Collected Frame range data '{key}':{asset_data[key]} ")

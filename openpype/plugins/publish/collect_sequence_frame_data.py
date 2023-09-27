@@ -27,9 +27,6 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
             instance.data[key] = value
             self.log.debug(f"Collected Frame range data '{key}':{value} ")
 
-        test_keys = {key: value for key, value in instance.data.items() if key in frame_data}
-        self.log.debug(f"Final Instance frame data: {test_keys}")
-
 
     def get_frame_data_from_repre_sequence(self, instance):
         repres = instance.data.get("representations")
