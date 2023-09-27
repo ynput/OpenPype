@@ -826,8 +826,8 @@ class ExporterReviewMov(ExporterReview):
             # make sure the filename are in
             # correct image output format
             if ".{}".format(self.ext) not in self.file:
-                original_ext = os.path.splitext(filename)[-1].strip(".")    # noqa
-                self.file = filename.replace(original_ext, ext)
+                filename_no_ext, _ = os.path.splitext(filename)
+                self.file = "{}.{}".format(filename_no_ext, self.ext)
 
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
