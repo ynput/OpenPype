@@ -28,10 +28,12 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
 
     def get_frame_data_from_repre_sequence(self, instance):
         repres = instance.data.get("representations")
-        parent_entity = (
-            instance.data.get("assetEntity")
-            or instance.context.data["projectEntity"]
-        )
+        parent_entity = instance.data.get("assetEntity")
+
+        if not parent_entity:
+            self.log.warning("Cannot find parent entity data")
+            return
+
         if repres:
             first_repre = repres[0]
             if "ext" not in first_repre:
@@ -40,7 +42,7 @@ class CollectSequenceFrameData(pyblish.api.InstancePlugin):
                 return
 
             files = first_repre["files"]
-            collections, remainder = clique.assemble(files)
+            collections, _ = clique.assemble(files)
             if not collections:
                 # No sequences detected and we can't retrieve
                 # frame range
