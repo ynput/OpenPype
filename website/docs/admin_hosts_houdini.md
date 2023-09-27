@@ -5,16 +5,18 @@ sidebar_label: Houdini
 ---
 ## General Settings
 ### JOB Path
-you can add your studios preffered JOB Path, JOB value will be checked and updated on file save and open.
-Disableing this option will effectivly turn off this feature.
+Specify a studio-wide `JOB` path.<br>
+The Houdini `$JOB` path can be customized through project settings with a (dynamic) path that will be updated on context changes, e.g. when switching to another asset or task.
+
+Disabling this feature will leave `$JOB` var unmanaged and thus no context update changes will occur.
 
 JOB Path can be:
-- Arbitrary hardcoded path
+- Arbitrary path
 - Openpype template path
     > This allows dynamic values for assets or shots.<br>
     > Using template keys is supported but formatting keys capitalization variants is not,
     >   e.g. {Asset} and {ASSET} won't work
-- empty
+- Empty
     > In this case, JOB will be synced to HIP
 
 ![update job on context change](assets/houdini/update-job-context-change.png)
