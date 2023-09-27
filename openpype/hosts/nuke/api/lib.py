@@ -3452,7 +3452,7 @@ def get_head_filename_without_hashes(original_path, name):
             "%.*d",
             "{{:0>{}}}".format(padding),
             fhead
-        ).rstip(".")
+        ).rstrip(".")
     new_fhead = "{}.{}".format(fhead, name)
     filename = filename.replace(fhead, new_fhead)
     return filename
