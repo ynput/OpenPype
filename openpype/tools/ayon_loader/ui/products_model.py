@@ -297,6 +297,9 @@ class ProductsModel(QtGui.QStandardItemModel):
         self._set_version_data_to_product_item(model_item, last_version)
         return model_item
 
+    def get_last_project_name(self):
+        return self._last_project_name
+
     def refresh(self, project_name, folder_ids):
         self._clear()
 

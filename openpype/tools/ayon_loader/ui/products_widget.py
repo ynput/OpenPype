@@ -1,11 +1,23 @@
 import collections
-from qtpy import QtWidgets, QtCore
+import uuid
 
-from openpype.tools.utils.delegates import PrettyTimeDelegate
+import qtawesome
+from qtpy import QtWidgets, QtCore, QtGui
+
+
+from openpype.lib.attribute_definitions import AbstractAttrDef
+from openpype.tools.attribute_defs import AttributeDefinitionsDialog
 from openpype.tools.utils import (
     RecursiveSortFilterProxyModel,
     DeselectableTreeView,
 )
+from openpype.tools.utils.delegates import PrettyTimeDelegate
+from openpype.tools.utils.widgets import (
+    OptionalMenu,
+    OptionalAction,
+    OptionDialog,
+)
+from openpype.tools.ayon_utils.widgets import get_qt_icon
 
 from .products_model import (
     ProductsModel,
@@ -13,6 +25,7 @@ from .products_model import (
     PRODUCT_TYPE_ROLE,
     GROUP_TYPE_ROLE,
     PRODUCT_ID_ROLE,
+    VERSION_ID_ROLE,
 )
 from .products_delegates import VersionDelegate
 
@@ -127,8 +140,9 @@ class ProductsWidget(QtWidgets.QWidget):
 
         products_proxy_model.rowsInserted.connect(self._on_rows_inserted)
         products_proxy_model.rowsMoved.connect(self._on_rows_moved)
-        products_proxy_model.rowsRemoved.connect(self._on_rows_removed)
         products_model.refreshed.connect(self._on_refresh)
+        products_view.customContextMenuRequested.connect(
+            self._on_context_menu)
 
         controller.register_event_callback(
             "selection.folders.changed",
@@ -216,14 +230,142 @@ class ProductsWidget(QtWidgets.QWidget):
     def _on_rows_moved(self):
         self._fill_version_editor()
 
-    def _on_rows_removed(self):
-        self._fill_version_editor()
-
     def _refresh_model(self):
         self._products_model.refresh(
             self._selected_project_name,
             self._selected_folder_ids
         )
+
+    def _on_context_menu(self, point):
+        selection_model = self._products_view.selectionModel()
+        model = self._products_view.model()
+        project_name = self._products_model.get_last_project_name()
+
+        version_ids = set()
+        indexes_queue = collections.deque()
+        indexes_queue.extend(selection_model.selectedIndexes())
+        while indexes_queue:
+            index = indexes_queue.popleft()
+            for row in range(model.rowCount(index)):
+                child_index = model.index(row, 0, index)
+                indexes_queue.append(child_index)
+            version_id = model.data(index, VERSION_ID_ROLE)
+            if version_id is not None:
+                version_ids.add(version_id)
+
+        action_items = self._controller.get_versions_action_items(
+            project_name, version_ids)
+
+        # Prepare global point where to show the menu
+        global_point = self._products_view.mapToGlobal(point)
+        if not action_items:
+            menu = QtWidgets.QMenu(self)
+            action = self._get_no_loader_action(menu, len(version_ids) == 1)
+            menu.addAction(action)
+            menu.exec_(global_point)
+            return
+
+        menu = OptionalMenu(self)
+
+        action_items_by_id = {}
+        for action_item in action_items:
+            item_id = uuid.uuid4().hex
+            action_items_by_id[item_id] = action_item
+            options = action_item.options
+            icon = get_qt_icon(action_item.icon)
+            use_option = bool(options)
+            action = OptionalAction(
+                action_item.label,
+                icon,
+                use_option,
+                menu
+            )
+            if use_option:
+                # Add option box tip
+                action.set_option_tip(options)
+
+            tip = action_item.tooltip
+            if tip:
+                action.setToolTip(tip)
+                action.setStatusTip(tip)
+
+            action.setData(item_id)
+
+            menu.addAction(action)
+
+        action = menu.exec_(global_point)
+        action_item = None
+        if action is not None:
+            item_id = action.data()
+            action_item = action_items_by_id.get(item_id)
+        if action_item is None:
+            return
+
+        options = self._get_options(action, action_item, self)
+        if options is None:
+            return
+        self._controller.trigger_action_item(
+            action_item.identifier,
+            options,
+            action_item.project_name,
+            action_item.folder_ids,
+            action_item.product_ids,
+            action_item.version_ids,
+            action_item.representation_ids,
+        )
+
+    def _get_options(self, action, action_item, parent):
+        """Provides dialog to select value from loader provided options.
+
+        Loader can provide static or dynamically created options based on
+        AttributeDefinitions, and for backwards compatibility qargparse.
+
+        Args:
+            action (OptionalAction) - Action object in menu.
+            action_item (ActionItem) - Action item with context information.
+            parent (QtCore.QObject) - Parent object for dialog.
+
+        Returns:
+            Union[dict[str, Any], None]: Selected value from attributes or
+                'None' if dialog was cancelled.
+        """
+
+        # Pop option dialog
+        options = action_item.options
+        if not getattr(action, "optioned", False) or not options:
+            return {}
+
+        if isinstance(options[0], AbstractAttrDef):
+            qargparse_options = False
+            dialog = AttributeDefinitionsDialog(options, parent)
+        else:
+            qargparse_options = True
+            dialog = OptionDialog(parent)
+            dialog.create(options)
+
+        dialog.setWindowTitle(action.label + " Options")
+
+        if not dialog.exec_():
+            return None
+
+        # Get option
+        if qargparse_options:
+            return dialog.parse()
+        return dialog.get_values()
+
+    def _get_no_loader_action(self, menu, one_item_selected):
+        """Creates dummy no loader option in 'menu'"""
+
+        if one_item_selected:
+            submsg = "this version."
+        else:
+            submsg = "your selection."
+        msg = "No compatible loaders for {}".format(submsg)
+        icon = qtawesome.icon(
+            "fa.exclamation",
+            color=QtGui.QColor(255, 51, 0)
+        )
+        return QtWidgets.QAction(icon, ("*" + msg), menu)
 
     def _on_folders_selection_change(self, event):
         self._selected_project_name = event["project_name"]
