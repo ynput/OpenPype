@@ -2,6 +2,7 @@
 """Extract camera as Maya Scene."""
 import os
 import itertools
+import contextlib
 
 from maya import cmds
 
@@ -178,9 +179,6 @@ class ExtractCameraMayaScene(publish.Extractor,
                                                   shapes=True,
                                                   long=True))
 
-                        for cam in baked_camera_shapes:
-                            self.ensure_image_plane_attachment(cam)
-
                         members.update(baked_camera_shapes)
                         members.difference_update(cameras)
                     else:
@@ -203,24 +201,26 @@ class ExtractCameraMayaScene(publish.Extractor,
                         unlock(plug)
                         cmds.setAttr(plug, value)
 
-                    self.log.info("Performing extraction..")
-                    cmds.select(cmds.ls(list(members), dag=True,
-                                        shapes=True, long=True), noExpand=True)
-                    cmds.file(path,
-                              force=True,
-                              typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
-                              exportSelected=True,
-                              preserveReferences=False,
-                              constructionHistory=False,
-                              channels=True,  # allow animation
-                              constraints=False,
-                              shader=False,
-                              expressions=False)
+                    with attached_image_planes(sorted(cameras),
+                                               sorted(baked_camera_shapes)):
+
+                        self.log.info("Performing extraction..")
+                        cmds.select(cmds.ls(list(members), dag=True,
+                                            shapes=True, long=True),
+                                    noExpand=True)
+                        cmds.file(path,
+                                  force=True,
+                                  typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
+                                  exportSelected=True,
+                                  preserveReferences=False,
+                                  constructionHistory=False,
+                                  channels=True,  # allow animation
+                                  constraints=False,
+                                  shader=False,
+                                  expressions=False)
 
                     # Delete the baked hierarchy
                     if bake_to_worldspace:
-                        for cam in baked_camera_shapes:
-                            self.ensure_image_plane_attachment(cam, True)
                         cmds.delete(baked)
                     if self.scene_type == "ma":
                         massage_ma_file(path)
@@ -253,25 +253,36 @@ class ExtractCameraMayaScene(publish.Extractor,
 
         return defs
 
-    def ensure_image_plane_attachment(self, camera, reattach=False):
-        """Reattaches image planes to baked or original cameras.
 
-        Baked cameras are duplicates of original ones, even with
-        `keep_input_connections` the connection of image plane is still on the
-        original one. This attaches it to duplicated camera properly.
-        If 'reattach' it attaches back image plane to original camera.
-        TODO figure out use of some context manager
-        (`delete_after` doesnt work)
-        """
-        image_planes = cmds.listConnections(camera, type="imagePlane")
-        if not image_planes:
-            return
-        if reattach:
-            # find original camera name
-            camera = camera[0:camera.find("_baked")]
+@contextlib.contextmanager
+def attached_image_planes(source_cameras, baked_cameras):
+    """Reattaches image planes to baked or original cameras.
 
-        image_planes = [x.split("->")[1] for x in image_planes]
-        for image_plane in image_planes:
-            self.log.debug("reattaching {}".format(image_plane))
-            cmds.imagePlane(image_plane, edit=True, detach=True)
-            cmds.imagePlane(image_plane, edit=True, camera=camera)
+    Baked cameras are duplicates of original ones, even with
+    `keep_input_connections` the connection of image plane is still on the
+    original one. This attaches it to duplicated camera properly and after
+    export it reattaches it back to original to keep image plane in workfile.
+    """
+    originals = {}
+    cameras = {baked: source for baked, source in zip(baked_cameras,
+                                                      source_cameras)
+               if source != baked}
+    try:
+        for baked_camera, source_camera in cameras.items():
+            image_planes = cmds.listConnections(baked_camera,
+                                                type="imagePlane")
+            if not image_planes:
+                continue
+
+            originals[source_camera] = []
+            image_planes = [x.split("->", 1)[1] for x in image_planes]
+            for image_plane in image_planes:
+                originals[source_camera].append(image_plane)
+                cmds.imagePlane(image_plane, edit=True, detach=True)
+                cmds.imagePlane(image_plane, edit=True, camera=baked_camera)
+        yield
+    finally:
+        for camera, image_planes in originals.items():
+            for image_plane in image_planes:
+                cmds.imagePlane(image_plane, edit=True, detach=True)
+                cmds.imagePlane(image_plane, edit=True, camera=camera)
