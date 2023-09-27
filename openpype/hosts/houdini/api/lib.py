@@ -792,8 +792,8 @@ def update_job_var_context():
             except OSError as e:
                 if e.errno != errno.EEXIST:
                     print(
-                            "  - Failed to create JOB dir. Maybe due to "
-                            "insufficient permissions."
+                        "  - Failed to create JOB dir. Maybe due to "
+                        "insufficient permissions."
                     )
 
             print("  - Context changed, update $JOB respectively to "
