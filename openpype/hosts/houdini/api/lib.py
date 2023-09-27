@@ -756,7 +756,10 @@ def get_camera_from_container(container):
 
 
 def update_job_var_context():
-    """Validate job path to ensure it matches the settings."""
+    """Update $JOB to match current context.
+
+    This will only do something if the setting is enabled in project settings.
+    """
 
     project_settings = get_current_project_settings()
     job_var_settings = \
@@ -796,5 +799,4 @@ def update_job_var_context():
                         "insufficient permissions."
                     )
 
-            print("  - Context changed, update $JOB respectively to "
-                  + job_path)
+            print("  - Updated $JOB to {}".format(job_path))

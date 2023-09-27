@@ -8,7 +8,9 @@ sidebar_label: Houdini
 
 The Houdini `$JOB` path can be customized through project settings with a (dynamic) path that will be updated on context changes, e.g. when switching to another asset or task.
 
-> If the folder does not exist on the context change it will be created by this feature so that `$JOB` will always try to point to an existing folder.
+:::note
+If the folder does not exist on the context change it will be created by this feature so that `$JOB` will always try to point to an existing folder.
+:::
 
 Disabling this feature will leave `$JOB` var unmanaged and thus no context update changes will occur.
 
