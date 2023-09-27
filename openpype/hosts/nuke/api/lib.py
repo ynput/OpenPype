@@ -3432,30 +3432,20 @@ def get_head_filename_without_hashes(original_path, name):
 
     Args:
         original_path (str): the filename with frame hashes
-        e.g. "renderCompositingMain.####.exr"
+            e.g. "renderCompositingMain.####.exr"
         name (str): the name of the tags
-        e.g. "baking"
+            e.g. "baking"
 
     Returns:
-        filename: the renamed filename with the tag
-        e.g. "renderCompositingMain.baking.####.exr"
+        str: the renamed filename with the tag
+            e.g. "renderCompositingMain.baking.####.exr"
     """
     filename = os.path.basename(original_path)
-    fhead = os.path.splitext(filename)[0].strip(".")
-    if "#" in fhead:
-        fhead = re.sub("#+", "", fhead).rstrip(".")
-    elif "%" in fhead:
-        # use regex to convert %04d to {:0>4}
-        padding = re.search("%(\\d)+d", fhead)
-        padding = padding.group(1) if padding else 1
-        fhead = re.sub(
-            "%.*d",
-            "{{:0>{}}}".format(padding),
-            fhead
-        ).rstrip(".")
-    new_fhead = "{}.{}".format(fhead, name)
-    filename = filename.replace(fhead, new_fhead)
-    return filename
+
+    def insert_name(matchobj):
+        return "{}.{}".format(name, matchobj.group(0))
+
+    return re.sub(r"(%\d*d)|#+", insert_name, filename)
 
 
 def get_filenames_without_hash(filename, frame_start, frame_end):
