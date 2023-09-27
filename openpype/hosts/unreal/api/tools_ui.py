@@ -136,7 +136,7 @@ class WindowCache:
 
             cls._popup.show()
             unreal.parent_external_window_to_slate(
-                cls._popup.winId(), 
+                cls._popup.winId(),
                 unreal.SlateParentWindowSearchMethod.ACTIVE_WINDOW)
 
     @classmethod
@@ -150,7 +150,7 @@ class WindowCache:
             cls._dialog.raise_()
             cls._dialog.activateWindow()
             unreal.parent_external_window_to_slate(
-                cls._dialog.winId(), 
+                cls._dialog.winId(),
                 unreal.SlateParentWindowSearchMethod.ACTIVE_WINDOW)
 
 
