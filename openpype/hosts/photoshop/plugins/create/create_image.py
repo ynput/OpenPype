@@ -10,6 +10,7 @@ from openpype.pipeline import (
 from openpype.lib import prepare_template_data
 from openpype.pipeline.create import SUBSET_NAME_ALLOWED_SYMBOLS
 from openpype.hosts.photoshop.api.pipeline import cache_and_get_instances
+from openpype.hosts.photoshop.lib import clean_subset_name
 
 
 class ImageCreator(Creator):
@@ -88,6 +89,7 @@ class ImageCreator(Creator):
 
             layer_fill = prepare_template_data({"layer": layer_name})
             subset_name = subset_name.format(**layer_fill)
+            subset_name = clean_subset_name(subset_name)
 
             if group.long_name:
                 for directory in group.long_name[::-1]:
@@ -183,7 +185,6 @@ class ImageCreator(Creator):
         self.default_variants = plugin_settings["default_variants"]
         self.mark_for_review = plugin_settings["mark_for_review"]
         self.enabled = plugin_settings["enabled"]
-
 
     def get_detail_description(self):
         return """Creator for Image instances
