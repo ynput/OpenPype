@@ -9,7 +9,7 @@ class CollectFrameDataFromAssetEntity(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.491
-    label = "Collect Frame Data From Asset"
+    label = "Collect Missing Frame Data From Asset"
     families = ["plate", "pointcache",
                 "vdbcache", "online",
                 "render"]
