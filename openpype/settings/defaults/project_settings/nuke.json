@@ -501,7 +501,7 @@
                 }
             }
         },
-        "ExtractReviewIntermediate": {
+        "ExtractReviewIntermediates": {
             "enabled": true,
             "viewer_lut_raw": false,
             "outputs": {

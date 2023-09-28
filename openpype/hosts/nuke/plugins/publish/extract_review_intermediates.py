@@ -8,7 +8,7 @@ from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import maintained_selection
 
 
-class ExtractReviewIntermediate(publish.Extractor):
+class ExtractReviewIntermediates(publish.Extractor):
     """Extracts Sequences and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -32,7 +32,7 @@ class ExtractReviewIntermediate(publish.Extractor):
         """
         nuke_publish = project_settings["nuke"]["publish"]
         deprecated_setting = nuke_publish["ExtractReviewDataMov"]
-        current_setting = nuke_publish["ExtractReviewIntermediate"]
+        current_setting = nuke_publish["ExtractReviewIntermediates"]
         if deprecated_setting["enabled"]:
             # Use deprecated settings if they are still enabled
             cls.viewer_lut_raw = deprecated_setting["viewer_lut_raw"]

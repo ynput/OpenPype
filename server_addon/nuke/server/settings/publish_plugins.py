@@ -177,7 +177,7 @@ class ExtractReviewDataMovModel(BaseSettingsModel):
     )
 
 
-class ExtractReviewBakingStreamsModel(BaseSettingsModel):
+class ExtractReviewIntermediatesModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     viewer_lut_raw: bool = Field(title="Viewer lut raw")
     outputs: list[BakingStreamModel] = Field(
@@ -282,9 +282,9 @@ class PublishPuginsModel(BaseSettingsModel):
         title="Extract Review Data Mov",
         default_factory=ExtractReviewDataMovModel
     )
-    ExtractReviewIntermediate: ExtractReviewBakingStreamsModel = Field(
-        title="Extract Review Data Baking Streams",
-        default_factory=ExtractReviewBakingStreamsModel
+    ExtractReviewIntermediates: ExtractReviewIntermediatesModel = Field(
+        title="Extract Review Intermediates",
+        default_factory=ExtractReviewIntermediatesModel
     )
     ExtractSlateFrame: ExtractSlateFrameModel = Field(
         title="Extract Slate Frame",
@@ -481,7 +481,7 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
             }
         ]
     },
-    "ExtractReviewIntermediate": {
+    "ExtractReviewIntermediates": {
         "enabled": True,
         "viewer_lut_raw": False,
         "outputs": [
