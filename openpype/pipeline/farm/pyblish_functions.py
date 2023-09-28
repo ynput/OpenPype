@@ -579,24 +579,22 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
 
         # if there are multiple cameras, we need to add camera name
         expected_filepath = col[0] if isinstance(col, (list, tuple)) else col
-        cam = next(
-            iter(cam for cam in cameras if cam in expected_filepath), None)
-        if cam:
-            if aov:
-                # Multiple cameras publishing in some hosts such as 3dsMax
-                # have aov data set to "Camera001_beauty" to differentiate
-                # the render output files
-                if not aov.startswith(cam):
-                    subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+        cams = [cam for cam in cameras if cam in expected_filepath]
+        if cams:
+            for cam in cams:
+                if aov:
+                    if not aov.startswith(cam):
+                        subset_name = '{}_{}_{}'.format(group_name, cam, aov)
+                    else:
+                        subset_name = "{}_{}".format(group_name, aov)
                 else:
-                    subset_name = '{}_{}'.format(group_name, aov)
-            else:
-                subset_name = '{}_{}'.format(group_name, cam)
+                    subset_name = '{}_{}'.format(group_name, cam)
         else:
             if aov:
                 subset_name = '{}_{}'.format(group_name, aov)
             else:
                 subset_name = '{}'.format(group_name)
+
         if isinstance(col, (list, tuple)):
             staging = os.path.dirname(col[0])
         else:
