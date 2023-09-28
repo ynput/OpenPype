@@ -54,15 +54,12 @@ class ExtractFBXAnimation(publish.Extractor):
         cmds.namespace(set=':')
         cmds.namespace(rel=False)
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
-
-        representation = {
+        representations = instance.data.setdefault("representations", [])
+        representations.append({
             'name': 'fbx',
             'ext': 'fbx',
             'files': filename,
             "stagingDir": staging_dir
-        }
-        instance.data["representations"].append(representation)
+        })
 
         self.log.debug("Extract animated FBX successful to: {0}".format(path))
