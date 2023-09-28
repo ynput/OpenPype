@@ -12,22 +12,20 @@ class CollectSkeletonMesh(pyblish.api.InstancePlugin):
     families = ["rig"]
 
     def process(self, instance):
+        skeleton_sets = instance.data.get("skeletonAnim_SET")
+        skeleton_mesh_sets = instance.data.get("skeletonMesh_SET")
+        if not skeleton_mesh_sets:
+            self.log.debug(
+                "skeletonMesh_SET found. "
+                "Skipping collecting of skeleton mesh..."
+            )
+            return
+
+        # Store current frame to ensure single frame export
         frame = cmds.currentTime(query=True)
         instance.data["frameStart"] = frame
         instance.data["frameEnd"] = frame
-        skeleton_sets = [
-            i for i in instance
-            if i.lower().endswith("skeletonanim_set")
-        ]
 
-        skeleton_mesh_sets = [
-            i for i in instance
-            if i.lower().endswith("skeletonmesh_set")
-        ]
-        if not skeleton_sets and skeleton_mesh_sets:
-            self.log.debug(
-                "no skeleton_set or skeleton_mesh set was found....")
-            return
         instance.data["skeleton_mesh"] = []
         instance.data["skeleton_rig"] = []
 

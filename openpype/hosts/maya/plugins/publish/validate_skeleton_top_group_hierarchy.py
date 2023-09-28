@@ -25,18 +25,18 @@ class ValidateSkeletonTopGroupHierarchy(pyblish.api.InstancePlugin,
     def process(self, instance):
         invalid = []
         skeleton_data = instance.data.get(("animated_rigs"), [])
-        skeletonMesh_data = instance.data(("skeleton_mesh"), [])
+        skeleton_mesh_data = instance.data(("skeleton_mesh"), [])
         if skeleton_data:
             invalid = self.get_top_hierarchy(skeleton_data)
             if invalid:
                 raise PublishValidationError(
-                    "The set includes the object which "
+                    "The skeletonAnim_SET includes the object which "
                     f"is not at the top hierarchy: {invalid}")
-        if skeletonMesh_data:
-            invalid = self.get_top_hierarchy(skeletonMesh_data)
+        if skeleton_mesh_data:
+            invalid = self.get_top_hierarchy(skeleton_mesh_data)
             if invalid:
                 raise PublishValidationError(
-                    "The set includes the object which "
+                    "The skeletonMesh_SET includes the object which "
                     f"is not at the top hierarchy: {invalid}")
 
     def get_top_hierarchy(self, targets):

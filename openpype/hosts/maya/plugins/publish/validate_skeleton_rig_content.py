@@ -45,12 +45,10 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
             self.log.debug("Skipping empty instance...")
             return
         # Ensure contents in sets and retrieve long path for all objects
-        skeleton_mesh_content = cmds.sets(
-            skeleton_mesh_set, query=True) or []
+        skeleton_mesh_content = instance.data.get("skeleton_mesh", [])
         skeleton_mesh_content = cmds.ls(skeleton_mesh_content, long=True)
 
-        skeleton_anim_content = cmds.sets(
-            skeleton_anim_set, query=True) or []
+        skeleton_anim_content = instance.data.get("skeleton_rig", [])
         skeleton_anim_content = cmds.ls(skeleton_anim_content, long=True)
 
         # Validate members are inside the hierarchy from root node

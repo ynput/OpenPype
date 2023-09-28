@@ -43,17 +43,15 @@ class ExtractSkeletonMesh(publish.Extractor,
         fbx_exporter.set_options_from_instance(instance)
 
         # Export
-        fbx_exporter.export(out_set, path.replace("\\", "/"))
+        path = path.replace("\\", "/")
+        fbx_exporter.export(out_set, path)
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
-
-        representation = {
+        representations = instance.data.setdefault("representations", [])
+        representations.append({
             'name': 'fbx',
             'ext': 'fbx',
             'files': filename,
             "stagingDir": staging_dir
-        }
-        instance.data["representations"].append(representation)
+        })
 
         self.log.debug("Extract animated FBX successful to: {0}".format(path))

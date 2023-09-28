@@ -6,6 +6,7 @@ import pyblish.api
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import fbx
+from openpype.hosts.maya.api.lib import namespaced
 
 
 class ExtractFBXAnimation(publish.Extractor):
@@ -27,9 +28,8 @@ class ExtractFBXAnimation(publish.Extractor):
         staging_dir = self.staging_dir(instance)
         filename = "{0}.fbx".format(instance.name)
         path = os.path.join(staging_dir, filename)
+        path = path.replace("\\", "/")
 
-        # The export requires forward slashes because we need
-        # to format it into a string in a mel expression
         fbx_exporter = fbx.FBXExtractor(log=self.log)
         out_set = instance.data.get("animated_skeleton", [])
         # Export
@@ -44,12 +44,11 @@ class ExtractFBXAnimation(publish.Extractor):
         namespace = out_set_name.split(":")[0]
         new_out_set = out_set_name.replace(
             f"{namespace}:", "")
-        cmds.namespace(set=':')
-        cmds.namespace(set=namespace)
-        cmds.namespace(rel=True)
-
-        fbx_exporter.export(
-            new_out_set, path.replace("\\", "/"))
+        cmds.namespace(set=':' + namespace)
+        cmds.namespace(relativeNames=True)
+        with namespaced(":" + namespace, new=False) as namespace:
+            fbx_exporter.export(
+                new_out_set, path.replace("\\", "/"))
         # restore namespace after export
         cmds.namespace(set=':')
         cmds.namespace(rel=False)
@@ -62,4 +61,4 @@ class ExtractFBXAnimation(publish.Extractor):
             "stagingDir": staging_dir
         })
 
-        self.log.debug("Extract animated FBX successful to: {0}".format(path))
+        self.log.debug("Extracted Fbx animation successful to: {0}".format(path))

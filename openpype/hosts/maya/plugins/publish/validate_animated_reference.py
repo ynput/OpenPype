@@ -7,10 +7,7 @@ from maya import cmds
 
 
 class ValidateAnimatedReferenceRig(pyblish.api.InstancePlugin):
-    """
-        Validate all the nodes underneath skeleton_Anim_SET
-        should be reference nodes
-    """
+    """Validate all nodes in skeletonAnim_SET are referenced"""
 
     order = ValidateContentsOrder
     hosts = ["maya"]
@@ -22,7 +19,7 @@ class ValidateAnimatedReferenceRig(pyblish.api.InstancePlugin):
         animated_sets = instance.data["animated_skeleton"]
         if not animated_sets:
             self.log.debug(
-                "No nodes found in skeleton_Anim_SET..Skipping..")
+                "No nodes found in skeletonAnim_SET.Skipping...")
             return
 
         for animated_reference in animated_sets:
@@ -30,14 +27,14 @@ class ValidateAnimatedReferenceRig(pyblish.api.InstancePlugin):
                 animated_reference, isNodeReferenced=True)
             if not bool(is_referenced):
                 raise PublishValidationError(
-                    "All the content in skeleton_Anim_SET"
-                    " should be reference nodes"
+                    "All the content in skeletonAnim_SET"
+                    " should be referenced nodes"
                 )
         invalid_controls = self.validate_controls(animated_sets)
         if invalid_controls:
             raise PublishValidationError(
-                "All the content in skeleton_Anim_SET"
-                " should be the transforms"
+                "All the content in skeletonAnim_SET"
+                " should be transforms"
             )
 
     def validate_controls(self, set_members):
