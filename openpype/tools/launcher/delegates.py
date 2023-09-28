@@ -75,8 +75,9 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
 
         # Add skip opening last workfile marker
         if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
-            rect = QtCore.QRectF(option.rect.x() + 5, option.rect.height() - 22.5,
-                                 5, 5)
+            rect = QtCore.QRectF(
+                option.rect.x() + 5, option.rect.height() - 22.5, 5, 5
+            )
             painter.setPen(QtCore.Qt.transparent)
             painter.setBrush(QtGui.QColor(200, 0, 0))
             painter.drawEllipse(rect)
@@ -92,7 +93,6 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
 
             painter.setPen(QtGui.QColor(70, 193, 191))
             painter.drawText(point, awesome["download"])
-
 
         is_group = False
         for group_role in self.group_roles:
