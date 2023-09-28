@@ -2,7 +2,7 @@ from openpype.pipeline import CreatedInstance
 
 from openpype.lib import BoolDef
 import openpype.hosts.photoshop.api as api
-from openpype.hosts.photoshop.lib import PSAutoCreator
+from openpype.hosts.photoshop.lib import PSAutoCreator, clean_subset_name
 from openpype.pipeline.create import get_subset_name
 from openpype.lib import prepare_template_data
 from openpype.client import get_asset_by_name
@@ -129,14 +129,4 @@ class AutoImageCreator(PSAutoCreator):
             self.family, variant, task_name, asset_doc,
             project_name, host_name, dynamic_data=dynamic_data
         )
-        return self._clean_subset_name(subset_name)
-
-    def _clean_subset_name(self, subset_name):
-        """Clean all variants leftover {layer} from subset name."""
-        dynamic_data = prepare_template_data({"layer": "{layer}"})
-        for value in dynamic_data.values():
-            if value in subset_name:
-                return (subset_name.replace(value, "")
-                        .replace("__", "_")
-                        .replace("..", "."))
-        return subset_name
+        return clean_subset_name(subset_name)
