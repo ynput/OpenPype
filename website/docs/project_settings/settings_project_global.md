@@ -189,7 +189,7 @@ A profile may generate multiple outputs from a single input. Each output must de
     - Profile filtering defines which group of output definitions is used but output definitions may require more specific filters on their own.
     - They may filter by subset name (regex can be used) or publish families. Publish families are more complex as are based on knowing code base.
     - Filtering by custom tags -> this is used for targeting to output definitions from other extractors using settings (at this moment only Nuke bake extractor can target using custom tags).
-        - Nuke extractor settings path: `project_settings/nuke/publish/ExtractReviewDataBakingStreams/outputs/baking/add_custom_tags`
+        - Nuke extractor settings path: `project_settings/nuke/publish/ExtractReviewIntermediate/outputs/baking/add_custom_tags`
     - Filtering by input length. Input may be video, sequence or single image. It is possible that `.mp4` should be created only when input is video or sequence and to create review `.png` when input is single frame. In some cases the output should be created even if it's single frame or multi frame input.
 
 

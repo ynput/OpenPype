@@ -8,7 +8,7 @@ from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import maintained_selection
 
 
-class ExtractReviewDataBakingStreams(publish.Extractor):
+class ExtractReviewIntermediate(publish.Extractor):
     """Extracts Sequences and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -16,7 +16,7 @@ class ExtractReviewDataBakingStreams(publish.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder + 0.01
-    label = "Extract Review Data Baking Streams"
+    label = "Extract Review Intermediate"
 
     families = ["review"]
     hosts = ["nuke"]
@@ -32,7 +32,7 @@ class ExtractReviewDataBakingStreams(publish.Extractor):
         """
         nuke_publish = project_settings["nuke"]["publish"]
         deprecated_setting = nuke_publish["ExtractReviewDataMov"]
-        current_setting = nuke_publish["ExtractReviewDataBakingStreams"]
+        current_setting = nuke_publish["ExtractReviewIntermediate"]
         if deprecated_setting["enabled"]:
             # Use deprecated settings if they are still enabled
             cls.viewer_lut_raw = deprecated_setting["viewer_lut_raw"]

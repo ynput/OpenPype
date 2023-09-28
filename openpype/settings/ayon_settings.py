@@ -753,7 +753,7 @@ def _convert_nuke_project_settings(ayon_settings, output):
     # settings for backwards compatibility
     deprecrated_review_settings = ayon_publish["ExtractReviewDataMov"]
     current_review_settings = (
-        ayon_publish["ExtractReviewDataBakingStreams"]
+        ayon_publish["ExtractReviewIntermediate"]
     )
     if deprecrated_review_settings["enabled"]:
         outputs_settings = deprecrated_review_settings["outputs"]

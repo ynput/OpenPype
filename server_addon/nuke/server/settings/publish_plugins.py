@@ -282,7 +282,7 @@ class PublishPuginsModel(BaseSettingsModel):
         title="Extract Review Data Mov",
         default_factory=ExtractReviewDataMovModel
     )
-    ExtractReviewDataBakingStreams: ExtractReviewBakingStreamsModel = Field(
+    ExtractReviewIntermediate: ExtractReviewBakingStreamsModel = Field(
         title="Extract Review Data Baking Streams",
         default_factory=ExtractReviewBakingStreamsModel
     )
@@ -481,7 +481,7 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
             }
         ]
     },
-    "ExtractReviewDataBakingStreams": {
+    "ExtractReviewIntermediate": {
         "enabled": True,
         "viewer_lut_raw": False,
         "outputs": [

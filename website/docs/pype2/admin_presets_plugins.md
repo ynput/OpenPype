@@ -534,7 +534,7 @@ Plugin responsible for generating thumbnails with colorspace controlled by Nuke.
 }
 ```
 
-### `ExtractReviewDataBakingStreams`
+### `ExtractReviewIntermediate`
 `viewer_lut_raw` **true** will publish the baked mov file without any colorspace conversion. It will be baked with the workfile workspace. This can happen in case the Viewer input process uses baked screen space luts.
 
 #### baking with controlled colorspace

@@ -373,14 +373,14 @@
         },
         {
             "type": "label",
-            "label": "^ Settings and for <span style=\"color:#FF0000\";><b>ExtractReviewDataMov</b></span> is deprecated and will be soon removed.  <br> Please use <b>ExtractReviewDataBakingStreams</b> instead."
+            "label": "^ Settings and for <span style=\"color:#FF0000\";><b>ExtractReviewDataMov</b></span> is deprecated and will be soon removed.  <br> Please use <b>ExtractReviewIntermediate</b> instead."
         },
         {
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
-            "key": "ExtractReviewDataBakingStreams",
-            "label": "ExtractReviewDataBakingStreams",
+            "key": "ExtractReviewIntermediate",
+            "label": "ExtractReviewIntermediate",
             "is_group": true,
             "children": [
                 {
