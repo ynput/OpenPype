@@ -352,9 +352,6 @@ def transfer_stack(
     """
     src_col = getattr(source_datablock, stack_name)
     for stack_datablock in src_col:
-        if stack_datablock.is_override_data:
-            continue
-
         target_col = getattr(target_datablock, stack_name)
         target_stack_datablock = target_col.get(stack_datablock.name)
         if not target_stack_datablock:
