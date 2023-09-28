@@ -46,7 +46,6 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
         skeleton_mesh_content = instance.data.get("skeleton_mesh", [])
         skeleton_mesh_content = cmds.ls(skeleton_mesh_content, long=True)
 
-
         # Validate members are inside the hierarchy from root node
         root_node = cmds.ls(set_members, assemblies=True)
         hierarchy = cmds.listRelatives(root_node, allDescendents=True,
