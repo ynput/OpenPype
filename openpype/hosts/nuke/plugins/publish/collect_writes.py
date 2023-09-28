@@ -79,7 +79,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         self.log.debug('output dir: {}'.format(output_dir))
 
-        if render_target == "frames":
+        if render_target == "local_frames":
             representation = {
                 'name': ext,
                 'ext': ext,
@@ -149,7 +149,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             self.log.info("Publishing rendered frames ...")
 
         # NOTE hornet update on use existing frames on farm
-        elif render_target == "farm" or render_target == 'farm_frames':
+        elif render_target == "farm" or render_target == 'a_frames_farm':
             farm_keys = ["farm_chunk", "farm_priority", "farm_concurrency"]
             for key in farm_keys:
                 # Skip if key is not in creator attributes
