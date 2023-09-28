@@ -4111,6 +4111,8 @@ def create_rig_animation_instance(
 
     anim_skeleton = next((node for node in nodes if
                           node.endswith("skeletonAnim_SET")), None)
+    skeleton_mesh = next((node for node in nodes if
+                          node.endswith("skeletonMesh_SET")), None)
 
     # Find the roots amongst the loaded nodes
     roots = (
@@ -4147,6 +4149,8 @@ def create_rig_animation_instance(
     rig_sets = [output, controls]
     if anim_skeleton:
         rig_sets.append(anim_skeleton)
+    if skeleton_mesh:
+        rig_sets.append(skeleton_mesh)
     with maintained_selection():
         cmds.select(rig_sets + roots, noExpand=True)
         create_context.create(
