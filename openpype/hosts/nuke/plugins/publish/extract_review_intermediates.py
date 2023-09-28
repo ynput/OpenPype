@@ -16,7 +16,7 @@ class ExtractReviewIntermediates(publish.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder + 0.01
-    label = "Extract Review Intermediate"
+    label = "Extract Review Intermediates"
 
     families = ["review"]
     hosts = ["nuke"]
