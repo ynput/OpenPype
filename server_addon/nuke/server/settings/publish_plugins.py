@@ -149,7 +149,7 @@ class ReformatNodesConfigModel(BaseSettingsModel):
     )
 
 
-class BakingStreamModel(BaseSettingsModel):
+class IntermediateOutputModel(BaseSettingsModel):
     name: str = Field(title="Output name")
     filter: BakingStreamFilterModel = Field(
         title="Filter", default_factory=BakingStreamFilterModel)
@@ -171,7 +171,7 @@ class ExtractReviewDataMovModel(BaseSettingsModel):
     """
     enabled: bool = Field(title="Enabled")
     viewer_lut_raw: bool = Field(title="Viewer lut raw")
-    outputs: list[BakingStreamModel] = Field(
+    outputs: list[IntermediateOutputModel] = Field(
         default_factory=list,
         title="Baking streams"
     )
@@ -180,7 +180,7 @@ class ExtractReviewDataMovModel(BaseSettingsModel):
 class ExtractReviewIntermediatesModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     viewer_lut_raw: bool = Field(title="Viewer lut raw")
-    outputs: list[BakingStreamModel] = Field(
+    outputs: list[IntermediateOutputModel] = Field(
         default_factory=list,
         title="Baking streams"
     )

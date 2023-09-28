@@ -9,7 +9,8 @@ from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class ExtractReviewIntermediates(publish.Extractor):
-    """Extracts Sequences and thumbnail with baked in luts
+    """Extracting intermediate videos or sequences with
+    thumbnail for transcoding.
 
     must be run after extract_render_local.py
 
