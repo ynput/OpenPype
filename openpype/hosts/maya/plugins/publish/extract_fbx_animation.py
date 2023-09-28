@@ -49,9 +49,6 @@ class ExtractFBXAnimation(publish.Extractor):
         with namespaced(":" + namespace, new=False) as namespace:
             fbx_exporter.export(
                 new_out_set, path.replace("\\", "/"))
-        # restore namespace after export
-        cmds.namespace(set=':')
-        cmds.namespace(rel=False)
 
         representations = instance.data.setdefault("representations", [])
         representations.append({
@@ -61,4 +58,5 @@ class ExtractFBXAnimation(publish.Extractor):
             "stagingDir": staging_dir
         })
 
-        self.log.debug("Extracted Fbx animation successful to: {0}".format(path))
+        self.log.debug(
+            "Extracted Fbx animation successful to: {0}".format(path))

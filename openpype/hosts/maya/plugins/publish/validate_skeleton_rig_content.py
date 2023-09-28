@@ -36,8 +36,6 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
             )
             return
 
-        skeleton_anim_set = instance.data["rig_sets"]["skeletonAnim_SET"]
-        skeleton_mesh_set = instance.data["rig_sets"]["skeletonMesh_SET"]
         # Ensure there are at least some transforms or dag nodes
         # in the rig instance
         set_members = instance.data['setMembers']
