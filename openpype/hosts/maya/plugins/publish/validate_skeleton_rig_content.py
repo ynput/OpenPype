@@ -26,7 +26,7 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
     accepted_controllers = ["transform", "locator"]
 
     def process(self, instance):
-        objectsets = ["skeletonAnim_SET", "skeletonMesh_SET"]
+        objectsets = ["skeletonMesh_SET"]
         missing = [
             key for key in objectsets if key not in instance.data["rig_sets"]
         ]
@@ -46,8 +46,6 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
         skeleton_mesh_content = instance.data.get("skeleton_mesh", [])
         skeleton_mesh_content = cmds.ls(skeleton_mesh_content, long=True)
 
-        skeleton_anim_content = instance.data.get("skeleton_rig", [])
-        skeleton_anim_content = cmds.ls(skeleton_anim_content, long=True)
 
         # Validate members are inside the hierarchy from root node
         root_node = cmds.ls(set_members, assemblies=True)
@@ -61,22 +59,12 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
                 if node not in hierarchy:
                     invalid_hierarchy.append(node)
             invalid_geometry = self.validate_geometry(skeleton_mesh_content)
-        if skeleton_anim_content:
-            for node in skeleton_anim_content:
-                if node not in hierarchy:
-                    invalid_hierarchy.append(node)
-            invalid_controls = self.validate_controls(skeleton_anim_content)
 
         error = False
         if invalid_hierarchy:
             self.log.error("Found nodes which reside outside of root group "
                            "while they are set up for publishing."
                            "\n%s" % invalid_hierarchy)
-            error = True
-
-        if invalid_controls:
-            self.log.error("Only transforms can be part of the "
-                           "skeletonAnim_SET. \n%s" % invalid_controls)
             error = True
 
         if invalid_geometry:
@@ -112,27 +100,5 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
         for shape in all_shapes:
             if cmds.nodeType(shape) not in self.accepted_output:
                 invalid.append(shape)
-
-        return invalid
-
-    def validate_controls(self, set_members):
-        """Check if the controller set passes the validations
-
-        Checks if all its set members are within the hierarchy of the root
-        Checks if the node types of the set members valid
-
-        Args:
-            set_members: list of nodes of the skeleton_anim_set
-            hierarchy: list of nodes which reside under the root node
-
-        Returns:
-            errors (list)
-        """
-
-        # Validate control types
-        invalid = []
-        for node in set_members:
-            if cmds.nodeType(node) not in self.accepted_controllers:
-                invalid.append(node)
 
         return invalid

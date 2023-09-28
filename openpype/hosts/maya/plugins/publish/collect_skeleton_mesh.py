@@ -12,7 +12,6 @@ class CollectSkeletonMesh(pyblish.api.InstancePlugin):
     families = ["rig"]
 
     def process(self, instance):
-        skeleton_sets = instance.data.get("skeletonAnim_SET")
         skeleton_mesh_sets = instance.data.get("skeletonMesh_SET")
         if not skeleton_mesh_sets:
             self.log.debug(
@@ -27,7 +26,6 @@ class CollectSkeletonMesh(pyblish.api.InstancePlugin):
         instance.data["frameEnd"] = frame
 
         instance.data["skeleton_mesh"] = []
-        instance.data["skeleton_rig"] = []
 
         if skeleton_mesh_sets:
             instance.data["families"] += ["rig.fbx"]
@@ -39,12 +37,3 @@ class CollectSkeletonMesh(pyblish.api.InstancePlugin):
                     self.log.debug(
                         "Collected skeleton "
                         f"mesh Set: {skeleton_mesh_content}")
-
-        if skeleton_sets:
-            for skeleton_set in skeleton_sets:
-                skeleton_content = cmds.sets(skeleton_set, query=True)
-                self.log.debug(
-                    "Collected animated "
-                    f"skeleton data: {skeleton_content}")
-                if skeleton_content:
-                    instance.data["skeleton_rig"] += skeleton_content
