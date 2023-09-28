@@ -6,6 +6,7 @@ from .constants import (
     FORCE_NOT_OPEN_WORKFILE_ROLE,
     FORCE_DOWNLOAD_LAST_WORKFILE_ROLE,
 )
+from openpype.tools.pyblish_pype.awesome import tags as awesome
 
 
 class ActionDelegate(QtWidgets.QStyledItemDelegate):
@@ -74,7 +75,7 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
 
         # Add skip opening last workfile marker
         if index.data(FORCE_NOT_OPEN_WORKFILE_ROLE):
-            rect = QtCore.QRectF(option.rect.x(), option.rect.height(),
+            rect = QtCore.QRectF(option.rect.x() + 5, option.rect.height() - 22.5,
                                  5, 5)
             painter.setPen(QtCore.Qt.transparent)
             painter.setBrush(QtGui.QColor(200, 0, 0))
@@ -84,15 +85,14 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
 
         # Add force download last workfile marker
         if index.data(FORCE_DOWNLOAD_LAST_WORKFILE_ROLE):
-            rect = QtCore.QRectF(
-                option.rect.width(), option.rect.height(), 5, 5
+            point = QtCore.QPointF(
+                option.rect.width() - 7.5,
+                option.rect.height() - 16,
             )
 
-            painter.setPen(QtCore.Qt.transparent)
-            painter.setBrush(QtGui.QColor(0, 200, 0))
-            painter.drawEllipse(rect)
+            painter.setPen(QtGui.QColor(70, 193, 191))
+            painter.drawText(point, awesome["download"])
 
-            painter.setBrush(self.extender_bg_brush)
 
         is_group = False
         for group_role in self.group_roles:
