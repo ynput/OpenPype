@@ -9,7 +9,7 @@ from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class ExtractReviewDataBakingStreams(publish.Extractor):
-    """Extracts movie and thumbnail with baked in luts
+    """Extracts Sequences and thumbnail with baked in luts
 
     must be run after extract_render_local.py
 
@@ -27,8 +27,8 @@ class ExtractReviewDataBakingStreams(publish.Extractor):
 
     @classmethod
     def apply_settings(cls, project_settings):
-        """just in case there are some old presets
-        in deprecated ExtractReviewDataMov Plugins
+        """Apply the settings from the deprecated
+        ExtractReviewDataMov plugin for backwards compatibility
         """
         nuke_publish = project_settings["nuke"]["publish"]
         deprecated_setting = nuke_publish["ExtractReviewDataMov"]

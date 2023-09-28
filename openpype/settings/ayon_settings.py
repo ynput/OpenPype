@@ -749,7 +749,8 @@ def _convert_nuke_project_settings(ayon_settings, output):
 
     new_review_data_outputs = {}
     outputs_settings = None
-    # just in case that the users having old presets in outputs setting
+    # Check deprecated ExtractReviewDataMov
+    # settings for backwards compatibility
     deprecrated_review_settings = ayon_publish["ExtractReviewDataMov"]
     current_review_settings = (
         ayon_publish["ExtractReviewDataBakingStreams"]

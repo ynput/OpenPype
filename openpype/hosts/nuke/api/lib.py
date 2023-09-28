@@ -3433,7 +3433,7 @@ def get_head_filename_without_hashes(original_path, name):
     Examples:
         >>> get_head_filename_without_hashes("render.####.exr", "baking")
         render.baking.####.exr
-        >>> get_head_filename_without_hashes("render.%d.exr", "tag")
+        >>> get_head_filename_without_hashes("render.%04d.exr", "tag")
         render.tag.%d.exr
         >>> get_head_filename_without_hashes("exr.####.exr", "foo")
         exr.foo.%04d.exr
