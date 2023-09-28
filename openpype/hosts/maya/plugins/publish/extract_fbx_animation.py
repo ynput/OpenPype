@@ -50,6 +50,8 @@ class ExtractFBXAnimation(publish.Extractor):
             fbx_exporter.export(
                 new_out_set, path.replace("\\", "/"))
 
+        cmds.namespace(relativeNames=False)
+
         representations = instance.data.setdefault("representations", [])
         representations.append({
             'name': 'fbx',
