@@ -40,7 +40,7 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
         # in the rig instance
         set_members = instance.data['setMembers']
         if not cmds.ls(set_members, type="dagNode", long=True):
-            self.log.debug("Skipping empty instance...")
+            self.log.debug("Skipping instance without dag nodes...")
             return
         # Ensure contents in sets and retrieve long path for all objects
         skeleton_mesh_content = instance.data.get("skeleton_mesh", [])
