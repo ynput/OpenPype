@@ -11,7 +11,6 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
     """Ensure skeleton rigs contains pipeline-critical content
 
     The rigs optionally contain at least two object sets:
-        "skeletonAnim_SET" - Set of only bone hierarchies
         "skeletonMesh_SET" - Set of the skinned meshes
                              with bone hierarchies
 
@@ -23,7 +22,6 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
     families = ["rig.fbx"]
 
     accepted_output = ["mesh", "transform", "locator"]
-    accepted_controllers = ["transform", "locator"]
 
     def process(self, instance):
         objectsets = ["skeletonMesh_SET"]
