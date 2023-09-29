@@ -768,45 +768,49 @@ def update_houdini_vars_context():
     if houdini_vars_settings["enabled"]:
         houdini_vars = houdini_vars_settings["houdini_vars"]
 
-        # Remap AYON settings structure to OpenPype settings structure
-        # It allows me to use the same logic for both AYON and OpenPype
-        if isinstance(houdini_vars, list):
-            items = {}
-            for item in houdini_vars:
-                items.update({item["var"]: item["path"]})
+        # No vars specified - nothing to do
+        if not houdini_vars:
+            return
 
-            houdini_vars = items
+        # Get Template data
+        template_data = get_current_context_template_data()
 
-        for var, path in houdini_vars.items():
+        # Set Houdini Vars
+        for item in houdini_vars:
+
+            # For consistency reasons we always force all vars to be uppercase
+            item["var"] = item["var"].upper()
+
             # get and resolve job path template
-            path = StringTemplate.format_template(
-                path,
-                get_current_context_template_data()
+            item_value = StringTemplate.format_template(
+                item["value"],
+                template_data
             )
-            path = path.replace("\\", "/")
 
-            if var == "JOB" and path == "":
+            if item["is_path"]:
+                item_value = item_value.replace("\\", "/")
+                try:
+                    os.makedirs(item_value)
+                except OSError as e:
+                    if e.errno != errno.EEXIST:
+                        print(
+                            "  - Failed to create ${} dir. Maybe due to "
+                            "insufficient permissions.".format(item["var"])
+                        )
+
+            if item["var"] == "JOB" and item_value == "":
                 # sync $JOB to $HIP if $JOB is empty
-                path = os.environ["HIP"]
+                item_value = os.environ["HIP"]
 
-            current_path = hou.hscript("echo -n `${}`".format(var))[0]
+            current_value = hou.hscript("echo -n `${}`".format(item["var"]))[0]
 
             # sync both environment variables.
             # because houdini doesn't do that by default
             # on opening new files
-            os.environ[var] = current_path
+            os.environ[item["var"]] = current_value
 
-            if current_path != path:
-                hou.hscript("set {}={}".format(var, path))
-                os.environ[var] = path
+            if current_value != item_value:
+                hou.hscript("set {}={}".format(item["var"], item_value))
+                os.environ[item["var"]] = item_value
 
-                try:
-                    os.makedirs(path)
-                except OSError as e:
-                    if e.errno != errno.EEXIST:
-                        print(
-                            "  - Failed to create {} dir. Maybe due to "
-                            "insufficient permissions.".format(var)
-                        )
-
-                print("  - Updated ${} to {}".format(var, path))
+                print("  - Updated ${} to {}".format(item["var"], item_value))

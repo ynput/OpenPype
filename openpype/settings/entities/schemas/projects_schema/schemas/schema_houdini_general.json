@@ -18,13 +18,29 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "dict-modifiable",
+                    "type": "list",
                     "key": "houdini_vars",
                     "label": "Houdini Vars",
                     "collapsible": false,
                     "object_type": {
-                        "type": "path",
-                        "multiplatform": false
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "var",
+                                "label": "Var"
+                            },
+                            {
+                                "type": "text",
+                                "key": "value",
+                                "label": "Value"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "is_path",
+                                "label": "isPath"
+                            }
+                        ]
                     }
                 }
             ]

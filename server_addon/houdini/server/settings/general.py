@@ -5,7 +5,8 @@ from ayon_server.settings import BaseSettingsModel
 class HoudiniVarModel(BaseSettingsModel):
     _layout = "expanded"
     var: str = Field("", title="Var")
-    path: str = Field(default_factory="", title="Path")
+    value: str = Field("", title="Value")
+    is_path: bool = Field(False, title="isPath")
 
 
 class UpdateHoudiniVarcontextModel(BaseSettingsModel):
@@ -30,7 +31,8 @@ DEFAULT_GENERAL_SETTINGS = {
         "houdini_vars": [
             {
                 "var": "JOB",
-                "path": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}"  # noqa
+                "value": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",  # noqa
+                "is_path": True
             }
         ]
     }

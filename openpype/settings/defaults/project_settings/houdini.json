@@ -2,9 +2,13 @@
     "general": {
         "update_houdini_var_context": {
             "enabled": true,
-            "houdini_vars":{
-                "JOB": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}"
-            }
+            "houdini_vars":[
+                {
+                    "var": "JOB",
+                    "value": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",
+                    "is_path": true
+                }
+            ]
         }
     },
     "imageio": {
