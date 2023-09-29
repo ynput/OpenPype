@@ -37,7 +37,8 @@ class ExtractTyCache(publish.Extractor):
         stagingdir = self.staging_dir(instance)
         filename = "{name}.tyc".format(**instance.data)
         path = os.path.join(stagingdir, filename)
-        filenames = self.get_file(path, start, end)
+        filenames = self.get_file(instance, start, end)
+        self.log.debug(f"filenames: {filenames}")
         additional_attributes = instance.data.get("tyc_attrs", {})
 
         with maintained_selection():
@@ -66,19 +67,20 @@ class ExtractTyCache(publish.Extractor):
         instance.data["representations"].append(representation)
         self.log.info(f"Extracted instance '{instance.name}' to: {filenames}")
 
-    def get_file(self, filepath, start_frame, end_frame):
+    def get_file(self, instance, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
 
         Set the filenames accordingly to the tyCache file
         naming extension(.tyc) for the publishing purpose
 
         Actual File Output from tyFlow in tyCache format:
-        <SceneFile>_<frame>.tyc
+        <InstanceName>__tyPart_<frame>.tyc
+        <InstanceName>__tyMesh.tyc
 
-        e.g. tyFlow_cloth_CCCS_blobbyFill_001_00004.tyc
+        e.g. tycacheMain__tyPart_00000.tyc
 
         Args:
-            fileapth (str): Output directory.
+            instance (str): instance.
             start_frame (int): Start frame.
             end_frame (int): End frame.
 
@@ -87,13 +89,11 @@ class ExtractTyCache(publish.Extractor):
 
         """
         filenames = []
-        filename = os.path.basename(filepath)
-        orig_name, _ = os.path.splitext(filename)
+        # should we include frame 0 ?
         for frame in range(int(start_frame), int(end_frame) + 1):
-            actual_name = "{}_{:05}".format(orig_name, frame)
-            actual_filename = filepath.replace(orig_name, actual_name)
-            filenames.append(os.path.basename(actual_filename))
-
+            filename = "{}__tyPart_{:05}.tyc".format(instance.name, frame)
+            filenames.append(filename)
+        filenames.append("{}__tyMesh.tyc".format(instance.name))
         return filenames
 
     def export_particle(self, members, start, end,
