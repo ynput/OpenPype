@@ -18,6 +18,10 @@
                     "label": "Enabled"
                 },
                 {
+                    "type": "label",
+                    "label": "Houdini Vars.<br>If a value is treated as a directory on update it will be ensured the folder exists"
+                },
+                {
                     "type": "list",
                     "key": "houdini_vars",
                     "label": "Houdini Vars",
@@ -37,8 +41,8 @@
                             },
                             {
                                 "type": "boolean",
-                                "key": "is_dir_path",
-                                "label": "is Dir Path"
+                                "key": "is_directory",
+                                "label": "Treat as directory"
                             }
                         ]
                     }

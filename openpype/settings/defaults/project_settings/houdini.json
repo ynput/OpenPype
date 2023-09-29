@@ -6,7 +6,7 @@
                 {
                     "var": "JOB",
                     "value": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",
-                    "is_dir_path": true
+                    "is_directory": true
                 }
             ]
         }
