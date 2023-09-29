@@ -21,7 +21,7 @@ class ValidateSkeletonRigContents(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["rig.fbx"]
 
-    accepted_output = ["mesh", "transform", "locator"]
+    accepted_output = {"mesh", "transform", "locator"}
 
     def process(self, instance):
         objectsets = ["skeletonMesh_SET"]
