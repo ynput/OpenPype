@@ -683,6 +683,42 @@ def replace_static_mesh_actors(old_assets, new_assets):
         smes.replace_mesh_components_meshes(
             static_mesh_comps, old_mesh, new_mesh)
 
+
+def replace_skeletal_mesh_actors(old_assets, new_assets):
+    eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+
+    comps = eas.get_all_level_actors_components()
+    skeletal_mesh_comps = [
+        c for c in comps if isinstance(c, unreal.SkeletalMeshComponent)
+    ]
+
+    # Get all the static meshes among the old assets in a dictionary with
+    # the name as key
+    old_meshes = {}
+    for a in old_assets:
+        asset = unreal.EditorAssetLibrary.load_asset(a)
+        if isinstance(asset, unreal.SkeletalMesh):
+            old_meshes[asset.get_name()] = asset
+
+    # Get all the static meshes among the new assets in a dictionary with
+    # the name as key
+    new_meshes = {}
+    for a in new_assets:
+        asset = unreal.EditorAssetLibrary.load_asset(a)
+        if isinstance(asset, unreal.SkeletalMesh):
+            new_meshes[asset.get_name()] = asset
+
+    for old_name, old_mesh in old_meshes.items():
+        new_mesh = new_meshes.get(old_name)
+
+        if not new_mesh:
+            continue
+
+        for comp in skeletal_mesh_comps:
+            if comp.get_skeletal_mesh_asset() == old_mesh:
+                comp.set_skeletal_mesh_asset(new_mesh)
+
+
 def delete_previous_asset_if_unused(container, asset_content):
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
 

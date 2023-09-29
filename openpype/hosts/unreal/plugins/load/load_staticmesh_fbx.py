@@ -98,7 +98,6 @@ class StaticMeshFBXLoader(plugin.Loader):
         Returns:
             list(str): list of container content
         """
-
         # Create directory for asset and Ayon container
         asset = context.get('asset').get('name')
         suffix = "_CON"
