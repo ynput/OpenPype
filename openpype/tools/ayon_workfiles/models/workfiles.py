@@ -48,7 +48,7 @@ def get_task_template_data(project_entity, task):
         return {}
     short_name = None
     task_type_name = task["taskType"]
-    for task_type_info in project_entity["config"]["taskTypes"]:
+    for task_type_info in project_entity["taskTypes"]:
         if task_type_info["name"] == task_type_name:
             short_name = task_type_info["shortName"]
             break
