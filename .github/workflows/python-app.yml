@@ -33,20 +33,38 @@ jobs:
     - name: Build
       run: |
         .\tools\build.ps1
-    - name: Rename & Export Build
+    - name: Rename Build
       run: |
-        net use T: /delete
-        $net = new-object -ComObject WScript.Network
-        $net.MapNetworkDrive("T:", "\\fs.hellohornet.lan\tools", $false, $(cat C:\user.txt), $(cat C:\pass.txt))
-        cd build
-        $platform = "amd64"
-        $date = Get-Date -Format "M-d-yy"
-        $commitmsg = git log -1 --pretty=format:"%s"
-        $commitmsg -match "\[(.*)\]"
-        $commitmsg = $matches[1]
-        $buildname = ($commitmsg + "-" + $date + "-" + $platform)
-        mv exe.win-amd64-3.9 $buildname
-        cp $buildname T:\dev\_builds -R
+        $current_dir = Get-Location
+        $version_file = Get-Content -Path "$current_dir\openpype\version.py"
+        $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
+        $openpype_version = $result[0].Groups['version'].Value
+        Write-Color $openpype_version
+        mv .\build\exe.win-amd64-3.9 .\build\$openpype_version
+
+    - name: Upload to S3
+      run: |
+        $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
+        $openpype_version = $result[0].Groups['version'].Value
+        $awsCliPath = "C:\Program Files\Amazon\AWSCLIV2\aws.exe"
+        $sourcePath = ".\build\$openpype_version\"
+        $destinationPath = "${{ vars.S3_BUCKET_WIN }}$openpype_version/"
+        & $awsCliPath s3 sync $sourcePath $destinationPath
+
+    # - name: Rename & Export Build
+    #   run: |
+    #     net use T: /delete
+    #     $net = new-object -ComObject WScript.Network
+    #     $net.MapNetworkDrive("T:", "\\fs.hellohornet.lan\tools", $false, $(cat C:\user.txt), $(cat C:\pass.txt))
+    #     cd build
+    #     $platform = "amd64"
+    #     $date = Get-Date -Format "M-d-yy"
+    #     $commitmsg = git log -1 --pretty=format:"%s"
+    #     $commitmsg -match "\[(.*)\]"
+    #     $commitmsg = $matches[1]
+    #     $buildname = ($commitmsg + "-" + $date + "-" + $platform)
+    #     mv exe.win-amd64-3.9 $buildname
+    #     cp $buildname T:\dev\_builds -R
     - name: Cleanup local build folder
       run: |
         cd build
