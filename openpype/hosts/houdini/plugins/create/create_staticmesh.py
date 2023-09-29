@@ -29,14 +29,12 @@ class CreateStaticMesh(plugin.HoudiniCreator):
         instance_node = hou.node(instance.get("instance_node"))
 
         # prepare parms
-        output_path = "{}{}".format(
-            hou.text.expandString("$HIP/pyblish"),
-            "/`chs('subset')`.fbx"
+        file_path = "{}/pyblish/`chs('subset')`.fbx".format(
+            hou.text.expandString("$HIP")
         )
-
         parms = {
             "startnode": self.get_selection(),
-            "sopoutput": output_path,
+            "sopoutput": file_path,
             # vertex cache format
             "vcformat": pre_create_data.get("vcformat"),
             "convertunits": pre_create_data.get("convertunits"),

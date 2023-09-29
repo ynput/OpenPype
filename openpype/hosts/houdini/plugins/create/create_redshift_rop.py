@@ -50,10 +50,9 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
         ipr_rop.parm("linked_rop").set(instance_node.path())
 
         ext = pre_create_data.get("image_format")
-        filepath = "{renders_dir}{subset_name}/{subset_name}.{fmt}".format(
-            renders_dir=hou.text.expandString("$HIP/pyblish/renders/"),
-            subset_name=subset_name,
-            fmt="${aov}.$F4.{ext}".format(aov="AOV", ext=ext)
+        file_path = "{}/pyblish/renders/`chs('subset')`/`chs('subset')`.$AOV.$F4.{}".format(
+            hou.text.expandString("$HIP"),
+            ext
         )
 
         ext_format_index = {"exr": 0, "tif": 1, "jpg": 2, "png": 3}
@@ -62,7 +61,7 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
             # Render frame range
             "trange": 1,
             # Redshift ROP settings
-            "RS_outputFileNamePrefix": filepath,
+            "RS_outputFileNamePrefix": file_path,
             "RS_outputMultilayerMode": "1",  # no multi-layered exr
             "RS_outputBeautyAOVSuffix": "beauty",
             "RS_outputFileFormat": ext_format_index[ext],

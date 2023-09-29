@@ -31,14 +31,13 @@ class CreateReview(plugin.HoudiniCreator):
 
         frame_range = hou.playbar.frameRange()
 
-        filepath = "{root}/{subset}/{subset}.$F4.{ext}".format(
-            root=hou.text.expandString("$HIP/pyblish"),
-            subset="`chs(\"subset\")`",  # keep dynamic link to subset
-            ext=pre_create_data.get("image_format") or "png"
+        file_path = "{}/pyblish/`chs('subset')`/`chs('subset')`.$F4.{}".format(
+            hou.text.expandString("$HIP"),
+            pre_create_data.get("image_format") or "png"
         )
 
         parms = {
-            "picture": filepath,
+            "picture": file_path,
 
             "trange": 1,
 

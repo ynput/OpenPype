@@ -31,10 +31,9 @@ class CreateKarmaROP(plugin.HoudiniCreator):
 
         ext = pre_create_data.get("image_format")
 
-        filepath = "{renders_dir}{subset_name}/{subset_name}.$F4.{ext}".format(
-            renders_dir=hou.text.expandString("$HIP/pyblish/renders/"),
-            subset_name=subset_name,
-            ext=ext,
+        file_path = "{}/pyblish/renders/`chs('subset')`/`chs('subset')`.$F4.{}".format(
+            hou.text.expandString("$HIP"),
+            ext
         )
         checkpoint = "{cp_dir}{subset_name}.$F4.checkpoint".format(
             cp_dir=hou.text.expandString("$HIP/pyblish/"),
@@ -50,7 +49,7 @@ class CreateKarmaROP(plugin.HoudiniCreator):
             # Render Frame Range
             "trange": 1,
             # Karma ROP Setting
-            "picture": filepath,
+            "picture": file_path,
             # Karma Checkpoint Setting
             "productName": checkpoint,
             # USD Output Directory

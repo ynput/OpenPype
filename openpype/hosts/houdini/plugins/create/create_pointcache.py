@@ -22,9 +22,8 @@ class CreatePointCache(plugin.HoudiniCreator):
             pre_create_data)
 
         instance_node = hou.node(instance.get("instance_node"))
-        file_path = "{}{}".format(
-            hou.text.expandString("$HIP/pyblish"),
-            "/`chs('subset')`.abc"
+        file_path = "{}/pyblish/`chs('subset')`.abc".format(
+            hou.text.expandString("$HIP")
         )
         parms = {
             "use_sop_path": True,

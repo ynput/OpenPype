@@ -31,17 +31,16 @@ class CreateMantraROP(plugin.HoudiniCreator):
 
         ext = pre_create_data.get("image_format")
 
-        filepath = "{renders_dir}{subset_name}/{subset_name}.$F4.{ext}".format(
-            renders_dir=hou.text.expandString("$HIP/pyblish/renders/"),
-            subset_name=subset_name,
-            ext=ext,
+        file_path = "{}/pyblish/renders/`chs('subset')`/`chs('subset')`.$F4.{}".format(
+            hou.text.expandString("$HIP"),
+            ext
         )
 
         parms = {
             # Render Frame Range
             "trange": 1,
             # Mantra ROP Setting
-            "vm_picture": filepath,
+            "vm_picture": file_path,
         }
 
         if self.selected_nodes:

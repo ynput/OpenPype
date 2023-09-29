@@ -25,9 +25,11 @@ class CreateUSD(plugin.HoudiniCreator):
             pre_create_data)  # type: CreatedInstance
 
         instance_node = hou.node(instance.get("instance_node"))
-
+        file_path = "{}/pyblish/`chs('subset')`.usd".format(
+            hou.text.expandString("$HIP")
+        )
         parms = {
-            "lopoutput": "$HIP/pyblish/{}.usd".format(subset_name),
+            "lopoutput": file_path,
             "enableoutputprocessor_simplerelativepaths": False,
         }
 

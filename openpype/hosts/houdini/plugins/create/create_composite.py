@@ -28,13 +28,13 @@ class CreateCompositeSequence(plugin.HoudiniCreator):
             pre_create_data)  # type: CreatedInstance
 
         instance_node = hou.node(instance.get("instance_node"))
-        filepath = "{}{}".format(
-            hou.text.expandString("$HIP/pyblish/"),
-            "{}.$F4{}".format(subset_name, self.ext)
+        file_path = "{}/pyblish/`chs('subset')`.$F4.{}".format(
+            hou.text.expandString("$HIP"),
+            self.ext
         )
         parms = {
             "trange": 1,
-            "copoutput": filepath
+            "copoutput": file_path
         }
 
         if self.selected_nodes:

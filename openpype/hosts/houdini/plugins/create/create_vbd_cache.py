@@ -26,8 +26,11 @@ class CreateVDBCache(plugin.HoudiniCreator):
             pre_create_data)  # type: CreatedInstance
 
         instance_node = hou.node(instance.get("instance_node"))
+        file_path = "{}/pyblish/`chs('subset')`.$F4.vdb".format(
+            hou.text.expandString("$HIP")
+        )
         parms = {
-            "sopoutput": "$HIP/pyblish/{}.$F4.vdb".format(subset_name),
+            "sopoutput": file_path,
             "initsim": True,
             "trange": 1
         }
