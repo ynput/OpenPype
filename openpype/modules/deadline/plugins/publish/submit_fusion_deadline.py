@@ -14,6 +14,7 @@ from openpype.lib import (
     BoolDef,
     NumberDef
 )
+from openpype.modules.deadline.utils import set_batch_name
 
 
 class FusionSubmitDeadline(
@@ -141,6 +142,7 @@ class FusionSubmitDeadline(
                 )
 
         filename = os.path.basename(script_path)
+        batch_name = set_batch_name(instance, filename)
 
         # Documentation for keys available at:
         # https://docs.thinkboxsoftware.com
@@ -149,7 +151,7 @@ class FusionSubmitDeadline(
         payload = {
             "JobInfo": {
                 # Top-level group name
-                "BatchName": filename,
+                "BatchName": batch_name,
 
                 # Asset dependency to wait for at least the scene file to sync.
                 "AssetDependency0": script_path,
