@@ -1,5 +1,6 @@
 {
     "deadline_servers": [],
+    "deadline_job_name": "{asset}_{task[name]}_{version}_{subversion}.{ext}",
     "publish": {
         "CollectDefaultDeadlineServer": {
             "pass_mongo_url": true
