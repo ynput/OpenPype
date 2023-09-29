@@ -1,0 +1,30 @@
+{
+    "type": "dict",
+    "key": "test_addon",
+    "label": "Test addon",
+    "collapsible": true,
+    "children": [
+        {
+            "type": "number",
+            "key": "number",
+            "label": "This is your lucky number:",
+            "minimum": 7,
+            "maximum": 7,
+            "decimals": 0
+        },
+        {
+            "type": "template",
+            "name": "test_addon/the_template",
+            "template_data": [
+                {
+                    "name": "color_1",
+                    "label": "Color 1"
+                },
+                {
+                    "name": "color_2",
+                    "label": "Color 2"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,30 @@
+[
+    {
+        "type": "list-strict",
+        "key": "{name}",
+        "label": "{label}",
+        "object_types": [
+            {
+                "label": "Red",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "decimal": 3
+            },
+            {
+                "label": "Green",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "decimal": 3
+            },
+            {
+                "label": "Blue",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "decimal": 3
+            }
+        ]
+    }
+]

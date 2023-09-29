@@ -1,0 +1,6 @@
+{
+    "system_settings/modules": {
+        "type": "schema",
+        "name": "test_addon/main"
+    }
+}

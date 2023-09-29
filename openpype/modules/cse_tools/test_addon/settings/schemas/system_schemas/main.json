@@ -1,0 +1,14 @@
+{
+    "type": "dict",
+    "key": "test_addon",
+    "label": "Test addon",
+    "collapsible": true,
+    "checkbox_key": "enabled",
+    "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        }
+    ]
+}
