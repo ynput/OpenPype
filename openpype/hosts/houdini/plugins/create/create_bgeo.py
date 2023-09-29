@@ -26,11 +26,9 @@ class CreateBGEO(plugin.HoudiniCreator):
 
         instance_node = hou.node(instance.get("instance_node"))
 
-        file_path = "{}{}".format(
-            hou.text.expandString("$HIP/pyblish/"),
-            "{}.$F4.{}".format(
-                subset_name,
-                pre_create_data.get("bgeo_type") or "bgeo.sc")
+        file_path = "{}/`chs('subset')`.$F4.{}".format(
+            hou.text.expandString("$HIP/pyblish"),
+            pre_create_data.get("bgeo_type") or "bgeo.sc"
         )
         parms = {
             "sopoutput": file_path

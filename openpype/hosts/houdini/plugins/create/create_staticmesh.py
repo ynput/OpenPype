@@ -29,8 +29,9 @@ class CreateStaticMesh(plugin.HoudiniCreator):
         instance_node = hou.node(instance.get("instance_node"))
 
         # prepare parms
-        output_path = hou.text.expandString(
-            "$HIP/pyblish/{}.fbx".format(subset_name)
+        output_path = "{}{}".format(
+            hou.text.expandString("$HIP/pyblish"),
+            "/`chs('subset')`.fbx"
         )
 
         parms = {
