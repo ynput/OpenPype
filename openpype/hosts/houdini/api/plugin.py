@@ -182,7 +182,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
                 node_type = "geometry"
 
             instance_node = self.create_instance_node(
-                instance_data["variant"], "/out", node_type)
+                subset_name, "/out", node_type)
 
             self.customize_node_look(instance_node)
 
@@ -254,8 +254,8 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
     def imprint(self, node, values, update=False):
         # Update values to be dynamic
 
-        values["subset"] = '`chs("family")+chs("variant")`'
-        values["variant"] = '`opname(".")`'
+        values["subset"] = '`opname(".")`'
+        values["variant"] = '`strreplace(chs("subset"), chs("family"), "")`'
         values["instance_node"] = '`opfullpath(".")`'
         values["instance_id"]  = '`opfullpath(".")`'
 
