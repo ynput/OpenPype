@@ -3,7 +3,7 @@ import maya.cmds as cmds
 
 
 def _process_reference(file_url, name, namespace, options):
-    """_summary_
+    """Load files by referencing scene in Maya.
 
     Args:
         file_url (str): fileapth of the objects to be loaded

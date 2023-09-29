@@ -938,7 +938,8 @@ def namespaced(namespace, new=True, relative_names=None):
     if new:
         namespace = unique_namespace(namespace)
         cmds.namespace(add=namespace)
-
+        if relative_names is not None:
+            cmds.namespace(relativeNames=relative_names)
     try:
         cmds.namespace(set=namespace)
         yield namespace
