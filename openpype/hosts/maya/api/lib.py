@@ -922,7 +922,7 @@ def no_display_layers(nodes):
 
 
 @contextlib.contextmanager
-def namespaced(namespace, new=True):
+def namespaced(namespace, new=True, relative_names=None):
     """Work inside namespace during context
 
     Args:
@@ -934,6 +934,7 @@ def namespaced(namespace, new=True):
 
     """
     original = cmds.namespaceInfo(cur=True, absoluteName=True)
+    original_relative_names = cmds.namespace(query=True, relativeNames=True)
     if new:
         namespace = unique_namespace(namespace)
         cmds.namespace(add=namespace)
@@ -943,6 +944,8 @@ def namespaced(namespace, new=True):
         yield namespace
     finally:
         cmds.namespace(set=original)
+        if relative_names is not None:
+            cmds.namespace(relativeNames=original_relative_names)
 
 
 @contextlib.contextmanager

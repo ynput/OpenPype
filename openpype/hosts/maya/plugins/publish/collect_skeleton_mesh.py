@@ -35,5 +35,6 @@ class CollectSkeletonMesh(pyblish.api.InstancePlugin):
                 if skeleton_mesh_content:
                     instance.data["skeleton_mesh"] += skeleton_mesh_content
                     self.log.debug(
-                        "Collected skeleton "
-                        f"mesh Set: {skeleton_mesh_content}")
+                        "Collected skeletonmesh Set: {}".format(
+                            skeleton_mesh_content
+                        ))

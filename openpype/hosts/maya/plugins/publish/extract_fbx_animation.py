@@ -40,18 +40,15 @@ class ExtractFBXAnimation(publish.Extractor):
         fbx_exporter.set_options_from_instance(instance)
 
         out_set_name = next(out for out in out_set)
-        # temporarily disable namespace
-        namespace = out_set_name.split(":")[0]
-        new_out_set = out_set_name.replace(
-            f"{namespace}:", "")
+        # Export from the rig's namespace so that the exported
+        # FBX does not include the namespace but preserves the node
+        # names as existing in the rig workfile
+        namespace, relative_out_set = out_set_name.split(":", 1)
         cmds.namespace(relativeNames=True)
-        with namespaced(":" + namespace, new=False) as namespace:
-            path = path.replace("\\", "/")
-            fbx_exporter.export(new_out_set, path)
-        original_relative_names = cmds.namespace(
-            query=True, relativeNames=True)
-        if original_relative_names:
-            cmds.namespace(relativeNames=original_relative_names)
+        with namespaced(
+            ":" + namespace,
+            new=False, relative_names=True) as namespace:
+            fbx_exporter.export(relative_out_set, path)
 
         representations = instance.data.setdefault("representations", [])
         representations.append({
@@ -62,4 +59,4 @@ class ExtractFBXAnimation(publish.Extractor):
         })
 
         self.log.debug(
-            "Extracted Fbx animation successful to: {0}".format(path))
+            "Extracted Fbx animation to: {0}".format(path))

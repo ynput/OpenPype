@@ -24,19 +24,17 @@ class ValidateSkeletonTopGroupHierarchy(pyblish.api.InstancePlugin,
 
     def process(self, instance):
         invalid = []
-        skeleton_mesh_data = instance.data(("skeleton_mesh"), [])
+        skeleton_mesh_data = instance.data("skeleton_mesh", [])
         if skeleton_mesh_data:
             invalid = self.get_top_hierarchy(skeleton_mesh_data)
             if invalid:
                 raise PublishValidationError(
                     "The skeletonMesh_SET includes the object which "
-                    f"is not at the top hierarchy: {invalid}")
+                    "is not at the top hierarchy: {}".format(invalid))
 
     def get_top_hierarchy(self, targets):
-        non_top_hierarchy_list = []
-        for target in targets:
-            long_names = cmds.ls(target, long=True)
-            for name in long_names:
-                if len(name.split["|"]) > 2:
-                    non_top_hierarchy_list.append(name)
+        targets = cmds.ls(targets, long=True)  # ensure long names
+        non_top_hierarchy_list = [
+            target for target in targets if target.count("|") > 2
+        ]
         return non_top_hierarchy_list

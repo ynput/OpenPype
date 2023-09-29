@@ -68,9 +68,7 @@ class ValidateSkeletonRigOutputIds(pyblish.api.InstancePlugin):
                 if shapes:
                     instance_nodes.extend(shapes)
 
-            scene_nodes = cmds.ls(type="transform", long=True)
-            scene_nodes += cmds.ls(type="mesh", long=True)
-            scene_nodes = set(scene_nodes) - set(instance_nodes)
+            scene_nodes = cmds.ls(type=("transform", "mesh"), long=True)
 
             scene_nodes_by_basename = defaultdict(list)
             for node in scene_nodes:
@@ -109,7 +107,7 @@ class ValidateSkeletonRigOutputIds(pyblish.api.InstancePlugin):
         for instance_node, matches in invalid_matches.items():
             ids = set(get_id(node) for node in matches)
 
-            # If there are multiple scene ids matched, and error needs to be
+            # If there are multiple scene ids matched, an error needs to be
             # raised for manual correction.
             if len(ids) > 1:
                 multiple_ids_match.append({"node": instance_node,

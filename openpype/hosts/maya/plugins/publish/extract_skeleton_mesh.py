@@ -32,8 +32,6 @@ class ExtractSkeletonMesh(publish.Extractor,
         filename = "{0}.fbx".format(instance.name)
         path = os.path.join(staging_dir, filename)
 
-        # The export requires forward slashes because we need
-        # to format it into a string in a mel expression
         fbx_exporter = fbx.FBXExtractor(log=self.log)
         out_set = instance.data.get("skeleton_mesh", [])
 
@@ -43,7 +41,6 @@ class ExtractSkeletonMesh(publish.Extractor,
         fbx_exporter.set_options_from_instance(instance)
 
         # Export
-        path = path.replace("\\", "/")
         fbx_exporter.export(out_set, path)
 
         representations = instance.data.setdefault("representations", [])

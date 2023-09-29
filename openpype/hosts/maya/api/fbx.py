@@ -203,6 +203,9 @@ class FBXExtractor:
             path (str): Path to use for export.
 
         """
+        # The export requires forward slashes because we need
+        # to format it into a string in a mel expression
+        path = path.replace("\\", "/")
         with maintained_selection():
             cmds.select(members, r=True, noExpand=True)
             mel.eval('FBXExport -f "{}" -s'.format(path))
