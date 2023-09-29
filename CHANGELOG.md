@@ -1,6 +1,270 @@
 # Changelog
 
 
+## [3.17.1](https://github.com/ynput/OpenPype/tree/3.17.1)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.17.0...3.17.1)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Unreal: Yeti support <a href="https://github.com/ynput/OpenPype/pull/5643">#5643</a></summary>
+
+Implemented Yeti support for Unreal.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Add Static Mesh product-type (family) <a href="https://github.com/ynput/OpenPype/pull/5481">#5481</a></summary>
+
+This PR adds support to publish Unreal Static Mesh in Houdini as FBXQuick recap
+- [x] Add UE Static Mesh Creator
+- [x] Dynamic subset name like in Maya
+- [x] Collect Static Mesh Type
+- [x] Update collect output node
+- [x] Validate FBX output node
+- [x] Validate mesh is static
+- [x] Validate Unreal Static Mesh Name
+- [x] Validate Subset Name
+- [x] FBX Extractor
+- [x] FBX Loader
+- [x] Update OP Settings
+- [x] Update AYON Settings
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Launcher tool: Refactor launcher tool (for AYON) <a href="https://github.com/ynput/OpenPype/pull/5612">#5612</a></summary>
+
+Refactored launcher tool to new tool. Separated backend and frontend logic. Refactored logic is AYON-centric and is used only in AYON mode, so it does not affect OpenPype.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Use custom staging dir function for Maya renders - OP-5265 <a href="https://github.com/ynput/OpenPype/pull/5186">#5186</a></summary>
+
+Check for custom staging dir when setting the renders output folder in Maya.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Colorspace: updating file path detection methods <a href="https://github.com/ynput/OpenPype/pull/5273">#5273</a></summary>
+
+Support for OCIO v2 file rules integrated into the available color management API
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: add default isort config <a href="https://github.com/ynput/OpenPype/pull/5572">#5572</a></summary>
+
+Add default configuration for isort tool
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Deadline: set PATH environment in deadline jobs by GlobalJobPreLoad <a href="https://github.com/ynput/OpenPype/pull/5622">#5622</a></summary>
+
+This PR makes `GlobalJobPreLoad` to set `PATH` environment in deadline jobs so that we don't have to use the full executable path for deadline to launch the dcc app. This trick should save us adding logic to pass houdini patch version and modifying Houdini deadline plugin. This trick should work with other DCCs
+
+
+___
+
+</details>
+
+
+<details>
+<summary>nuke: extract review data mov read node with expression <a href="https://github.com/ynput/OpenPype/pull/5635">#5635</a></summary>
+
+Some productions might have set default values for read nodes, those settings are not colliding anymore now.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Support new publisher for colorsets validation. <a href="https://github.com/ynput/OpenPype/pull/5630">#5630</a></summary>
+
+Fix `validate_color_sets` for the new publisher.In current `develop` the repair option does not appear due to wrong error raising.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Camera Loader fix mismatch for Maya cameras <a href="https://github.com/ynput/OpenPype/pull/5584">#5584</a></summary>
+
+This PR adds
+- A workaround to match Maya render mask in Houdini
+- `SetCameraResolution` inventory action
+- set camera resolution when loading or updating camera
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: fix set colorspace on writes <a href="https://github.com/ynput/OpenPype/pull/5634">#5634</a></summary>
+
+Colorspace is set correctly to any write node created from publisher.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Fix review family extraction <a href="https://github.com/ynput/OpenPype/pull/5637">#5637</a></summary>
+
+Extractor marks representation of review instance with review tag.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON settings: Extract OIIO transcode settings <a href="https://github.com/ynput/OpenPype/pull/5639">#5639</a></summary>
+
+Output definitions of Extract OIIO transcode have name to match OpenPype settings, and the settings are converted to dictionary in settings conversion.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Fix task type short name conversion <a href="https://github.com/ynput/OpenPype/pull/5641">#5641</a></summary>
+
+Convert AYON task type short name for OpenPype correctly.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>colorspace: missing `allowed_exts` fix <a href="https://github.com/ynput/OpenPype/pull/5646">#5646</a></summary>
+
+Colorspace module is not failing due to missing `allowed_exts` attribute.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: remove trailing underscore in subset name <a href="https://github.com/ynput/OpenPype/pull/5647">#5647</a></summary>
+
+If {layer} placeholder is at the end of subset name template and not used (for example in `auto_image` where separating it by layer doesn't make any sense) trailing '_' was kept. This updates cleaning logic and extracts it as it might be similar in regular `image` instance.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>traypublisher: missing `assetEntity` in context data <a href="https://github.com/ynput/OpenPype/pull/5648">#5648</a></summary>
+
+Issue with missing `assetEnity` key in context data is not problem anymore.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Workfiles tool save button works <a href="https://github.com/ynput/OpenPype/pull/5653">#5653</a></summary>
+
+Fix save as button in workfiles tool.(It is mystery why this stopped to work??)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: bug fix delete items from container <a href="https://github.com/ynput/OpenPype/pull/5658">#5658</a></summary>
+
+Fix the bug shown when clicking "Delete Items from Container" and selecting nothing and press ok.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Chore: Remove unused functions from Fusion integration <a href="https://github.com/ynput/OpenPype/pull/5617">#5617</a></summary>
+
+Cleanup unused code from Fusion integration
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Increase timout for deadline test <a href="https://github.com/ynput/OpenPype/pull/5654">#5654</a></summary>
+
+DL picks up jobs quite slow, so bump up delay.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.17.0](https://github.com/ynput/OpenPype/tree/3.17.0)
 
 
