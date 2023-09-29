@@ -221,6 +221,12 @@ def build_workfile_template(*args, **kwargs):
     builder.build_template(*args, **kwargs)
 
 
+def build_workfile_sequence_template(*args, **kwargs):
+    print("Hello World")
+    # builder = AETemplateBuilder(registered_host())
+    # builder.build_template(*args, **kwargs)
+
+
 def update_workfile_template(*args):
     builder = AETemplateBuilder(registered_host())
     builder.rebuild_template()

@@ -387,3 +387,23 @@ class AfterEffectsRoute(WebSocketRoute):
 
         # Required return statement.
         return "nothing"
+
+    def build_workfile_sequence_template_route(self):
+        from openpype.hosts.aftereffects.api.workfile_template_builder import \
+            build_workfile_sequence_template
+        partial_method = functools.partial(build_workfile_sequence_template)
+
+        ProcessLauncher.execute_in_main_thread(partial_method)
+
+        # Required return statement.
+        return "nothing"
+
+    def publish_multishot_route(self):
+        from openpype.hosts.aftereffects.api.workfile_template_builder import \
+            build_workfile_sequence_template
+        partial_method = functools.partial(build_workfile_sequence_template)
+
+        ProcessLauncher.execute_in_main_thread(partial_method)
+
+        # Required return statement.
+        return "nothing"
