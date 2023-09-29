@@ -18,7 +18,7 @@ class ExtractCameraAlembic(publish.Extractor,
 
     """
 
-    label = "Camera (Alembic)"
+    label = "Extract Camera (Alembic)"
     hosts = ["maya"]
     families = ["camera", "matchmove"]
     bake_attributes = []

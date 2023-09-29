@@ -102,7 +102,7 @@ class ExtractCameraMayaScene(publish.Extractor,
 
     """
 
-    label = "Camera (Maya Scene)"
+    label = "Extract Camera (Maya Scene)"
     hosts = ["maya"]
     families = ["camera", "matchmove"]
     scene_type = "ma"
