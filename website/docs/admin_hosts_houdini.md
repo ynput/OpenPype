@@ -12,7 +12,7 @@ Using template keys is supported but formatting keys capitalization variants is 
 
 
 :::note
-If `is Dir Path` toggle is activated, Openpype will consider the given value is a path of a folder.
+If `Treat as directory` toggle is activated, Openpype will consider the given value is a path of a folder.
 
 If the folder does not exist on the context change it will be created by this feature so that the path will always try to point to an existing folder.
 :::
