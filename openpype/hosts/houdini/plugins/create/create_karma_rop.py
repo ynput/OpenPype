@@ -31,18 +31,24 @@ class CreateKarmaROP(plugin.HoudiniCreator):
 
         ext = pre_create_data.get("image_format")
 
-        file_path = "{}/pyblish/renders/`chs('subset')`/`chs('subset')`.$F4.{}".format(
-            hou.text.expandString("$HIP"),
-            ext
+        file_path = (
+            "{}/pyblish/renders/`chs('subset')`/"
+            "`chs('subset')`.$F4.{}".format(
+                hou.text.expandString("$HIP"),
+                ext
+            )
         )
-        checkpoint = "{cp_dir}{subset_name}.$F4.checkpoint".format(
-            cp_dir=hou.text.expandString("$HIP/pyblish/"),
-            subset_name=subset_name
+        checkpoint = (
+            "{}/pyblish/`chs('subset')`.$F4.checkpoint".format(
+                hou.text.expandString("$HIP"),
+            )
         )
 
-        usd_directory = "{usd_dir}{subset_name}_$RENDERID".format(
-            usd_dir=hou.text.expandString("$HIP/pyblish/renders/usd_renders/"),     # noqa
-            subset_name=subset_name
+        usd_directory = (
+            "{}/pyblish/renders/usd_renders/`chs('subset')`"
+            "_$RENDERID".format(
+                hou.text.expandString("$HIP")
+            )
         )
 
         parms = {

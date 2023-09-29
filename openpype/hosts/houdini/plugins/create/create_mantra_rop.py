@@ -31,9 +31,12 @@ class CreateMantraROP(plugin.HoudiniCreator):
 
         ext = pre_create_data.get("image_format")
 
-        file_path = "{}/pyblish/renders/`chs('subset')`/`chs('subset')`.$F4.{}".format(
-            hou.text.expandString("$HIP"),
-            ext
+        file_path = (
+            "{}/pyblish/renders/`chs('subset')`/"
+            "`chs('subset')`.$F4.{}".format(
+                hou.text.expandString("$HIP"),
+                ext
+            )
         )
 
         parms = {

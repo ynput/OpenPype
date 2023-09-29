@@ -88,9 +88,12 @@ class CreateVrayROP(plugin.HoudiniCreator):
             })
 
         else:
-            file_path = "{}/pyblish/renders/`chs('subset')`/`chs('subset')`.$F4.{}".format(
-                hou.text.expandString("$HIP"),
-                ext
+            file_path = (
+                "{}/pyblish/renders/`chs('subset')`/"
+                "`chs('subset')`.$F4.{}".format(
+                    hou.text.expandString("$HIP"),
+                    ext
+                )
             )
             parms.update({
                 "use_render_channels": 0,

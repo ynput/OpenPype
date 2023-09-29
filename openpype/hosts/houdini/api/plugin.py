@@ -257,7 +257,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
         values["subset"] = '`opname(".")`'
         values["variant"] = '`strreplace(chs("subset"), chs("family"), "")`'
         values["instance_node"] = '`opfullpath(".")`'
-        values["instance_id"]  = '`opfullpath(".")`'
+        values["instance_id"] = '`opfullpath(".")`'
 
         imprint(node, values, update=update)
 
