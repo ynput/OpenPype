@@ -6,7 +6,7 @@ class HoudiniVarModel(BaseSettingsModel):
     _layout = "expanded"
     var: str = Field("", title="Var")
     value: str = Field("", title="Value")
-    is_path: bool = Field(False, title="isPath")
+    is_dir_path: bool = Field(False, title="is Dir Path")
 
 
 class UpdateHoudiniVarcontextModel(BaseSettingsModel):
@@ -32,7 +32,7 @@ DEFAULT_GENERAL_SETTINGS = {
             {
                 "var": "JOB",
                 "value": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",  # noqa
-                "is_path": True
+                "is_dir_path": True
             }
         ]
     }

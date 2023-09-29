@@ -37,8 +37,8 @@
                             },
                             {
                                 "type": "boolean",
-                                "key": "is_path",
-                                "label": "isPath"
+                                "key": "is_dir_path",
+                                "label": "is Dir Path"
                             }
                         ]
                     }

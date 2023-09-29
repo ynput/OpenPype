@@ -787,7 +787,7 @@ def update_houdini_vars_context():
                 template_data
             )
 
-            if item["is_path"]:
+            if item["is_dir_path"]:
                 item_value = item_value.replace("\\", "/")
                 try:
                     os.makedirs(item_value)

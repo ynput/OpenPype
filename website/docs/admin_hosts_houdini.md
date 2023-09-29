@@ -4,26 +4,24 @@ title: Houdini
 sidebar_label: Houdini
 ---
 ## General Settings
-### JOB Path
+### Houdini Vars
 
-The Houdini `$JOB` path can be customized through project settings with a (dynamic) path that will be updated on context changes, e.g. when switching to another asset or task.
+Allows admins to have a list of vars (e.g. JOB) with (dynamic) values that will be updated on context changes, e.g. when switching to another asset or task.
+
+Using template keys is supported but formatting keys capitalization variants is not, e.g. `{Asset}` and `{ASSET}` won't work
+
 
 :::note
-If the folder does not exist on the context change it will be created by this feature so that `$JOB` will always try to point to an existing folder.
+If `is Dir Path` toggle is activated, Openpype will consider the given value is a path of a folder.
+
+If the folder does not exist on the context change it will be created by this feature so that the path will always try to point to an existing folder.
 :::
 
-Disabling this feature will leave `$JOB` var unmanaged and thus no context update changes will occur.
+Disabling `Update Houdini vars on context change` feature will leave all Houdini vars unmanaged and thus no context update changes will occur.
 
-JOB Path can be:
-- Arbitrary path
-- Openpype template path
-    > This allows dynamic values for assets or shots.<br>
-    > Using template keys is supported but formatting keys capitalization variants is not,
-    >   e.g. `{Asset}` and `{ASSET}` won't work
-- Empty
-    > In this case, JOB will be synced to HIP
+> If `$JOB` is present in the Houdini var list and has an empty value, OpenPype will set its value to `$HIP`
 
-![update job on context change](assets/houdini/update-job-context-change.png)
+![update-houdini-vars-context-change](assets/houdini/update-houdini-vars-context-change.png)
 
 
 
