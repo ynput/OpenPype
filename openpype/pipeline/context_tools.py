@@ -717,14 +717,12 @@ def get_current_context_template_data():
 
     # compute `frameStartHandle` and `frameEndHandle`
     if "frameStart" in asset_data and "handleStart" in asset_data:
-        asset_data["frameStartHandle"] = (
-                asset_data["frameStart"] - asset_data["handleStart"]
-        )
+        asset_data["frameStartHandle"] = \
+            asset_data["frameStart"] - asset_data["handleStart"]
 
     if "frameEnd" in asset_data and "handleEnd" in asset_data:
-        asset_data["frameEndHandle"] = (
-                asset_data["frameEnd"] + asset_data["handleEnd"]
-        )
+        asset_data["frameEndHandle"] = \
+            asset_data["frameEnd"] + asset_data["handleEnd"]
 
     # add assetData
     template_data["assetData"] = asset_data
