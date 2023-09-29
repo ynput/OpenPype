@@ -107,7 +107,7 @@ class ExtractCameraMayaScene(publish.Extractor,
     families = ["camera", "matchmove"]
     scene_type = "ma"
 
-    keep_input_connections = False
+    keep_image_planes = True
 
     def process(self, instance):
         """Plugin entry point."""
@@ -161,17 +161,10 @@ class ExtractCameraMayaScene(publish.Extractor,
             with lib.evaluation("off"):
                 with lib.suspended_refresh():
                     if bake_to_worldspace:
-                        self.log.info(
-                            "Performing camera bakes: {}".format(transforms))
-                        attr_values = self.get_attr_values_from_data(
-                            instance.data)
-                        keep_input_connections = attr_values.get("keep_input_connections")  # noqa
-
                         baked = lib.bake_to_world_space(
                             transforms,
                             frame_range=[start, end],
-                            step=step,
-                            copy_input_connections=keep_input_connections
+                            step=step
                         )
                         baked_camera_shapes = set(cmds.ls(baked,
                                                   type="camera",
@@ -201,8 +194,13 @@ class ExtractCameraMayaScene(publish.Extractor,
                         unlock(plug)
                         cmds.setAttr(plug, value)
 
+                    attr_values = self.get_attr_values_from_data(
+                        instance.data)
+                    keep_image_planes = attr_values.get("keep_image_planes")
+
                     with transfer_image_planes(sorted(cameras),
-                                               sorted(baked_camera_shapes)):
+                                               sorted(baked_camera_shapes),
+                                               keep_image_planes):
 
                         self.log.info("Performing extraction..")
                         cmds.select(cmds.ls(list(members), dag=True,
@@ -244,10 +242,10 @@ class ExtractCameraMayaScene(publish.Extractor,
         defs = super(ExtractCameraMayaScene, cls).get_attribute_defs()
 
         defs.extend([
-            BoolDef("keep_input_connections",
-                    label="Keep Input Connections",
-                    tooltip="Preserving input connections will allow Image Planes to stay connected on publish",  # noqa
-                    default=cls.keep_input_connections),
+            BoolDef("keep_image_planes",
+                    label="Keep Image Planes",
+                    tooltip="Preserving connected image planes on camera",
+                    default=cls.keep_image_planes),
 
         ])
 
@@ -255,35 +253,38 @@ class ExtractCameraMayaScene(publish.Extractor,
 
 
 @contextlib.contextmanager
-def transfer_image_planes(source_cameras, target_cameras):
+def transfer_image_planes(source_cameras, target_cameras,
+                          keep_input_connections):
     """Reattaches image planes to baked or original cameras.
 
-    Baked cameras are duplicates of original ones, even with
-    `keep_input_connections` the connection of image plane is still on the
-    original one. This attaches it to duplicated camera properly and after
+    Baked cameras are duplicates of original ones.
+    This attaches it to duplicated camera properly and after
     export it reattaches it back to original to keep image plane in workfile.
     """
     originals = {}
     try:
         for source_camera, target_camera in zip(source_cameras,
                                                 target_cameras):
-            if source_camera == target_camera:
-                continue
-
             image_planes = cmds.listConnections(source_camera,
-                                                type="imagePlane")
-            if not image_planes:
-                continue
+                                                type="imagePlane") or []
 
             # Split of the parent path they are attached - we want
             # the image plane node name.
             # TODO: Does this still mean the image plane name is unique?
             image_planes = [x.split("->", 1)[1] for x in image_planes]
 
-            originals[source_camera] = image_planes
-            for image_plane in image_planes:
-                _attach_image_plane(target_camera, image_plane)
+            if not image_planes:
+                continue
 
+            originals[source_camera] = []
+            for image_plane in image_planes:
+                if keep_input_connections:
+                    if source_camera == target_camera:
+                        continue
+                    _attach_image_plane(target_camera, image_plane)
+                else:  # explicitly dettaching image planes
+                    cmds.imagePlane(image_plane, edit=True, detach=True)
+                originals[source_camera].append(image_plane)
         yield
     finally:
         for camera, image_planes in originals.items():
