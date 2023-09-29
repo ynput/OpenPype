@@ -5,6 +5,8 @@ import getpass
 import requests
 import pyblish.api
 
+from openpype.modules.deadline.utils import set_batch_name
+
 
 class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit CelAction2D scene to Deadline
@@ -74,6 +76,8 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         render_path = os.path.normpath(render_path)
         script_name = os.path.basename(script_path)
 
+        batch_name = set_batch_name(instance, script_name)
+
         for item in instance.context:
             if "workfile" in item.data["family"]:
                 msg = "Workfile (scene) must be published along"
@@ -136,7 +140,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
                 "Plugin": "CelAction",
 
                 # Top-level group name
-                "BatchName": script_name,
+                "BatchName": batch_name,
 
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": self._deadline_user,
