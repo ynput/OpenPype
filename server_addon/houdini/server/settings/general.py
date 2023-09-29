@@ -10,7 +10,7 @@ class HoudiniVarModel(BaseSettingsModel):
 
 
 class UpdateHoudiniVarcontextModel(BaseSettingsModel):
-    """Houdini Vars Note.
+    """Sync vars with context changes.
 
     If a value is treated as a directory on update
     it will be ensured the folder exists.

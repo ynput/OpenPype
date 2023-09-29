@@ -19,7 +19,7 @@
                 },
                 {
                     "type": "label",
-                    "label": "Houdini Vars.<br>If a value is treated as a directory on update it will be ensured the folder exists"
+                    "label": "Sync vars with context changes.<br>If a value is treated as a directory on update it will be ensured the folder exists"
                 },
                 {
                     "type": "list",
