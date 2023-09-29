@@ -38,7 +38,6 @@ class ExtractTyCache(publish.Extractor):
         filename = "{name}.tyc".format(**instance.data)
         path = os.path.join(stagingdir, filename)
         filenames = self.get_file(instance, start, end)
-        self.log.debug(f"filenames: {filenames}")
         additional_attributes = instance.data.get("tyc_attrs", {})
 
         with maintained_selection():
