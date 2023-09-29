@@ -32,7 +32,7 @@ class CreatePointCache(plugin.HoudiniCreator):
             "prim_to_detail_pattern": "cbId",
             "format": 2,
             "facesets": 0,
-            "filename":  file_path
+            "filename": file_path
         }
 
         if self.selected_nodes:

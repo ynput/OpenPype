@@ -55,10 +55,11 @@ class CreateHDA(plugin.HoudiniCreator):
             if not to_hda.canCreateDigitalAsset():
                 raise plugin.OpenPypeCreatorError(
                     "cannot create hda from node {}".format(to_hda))
+
             file_path = "{}/{}.hda".format(
-            hou.text.expandString("$HIP"),
-            node_name
-        )
+                hou.text.expandString("$HIP"),
+                node_name
+            )
             hda_node = to_hda.createDigitalAsset(
                 name=node_name,
                 hda_file_name=file_path
