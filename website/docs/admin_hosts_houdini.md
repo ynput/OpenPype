@@ -21,6 +21,12 @@ Disabling `Update Houdini vars on context change` feature will leave all Houdini
 
 > If `$JOB` is present in the Houdini var list and has an empty value, OpenPype will set its value to `$HIP`
 
+
+:::note
+For consistency reasons we always force all vars to be uppercase.
+e.g. `myvar` will be `MYVAR`
+:::
+
 ![update-houdini-vars-context-change](assets/houdini/update-houdini-vars-context-change.png)
 
 
