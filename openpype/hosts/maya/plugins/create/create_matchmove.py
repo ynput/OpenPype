@@ -5,7 +5,7 @@ from openpype.hosts.maya.api import (
 from openpype.lib import BoolDef
 
 
-class MatchMove(plugin.MayaCreator):
+class CreateMatchmove(plugin.MayaCreator):
     """Instance for more complex setup of cameras.
 
     Might contain multiple cameras, geometries etc.
