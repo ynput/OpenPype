@@ -34,7 +34,7 @@ Following family definitions and requirements are OpenPype defaults and what we 
 Here's a list of supported families
 
 | Family                  | Comment                                               | Example Subsets           |
-| ----------------------- |-------------------------------------------------------| ------------------------- |
+|-------------------------|-------------------------------------------------------| ------------------------- |
 | [Model](#model)         | Cleaned geo without materials                         | main, proxy, broken       |
 | [Look](#look)           | Package of shaders, assignments and textures          | main, wet, dirty          |
 | [Rig](#rig)             | Characters or props with animation controls           | main, deform, sim         |
@@ -67,7 +67,7 @@ Here's a list of supported families
 | Gizmo                   |                                                       |                           |
 | Nukenodes               |                                                       |                           |
 | Harmony.template        |                                                       |                           |
-| Harmony.palette        |                                                       |                           |
+| Harmony.palette         |                                                       |                           |
 
 
 
