@@ -2,9 +2,12 @@ from copy import deepcopy
 import re
 import os
 import json
-import platform
 import contextlib
+import functools
+import platform
 import tempfile
+import warnings
+
 from openpype import PACKAGE_DIR
 from openpype.settings import get_project_settings
 from openpype.lib import (
@@ -20,10 +23,58 @@ log = Logger.get_logger(__name__)
 
 
 class CachedData:
-    remapping = {}
+    remapping = None
+    has_compatible_ocio_package = None
+    config_version_data = {}
+    ocio_config_colorspaces = {}
     allowed_exts = {
         ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
     }
+
+
+class DeprecatedWarning(DeprecationWarning):
+    pass
+
+
+def deprecated(new_destination):
+    """Mark functions as deprecated.
+
+    It will result in a warning being emitted when the function is used.
+    """
+
+    func = None
+    if callable(new_destination):
+        func = new_destination
+        new_destination = None
+
+    def _decorator(decorated_func):
+        if new_destination is None:
+            warning_message = (
+                " Please check content of deprecated function to figure out"
+                " possible replacement."
+            )
+        else:
+            warning_message = " Please replace your usage with '{}'.".format(
+                new_destination
+            )
+
+        @functools.wraps(decorated_func)
+        def wrapper(*args, **kwargs):
+            warnings.simplefilter("always", DeprecatedWarning)
+            warnings.warn(
+                (
+                    "Call to deprecated function '{}'"
+                    "\nFunction was moved or removed.{}"
+                ).format(decorated_func.__name__, warning_message),
+                category=DeprecatedWarning,
+                stacklevel=4
+            )
+            return decorated_func(*args, **kwargs)
+        return wrapper
+
+    if func is None:
+        return _decorator
+    return _decorator(func)
 
 
 @contextlib.contextmanager
@@ -69,124 +120,264 @@ def get_ocio_config_script_path():
     )
 
 
-def get_imageio_colorspace_from_filepath(
-    path, host_name, project_name,
+def get_colorspace_name_from_filepath(
+    filepath, host_name, project_name,
     config_data=None, file_rules=None,
     project_settings=None,
     validate=True
 ):
     """Get colorspace name from filepath
 
-    ImageIO Settings file rules are tested for matching rule.
-
     Args:
-        path (str): path string, file rule pattern is tested on it
+        filepath (str): path string, file rule pattern is tested on it
         host_name (str): host name
         project_name (str): project name
-        config_data (dict, optional): config path and template in dict.
+        config_data (Optional[dict]): config path and template in dict.
                                       Defaults to None.
-        file_rules (dict, optional): file rule data from settings.
+        file_rules (Optional[dict]): file rule data from settings.
                                      Defaults to None.
-        project_settings (dict, optional): project settings. Defaults to None.
-        validate (bool, optional): should resulting colorspace be validated
-                                   with config file? Defaults to True.
+        project_settings (Optional[dict]): project settings. Defaults to None.
+        validate (Optional[bool]): should resulting colorspace be validated
+                                with config file? Defaults to True.
 
     Returns:
         str: name of colorspace
     """
-    if not any([config_data, file_rules]):
-        project_settings = project_settings or get_project_settings(
-            project_name
-        )
-        config_data = get_imageio_config(
-            project_name, host_name, project_settings)
+    project_settings, config_data, file_rules = _get_context_settings(
+        host_name, project_name,
+        config_data=config_data, file_rules=file_rules,
+        project_settings=project_settings
+    )
 
-        # in case host color management is not enabled
-        if not config_data:
-            return None
+    if not config_data:
+        # in case global or host color management is not enabled
+        return None
 
-        file_rules = get_imageio_file_rules(
-            project_name, host_name, project_settings)
+    # use ImageIO file rules
+    colorspace_name = get_imageio_file_rules_colorspace_from_filepath(
+        filepath, host_name, project_name,
+        config_data=config_data, file_rules=file_rules,
+        project_settings=project_settings
+    )
 
-    # match file rule from path
-    colorspace_name = None
-    for _frule_name, file_rule in file_rules.items():
-        pattern = file_rule["pattern"]
-        extension = file_rule["ext"]
-        ext_match = re.match(
-            r".*(?=.{})".format(extension), path
-        )
-        file_match = re.search(
-            pattern, path
-        )
+    # try to get colorspace from OCIO v2 file rules
+    if (
+        not colorspace_name
+        and compatibility_check_config_version(config_data["path"], major=2)
+    ):
+        colorspace_name = get_config_file_rules_colorspace_from_filepath(
+            config_data["path"], filepath)
 
-        if ext_match and file_match:
-            colorspace_name = file_rule["colorspace"]
+    # use parse colorspace from filepath as fallback
+    colorspace_name = colorspace_name or parse_colorspace_from_filepath(
+        filepath, config_path=config_data["path"]
+    )
 
     if not colorspace_name:
         log.info("No imageio file rule matched input path: '{}'".format(
-            path
+            filepath
         ))
         return None
 
     # validate matching colorspace with config
-    if validate and config_data:
+    if validate:
         validate_imageio_colorspace_in_config(
             config_data["path"], colorspace_name)
 
     return colorspace_name
 
 
-def parse_colorspace_from_filepath(
-    path, host_name, project_name,
-    config_data=None,
+# TODO: remove this in future - backward compatibility
+@deprecated("get_imageio_file_rules_colorspace_from_filepath")
+def get_imageio_colorspace_from_filepath(*args, **kwargs):
+    return get_imageio_file_rules_colorspace_from_filepath(*args, **kwargs)
+
+# TODO: remove this in future - backward compatibility
+@deprecated("get_imageio_file_rules_colorspace_from_filepath")
+def get_colorspace_from_filepath(*args, **kwargs):
+    return get_imageio_file_rules_colorspace_from_filepath(*args, **kwargs)
+
+
+def _get_context_settings(
+    host_name, project_name,
+    config_data=None, file_rules=None,
     project_settings=None
+):
+    project_settings = project_settings or get_project_settings(
+        project_name
+    )
+
+    config_data = config_data or get_imageio_config(
+        project_name, host_name, project_settings)
+
+    # in case host color management is not enabled
+    if not config_data:
+        return (None, None, None)
+
+    file_rules = file_rules or get_imageio_file_rules(
+        project_name, host_name, project_settings)
+
+    return project_settings, config_data, file_rules
+
+
+def get_imageio_file_rules_colorspace_from_filepath(
+    filepath, host_name, project_name,
+    config_data=None, file_rules=None,
+    project_settings=None
+):
+    """Get colorspace name from filepath
+
+    ImageIO Settings file rules are tested for matching rule.
+
+    Args:
+        filepath (str): path string, file rule pattern is tested on it
+        host_name (str): host name
+        project_name (str): project name
+        config_data (Optional[dict]): config path and template in dict.
+                                      Defaults to None.
+        file_rules (Optional[dict]): file rule data from settings.
+                                     Defaults to None.
+        project_settings (Optional[dict]): project settings. Defaults to None.
+
+    Returns:
+        str: name of colorspace
+    """
+    project_settings, config_data, file_rules = _get_context_settings(
+        host_name, project_name,
+        config_data=config_data, file_rules=file_rules,
+        project_settings=project_settings
+    )
+
+    if not config_data:
+        # in case global or host color management is not enabled
+        return None
+
+    # match file rule from path
+    colorspace_name = None
+    for file_rule in file_rules.values():
+        pattern = file_rule["pattern"]
+        extension = file_rule["ext"]
+        ext_match = re.match(
+            r".*(?=.{})".format(extension), filepath
+        )
+        file_match = re.search(
+            pattern, filepath
+        )
+
+        if ext_match and file_match:
+            colorspace_name = file_rule["colorspace"]
+
+    return colorspace_name
+
+
+def get_config_file_rules_colorspace_from_filepath(config_path, filepath):
+    """Get colorspace from file path wrapper.
+
+    Wrapper function for getting colorspace from file path
+    with use of OCIO v2 file-rules.
+
+    Args:
+        config_path (str): path leading to config.ocio file
+        filepath (str): path leading to a file
+
+    Returns:
+        Any[str, None]: matching colorspace name
+    """
+    if not compatibility_check():
+        # python environment is not compatible with PyOpenColorIO
+        # needs to be run in subprocess
+        result_data = _get_wrapped_with_subprocess(
+            "colorspace", "get_config_file_rules_colorspace_from_filepath",
+            config_path=config_path,
+            filepath=filepath
+        )
+        if result_data:
+            return result_data[0]
+
+    # TODO: refactor this so it is not imported but part of this file
+    from openpype.scripts.ocio_wrapper import _get_config_file_rules_colorspace_from_filepath  # noqa: E501
+
+    result_data = _get_config_file_rules_colorspace_from_filepath(
+        config_path, filepath)
+
+    if result_data:
+        return result_data[0]
+
+
+def parse_colorspace_from_filepath(
+    filepath, colorspaces=None, config_path=None
 ):
     """Parse colorspace name from filepath
 
     An input path can have colorspace name used as part of name
     or as folder name.
 
+    Example:
+        >>> config_path = "path/to/config.ocio"
+        >>> colorspaces = get_ocio_config_colorspaces(config_path)
+        >>> colorspace = parse_colorspace_from_filepath(
+                "path/to/file/acescg/file.exr",
+                colorspaces=colorspaces
+            )
+        >>> print(colorspace)
+        acescg
+
     Args:
-        path (str): path string
-        host_name (str): host name
-        project_name (str): project name
-        config_data (dict, optional): config path and template in dict.
-                                      Defaults to None.
-        project_settings (dict, optional): project settings. Defaults to None.
+        filepath (str): path string
+        colorspaces (Optional[dict[str]]): list of colorspaces
+        config_path (Optional[str]): path to config.ocio file
 
     Returns:
         str: name of colorspace
     """
-    if not config_data:
-        project_settings = project_settings or get_project_settings(
-            project_name
+    def _get_colorspace_match_regex(colorspaces):
+        """Return a regex pattern
+
+        Allows to search a colorspace match in a filename
+
+        Args:
+            colorspaces (list): List of colorspace names
+
+        Returns:
+            re.Pattern: regex pattern
+        """
+        pattern = "|".join(
+            # Allow to match spaces also as underscores because the
+            # integrator replaces spaces with underscores in filenames
+            re.escape(colorspace) for colorspace in
+            # Sort by longest first so the regex matches longer matches
+            # over smaller matches, e.g. matching 'Output - sRGB' over 'sRGB'
+            sorted(colorspaces, key=len, reverse=True)
         )
-        config_data = get_imageio_config(
-            project_name, host_name, project_settings)
+        return re.compile(pattern)
 
-    config_path = config_data["path"]
+    if not colorspaces and not config_path:
+        raise ValueError(
+            "Must provide `config_path` if `colorspaces` is not provided."
+        )
 
-    # match file rule from path
-    colorspace_name = None
-    colorspaces = get_ocio_config_colorspaces(config_path)
-    for colorspace_key in colorspaces:
-        # check underscored variant of colorspace name
-        # since we are reformatting it in integrate.py
-        if colorspace_key.replace(" ", "_") in path:
-            colorspace_name = colorspace_key
-            break
-        if colorspace_key in path:
-            colorspace_name = colorspace_key
-            break
+    colorspaces = colorspaces or get_ocio_config_colorspaces(config_path)
+    underscored_colorspaces = {
+        key.replace(" ", "_"): key for key in colorspaces
+        if " " in key
+    }
 
-    if not colorspace_name:
-        log.info("No matching colorspace in config '{}' for path: '{}'".format(
-            config_path, path
-        ))
-        return None
+    # match colorspace from  filepath
+    regex_pattern = _get_colorspace_match_regex(
+        list(colorspaces) + list(underscored_colorspaces))
+    match = regex_pattern.search(filepath)
+    colorspace = match.group(0) if match else None
 
-    return colorspace_name
+    if colorspace in underscored_colorspaces:
+        return underscored_colorspaces[colorspace]
+
+    if colorspace:
+        return colorspace
+
+    log.info("No matching colorspace in config '{}' for path: '{}'".format(
+        config_path, filepath
+    ))
+    return None
 
 
 def validate_imageio_colorspace_in_config(config_path, colorspace_name):
@@ -211,49 +402,101 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
     return True
 
 
+# TODO: remove this in future - backward compatibility
+@deprecated("_get_wrapped_with_subprocess")
 def get_data_subprocess(config_path, data_type):
-    """Get data via subprocess
+    """[Deprecated] Get data via subprocess
 
     Wrapper for Python 2 hosts.
 
     Args:
         config_path (str): path leading to config.ocio file
     """
+    return _get_wrapped_with_subprocess(
+        "config", data_type, in_path=config_path,
+    )
+
+
+def _get_wrapped_with_subprocess(command_group, command, **kwargs):
+    """Get data via subprocess
+
+    Wrapper for Python 2 hosts.
+
+    Args:
+        command_group (str): command group name
+        command (str): command name
+        **kwargs: command arguments
+
+    Returns:
+        Any[dict, None]: data
+    """
     with _make_temp_json_file() as tmp_json_path:
         # Prepare subprocess arguments
         args = [
             "run", get_ocio_config_script_path(),
-            "config", data_type,
-            "--in_path", config_path,
-            "--out_path", tmp_json_path
-
+            command_group, command
         ]
+
+        for key_, value_ in kwargs.items():
+            args.extend(("--{}".format(key_), value_))
+
+        args.append("--out_path")
+        args.append(tmp_json_path)
+
         log.info("Executing: {}".format(" ".join(args)))
 
-        process_kwargs = {
-            "logger": log
-        }
-
-        run_openpype_process(*args, **process_kwargs)
+        run_openpype_process(*args, logger=log)
 
         # return all colorspaces
-        return_json_data = open(tmp_json_path).read()
-        return json.loads(return_json_data)
+        with open(tmp_json_path, "r") as f_:
+            return json.load(f_)
 
 
+# TODO: this should be part of ocio_wrapper.py
 def compatibility_check():
-    """checking if user has a compatible PyOpenColorIO >= 2.
+    """Making sure PyOpenColorIO is importable"""
+    if CachedData.has_compatible_ocio_package is not None:
+        return CachedData.has_compatible_ocio_package
 
-    It's achieved by checking if PyOpenColorIO is importable
-    and calling any version 2 specific function
-    """
     try:
-        import PyOpenColorIO
+        import PyOpenColorIO  # noqa: F401
+        CachedData.has_compatible_ocio_package = True
+    except ImportError:
+        CachedData.has_compatible_ocio_package = False
 
-        # ocio versions lower than 2 will raise AttributeError
-        PyOpenColorIO.GetVersion()
-    except (ImportError, AttributeError):
+    # compatible
+    return CachedData.has_compatible_ocio_package
+
+
+# TODO: this should be part of ocio_wrapper.py
+def compatibility_check_config_version(config_path, major=1, minor=None):
+    """Making sure PyOpenColorIO config version is compatible"""
+
+    if not CachedData.config_version_data.get(config_path):
+        if compatibility_check():
+            # TODO: refactor this so it is not imported but part of this file
+            from openpype.scripts.ocio_wrapper import _get_version_data
+
+            CachedData.config_version_data[config_path] = \
+                _get_version_data(config_path)
+
+        else:
+            # python environment is not compatible with PyOpenColorIO
+            # needs to be run in subprocess
+            CachedData.config_version_data[config_path] = \
+                _get_wrapped_with_subprocess(
+                    "config", "get_version", config_path=config_path
+            )
+
+    # check major version
+    if CachedData.config_version_data[config_path]["major"] != major:
         return False
+
+    # check minor version
+    if minor and CachedData.config_version_data[config_path]["minor"] != minor:
+        return False
+
+    # compatible
     return True
 
 
@@ -269,18 +512,28 @@ def get_ocio_config_colorspaces(config_path):
     Returns:
         dict: colorspace and family in couple
     """
-    if not compatibility_check():
-        # python environment is not compatible with PyOpenColorIO
-        # needs to be run in subprocess
-        return get_colorspace_data_subprocess(config_path)
+    if not CachedData.ocio_config_colorspaces.get(config_path):
+        if not compatibility_check():
+            # python environment is not compatible with PyOpenColorIO
+            # needs to be run in subprocess
+            CachedData.ocio_config_colorspaces[config_path] = \
+                _get_wrapped_with_subprocess(
+                    "config", "get_colorspace", in_path=config_path
+            )
+        else:
+            # TODO: refactor this so it is not imported but part of this file
+            from openpype.scripts.ocio_wrapper import _get_colorspace_data
 
-    from openpype.scripts.ocio_wrapper import _get_colorspace_data
+            CachedData.ocio_config_colorspaces[config_path] = \
+                _get_colorspace_data(config_path)
 
-    return _get_colorspace_data(config_path)
+    return CachedData.ocio_config_colorspaces[config_path]
 
 
+# TODO: remove this in future - backward compatibility
+@deprecated("_get_wrapped_with_subprocess")
 def get_colorspace_data_subprocess(config_path):
-    """Get colorspace data via subprocess
+    """[Deprecated] Get colorspace data via subprocess
 
     Wrapper for Python 2 hosts.
 
@@ -290,7 +543,9 @@ def get_colorspace_data_subprocess(config_path):
     Returns:
         dict: colorspace and family in couple
     """
-    return get_data_subprocess(config_path, "get_colorspace")
+    return _get_wrapped_with_subprocess(
+        "config", "get_colorspace", in_path=config_path
+    )
 
 
 def get_ocio_config_views(config_path):
@@ -308,15 +563,20 @@ def get_ocio_config_views(config_path):
     if not compatibility_check():
         # python environment is not compatible with PyOpenColorIO
         # needs to be run in subprocess
-        return get_views_data_subprocess(config_path)
+        return _get_wrapped_with_subprocess(
+            "config", "get_views", in_path=config_path
+        )
 
+    # TODO: refactor this so it is not imported but part of this file
     from openpype.scripts.ocio_wrapper import _get_views_data
 
     return _get_views_data(config_path)
 
 
+# TODO: remove this in future - backward compatibility
+@deprecated("_get_wrapped_with_subprocess")
 def get_views_data_subprocess(config_path):
-    """Get viewers data via subprocess
+    """[Deprecated] Get viewers data via subprocess
 
     Wrapper for Python 2 hosts.
 
@@ -326,7 +586,9 @@ def get_views_data_subprocess(config_path):
     Returns:
         dict: `display/viewer` and viewer data
     """
-    return get_data_subprocess(config_path, "get_views")
+    return _get_wrapped_with_subprocess(
+        "config", "get_views", in_path=config_path
+    )
 
 
 def get_imageio_config(
