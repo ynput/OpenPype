@@ -44,13 +44,14 @@ class ExtractFBXAnimation(publish.Extractor):
         namespace = out_set_name.split(":")[0]
         new_out_set = out_set_name.replace(
             f"{namespace}:", "")
-        cmds.namespace(set=':' + namespace)
         cmds.namespace(relativeNames=True)
         with namespaced(":" + namespace, new=False) as namespace:
-            fbx_exporter.export(
-                new_out_set, path.replace("\\", "/"))
-
-        cmds.namespace(relativeNames=False)
+            path = path.replace("\\", "/")
+            fbx_exporter.export(new_out_set, path)
+        original_relative_names = cmds.namespace(
+            query=True, relativeNames=True)
+        if original_relative_names:
+            cmds.namespace(relativeNames=original_relative_names)
 
         representations = instance.data.setdefault("representations", [])
         representations.append({
