@@ -1002,8 +1002,8 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "keep_input_connections",
-                    "label": "Export Input connections (Image planes)"
+                    "key": "keep_image_planes",
+                    "label": "Export Image planes"
                 }
             ]
         },
