@@ -402,6 +402,9 @@ class ClipLoader:
         if handle_end is None:
             handle_end = int(self.data["assetData"]["handleEnd"])
 
+        self.timeline_in = int(self.data["assetData"]["clipIn"])
+
+
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
 
@@ -416,7 +419,12 @@ class ClipLoader:
 
         # make track item from source in bin as item
         timeline_item = lib.create_timeline_item(
-            media_pool_item, self.active_timeline, source_in, source_out)
+            media_pool_item,
+            self.active_timeline,
+            source_in,
+            source_out,
+            self.timeline_in
+        )
 
         print("Loading clips: `{}`".format(self.data["clip_name"]))
         return timeline_item

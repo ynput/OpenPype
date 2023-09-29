@@ -246,7 +246,8 @@ def get_media_pool_item(fpath, root: object = None) -> object:
 def create_timeline_item(media_pool_item: object,
                          timeline: object = None,
                          source_start: int = None,
-                         source_end: int = None) -> object:
+                         source_end: int = None,
+                         timeline_in: int = None) -> object:
     """
     Add media pool item to current or defined timeline.
 
@@ -278,6 +279,12 @@ def create_timeline_item(media_pool_item: object,
             clip_data.update({"endFrame": source_end})
 
         print(clip_data)
+
+        if timeline_in:
+            timeline_start = timeline.GetStartFrame()
+            # Create a clipInfo dictionary with the necessary information
+            clip_data["recordFrame"] = int(timeline_start + timeline_in)
+
         # add to timeline
         media_pool.AppendToTimeline([clip_data])
 
