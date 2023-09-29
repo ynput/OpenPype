@@ -13,6 +13,7 @@ import pyblish.api
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.modules.deadline.utils import set_batch_name
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 
@@ -264,7 +265,8 @@ class HarmonySubmitDeadline(
         job_info.Pool = self._instance.data.get("primaryPool")
         job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         job_info.ChunkSize = self.chunk_size
-        batch_name = os.path.basename(self._instance.data["source"])
+        filename = os.path.basename(self._instance.data["source"])
+        batch_name = set_batch_name(self._instance, filename)
         if is_in_tests:
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         job_info.BatchName = batch_name
