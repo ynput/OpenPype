@@ -765,52 +765,54 @@ def update_houdini_vars_context():
     houdini_vars_settings = \
         project_settings["houdini"]["general"]["update_houdini_var_context"]
 
-    if houdini_vars_settings["enabled"]:
-        houdini_vars = houdini_vars_settings["houdini_vars"]
+    if not houdini_vars_settings["enabled"]:
+        return
 
-        # No vars specified - nothing to do
-        if not houdini_vars:
-            return
+    houdini_vars = houdini_vars_settings["houdini_vars"]
 
-        # Get Template data
-        template_data = get_current_context_template_data()
+    # No vars specified - nothing to do
+    if not houdini_vars:
+        return
 
-        # Set Houdini Vars
-        for item in houdini_vars:
+    # Get Template data
+    template_data = get_current_context_template_data()
 
-            # For consistency reasons we always force all vars to be uppercase
-            item["var"] = item["var"].upper()
+    # Set Houdini Vars
+    for item in houdini_vars:
 
-            # get and resolve job path template
-            item_value = StringTemplate.format_template(
-                item["value"],
-                template_data
-            )
+        # For consistency reasons we always force all vars to be uppercase
+        item["var"] = item["var"].upper()
 
-            if item["is_dir_path"]:
-                item_value = item_value.replace("\\", "/")
-                try:
-                    os.makedirs(item_value)
-                except OSError as e:
-                    if e.errno != errno.EEXIST:
-                        print(
-                            "  - Failed to create ${} dir. Maybe due to "
-                            "insufficient permissions.".format(item["var"])
-                        )
+        # get and resolve template in value
+        item_value = StringTemplate.format_template(
+            item["value"],
+            template_data
+        )
 
-            if item["var"] == "JOB" and item_value == "":
-                # sync $JOB to $HIP if $JOB is empty
-                item_value = os.environ["HIP"]
+        if item["is_dir_path"]:
+            item_value = item_value.replace("\\", "/")
+            try:
+                os.makedirs(item_value)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    print(
+                        "  - Failed to create ${} dir. Maybe due to "
+                        "insufficient permissions.".format(item["var"])
+                    )
 
-            current_value = hou.hscript("echo -n `${}`".format(item["var"]))[0]
+        if item["var"] == "JOB" and item_value == "":
+            # sync $JOB to $HIP if $JOB is empty
+            item_value = os.environ["HIP"]
 
-            # sync both environment variables.
-            # because houdini doesn't do that by default
-            # on opening new files
-            os.environ[item["var"]] = current_value
+        current_value = hou.hscript("echo -n `${}`".format(item["var"]))[0]
 
-            if current_value != item_value:
-                hou.hscript("set {}={}".format(item["var"], item_value))
-                os.environ[item["var"]] = item_value
+        # sync both environment variables.
+        # because houdini doesn't do that by default
+        # on opening new files
+        os.environ[item["var"]] = current_value
 
-                print("  - Updated ${} to {}".format(item["var"], item_value))
+        if current_value != item_value:
+            hou.hscript("set {}={}".format(item["var"], item_value))
+            os.environ[item["var"]] = item_value
+
+            print("  - Updated ${} to {}".format(item["var"], item_value))
