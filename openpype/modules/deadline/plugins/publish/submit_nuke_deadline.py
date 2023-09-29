@@ -18,6 +18,7 @@ from openpype.lib import (
     BoolDef,
     NumberDef
 )
+from openpype.modules.deadline.utils import set_batch_name
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin,
@@ -200,11 +201,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         response_data=None
     ):
         render_dir = os.path.normpath(os.path.dirname(render_path))
-        batch_name = os.path.basename(script_path)
-        jobname = "%s - %s" % (batch_name, instance.name)
+        filename = os.path.basename(script_path)
+        jobname = "%s - %s" % (filename, instance.name)
+
+        batch_name = set_batch_name(instance, filename)
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
-
 
         output_filename_0 = self.preview_fname(render_path)
 
