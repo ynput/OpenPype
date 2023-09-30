@@ -6,17 +6,21 @@ from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 
 
-class ExtractCameraAlembic(publish.Extractor):
+class ExtractCameraAlembic(publish.Extractor,
+                           publish.OptionalPyblishPluginMixin):
     """Extract a Camera as Alembic.
 
-    The cameras gets baked to world space by default. Only when the instance's
+    The camera gets baked to world space by default. Only when the instance's
     `bakeToWorldSpace` is set to False it will include its full hierarchy.
+
+    'camera' family expects only single camera, if multiple cameras are needed,
+    'matchmove' is better choice.
 
     """
 
-    label = "Camera (Alembic)"
+    label = "Extract Camera (Alembic)"
     hosts = ["maya"]
-    families = ["camera"]
+    families = ["camera", "matchmove"]
     bake_attributes = []
 
     def process(self, instance):
@@ -35,10 +39,11 @@ class ExtractCameraAlembic(publish.Extractor):
 
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
-        camera = cameras[0]
 
         # Define extract output file path
         dir_path = self.staging_dir(instance)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
         filename = "{0}.abc".format(instance.name)
         path = os.path.join(dir_path, filename)
 
@@ -64,9 +69,10 @@ class ExtractCameraAlembic(publish.Extractor):
 
                 # if baked, drop the camera hierarchy to maintain
                 # clean output and backwards compatibility
-                camera_root = cmds.listRelatives(
-                    camera, parent=True, fullPath=True)[0]
-                job_str += ' -root {0}'.format(camera_root)
+                camera_roots = cmds.listRelatives(
+                    cameras, parent=True, fullPath=True)
+                for camera_root in camera_roots:
+                    job_str += ' -root {0}'.format(camera_root)
 
                 for member in members:
                     descendants = cmds.listRelatives(member,
