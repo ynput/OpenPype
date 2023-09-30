@@ -28,8 +28,6 @@ from openpype.lib import (
 from openpype.pipeline import (
     legacy_io,
     get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name,
     register_loader_plugin_path,
     register_inventory_action_path,
     register_creator_plugin_path,
