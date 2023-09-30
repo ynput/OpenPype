@@ -106,7 +106,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         _set_project()
         self._register_callbacks()
 
-        menu.install()
+        menu.install(project_settings)
 
         register_event_callback("save", on_save)
         register_event_callback("open", on_open)
