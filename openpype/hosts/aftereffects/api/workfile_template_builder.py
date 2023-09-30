@@ -223,6 +223,33 @@ def build_workfile_template(*args, **kwargs):
 
 def build_workfile_sequence_template(*args, **kwargs):
     print("Hello World")
+
+    from openpype.modules.kitsu.utils.credentials import (
+        validate_credentials,
+    )
+
+    import gazu
+    validate_credentials(login=os.environ["KITSU_LOGIN"],
+                         password=os.environ["KITSU_PWD"],
+                         kitsu_url=os.environ.get("KITSU_SERVER"))
+
+    project = os.environ["AVALON_PROJECT"]
+    asset = os.environ["AVALON_ASSET"]
+    task = os.environ["AVALON_TASK"]
+
+    print(project)
+    print(asset)
+    print(task)
+
+    project = gazu.project.get_project_by_name(project)
+    print(project.get("name"))
+    # set_credentials_envs(login, password)
+    # validate_credentials(login, password)
+
+    # from openpype.modules.kitsu.utils.credentials import (
+    #     validate_credentials,
+    #     set_credentials_envs,
+    # )
     # builder = AETemplateBuilder(registered_host())
     # builder.build_template(*args, **kwargs)
 
