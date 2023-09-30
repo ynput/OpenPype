@@ -601,6 +601,13 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
 class Loader(LoaderPlugin):
     hosts = ["maya"]
 
+    load_settings = {}  # defined in settings
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        super(Loader, cls).apply_settings(project_settings, system_settings)
+        cls.load_settings = project_settings['maya']['load']
+
     def get_custom_namespace_and_group(self, context, options, loader_key):
         """Queries Settings to get custom template for namespace and group.
 
@@ -613,12 +620,9 @@ class Loader(LoaderPlugin):
             loader_key (str): key to get separate configuration from Settings
                 ('reference_loader'|'import_loader')
         """
-        options["attach_to_root"] = True
 
-        asset = context['asset']
-        subset = context['subset']
-        settings = get_project_settings(context['project']['name'])
-        custom_naming = settings['maya']['load'][loader_key]
+        options["attach_to_root"] = True
+        custom_naming = self.load_settings[loader_key]
 
         if not custom_naming['namespace']:
             raise LoadError("No namespace specified in "
@@ -627,6 +631,8 @@ class Loader(LoaderPlugin):
             self.log.debug("No custom group_name, no group will be created.")
             options["attach_to_root"] = False
 
+        asset = context['asset']
+        subset = context['subset']
         formatting_data = {
             "asset_name": asset['name'],
             "asset_type": asset['type'],
