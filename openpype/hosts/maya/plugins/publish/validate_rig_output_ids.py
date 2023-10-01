@@ -47,7 +47,7 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
         invalid = {}
 
         if compute:
-            out_set =  cls.get_node(instance)
+            out_set = cls.get_node(instance)
             if not out_set:
                 instance.data["mismatched_output_ids"] = invalid
                 return invalid

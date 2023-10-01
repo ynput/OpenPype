@@ -228,6 +228,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
                         default = cls.CONTROLLER_DEFAULTS[attr]
                         cls.log.info("Setting %s to %s" % (plug, default))
                         cmds.setAttr(plug, default)
+
     @classmethod
     def get_node(cls, instance):
         return instance.data["rig_sets"].get("controls_SET")

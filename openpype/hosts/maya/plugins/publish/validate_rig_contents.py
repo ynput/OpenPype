@@ -216,13 +216,13 @@ class ValidateSkeletonRigContents(ValidateRigContents):
             invalid_geometry = cls.validate_geometry(output_content)
         if invalid_hierarchy:
             cls.log.error("Found nodes which reside outside of root group "
-                           "while they are set up for publishing."
-                           "\n%s" % invalid_hierarchy)
+                          "while they are set up for publishing."
+                          "\n%s" % invalid_hierarchy)
             error = True
         if invalid_geometry:
             cls.log.error("Found nodes which reside outside of root group "
-                           "while they are set up for publishing."
-                           "\n%s" % invalid_hierarchy)
+                          "while they are set up for publishing."
+                          "\n%s" % invalid_hierarchy)
             error = True
         return error
 
