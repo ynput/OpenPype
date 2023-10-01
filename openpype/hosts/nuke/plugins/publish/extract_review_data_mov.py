@@ -17,8 +17,7 @@ class ExtractReviewDataMov(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder + 0.01
     label = "Extract Review Data Mov"
-
-    families = ["review"]
+    families = ["review","render.a_frames_farm"]
     hosts = ["nuke"]
 
     # presets
@@ -30,7 +29,6 @@ class ExtractReviewDataMov(publish.Extractor):
 
         # add main family to make sure all families are compared
         families.add(instance.data["family"])
-
         task_type = instance.context.data["taskType"]
         subset = instance.data["subset"]
         self.log.info("Creating staging dir...")

@@ -85,6 +85,8 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             collections, remainder = clique.assemble(repre["files"])
             self.log.info("collections: {}".format(str(collections)))
             self.log.info("remainder: {}".format(str(remainder)))
+            if not collections:
+                return
 
             collection = collections[0]
 

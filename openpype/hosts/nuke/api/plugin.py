@@ -326,8 +326,8 @@ class NukeWriteCreator(NukeCreator):
     def _get_render_target_enum(self):
         rendering_targets = {
             "local": "Local machine rendering",
-            # "frames": "Use existing frames",
-            "farm_frames": "Use existing frames on farm" # NOTE hornet update on use existing frames on farm
+            "local_frames": "Use existing frames",
+            "a_frames_farm": "Use existing frames on farm" # NOTE hornet update on use existing frames on farm
         }
         if ("farm_rendering" in self.instance_attributes):
             rendering_targets["farm"] = "Farm rendering"
@@ -603,7 +603,7 @@ class ExporterReview(object):
             self.fhead = self.fhead.replace("#", "")[:-1]
 
         #NOTE hornet update for use exiting frame on farm
-        # if self.instance.data('render_target') == 'farm_frames':
+        # if self.instance.data('render_target') == 'a_frames_farm':
         self.fhead = self.fhead.replace('%04d.','')
 
     def get_representation_data(
@@ -1275,7 +1275,7 @@ def convert_to_valid_instaces():
             if families_ak and "write" in families_ak.lower():
                 target = node["render"].value()
                 if target == "Use existing frames":
-                    creator_attr["render_target"] = "frames"
+                    creator_attr["render_target"] = "local_frames"
                 elif target == "Local":
                     # Local rendering
                     creator_attr["render_target"] = "local"
@@ -1285,7 +1285,7 @@ def convert_to_valid_instaces():
                 elif target == "Use existing frames on farm":
                     # NOTE hornet update on use existing frames on farm
                     # Farm rendering
-                    creator_attr["render_target"] = "farm_frames"
+                    creator_attr["render_target"] = "a_frames_farm"
 
 
                 if "deadlinePriority" in node.knobs():

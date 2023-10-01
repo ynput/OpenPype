@@ -13,7 +13,7 @@ class IntegrateOpenclip(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.91
     families = ['render', 'plate']
     hosts = ['nuke', 'standalonepublisher', 'traypublisher','shell']
-    targets = ['local', 'deadline', 'farm_frames', 'farm']
+    targets = ['local', 'deadline', 'a_frames_farm', 'farm']
 # the pattern based clips are very compact and can reasonably fit here to avoid referencing non python files in the publish steps
     template = r"""<?xml version="1.0"?>
 <clip type="clip" version="6">
