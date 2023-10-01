@@ -294,11 +294,11 @@ class PublishReportMaker:
         # Ensure the current plug-in is marked as `passed` in the result
         # so that it shows on reports for paused publishes
         if self._current_plugin is not None:
-            current_plugins_data = plugins_data_by_plugin_id.get(
+            current_plugin_data = plugins_data_by_plugin_id.get(
                 self._current_plugin.id
             )
-            if current_plugins_data and not current_plugins_data["passed"]:
-                current_plugins_data["passed"] = True
+            if current_plugin_data and not current_plugin_data["passed"]:
+                current_plugin_data["passed"] = True
 
         if publish_plugins:
             for plugin in publish_plugins:
