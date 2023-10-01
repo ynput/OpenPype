@@ -179,7 +179,7 @@ class PublishReportMaker:
         self._plugin_data = []
         self._plugin_data_with_plugin = []
 
-        self._stored_plugins = []
+        self._stored_plugins = set()
         self._current_plugin_data = []
         self._all_instances_by_id = {}
         self._current_context = None
@@ -194,7 +194,7 @@ class PublishReportMaker:
         self._publish_discover_result = create_context.publish_discover_result
         self._plugin_data = []
         self._plugin_data_with_plugin = []
-        self._stored_plugins = []
+        self._stored_plugins = set()
         self._current_plugin_data = {}
         self._all_instances_by_id = {}
         self._current_context = context
@@ -230,7 +230,7 @@ class PublishReportMaker:
             raise ValueError(
                 "Plugin '{}' is already stored".format(str(plugin)))
 
-        self._stored_plugins.append(plugin)
+        self._stored_plugins.add(plugin)
 
         plugin_data_item = self._create_plugin_data_item(plugin)
 
