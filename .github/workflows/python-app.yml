@@ -38,7 +38,8 @@ jobs:
         $version_file = Get-Content -Path "$current_dir\openpype\version.py"
         $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
         $openpype_version = $result[0].Groups['version'].Value
-        mv .\build\exe.win-amd64-3.9 .\build\$openpype_version
+        cd build
+        mv exe.win-amd64-3.9 $openpype_version
 
     - name: Upload to S3
       run: |
