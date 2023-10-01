@@ -1179,7 +1179,7 @@
             "active": true
         },
         "ValidateSkeletonTopGroupHierarchy": {
-            "enabled": false,
+            "enabled": true,
             "optional": true,
             "active": true
         },

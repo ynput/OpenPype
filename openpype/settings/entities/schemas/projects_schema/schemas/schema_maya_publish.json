@@ -829,7 +829,7 @@
                         },
                         {
                             "key": "ValidateSkeletonRigContents",
-                            "label": "ValidateSkeleton Rig Contents"
+                            "label": "Validate Skeleton Rig Contents"
                         },
                         {
                             "key": "ValidateSkeletonRigControllers",

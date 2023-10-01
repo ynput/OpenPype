@@ -25,19 +25,26 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
     accepted_controllers = ["transform"]
 
     def process(self, instance):
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise PublishValidationError(
+                "Invalid rig content. See log for details.")
+
+    @classmethod
+    def get_invalid(cls, instance):
 
         # Find required sets by suffix
-        required = ["controls_SET", "out_SET"]
+        required, rig_sets = cls.get_nodes(instance)
         missing = [
-            key for key in required if key not in instance.data["rig_sets"]
+            key for key in required if key not in rig_sets
         ]
         if missing:
             raise PublishValidationError(
                 "%s is missing sets: %s" % (instance, ", ".join(missing))
             )
 
-        controls_set = instance.data["rig_sets"]["controls_SET"]
-        out_set = instance.data["rig_sets"]["out_SET"]
+        controls_set = rig_sets["controls_SET"]
+        out_set = rig_sets["out_SET"]
 
         # Ensure there are at least some transforms or dag nodes
         # in the rig instance
@@ -76,31 +83,29 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
                 invalid_hierarchy.append(node)
 
         # Additional validations
-        invalid_geometry = self.validate_geometry(output_content)
-        invalid_controls = self.validate_controls(controls_content)
+        invalid_geometry = cls.validate_geometry(output_content)
+        invalid_controls = cls.validate_controls(controls_content)
 
         error = False
         if invalid_hierarchy:
-            self.log.error("Found nodes which reside outside of root group "
+            cls.log.error("Found nodes which reside outside of root group "
                            "while they are set up for publishing."
                            "\n%s" % invalid_hierarchy)
             error = True
 
         if invalid_controls:
-            self.log.error("Only transforms can be part of the controls_SET."
+            cls.log.error("Only transforms can be part of the controls_SET."
                            "\n%s" % invalid_controls)
             error = True
 
         if invalid_geometry:
-            self.log.error("Only meshes can be part of the out_SET\n%s"
+            cls.log.error("Only meshes can be part of the out_SET\n%s"
                            % invalid_geometry)
             error = True
+        return error
 
-        if error:
-            raise PublishValidationError(
-                "Invalid rig content. See log for details.")
-
-    def validate_geometry(self, set_members):
+    @classmethod
+    def validate_geometry(cls, set_members):
         """Check if the out set passes the validations
 
         Checks if all its set members are within the hierarchy of the root
@@ -122,12 +127,13 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
                                     fullPath=True) or []
         all_shapes = cmds.ls(set_members + shapes, long=True, shapes=True)
         for shape in all_shapes:
-            if cmds.nodeType(shape) not in self.accepted_output:
+            if cmds.nodeType(shape) not in cls.accepted_output:
                 invalid.append(shape)
 
         return invalid
 
-    def validate_controls(self, set_members):
+    @classmethod
+    def validate_controls(cls, set_members):
         """Check if the controller set passes the validations
 
         Checks if all its set members are within the hierarchy of the root
@@ -144,7 +150,84 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         # Validate control types
         invalid = []
         for node in set_members:
-            if cmds.nodeType(node) not in self.accepted_controllers:
+            if cmds.nodeType(node) not in cls.accepted_controllers:
                 invalid.append(node)
 
         return invalid
+
+    @classmethod
+    def get_nodes(cls, instance):
+        objectsets = ["controls_SET", "out_SET"]
+        rig_sets_nodes = instance.data.get("rig_sets", [])
+        return objectsets, rig_sets_nodes
+
+
+class ValidateSkeletonRigContents(ValidateRigContents):
+    """Ensure skeleton rigs contains pipeline-critical content
+
+    The rigs optionally contain at least two object sets:
+        "skeletonMesh_SET" - Set of the skinned meshes
+                             with bone hierarchies
+
+    """
+
+    order = ValidateContentsOrder
+    label = "Skeleton Rig Contents"
+    hosts = ["maya"]
+    families = ["rig.fbx"]
+
+    accepted_output = {"mesh", "transform", "locator"}
+
+    @classmethod
+    def get_invalid(cls, instance):
+        objectsets, skeleton_mesh_nodes = cls.get_nodes(instance)
+        missing = [
+            key for key in objectsets if key not in instance.data["rig_sets"]
+        ]
+        if missing:
+            cls.log.debug(
+                "%s is missing sets: %s" % (instance, ", ".join(missing))
+            )
+            return
+
+        # Ensure there are at least some transforms or dag nodes
+        # in the rig instance
+        set_members = instance.data['setMembers']
+        if not cmds.ls(set_members, type="dagNode", long=True):
+            raise PublishValidationError(
+                "No dag nodes in the pointcache instance. "
+                "(Empty instance?)"
+            )
+        # Ensure contents in sets and retrieve long path for all objects
+        output_content = instance.data.get("skeleton_mesh", [])
+        output_content = cmds.ls(skeleton_mesh_nodes, long=True)
+
+        # Validate members are inside the hierarchy from root node
+        root_nodes = cmds.ls(set_members, assemblies=True, long=True)
+        hierarchy = cmds.listRelatives(root_nodes, allDescendents=True,
+                                       fullPath=True) + root_nodes
+        hierarchy = set(hierarchy)
+        error = False
+        invalid_hierarchy = []
+        if output_content:
+            for node in output_content:
+                if node not in hierarchy:
+                    invalid_hierarchy.append(node)
+            invalid_geometry = cls.validate_geometry(output_content)
+        if invalid_hierarchy:
+            cls.log.error("Found nodes which reside outside of root group "
+                           "while they are set up for publishing."
+                           "\n%s" % invalid_hierarchy)
+            error = True
+        if invalid_geometry:
+            cls.log.error("Found nodes which reside outside of root group "
+                           "while they are set up for publishing."
+                           "\n%s" % invalid_hierarchy)
+            error = True
+        return error
+
+    @classmethod
+    def get_nodes(cls, instance):
+        objectsets = ["skeletonMesh_SET"]
+        skeleton_mesh_nodes = instance.data.get("skeleton_mesh", [])
+        return objectsets, skeleton_mesh_nodes

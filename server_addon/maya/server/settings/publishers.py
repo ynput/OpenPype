@@ -1234,7 +1234,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "active": True
     },
     "ValidateSkeletonTopGroupHierarchy": {
-        "enabled": False,
+        "enabled": True,
         "optional": True,
         "active": True
     },

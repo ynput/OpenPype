@@ -47,7 +47,7 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
         invalid = {}
 
         if compute:
-            out_set = instance.data["rig_sets"].get("out_SET")
+            out_set =  cls.get_node(instance)
             if not out_set:
                 instance.data["mismatched_output_ids"] = invalid
                 return invalid
@@ -115,3 +115,26 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
                 "Multiple matched ids found. Please repair manually: "
                 "{}".format(multiple_ids_match)
             )
+
+    @classmethod
+    def get_node(cls, instance):
+        return instance.data["rig_sets"].get("out_SET")
+
+
+class ValidateSkeletonRigOutputIds(ValidateRigOutputIds):
+    """Validate rig output ids from the skeleton sets.
+
+    Ids must share the same id as similarly named nodes in the scene. This is
+    to ensure the id from the model is preserved through animation.
+
+    """
+    order = ValidateContentsOrder + 0.05
+    label = "Skeleton Rig Output Ids"
+    hosts = ["maya"]
+    families = ["rig.fbx"]
+    actions = [RepairAction,
+               openpype.hosts.maya.api.action.SelectInvalidAction]
+
+    @classmethod
+    def get_node(cls, instance):
+        return instance.data["rig_sets"].get("skeletonMesh_SET")

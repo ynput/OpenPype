@@ -12,7 +12,10 @@ class CollectSkeletonMesh(pyblish.api.InstancePlugin):
     families = ["rig"]
 
     def process(self, instance):
-        skeleton_mesh_sets = instance.data.get("skeletonMesh_SET")
+        skeleton_mesh_sets = [
+            i for i in instance
+            if i.lower().endswith("skeletonmesh_set")
+        ]
         if not skeleton_mesh_sets:
             self.log.debug(
                 "skeletonMesh_SET found. "
