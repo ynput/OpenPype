@@ -194,6 +194,7 @@ class PublishReportMaker:
         self._publish_discover_result = create_context.publish_discover_result
         self._plugin_data = []
         self._plugin_data_with_plugin = []
+        self._stored_plugins = []
         self._current_plugin_data = {}
         self._all_instances_by_id = {}
         self._current_context = context
