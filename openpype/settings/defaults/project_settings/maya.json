@@ -1371,6 +1371,12 @@
             "active": true,
             "bake_attributes": []
         },
+        "ExtractCameraMayaScene": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "keep_image_planes": false
+        },
         "ExtractGLB": {
             "enabled": true,
             "active": true,

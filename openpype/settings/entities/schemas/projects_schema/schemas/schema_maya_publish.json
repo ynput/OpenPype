@@ -1041,6 +1041,35 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "ExtractCameraMayaScene",
+            "label": "Extract camera to Maya scene",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "boolean",
+                    "key": "keep_image_planes",
+                    "label": "Export Image planes"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "ExtractGLB",
             "label": "Extract GLB",
             "checkbox_key": "enabled",
