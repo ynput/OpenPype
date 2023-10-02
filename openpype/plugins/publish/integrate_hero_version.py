@@ -142,6 +142,12 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             ))
             return
 
+        if AYON_SERVER_ENABLED and src_version_entity["name"] == 0:
+            self.log.debug(
+                "Version 0 cannot have hero version. Skipping."
+            )
+            return
+
         all_copied_files = []
         transfers = instance.data.get("transfers", list())
         for _src, dst in transfers:
@@ -269,10 +275,10 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     backup_hero_publish_dir = _backup_hero_publish_dir
                     break
                 except Exception:
-                    self.log.info((
+                    self.log.info(
                         "Could not remove previous backup folder."
-                        " Trying to add index to folder name"
-                    ))
+                        " Trying to add index to folder name."
+                    )
 
                 _backup_hero_publish_dir = (
                     backup_hero_publish_dir + str(idx)

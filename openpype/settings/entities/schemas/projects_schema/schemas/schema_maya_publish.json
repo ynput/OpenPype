@@ -103,7 +103,7 @@
                 },
                 {
                     "key": "exclude_families",
-                    "label": "Families",
+                    "label": "Exclude Families",
                     "type": "list",
                     "object_type": "text"
                 }
@@ -975,6 +975,35 @@
                     "key": "bake_attributes",
                     "label": "Bake Attributes",
                     "is_list": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractCameraMayaScene",
+            "label": "Extract camera to Maya scene",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "boolean",
+                    "key": "keep_image_planes",
+                    "label": "Export Image planes"
                 }
             ]
         },

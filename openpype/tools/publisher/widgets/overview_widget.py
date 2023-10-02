@@ -28,12 +28,14 @@ class OverviewWidget(QtWidgets.QFrame):
         self._refreshing_instances = False
         self._controller = controller
 
-        create_widget = CreateWidget(controller, self)
+        subset_content_widget = QtWidgets.QWidget(self)
+
+        create_widget = CreateWidget(controller, subset_content_widget)
 
         # --- Created Subsets/Instances ---
         # Common widget for creation and overview
         subset_views_widget = BorderedLabelWidget(
-            "Subsets to publish", self
+            "Subsets to publish", subset_content_widget
         )
 
         subset_view_cards = InstanceCardView(controller, subset_views_widget)
@@ -45,14 +47,14 @@ class OverviewWidget(QtWidgets.QFrame):
         subset_views_layout.setCurrentWidget(subset_view_cards)
 
         # Buttons at the bottom of subset view
-        create_btn = CreateInstanceBtn(self)
-        delete_btn = RemoveInstanceBtn(self)
-        change_view_btn = ChangeViewBtn(self)
+        create_btn = CreateInstanceBtn(subset_views_widget)
+        delete_btn = RemoveInstanceBtn(subset_views_widget)
+        change_view_btn = ChangeViewBtn(subset_views_widget)
 
         # --- Overview ---
         # Subset details widget
         subset_attributes_wrap = BorderedLabelWidget(
-            "Publish options", self
+            "Publish options", subset_content_widget
         )
         subset_attributes_widget = SubsetAttributesWidget(
             controller, subset_attributes_wrap
@@ -81,7 +83,6 @@ class OverviewWidget(QtWidgets.QFrame):
         subset_views_widget.set_center_widget(subset_view_widget)
 
         # Whole subset layout with attributes and details
-        subset_content_widget = QtWidgets.QWidget(self)
         subset_content_layout = QtWidgets.QHBoxLayout(subset_content_widget)
         subset_content_layout.setContentsMargins(0, 0, 0, 0)
         subset_content_layout.addWidget(create_widget, 7)
@@ -161,14 +162,13 @@ class OverviewWidget(QtWidgets.QFrame):
         self._change_anim = change_anim
 
         # Start in create mode
-        self._create_widget_policy = create_widget.sizePolicy()
-        self._subset_views_widget_policy = subset_views_widget.sizePolicy()
-        self._subset_attributes_wrap_policy = (
-            subset_attributes_wrap.sizePolicy()
-        )
-        self._max_widget_width = None
         self._current_state = "create"
         subset_attributes_wrap.setVisible(False)
+
+    def make_sure_animation_is_finished(self):
+        if self._change_anim.state() == QtCore.QAbstractAnimation.Running:
+            self._change_anim.stop()
+        self._on_change_anim_finished()
 
     def set_state(self, new_state, animate):
         if new_state == self._current_state:
@@ -176,17 +176,9 @@ class OverviewWidget(QtWidgets.QFrame):
 
         self._current_state = new_state
 
-        anim_is_running = (
-            self._change_anim.state() == QtCore.QAbstractAnimation.Running
-        )
         if not animate:
-            self._change_visibility_for_state()
-            if anim_is_running:
-                self._change_anim.stop()
+            self.make_sure_animation_is_finished()
             return
-
-        if self._max_widget_width is None:
-            self._max_widget_width = self._subset_views_widget.maximumWidth()
 
         if new_state == "create":
             direction = QtCore.QAbstractAnimation.Backward
@@ -194,11 +186,38 @@ class OverviewWidget(QtWidgets.QFrame):
             direction = QtCore.QAbstractAnimation.Forward
         self._change_anim.setDirection(direction)
 
-        if not anim_is_running:
-            view_width = self._subset_views_widget.width()
-            self._subset_views_widget.setMinimumWidth(view_width)
-            self._subset_views_widget.setMaximumWidth(view_width)
+        if (
+            self._change_anim.state() != QtCore.QAbstractAnimation.Running
+        ):
+            self._start_animation()
+
+    def _start_animation(self):
+        views_geo = self._subset_views_widget.geometry()
+        layout_spacing = self._subset_content_layout.spacing()
+        if self._create_widget.isVisible():
+            create_geo = self._create_widget.geometry()
+            subset_geo = QtCore.QRect(create_geo)
+            subset_geo.moveTop(views_geo.top())
+            subset_geo.moveLeft(views_geo.right() + layout_spacing)
+            self._subset_attributes_wrap.setVisible(True)
+
+        elif self._subset_attributes_wrap.isVisible():
+            subset_geo = self._subset_attributes_wrap.geometry()
+            create_geo = QtCore.QRect(subset_geo)
+            create_geo.moveTop(views_geo.top())
+            create_geo.moveRight(views_geo.left() - (layout_spacing + 1))
+            self._create_widget.setVisible(True)
+        else:
             self._change_anim.start()
+            return
+
+        while self._subset_content_layout.count():
+            self._subset_content_layout.takeAt(0)
+        self._subset_views_widget.setGeometry(views_geo)
+        self._create_widget.setGeometry(create_geo)
+        self._subset_attributes_wrap.setGeometry(subset_geo)
+
+        self._change_anim.start()
 
     def get_subset_views_geo(self):
         parent = self._subset_views_widget.parent()
@@ -281,41 +300,39 @@ class OverviewWidget(QtWidgets.QFrame):
     def _on_change_anim(self, value):
         self._create_widget.setVisible(True)
         self._subset_attributes_wrap.setVisible(True)
-        width = (
-            self._subset_content_widget.width()
-            - (
-                self._subset_views_widget.width()
-                + (self._subset_content_layout.spacing() * 2)
-            )
-        )
-        subset_attrs_width = int((float(width) / self.anim_end_value) * value)
-        if subset_attrs_width > width:
-            subset_attrs_width = width
+        layout_spacing = self._subset_content_layout.spacing()
 
+        content_width = (
+            self._subset_content_widget.width() - (layout_spacing * 2)
+        )
+        content_height = self._subset_content_widget.height()
+        views_width = max(
+            int(content_width * 0.3),
+            self._subset_views_widget.minimumWidth()
+        )
+        width = content_width - views_width
+        # Visible widths of other widgets
+        subset_attrs_width = int((float(width) / self.anim_end_value) * value)
         create_width = width - subset_attrs_width
 
-        self._create_widget.setMinimumWidth(create_width)
-        self._create_widget.setMaximumWidth(create_width)
-        self._subset_attributes_wrap.setMinimumWidth(subset_attrs_width)
-        self._subset_attributes_wrap.setMaximumWidth(subset_attrs_width)
+        views_geo = QtCore.QRect(
+            create_width + layout_spacing, 0,
+            views_width, content_height
+        )
+        create_geo = QtCore.QRect(0, 0, width, content_height)
+        subset_attrs_geo = QtCore.QRect(create_geo)
+        create_geo.moveRight(views_geo.left() - (layout_spacing + 1))
+        subset_attrs_geo.moveLeft(views_geo.right() + layout_spacing)
+
+        self._subset_views_widget.setGeometry(views_geo)
+        self._create_widget.setGeometry(create_geo)
+        self._subset_attributes_wrap.setGeometry(subset_attrs_geo)
 
     def _on_change_anim_finished(self):
         self._change_visibility_for_state()
-        self._create_widget.setMinimumWidth(0)
-        self._create_widget.setMaximumWidth(self._max_widget_width)
-        self._subset_attributes_wrap.setMinimumWidth(0)
-        self._subset_attributes_wrap.setMaximumWidth(self._max_widget_width)
-        self._subset_views_widget.setMinimumWidth(0)
-        self._subset_views_widget.setMaximumWidth(self._max_widget_width)
-        self._create_widget.setSizePolicy(
-            self._create_widget_policy
-        )
-        self._subset_attributes_wrap.setSizePolicy(
-            self._subset_attributes_wrap_policy
-        )
-        self._subset_views_widget.setSizePolicy(
-            self._subset_views_widget_policy
-        )
+        self._subset_content_layout.addWidget(self._create_widget, 7)
+        self._subset_content_layout.addWidget(self._subset_views_widget, 3)
+        self._subset_content_layout.addWidget(self._subset_attributes_wrap, 7)
 
     def _change_visibility_for_state(self):
         self._create_widget.setVisible(

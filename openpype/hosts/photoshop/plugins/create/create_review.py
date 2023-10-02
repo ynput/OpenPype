@@ -18,7 +18,7 @@ class ReviewCreator(PSAutoCreator):
         it will get recreated in next publish either way).
         """
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["photoshop"]["create"]["ReviewCreator"]
         )

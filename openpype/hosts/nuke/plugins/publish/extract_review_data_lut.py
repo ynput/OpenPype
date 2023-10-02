@@ -20,7 +20,6 @@ class ExtractReviewDataLut(publish.Extractor):
     hosts = ["nuke"]
 
     def process(self, instance):
-        families = instance.data["families"]
         self.log.info("Creating staging dir...")
         if "representations" in instance.data:
             staging_dir = instance.data[

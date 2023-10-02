@@ -8,15 +8,13 @@ from openpype.lib import (
 )
 
 
-class CreateAnimation(plugin.MayaCreator):
-    """Animation output for character rigs"""
+class CreateAnimation(plugin.MayaHiddenCreator):
+    """Animation output for character rigs
 
-    # We hide the animation creator from the UI since the creation of it
-    # is automated upon loading a rig. There's an inventory action to recreate
-    # it for loaded rigs if by chance someone deleted the animation instance.
-    # Note: This setting is actually applied from project settings
-    enabled = False
-
+    We hide the animation creator from the UI since the creation of it is
+    automated upon loading a rig. There's an inventory action to recreate it
+    for loaded rigs if by chance someone deleted the animation instance.
+    """
     identifier = "io.openpype.creators.maya.animation"
     name = "animationDefault"
     label = "Animation"
@@ -27,9 +25,6 @@ class CreateAnimation(plugin.MayaCreator):
     write_face_sets = False
     include_parent_hierarchy = False
     include_user_defined_attributes = False
-
-    # TODO: Would be great if we could visually hide this from the creator
-    #       by default but do allow to generate it through code.
 
     def get_instance_attr_defs(self):
 
@@ -85,3 +80,10 @@ class CreateAnimation(plugin.MayaCreator):
         """
 
         return defs
+
+    def apply_settings(self, project_settings):
+        super(CreateAnimation, self).apply_settings(project_settings)
+        # Hardcoding creator to be enabled due to existing settings would
+        # disable the creator causing the creator plugin to not be
+        # discoverable.
+        self.enabled = True

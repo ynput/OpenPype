@@ -65,12 +65,12 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 
         on button_add pressed do
         (
-            current_selection = selectByName title:"Select Objects to add to
+            current_sel = selectByName title:"Select Objects to add to
             the Container" buttontext:"Add" filter:nodes_to_add
-            if current_selection == undefined then return False
+            if current_sel == undefined then return False
             temp_arr = #()
             i_node_arr = #()
-            for c in current_selection do
+            for c in current_sel do
             (
                 handle_name = node_to_name c
                 node_ref = NodeTransformMonitor node:c
@@ -89,15 +89,18 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 
         on button_del pressed do
         (
-            current_selection = selectByName title:"Select Objects to remove
+            current_sel = selectByName title:"Select Objects to remove
             from the Container" buttontext:"Remove" filter: nodes_to_rmv
-            if current_selection == undefined then return False
+            if current_sel == undefined or current_sel.count == 0 then
+            (
+                return False
+            )
             temp_arr = #()
             i_node_arr = #()
             new_i_node_arr = #()
             new_temp_arr = #()
 
-            for c in current_selection do
+            for c in current_sel do
             (
                 node_ref = NodeTransformMonitor node:c as string
                 handle_name = node_to_name c
@@ -136,6 +139,7 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
                 temp_arr = #()
                 for x in all_handles do
                 (
+                    if x.node == undefined do continue
                     handle_name = node_to_name x.node
                     append temp_arr handle_name
                 )
@@ -185,7 +189,10 @@ class MaxCreatorBase(object):
             node = rt.Container(name=node)
 
         attrs = rt.Execute(MS_CUSTOM_ATTRIB)
-        rt.custAttributes.add(node.baseObject, attrs)
+        modifier = rt.EmptyModifier()
+        rt.addModifier(node, modifier)
+        node.modifiers[0].name = "OP Data"
+        rt.custAttributes.add(node.modifiers[0], attrs)
 
         return node
 
@@ -209,13 +216,19 @@ class MaxCreator(Creator, MaxCreatorBase):
         if pre_create_data.get("use_selection"):
 
             node_list = []
+            sel_list = []
             for i in self.selected_nodes:
                 node_ref = rt.NodeTransformMonitor(node=i)
                 node_list.append(node_ref)
+                sel_list.append(str(i))
 
             # Setting the property
             rt.setProperty(
-                instance_node.openPypeData, "all_handles", node_list)
+                instance_node.modifiers[0].openPypeData,
+                "all_handles", node_list)
+            rt.setProperty(
+                instance_node.modifiers[0].openPypeData,
+                "sel_list", sel_list)
 
         self._add_instance_to_context(instance)
         imprint(instance_node.name, instance.data_to_store())
@@ -254,8 +267,8 @@ class MaxCreator(Creator, MaxCreatorBase):
             instance_node = rt.GetNodeByName(
                 instance.data.get("instance_node"))
             if instance_node:
-                count = rt.custAttributes.count(instance_node)
-                rt.custAttributes.delete(instance_node, count)
+                count = rt.custAttributes.count(instance_node.modifiers[0])
+                rt.custAttributes.delete(instance_node.modifiers[0], count)
                 rt.Delete(instance_node)
 
             self._remove_instance_from_context(instance)

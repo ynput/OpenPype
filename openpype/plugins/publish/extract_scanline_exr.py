@@ -5,7 +5,12 @@ import shutil
 
 import pyblish.api
 
-from openpype.lib import run_subprocess, get_oiio_tools_path
+from openpype.lib import (
+    run_subprocess,
+    get_oiio_tool_args,
+    ToolNotFoundError,
+)
+from openpype.pipeline import KnownPublishError
 
 
 class ExtractScanlineExr(pyblish.api.InstancePlugin):
@@ -24,32 +29,32 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
         representations_new = []
 
         for repre in representations:
-            self.log.info(
+            self.log.debug(
                 "Processing representation {}".format(repre.get("name")))
             tags = repre.get("tags", [])
             if "toScanline" not in tags:
-                self.log.info(" - missing toScanline tag")
+                self.log.debug(" - missing toScanline tag")
                 continue
 
             # run only on exrs
             if repre.get("ext") != "exr":
-                self.log.info("- not EXR files")
+                self.log.debug("- not EXR files")
                 continue
 
             if not isinstance(repre['files'], (list, tuple)):
                 input_files = [repre['files']]
-                self.log.info("We have a single frame")
+                self.log.debug("We have a single frame")
             else:
                 input_files = repre['files']
-                self.log.info("We have a sequence")
+                self.log.debug("We have a sequence")
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
 
-            oiio_tool_path = get_oiio_tools_path()
-            if not os.path.exists(oiio_tool_path):
-                self.log.error(
-                    "OIIO tool not found in {}".format(oiio_tool_path))
-                raise AssertionError("OIIO tool not found")
+            try:
+                oiio_tool_args = get_oiio_tool_args("oiiotool")
+            except ToolNotFoundError:
+                self.log.error("OIIO tool not found.")
+                raise KnownPublishError("OIIO tool not found")
 
             for file in input_files:
 
@@ -57,14 +62,13 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
                 temp_name = os.path.join(stagingdir, "__{}".format(file))
                 # move original render to temp location
                 shutil.move(original_name, temp_name)
-                oiio_cmd = [
-                    oiio_tool_path,
+                oiio_cmd = oiio_tool_args + [
                     os.path.join(stagingdir, temp_name), "--scanline", "-o",
                     os.path.join(stagingdir, original_name)
                 ]
 
                 subprocess_exr = " ".join(oiio_cmd)
-                self.log.info(f"running: {subprocess_exr}")
+                self.log.debug(f"running: {subprocess_exr}")
                 run_subprocess(subprocess_exr, logger=self.log)
 
                 # raise error if there is no ouptput

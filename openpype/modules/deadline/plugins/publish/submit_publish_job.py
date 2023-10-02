@@ -3,22 +3,20 @@
 import os
 import json
 import re
-from copy import copy, deepcopy
+from copy import deepcopy
 import requests
 import clique
 
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_last_version_by_subset_name,
 )
-from openpype.pipeline import (
-    legacy_io,
-)
-from openpype.pipeline import publish
-from openpype.lib import EnumDef
+from openpype.pipeline import publish, legacy_io
+from openpype.lib import EnumDef, is_running_from_build
 from openpype.tests.lib import is_in_tests
-from openpype.lib import is_running_from_build
+from openpype.pipeline.version_start import get_versioning_start
 
 from openpype.pipeline.farm.pyblish_functions import (
     create_skeleton_instance,
@@ -94,13 +92,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     label = "Submit image sequence jobs to Deadline or Muster"
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
-    deadline_plugin = "OpenPype"
+
     targets = ["local"]
 
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
              "celaction", "aftereffects", "harmony"]
 
-    families = ["render.farm", "prerender.farm",
+    families = ["render.farm", "render.frames_farm",
+                "prerender.farm", "prerender.frames_farm",
                 "renderlayer", "imagesequence",
                 "vrayscene", "maxrender",
                 "arnold_rop", "mantra_rop",
@@ -123,12 +122,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         "FTRACK_SERVER",
         "AVALON_APP_NAME",
         "OPENPYPE_USERNAME",
-        "OPENPYPE_SG_USER"
+        "OPENPYPE_SG_USER",
+        "KITSU_LOGIN",
+        "KITSU_PWD"
     ]
-
-    # Add OpenPype version if we are running from build.
-    if is_running_from_build():
-        environ_keys.append("OPENPYPE_VERSION")
 
     # custom deadline attributes
     deadline_department = ""
@@ -189,7 +186,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             instance.data.get("asset"),
             instances[0]["subset"],
             instance.context,
-            'render',
+            instances[0]["family"],
             override_version
         )
 
@@ -203,12 +200,24 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": instance.context.data["task"],
             "OPENPYPE_USERNAME": instance.context.data["user"],
-            "OPENPYPE_PUBLISH_JOB": "1",
-            "OPENPYPE_RENDER_JOB": "0",
-            "OPENPYPE_REMOTE_JOB": "0",
             "OPENPYPE_LOG_NO_COLORS": "1",
             "IS_TEST": str(int(is_in_tests()))
         }
+
+        if AYON_SERVER_ENABLED:
+            environment["AYON_PUBLISH_JOB"] = "1"
+            environment["AYON_RENDER_JOB"] = "0"
+            environment["AYON_REMOTE_PUBLISH"] = "0"
+            environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
+            deadline_plugin = "Ayon"
+        else:
+            environment["OPENPYPE_PUBLISH_JOB"] = "1"
+            environment["OPENPYPE_RENDER_JOB"] = "0"
+            environment["OPENPYPE_REMOTE_PUBLISH"] = "0"
+            deadline_plugin = "OpenPype"
+            # Add OpenPype version if we are running from build.
+            if is_running_from_build():
+                self.environ_keys.append("OPENPYPE_VERSION")
 
         # add environments from self.environ_keys
         for env_key in self.environ_keys:
@@ -252,7 +261,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         )
         payload = {
             "JobInfo": {
-                "Plugin": self.deadline_plugin,
+                "Plugin": deadline_plugin,
                 "BatchName": job["Props"]["Batch"],
                 "Name": job_name,
                 "UserName": job["Props"]["User"],
@@ -293,7 +302,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 payload["JobInfo"]["JobDependency{}".format(
                     job_index)] = assembly_id  # noqa: E501
                 job_index += 1
-        else:
+        elif job.get("_id"):
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
         for index, (key_, value_) in enumerate(environment.items()):
@@ -308,7 +317,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # remove secondary pool
         payload["JobInfo"].pop("SecondaryPool", None)
 
-        self.log.info("Submitting Deadline job ...")
+        self.log.debug("Submitting Deadline publish job ...")
 
         url = "{}/api/jobs".format(self.deadline_url)
         response = requests.post(url, json=payload, timeout=10)
@@ -335,6 +344,151 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         if not instance.data.get("farm"):
             self.log.debug("Skipping local instance.")
             return
+
+        data = instance.data.copy()
+        context = instance.context
+        self.context = context
+        self.anatomy = instance.context.data["anatomy"]
+
+        asset = data.get("asset") or context.data["asset"]
+        subset = data.get("subset")
+
+        start = instance.data.get("frameStart")
+        if start is None:
+            start = context.data["frameStart"]
+
+        end = instance.data.get("frameEnd")
+        if end is None:
+            end = context.data["frameEnd"]
+
+        handle_start = instance.data.get("handleStart")
+        if handle_start is None:
+            handle_start = context.data["handleStart"]
+
+        handle_end = instance.data.get("handleEnd")
+        if handle_end is None:
+            handle_end = context.data["handleEnd"]
+
+        fps = instance.data.get("fps")
+        if fps is None:
+            fps = context.data["fps"]
+
+        if data.get("extendFrames", False):
+            start, end = self._extend_frames(
+                asset,
+                subset,
+                start,
+                end,
+                data["overrideExistingFrame"])
+
+        try:
+            source = data["source"]
+        except KeyError:
+            source = context.data["currentFile"]
+
+        success, rootless_path = (
+            self.anatomy.find_root_template_from_path(source)
+        )
+        if success:
+            source = rootless_path
+
+        else:
+            # `rootless_path` is not set to `source` if none of roots match
+            self.log.warning((
+                "Could not find root path for remapping \"{}\"."
+                " This may cause issues."
+            ).format(source))
+
+        family = "render"
+        if ("prerender" in instance.data["families"] or
+                "prerender.farm" in instance.data["families"]):
+            family = "prerender"
+        families = [family]
+
+        # pass review to families if marked as review
+        do_not_add_review = False
+        if data.get("review"):
+            families.append("review")
+        elif data.get("review") is False:
+            self.log.debug("Instance has review explicitly disabled.")
+            do_not_add_review = True
+
+        instance_skeleton_data = {
+            "family": family,
+            "subset": subset,
+            "families": families,
+            "asset": asset,
+            "frameStart": start,
+            "frameEnd": end,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
+            "frameStartHandle": start - handle_start,
+            "frameEndHandle": end + handle_end,
+            "comment": instance.data["comment"],
+            "fps": fps,
+            "source": source,
+            "extendFrames": data.get("extendFrames"),
+            "overrideExistingFrame": data.get("overrideExistingFrame"),
+            "pixelAspect": data.get("pixelAspect", 1),
+            "resolutionWidth": data.get("resolutionWidth", 1920),
+            "resolutionHeight": data.get("resolutionHeight", 1080),
+            "multipartExr": data.get("multipartExr", False),
+            "jobBatchName": data.get("jobBatchName", ""),
+            "useSequenceForReview": data.get("useSequenceForReview", True),
+            # map inputVersions `ObjectId` -> `str` so json supports it
+            "inputVersions": list(map(str, data.get("inputVersions", []))),
+            "colorspace": instance.data.get("colorspace"),
+            "stagingDir_persistent": instance.data.get(
+                "stagingDir_persistent", False
+            )
+        }
+
+        # skip locking version if we are creating v01
+        instance_version = instance.data.get("version")  # take this if exists
+        if instance_version != 1:
+            instance_skeleton_data["version"] = instance_version
+
+        # transfer specific families from original instance to new render
+        for item in self.families_transfer:
+            if item in instance.data.get("families", []):
+                instance_skeleton_data["families"] += [item]
+
+        # transfer specific properties from original instance based on
+        # mapping dictionary `instance_transfer`
+        for key, values in self.instance_transfer.items():
+            if key in instance.data.get("families", []):
+                for v in values:
+                    instance_skeleton_data[v] = instance.data.get(v)
+
+        # look into instance data if representations are not having any
+        # which are having tag `publish_on_farm` and include them
+        for repre in instance.data.get("representations", []):
+            staging_dir = repre.get("stagingDir")
+            if staging_dir:
+                success, rootless_staging_dir = (
+                    self.anatomy.find_root_template_from_path(
+                        staging_dir
+                    )
+                )
+                if success:
+                    repre["stagingDir"] = rootless_staging_dir
+                else:
+                    self.log.warning((
+                        "Could not find root path for remapping \"{}\"."
+                        " This may cause issues on farm."
+                    ).format(staging_dir))
+                    repre["stagingDir"] = staging_dir
+
+            if "publish_on_farm" in repre.get("tags"):
+                # create representations attribute of not there
+                if "representations" not in instance_skeleton_data.keys():
+                    instance_skeleton_data["representations"] = []
+
+                instance_skeleton_data["representations"].append(repre)
+
+        instances = None
+        assert data.get("expectedFiles"), ("Submission from old Pype version"
+                                           " - missing expectedFiles")
 
         anatomy = instance.context.data["anatomy"]
 
@@ -445,7 +599,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             import getpass
 
             render_job = {}
-            self.log.info("Faking job data ...")
+            self.log.debug("Faking job data ...")
             render_job["Props"] = {}
             # Render job doesn't exist because we do not have prior submission.
             # We still use data from it so lets fake it.
@@ -469,6 +623,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
 
+        deadline_publish_job_id = None
         if submission_type == "deadline":
             # get default deadline webservice url from deadline module
             self.deadline_url = instance.context.data["defaultDeadline"]
@@ -561,13 +716,32 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             if version:
                 version = int(version["name"]) + 1
             else:
-                version = 1
+                version = get_versioning_start(
+                    project_name,
+                    template_data["app"],
+                    task_name=template_data["task"]["name"],
+                    task_type=template_data["task"]["type"],
+                    family="render",
+                    subset=subset,
+                    project_settings=context.data["project_settings"]
+                )
+
+        host_name = context.data["hostName"]
+        task_info = template_data.get("task") or {}
+
+        template_name = publish.get_publish_template_name(
+            project_name,
+            host_name,
+            family,
+            task_info.get("name"),
+            task_info.get("type"),
+        )
 
         template_data["subset"] = subset
         template_data["family"] = family
         template_data["version"] = version
 
-        render_templates = anatomy.templates_obj["render"]
+        render_templates = anatomy.templates_obj[template_name]
         if "folder" in render_templates:
             publish_folder = render_templates["folder"].format_strict(
                 template_data

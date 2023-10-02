@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Setup info for building OpenPype 3.0."""
 import os
-import sys
 import re
 import platform
 import distutils.spawn
@@ -125,8 +124,6 @@ bin_includes = [
 include_files = [
     "igniter",
     "openpype",
-    "common",
-    "schema",
     "LICENSE",
     "README.md"
 ]
@@ -170,22 +167,7 @@ executables = [
         target_name="openpype_console",
         icon=icon_path.as_posix()
     ),
-    Executable(
-        "ayon_start.py",
-        base=base,
-        target_name="ayon",
-        icon=icon_path.as_posix()
-    ),
 ]
-if IS_WINDOWS:
-    executables.append(
-        Executable(
-            "ayon_start.py",
-            base=None,
-            target_name="ayon_console",
-            icon=icon_path.as_posix()
-        )
-    )
 
 if IS_LINUX:
     executables.append(

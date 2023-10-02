@@ -27,20 +27,16 @@ from openpype.settings import get_project_settings
 from openpype.pipeline import (
     get_current_project_name,
     get_current_asset_name,
+    get_current_task_name,
     discover_loader_plugins,
     loaders_from_representation,
     get_representation_path,
     load_container,
-    registered_host,
+    registered_host
 )
 from openpype.lib import NumberDef
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline.create import CreateContext
-from openpype.pipeline.context_tools import (
-    get_current_asset_name,
-    get_current_project_name,
-    get_current_task_name
-)
 from openpype.lib.profiles_filtering import filter_profiles
 
 
@@ -2575,7 +2571,7 @@ def bake_to_world_space(nodes,
             new_name = "{0}_baked".format(short_name)
             new_node = cmds.duplicate(node,
                                       name=new_name,
-                                      renameChildren=True)[0]
+                                      renameChildren=True)[0]  # noqa
 
             # Connect all attributes on the node except for transform
             # attributes
