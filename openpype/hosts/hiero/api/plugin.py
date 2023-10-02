@@ -317,20 +317,6 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-def get_reference_node_parents(ref):
-    """Return all parent reference nodes of reference node
-
-    Args:
-        ref (str): reference node.
-
-    Returns:
-        list: The upstream parent reference nodes.
-
-    """
-    parents = []
-    return parents
-
-
 class SequenceLoader(LoaderPlugin):
     """A basic SequenceLoader for Resolve
 

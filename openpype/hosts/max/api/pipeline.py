@@ -18,7 +18,6 @@ from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.plugin import MS_CUSTOM_ATTRIB
 from openpype.hosts.max import MAX_HOST_DIR
 
-
 from pymxs import runtime as rt  # noqa
 
 log = logging.getLogger("openpype.hosts.max")
@@ -164,12 +163,9 @@ def containerise(name: str, nodes: list, context,
         "loader": loader,
         "representation": context["representation"]["_id"],
     }
-
     container_name = f"{namespace}:{name}{suffix}"
     container = rt.container(name=container_name)
-    for node in nodes:
-        node.Parent = container
-
+    import_custom_attribute_data(container, nodes)
     if not lib.imprint(container_name, data):
         print(f"imprinting of {container_name} failed.")
     return container
@@ -197,18 +193,20 @@ def import_custom_attribute_data(container: str, selections: list):
     rt.addModifier(container, modifier)
     container.modifiers[0].name = "OP Data"
     rt.custAttributes.add(container.modifiers[0], attrs)
-    nodes = {}
+    node_list = []
+    sel_list = []
     for i in selections:
-        nodes = {
-            str(i): rt.NodeTransformMonitor(node=i),
-        }
+        node_ref = rt.NodeTransformMonitor(node=i)
+        node_list.append(node_ref)
+        sel_list.append(str(i))
+
     # Setting the property
     rt.setProperty(
         container.modifiers[0].openPypeData,
-        "all_handles", nodes.values())
+        "all_handles", node_list)
     rt.setProperty(
         container.modifiers[0].openPypeData,
-        "sel_list", nodes.keys())
+        "sel_list", sel_list)
 
 
 def update_custom_attribute_data(container: str, selections: list):
@@ -222,3 +220,20 @@ def update_custom_attribute_data(container: str, selections: list):
     if container.modifiers[0].name == "OP Data":
         rt.deleteModifier(container, container.modifiers[0])
     import_custom_attribute_data(container, selections)
+
+
+def get_previous_loaded_object(container: str):
+    """Get previous loaded_object through the OP data
+
+    Args:
+        container (str): the container which stores the OP data
+
+    Returns:
+        node_list(list): list of nodes which are previously loaded
+    """
+    node_list = []
+    sel_list = rt.getProperty(container.modifiers[0].openPypeData, "sel_list")
+    for obj in rt.Objects:
+        if str(obj) in sel_list:
+            node_list.append(obj)
+    return node_list

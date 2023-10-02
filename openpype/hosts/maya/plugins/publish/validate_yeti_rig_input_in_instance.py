@@ -37,8 +37,8 @@ class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
 
         # Allow publish without input meshes.
         if not shapes:
-            cls.log.info("Found no input meshes for %s, skipping ..."
-                         % instance)
+            cls.log.debug("Found no input meshes for %s, skipping ..."
+                          % instance)
             return []
 
         # check if input node is part of groomRig instance

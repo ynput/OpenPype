@@ -164,7 +164,7 @@ class RenderCreator(Creator):
                 api.get_stub().rename_item(comp_id,
                                            new_comp_name)
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["aftereffects"]["create"]["RenderCreator"]
         )
