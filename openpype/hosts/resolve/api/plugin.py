@@ -355,7 +355,6 @@ class ClipLoader:
         asset = str(repr_cntx["asset"])
         subset = str(repr_cntx["subset"])
         representation = str(repr_cntx["representation"])
-        self.data["track_name"] = "{}_{}".format(asset, representation)
         self.data["clip_name"] = "_".join([asset, subset, representation])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
@@ -387,32 +386,6 @@ class ClipLoader:
         asset_name = self.context["representation"]["context"]["asset"]
         self.data["assetData"] = get_current_project_asset(asset_name)["data"]
 
-    def _set_active_track(self):
-        """ Set active track to `track` """
-        track_type = "video"
-        track_name = self.data["track_name"]
-        track_exists = False
-
-        # get total track count
-        track_count = self.active_timeline.GetTrackCount(track_type)
-        # loop all tracks by track indexes
-        for track_index in range(1, int(track_count) + 1):
-            # get current track name
-            _track_name = self.active_timeline.GetTrackName(
-                track_type, track_index)
-            if track_name != _track_name:
-                continue
-            track_exists = True
-            break
-
-        if not track_exists:
-            self.active_timeline.AddTrack(track_type)
-            self.active_timeline.SetTrackName(
-                track_type,
-                track_index + 1,
-                track_name
-            )
-
 
     def load(self):
         # create project bin for the media to be imported into
@@ -420,7 +393,6 @@ class ClipLoader:
 
         # create mediaItem in active project bin
         # create clip media
-
         media_pool_item = lib.create_media_pool_item(
             self.data["path"], self.active_bin)
         _clip_property = media_pool_item.GetClipProperty
@@ -432,9 +404,6 @@ class ClipLoader:
             handle_start = int(self.data["assetData"]["handleStart"])
         if handle_end is None:
             handle_end = int(self.data["assetData"]["handleEnd"])
-
-        # handle timeline tracks
-        self._set_active_track()
 
         # get timeline in
         timeline_start = self.active_timeline.GetStartFrame()
@@ -454,17 +423,17 @@ class ClipLoader:
             source_out -= handle_end
 
         # include handles
-        if self.with_handles:
-            source_in -= handle_start
-            source_out += handle_end
+        if not self.with_handles:
+            source_in += handle_start
+            source_out -= handle_end
 
         # make track item from source in bin as item
         timeline_item = lib.create_timeline_item(
             media_pool_item,
-            self.active_timeline,
             source_in,
             source_out,
-            timeline_in
+            timeline_in,
+            self.active_timeline,
         )
 
         print("Loading clips: `{}`".format(self.data["clip_name"]))
@@ -504,7 +473,7 @@ class TimelineItemLoader(LoaderPlugin):
     """
 
     options = [
-        qargparse.Toggle(
+        qargparse.Boolean(
             "handles",
             label="Include handles",
             default=0,

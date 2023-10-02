@@ -6,7 +6,10 @@ import contextlib
 from opentimelineio import opentime
 
 from openpype.lib import Logger
-from openpype.pipeline.editorial import is_overlapping_otio_ranges
+from openpype.pipeline.editorial import (
+    is_overlapping_otio_ranges,
+    frames_to_timecode
+)
 
 from ..otio import davinci_export as otio_export
 
@@ -243,11 +246,13 @@ def get_media_pool_item(fpath, root: object = None) -> object:
     return None
 
 
-def create_timeline_item(media_pool_item: object,
-                         timeline: object = None,
-                         source_start: int = None,
-                         source_end: int = None,
-                         timeline_in: int = None) -> object:
+def create_timeline_item(
+        media_pool_item: object,
+        source_start: int,
+        source_end: int,
+        timeline_in: int,
+        timeline: object = None
+) -> object:
     """
     Add media pool item to current or defined timeline.
 
@@ -267,20 +272,24 @@ def create_timeline_item(media_pool_item: object,
     clip_name = _clip_property("File Name")
     timeline = timeline or get_current_timeline()
 
+    # timing variables
+    fps = project.GetSetting("timelineFrameRate")
+    duration = source_end - source_start
+    timecode_in = frames_to_timecode(timeline_in, fps)
+    timecode_out = frames_to_timecode(timeline_in + duration, fps)
+
     # if timeline was used then switch it to current timeline
     with maintain_current_timeline(timeline):
         # Add input mediaPoolItem to clip data
-        clip_data = {"mediaPoolItem": media_pool_item}
+        clip_data = {
+            "mediaPoolItem": media_pool_item,
+            "startFrame": source_start,
+            "endFrame": source_end,
+            "recordFrame": timeline_in,
+        }
 
-        # add source time range if input was given
-        if source_start is not None:
-            clip_data["startFrame"] = source_start
-        if source_end is not None:
-            clip_data["endFrame"] = source_end
-
-        # Create a clipInfo dictionary with the necessary information
-        clip_data["recordFrame"] = timeline_in
-
+        print("clip_data", "_" * 50)
+        print(media_pool_item.GetName())
         print(clip_data)
 
         # add to timeline
@@ -289,10 +298,15 @@ def create_timeline_item(media_pool_item: object,
         output_timeline_item = get_timeline_item(
             media_pool_item, timeline)
 
-    assert output_timeline_item, AssertionError(
-        "Track Item with name `{}` doesn't exist on the timeline: `{}`".format(
-            clip_name, timeline.GetName()
-        ))
+    assert output_timeline_item, AssertionError((
+        "Clip name '{}' was't created on the timeline: '{}' \n\n"
+        "Please check if the clip is in the media pool or if the timeline \n"
+        "is having activated correct track name, or if it is not already \n"
+        "having any clip add place on the timeline in: '{}' out: '{}'. \n\n"
+        "Clip data: {}"
+    ).format(
+        clip_name, timeline.GetName(), timecode_in, timecode_out, clip_data
+    ))
     return output_timeline_item
 
 
