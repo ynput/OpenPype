@@ -276,6 +276,17 @@
         }
     ],
     "editorial_creators": {
+        "editorial_csv_ingest": {
+            "column_map": {
+                "Submission": "label",
+                "Vendor": "label",
+                "Filename": "filename",
+                "Shot": "folder",
+                "Task": "task",
+                "Version": "version",
+                "Notes": "notes"
+            }
+        },
         "editorial_simple": {
             "default_variants": [
                 "Main"
