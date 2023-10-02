@@ -1,0 +1,42 @@
+[
+    {
+        "key": "file_rules",
+        "type": "dict",
+        "label": "File Rules (OCIO v1 only)",
+        "collapsible": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "activate_host_rules",
+                "label": "Activate Host File Rules"
+            },
+            {
+                "key": "rules",
+                "label": "Rules",
+                "type": "dict-modifiable",
+                "highlight_content": true,
+                "collapsible": false,
+                "object_type": {
+                    "type": "dict",
+                    "children": [
+                        {
+                            "key": "pattern",
+                            "label": "Regex pattern",
+                            "type": "text"
+                        },
+                        {
+                            "key": "colorspace",
+                            "label": "Colorspace name",
+                            "type": "text"
+                        },
+                        {
+                            "key": "ext",
+                            "label": "File extension",
+                            "type": "text"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+]

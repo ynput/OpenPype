@@ -37,7 +37,8 @@ class GpuCacheLoader(load.LoaderPlugin):
         label = "{}:{}".format(namespace, name)
         root = cmds.group(name=label, empty=True)
 
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        project_name = context["project"]["name"]
+        settings = get_project_settings(project_name)
         colors = settings['maya']['load']['colors']
         c = colors.get('model')
         if c is not None:
@@ -56,7 +57,8 @@ class GpuCacheLoader(load.LoaderPlugin):
                                 name="{0}Shape".format(transform_name))
 
         # Set the cache filepath
-        cmds.setAttr(cache + '.cacheFileName', self.fname, type="string")
+        path = self.filepath_from_context(context)
+        cmds.setAttr(cache + '.cacheFileName', path, type="string")
         cmds.setAttr(cache + '.cacheGeomPath', "|", type="string")    # root
 
         # Lock parenting of the transform and cache

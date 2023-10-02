@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import re
 import uuid
 import logging
 from contextlib import contextmanager
@@ -9,7 +10,7 @@ import json
 import six
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name, get_current_asset_name
 from openpype.pipeline.context_tools import get_current_project_asset
 
 import hou
@@ -21,9 +22,12 @@ log = logging.getLogger(__name__)
 JSON_PREFIX = "JSON:::"
 
 
-def get_asset_fps():
+def get_asset_fps(asset_doc=None):
     """Return current asset fps."""
-    return get_current_project_asset()["data"].get("fps")
+
+    if asset_doc is None:
+        asset_doc = get_current_project_asset(fields=["data.fps"])
+    return asset_doc["data"]["fps"]
 
 
 def set_id(node, unique_id, overwrite=False):
@@ -77,8 +81,8 @@ def generate_ids(nodes, asset_id=None):
     """
 
     if asset_id is None:
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         # Get the asset ID from the database for the asset of current context
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
 
@@ -471,14 +475,19 @@ def maintained_selection():
 
 
 def reset_framerange():
-    """Set frame range to current asset"""
+    """Set frame range and FPS to current asset"""
 
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    # Get asset data
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     # Get the asset ID from the database for the asset of current context
     asset_doc = get_asset_by_name(project_name, asset_name)
     asset_data = asset_doc["data"]
 
+    # Get FPS
+    fps = get_asset_fps(asset_doc)
+
+    # Get Start and End Frames
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
 
@@ -492,6 +501,9 @@ def reset_framerange():
     frame_start -= int(handle_start)
     frame_end += int(handle_end)
 
+    # Set frame range and FPS
+    print("Setting scene FPS to {}".format(int(fps)))
+    set_scene_fps(fps)
     hou.playbar.setFrameRange(frame_start, frame_end)
     hou.playbar.setPlaybackRange(frame_start, frame_end)
     hou.setFrame(frame_start)
@@ -581,3 +593,157 @@ def splitext(name, allowed_multidot_extensions):
             return name[:-len(ext)], ext
 
     return os.path.splitext(name)
+
+
+def get_top_referenced_parm(parm):
+
+    processed = set()  # disallow infinite loop
+    while True:
+        if parm.path() in processed:
+            raise RuntimeError("Parameter references result in cycle.")
+
+        processed.add(parm.path())
+
+        ref = parm.getReferencedParm()
+        if ref.path() == parm.path():
+            # It returns itself when it doesn't reference
+            # another parameter
+            return ref
+        else:
+            parm = ref
+
+
+def evalParmNoFrame(node, parm, pad_character="#"):
+
+    parameter = node.parm(parm)
+    assert parameter, "Parameter does not exist: %s.%s" % (node, parm)
+
+    # If the parameter has a parameter reference, then get that
+    # parameter instead as otherwise `unexpandedString()` fails.
+    parameter = get_top_referenced_parm(parameter)
+
+    # Substitute out the frame numbering with padded characters
+    try:
+        raw = parameter.unexpandedString()
+    except hou.Error as exc:
+        print("Failed: %s" % parameter)
+        raise RuntimeError(exc)
+
+    def replace(match):
+        padding = 1
+        n = match.group(2)
+        if n and int(n):
+            padding = int(n)
+        return pad_character * padding
+
+    expression = re.sub(r"(\$F([0-9]*))", replace, raw)
+
+    with hou.ScriptEvalContext(parameter):
+        return hou.expandStringAtFrame(expression, 0)
+
+
+def get_color_management_preferences():
+    """Get default OCIO preferences"""
+    return {
+        "config": hou.Color.ocio_configPath(),
+        "display": hou.Color.ocio_defaultDisplay(),
+        "view": hou.Color.ocio_defaultView()
+    }
+
+
+def get_obj_node_output(obj_node):
+    """Find output node.
+
+    If the node has any output node return the
+    output node with the minimum `outputidx`.
+    When no output is present return the node
+    with the display flag set. If no output node is
+    detected then None is returned.
+
+    Arguments:
+        node (hou.Node): The node to retrieve a single
+            the output node for.
+
+    Returns:
+        Optional[hou.Node]: The child output node.
+
+    """
+
+    outputs = obj_node.subnetOutputs()
+    if not outputs:
+        return
+
+    elif len(outputs) == 1:
+        return outputs[0]
+
+    else:
+        return min(outputs,
+                   key=lambda node: node.evalParm('outputidx'))
+
+
+def get_output_children(output_node, include_sops=True):
+    """Recursively return a list of all output nodes
+    contained in this node including this node.
+
+    It works in a similar manner to output_node.allNodes().
+    """
+    out_list = [output_node]
+
+    if output_node.childTypeCategory() == hou.objNodeTypeCategory():
+        for child in output_node.children():
+            out_list += get_output_children(child, include_sops=include_sops)
+
+    elif include_sops and \
+            output_node.childTypeCategory() == hou.sopNodeTypeCategory():
+        out = get_obj_node_output(output_node)
+        if out:
+            out_list += [out]
+
+    return out_list
+
+
+def get_resolution_from_doc(doc):
+    """Get resolution from the given asset document. """
+
+    if not doc or "data" not in doc:
+        print("Entered document is not valid. \"{}\"".format(str(doc)))
+        return None
+
+    resolution_width = doc["data"].get("resolutionWidth")
+    resolution_height = doc["data"].get("resolutionHeight")
+
+    # Make sure both width and height are set
+    if resolution_width is None or resolution_height is None:
+        print("No resolution information found for \"{}\"".format(doc["name"]))
+        return None
+
+    return int(resolution_width), int(resolution_height)
+
+
+def set_camera_resolution(camera, asset_doc=None):
+    """Apply resolution to camera from asset document of the publish"""
+
+    if not asset_doc:
+        asset_doc = get_current_project_asset()
+
+    resolution = get_resolution_from_doc(asset_doc)
+
+    if resolution:
+        print("Setting camera resolution: {} -> {}x{}".format(
+            camera.name(), resolution[0], resolution[1]
+        ))
+        camera.parm("resx").set(resolution[0])
+        camera.parm("resy").set(resolution[1])
+
+
+def get_camera_from_container(container):
+    """Get camera from container node. """
+
+    cameras = container.recursiveGlob(
+        "*",
+        filter=hou.nodeTypeFilter.ObjCamera,
+        include_subnets=False
+    )
+
+    assert len(cameras) == 1, "Camera instance must have only one camera"
+    return cameras[0]

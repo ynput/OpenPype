@@ -13,11 +13,10 @@ class ValidateMaxContents(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     families = ["camera",
                 "maxScene",
-                "maxrender"]
+                "review"]
     hosts = ["max"]
     label = "Max Scene Contents"
 
     def process(self, instance):
-        container = rt.getNodeByName(instance.data["instance_node"])
-        if not list(container.Children):
+        if not instance.data["members"]:
             raise PublishValidationError("No content found in the container")

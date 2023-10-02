@@ -35,6 +35,11 @@ QWidget:disabled {
     color: {color:font-disabled};
 }
 
+/* Some DCCs have set borders to solid color */
+QScrollArea {
+    border: none;
+}
+
 QLabel {
     background: transparent;
 }
@@ -42,7 +47,7 @@ QLabel {
 /* Inputs */
 QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
     border: 1px solid {color:border};
-    border-radius: 0.3em;
+    border-radius: 0.2em;
     background: {color:bg-inputs};
     padding: 0.1em;
 }
@@ -127,10 +132,11 @@ QPushButton {
     border-radius: 0.2em;
     padding: 3px 5px 3px 5px;
     background: {color:bg-buttons};
+    min-width: 0px; /* Substance Painter fix */
 }
 
 QPushButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
     color: {color:font-hover};
 }
 
@@ -160,7 +166,7 @@ QToolButton {
 }
 
 QToolButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
     color: {color:font-hover};
 }
 
@@ -226,7 +232,7 @@ QMenu::separator {
 /* Combobox */
 QComboBox {
     border: 1px solid {color:border};
-    border-radius: 3px;
+    border-radius: 0.2em;
     padding: 1px 3px 1px 3px;
     background: {color:bg-inputs};
 }
@@ -332,7 +338,15 @@ QTabWidget::tab-bar {
     alignment: left;
 }
 
+/* avoid QTabBar overrides in Substance Painter */
+QTabBar {
+    text-transform: none;
+    font-weight: normal;
+}
+
 QTabBar::tab {
+    text-transform: none;
+    font-weight: normal;
     border-top: 1px solid {color:border};
     border-left: 1px solid {color:border};
     border-right: 1px solid {color:border};
@@ -372,6 +386,7 @@ QHeaderView {
 QHeaderView::section  {
     background: {color:bg-view-header};
     padding: 4px;
+    border-top: 0px; /* Substance Painter fix */
     border-right: 1px solid {color:bg-view};
     border-radius: 0px;
     text-align: center;
@@ -474,7 +489,6 @@ QAbstractItemView:disabled{
 }
 
 QAbstractItemView::item:hover {
-    /* color: {color:bg-view-hover}; */
     background: {color:bg-view-hover};
 }
 
@@ -708,6 +722,13 @@ OverlayMessageWidget[type="error"]:hover {
     background: {color:overlay-messages:bg-error-hover};
 }
 
+OverlayMessageWidget[type="info"] {
+    background: {color:overlay-messages:bg-info};
+}
+OverlayMessageWidget[type="info"]:hover {
+    background: {color:overlay-messages:bg-info-hover};
+}
+
 OverlayMessageWidget QWidget {
     background: transparent;
 }
@@ -735,15 +756,16 @@ OverlayMessageWidget QWidget {
 }
 
 #InfoText {
-    padding-left: 30px;
-    padding-top: 20px;
+    padding-left: 0px;
+    padding-top: 0px;
+    padding-right: 20px;
     background: transparent;
-    border: 1px solid {color:border};
+    border: none;
 }
 
 #TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
     background: transparent;
-    border-radius: 0.3em;
+    border-radius: 0.2em;
 }
 
 #TypeEditor:focus, #ToolEditor:focus, #NameEditor:focus, #NumberEditor:focus {
@@ -860,7 +882,13 @@ OverlayMessageWidget QWidget {
     background: {color:bg-view-hover};
 }
 
-/* New Create/Publish UI */
+/* Publisher UI (Create/Publish) */
+#PublishWindow QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+    padding: 1px;
+}
+#PublishWindow QComboBox {
+    padding: 1px 1px 1px 0.2em;
+}
 PublisherTabsWidget {
     background: {color:publisher:tab-bg};
 }
@@ -894,7 +922,7 @@ PixmapButton{
     background: {color:bg-buttons};
 }
 PixmapButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
 }
 PixmapButton:disabled {
     background: {color:bg-buttons-disabled};
@@ -905,7 +933,7 @@ PixmapButton:disabled {
     background: {color:bg-view};
 }
 #ThumbnailPixmapHoverButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
 }
 
 #CreatorDetailedDescription {
@@ -926,7 +954,7 @@ PixmapButton:disabled {
 }
 
 #CreateDialogHelpButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
 }
 #CreateDialogHelpButton QWidget {
     background: transparent;
@@ -944,6 +972,7 @@ PixmapButton:disabled {
     border-top-left-radius: 0px;
     padding-top: 0.5em;
     padding-bottom: 0.5em;
+    width: 0.5em;
 }
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
     border-color: {color:publisher:success};
@@ -984,7 +1013,7 @@ PixmapButton:disabled {
     border-radius: 0.2em;
 }
 #CardViewWidget:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
 }
 #CardViewWidget[state="selected"] {
     background: {color:bg-view-selection};
@@ -1011,12 +1040,17 @@ PixmapButton:disabled {
 }
 
 #PublishInfoFrame[state="3"], #PublishInfoFrame[state="4"] {
-    background: rgb(194, 226, 236);
+    background: {color:publisher:progress};
 }
 
 #PublishInfoFrame QLabel {
     color: black;
     font-style: bold;
+}
+
+#PublishReportHeader {
+    font-size: 14pt;
+    font-weight: bold;
 }
 
 #PublishInfoMainLabel {
@@ -1039,7 +1073,7 @@ ValidationArtistMessage QLabel {
 }
 
 #ValidationActionButton:hover {
-    background: {color:bg-button-hover};
+    background: {color:bg-buttons-hover};
     color: {color:font-hover};
 }
 
@@ -1069,10 +1103,39 @@ ValidationArtistMessage QLabel {
     border-left: 1px solid {color:border};
 }
 
+#PublishInstancesDetails {
+    border: 1px solid {color:border};
+    border-radius: 0.3em;
+}
+
+#InstancesLogsView {
+    border: 1px solid {color:border};
+    background: {color:bg-view};
+    border-radius: 0.3em;
+}
+
+#PublishLogMessage {
+    font-family: "Noto Sans Mono";
+}
+
+#PublishInstanceLogsLabel {
+    font-weight: bold;
+}
+
+#PublishCrashMainLabel{
+    font-weight: bold;
+    font-size: 16pt;
+}
+
+#PublishCrashReportLabel {
+    font-weight: bold;
+    font-size: 13pt;
+}
+
 #AssetNameInputWidget {
     background: {color:bg-inputs};
     border: 1px solid {color:border};
-    border-radius: 0.3em;
+    border-radius: 0.2em;
 }
 
 #AssetNameInputWidget QWidget {
@@ -1364,6 +1427,10 @@ CreateNextPageOverlay {
     background: rgba(0, 0, 0, 127);
 }
 
+#OverlayFrameLabel {
+    font-size: 15pt;
+}
+
 #BreadcrumbsPathInput {
     padding: 2px;
     font-size: 9pt;
@@ -1465,6 +1532,12 @@ CreateNextPageOverlay {
 }
 
 /* Attribute Definition widgets */
+AttributeDefinitionsWidget QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+    padding: 1px;
+}
+AttributeDefinitionsWidget QComboBox {
+    padding: 1px 1px 1px 0.2em;
+}
 InViewButton, InViewButton:disabled {
     background: transparent;
 }

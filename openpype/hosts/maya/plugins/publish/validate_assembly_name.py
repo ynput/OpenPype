@@ -1,6 +1,9 @@
 import pyblish.api
 import maya.cmds as cmds
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    PublishValidationError
+)
 
 
 class ValidateAssemblyName(pyblish.api.InstancePlugin):
@@ -17,7 +20,7 @@ class ValidateAssemblyName(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-        cls.log.info("Checking name of {}".format(instance.name))
+        cls.log.debug("Checking name of {}".format(instance.name))
 
         content_instance = instance.data.get("setMembers", None)
         if not content_instance:
@@ -47,5 +50,5 @@ class ValidateAssemblyName(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found {} invalid named assembly "
+            raise PublishValidationError("Found {} invalid named assembly "
                                "items".format(len(invalid)))

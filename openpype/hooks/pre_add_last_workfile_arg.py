@@ -1,6 +1,6 @@
 import os
 
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class AddLastWorkfileToLaunchArgs(PreLaunchHook):
@@ -13,8 +13,8 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
 
     # Execute after workfile template copy
     order = 10
-    app_groups = [
-        "3dsmax",
+    app_groups = {
+        "3dsmax", "adsk_3dsmax",
         "maya",
         "nuke",
         "nukex",
@@ -25,8 +25,10 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
         "blender",
         "photoshop",
         "tvpaint",
-        "aftereffects"
-    ]
+        "substancepainter",
+        "aftereffects",
+    }
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         if not self.data.get("start_last_workfile"):

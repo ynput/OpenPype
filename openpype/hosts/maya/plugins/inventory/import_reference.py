@@ -1,7 +1,7 @@
 from maya import cmds
 
 from openpype.pipeline import InventoryAction
-from openpype.hosts.maya.api.plugin import get_reference_node
+from openpype.hosts.maya.api.lib import get_reference_node
 
 
 class ImportReference(InventoryAction):
@@ -12,7 +12,6 @@ class ImportReference(InventoryAction):
     color = "#d8d8d8"
 
     def process(self, containers):
-        references = cmds.ls(type="reference")
         for container in containers:
             if container["loader"] != "ReferenceLoader":
                 print("Not a reference, skipping")

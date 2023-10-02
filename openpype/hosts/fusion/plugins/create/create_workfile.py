@@ -1,5 +1,3 @@
-import qtawesome
-
 from openpype.hosts.fusion.api import (
     get_current_comp
 )
@@ -7,7 +5,6 @@ from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     AutoCreator,
     CreatedInstance,
-    legacy_io,
 )
 
 
@@ -15,6 +12,7 @@ class FusionWorkfileCreator(AutoCreator):
     identifier = "workfile"
     family = "workfile"
     label = "Workfile"
+    icon = "fa5.file"
 
     default_variant = "Main"
 
@@ -65,10 +63,10 @@ class FusionWorkfileCreator(AutoCreator):
                 existing_instance = instance
                 break
 
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        host_name = legacy_io.Session["AVALON_APP"]
+        project_name = self.create_context.get_current_project_name()
+        asset_name = self.create_context.get_current_asset_name()
+        task_name = self.create_context.get_current_task_name()
+        host_name = self.create_context.host_name
 
         if existing_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)
@@ -104,6 +102,3 @@ class FusionWorkfileCreator(AutoCreator):
             existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
             existing_instance["subset"] = subset_name
-
-    def get_icon(self):
-        return qtawesome.icon("fa.file-o", color="white")

@@ -4,7 +4,7 @@ import os
 
 from openpype.pipeline import (
     get_representation_path,
-    AVALON_CONTAINER_ID
+    AYON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
@@ -23,7 +23,7 @@ class SkeletalMeshFBXLoader(plugin.Loader):
     def load(self, context, name, namespace, options):
         """Load and containerise representation into Content Browser.
 
-        This is two step process. First, import FBX to temporary path and
+        This is a two step process. First, import FBX to temporary path and
         then call `containerise()` on it - this moves all content to new
         directory and then it will create AssetContainer there and imprint it
         with metadata. This will mark this path as container.
@@ -42,8 +42,8 @@ class SkeletalMeshFBXLoader(plugin.Loader):
             list(str): list of container content
 
         """
-        # Create directory for asset and OpenPype container
-        root = "/Game/OpenPype/Assets"
+        # Create directory for asset and Ayon container
+        root = "/Game/Ayon/Assets"
         if options and options.get("asset_dir"):
             root = options["asset_dir"]
         asset = context.get('asset').get('name')
@@ -52,11 +52,16 @@ class SkeletalMeshFBXLoader(plugin.Loader):
             asset_name = "{}_{}".format(asset, name)
         else:
             asset_name = "{}".format(name)
-        version = context.get('version').get('name')
+        version = context.get('version')
+        # Check if version is hero version and use different name
+        if not version.get("name") and version.get('type') == "hero_version":
+            name_version = f"{name}_hero"
+        else:
+            name_version = f"{name}_v{version.get('name'):03d}"
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/{asset}/{name}_v{version:03d}", suffix="")
+            f"{root}/{asset}/{name_version}", suffix="")
 
         container_name += suffix
 
@@ -65,7 +70,8 @@ class SkeletalMeshFBXLoader(plugin.Loader):
 
             task = unreal.AssetImportTask()
 
-            task.set_editor_property('filename', self.fname)
+            path = self.filepath_from_context(context)
+            task.set_editor_property('filename', path)
             task.set_editor_property('destination_path', asset_dir)
             task.set_editor_property('destination_name', asset_name)
             task.set_editor_property('replace_existing', False)
@@ -103,8 +109,8 @@ class SkeletalMeshFBXLoader(plugin.Loader):
                 container=container_name, path=asset_dir)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -115,7 +121,7 @@ class SkeletalMeshFBXLoader(plugin.Loader):
             "family": context["representation"]["context"]["family"]
         }
         unreal_pipeline.imprint(
-            "{}/{}".format(asset_dir, container_name), data)
+            f"{asset_dir}/{container_name}", data)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True

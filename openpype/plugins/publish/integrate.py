@@ -2,9 +2,10 @@ import os
 import logging
 import sys
 import copy
+import datetime
+
 import clique
 import six
-
 from bson.objectid import ObjectId
 import pyblish.api
 
@@ -137,7 +138,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsdOverride",
                 "simpleUnrealTexture",
                 "online",
-                "uasset"
+                "uasset",
+                "blendScene",
+                "yeticacheUE"
                 ]
 
     default_template_name = "publish"
@@ -148,19 +151,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "username", "user", "output"
     ]
-    skip_host_families = []
 
     def process(self, instance):
-        if self._temp_skip_instance_by_settings(instance):
-            return
-
-        # Mark instance as processed for legacy integrator
-        instance.data["processedWithNewIntegrator"] = True
 
         # Instance should be integrated on a farm
         if instance.data.get("farm"):
-            self.log.info(
+            self.log.debug(
                 "Instance is marked to be processed on farm. Skipping")
+            return
+
+        # Instance is marked to not get integrated
+        if not instance.data.get("integrate", True):
+            self.log.debug("Instance is marked to skip integrating. Skipping")
             return
 
         filtered_repres = self.filter_representations(instance)
@@ -196,39 +198,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # the try, except.
         file_transactions.finalize()
 
-    def _temp_skip_instance_by_settings(self, instance):
-        """Decide if instance will be processed with new or legacy integrator.
-
-        This is temporary solution until we test all usecases with new (this)
-        integrator plugin.
-        """
-
-        host_name = instance.context.data["hostName"]
-        instance_family = instance.data["family"]
-        instance_families = set(instance.data.get("families") or [])
-
-        skip = False
-        for item in self.skip_host_families:
-            if host_name not in item["host"]:
-                continue
-
-            families = set(item["families"])
-            if instance_family in families:
-                skip = True
-                break
-
-            for family in instance_families:
-                if family in families:
-                    skip = True
-                    break
-
-            if skip:
-                break
-
-        if skip:
-            self.log.debug("Instance is marked to be skipped by settings.")
-        return skip
-
     def filter_representations(self, instance):
         # Prepare repsentations that should be integrated
         repres = instance.data.get("representations")
@@ -262,7 +231,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         instance_stagingdir = instance.data.get("stagingDir")
         if not instance_stagingdir:
-            self.log.info((
+            self.log.debug((
                 "{0} is missing reference to staging directory."
                 " Will try to get it from representation."
             ).format(instance))
@@ -338,7 +307,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # increase if the file transaction takes a long time.
         op_session.commit()
 
-        self.log.info("Subset {subset[name]} and Version {version[name]} "
+        self.log.info("Subset '{subset[name]}' version {version[name]} "
                       "written to database..".format(subset=subset,
                                                      version=version))
 
@@ -353,10 +322,16 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Get the accessible sites for Site Sync
         modules_by_name = instance.context.data["openPypeModules"]
-        sync_server_module = modules_by_name["sync_server"]
-        sites = sync_server_module.compute_resource_sync_sites(
-            project_name=instance.data["projectEntity"]["name"]
-        )
+        sync_server_module = modules_by_name.get("sync_server")
+        if sync_server_module is None:
+            sites = [{
+                "name": "studio",
+                "created_dt": datetime.datetime.now()
+            }]
+        else:
+            sites = sync_server_module.compute_resource_sync_sites(
+                project_name=instance.data["projectEntity"]["name"]
+            )
         self.log.debug("Sync Server Sites: {}".format(sites))
 
         # Compute the resource file infos once (files belonging to the
@@ -418,8 +393,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             p["representation"]["_id"]: p for p in prepared_representations
         }
 
-        self.log.info("Registered {} representations"
-                      "".format(len(prepared_representations)))
+        self.log.info(
+            "Registered {} representations: {}".format(
+                len(prepared_representations),
+                ", ".join(p["representation"]["name"]
+                          for p in prepared_representations)
+            )
+        )
 
     def prepare_subset(self, instance, op_session, project_name):
         asset_doc = instance.data["assetEntity"]
@@ -475,7 +455,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 update_data
             )
 
-        self.log.info("Prepared subset: {}".format(subset_name))
+        self.log.debug("Prepared subset: {}".format(subset_name))
         return subset_doc
 
     def prepare_version(self, instance, op_session, subset_doc, project_name):
@@ -516,7 +496,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 project_name, version_doc["type"], version_doc
             )
 
-        self.log.info("Prepared version: v{0:03d}".format(version_doc["name"]))
+        self.log.debug(
+            "Prepared version: v{0:03d}".format(version_doc["name"])
+        )
 
         return version_doc
 

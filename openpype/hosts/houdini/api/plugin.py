@@ -167,9 +167,12 @@ class HoudiniCreatorBase(object):
 class HoudiniCreator(NewCreator, HoudiniCreatorBase):
     """Base class for most of the Houdini creator plugins."""
     selected_nodes = []
+    settings_name = None
 
     def create(self, subset_name, instance_data, pre_create_data):
         try:
+            self.selected_nodes = []
+
             if pre_create_data.get("use_selection"):
                 self.selected_nodes = hou.selectedNodes()
 
@@ -276,3 +279,37 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             color = hou.Color((0.616, 0.871, 0.769))
         node.setUserData('nodeshape', shape)
         node.setColor(color)
+
+    def get_network_categories(self):
+        """Return in which network view type this creator should show.
+
+        The node type categories returned here will be used to define where
+        the creator will show up in the TAB search for nodes in Houdini's
+        Network View.
+
+        This can be overridden in inherited classes to define where that
+        particular Creator should be visible in the TAB search.
+
+        Returns:
+            list: List of houdini node type categories
+
+        """
+        return [hou.ropNodeTypeCategory()]
+
+    def apply_settings(self, project_settings):
+        """Method called on initialization of plugin to apply settings."""
+
+        settings_name = self.settings_name
+        if settings_name is None:
+            settings_name = self.__class__.__name__
+
+        settings = project_settings["houdini"]["create"]
+        settings = settings.get(settings_name)
+        if settings is None:
+            self.log.debug(
+                "No settings found for {}".format(self.__class__.__name__)
+            )
+            return
+
+        for key, value in settings.items():
+            setattr(self, key, value)

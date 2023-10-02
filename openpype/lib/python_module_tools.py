@@ -230,3 +230,70 @@ def import_module_from_dirpath(dirpath, folder_name, dst_module_name=None):
             dirpath, folder_name, dst_module_name
         )
     return module
+
+
+def is_func_signature_supported(func, *args, **kwargs):
+    """Check if a function signature supports passed args and kwargs.
+
+    This check does not actually call the function, just look if function can
+    be called with the arguments.
+
+    Notes:
+        This does NOT check if the function would work with passed arguments
+            only if they can be passed in. If function have *args, **kwargs
+            in paramaters, this will always return 'True'.
+
+    Example:
+        >>> def my_function(my_number):
+        ...     return my_number + 1
+        ...
+        >>> is_func_signature_supported(my_function, 1)
+        True
+        >>> is_func_signature_supported(my_function, 1, 2)
+        False
+        >>> is_func_signature_supported(my_function, my_number=1)
+        True
+        >>> is_func_signature_supported(my_function, number=1)
+        False
+        >>> is_func_signature_supported(my_function, "string")
+        True
+        >>> def my_other_function(*args, **kwargs):
+        ...     my_function(*args, **kwargs)
+        ...
+        >>> is_func_signature_supported(
+        ...     my_other_function,
+        ...     "string",
+        ...     1,
+        ...     other=None
+        ... )
+        True
+
+    Args:
+        func (function): A function where the signature should be tested.
+        *args (Any): Positional arguments for function signature.
+        **kwargs (Any): Keyword arguments for function signature.
+
+    Returns:
+        bool: Function can pass in arguments.
+    """
+
+    if hasattr(inspect, "signature"):
+        # Python 3 using 'Signature' object where we try to bind arg
+        #   or kwarg. Using signature is recommended approach based on
+        #   documentation.
+        sig = inspect.signature(func)
+        try:
+            sig.bind(*args, **kwargs)
+            return True
+        except TypeError:
+            pass
+
+    else:
+        # In Python 2 'signature' is not available so 'getcallargs' is used
+        # - 'getcallargs' is marked as deprecated since Python 3.0
+        try:
+            inspect.getcallargs(func, *args, **kwargs)
+            return True
+        except TypeError:
+            pass
+    return False

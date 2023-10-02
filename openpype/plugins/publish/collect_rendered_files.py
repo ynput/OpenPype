@@ -13,6 +13,7 @@ import json
 import pyblish.api
 
 from openpype.pipeline import legacy_io, KnownPublishError
+from openpype.pipeline.publish.lib import add_repre_files_for_cleanup
 
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
@@ -89,23 +90,29 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
         # now we can just add instances from json file and we are done
         for instance_data in data.get("instances"):
-            self.log.info("  - processing instance for {}".format(
+
+            self.log.debug("  - processing instance for {}".format(
                 instance_data.get("subset")))
             instance = self._context.create_instance(
                 instance_data.get("subset")
             )
-            self.log.info("Filling stagingDir...")
+            self.log.debug("Filling stagingDir...")
 
             self._fill_staging_dir(instance_data, anatomy)
             instance.data.update(instance_data)
 
             # stash render job id for later validation
             instance.data["render_job_id"] = data.get("job").get("_id")
-
+            staging_dir_persistent = instance.data.get(
+                "stagingDir_persistent", False
+            )
             representations = []
             for repre_data in instance_data.get("representations") or []:
                 self._fill_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
+
+                if not staging_dir_persistent:
+                    add_repre_files_for_cleanup(instance, repre_data)
 
             instance.data["representations"] = representations
 
@@ -117,8 +124,10 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                         "offset": 0
                     }]
                 })
-                self.log.info(
+                self.log.debug(
                     f"Adding audio to instance: {instance.data['audio']}")
+
+            return staging_dir_persistent
 
     def process(self, context):
         self._context = context
@@ -133,11 +142,11 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
         # Using already collected Anatomy
         anatomy = context.data["anatomy"]
-        self.log.info("Getting root setting for project \"{}\"".format(
+        self.log.debug("Getting root setting for project \"{}\"".format(
             anatomy.project_name
         ))
 
-        self.log.info("anatomy: {}".format(anatomy.roots))
+        self.log.debug("anatomy: {}".format(anatomy.roots))
         try:
             session_is_set = False
             for path in paths:
@@ -152,11 +161,16 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                     if remapped:
                         session_data["AVALON_WORKDIR"] = remapped
 
-                    self.log.info("Setting session using data from file")
+                    self.log.debug("Setting session using data from file")
                     legacy_io.Session.update(session_data)
                     os.environ.update(session_data)
                     session_is_set = True
-                self._process_path(data, anatomy)
+                staging_dir_persistent = self._process_path(data, anatomy)
+                if not staging_dir_persistent:
+                    context.data["cleanupFullPaths"].append(path)
+                    context.data["cleanupEmptyDirs"].append(
+                        os.path.dirname(path)
+                    )
         except Exception as e:
             self.log.error(e, exc_info=True)
             raise Exception("Error") from e

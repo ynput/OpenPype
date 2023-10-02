@@ -1,29 +1,47 @@
 from openpype.hosts.maya.api import (
-    lib,
-    plugin
+    plugin,
+    lib
+)
+from openpype.lib import (
+    BoolDef,
+    TextDef
 )
 
 
-class CreateLook(plugin.Creator):
+class CreateLook(plugin.MayaCreator):
     """Shader connections defining shape look"""
 
-    name = "look"
+    identifier = "io.openpype.creators.maya.look"
     label = "Look"
     family = "look"
     icon = "paint-brush"
+
     make_tx = True
     rs_tex = False
 
-    def __init__(self, *args, **kwargs):
-        super(CreateLook, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        self.data["renderlayer"] = lib.get_current_renderlayer()
+        return [
+            # TODO: This value should actually get set on create!
+            TextDef("renderLayer",
+                    # TODO: Bug: Hidden attribute's label is still shown in UI?
+                    hidden=True,
+                    default=lib.get_current_renderlayer(),
+                    label="Renderlayer",
+                    tooltip="Renderlayer to extract the look from"),
+            BoolDef("maketx",
+                    label="MakeTX",
+                    tooltip="Whether to generate .tx files for your textures",
+                    default=self.make_tx),
+            BoolDef("rstex",
+                    label="Convert textures to .rstex",
+                    tooltip="Whether to generate Redshift .rstex files for "
+                            "your textures",
+                    default=self.rs_tex)
+        ]
 
-        # Whether to automatically convert the textures to .tx upon publish.
-        self.data["maketx"] = self.make_tx
-        # Whether to automatically convert the textures to .rstex upon publish.
-        self.data["rstex"] = self.rs_tex
-        # Enable users to force a copy.
-        # - on Windows is "forceCopy" always changed to `True` because of
-        #   windows implementation of hardlinks
-        self.data["forceCopy"] = False
+    def get_pre_create_attr_defs(self):
+        # Show same attributes on create but include use selection
+        defs = super(CreateLook, self).get_pre_create_attr_defs()
+        defs.extend(self.get_instance_attr_defs())
+        return defs

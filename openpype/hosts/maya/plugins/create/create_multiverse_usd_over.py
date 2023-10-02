@@ -1,30 +1,59 @@
 from openpype.hosts.maya.api import plugin, lib
+from openpype.lib import (
+    BoolDef,
+    NumberDef,
+    EnumDef
+)
 
 
-class CreateMultiverseUsdOver(plugin.Creator):
+class CreateMultiverseUsdOver(plugin.MayaCreator):
     """Create Multiverse USD Override"""
 
-    name = "mvUsdOverrideMain"
+    identifier = "io.openpype.creators.maya.mvusdoverride"
     label = "Multiverse USD Override"
     family = "mvUsdOverride"
     icon = "cubes"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateMultiverseUsdOver, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
+        defs = lib.collect_animation_defs(fps=True)
+        defs.extend([
+            EnumDef("fileFormat",
+                    label="File format",
+                    items=["usd", "usda"],
+                    default="usd"),
+            BoolDef("writeAll",
+                    label="Write All",
+                    default=False),
+            BoolDef("writeTransforms",
+                    label="Write Transforms",
+                    default=True),
+            BoolDef("writeVisibility",
+                    label="Write Visibility",
+                    default=True),
+            BoolDef("writeAttributes",
+                    label="Write Attributes",
+                    default=True),
+            BoolDef("writeMaterials",
+                    label="Write Materials",
+                    default=True),
+            BoolDef("writeVariants",
+                    label="Write Variants",
+                    default=True),
+            BoolDef("writeVariantsDefinition",
+                    label="Write Variants Definition",
+                    default=True),
+            BoolDef("writeActiveState",
+                    label="Write Active State",
+                    default=True),
+            BoolDef("writeNamespaces",
+                    label="Write Namespaces",
+                    default=False),
+            NumberDef("numTimeSamples",
+                      label="Num Time Samples",
+                      default=1),
+            NumberDef("timeSamplesSpan",
+                      label="Time Samples Span",
+                      default=0.0),
+        ])
 
-        # Add animation data first, since it maintains order.
-        self.data.update(lib.collect_animation_data(True))
-
-        # Order of `fileFormat` must match extract_multiverse_usd_over.py
-        self.data["fileFormat"] = ["usda", "usd"]
-        self.data["writeAll"] = False
-        self.data["writeTransforms"] = True
-        self.data["writeVisibility"] = True
-        self.data["writeAttributes"] = True
-        self.data["writeMaterials"] = True
-        self.data["writeVariants"] = True
-        self.data["writeVariantsDefinition"] = True
-        self.data["writeActiveState"] = True
-        self.data["writeNamespaces"] = False
-        self.data["numTimeSamples"] = 1
-        self.data["timeSamplesSpan"] = 0.0
+        return defs

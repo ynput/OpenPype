@@ -1,0 +1,14 @@
+{
+    "imageio": {
+        "activate_host_color_management": true,
+        "ocio_config": {
+            "override_global_config": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "activate_host_rules": false,
+            "rules": {}
+        }
+    },
+    "shelves": {}
+}

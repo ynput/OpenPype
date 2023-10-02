@@ -9,4 +9,4 @@ except ImportError as exc:
 if __name__ == "__main__":
     # Perform remote publish with thorough error checking
     log = Logger.get_logger(__name__)
-    remote_publish(log, raise_error=True)
+    remote_publish(log)

@@ -33,7 +33,7 @@ def preserve_modelpanel_cameras(container, log=None):
     panel_cameras = {}
     for panel in cmds.getPanel(type="modelPanel"):
         cam = cmds.ls(cmds.modelPanel(panel, query=True, camera=True),
-                      long=True)
+                      long=True)[0]
 
         # Often but not always maya returns the transform from the
         # modelPanel as opposed to the camera shape, so we convert it
@@ -101,7 +101,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 "camerarig",
                 "staticMesh",
                 "skeletalMesh",
-                "mvLook"]
+                "mvLook",
+                "matchmove"]
 
     representations = ["ma", "abc", "fbx", "mb"]
 
@@ -118,15 +119,20 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         except ValueError:
             family = "model"
 
+        project_name = context["project"]["name"]
         # True by default to keep legacy behaviours
         attach_to_root = options.get("attach_to_root", True)
         group_name = options["group_name"]
 
+        # no group shall be created
+        if not attach_to_root:
+            group_name = namespace
+
+        path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
-            file_url = self.prepare_root_value(self.fname,
-                                               context["project"]["name"])
 
+            file_url = self.prepare_root_value(path, project_name)
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               sharedReferenceFile=False,
@@ -147,11 +153,10 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             if current_namespace != ":":
                 group_name = current_namespace + ":" + group_name
 
-            group_name = "|" + group_name
-
             self[:] = new_nodes
 
             if attach_to_root:
+                group_name = "|" + group_name
                 roots = cmds.listRelatives(group_name,
                                            children=True,
                                            fullPath=True) or []
@@ -162,9 +167,15 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                     with parent_nodes(roots, parent=None):
                         cmds.xform(group_name, zeroTransformPivots=True)
 
-                cmds.setAttr("{}.displayHandle".format(group_name), 1)
+                settings = get_project_settings(project_name)
 
-                settings = get_project_settings(os.environ['AVALON_PROJECT'])
+                display_handle = settings['maya']['load'].get(
+                    'reference_loader', {}
+                ).get('display_handle', True)
+                cmds.setAttr(
+                    "{}.displayHandle".format(group_name), display_handle
+                )
+
                 colors = settings['maya']['load']['colors']
                 c = colors.get(family)
                 if c is not None:
@@ -174,7 +185,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                                  (float(c[1]) / 255),
                                  (float(c[2]) / 255))
 
-                cmds.setAttr("{}.displayHandle".format(group_name), 1)
+                cmds.setAttr(
+                    "{}.displayHandle".format(group_name), display_handle
+                )
                 # get bounding box
                 bbox = cmds.exactWorldBoundingBox(group_name)
                 # get pivot position on world space
@@ -193,9 +206,14 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 cmds.setAttr("{}.selectHandleZ".format(group_name), cz)
 
             if family == "rig":
-                self._post_process_rig(name, namespace, context, options)
+                self._post_process_rig(namespace, context, options)
             else:
                 if "translate" in options:
+                    if not attach_to_root and new_nodes:
+                        root_nodes = cmds.ls(new_nodes, assemblies=True,
+                                             long=True)
+                        # we assume only a single root is ever loaded
+                        group_name = root_nodes[0]
                     cmds.setAttr("{}.translate".format(group_name),
                                  *options["translate"])
             return new_nodes
@@ -212,10 +230,11 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         members = get_container_members(container)
         self._lock_camera_transforms(members)
 
-    def _post_process_rig(self, name, namespace, context, options):
+    def _post_process_rig(self, namespace, context, options):
+
         nodes = self[:]
         create_rig_animation_instance(
-            nodes, context, namespace, log=self.log
+            nodes, context, namespace, options=options, log=self.log
         )
 
     def _lock_camera_transforms(self, nodes):

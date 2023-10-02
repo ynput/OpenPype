@@ -111,6 +111,7 @@ module.exports = {
                 "module_site_sync",
                 "module_deadline",
                 "module_muster",
+                "module_royalrender",
                 "module_clockify",
                 "module_slack"
             ],
@@ -126,6 +127,7 @@ module.exports = {
                 "admin_hosts_nuke",
                 "admin_hosts_resolve",
                 "admin_hosts_harmony",
+                "admin_hosts_photoshop",
                 "admin_hosts_aftereffects",
                 "admin_hosts_tvpaint"
             ],
@@ -179,6 +181,7 @@ module.exports = {
             ]
         },
         "dev_deadline",
+        "dev_blender",
         "dev_colorspace"
     ]
 };

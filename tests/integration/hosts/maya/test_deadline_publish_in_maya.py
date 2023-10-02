@@ -32,7 +32,7 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
 
-    TIMEOUT = 120  # publish timeout
+    TIMEOUT = 180  # publish timeout
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""

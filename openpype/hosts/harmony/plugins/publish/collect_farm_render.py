@@ -5,7 +5,6 @@ from pathlib import Path
 import attr
 
 from openpype.lib import get_formatted_current_time
-from openpype.pipeline import legacy_io
 from openpype.pipeline import publish
 from openpype.pipeline.publish import RenderInstance
 import openpype.hosts.harmony.api as harmony
@@ -99,6 +98,8 @@ class CollectFarmRender(publish.AbstractCollectRender):
 
         self_name = self.__class__.__name__
 
+        asset_name = context.data["asset"]
+
         for node in context.data["allNodes"]:
             data = harmony.read(node)
 
@@ -141,18 +142,18 @@ class CollectFarmRender(publish.AbstractCollectRender):
                 source=context.data["currentFile"],
                 label=node.split("/")[1],
                 subset=subset_name,
-                asset=legacy_io.Session["AVALON_ASSET"],
+                asset=asset_name,
                 task=task_name,
                 attachTo=False,
                 setMembers=[node],
                 publish=info[4],
-                review=False,
                 renderer=None,
                 priority=50,
                 name=node.split("/")[1],
 
                 family="render.farm",
                 families=["render.farm"],
+                farm=True,
 
                 resolutionWidth=context.data["resolutionWidth"],
                 resolutionHeight=context.data["resolutionHeight"],
@@ -173,7 +174,6 @@ class CollectFarmRender(publish.AbstractCollectRender):
                 outputFormat=info[1],
                 outputStartFrame=info[3],
                 leadingZeros=info[2],
-                toBeRenderedOn='deadline',
                 ignoreFrameHandleCheck=True
 
             )

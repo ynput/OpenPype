@@ -7,9 +7,19 @@ import requests
 import pyblish.api
 
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import (
+    OpenPypePyblishPluginMixin
+)
+from openpype.lib import (
+    BoolDef,
+    NumberDef
+)
 
 
-class FusionSubmitDeadline(pyblish.api.InstancePlugin):
+class FusionSubmitDeadline(
+    pyblish.api.InstancePlugin,
+    OpenPypePyblishPluginMixin
+):
     """Submit current Comp to Deadline
 
     Renders are submitted to a Deadline Web Service as
@@ -17,12 +27,62 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
 
     """
 
-    label = "Submit to Deadline"
+    label = "Submit Fusion to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["fusion"]
-    families = ["render.farm"]
+    families = ["render"]
+    targets = ["local"]
+
+    # presets
+    priority = 50
+    chunk_size = 1
+    concurrent_tasks = 1
+    group = ""
+
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            NumberDef(
+                "priority",
+                label="Priority",
+                default=cls.priority,
+                decimals=0
+            ),
+            NumberDef(
+                "chunk",
+                label="Frames Per Task",
+                default=cls.chunk_size,
+                decimals=0,
+                minimum=1,
+                maximum=1000
+            ),
+            NumberDef(
+                "concurrency",
+                label="Concurrency",
+                default=cls.concurrent_tasks,
+                decimals=0,
+                minimum=1,
+                maximum=10
+            ),
+            BoolDef(
+                "suspend_publish",
+                default=False,
+                label="Suspend publish"
+            )
+        ]
 
     def process(self, instance):
+        if not instance.data.get("farm"):
+            self.log.debug("Skipping local instance.")
+            return
+
+        attribute_values = self.get_attr_values_from_data(
+            instance.data)
+
+        # add suspend_publish attributeValue to instance data
+        instance.data["suspend_publish"] = attribute_values[
+            "suspend_publish"]
+
         context = instance.context
 
         key = "__hasRun{}".format(self.__class__.__name__)
@@ -33,35 +93,54 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
 
         from openpype.hosts.fusion.api.lib import get_frame_path
 
-        deadline_url = (
-            context.data["system_settings"]
-            ["modules"]
-            ["deadline"]
-            ["DEADLINE_REST_URL"]
-        )
-        assert deadline_url, "Requires DEADLINE_REST_URL"
+        # get default deadline webservice url from deadline module
+        deadline_url = instance.context.data["defaultDeadline"]
+        # if custom one is set in instance, use that
+        if instance.data.get("deadlineUrl"):
+            deadline_url = instance.data.get("deadlineUrl")
+        assert deadline_url, "Requires Deadline Webservice URL"
 
         # Collect all saver instances in context that are to be rendered
         saver_instances = []
-        for instance in context[:]:
-            if not self.families[0] in instance.data.get("families"):
+        for instance in context:
+            if instance.data["family"] != "render":
                 # Allow only saver family instances
                 continue
 
             if not instance.data.get("publish", True):
                 # Skip inactive instances
                 continue
+
             self.log.debug(instance.data["name"])
             saver_instances.append(instance)
 
         if not saver_instances:
-            raise RuntimeError("No instances found for Deadline submittion")
+            raise RuntimeError("No instances found for Deadline submission")
 
-        fusion_version = int(context.data["fusionVersion"])
-        filepath = context.data["currentFile"]
-        filename = os.path.basename(filepath)
-        comment = context.data.get("comment", "")
+        comment = instance.data.get("comment", "")
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
+
+        script_path = context.data["currentFile"]
+
+        for item in context:
+            if "workfile" in item.data["families"]:
+                msg = "Workfile (scene) must be published along"
+                assert item.data["publish"] is True, msg
+
+                template_data = item.data.get("anatomyData")
+                rep = item.data.get("representations")[0].get("name")
+                template_data["representation"] = rep
+                template_data["ext"] = rep
+                template_data["comment"] = None
+                anatomy_filled = context.data["anatomy"].format(template_data)
+                template_filled = anatomy_filled["publish"]["path"]
+                script_path = os.path.normpath(template_filled)
+
+                self.log.info(
+                    "Using published scene for render {}".format(script_path)
+                )
+
+        filename = os.path.basename(script_path)
 
         # Documentation for keys available at:
         # https://docs.thinkboxsoftware.com
@@ -73,31 +152,41 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
                 "BatchName": filename,
 
                 # Asset dependency to wait for at least the scene file to sync.
-                "AssetDependency0": filepath,
+                "AssetDependency0": script_path,
 
                 # Job name, as seen in Monitor
                 "Name": filename,
 
+                "Priority": attribute_values.get(
+                    "priority", self.priority),
+                "ChunkSize": attribute_values.get(
+                    "chunk", self.chunk_size),
+                "ConcurrentTasks": attribute_values.get(
+                    "concurrency",
+                    self.concurrent_tasks
+                ),
+
                 # User, as seen in Monitor
                 "UserName": deadline_user,
 
-                # Use a default submission pool for Fusion
-                "Pool": "fusion",
+                "Pool": instance.data.get("primaryPool"),
+                "SecondaryPool": instance.data.get("secondaryPool"),
+                "Group": self.group,
 
                 "Plugin": "Fusion",
                 "Frames": "{start}-{end}".format(
-                    start=int(context.data["frameStart"]),
-                    end=int(context.data["frameEnd"])
+                    start=int(instance.data["frameStartHandle"]),
+                    end=int(instance.data["frameEndHandle"])
                 ),
 
                 "Comment": comment,
             },
             "PluginInfo": {
                 # Input
-                "FlowFile": filepath,
+                "FlowFile": script_path,
 
                 # Mandatory for Deadline
-                "Version": str(fusion_version),
+                "Version": str(instance.data["app_version"]),
 
                 # Render in high quality
                 "HighQuality": True,
@@ -108,7 +197,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Proxy: higher numbers smaller images for faster test renders
                 # 1 = no proxy quality
-                "Proxy": 1,
+                "Proxy": 1
             },
 
             # Mandatory for Deadline, may be empty
@@ -117,7 +206,9 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
 
         # Enable going to rendered frames from Deadline Monitor
         for index, instance in enumerate(saver_instances):
-            head, padding, tail = get_frame_path(instance.data["path"])
+            head, padding, tail = get_frame_path(
+                instance.data["expectedFiles"][0]
+            )
             path = "{}{}{}".format(head, "#" * padding, tail)
             folder, filename = os.path.split(path)
             payload["JobInfo"]["OutputDirectory%d" % index] = folder
@@ -142,8 +233,8 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
             ) for index, key in enumerate(environment)
         })
 
-        self.log.info("Submitting..")
-        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
+        self.log.debug("Submitting..")
+        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
         # E.g. http://192.168.0.1:8082/api/jobs
         url = "{}/api/jobs".format(deadline_url)

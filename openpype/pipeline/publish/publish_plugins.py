@@ -1,6 +1,5 @@
 import inspect
 from abc import ABCMeta
-from pprint import pformat
 import pyblish.api
 from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
 from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
@@ -14,9 +13,8 @@ from .lib import (
 )
 
 from openpype.pipeline.colorspace import (
-    get_imageio_colorspace_from_filepath,
-    get_imageio_config,
-    get_imageio_file_rules
+    get_colorspace_settings_from_publish_context,
+    set_colorspace_data_to_representation
 )
 
 
@@ -45,7 +43,7 @@ class PublishValidationError(Exception):
 
     def __init__(self, message, title=None, description=None, detail=None):
         self.message = message
-        self.title = title or "< Missing title >"
+        self.title = title
         self.description = description or message
         self.detail = detail
         super(PublishValidationError, self).__init__(message)
@@ -233,36 +231,38 @@ class RepairAction(pyblish.api.Action):
             raise RuntimeError("Plug-in does not have repair method.")
 
         # Get the errored instances
-        self.log.info("Finding failed instances..")
-        errored_instances = get_errored_instances_from_context(context)
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
-        for instance in instances:
+        self.log.debug("Finding failed instances..")
+        errored_instances = get_errored_instances_from_context(context,
+                                                               plugin=plugin)
+        for instance in errored_instances:
+            self.log.debug(
+                "Attempting repair for instance: {} ...".format(instance)
+            )
             plugin.repair(instance)
 
 
 class RepairContextAction(pyblish.api.Action):
     """Repairs the action
 
-    To process the repairing this requires a static `repair(instance)` method
+    To process the repairing this requires a static `repair(context)` method
     is available on the plugin.
     """
 
     label = "Repair"
     on = "failed"  # This action is only available on a failed plug-in
+    icon = "wrench"  # Icon from Awesome Icon
 
     def process(self, context, plugin):
         if not hasattr(plugin, "repair"):
             raise RuntimeError("Plug-in does not have repair method.")
 
         # Get the failed instances
-        self.log.info("Finding failed instances..")
+        self.log.debug("Finding failed plug-ins..")
         failed_plugins = get_errored_plugins_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
         if plugin in failed_plugins:
-            self.log.info("Attempting fix ...")
+            self.log.debug("Attempting repair ...")
             plugin.repair(context)
 
 
@@ -304,12 +304,8 @@ class ColormanagedPyblishPluginMixin(object):
     matching colorspace from rules. Finally, it infuses this
     data into the representation.
     """
-    allowed_ext = set(
-        ext.lstrip(".") for ext in IMAGE_EXTENSIONS.union(VIDEO_EXTENSIONS)
-    )
 
-    @staticmethod
-    def get_colorspace_settings(context):
+    def get_colorspace_settings(self, context):
         """Returns solved settings for the host context.
 
         Args:
@@ -318,45 +314,18 @@ class ColormanagedPyblishPluginMixin(object):
         Returns:
             tuple | bool: config, file rules or None
         """
-        if "imageioSettings" in context.data:
-            return context.data["imageioSettings"]
-
-        project_name = context.data["projectName"]
-        host_name = context.data["hostName"]
-        anatomy_data = context.data["anatomyData"]
-        project_settings_ = context.data["project_settings"]
-
-        config_data = get_imageio_config(
-            project_name, host_name,
-            project_settings=project_settings_,
-            anatomy_data=anatomy_data
-        )
-        file_rules = get_imageio_file_rules(
-            project_name, host_name,
-            project_settings=project_settings_
-        )
-
-        # caching settings for future instance processing
-        context.data["imageioSettings"] = (config_data, file_rules)
-
-        return config_data, file_rules
+        return get_colorspace_settings_from_publish_context(context.data)
 
     def set_representation_colorspace(
         self, representation, context,
         colorspace=None,
-        colorspace_settings=None
     ):
         """Sets colorspace data to representation.
 
         Args:
             representation (dict): publishing representation
             context (publish.Context): publishing context
-            config_data (dict): host resolved config data
-            file_rules (dict): host resolved file rules data
             colorspace (str, optional): colorspace name. Defaults to None.
-            colorspace_settings (tuple[dict, dict], optional):
-                Settings for config_data and file_rules.
-                Defaults to None.
 
         Example:
             ```
@@ -373,60 +342,10 @@ class ColormanagedPyblishPluginMixin(object):
             ```
 
         """
-        ext = representation["ext"]
-        # check extension
-        self.log.debug("__ ext: `{}`".format(ext))
 
-        # check if ext in lower case is in self.allowed_ext
-        if ext.lstrip(".").lower() not in self.allowed_ext:
-            self.log.debug("Extension is not in allowed extensions.")
-            return
-
-        if colorspace_settings is None:
-            colorspace_settings = self.get_colorspace_settings(context)
-
-        # unpack colorspace settings
-        config_data, file_rules = colorspace_settings
-
-        if not config_data:
-            # warn in case no colorspace path was defined
-            self.log.warning("No colorspace management was defined")
-            return
-
-        self.log.info("Config data is : `{}`".format(
-            config_data))
-
-        project_name = context.data["projectName"]
-        host_name = context.data["hostName"]
-        project_settings = context.data["project_settings"]
-
-        # get one filename
-        filename = representation["files"]
-        if isinstance(filename, list):
-            filename = filename[0]
-
-        self.log.debug("__ filename: `{}`".format(
-            filename))
-
-        # get matching colorspace from rules
-        colorspace = colorspace or get_imageio_colorspace_from_filepath(
-            filename, host_name, project_name,
-            config_data=config_data,
-            file_rules=file_rules,
-            project_settings=project_settings
+        # using cached settings if available
+        set_colorspace_data_to_representation(
+            representation, context.data,
+            colorspace,
+            log=self.log
         )
-        self.log.debug("__ colorspace: `{}`".format(
-            colorspace))
-
-        # infuse data to representation
-        if colorspace:
-            colorspace_data = {
-                "colorspace": colorspace,
-                "config": config_data
-            }
-
-            # update data key
-            representation["colorspaceData"] = colorspace_data
-
-            self.log.debug("__ colorspace_data: `{}`".format(
-                pformat(colorspace_data)))

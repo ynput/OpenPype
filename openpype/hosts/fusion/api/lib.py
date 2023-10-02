@@ -14,7 +14,7 @@ from openpype.client import (
 )
 from openpype.pipeline import (
     switch_container,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.pipeline.context_tools import get_current_project_asset
 
@@ -181,83 +181,12 @@ def validate_comp_prefs(comp=None, force_repair=False):
         dialog.setStyleSheet(load_stylesheet())
 
 
-def switch_item(container,
-                asset_name=None,
-                subset_name=None,
-                representation_name=None):
-    """Switch container asset, subset or representation of a container by name.
-
-    It'll always switch to the latest version - of course a different
-    approach could be implemented.
-
-    Args:
-        container (dict): data of the item to switch with
-        asset_name (str): name of the asset
-        subset_name (str): name of the subset
-        representation_name (str): name of the representation
-
-    Returns:
-        dict
-
-    """
-
-    if all(not x for x in [asset_name, subset_name, representation_name]):
-        raise ValueError("Must have at least one change provided to switch.")
-
-    # Collect any of current asset, subset and representation if not provided
-    #   so we can use the original name from those.
-    project_name = legacy_io.active_project()
-    if any(not x for x in [asset_name, subset_name, representation_name]):
-        repre_id = container["representation"]
-        representation = get_representation_by_id(project_name, repre_id)
-        repre_parent_docs = get_representation_parents(
-            project_name, representation)
-        if repre_parent_docs:
-            version, subset, asset, _ = repre_parent_docs
-        else:
-            version = subset = asset = None
-
-        if asset_name is None:
-            asset_name = asset["name"]
-
-        if subset_name is None:
-            subset_name = subset["name"]
-
-        if representation_name is None:
-            representation_name = representation["name"]
-
-    # Find the new one
-    asset = get_asset_by_name(project_name, asset_name, fields=["_id"])
-    assert asset, ("Could not find asset in the database with the name "
-                   "'%s'" % asset_name)
-
-    subset = get_subset_by_name(
-        project_name, subset_name, asset["_id"], fields=["_id"]
-    )
-    assert subset, ("Could not find subset in the database with the name "
-                    "'%s'" % subset_name)
-
-    version = get_last_version_by_subset_id(
-        project_name, subset["_id"], fields=["_id"]
-    )
-    assert version, "Could not find a version for {}.{}".format(
-        asset_name, subset_name
-    )
-
-    representation = get_representation_by_name(
-        project_name, representation_name, version["_id"]
-    )
-    assert representation, ("Could not find representation in the database "
-                            "with the name '%s'" % representation_name)
-
-    switch_container(container, representation)
-
-    return representation
-
-
 @contextlib.contextmanager
-def maintained_selection():
-    comp = get_current_comp()
+def maintained_selection(comp=None):
+    """Reset comp selection from before the context after the context"""
+    if comp is None:
+        comp = get_current_comp()
+
     previous_selection = comp.GetToolList(True).values()
     try:
         yield
@@ -267,6 +196,33 @@ def maintained_selection():
         if previous_selection:
             for tool in previous_selection:
                 flow.Select(tool, True)
+
+
+@contextlib.contextmanager
+def maintained_comp_range(comp=None,
+                          global_start=True,
+                          global_end=True,
+                          render_start=True,
+                          render_end=True):
+    """Reset comp frame ranges from before the context after the context"""
+    if comp is None:
+        comp = get_current_comp()
+
+    comp_attrs = comp.GetAttrs()
+    preserve_attrs = {}
+    if global_start:
+        preserve_attrs["COMPN_GlobalStart"] = comp_attrs["COMPN_GlobalStart"]
+    if global_end:
+        preserve_attrs["COMPN_GlobalEnd"] = comp_attrs["COMPN_GlobalEnd"]
+    if render_start:
+        preserve_attrs["COMPN_RenderStart"] = comp_attrs["COMPN_RenderStart"]
+    if render_end:
+        preserve_attrs["COMPN_RenderEnd"] = comp_attrs["COMPN_RenderEnd"]
+
+    try:
+        yield
+    finally:
+        comp.SetAttrs(preserve_attrs)
 
 
 def get_frame_path(path):
@@ -307,6 +263,12 @@ def get_fusion_module():
     """Get current Fusion instance"""
     fusion = getattr(sys.modules["__main__"], "fusion", None)
     return fusion
+
+
+def get_bmd_library():
+    """Get bmd library"""
+    bmd = getattr(sys.modules["__main__"], "bmd", None)
+    return bmd
 
 
 def get_current_comp():

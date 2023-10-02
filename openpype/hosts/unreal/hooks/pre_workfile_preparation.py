@@ -2,22 +2,25 @@
 """Hook to launch Unreal and prepare projects."""
 import os
 import copy
+import shutil
+import tempfile
 from pathlib import Path
-from openpype.widgets.splash_screen import SplashScreen
+
 from qtpy import QtCore
+
+from openpype import resources
+from openpype.lib.applications import (
+    PreLaunchHook,
+    ApplicationLaunchFailed,
+    LaunchTypes,
+)
+from openpype.pipeline.workfile import get_workfile_template_key
+import openpype.hosts.unreal.lib as unreal_lib
 from openpype.hosts.unreal.ue_workers import (
     UEProjectGenerationWorker,
     UEPluginInstallWorker
 )
-
-from openpype import resources
-from openpype.lib import (
-    PreLaunchHook,
-    ApplicationLaunchFailed,
-    ApplicationNotFound,
-)
-from openpype.pipeline.workfile import get_workfile_template_key
-import openpype.hosts.unreal.lib as unreal_lib
+from openpype.hosts.unreal.ui import SplashScreen
 
 
 class UnrealPrelaunchHook(PreLaunchHook):
@@ -29,6 +32,8 @@ class UnrealPrelaunchHook(PreLaunchHook):
     shell script.
 
     """
+    app_groups = {"unreal"}
+    launch_types = {LaunchTypes.local}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -111,6 +116,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
         ue_project_worker = UEProjectGenerationWorker()
         ue_project_worker.setup(
             engine_version,
+            self.data["project_name"],
             unreal_project_name,
             engine_path,
             project_dir
@@ -186,34 +192,60 @@ class UnrealPrelaunchHook(PreLaunchHook):
 
         project_path.mkdir(parents=True, exist_ok=True)
 
-        # Set "OPENPYPE_UNREAL_PLUGIN" to current process environment for
-        # execution of `create_unreal_project`
-
-        if self.launch_context.env.get("OPENPYPE_UNREAL_PLUGIN"):
-            self.log.info((
-                f"{self.signature} using OpenPype plugin from "
-                f"{self.launch_context.env.get('OPENPYPE_UNREAL_PLUGIN')}"
-            ))
-        env_key = "OPENPYPE_UNREAL_PLUGIN"
-        if self.launch_context.env.get(env_key):
-            os.environ[env_key] = self.launch_context.env[env_key]
-
         # engine_path points to the specific Unreal Engine root
         # so, we are going up from the executable itself 3 levels.
         engine_path: Path = Path(executable).parents[3]
 
-        if not unreal_lib.check_plugin_existence(engine_path):
-            self.exec_plugin_install(engine_path)
+        # Check if new env variable exists, and if it does, if the path
+        # actually contains the plugin. If not, install it.
+
+        built_plugin_path = self.launch_context.env.get(
+            "AYON_BUILT_UNREAL_PLUGIN", None)
+
+        if unreal_lib.check_built_plugin_existance(built_plugin_path):
+            self.log.info((
+                f"{self.signature} using existing built Ayon plugin from "
+                f"{built_plugin_path}"
+            ))
+            unreal_lib.copy_built_plugin(engine_path, Path(built_plugin_path))
+        else:
+            # Set "AYON_UNREAL_PLUGIN" to current process environment for
+            # execution of `create_unreal_project`
+            env_key = "AYON_UNREAL_PLUGIN"
+            if self.launch_context.env.get(env_key):
+                self.log.info((
+                    f"{self.signature} using Ayon plugin from "
+                    f"{self.launch_context.env.get(env_key)}"
+                ))
+            if self.launch_context.env.get(env_key):
+                os.environ[env_key] = self.launch_context.env[env_key]
+
+            if not unreal_lib.check_plugin_existence(engine_path):
+                self.exec_plugin_install(engine_path)
 
         project_file = project_path / unreal_project_filename
 
         if not project_file.is_file():
-            self.exec_ue_project_gen(engine_version,
-                                     unreal_project_name,
-                                     engine_path,
-                                     project_path)
+            with tempfile.TemporaryDirectory() as temp_dir:
+                self.exec_ue_project_gen(engine_version,
+                                         unreal_project_name,
+                                         engine_path,
+                                         Path(temp_dir))
+                try:
+                    self.log.info((
+                        f"Moving from {temp_dir} to "
+                        f"{project_path.as_posix()}"
+                    ))
+                    shutil.copytree(
+                        temp_dir, project_path, dirs_exist_ok=True)
 
-        self.launch_context.env["OPENPYPE_UNREAL_VERSION"] = engine_version
+                except shutil.Error as e:
+                    raise ApplicationLaunchFailed((
+                        f"{self.signature} Cannot copy directory {temp_dir} "
+                        f"to {project_path.as_posix()} - {e}"
+                    )) from e
+
+        self.launch_context.env["AYON_UNREAL_VERSION"] = engine_version
         # Append project file to launch arguments
         self.launch_context.launch_args.append(
             f"\"{project_file.as_posix()}\"")

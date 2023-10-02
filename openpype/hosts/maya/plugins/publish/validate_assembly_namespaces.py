@@ -1,6 +1,8 @@
 import pyblish.api
 import openpype.hosts.maya.api.action
-
+from openpype.pipeline.publish import (
+    PublishValidationError
+)
 
 class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin):
     """Ensure namespaces are not nested
@@ -21,9 +23,9 @@ class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        self.log.info("Checking namespace for %s" % instance.name)
+        self.log.debug("Checking namespace for %s" % instance.name)
         if self.get_invalid(instance):
-            raise RuntimeError("Nested namespaces found")
+            raise PublishValidationError("Nested namespaces found")
 
     @classmethod
     def get_invalid(cls, instance):

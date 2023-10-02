@@ -104,12 +104,12 @@ class ExtractYetiRig(publish.Extractor):
             instance.context.data["project_settings"]["maya"]["ext_mapping"]
         )
         if ext_mapping:
-            self.log.info("Looking in settings for scene type ...")
+            self.log.debug("Looking in settings for scene type ...")
             # use extension mapping for first family found
             for family in self.families:
                 try:
                     self.scene_type = ext_mapping[family]
-                    self.log.info(
+                    self.log.debug(
                         "Using {} as scene type".format(self.scene_type))
                     break
                 except KeyError:
@@ -127,7 +127,7 @@ class ExtractYetiRig(publish.Extractor):
         maya_path = os.path.join(dirname,
                                  "yeti_rig.{}".format(self.scene_type))
 
-        self.log.info("Writing metadata file")
+        self.log.debug("Writing metadata file: {}".format(settings_path))
 
         image_search_path = resources_dir = instance.data["resourcesDir"]
 
@@ -147,7 +147,7 @@ class ExtractYetiRig(publish.Extractor):
                 dst = os.path.join(image_search_path, os.path.basename(file))
                 instance.data['transfers'].append([src, dst])
 
-                self.log.info("adding transfer {} -> {}". format(src, dst))
+                self.log.debug("adding transfer {} -> {}". format(src, dst))
 
         # Ensure the imageSearchPath is being remapped to the publish folder
         attr_value = {"%s.imageSearchPath" % n: str(image_search_path) for
@@ -182,7 +182,7 @@ class ExtractYetiRig(publish.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
-        self.log.info("rig file: {}".format(maya_path))
+        self.log.debug("rig file: {}".format(maya_path))
         instance.data["representations"].append(
             {
                 'name': self.scene_type,
@@ -191,7 +191,7 @@ class ExtractYetiRig(publish.Extractor):
                 'stagingDir': dirname
             }
         )
-        self.log.info("settings file: {}".format(settings_path))
+        self.log.debug("settings file: {}".format(settings_path))
         instance.data["representations"].append(
             {
                 'name': 'rigsettings',
@@ -201,6 +201,6 @@ class ExtractYetiRig(publish.Extractor):
             }
         )
 
-        self.log.info("Extracted {} to {}".format(instance, dirname))
+        self.log.debug("Extracted {} to {}".format(instance, dirname))
 
         cmds.select(clear=True)

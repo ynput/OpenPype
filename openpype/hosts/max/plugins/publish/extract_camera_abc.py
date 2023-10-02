@@ -1,21 +1,14 @@
 import os
+
 import pyblish.api
-from openpype.pipeline import (
-    publish,
-    OptionalPyblishPluginMixin
-)
 from pymxs import runtime as rt
-from openpype.hosts.max.api import (
-    maintained_selection,
-    get_all_children
-)
+
+from openpype.hosts.max.api import maintained_selection
+from openpype.pipeline import OptionalPyblishPluginMixin, publish
 
 
-class ExtractCameraAlembic(publish.Extractor,
-                           OptionalPyblishPluginMixin):
-    """
-    Extract Camera with AlembicExport
-    """
+class ExtractCameraAlembic(publish.Extractor, OptionalPyblishPluginMixin):
+    """Extract Camera with AlembicExport."""
 
     order = pyblish.api.ExtractorOrder - 0.1
     label = "Extract Alembic Camera"
@@ -29,8 +22,6 @@ class ExtractCameraAlembic(publish.Extractor,
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
-        container = instance.data["instance_node"]
-
         self.log.info("Extracting Camera ...")
 
         stagingdir = self.staging_dir(instance)
@@ -38,38 +29,36 @@ class ExtractCameraAlembic(publish.Extractor,
         path = os.path.join(stagingdir, filename)
 
         # We run the render
-        self.log.info("Writing alembic '%s' to '%s'" % (filename,
-                                                        stagingdir))
+        self.log.info(f"Writing alembic '{filename}' to '{stagingdir}'")
 
-        export_cmd = (
-            f"""
-AlembicExport.ArchiveType = #ogawa
-AlembicExport.CoordinateSystem = #maya
-AlembicExport.StartFrame = {start}
-AlembicExport.EndFrame = {end}
-AlembicExport.CustomAttributes = true
-
-exportFile @"{path}" #noPrompt selectedOnly:on using:AlembicExport
-
-            """)
-
-        self.log.debug(f"Executing command: {export_cmd}")
+        rt.AlembicExport.ArchiveType = rt.Name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.Name("maya")
+        rt.AlembicExport.StartFrame = start
+        rt.AlembicExport.EndFrame = end
+        rt.AlembicExport.CustomAttributes = True
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.execute(export_cmd)
+            node_list = instance.data["members"]
+            rt.Select(node_list)
+            rt.ExportFile(
+                path,
+                rt.Name("noPrompt"),
+                selectedOnly=True,
+                using=rt.AlembicExport,
+            )
 
         self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
-            'name': 'abc',
-            'ext': 'abc',
-            'files': filename,
+            "name": "abc",
+            "ext": "abc",
+            "files": filename,
             "stagingDir": stagingdir,
+            "frameStart": start,
+            "frameEnd": end,
         }
         instance.data["representations"].append(representation)
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
-                                                          path))
+        self.log.info(f"Extracted instance '{instance.name}' to: {path}")

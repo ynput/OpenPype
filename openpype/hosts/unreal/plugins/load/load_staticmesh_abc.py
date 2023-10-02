@@ -4,7 +4,7 @@ import os
 
 from openpype.pipeline import (
     get_representation_path,
-    AVALON_CONTAINER_ID
+    AYON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
@@ -75,15 +75,17 @@ class StaticMeshAlembicLoader(plugin.Loader):
             list(str): list of container content
 
         """
-        # Create directory for asset and OpenPype container
-        root = "/Game/OpenPype/Assets"
+        # Create directory for asset and Ayon container
+        root = "/Game/Ayon/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
-        if asset:
-            asset_name = "{}_{}".format(asset, name)
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
+        version = context.get('version')
+        # Check if version is hero version and use different name
+        if not version.get("name") and version.get('type') == "hero_version":
+            name_version = f"{name}_hero"
         else:
-            asset_name = "{}".format(name)
-        version = context.get('version').get('name')
+            name_version = f"{name}_v{version.get('name'):03d}"
 
         default_conversion = False
         if options.get("default_conversion"):
@@ -91,15 +93,16 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/{asset}/{name}_v{version:03d}", suffix="")
+            f"{root}/{asset}/{name_version}", suffix="")
 
         container_name += suffix
 
         if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
             unreal.EditorAssetLibrary.make_directory(asset_dir)
 
+            path = self.filepath_from_context(context)
             task = self.get_task(
-                self.fname, asset_dir, asset_name, False, default_conversion)
+                path, asset_dir, asset_name, False, default_conversion)
 
             unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
@@ -108,8 +111,8 @@ class StaticMeshAlembicLoader(plugin.Loader):
                 container=container_name, path=asset_dir)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,
@@ -119,8 +122,7 @@ class StaticMeshAlembicLoader(plugin.Loader):
             "parent": context["representation"]["parent"],
             "family": context["representation"]["context"]["family"]
         }
-        unreal_pipeline.imprint(
-            "{}/{}".format(asset_dir, container_name), data)
+        unreal_pipeline.imprint(f"{asset_dir}/{container_name}", data)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True
@@ -136,7 +138,7 @@ class StaticMeshAlembicLoader(plugin.Loader):
         source_path = get_representation_path(representation)
         destination_path = container["namespace"]
 
-        task = self.get_task(source_path, destination_path, name, True)
+        task = self.get_task(source_path, destination_path, name, True, False)
 
         # do import fbx and replace existing data
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])

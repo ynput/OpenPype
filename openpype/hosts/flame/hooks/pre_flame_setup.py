@@ -6,13 +6,10 @@ import socket
 from pprint import pformat
 
 from openpype.lib import (
-    PreLaunchHook,
     get_openpype_username,
     run_subprocess,
 )
-from openpype.lib.applications import (
-    ApplicationLaunchFailed
-)
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 from openpype.hosts import flame as opflame
 
 
@@ -22,11 +19,12 @@ class FlamePrelaunch(PreLaunchHook):
     Will make sure flame_script_dirs are copied to user's folder defined
     in environment var FLAME_SCRIPT_DIR.
     """
-    app_groups = ["flame"]
+    app_groups = {"flame"}
     permissions = 0o777
 
     wtc_script_path = os.path.join(
         opflame.HOST_DIR, "api", "scripts", "wiretap_com.py")
+    launch_types = {LaunchTypes.local}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,6 +44,17 @@ class FlamePrelaunch(PreLaunchHook):
         project_settings = self.data["project_settings"]
 
         imageio_flame = project_settings["flame"]["imageio"]
+
+        # Check whether 'enabled' key from host imageio settings exists
+        # so we can tell if host is using the new colormanagement framework.
+        # If the 'enabled' isn't found we want 'colormanaged' set to True
+        # because prior to the key existing we always did colormanagement for
+        # Flame
+        colormanaged = imageio_flame.get("enabled")
+        # if key was not found, set to True
+        # ensuring backward compatibility
+        if colormanaged is None:
+            colormanaged = True
 
         # get user name and host name
         user_name = get_openpype_username()
@@ -68,9 +77,7 @@ class FlamePrelaunch(PreLaunchHook):
             "FrameWidth": int(width),
             "FrameHeight": int(height),
             "AspectRatio": float((width / height) * _db_p_data["pixelAspect"]),
-            "FrameRate": self._get_flame_fps(fps),
-            "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
-            "FieldDominance": str(imageio_flame["project"]["fieldDominance"])
+            "FrameRate": self._get_flame_fps(fps)
         }
 
         data_to_script = {
@@ -78,13 +85,22 @@ class FlamePrelaunch(PreLaunchHook):
             "host_name": _env.get("FLAME_WIRETAP_HOSTNAME") or hostname,
             "volume_name": volume_name,
             "group_name": _env.get("FLAME_WIRETAP_GROUP"),
-            "color_policy": str(imageio_flame["project"]["colourPolicy"]),
 
             # from project
             "project_name": project_name,
             "user_name": user_name,
             "project_data": project_data
         }
+
+        # add color management data
+        if colormanaged:
+            project_data.update({
+                "FrameDepth": str(imageio_flame["project"]["frameDepth"]),
+                "FieldDominance": str(
+                    imageio_flame["project"]["fieldDominance"])
+            })
+            data_to_script["color_policy"] = str(
+                imageio_flame["project"]["colourPolicy"])
 
         self.log.info(pformat(dict(_env)))
         self.log.info(pformat(data_to_script))

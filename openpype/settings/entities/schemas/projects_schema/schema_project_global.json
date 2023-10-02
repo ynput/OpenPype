@@ -6,11 +6,75 @@
     "is_file": true,
     "children": [
         {
+            "type": "dict",
+            "key": "version_start_category",
+            "label": "Version Start",
+            "collapsible": true,
+            "collapsible_key": true,
+            "children": [
+                {
+                  "type": "list",
+                  "collapsible": true,
+                  "key": "profiles",
+                  "label": "Profiles",
+                  "object_type": {
+                      "type": "dict",
+                      "children": [
+                          {
+                              "key": "host_names",
+                              "label": "Host names",
+                              "type": "hosts-enum",
+                              "multiselection": true
+                          },
+                          {
+                              "key": "task_types",
+                              "label": "Task types",
+                              "type": "task-types-enum"
+                          },
+                          {
+                              "key": "task_names",
+                              "label": "Task names",
+                              "type": "list",
+                              "object_type": "text"
+                          },
+                          {
+                              "key": "families",
+                              "label": "Families",
+                              "type": "list",
+                              "object_type": "text"
+                          },
+                          {
+                              "key": "subsets",
+                              "label": "Subset names",
+                              "type": "list",
+                              "object_type": "text"
+                          },
+                          {
+                              "key": "version_start",
+                              "label": "Version Start",
+                              "type": "number",
+                              "minimum": 0
+                          }
+                      ]
+                  }
+                }
+            ]
+        },
+        {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management",
             "is_group": true,
             "children": [
+                {
+                    "type": "label",
+                    "label": "It's important to note that once color management is activated on a project, all hosts will be color managed by default. <br>The OpenColorIO (OCIO) config file is used either from the global settings or from the host's overrides. It's worth <br>noting that the order of the defined configuration paths matters, with higher priority given to paths listed earlier in <br>the configuration list.<br><br>To avoid potential issues, ensure that the OCIO configuration path is not an absolute path and includes at least <br>the root token (Anatomy). This helps ensure that the configuration path remains valid across different environments and <br>avoids any hard-coding of paths that may be specific to one particular system.<br><br><b><a href='https://ayon.ynput.io/docs/admin_colorspace' style=\"color:#00d6a1\";>Related documentation.</a></b>"
+                },
+                {
+                    "type": "boolean",
+                    "key": "activate_global_color_management",
+                    "label": "Enable Color Management"
+                },
                 {
                     "key": "ocio_config",
                     "type": "dict",
@@ -27,8 +91,44 @@
                     ]
                 },
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "key": "file_rules",
+                    "type": "dict",
+                    "label": "File Rules (OCIO v1 only)",
+                    "collapsible": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "activate_global_file_rules",
+                            "label": "Enable File Rules"
+                        },
+                        {
+                            "key": "rules",
+                            "label": "Rules",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "collapsible": false,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "pattern",
+                                        "label": "Regex pattern",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "colorspace",
+                                        "label": "Colorspace name",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "ext",
+                                        "label": "File extension",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
                 }
 
             ]
