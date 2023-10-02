@@ -6,7 +6,6 @@ from openpype.pipeline import publish
 from openpype.pipeline.publish import RenderInstance
 from openpype.hosts.fusion.api.lib import (
     get_frame_path,
-    get_current_comp,
 )
 
 
@@ -148,7 +147,7 @@ class CollectFusionRender(
         start = render_instance.frameStart - render_instance.handleStart
         end = render_instance.frameEnd + render_instance.handleEnd
 
-        comp = get_current_comp()
+        comp = render_instance.workfileComp
         path = comp.MapPath(
             render_instance.tool["Clip"][
                 render_instance.workfileComp.TIME_UNDEFINED
