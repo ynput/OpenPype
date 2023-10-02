@@ -221,8 +221,6 @@ class FusionSubmitDeadline(
             # these paths, such as if slaves are running Linux and the
             # submitter is on Windows.
             "PYTHONPATH",
-            "OFX_PLUGIN_PATH",
-            "FUSION9_MasterPrefs",
             "FTRACK_API_KEY",
             "FTRACK_API_USER",
             "FTRACK_SERVER",
