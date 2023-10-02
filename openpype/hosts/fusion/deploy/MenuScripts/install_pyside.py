@@ -14,6 +14,8 @@ try:
     print("Qt library found, nothing to do..")
 
 except Exception:
+    # app is a predefined variable for menu scripts
+    app = app  # noqa: F821
     fusion_version = int(app.Version)
     fusion_python_home, _ = FUSION_VERSIONS_DICT.get(fusion_version)
     fusion_python_home = os.environ.get(fusion_python_home)
