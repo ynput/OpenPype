@@ -22,12 +22,11 @@ class RenderProduct(object):
 
 
 class ARenderProduct(object):
-
     def __init__(self):
         """Constructor."""
         # Initialize
         self.layer_data = self._get_layer_data()
-        self.layer_data.products = self.get_colorspace_data()
+        self.layer_data.products = self.get_render_products()
 
     def _get_layer_data(self):
         scene = bpy.context.scene
@@ -37,7 +36,7 @@ class ARenderProduct(object):
             frameEnd=int(scene.frame_end),
         )
 
-    def get_colorspace_data(self):
+    def get_render_products(self):
         """To be implemented by renderer class.
         This should return a list of RenderProducts.
         Returns:
