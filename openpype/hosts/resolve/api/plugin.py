@@ -291,17 +291,17 @@ class ClipLoader:
     active_bin = None
     data = dict()
 
-    def __init__(self, cls, context, path, **options):
+    def __init__(self, loader_obj, context, path, **options):
         """ Initialize object
 
         Arguments:
-            cls (openpype.pipeline.load.LoaderPlugin): plugin object
+            loader_obj (openpype.pipeline.load.LoaderPlugin): plugin object
             context (dict): loader plugin context
             options (dict)[optional]: possible keys:
                 projectBinPath: "path/to/binItem"
 
         """
-        self.__dict__.update(cls.__dict__)
+        self.__dict__.update(loader_obj.__dict__)
         self.context = context
         self.active_project = lib.get_current_project()
         self.fname = path
@@ -319,23 +319,29 @@ class ClipLoader:
 
         # inject asset data to representation dict
         self._get_asset_data()
-        print("__init__ self.data: `{}`".format(self.data))
 
         # add active components to class
         if self.new_timeline:
-            if options.get("timeline"):
+            loader_cls = loader_obj.__class__
+            if loader_cls.timeline:
                 # if multiselection is set then use options sequence
-                self.active_timeline = options["timeline"]
+                self.active_timeline = loader_cls.timeline
             else:
                 # create new sequence
-                self.active_timeline = (
-                    lib.get_current_timeline() or
-                    lib.get_new_timeline()
+                self.active_timeline = lib.get_new_timeline(
+                    "{}_{}_{}".format(
+                        self.subset,
+                        self.representation,
+                        str(uuid.uuid4())[:8]
+                    )
                 )
+                loader_cls.timeline = self.active_timeline
+
+            print(self.active_timeline.GetName())
         else:
             self.active_timeline = lib.get_current_timeline()
 
-        cls.timeline = self.active_timeline
+
 
     def _populate_data(self):
         """ Gets context and convert it to self.data
@@ -349,10 +355,14 @@ class ClipLoader:
         # create name
         repr = self.context["representation"]
         repr_cntx = repr["context"]
-        asset = str(repr_cntx["asset"])
-        subset = str(repr_cntx["subset"])
-        representation = str(repr_cntx["representation"])
-        self.data["clip_name"] = "_".join([asset, subset, representation])
+        self.asset = str(repr_cntx["asset"])
+        self.subset = str(repr_cntx["subset"])
+        self.representation = str(repr_cntx["representation"])
+        self.data["clip_name"] = "_".join([
+            self.asset,
+            self.subset,
+            self.representation
+        ])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
         file = self.fname
@@ -367,7 +377,7 @@ class ClipLoader:
         hierarchy = str("/".join((
             "Loader",
             repr_cntx["hierarchy"].replace("\\", "/"),
-            asset
+            self.asset
         )))
 
         self.data["binPath"] = hierarchy

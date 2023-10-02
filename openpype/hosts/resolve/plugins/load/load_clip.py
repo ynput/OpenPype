@@ -48,12 +48,6 @@ class LoadClip(plugin.TimelineItemLoader):
 
     def load(self, context, name, namespace, options):
 
-        # in case loader uses multiselection
-        if self.timeline:
-            options.update({
-                "timeline": self.timeline,
-            })
-
         # load clip to timeline and get main variables
         path = self.filepath_from_context(context)
         timeline_item = plugin.ClipLoader(
