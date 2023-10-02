@@ -424,17 +424,25 @@ class TextDef(AbstractAttrDef):
 
 
 class EnumDef(AbstractAttrDef):
-    """Enumeration of single item from items.
+    """Enumeration of items.
+
+    Enumeration of single item from items. Or list of items if multiselection
+    is enabled.
 
     Args:
-        items: Items definition that can be converted using
-            'prepare_enum_items'.
-        default: Default value. Must be one key(value) from passed items.
+        items (Union[list[str], list[dict[str, Any]]): Items definition that
+            can be converted using 'prepare_enum_items'.
+        default (Optional[Any]): Default value. Must be one key(value) from
+            passed items or list of values for multiselection.
+        multiselection (Optional[bool]): If True, multiselection is allowed.
+            Output is list of selected items.
     """
 
     type = "enum"
 
-    def __init__(self, key, items, default=None, **kwargs):
+    def __init__(
+        self, key, items, default=None, multiselection=False, **kwargs
+    ):
         if not items:
             raise ValueError((
                 "Empty 'items' value. {} must have"
@@ -443,30 +451,44 @@ class EnumDef(AbstractAttrDef):
 
         items = self.prepare_enum_items(items)
         item_values = [item["value"] for item in items]
-        if default not in item_values:
-            for value in item_values:
-                default = value
-                break
+        item_values_set = set(item_values)
+        if multiselection:
+            if default is None:
+                default = []
+            default = list(item_values_set.intersection(default))
+
+        elif default not in item_values:
+            default = next(iter(item_values), None)
 
         super(EnumDef, self).__init__(key, default=default, **kwargs)
 
         self.items = items
-        self._item_values = set(item_values)
+        self._item_values = item_values_set
+        self.multiselection = multiselection
 
     def __eq__(self, other):
         if not super(EnumDef, self).__eq__(other):
             return False
 
-        return self.items == other.items
+        return (
+            self.items == other.items
+            and self.multiselection == other.multiselection
+        )
 
     def convert_value(self, value):
-        if value in self._item_values:
-            return value
-        return self.default
+        if not self.multiselection:
+            if value in self._item_values:
+                return value
+            return self.default
+
+        if value is None:
+            return copy.deepcopy(self.default)
+        return list(self._item_values.intersection(value))
 
     def serialize(self):
         data = super(EnumDef, self).serialize()
         data["items"] = copy.deepcopy(self.items)
+        data["multiselection"] = self.multiselection
         return data
 
     @staticmethod

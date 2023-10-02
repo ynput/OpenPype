@@ -24,7 +24,7 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
         instance.data["deadlineUrl"] = self._collect_deadline_url(instance)
         instance.data["deadlineUrl"] = \
             instance.data["deadlineUrl"].strip().rstrip("/")
-        self.log.info(
+        self.log.debug(
             "Using {} for submission.".format(instance.data["deadlineUrl"]))
 
     def _collect_deadline_url(self, render_instance):

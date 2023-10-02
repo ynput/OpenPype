@@ -189,10 +189,10 @@ A profile may generate multiple outputs from a single input. Each output must de
     - Profile filtering defines which group of output definitions is used but output definitions may require more specific filters on their own.
     - They may filter by subset name (regex can be used) or publish families. Publish families are more complex as are based on knowing code base.
     - Filtering by custom tags -> this is used for targeting to output definitions from other extractors using settings (at this moment only Nuke bake extractor can target using custom tags).
-        - Nuke extractor settings path: `project_settings/nuke/publish/ExtractReviewDataMov/outputs/baking/add_custom_tags`
+        - Nuke extractor settings path: `project_settings/nuke/publish/ExtractReviewIntermediates/outputs/baking/add_custom_tags`
     - Filtering by input length. Input may be video, sequence or single image. It is possible that `.mp4` should be created only when input is video or sequence and to create review `.png` when input is single frame. In some cases the output should be created even if it's single frame or multi frame input.
 
-    
+
 ### Extract Burnin
 
 Plugin is responsible for adding burnins into review representations.
@@ -226,13 +226,13 @@ A burnin profile may set multiple burnin outputs from one input. The burnin's na
 | **Bottom Centered** | Bottom center content. | str | "{username}" |
 | **Bottom Right** | Bottom right corner content. | str | "{frame_start}-{current_frame}-{frame_end}" |
 
-Each burnin profile can be configured with additional family filtering and can 
-add additional tags to the burnin representation, these can be configured under 
+Each burnin profile can be configured with additional family filtering and can
+add additional tags to the burnin representation, these can be configured under
 the profile's **Additional filtering** section.
 
 :::note Filename suffix
-The filename suffix is appended to filename of the source representation. For 
-example, if the source representation has suffix **"h264"** and the burnin 
+The filename suffix is appended to filename of the source representation. For
+example, if the source representation has suffix **"h264"** and the burnin
 suffix is **"client"** then the final suffix is **"h264_client"**.
 :::
 
@@ -342,6 +342,10 @@ Example could be Nuke where artist might want to temporarily render pictures int
 One of the key advantages of this feature is that it allows users to choose the folder for writing such intermediate files to take advantage of faster storage for rendering, which can help improve workflow efficiency. Additionally, this feature allows users to keep their intermediate extracted data persistent, and use their own infrastructure for regular cleaning.
 
 In some cases, these DCCs (Nuke, Houdini, Maya) automatically add a rendering path during the creation stage, which is then used in publishing. Creators and extractors of such DCCs need to use these profiles to fill paths in DCC's nodes to use this functionality.
+
+:::note
+Maya's setting `project_settings/maya/RenderSettings/default_render_image_folder` is be overwritten by the custom staging dir.
+:::
 
 The custom staging folder uses a path template configured in `project_anatomy/templates/others` with `transient` being a default example path that could be used. The template requires a 'folder' key for it to be usable as custom staging folder.
 

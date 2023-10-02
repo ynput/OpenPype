@@ -75,7 +75,7 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
         """
 
         meshes = cmds.ls(instance, type="mesh", long=True)
-        cls.log.info("meshes: {}".format(meshes))
+        cls.log.debug("meshes: {}".format(meshes))
         # load the glsl shader plugin
         cmds.loadPlugin("glslShader", quiet=True)
 
@@ -96,8 +96,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
                     cls.log.warning("ogsfx shader file "
                                     "not found in {}".format(ogsfx_path))
 
-                cls.log.info("Find the ogsfx shader file in "
-                             "default maya directory...")
+                cls.log.debug("Searching the ogsfx shader file in "
+                              "default maya directory...")
                 # re-direct to search the ogsfx path in maya_dir
                 ogsfx_path = os.getenv("MAYA_APP_DIR") + ogsfx_path
                 if not os.path.exists(ogsfx_path):
@@ -130,8 +130,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
     @classmethod
     def pbs_shader_conversion(cls, main_shader, glsl):
 
-        cls.log.info("StringrayPBS detected "
-                     "-> Can do texture conversion")
+        cls.log.debug("StringrayPBS detected "
+                      "-> Can do texture conversion")
 
         for shader in main_shader:
             # get the file textures related to the PBS Shader
@@ -168,8 +168,8 @@ class ValidateGLSLMaterial(pyblish.api.InstancePlugin):
 
     @classmethod
     def arnold_shader_conversion(cls, main_shader, glsl):
-        cls.log.info("aiStandardSurface detected "
-                     "-> Can do texture conversion")
+        cls.log.debug("aiStandardSurface detected "
+                      "-> Can do texture conversion")
 
         for shader in main_shader:
             # get the file textures related to the PBS Shader
