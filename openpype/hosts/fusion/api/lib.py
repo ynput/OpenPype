@@ -21,6 +21,7 @@ from openpype.pipeline.context_tools import get_current_project_asset
 self = sys.modules[__name__]
 self._project = None
 
+
 def update_frame_range(start, end, comp=None, set_render_range=True,
                        handle_start=0, handle_end=0):
     """Set Fusion comp's start and end frame range
@@ -70,8 +71,8 @@ def set_asset_framerange():
     handle_start = asset_doc["data"]["handleStart"]
     handle_end = asset_doc["data"]["handleEnd"]
     update_frame_range(start, end, set_render_range=True,
-                        handle_start=handle_start,
-                        handle_end=handle_end)
+                       handle_start=handle_start,
+                       handle_end=handle_end)
 
 
 def set_asset_resolution():
@@ -133,8 +134,8 @@ def validate_comp_prefs(comp=None, force_repair=False):
         comp_value = comp_frame_format_prefs.get(comp_key)
         if asset_value != comp_value:
             invalid_msg = "{} {} should be {}".format(label,
-                                                           comp_value,
-                                                           asset_value)
+                                                      comp_value,
+                                                      asset_value)
             invalid.append(invalid_msg)
 
             if not force_repair:
@@ -166,7 +167,6 @@ def validate_comp_prefs(comp=None, force_repair=False):
         from . import menu
         from openpype.widgets import popup
         from openpype.style import load_stylesheet
-
         dialog = popup.Popup(parent=menu.menu)
         dialog.setWindowTitle("Fusion comp has invalid configuration")
 
