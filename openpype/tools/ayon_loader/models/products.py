@@ -79,10 +79,10 @@ def product_item_from_entity(
         "name": "fa.file-o",
         "color": get_default_entity_icon_color(),
     }
-    version_items = [
-        version_item_from_entity(version_entity)
+    version_items = {
+        version_entity["id"]: version_item_from_entity(version_entity)
         for version_entity in version_entities
-    ]
+    }
 
     return ProductItem(
         product_id=product_entity["id"],

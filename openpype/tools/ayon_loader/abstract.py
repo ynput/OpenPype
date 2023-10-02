@@ -108,18 +108,18 @@ class ProductItem:
             "group_name": self.group_name,
             "folder_id": self.folder_id,
             "folder_label": self.folder_label,
-            "version_items": [
-                version_item.to_data()
-                for version_item in self.version_items
-            ],
+            "version_items": {
+                version_id: version_item.to_data()
+                for version_id, version_item in self.version_items.items()
+            },
         }
 
     @classmethod
     def from_data(cls, data):
-        version_items = [
-            VersionItem.from_data(version)
-            for version in data["version_items"]
-        ]
+        version_items = {
+            version_id: VersionItem.from_data(version)
+            for version_id, version in data["version_items"].items()
+        }
         data["version_items"] = version_items
         return cls(**data)
 

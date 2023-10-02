@@ -139,7 +139,7 @@ class ProductsModel(QtGui.QStandardItemModel):
             product_item = self._product_items_by_id.get(product_id)
             if product_item is None:
                 return None
-            return product_item.version_items
+            return list(product_item.version_items.values())
 
         if role == QtCore.Qt.EditRole:
             return None
@@ -193,8 +193,8 @@ class ProductsModel(QtGui.QStandardItemModel):
             product_id = index.data(PRODUCT_ID_ROLE)
             product_item = self._product_items_by_id[product_id]
             final_version_item = None
-            for version_item in product_item.version_items:
-                if version_item.version_id == value:
+            for v_id, version_item in product_item.version_items.items():
+                if v_id == value:
                     final_version_item = version_item
                     break
 
@@ -277,7 +277,7 @@ class ProductsModel(QtGui.QStandardItemModel):
 
     def _get_product_model_item(self, product_item):
         model_item = self._items_by_id.get(product_item.product_id)
-        versions = list(product_item.version_items)
+        versions = list(product_item.version_items.values())
         versions.sort()
         last_version = versions[-1]
         if model_item is None:
