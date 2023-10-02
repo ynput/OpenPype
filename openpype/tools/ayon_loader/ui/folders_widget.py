@@ -24,17 +24,17 @@ elif qtpy.API == "pyqt4":
 UNDERLINE_COLORS_ROLE = QtCore.Qt.UserRole + 4
 
 
-class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
-    """Item delegate drawing bars under asset name.
+class UnderlinesFolderDelegate(QtWidgets.QItemDelegate):
+    """Item delegate drawing bars under folder label.
 
-    This is used in loader and library loader tools. Multiselection of assets
-    may group subsets by name under colored groups. Selected color groups are
-    then propagated back to selected assets as underlines.
+    This is used in loader tool. Multiselection of folders
+    may group products by name under colored groups. Selected color groups are
+    then propagated back to selected folders as underlines.
     """
     bar_height = 3
 
     def __init__(self, *args, **kwargs):
-        super(UnderlinesAssetDelegate, self).__init__(*args, **kwargs)
+        super(UnderlinesFolderDelegate, self).__init__(*args, **kwargs)
         colors = get_objected_colors("loader", "asset-view")
         self._selected_color = colors["selected"].get_qcolor()
         self._hover_color = colors["hover"].get_qcolor()
@@ -42,7 +42,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
 
     def sizeHint(self, option, index):
         """Add bar height to size hint."""
-        result = super(UnderlinesAssetDelegate, self).sizeHint(option, index)
+        result = super(UnderlinesFolderDelegate, self).sizeHint(option, index)
         height = result.height()
         result.setHeight(height + self.bar_height)
 
@@ -60,6 +60,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
         item_rect.setHeight(option.rect.height() - self.bar_height)
 
         subset_colors = index.data(UNDERLINE_COLORS_ROLE) or []
+
         subset_colors_width = 0
         if subset_colors:
             subset_colors_width = option.rect.width() / len(subset_colors)
@@ -70,7 +71,7 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
             new_color = None
             new_rect = None
             if subset_c:
-                new_color = QtGui.QColor(*subset_c)
+                new_color = QtGui.QColor(subset_c)
 
                 new_rect = QtCore.QRect(
                     option.rect.left() + (counter * subset_colors_width),
@@ -185,6 +186,11 @@ class UnderlinesAssetDelegate(QtWidgets.QItemDelegate):
 
 
 class LoaderFoldersModel(FoldersModel):
+    def __init__(self, *args, **kwargs):
+        super(LoaderFoldersModel, self).__init__(*args, **kwargs)
+
+        self._colored_items = set()
+
     def _fill_item_data(self, item, folder_item):
         """
 
@@ -194,6 +200,38 @@ class LoaderFoldersModel(FoldersModel):
         """
 
         super(LoaderFoldersModel, self)._fill_item_data(item, folder_item)
+
+    def set_merged_products_selection(self, items):
+        changes = {
+            folder_id: None
+            for folder_id in self._colored_items
+        }
+
+        all_folder_ids = set()
+        for item in items:
+            folder_ids = item["folder_ids"]
+            all_folder_ids.update(folder_ids)
+
+        for folder_id in all_folder_ids:
+            changes[folder_id] = []
+
+        for item in items:
+            item_color = item["color"]
+            item_folder_ids = item["folder_ids"]
+            for folder_id in all_folder_ids:
+                folder_color = (
+                    item_color
+                    if folder_id in item_folder_ids
+                    else None
+                )
+                changes[folder_id].append(folder_color)
+
+        for folder_id, color_value in changes.items():
+            item = self._items_by_id.get(folder_id)
+            if item is not None:
+                item.setData(color_value, UNDERLINE_COLORS_ROLE)
+
+        self._colored_items = all_folder_ids
 
 
 class LoaderFoldersWidget(QtWidgets.QWidget):
@@ -238,7 +276,10 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
         folders_proxy_model = RecursiveSortFilterProxyModel()
         folders_proxy_model.setSourceModel(folders_model)
 
+        folders_label_delegate = UnderlinesFolderDelegate(folders_view)
+
         folders_view.setModel(folders_proxy_model)
+        folders_view.setItemDelegate(folders_label_delegate)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -270,6 +311,7 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
         self._folders_view = folders_view
         self._folders_model = folders_model
         self._folders_proxy_model = folders_proxy_model
+        self._folders_label_delegate = folders_label_delegate
 
         self._handle_expected_selection = handle_expected_selection
         self._expected_selection = None
@@ -282,6 +324,16 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
         """
 
         self._folders_proxy_model.setFilterFixedString(name)
+
+    def set_merged_products_selection(self, items):
+        """
+
+        Args:
+            items (list[dict[str, Any]]): List of merged items with folder
+                ids.
+        """
+
+        self._folders_model.set_merged_products_selection(items)
 
     def _on_project_selection_change(self, event):
         project_name = event["project_name"]

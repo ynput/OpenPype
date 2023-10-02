@@ -8,8 +8,9 @@ from openpype.tools.ayon_utils.widgets import get_qt_icon
 PRODUCTS_MODEL_SENDER_NAME = "qt_products_model"
 
 GROUP_TYPE_ROLE = QtCore.Qt.UserRole + 1
-FOLDER_LABEL_ROLE = QtCore.Qt.UserRole + 2
-FOLDER_ID_ROLE = QtCore.Qt.UserRole + 3
+MERGED_COLOR_ROLE = QtCore.Qt.UserRole + 2
+FOLDER_LABEL_ROLE = QtCore.Qt.UserRole + 3
+FOLDER_ID_ROLE = QtCore.Qt.UserRole + 4
 PRODUCT_ID_ROLE = QtCore.Qt.UserRole + 5
 PRODUCT_NAME_ROLE = QtCore.Qt.UserRole + 6
 PRODUCT_TYPE_ROLE = QtCore.Qt.UserRole + 7
@@ -80,6 +81,7 @@ class ProductsModel(QtGui.QStandardItemModel):
         self._product_items_by_id = {}
         self._grouping_enabled = False
         self._reset_merge_color = False
+        self._color_iterator = self._color_iter()
 
         self._last_project_name = None
         self._last_folder_ids = []
@@ -206,7 +208,7 @@ class ProductsModel(QtGui.QStandardItemModel):
         return super(ProductsModel, self).setData(index, value, role)
 
     def _get_next_color(self):
-        return next(self._color_iter())
+        return next(self._color_iterator)
 
     def _color_iter(self):
         while True:
@@ -236,11 +238,12 @@ class ProductsModel(QtGui.QStandardItemModel):
             self._group_items_by_name[group_name] = model_item
         return model_item
 
-    def _get_merged_model_item(self, path, count):
+    def _get_merged_model_item(self, path, count, hex_color):
         model_item = self._merged_items_by_id.get(path)
         if model_item is None:
             model_item = QtGui.QStandardItem()
             model_item.setData(1, GROUP_TYPE_ROLE)
+            model_item.setData(hex_color, MERGED_COLOR_ROLE)
             model_item.setEditable(False)
             model_item.setColumnCount(self.columnCount())
             self._merged_items_by_id[path] = model_item
@@ -372,7 +375,7 @@ class ProductsModel(QtGui.QStandardItemModel):
                 merged_color = qtawesome.icon(
                     "fa.circle", color=merged_color_qt)
                 merged_item = self._get_merged_model_item(
-                    path, len(product_items))
+                    path, len(product_items), merged_color_hex)
                 merged_item.setData(merged_color, QtCore.Qt.DecorationRole)
                 new_items.append(merged_item)
 

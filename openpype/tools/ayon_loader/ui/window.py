@@ -100,7 +100,11 @@ class LoaderWindow(QtWidgets.QWidget):
             self._on_product_filter_change
         )
         product_group_checkbox.stateChanged.connect(
-            self._on_product_group_change)
+            self._on_product_group_change
+        )
+        products_widget.merged_products_selection_changed.connect(
+            self._on_merged_products_selection_change
+        )
 
         self._projects_combobox = projects_combobox
 
@@ -164,3 +168,7 @@ class LoaderWindow(QtWidgets.QWidget):
         self._products_widget.set_product_type_filter(
             self._product_types_widget.get_filter_info()
         )
+
+    def _on_merged_products_selection_change(self):
+        items = self._products_widget.get_merged_products_selection()
+        self._folders_widget.set_merged_products_selection(items)

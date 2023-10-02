@@ -24,6 +24,8 @@ from .products_model import (
     PRODUCTS_MODEL_SENDER_NAME,
     PRODUCT_TYPE_ROLE,
     GROUP_TYPE_ROLE,
+    MERGED_COLOR_ROLE,
+    FOLDER_ID_ROLE,
     PRODUCT_ID_ROLE,
     VERSION_ID_ROLE,
 )
@@ -83,6 +85,7 @@ class ProductsProxyModel(RecursiveSortFilterProxyModel):
 
 
 class ProductsWidget(QtWidgets.QWidget):
+    merged_products_selection_changed = QtCore.Signal()
     default_widths = (
         200,  # Product name
         90,   # Product type
@@ -143,6 +146,8 @@ class ProductsWidget(QtWidgets.QWidget):
         products_model.refreshed.connect(self._on_refresh)
         products_view.customContextMenuRequested.connect(
             self._on_context_menu)
+        products_view.selectionModel().selectionChanged.connect(
+            self._on_selection_change)
 
         controller.register_event_callback(
             "selection.folders.changed",
@@ -171,6 +176,8 @@ class ProductsWidget(QtWidgets.QWidget):
         self._selected_project_name = None
         self._selected_folder_ids = set()
 
+        self._selected_merged_products = []
+
         # Set initial state of widget
         self._update_folders_label_visible()
 
@@ -197,6 +204,9 @@ class ProductsWidget(QtWidgets.QWidget):
 
     def set_enable_grouping(self, enable_grouping):
         self._products_model.set_enable_grouping(enable_grouping)
+
+    def get_merged_products_selection(self):
+        return self._selected_merged_products
 
     def _fill_version_editor(self):
         model = self._products_proxy_model
@@ -313,6 +323,48 @@ class ProductsWidget(QtWidgets.QWidget):
             action_item.version_ids,
             action_item.representation_ids,
         )
+
+    def _on_selection_change(self):
+        selected_merged_products = []
+        selection_model = self._products_view.selectionModel()
+        model = self._products_view.model()
+        indexes_queue = collections.deque()
+        indexes_queue.extend(selection_model.selectedIndexes())
+        while indexes_queue:
+            index = indexes_queue.popleft()
+            if index.column() != 0:
+                continue
+
+            group_type = model.data(index, GROUP_TYPE_ROLE)
+            if group_type == 0:
+                for row in range(model.rowCount(index)):
+                    child_index = model.index(row, 0, index)
+                    indexes_queue.append(child_index)
+                continue
+
+            if group_type != 1:
+                continue
+
+            item_folder_ids = set()
+            for row in range(model.rowCount(index)):
+                child_index = model.index(row, 0, index)
+                folder_id = model.data(child_index, FOLDER_ID_ROLE)
+                item_folder_ids.add(folder_id)
+
+            if not item_folder_ids:
+                continue
+
+            hex_color = model.data(index, MERGED_COLOR_ROLE)
+            item_data = {
+                "color": hex_color,
+                "folder_ids": item_folder_ids
+            }
+            selected_merged_products.append(item_data)
+
+        prev_selected_merged_products = self._selected_merged_products
+        self._selected_merged_products = selected_merged_products
+        if selected_merged_products != prev_selected_merged_products:
+            self.merged_products_selection_changed.emit()
 
     def _get_options(self, action, action_item, parent):
         """Provides dialog to select value from loader provided options.
