@@ -213,7 +213,8 @@ class PypeCommands:
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant, timeout, setup_only):
+                  test_data_folder, persist, app_variant, timeout, setup_only,
+                  openpype_mongo):
         """
             Runs tests from 'folder'
 
@@ -263,6 +264,15 @@ class PypeCommands:
 
         if setup_only:
             args.extend(["--setup_only", setup_only])
+
+        if openpype_mongo:
+            args.extend(["--openpype_mongo", openpype_mongo])
+        else:
+            msg = (
+                "Either provide uri to MongoDB through environment variable"
+                " OPENPYPE_MONGO or the command flag --openpype_mongo"
+            )
+            assert not os.environ.get("OPENPYPE_MONGO"), msg
 
         print("run_tests args: {}".format(args))
         import pytest

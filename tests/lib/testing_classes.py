@@ -40,7 +40,7 @@ class ModuleUnitTest(BaseTest):
     """
     PERSIST = False  # True to not purge temporary folder nor test DB
 
-    TEST_OPENPYPE_MONGO = "mongodb://localhost:27017"
+    OPENPYPE_MONGO = "mongodb://localhost:27017"
     TEST_DB_NAME = "avalon_tests"
     TEST_PROJECT_NAME = "test_project"
     TEST_OPENPYPE_NAME = "openpype_tests"
@@ -147,11 +147,11 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def db_setup(self, download_test_data, env_var, monkeypatch_session,
-                 request):
+                 request, openpype):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
 
-        uri = os.environ.get("OPENPYPE_MONGO")
+        uri = os.environ.get("OPENPYPE_MONGO", openpype)
         db_handler = DBHandler(uri)
         db_handler.setup_from_dump(self.TEST_DB_NAME, backup_dir,
                                    overwrite=True,
