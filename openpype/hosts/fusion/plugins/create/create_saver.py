@@ -50,7 +50,7 @@ class CreateSaver(NewCreator):
 
         instance_data.update({
             "id": "pyblish.avalon.instance",
-            "subset": subset_name,
+            "subset": subset_name
         })
 
         # TODO: Add pre_create attributes to choose file format?

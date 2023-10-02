@@ -9,7 +9,6 @@ from openpype.hosts.fusion.api import (
 )
 from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
 
-
 comp = get_current_comp()
 
 
