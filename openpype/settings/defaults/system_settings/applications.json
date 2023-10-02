@@ -1172,7 +1172,8 @@
                     "darwin": [],
                     "linux": []
                 },
-                "environment": {}
+                "environment": {},
+                "add_python_use_system_env": true
             },
             "2-90": {
                 "executables": {
@@ -1187,7 +1188,8 @@
                     "darwin": [],
                     "linux": []
                 },
-                "environment": {}
+                "environment": {},
+                "add_python_use_system_env": true
             },
             "2-91": {
                 "executables": {
@@ -1202,7 +1204,8 @@
                     "darwin": [],
                     "linux": []
                 },
-                "environment": {}
+                "environment": {},
+                "add_python_use_system_env": true
             },
             "__dynamic_keys_labels__": {
                 "2-83": "2.83",
@@ -1530,8 +1533,8 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "5-1": "Unreal 5.1",
-                "5-0": "Unreal 5.0"
+                "5-0": "Unreal 5.0",
+                "5-1": "Unreal 5.1"
             }
         }
     },

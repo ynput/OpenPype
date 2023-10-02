@@ -11,7 +11,24 @@ class AddPythonUseSystemEnvArg(PreLaunchHook):
 
     def execute(self):
 
+        add_var = self.get_application_setting("add_python_use_system_env",
+                                               default=True)
+        if not add_var:
+            return
+
         arg = "--python-use-system-env"
         if arg not in self.launch_context.launch_args:
             self.log.debug(f"Adding required {arg} argument")
             self.launch_context.launch_args.append(arg)
+        else:
+            self.log.debug(f"Required {arg} argument already provided before "
+                           f"this prelaunch hook.")
+
+    def get_application_setting(self, key, default=None):
+        app = self.launch_context.application
+        group_name = app.group.name
+        app_name = app.name
+        return (
+            self.data["system_settings"]["applications"][group_name]
+                     ["variants"][app_name].get(key, default)
+        )
