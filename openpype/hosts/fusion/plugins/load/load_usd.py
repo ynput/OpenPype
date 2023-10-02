@@ -29,7 +29,7 @@ class FusionLoadUSD(load.LoaderPlugin):
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
-        super(FusionLoadUSD, cls).apply_settings(project_settings, 
+        super(FusionLoadUSD, cls).apply_settings(project_settings,
                                                  system_settings)
         if cls.enabled:
             # Enable only in Fusion 18.5+
