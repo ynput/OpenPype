@@ -21,7 +21,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             return
 
         if "hierarchyContext" not in context.data:
-            self.log.info("skipping IntegrateHierarchyToAvalon")
+            self.log.debug("skipping ExtractHierarchyToAvalon")
             return
 
         if not legacy_io.Session:

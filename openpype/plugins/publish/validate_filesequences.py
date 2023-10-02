@@ -1,5 +1,7 @@
 import pyblish.api
 
+from openpype.pipeline.publish import PublishValidationError
+
 
 class ValidateFileSequences(pyblish.api.ContextPlugin):
     """Validates whether any file sequences were collected."""
@@ -10,4 +12,5 @@ class ValidateFileSequences(pyblish.api.ContextPlugin):
     label = "Validate File Sequences"
 
     def process(self, context):
-        assert context, "Nothing collected."
+        if not context:
+            raise PublishValidationError("Nothing collected.")

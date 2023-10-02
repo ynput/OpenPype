@@ -346,10 +346,10 @@
         }
     },
     "publish": {
-        "CollectFrameDataFromAssetEntity": {
+        "CollectSequenceFrameData": {
             "enabled": true,
             "optional": true,
-            "active": true
+            "active": false
         },
         "ValidateFrameRange": {
             "enabled": true,

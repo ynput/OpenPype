@@ -35,14 +35,11 @@ class CollectAssembly(pyblish.api.InstancePlugin):
         # Get all content from the instance
         instance_lookup = set(cmds.ls(instance, type="transform", long=True))
         data = defaultdict(list)
-        self.log.info(instance_lookup)
 
         hierarchy_nodes = []
         for container in containers:
 
-            self.log.info(container)
             root = lib.get_container_transforms(container, root=True)
-            self.log.info(root)
             if not root or root not in instance_lookup:
                 continue
 

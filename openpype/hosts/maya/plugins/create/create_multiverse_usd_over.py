@@ -6,7 +6,7 @@ from openpype.lib import (
 )
 
 
-class CreateMultiverseUsdOver(plugin.Creator):
+class CreateMultiverseUsdOver(plugin.MayaCreator):
     """Create Multiverse USD Override"""
 
     identifier = "io.openpype.creators.maya.mvusdoverride"

@@ -214,8 +214,16 @@ class BaseCreator:
             # Backwards compatibility for system settings
             self.apply_settings(project_settings, system_settings)
 
-        init_overriden = self.__class__.__init__ is not BaseCreator.__init__
-        if init_overriden or expect_system_settings:
+        init_use_base = any(
+            self.__class__.__init__ is cls.__init__
+            for cls in {
+                BaseCreator,
+                Creator,
+                HiddenCreator,
+                AutoCreator,
+            }
+        )
+        if not init_use_base or expect_system_settings:
             self.log.warning((
                 "WARNING: Source - Create plugin {}."
                 " System settings argument will not be passed to"

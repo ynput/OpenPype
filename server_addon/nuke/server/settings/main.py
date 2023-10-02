@@ -58,9 +58,7 @@ class NukeSettings(BaseSettingsModel):
         default_factory=ImageIOSettings,
         title="Color Management (imageio)",
     )
-    """# TODO: fix host api:
-    - rename  `nuke-dirmap` to `dirmap` was inevitable
-    """
+
     dirmap: DirmapSettings = Field(
         default_factory=DirmapSettings,
         title="Nuke Directory Mapping",
