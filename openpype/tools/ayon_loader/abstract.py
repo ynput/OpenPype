@@ -16,7 +16,9 @@ class VersionItem:
         duration,
         handles,
         step,
-        in_scene
+        in_scene,
+        comment,
+        source
     ):
         self.version_id = version_id
         self.product_id = product_id
@@ -30,6 +32,8 @@ class VersionItem:
         self.handles = handles
         self.step = step
         self.in_scene = in_scene
+        self.comment = comment
+        self.source = source
 
     def __eq__(self, other):
         if not isinstance(other, VersionItem):
@@ -68,6 +72,8 @@ class VersionItem:
             "handles": self.handles,
             "step": self.step,
             "in_scene": self.in_scene,
+            "comment": self.comment,
+            "source": self.source,
         }
 
     @classmethod
@@ -145,6 +151,14 @@ class ProductTypeItem:
 @six.add_metaclass(ABCMeta)
 class AbstractController:
     @abstractmethod
+    def emit_event(self, topic, data=None, source=None):
+        pass
+
+    @abstractmethod
+    def register_event_callback(self, topic, callback):
+        pass
+
+    @abstractmethod
     def get_current_project(self):
         pass
 
@@ -158,7 +172,58 @@ class AbstractController:
         pass
 
     @abstractmethod
+    def get_folder_items(self, project_name, sender=None):
+        pass
+
+    @abstractmethod
+    def get_product_items(self, project_name, folder_ids, sender=None):
+        pass
+
+    @abstractmethod
+    def get_product_item(self, project_name, folder_id, product_id):
+        """
+
+        Args:
+            project_name (str): Project name.
+            folder_id (str): Folder id.
+            product_id (str): Product id.
+
+        Returns:
+             Union[ProductItem, None]: Product info or None if not found.
+        """
+
+        pass
+
+    @abstractmethod
     def get_product_type_items(self, project_name):
+        pass
+
+    @abstractmethod
+    def get_folder_entity(self, project_name, folder_id):
+        pass
+
+    # Load action items
+    @abstractmethod
+    def get_versions_action_items(self, project_name, version_ids):
+        pass
+
+    @abstractmethod
+    def get_representations_action_items(
+        self, project_name, representation_ids
+    ):
+        pass
+
+    @abstractmethod
+    def trigger_action_item(
+        self,
+        identifier,
+        options,
+        project_name,
+        folder_ids,
+        product_ids,
+        version_ids,
+        representation_ids,
+    ):
         pass
 
     # Selection model wrapper calls
@@ -176,4 +241,8 @@ class AbstractController:
 
     @abstractmethod
     def set_selected_folders(self, folder_ids):
+        pass
+
+    @abstractmethod
+    def fill_root_in_source(self, source):
         pass

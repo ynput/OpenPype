@@ -22,6 +22,8 @@ def version_item_from_entity(version):
     handle_start = version_attribs.get("handleStart")
     handle_end = version_attribs.get("handleEnd")
     step = version_attribs.get("step")
+    comment = version_attribs.get("comment")
+    source = version_attribs.get("source")
 
     frame_range = None
     duration = None
@@ -59,6 +61,8 @@ def version_item_from_entity(version):
         handles=handles,
         step=step,
         in_scene=None,
+        comment=comment,
+        source=source,
     )
 
 
@@ -182,6 +186,13 @@ class ProductsModel:
             if data:
                 output.update(data)
         return output
+
+    def get_product_item(self, project_name, folder_id, product_id):
+        if not any((project_name, folder_id, product_id)):
+            return None
+        project_cache = self._product_items_cache[project_name]
+        product_items_by_folder_id = project_cache[folder_id].get_data()
+        return product_items_by_folder_id.get(product_id)
 
     def _refresh_product_items(self, project_name, folder_ids, sender):
         if not project_name or not folder_ids:

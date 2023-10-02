@@ -1,8 +1,12 @@
 import logging
 
 from openpype.lib.events import QueuedEventSystem
-
-from openpype.tools.ayon_utils.models import ProjectsModel, HierarchyModel
+from openpype.pipeline import Anatomy
+from openpype.tools.ayon_utils.models import (
+    ProjectsModel,
+    HierarchyModel,
+    NestedCacheItem,
+)
 
 from .abstract import AbstractController
 from .models import SelectionModel, ProductsModel, LoaderActionsModel
@@ -13,6 +17,7 @@ class LoaderController(AbstractController):
         self._log = None
         self._event_system = self._create_event_system()
 
+        self._project_anatomy_cache = NestedCacheItem(levels=1)
         self._selection_model = SelectionModel(self)
         self._projects_model = ProjectsModel(self)
         self._hierarchy_model = HierarchyModel(self)
@@ -59,6 +64,11 @@ class LoaderController(AbstractController):
     def get_product_items(self, project_name, folder_ids, sender=None):
         return self._products_model.get_product_items(
             project_name, folder_ids, sender)
+
+    def get_product_item(self, project_name, folder_id, product_id):
+        return self._products_model.get_product_item(
+            project_name, folder_id, product_id
+        )
 
     def get_product_type_items(self, project_name):
         return self._products_model.get_product_type_items(project_name)
@@ -108,6 +118,25 @@ class LoaderController(AbstractController):
 
     def set_selected_folders(self, folder_ids):
         self._selection_model.set_selected_folders(folder_ids)
+
+    def fill_root_in_source(self, source):
+        project_name = self.get_selected_project_name()
+        anatomy = self._get_project_anatomy(project_name)
+        if anatomy is None:
+            return source
+
+        try:
+            return anatomy.fill_root(source)
+        except Exception:
+            return source
+
+    def _get_project_anatomy(self, project_name):
+        if not project_name:
+            return None
+        cache = self._project_anatomy_cache[project_name]
+        if not cache.is_valid:
+            cache.update_data(Anatomy(project_name))
+        return cache.get_data()
 
     def _create_event_system(self):
         return QueuedEventSystem()

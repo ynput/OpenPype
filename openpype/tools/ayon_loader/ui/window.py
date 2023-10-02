@@ -9,6 +9,8 @@ from openpype.tools.ayon_loader.control import LoaderController
 from .folders_widget import LoaderFoldersWidget
 from .products_widget import ProductsWidget
 from .product_types_widget import ProductTypesView
+from .info_widget import InfoWidget
+from .repres_widget import RepresentationsWidget
 
 
 class LoaderWindow(QtWidgets.QWidget):
@@ -76,11 +78,23 @@ class LoaderWindow(QtWidgets.QWidget):
         products_wrap_layout.addWidget(products_inputs_widget, 0)
         products_wrap_layout.addWidget(products_widget, 1)
 
+        right_panel_splitter = QtWidgets.QSplitter(main_splitter)
+        right_panel_splitter.setOrientation(QtCore.Qt.Vertical)
+
+        info_widget = InfoWidget(controller, right_panel_splitter)
+
+        repre_widget = RepresentationsWidget(controller, right_panel_splitter)
+
+        right_panel_splitter.addWidget(info_widget)
+        right_panel_splitter.addWidget(repre_widget)
+
         main_splitter.addWidget(context_splitter)
         main_splitter.addWidget(products_wrap_widget)
+        main_splitter.addWidget(right_panel_splitter)
 
-        main_splitter.setStretchFactor(0, 3)
-        main_splitter.setStretchFactor(1, 7)
+        main_splitter.setStretchFactor(0, 4)
+        main_splitter.setStretchFactor(1, 6)
+        main_splitter.setStretchFactor(2, 1)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(main_splitter)
@@ -105,7 +119,11 @@ class LoaderWindow(QtWidgets.QWidget):
         products_widget.merged_products_selection_changed.connect(
             self._on_merged_products_selection_change
         )
+        products_widget.selection_changed.connect(
+            self._on_products_selection_change
+        )
 
+        self._main_splitter = main_splitter
         self._projects_combobox = projects_combobox
 
         self._folders_filter_input = folders_filter_input
@@ -116,6 +134,8 @@ class LoaderWindow(QtWidgets.QWidget):
         self._products_filter_input = products_filter_input
         self._product_group_checkbox = product_group_checkbox
         self._products_widget = products_widget
+
+        self._info_widget = info_widget
 
         self._controller = controller
         self._first_show = True
@@ -137,7 +157,8 @@ class LoaderWindow(QtWidgets.QWidget):
         #     self.resize(1800, 900)
         # else:
         #     self.resize(1300, 700)
-        self.resize(1300, 700)
+        self.resize(1800, 900)
+        self._main_splitter.setSizes([250, 1000, 550])
         self.setStyleSheet(load_stylesheet())
         self._controller.reset()
 
@@ -170,5 +191,12 @@ class LoaderWindow(QtWidgets.QWidget):
         )
 
     def _on_merged_products_selection_change(self):
-        items = self._products_widget.get_merged_products_selection()
+        items = self._products_widget.get_selected_merged_products()
         self._folders_widget.set_merged_products_selection(items)
+
+    def _on_products_selection_change(self):
+        items = self._products_widget.get_selected_version_info()
+        self._info_widget.set_selected_version_info(
+            self._projects_combobox.get_current_project_name(),
+            items
+        )

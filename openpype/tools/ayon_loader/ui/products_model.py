@@ -27,10 +27,12 @@ VERSION_HANDLES_ROLE = QtCore.Qt.UserRole + 17
 VERSION_STEP_ROLE = QtCore.Qt.UserRole + 18
 VERSION_IN_SCENE_ROLE = QtCore.Qt.UserRole + 19
 VERSION_AVAILABLE_ROLE = QtCore.Qt.UserRole + 20
+VERSION_THUMBNAIL_ID_ROLE = QtCore.Qt.UserRole + 21
 
 
 class ProductsModel(QtGui.QStandardItemModel):
     refreshed = QtCore.Signal()
+    version_changed = QtCore.Signal()
     column_labels = [
         "Product name",
         "Product type",
@@ -91,6 +93,18 @@ class ProductsModel(QtGui.QStandardItemModel):
             item.index()
             for item in self._items_by_id.values()
         ]
+
+    def get_product_item_by_id(self, product_id):
+        """
+
+        Args:
+            product_id (str): Product id.
+
+        Returns:
+            Union[ProductItem, None]: Product item with version information.
+        """
+
+        return self._product_items_by_id.get(product_id)
 
     def set_enable_grouping(self, enable_grouping):
         if enable_grouping is self._grouping_enabled:
@@ -204,6 +218,7 @@ class ProductsModel(QtGui.QStandardItemModel):
                 return True
             item = self.itemFromIndex(index)
             self._set_version_data_to_product_item(item, final_version_item)
+            self.version_changed.emit()
             return True
         return super(ProductsModel, self).setData(index, value, role)
 
@@ -274,6 +289,8 @@ class ProductsModel(QtGui.QStandardItemModel):
         model_item.setData(version_item.handles, VERSION_HANDLES_ROLE)
         model_item.setData(version_item.step, VERSION_STEP_ROLE)
         model_item.setData(version_item.in_scene, VERSION_IN_SCENE_ROLE)
+        model_item.setData(
+            version_item.thumbnail_id, VERSION_THUMBNAIL_ID_ROLE)
 
     def _get_product_model_item(self, product_item):
         model_item = self._items_by_id.get(product_item.product_id)

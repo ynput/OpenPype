@@ -28,6 +28,7 @@ from .products_model import (
     FOLDER_ID_ROLE,
     PRODUCT_ID_ROLE,
     VERSION_ID_ROLE,
+    VERSION_THUMBNAIL_ID_ROLE,
 )
 from .products_delegates import VersionDelegate
 
@@ -86,6 +87,8 @@ class ProductsProxyModel(RecursiveSortFilterProxyModel):
 
 class ProductsWidget(QtWidgets.QWidget):
     merged_products_selection_changed = QtCore.Signal()
+    selection_changed = QtCore.Signal()
+    version_changed = QtCore.Signal()
     default_widths = (
         200,  # Product name
         90,   # Product type
@@ -148,6 +151,7 @@ class ProductsWidget(QtWidgets.QWidget):
             self._on_context_menu)
         products_view.selectionModel().selectionChanged.connect(
             self._on_selection_change)
+        products_model.version_changed.connect(self._on_version_change)
 
         controller.register_event_callback(
             "selection.folders.changed",
@@ -177,6 +181,7 @@ class ProductsWidget(QtWidgets.QWidget):
         self._selected_folder_ids = set()
 
         self._selected_merged_products = []
+        self._selected_versions_info = []
 
         # Set initial state of widget
         self._update_folders_label_visible()
@@ -205,8 +210,11 @@ class ProductsWidget(QtWidgets.QWidget):
     def set_enable_grouping(self, enable_grouping):
         self._products_model.set_enable_grouping(enable_grouping)
 
-    def get_merged_products_selection(self):
+    def get_selected_merged_products(self):
         return self._selected_merged_products
+
+    def get_selected_version_info(self):
+        return self._selected_versions_info
 
     def _fill_version_editor(self):
         model = self._products_proxy_model
@@ -330,12 +338,35 @@ class ProductsWidget(QtWidgets.QWidget):
         model = self._products_view.model()
         indexes_queue = collections.deque()
         indexes_queue.extend(selection_model.selectedIndexes())
+
+        # Helper for 'version_items' to avoid duplicated items
+        all_product_ids = set()
+        # Version items contains information about selected version items
+        selected_versions_info = []
         while indexes_queue:
             index = indexes_queue.popleft()
             if index.column() != 0:
                 continue
 
             group_type = model.data(index, GROUP_TYPE_ROLE)
+            if group_type is None:
+                product_id = model.data(index, PRODUCT_ID_ROLE)
+                # Skip duplicates - when group and item are selected the item
+                #   would be in the loop multiple times
+                if product_id in all_product_ids:
+                    continue
+
+                all_product_ids.add(product_id)
+
+                thumbnail_id = model.data(index, VERSION_THUMBNAIL_ID_ROLE)
+                selected_versions_info.append({
+                    "folder_id": model.data(index, FOLDER_ID_ROLE),
+                    "product_id": product_id,
+                    "version_id": model.data(index, VERSION_ID_ROLE),
+                    "thumbnail_id": thumbnail_id,
+                })
+                continue
+
             if group_type == 0:
                 for row in range(model.rowCount(index)):
                     child_index = model.index(row, 0, index)
@@ -348,6 +379,8 @@ class ProductsWidget(QtWidgets.QWidget):
             item_folder_ids = set()
             for row in range(model.rowCount(index)):
                 child_index = model.index(row, 0, index)
+                indexes_queue.append(child_index)
+
                 folder_id = model.data(child_index, FOLDER_ID_ROLE)
                 item_folder_ids.add(folder_id)
 
@@ -363,8 +396,14 @@ class ProductsWidget(QtWidgets.QWidget):
 
         prev_selected_merged_products = self._selected_merged_products
         self._selected_merged_products = selected_merged_products
+        self._selected_versions_info = selected_versions_info
+
         if selected_merged_products != prev_selected_merged_products:
             self.merged_products_selection_changed.emit()
+        self.selection_changed.emit()
+
+    def _on_version_change(self):
+        self._on_selection_change()
 
     def _get_options(self, action, action_item, parent):
         """Provides dialog to select value from loader provided options.
