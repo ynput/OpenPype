@@ -23,7 +23,7 @@ class ResetXgenAttributes(pyblish.api.InstancePlugin):
         for palette, data in xgen_attributes.items():
             for attr, value in data.items():
                 node_attr = "{}.{}".format(palette, attr)
-                self.log.info(
+                self.log.debug(
                     "Setting \"{}\" on \"{}\"".format(value, node_attr)
                 )
                 cmds.setAttr(node_attr, value, type="string")
@@ -32,5 +32,5 @@ class ResetXgenAttributes(pyblish.api.InstancePlugin):
         # Need to save the scene, cause the attribute changes above does not
         # mark the scene as modified so user can exit without committing the
         # changes.
-        self.log.info("Saving changes.")
+        self.log.debug("Saving changes.")
         cmds.file(save=True)

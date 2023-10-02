@@ -39,5 +39,12 @@ class CollectCurrentContext(pyblish.api.ContextPlugin):
         #   - 'task' -> 'taskName'
 
         self.log.info((
-            "Collected project context\nProject: {}\nAsset: {}\nTask: {}"
-        ).format(project_name, asset_name, task_name))
+            "Collected project context\n"
+            "Project: {project_name}\n"
+            "Asset: {asset_name}\n"
+            "Task: {task_name}"
+        ).format(
+            project_name=context.data["projectName"],
+            asset_name=context.data["asset"],
+            task_name=context.data["task"]
+        ))

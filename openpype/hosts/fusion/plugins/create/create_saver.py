@@ -246,11 +246,7 @@ class CreateSaver(NewCreator):
             label="Review",
         )
 
-    def apply_settings(
-        self,
-        project_settings,
-        system_settings
-    ):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings

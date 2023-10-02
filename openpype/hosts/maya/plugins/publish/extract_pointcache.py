@@ -107,13 +107,14 @@ class ExtractAlembic(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        instance.context.data["cleanupFullPaths"].append(path)
+        if not instance.data.get("stagingDir_persistent", False):
+            instance.context.data["cleanupFullPaths"].append(path)
 
-        self.log.info("Extracted {} to {}".format(instance, dirname))
+        self.log.debug("Extracted {} to {}".format(instance, dirname))
 
         # Extract proxy.
         if not instance.data.get("proxy"):
-            self.log.info("No proxy nodes found. Skipping proxy extraction.")
+            self.log.debug("No proxy nodes found. Skipping proxy extraction.")
             return
 
         path = path.replace(".abc", "_proxy.abc")

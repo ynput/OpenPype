@@ -103,7 +103,7 @@ class FbxCameraLoader(plugin.AssetLoader):
         asset_group = bpy.data.objects.new(group_name, object_data=None)
         avalon_container.objects.link(asset_group)
 
-        objects = self._process(libpath, asset_group, group_name)
+        self._process(libpath, asset_group, group_name)
 
         objects = []
         nodes = list(asset_group.children)
