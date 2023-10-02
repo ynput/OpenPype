@@ -13,7 +13,7 @@ from openpype.lib import (
 from openpype.pipeline import (
     Creator as NewCreator,
     CreatedInstance,
-    Anatomy,
+    Anatomy
 )
 from openpype.client import (
     get_asset_by_name,
@@ -40,21 +40,18 @@ class CreateSaver(NewCreator):
 
     # TODO: This should be renamed together with Nuke so it is aligned
     temp_rendering_path_template = (
-        "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}"
-    )
+        "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}")
 
     def create(self, subset_name, instance_data, pre_create_data):
         self.pass_pre_attributes_to_instance(
             instance_data,
-            pre_create_data,
+            pre_create_data
         )
 
-        instance_data.update(
-            {
-                "id": "pyblish.avalon.instance",
-                "subset": subset_name,
-            }
-        )
+        instance_data.update({
+            "id": "pyblish.avalon.instance",
+            "subset": subset_name,
+        })
 
         # TODO: Add pre_create attributes to choose file format?
         file_format = "OpenEXRFormat"
@@ -177,12 +174,15 @@ class CreateSaver(NewCreator):
             )
         )
 
-        formatting_data.update(
-            {"workdir": workdir, "frame": "0" * frame_padding, "ext": "exr"}
-        )
+        formatting_data.update({
+            "workdir": workdir,
+            "frame": "0" * frame_padding,
+            "ext": "exr"
+        })
 
         # build file path to render
-        filepath = self.temp_rendering_path_template.format(**formatting_data)
+        filepath = self.temp_rendering_path_template.format(
+            **formatting_data)
 
         tool["Clip"] = os.path.normpath(filepath)
 
@@ -217,7 +217,7 @@ class CreateSaver(NewCreator):
         attr_defs = [
             self._get_render_target_enum(),
             self._get_reviewable_bool(),
-            self._get_frame_range_enum(),
+            self._get_frame_range_enum()
         ]
         return attr_defs
 
@@ -228,7 +228,7 @@ class CreateSaver(NewCreator):
     def pass_pre_attributes_to_instance(
         self,
         instance_data,
-        pre_create_data,
+        pre_create_data
     ):
         creator_attrs = instance_data["creator_attributes"] = {}
         for pass_key in pre_create_data.keys():
@@ -252,13 +252,13 @@ class CreateSaver(NewCreator):
         frame_range_options = {
             "asset_db": "Current asset context",
             "render_range": "From render in/out",
-            "comp_range": "From composition timeline",
+            "comp_range": "From composition timeline"
         }
 
         return EnumDef(
             "frame_range_source",
             items=frame_range_options,
-            label="Frame range source",
+            label="Frame range source"
         )
 
     def _get_reviewable_bool(self):
@@ -272,18 +272,15 @@ class CreateSaver(NewCreator):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings
-        plugin_settings = project_settings["fusion"]["create"][
-            self.__class__.__name__
-        ]
+        plugin_settings = (
+            project_settings["fusion"]["create"][self.__class__.__name__]
+        )
 
         # individual attributes
-        self.instance_attributes = (
-            plugin_settings.get("instance_attributes")
-            or self.instance_attributes
-        )
-        self.default_variants = (
-            plugin_settings.get("default_variants") or self.default_variants
-        )
+        self.instance_attributes = plugin_settings.get(
+            "instance_attributes") or self.instance_attributes
+        self.default_variants = plugin_settings.get(
+            "default_variants") or self.default_variants
         self.temp_rendering_path_template = (
             plugin_settings.get("temp_rendering_path_template")
             or self.temp_rendering_path_template

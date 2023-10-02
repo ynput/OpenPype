@@ -7,10 +7,8 @@ from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk,
 )
-from openpype.lib.transcoding import (
-    IMAGE_EXTENSIONS,
-    VIDEO_EXTENSIONS,
-)
+from openpype.lib.transcoding import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS
+
 
 comp = get_current_comp()
 
