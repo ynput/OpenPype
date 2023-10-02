@@ -63,7 +63,7 @@ class ValidateSaverResolution(
     """Validate that the saver input resolution matches the asset resolution"""
 
     order = pyblish.api.ValidatorOrder
-    label = "Validate Saver Resolution"
+    label = "Validate Asset Resolution"
     families = ["render"]
     hosts = ["fusion"]
     optional = True
