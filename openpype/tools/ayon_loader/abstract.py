@@ -8,7 +8,7 @@ class VersionItem:
         version_id,
         version,
         is_hero,
-        subset_id,
+        product_id,
         thumbnail_id,
         published_time,
         author,
@@ -19,7 +19,7 @@ class VersionItem:
         in_scene
     ):
         self.version_id = version_id
-        self.subset_id = subset_id
+        self.product_id = product_id
         self.thumbnail_id = thumbnail_id
         self.version = version
         self.is_hero = is_hero
@@ -38,7 +38,7 @@ class VersionItem:
             self.is_hero == other.is_hero
             and self.version == other.version
             and self.version_id == other.version_id
-            and self.subset_id == other.subset_id
+            and self.product_id == other.product_id
         )
 
     def __ne__(self, other):
@@ -57,7 +57,7 @@ class VersionItem:
     def to_data(self):
         return {
             "version_id": self.version_id,
-            "subset_id": self.subset_id,
+            "product_id": self.product_id,
             "thumbnail_id": self.thumbnail_id,
             "version": self.version,
             "is_hero": self.is_hero,

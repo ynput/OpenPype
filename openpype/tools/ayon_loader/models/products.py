@@ -50,7 +50,7 @@ def version_item_from_entity(version):
         version_id=version["id"],
         version=version_num,
         is_hero=is_hero,
-        subset_id=version["productId"],
+        product_id=version["productId"],
         thumbnail_id=version["thumbnailId"],
         published_time=published_time,
         author=author,
