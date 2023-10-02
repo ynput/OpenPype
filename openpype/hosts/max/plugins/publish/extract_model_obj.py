@@ -3,6 +3,7 @@ import pyblish.api
 from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
 from openpype.hosts.max.api import maintained_selection
+from openpype.pipeline.publish import KnownPublishError
 
 
 class ExtractModelObj(publish.Extractor, OptionalPyblishPluginMixin):
@@ -27,6 +28,7 @@ class ExtractModelObj(publish.Extractor, OptionalPyblishPluginMixin):
         filepath = os.path.join(stagingdir, filename)
         self.log.info("Writing OBJ '%s' to '%s'" % (filepath, stagingdir))
 
+        self.log.info("Performing Extraction ...")
         with maintained_selection():
             # select and export
             node_list = instance.data["members"]
@@ -38,7 +40,10 @@ class ExtractModelObj(publish.Extractor, OptionalPyblishPluginMixin):
                 using=rt.ObjExp,
             )
 
-        self.log.info("Performing Extraction ...")
+        if not os.path.exists(filepath):
+            raise KnownPublishError(
+                "File {} wasn't produced by 3ds max, please check the logs.")
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
 

@@ -2,8 +2,7 @@ import os
 from openpype.pipeline import load, get_representation_path
 from openpype.hosts.max.api.pipeline import (
     containerise,
-    import_custom_attribute_data,
-    update_custom_attribute_data
+    get_previous_loaded_object
 )
 from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.lib import (
@@ -15,12 +14,11 @@ class ModelAbcLoader(load.LoaderPlugin):
     """Loading model with the Alembic loader."""
 
     families = ["model"]
-    label = "Load Model(Alembic)"
+    label = "Load Model with Alembic"
     representations = ["abc"]
     order = -10
     icon = "code-fork"
     color = "orange"
-    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -52,21 +50,22 @@ class ModelAbcLoader(load.LoaderPlugin):
             self.log.error("Something failed when loading.")
 
         abc_container = abc_containers.pop()
-        import_custom_attribute_data(
-            abc_container, abc_container.Children)
 
         namespace = unique_namespace(
             name + "_",
             suffix="_",
         )
+        abc_objects = []
         for abc_object in abc_container.Children:
             abc_object.name = f"{namespace}:{abc_object.name}"
+            abc_objects.append(abc_object)
         # rename the abc container with namespace
-        abc_container_name = f"{namespace}:{name}_{self.postfix}"
+        abc_container_name = f"{namespace}:{name}"
         abc_container.name = abc_container_name
+        abc_objects.append(abc_container)
 
         return containerise(
-            name, [abc_container], context,
+            name, abc_objects, context,
             namespace, loader=self.__class__.__name__
         )
 
@@ -75,20 +74,19 @@ class ModelAbcLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
-
+        node_list = [n for n in get_previous_loaded_object(node)
+                     if rt.ClassOf(n) == rt.AlembicContainer]
         with maintained_selection():
-            rt.Select(node.Children)
+            rt.Select(node_list)
 
             for alembic in rt.Selection:
                 abc = rt.GetNodeByName(alembic.name)
-                update_custom_attribute_data(abc, abc.Children)
                 rt.Select(abc.Children)
                 for abc_con in abc.Children:
                     abc_con.source = path
                     rt.Select(abc_con.Children)
                     for abc_obj in abc_con.Children:
                         abc_obj.source = path
-
         lib.imprint(
             container["instance_node"],
             {"representation": str(representation["_id"])},
