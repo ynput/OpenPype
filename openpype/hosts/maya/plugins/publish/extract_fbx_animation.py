@@ -45,7 +45,7 @@ class ExtractFBXAnimation(publish.Extractor):
         # names as existing in the rig workfile
         namespace, relative_out_set = out_set_name.split(":", 1)
         cmds.namespace(relativeNames=True)
-        with namespaced(":" + namespace,new=False, relative_names=True) as namespace:       # noqa
+        with namespaced(":" + namespace, new=False, relative_names=True) as namespace:       # noqa
             fbx_exporter.export(relative_out_set, path)
 
         representations = instance.data.setdefault("representations", [])
@@ -57,4 +57,4 @@ class ExtractFBXAnimation(publish.Extractor):
         })
 
         self.log.debug(
-            "Extracted Fbx animation to: {0}".format(path))
+            "Extracted FBX animation to: {0}".format(path))

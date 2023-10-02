@@ -51,4 +51,4 @@ class ExtractSkeletonMesh(publish.Extractor,
             "stagingDir": staging_dir
         })
 
-        self.log.debug("Extract animated FBX successful to: {0}".format(path))
+        self.log.debug("Extract FBX to: {0}".format(path))

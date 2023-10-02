@@ -64,7 +64,7 @@ class FBXExtractor:
             "inputConnections": bool,
             "upAxis": str,  # x, y or z,
             "triangulate": bool,
-            "FileVersion": str,
+            "fileVersion": str,
             "skeletonDefinitions": bool,
             "referencedAssetsContent": bool
         }

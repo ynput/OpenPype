@@ -88,6 +88,14 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_node(cls, instance):
+        """Get target object nodes from out_SET
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of object nodes from out_SET
+        """
         return instance.data["rig_sets"].get("out_SET")
 
 
@@ -114,5 +122,13 @@ class ValidateSkeletonRigOutSetNodeIds(ValidateRigOutSetNodeIds):
 
     @classmethod
     def get_node(cls, instance):
+        """Get target object nodes from skeletonMesh_SET
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of object nodes from skeletonMesh_SET
+        """
         return instance.data["rig_sets"].get(
             "skeletonMesh_SET")

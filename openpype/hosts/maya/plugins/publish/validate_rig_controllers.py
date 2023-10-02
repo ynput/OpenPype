@@ -231,6 +231,14 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_node(cls, instance):
+        """Get target object nodes from controls_SET
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of object nodes from controls_SET
+        """
         return instance.data["rig_sets"].get("controls_SET")
 
 
@@ -274,4 +282,12 @@ class ValidateSkeletonRigControllers(ValidateRigControllers):
 
     @classmethod
     def get_node(cls, instance):
-        return instance.data["rig_sets"].get("skeletonAnim_SET")
+        """Get target object nodes from skeletonMesh_SET
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of object nodes from skeletonMesh_SET
+        """
+        return instance.data["rig_sets"].get("skeletonMesh_SET")

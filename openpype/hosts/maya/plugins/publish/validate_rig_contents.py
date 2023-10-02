@@ -35,25 +35,11 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
         # Find required sets by suffix
         required, rig_sets = cls.get_nodes(instance)
-        missing = [
-            key for key in required if key not in rig_sets
-        ]
-        if missing:
-            raise PublishValidationError(
-                "%s is missing sets: %s" % (instance, ", ".join(missing))
-            )
+
+        cls.validate_missing_objectsets(instance, required, rig_sets)
 
         controls_set = rig_sets["controls_SET"]
         out_set = rig_sets["out_SET"]
-
-        # Ensure there are at least some transforms or dag nodes
-        # in the rig instance
-        set_members = instance.data['setMembers']
-        if not cmds.ls(set_members, type="dagNode", long=True):
-            raise PublishValidationError(
-                "No dag nodes in the pointcache instance. "
-                "(Empty instance?)"
-            )
 
         # Ensure contents in sets and retrieve long path for all objects
         output_content = cmds.sets(out_set, query=True) or []
@@ -68,19 +54,8 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
             )
         controls_content = cmds.ls(controls_content, long=True)
 
-        # Validate members are inside the hierarchy from root node
-        root_nodes = cmds.ls(set_members, assemblies=True, long=True)
-        hierarchy = cmds.listRelatives(root_nodes, allDescendents=True,
-                                       fullPath=True) + root_nodes
-        hierarchy = set(hierarchy)
-
-        invalid_hierarchy = []
-        for node in output_content:
-            if node not in hierarchy:
-                invalid_hierarchy.append(node)
-        for node in controls_content:
-            if node not in hierarchy:
-                invalid_hierarchy.append(node)
+        rig_content = output_content + controls_content
+        invalid_hierarchy = cls.invalid_hierarchy(instance, rig_content)
 
         # Additional validations
         invalid_geometry = cls.validate_geometry(output_content)
@@ -103,6 +78,62 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
                            % invalid_geometry)
             error = True
         return error
+
+    @classmethod
+    def validate_missing_objectsets(cls, instance,
+                                    required_objsets, rig_sets):
+        """Validate missing objectsets in rig sets
+
+        Args:
+            instance (str): instance
+            required_objsets (list): list of objectset names
+            rig_sets (list): list of rig sets
+
+        Raises:
+            PublishValidationError: When the error is raised, it will show
+                which instance has the missing object sets
+        """
+        missing = [
+            key for key in required_objsets if key not in rig_sets
+        ]
+        if missing:
+            raise PublishValidationError(
+                "%s is missing sets: %s" % (instance, ", ".join(missing))
+            )
+
+    @classmethod
+    def invalid_hierarchy(cls, instance, content):
+        """_summary_
+
+        Args:
+            instance (str): instance
+            content (list): list of content from rig sets
+
+        Raises:
+            PublishValidationError: It means no dag nodes in
+                the rig instance
+
+        Returns:
+            list: invalid hierarchy
+        """
+        # Ensure there are at least some transforms or dag nodes
+        # in the rig instance
+        set_members = instance.data['setMembers']
+        if not cmds.ls(set_members, type="dagNode", long=True):
+            raise PublishValidationError(
+                "No dag nodes in the rig instance. "
+                "(Empty instance?)"
+            )
+        # Validate members are inside the hierarchy from root node
+        root_nodes = cmds.ls(set_members, assemblies=True, long=True)
+        hierarchy = cmds.listRelatives(root_nodes, allDescendents=True,
+                                       fullPath=True) + root_nodes
+        hierarchy = set(hierarchy)
+        invalid_hierarchy = []
+        for node in content:
+            if node not in hierarchy:
+                invalid_hierarchy.append(node)
+        return invalid_hierarchy
 
     @classmethod
     def validate_geometry(cls, set_members):
@@ -130,8 +161,6 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
             if cmds.nodeType(shape) not in cls.accepted_output:
                 invalid.append(shape)
 
-        return invalid
-
     @classmethod
     def validate_controls(cls, set_members):
         """Check if the controller set passes the validations
@@ -157,6 +186,14 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_nodes(cls, instance):
+        """Get the target objectsets and rig sets nodes
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of objectsets, list of rig sets nodes
+        """
         objectsets = ["controls_SET", "out_SET"]
         rig_sets_nodes = instance.data.get("rig_sets", [])
         return objectsets, rig_sets_nodes
@@ -181,39 +218,18 @@ class ValidateSkeletonRigContents(ValidateRigContents):
     @classmethod
     def get_invalid(cls, instance):
         objectsets, skeleton_mesh_nodes = cls.get_nodes(instance)
-        missing = [
-            key for key in objectsets if key not in instance.data["rig_sets"]
-        ]
-        if missing:
-            cls.log.debug(
-                "%s is missing sets: %s" % (instance, ", ".join(missing))
-            )
-            return
+        cls.validate_missing_objectsets(
+            instance, objectsets, instance.data["rig_sets"])
 
-        # Ensure there are at least some transforms or dag nodes
-        # in the rig instance
-        set_members = instance.data['setMembers']
-        if not cmds.ls(set_members, type="dagNode", long=True):
-            raise PublishValidationError(
-                "No dag nodes in the pointcache instance. "
-                "(Empty instance?)"
-            )
         # Ensure contents in sets and retrieve long path for all objects
         output_content = instance.data.get("skeleton_mesh", [])
         output_content = cmds.ls(skeleton_mesh_nodes, long=True)
 
-        # Validate members are inside the hierarchy from root node
-        root_nodes = cmds.ls(set_members, assemblies=True, long=True)
-        hierarchy = cmds.listRelatives(root_nodes, allDescendents=True,
-                                       fullPath=True) + root_nodes
-        hierarchy = set(hierarchy)
+        invalid_hierarchy = cls.invalid_hierarchy(
+            instance, output_content)
+        invalid_geometry = cls.validate_geometry(output_content)
+
         error = False
-        invalid_hierarchy = []
-        if output_content:
-            for node in output_content:
-                if node not in hierarchy:
-                    invalid_hierarchy.append(node)
-            invalid_geometry = cls.validate_geometry(output_content)
         if invalid_hierarchy:
             cls.log.error("Found nodes which reside outside of root group "
                           "while they are set up for publishing."
@@ -228,6 +244,15 @@ class ValidateSkeletonRigContents(ValidateRigContents):
 
     @classmethod
     def get_nodes(cls, instance):
+        """Get the target objectsets and rig sets nodes
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of objectsets,
+                  list of objects node from skeletonMesh_SET
+        """
         objectsets = ["skeletonMesh_SET"]
         skeleton_mesh_nodes = instance.data.get("skeleton_mesh", [])
         return objectsets, skeleton_mesh_nodes
