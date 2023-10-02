@@ -38,14 +38,17 @@ jobs:
         $version_file = Get-Content -Path "$current_dir\openpype\version.py"
         $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
         $openpype_version = $result[0].Groups['version'].Value
-        mv .\build\exe.win-amd64-3.9 .\build\$openpype_version
+        cd build
+        mv exe.win-amd64-3.9 $openpype_version
 
     - name: Upload to S3
       run: |
+        $current_dir = Get-Location
+        $version_file = Get-Content -Path "$current_dir\openpype\version.py"
         $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
         $openpype_version = $result[0].Groups['version'].Value
         $awsCliPath = "C:\Program Files\Amazon\AWSCLIV2\aws.exe"
-        $sourcePath = ".\build\$openpype_version\"
+        $sourcePath = "\build\$openpype_version"
         $destinationPath = "${{ vars.S3_BUCKET_WIN }}$openpype_version/"
         & $awsCliPath s3 sync $sourcePath $destinationPath
 
