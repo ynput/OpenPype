@@ -177,7 +177,7 @@ class PublishReportMaker:
         self._convert_discover_result = None
         self._publish_discover_result = None
 
-        self._plugin_data_by_plugin_id = {}
+        self._plugin_data_by_id = {}
         self._current_plugin = None
         self._current_plugin_data = {}
         self._all_instances_by_id = {}
@@ -192,7 +192,7 @@ class PublishReportMaker:
         )
         self._publish_discover_result = create_context.publish_discover_result
 
-        self._plugin_data_by_plugin_id = {}
+        self._plugin_data_by_id = {}
         self._current_plugin = None
         self._current_plugin_data = {}
         self._all_instances_by_id = {}
@@ -214,7 +214,7 @@ class PublishReportMaker:
         self._current_plugin_data = self._add_plugin_data_item(plugin)
 
     def _add_plugin_data_item(self, plugin):
-        if plugin.id in self._plugin_data_by_plugin_id:
+        if plugin.id in self._plugin_data_by_id:
             # A plugin would be processed more than once. What can cause it:
             #   - there is a bug in controller
             #   - plugin class is imported into multiple files
@@ -223,7 +223,7 @@ class PublishReportMaker:
                 "Plugin '{}' is already stored".format(str(plugin)))
 
         plugin_data_item = self._create_plugin_data_item(plugin)
-        self._plugin_data_by_plugin_id[plugin.id] = plugin_data_item
+        self._plugin_data_by_id[plugin.id] = plugin_data_item
 
         return plugin_data_item
 
@@ -265,7 +265,7 @@ class PublishReportMaker:
         """Add result of single action."""
         plugin = result["plugin"]
 
-        store_item = self._plugin_data_by_plugin_id.get(plugin.id)
+        store_item = self._plugin_data_by_id.get(plugin.id)
         if store_item is None:
             store_item = self._add_plugin_data_item(plugin)
 
@@ -287,14 +287,14 @@ class PublishReportMaker:
                 instance, instance in self._current_context
             )
 
-        plugins_data_by_plugin_id = copy.deepcopy(
-            self._plugin_data_by_plugin_id
+        plugins_data_by_id = copy.deepcopy(
+            self._plugin_data_by_id
         )
 
         # Ensure the current plug-in is marked as `passed` in the result
         # so that it shows on reports for paused publishes
         if self._current_plugin is not None:
-            current_plugin_data = plugins_data_by_plugin_id.get(
+            current_plugin_data = plugins_data_by_id.get(
                 self._current_plugin.id
             )
             if current_plugin_data and not current_plugin_data["passed"]:
@@ -302,8 +302,8 @@ class PublishReportMaker:
 
         if publish_plugins:
             for plugin in publish_plugins:
-                if plugin.id not in plugins_data_by_plugin_id:
-                    plugins_data_by_plugin_id[plugin.id] = \
+                if plugin.id not in plugins_data_by_id:
+                    plugins_data_by_id[plugin.id] = \
                         self._create_plugin_data_item(plugin)
 
         reports = []
@@ -325,7 +325,7 @@ class PublishReportMaker:
                 )
 
         return {
-            "plugins_data": list(plugins_data_by_plugin_id.values()),
+            "plugins_data": list(plugins_data_by_id.values()),
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context),
             "crashed_file_paths": crashed_file_paths,
