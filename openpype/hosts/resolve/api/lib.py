@@ -274,16 +274,14 @@ def create_timeline_item(media_pool_item: object,
 
         # add source time range if input was given
         if source_start is not None:
-            clip_data.update({"startFrame": source_start})
+            clip_data["startFrame"] = source_start
         if source_end is not None:
-            clip_data.update({"endFrame": source_end})
+            clip_data["endFrame"] = source_end
+
+        # Create a clipInfo dictionary with the necessary information
+        clip_data["recordFrame"] = timeline_in
 
         print(clip_data)
-
-        if timeline_in:
-            timeline_start = timeline.GetStartFrame()
-            # Create a clipInfo dictionary with the necessary information
-            clip_data["recordFrame"] = int(timeline_start + timeline_in)
 
         # add to timeline
         media_pool.AppendToTimeline([clip_data])

@@ -312,6 +312,9 @@ class ClipLoader:
         # try to get value from options or evaluate key value for `load_to`
         self.new_timeline = options.get("newTimeline") or bool(
             "New timeline" in options.get("load_to", ""))
+        # try to get value from options or evaluate key value for `load_how`
+        self.sequential_load = options.get("sequentially") or bool(
+            "Sequentially in order" in options.get("load_how", ""))
 
         assert self._populate_data(), str(
             "Cannot Load selected data, look into database "
@@ -352,6 +355,7 @@ class ClipLoader:
         asset = str(repr_cntx["asset"])
         subset = str(repr_cntx["subset"])
         representation = str(repr_cntx["representation"])
+        self.data["track_name"] = "{}_{}".format(asset, representation)
         self.data["clip_name"] = "_".join([asset, subset, representation])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
@@ -383,6 +387,33 @@ class ClipLoader:
         asset_name = self.context["representation"]["context"]["asset"]
         self.data["assetData"] = get_current_project_asset(asset_name)["data"]
 
+    def _set_active_track(self):
+        """ Set active track to `track` """
+        track_type = "video"
+        track_name = self.data["track_name"]
+        track_exists = False
+
+        # get total track count
+        track_count = self.active_timeline.GetTrackCount(track_type)
+        # loop all tracks by track indexes
+        for track_index in range(1, int(track_count) + 1):
+            # get current track name
+            _track_name = self.active_timeline.GetTrackName(
+                track_type, track_index)
+            if track_name != _track_name:
+                continue
+            track_exists = True
+            break
+
+        if not track_exists:
+            self.active_timeline.AddTrack(track_type)
+            self.active_timeline.SetTrackName(
+                track_type,
+                track_index + 1,
+                track_name
+            )
+
+
     def load(self):
         # create project bin for the media to be imported into
         self.active_bin = lib.create_bin(self.data["binPath"])
@@ -402,8 +433,18 @@ class ClipLoader:
         if handle_end is None:
             handle_end = int(self.data["assetData"]["handleEnd"])
 
-        self.timeline_in = int(self.data["assetData"]["clipIn"])
+        # handle timeline tracks
+        self._set_active_track()
 
+        # get timeline in
+        timeline_start = self.active_timeline.GetStartFrame()
+        if self.sequential_load:
+            # set timeline start frame
+            timeline_in = int(timeline_start)
+        else:
+            # set timeline start frame + original clip in frame
+            timeline_in = int(
+                timeline_start + self.data["assetData"]["clipIn"])
 
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
@@ -423,7 +464,7 @@ class ClipLoader:
             self.active_timeline,
             source_in,
             source_out,
-            self.timeline_in
+            timeline_in
         )
 
         print("Loading clips: `{}`".format(self.data["clip_name"]))
@@ -478,6 +519,16 @@ class TimelineItemLoader(LoaderPlugin):
             ],
             default=0,
             help="Where do you want clips to be loaded?"
+        ),
+        qargparse.Choice(
+            "load_how",
+            label="How to load clips",
+            items=[
+                "Original timing",
+                "Sequentially in order"
+            ],
+            default="Original timing",
+            help="Would you like to place it at original timing?"
         )
     ]
 
