@@ -7,6 +7,7 @@ from openpype.hosts.fusion.api import (
     get_current_comp,
     comp_lock_and_undo_chunk
 )
+from openpype.hosts.fusion.api.lib import get_fusion_module
 
 
 class FusionLoadUSD(load.LoaderPlugin):
@@ -25,6 +26,19 @@ class FusionLoadUSD(load.LoaderPlugin):
     color = "orange"
 
     tool_type = "uLoader"
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        super(FusionLoadUSD, cls).apply_settings(project_settings, 
+                                                 system_settings)
+        if cls.enabled:
+            # Enable only in Fusion 18.5+
+            fusion = get_fusion_module()
+            version = fusion.GetVersion()
+            major = version[1]
+            minor = version[2]
+            is_usd_supported = (major, minor) >= (18, 5)
+            cls.enabled = is_usd_supported
 
     def load(self, context, name, namespace, data):
         # Fallback to asset name when namespace is None
