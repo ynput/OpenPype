@@ -40,7 +40,10 @@ def aov_list_enum():
         {"value": "emission", "label": "Emission"},
         {"value": "environment", "label": "Environment"},
         {"value": "shadow", "label": "Shadow"},
-        {"value": "ao", "label": "Ambient Occlusion"}
+        {"value": "ao", "label": "Ambient Occlusion"},
+        {"value": "denoising", "label": "Denoising"},
+        {"value": "volume_direct", "label": "Direct Volumetric Scattering"},
+        {"value": "volume_indirect", "label": "Indirect Volumetric Scattering"}
     ]
 
 

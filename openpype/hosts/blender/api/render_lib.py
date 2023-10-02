@@ -116,6 +116,12 @@ def set_render_passes(settings):
     vl.use_pass_shadow = "shadow" in aov_list
     vl.use_pass_ambient_occlusion = "ao" in aov_list
 
+    cycles = vl.cycles
+
+    cycles.denoising_store_passes = "denoising" in aov_list
+    cycles.use_pass_volume_direct = "volume_direct" in aov_list
+    cycles.use_pass_volume_indirect = "volume_indirect" in aov_list
+
     aovs_names = [aov.name for aov in vl.aovs]
     for cp in custom_passes:
         cp_name = cp[0]
@@ -149,7 +155,7 @@ def set_node_tree(output_path, name, aov_sep, ext, multilayer):
     # Get the enabled output sockets, that are the active passes for the
     # render.
     # We also exclude some layers.
-    exclude_sockets = ["Image", "Alpha"]
+    exclude_sockets = ["Image", "Alpha", "Noisy Image"]
     passes = [
         socket
         for socket in rl_node.outputs

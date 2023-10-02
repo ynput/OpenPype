@@ -123,7 +123,10 @@
                         {"emission": "Emission"},
                         {"environment": "Environment"},
                         {"shadow": "Shadow"},
-                        {"ao": "Ambient Occlusion"}
+                        {"ao": "Ambient Occlusion"},
+                        {"denoising": "Denoising"},
+                        {"volume_direct": "Direct Volumetric Scattering"},
+                        {"volume_indirect": "Indirect Volumetric Scattering"}
                     ]
                 },
                 {
