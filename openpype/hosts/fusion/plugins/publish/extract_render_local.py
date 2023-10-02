@@ -40,7 +40,7 @@ def enabled_savers(comp, savers):
         yield
     finally:
         for saver_name, original_state in original_states.items():
-            saver = savers_by_name.get(saver_name)
+            saver = savers_by_name[saver_name]
             saver.SetAttrs({"TOOLB_PassThrough": original_state})
 
 
