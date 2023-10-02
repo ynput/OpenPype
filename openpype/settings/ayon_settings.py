@@ -748,7 +748,19 @@ def _convert_nuke_project_settings(ayon_settings, output):
     )
 
     new_review_data_outputs = {}
-    for item in ayon_publish["ExtractReviewDataMov"]["outputs"]:
+    outputs_settings = None
+    # Check deprecated ExtractReviewDataMov
+    # settings for backwards compatibility
+    deprecrated_review_settings = ayon_publish["ExtractReviewDataMov"]
+    current_review_settings = (
+        ayon_publish["ExtractReviewIntermediates"]
+    )
+    if deprecrated_review_settings["enabled"]:
+        outputs_settings = deprecrated_review_settings["outputs"]
+    elif current_review_settings["enabled"]:
+        outputs_settings = current_review_settings["outputs"]
+
+    for item in outputs_settings:
         item_filter = item["filter"]
         if "product_names" in item_filter:
             item_filter["subsets"] = item_filter.pop("product_names")
@@ -767,7 +779,11 @@ def _convert_nuke_project_settings(ayon_settings, output):
 
         name = item.pop("name")
         new_review_data_outputs[name] = item
-    ayon_publish["ExtractReviewDataMov"]["outputs"] = new_review_data_outputs
+
+    if deprecrated_review_settings["enabled"]:
+        deprecrated_review_settings["outputs"] = new_review_data_outputs
+    elif current_review_settings["enabled"]:
+        current_review_settings["outputs"] = new_review_data_outputs
 
     collect_instance_data = ayon_publish["CollectInstanceData"]
     if "sync_workfile_version_on_product_types" in collect_instance_data:
@@ -1102,7 +1118,7 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
         "studio_name",
         "studio_code",
     ):
-        ayon_core.pop(key)
+        ayon_core.pop(key, None)
 
     # Publish conversion
     ayon_publish = ayon_core["publish"]
@@ -1138,6 +1154,27 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             if "output_height" in output_def:
                 output_def["height"] = output_def.pop("output_height")
 
+        profile["outputs"] = new_outputs
+
+    # ExtractOIIOTranscode plugin
+    extract_oiio_transcode = ayon_publish["ExtractOIIOTranscode"]
+    extract_oiio_transcode_profiles = extract_oiio_transcode["profiles"]
+    for profile in extract_oiio_transcode_profiles:
+        new_outputs = {}
+        name_counter = {}
+        for output in profile["outputs"]:
+            if "name" in output:
+                name = output.pop("name")
+            else:
+                # Backwards compatibility for setting without 'name' in model
+                name = output["extension"]
+                if name in new_outputs:
+                    name_counter[name] += 1
+                    name = "{}_{}".format(name, name_counter[name])
+                else:
+                    name_counter[name] = 0
+
+            new_outputs[name] = output
         profile["outputs"] = new_outputs
 
     # Extract Burnin plugin

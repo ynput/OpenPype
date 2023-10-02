@@ -103,13 +103,16 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
             # stash render job id for later validation
             instance.data["render_job_id"] = data.get("job").get("_id")
-
+            staging_dir_persistent = instance.data.get(
+                "stagingDir_persistent", False
+            )
             representations = []
             for repre_data in instance_data.get("representations") or []:
                 self._fill_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
 
-                add_repre_files_for_cleanup(instance, repre_data)
+                if not staging_dir_persistent:
+                    add_repre_files_for_cleanup(instance, repre_data)
 
             instance.data["representations"] = representations
 
@@ -123,6 +126,8 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 })
                 self.log.debug(
                     f"Adding audio to instance: {instance.data['audio']}")
+
+            return staging_dir_persistent
 
     def process(self, context):
         self._context = context
@@ -160,9 +165,12 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                     legacy_io.Session.update(session_data)
                     os.environ.update(session_data)
                     session_is_set = True
-                self._process_path(data, anatomy)
-                context.data["cleanupFullPaths"].append(path)
-                context.data["cleanupEmptyDirs"].append(os.path.dirname(path))
+                staging_dir_persistent = self._process_path(data, anatomy)
+                if not staging_dir_persistent:
+                    context.data["cleanupFullPaths"].append(path)
+                    context.data["cleanupEmptyDirs"].append(
+                        os.path.dirname(path)
+                    )
         except Exception as e:
             self.log.error(e, exc_info=True)
             raise Exception("Error") from e
