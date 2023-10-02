@@ -102,8 +102,8 @@ class LoadClip(plugin.TimelineItemLoader):
         context.update({"representation": representation})
         name = container['name']
         namespace = container['namespace']
-        timeline_item_data = lib.get_pype_timeline_item_by_name(namespace)
-        timeline_item = timeline_item_data["clip"]["item"]
+        timeline_item = lib.get_pype_timeline_item_by_name(namespace)
+
         project_name = get_current_project_name()
         version = get_version_by_id(project_name, representation["parent"])
         version_data = version.get("data", {})
@@ -111,8 +111,8 @@ class LoadClip(plugin.TimelineItemLoader):
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
         path = get_representation_path(representation)
-        context["version"] = {"data": version_data}
 
+        context["version"] = {"data": version_data}
         loader = plugin.ClipLoader(self, context, path)
         timeline_item = loader.update(timeline_item)
 

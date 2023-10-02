@@ -395,14 +395,22 @@ def get_current_timeline_items(
 
 
 def get_pype_timeline_item_by_name(name: str) -> object:
-    track_itmes = get_current_timeline_items()
-    for _ti in track_itmes:
-        tag_data = get_timeline_item_pype_tag(_ti["clip"]["item"])
-        tag_name = tag_data.get("name")
+    """Get timeline item by name.
+
+    Args:
+        name (str): name of timeline item
+
+    Returns:
+        object: resolve.TimelineItem
+    """
+    for _ti_data in get_current_timeline_items():
+        _ti_clip = _ti_data["clip"]["item"]
+        tag_data = get_timeline_item_pype_tag(_ti_clip)
+        tag_name = tag_data.get("namespace")
         if not tag_name:
             continue
-        if tag_data.get("name") in name:
-            return _ti
+        if tag_name in name:
+            return _ti_clip
     return None
 
 
