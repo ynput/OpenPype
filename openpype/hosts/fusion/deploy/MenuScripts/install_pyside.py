@@ -2,18 +2,8 @@
 # Qt library installed
 import os
 import importlib
-import platform
 from install_pip_package import pip_install
 from openpype.hosts.fusion import FUSION_VERSIONS_DICT
-
-
-def get_pyside_version() -> str:
-    os_platform = platform.system()
-    pyside_version = "PySide2"
-    if os_platform == "Darwin":
-        pyside_version = "PySide6"
-    return pyside_version
-
 
 try:
     from qtpy import API_NAME
@@ -29,5 +19,4 @@ except Exception:
     fusion_python_home = os.environ.get(fusion_python_home)
     print("Assuming no Qt library is installed..")
     print("Installing PySide package for " f"{fusion_python_home}")
-    pyside_version = get_pyside_version()
-    pip_install(pyside_version, fusion_python_home)
+    pip_install("PySide6", fusion_python_home)
