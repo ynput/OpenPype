@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """Validator for USD plugin."""
-from openpype.pipeline import PublishValidationError
 from pyblish.api import InstancePlugin, ValidatorOrder
 from pymxs import runtime as rt
+
+from openpype.pipeline import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError
+)
 
 
 def get_plugins() -> list:
@@ -17,16 +21,24 @@ def get_plugins() -> list:
     return plugin_info_list
 
 
-class ValidateUSDPlugin(InstancePlugin):
+class ValidateUSDPlugin(OptionalPyblishPluginMixin,
+                        InstancePlugin):
     """Validates if USD plugin is installed or loaded in 3ds max."""
 
     order = ValidatorOrder - 0.01
     families = ["model"]
     hosts = ["max"]
-    label = "USD Plugin"
+    label = "Validate USD Plugin loaded"
+    optional = True
 
     def process(self, instance):
         """Plugin entry point."""
+
+        for sc in ValidateUSDPlugin.__subclasses__():
+            self.log.info(sc)
+
+        if not self.is_active(instance.data):
+            return
 
         plugin_info = get_plugins()
         usd_import = "usdimport.dli"

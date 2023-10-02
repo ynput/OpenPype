@@ -21,6 +21,9 @@ from openpype.pipeline import (
     CreatedInstance,
     get_current_task_name
 )
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS
+)
 from .lib import (
     INSTANCE_DATA_KNOB,
     Knobby,
@@ -35,7 +38,9 @@ from .lib import (
     get_node_data,
     get_view_process_node,
     get_viewer_config_from_string,
-    deprecated
+    deprecated,
+    get_head_filename_without_hashes,
+    get_filenames_without_hash
 )
 from .pipeline import (
     list_instances,
@@ -379,11 +384,7 @@ class NukeWriteCreator(NukeCreator):
                 sys.exc_info()[2]
             )
 
-    def apply_settings(
-        self,
-        project_settings,
-        system_settings
-    ):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings
@@ -584,18 +585,25 @@ class ExporterReview(object):
     def get_file_info(self):
         if self.collection:
             # get path
-            self.fname = os.path.basename(self.collection.format(
-                "{head}{padding}{tail}"))
+            self.fname = os.path.basename(
+                self.collection.format("{head}{padding}{tail}")
+            )
             self.fhead = self.collection.format("{head}")
 
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
+
+            # make sure slate frame is not included
+            frame_start_handle = self.instance.data["frameStartHandle"]
+            if frame_start_handle > self.first_frame:
+                self.first_frame = frame_start_handle
+
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
-            self.first_frame = self.instance.data.get("frameStartHandle", None)
-            self.last_frame = self.instance.data.get("frameEndHandle", None)
+            self.first_frame = self.instance.data["frameStartHandle"]
+            self.last_frame = self.instance.data["frameEndHandle"]
 
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
@@ -631,6 +639,10 @@ class ExporterReview(object):
                 "frameStart": self.first_frame,
                 "frameEnd": self.last_frame,
             })
+        if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
+            filenames = get_filenames_without_hash(
+                self.file, self.first_frame, self.last_frame)
+            repre["files"] = filenames
 
         if self.multiple_presets:
             repre["outputName"] = self.name
@@ -805,6 +817,18 @@ class ExporterReviewMov(ExporterReview):
         self.log.info("File info was set...")
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
+        if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
+            # filename would be with frame hashes if
+            # the file extension is not in video format
+            filename = get_head_filename_without_hashes(
+                self.path_in, self.name)
+            self.file = filename
+            # make sure the filename are in
+            # correct image output format
+            if ".{}".format(self.ext) not in self.file:
+                filename_no_ext, _ = os.path.splitext(filename)
+                self.file = "{}.{}".format(filename_no_ext, self.ext)
+
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
 
@@ -873,6 +897,11 @@ class ExporterReviewMov(ExporterReview):
         r_node["origlast"].setValue(self.last_frame)
         r_node["colorspace"].setValue(self.write_colorspace)
 
+        # do not rely on defaults, set explicitly
+        # to be sure it is set correctly
+        r_node["frame_mode"].setValue("expression")
+        r_node["frame"].setValue("")
+
         if read_raw:
             r_node["raw"].setValue(1)
 
@@ -925,7 +954,6 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug("Path: {}".format(self.path))
         write_node["file"].setValue(str(self.path))
         write_node["file_type"].setValue(str(self.ext))
-
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
         # TODO shouldn't this come from settings on outputs?
         try:

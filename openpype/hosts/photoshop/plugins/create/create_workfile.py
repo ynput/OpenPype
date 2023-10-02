@@ -19,7 +19,7 @@ class WorkfileCreator(PSAutoCreator):
         in next publish automatically).
         """
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["photoshop"]["create"]["WorkfileCreator"]
         )

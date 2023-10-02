@@ -43,7 +43,7 @@ class ExtractVRayProxy(publish.Extractor):
         vertex_colors = instance.data.get("vertexColors", False)
 
         # Write out vrmesh file
-        self.log.info("Writing: '%s'" % file_path)
+        self.log.debug("Writing: '%s'" % file_path)
         with maintained_selection():
             cmds.select(instance.data["setMembers"], noExpand=True)
             cmds.vrayCreateProxy(exportType=1,
@@ -68,5 +68,5 @@ class ExtractVRayProxy(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s"
-                      % (instance.name, staging_dir))
+        self.log.debug("Extracted instance '%s' to: %s"
+                       % (instance.name, staging_dir))

@@ -18,6 +18,10 @@ Location: Settings > Project > AfterEffects
 
 ## Publish plugins
 
+### Collect Review
+
+Enable/disable creation of auto instance of review.
+
 ### Validate Scene Settings
 
 #### Skip Resolution Check for Tasks
@@ -27,6 +31,10 @@ Set regex pattern(s) to look for in a Task name to skip resolution check against
 #### Skip Timeline Check for Tasks
 
 Set regex pattern(s) to look for in a Task name to skip `frameStart`, `frameEnd` check against values from DB.
+
+### ValidateContainers
+
+By default this validator will look loaded items with lower version than latest. This validator is context wide so it must be disabled in Context button.
 
 ### AfterEffects Submit to Deadline
 

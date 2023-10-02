@@ -35,13 +35,13 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
 
     def process(self, context):
         if not AYON_SERVER_ENABLED:
-            self.log.info("AYON is not enabled. Skipping")
+            self.log.debug("AYON is not enabled. Skipping")
             return
 
         # Filter instances which can be used for integration
         filtered_instance_items = self._prepare_instances(context)
         if not filtered_instance_items:
-            self.log.info(
+            self.log.debug(
                 "All instances were filtered. Thumbnail integration skipped."
             )
             return
@@ -110,7 +110,7 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
 
             # Skip instance if thumbnail path is not available for it
             if not thumbnail_path:
-                self.log.info((
+                self.log.debug((
                     "Skipping thumbnail integration for instance \"{}\"."
                     " Instance and context"
                     " thumbnail paths are not available."

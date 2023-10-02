@@ -20,9 +20,7 @@ class ExtractModel(publish.Extractor, OptionalPyblishPluginMixin):
         if not self.is_active(instance.data):
             return
 
-        container = instance.data["instance_node"]
-
-        self.log.info("Extracting Geometry ...")
+        self.log.debug("Extracting Geometry ...")
 
         stagingdir = self.staging_dir(instance)
         filename = "{name}.abc".format(**instance.data)

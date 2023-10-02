@@ -19,6 +19,7 @@ from openpype.tools.utils import (
     CustomTextComboBox,
     FocusSpinBox,
     FocusDoubleSpinBox,
+    MultiSelectionComboBox,
 )
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
@@ -412,10 +413,19 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         self._multivalue = False
         super(EnumAttrWidget, self).__init__(*args, **kwargs)
 
+    @property
+    def multiselection(self):
+        return self.attr_def.multiselection
+
     def _ui_init(self):
-        input_widget = CustomTextComboBox(self)
-        combo_delegate = QtWidgets.QStyledItemDelegate(input_widget)
-        input_widget.setItemDelegate(combo_delegate)
+        if self.multiselection:
+            input_widget = MultiSelectionComboBox(self)
+
+        else:
+            input_widget = CustomTextComboBox(self)
+            combo_delegate = QtWidgets.QStyledItemDelegate(input_widget)
+            input_widget.setItemDelegate(combo_delegate)
+            self._combo_delegate = combo_delegate
 
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)
@@ -427,9 +437,11 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         if idx >= 0:
             input_widget.setCurrentIndex(idx)
 
-        input_widget.currentIndexChanged.connect(self._on_value_change)
+        if self.multiselection:
+            input_widget.value_changed.connect(self._on_value_change)
+        else:
+            input_widget.currentIndexChanged.connect(self._on_value_change)
 
-        self._combo_delegate = combo_delegate
         self._input_widget = input_widget
 
         self.main_layout.addWidget(input_widget, 0)
@@ -442,17 +454,40 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         self.value_changed.emit(new_value, self.attr_def.id)
 
     def current_value(self):
+        if self.multiselection:
+            return self._input_widget.value()
         idx = self._input_widget.currentIndex()
         return self._input_widget.itemData(idx)
 
+    def _multiselection_multivalue_prep(self, values):
+        final = None
+        multivalue = False
+        for value in values:
+            value = set(value)
+            if final is None:
+                final = value
+            elif multivalue or final != value:
+                final |= value
+                multivalue = True
+        return list(final), multivalue
+
     def set_value(self, value, multivalue=False):
         if multivalue:
-            set_value = set(value)
-            if len(set_value) == 1:
-                multivalue = False
-                value = tuple(set_value)[0]
+            if self.multiselection:
+                value, multivalue = self._multiselection_multivalue_prep(
+                    value)
+            else:
+                set_value = set(value)
+                if len(set_value) == 1:
+                    multivalue = False
+                    value = tuple(set_value)[0]
 
-        if not multivalue:
+        if self.multiselection:
+            self._input_widget.blockSignals(True)
+            self._input_widget.set_value(value)
+            self._input_widget.blockSignals(False)
+
+        elif not multivalue:
             idx = self._input_widget.findData(value)
             cur_idx = self._input_widget.currentIndex()
             if idx != cur_idx and idx >= 0:
