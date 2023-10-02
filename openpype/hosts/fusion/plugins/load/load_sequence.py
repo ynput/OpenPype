@@ -161,7 +161,6 @@ class FusionLoadSequence(load.LoaderPlugin):
         with comp_lock_and_undo_chunk(comp, "Create Loader"):
             args = (-32768, -32768)
             tool = comp.AddTool("Loader", *args)
-            comp = get_current_comp()
             tool["Clip"] = comp.ReverseMapPath(path)
 
             # Set global in point to start frame (if in version.data)
