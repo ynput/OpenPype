@@ -160,7 +160,7 @@ class CreateSaver(NewCreator):
 
         # build file path to render
         filepath = self.temp_rendering_path_template.format(
-                **formatting_data)
+            **formatting_data)
 
         comp = get_current_comp()
         tool["Clip"] = comp.ReverseMapPath(os.path.normpath(filepath))
