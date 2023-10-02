@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.16.4" # OpenPype
+version = "3.17.1" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -36,7 +36,7 @@ appdirs = { git = "https://github.com/ActiveState/appdirs.git", branch = "master
 blessed = "^1.17" # openpype terminal formatting
 coolname = "*"
 clique = "1.6.*"
-Click = "^8"
+Click = "7.1.2"
 dnspython = "^2.1.0"
 ftrack-python-api = "^2.3.3"
 arrow = "^0.17"
@@ -56,6 +56,7 @@ QtPy = "^2.3.0"
 qtawesome = "0.7.3"
 speedcopy = "^2.1"
 six = "^1.15"
+urllib3 = "1.26.16"
 semver = "^2.13.0" # for version resolution
 wsrpc_aiohttp = "^3.1.1" # websocket server
 pywin32 = { version = "301", markers = "sys_platform == 'win32'" }

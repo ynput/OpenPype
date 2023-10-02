@@ -10,6 +10,7 @@ from openpype.client import get_last_version_by_subset_name
 from openpype.hosts.maya import api
 from . import lib
 from .alembic import get_alembic_ids_cache
+from .usd import is_usd_lib_supported, get_usd_ids_cache
 
 
 log = logging.getLogger(__name__)
@@ -73,6 +74,13 @@ def get_nodes_by_id(standin):
     if path.endswith(".abc"):
         # Support alembic files directly
         return get_alembic_ids_cache(path)
+
+    elif (
+        is_usd_lib_supported and
+        any(path.endswith(ext) for ext in [".usd", ".usda", ".usdc"])
+    ):
+        # Support usd files directly
+        return get_usd_ids_cache(path)
 
     json_path = None
     for f in os.listdir(os.path.dirname(path)):
