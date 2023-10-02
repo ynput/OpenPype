@@ -152,7 +152,7 @@ class CreateSaver(NewCreator):
 
         # As data contains an extra key called active, add it to
         # original_data to get a correct comparison
-        if data.get("active"):
+        if "active" in data:
             original_data["active"] = data["active"]
 
         if original_data != data:
