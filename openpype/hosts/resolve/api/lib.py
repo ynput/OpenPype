@@ -125,7 +125,7 @@ def get_any_timeline():
         return project.GetTimelineByIndex(1)
 
 
-def get_new_timeline():
+def get_new_timeline(timeline_name: str = None):
     """Get new timeline object.
 
     Returns:
@@ -133,7 +133,8 @@ def get_new_timeline():
     """
     project = get_current_project()
     media_pool = project.GetMediaPool()
-    new_timeline = media_pool.CreateEmptyTimeline(self.pype_timeline_name)
+    new_timeline = media_pool.CreateEmptyTimeline(
+        timeline_name or self.pype_timeline_name)
     project.SetCurrentTimeline(new_timeline)
     return new_timeline
 
