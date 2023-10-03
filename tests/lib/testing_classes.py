@@ -40,7 +40,7 @@ class ModuleUnitTest(BaseTest):
     """
     PERSIST = False  # True to not purge temporary folder nor test DB
 
-    OPENPYPE_MONGO = "mongodb://localhost:27017"
+    TEST_OPENPYPE_MONGO = "mongodb://localhost:27017"
     TEST_DB_NAME = "avalon_tests"
     TEST_PROJECT_NAME = "test_project"
     TEST_OPENPYPE_NAME = "openpype_tests"
