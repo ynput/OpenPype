@@ -293,7 +293,7 @@
                         {
                             "type": "enum",
                             "key": "plugin",
-                            "label": "Deadline plugin",
+                            "label": "Deadline Plugin",
                             "enum_items": [
                                 {"Fusion": "Fusion"},
                                 {"FusionCmd": "FusionCmd"}
