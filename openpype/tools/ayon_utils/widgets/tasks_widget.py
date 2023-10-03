@@ -44,11 +44,12 @@ class TasksModel(QtGui.QStandardItemModel):
         # Initial state
         self._add_invalid_selection_item()
 
-    def clear(self):
+    def _clear_items(self):
         self._items_by_name = {}
         self._has_content = False
         self._remove_invalid_items()
-        super(TasksModel, self).clear()
+        root_item = self.invisibleRootItem()
+        root_item.removeRows(0, root_item.rowCount())
 
     def refresh(self):
         """Refresh tasks for last project and folder."""
@@ -126,7 +127,7 @@ class TasksModel(QtGui.QStandardItemModel):
         return self._empty_tasks_item
 
     def _add_invalid_item(self, item):
-        self.clear()
+        self._clear_items()
         root_item = self.invisibleRootItem()
         root_item.appendRow(item)
 
@@ -347,9 +348,6 @@ class TasksWidget(QtWidgets.QWidget):
         """
 
         self._tasks_model.refresh()
-
-    def _clear(self):
-        self._tasks_model.clear()
 
     def _on_tasks_refresh_finished(self, event):
         """Tasks were refreshed in controller.
