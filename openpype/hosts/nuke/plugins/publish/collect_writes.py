@@ -69,7 +69,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             instance, collected_frames
         )
 
-        # To avoid errors only try injecting colorspace 
+        # To avoid errors only try injecting colorspace
         # if any existing files were found on disk
         if representation["files"]:
             # inject colorspace data
