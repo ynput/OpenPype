@@ -75,7 +75,8 @@ class ExtractTyCache(publish.Extractor):
             "stagingDir": stagingdir
         }
         instance.data["representations"].append(mesh_repres)
-        self.log.info(f"Extracted instance '{instance.name}' to: {mesh_filename}")
+        self.log.info(
+            f"Extracted instance '{instance.name}' to: {mesh_filename}")
 
     def get_file(self, instance, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
