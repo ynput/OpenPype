@@ -59,7 +59,7 @@ class ValidateColorspaceLook(pyblish.api.InstancePlugin,
 
         if not_set_keys:
             message = (
-                f"Colorspace look attributes are not set: "
+                "Colorspace look attributes are not set: "
                 f"{', '.join(not_set_keys)}"
             )
             raise PublishValidationError(
