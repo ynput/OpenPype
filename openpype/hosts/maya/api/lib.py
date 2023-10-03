@@ -183,6 +183,47 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
+def get_namespace(node):
+    """Return namespace of given node"""
+    return node.rsplit("|", 1)[-1].rsplit(":", 1)[0]
+
+
+def strip_namespace(node, namespace):
+    """Strip given namespace from node path.
+
+    The namespace will only be stripped from names
+    if it starts with that namespace. If the namespace
+    occurs within another namespace it's not removed.
+
+    Examples:
+        >>> strip_namespace("namespace:node", namespace="namespace:")
+        "node"
+        >>> strip_namespace("hello:world:node", namespace="hello:world")
+        "node"
+        >>> strip_namespace("hello:world:node", namespace="hello")
+        "world:node"
+        >>> strip_namespace("hello:world:node", namespace="world")
+        "hello:world:node"
+        >>> strip_namespace("ns:group|ns:node", namespace="ns")
+        "group|node"
+
+    Returns:
+        str: Node name without given starting namespace.
+
+    """
+
+    # Ensure namespace ends with `:`
+    if not namespace.endswith(":"):
+        namespace = "{}:".format(namespace)
+
+    # The long path for a node can also have the namespace
+    # in its parents so we need to remove it from each
+    return "|".join(
+        name[len(namespace):] if name.startswith(namespace) else name
+        for name in node.split("|")
+    )
+
+
 def get_custom_namespace(custom_namespace):
     """Return unique namespace.
 

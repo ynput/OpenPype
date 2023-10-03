@@ -6,7 +6,9 @@ import pyblish.api
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import fbx
-from openpype.hosts.maya.api.lib import namespaced
+from openpype.hosts.maya.api.lib import (
+    namespaced, get_namespace, strip_namespace
+)
 
 
 class ExtractFBXAnimation(publish.Extractor):
@@ -31,24 +33,25 @@ class ExtractFBXAnimation(publish.Extractor):
         path = path.replace("\\", "/")
 
         fbx_exporter = fbx.FBXExtractor(log=self.log)
-        out_group = instance.data.get("animated_skeleton", [])
+        out_members = instance.data.get("animated_skeleton", [])
         # Export
         instance.data["constraints"] = True
         instance.data["skeletonDefinitions"] = True
         instance.data["referencedAssetsContent"] = True
-
         fbx_exporter.set_options_from_instance(instance)
-
         # Export from the rig's namespace so that the exported
         # FBX does not include the namespace but preserves the node
         # names as existing in the rig workfile
-        namespace, relative_out_group = out_group[0].split(":", 1)
+        namespace = get_namespace(out_members[0])
+        relative_out_members = [
+            strip_namespace(node, namespace) for node in out_members
+        ]
         with namespaced(
             ":" + namespace,
             new=False,
             relative_names=True
         ) as namespace:
-            fbx_exporter.export(relative_out_group, path)
+            fbx_exporter.export(relative_out_members, path)
 
         representations = instance.data.setdefault("representations", [])
         representations.append({
