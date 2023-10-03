@@ -128,6 +128,9 @@ def get_any_timeline():
 def get_new_timeline(timeline_name: str = None):
     """Get new timeline object.
 
+Arguments:
+    timeline_name (str): New timeline name.
+
     Returns:
         object: resolve.Timeline
     """
