@@ -105,7 +105,8 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     @classmethod
     def invalid_hierarchy(cls, instance, content):
-        """Check if the sets passes the validation
+        """Check if the rig sets passes the validation with
+        correct hierarchy
 
         Args:
             instance (str): instance
