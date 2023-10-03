@@ -14,6 +14,13 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
+class MissingKeyError(KeyError):
+    def __init__(self, msg=None):
+        if not msg:
+            msg = "Creator's subset name template is missing key value."
+        super(MissingKeyError, self).__init__(msg)
+
+
 def get_subset_name_template(
     project_name,
     family,
@@ -161,7 +168,7 @@ def get_subset_name(
     try:
         return template.format(**prepare_template_data(fill_pairs))
     except KeyError as exp:
-        raise KeyError(
+        raise MissingKeyError(
             "Value for {} key is missing in template '{}'."
             " Available values are {}".format(str(exp), template, fill_pairs)
         )
