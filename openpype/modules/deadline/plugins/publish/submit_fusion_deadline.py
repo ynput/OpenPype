@@ -173,7 +173,7 @@ class FusionSubmitDeadline(
                 "SecondaryPool": instance.data.get("secondaryPool"),
                 "Group": self.group,
 
-                "Plugin": "Fusion",
+                "Plugin": "FusionCmd",
                 "Frames": "{start}-{end}".format(
                     start=int(instance.data["frameStartHandle"]),
                     end=int(instance.data["frameEndHandle"])
