@@ -108,6 +108,7 @@ class LauncherWindow(QtWidgets.QWidget):
         page_slide_anim.setEndValue(1.0)
         page_slide_anim.setEasingCurve(QtCore.QEasingCurve.OutQuad)
 
+        projects_page.refreshed.connect(self._on_projects_refresh)
         message_timer.timeout.connect(self._on_message_timeout)
         refresh_timer.timeout.connect(self._on_refresh_timeout)
         page_slide_anim.valueChanged.connect(
@@ -132,6 +133,7 @@ class LauncherWindow(QtWidgets.QWidget):
         self._is_on_projects_page = True
         self._window_is_active = False
         self._refresh_on_activate = False
+        self._selected_project_name = None
 
         self._pages_widget = pages_widget
         self._pages_layout = pages_layout
@@ -191,11 +193,25 @@ class LauncherWindow(QtWidgets.QWidget):
 
     def _on_project_selection_change(self, event):
         project_name = event["project_name"]
+        self._selected_project_name = project_name
         if not project_name:
             self._go_to_projects_page()
 
         elif self._is_on_projects_page:
             self._go_to_hierarchy_page(project_name)
+
+    def _on_projects_refresh(self):
+        # There is nothing to do, we're on projects page
+        if self._is_on_projects_page:
+            return
+
+        # No projects were found -> go back to projects page
+        if not self._projects_page.has_content():
+            self._go_to_projects_page()
+            return
+
+        self._hierarchy_page.refresh()
+        self._actions_widget.refresh()
 
     def _on_action_trigger_started(self, event):
         self._echo("Running action: {}".format(event["full_label"]))

@@ -32,10 +32,6 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         super(ActionsQtModel, self).__init__()
 
         controller.register_event_callback(
-            "controller.refresh.finished",
-            self._on_controller_refresh_finished,
-        )
-        controller.register_event_callback(
             "selection.project.changed",
             self._on_selection_project_changed,
         )
@@ -144,13 +140,6 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         self._groups_by_id = groups_by_id
         self._items_by_id = items_by_id
         self.refreshed.emit()
-
-    def _on_controller_refresh_finished(self):
-        context = self._controller.get_selected_context()
-        self._selected_project_name = context["project_name"]
-        self._selected_folder_id = context["folder_id"]
-        self._selected_task_id = context["task_id"]
-        self.refresh()
 
     def _on_selection_project_changed(self, event):
         self._selected_project_name = event["project_name"]
@@ -335,6 +324,9 @@ class ActionsWidget(QtWidgets.QWidget):
         self._proxy_model = proxy_model
 
         self._set_row_height(1)
+
+    def refresh(self):
+        self._model.refresh()
 
     def _set_row_height(self, rows):
         self.setMinimumHeight(rows * 75)
