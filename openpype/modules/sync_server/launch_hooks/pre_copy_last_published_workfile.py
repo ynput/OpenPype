@@ -207,15 +207,14 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         # Use last published workfile version + 1
         # or last local workfile version + 1 if it's higher
-        workfile_data["version"] = (
-            last_local_workfile_version if (
-                last_local_workfile_version
-                and last_local_workfile_version
-                > last_published_workfile_version
+        workfile_data["version"] = max(
+            (
+                last_local_workfile_version or 0,
+                last_published_workfile_version or 0,
             )
-            else last_published_workfile_version
         ) + 1
         workfile_data["ext"] = extension
+        workfile_data["comment"] = "downloaded"
 
         anatomy_result = anatomy.format(workfile_data)
         local_workfile_path = anatomy_result[template_key]["path"]
