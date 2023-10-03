@@ -39,11 +39,10 @@ class ExtractFBXAnimation(publish.Extractor):
 
         fbx_exporter.set_options_from_instance(instance)
 
-        out_set_name = next(out for out in out_set)
         # Export from the rig's namespace so that the exported
         # FBX does not include the namespace but preserves the node
         # names as existing in the rig workfile
-        namespace, relative_out_set = out_set_name.split(":", 1)
+        namespace, relative_out_set = out_set[0].split(":", 1)
         with namespaced(
             ":" + namespace,
             new=False,

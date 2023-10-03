@@ -18,7 +18,7 @@ class ValidateAnimatedReferenceRig(pyblish.api.InstancePlugin):
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
-        animated_sets = instance.data["animated_skeleton"]
+        animated_sets = instance.data.get("animated_skeleton", [])
         if not animated_sets:
             self.log.debug(
                 "No nodes found in skeletonAnim_SET. "
@@ -58,6 +58,7 @@ class ValidateAnimatedReferenceRig(pyblish.api.InstancePlugin):
 
         # Validate control types
         invalid = []
+        set_members = cmds.ls(set_members, long=True)
         for node in set_members:
             if cmds.nodeType(node) not in self.accepted_controllers:
                 invalid.append(node)

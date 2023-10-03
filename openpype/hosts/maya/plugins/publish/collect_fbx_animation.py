@@ -33,4 +33,4 @@ class CollectFbxAnimation(pyblish.api.InstancePlugin,
                     skeleton_content
                 ))
             if skeleton_content:
-                instance.data["animated_skeleton"] += skeleton_content
+                instance.data["animated_skeleton"] = skeleton_content
