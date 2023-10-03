@@ -1,13 +1,14 @@
 import os
 import sys
 
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.utils import host_tools
+from openpype.pipeline import registered_host
 
 from .pipeline import (
     publish,
-    launch_workfiles_app
+    launch_workfiles_app,
 )
 
 
@@ -54,6 +55,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
         )
 
         self.setWindowTitle("OpenPype")
+        save_current_btn = QtWidgets.QPushButton("Save current file", self)
         workfiles_btn = QtWidgets.QPushButton("Workfiles ...", self)
         create_btn = QtWidgets.QPushButton("Create ...", self)
         publish_btn = QtWidgets.QPushButton("Publish ...", self)
@@ -74,6 +76,10 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 20, 10, 20)
+
+        layout.addWidget(save_current_btn)
+
+        layout.addWidget(Spacer(15, self))
 
         layout.addWidget(workfiles_btn)
         layout.addWidget(create_btn)
@@ -99,6 +105,8 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
+        save_current_btn.clicked.connect(self.on_save_current_clicked)
+        save_current_btn.setShortcut(QtGui.QKeySequence.Save)
         workfiles_btn.clicked.connect(self.on_workfile_clicked)
         create_btn.clicked.connect(self.on_create_clicked)
         publish_btn.clicked.connect(self.on_publish_clicked)
@@ -110,6 +118,15 @@ class OpenPypeMenu(QtWidgets.QWidget):
         # set_colorspace_btn.clicked.connect(self.on_set_colorspace_clicked)
         # reset_resolution_btn.clicked.connect(self.on_set_resolution_clicked)
         experimental_btn.clicked.connect(self.on_experimental_clicked)
+
+    def on_save_current_clicked(self):
+        host = registered_host()
+        current_file = host.current_file()
+        if not current_file:
+            return
+
+        print(f"Saving current file to: {current_file}")
+        host.save_file(current_file)
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
