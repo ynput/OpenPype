@@ -5,7 +5,6 @@ import uuid
 import clique
 from pymongo import UpdateOne
 import qargparse
-from qtpy import QtWidgets, QtCore
 
 from openpype import style
 from openpype.client import get_versions, get_representations
@@ -185,6 +184,14 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
         return size
 
     def message(self, text):
+        from qtpy import QtWidgets, QtCore
+
+        if not QtWidgets.QApplication.instance():
+            self.log.debug(
+                "No QApplication found to show text with:\n{}" + text
+            )
+            return
+
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText(text)
         msgBox.setStyleSheet(style.load_stylesheet())
