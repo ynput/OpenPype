@@ -31,7 +31,7 @@ class ExtractFBXAnimation(publish.Extractor):
         path = path.replace("\\", "/")
 
         fbx_exporter = fbx.FBXExtractor(log=self.log)
-        out_set = instance.data.get("animated_skeleton", [])
+        out_group = instance.data.get("animated_skeleton", [])
         # Export
         instance.data["constraints"] = True
         instance.data["skeletonDefinitions"] = True
@@ -42,13 +42,13 @@ class ExtractFBXAnimation(publish.Extractor):
         # Export from the rig's namespace so that the exported
         # FBX does not include the namespace but preserves the node
         # names as existing in the rig workfile
-        namespace, relative_out_set = out_set[0].split(":", 1)
+        namespace, relative_out_group = out_group[0].split(":", 1)
         with namespaced(
             ":" + namespace,
             new=False,
             relative_names=True
         ) as namespace:
-            fbx_exporter.export(relative_out_set, path)
+            fbx_exporter.export(relative_out_group, path)
 
         representations = instance.data.setdefault("representations", [])
         representations.append({
