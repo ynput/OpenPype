@@ -468,6 +468,8 @@ class DeleteOldVersions(load.SubsetLoaderPlugin):
         except Exception:
             self.log.error("Failed to delete versions.", exc_info=True)
 
+        return size
+
 
 class CalculateOldVersions(DeleteOldVersions):
     """Calculate file size of old versions"""
