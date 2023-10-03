@@ -44,7 +44,11 @@ class ExtractFBXAnimation(publish.Extractor):
         # FBX does not include the namespace but preserves the node
         # names as existing in the rig workfile
         namespace, relative_out_set = out_set_name.split(":", 1)
-        with namespaced(":" + namespace, new=False, relative_names=True) as namespace:       # noqa
+        with namespaced(
+            ":" + namespace,
+            new=False,
+            relative_names=True
+        ) as namespace:
             fbx_exporter.export(relative_out_set, path)
 
         representations = instance.data.setdefault("representations", [])

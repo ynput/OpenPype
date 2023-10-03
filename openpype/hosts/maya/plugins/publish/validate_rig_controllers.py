@@ -264,8 +264,6 @@ class ValidateSkeletonRigControllers(ValidateRigControllers):
     label = "Skeleton Rig Controllers"
     hosts = ["maya"]
     families = ["rig.fbx"]
-    actions = [RepairAction,
-               openpype.hosts.maya.api.action.SelectInvalidAction]
 
     # Default controller values
     CONTROLLER_DEFAULTS = {

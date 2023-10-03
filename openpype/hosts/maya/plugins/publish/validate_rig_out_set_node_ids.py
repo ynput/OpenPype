@@ -114,11 +114,6 @@ class ValidateSkeletonRigOutSetNodeIds(ValidateRigOutSetNodeIds):
     families = ["rig.fbx"]
     hosts = ['maya']
     label = 'Skeleton Rig Out Set Node Ids'
-    actions = [
-        openpype.hosts.maya.api.action.SelectInvalidAction,
-        RepairAction
-    ]
-    allow_history_only = False
 
     @classmethod
     def get_node(cls, instance):

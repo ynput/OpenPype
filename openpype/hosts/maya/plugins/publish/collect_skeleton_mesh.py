@@ -12,13 +12,11 @@ class CollectSkeletonMesh(pyblish.api.InstancePlugin):
     families = ["rig"]
 
     def process(self, instance):
-        skeleton_mesh_sets = [
-            i for i in instance
-            if i.lower().endswith("skeletonmesh_set")
-        ]
-        if not skeleton_mesh_sets:
+        skeleton_mesh_set = instance.data["rig_sets"].get(
+            "skeletonMesh_SET")
+        if not skeleton_mesh_set:
             self.log.debug(
-                "skeletonMesh_SET found. "
+                "No skeletonMesh_SET found. "
                 "Skipping collecting of skeleton mesh..."
             )
             return
@@ -30,14 +28,18 @@ class CollectSkeletonMesh(pyblish.api.InstancePlugin):
 
         instance.data["skeleton_mesh"] = []
 
-        if skeleton_mesh_sets:
+        if skeleton_mesh_set:
+            skeleton_mesh_content = cmds.sets(
+                skeleton_mesh_set, query=True) or []
+            if not skeleton_mesh_content:
+                self.log.debug(
+                    "No object nodes in skeletonMesh_SET. "
+                    "Skipping collecting of skeleton mesh..."
+                )
+                return
             instance.data["families"] += ["rig.fbx"]
-            for skeleton_mesh_set in skeleton_mesh_sets:
-                skeleton_mesh_content = cmds.sets(
-                    skeleton_mesh_set, query=True)
-                if skeleton_mesh_content:
-                    instance.data["skeleton_mesh"] += skeleton_mesh_content
-                    self.log.debug(
-                        "Collected skeletonmesh Set: {}".format(
-                            skeleton_mesh_content
-                        ))
+            instance.data["skeleton_mesh"] = skeleton_mesh_content
+            self.log.debug(
+                "Collected skeletonMesh_SET members: {}".format(
+                    skeleton_mesh_content
+                ))

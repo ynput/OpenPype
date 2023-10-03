@@ -140,8 +140,6 @@ class ValidateSkeletonRigOutputIds(ValidateRigOutputIds):
     label = "Skeleton Rig Output Ids"
     hosts = ["maya"]
     families = ["rig.fbx"]
-    actions = [RepairAction,
-               openpype.hosts.maya.api.action.SelectInvalidAction]
 
     @classmethod
     def get_node(cls, instance):

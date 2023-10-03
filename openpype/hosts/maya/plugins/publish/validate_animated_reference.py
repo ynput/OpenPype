@@ -1,4 +1,5 @@
 import pyblish.api
+import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     PublishValidationError,
     ValidateContentsOrder
@@ -14,12 +15,15 @@ class ValidateAnimatedReferenceRig(pyblish.api.InstancePlugin):
     families = ["animation.fbx"]
     label = "Animated Reference Rig"
     accepted_controllers = ["transform", "locator"]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
         animated_sets = instance.data["animated_skeleton"]
         if not animated_sets:
             self.log.debug(
-                "No nodes found in skeletonAnim_SET.Skipping...")
+                "No nodes found in skeletonAnim_SET. "
+                "Skipping validation of animated reference rig..."
+            )
             return
 
         for animated_reference in animated_sets:
@@ -37,6 +41,7 @@ class ValidateAnimatedReferenceRig(pyblish.api.InstancePlugin):
                 " should be transforms"
             )
 
+    @classmethod
     def validate_controls(self, set_members):
         """Check if the controller set passes the validations
 

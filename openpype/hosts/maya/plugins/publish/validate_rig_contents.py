@@ -1,6 +1,6 @@
 import pyblish.api
 from maya import cmds
-
+import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     PublishValidationError,
     ValidateContentsOrder
@@ -20,6 +20,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
     label = "Rig Contents"
     hosts = ["maya"]
     families = ["rig"]
+    action = [openpype.hosts.maya.api.action.SelectInvalidAction ]
 
     accepted_output = ["mesh", "transform"]
     accepted_controllers = ["transform"]
@@ -77,7 +78,8 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
             cls.log.error("Only meshes can be part of the out_SET\n%s"
                            % invalid_geometry)
             error = True
-        return error
+        if error:
+            return invalid_hierarchy + invalid_controls + invalid_geometry
 
     @classmethod
     def validate_missing_objectsets(cls, instance,
@@ -103,7 +105,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     @classmethod
     def invalid_hierarchy(cls, instance, content):
-        """_summary_
+        """Check if the sets passes the validation
 
         Args:
             instance (str): instance
@@ -192,7 +194,8 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
             instance (str): instance
 
         Returns:
-            list: list of objectsets, list of rig sets nodes
+            tuple: 2-tuple of list of objectsets,
+                list of rig sets nodes
         """
         objectsets = ["controls_SET", "out_SET"]
         rig_sets_nodes = instance.data.get("rig_sets", [])
@@ -212,8 +215,6 @@ class ValidateSkeletonRigContents(ValidateRigContents):
     label = "Skeleton Rig Contents"
     hosts = ["maya"]
     families = ["rig.fbx"]
-
-    accepted_output = {"mesh", "transform", "locator"}
 
     @classmethod
     def get_invalid(cls, instance):
@@ -240,7 +241,8 @@ class ValidateSkeletonRigContents(ValidateRigContents):
                           "while they are set up for publishing."
                           "\n%s" % invalid_hierarchy)
             error = True
-        return error
+        if error:
+            return invalid_hierarchy + invalid_geometry
 
     @classmethod
     def get_nodes(cls, instance):
@@ -250,8 +252,8 @@ class ValidateSkeletonRigContents(ValidateRigContents):
             instance (str): instance
 
         Returns:
-            list: list of objectsets,
-                  list of objects node from skeletonMesh_SET
+            tuple: 2-tuple of list of objectsets,
+                list of rig sets nodes
         """
         objectsets = ["skeletonMesh_SET"]
         skeleton_mesh_nodes = instance.data.get("skeleton_mesh", [])
