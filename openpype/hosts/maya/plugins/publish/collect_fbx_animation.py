@@ -19,7 +19,7 @@ class CollectFbxAnimation(pyblish.api.InstancePlugin,
             return
         skeleton_sets = [
             i for i in instance
-            if i.lower().endswith("skeletonanim_set")
+            if i.endswith("skeletonAnim_SET")
         ]
         if not skeleton_sets:
             return

@@ -28,18 +28,17 @@ class CollectSkeletonMesh(pyblish.api.InstancePlugin):
 
         instance.data["skeleton_mesh"] = []
 
-        if skeleton_mesh_set:
-            skeleton_mesh_content = cmds.sets(
-                skeleton_mesh_set, query=True) or []
-            if not skeleton_mesh_content:
-                self.log.debug(
-                    "No object nodes in skeletonMesh_SET. "
-                    "Skipping collecting of skeleton mesh..."
-                )
-                return
-            instance.data["families"] += ["rig.fbx"]
-            instance.data["skeleton_mesh"] = skeleton_mesh_content
+        skeleton_mesh_content = cmds.sets(
+            skeleton_mesh_set, query=True) or []
+        if not skeleton_mesh_content:
             self.log.debug(
-                "Collected skeletonMesh_SET members: {}".format(
-                    skeleton_mesh_content
-                ))
+                "No object nodes in skeletonMesh_SET. "
+                "Skipping collecting of skeleton mesh..."
+            )
+            return
+        instance.data["families"] += ["rig.fbx"]
+        instance.data["skeleton_mesh"] = skeleton_mesh_content
+        self.log.debug(
+            "Collected skeletonMesh_SET members: {}".format(
+                skeleton_mesh_content
+            ))

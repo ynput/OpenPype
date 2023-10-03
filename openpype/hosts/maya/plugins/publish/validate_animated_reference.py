@@ -43,7 +43,7 @@ class ValidateAnimatedReferenceRig(pyblish.api.InstancePlugin):
 
     @classmethod
     def validate_controls(self, set_members):
-        """Check if the controller set passes the validations
+        """Check if the controller set contains only accepted node types.
 
         Checks if all its set members are within the hierarchy of the root
         Checks if the node types of the set members valid

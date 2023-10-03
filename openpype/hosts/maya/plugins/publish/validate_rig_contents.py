@@ -105,8 +105,8 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     @classmethod
     def invalid_hierarchy(cls, instance, content):
-        """Check if the rig sets passes the validation with
-        correct hierarchy
+        """
+        Check if all rig set members are within the hierarchy of the rig root
 
         Args:
             instance (str): instance
@@ -140,9 +140,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     @classmethod
     def validate_geometry(cls, set_members):
-        """Check if the out set passes the validations
-
-        Checks if all its set members are within the hierarchy of the root
+        """
         Checks if the node types of the set members valid
 
         Args:
@@ -166,9 +164,8 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     @classmethod
     def validate_controls(cls, set_members):
-        """Check if the controller set passes the validations
-
-        Checks if all its set members are within the hierarchy of the root
+        """
+        Checks if the control set members are allowed node types.
         Checks if the node types of the set members valid
 
         Args:
