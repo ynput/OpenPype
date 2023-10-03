@@ -132,11 +132,11 @@ def _get_colorspace_data(config_path):
     roles = config.getRoles()
     if roles:
         colorspace_data.update({
-            role[0]: {
+            role: {
                 "type": "role",
-                "colorspace": role[1]
+                "colorspace": colorspace
             }
-            for role in roles
+            for (role, colorspace) in roles
         })
 
     return colorspace_data
