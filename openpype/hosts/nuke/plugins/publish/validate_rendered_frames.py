@@ -66,7 +66,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             if not repre.get("files"):
                 msg = ("no frames were collected, "
                        "you need to render them.\n"
-                       "Check properties of write node (group) and"
+                       "Check properties of write node (group) and "
                        "select 'Local' option in 'Publish' dropdown.")
                 self.log.error(msg)
                 raise PublishXmlValidationError(
