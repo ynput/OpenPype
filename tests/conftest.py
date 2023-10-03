@@ -30,7 +30,7 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
-        "--openpype_mongo", action="store", default=None,
+        "--mongo_url", action="store", default=None,
         help="Provide url of the Mongo database."
     )
 
@@ -61,8 +61,8 @@ def setup_only(request):
 
 
 @pytest.fixture(scope="module")
-def openpype_mongo(request):
-    return request.config.getoption("--openpype_mongo")
+def mongo_url(request):
+    return request.config.getoption("--mongo_url")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

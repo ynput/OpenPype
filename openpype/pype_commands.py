@@ -214,7 +214,7 @@ class PypeCommands:
 
     def run_tests(self, folder, mark, pyargs,
                   test_data_folder, persist, app_variant, timeout, setup_only,
-                  openpype_mongo):
+                  mongo_url):
         """
             Runs tests from 'folder'
 
@@ -227,6 +227,10 @@ class PypeCommands:
                     end
                 app_variant (str): variant (eg 2020 for AE), empty if use
                     latest installed version
+                timeout (int): explicit timeout for single test
+                setup_only (bool): if only preparation steps should be
+                    triggered, no tests (useful for debugging/development)
+                mongo_url (str): url to Openpype Mongo database
         """
         print("run_tests")
         if folder:
@@ -265,12 +269,12 @@ class PypeCommands:
         if setup_only:
             args.extend(["--setup_only", setup_only])
 
-        if openpype_mongo:
-            args.extend(["--openpype_mongo", openpype_mongo])
+        if mongo_url:
+            args.extend(["--mongo_url", mongo_url])
         else:
             msg = (
                 "Either provide uri to MongoDB through environment variable"
-                " OPENPYPE_MONGO or the command flag --openpype_mongo"
+                " OPENPYPE_MONGO or the command flag --mongo_url"
             )
             assert not os.environ.get("OPENPYPE_MONGO"), msg
 
