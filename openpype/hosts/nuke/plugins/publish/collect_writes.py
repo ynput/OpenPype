@@ -68,8 +68,14 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         representation = self._get_existing_frames_representation(
             instance, collected_frames
         )
+
+        set_colorspace = True
+
         files = representation["files"]
-        if isinstance(files, list) and files:
+        if isinstance(files, list) and not files:
+            set_colorspace = False
+
+        if set_colorspace:
             # inject colorspace data
             self.set_representation_colorspace(
                 representation, instance.context,
