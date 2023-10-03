@@ -36,7 +36,10 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
 
         # Consider only valid node types to avoid "Unknown object type" warning
         all_node_types = set(cmds.allNodeTypes())
-        node_types = [key for key in file_attrs.keys() if key in all_node_types]
+        node_types = [
+            key for key in file_attrs.keys()
+            if key in all_node_types
+        ]
 
         for node, node_type in pairwise(cmds.ls(type=node_types,
                                                 showType=True)):
