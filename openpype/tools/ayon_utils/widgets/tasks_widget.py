@@ -50,8 +50,8 @@ class TasksModel(QtGui.QStandardItemModel):
         self._remove_invalid_items()
         super(TasksModel, self).clear()
 
-    def refresh(self, project_name, folder_id):
-        """Refresh tasks for folder.
+    def set_context(self, project_name, folder_id):
+        """Set context for which should be tasks showed.
 
         Args:
             project_name (Union[str]): Name of project.
@@ -353,13 +353,13 @@ class TasksWidget(QtWidgets.QWidget):
             or event["folder_id"] != self._selected_folder_id
         ):
             return
-        self._tasks_model.refresh(
+        self._tasks_model.set_context(
             event["project_name"], self._selected_folder_id
         )
 
     def _folder_selection_changed(self, event):
         self._selected_folder_id = event["folder_id"]
-        self._tasks_model.refresh(
+        self._tasks_model.set_context(
             event["project_name"], self._selected_folder_id
         )
 
