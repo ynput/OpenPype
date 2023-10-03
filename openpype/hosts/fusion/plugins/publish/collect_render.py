@@ -4,9 +4,7 @@ import pyblish.api
 
 from openpype.pipeline import publish
 from openpype.pipeline.publish import RenderInstance
-from openpype.hosts.fusion.api.lib import (
-    get_frame_path,
-)
+from openpype.hosts.fusion.api.lib import get_frame_path
 
 
 @attr.s
