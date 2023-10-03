@@ -52,7 +52,8 @@
             "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
-            "group": ""
+            "group": "",
+            "plugin": "Fusion"
         },
         "NukeSubmitDeadline": {
             "enabled": true,
