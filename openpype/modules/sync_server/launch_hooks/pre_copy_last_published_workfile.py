@@ -184,24 +184,36 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         extension = last_published_workfile_path.split(".")[-1]
 
-        # Use last local workfile version + 1
-        # or last published workfile version + 1
+        # Get last published workfile version
+        last_published_workfile_version = workfile_representation["context"][
+            "version"
+        ]
+
+        # Get last local workfile version
+        last_local_workfile_version = get_last_workfile_with_version(
+            get_workdir(
+                project_doc,
+                asset_doc,
+                task_name,
+                host_name,
+                anatomy=anatomy,
+                template_key=template_key,
+                project_settings=project_settings,
+            ),
+            anatomy.templates[template_key]["file"],
+            workfile_data,
+            [extension],
+        )[1]
+
+        # Use last published workfile version + 1
+        # or last local workfile version + 1 if it's higher
         workfile_data["version"] = (
-            get_last_workfile_with_version(
-                get_workdir(
-                    project_doc,
-                    asset_doc,
-                    task_name,
-                    host_name,
-                    anatomy=anatomy,
-                    template_key=template_key,
-                    project_settings=project_settings,
-                ),
-                anatomy.templates[template_key]["file"],
-                workfile_data,
-                [extension],
-            )[1]
-            or workfile_representation["context"]["version"]
+            last_local_workfile_version if (
+                last_local_workfile_version
+                and last_local_workfile_version
+                > last_published_workfile_version
+            )
+            else last_published_workfile_version
         ) + 1
         workfile_data["ext"] = extension
 
