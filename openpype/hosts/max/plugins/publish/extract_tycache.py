@@ -66,6 +66,17 @@ class ExtractTyCache(publish.Extractor):
         instance.data["representations"].append(representation)
         self.log.info(f"Extracted instance '{instance.name}' to: {filenames}")
 
+        # Get the tyMesh filename for extraction
+        mesh_filename = "{}__tyMesh.tyc".format(instance.name)
+        mesh_repres = {
+            'name': 'tyMesh',
+            'ext': 'tyc',
+            'files': mesh_filename,
+            "stagingDir": stagingdir
+        }
+        instance.data["representations"].append(mesh_repres)
+        self.log.info(f"Extracted instance '{instance.name}' to: {mesh_filename}")
+
     def get_file(self, instance, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
 
@@ -74,7 +85,6 @@ class ExtractTyCache(publish.Extractor):
 
         Actual File Output from tyFlow in tyCache format:
         <InstanceName>__tyPart_<frame>.tyc
-        <InstanceName>__tyMesh.tyc
 
         e.g. tycacheMain__tyPart_00000.tyc
 
@@ -92,7 +102,6 @@ class ExtractTyCache(publish.Extractor):
         for frame in range(int(start_frame), int(end_frame) + 1):
             filename = "{}__tyPart_{:05}.tyc".format(instance.name, frame)
             filenames.append(filename)
-        filenames.append("{}__tyMesh.tyc".format(instance.name))
         return filenames
 
     def export_particle(self, members, start, end,
