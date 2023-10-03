@@ -300,8 +300,8 @@ class AbstractLauncherFrontEnd(AbstractLauncherCommon):
     def refresh_actions(self):
         """Refresh actions and all related data.
 
-        Triggers 'controller.refresh.actions.started' event at the beginning and
-        'controller.refresh.actions.finished' at the end.
+        Triggers 'controller.refresh.actions.started' event at the beginning
+        and 'controller.refresh.actions.finished' at the end.
         """
 
         pass
