@@ -281,7 +281,6 @@ def create_timeline_item(media_pool_item: object,
         if source_end is not None:
             clip_data.update({"endFrame": source_end})
 
-        print(clip_data)
         # add to timeline
         media_pool.AppendToTimeline([clip_data])
 
@@ -560,7 +559,6 @@ def get_pype_marker(timeline_item):
         note = timeline_item_markers[marker_frame]["note"]
         color = timeline_item_markers[marker_frame]["color"]
         name = timeline_item_markers[marker_frame]["name"]
-        print(f"_ marker data: {marker_frame} | {name} | {color} | {note}")
         if name == self.pype_marker_name and color == self.pype_marker_color:
             self.temp_marker_frame = marker_frame
             return json.loads(note)
@@ -630,7 +628,7 @@ def create_compound_clip(clip_data, name, folder):
                 if c.GetName() in name), None)
 
     if cct:
-        print(f"_ cct exists: {cct}")
+        print(f"Compound clip exists: {cct}")
     else:
         # Create empty timeline in current folder and give name:
         cct = mp.CreateEmptyTimeline(name)
@@ -639,7 +637,7 @@ def create_compound_clip(clip_data, name, folder):
         clips = folder.GetClipList()
         cct = next((c for c in clips
                     if c.GetName() in name), None)
-        print(f"_ cct created: {cct}")
+        print(f"Compound clip created: {cct}")
 
         with maintain_current_timeline(cct, tl_origin):
             # Add input clip to the current timeline:
