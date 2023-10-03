@@ -60,6 +60,7 @@ def setup_only(request):
     return request.config.getoption("--setup_only")
 
 
+@pytest.fixture(scope="module")
 def openpype_mongo(request):
     return request.config.getoption("--openpype_mongo")
 

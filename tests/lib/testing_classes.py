@@ -147,11 +147,11 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def db_setup(self, download_test_data, env_var, monkeypatch_session,
-                 request, openpype):
+                 request, openpype_mongo):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
 
-        uri = os.environ.get("OPENPYPE_MONGO", openpype)
+        uri = openpype_mongo or os.environ.get("OPENPYPE_MONGO")
         db_handler = DBHandler(uri)
         db_handler.setup_from_dump(self.TEST_DB_NAME, backup_dir,
                                    overwrite=True,
