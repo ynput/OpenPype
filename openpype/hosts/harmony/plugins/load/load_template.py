@@ -82,7 +82,6 @@ class TemplateLoader(load.LoaderPlugin):
         node = harmony.find_node_by_name(node_name, "GROUP")
         self_name = self.__class__.__name__
 
-        update_and_replace = False
         if is_representation_from_latest(representation):
             self._set_green(node)
         else:

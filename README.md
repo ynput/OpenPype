@@ -62,7 +62,7 @@ development tools like [CMake](https://cmake.org/) and [Visual Studio](https://v
 
 #### Clone repository:
 ```sh
-git clone --recurse-submodules git@github.com:Pypeclub/OpenPype.git
+git clone --recurse-submodules git@github.com:ynput/OpenPype.git
 ```
 
 #### To build OpenPype:

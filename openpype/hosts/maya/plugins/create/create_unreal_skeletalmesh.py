@@ -21,7 +21,7 @@ class CreateUnrealSkeletalMesh(plugin.MayaCreator):
     # Defined in settings
     joint_hints = set()
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         """Apply project settings to creator"""
         settings = (
             project_settings["maya"]["create"]["CreateUnrealSkeletalMesh"]

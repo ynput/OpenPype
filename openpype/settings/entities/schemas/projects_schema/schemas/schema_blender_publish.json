@@ -19,6 +19,39 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateFileSaved",
+            "label": "Validate File Saved",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "splitter"
+                },
+                {
+                    "key": "exclude_families",
+                    "label": "Exclude Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
             "type": "collapsible-wrap",
             "label": "Model",
             "children": [
@@ -41,6 +74,66 @@
                         {
                             "key": "ValidateNoColonsInName",
                             "label": "Validate No Colons In Name"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "collapsible-wrap",
+            "label": "Render",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "type": "dict",
+                            "collapsible": true,
+                            "key": "ValidateRenderCameraIsSet",
+                            "label": "Validate Render Camera Is Set",
+                            "checkbox_key": "enabled",
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "optional",
+                                    "label": "Optional"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "active",
+                                    "label": "Active"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "dict",
+                            "collapsible": true,
+                            "key": "ValidateDeadlinePublish",
+                            "label": "Validate Render Output for Deadline",
+                            "checkbox_key": "enabled",
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "optional",
+                                    "label": "Optional"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "active",
+                                    "label": "Active"
+                                }
+                            ]
                         }
                     ]
                 }

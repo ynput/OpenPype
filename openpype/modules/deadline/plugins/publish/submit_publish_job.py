@@ -96,7 +96,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     targets = ["local"]
 
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
-             "celaction", "aftereffects", "harmony"]
+             "celaction", "aftereffects", "harmony", "blender"]
 
     families = ["render.farm", "render.frames_farm",
                 "prerender.farm", "prerender.frames_farm",
@@ -107,6 +107,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "redshift_rop"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
+                  "blender": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"],
@@ -317,7 +318,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         # remove secondary pool
         payload["JobInfo"].pop("SecondaryPool", None)
 
-        self.log.info("Submitting Deadline job ...")
+        self.log.debug("Submitting Deadline publish job ...")
 
         url = "{}/api/jobs".format(self.deadline_url)
         response = requests.post(url, json=payload, timeout=10)
@@ -344,6 +345,151 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         if not instance.data.get("farm"):
             self.log.debug("Skipping local instance.")
             return
+
+        data = instance.data.copy()
+        context = instance.context
+        self.context = context
+        self.anatomy = instance.context.data["anatomy"]
+
+        asset = data.get("asset") or context.data["asset"]
+        subset = data.get("subset")
+
+        start = instance.data.get("frameStart")
+        if start is None:
+            start = context.data["frameStart"]
+
+        end = instance.data.get("frameEnd")
+        if end is None:
+            end = context.data["frameEnd"]
+
+        handle_start = instance.data.get("handleStart")
+        if handle_start is None:
+            handle_start = context.data["handleStart"]
+
+        handle_end = instance.data.get("handleEnd")
+        if handle_end is None:
+            handle_end = context.data["handleEnd"]
+
+        fps = instance.data.get("fps")
+        if fps is None:
+            fps = context.data["fps"]
+
+        if data.get("extendFrames", False):
+            start, end = self._extend_frames(
+                asset,
+                subset,
+                start,
+                end,
+                data["overrideExistingFrame"])
+
+        try:
+            source = data["source"]
+        except KeyError:
+            source = context.data["currentFile"]
+
+        success, rootless_path = (
+            self.anatomy.find_root_template_from_path(source)
+        )
+        if success:
+            source = rootless_path
+
+        else:
+            # `rootless_path` is not set to `source` if none of roots match
+            self.log.warning((
+                "Could not find root path for remapping \"{}\"."
+                " This may cause issues."
+            ).format(source))
+
+        family = "render"
+        if ("prerender" in instance.data["families"] or
+                "prerender.farm" in instance.data["families"]):
+            family = "prerender"
+        families = [family]
+
+        # pass review to families if marked as review
+        do_not_add_review = False
+        if data.get("review"):
+            families.append("review")
+        elif data.get("review") is False:
+            self.log.debug("Instance has review explicitly disabled.")
+            do_not_add_review = True
+
+        instance_skeleton_data = {
+            "family": family,
+            "subset": subset,
+            "families": families,
+            "asset": asset,
+            "frameStart": start,
+            "frameEnd": end,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
+            "frameStartHandle": start - handle_start,
+            "frameEndHandle": end + handle_end,
+            "comment": instance.data["comment"],
+            "fps": fps,
+            "source": source,
+            "extendFrames": data.get("extendFrames"),
+            "overrideExistingFrame": data.get("overrideExistingFrame"),
+            "pixelAspect": data.get("pixelAspect", 1),
+            "resolutionWidth": data.get("resolutionWidth", 1920),
+            "resolutionHeight": data.get("resolutionHeight", 1080),
+            "multipartExr": data.get("multipartExr", False),
+            "jobBatchName": data.get("jobBatchName", ""),
+            "useSequenceForReview": data.get("useSequenceForReview", True),
+            # map inputVersions `ObjectId` -> `str` so json supports it
+            "inputVersions": list(map(str, data.get("inputVersions", []))),
+            "colorspace": instance.data.get("colorspace"),
+            "stagingDir_persistent": instance.data.get(
+                "stagingDir_persistent", False
+            )
+        }
+
+        # skip locking version if we are creating v01
+        instance_version = instance.data.get("version")  # take this if exists
+        if instance_version != 1:
+            instance_skeleton_data["version"] = instance_version
+
+        # transfer specific families from original instance to new render
+        for item in self.families_transfer:
+            if item in instance.data.get("families", []):
+                instance_skeleton_data["families"] += [item]
+
+        # transfer specific properties from original instance based on
+        # mapping dictionary `instance_transfer`
+        for key, values in self.instance_transfer.items():
+            if key in instance.data.get("families", []):
+                for v in values:
+                    instance_skeleton_data[v] = instance.data.get(v)
+
+        # look into instance data if representations are not having any
+        # which are having tag `publish_on_farm` and include them
+        for repre in instance.data.get("representations", []):
+            staging_dir = repre.get("stagingDir")
+            if staging_dir:
+                success, rootless_staging_dir = (
+                    self.anatomy.find_root_template_from_path(
+                        staging_dir
+                    )
+                )
+                if success:
+                    repre["stagingDir"] = rootless_staging_dir
+                else:
+                    self.log.warning((
+                        "Could not find root path for remapping \"{}\"."
+                        " This may cause issues on farm."
+                    ).format(staging_dir))
+                    repre["stagingDir"] = staging_dir
+
+            if "publish_on_farm" in repre.get("tags"):
+                # create representations attribute of not there
+                if "representations" not in instance_skeleton_data.keys():
+                    instance_skeleton_data["representations"] = []
+
+                instance_skeleton_data["representations"].append(repre)
+
+        instances = None
+        assert data.get("expectedFiles"), ("Submission from old Pype version"
+                                           " - missing expectedFiles")
 
         anatomy = instance.context.data["anatomy"]
 
@@ -454,7 +600,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             import getpass
 
             render_job = {}
-            self.log.info("Faking job data ...")
+            self.log.debug("Faking job data ...")
             render_job["Props"] = {}
             # Render job doesn't exist because we do not have prior submission.
             # We still use data from it so lets fake it.

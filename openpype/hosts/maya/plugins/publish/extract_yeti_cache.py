@@ -39,7 +39,7 @@ class ExtractYetiCache(publish.Extractor):
         else:
             kwargs.update({"samples": samples})
 
-        self.log.info(
+        self.log.debug(
             "Writing out cache {} - {}".format(start_frame, end_frame))
         # Start writing the files for snap shot
         # <NAME> will be replace by the Yeti node name
@@ -53,7 +53,7 @@ class ExtractYetiCache(publish.Extractor):
 
         cache_files = [x for x in os.listdir(dirname) if x.endswith(".fur")]
 
-        self.log.info("Writing metadata file")
+        self.log.debug("Writing metadata file")
         settings = instance.data["fursettings"]
         fursettings_path = os.path.join(dirname, "yeti.fursettings")
         with open(fursettings_path, "w") as fp:
@@ -63,7 +63,7 @@ class ExtractYetiCache(publish.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
-        self.log.info("cache files: {}".format(cache_files[0]))
+        self.log.debug("cache files: {}".format(cache_files[0]))
 
         # Workaround: We do not explicitly register these files with the
         # representation solely so that we can write multiple sequences
@@ -87,4 +87,4 @@ class ExtractYetiCache(publish.Extractor):
             }
         )
 
-        self.log.info("Extracted {} to {}".format(instance, dirname))
+        self.log.debug("Extracted {} to {}".format(instance, dirname))

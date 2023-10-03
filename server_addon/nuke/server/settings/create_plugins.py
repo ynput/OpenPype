@@ -16,13 +16,10 @@ def instance_attributes_enum():
 
 
 class PrenodeModel(BaseSettingsModel):
-    # TODO: missing in host api
-    # - good for `dependency`
     name: str = Field(
         title="Node name"
     )
 
-    # TODO: `nodeclass` should be renamed to `nuke_node_class`
     nodeclass: str = Field(
         "",
         title="Node class"
@@ -32,11 +29,8 @@ class PrenodeModel(BaseSettingsModel):
         title="Incoming dependency"
     )
 
-    """# TODO: Changes in host api:
-    - Need complete rework of knob types in nuke integration.
-    - We could not support v3 style of settings.
-    """
     knobs: list[KnobModel] = Field(
+        default_factory=list,
         title="Knobs",
     )
 
@@ -61,11 +55,8 @@ class CreateWriteRenderModel(BaseSettingsModel):
         title="Instance attributes"
     )
 
-    """# TODO: Changes in host api:
-    - prenodes key was originally dict and now is list
-      (we could not support v3 style of settings)
-    """
     prenodes: list[PrenodeModel] = Field(
+        default_factory=list,
         title="Preceding nodes",
     )
 
@@ -90,11 +81,8 @@ class CreateWritePrerenderModel(BaseSettingsModel):
         title="Instance attributes"
     )
 
-    """# TODO: Changes in host api:
-    - prenodes key was originally dict and now is list
-      (we could not support v3 style of settings)
-    """
     prenodes: list[PrenodeModel] = Field(
+        default_factory=list,
         title="Preceding nodes",
     )
 
@@ -119,11 +107,8 @@ class CreateWriteImageModel(BaseSettingsModel):
         title="Instance attributes"
     )
 
-    """# TODO: Changes in host api:
-    - prenodes key was originally dict and now is list
-      (we could not support v3 style of settings)
-    """
     prenodes: list[PrenodeModel] = Field(
+        default_factory=list,
         title="Preceding nodes",
     )
 

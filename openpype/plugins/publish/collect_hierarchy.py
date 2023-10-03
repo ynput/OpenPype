@@ -24,7 +24,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
         final_context[project_name]['entity_type'] = 'Project'
 
         for instance in context:
-            self.log.info("Processing instance: `{}` ...".format(instance))
+            self.log.debug("Processing instance: `{}` ...".format(instance))
 
             # shot data dict
             shot_data = {}

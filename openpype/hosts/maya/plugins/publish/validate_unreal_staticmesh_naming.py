@@ -140,12 +140,12 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
             return
 
         if not self.validate_mesh and not self.validate_collision:
-            self.log.info("Validation of both mesh and collision names"
-                          "is disabled.")
+            self.log.debug("Validation of both mesh and collision names"
+                           "is disabled.")
             return
 
         if not instance.data.get("collisionMembers", None):
-            self.log.info("There are no collision objects to validate")
+            self.log.debug("There are no collision objects to validate")
             return
 
         invalid = self.get_invalid(instance)

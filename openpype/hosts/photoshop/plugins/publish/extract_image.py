@@ -45,9 +45,11 @@ class ExtractImage(pyblish.api.ContextPlugin):
                     # Perform extraction
                     files = {}
                     ids = set()
-                    layer = instance.data.get("layer")
-                    if layer:
-                        ids.add(layer.id)
+                    # real layers and groups
+                    members = instance.data("members")
+                    if members:
+                        ids.update(set([int(member) for member in members]))
+                    # virtual groups collected by color coding or auto_image
                     add_ids = instance.data.pop("ids", None)
                     if add_ids:
                         ids.update(set(add_ids))

@@ -23,7 +23,7 @@ class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        self.log.info("Checking namespace for %s" % instance.name)
+        self.log.debug("Checking namespace for %s" % instance.name)
         if self.get_invalid(instance):
             raise PublishValidationError("Nested namespaces found")
 

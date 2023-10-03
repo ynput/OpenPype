@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from System import *
 from System.Diagnostics import *
 from System.IO import *

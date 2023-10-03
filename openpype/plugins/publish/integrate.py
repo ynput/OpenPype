@@ -140,7 +140,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "simpleUnrealTexture",
                 "online",
                 "uasset",
-                "blendScene"
+                "blendScene",
+                "yeticacheUE"
                 ]
 
     default_template_name = "publish"
@@ -156,13 +157,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Instance should be integrated on a farm
         if instance.data.get("farm"):
-            self.log.info(
+            self.log.debug(
                 "Instance is marked to be processed on farm. Skipping")
             return
 
         # Instance is marked to not get integrated
         if not instance.data.get("integrate", True):
-            self.log.info("Instance is marked to skip integrating. Skipping")
+            self.log.debug("Instance is marked to skip integrating. Skipping")
             return
 
         filtered_repres = self.filter_representations(instance)
@@ -307,7 +308,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # increase if the file transaction takes a long time.
         op_session.commit()
 
-        self.log.info("Subset {subset[name]} and Version {version[name]} "
+        self.log.info("Subset '{subset[name]}' version {version[name]} "
                       "written to database..".format(subset=subset,
                                                      version=version))
 
@@ -393,8 +394,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             p["representation"]["_id"]: p for p in prepared_representations
         }
 
-        self.log.info("Registered {} representations"
-                      "".format(len(prepared_representations)))
+        self.log.info(
+            "Registered {} representations: {}".format(
+                len(prepared_representations),
+                ", ".join(p["representation"]["name"]
+                          for p in prepared_representations)
+            )
+        )
 
     def prepare_subset(self, instance, op_session, project_name):
         asset_doc = instance.data["assetEntity"]
