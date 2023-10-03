@@ -185,7 +185,11 @@ def maintained_selection():
 
 def get_namespace(node):
     """Return namespace of given node"""
-    return node.rsplit("|", 1)[-1].rsplit(":", 1)[0]
+    node_name = node.rsplit("|", 1)[-1]
+    if ":" in node_name:
+        return node_name.rsplit(":", 1)[0]
+    else:
+        return ""
 
 
 def strip_namespace(node, namespace):
