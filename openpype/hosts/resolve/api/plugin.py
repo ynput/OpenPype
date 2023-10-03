@@ -329,9 +329,8 @@ class ClipLoader:
             else:
                 # create new sequence
                 self.active_timeline = lib.get_new_timeline(
-                    "{}_{}_{}".format(
-                        self.subset,
-                        self.representation,
+                    "{}_{}".format(
+                        self.data["timeline_basename"],
                         str(uuid.uuid4())[:8]
                     )
                 )
@@ -355,13 +354,13 @@ class ClipLoader:
         # create name
         repr = self.context["representation"]
         repr_cntx = repr["context"]
-        self.asset = str(repr_cntx["asset"])
-        self.subset = str(repr_cntx["subset"])
-        self.representation = str(repr_cntx["representation"])
+        asset = str(repr_cntx["asset"])
+        subset = str(repr_cntx["subset"])
+        representation = str(repr_cntx["representation"])
         self.data["clip_name"] = "_".join([
-            self.asset,
-            self.subset,
-            self.representation
+            asset,
+            subset,
+            representation
         ])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
@@ -372,12 +371,14 @@ class ClipLoader:
                 "Representation id `{}` is failing to load".format(repr_id))
             return None
         self.data["path"] = file.replace("\\", "/")
+        self.data["timeline_basename"] = "timeline_{}_{}".format(
+            subset, representation)
 
         # solve project bin structure path
         hierarchy = str("/".join((
             "Loader",
             repr_cntx["hierarchy"].replace("\\", "/"),
-            self.asset
+            asset
         )))
 
         self.data["binPath"] = hierarchy
