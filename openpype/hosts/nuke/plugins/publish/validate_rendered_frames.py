@@ -64,7 +64,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
         for repre in instance.data["representations"]:
 
             if not repre.get("files"):
-                msg = ("no frames were collected, "
+                msg = ("No frames were collected, "
                        "you need to render them.\n"
                        "Check properties of write node (group) and "
                        "select 'Local' option in 'Publish' dropdown.")
