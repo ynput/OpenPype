@@ -56,6 +56,15 @@ class FoldersModel(QtGui.QStandardItemModel):
 
         return self._has_content
 
+    def refresh(self):
+        """Refresh folders for last selected project.
+
+        Force to update folders model from controller. This may or may not
+        trigger query from server, that's based on controller's cache.
+        """
+
+        self.set_project_name(self._last_project_name)
+
     def clear(self):
         self._items_by_id = {}
         self._parent_id_by_id = {}
@@ -292,6 +301,14 @@ class FoldersWidget(QtWidgets.QWidget):
         """
 
         self._folders_proxy_model.setFilterFixedString(name)
+
+    def refresh(self):
+        """Refresh folders model.
+
+        Force to update folders model from controller.
+        """
+
+        self._folders_model.refresh()
 
     def _on_project_selection_change(self, event):
         project_name = event["project_name"]

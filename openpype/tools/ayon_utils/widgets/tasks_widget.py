@@ -50,6 +50,11 @@ class TasksModel(QtGui.QStandardItemModel):
         self._remove_invalid_items()
         super(TasksModel, self).clear()
 
+    def refresh(self):
+        """Refresh tasks for last project and folder."""
+
+        self._refresh(self._last_project_name, self._last_folder_id)
+
     def set_context(self, project_name, folder_id):
         """Set context for which should be tasks showed.
 
@@ -333,6 +338,15 @@ class TasksWidget(QtWidgets.QWidget):
 
         self._handle_expected_selection = handle_expected_selection
         self._expected_selection_data = None
+
+    def refresh(self):
+        """Refresh folders for last selected project.
+
+        Force to update folders model from controller. This may or may not
+        trigger query from server, that's based on controller's cache.
+        """
+
+        self._tasks_model.refresh()
 
     def _clear(self):
         self._tasks_model.clear()
