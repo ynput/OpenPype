@@ -336,7 +336,6 @@ class ClipLoader:
                 )
                 loader_cls.timeline = self.active_timeline
 
-            print(self.active_timeline.GetName())
         else:
             self.active_timeline = lib.get_current_timeline()
 
@@ -660,8 +659,6 @@ class PublishClip:
 
         # define ui inputs if non gui mode was used
         self.shot_num = self.ti_index
-        print(
-            "____ self.shot_num: {}".format(self.shot_num))
 
         # ui_inputs data or default values if gui was not used
         self.rename = self.ui_inputs.get(
