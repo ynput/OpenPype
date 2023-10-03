@@ -193,6 +193,9 @@ class BaseWorkfileController(
             self._project_anatomy = Anatomy(self.get_current_project_name())
         return self._project_anatomy
 
+    def get_project_entity(self):
+        return self._entities_model.get_project_entity()
+
     def get_folder_entity(self, folder_id):
         return self._entities_model.get_folder_entity(folder_id)
 
@@ -449,12 +452,12 @@ class BaseWorkfileController(
         self._emit_event("controller.refresh.finished")
 
     # Controller actions
-    def open_workfile(self, filepath):
+    def open_workfile(self, folder_id, task_id, filepath):
         self._emit_event("open_workfile.started")
 
         failed = False
         try:
-            self._host_open_workfile(filepath)
+            self._open_workfile(folder_id, task_id, filepath)
 
         except Exception:
             failed = True
@@ -572,6 +575,53 @@ class BaseWorkfileController(
             self._expected_selection.get_expected_selection_data(),
         )
 
+    def _get_event_context_data(
+        self, project_name, folder_id, task_id, folder=None, task=None
+    ):
+        if folder is None:
+            folder = self.get_folder_entity(folder_id)
+        if task is None:
+            task = self.get_task_entity(task_id)
+        # NOTE keys should be OpenPype compatible
+        return {
+            "project_name": project_name,
+            "folder_id": folder_id,
+            "asset_id": folder_id,
+            "asset_name": folder["name"],
+            "task_id": task_id,
+            "task_name": task["name"],
+            "host_name": self.get_host_name(),
+        }
+
+    def _open_workfile(self, folder_id, task_id, filepath):
+        project_name = self.get_current_project_name()
+        event_data = self._get_event_context_data(
+            project_name, folder_id, task_id
+        )
+        event_data["filepath"] = filepath
+
+        emit_event("workfile.open.before", event_data, source="workfiles.tool")
+
+        # Change context
+        task_name = event_data["task_name"]
+        if (
+            folder_id != self.get_current_folder_id()
+            or task_name != self.get_current_task_name()
+        ):
+            # Use OpenPype asset-like object
+            asset_doc = get_asset_by_id(
+                event_data["project_name"],
+                event_data["folder_id"],
+            )
+            change_current_context(
+                asset_doc,
+                event_data["task_name"]
+            )
+
+        self._host_open_workfile(filepath)
+
+        emit_event("workfile.open.after", event_data, source="workfiles.tool")
+
     def _save_as_workfile(
         self,
         folder_id,
@@ -588,18 +638,14 @@ class BaseWorkfileController(
         task_name = task["name"]
 
         # QUESTION should the data be different for 'before' and 'after'?
-        # NOTE keys should be OpenPype compatible
-        event_data = {
-            "project_name": project_name,
-            "folder_id": folder_id,
-            "asset_id": folder_id,
-            "asset_name": folder["name"],
-            "task_id": task_id,
-            "task_name": task_name,
-            "host_name": self.get_host_name(),
+        event_data = self._get_event_context_data(
+            project_name, folder_id, task_id, folder, task
+        )
+        event_data.update({
             "filename": filename,
             "workdir_path": workdir,
-        }
+        })
+
         emit_event("workfile.save.before", event_data, source="workfiles.tool")
 
         # Create workfiles root folder

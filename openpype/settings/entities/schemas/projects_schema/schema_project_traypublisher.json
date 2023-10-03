@@ -350,8 +350,8 @@
                     "name": "template_validate_plugin",
                     "template_data": [
                         {
-                            "key": "CollectFrameDataFromAssetEntity",
-                            "label": "Collect frame range from asset entity"
+                            "key": "CollectSequenceFrameData",
+                            "label": "Collect Original Sequence Frame Data"
                         },
                         {
                             "key": "ValidateFrameRange",

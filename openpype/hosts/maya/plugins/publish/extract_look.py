@@ -6,7 +6,6 @@ import contextlib
 import json
 import logging
 import os
-import platform
 import tempfile
 import six
 import attr
@@ -25,6 +24,7 @@ from openpype.lib import (
 
 from openpype.pipeline import legacy_io, publish, KnownPublishError
 from openpype.hosts.maya.api import lib
+from openpype import AYON_SERVER_ENABLED
 
 # Modes for transfer
 COPY = 1
@@ -57,6 +57,12 @@ def find_paths_by_hash(texture_hash):
         str: path to texture if found.
 
     """
+    if AYON_SERVER_ENABLED:
+        raise KnownPublishError(
+            "This is a bug. \"find_paths_by_hash\" is not compatible with "
+            "AYON."
+        )
+
     key = "data.sourceHashes.{0}".format(texture_hash)
     return legacy_io.distinct(key, {"type": "version"})
 
@@ -589,7 +595,13 @@ class ExtractLook(publish.Extractor):
         resources = instance.data["resources"]
         color_management = lib.get_color_management_preferences()
 
-        force_copy = instance.data.get("forceCopy", False)
+        # TODO: Temporary disable all hardlinking, due to the feature not being
+        # used or properly working.
+        self.log.info(
+            "Forcing copy instead of hardlink."
+        )
+        force_copy = True
+
         if not force_copy and platform.system().lower() == "windows":
             # Temporary fix to NOT create hardlinks on windows machines
             self.log.warning(

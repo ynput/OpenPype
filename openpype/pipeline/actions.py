@@ -20,7 +20,13 @@ class LauncherAction(object):
     log.propagate = True
 
     def is_compatible(self, session):
-        """Return whether the class is compatible with the Session."""
+        """Return whether the class is compatible with the Session.
+
+        Args:
+            session (dict[str, Union[str, None]]): Session data with
+                AVALON_PROJECT, AVALON_ASSET and AVALON_TASK.
+        """
+
         return True
 
     def process(self, session, **kwargs):
