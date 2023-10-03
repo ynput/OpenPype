@@ -20,7 +20,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
     label = "Rig Contents"
     hosts = ["maya"]
     families = ["rig"]
-    action = [openpype.hosts.maya.api.action.SelectInvalidAction ]
+    action = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     accepted_output = ["mesh", "transform"]
     accepted_controllers = ["transform"]
