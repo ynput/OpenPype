@@ -43,10 +43,7 @@ AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
 class ResolveHost(HostBase, IWorkfileHost, ILoadHost):
-    name = "maya"
-
-    def __init__(self):
-        super(ResolveHost, self).__init__()
+    name = "resolve"
 
     def install(self):
         """Install resolve-specific functionality of avalon-core.
@@ -62,7 +59,7 @@ class ResolveHost(HostBase, IWorkfileHost, ILoadHost):
 
         log.info("openpype.hosts.resolve installed")
 
-        pyblish.register_host("resolve")
+        pyblish.register_host(self.name)
         pyblish.register_plugin_path(PUBLISH_PATH)
         print("Registering DaVinci Resolve plug-ins..")
 
