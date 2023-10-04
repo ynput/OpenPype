@@ -115,6 +115,12 @@ class LoaderController(AbstractController):
     def set_selected_folders(self, folder_ids):
         self._selection_model.set_selected_folders(folder_ids)
 
+    def get_selected_version_ids(self):
+        return self._selection_model.get_selected_version_ids()
+
+    def set_selected_versions(self, version_ids):
+        self._selection_model.set_selected_versions(version_ids)
+
     def fill_root_in_source(self, source):
         project_name = self.get_selected_project_name()
         anatomy = self._get_project_anatomy(project_name)

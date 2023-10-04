@@ -339,6 +339,7 @@ class ProductsWidget(QtWidgets.QWidget):
 
         # Helper for 'version_items' to avoid duplicated items
         all_product_ids = set()
+        selected_version_ids = set()
         # Version items contains information about selected version items
         selected_versions_info = []
         while indexes_queue:
@@ -356,11 +357,14 @@ class ProductsWidget(QtWidgets.QWidget):
 
                 all_product_ids.add(product_id)
 
+                version_id = model.data(index, VERSION_ID_ROLE)
+                selected_version_ids.add(version_id)
+
                 thumbnail_id = model.data(index, VERSION_THUMBNAIL_ID_ROLE)
                 selected_versions_info.append({
                     "folder_id": model.data(index, FOLDER_ID_ROLE),
                     "product_id": product_id,
-                    "version_id": model.data(index, VERSION_ID_ROLE),
+                    "version_id": version_id,
                     "thumbnail_id": thumbnail_id,
                 })
                 continue
@@ -399,6 +403,7 @@ class ProductsWidget(QtWidgets.QWidget):
         if selected_merged_products != prev_selected_merged_products:
             self.merged_products_selection_changed.emit()
         self.selection_changed.emit()
+        self._controller.set_selected_versions(selected_version_ids)
 
     def _on_version_change(self):
         self._on_selection_change()

@@ -50,10 +50,9 @@ class SelectionModel(object):
     def get_selected_version_ids(self):
         return self._version_ids
 
-    def set_selected_version_ids(self, version_ids):
+    def set_selected_versions(self, version_ids):
         if version_ids == self._version_ids:
             return
-
 
         self._version_ids = version_ids
         self._controller.emit_event(

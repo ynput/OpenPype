@@ -242,5 +242,13 @@ class AbstractController:
         pass
 
     @abstractmethod
+    def get_selected_version_ids(self):
+        pass
+
+    @abstractmethod
+    def set_selected_versions(self, version_ids):
+        pass
+
+    @abstractmethod
     def fill_root_in_source(self, source):
         pass
