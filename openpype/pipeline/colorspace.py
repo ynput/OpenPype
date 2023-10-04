@@ -538,6 +538,7 @@ def get_labeled_colorspaces(
     include_aliases=False,
     include_looks=False,
     include_roles=False,
+    include_display_views=False
 
 ):
     """Get all colorspace data with labels
@@ -560,6 +561,7 @@ def get_labeled_colorspaces(
     colorspaces = set()
     looks = set()
     roles = set()
+    display_views = set()
     for items_type, colorspace_items in config_items.items():
         if items_type == "colorspaces":
             for color_name, color_data in colorspace_items.items():
@@ -577,6 +579,12 @@ def get_labeled_colorspaces(
             looks.update([
                 (name, "[look] {} ({})".format(name, role_data["process_space"]))
                 for name, role_data in colorspace_items.items()
+            ])
+
+        elif items_type == "displays_views":
+            display_views.update([
+                (name, "[view (display)] {}".format(name))
+                for name, _ in colorspace_items.items()
             ])
 
         elif items_type == "roles":
@@ -598,6 +606,9 @@ def get_labeled_colorspaces(
 
     if looks and include_looks:
         labeled_colorspaces.extend(looks)
+
+    if display_views and include_display_views:
+        labeled_colorspaces.extend(display_views)
 
     return labeled_colorspaces
 

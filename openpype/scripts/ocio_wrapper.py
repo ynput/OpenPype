@@ -107,6 +107,7 @@ def _get_colorspace_data(config_path):
     config = ocio.Config().CreateFromFile(str(config_path))
 
     colorspace_data = {
+        "roles": {},
         "colorspaces": {
             color.getName(): {
                 "family": color.getFamily(),
@@ -115,7 +116,17 @@ def _get_colorspace_data(config_path):
                 "equalitygroup": color.getEqualityGroup(),
             }
             for color in config.getColorSpaces()
-        }
+        },
+        "displays_views": {
+            f"{view} ({display})": {
+                "display": display,
+                "view": view
+
+            }
+            for display in config.getDisplays()
+            for view in config.getViews(display)
+        },
+        "looks": {}
     }
 
     # add looks
