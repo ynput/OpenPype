@@ -6,8 +6,12 @@ Because of limited api, alembics can be only loaded, but not easily updated.
 """
 import os
 from openpype.pipeline import load, get_representation_path
-from openpype.hosts.max.api.pipeline import containerise
-from openpype.hosts.max.api import lib
+from openpype.hosts.max.api import lib, maintained_selection
+from openpype.hosts.max.api.lib import unique_namespace
+from openpype.hosts.max.api.pipeline import (
+    containerise,
+    get_previous_loaded_object
+)
 
 
 class AbcLoader(load.LoaderPlugin):
@@ -23,7 +27,8 @@ class AbcLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        file_path = os.path.normpath(self.fname)
+        file_path = self.filepath_from_context(context)
+        file_path = os.path.normpath(file_path)
 
         abc_before = {
             c
@@ -32,7 +37,7 @@ class AbcLoader(load.LoaderPlugin):
         }
 
         rt.AlembicImport.ImportToRoot = False
-        rt.importFile(file_path, rt.name("noPrompt"))
+        rt.importFile(file_path, rt.name("noPrompt"), using=rt.AlembicImport)
 
         abc_after = {
             c
@@ -47,21 +52,47 @@ class AbcLoader(load.LoaderPlugin):
             self.log.error("Something failed when loading.")
 
         abc_container = abc_containers.pop()
+        selections = rt.GetCurrentSelection()
+        for abc in selections:
+            for cam_shape in abc.Children:
+                cam_shape.playbackType = 0
+
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+        abc_objects = []
+        for abc_object in abc_container.Children:
+            abc_object.name = f"{namespace}:{abc_object.name}"
+            abc_objects.append(abc_object)
+        # rename the abc container with namespace
+        abc_container_name = f"{namespace}:{name}"
+        abc_container.name = abc_container_name
+        abc_objects.append(abc_container)
 
         return containerise(
-            name, [abc_container], context, loader=self.__class__.__name__
+            name, abc_objects, context,
+            namespace, loader=self.__class__.__name__
         )
 
     def update(self, container, representation):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
+        node = rt.GetNodeByName(container["instance_node"])
+        abc_container = [n for n in get_previous_loaded_object(node)
+                         if rt.ClassOf(n) == rt.AlembicContainer]
+        with maintained_selection():
+            rt.Select(abc_container)
 
-        alembic_objects = self.get_container_children(node, "AlembicObject")
-        for alembic_object in alembic_objects:
-            alembic_object.source = path
-
+            for alembic in rt.Selection:
+                abc = rt.GetNodeByName(alembic.name)
+                rt.Select(abc.Children)
+                for abc_con in abc.Children:
+                    abc_con.source = path
+                    rt.Select(abc_con.Children)
+                    for abc_obj in abc_con.Children:
+                        abc_obj.source = path
         lib.imprint(
             container["instance_node"],
             {"representation": str(representation["_id"])},
@@ -73,8 +104,8 @@ class AbcLoader(load.LoaderPlugin):
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)
 
     @staticmethod
     def get_container_children(parent, type_name):

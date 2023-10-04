@@ -2,6 +2,7 @@ import os
 import pyblish.api
 import clique
 from openpype.pipeline import PublishXmlValidationError
+from openpype.pipeline.publish import get_errored_instances_from_context
 
 
 class RepairActionBase(pyblish.api.Action):
@@ -11,28 +12,20 @@ class RepairActionBase(pyblish.api.Action):
     @staticmethod
     def get_instance(context, plugin):
         # Get the errored instances
-        failed = []
-        for result in context.data["results"]:
-            if (result["error"] is not None and result["instance"] is not None
-               and result["instance"] not in failed):
-                failed.append(result["instance"])
+        return get_errored_instances_from_context(context, plugin=plugin)
 
-        # Apply pyblish.logic to get the instances for the plug-in
-        return pyblish.api.instances_by_plugin(failed, plugin)
-
-    def repair_knob(self, instances, state):
+    def repair_knob(self, context, instances, state):
+        create_context = context.data["create_context"]
         for instance in instances:
-            node = instance.data["transientData"]["node"]
-            files_remove = [os.path.join(instance.data["outputDir"], f)
-                            for r in instance.data.get("representations", [])
-                            for f in r.get("files", [])
-                            ]
-            self.log.info("Files to be removed: {}".format(files_remove))
-            for f in files_remove:
-                os.remove(f)
-                self.log.debug("removing file: {}".format(f))
-            node["render"].setValue(state)
+            # Reset the render knob
+            instance_id = instance.data.get("instance_id")
+            created_instance = create_context.get_instance_by_id(
+                instance_id
+            )
+            created_instance.creator_attributes["render_target"] = state
             self.log.info("Rendering toggled to `{}`".format(state))
+
+        create_context.save_changes()
 
 
 class RepairCollectionActionToLocal(RepairActionBase):
@@ -40,7 +33,7 @@ class RepairCollectionActionToLocal(RepairActionBase):
 
     def process(self, context, plugin):
         instances = self.get_instance(context, plugin)
-        self.repair_knob(instances, "Local")
+        self.repair_knob(context, instances, "local")
 
 
 class RepairCollectionActionToFarm(RepairActionBase):
@@ -48,7 +41,7 @@ class RepairCollectionActionToFarm(RepairActionBase):
 
     def process(self, context, plugin):
         instances = self.get_instance(context, plugin)
-        self.repair_knob(instances, "On farm")
+        self.repair_knob(context, instances, "farm")
 
 
 class ValidateRenderedFrames(pyblish.api.InstancePlugin):

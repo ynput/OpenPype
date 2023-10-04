@@ -421,9 +421,9 @@
         },
         "workfile": {
             "enabled": false,
-            "renderSpace": "ACEScg",
-            "displayName": "sRGB",
-            "viewName": "ACES 1.0 SDR-video"
+            "renderSpace": "ACES - ACEScg",
+            "displayName": "ACES",
+            "viewName": "sRGB"
         },
         "colorManagementPreference_v2": {
             "enabled": true,
@@ -524,19 +524,19 @@
             "enabled": true,
             "make_tx": true,
             "rs_tex": false,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateRender": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateUnrealStaticMesh": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "",
                 "_Main"
             ],
@@ -550,7 +550,9 @@
         },
         "CreateUnrealSkeletalMesh": {
             "enabled": true,
-            "defaults": [],
+            "default_variants": [
+                "Main"
+            ],
             "joint_hints": "jnt_org"
         },
         "CreateMultiverseLook": {
@@ -558,12 +560,11 @@
             "publish_mip_map": true
         },
         "CreateAnimation": {
-            "enabled": false,
             "write_color_sets": false,
             "write_face_sets": false,
             "include_parent_hierarchy": false,
             "include_user_defined_attributes": false,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
@@ -571,7 +572,7 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
-            "defaults": [
+            "default_variants": [
                 "Main",
                 "Proxy",
                 "Sculpt"
@@ -582,7 +583,7 @@
             "write_color_sets": false,
             "write_face_sets": false,
             "include_user_defined_attributes": false,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
@@ -590,20 +591,20 @@
             "enabled": true,
             "write_color_sets": false,
             "write_face_sets": false,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateReview": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ],
             "useMayaTimeline": true
         },
         "CreateAss": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ],
             "expandProcedurals": false,
@@ -618,68 +619,68 @@
             "maskOverride": false,
             "maskDriver": false,
             "maskFilter": false,
-            "maskColor_manager": false,
-            "maskOperator": false
+            "maskOperator": false,
+            "maskColor_manager": false
         },
         "CreateVrayProxy": {
             "enabled": true,
             "vrmesh": true,
             "alembic": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsd": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdComp": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMultiverseUsdOver": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateAssembly": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateCamera": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateLayout": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateMayaScene": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateRenderSetup": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateRig": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main",
                 "Sim",
                 "Cloth"
@@ -687,20 +688,20 @@
         },
         "CreateSetDress": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main",
                 "Anim"
             ]
         },
         "CreateVRayScene": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         },
         "CreateYetiRig": {
             "enabled": true,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         }
@@ -708,6 +709,9 @@
     "publish": {
         "CollectMayaRender": {
             "sync_workfile_version": false
+        },
+        "CollectFbxAnimation": {
+            "enabled": true
         },
         "CollectFbxCamera": {
             "enabled": false
@@ -1122,6 +1126,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateAnimatedReferenceRig": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ValidateAnimationContent": {
             "enabled": true,
             "optional": false,
@@ -1142,6 +1151,16 @@
             "optional": false,
             "active": true
         },
+        "ValidateSkeletonRigContents": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateSkeletonRigControllers": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateSkinclusterDeformerSet": {
             "enabled": true,
             "optional": false,
@@ -1151,6 +1170,21 @@
             "enabled": true,
             "optional": false,
             "allow_history_only": false
+        },
+        "ValidateSkeletonRigOutSetNodeIds": {
+            "enabled": false,
+            "optional": false,
+            "allow_history_only": false
+        },
+        "ValidateSkeletonRigOutputIds": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateSkeletonTopGroupHierarchy": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ValidateCameraAttributes": {
             "enabled": false,
@@ -1340,6 +1374,12 @@
             "active": true,
             "bake_attributes": []
         },
+        "ExtractCameraMayaScene": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "keep_image_planes": false
+        },
         "ExtractGLB": {
             "enabled": true,
             "active": true,
@@ -1467,6 +1507,10 @@
             "namespace": "{asset_name}_{subset}_##_",
             "group_name": "_GRP",
             "display_handle": true
+        },
+        "import_loader": {
+            "namespace": "{asset_name}_{subset}_##_",
+            "group_name": "_GRP"
         }
     },
     "workfile_build": {

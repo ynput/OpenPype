@@ -88,9 +88,15 @@ class PypeCommands:
         """
 
         from openpype.lib import Logger
-        from openpype.lib.applications import get_app_environments_for_context
+        from openpype.lib.applications import (
+            get_app_environments_for_context,
+            LaunchTypes,
+        )
         from openpype.modules import ModulesManager
-        from openpype.pipeline import install_openpype_plugins
+        from openpype.pipeline import (
+            install_openpype_plugins,
+            get_global_context,
+        )
         from openpype.tools.utils.host_tools import show_publish
         from openpype.tools.utils.lib import qt_app_context
 
@@ -112,12 +118,15 @@ class PypeCommands:
         if not any(paths):
             raise RuntimeError("No publish paths specified")
 
-        if os.getenv("AVALON_APP_NAME"):
+        app_full_name = os.getenv("AVALON_APP_NAME")
+        if app_full_name:
+            context = get_global_context()
             env = get_app_environments_for_context(
-                os.environ["AVALON_PROJECT"],
-                os.environ["AVALON_ASSET"],
-                os.environ["AVALON_TASK"],
-                os.environ["AVALON_APP_NAME"]
+                context["project_name"],
+                context["asset_name"],
+                context["task_name"],
+                app_full_name,
+                launch_type=LaunchTypes.farm_publish,
             )
             os.environ.update(env)
 
@@ -157,74 +166,6 @@ class PypeCommands:
         log.info("Publish finished.")
 
     @staticmethod
-    def remotepublishfromapp(project_name, batch_path, host_name,
-                             user_email, targets=None):
-        """Opens installed variant of 'host' and run remote publish there.
-
-        Eventually should be yanked out to Webpublisher cli.
-
-        Currently implemented and tested for Photoshop where customer
-        wants to process uploaded .psd file and publish collected layers
-        from there. Triggered by Webpublisher.
-
-        Checks if no other batches are running (status =='in_progress). If
-        so, it sleeps for SLEEP (this is separate process),
-        waits for WAIT_FOR seconds altogether.
-
-        Requires installed host application on the machine.
-
-        Runs publish process as user would, in automatic fashion.
-
-        Args:
-            project_name (str): project to publish (only single context is
-                expected per call of remotepublish
-            batch_path (str): Path batch folder. Contains subfolders with
-                resources (workfile, another subfolder 'renders' etc.)
-            host_name (str): 'photoshop'
-            user_email (string): email address for webpublisher - used to
-                find Ftrack user with same email
-            targets (list): Pyblish targets
-                (to choose validator for example)
-        """
-
-        from openpype.hosts.webpublisher.publish_functions import (
-            cli_publish_from_app
-        )
-
-        cli_publish_from_app(
-            project_name, batch_path, host_name, user_email, targets
-        )
-
-    @staticmethod
-    def remotepublish(project, batch_path, user_email, targets=None):
-        """Start headless publishing.
-
-        Used to publish rendered assets, workfiles etc via Webpublisher.
-        Eventually should be yanked out to Webpublisher cli.
-
-        Publish use json from passed paths argument.
-
-        Args:
-            project (str): project to publish (only single context is expected
-                per call of remotepublish
-            batch_path (str): Path batch folder. Contains subfolders with
-                resources (workfile, another subfolder 'renders' etc.)
-            user_email (string): email address for webpublisher - used to
-                find Ftrack user with same email
-            targets (list): Pyblish targets
-                (to choose validator for example)
-
-        Raises:
-            RuntimeError: When there is no path to process.
-        """
-
-        from openpype.hosts.webpublisher.publish_functions import (
-            cli_publish
-        )
-
-        cli_publish(project, batch_path, user_email, targets)
-
-    @staticmethod
     def extractenvironments(output_json_path, project, asset, task, app,
                             env_group):
         """Produces json file with environment based on project and app.
@@ -232,11 +173,19 @@ class PypeCommands:
         Called by Deadline plugin to propagate environment into render jobs.
         """
 
-        from openpype.lib.applications import get_app_environments_for_context
+        from openpype.lib.applications import (
+            get_app_environments_for_context,
+            LaunchTypes,
+        )
 
         if all((project, asset, task, app)):
             env = get_app_environments_for_context(
-                project, asset, task, app, env_group
+                project,
+                asset,
+                task,
+                app,
+                env_group=env_group,
+                launch_type=LaunchTypes.farm_render,
             )
         else:
             env = os.environ.copy()
@@ -260,17 +209,12 @@ class PypeCommands:
 
         main(output_path, project_name, asset_name, strict)
 
-    def texture_copy(self, project, asset, path):
-        pass
-
-    def run_application(self, app, project, asset, task, tools, arguments):
-        pass
-
     def validate_jsons(self):
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant, timeout, setup_only):
+                  test_data_folder, persist, app_variant, timeout, setup_only,
+                  mongo_url):
         """
             Runs tests from 'folder'
 
@@ -283,6 +227,10 @@ class PypeCommands:
                     end
                 app_variant (str): variant (eg 2020 for AE), empty if use
                     latest installed version
+                timeout (int): explicit timeout for single test
+                setup_only (bool): if only preparation steps should be
+                    triggered, no tests (useful for debugging/development)
+                mongo_url (str): url to Openpype Mongo database
         """
         print("run_tests")
         if folder:
@@ -291,7 +239,14 @@ class PypeCommands:
             folder = "../tests"
 
         # disable warnings and show captured stdout even if success
-        args = ["--disable-pytest-warnings", "-rP", folder]
+        args = [
+            "--disable-pytest-warnings",
+            "--capture=sys",
+            "--print",
+            "-W ignore::DeprecationWarning",
+            "-rP",
+            folder
+        ]
 
         if mark:
             args.extend(["-m", mark])
@@ -314,37 +269,18 @@ class PypeCommands:
         if setup_only:
             args.extend(["--setup_only", setup_only])
 
+        if mongo_url:
+            args.extend(["--mongo_url", mongo_url])
+        else:
+            msg = (
+                "Either provide uri to MongoDB through environment variable"
+                " OPENPYPE_MONGO or the command flag --mongo_url"
+            )
+            assert not os.environ.get("OPENPYPE_MONGO"), msg
+
         print("run_tests args: {}".format(args))
         import pytest
         pytest.main(args)
-
-    def syncserver(self, active_site):
-        """Start running sync_server in background.
-
-        This functionality is available in directly in module cli commands.
-        `~/openpype_console module sync_server syncservice`
-        """
-
-        os.environ["OPENPYPE_LOCAL_ID"] = active_site
-
-        def signal_handler(sig, frame):
-            print("You pressed Ctrl+C. Process ended.")
-            sync_server_module.server_exit()
-            sys.exit(0)
-
-        signal.signal(signal.SIGINT, signal_handler)
-        signal.signal(signal.SIGTERM, signal_handler)
-
-        from openpype.modules import ModulesManager
-
-        manager = ModulesManager()
-        sync_server_module = manager.modules_by_name["sync_server"]
-
-        sync_server_module.server_init()
-        sync_server_module.server_start()
-
-        while True:
-            time.sleep(1.0)
 
     def repack_version(self, directory):
         """Repacking OpenPype version."""
@@ -355,6 +291,13 @@ class PypeCommands:
 
     def pack_project(self, project_name, dirpath, database_only):
         from openpype.lib.project_backpack import pack_project
+
+        if database_only and not dirpath:
+            raise ValueError((
+                "Destination dir must be defined when using --dbonly."
+                " Use '--dirpath {output dir path}' flag"
+                " to specify directory."
+            ))
 
         pack_project(project_name, dirpath, database_only)
 

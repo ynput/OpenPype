@@ -112,6 +112,32 @@ function getActiveDocumentFullName(){
     return _prepareError("No file open currently");
 }
 
+
+function addItem(name, item_type){
+    /**
+     * Adds comp or folder to project items.
+     *
+     * Could be called when creating publishable instance to prepare
+     * composition (and render queue).
+     *
+     * Args:
+     *      name (str): composition name
+     *      item_type (str): COMP|FOLDER
+     * Returns:
+     *      SingleItemValue: eg {"result": VALUE}
+     */
+    if (item_type == "COMP"){
+        // dummy values, will be rewritten later
+        item = app.project.items.addComp(name, 1920, 1060, 1, 10, 25);
+    }else if (item_type == "FOLDER"){
+        item = app.project.items.addFolder(name);
+    }else{
+        return _prepareError("Only 'COMP' or 'FOLDER' can be created");
+    }
+    return _prepareSingleValue(item.id);
+
+}
+
 function getItems(comps, folders, footages){
     /**
      * Returns JSON representation of compositions and
@@ -136,6 +162,24 @@ function getItems(comps, folders, footages){
         }
     }
     return '[' + items.join() + ']';
+
+}
+
+function selectItems(items){
+    /**
+     * Select all items from `items`, deselect other.
+     *
+     * Args:
+     *      items (list)
+     */
+    for (i = 1; i <= app.project.items.length; ++i){
+        item = app.project.items[i];
+        if (items.indexOf(item.id) > -1){
+            item.selected = true;
+        }else{
+            item.selected = false;
+        }
+    }
 
 }
 
@@ -171,6 +215,8 @@ function _getItem(item, comps, folders, footages){
      * Refactor
      */
     var item_type = '';
+    var path = '';
+    var containing_comps = [];
     if (item instanceof FolderItem){
         item_type = 'folder';
         if (!folders){
@@ -178,9 +224,17 @@ function _getItem(item, comps, folders, footages){
         }
     }
     if (item instanceof FootageItem){
-        item_type = 'footage';
         if (!footages){
             return "{}";
+        }
+        item_type = 'footage';
+        if (item.file){
+            path = item.file.fsName;
+        }
+        if (item.usedIn){
+            for (j = 0; j < item.usedIn.length; ++j){
+                containing_comps.push(item.usedIn[j].id);
+            }
         }
     }
     if (item instanceof CompItem){
@@ -192,7 +246,9 @@ function _getItem(item, comps, folders, footages){
 
     var item = {"name": item.name,
                 "id": item.id,
-                "type": item_type};
+                "type": item_type,
+                "path": path,
+                "containing_comps": containing_comps};
     return JSON.stringify(item);
 }
 
@@ -280,12 +336,12 @@ function setLabelColor(comp_id, color_idx){
     }
 }
 
-function replaceItem(comp_id, path, item_name){
+function replaceItem(item_id, path, item_name){
     /**
      * Replaces loaded file with new file and updates name
      *
      * Args:
-     *    comp_id (int): id of composition, not a index!
+     *    item_id (int): id of composition, not a index!
      *    path (string): absolute path to new file
      *    item_name (string): new composition name
      */
@@ -295,7 +351,7 @@ function replaceItem(comp_id, path, item_name){
     if (!fp.exists){
         return _prepareError("File " + path + " not found.");
     }
-    var item = app.project.itemByID(comp_id);
+    var item = app.project.itemByID(item_id);
     if (item){
         try{
             if (isFileSequence(item)) {
@@ -311,7 +367,7 @@ function replaceItem(comp_id, path, item_name){
             fp.close();
         }
     }else{
-        return _prepareError("There is no composition with "+ comp_id);
+        return _prepareError("There is no item with "+ item_id);
     }
     app.endUndoGroup();
 }
@@ -819,6 +875,67 @@ function getAppVersion(){
 
 function printMsg(msg){
     alert(msg);
+}
+
+function addPlaceholder(name, width, height, fps, duration){
+    /** Add AE PlaceholderItem to Project list.
+     *
+     * PlaceholderItem chosen as it doesn't require existing file and
+     * might potentially allow nice functionality in the future.
+     *
+     */
+    app.beginUndoGroup('change comp properties');
+    try{
+        item = app.project.importPlaceholder(name, width, height,
+                                             fps, duration);
+
+        return _prepareSingleValue(item.id);
+    }catch (error) {
+        writeLn(_prepareError("Cannot add placeholder " + error.toString()));
+    }
+    app.endUndoGroup();
+}
+
+function addItemInstead(placeholder_item_id, item_id){
+    /** Add new loaded item in place of load placeholder.
+     *
+     * Each placeholder could be placed multiple times into multiple
+     * composition. This loops through all compositions and
+     * places loaded item under placeholder.
+     * Placeholder item gets deleted later separately according
+     * to configuration in Settings.
+     *
+     * Args:
+     *      placeholder_item_id (int)
+     *      item_id (int)
+    */
+    var item = app.project.itemByID(item_id);
+    if (!item){
+        return _prepareError("There is no item with "+ item_id);
+    }
+
+    app.beginUndoGroup('Add loaded items');
+    for (i = 1; i <= app.project.items.length; ++i){
+        var comp = app.project.items[i];
+        if (!(comp instanceof CompItem)){
+            continue
+        }
+
+        var i = 1;
+        while (i <= comp.numLayers) {
+            var layer = comp.layer(i);
+            var layer_source = layer.source;
+            if (layer_source && layer_source.id == placeholder_item_id){
+                var new_layer = comp.layers.add(item);
+                new_layer.moveAfter(layer);
+                // copy all(?) properties to new layer
+                layer.property("ADBE Transform Group").copyToComp(new_layer);
+                i = i + 1;
+            }
+            i = i + 1;
+        }
+    }
+    app.endUndoGroup();
 }
 
 function _prepareSingleValue(value){

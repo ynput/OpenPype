@@ -178,7 +178,7 @@ def get(layer, render_instance=None):
     }.get(renderer_name.lower(), None)
     if renderer is None:
         raise UnsupportedRendererException(
-            "unsupported {}".format(renderer_name)
+            "Unsupported renderer: {}".format(renderer_name)
         )
 
     return renderer(layer, render_instance)
@@ -275,12 +275,14 @@ class ARenderProducts:
                 "Unsupported renderer {}".format(self.renderer)
             )
 
+        # Note: When this attribute is never set (e.g. on maya launch) then
+        # this can return None even though it is a string attribute
         prefix = self._get_attr(prefix_attr)
 
         if not prefix:
             # Fall back to scene name by default
-            log.debug("Image prefix not set, using <Scene>")
-            file_prefix = "<Scene>"
+            log.warning("Image prefix not set, using <Scene>")
+            prefix = "<Scene>"
 
         return prefix
 

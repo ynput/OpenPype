@@ -12,7 +12,7 @@ import requests
 import re
 
 from tests.lib.db_handler import DBHandler
-from common.openpype_common.distribution.file_handler import RemoteFileHandler
+from tests.lib.file_handler import RemoteFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
@@ -147,11 +147,11 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def db_setup(self, download_test_data, env_var, monkeypatch_session,
-                 request):
+                 request, mongo_url):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
 
-        uri = os.environ.get("OPENPYPE_MONGO")
+        uri = mongo_url or os.environ.get("OPENPYPE_MONGO")
         db_handler = DBHandler(uri)
         db_handler.setup_from_dump(self.TEST_DB_NAME, backup_dir,
                                    overwrite=True,

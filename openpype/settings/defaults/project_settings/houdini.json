@@ -14,48 +14,83 @@
     "create": {
         "CreateArnoldAss": {
             "enabled": true,
-            "defaults": [],
+            "default_variants": [
+                "Main"
+            ],
             "ext": ".ass"
+        },
+        "CreateStaticMesh": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ],
+            "static_mesh_prefix": "S",
+            "collision_prefixes": [
+                "UBX",
+                "UCP",
+                "USP",
+                "UCX"
+            ]
         },
         "CreateAlembicCamera": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateCompositeSequence": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreatePointCache": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateRedshiftROP": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateRemotePublish": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateVDBCache": {
             "enabled": true,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateUSD": {
             "enabled": false,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateUSDModel": {
             "enabled": false,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "USDCreateShadingWorkspace": {
             "enabled": false,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateUSDRender": {
             "enabled": false,
-            "defaults": []
+            "default_variants": [
+                "Main"
+            ]
         }
     },
     "publish": {
@@ -71,8 +106,28 @@
                 "$JOB"
             ]
         },
+        "ValidateReviewColorspace": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateContainers": {
             "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateSubsetName": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshIsStatic": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": false,
             "optional": true,
             "active": true
         }

@@ -51,8 +51,10 @@ class ExtractBurnin(publish.Extractor):
         "aftereffects",
         "photoshop",
         "flame",
-        "houdini"
-        # "resolve"
+        "houdini",
+        "max",
+        "blender",
+        "unreal"
     ]
 
     optional = True
@@ -81,7 +83,7 @@ class ExtractBurnin(publish.Extractor):
             return
 
         if not instance.data.get("representations"):
-            self.log.info(
+            self.log.debug(
                 "Instance does not have filled representations. Skipping")
             return
 
@@ -133,11 +135,11 @@ class ExtractBurnin(publish.Extractor):
                 burnin_defs, repre["tags"]
             )
             if not repre_burnin_defs:
-                self.log.info((
+                self.log.debug(
                     "Skipped representation. All burnin definitions from"
-                    " selected profile does not match to representation's"
-                    " tags. \"{}\""
-                ).format(str(repre["tags"])))
+                    " selected profile do not match to representation's"
+                    " tags. \"{}\"".format(repre["tags"])
+                )
                 continue
             filtered_repres.append((repre, repre_burnin_defs))
 
@@ -162,7 +164,7 @@ class ExtractBurnin(publish.Extractor):
                                   logger=self.log)
 
         if not profile:
-            self.log.info((
+            self.log.debug((
                 "Skipped instance. None of profiles in presets are for"
                 " Host: \"{}\" | Families: \"{}\" | Task \"{}\""
                 " | Task type \"{}\" | Subset \"{}\" "
@@ -174,7 +176,7 @@ class ExtractBurnin(publish.Extractor):
         # Pre-filter burnin definitions by instance families
         burnin_defs = self.filter_burnins_defs(profile, instance)
         if not burnin_defs:
-            self.log.info((
+            self.log.debug((
                 "Skipped instance. Burnin definitions are not set for profile"
                 " Host: \"{}\" | Families: \"{}\" | Task \"{}\""
                 " | Profile \"{}\""
@@ -221,10 +223,10 @@ class ExtractBurnin(publish.Extractor):
             # If result is None the requirement of conversion can't be
             #   determined
             if do_convert is None:
-                self.log.info((
+                self.log.debug(
                     "Can't determine if representation requires conversion."
                     " Skipped."
-                ))
+                )
                 continue
 
             # Do conversion if needed
@@ -266,6 +268,16 @@ class ExtractBurnin(publish.Extractor):
             first_output = True
 
             files_to_delete = []
+
+            repre_burnin_options = copy.deepcopy(burnin_options)
+            # Use fps from representation for output in options
+            fps = repre.get("fps")
+            if fps is not None:
+                repre_burnin_options["fps"] = fps
+                # TODO Should we use fps from source representation to fill
+                #  it in review?
+                # burnin_data["fps"] = fps
+
             for filename_suffix, burnin_def in repre_burnin_defs.items():
                 new_repre = copy.deepcopy(repre)
                 new_repre["stagingDir"] = src_repre_staging_dir
@@ -308,7 +320,7 @@ class ExtractBurnin(publish.Extractor):
                     "input": temp_data["full_input_path"],
                     "output": temp_data["full_output_path"],
                     "burnin_data": burnin_data,
-                    "options": copy.deepcopy(burnin_options),
+                    "options": repre_burnin_options,
                     "values": burnin_values,
                     "full_input_path": temp_data["full_input_paths"][0],
                     "first_frame": temp_data["first_frame"],
@@ -463,15 +475,11 @@ class ExtractBurnin(publish.Extractor):
 
         handle_start = instance.data.get("handleStart")
         if handle_start is None:
-            handle_start = context.data.get("handleStart")
-            if handle_start is None:
-                handle_start = handles
+            handle_start = context.data.get("handleStart") or 0
 
         handle_end = instance.data.get("handleEnd")
         if handle_end is None:
-            handle_end = context.data.get("handleEnd")
-            if handle_end is None:
-                handle_end = handles
+            handle_end = context.data.get("handleEnd") or 0
 
         frame_start_handle = frame_start - handle_start
         frame_end_handle = frame_end + handle_end

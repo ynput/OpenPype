@@ -36,17 +36,17 @@ class MultiverseUsdLoader(load.LoaderPlugin):
             suffix="_",
         )
 
+        path = self.filepath_from_context(context)
+
         # Make sure we can load the plugin
         cmds.loadPlugin("MultiverseForMaya", quiet=True)
         import multiverse
 
         # Create the shape
-        shape = None
-        transform = None
         with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                shape = multiverse.CreateUsdCompound(self.fname)
+                shape = multiverse.CreateUsdCompound(path)
                 transform = cmds.listRelatives(
                     shape, parent=True, fullPath=True)[0]
 

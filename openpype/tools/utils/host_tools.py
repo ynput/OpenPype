@@ -6,11 +6,13 @@ use singleton approach with global functions (using helper anyway).
 import os
 
 import pyblish.api
+
+from openpype import AYON_SERVER_ENABLED
 from openpype.host import IWorkfileHost, ILoadHost
 from openpype.lib import Logger
 from openpype.pipeline import (
     registered_host,
-    legacy_io,
+    get_current_asset_name,
 )
 
 from .lib import qt_app_context
@@ -46,17 +48,29 @@ class HostToolsHelper:
             self._log = Logger.get_logger(self.__class__.__name__)
         return self._log
 
+    def _init_ayon_workfiles_tool(self, parent):
+        from openpype.tools.ayon_workfiles.widgets import WorkfilesToolWindow
+
+        workfiles_window = WorkfilesToolWindow(parent=parent)
+        self._workfiles_tool = workfiles_window
+
+    def _init_openpype_workfiles_tool(self, parent):
+        from openpype.tools.workfiles.app import Window
+
+        # Host validation
+        host = registered_host()
+        IWorkfileHost.validate_workfile_methods(host)
+
+        workfiles_window = Window(parent=parent)
+        self._workfiles_tool = workfiles_window
+
     def get_workfiles_tool(self, parent):
         """Create, cache and return workfiles tool window."""
         if self._workfiles_tool is None:
-            from openpype.tools.workfiles.app import Window
-
-            # Host validation
-            host = registered_host()
-            IWorkfileHost.validate_workfile_methods(host)
-
-            workfiles_window = Window(parent=parent)
-            self._workfiles_tool = workfiles_window
+            if AYON_SERVER_ENABLED:
+                self._init_ayon_workfiles_tool(parent)
+            else:
+                self._init_openpype_workfiles_tool(parent)
 
         return self._workfiles_tool
 
@@ -96,7 +110,7 @@ class HostToolsHelper:
                 use_context = False
 
             if use_context:
-                context = {"asset": legacy_io.Session["AVALON_ASSET"]}
+                context = {"asset": get_current_asset_name()}
                 loader_tool.set_context(context, refresh=True)
             else:
                 loader_tool.refresh()

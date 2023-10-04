@@ -325,7 +325,6 @@ class CollectTimelineInstances(pyblish.api.ContextPlugin):
     def _create_shot_instance(self, context, clip_name, **data):
         master_layer = data.get("heroTrack")
         hierarchy_data = data.get("hierarchyData")
-        asset = data.get("asset")
 
         if not master_layer:
             return

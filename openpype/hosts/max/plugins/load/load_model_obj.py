@@ -1,15 +1,23 @@
 import os
-from openpype.pipeline import (
-    load,
-    get_representation_path
-)
-from openpype.hosts.max.api.pipeline import containerise
+
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import (
+    unique_namespace,
+    get_namespace,
+    maintained_selection,
+    object_transform_set
+)
 from openpype.hosts.max.api.lib import maintained_selection
+from openpype.hosts.max.api.pipeline import (
+    containerise,
+    get_previous_loaded_object,
+    update_custom_attribute_data
+)
+from openpype.pipeline import get_representation_path, load
 
 
 class ObjLoader(load.LoaderPlugin):
-    """Obj Loader"""
+    """Obj Loader."""
 
     families = ["model"]
     representations = ["obj"]
@@ -20,22 +28,23 @@ class ObjLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
 
-        filepath = os.path.normpath(self.fname)
-        self.log.debug(f"Executing command to import..")
+        filepath = os.path.normpath(self.filepath_from_context(context))
+        self.log.debug("Executing command to import..")
 
-        rt.execute(f'importFile @"{filepath}" #noPrompt using:ObjImp')
+        rt.Execute(f'importFile @"{filepath}" #noPrompt using:ObjImp')
+
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
         # create "missing" container for obj import
-        container = rt.container()
-        container.name = f"{name}"
-
+        selections = rt.GetCurrentSelection()
         # get current selection
-        for selection in rt.getCurrentSelection():
-            selection.Parent = container
-
-        asset = rt.getNodeByName(f"{name}")
-
+        for selection in selections:
+            selection.name = f"{namespace}:{selection.name}"
         return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
+            name, selections, context,
+            namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
@@ -43,26 +52,38 @@ class ObjLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
+        namespace, _ = get_namespace(node_name)
+        node_list = get_previous_loaded_object(node)
+        rt.Select(node_list)
+        previous_objects = rt.GetCurrentSelection()
+        transform_data = object_transform_set(previous_objects)
+        for prev_obj in previous_objects:
+            if rt.isValidNode(prev_obj):
+                rt.Delete(prev_obj)
 
-        instance_name, _ = node_name.split("_")
-        container = rt.getNodeByName(instance_name)
-        for n in container.Children:
-            rt.delete(n)
-
-        rt.execute(f'importFile @"{path}" #noPrompt using:ObjImp')
+        rt.Execute(f'importFile @"{path}" #noPrompt using:ObjImp')
         # get current selection
-        for selection in rt.getCurrentSelection():
-            selection.Parent = container
-
+        selections = rt.GetCurrentSelection()
+        for selection in selections:
+            selection.name = f"{namespace}:{selection.name}"
+            selection_transform = f"{selection.name}.transform"
+            if selection_transform in transform_data.keys():
+                selection.pos = transform_data[selection_transform] or 0
+                selection.scale = transform_data[
+                    f"{selection.name}.scale"] or 0
+        update_custom_attribute_data(node, selections)
         with maintained_selection():
-            rt.select(node)
+            rt.Select(node)
 
         lib.imprint(node_name, {
             "representation": str(representation["_id"])
         })
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
     def remove(self, container):
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)

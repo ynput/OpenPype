@@ -113,12 +113,19 @@ def pack_project(
             project_name
         ))
 
+    if only_documents and not destination_dir:
+        raise ValueError((
+            "Destination directory must be defined"
+            " when only documents should be packed."
+        ))
+
     root_path = None
     source_root = {}
     project_source_path = None
     if not only_documents:
         roots = project_doc["config"]["roots"]
         # Determine root directory of project
+        source_root = None
         source_root_name = None
         for root_name, root_value in roots.items():
             if source_root is not None:
@@ -140,6 +147,11 @@ def pack_project(
     # Determine zip filepath where data will be stored
     if not destination_dir:
         destination_dir = root_path
+
+    if not destination_dir:
+        raise ValueError(
+            "Project {} does not have any roots.".format(project_name)
+        )
 
     destination_dir = os.path.normpath(destination_dir)
     if not os.path.exists(destination_dir):

@@ -12,7 +12,7 @@ from unreal import (
 from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     AYON_CONTAINER_ID,
-    legacy_io,
+    get_current_project_name,
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api.pipeline import (
@@ -184,7 +184,7 @@ class CameraLoader(plugin.Loader):
                 frame_ranges[i + 1][0], frame_ranges[i + 1][1],
                 [level])
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         data = get_asset_by_name(project_name, asset)["data"]
         cam_seq.set_display_rate(
             unreal.FrameRate(data.get("fps"), 1.0))
@@ -200,12 +200,13 @@ class CameraLoader(plugin.Loader):
         settings.set_editor_property('reduce_keys', False)
 
         if cam_seq:
+            path = self.filepath_from_context(context)
             self._import_camera(
                 EditorLevelLibrary.get_editor_world(),
                 cam_seq,
                 cam_seq.get_bindings(),
                 settings,
-                self.fname
+                path
             )
 
         # Set range of all sections
@@ -389,7 +390,7 @@ class CameraLoader(plugin.Loader):
         # Set range of all sections
         # Changing the range of the section is not enough. We need to change
         # the frame of all the keys in the section.
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         asset = container.get('asset')
         data = get_asset_by_name(project_name, asset)["data"]
 

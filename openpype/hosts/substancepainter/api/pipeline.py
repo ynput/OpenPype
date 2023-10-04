@@ -86,7 +86,7 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         self._uninstall_menu()
         self._deregister_callbacks()
 
-    def has_unsaved_changes(self):
+    def workfile_has_unsaved_changes(self):
 
         if not substance_painter.project.is_open():
             return False

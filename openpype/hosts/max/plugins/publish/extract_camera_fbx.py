@@ -1,14 +1,14 @@
 import os
+
 import pyblish.api
-from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
-from openpype.hosts.max.api import maintained_selection, get_all_children
+
+from openpype.hosts.max.api import maintained_selection
+from openpype.pipeline import OptionalPyblishPluginMixin, publish
 
 
 class ExtractCameraFbx(publish.Extractor, OptionalPyblishPluginMixin):
-    """
-    Extract Camera with FbxExporter
-    """
+    """Extract Camera with FbxExporter."""
 
     order = pyblish.api.ExtractorOrder - 0.2
     label = "Extract Fbx Camera"
@@ -19,14 +19,13 @@ class ExtractCameraFbx(publish.Extractor, OptionalPyblishPluginMixin):
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        container = instance.data["instance_node"]
 
-        self.log.info("Extracting Camera ...")
+        self.log.debug("Extracting Camera ...")
         stagingdir = self.staging_dir(instance)
         filename = "{name}.fbx".format(**instance.data)
 
         filepath = os.path.join(stagingdir, filename)
-        self.log.info("Writing fbx file '%s' to '%s'" % (filename, filepath))
+        self.log.info(f"Writing fbx file '{filename}' to '{filepath}'")
 
         rt.FBXExporterSetParam("Animation", True)
         rt.FBXExporterSetParam("Cameras", True)
@@ -36,10 +35,11 @@ class ExtractCameraFbx(publish.Extractor, OptionalPyblishPluginMixin):
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
-            rt.exportFile(
+            node_list = instance.data["members"]
+            rt.Select(node_list)
+            rt.ExportFile(
                 filepath,
-                rt.name("noPrompt"),
+                rt.Name("noPrompt"),
                 selectedOnly=True,
                 using=rt.FBXEXP,
             )
@@ -55,6 +55,4 @@ class ExtractCameraFbx(publish.Extractor, OptionalPyblishPluginMixin):
             "stagingDir": stagingdir,
         }
         instance.data["representations"].append(representation)
-        self.log.info(
-            "Extracted instance '%s' to: %s" % (instance.name, filepath)
-        )
+        self.log.info(f"Extracted instance '{instance.name}' to: {filepath}")

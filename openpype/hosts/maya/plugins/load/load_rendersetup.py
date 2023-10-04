@@ -43,8 +43,9 @@ class RenderSetupLoader(load.LoaderPlugin):
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
         )
-        self.log.info(">>> loading json [ {} ]".format(self.fname))
-        with open(self.fname, "r") as file:
+        path = self.filepath_from_context(context)
+        self.log.info(">>> loading json [ {} ]".format(path))
+        with open(path, "r") as file:
             renderSetup.instance().decode(
                 json.load(file), renderSetup.DECODE_AND_OVERWRITE, None)
 

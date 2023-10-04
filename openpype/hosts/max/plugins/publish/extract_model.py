@@ -2,7 +2,7 @@ import os
 import pyblish.api
 from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
-from openpype.hosts.max.api import maintained_selection, get_all_children
+from openpype.hosts.max.api import maintained_selection
 
 
 class ExtractModel(publish.Extractor, OptionalPyblishPluginMixin):
@@ -20,9 +20,7 @@ class ExtractModel(publish.Extractor, OptionalPyblishPluginMixin):
         if not self.is_active(instance.data):
             return
 
-        container = instance.data["instance_node"]
-
-        self.log.info("Extracting Geometry ...")
+        self.log.debug("Extracting Geometry ...")
 
         stagingdir = self.staging_dir(instance)
         filename = "{name}.abc".format(**instance.data)
@@ -40,7 +38,8 @@ class ExtractModel(publish.Extractor, OptionalPyblishPluginMixin):
 
         with maintained_selection():
             # select and export
-            rt.select(get_all_children(rt.getNodeByName(container)))
+            node_list = instance.data["members"]
+            rt.Select(node_list)
             rt.exportFile(
                 filepath,
                 rt.name("noPrompt"),

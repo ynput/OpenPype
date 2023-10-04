@@ -15,7 +15,7 @@ from openpype.client import (
     get_representations,
     get_representation_by_id,
 )
-from openpype.modules import OpenPypeModule, ITrayModule
+from openpype.modules import OpenPypeModule, ITrayModule, IPluginPaths
 from openpype.settings import (
     get_project_settings,
     get_system_settings,
@@ -34,12 +34,17 @@ from openpype.settings.constants import (
 from .providers.local_drive import LocalDriveHandler
 from .providers import lib
 
-from .utils import time_function, SyncStatus, SiteAlreadyPresentError
+from .utils import (
+    time_function,
+    SyncStatus,
+    SiteAlreadyPresentError,
+    SYNC_SERVER_ROOT,
+)
 
 log = Logger.get_logger("SyncServer")
 
 
-class SyncServerModule(OpenPypeModule, ITrayModule):
+class SyncServerModule(OpenPypeModule, ITrayModule, IPluginPaths):
     """
        Synchronization server that is syncing published files from local to
        any of implemented providers (like GDrive, S3 etc.)
@@ -136,6 +141,27 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         # projects that long tasks are running on
         self.projects_processed = set()
 
+    def get_plugin_paths(self):
+        """Deadline plugin paths."""
+        return {
+            "load": [os.path.join(SYNC_SERVER_ROOT, "plugins", "load")]
+        }
+
+    def get_site_icons(self):
+        """Icons for sites.
+
+        Returns:
+            dict[str, str]: Path to icon by site.
+        """
+
+        resource_path = os.path.join(
+            SYNC_SERVER_ROOT, "providers", "resources"
+        )
+        return {
+            provider: "{}/{}.png".format(resource_path, provider)
+            for provider in ["studio", "local_drive", "gdrive"]
+        }
+
     """ Start of Public API """
     def add_site(self, project_name, representation_id, site_name=None,
                  force=False, priority=None, reset_timer=False):
@@ -203,6 +229,58 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
                                           remove=True)
         if remove_local_files:
             self._remove_local_file(project_name, representation_id, site_name)
+
+    def get_progress_for_repre(self, doc, active_site, remote_site):
+        """
+            Calculates average progress for representation.
+            If site has created_dt >> fully available >> progress == 1
+            Could be calculated in aggregate if it would be too slow
+            Args:
+                doc(dict): representation dict
+            Returns:
+                (dict) with active and remote sites progress
+                {'studio': 1.0, 'gdrive': -1} - gdrive site is not present
+                    -1 is used to highlight the site should be added
+                {'studio': 1.0, 'gdrive': 0.0} - gdrive site is present, not
+                    uploaded yet
+        """
+        progress = {active_site: -1,
+                    remote_site: -1}
+        if not doc:
+            return progress
+
+        files = {active_site: 0, remote_site: 0}
+        doc_files = doc.get("files") or []
+        for doc_file in doc_files:
+            if not isinstance(doc_file, dict):
+                continue
+
+            sites = doc_file.get("sites") or []
+            for site in sites:
+                if (
+                        # Pype 2 compatibility
+                        not isinstance(site, dict)
+                        # Check if site name is one of progress sites
+                        or site["name"] not in progress
+                ):
+                    continue
+
+                files[site["name"]] += 1
+                norm_progress = max(progress[site["name"]], 0)
+                if site.get("created_dt"):
+                    progress[site["name"]] = norm_progress + 1
+                elif site.get("progress"):
+                    progress[site["name"]] = norm_progress + site["progress"]
+                else:  # site exists, might be failed, do not add again
+                    progress[site["name"]] = 0
+
+        # for example 13 fully avail. files out of 26 >> 13/26 = 0.5
+        avg_progress = {}
+        avg_progress[active_site] = \
+            progress[active_site] / max(files[active_site], 1)
+        avg_progress[remote_site] = \
+            progress[remote_site] / max(files[remote_site], 1)
+        return avg_progress
 
     def compute_resource_sync_sites(self, project_name):
         """Get available resource sync sites state for publish process.
@@ -845,10 +923,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             (str): full absolut path to directory with hooks for the module
         """
 
-        return os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "launch_hooks"
-        )
+        return os.path.join(SYNC_SERVER_ROOT, "launch_hooks")
 
     # Needs to be refactored after Settings are updated
     # # Methods for Settings to get appriate values to fill forms

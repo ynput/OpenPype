@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError,
+)
 
 
 class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
@@ -29,10 +32,9 @@ class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all the cameras in the instance"""
-        # If the renderer is 3delight
-        # the validation will be skipped
-        if not instance.data.get("renderer") == "_3delight":
-            invalid = self.get_invalid(instance)
-            if invalid:
-                raise RuntimeError("Renderable default cameras "
-                                   "found: {0}".format(invalid))
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise PublishValidationError(
+                title="Rendering default cameras",
+                message="Renderable default cameras "
+                        "found: {0}".format(invalid))

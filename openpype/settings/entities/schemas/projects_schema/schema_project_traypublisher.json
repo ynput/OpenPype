@@ -86,6 +86,12 @@
                         "type": "boolean"
                     },
                     {
+                        "type": "boolean",
+                        "key": "allow_version_control",
+                        "label": "Allow version control",
+                        "default": false
+                    },
+                    {
                         "type": "list",
                         "key": "extensions",
                         "label": "Extensions",
@@ -344,8 +350,16 @@
                     "name": "template_validate_plugin",
                     "template_data": [
                         {
+                            "key": "CollectSequenceFrameData",
+                            "label": "Collect Original Sequence Frame Data"
+                        },
+                        {
                             "key": "ValidateFrameRange",
                             "label": "Validate frame range"
+                        },
+                        {
+                            "key": "ValidateExistingVersion",
+                            "label": "Validate Existing Version"
                         }
                     ]
                 }

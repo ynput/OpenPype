@@ -16,11 +16,10 @@ class ExtractRedshiftProxy(publish.Extractor):
     families = ["redshiftproxy"]
 
     def process(self, instance):
-        container = instance.data["instance_node"]
         start = int(instance.context.data.get("frameStart"))
         end = int(instance.context.data.get("frameEnd"))
 
-        self.log.info("Extracting Redshift Proxy...")
+        self.log.debug("Extracting Redshift Proxy...")
         stagingdir = self.staging_dir(instance)
         rs_filename = "{name}.rs".format(**instance.data)
         rs_filepath = os.path.join(stagingdir, rs_filename)
@@ -30,8 +29,8 @@ class ExtractRedshiftProxy(publish.Extractor):
 
         with maintained_selection():
             # select and export
-            con = rt.getNodeByName(container)
-            rt.select(con.Children)
+            node_list = instance.data["members"]
+            rt.Select(node_list)
             # Redshift rsProxy command
             # rsProxy fp selected compress connectivity startFrame endFrame
             # camera warnExisting transformPivotToOrigin
