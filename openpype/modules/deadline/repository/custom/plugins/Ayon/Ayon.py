@@ -96,7 +96,7 @@ class AyonDeadlinePlugin(DeadlinePlugin):
         for path in exe_list.split(";"):
             if path.startswith("~"):
                 path = os.path.expanduser(path)
-                expanded_paths.append(path)
+            expanded_paths.append(path)  # Always append the path after potential expansion
         exe = FileUtils.SearchFileList(";".join(expanded_paths))
 
         if exe == "":
