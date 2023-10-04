@@ -27,7 +27,8 @@ def ensure_installed_host():
     if host:
         return host
 
-    install_host(openpype.hosts.resolve.api)
+    host = openpype.hosts.resolve.api.ResolveHost()
+    install_host(host)
     return registered_host()
 
 
@@ -37,10 +38,10 @@ def launch_menu():
     openpype.hosts.resolve.api.launch_pype_menu()
 
 
-def open_file(path):
+def open_workfile(path):
     # Avoid the need to "install" the host
     host = ensure_installed_host()
-    host.open_file(path)
+    host.open_workfile(path)
 
 
 def main():
@@ -49,7 +50,7 @@ def main():
 
     if workfile_path and os.path.exists(workfile_path):
         log.info(f"Opening last workfile: {workfile_path}")
-        open_file(workfile_path)
+        open_workfile(workfile_path)
     else:
         log.info("No last workfile set to open. Skipping..")
 

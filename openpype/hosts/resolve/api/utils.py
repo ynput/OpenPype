@@ -17,7 +17,7 @@ def get_resolve_module():
     # dont run if already loaded
     if api.bmdvr:
         log.info(("resolve module is assigned to "
-                  f"`pype.hosts.resolve.api.bmdvr`: {api.bmdvr}"))
+                  f"`openpype.hosts.resolve.api.bmdvr`: {api.bmdvr}"))
         return api.bmdvr
     try:
         """
@@ -41,6 +41,10 @@ def get_resolve_module():
             )
         elif sys.platform.startswith("linux"):
             expected_path = "/opt/resolve/libs/Fusion/Modules"
+        else:
+            raise NotImplementedError(
+                "Unsupported platform: {}".format(sys.platform)
+            )
 
         # check if the default path has it...
         print(("Unable to find module DaVinciResolveScript from "
@@ -74,6 +78,6 @@ def get_resolve_module():
     api.bmdvr = bmdvr
     api.bmdvf = bmdvf
     log.info(("Assigning resolve module to "
-              f"`pype.hosts.resolve.api.bmdvr`: {api.bmdvr}"))
+              f"`openpype.hosts.resolve.api.bmdvr`: {api.bmdvr}"))
     log.info(("Assigning resolve module to "
-              f"`pype.hosts.resolve.api.bmdvf`: {api.bmdvf}"))
+              f"`openpype.hosts.resolve.api.bmdvf`: {api.bmdvf}"))
