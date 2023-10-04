@@ -8,12 +8,11 @@ from openpype.tools.utils.lib import (
     preserve_expanded_rows,
     preserve_selection,
 )
-from openpype.tools.loader.widgets import ThumbnailWidget
+
 from .models import (
     AssetModel,
     LookModel
 )
-from openpype.pipeline import legacy_io
 from . import commands
 from .views import View
 
@@ -27,7 +26,7 @@ class AssetOutliner(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(AssetOutliner, self).__init__(parent)
 
-        title = QtWidgets.QLabel("Assets In Scene", self)
+        title = QtWidgets.QLabel("Assets", self)
         title.setAlignment(QtCore.Qt.AlignCenter)
         title.setStyleSheet("font-weight: bold; font-size: 12px")
 
@@ -40,69 +39,29 @@ class AssetOutliner(QtWidgets.QWidget):
         view.setIndentation(10)
 
         from_all_asset_btn = QtWidgets.QPushButton(
-            "Refresh", self
+            "Get All Assets", self
         )
-        self.from_selection_box = QtWidgets.QCheckBox("from Selection Only")
-        controlsLayout = QtWidgets.QHBoxLayout()
-        controlsLayout.addWidget(from_all_asset_btn)
-        controlsLayout.addWidget(self.from_selection_box)
+        from_selection_btn = QtWidgets.QPushButton(
+            "Get Assets From Selection", self
+        )
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(title)
-        layout.addLayout(controlsLayout)
+        layout.addWidget(from_all_asset_btn)
+        layout.addWidget(from_selection_btn)
         layout.addWidget(view)
 
         # Build connections
+        from_selection_btn.clicked.connect(self.get_selected_assets)
         from_all_asset_btn.clicked.connect(self.get_all_assets)
 
         selection_model = view.selectionModel()
         selection_model.selectionChanged.connect(self.selection_changed)
-        selection_model.selectionChanged.connect(self.selectInMaya)
 
         self.view = view
         self.model = model
 
         self.log = logging.getLogger(__name__)
-    def selectInMaya(self):
-        try:
-            dex = self.view.selectedIndexes()[0]
-            obj = dex.model().data(dex,QtCore.Qt.DisplayRole)
-            itm = dex.model().data(dex,TreeModel.ItemRole)
-            cmds.select(clear=True)
-            if dex.model().hasChildren(dex):
-                for nspace in itm['namespaces']:
-                    cmds.select(nspace + '*:*', add=True)
-            else:
-                cmds.select(obj + '*:*')
-        except ValueError:
-            pass
-        except IndexError:
-            pass
-    def clear(self):
-        self.model.clear()
-
-        # fix looks remaining visible when no items present after "refresh"
-        # todo: figure out why this workaround is needed.
-        self.selection_changed.emit()
-
-    def add_items(self, items):
-        """Add new items to the outliner"""
-
-        self.model.add_items(items)
-        self.refreshed.emit()
-
-    def get_selected_items(self):
-        """Get current selected items from view
-
-        Returns:
-            list: list of dictionaries
-        """
-
-        selection_model = self.view.selectionModel()
-        items = [row.data(TreeModel.ItemRole) for row in
-                 selection_model.selectedRows(0)]
-
-        return items
 
     def clear(self):
         self.model.clear()
@@ -130,16 +89,14 @@ class AssetOutliner(QtWidgets.QWidget):
 
     def get_all_assets(self):
         """Add all items from the current scene"""
-        items = []
+
         with preserve_expanded_rows(self.view):
             with preserve_selection(self.view):
                 self.clear()
                 nodes = commands.get_all_asset_nodes()
-                print(nodes)
                 items = commands.create_items_from_nodes(nodes)
                 self.add_items(items)
-
-        return len(items) > 0
+                return len(items) > 0
 
     def get_selected_assets(self):
         """Add all selected items from the current scene"""
@@ -250,20 +207,17 @@ class LookOutliner(QtWidgets.QWidget):
         view.setToolTip("Use right mouse button menu for direct actions")
         view.customContextMenuRequested.connect(self.right_mouse_menu)
         view.sortByColumn(0, QtCore.Qt.AscendingOrder)
-        view.selectionModel().selectionChanged.connect(lambda x: self.get_selected_entity())
 
-        self.thumbWidget = ThumbnailWidget(legacy_io)
         # look manager layout
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
         layout.addWidget(title)
-        layout.addWidget(self.thumbWidget)
         layout.addWidget(view)
 
         self.view = view
         self.model = model
-        self.thumbWidget.set_thumbnail()
+
     def clear(self):
         self.model.clear()
 
@@ -299,15 +253,3 @@ class LookOutliner(QtWidgets.QWidget):
         menu.addAction(apply_action)
 
         menu.exec_(globalpos)
-    def get_selected_entity(self):
-        selectedItems = self.get_selected_items()
-        if len(selectedItems) > 0:
-            item = selectedItems[0]
-        else:
-            self.thumbWidget.set_thumbnail()
-            return
-        thumbEntity = legacy_io.find_one({"name": 'thumbnail','type': 'representation', 'context.subset': item['subset'] } )
-        if thumbEntity:
-            self.thumbWidget.set_thumbnail(thumbnail_ent=thumbEntity)
-        else:
-            self.thumbWidget.set_thumbnail()

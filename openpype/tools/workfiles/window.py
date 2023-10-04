@@ -439,7 +439,8 @@ class Window(QtWidgets.QWidget):
         task_type = self.tasks_widget.get_selected_task_type()
 
         # NOTE hornet fix for workspace
-        if task_name == 'anim' and task_type == 'anim' :
+        fix_list = ['anim','lgt','lay','mdl','rig','look','previz','lgt']
+        if task_name in fix_list and task_type in fix_list :
             from openpype.hpipe import maya_fix
             maya_fix.fix_workspace()
         # END
