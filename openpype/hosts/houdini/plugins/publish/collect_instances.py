@@ -102,4 +102,4 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         """
 
-        return lib.get_frame_data(self, node)
+        return lib.get_frame_data(node)

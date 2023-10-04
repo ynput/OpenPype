@@ -21,7 +21,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin):
         ropnode = hou.node(node_path)
 
         asset_data = instance.context.data["assetEntity"]["data"]
-        frame_data = lib.get_frame_data(self, ropnode, asset_data)
+        frame_data = lib.get_frame_data(ropnode, asset_data, self.log)
 
         if "frameStart" in frame_data and "frameEnd" in frame_data:
 

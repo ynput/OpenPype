@@ -548,7 +548,7 @@ def get_template_from_value(key, value):
     return parm
 
 
-def get_frame_data(self, node, asset_data=None):
+def get_frame_data(node, asset_data=None, log=None):
     """Get the frame data: start frame, end frame and steps.
 
     Args:
@@ -561,28 +561,31 @@ def get_frame_data(self, node, asset_data=None):
     if asset_data is None:
         asset_data = {}
 
+    if log is None:
+        log = self.log
+
     data = {}
 
     if node.parm("trange") is None:
-        self.log.debug(
+        log.debug(
             "Node has no 'trange' parameter: {}".format(node.path())
         )
         return data
 
     if node.evalParm("trange") == 0:
-        self.log.debug(
+        log.debug(
             "Node '{}' has 'Render current frame' set. "
             "Time range data ignored.".format(node.path())
         )
         return data
 
     data["frameStartHandle"] = node.evalParm("f1")
-    data["frameStart"] = node.evalParm("f1") + asset_data.get("handleStart", 0)
     data["handleStart"] = asset_data.get("handleStart", 0)
+    data["frameStart"] = data["frameStartHandle"] + data["handleStart"]
 
     data["frameEndHandle"] = node.evalParm("f2")
-    data["frameEnd"] = node.evalParm("f2") - asset_data.get("handleEnd", 0)
     data["handleEnd"] = asset_data.get("handleEnd", 0)
+    data["frameEnd"] = data["frameEndHandle"] - data["handleEnd"]
 
     data["byFrameStep"] = node.evalParm("f3")
 

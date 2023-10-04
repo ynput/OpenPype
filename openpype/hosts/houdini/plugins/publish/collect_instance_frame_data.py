@@ -21,7 +21,7 @@ class CollectInstanceNodeFrameRange(pyblish.api.InstancePlugin):
             return
 
         asset_data = instance.context.data["assetEntity"]["data"]
-        frame_data = lib.get_frame_data(self, node, asset_data)
+        frame_data = lib.get_frame_data(node, asset_data, self.log)
 
         if not frame_data:
             return
