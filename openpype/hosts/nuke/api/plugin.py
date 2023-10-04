@@ -819,6 +819,11 @@ class ExporterReviewMov(ExporterReview):
             self.file = "{}{}.{}".format(
                 self.fhead, self.name, self.ext)
         else:
+            # Output is image (or image sequence)
+            # When the file is an image it's possible it
+            # has extra information after the `fhead` that
+            # we want to preserve, e.g. like frame numbers
+            # or frames hashes like `####`
             filename_no_ext = os.path.splitext(
                 os.path.basename(self.path_in))[0]
             after_head = filename_no_ext[len(self.fhead):]
