@@ -102,16 +102,4 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         """
 
-        data = {}
-
-        if node.parm("trange") is None:
-            return data
-
-        if node.evalParm("trange") == 0:
-            return data
-
-        data["frameStart"] = node.evalParm("f1")
-        data["frameEnd"] = node.evalParm("f2")
-        data["byFrameStep"] = node.evalParm("f3")
-
-        return data
+        return lib.get_frame_data(self, node)

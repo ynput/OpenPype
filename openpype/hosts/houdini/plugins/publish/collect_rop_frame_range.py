@@ -19,16 +19,20 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin):
             return
 
         ropnode = hou.node(node_path)
-        frame_data = lib.get_frame_data(ropnode)
+
+        asset_data = instance.context.data["assetEntity"]["data"]
+        frame_data = lib.get_frame_data(self, ropnode, asset_data)
 
         if "frameStart" in frame_data and "frameEnd" in frame_data:
 
             # Log artist friendly message about the collected frame range
             message = (
                 "Frame range {0[frameStart]} - {0[frameEnd]}"
-            ).format(frame_data)
-            if frame_data.get("step", 1.0) != 1.0:
-                message += " with step {0[step]}".format(frame_data)
+                .format(frame_data)
+            )
+            if frame_data.get("byFrameStep", 1.0) != 1.0:
+                message += " with step {0[byFrameStep]}".format(frame_data)
+
             self.log.info(message)
 
             instance.data.update(frame_data)
@@ -36,6 +40,6 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin):
             # Add frame range to label if the instance has a frame range.
             label = instance.data.get("label", instance.data["name"])
             instance.data["label"] = (
-                "{0} [{1[frameStart]} - {1[frameEnd]}]".format(label,
-                                                               frame_data)
+                "{0} [{1[frameStart]} - {1[frameEnd]}]"
+                .format(label,frame_data)
             )
