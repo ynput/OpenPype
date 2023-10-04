@@ -65,9 +65,12 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             job_info.BatchName += datetime.now().strftime("%d%m%Y%H%M%S")
 
         # Deadline requires integers in frame range
+        start = instance.data.get("frameStartHandle") or instance.data["frameStart"]
+        end = instance.data.get("frameEndHandle") or instance.data["frameEnd"]
+
         frames = "{start}-{end}x{step}".format(
-            start=int(instance.data["frameStart"]),
-            end=int(instance.data["frameEnd"]),
+            start=int(start),
+            end=int(end),
             step=int(instance.data["byFrameStep"]),
         )
         job_info.Frames = frames
