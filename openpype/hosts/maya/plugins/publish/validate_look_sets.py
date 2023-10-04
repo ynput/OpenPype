@@ -65,7 +65,7 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
         with lib.renderlayer(renderlayer):
             for node in instance:
                 # get the connected objectSets of the node
-                sets = lib.get_related_sets(node)
+                sets = lib.get_related_sets(node,exact=True)
                 if not sets:
                     continue
 

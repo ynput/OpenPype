@@ -1821,7 +1821,7 @@ def get_isolate_view_sets():
     return view_sets
 
 
-def get_related_sets(node):
+def get_related_sets(node,exact=False):
     """Return objectSets that are relationships for a look for `node`.
 
     Filters out based on:
@@ -1848,7 +1848,6 @@ def get_related_sets(node):
     ignored = {"pyblish.avalon.instance", "pyblish.avalon.container"}
 
     view_sets = get_isolate_view_sets()
-
     sets = cmds.listSets(object=node, extendToShape=False)
     if not sets:
         return []
@@ -1857,7 +1856,10 @@ def get_related_sets(node):
     # In rare cases it can happen that a node is added to an internal maya
     # set inaccessible by maya commands, for example check some nodes
     # returned by `cmds.listSets(allSets=True)`
-    sets = cmds.ls(sets)
+    if exact:
+        sets = cmds.ls(sets,exactType='objectSet')
+    else:
+        sets = cmds.ls(sets)
 
     # Ignore `avalon.container`
     sets = [s for s in sets if
