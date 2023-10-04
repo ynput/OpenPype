@@ -1,7 +1,7 @@
 """Functions to update OpenPype data using Kitsu DB (a.k.a Zou)."""
 from copy import deepcopy
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from pymongo import DeleteOne, UpdateOne
 import gazu
@@ -60,6 +60,24 @@ def set_op_project(dbcon: AvalonMongoDB, project_id: str):
     """
 
     dbcon.Session["AVALON_PROJECT"] = get_kitsu_project_name(project_id)
+
+
+def get_op_item_name_from_zou(
+        item: dict, parent_name: Optional[str]
+) -> str:
+    """Helper function to build OpenPype item name from zou item.
+
+    Args:
+        item (dict): Zou item representation.
+        parent_name (Optional[str]): Item parent's name or None.
+
+    Returns:
+          (str): Item name.
+    """
+
+    if item["type"] in ["Shot", "Sequence"] and parent_name is not None:
+        return f"{parent_name}_{item['name']}"
+    return item["name"]
 
 
 def update_op_assets(
@@ -260,15 +278,10 @@ def update_op_assets(
                 ancestor_id = None
 
         # Build OpenPype compatible name
-        if item_type in ["Shot", "Sequence"] and parent_zou_id is not None:
-            # Name with parents hierarchy "({episode}_){sequence}_{shot}"
-            # to avoid duplicate name issue
-            item_name = f"{item_data['parents'][-1]}_{item['name']}"
-
-            # Update doc name
-            asset_doc_ids[item["id"]]["name"] = item_name
-        else:
-            item_name = item["name"]
+        item_name = get_op_item_name_from_zou(
+            item, item_data['parents'][-1] if item_data["parents"] else None
+        )
+        asset_doc_ids[item["id"]]["name"] = item_name
 
         # Set root folders parents
         item_data["parents"] = [entity_root_asset_name] + item_data["parents"]
