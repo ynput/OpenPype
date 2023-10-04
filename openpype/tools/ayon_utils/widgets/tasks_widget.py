@@ -305,6 +305,7 @@ class TasksWidget(QtWidgets.QWidget):
         tasks_model = TasksModel(controller)
         tasks_proxy_model = QtCore.QSortFilterProxyModel()
         tasks_proxy_model.setSourceModel(tasks_model)
+        tasks_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         tasks_view.setModel(tasks_proxy_model)
 

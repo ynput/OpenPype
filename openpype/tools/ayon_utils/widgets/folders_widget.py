@@ -257,6 +257,7 @@ class FoldersWidget(QtWidgets.QWidget):
         folders_model = FoldersModel(controller)
         folders_proxy_model = RecursiveSortFilterProxyModel()
         folders_proxy_model.setSourceModel(folders_model)
+        folders_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         folders_view.setModel(folders_proxy_model)
 
