@@ -187,13 +187,14 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             self.customize_node_look(instance_node)
 
             instance_data["instance_node"] = instance_node.path()
+            instance_data["instance_id"] = instance_node.path()
             instance = CreatedInstance(
                 self.family,
                 subset_name,
                 instance_data,
                 self)
             self._add_instance_to_context(instance)
-            imprint(instance_node, instance.data_to_store())
+            self.imprint(instance_node, instance.data_to_store())
             return instance
 
         except hou.Error as er:
@@ -222,24 +223,40 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
         self.cache_subsets(self.collection_shared_data)
         for instance in self.collection_shared_data[
                 "houdini_cached_subsets"].get(self.identifier, []):
+
+            node_data = read(instance)
+
+            # Node paths are always the full node path since that is unique
+            # Because it's the node's path it's not written into attributes
+            # but explicitly collected
+            node_path = instance.path()
+            node_data["instance_id"] = node_path
+            node_data["instance_node"] = node_path
+
             created_instance = CreatedInstance.from_existing(
-                read(instance), self
+                node_data, self
             )
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
         for created_inst, changes in update_list:
             instance_node = hou.node(created_inst.get("instance_node"))
-
             new_values = {
                 key: changes[key].new_value
                 for key in changes.changed_keys
             }
-            imprint(
+            self.imprint(
                 instance_node,
                 new_values,
                 update=True
             )
+
+    def imprint(self, node, values, update=False):
+        # Never store instance node and instance id since that data comes
+        # from the node's path
+        values.pop("instance_node", None)
+        values.pop("instance_id", None)
+        imprint(node, values, update=update)
 
     def remove_instances(self, instances):
         """Remove specified instance from the scene.
