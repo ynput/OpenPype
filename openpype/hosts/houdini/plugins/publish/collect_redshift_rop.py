@@ -132,8 +132,8 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
             return path
 
         expected_files = []
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
+        start = instance.data.get("frameStartHandle") or instance.data["frameStart"]
+        end = instance.data.get("frameEndHandle") or instance.data["frameEnd"]
         for i in range(int(start), (int(end) + 1)):
             expected_files.append(
                 os.path.join(dir, (file % i)).replace("\\", "/"))
