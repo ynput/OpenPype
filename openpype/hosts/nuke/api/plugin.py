@@ -815,8 +815,10 @@ class ExporterReviewMov(ExporterReview):
 
         self.log.info("File info was set...")
 
-        self.file = self.fhead + self.name + ".{}".format(self.ext)
-        if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
+        if ".{}".format(self.ext) in VIDEO_EXTENSIONS:
+            self.file = "{}{}.{}".format(
+                self.fhead, self.name, self.ext)
+        else:
             filename_no_ext = os.path.splitext(
                 os.path.basename(self.path_in))[0]
             after_head = filename_no_ext[len(self.fhead):]
