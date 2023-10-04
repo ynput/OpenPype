@@ -148,13 +148,12 @@ This creator publishes color space look file (LUT).
 
         if config_data:
             filepath = config_data["path"]
-            config_items = colorspace.get_ocio_config_colorspaces(filepath)
-
-            self.colorspace_items.extend((
-                (name, f"{name} [{data_['type']}]")
-                for name, data_ in config_items.items()
-                if data_.get("type") == "colorspace"
-            ))
+            labeled_colorspaces = colorspace.get_labeled_colorspaces(
+                filepath,
+                include_aliases=True,
+                include_roles=True
+            )
+            self.colorspace_items.extend(labeled_colorspaces)
             self.enabled = True
 
     def _get_subset(self, asset_doc, variant, project_name, task_name=None):

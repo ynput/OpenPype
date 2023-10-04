@@ -356,7 +356,10 @@ def parse_colorspace_from_filepath(
             "Must provide `config_path` if `colorspaces` is not provided."
         )
 
-    colorspaces = colorspaces or get_ocio_config_colorspaces(config_path)
+    colorspaces = (
+        colorspaces
+        or get_ocio_config_colorspaces(config_path)["colorspace"]
+    )
     underscored_colorspaces = {
         key.replace(" ", "_"): key for key in colorspaces
         if " " in key
@@ -393,7 +396,7 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
     Returns:
         bool: True if exists
     """
-    colorspaces = get_ocio_config_colorspaces(config_path)
+    colorspaces = get_ocio_config_colorspaces(config_path)["colorspace"]
     if colorspace_name not in colorspaces:
         raise KeyError(
             "Missing colorspace '{}' in config file '{}'".format(
@@ -528,6 +531,76 @@ def get_ocio_config_colorspaces(config_path):
                 _get_colorspace_data(config_path)
 
     return CachedData.ocio_config_colorspaces[config_path]
+
+
+def get_labeled_colorspaces(
+    config_path,
+    include_aliases=False,
+    include_looks=False,
+    include_roles=False,
+
+):
+    """Get all colorspace data with labels
+
+    Wrapper function for aggregating all names and its families.
+    Families can be used for building menu and submenus in gui.
+
+    Args:
+        config_path (str): path leading to config.ocio file
+        include_aliases (bool): include aliases in result
+        include_looks (bool): include looks in result
+        include_roles (bool): include roles in result
+
+    Returns:
+        list[tuple[str,str]]: colorspace and family in couple
+    """
+    config_items = get_ocio_config_colorspaces(config_path)
+    labeled_colorspaces = []
+    aliases = set()
+    colorspaces = set()
+    looks = set()
+    roles = set()
+    for items_type, colorspace_items in config_items.items():
+        if items_type == "colorspace":
+            for color_name, color_data in colorspace_items.items():
+                if color_data.get("aliases"):
+                    aliases.update([
+                "{} ({})".format(alias_name, color_name)
+                for alias_name in color_data["aliases"]
+            ])
+                colorspaces.add(color_name)
+        elif items_type == "look":
+            looks.update([
+                "{} ({})".format(name, role_data["process_space"])
+                for name, role_data in colorspace_items.items()
+            ])
+        elif items_type == "role":
+            roles.update([
+                "{} ({})".format(name, role_data["colorspace"])
+                for name, role_data in colorspace_items.items()
+            ])
+
+    if roles and include_roles:
+        labeled_colorspaces.extend((
+            (name, f"[role] {name}") for name in roles
+        ))
+
+    labeled_colorspaces.extend((
+        (name, f"[colorspace] {name}") for name in colorspaces
+    ))
+
+    if aliases and include_aliases:
+        labeled_colorspaces.extend((
+            (name, f"[alias] {name}") for name in aliases
+        ))
+
+    if looks and include_looks:
+        labeled_colorspaces.extend((
+            (name, f"[look] {name}") for name in looks
+        ))
+
+
+    return labeled_colorspaces
 
 
 # TODO: remove this in future - backward compatibility

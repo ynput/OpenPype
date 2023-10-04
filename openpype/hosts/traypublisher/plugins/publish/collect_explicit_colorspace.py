@@ -50,30 +50,13 @@ class CollectColorspace(pyblish.api.InstancePlugin,
         )
 
         if config_data:
-
             filepath = config_data["path"]
-            config_items = colorspace.get_ocio_config_colorspaces(filepath)
-            aliases = set()
-            for _, value_ in config_items.items():
-                if value_.get("type") != "colorspace":
-                    continue
-                if not value_.get("aliases"):
-                    continue
-                for alias in value_.get("aliases"):
-                    aliases.add(alias)
-
-            colorspaces = {
-                name for name, data_ in config_items.items()
-                if data_.get("type") == "colorspace"
-            }
-
-            cls.colorspace_items.extend((
-                (name, f"{name} [colorspace]") for name in colorspaces
-            ))
-            if aliases:
-                cls.colorspace_items.extend((
-                    (name, f"{name} [alias]") for name in aliases
-                ))
+            labeled_colorspaces = colorspace.get_labeled_colorspaces(
+                filepath,
+                include_aliases=True,
+                include_roles=True
+            )
+            cls.colorspace_items.extend(labeled_colorspaces)
             cls.enabled = True
 
     @classmethod

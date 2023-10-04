@@ -107,37 +107,32 @@ def _get_colorspace_data(config_path):
     config = ocio.Config().CreateFromFile(str(config_path))
 
     colorspace_data = {
-        color.getName(): {
-            "type": "colorspace",
-            "family": color.getFamily(),
-            "categories": list(color.getCategories()),
-            "aliases": list(color.getAliases()),
-            "equalitygroup": color.getEqualityGroup(),
+        "colorspace": {
+            color.getName(): {
+                "family": color.getFamily(),
+                "categories": list(color.getCategories()),
+                "aliases": list(color.getAliases()),
+                "equalitygroup": color.getEqualityGroup(),
+            }
+            for color in config.getColorSpaces()
         }
-        for color in config.getColorSpaces()
     }
 
     # add looks
     looks = config.getLooks()
     if looks:
-        colorspace_data.update({
-            look.getName(): {
-                "type": "look",
-                "process_space": look.getProcessSpace()
-            }
+        colorspace_data["look"] = {
+            look.getName(): {"process_space": look.getProcessSpace()}
             for look in looks
-        })
+        }
 
     # add roles
     roles = config.getRoles()
     if roles:
-        colorspace_data.update({
-            role: {
-                "type": "role",
-                "colorspace": colorspace
-            }
+        colorspace_data["role"] = {
+            role: {"colorspace": colorspace}
             for (role, colorspace) in roles
-        })
+        }
 
     return colorspace_data
 
