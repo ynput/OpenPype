@@ -15,6 +15,7 @@ class SelectionModel(object):
         self._project_name = None
         self._folder_ids = set()
         self._version_ids = set()
+        self._representation_ids = set()
 
     def get_selected_project_name(self):
         return self._project_name
@@ -63,4 +64,22 @@ class SelectionModel(object):
                 "version_ids": self._version_ids,
             },
             self.event_source
+        )
+
+    def get_selected_representation_ids(self):
+        return self._representation_ids
+
+    def set_selected_representations(self, repre_ids):
+        if repre_ids == self._representation_ids:
+            return
+
+        self._representation_ids = repre_ids
+        self._controller.emit_event(
+            "selection.representations.changed",
+            {
+                "project_name": self._project_name,
+                "folder_ids": self._folder_ids,
+                "version_ids": self._version_ids,
+                "representation_ids": self._representation_ids,
+            }
         )

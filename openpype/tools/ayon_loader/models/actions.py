@@ -258,9 +258,7 @@ class LoaderActionsModel:
         identifier,
         options,
         project_name,
-        folder_ids,
         product_ids,
-        version_ids,
         representation_ids
     ):
         loader = self._get_loader_by_identifier(project_name, identifier)
@@ -269,9 +267,6 @@ class LoaderActionsModel:
                 loader,
                 options,
                 project_name,
-                folder_ids,
-                product_ids,
-                version_ids,
                 representation_ids,
             )
         elif product_ids is not None:
@@ -279,7 +274,6 @@ class LoaderActionsModel:
                 loader,
                 options,
                 project_name,
-                folder_ids,
                 product_ids,
             )
         else:
@@ -410,6 +404,7 @@ class LoaderActionsModel:
         return action_item.order, action_item.label
 
     def _contexts_for_versions(self, project_name, version_ids):
+        # TODO fix hero version
         _version_docs = get_versions(project_name, version_ids)
         version_docs_by_id = {}
         version_docs_by_product_id = collections.defaultdict(list)
@@ -466,14 +461,14 @@ class LoaderActionsModel:
         loader,
         options,
         project_name,
-        folder_ids,
         product_ids,
     ):
         project_doc = get_project(project_name)
         project_doc["code"] = project_doc["data"]["code"]
+        product_docs = list(get_subsets(project_name, subset_ids=product_ids))
+        folder_ids = {p["parent"]: p for p in product_docs}
         folder_docs = get_assets(project_name, asset_ids=folder_ids)
         folder_docs_by_id = {f["_id"]: f for f in folder_docs}
-        product_docs = get_subsets(project_name, subset_ids=product_ids)
         product_contexts = []
         for product_doc in product_docs:
             folder_id = product_doc["parent"]
@@ -495,22 +490,22 @@ class LoaderActionsModel:
         loader,
         options,
         project_name,
-        folder_ids,
-        product_ids,
-        version_ids,
         representation_ids,
     ):
         project_doc = get_project(project_name)
         project_doc["code"] = project_doc["data"]["code"]
-        folder_docs = get_assets(project_name, asset_ids=folder_ids)
-        folder_docs_by_id = {f["_id"]: f for f in folder_docs}
-        product_docs = get_subsets(project_name, subset_ids=product_ids)
-        product_docs_by_id = {p["_id"]: p for p in product_docs}
+        repre_docs = list(get_representations(
+            project_name, representation_ids=representation_ids
+        ))
+        version_ids = {r["parent"] for r in repre_docs}
         version_docs = get_versions(project_name, version_ids=version_ids)
         version_docs_by_id = {v["_id"]: v for v in version_docs}
-        repre_docs = get_representations(
-            project_name, representation_ids=representation_ids
-        )
+        product_ids = {v["parent"] for v in version_docs}
+        product_docs = get_subsets(project_name, subset_ids=product_ids)
+        product_docs_by_id = {p["_id"]: p for p in product_docs}
+        folder_ids = {p["parent"] for p in product_docs}
+        folder_docs = get_assets(project_name, asset_ids=folder_ids)
+        folder_docs_by_id = {f["_id"]: f for f in folder_docs}
         repre_contexts = []
         for repre_doc in repre_docs:
             version_id = repre_doc["parent"]

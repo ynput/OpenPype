@@ -131,7 +131,6 @@ class InfoWidget(QtWidgets.QWidget):
         first_item = next(iter(items))
         product_item = self._controller.get_product_item(
             project_name,
-            first_item["folder_id"],
             first_item["product_id"],
         )
         version_id = first_item["version_id"]

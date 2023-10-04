@@ -65,13 +65,20 @@ class LoaderController(AbstractController):
         return self._products_model.get_product_items(
             project_name, folder_ids, sender)
 
-    def get_product_item(self, project_name, folder_id, product_id):
+    def get_product_item(self, project_name, product_id):
         return self._products_model.get_product_item(
-            project_name, folder_id, product_id
+            project_name, product_id
         )
 
     def get_product_type_items(self, project_name):
         return self._products_model.get_product_type_items(project_name)
+
+    def get_representation_items(
+        self, project_name, version_ids, sender=None
+    ):
+        return self._products_model.get_repre_items(
+            project_name, version_ids, sender
+        )
 
     def get_folder_entity(self, project_name, folder_id):
         self._hierarchy_model.get_folder_entity(project_name, folder_id)
@@ -110,7 +117,7 @@ class LoaderController(AbstractController):
 
     # Selection model wrappers
     def get_selected_folder_ids(self):
-        self._selection_model.get_selected_folder_ids()
+        return self._selection_model.get_selected_folder_ids()
 
     def set_selected_folders(self, folder_ids):
         self._selection_model.set_selected_folders(folder_ids)
@@ -120,6 +127,12 @@ class LoaderController(AbstractController):
 
     def set_selected_versions(self, version_ids):
         self._selection_model.set_selected_versions(version_ids)
+
+    def get_selected_representation_ids(self):
+        return self._selection_model.get_selected_representation_ids()
+
+    def set_selected_representations(self, repre_ids):
+        self._selection_model.set_selected_representations(repre_ids)
 
     def fill_root_in_source(self, source):
         project_name = self.get_selected_project_name()

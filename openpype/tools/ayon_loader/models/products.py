@@ -7,9 +7,10 @@ import ayon_api
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.ayon_utils.models import NestedCacheItem
 from openpype.tools.ayon_loader.abstract import (
-    VersionItem,
-    ProductItem,
     ProductTypeItem,
+    ProductItem,
+    VersionItem,
+    RepreItem,
 )
 
 PRODUCTS_MODEL_SENDER = "products.model"
@@ -114,31 +115,31 @@ def product_type_item_from_data(product_type_data):
     return ProductTypeItem(product_type_data["name"], icon, True)
 
 
-class RepreItem:
-    def __init__(self, repre_id, version_id):
-        self.repre_id = repre_id
-        self.version_id = version_id
-
-    @classmethod
-    def from_doc(cls, repre_doc):
-        return cls(
-            str(repre_doc["_id"]),
-            str(repre_doc["parent"]),
-        )
-
-
 class ProductsModel:
+    lifetime = 60  # A minutes
     def __init__(self, controller):
         self._controller = controller
 
+        # Mapping helpers
+        # NOTE - mapping must be cleaned up with cache cleanup
+        self._product_item_by_id = collections.defaultdict(dict)
+        self._version_item_by_id = collections.defaultdict(dict)
+        self._product_folder_ids_mapping = collections.defaultdict(dict)
+
+        # Cache helpers
         self._product_type_items_cache = NestedCacheItem(
-            levels=1, default_factory=list)
+            levels=1, default_factory=list, lifetime=self.lifetime)
         self._product_items_cache = NestedCacheItem(
-            levels=2, default_factory=dict)
+            levels=2, default_factory=dict, lifetime=self.lifetime)
         self._repre_items_cache = NestedCacheItem(
-            levels=3, default_factory=dict)
+            levels=2, default_factory=dict, lifetime=self.lifetime)
 
     def reset(self):
+        self._product_item_by_id.clear()
+        self._version_item_by_id.clear()
+        self._product_folder_ids_mapping.clear()
+
+        self._product_type_items_cache.reset()
         self._product_items_cache.reset()
         self._repre_items_cache.reset()
 
@@ -153,56 +154,261 @@ class ProductsModel:
         return cache.get_data()
 
     def get_product_items(self, project_name, folder_ids, sender):
+        """
+
+        Returns:
+            list[ProductItem]: Product items.
+        """
+
         if not project_name or not folder_ids:
             return []
 
         project_cache = self._product_items_cache[project_name]
-        caches = []
+        output = []
         folder_ids_to_update = set()
         for folder_id in folder_ids:
             cache = project_cache[folder_id]
-            caches.append(cache)
-            if not cache.is_valid:
+            if cache.is_valid:
+                output.extend(cache.get_data().values())
+            else:
                 folder_ids_to_update.add(folder_id)
 
         self._refresh_product_items(
             project_name, folder_ids_to_update, sender)
 
-        output = []
-        for cache in caches:
+        for folder_id in folder_ids_to_update:
+            cache = project_cache[folder_id]
             output.extend(cache.get_data().values())
         return output
 
-    def get_repre_items(self, project_name, version_ids):
-        output = {}
-        if not version_ids:
-            return output
-        repre_ids_cache = self._repre_items_cache.get(project_name)
-        if repre_ids_cache is None:
-            return output
+    def get_product_item(self, project_name, product_id):
+        if not any((project_name, product_id)):
+            return None
 
-        for version_id in version_ids:
-            data = repre_ids_cache[version_id].get_data()
-            if data:
-                output.update(data)
+        product_items_by_id = self._product_item_by_id[project_name]
+        product_item = product_items_by_id.get(product_id)
+        if product_item is not None:
+            return product_item
+        for product_item in self._query_product_items_by_ids(
+            project_name, product_ids=[product_id]
+        ).values():
+            return product_item
+
+    def _get_product_items_by_id(self, project_name, product_ids):
+        product_item_by_id = self._product_item_by_id[project_name]
+        missing_product_ids = set()
+        output = {}
+        for product_id in product_ids:
+            product_item = product_item_by_id.get(product_id)
+            if product_item is not None:
+                output[product_id] = product_item
+            else:
+                missing_product_ids.add(product_id)
+
+        output.update(
+            self._query_product_items_by_ids(
+                project_name, missing_product_ids
+            )
+        )
         return output
 
-    def get_product_item(self, project_name, folder_id, product_id):
-        if not any((project_name, folder_id, product_id)):
-            return None
-        project_cache = self._product_items_cache[project_name]
-        product_items_by_folder_id = project_cache[folder_id].get_data()
-        return product_items_by_folder_id.get(product_id)
+    def _get_version_items_by_id(self, project_name, version_ids):
+        version_item_by_id = self._version_item_by_id[project_name]
+        missing_version_ids = set()
+        output = {}
+        for version_id in version_ids:
+            version_item = version_item_by_id.get(version_id)
+            if version_item is not None:
+                output[version_id] = version_item
+            else:
+                missing_version_ids.add(version_id)
 
-    def _refresh_product_items(self, project_name, folder_ids, sender):
-        if not project_name or not folder_ids:
-            return
+        output.update(
+            self._query_version_items_by_ids(
+                project_name, missing_version_ids
+            )
+        )
+        return output
 
-        product_type_items = self.get_product_type_items(project_name)
+    def _create_product_items(
+        self,
+        project_name,
+        products,
+        versions,
+        folder_items=None,
+        product_type_items=None,
+    ):
+        if folder_items is None:
+            folder_items = self._controller.get_folder_items(project_name)
+
+        if product_type_items is None:
+            product_type_items = self.get_product_type_items(project_name)
+
+        versions_by_product_id = collections.defaultdict(list)
+        for version in versions:
+            versions_by_product_id[version["productId"]].append(version)
         product_type_items_by_name = {
             product_type_item.name: product_type_item
             for product_type_item in product_type_items
         }
+        output = {}
+        for product in products:
+            product_id = product["id"]
+            folder_id = product["folderId"]
+            folder_item = folder_items.get(folder_id)
+            if not folder_item:
+                continue
+            versions = versions_by_product_id[product_id]
+            if not versions:
+                continue
+            product_item = product_item_from_entity(
+                product,
+                versions,
+                product_type_items_by_name,
+                folder_item.label,
+            )
+            output[product_id] = product_item
+        return output
+
+    def _query_product_items_by_ids(
+        self,
+        project_name,
+        folder_ids=None,
+        product_ids=None,
+        folder_items=None
+    ):
+        """Query product items.
+
+        This method does get from, or store to, cache attributes.
+
+        One of 'product_ids' or 'folder_ids' must be passed to the method.
+
+        Args:
+            project_name (str): Project name.
+            folder_ids (Optional[Iterable[str]]): Folder ids under which are
+                products.
+            product_ids (Optional[Iterable[str]]): Product ids to use.
+            folder_items (Optional[Dict[str, FolderItem]]): Prepared folder
+                items from controller.
+
+        Returns:
+            dict[str, ProductItem]: Product items by product id.
+        """
+
+        if not folder_ids and not product_ids:
+            return {}
+
+        kwargs = {}
+        if folder_ids is not None:
+            kwargs["folder_ids"] = folder_ids
+
+        if product_ids is not None:
+            kwargs["product_ids"] = product_ids
+
+        products = list(ayon_api.get_products(project_name, **kwargs))
+        product_ids = {product["id"] for product in products}
+
+        versions = ayon_api.get_versions(
+            project_name, product_ids=product_ids
+        )
+
+        return self._create_product_items(
+            project_name, products, versions, folder_items=folder_items
+        )
+
+    def _query_version_items_by_ids(self, project_name, version_ids):
+        versions = list(ayon_api.get_versions(
+            project_name, version_ids=version_ids
+        ))
+        product_ids = {version["productId"] for version in versions}
+        products = list(ayon_api.get_products(
+            project_name, product_ids=product_ids
+        ))
+        product_items = self._create_product_items(
+            project_name, products, versions
+        )
+        version_items = {}
+        for product_item in product_items.values():
+            version_items.update(product_item.version_items)
+        return version_items
+
+    def get_repre_items(self, project_name, version_ids, sender):
+        output = []
+        if not any((project_name, version_ids)):
+            return output
+
+        invalid_version_ids = set()
+        project_cache = self._repre_items_cache[project_name]
+        for version_id in version_ids:
+            version_cache = project_cache[version_id]
+            if version_cache.is_valid:
+                output.extend(version_cache.get_data().values())
+            else:
+                invalid_version_ids.add(version_id)
+
+        if invalid_version_ids:
+            self.refresh_representation_items(
+                project_name, invalid_version_ids, sender
+            )
+
+        for version_id in invalid_version_ids:
+            version_cache = project_cache[version_id]
+            output.extend(version_cache.get_data().values())
+
+        return output
+
+    def _clear_product_version_items(self, project_name, folder_ids):
+        """Clear product and version items from memory.
+
+        When products are re-queried for a folders, the old product and version
+        items in '_product_item_by_id' and '_version_item_by_id' should
+        be cleaned up from memory. And mapping in stored in
+        '_product_folder_ids_mapping' is not relevant either.
+
+        Args:
+            project_name (str): Name of project.
+            folder_ids (Iterable[str]): Folder ids which are being refreshed.
+        """
+
+        project_mapping = self._product_folder_ids_mapping[project_name]
+        if not project_mapping:
+            return
+
+        product_item_by_id = self._product_item_by_id[project_name]
+        version_item_by_id = self._version_item_by_id[project_name]
+        for folder_id in folder_ids:
+            product_ids = project_mapping.pop(folder_id, None)
+            if not product_ids:
+                continue
+
+            for product_id in product_ids:
+                product_item = product_item_by_id.pop(product_id, None)
+                if product_item is None:
+                    continue
+                for version_item in product_item.version_items.values():
+                    version_item_by_id.pop(version_item.version_id, None)
+
+    def _refresh_product_items(self, project_name, folder_ids, sender):
+        """Refresh product items and store them in cache.
+
+        Args:
+            project_name (str): Name of project.
+            folder_ids (Iterable[str]): Folder ids which are being refreshed.
+            sender (Union[str, None]): Who triggered the refresh.
+        """
+
+        if not project_name or not folder_ids:
+            return
+
+        self._clear_product_version_items(project_name, folder_ids)
+
+        project_mapping = self._product_folder_ids_mapping[project_name]
+        product_item_by_id = self._product_item_by_id[project_name]
+        version_item_by_id = self._version_item_by_id[project_name]
+
+        for folder_id in folder_ids:
+            project_mapping[folder_id] = set()
+
         with self._product_refresh_event_manager(
             project_name, folder_ids, sender
         ):
@@ -211,35 +417,23 @@ class ProductsModel:
                 folder_id: {}
                 for folder_id in folder_ids
             }
-            products = list(ayon_api.get_products(
-                project_name, folder_ids=folder_ids
-            ))
-            product_ids = {product["id"] for product in products}
-            versions = ayon_api.get_versions(
-                project_name, product_ids=product_ids)
-
-            versions_by_product_id = collections.defaultdict(list)
-            for version in versions:
-                versions_by_product_id[version["productId"]].append(version)
-
-            for product in products:
-                product_id = product["id"]
-                folder_id = product["folderId"]
-                folder_item = folder_items.get(folder_id)
-                if not folder_item:
-                    continue
-                versions = versions_by_product_id[product_id]
-                if not versions:
-                    continue
-                product_item = product_item_from_entity(
-                    product,
-                    versions,
-                    product_type_items_by_name,
-                    folder_item.label,
-                )
+            product_items_by_id = self._query_product_items_by_ids(
+                project_name,
+                folder_ids=folder_ids,
+                folder_items=folder_items
+            )
+            for product_id, product_item in product_items_by_id.items():
+                folder_id = product_item.folder_id
                 items_by_folder_id[product_item.folder_id][product_id] = (
                     product_item
                 )
+
+                project_mapping[folder_id].add(product_id)
+                product_item_by_id[product_id] = product_item
+                for version_id, version_item in (
+                    product_item.version_items.items()
+                ):
+                    version_item_by_id[version_id] = version_item
 
             project_cache = self._product_items_cache[project_name]
             for folder_id, product_items in items_by_folder_id.items():
@@ -253,8 +447,8 @@ class ProductsModel:
             "products.refresh.started",
             {
                 "project_name": project_name,
-                "sender": sender,
                 "folder_ids": folder_ids,
+                "sender": sender,
             },
             PRODUCTS_MODEL_SENDER
         )
@@ -266,65 +460,86 @@ class ProductsModel:
                 "products.refresh.finished",
                 {
                     "project_name": project_name,
-                    "sender": sender,
                     "folder_ids": folder_ids,
+                    "sender": sender,
                 },
                 PRODUCTS_MODEL_SENDER
             )
 
-    def refresh_representations(self, project_name, version_ids):
-        self._controller.event_system.emit(
+    def refresh_representation_items(
+        self, project_name, version_ids, sender
+    ):
+        if not any((project_name, version_ids)):
+            return
+        self._controller.emit_event(
             "model.representations.refresh.started",
             {
                 "project_name": project_name,
                 "version_ids": version_ids,
+                "sender": sender,
             },
             "products.model"
         )
         failed = False
         try:
-            self._refresh_representations(project_name, version_ids)
+            self._refresh_representation_items(project_name, version_ids)
         except Exception:
+            # TODO add more information about failed refresh
             failed = True
 
-        self._controller.event_system.emit(
+        self._controller.emit_event(
             "model.representations.refresh.finished",
             {
                 "project_name": project_name,
                 "version_ids": version_ids,
+                "sender": sender,
                 "failed": failed,
             },
             "products.model"
         )
 
-    def _refresh_representations(self, project_name, version_ids):
-        pass
-        # if project_name not in self._repre_items_cache:
-        #     self._repre_items_cache[project_name] = (
-        #         collections.defaultdict(CacheItem.create_outdated)
-        #     )
-        #
-        # version_ids_to_query = set()
-        # repre_cache = self._repre_items_cache[project_name]
-        # for version_id in version_ids:
-        #     if repre_cache[version_id].is_outdated:
-        #         version_ids_to_query.add(version_id)
-        #
-        # if not version_ids_to_query:
-        #     return
-        #
-        # repre_entities_by_version_id = {
-        #     version_id: {}
-        #     for version_id in version_ids_to_query
-        # }
-        # repre_entities = ayon_api.get_representations(
-        #     project_name, version_ids=version_ids_to_query
-        # )
-        # for repre_entity in repre_entities:
-        #     repre_item = RepreItem.from_doc(repre_entity)
-        #     repre_entities_by_version_id[repre_item.version_id][repre_item.id] = {
-        #         repre_item
-        #     }
-        #
-        # for version_id, repre_items in repre_docs_by_version_id.items():
-        #     repre_cache[version_id].update_data(repre_items)
+    def _refresh_representation_items(self, project_name, version_ids):
+        representations = list(ayon_api.get_representations(
+            project_name,
+            version_ids=version_ids,
+            fields=["id", "name", "versionId"]
+        ))
+
+        version_items_by_id = self._get_version_items_by_id(
+            project_name, version_ids
+        )
+        product_ids = {
+            version_item.product_id
+            for version_item in version_items_by_id.values()
+        }
+        product_items_by_id = self._get_product_items_by_id(
+            project_name, product_ids
+        )
+        repre_icon = {
+            "type": "awesome-font",
+            "name": "fa.file-o",
+            "color": get_default_entity_icon_color(),
+        }
+        repre_items_by_version_id = collections.defaultdict(dict)
+        for representation in representations:
+            version_id = representation["versionId"]
+            version_item = version_items_by_id.get(version_id)
+            if version_item is None:
+                continue
+            product_item = product_items_by_id.get(version_item.product_id)
+            if product_item is None:
+                continue
+            repre_id = representation["id"]
+            repre_item = RepreItem(
+                repre_id,
+                representation["name"],
+                repre_icon,
+                product_item.product_name,
+                product_item.folder_label,
+            )
+            repre_items_by_version_id[version_id][repre_id] = repre_item
+
+        project_cache = self._repre_items_cache[project_name]
+        for version_id, repre_items in repre_items_by_version_id.items():
+            version_cache = project_cache[version_id]
+            version_cache.update_data(repre_items)

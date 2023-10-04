@@ -2,6 +2,73 @@ from abc import ABCMeta, abstractmethod
 import six
 
 
+class ProductTypeItem:
+    def __init__(self, name, icon, checked):
+        self.name = name
+        self.icon = icon
+        self.checked = checked
+
+    def to_data(self):
+        return {
+            "name": self.name,
+            "icon": self.icon,
+            "checked": self.checked,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        return cls(**data)
+
+
+class ProductItem:
+    def __init__(
+        self,
+        product_id,
+        product_type,
+        product_name,
+        product_icon,
+        product_type_icon,
+        group_name,
+        folder_id,
+        folder_label,
+        version_items,
+    ):
+        self.product_id = product_id
+        self.product_type = product_type
+        self.product_name = product_name
+        self.product_icon = product_icon
+        self.product_type_icon = product_type_icon
+        self.group_name = group_name
+        self.folder_id = folder_id
+        self.folder_label = folder_label
+        self.version_items = version_items
+
+    def to_data(self):
+        return {
+            "product_id": self.product_id,
+            "product_type": self.product_type,
+            "product_name": self.product_name,
+            "product_icon": self.product_icon,
+            "product_type_icon": self.product_type_icon,
+            "group_name": self.group_name,
+            "folder_id": self.folder_id,
+            "folder_label": self.folder_label,
+            "version_items": {
+                version_id: version_item.to_data()
+                for version_id, version_item in self.version_items.items()
+            },
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        version_items = {
+            version_id: VersionItem.from_data(version)
+            for version_id, version in data["version_items"].items()
+        }
+        data["version_items"] = version_items
+        return cls(**data)
+
+
 class VersionItem:
     def __init__(
         self,
@@ -81,66 +148,28 @@ class VersionItem:
         return cls(**data)
 
 
-class ProductItem:
+class RepreItem:
     def __init__(
         self,
-        product_id,
-        product_type,
+        representation_id,
+        representation_name,
+        representation_icon,
         product_name,
-        product_icon,
-        product_type_icon,
-        group_name,
-        folder_id,
         folder_label,
-        version_items,
     ):
-        self.product_id = product_id
-        self.product_type = product_type
+        self.representation_id = representation_id
+        self.representation_name = representation_name
+        self.representation_icon = representation_icon
         self.product_name = product_name
-        self.product_icon = product_icon
-        self.product_type_icon = product_type_icon
-        self.group_name = group_name
-        self.folder_id = folder_id
         self.folder_label = folder_label
-        self.version_items = version_items
 
     def to_data(self):
         return {
-            "product_id": self.product_id,
-            "product_type": self.product_type,
+            "representation_id": self.representation_id,
+            "representation_name": self.representation_name,
+            "representation_icon": self.representation_icon,
             "product_name": self.product_name,
-            "product_icon": self.product_icon,
-            "product_type_icon": self.product_type_icon,
-            "group_name": self.group_name,
-            "folder_id": self.folder_id,
             "folder_label": self.folder_label,
-            "version_items": {
-                version_id: version_item.to_data()
-                for version_id, version_item in self.version_items.items()
-            },
-        }
-
-    @classmethod
-    def from_data(cls, data):
-        version_items = {
-            version_id: VersionItem.from_data(version)
-            for version_id, version in data["version_items"].items()
-        }
-        data["version_items"] = version_items
-        return cls(**data)
-
-
-class ProductTypeItem:
-    def __init__(self, name, icon, checked):
-        self.name = name
-        self.icon = icon
-        self.checked = checked
-
-    def to_data(self):
-        return {
-            "name": self.name,
-            "icon": self.icon,
-            "checked": self.checked,
         }
 
     @classmethod
@@ -180,12 +209,11 @@ class AbstractController:
         pass
 
     @abstractmethod
-    def get_product_item(self, project_name, folder_id, product_id):
+    def get_product_item(self, project_name, product_id):
         """
 
         Args:
             project_name (str): Project name.
-            folder_id (str): Folder id.
             product_id (str): Product id.
 
         Returns:
@@ -196,6 +224,12 @@ class AbstractController:
 
     @abstractmethod
     def get_product_type_items(self, project_name):
+        pass
+
+    @abstractmethod
+    def get_representation_items(
+        self, project_name, version_ids, sender=None
+    ):
         pass
 
     @abstractmethod
@@ -247,6 +281,14 @@ class AbstractController:
 
     @abstractmethod
     def set_selected_versions(self, version_ids):
+        pass
+
+    @abstractmethod
+    def get_selected_representation_ids(self):
+        pass
+
+    @abstractmethod
+    def set_selected_representations(self, repre_ids):
         pass
 
     @abstractmethod
