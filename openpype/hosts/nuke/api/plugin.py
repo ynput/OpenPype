@@ -817,15 +817,11 @@ class ExporterReviewMov(ExporterReview):
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
         if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
-            filename = os.path.basename(self.path_in)
-            self.file = re.sub(
-                self.fhead, self.fhead + self.name + ".", filename)
-            # make sure the filename are in
-            # correct image output format
-            if not self.file.endswith(".{}".format(ext)):
-                filename_no_ext, _ = os.path.splitext(self.file)
-                self.file = "{}.{}".format(filename_no_ext, self.ext)
-
+            filename_no_ext = os.path.splitext(
+                os.path.basename(self.path_in))[0]
+            after_head = filename_no_ext[len(self.fhead):]
+            self.file = "{}{}.{}.{}".format(
+                self.fhead, self.name, after_head, self.ext)
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
 
