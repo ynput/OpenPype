@@ -41,5 +41,5 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin):
             label = instance.data.get("label", instance.data["name"])
             instance.data["label"] = (
                 "{0} [{1[frameStart]} - {1[frameEnd]}]"
-                .format(label,frame_data)
+                .format(label, frame_data)
             )

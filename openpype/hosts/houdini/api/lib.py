@@ -548,7 +548,7 @@ def get_template_from_value(key, value):
     return parm
 
 
-def get_frame_data(self, node, asset_data={}):
+def get_frame_data(self, node, asset_data=None):
     """Get the frame data: start frame, end frame and steps.
 
     Args:
@@ -558,6 +558,9 @@ def get_frame_data(self, node, asset_data={}):
         dict: frame data for star, end and steps.
 
     """
+    if asset_data is None:
+        asset_data = {}
+
     data = {}
 
     if node.parm("trange") is None:
