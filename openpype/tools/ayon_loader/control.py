@@ -90,19 +90,15 @@ class LoaderController(AbstractController):
         identifier,
         options,
         project_name,
-        folder_ids,
         product_ids,
-        version_ids,
-        representation_ids,
+        representation_ids
     ):
         self._loader_actions_model.trigger_action_item(
             identifier,
             options,
             project_name,
-            folder_ids,
             product_ids,
-            version_ids,
-            representation_ids,
+            representation_ids
         )
 
     # Selection model wrappers

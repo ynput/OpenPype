@@ -326,10 +326,8 @@ class ProductsWidget(QtWidgets.QWidget):
             action_item.identifier,
             options,
             action_item.project_name,
-            action_item.folder_ids,
-            action_item.product_ids,
-            action_item.version_ids,
-            action_item.representation_ids,
+            product_ids=action_item.product_ids,
+            representation_ids=action_item.representation_ids,
         )
 
     def _on_selection_change(self):
