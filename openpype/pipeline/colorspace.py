@@ -358,7 +358,7 @@ def parse_colorspace_from_filepath(
 
     colorspaces = (
         colorspaces
-        or get_ocio_config_colorspaces(config_path)["colorspace"]
+        or get_ocio_config_colorspaces(config_path)["colorspaces"]
     )
     underscored_colorspaces = {
         key.replace(" ", "_"): key for key in colorspaces
@@ -396,7 +396,7 @@ def validate_imageio_colorspace_in_config(config_path, colorspace_name):
     Returns:
         bool: True if exists
     """
-    colorspaces = get_ocio_config_colorspaces(config_path)["colorspace"]
+    colorspaces = get_ocio_config_colorspaces(config_path)["colorspaces"]
     if colorspace_name not in colorspaces:
         raise KeyError(
             "Missing colorspace '{}' in config file '{}'".format(
@@ -561,20 +561,25 @@ def get_labeled_colorspaces(
     looks = set()
     roles = set()
     for items_type, colorspace_items in config_items.items():
-        if items_type == "colorspace":
+        if items_type == "colorspaces":
             for color_name, color_data in colorspace_items.items():
                 if color_data.get("aliases"):
                     aliases.update([
-                (alias_name, "[alias] {} ({})".format(alias_name, color_name))
-                for alias_name in color_data["aliases"]
-            ])
+                        (
+                            alias_name,
+                            "[alias] {} ({})".format(alias_name, color_name)
+                        )
+                        for alias_name in color_data["aliases"]
+                    ])
                 colorspaces.add(color_name)
-        elif items_type == "look":
+
+        elif items_type == "looks":
             looks.update([
                 (name, "[look] {} ({})".format(name, role_data["process_space"]))
                 for name, role_data in colorspace_items.items()
             ])
-        elif items_type == "role":
+
+        elif items_type == "roles":
             roles.update([
                 (name, "[role] {} ({})".format(name, role_data["colorspace"]))
                 for name, role_data in colorspace_items.items()
@@ -583,6 +588,7 @@ def get_labeled_colorspaces(
     if roles and include_roles:
         labeled_colorspaces.extend(roles)
 
+    # add colorspace after roles so it is first in menu
     labeled_colorspaces.extend((
         (name, f"[colorspace] {name}") for name in colorspaces
     ))
@@ -592,7 +598,6 @@ def get_labeled_colorspaces(
 
     if looks and include_looks:
         labeled_colorspaces.extend(looks)
-
 
     return labeled_colorspaces
 
