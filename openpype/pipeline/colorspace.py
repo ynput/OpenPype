@@ -565,39 +565,33 @@ def get_labeled_colorspaces(
             for color_name, color_data in colorspace_items.items():
                 if color_data.get("aliases"):
                     aliases.update([
-                "{} ({})".format(alias_name, color_name)
+                (alias_name, "[alias] {} ({})".format(alias_name, color_name))
                 for alias_name in color_data["aliases"]
             ])
                 colorspaces.add(color_name)
         elif items_type == "look":
             looks.update([
-                "{} ({})".format(name, role_data["process_space"])
+                (name, "[look] {} ({})".format(name, role_data["process_space"]))
                 for name, role_data in colorspace_items.items()
             ])
         elif items_type == "role":
             roles.update([
-                "{} ({})".format(name, role_data["colorspace"])
+                (name, "[role] {} ({})".format(name, role_data["colorspace"]))
                 for name, role_data in colorspace_items.items()
             ])
 
     if roles and include_roles:
-        labeled_colorspaces.extend((
-            (name, f"[role] {name}") for name in roles
-        ))
+        labeled_colorspaces.extend(roles)
 
     labeled_colorspaces.extend((
         (name, f"[colorspace] {name}") for name in colorspaces
     ))
 
     if aliases and include_aliases:
-        labeled_colorspaces.extend((
-            (name, f"[alias] {name}") for name in aliases
-        ))
+        labeled_colorspaces.extend(aliases)
 
     if looks and include_looks:
-        labeled_colorspaces.extend((
-            (name, f"[look] {name}") for name in looks
-        ))
+        labeled_colorspaces.extend(looks)
 
 
     return labeled_colorspaces
