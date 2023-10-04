@@ -8,7 +8,7 @@ from openpype.pipeline import registered_host
 
 from .pipeline import (
     publish,
-    launch_workfiles_app,
+    launch_workfiles_app
 )
 
 
