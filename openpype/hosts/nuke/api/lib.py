@@ -3425,32 +3425,6 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
     return "{} ({})".format(viewer, display)
 
 
-def prepend_name_before_hashed_frame(original_path, name):
-    """Function to prepend an extra name before the hashed frame numbers
-
-    Examples:
-        >>> prepend_name_before_hashed_frame("render.####.exr", "baking")
-        render.baking.####.exr
-        >>> prepend_name_before_hashed_frame("render.%04d.exr", "tag")
-        render.tag.%d.exr
-        >>> prepend_name_before_hashed_frame("exr.####.exr", "foo")
-        exr.foo.%04d.exr
-
-    Args:
-        original_path (str): the filename with frame hashes
-        name (str): the name of the tags
-
-    Returns:
-        str: the renamed filename with the tag
-    """
-    filename = os.path.basename(original_path)
-
-    def insert_name(matchobj):
-        return "{}.{}".format(name, matchobj.group(0))
-
-    return re.sub(r"(%\d*d)|#+", insert_name, filename)
-
-
 def get_filenames_without_hash(filename, frame_start, frame_end):
     """Get filenames without frame hash
         i.e. "renderCompositingMain.baking.0001.exr"

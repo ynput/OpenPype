@@ -39,7 +39,6 @@ from .lib import (
     get_view_process_node,
     get_viewer_config_from_string,
     deprecated,
-    prepend_name_before_hashed_frame,
     get_filenames_without_hash
 )
 from .pipeline import (
@@ -818,15 +817,14 @@ class ExporterReviewMov(ExporterReview):
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
         if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
-            # filename would be with frame hashes if
-            # the file extension is not in video format
-            filename = prepend_name_before_hashed_frame(
-                self.path_in, self.name)
-            self.file = filename
+            filename = os.path.basename(self.path_in)
+            self.file = self.fhead + self.name + ".{}".format(
+                filename.split(".", 1)[-1]
+            )
             # make sure the filename are in
             # correct image output format
             if not self.file.endswith(".{}".format(ext)):
-                filename_no_ext, _ = os.path.splitext(filename)
+                filename_no_ext, _ = os.path.splitext(self.file)
                 self.file = "{}.{}".format(filename_no_ext, self.ext)
 
         self.path = os.path.join(
