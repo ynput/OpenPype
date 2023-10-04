@@ -3425,17 +3425,15 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
     return "{} ({})".format(viewer, display)
 
 
-def get_head_filename_without_hashes(original_path, name):
-    """Function to get the renamed head filename without frame hashes
-    To avoid the system being confused on finding the filename with
-    frame hashes if the head of the filename has the hashed symbol
+def prepend_name_before_hashed_frame(original_path, name):
+    """Function to prepend an extra name before the hashed frame numbers
 
     Examples:
-        >>> get_head_filename_without_hashes("render.####.exr", "baking")
+        >>> prepend_name_before_hashed_frame("render.####.exr", "baking")
         render.baking.####.exr
-        >>> get_head_filename_without_hashes("render.%04d.exr", "tag")
+        >>> prepend_name_before_hashed_frame("render.%04d.exr", "tag")
         render.tag.%d.exr
-        >>> get_head_filename_without_hashes("exr.####.exr", "foo")
+        >>> prepend_name_before_hashed_frame("exr.####.exr", "foo")
         exr.foo.%04d.exr
 
     Args:
