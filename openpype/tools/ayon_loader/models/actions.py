@@ -183,75 +183,34 @@ class LoaderActionsModel:
         self._repre_loaders.reset()
 
     def get_versions_action_items(self, project_name, version_ids):
-        action_items = []
-        if not project_name or not version_ids:
-            return action_items
-
-        product_loaders, repre_loaders = self._get_loaders(project_name)
         (
             product_context_by_id,
             repre_context_by_id
-        ) = self._contexts_for_versions(project_name, version_ids)
-
-        repre_contexts = list(repre_context_by_id.values())
-        repre_ids = set(repre_context_by_id.keys())
-        repre_version_ids = set()
-        repre_product_ids = set()
-        repre_folder_ids = set()
-        for repre_context in repre_context_by_id.values():
-            repre_product_ids.add(repre_context["subset"]["_id"])
-            repre_version_ids.add(repre_context["version"]["_id"])
-            repre_folder_ids.add(repre_context["asset"]["_id"])
-
-        action_items = []
-        for loader in repre_loaders:
-            if not repre_contexts:
-                break
-
-            # # do not allow download whole repre, select specific repre
-            # if tools_lib.is_sync_loader(loader):
-            #     continue
-
-            filtered_repre_contexts = filter_repre_contexts_by_loader(
-                repre_contexts, loader)
-            if len(filtered_repre_contexts) != len(repre_contexts):
-                continue
-
-            item = self._create_loader_action_item(
-                loader,
-                repre_contexts,
-                project_name=project_name,
-                folder_ids=repre_folder_ids,
-                product_ids=repre_product_ids,
-                version_ids=repre_version_ids,
-                representation_ids=repre_ids
-            )
-            action_items.append(item)
-
-        # Subset Loaders.
-        product_ids = set(product_context_by_id.keys())
-        product_folder_ids = set()
-        for product_context in product_context_by_id.values():
-            product_folder_ids.add(product_context["asset"]["_id"])
-
-        product_contexts = list(product_context_by_id.values())
-        for loader in product_loaders:
-            item = self._create_loader_action_item(
-                loader,
-                product_contexts,
-                project_name=project_name,
-                folder_ids=product_folder_ids,
-                product_ids=product_ids,
-            )
-            action_items.append(item)
-
-        action_items.sort(key=self._actions_sorter)
-        return action_items
+        ) = self._contexts_for_versions(
+            project_name,
+            version_ids
+        )
+        return self._get_action_items_for_contexts(
+            project_name,
+            product_context_by_id,
+            repre_context_by_id
+        )
 
     def get_representations_action_items(
         self, project_name, representation_ids
     ):
-        return []
+        (
+            product_context_by_id,
+            repre_context_by_id
+        ) = self._contexts_for_representations(
+            project_name,
+            representation_ids
+        )
+        return self._get_action_items_for_contexts(
+            project_name,
+            product_context_by_id,
+            repre_context_by_id
+        )
 
     def trigger_action_item(
         self,
@@ -405,6 +364,11 @@ class LoaderActionsModel:
 
     def _contexts_for_versions(self, project_name, version_ids):
         # TODO fix hero version
+        product_context_by_id = {}
+        repre_context_by_id = {}
+        if not project_name and not version_ids:
+            return product_context_by_id, repre_context_by_id
+
         _version_docs = get_versions(project_name, version_ids)
         version_docs_by_id = {}
         version_docs_by_product_id = collections.defaultdict(list)
@@ -425,8 +389,6 @@ class LoaderActionsModel:
         project_doc = get_project(project_name)
         project_doc["code"] = project_doc["data"]["code"]
 
-        repre_context_by_id = {}
-        product_context_by_id = {}
         for product_id, product_doc in product_docs_by_id.items():
             folder_id = product_doc["parent"]
             folder_doc = folder_docs_by_id[folder_id]
@@ -455,6 +417,130 @@ class LoaderActionsModel:
             }
 
         return product_context_by_id, repre_context_by_id
+
+    def _contexts_for_representations(self, project_name, repre_ids):
+        product_context_by_id = {}
+        repre_context_by_id = {}
+        if not project_name and not repre_ids:
+            return product_context_by_id, repre_context_by_id
+
+        repre_docs = list(get_representations(
+            project_name, representation_ids=repre_ids
+        ))
+        version_ids = {r["parent"] for r in repre_docs}
+        version_docs = get_versions(project_name, version_ids=version_ids)
+        version_docs_by_id = {
+            v["_id"]: v for v in version_docs
+        }
+
+        product_ids = {v["parent"] for v in version_docs_by_id.values()}
+        product_docs = get_subsets(project_name, subset_ids=product_ids)
+        product_docs_by_id = {
+            p["_id"]: p for p in product_docs
+        }
+
+        folder_ids = {p["parent"] for p in product_docs_by_id.values()}
+        folder_docs = get_assets(project_name, asset_ids=folder_ids)
+        folder_docs_by_id = {
+            f["_id"]: f for f in folder_docs
+        }
+
+        project_doc = get_project(project_name)
+        project_doc["code"] = project_doc["data"]["code"]
+
+        for product_id, product_doc in product_docs_by_id.items():
+            folder_id = product_doc["parent"]
+            folder_doc = folder_docs_by_id[folder_id]
+            product_context_by_id[product_id] = {
+                "project": project_doc,
+                "asset": folder_doc,
+                "subset": product_doc,
+            }
+
+        repre_docs = get_representations(
+            project_name, version_ids=version_ids)
+        for repre_doc in repre_docs:
+            version_id = repre_doc["parent"]
+            version_doc = version_docs_by_id[version_id]
+            product_id = version_doc["parent"]
+            product_doc = product_docs_by_id[product_id]
+            folder_id = product_doc["parent"]
+            folder_doc = folder_docs_by_id[folder_id]
+
+            repre_context_by_id[repre_doc["_id"]] = {
+                "project": project_doc,
+                "asset": folder_doc,
+                "subset": product_doc,
+                "version": version_doc,
+                "representation": repre_doc,
+            }
+        return product_context_by_id, repre_context_by_id
+
+    def _get_action_items_for_contexts(
+        self,
+        project_name,
+        product_context_by_id,
+        repre_context_by_id
+    ):
+        action_items = []
+        if not product_context_by_id and not repre_context_by_id:
+            return action_items
+
+        product_loaders, repre_loaders = self._get_loaders(project_name)
+
+        repre_contexts = list(repre_context_by_id.values())
+        repre_ids = set(repre_context_by_id.keys())
+        repre_version_ids = set()
+        repre_product_ids = set()
+        repre_folder_ids = set()
+        for repre_context in repre_context_by_id.values():
+            repre_product_ids.add(repre_context["subset"]["_id"])
+            repre_version_ids.add(repre_context["version"]["_id"])
+            repre_folder_ids.add(repre_context["asset"]["_id"])
+
+        for loader in repre_loaders:
+            if not repre_contexts:
+                break
+
+            # # do not allow download whole repre, select specific repre
+            # if tools_lib.is_sync_loader(loader):
+            #     continue
+
+            filtered_repre_contexts = filter_repre_contexts_by_loader(
+                repre_contexts, loader)
+            if len(filtered_repre_contexts) != len(repre_contexts):
+                continue
+
+            item = self._create_loader_action_item(
+                loader,
+                repre_contexts,
+                project_name=project_name,
+                folder_ids=repre_folder_ids,
+                product_ids=repre_product_ids,
+                version_ids=repre_version_ids,
+                representation_ids=repre_ids
+            )
+            action_items.append(item)
+
+        # Subset Loaders.
+        product_ids = set(product_context_by_id.keys())
+        product_folder_ids = set()
+        for product_context in product_context_by_id.values():
+            product_folder_ids.add(product_context["asset"]["_id"])
+
+        product_contexts = list(product_context_by_id.values())
+        for loader in product_loaders:
+            item = self._create_loader_action_item(
+                loader,
+                product_contexts,
+                project_name=project_name,
+                folder_ids=product_folder_ids,
+                product_ids=product_ids,
+            )
+            action_items.append(item)
+
+        action_items.sort(key=self._actions_sorter)
+        return action_items
 
     def _trigger_product_loader(
         self,
@@ -500,10 +586,10 @@ class LoaderActionsModel:
         version_ids = {r["parent"] for r in repre_docs}
         version_docs = get_versions(project_name, version_ids=version_ids)
         version_docs_by_id = {v["_id"]: v for v in version_docs}
-        product_ids = {v["parent"] for v in version_docs}
+        product_ids = {v["parent"] for v in version_docs_by_id.values()}
         product_docs = get_subsets(project_name, subset_ids=product_ids)
         product_docs_by_id = {p["_id"]: p for p in product_docs}
-        folder_ids = {p["parent"] for p in product_docs}
+        folder_ids = {p["parent"] for p in product_docs_by_id.values()}
         folder_docs = get_assets(project_name, asset_ids=folder_ids)
         folder_docs_by_id = {f["_id"]: f for f in folder_docs}
         repre_contexts = []

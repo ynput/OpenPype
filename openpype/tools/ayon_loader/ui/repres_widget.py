@@ -6,6 +6,8 @@ import qtawesome
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.ayon_utils.widgets import get_qt_icon
 
+from .actions_utils import show_actions_menu
+
 REPRESENTAION_NAME_ROLE = QtCore.Qt.UserRole + 1
 REPRESENTATION_ID_ROLE = QtCore.Qt.UserRole + 2
 PRODUCT_NAME_ROLE = QtCore.Qt.UserRole + 3
@@ -307,10 +309,26 @@ class RepresentationsWidget(QtWidgets.QWidget):
         selected_repre_ids = self._get_selected_repre_ids()
         self._controller.set_selected_representations(selected_repre_ids)
 
-    def _on_context_menu(self, pos):
-        # TODO implement
+    def _on_context_menu(self, point):
         repre_ids = self._get_selected_repre_ids()
         action_items = self._controller.get_representations_action_items(
             self._selected_project_name, repre_ids
         )
-        print(action_items)
+        global_point = self._repre_view.mapToGlobal(point)
+        result = show_actions_menu(
+            action_items,
+            global_point,
+            len(repre_ids) == 1,
+            self
+        )
+        action_item, options = result
+        if action_item is None or options is None:
+            return
+
+        self._controller.trigger_action_item(
+            action_item.identifier,
+            options,
+            action_item.project_name,
+            product_ids=action_item.product_ids,
+            representation_ids=action_item.representation_ids,
+        )
