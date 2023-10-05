@@ -86,12 +86,22 @@ class HostToolsHelper:
     def get_loader_tool(self, parent):
         """Create, cache and return loader tool window."""
         if self._loader_tool is None:
-            from openpype.tools.loader import LoaderWindow
-
             host = registered_host()
             ILoadHost.validate_load_methods(host)
+            if AYON_SERVER_ENABLED:
+                from openpype.tools.ayon_loader.ui import LoaderWindow
+                from openpype.tools.ayon_loader import LoaderController
 
-            loader_window = LoaderWindow(parent=parent or self._parent)
+                controller = LoaderController(host=host)
+                loader_window = LoaderWindow(
+                    controller=controller,
+                    parent=parent or self._parent
+                )
+
+            else:
+                from openpype.tools.loader import LoaderWindow
+
+                loader_window = LoaderWindow(parent=parent or self._parent)
             self._loader_tool = loader_window
 
         return self._loader_tool
