@@ -19,6 +19,21 @@ ANIMATION_STATE_ROLE = QtCore.Qt.UserRole + 6
 FORCE_NOT_OPEN_WORKFILE_ROLE = QtCore.Qt.UserRole + 7
 
 
+def _variant_label_sort_getter(action_item):
+    """Get variant label value for sorting.
+
+    Make sure the output value is a string.
+
+    Args:
+        action_item (ActionItem): Action item.
+
+    Returns:
+        str: Variant label or empty string.
+    """
+
+    return action_item.variant_label or ""
+
+
 class ActionsQtModel(QtGui.QStandardItemModel):
     """Qt model for actions.
 
@@ -106,8 +121,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
 
         groups_by_id = {}
         for action_items in items_by_label.values():
-            action_items.sort(key=lambda x: x.variant_label)
-            action_items.reverse()
+            action_items.sort(key=_variant_label_sort_getter, reverse=True)
             first_item = next(iter(action_items))
             all_action_items_info.append((first_item, len(action_items) > 1))
             groups_by_id[first_item.identifier] = action_items
