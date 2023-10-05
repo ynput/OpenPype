@@ -65,8 +65,9 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
         asset_doc = instance.data["assetEntity"]
         project_doc = instance.context.data["projectEntity"]
         for data in [asset_doc["data"], project_doc["data"]]:
-            if "resolutionWidth" in data and "resolutionHeight" in data \
-            and "pixelAspect" in data:
+            if "resolutionWidth" in data and (
+                "resolutionHeight" in data and "pixelAspect" in data
+            ):
                 width = data["resolutionWidth"]
                 height = data["resolutionHeight"]
                 pixelAspect = data["pixelAspect"]
