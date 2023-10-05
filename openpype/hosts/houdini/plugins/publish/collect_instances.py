@@ -91,15 +91,3 @@ class CollectInstances(pyblish.api.ContextPlugin):
         context[:] = sorted(context, key=sort_by_family)
 
         return context
-
-    def get_frame_data(self, node):
-        """Get the frame data: start frame, end frame and steps
-        Args:
-            node(hou.Node)
-
-        Returns:
-            dict
-
-        """
-
-        return lib.get_frame_data(node)

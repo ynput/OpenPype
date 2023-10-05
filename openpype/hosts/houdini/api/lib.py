@@ -564,20 +564,20 @@ def get_frame_data(node, asset_data=None, log=None):
     if log is None:
         log = self.log
 
-    data = {}
-
     if node.parm("trange") is None:
         log.debug(
             "Node has no 'trange' parameter: {}".format(node.path())
         )
-        return data
+        return
 
     if node.evalParm("trange") == 0:
         log.debug(
             "Node '{}' has 'Render current frame' set. "
             "Time range data ignored.".format(node.path())
         )
-        return data
+        return
+
+    data = {}
 
     data["frameStartHandle"] = node.evalParm("f1")
     data["handleStart"] = asset_data.get("handleStart", 0)
