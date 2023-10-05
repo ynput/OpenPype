@@ -52,12 +52,12 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
             )
         if current_width != width or current_height != height:
             raise PublishValidationError(
-                "Render resolution is {}x{} does not match asset resolution is {}x{}".format(
+                "Render resolution {}x{} does not match asset resolution {}x{}".format(         # noqa:E501
                     current_width, current_height, width, height
                 ))
         if current_pixelAspect != pixelAspect:
-                raise PublishValidationError(
-                "Render pixel aspect is {} does not match asset pixel aspect is {}".format(
+            raise PublishValidationError(
+                "Render pixel aspect {} does not match asset pixel aspect {}".format(            # noqa:E501
                     current_pixelAspect, pixelAspect
                 ))
 
@@ -66,7 +66,7 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
         project_doc = instance.context.data["projectEntity"]
         for data in [asset_doc["data"], project_doc["data"]]:
             if "resolutionWidth" in data and "resolutionHeight" in data \
-                and "pixelAspect" in data:
+            and "pixelAspect" in data:
                 width = data["resolutionWidth"]
                 height = data["resolutionHeight"]
                 pixelAspect = data["pixelAspect"]
