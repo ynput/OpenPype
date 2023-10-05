@@ -777,7 +777,8 @@ def get_context_var_changes():
     # Set Houdini Vars
     for item in houdini_vars:
         # For consistency reasons we always force all vars to be uppercase
-        var = item["var"].upper()
+        # Also remove any leading, and trailing whitespaces.
+        var = item["var"].strip().upper()
 
         # get and resolve template in value
         item_value = StringTemplate.format_template(
