@@ -839,7 +839,7 @@ def update_houdini_vars_context_dialog():
 
     message = "\n".join(
         "${}: {} -> {}".format(var, old or "None", new)
-        for var, (old, new, is_directory) in update_vars.items()
+        for var, (old, new, _is_directory) in update_vars.items()
     )
     parent = hou.ui.mainQtWindow()
     dialog = popup.PopupUpdateKeys(parent=parent)
