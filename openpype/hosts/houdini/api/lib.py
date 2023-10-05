@@ -800,7 +800,13 @@ def get_context_var_changes():
         os.environ[item["var"]] = current_value
 
         if current_value != item_value:
-            houdini_vars_to_update.update({item["var"]: (current_value, item_value, item["is_directory"])})
+            houdini_vars_to_update.update(
+                {
+                    item["var"]: (
+                        current_value, item_value, item["is_directory"]
+                    )
+                }
+            )
 
     return houdini_vars_to_update
 
