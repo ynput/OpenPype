@@ -273,73 +273,87 @@ def update_placeholder(*args):
 
 
 def build_workfile_sequence_template(*args, **kwargs):
-
     from openpype.pipeline import get_current_context
-    from openpype.pipeline.workfile import get_workfile_template_key_from_context
-
-    from openpype.modules.kitsu.utils.credentials import (
-        validate_credentials,
-    )
-    import gazu
-
     from openpype.client import get_assets, get_asset_by_name
 
-    from pprint import pprint as pp
-
-    print("Hello World")
-    print(registered_host())
-    print(kwargs)
-    # AfterEffectsServerStub
-    # openpype/hosts/aftereffects/api/ws_stub.py
-    stub = get_stub()
-    """
-    print("<<<META")
-    print(stub.get_metadata())
-    print("DATA>>>")
-    METADATA Example
-    [ {'id': 'openpype.placeholder',
-        'name': 'LOADERPLACEHOLDER',
-        'is_placeholder': True,
-        'plugin_identifier': 'aftereffects.load',
-        'uuid': '18fe42ad-2bed-45a4-9472-f60fc43d8f40',
-        'data': {
-            'builder_type': 'context_asset',
-            'family': 'image',
-            'representation': '',
-            'loader': 'CalculateOldVersions',
-            'loader_args': '',
-            'order': 0,
-            'asset': '',
-            'subset': '',
-            'hierarchy': ''
-                },
-        'members': [19]
-        },
-    ]
-    """
-    validate_credentials(login=os.environ["KITSU_LOGIN"],
-                         password=os.environ["KITSU_PWD"],
-                         kitsu_url=os.environ.get("KITSU_SERVER"))
-
     context = get_current_context()
+    stub = get_stub()
+    current_comp = stub.get_selected_items(True)
 
-    project = gazu.project.get_project_by_name(context["project_name"])
-    sequence = gazu.shot.get_sequence_by_name(project, context["asset_name"])
-    shots = gazu.shot.all_shots_for_sequence(sequence)
+    if len(current_comp) == 0:
+        stub.print_msg("Select a comp to build")
+        return
+    elif len(current_comp) > 1:
+        stub.print_msg("More than one comp selected."
+                       "Building can be done only on one comp at a time.")
+        return
+    else:
+        # print(current_comp)
+        current_comp = current_comp[0]
 
-    sequence_op = get_asset_by_name(context["project_name"],
-                                    context["asset_name"])
+    existing_folders = stub.get_items(False, folders=True)
+    existing_folders_name = [folder.name for folder in existing_folders]
 
-    shots_op = get_assets(context["project_name"], parent_ids=[sequence_op["_id"]])
+    current_asset = get_asset_by_name(context["project_name"],
+                                      context["asset_name"])
 
-    for shot in shots_op:
+    child_assets = get_assets(context["project_name"],
+                              parent_ids=[current_asset["_id"]])
 
-        shot_name = shot["name"]
-        shot_start = shot["data"]["frameStart"]
-        shot_end = shot["data"]["frameEnd"]
-        shot_workfile = get_last_workfile_path(context["project_name"], shot_name, "Compositing")
+    error_messages = []
 
-        break
+    previous_end = 0
+
+    for asset in child_assets:
+        asset_name = asset["name"]
+        asset_start = int(asset["data"]["frameStart"])
+        asset_end = int(asset["data"]["frameEnd"])
+        print("Processing:", asset_name)
+
+        if asset_name not in existing_folders_name:
+            try:
+                asset_workfile = get_last_workfile_path(
+                    context["project_name"], asset_name, "Compositing")
+
+                import_options = {}
+                import_options['ImportAsType'] = 'ImportAsType.PROJECT'
+                stub.import_file(asset_workfile, asset_name, import_options)
+
+                # Find recently imported comp.
+                # No way to filter by folders for granularity :(
+                imported_comp = get_comp_by_name("renderCompositingMain")
+                stub.rename_item(imported_comp.id,
+                                 "{}_{}".format(asset_name, imported_comp.name)
+                                 )
+
+                stub.add_item_as_layer_at_frame(current_comp.id,
+                                                imported_comp.id,
+                                                previous_end)
+            except AttributeError as err:
+                error_messages.append((asset_name, str(err)))
+                stub.log.error("{}: {}\n".format(asset_name, str(err)))
+            except ValueError as err:
+                # jsx addItemAsLayerToComp does not return a JSON
+                # and that raises an error.
+                # Not sure if the JSON is needed
+                if str(err) == "Received broken JSON undefined":
+                    pass
+                else:
+                    error_messages.append((asset_name, str(err)))
+                    stub.log.error("{}: {}\n".format(asset_name, str(err)))
+
+            previous_end += asset_end
+
+    if error_messages:
+        stub.print_msg("There were errors while importing. Check the console.")
+
+
+def get_comp_by_name(comp_name):
+    stub = get_stub()
+    for item in stub.get_items(True):
+        if item.name == comp_name:
+            # print("Found", comp_name, item)
+            return item
 
 
 def get_last_workfile_path(project_name, asset_name, task_name):

@@ -151,8 +151,6 @@
   <script type=text/javascript>
             $(function() {
               $("a#build-workfile-sequence-template-button").bind("click", function() {
-
-                console.log("Hola")
                 RPC.call('AfterEffects.build_workfile_sequence_template_route').then(function (data) {
                 }, function (error) {
                     alert(error);
@@ -161,18 +159,6 @@
             });
     </script>
 
-    <script type=text/javascript>
-                $(function() {
-                  $("a#build-workfile-sequence-template-button").bind("click", function() {
-
-                    console.log("Hola")
-                    RPC.call('AfterEffects.build_workfile_sequence_template_route').then(function (data) {
-                    }, function (error) {
-                        alert(error);
-                    });
-                  });
-                });
-        </script>
 
 </head>
 

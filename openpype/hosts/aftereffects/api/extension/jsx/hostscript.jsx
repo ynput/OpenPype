@@ -944,3 +944,37 @@ function _prepareSingleValue(value){
 function _prepareError(error_msg){
     return JSON.stringify({"error": error_msg})
 }
+
+function addItemAsLayerToCompWithOffset(comp_id, item_id, offset){
+    /**
+     * Adds already imported FootageItem ('item_id') as a new
+     * layer to composition ('comp_id').
+     * Move the layer to the offset time.
+     *
+     * Args:
+     *  comp_id (int): id of target composition
+     *  item_id (int): FootageItem.id
+     *  offset (int): the frame number to move the layer to.
+     */
+    var comp = app.project.itemByID(comp_id);
+
+    if (comp){
+        item = app.project.itemByID(item_id);
+        if (item){
+            app.beginUndoGroup('Add item as layer ');
+            last_displayStartFrame = app.project.displayStartFrame;
+            app.project.displayStartFrame = 0;
+
+            layer = comp.layers.add(item);
+            layer.startTime = currentFormatToTime(offset, comp.frameRate);
+
+            app.project.displayStartFrame = last_displayStartFrame;
+            app.endUndoGroup('Add comps to  comps to ');
+            return
+        }else{
+            return _prepareError("There is no item with " + item_id);
+        }
+    }else{
+        return _prepareError("There is no composition with "+ comp_id);
+    }
+}

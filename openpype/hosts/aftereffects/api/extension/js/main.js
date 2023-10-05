@@ -370,6 +370,17 @@ function main(websocket_url){
                 return result;
             });
     });
+
+    RPC.addRoute('AfterEffects.add_item_as_layer_with_offset', function (data) {
+        log.warn('Server called client route "add_item_as_layer_with_offset":', data);
+        return runEvalScript("addItemAsLayerToCompWithOffset(" + data.comp_id + ", " +
+            data.item_id + "," + data.offset + ")")
+            .then(function (result) {
+                log.warn("addItemAsLayerToComp: " + result);
+                return result;
+            });
+    });
+
 }
 
 /** main entry point **/
