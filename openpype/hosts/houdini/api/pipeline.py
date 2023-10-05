@@ -301,7 +301,7 @@ def on_save():
     log.info("Running callback on save..")
 
     # update houdini vars
-    lib.update_houdini_vars_context()
+    lib.update_houdini_vars_context_dialog()
 
     nodes = lib.get_id_required_nodes()
     for node, new_id in lib.generate_ids(nodes):
@@ -339,7 +339,7 @@ def on_open():
     log.info("Running callback on open..")
 
     # update houdini vars
-    lib.update_houdini_vars_context()
+    lib.update_houdini_vars_context_dialog()
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
@@ -405,6 +405,7 @@ def _set_context_settings():
     """
 
     lib.reset_framerange()
+    lib.update_houdini_vars_context()
 
 
 def on_pyblish_instance_toggled(instance, new_value, old_value):
