@@ -835,6 +835,7 @@ def update_houdini_vars_context_dialog():
     update_vars = get_context_var_changes()
     if not update_vars:
         # Nothing to change
+        print("  - Nothing to change, Houdini Vars are up to date.")
         return
 
     message = "\n".join(
