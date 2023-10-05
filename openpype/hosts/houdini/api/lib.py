@@ -814,7 +814,7 @@ def get_context_var_changes():
 def update_houdini_vars_context():
     """Update asset context variables"""
 
-    for var, (old, new, is_directory) in get_context_var_changes().items():
+    for var, (_old, new, is_directory) in get_context_var_changes().items():
         if is_directory:
             try:
                 os.makedirs(new)
