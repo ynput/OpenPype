@@ -253,7 +253,7 @@ class AbstractController:
         identifier,
         options,
         project_name,
-        product_ids,
+        version_ids,
         representation_ids
     ):
         pass

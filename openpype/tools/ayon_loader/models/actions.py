@@ -189,7 +189,7 @@ class LoaderActionsModel:
 
     def get_versions_action_items(self, project_name, version_ids):
         (
-            product_context_by_id,
+            version_context_by_id,
             repre_context_by_id
         ) = self._contexts_for_versions(
             project_name,
@@ -197,7 +197,7 @@ class LoaderActionsModel:
         )
         return self._get_action_items_for_contexts(
             project_name,
-            product_context_by_id,
+            version_context_by_id,
             repre_context_by_id
         )
 
@@ -222,7 +222,7 @@ class LoaderActionsModel:
         identifier,
         options,
         project_name,
-        product_ids,
+        version_ids,
         representation_ids
     ):
         event_data = {
@@ -242,12 +242,12 @@ class LoaderActionsModel:
                 project_name,
                 representation_ids,
             )
-        elif product_ids is not None:
-            error_info = self._trigger_product_loader(
+        elif version_ids is not None:
+            error_info = self._trigger_version_loader(
                 loader,
                 options,
                 project_name,
-                product_ids,
+                version_ids,
             )
         else:
             raise NotImplementedError(
@@ -385,15 +385,15 @@ class LoaderActionsModel:
 
     def _contexts_for_versions(self, project_name, version_ids):
         # TODO fix hero version
-        product_context_by_id = {}
+        version_context_by_id = {}
         repre_context_by_id = {}
         if not project_name and not version_ids:
-            return product_context_by_id, repre_context_by_id
+            return version_context_by_id, repre_context_by_id
 
-        _version_docs = get_versions(project_name, version_ids)
+        version_docs = list(get_versions(project_name, version_ids))
         version_docs_by_id = {}
         version_docs_by_product_id = collections.defaultdict(list)
-        for version_doc in _version_docs:
+        for version_doc in version_docs:
             version_id = version_doc["_id"]
             product_id = version_doc["parent"]
             version_docs_by_id[version_id] = version_doc
@@ -410,13 +410,16 @@ class LoaderActionsModel:
         project_doc = get_project(project_name)
         project_doc["code"] = project_doc["data"]["code"]
 
-        for product_id, product_doc in product_docs_by_id.items():
+        for version_doc in version_docs:
+            product_id = version_doc["parent"]
+            product_doc = product_docs_by_id[product_id]
             folder_id = product_doc["parent"]
             folder_doc = folder_docs_by_id[folder_id]
-            product_context_by_id[product_id] = {
+            version_context_by_id[product_id] = {
                 "project": project_doc,
                 "asset": folder_doc,
                 "subset": product_doc,
+                "version": version_doc,
             }
 
         repre_docs = get_representations(
@@ -437,7 +440,7 @@ class LoaderActionsModel:
                 "representation": repre_doc,
             }
 
-        return product_context_by_id, repre_context_by_id
+        return version_context_by_id, repre_context_by_id
 
     def _contexts_for_representations(self, project_name, repre_ids):
         product_context_by_id = {}
@@ -500,11 +503,11 @@ class LoaderActionsModel:
     def _get_action_items_for_contexts(
         self,
         project_name,
-        product_context_by_id,
+        version_context_by_id,
         repre_context_by_id
     ):
         action_items = []
-        if not product_context_by_id and not repre_context_by_id:
+        if not version_context_by_id and not repre_context_by_id:
             return action_items
 
         product_loaders, repre_loaders = self._get_loaders(project_name)
@@ -544,46 +547,57 @@ class LoaderActionsModel:
             action_items.append(item)
 
         # Subset Loaders.
-        product_ids = set(product_context_by_id.keys())
+        version_ids = set(version_context_by_id.keys())
         product_folder_ids = set()
-        for product_context in product_context_by_id.values():
+        product_ids = set()
+        for product_context in version_context_by_id.values():
+            product_ids.add(product_context["subset"]["_id"])
             product_folder_ids.add(product_context["asset"]["_id"])
 
-        product_contexts = list(product_context_by_id.values())
+        version_contexts = list(version_context_by_id.values())
         for loader in product_loaders:
             item = self._create_loader_action_item(
                 loader,
-                product_contexts,
+                version_contexts,
                 project_name=project_name,
                 folder_ids=product_folder_ids,
                 product_ids=product_ids,
+                version_ids=version_ids,
             )
             action_items.append(item)
 
         action_items.sort(key=self._actions_sorter)
         return action_items
 
-    def _trigger_product_loader(
+    def _trigger_version_loader(
         self,
         loader,
         options,
         project_name,
-        product_ids,
+        version_ids,
     ):
         project_doc = get_project(project_name)
         project_doc["code"] = project_doc["data"]["code"]
-        product_docs = list(get_subsets(project_name, subset_ids=product_ids))
-        folder_ids = {p["parent"]: p for p in product_docs}
+
+        version_docs = list(
+            get_versions(project_name, version_ids=version_ids))
+        product_ids = {v["parent"] for v in version_docs}
+        product_docs = get_subsets(project_name, subset_ids=product_ids)
+        product_docs_by_id = {f["_id"]: f for f in product_docs}
+        folder_ids = {p["parent"] for p in product_docs_by_id.values()}
         folder_docs = get_assets(project_name, asset_ids=folder_ids)
         folder_docs_by_id = {f["_id"]: f for f in folder_docs}
         product_contexts = []
-        for product_doc in product_docs:
+        for version_doc in version_docs:
+            product_id = version_doc["parent"]
+            product_doc = product_docs_by_id[product_id]
             folder_id = product_doc["parent"]
             folder_doc = folder_docs_by_id[folder_id]
             product_contexts.append({
                 "project": project_doc,
                 "asset": folder_doc,
                 "subset": product_doc,
+                "version": version_doc,
             })
 
         return self._load_products_by_loader(
@@ -642,7 +656,7 @@ class LoaderActionsModel:
         """
 
         error_info = []
-        for repre_context in repre_contexts.values():
+        for repre_context in repre_contexts:
             version_doc = repre_context["version"]
             if version_doc["type"] == "hero_version":
                 version_name = "Hero"
@@ -683,12 +697,17 @@ class LoaderActionsModel:
         return error_info
 
     def _load_products_by_loader(self, loader, version_contexts, options):
-        """Triggers load with SubsetLoader type of loaders
+        """Triggers load with SubsetLoader type of loaders.
+
+        Warning:
+            Plugin is named 'SubsetLoader' but version is passed to context
+                too.
 
         Args:
-            loader (SubsetLoder):
-            version_contexts (list):
-            options (dict):
+            loader (SubsetLoder): Loader used to load.
+            version_contexts (list[dict[str, Any]]): For context for each
+                version.
+            options (dict[str, Any]): Options for loader that user could fill.
         """
 
         error_info = []

@@ -97,14 +97,14 @@ class LoaderController(AbstractController):
         identifier,
         options,
         project_name,
-        product_ids,
+        version_ids,
         representation_ids
     ):
         self._loader_actions_model.trigger_action_item(
             identifier,
             options,
             project_name,
-            product_ids,
+            version_ids,
             representation_ids
         )
 

@@ -281,7 +281,7 @@ class ProductsWidget(QtWidgets.QWidget):
             action_item.identifier,
             options,
             action_item.project_name,
-            product_ids=action_item.product_ids,
+            version_ids=action_item.version_ids,
             representation_ids=action_item.representation_ids,
         )
 
