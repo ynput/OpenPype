@@ -5,6 +5,7 @@ import qtawesome
 
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.ayon_utils.widgets import get_qt_icon
+from openpype.tools.utils import DeselectableTreeView
 
 from .actions_utils import show_actions_menu
 
@@ -210,7 +211,10 @@ class RepresentationsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(RepresentationsWidget, self).__init__(parent)
 
-        repre_view = QtWidgets.QTreeView(self)
+        repre_view = DeselectableTreeView(self)
+        repre_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection
+        )
         repre_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         repre_view.setSortingEnabled(True)
         repre_view.setAlternatingRowColors(True)
@@ -329,6 +333,6 @@ class RepresentationsWidget(QtWidgets.QWidget):
             action_item.identifier,
             options,
             action_item.project_name,
-            product_ids=action_item.product_ids,
+            version_ids=action_item.version_ids,
             representation_ids=action_item.representation_ids,
         )
