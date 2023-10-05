@@ -268,11 +268,12 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         attr_values = self.get_attr_values_from_data(instance.data)
         strict_error_checking = attr_values.get("strict_error_checking",
                                                 self.strict_error_checking)
+
         plugin_info = MayaPluginInfo(
             SceneFile=self.scene_path,
             Version=cmds.about(version=True),
             RenderLayer=instance.data['setMembers'],
-            Renderer=instance.data["renderer"],
+            Renderer=self._fix_renderer_name(instance.data["renderer"]),
             RenderSetupIncludeLights=rs_include_lights,  # noqa
             ProjectPath=context.data["workspaceDir"],
             UsingRenderLayers=True,
@@ -469,7 +470,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         assembly_plugin_info = {
             "CleanupTiles": 1,
             "ErrorOnMissing": True,
-            "Renderer": self._instance.data["renderer"]
+            "Renderer": self._fix_renderer_name(
+                self._instance.data["renderer"])
         }
 
         assembly_payloads = []
@@ -585,27 +587,13 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             "OutputFilePrefix": layer_prefix,
         })
 
-        # This hack is here because of how Deadline handles Renderman version.
-        # it considers everything with `renderman` set as version older than
-        # Renderman 22, and so if we are using renderman > 21 we need to set
-        # renderer string on the job to `renderman22`. We will have to change
-        # this when Deadline releases new version handling this.
-        renderer = self._instance.data["renderer"]
         if renderer == "renderman":
-            try:
-                from rfm2.config import cfg  # noqa
-            except ImportError:
-                raise Exception("Cannot determine renderman version")
-
-            rman_version = cfg().build_info.version()  # type: str
-            if int(rman_version.split(".")[0]) > 22:
-                renderer = "renderman22"
-
-            plugin_info["Renderer"] = renderer
 
             # this is needed because renderman plugin in Deadline
             # handles directory and file prefixes separately
             plugin_info["OutputFilePath"] = job_info.OutputDirectory[0]
+
+        plugin_info["Renderer"] = self._fix_renderer_name(renderer)
 
         return job_info, plugin_info
 
@@ -796,6 +784,37 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         ])
 
         return defs
+
+    @staticmethod
+    def _fix_renderer_name(renderer):
+        # type: (str) -> str
+        """Fix renderer name for Deadline.
+
+        This is unfortunate hack because of the way Deadline handles
+        renderer name. 3delight is reported from Maya with `_` underscore
+        because the limitations in variable names that can't start with
+        a number. But Deadline expects it without underscore.
+
+        Also with Renderman, it considers everything with `renderman` set
+        as version older than Renderman 22, and so if we are using
+        renderman > 21 we need to set renderer string on the job
+        to `renderman22`. We will have to change this when Deadline
+        releases new version handling this.
+
+        """
+        if renderer.lower() == "_3delight":
+            return "3delight"
+
+        elif renderer.lower() == "renderman":
+            try:
+                from rfm2.config import cfg  # noqa
+            except ImportError:
+                raise Exception("Cannot determine renderman version")
+
+            rman_version = cfg().build_info.version()  # type: str
+            if int(rman_version.split(".")[0]) > 22:
+                return "renderman22"
+        return renderer
 
 def _format_tiles(
         filename,

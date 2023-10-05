@@ -78,6 +78,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'renderman': 'rmanGlobals.imageFileFormat',
         'redshift': 'defaultRenderGlobals.imageFilePrefix',
         'mayahardware2': 'defaultRenderGlobals.imageFilePrefix',
+        '_3delight': 'defaultRenderGlobals.imageFilePrefix',
     }
 
     ImagePrefixTokens = {
@@ -87,6 +88,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'vray': '<Scene>/<Layer>/<Layer>',
         'renderman': '<layer>{aov_separator}<aov>.<f4>.<ext>',
         'mayahardware2': '<Scene>/<RenderLayer>/<RenderLayer>',
+        '_3delight': '3delight/<scene>/image/<scene>_<pass>_#.<ext>'
     }
 
     _aov_chars = {
@@ -102,7 +104,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     R_AOV_TOKEN = re.compile(
         r'%a|<aov>|<renderpass>', re.IGNORECASE)
     R_LAYER_TOKEN = re.compile(
-        r'%l|<layer>|<renderlayer>', re.IGNORECASE)
+        r'%l|<layer>|<renderlayer>|<pass>', re.IGNORECASE)
     R_CAMERA_TOKEN = re.compile(r'%c|Camera>')
     R_SCENE_TOKEN = re.compile(r'%s|<scene>', re.IGNORECASE)
 

@@ -48,7 +48,7 @@ class RenderSettings(object):
             "arnold": render_settings["arnold_renderer"]["image_prefix"],
             "renderman": render_settings["renderman_renderer"]["image_prefix"],
             "redshift": render_settings["redshift_renderer"]["image_prefix"],
-            '_3delight': render_settings["3delight_renderer"]["image_prefix"]
+            "_3delight": render_settings["3delight_renderer"]["image_prefix"]
         }
 
         # TODO probably should be stored to more explicit attribute
