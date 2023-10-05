@@ -37,6 +37,7 @@ class CreateColorspaceLook(TrayPublishCreator):
     ]
     colorspace_attr_show = False
     config_items = None
+    config_data = None
 
     def get_detail_description(self):
         return """# Colorspace Look
@@ -73,7 +74,19 @@ This creator publishes color space look file (LUT).
         # Create new instance
         new_instance = CreatedInstance(self.family, subset_name,
                                        instance_data, self)
+        new_instance.transient_data["config_items"] = self.config_items
+        new_instance.transient_data["config_data"] = self.config_data
+
         self._store_new_instance(new_instance)
+
+
+    def collect_instances(self):
+        super().collect_instances()
+        for instance in self.create_context.instances:
+            if instance.creator_identifier == self.identifier:
+                instance.transient_data["config_items"] = self.config_items
+                instance.transient_data["config_data"] = self.config_data
+
 
     def get_instance_attr_defs(self):
         return [
@@ -147,17 +160,21 @@ This creator publishes color space look file (LUT).
             project_settings=project_settings
         )
 
-        if config_data:
-            filepath = config_data["path"]
-            config_items = colorspace.get_ocio_config_colorspaces(filepath)
-            labeled_colorspaces = colorspace.get_colorspaces_enumerator_items(
-                config_items,
-                include_aliases=True,
-                include_roles=True
-            )
-            self.config_items = config_items
-            self.colorspace_items.extend(labeled_colorspaces)
-            self.enabled = True
+        if not config_data:
+            self.enabled = False
+            return
+
+        filepath = config_data["path"]
+        config_items = colorspace.get_ocio_config_colorspaces(filepath)
+        labeled_colorspaces = colorspace.get_colorspaces_enumerator_items(
+            config_items,
+            include_aliases=True,
+            include_roles=True
+        )
+        self.config_items = config_items
+        self.config_data = config_data
+        self.colorspace_items.extend(labeled_colorspaces)
+        self.enabled = True
 
     def _get_subset(self, asset_doc, variant, project_name, task_name=None):
         """Create subset name according to standard template process"""
