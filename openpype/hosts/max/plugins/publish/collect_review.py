@@ -4,6 +4,7 @@ import pyblish.api
 
 from pymxs import runtime as rt
 from openpype.lib import BoolDef
+from openpype.hosts.max.api.lib import get_max_version
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 
@@ -43,6 +44,17 @@ class CollectReview(pyblish.api.InstancePlugin,
             "dspSafeFrame": attr_values.get("dspSafeFrame"),
             "dspFrameNums": attr_values.get("dspFrameNums")
         }
+
+        if int(get_max_version()) >= 2024:
+            colorspace_mgr = rt.ColorPipelineMgr      # noqa
+            display = next(
+                (display for display in colorspace_mgr.GetDisplayList()))
+            view_transform = next(
+                (view for view in colorspace_mgr.GetViewList(display)))
+            instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
+            instance.data["colorspaceDisplay"] = display
+            instance.data["colorspaceView"] = view_transform
+
         # Enable ftrack functionality
         instance.data.setdefault("families", []).append('ftrack')
 
@@ -54,7 +66,6 @@ class CollectReview(pyblish.api.InstancePlugin,
 
     @classmethod
     def get_attribute_defs(cls):
-
         return [
             BoolDef("dspGeometry",
                     label="Geometry",

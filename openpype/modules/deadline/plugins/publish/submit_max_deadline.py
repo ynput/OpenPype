@@ -238,9 +238,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
                 "separateAovFiles")
         if instance.data["cameras"]:
-            plugin_info["Camera0"] = None
-            plugin_info["Camera"] = instance.data["cameras"][0]
-            plugin_info["Camera1"] = instance.data["cameras"][0]
+            camera = instance.data["cameras"][0]
+            plugin_info["Camera0"] = camera
+            plugin_info["Camera"] = camera
+            plugin_info["Camera1"] = camera
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 
