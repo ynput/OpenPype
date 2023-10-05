@@ -326,13 +326,14 @@ class ActionsModel:
         return output
 
     def set_application_force_not_open_workfile(
-        self, project_name, folder_id, task_id, action_id, enabled
+        self, project_name, folder_id, task_id, action_ids, enabled
     ):
         no_workfile_reg_data = self._get_no_last_workfile_reg_data()
         project_data = no_workfile_reg_data.setdefault(project_name, {})
         folder_data = project_data.setdefault(folder_id, {})
         task_data = folder_data.setdefault(task_id, {})
-        task_data[action_id] = enabled
+        for action_id in action_ids:
+            task_data[action_id] = enabled
         self._launcher_tool_reg.set_item(
             self._not_open_workfile_reg_key, no_workfile_reg_data
         )
@@ -359,7 +360,10 @@ class ActionsModel:
                     project_name, folder_id, task_id
                 )
                 force_not_open_workfile = per_action.get(identifier, False)
-                action.data["start_last_workfile"] = force_not_open_workfile
+                if force_not_open_workfile:
+                    action.data["start_last_workfile"] = False
+                else:
+                    action.data.pop("start_last_workfile", None)
             action.process(session)
         except Exception as exc:
             self.log.warning("Action trigger failed.", exc_info=True)

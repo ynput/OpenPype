@@ -121,10 +121,10 @@ class BaseLauncherController(
             project_name, folder_id, task_id)
 
     def set_application_force_not_open_workfile(
-        self, project_name, folder_id, task_id, action_id, enabled
+        self, project_name, folder_id, task_id, action_ids, enabled
     ):
         self._actions_model.set_application_force_not_open_workfile(
-            project_name, folder_id, task_id, action_id, enabled
+            project_name, folder_id, task_id, action_ids, enabled
         )
 
     def trigger_action(self, project_name, folder_id, task_id, identifier):
