@@ -19,12 +19,10 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
             2. Validate if tyFlow operator Export Particle exists
 
         """
-        report = []
-
         invalid_object = self.get_tyflow_object(instance)
         if invalid_object:
-             raise PublishValidationError(
-                 f"Non tyFlow object found: {invalid_object}")
+            raise PublishValidationError(
+                f"Non tyFlow object found: {invalid_object}")
 
         invalid_operator = self.get_tyflow_operator(instance)
         if invalid_operator:
