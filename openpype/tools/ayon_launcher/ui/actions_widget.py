@@ -19,6 +19,21 @@ ANIMATION_STATE_ROLE = QtCore.Qt.UserRole + 6
 FORCE_NOT_OPEN_WORKFILE_ROLE = QtCore.Qt.UserRole + 7
 
 
+def _variant_label_sort_getter(action_item):
+    """Get variant label value for sorting.
+
+    Make sure the output value is a string.
+
+    Args:
+        action_item (ActionItem): Action item.
+
+    Returns:
+        str: Variant label or empty string.
+    """
+
+    return action_item.variant_label or ""
+
+
 class ActionsQtModel(QtGui.QStandardItemModel):
     """Qt model for actions.
 
@@ -51,6 +66,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         self._controller = controller
 
         self._items_by_id = {}
+        self._action_items_by_id = {}
         self._groups_by_id = {}
 
         self._selected_project_name = None
@@ -72,8 +88,12 @@ class ActionsQtModel(QtGui.QStandardItemModel):
     def get_item_by_id(self, action_id):
         return self._items_by_id.get(action_id)
 
+    def get_action_item_by_id(self, action_id):
+        return self._action_items_by_id.get(action_id)
+
     def _clear_items(self):
         self._items_by_id = {}
+        self._action_items_by_id = {}
         self._groups_by_id = {}
         root = self.invisibleRootItem()
         root.removeRows(0, root.rowCount())
@@ -101,12 +121,14 @@ class ActionsQtModel(QtGui.QStandardItemModel):
 
         groups_by_id = {}
         for action_items in items_by_label.values():
+            action_items.sort(key=_variant_label_sort_getter, reverse=True)
             first_item = next(iter(action_items))
             all_action_items_info.append((first_item, len(action_items) > 1))
             groups_by_id[first_item.identifier] = action_items
 
         new_items = []
         items_by_id = {}
+        action_items_by_id = {}
         for action_item_info in all_action_items_info:
             action_item, is_group = action_item_info
             icon = get_qt_icon(action_item.icon)
@@ -132,6 +154,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
                 action_item.force_not_open_workfile,
                 FORCE_NOT_OPEN_WORKFILE_ROLE)
             items_by_id[action_item.identifier] = item
+            action_items_by_id[action_item.identifier] = action_item
 
         if new_items:
             root_item.appendRows(new_items)
@@ -139,10 +162,12 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         to_remove = set(self._items_by_id.keys()) - set(items_by_id.keys())
         for identifier in to_remove:
             item = self._items_by_id.pop(identifier)
+            self._action_items_by_id.pop(identifier)
             root_item.removeRow(item.row())
 
         self._groups_by_id = groups_by_id
         self._items_by_id = items_by_id
+        self._action_items_by_id = action_items_by_id
         self.refreshed.emit()
 
     def _on_controller_refresh_finished(self):
@@ -387,9 +412,15 @@ class ActionsWidget(QtWidgets.QWidget):
             checkbox.setChecked(True)
 
         action_id = index.data(ACTION_ID_ROLE)
+        is_group = index.data(ACTION_IS_GROUP_ROLE)
+        if is_group:
+            action_items = self._model.get_group_items(action_id)
+        else:
+            action_items = [self._model.get_action_item_by_id(action_id)]
+        action_ids = {action_item.identifier for action_item in action_items}
         checkbox.stateChanged.connect(
             lambda: self._on_checkbox_changed(
-                action_id, checkbox.isChecked()
+                action_ids, checkbox.isChecked()
             )
         )
         action = QtWidgets.QWidgetAction(menu)
@@ -402,7 +433,7 @@ class ActionsWidget(QtWidgets.QWidget):
         menu.exec_(global_point)
         self._context_menu = None
 
-    def _on_checkbox_changed(self, action_id, is_checked):
+    def _on_checkbox_changed(self, action_ids, is_checked):
         if self._context_menu is not None:
             self._context_menu.close()
 
@@ -410,7 +441,7 @@ class ActionsWidget(QtWidgets.QWidget):
         folder_id = self._model.get_selected_folder_id()
         task_id = self._model.get_selected_task_id()
         self._controller.set_application_force_not_open_workfile(
-            project_name, folder_id, task_id, action_id, is_checked)
+            project_name, folder_id, task_id, action_ids, is_checked)
         self._model.refresh()
 
     def _on_clicked(self, index):
