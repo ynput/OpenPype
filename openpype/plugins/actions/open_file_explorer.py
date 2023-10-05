@@ -83,10 +83,6 @@ class OpenTaskPath(LauncherAction):
         if os.path.exists(valid_workdir):
             return valid_workdir
 
-        # If task was selected, try to find asset path only to asset
-        if not task_name:
-            raise AssertionError("Folder does not exist.")
-
         data.pop("task", None)
         workdir = anatomy.templates_obj["work"]["folder"].format(data)
         valid_workdir = self._find_first_filled_path(workdir)
@@ -95,7 +91,7 @@ class OpenTaskPath(LauncherAction):
             valid_workdir = os.path.normpath(valid_workdir)
             if os.path.exists(valid_workdir):
                 return valid_workdir
-        raise AssertionError("Folder does not exist.")
+        raise AssertionError("Folder does not exist yet.")
 
     @staticmethod
     def open_in_explorer(path):

@@ -106,7 +106,8 @@ class FilesWidget(QtWidgets.QWidget):
             self._on_published_cancel_clicked)
 
         self._selected_folder_id = None
-        self._selected_tak_name = None
+        self._selected_task_id = None
+        self._selected_task_name = None
 
         self._pre_select_folder_id = None
         self._pre_select_task_name = None
@@ -178,7 +179,7 @@ class FilesWidget(QtWidgets.QWidget):
     # -------------------------------------------------------------
     # Workarea workfiles
     # -------------------------------------------------------------
-    def _open_workfile(self, filepath):
+    def _open_workfile(self, folder_id, task_name, filepath):
         if self._controller.has_unsaved_changes():
             result = self._save_changes_prompt()
             if result is None:
@@ -186,12 +187,15 @@ class FilesWidget(QtWidgets.QWidget):
 
             if result:
                 self._controller.save_current_workfile()
-        self._controller.open_workfile(filepath)
+        self._controller.open_workfile(folder_id, task_name, filepath)
 
     def _on_workarea_open_clicked(self):
         path = self._workarea_widget.get_selected_path()
-        if path:
-            self._open_workfile(path)
+        if not path:
+            return
+        folder_id = self._selected_folder_id
+        task_id = self._selected_task_id
+        self._open_workfile(folder_id, task_id, path)
 
     def _on_current_open_requests(self):
         self._on_workarea_open_clicked()
@@ -238,8 +242,12 @@ class FilesWidget(QtWidgets.QWidget):
         }
 
         filepath = QtWidgets.QFileDialog.getOpenFileName(**kwargs)[0]
-        if filepath:
-            self._open_workfile(filepath)
+        if not filepath:
+            return
+
+        folder_id = self._selected_folder_id
+        task_id = self._selected_task_id
+        self._open_workfile(folder_id, task_id, filepath)
 
     def _on_workarea_save_clicked(self):
         result = self._exec_save_as_dialog()
@@ -279,10 +287,11 @@ class FilesWidget(QtWidgets.QWidget):
 
     def _on_task_changed(self, event):
         self._selected_folder_id = event["folder_id"]
-        self._selected_tak_name = event["task_name"]
+        self._selected_task_id = event["task_id"]
+        self._selected_task_name = event["task_name"]
         self._valid_selected_context = (
             self._selected_folder_id is not None
-            and self._selected_tak_name is not None
+            and self._selected_task_id is not None
         )
         self._update_published_btns_state()
 
@@ -311,7 +320,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         if enabled:
             self._pre_select_folder_id = self._selected_folder_id
-            self._pre_select_task_name = self._selected_tak_name
+            self._pre_select_task_name = self._selected_task_name
         else:
             self._pre_select_folder_id = None
             self._pre_select_task_name = None
@@ -334,7 +343,7 @@ class FilesWidget(QtWidgets.QWidget):
             return True
         if self._pre_select_task_name is None:
             return False
-        return self._pre_select_task_name != self._selected_tak_name
+        return self._pre_select_task_name != self._selected_task_name
 
     def _on_published_cancel_clicked(self):
         folder_id = self._pre_select_folder_id

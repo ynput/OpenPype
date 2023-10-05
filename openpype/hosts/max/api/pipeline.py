@@ -18,7 +18,6 @@ from openpype.hosts.max.api import lib
 from openpype.hosts.max.api.plugin import MS_CUSTOM_ATTRIB
 from openpype.hosts.max import MAX_HOST_DIR
 
-
 from pymxs import runtime as rt  # noqa
 
 log = logging.getLogger("openpype.hosts.max")
@@ -57,6 +56,9 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         rt.callbacks.addScript(rt.Name('systemPostNew'),
                                context_setting)
+
+        rt.callbacks.addScript(rt.Name('filePostOpen'),
+                               lib.check_colorspace)
 
     def has_unsaved_changes(self):
         # TODO: how to get it from 3dsmax?

@@ -14,6 +14,10 @@ class CreateMultiverseUsd(plugin.MayaCreator):
     label = "Multiverse USD Asset"
     family = "usd"
     icon = "cubes"
+    description = "Create Multiverse USD Asset"
+
+    def get_publish_families(self):
+        return ["usd", "mvUsd"]
 
     def get_instance_attr_defs(self):
 

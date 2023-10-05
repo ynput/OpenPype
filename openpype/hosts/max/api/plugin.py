@@ -65,12 +65,12 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 
         on button_add pressed do
         (
-            current_selection = selectByName title:"Select Objects to add to
+            current_sel = selectByName title:"Select Objects to add to
             the Container" buttontext:"Add" filter:nodes_to_add
-            if current_selection == undefined then return False
+            if current_sel == undefined then return False
             temp_arr = #()
             i_node_arr = #()
-            for c in current_selection do
+            for c in current_sel do
             (
                 handle_name = node_to_name c
                 node_ref = NodeTransformMonitor node:c
@@ -89,15 +89,18 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 
         on button_del pressed do
         (
-            current_selection = selectByName title:"Select Objects to remove
+            current_sel = selectByName title:"Select Objects to remove
             from the Container" buttontext:"Remove" filter: nodes_to_rmv
-            if current_selection == undefined then return False
+            if current_sel == undefined or current_sel.count == 0 then
+            (
+                return False
+            )
             temp_arr = #()
             i_node_arr = #()
             new_i_node_arr = #()
             new_temp_arr = #()
 
-            for c in current_selection do
+            for c in current_sel do
             (
                 node_ref = NodeTransformMonitor node:c as string
                 handle_name = node_to_name c

@@ -1,15 +1,35 @@
 # -*- coding: utf-8 -*-
 """Library of functions useful for 3dsmax pipeline."""
 import contextlib
+import logging
 import json
 from typing import Any, Dict, Union
 
 import six
+from openpype.pipeline import get_current_project_name, colorspace
+from openpype.settings import get_project_settings
 from openpype.pipeline.context_tools import (
     get_current_project, get_current_project_asset)
+from openpype.style import load_stylesheet
 from pymxs import runtime as rt
 
+
 JSON_PREFIX = "JSON::"
+log = logging.getLogger("openpype.hosts.max")
+
+
+def get_main_window():
+    """Acquire Max's main window"""
+    from qtpy import QtWidgets
+    top_widgets = QtWidgets.QApplication.topLevelWidgets()
+    name = "QmaxApplicationWindow"
+    for widget in top_widgets:
+        if (
+            widget.inherits("QMainWindow")
+            and widget.metaObject().className() == name
+        ):
+            return widget
+    raise RuntimeError('Count not find 3dsMax main window.')
 
 
 def imprint(node_name: str, data: dict) -> bool:
@@ -277,6 +297,7 @@ def set_context_setting():
     """
     reset_scene_resolution()
     reset_frame_range()
+    reset_colorspace()
 
 
 def get_max_version():
@@ -290,6 +311,14 @@ def get_max_version():
     """
     max_info = rt.MaxVersion()
     return max_info[7]
+
+
+def is_headless():
+    """Check if 3dsMax runs in batch mode.
+    If it returns True, it runs in 3dsbatch.exe
+    If it returns False, it runs in 3dsmax.exe
+    """
+    return rt.maxops.isInNonInteractiveMode()
 
 
 @contextlib.contextmanager
@@ -313,6 +342,51 @@ def set_timeline(frameStart, frameEnd):
     rt.animationRange = rt.interval(frameStart, frameEnd)
     return rt.animationRange
 
+
+def reset_colorspace():
+    """OCIO Configuration
+    Supports in 3dsMax 2024+
+
+    """
+    if int(get_max_version()) < 2024:
+        return
+    project_name = get_current_project_name()
+    colorspace_mgr = rt.ColorPipelineMgr
+    project_settings = get_project_settings(project_name)
+
+    max_config_data = colorspace.get_imageio_config(
+        project_name, "max", project_settings)
+    if max_config_data:
+        ocio_config_path = max_config_data["path"]
+        colorspace_mgr = rt.ColorPipelineMgr
+        colorspace_mgr.Mode = rt.Name("OCIO_Custom")
+        colorspace_mgr.OCIOConfigPath = ocio_config_path
+
+    colorspace_mgr.OCIOConfigPath = ocio_config_path
+
+
+def check_colorspace():
+    parent = get_main_window()
+    if parent is None:
+        log.info("Skipping outdated pop-up "
+                 "because Max main window can't be found.")
+    if int(get_max_version()) >= 2024:
+        color_mgr = rt.ColorPipelineMgr
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(project_name)
+        max_config_data = colorspace.get_imageio_config(
+            project_name, "max", project_settings)
+        if max_config_data and color_mgr.Mode != rt.Name("OCIO_Custom"):
+            if not is_headless():
+                from openpype.widgets import popup
+                dialog = popup.Popup(parent=parent)
+                dialog.setWindowTitle("Warning: Wrong OCIO Mode")
+                dialog.setMessage("This scene has wrong OCIO "
+                                  "Mode setting.")
+                dialog.setButtonText("Fix")
+                dialog.setStyleSheet(load_stylesheet())
+                dialog.on_clicked.connect(reset_colorspace)
+                dialog.show()
 
 def unique_namespace(namespace, format="%02d",
                      prefix="", suffix="", con_suffix="CON"):

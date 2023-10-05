@@ -22,7 +22,8 @@ class CollectRigSets(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         # Find required sets by suffix
-        searching = {"controls_SET", "out_SET"}
+        searching = {"controls_SET", "out_SET",
+                     "skeletonAnim_SET", "skeletonMesh_SET"}
         found = {}
         for node in cmds.ls(instance, exactType="objectSet"):
             for suffix in searching:
