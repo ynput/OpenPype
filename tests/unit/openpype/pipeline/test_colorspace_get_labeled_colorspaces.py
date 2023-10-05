@@ -35,7 +35,12 @@ class TestGetLabeledColorspaces(unittest.TestCase):
             'looks': {},
             'roles': {},
         }
-        result = get_labeled_colorspaces('config.ocio', include_aliases=False, include_looks=False, include_roles=False)
+        result = get_labeled_colorspaces(
+            'config.ocio',
+            include_aliases=False,
+            include_looks=False,
+            include_roles=False
+        )
         self.assertEqual(result, [('sRGB', '[colorspace] sRGB')])
 
     @patch('openpype.pipeline.colorspace.get_ocio_config_colorspaces')
@@ -49,8 +54,18 @@ class TestGetLabeledColorspaces(unittest.TestCase):
             'looks': {},
             'roles': {},
         }
-        result = get_labeled_colorspaces('config.ocio', include_aliases=True, include_looks=False, include_roles=False)
-        self.assertEqual(result, [('sRGB', '[colorspace] sRGB'), ('sRGB (D65)', '[alias] sRGB (D65) (sRGB)')])
+        result = get_labeled_colorspaces(
+            'config.ocio',
+            include_aliases=True,
+            include_looks=False,
+            include_roles=False
+        )
+        self.assertEqual(
+            result, [
+                ('sRGB', '[colorspace] sRGB'),
+                ('sRGB (D65)', '[alias] sRGB (D65) (sRGB)')
+            ]
+        )
 
     @patch('openpype.pipeline.colorspace.get_ocio_config_colorspaces')
     def test_includes_looks(self, mock_get_ocio_config_colorspaces):
@@ -63,8 +78,14 @@ class TestGetLabeledColorspaces(unittest.TestCase):
             },
             'roles': {},
         }
-        result = get_labeled_colorspaces('config.ocio', include_aliases=False, include_looks=True, include_roles=False)
-        self.assertEqual(result, [('sRGB to Rec.709', '[look] sRGB to Rec.709 (Rec.709)')])
+        result = get_labeled_colorspaces(
+            'config.ocio',
+            include_aliases=False,
+            include_looks=True,
+            include_roles=False
+        )
+        self.assertEqual(
+            result, [('sRGB to Rec.709', '[look] sRGB to Rec.709 (Rec.709)')])
 
     @patch('openpype.pipeline.colorspace.get_ocio_config_colorspaces')
     def test_includes_roles(self, mock_get_ocio_config_colorspaces):
@@ -77,5 +98,29 @@ class TestGetLabeledColorspaces(unittest.TestCase):
                 },
             },
         }
-        result = get_labeled_colorspaces('config.ocio', include_aliases=False, include_looks=False, include_roles=True)
+        result = get_labeled_colorspaces(
+            'config.ocio',
+            include_aliases=False,
+            include_looks=False,
+            include_roles=True
+        )
         self.assertEqual(result, [('reference', '[role] reference (sRGB)')])
+
+    @patch('openpype.pipeline.colorspace.get_ocio_config_colorspaces')
+    def test_includes_display_views(self, mock_get_ocio_config_colorspaces):
+        mock_get_ocio_config_colorspaces.return_value = {
+            'colorspaces': {},
+            'looks': {},
+            'roles': {},
+            'displays_views': {
+                'sRGB (ACES)': {
+                    'view': 'sRGB',
+                    'display': 'ACES',
+                },
+            },
+        }
+        result = get_labeled_colorspaces(
+            'config.ocio',
+            include_display_views=True
+        )
+        self.assertEqual(result, [('sRGB (ACES)', '[view (display)] sRGB (ACES)')])
