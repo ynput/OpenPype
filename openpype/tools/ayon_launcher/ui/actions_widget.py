@@ -51,6 +51,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         self._controller = controller
 
         self._items_by_id = {}
+        self._action_items_by_id = {}
         self._groups_by_id = {}
 
         self._selected_project_name = None
@@ -72,8 +73,12 @@ class ActionsQtModel(QtGui.QStandardItemModel):
     def get_item_by_id(self, action_id):
         return self._items_by_id.get(action_id)
 
+    def get_action_item_by_id(self, action_id):
+        return self._action_items_by_id.get(action_id)
+
     def _clear_items(self):
         self._items_by_id = {}
+        self._action_items_by_id = {}
         self._groups_by_id = {}
         root = self.invisibleRootItem()
         root.removeRows(0, root.rowCount())
@@ -109,6 +114,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
 
         new_items = []
         items_by_id = {}
+        action_items_by_id = {}
         for action_item_info in all_action_items_info:
             action_item, is_group = action_item_info
             icon = get_qt_icon(action_item.icon)
@@ -134,6 +140,7 @@ class ActionsQtModel(QtGui.QStandardItemModel):
                 action_item.force_not_open_workfile,
                 FORCE_NOT_OPEN_WORKFILE_ROLE)
             items_by_id[action_item.identifier] = item
+            action_items_by_id[action_item.identifier] = action_item
 
         if new_items:
             root_item.appendRows(new_items)
@@ -141,10 +148,12 @@ class ActionsQtModel(QtGui.QStandardItemModel):
         to_remove = set(self._items_by_id.keys()) - set(items_by_id.keys())
         for identifier in to_remove:
             item = self._items_by_id.pop(identifier)
+            self._action_items_by_id.pop(identifier)
             root_item.removeRow(item.row())
 
         self._groups_by_id = groups_by_id
         self._items_by_id = items_by_id
+        self._action_items_by_id = action_items_by_id
         self.refreshed.emit()
 
     def _on_controller_refresh_finished(self):
@@ -393,7 +402,7 @@ class ActionsWidget(QtWidgets.QWidget):
         if is_group:
             action_items = self._model.get_group_items(action_id)
         else:
-            action_items = [self._model.get_item_by_id(action_id)]
+            action_items = [self._model.get_action_item_by_id(action_id)]
         action_ids = {action_item.identifier for action_item in action_items}
         checkbox.stateChanged.connect(
             lambda: self._on_checkbox_changed(
