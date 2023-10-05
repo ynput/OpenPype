@@ -78,8 +78,8 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
         return [
             BoolDef("use_handles",
                     tooltip="Disable this if you don't want the publisher"
-                    " to ignore start and end handles specified in the asset data"
-                    " for this publish instance",
+                    " to ignore start and end handles specified in the"
+                    " asset data for this publish instance",
                     default=True,
                     label="Use asset handles")
         ]
