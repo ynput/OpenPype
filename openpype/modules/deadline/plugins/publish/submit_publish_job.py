@@ -134,6 +134,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     environ_job_filter = [
         "OPENPYPE_METADATA_FILE"
     ]
+
     environ_keys = [
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
@@ -913,6 +914,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     instance_skeleton_data["representations"] = []
 
                 instance_skeleton_data["representations"].append(repre)
+
         instances = None
         assert data.get("expectedFiles"), ("Submission from old Pype version"
                                            " - missing expectedFiles")
@@ -1089,7 +1091,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
-        render_target = data.get("creator_attributes")['render_target']
+        render_target = ''
+        if data.get("creator_attributes"):
+            render_target = data.get("creator_attributes")['render_target'] or ''
         if submission_type == "deadline":
             # get default deadline webservice url from deadline module
             self.deadline_url = instance.context.data["defaultDeadline"]
@@ -1098,11 +1102,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 self.deadline_url = instance.data.get("deadlineUrl")
             assert self.deadline_url, "Requires Deadline Webservice URL"
 
-            deadline_publish_job_id = \
-                self._submit_deadline_post_job(instance, render_job, instances,
-                                               review=do_not_add_review,
-                                               render_type=render_target)
-
+            if render_target:
+                deadline_publish_job_id = \
+                    self._submit_deadline_post_job(instance, render_job, instances,
+                                                review=do_not_add_review,
+                                                render_type=render_target)
+            else:
+                deadline_publish_job_id = \
+                self._submit_deadline_post_job(instance, render_job, instances)
         # publish job file
         publish_job = {
             "asset": asset,
