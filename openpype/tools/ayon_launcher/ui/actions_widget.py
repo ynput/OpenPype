@@ -101,6 +101,8 @@ class ActionsQtModel(QtGui.QStandardItemModel):
 
         groups_by_id = {}
         for action_items in items_by_label.values():
+            action_items.sort(key=lambda x: x.variant_label)
+            action_items.reverse()
             first_item = next(iter(action_items))
             all_action_items_info.append((first_item, len(action_items) > 1))
             groups_by_id[first_item.identifier] = action_items
@@ -387,9 +389,15 @@ class ActionsWidget(QtWidgets.QWidget):
             checkbox.setChecked(True)
 
         action_id = index.data(ACTION_ID_ROLE)
+        is_group = index.data(ACTION_IS_GROUP_ROLE)
+        if is_group:
+            action_items = self._model.get_group_items(action_id)
+        else:
+            action_items = [self._model.get_item_by_id(action_id)]
+        action_ids = {action_item.identifier for action_item in action_items}
         checkbox.stateChanged.connect(
             lambda: self._on_checkbox_changed(
-                action_id, checkbox.isChecked()
+                action_ids, checkbox.isChecked()
             )
         )
         action = QtWidgets.QWidgetAction(menu)
@@ -402,7 +410,7 @@ class ActionsWidget(QtWidgets.QWidget):
         menu.exec_(global_point)
         self._context_menu = None
 
-    def _on_checkbox_changed(self, action_id, is_checked):
+    def _on_checkbox_changed(self, action_ids, is_checked):
         if self._context_menu is not None:
             self._context_menu.close()
 
@@ -410,7 +418,7 @@ class ActionsWidget(QtWidgets.QWidget):
         folder_id = self._model.get_selected_folder_id()
         task_id = self._model.get_selected_task_id()
         self._controller.set_application_force_not_open_workfile(
-            project_name, folder_id, task_id, action_id, is_checked)
+            project_name, folder_id, task_id, action_ids, is_checked)
         self._model.refresh()
 
     def _on_clicked(self, index):
