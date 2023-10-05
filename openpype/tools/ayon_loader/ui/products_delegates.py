@@ -1,13 +1,13 @@
 import numbers
 from qtpy import QtWidgets, QtCore, QtGui
 
-from openpype.pipeline import HeroVersionType
 from openpype.tools.utils.lib import format_version
 
 from .products_model import (
     PRODUCT_ID_ROLE,
     VERSION_NAME_EDIT_ROLE,
     VERSION_ID_ROLE,
+    PRODUCT_IN_SCENE_ROLE,
 )
 
 
@@ -158,3 +158,34 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
 
         version_id = editor.itemData(editor.currentIndex())
         model.setData(index, version_id, VERSION_NAME_EDIT_ROLE)
+
+
+class LoadedInSceneDelegate(QtWidgets.QStyledItemDelegate):
+    """Delegate for Loaded in Scene state columns.
+
+    Shows "Yes" or "No" for 1 or 0 values, or "N/A" for other values.
+    Colorizes green or dark grey based on values.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(LoadedInSceneDelegate, self).__init__(*args, **kwargs)
+        self._colors = {
+            1: QtGui.QColor(80, 170, 80),
+            0: QtGui.QColor(90, 90, 90),
+        }
+        self._default_color = QtGui.QColor(90, 90, 90)
+
+    def displayText(self, value, locale):
+        if value == 0:
+            return "No"
+        elif value == 1:
+            return "Yes"
+        return "N/A"
+
+    def initStyleOption(self, option, index):
+        super(LoadedInSceneDelegate, self).initStyleOption(option, index)
+
+        # Colorize based on value
+        value = index.data(PRODUCT_IN_SCENE_ROLE)
+        color = self._colors.get(value, self._default_color)
+        option.palette.setBrush(QtGui.QPalette.Text, color)

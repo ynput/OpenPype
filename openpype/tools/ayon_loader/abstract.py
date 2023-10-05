@@ -28,6 +28,7 @@ class ProductItem:
         product_name,
         product_icon,
         product_type_icon,
+        product_in_scene,
         group_name,
         folder_id,
         folder_label,
@@ -38,6 +39,7 @@ class ProductItem:
         self.product_name = product_name
         self.product_icon = product_icon
         self.product_type_icon = product_type_icon
+        self.product_in_scene = product_in_scene
         self.group_name = group_name
         self.folder_id = folder_id
         self.folder_label = folder_label
@@ -50,6 +52,7 @@ class ProductItem:
             "product_name": self.product_name,
             "product_icon": self.product_icon,
             "product_type_icon": self.product_type_icon,
+            "product_in_scene": self.product_in_scene,
             "group_name": self.group_name,
             "folder_id": self.folder_id,
             "folder_label": self.folder_label,
@@ -83,7 +86,6 @@ class VersionItem:
         duration,
         handles,
         step,
-        in_scene,
         comment,
         source
     ):
@@ -98,7 +100,6 @@ class VersionItem:
         self.duration = duration
         self.handles = handles
         self.step = step
-        self.in_scene = in_scene
         self.comment = comment
         self.source = source
 
@@ -138,7 +139,6 @@ class VersionItem:
             "duration": self.duration,
             "handles": self.handles,
             "step": self.step,
-            "in_scene": self.in_scene,
             "comment": self.comment,
             "source": self.source,
         }
@@ -179,16 +179,13 @@ class RepreItem:
 
 @six.add_metaclass(ABCMeta)
 class AbstractController:
+
     @abstractmethod
     def emit_event(self, topic, data=None, source=None):
         pass
 
     @abstractmethod
     def register_event_callback(self, topic, callback):
-        pass
-
-    @abstractmethod
-    def get_current_project(self):
         pass
 
     @abstractmethod
@@ -293,4 +290,41 @@ class AbstractController:
 
     @abstractmethod
     def fill_root_in_source(self, source):
+        pass
+
+    @abstractmethod
+    def get_current_context(self):
+        """Current context is a context of the current scene.
+
+        Example output:
+            {
+                "project_name": "MyProject",
+                "folder_id": "0011223344-5566778-99",
+                "task_name": "Compositing",
+            }
+
+        Returns:
+            dict[str, Union[str, None]]: Context data.
+        """
+
+        pass
+
+    @abstractmethod
+    def is_loaded_products_supported(self):
+        """Is capable to get information about loaded products.
+
+        Returns:
+            bool: True if it is supported.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_loaded_product_ids(self):
+        """Return set of loaded product ids.
+
+        Returns:
+            set[str]: Set of loaded product ids.
+        """
+
         pass

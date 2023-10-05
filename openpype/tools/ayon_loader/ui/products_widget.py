@@ -19,7 +19,7 @@ from .products_model import (
     VERSION_ID_ROLE,
     VERSION_THUMBNAIL_ID_ROLE,
 )
-from .products_delegates import VersionDelegate
+from .products_delegates import VersionDelegate, LoadedInSceneDelegate
 from .actions_utils import show_actions_menu
 
 
@@ -130,6 +130,10 @@ class ProductsWidget(QtWidgets.QWidget):
         products_view.setItemDelegateForColumn(
             products_model.published_time_col, time_delegate)
 
+        in_scene_delegate = LoadedInSceneDelegate()
+        products_view.setItemDelegateForColumn(
+            products_model.in_scene_col, in_scene_delegate)
+
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(products_view, 1)
@@ -174,7 +178,13 @@ class ProductsWidget(QtWidgets.QWidget):
         self._selected_versions_info = []
 
         # Set initial state of widget
+        # - Hide folders column
         self._update_folders_label_visible()
+        # - Hide in scene column if is not supported (this won't change)
+        products_view.setColumnHidden(
+            products_model.in_scene_col,
+            not controller.is_loaded_products_supported()
+        )
 
     def set_name_filer(self, name):
         """Set filter of product name.

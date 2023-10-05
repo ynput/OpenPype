@@ -1,11 +1,15 @@
 import logging
 
+import ayon_api
+
 from openpype.lib.events import QueuedEventSystem
-from openpype.pipeline import Anatomy
+from openpype.pipeline import Anatomy, get_current_context
+from openpype.host import ILoadHost
 from openpype.tools.ayon_utils.models import (
     ProjectsModel,
     HierarchyModel,
     NestedCacheItem,
+    CacheItem,
 )
 
 from .abstract import AbstractController
@@ -13,11 +17,22 @@ from .models import SelectionModel, ProductsModel, LoaderActionsModel
 
 
 class LoaderController(AbstractController):
-    def __init__(self):
+    """
+
+    Args:
+        host (Optional[AbstractHost]): Host object. Defaults to None.
+    """
+
+    def __init__(self, host=None):
         self._log = None
+        self._host = host
+
         self._event_system = self._create_event_system()
 
         self._project_anatomy_cache = NestedCacheItem(levels=1)
+        self._loaded_products_cache = CacheItem(
+            default_factory=set, lifetime=60)
+
         self._selection_model = SelectionModel(self)
         self._projects_model = ProjectsModel(self)
         self._hierarchy_model = HierarchyModel(self)
@@ -46,13 +61,16 @@ class LoaderController(AbstractController):
 
     def reset(self):
         self._emit_event("controller.reset.started")
+
+        self._project_anatomy_cache.reset()
+        self._loaded_products_cache.reset()
+
         self._products_model.reset()
         self._hierarchy_model.reset()
+        self._loader_actions_model.reset()
         self._projects_model.refresh()
-        self._emit_event("controller.reset.finished")
 
-    def get_current_project(self):
-        return None
+        self._emit_event("controller.reset.finished")
 
     # Entity model wrappers
     def get_project_items(self, sender=None):
@@ -144,6 +162,57 @@ class LoaderController(AbstractController):
             return anatomy.fill_root(source)
         except Exception:
             return source
+
+    def get_current_context(self):
+        if self._host is None:
+            return {
+                "project_name": None,
+                "folder_id": None,
+                "task_name": None,
+            }
+        if hasattr(self._host, "get_current_context"):
+            context = self._host.get_current_context()
+        else:
+            context = get_current_context()
+        folder_id = None
+        project_name = context.get("project_name")
+        asset_name = context.get("asset_name")
+        if project_name and asset_name:
+            folder = ayon_api.get_folder_by_name(
+                project_name, asset_name, fields=["id"]
+            )
+            if folder:
+                folder_id = folder["id"]
+        return {
+            "project_name": project_name,
+            "folder_id": folder_id,
+            "task_name": context.get("task_name"),
+        }
+
+    def get_loaded_product_ids(self):
+        if self._host is None:
+            return set()
+
+        context = self.get_current_context()
+        project_name = context["project_name"]
+        if not project_name:
+            return set()
+
+        if not self._loaded_products_cache.is_valid:
+            if isinstance(self._host, ILoadHost):
+                containers = self._host.get_containers()
+            else:
+                containers = self._host.ls()
+            repre_ids = {c.get("representation") for c in containers}
+            repre_ids.discard(None)
+            product_ids = self._products_model.get_product_ids_by_repre_ids(
+                project_name, repre_ids
+            )
+            self._loaded_products_cache.update_data(product_ids)
+        return self._loaded_products_cache.get_data()
+
+    def is_loaded_products_supported(self):
+        return self._host is not None
 
     def _get_project_anatomy(self, project_name):
         if not project_name:

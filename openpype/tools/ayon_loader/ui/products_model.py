@@ -15,17 +15,17 @@ PRODUCT_ID_ROLE = QtCore.Qt.UserRole + 5
 PRODUCT_NAME_ROLE = QtCore.Qt.UserRole + 6
 PRODUCT_TYPE_ROLE = QtCore.Qt.UserRole + 7
 PRODUCT_TYPE_ICON_ROLE = QtCore.Qt.UserRole + 8
-VERSION_ID_ROLE = QtCore.Qt.UserRole + 9
-VERSION_HERO_ROLE = QtCore.Qt.UserRole + 10
-VERSION_NAME_ROLE = QtCore.Qt.UserRole + 11
-VERSION_NAME_EDIT_ROLE = QtCore.Qt.UserRole + 12
-VERSION_PUBLISH_TIME_ROLE = QtCore.Qt.UserRole + 13
-VERSION_AUTHOR_ROLE = QtCore.Qt.UserRole + 14
-VERSION_FRAME_RANGE_ROLE = QtCore.Qt.UserRole + 15
-VERSION_DURATION_ROLE = QtCore.Qt.UserRole + 16
-VERSION_HANDLES_ROLE = QtCore.Qt.UserRole + 17
-VERSION_STEP_ROLE = QtCore.Qt.UserRole + 18
-VERSION_IN_SCENE_ROLE = QtCore.Qt.UserRole + 19
+PRODUCT_IN_SCENE_ROLE = QtCore.Qt.UserRole + 9
+VERSION_ID_ROLE = QtCore.Qt.UserRole + 10
+VERSION_HERO_ROLE = QtCore.Qt.UserRole + 11
+VERSION_NAME_ROLE = QtCore.Qt.UserRole + 12
+VERSION_NAME_EDIT_ROLE = QtCore.Qt.UserRole + 13
+VERSION_PUBLISH_TIME_ROLE = QtCore.Qt.UserRole + 14
+VERSION_AUTHOR_ROLE = QtCore.Qt.UserRole + 15
+VERSION_FRAME_RANGE_ROLE = QtCore.Qt.UserRole + 16
+VERSION_DURATION_ROLE = QtCore.Qt.UserRole + 17
+VERSION_HANDLES_ROLE = QtCore.Qt.UserRole + 18
+VERSION_STEP_ROLE = QtCore.Qt.UserRole + 19
 VERSION_AVAILABLE_ROLE = QtCore.Qt.UserRole + 20
 VERSION_THUMBNAIL_ID_ROLE = QtCore.Qt.UserRole + 21
 
@@ -66,6 +66,7 @@ class ProductsModel(QtGui.QStandardItemModel):
     version_col = column_labels.index("Version")
     published_time_col = column_labels.index("Time")
     folders_label_col = column_labels.index("Folder")
+    in_scene_col = column_labels.index("In scene")
 
     def __init__(self, controller):
         super(ProductsModel, self).__init__()
@@ -180,7 +181,7 @@ class ProductsModel(QtGui.QStandardItemModel):
             elif col == 9:
                 role = VERSION_STEP_ROLE
             elif col == 10:
-                role = VERSION_IN_SCENE_ROLE
+                role = PRODUCT_IN_SCENE_ROLE
             elif col == 11:
                 role = VERSION_AVAILABLE_ROLE
             else:
@@ -288,7 +289,6 @@ class ProductsModel(QtGui.QStandardItemModel):
         model_item.setData(version_item.duration, VERSION_DURATION_ROLE)
         model_item.setData(version_item.handles, VERSION_HANDLES_ROLE)
         model_item.setData(version_item.step, VERSION_STEP_ROLE)
-        model_item.setData(version_item.in_scene, VERSION_IN_SCENE_ROLE)
         model_item.setData(
             version_item.thumbnail_id, VERSION_THUMBNAIL_ID_ROLE)
 
@@ -310,10 +310,14 @@ class ProductsModel(QtGui.QStandardItemModel):
             model_item.setData(product_item.product_type, PRODUCT_TYPE_ROLE)
             model_item.setData(product_type_icon, PRODUCT_TYPE_ICON_ROLE)
             model_item.setData(product_item.folder_id, FOLDER_ID_ROLE)
-            model_item.setData(product_item.folder_label, FOLDER_LABEL_ROLE)
 
             self._product_items_by_id[product_id] = product_item
             self._items_by_id[product_id] = model_item
+
+        model_item.setData(product_item.folder_label, FOLDER_LABEL_ROLE)
+        in_scene = 1 if product_item.product_in_scene else 0
+        model_item.setData(in_scene, PRODUCT_IN_SCENE_ROLE)
+
         self._set_version_data_to_product_item(model_item, last_version)
         return model_item
 

@@ -61,7 +61,6 @@ def version_item_from_entity(version):
         duration=duration,
         handles=handles,
         step=step,
-        in_scene=None,
         comment=comment,
         source=source,
     )
@@ -72,6 +71,7 @@ def product_item_from_entity(
     version_entities,
     product_type_items_by_name,
     folder_label,
+    product_in_scene,
 ):
     product_attribs = product_entity["attrib"]
     group = product_attribs.get("productGroup")
@@ -95,6 +95,7 @@ def product_item_from_entity(
         product_name=product_entity["name"],
         product_icon=product_icon,
         product_type_icon=product_type_icon,
+        product_in_scene=product_in_scene,
         group_name=group,
         folder_id=product_entity["folderId"],
         folder_label=folder_label,
@@ -194,6 +195,31 @@ class ProductsModel:
         ).values():
             return product_item
 
+    def get_product_ids_by_repre_ids(self, project_name, repre_ids):
+        """Get product ids based on passed representation ids.
+
+        Args:
+            project_name (str): Where to look for representations.
+            repre_ids (Iterable[str]): Representation ids.
+
+        Returns:
+            set[str]: Product ids for passed representation ids.
+        """
+
+        # TODO look out how to use single server call
+        if not repre_ids:
+            return set()
+        repres = ayon_api.get_representations(
+            project_name, repre_ids, fields=["versionId"]
+        )
+        version_ids = {repre["versionId"] for repre in repres}
+        if not version_ids:
+            return set()
+        versions = ayon_api.get_versions(
+            project_name, version_ids=version_ids, fields=["productId"]
+        )
+        return {v["productId"] for v in versions}
+
     def _get_product_items_by_id(self, project_name, product_ids):
         product_item_by_id = self._product_item_by_id[project_name]
         missing_product_ids = set()
@@ -244,6 +270,8 @@ class ProductsModel:
         if product_type_items is None:
             product_type_items = self.get_product_type_items(project_name)
 
+        loaded_product_ids = self._controller.get_loaded_product_ids()
+
         versions_by_product_id = collections.defaultdict(list)
         for version in versions:
             versions_by_product_id[version["productId"]].append(version)
@@ -266,6 +294,7 @@ class ProductsModel:
                 versions,
                 product_type_items_by_name,
                 folder_item.label,
+                product_id in loaded_product_ids,
             )
             output[product_id] = product_item
         return output
