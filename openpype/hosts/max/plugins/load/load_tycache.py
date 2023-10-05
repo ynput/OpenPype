@@ -49,8 +49,7 @@ class PointCloudLoader(load.LoaderPlugin):
         update_custom_attribute_data(
             node, node_list)
         with maintained_selection():
-            rt.Select(node_list)
-            for prt in rt.Selection:
+            for prt in node_list:
                 prt.filename = path
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])

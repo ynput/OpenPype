@@ -42,18 +42,17 @@ class ExtractTyCache(publish.Extractor):
 
         with maintained_selection():
             job_args = None
+            has_tyc_spline = (
+                True
+                if instance.data["tycache_type"] == "tycachespline"
+                else False
+            )
             if instance.data["tycache_type"] == "tycache":
                 job_args = self.export_particle(
                     instance.data["members"],
                     start, end, path,
-                    additional_attributes)
-            elif instance.data["tycache_type"] == "tycachespline":
-                job_args = self.export_particle(
-                    instance.data["members"],
-                    start, end, path,
                     additional_attributes,
-                    tycache_spline_enabled=True)
-
+                    tycache_spline_enabled=has_tyc_spline)
             for job in job_args:
                 rt.Execute(job)
 

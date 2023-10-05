@@ -23,15 +23,14 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
 
         invalid_object = self.get_tyflow_object(instance)
         if invalid_object:
-            report.append(f"Non tyFlow object found: {invalid_object}")
+             raise PublishValidationError(
+                 f"Non tyFlow object found: {invalid_object}")
 
         invalid_operator = self.get_tyflow_operator(instance)
         if invalid_operator:
-            report.append((
+            raise PublishValidationError((
                 "tyFlow ExportParticle operator not "
                 f"found: {invalid_operator}"))
-        if report:
-            raise PublishValidationError(f"{report}")
 
     def get_tyflow_object(self, instance):
         """Get the nodes which are not tyFlow object(s)
@@ -46,7 +45,7 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
         """
         invalid = []
         container = instance.data["instance_node"]
-        self.log.info(f"Validating tyFlow container for {container}")
+        self.log.debug(f"Validating tyFlow container for {container}")
 
         selection_list = instance.data["members"]
         for sel in selection_list:
@@ -61,7 +60,8 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
         return invalid
 
     def get_tyflow_operator(self, instance):
-        """_summary_
+        """Check if the Export Particle Operators in the node
+        connections.
 
         Args:
             instance (str): instance node
@@ -73,7 +73,7 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
         """
         invalid = []
         container = instance.data["instance_node"]
-        self.log.info(f"Validating tyFlow object for {container}")
+        self.log.debug(f"Validating tyFlow object for {container}")
         selection_list = instance.data["members"]
         bool_list = []
         for sel in selection_list:
@@ -88,7 +88,7 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
             # if the export_particles property is not there
             # it means there is not a "Export Particle" operator
             if "True" not in bool_list:
-                self.log.error("Operator 'Export Particles' not found!")
+                self.log.error("Operator 'Export Particles' not found.")
                 invalid.append(sel)
 
         return invalid
