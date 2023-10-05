@@ -147,7 +147,6 @@ class PointCacheAlembicLoader(plugin.Loader):
         if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
             path = self.filepath_from_context(context)
 
-
             self.import_and_containerize(
                 path, asset_dir, asset_name, container_name,
                 frame_start, frame_end)
