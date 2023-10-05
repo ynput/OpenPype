@@ -649,30 +649,43 @@ def generate_sequence(h, h_dir):
     return sequence, (min_frame, max_frame)
 
 
-def replace_static_mesh_actors(old_assets, new_assets):
+def _get_comps_and_assets(
+    component_class, asset_class, old_assets, new_assets
+):
     eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    smes = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
-
     comps = eas.get_all_level_actors_components()
-    static_mesh_comps = [
-        c for c in comps if isinstance(c, unreal.StaticMeshComponent)
+    components = [
+        c for c in comps if isinstance(c, component_class)
     ]
 
     # Get all the static meshes among the old assets in a dictionary with
     # the name as key
-    old_meshes = {}
+    selected_old_assets = {}
     for a in old_assets:
         asset = unreal.EditorAssetLibrary.load_asset(a)
-        if isinstance(asset, unreal.StaticMesh):
-            old_meshes[asset.get_name()] = asset
+        if isinstance(asset, asset_class):
+            selected_old_assets[asset.get_name()] = asset
 
     # Get all the static meshes among the new assets in a dictionary with
     # the name as key
-    new_meshes = {}
+    selected_new_assets = {}
     for a in new_assets:
         asset = unreal.EditorAssetLibrary.load_asset(a)
-        if isinstance(asset, unreal.StaticMesh):
-            new_meshes[asset.get_name()] = asset
+        if isinstance(asset, asset_class):
+            selected_new_assets[asset.get_name()] = asset
+
+    return components, selected_old_assets, selected_new_assets
+
+
+def replace_static_mesh_actors(old_assets, new_assets):
+    smes = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+
+    static_mesh_comps, old_meshes, new_meshes = _get_comps_and_assets(
+        unreal.StaticMeshComponent,
+        unreal.StaticMesh,
+        old_assets,
+        new_assets
+    )
 
     for old_name, old_mesh in old_meshes.items():
         new_mesh = new_meshes.get(old_name)
@@ -685,28 +698,12 @@ def replace_static_mesh_actors(old_assets, new_assets):
 
 
 def replace_skeletal_mesh_actors(old_assets, new_assets):
-    eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-
-    comps = eas.get_all_level_actors_components()
-    skeletal_mesh_comps = [
-        c for c in comps if isinstance(c, unreal.SkeletalMeshComponent)
-    ]
-
-    # Get all the static meshes among the old assets in a dictionary with
-    # the name as key
-    old_meshes = {}
-    for a in old_assets:
-        asset = unreal.EditorAssetLibrary.load_asset(a)
-        if isinstance(asset, unreal.SkeletalMesh):
-            old_meshes[asset.get_name()] = asset
-
-    # Get all the static meshes among the new assets in a dictionary with
-    # the name as key
-    new_meshes = {}
-    for a in new_assets:
-        asset = unreal.EditorAssetLibrary.load_asset(a)
-        if isinstance(asset, unreal.SkeletalMesh):
-            new_meshes[asset.get_name()] = asset
+    skeletal_mesh_comps, old_meshes, new_meshes = _get_comps_and_assets(
+        unreal.SkeletalMeshComponent,
+        unreal.SkeletalMesh,
+        old_assets,
+        new_assets
+    )
 
     for old_name, old_mesh in old_meshes.items():
         new_mesh = new_meshes.get(old_name)
@@ -717,6 +714,25 @@ def replace_skeletal_mesh_actors(old_assets, new_assets):
         for comp in skeletal_mesh_comps:
             if comp.get_skeletal_mesh_asset() == old_mesh:
                 comp.set_skeletal_mesh_asset(new_mesh)
+
+
+def replace_geometry_cache_actors(old_assets, new_assets):
+    geometry_cache_comps, old_caches, new_caches = _get_comps_and_assets(
+        unreal.SkeletalMeshComponent,
+        unreal.SkeletalMesh,
+        old_assets,
+        new_assets
+    )
+
+    for old_name, old_mesh in old_caches.items():
+        new_mesh = new_caches.get(old_name)
+
+        if not new_mesh:
+            continue
+
+        for comp in geometry_cache_comps:
+            if comp.get_editor_property("geometry_cache") == old_mesh:
+                comp.set_geometry_cache(new_mesh)
 
 
 def delete_previous_asset_if_unused(container, asset_content):
