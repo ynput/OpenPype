@@ -204,8 +204,6 @@ class LoadImage(load.LoaderPlugin):
         last = first = int(frame_number)
 
         # Set the global in to the start frame of the sequence
-        read_name = self._get_node_name(representation)
-        node["name"].setValue(read_name)
         node["file"].setValue(file)
         node["origfirst"].setValue(first)
         node["first"].setValue(first)
