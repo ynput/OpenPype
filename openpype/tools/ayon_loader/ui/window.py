@@ -2,7 +2,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.resources import get_openpype_icon_filepath
 from openpype.style import load_stylesheet
-from openpype.tools.utils import PlaceholderLineEdit
+from openpype.tools.utils import PlaceholderLineEdit, ErrorMessageBox
 from openpype.tools.ayon_utils.widgets import ProjectsCombobox
 from openpype.tools.ayon_loader.control import LoaderController
 
@@ -11,6 +11,67 @@ from .products_widget import ProductsWidget
 from .product_types_widget import ProductTypesView
 from .info_widget import InfoWidget
 from .repres_widget import RepresentationsWidget
+
+
+class LoadErrorMessageBox(ErrorMessageBox):
+    def __init__(self, messages, parent=None):
+        self._messages = messages
+        super(LoadErrorMessageBox, self).__init__("Loading failed", parent)
+
+    def _create_top_widget(self, parent_widget):
+        label_widget = QtWidgets.QLabel(parent_widget)
+        label_widget.setText(
+            "<span style='font-size:18pt;'>Failed to load items</span>"
+        )
+        return label_widget
+
+    def _get_report_data(self):
+        report_data = []
+        for exc_msg, tb_text, repre, product, version in self._messages:
+            report_message = (
+                "During load error happened on Product: \"{product}\""
+                " Representation: \"{repre}\" Version: {version}"
+                "\n\nError message: {message}"
+            ).format(
+                product=product,
+                repre=repre,
+                version=version,
+                message=exc_msg
+            )
+            if tb_text:
+                report_message += "\n\n{}".format(tb_text)
+            report_data.append(report_message)
+        return report_data
+
+    def _create_content(self, content_layout):
+        item_name_template = (
+            "<span style='font-weight:bold;'>Product:</span> {}<br>"
+            "<span style='font-weight:bold;'>Version:</span> {}<br>"
+            "<span style='font-weight:bold;'>Representation:</span> {}<br>"
+        )
+        exc_msg_template = "<span style='font-weight:bold'>{}</span>"
+
+        for exc_msg, tb_text, repre, product, version in self._messages:
+            line = self._create_line()
+            content_layout.addWidget(line)
+
+            item_name = item_name_template.format(product, version, repre)
+            item_name_widget = QtWidgets.QLabel(
+                item_name.replace("\n", "<br>"), self
+            )
+            item_name_widget.setWordWrap(True)
+            content_layout.addWidget(item_name_widget)
+
+            exc_msg = exc_msg_template.format(exc_msg.replace("\n", "<br>"))
+            message_label_widget = QtWidgets.QLabel(exc_msg, self)
+            message_label_widget.setWordWrap(True)
+            content_layout.addWidget(message_label_widget)
+
+            if tb_text:
+                line = self._create_line()
+                tb_widget = self._create_traceback_widget(tb_text, self)
+                content_layout.addWidget(line)
+                content_layout.addWidget(tb_widget)
 
 
 class LoaderWindow(QtWidgets.QWidget):
@@ -55,7 +116,7 @@ class LoaderWindow(QtWidgets.QWidget):
         context_splitter.setStretchFactor(0, 65)
         context_splitter.setStretchFactor(1, 35)
 
-        # Subset + version selection item
+        # Product + version selection item
         products_wrap_widget = QtWidgets.QWidget(main_splitter)
 
         products_inputs_widget = QtWidgets.QWidget(products_wrap_widget)
@@ -121,6 +182,10 @@ class LoaderWindow(QtWidgets.QWidget):
         )
         products_widget.selection_changed.connect(
             self._on_products_selection_change
+        )
+        controller.register_event_callback(
+            "load.finished",
+            self._on_load_finished,
         )
 
         self._main_splitter = main_splitter
@@ -200,3 +265,11 @@ class LoaderWindow(QtWidgets.QWidget):
             self._projects_combobox.get_current_project_name(),
             items
         )
+
+    def _on_load_finished(self, event):
+        error_info = event["error_info"]
+        if not error_info:
+            return
+
+        box = LoadErrorMessageBox(error_info, self)
+        box.show()

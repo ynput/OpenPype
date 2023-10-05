@@ -1,6 +1,9 @@
+import sys
+import traceback
 import inspect
 import copy
 import collections
+import uuid
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -24,6 +27,8 @@ from openpype.pipeline.load import (
     IncompatibleLoaderError,
 )
 from openpype.tools.ayon_utils.models import NestedCacheItem
+
+ACTIONS_MODEL_SENDER = "actions.model"
 
 
 @six.add_metaclass(ABCMeta)
@@ -220,16 +225,25 @@ class LoaderActionsModel:
         product_ids,
         representation_ids
     ):
+        event_data = {
+            "identifier": identifier,
+            "id": uuid.uuid4().hex,
+        }
+        self._controller.emit_event(
+            "load.started",
+            event_data,
+            ACTIONS_MODEL_SENDER,
+        )
         loader = self._get_loader_by_identifier(project_name, identifier)
         if representation_ids is not None:
-            self._trigger_representation_loader(
+            error_info = self._trigger_representation_loader(
                 loader,
                 options,
                 project_name,
                 representation_ids,
             )
         elif product_ids is not None:
-            self._trigger_product_loader(
+            error_info = self._trigger_product_loader(
                 loader,
                 options,
                 project_name,
@@ -238,6 +252,13 @@ class LoaderActionsModel:
         else:
             raise NotImplementedError(
                 "Invalid arguments to trigger action item")
+
+        event_data["error_info"] = error_info
+        self._controller.emit_event(
+            "load.finished",
+            event_data,
+            ACTIONS_MODEL_SENDER,
+        )
 
     def _get_loader_label(self, loader, representation=None):
         """Pull label info from loader class"""
@@ -565,11 +586,9 @@ class LoaderActionsModel:
                 "subset": product_doc,
             })
 
-        if loader.is_multiple_contexts_compatible:
-            load_with_subset_contexts(loader, product_contexts, options)
-        else:
-            for product_context in product_contexts:
-                load_with_subset_context(loader, product_context, options)
+        return self._load_products_by_loader(
+            loader, product_contexts, options
+        )
 
     def _trigger_representation_loader(
         self,
@@ -608,5 +627,123 @@ class LoaderActionsModel:
                 "representation": repre_doc,
             })
 
-        for repre_context in repre_contexts:
-            load_with_repre_context(loader, repre_context, options=options)
+        return self._load_representations_by_loader(
+            loader, repre_contexts, options
+        )
+
+    def _load_representations_by_loader(self, loader, repre_contexts, options):
+        """Loops through list of repre_contexts and loads them with one loader
+
+        Args:
+            loader (LoaderPlugin): Loader plugin to use.
+            repre_contexts (list[dict]): Full info about selected representations,
+                containing repre, version, subset, asset and project documents.
+            options (dict): Data from options.
+        """
+
+        error_info = []
+        for repre_context in repre_contexts.values():
+            version_doc = repre_context["version"]
+            if version_doc["type"] == "hero_version":
+                version_name = "Hero"
+            else:
+                version_name = version_doc.get("name")
+            try:
+                load_with_repre_context(
+                    loader,
+                    repre_context,
+                    options=options
+                )
+
+            except IncompatibleLoaderError as exc:
+                print(exc)
+                error_info.append((
+                    "Incompatible Loader",
+                    None,
+                    repre_context["representation"]["name"],
+                    repre_context["subset"]["name"],
+                    version_name
+                ))
+
+            except Exception as exc:
+                formatted_traceback = None
+                if not isinstance(exc, LoadError):
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    formatted_traceback = "".join(traceback.format_exception(
+                        exc_type, exc_value, exc_traceback
+                    ))
+
+                error_info.append((
+                    str(exc),
+                    formatted_traceback,
+                    repre_context["representation"]["name"],
+                    repre_context["subset"]["name"],
+                    version_name
+                ))
+        return error_info
+
+    def _load_products_by_loader(self, loader, version_contexts, options):
+        """Triggers load with SubsetLoader type of loaders
+
+        Args:
+            loader (SubsetLoder):
+            version_contexts (list):
+            options (dict):
+        """
+
+        error_info = []
+        if loader.is_multiple_contexts_compatible:
+            subset_names = []
+            for context in version_contexts:
+                subset_name = context.get("subset", {}).get("name") or "N/A"
+                subset_names.append(subset_name)
+            try:
+                load_with_subset_contexts(
+                    loader,
+                    version_contexts,
+                    options=options
+                )
+
+            except Exception as exc:
+                formatted_traceback = None
+                if not isinstance(exc, LoadError):
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    formatted_traceback = "".join(traceback.format_exception(
+                        exc_type, exc_value, exc_traceback
+                    ))
+                error_info.append((
+                    str(exc),
+                    formatted_traceback,
+                    None,
+                    ", ".join(subset_names),
+                    None
+                ))
+        else:
+            for version_context in version_contexts:
+                subset_name = (
+                    version_context.get("subset", {}).get("name") or "N/A"
+                )
+                try:
+                    load_with_subset_context(
+                        loader,
+                        version_context,
+                        options=options
+                    )
+
+                except Exception as exc:
+                    formatted_traceback = None
+                    if not isinstance(exc, LoadError):
+                        exc_type, exc_value, exc_traceback = sys.exc_info()
+                        formatted_traceback = "".join(traceback.format_exception(
+                            exc_type, exc_value, exc_traceback
+                        ))
+
+                    error_info.append((
+                        str(exc),
+                        formatted_traceback,
+                        None,
+                        subset_name,
+                        None
+                    ))
+
+        return error_info
