@@ -777,7 +777,7 @@ def get_context_var_changes():
     # Set Houdini Vars
     for item in houdini_vars:
         # For consistency reasons we always force all vars to be uppercase
-        item["var"] = item["var"].upper()
+        var = item["var"].upper()
 
         # get and resolve template in value
         item_value = StringTemplate.format_template(
@@ -785,27 +785,18 @@ def get_context_var_changes():
             template_data
         )
 
-        if item["var"] == "JOB" and item_value == "":
+        if var == "JOB" and item_value == "":
             # sync $JOB to $HIP if $JOB is empty
             item_value = os.environ["HIP"]
 
         if item["is_directory"]:
             item_value = item_value.replace("\\", "/")
 
-        current_value = hou.hscript("echo -n `${}`".format(item["var"]))[0]
-
-        # sync both environment variables.
-        # because houdini doesn't do that by default
-        # on opening new files
-        os.environ[item["var"]] = current_value
+        current_value = hou.hscript("echo -n `${}`".format(var))[0]
 
         if current_value != item_value:
-            houdini_vars_to_update.update(
-                {
-                    item["var"]: (
-                        current_value, item_value, item["is_directory"]
-                    )
-                }
+            houdini_vars_to_update[var] = (
+                current_value, item_value, item["is_directory"]
             )
 
     return houdini_vars_to_update
@@ -821,13 +812,13 @@ def update_houdini_vars_context():
             except OSError as e:
                 if e.errno != errno.EEXIST:
                     print(
-                        "  - Failed to create ${} dir. Maybe due to "
+                        "Failed to create ${} dir. Maybe due to "
                         "insufficient permissions.".format(var)
                     )
 
         hou.hscript("set {}={}".format(var, new))
         os.environ[var] = new
-        print("  - Updated ${} to {}".format(var, new))
+        print("Updated ${} to {}".format(var, new))
 
 
 def update_houdini_vars_context_dialog():
@@ -835,7 +826,7 @@ def update_houdini_vars_context_dialog():
     update_vars = get_context_var_changes()
     if not update_vars:
         # Nothing to change
-        print("  - Nothing to change, Houdini Vars are up to date.")
+        print("Nothing to change, Houdini Vars are up to date.")
         return
 
     message = "\n".join(
@@ -850,6 +841,6 @@ def update_houdini_vars_context_dialog():
     dialog.setButtonText("Fix")
 
     # on_show is the Fix button clicked callback
-    dialog.on_clicked_state.connect(lambda: update_houdini_vars_context())
+    dialog.on_clicked_state.connect(update_houdini_vars_context)
 
     dialog.show()
