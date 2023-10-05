@@ -151,6 +151,7 @@ class MayaCreatorBase(object):
         # We never store the instance_node as value on the node since
         # it's the node name itself
         data.pop("instance_node", None)
+        data.pop("instance_id", None)
 
         # Don't store `families` since it's up to the creator itself
         # to define the initial publish families - not a stored attribute of
@@ -227,6 +228,7 @@ class MayaCreatorBase(object):
 
         # Explicitly re-parse the node name
         node_data["instance_node"] = node
+        node_data["instance_id"] = node
 
         # If the creator plug-in specifies
         families = self.get_publish_families()

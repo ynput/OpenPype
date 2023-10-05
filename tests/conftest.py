@@ -29,6 +29,11 @@ def pytest_addoption(parser):
         help="True - only setup test, do not run any tests"
     )
 
+    parser.addoption(
+        "--mongo_url", action="store", default=None,
+        help="Provide url of the Mongo database."
+    )
+
 
 @pytest.fixture(scope="module")
 def test_data_folder(request):
@@ -53,6 +58,11 @@ def timeout(request):
 @pytest.fixture(scope="module")
 def setup_only(request):
     return request.config.getoption("--setup_only")
+
+
+@pytest.fixture(scope="module")
+def mongo_url(request):
+    return request.config.getoption("--mongo_url")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
