@@ -1,4 +1,3 @@
-from copy import deepcopy
 import re
 import os
 import json
@@ -7,6 +6,7 @@ import functools
 import platform
 import tempfile
 import warnings
+from copy import deepcopy
 
 from openpype import PACKAGE_DIR
 from openpype.settings import get_project_settings
@@ -533,13 +533,63 @@ def get_ocio_config_colorspaces(config_path):
     return CachedData.ocio_config_colorspaces[config_path]
 
 
-def get_labeled_colorspaces(
-    config_path,
+def convert_colorspace_enumerator_item(
+    colorspace_enum_item,
+    config_items
+):
+    """Convert colorspace enumerator item to dictionary
+
+    Args:
+        colorspace_item (str): colorspace and family in couple
+        config_items (dict[str,dict]): colorspace data
+
+    Returns:
+        dict: colorspace data
+    """
+    # split string with `::` separator and set first as key and second as value
+    item_type, item_name = colorspace_enum_item.split("::")
+
+    item_data = None
+    if item_type == "aliases":
+        # loop through all colorspaces and find matching alias
+        for name, _data in config_items.get("colorspaces", {}).items():
+            if item_name in _data.get("aliases", []):
+                item_data = deepcopy(_data)
+                item_data.update({
+                    "name": name,
+                    "type": "colorspace"
+                })
+                break
+    else:
+        # find matching colorspace item found in labeled_colorspaces
+        item_data = config_items.get(item_type, {}).get(item_name)
+        if item_data:
+            item_data = deepcopy(item_data)
+            item_data.update({
+                "name": item_name,
+                "type": item_type
+            })
+
+    # raise exception if item is not found
+    if not item_data:
+        message_config_keys = ", ".join(
+            "'{}':{}".format(key, set(config_items.get(key, {}).keys())) for key in config_items.keys()
+        )
+        raise KeyError(
+            "Missing colorspace item '{}' in config data: [{}]".format(
+                colorspace_enum_item, message_config_keys
+            )
+        )
+
+    return item_data
+
+
+def get_colorspaces_enumerator_items(
+    config_items,
     include_aliases=False,
     include_looks=False,
     include_roles=False,
     include_display_views=False
-
 ):
     """Get all colorspace data with labels
 
@@ -547,7 +597,7 @@ def get_labeled_colorspaces(
     Families can be used for building menu and submenus in gui.
 
     Args:
-        config_path (str): path leading to config.ocio file
+        config_items (dict[str,dict]): colorspace data
         include_aliases (bool): include aliases in result
         include_looks (bool): include looks in result
         include_roles (bool): include roles in result
@@ -555,7 +605,6 @@ def get_labeled_colorspaces(
     Returns:
         list[tuple[str,str]]: colorspace and family in couple
     """
-    config_items = get_ocio_config_colorspaces(config_path)
     labeled_colorspaces = []
     aliases = set()
     colorspaces = set()
@@ -568,46 +617,61 @@ def get_labeled_colorspaces(
                 if color_data.get("aliases"):
                     aliases.update([
                         (
-                            alias_name,
+                            "aliases::{}".format(alias_name),
                             "[alias] {} ({})".format(alias_name, color_name)
                         )
                         for alias_name in color_data["aliases"]
                     ])
-                colorspaces.add(color_name)
+                colorspaces.add((
+                    "{}::{}".format(items_type, color_name),
+                    "[colorspace] {}".format(color_name)
+                ))
 
         elif items_type == "looks":
             looks.update([
-                (name, "[look] {} ({})".format(name, role_data["process_space"]))
+                (
+                    "{}::{}".format(items_type, name),
+                    "[look] {} ({})".format(name, role_data["process_space"])
+                )
                 for name, role_data in colorspace_items.items()
             ])
 
         elif items_type == "displays_views":
             display_views.update([
-                (name, "[view (display)] {}".format(name))
+                (
+                    "{}::{}".format(items_type, name),
+                    "[view (display)] {}".format(name)
+                )
                 for name, _ in colorspace_items.items()
             ])
 
         elif items_type == "roles":
             roles.update([
-                (name, "[role] {} ({})".format(name, role_data["colorspace"]))
+                (
+                    "{}::{}".format(items_type, name),
+                    "[role] {} ({})".format(name, role_data["colorspace"])
+                )
                 for name, role_data in colorspace_items.items()
             ])
 
     if roles and include_roles:
+        roles = sorted(roles, key=lambda x: x[0])
         labeled_colorspaces.extend(roles)
 
-    # add colorspace after roles so it is first in menu
-    labeled_colorspaces.extend((
-        (name, f"[colorspace] {name}") for name in colorspaces
-    ))
+    # add colorspaces as second so it is not first in menu
+    colorspaces = sorted(colorspaces, key=lambda x: x[0])
+    labeled_colorspaces.extend(colorspaces)
 
     if aliases and include_aliases:
+        aliases = sorted(aliases, key=lambda x: x[0])
         labeled_colorspaces.extend(aliases)
 
     if looks and include_looks:
+        looks = sorted(looks, key=lambda x: x[0])
         labeled_colorspaces.extend(looks)
 
     if display_views and include_display_views:
+        display_views = sorted(display_views, key=lambda x: x[0])
         labeled_colorspaces.extend(display_views)
 
     return labeled_colorspaces

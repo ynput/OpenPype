@@ -36,6 +36,7 @@ class CreateColorspaceLook(TrayPublishCreator):
         (None, "Not set")
     ]
     colorspace_attr_show = False
+    config_items = None
 
     def get_detail_description(self):
         return """# Colorspace Look
@@ -148,11 +149,13 @@ This creator publishes color space look file (LUT).
 
         if config_data:
             filepath = config_data["path"]
-            labeled_colorspaces = colorspace.get_labeled_colorspaces(
-                filepath,
+            config_items = colorspace.get_ocio_config_colorspaces(filepath)
+            labeled_colorspaces = colorspace.get_colorspaces_enumerator_items(
+                config_items,
                 include_aliases=True,
                 include_roles=True
             )
+            self.config_items = config_items
             self.colorspace_items.extend(labeled_colorspaces)
             self.enabled = True
 

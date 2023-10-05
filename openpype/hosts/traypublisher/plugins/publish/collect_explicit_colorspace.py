@@ -22,6 +22,7 @@ class CollectColorspace(pyblish.api.InstancePlugin,
         (None, "Don't override")
     ]
     colorspace_attr_show = False
+    config_items = None
 
     def process(self, instance):
         values = self.get_attr_values_from_data(instance.data)
@@ -51,11 +52,13 @@ class CollectColorspace(pyblish.api.InstancePlugin,
 
         if config_data:
             filepath = config_data["path"]
-            labeled_colorspaces = colorspace.get_labeled_colorspaces(
-                filepath,
+            config_items = colorspace.get_ocio_config_colorspaces(filepath)
+            labeled_colorspaces = colorspace.get_colorspaces_enumerator_items(
+                config_items,
                 include_aliases=True,
                 include_roles=True
             )
+            cls.config_items = config_items
             cls.colorspace_items.extend(labeled_colorspaces)
             cls.enabled = True
 
