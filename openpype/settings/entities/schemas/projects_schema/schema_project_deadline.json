@@ -289,6 +289,15 @@
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
+                        },
+                        {
+                            "type": "enum",
+                            "key": "plugin",
+                            "label": "Deadline Plugin",
+                            "enum_items": [
+                                {"Fusion": "Fusion"},
+                                {"FusionCmd": "FusionCmd"}
+                            ]
                         }
                     ]
                 },
