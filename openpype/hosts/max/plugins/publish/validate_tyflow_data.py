@@ -19,16 +19,20 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
             2. Validate if tyFlow operator Export Particle exists
 
         """
+        report = []
+
         invalid_object = self.get_tyflow_object(instance)
-        if invalid_object:
-            raise PublishValidationError(
-                f"Non tyFlow object found: {invalid_object}")
+            self.log.error(f"Non tyFlow object found: {invalid_object}")
 
         invalid_operator = self.get_tyflow_operator(instance)
         if invalid_operator:
-            raise PublishValidationError((
-                "tyFlow ExportParticle operator not "
-                f"found: {invalid_operator}"))
+            self.log.error(
+                "Operator 'Export Particles' not found in tyFlow editor.")
+        if report:
+            raise PublishValidationError(
+                "issues occurred",
+                description="Container should only include tyFlow object\n "
+                "and tyflow operator Export Particle should be in the tyFlow editor")
 
     def get_tyflow_object(self, instance):
         """Get the nodes which are not tyFlow object(s)
@@ -86,7 +90,6 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
             # if the export_particles property is not there
             # it means there is not a "Export Particle" operator
             if "True" not in bool_list:
-                self.log.error("Operator 'Export Particles' not found.")
                 invalid.append(sel)
 
         return invalid
