@@ -95,6 +95,8 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         self.log.info("Installing callbacks ... ")
         register_event_callback("init", on_init)
 
+        _set_project()
+
         if lib.IS_HEADLESS:
             self.log.info((
                 "Running in headless mode, skipping Maya save/open/new"
@@ -103,7 +105,6 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
             return
 
-        _set_project()
         self._register_callbacks()
 
         menu.install(project_settings)
