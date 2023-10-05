@@ -221,39 +221,6 @@ def build_workfile_template(*args, **kwargs):
     builder.build_template(*args, **kwargs)
 
 
-def build_workfile_sequence_template(*args, **kwargs):
-    print("Hello World")
-
-    from openpype.modules.kitsu.utils.credentials import (
-        validate_credentials,
-    )
-
-    import gazu
-    validate_credentials(login=os.environ["KITSU_LOGIN"],
-                         password=os.environ["KITSU_PWD"],
-                         kitsu_url=os.environ.get("KITSU_SERVER"))
-
-    project = os.environ["AVALON_PROJECT"]
-    asset = os.environ["AVALON_ASSET"]
-    task = os.environ["AVALON_TASK"]
-
-    print(project)
-    print(asset)
-    print(task)
-
-    project = gazu.project.get_project_by_name(project)
-    print(project.get("name"))
-    # set_credentials_envs(login, password)
-    # validate_credentials(login, password)
-
-    # from openpype.modules.kitsu.utils.credentials import (
-    #     validate_credentials,
-    #     set_credentials_envs,
-    # )
-    # builder = AETemplateBuilder(registered_host())
-    # builder.build_template(*args, **kwargs)
-
-
 def update_workfile_template(*args):
     builder = AETemplateBuilder(registered_host())
     builder.rebuild_template()
@@ -302,3 +269,119 @@ def update_placeholder(*args):
     window = WorkfileBuildPlaceholderDialog(host, builder)
     window.set_update_mode(placeholder_item)
     window.exec_()
+
+
+
+def build_workfile_sequence_template(*args, **kwargs):
+
+    from openpype.pipeline import get_current_context
+    from openpype.pipeline.workfile import get_workfile_template_key_from_context
+
+    from openpype.modules.kitsu.utils.credentials import (
+        validate_credentials,
+    )
+    import gazu
+
+    from openpype.client import get_assets, get_asset_by_name
+
+    from pprint import pprint as pp
+
+    print("Hello World")
+    print(registered_host())
+    print(kwargs)
+    # AfterEffectsServerStub
+    # openpype/hosts/aftereffects/api/ws_stub.py
+    stub = get_stub()
+    """
+    print("<<<META")
+    print(stub.get_metadata())
+    print("DATA>>>")
+    METADATA Example
+    [ {'id': 'openpype.placeholder',
+        'name': 'LOADERPLACEHOLDER',
+        'is_placeholder': True,
+        'plugin_identifier': 'aftereffects.load',
+        'uuid': '18fe42ad-2bed-45a4-9472-f60fc43d8f40',
+        'data': {
+            'builder_type': 'context_asset',
+            'family': 'image',
+            'representation': '',
+            'loader': 'CalculateOldVersions',
+            'loader_args': '',
+            'order': 0,
+            'asset': '',
+            'subset': '',
+            'hierarchy': ''
+                },
+        'members': [19]
+        },
+    ]
+    """
+    validate_credentials(login=os.environ["KITSU_LOGIN"],
+                         password=os.environ["KITSU_PWD"],
+                         kitsu_url=os.environ.get("KITSU_SERVER"))
+
+    context = get_current_context()
+
+    project = gazu.project.get_project_by_name(context["project_name"])
+    sequence = gazu.shot.get_sequence_by_name(project, context["asset_name"])
+    shots = gazu.shot.all_shots_for_sequence(sequence)
+
+    sequence_op = get_asset_by_name(context["project_name"],
+                                    context["asset_name"])
+
+    shots_op = get_assets(context["project_name"], parent_ids=[sequence_op["_id"]])
+
+    for shot in shots_op:
+
+        shot_name = shot["name"]
+        shot_start = shot["data"]["frameStart"]
+        shot_end = shot["data"]["frameEnd"]
+        shot_workfile = get_last_workfile_path(context["project_name"], shot_name, "Compositing")
+
+        break
+
+
+def get_last_workfile_path(project_name, asset_name, task_name):
+    # COPIED FROM openpype\hosts\photoshop\api\launch_logic.py
+    from openpype.pipeline.workfile import (
+        get_workfile_template_key_from_context,
+        get_last_workfile
+    )
+    from openpype.pipeline import (
+        registered_host,
+        Anatomy,
+    )
+    from openpype.pipeline.template_data import get_template_data_with_names
+    from openpype.lib import Logger, StringTemplate
+
+    """Returns last workfile path if exists"""
+    host = registered_host()
+    host_name = host.name
+    template_key = get_workfile_template_key_from_context(
+        asset_name,
+        task_name,
+        host_name,
+        project_name=project_name
+    )
+    anatomy = Anatomy(project_name)
+
+    data = get_template_data_with_names(
+        project_name, asset_name, task_name, host_name
+    )
+    data["root"] = anatomy.roots
+
+    file_template = anatomy.templates[template_key]["file"]
+
+    # Define saving file extension
+    extensions = host.get_workfile_extensions()
+
+    folder_template = anatomy.templates[template_key]["folder"]
+    work_root = StringTemplate.format_strict_template(
+        folder_template, data
+    )
+    last_workfile_path = get_last_workfile(
+        work_root, file_template, data, extensions, True
+    )
+
+    return last_workfile_path
