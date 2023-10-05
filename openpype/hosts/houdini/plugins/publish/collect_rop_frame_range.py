@@ -30,7 +30,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
         asset_data = instance.context.data["assetEntity"]["data"]
 
         attr_values = self.get_attr_values_from_data(instance.data)
-        if attr_values.get("reset_handles"):
+        if not attr_values.get("use_handles"):
             asset_data["handleStart"] = 0
             asset_data["handleEnd"] = 0
 
@@ -42,16 +42,16 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
         # Log artist friendly message about the collected frame range
         message = ""
 
-        if attr_values.get("reset_handles"):
-            message += (
-                "Reset frame handles is activated for this instance, "
-                "start and end handles are set to 0.\n"
-            )
-        else:
+        if attr_values.get("use_handles"):
             message += (
                 "Full Frame range with Handles "
                 "{0[frameStartHandle]} - {0[frameEndHandle]}\n"
                 .format(frame_data)
+            )
+        else:
+            message += (
+                "Use handles is deactivated for this instance, "
+                "start and end handles are set to 0.\n"
             )
 
         message += (
@@ -76,8 +76,10 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
     @classmethod
     def get_attribute_defs(cls):
         return [
-            BoolDef("reset_handles",
-                    tooltip="Set frame handles to zero",
-                    default=False,
-                    label="Reset frame handles")
+            BoolDef("use_handles",
+                    tooltip="Disable this if you don't want the publisher"
+                    " to ignore start and end handles specified in the asset data"
+                    " for this publish instance",
+                    default=True,
+                    label="Use asset handles")
         ]
