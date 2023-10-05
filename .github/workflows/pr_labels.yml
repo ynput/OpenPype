@@ -2,7 +2,7 @@ name: 🔖 PR labels
 
 on:
   pull_request_target:
-    types: [opened, assigned]
+    types: []
 
 jobs:
   size-label:
