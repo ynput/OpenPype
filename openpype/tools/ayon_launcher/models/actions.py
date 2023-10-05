@@ -359,9 +359,10 @@ class ActionsModel:
                     project_name, folder_id, task_id
                 )
                 force_not_open_workfile = per_action.get(identifier, False)
-                action.data["start_last_workfile"] = (
-                    not force_not_open_workfile
-                )
+                if force_not_open_workfile:
+                    action.data["start_last_workfile"] = False
+                else:
+                    action.data.pop("start_last_workfile", None)
             action.process(session)
         except Exception as exc:
             self.log.warning("Action trigger failed.", exc_info=True)
