@@ -119,6 +119,10 @@ class OpenPypeMenu(object):
         frame_action.triggered.connect(self.frame_range_callback)
         openpype_menu.addAction(frame_action)
 
+        colorspace_action = QtWidgets.QAction("Set Colorspace", openpype_menu)
+        colorspace_action.triggered.connect(self.colorspace_callback)
+        openpype_menu.addAction(colorspace_action)
+
         return openpype_menu
 
     def load_callback(self):
@@ -148,3 +152,7 @@ class OpenPypeMenu(object):
     def frame_range_callback(self):
         """Callback to reset frame range"""
         return lib.reset_frame_range()
+
+    def colorspace_callback(self):
+        """Callback to reset colorspace"""
+        return lib.reset_colorspace()

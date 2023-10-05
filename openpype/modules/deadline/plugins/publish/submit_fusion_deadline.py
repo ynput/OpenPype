@@ -35,6 +35,8 @@ class FusionSubmitDeadline(
     targets = ["local"]
 
     # presets
+    plugin = None
+
     priority = 50
     chunk_size = 1
     concurrent_tasks = 1
@@ -174,7 +176,7 @@ class FusionSubmitDeadline(
                 "SecondaryPool": instance.data.get("secondaryPool"),
                 "Group": self.group,
 
-                "Plugin": "Fusion",
+                "Plugin": self.plugin,
                 "Frames": "{start}-{end}".format(
                     start=int(instance.data["frameStartHandle"]),
                     end=int(instance.data["frameEndHandle"])

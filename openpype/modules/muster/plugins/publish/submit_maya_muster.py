@@ -25,6 +25,7 @@ def _get_template_id(renderer):
     :rtype: int
     """
 
+    # TODO: Use settings from context?
     templates = get_system_settings()["modules"]["muster"]["templates_mapping"]
     if not templates:
         raise RuntimeError(("Muster template mapping missing in "
