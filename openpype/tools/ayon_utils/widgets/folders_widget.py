@@ -56,11 +56,21 @@ class FoldersModel(QtGui.QStandardItemModel):
 
         return self._has_content
 
-    def clear(self):
+    def refresh(self):
+        """Refresh folders for last selected project.
+
+        Force to update folders model from controller. This may or may not
+        trigger query from server, that's based on controller's cache.
+        """
+
+        self.set_project_name(self._last_project_name)
+
+    def _clear_items(self):
         self._items_by_id = {}
         self._parent_id_by_id = {}
         self._has_content = False
-        super(FoldersModel, self).clear()
+        root_item = self.invisibleRootItem()
+        root_item.removeRows(0, root_item.rowCount())
 
     def get_index_by_id(self, item_id):
         """Get index by folder id.
@@ -90,7 +100,7 @@ class FoldersModel(QtGui.QStandardItemModel):
         self._is_refreshing = True
 
         if self._last_project_name != project_name:
-            self.clear()
+            self._clear_items()
         self._last_project_name = project_name
 
         thread = self._refresh_threads.get(project_name)
@@ -135,7 +145,7 @@ class FoldersModel(QtGui.QStandardItemModel):
     def _fill_items(self, folder_items_by_id):
         if not folder_items_by_id:
             if folder_items_by_id is not None:
-                self.clear()
+                self._clear_items()
             self._is_refreshing = False
             self.refreshed.emit()
             return
@@ -247,6 +257,7 @@ class FoldersWidget(QtWidgets.QWidget):
         folders_model = FoldersModel(controller)
         folders_proxy_model = RecursiveSortFilterProxyModel()
         folders_proxy_model.setSourceModel(folders_model)
+        folders_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         folders_view.setModel(folders_proxy_model)
 
@@ -293,15 +304,20 @@ class FoldersWidget(QtWidgets.QWidget):
 
         self._folders_proxy_model.setFilterFixedString(name)
 
+    def refresh(self):
+        """Refresh folders model.
+
+        Force to update folders model from controller.
+        """
+
+        self._folders_model.refresh()
+
     def _on_project_selection_change(self, event):
         project_name = event["project_name"]
         self._set_project_name(project_name)
 
     def _set_project_name(self, project_name):
         self._folders_model.set_project_name(project_name)
-
-    def _clear(self):
-        self._folders_model.clear()
 
     def _on_folders_refresh_finished(self, event):
         if event["sender"] != SENDER_NAME:
