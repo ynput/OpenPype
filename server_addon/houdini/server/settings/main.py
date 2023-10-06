@@ -4,7 +4,6 @@ from ayon_server.settings import (
     MultiplatformPathModel,
     MultiplatformPathListModel,
 )
-
 from .general import (
     GeneralSettingsModel,
     DEFAULT_GENERAL_SETTINGS
