@@ -168,7 +168,7 @@ class BasicValidateModel(BaseSettingsModel):
 
 
 class PublishPluginsModel(BaseSettingsModel):
-    CollectRopFrameRange:CollectRopFrameRangeModel = Field(
+    CollectRopFrameRange: CollectRopFrameRangeModel = Field(
         default_factory=CollectRopFrameRangeModel,
         title="Collect Rop Frame Range."
     )
