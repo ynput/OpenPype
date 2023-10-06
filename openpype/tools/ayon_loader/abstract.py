@@ -180,10 +180,6 @@ class RepreItem:
 @six.add_metaclass(ABCMeta)
 class AbstractController:
     @abstractmethod
-    def is_standard_projects_filter_enabled(self):
-        pass
-
-    @abstractmethod
     def emit_event(self, topic, data=None, source=None):
         pass
 
@@ -349,6 +345,10 @@ class AbstractController:
             bool: True if it is supported.
         """
 
+        pass
+
+    @abstractmethod
+    def is_standard_projects_filter_enabled(self):
         pass
 
     @abstractmethod

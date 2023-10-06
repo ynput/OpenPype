@@ -114,9 +114,6 @@ class LoaderController(AbstractController):
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
-    def is_standard_projects_filter_enabled(self):
-        return self._host is not None
-
     # ---------------------------------
     # Implementation of abstract methods
     # ---------------------------------
@@ -324,6 +321,9 @@ class LoaderController(AbstractController):
         return self._loaded_products_cache.get_data()
 
     def is_loaded_products_supported(self):
+        return self._host is not None
+
+    def is_standard_projects_filter_enabled(self):
         return self._host is not None
 
     def _get_project_anatomy(self, project_name):

@@ -339,7 +339,9 @@ class LoaderWindow(QtWidgets.QWidget):
 
     def _on_controller_reset(self):
         context = self._controller.get_current_context()
-        self._go_to_current_btn.setVisible(bool(context["project_name"]))
+        project_name = context["project_name"]
+        self._go_to_current_btn.setVisible(bool(project_name))
+        self._projects_combobox.set_current_context_project(project_name)
 
     def _on_load_finished(self, event):
         error_info = event["error_info"]
