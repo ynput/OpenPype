@@ -9,8 +9,8 @@ from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.lib import reset_scene_resolution
 
 
-class ValidateSceneResolution(pyblish.api.InstancePlugin,
-                              OptionalPyblishPluginMixin):
+class ValidateResolution(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """Validate the render resolution setting aligned with DB"""
 
     order = pyblish.api.ValidatorOrder - 0.01
