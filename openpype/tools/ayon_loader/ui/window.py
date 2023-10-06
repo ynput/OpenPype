@@ -84,6 +84,7 @@ class LoaderWindow(QtWidgets.QWidget):
         self.setWindowTitle("Loader")
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.Window)
 
         if controller is None:
             controller = LoaderController()
