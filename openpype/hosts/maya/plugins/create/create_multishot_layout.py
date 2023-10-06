@@ -55,7 +55,7 @@ class CreateMultishotLayout(plugin.MayaCreator):
         items_with_label = [
             dict(
                 label=current_path_parts[p] if current_path_parts[p] != current_folder["name"] else f"{current_path_parts[p]} (current)",  # noqa
-                value="/".join(current_path_parts[:p+1]),
+                value="/".join(current_path_parts[:p + 1]),
             )
             for p in range(len(current_path_parts))
         ]
