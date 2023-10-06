@@ -179,6 +179,9 @@ class RepreItem:
 
 @six.add_metaclass(ABCMeta)
 class AbstractController:
+    @abstractmethod
+    def is_standard_projects_filter_enabled(self):
+        pass
 
     @abstractmethod
     def emit_event(self, topic, data=None, source=None):
@@ -190,6 +193,23 @@ class AbstractController:
 
     @abstractmethod
     def reset(self):
+        pass
+
+    # Expected selection helpers
+    @abstractmethod
+    def get_expected_selection_data(self):
+        pass
+
+    @abstractmethod
+    def set_expected_selection(self, project_name, folder_id):
+        pass
+
+    @abstractmethod
+    def expected_project_selected(self, project_name):
+        pass
+
+    @abstractmethod
+    def expected_folder_selected(self, folder_id):
         pass
 
     # Model wrapper calls

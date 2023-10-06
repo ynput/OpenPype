@@ -7,6 +7,7 @@ from openpype.tools.utils import (
     ErrorMessageBox,
     ThumbnailPainterWidget,
     RefreshButton,
+    GoToCurrentButton,
 )
 from openpype.tools.utils.lib import center_window
 from openpype.tools.ayon_utils.widgets import ProjectsCombobox
@@ -106,14 +107,17 @@ class LoaderWindow(QtWidgets.QWidget):
         projects_combobox = ProjectsCombobox(
             controller,
             context_top_widget,
+            handle_expected_selection=True
         )
         projects_combobox.set_select_item_visible(True)
 
+        go_to_current_btn = GoToCurrentButton(context_top_widget)
         refresh_btn = RefreshButton(context_top_widget)
 
         context_top_layout = QtWidgets.QHBoxLayout(context_top_widget)
         context_top_layout.setContentsMargins(0, 0, 0, 0,)
         context_top_layout.addWidget(projects_combobox, 1)
+        context_top_layout.addWidget(go_to_current_btn, 0)
         context_top_layout.addWidget(refresh_btn, 0)
 
         folders_filter_input = PlaceholderLineEdit(context_widget)
@@ -208,6 +212,9 @@ class LoaderWindow(QtWidgets.QWidget):
         products_widget.selection_changed.connect(
             self._on_products_selection_change
         )
+        go_to_current_btn.clicked.connect(
+            self._on_go_to_current_context_click
+        )
         refresh_btn.clicked.connect(
             self._on_refresh_click
         )
@@ -227,8 +234,14 @@ class LoaderWindow(QtWidgets.QWidget):
             "selection.versions.changed",
             self._on_versions_selection_changed,
         )
+        controller.register_event_callback(
+            "controller.reset.finished",
+            self._on_controller_reset,
+        )
 
         self._main_splitter = main_splitter
+
+        self._go_to_current_btn = go_to_current_btn
         self._refresh_btn = refresh_btn
         self._projects_combobox = projects_combobox
 
@@ -311,8 +324,19 @@ class LoaderWindow(QtWidgets.QWidget):
             items
         )
 
+    def _on_go_to_current_context_click(self):
+        context = self._controller.get_current_context()
+        self._controller.set_expected_selection(
+            context["project_name"],
+            context["folder_id"],
+        )
+
     def _on_refresh_click(self):
         self._controller.reset()
+
+    def _on_controller_reset(self):
+        context = self._controller.get_current_context()
+        self._go_to_current_btn.setVisible(bool(context["project_name"]))
 
     def _on_load_finished(self, event):
         error_info = event["error_info"]
