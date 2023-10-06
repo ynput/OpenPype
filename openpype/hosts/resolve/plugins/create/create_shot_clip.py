@@ -304,7 +304,6 @@ class CreateShotClip(plugin.Creator):
         instances = []
         for timeline_item_data in selected_timeline_items:
             timeline_item = timeline_item_data["clip"]["item"]
-            ti_name = timeline_item.GetName().split(".")[0]
 
             # get openpype tag data
             tag_data = lib.get_timeline_item_pype_tag(timeline_item)
