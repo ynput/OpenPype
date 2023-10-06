@@ -27,10 +27,10 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
         if invalid:
             raise PublishValidationError(
                 "issues occurred", description=(
-                "Wrong render resolution setting. "
-                "Please use repair button to fix it.\n"
-                "If current renderer is V-Ray, "
-                "make sure vraySettings node has been created"
+                    "Wrong render resolution setting. "
+                    "Please use repair button to fix it.\n"
+                    "If current renderer is V-Ray, "
+                    "make sure vraySettings node has been created"
             ))
 
     def get_invalid_resolution(self, instance):
