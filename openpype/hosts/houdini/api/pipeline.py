@@ -14,6 +14,7 @@ import pyblish.api
 from openpype.pipeline import (
     register_creator_plugin_path,
     register_loader_plugin_path,
+    register_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
@@ -55,6 +56,7 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
+        register_inventory_action_path(INVENTORY_PATH)
 
         log.info("Installing callbacks ... ")
         # register_event_callback("init", on_init)

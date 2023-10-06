@@ -47,6 +47,18 @@
           {
               "key": "ValidateContainers",
               "label": "ValidateContainers"
+          },
+          {
+            "key": "ValidateSubsetName",
+            "label": "Validate Subset Name"
+          },
+          {
+            "key": "ValidateMeshIsStatic",
+            "label": "Validate Mesh is Static"
+          },
+          {
+            "key": "ValidateUnrealStaticMeshName",
+            "label": "Validate Unreal Static Mesh Name"
           }
       ]
     }

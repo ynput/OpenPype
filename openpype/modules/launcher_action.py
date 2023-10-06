@@ -1,3 +1,6 @@
+import os
+
+from openpype import PLUGINS_DIR, AYON_SERVER_ENABLED
 from openpype.modules import (
     OpenPypeModule,
     ITrayAction,
@@ -13,36 +16,66 @@ class LauncherAction(OpenPypeModule, ITrayAction):
         self.enabled = True
 
         # Tray attributes
-        self.window = None
+        self._window = None
 
     def tray_init(self):
-        self.create_window()
+        self._create_window()
 
-        self.add_doubleclick_callback(self.show_launcher)
+        self.add_doubleclick_callback(self._show_launcher)
 
     def tray_start(self):
         return
 
     def connect_with_modules(self, enabled_modules):
         # Register actions
-        if self.tray_initialized:
-            from openpype.tools.launcher import actions
-            actions.register_config_actions()
-            actions_paths = self.manager.collect_plugin_paths()["actions"]
-            actions.register_actions_from_paths(actions_paths)
-            actions.register_environment_actions()
-
-    def create_window(self):
-        if self.window:
+        if not self.tray_initialized:
             return
-        from openpype.tools.launcher import LauncherWindow
-        self.window = LauncherWindow()
+
+        from openpype.pipeline.actions import register_launcher_action_path
+
+        actions_dir = os.path.join(PLUGINS_DIR, "actions")
+        if os.path.exists(actions_dir):
+            register_launcher_action_path(actions_dir)
+
+        actions_paths = self.manager.collect_plugin_paths()["actions"]
+        for path in actions_paths:
+            if path and os.path.exists(path):
+                register_launcher_action_path(actions_dir)
+
+        paths_str = os.environ.get("AVALON_ACTIONS") or ""
+        if paths_str:
+            self.log.warning(
+                "WARNING: 'AVALON_ACTIONS' is deprecated. Support of this"
+                " environment variable will be removed in future versions."
+                " Please consider using 'OpenPypeModule' to define custom"
+                " action paths. Planned version to drop the support"
+                " is 3.17.2 or 3.18.0 ."
+            )
+
+        for path in paths_str.split(os.pathsep):
+            if path and os.path.exists(path):
+                register_launcher_action_path(path)
 
     def on_action_trigger(self):
-        self.show_launcher()
+        """Implementation for ITrayAction interface.
 
-    def show_launcher(self):
-        if self.window:
-            self.window.show()
-            self.window.raise_()
-            self.window.activateWindow()
+        Show launcher tool on action trigger.
+        """
+
+        self._show_launcher()
+
+    def _create_window(self):
+        if self._window:
+            return
+        if AYON_SERVER_ENABLED:
+            from openpype.tools.ayon_launcher.ui import LauncherWindow
+        else:
+            from openpype.tools.launcher import LauncherWindow
+        self._window = LauncherWindow()
+
+    def _show_launcher(self):
+        if self._window is None:
+            return
+        self._window.show()
+        self._window.raise_()
+        self._window.activateWindow()

@@ -39,7 +39,7 @@ class CollectYetiCache(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.45
     label = "Collect Yeti Cache"
-    families = ["yetiRig", "yeticache"]
+    families = ["yetiRig", "yeticache", "yeticacheUE"]
     hosts = ["maya"]
 
     def process(self, instance):

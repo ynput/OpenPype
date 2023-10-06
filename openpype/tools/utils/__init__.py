@@ -15,6 +15,10 @@ from .widgets import (
     IconButton,
     PixmapButton,
     SeparatorWidget,
+    VerticalExpandButton,
+    SquareButton,
+    RefreshButton,
+    GoToCurrentButton,
 )
 from .views import DeselectableTreeView
 from .error_dialog import ErrorMessageBox
@@ -59,6 +63,11 @@ __all__ = (
     "IconButton",
     "PixmapButton",
     "SeparatorWidget",
+
+    "VerticalExpandButton",
+    "SquareButton",
+    "RefreshButton",
+    "GoToCurrentButton",
 
     "DeselectableTreeView",
 

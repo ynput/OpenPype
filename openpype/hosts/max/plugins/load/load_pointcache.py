@@ -55,7 +55,7 @@ class AbcLoader(load.LoaderPlugin):
         selections = rt.GetCurrentSelection()
         for abc in selections:
             for cam_shape in abc.Children:
-                cam_shape.playbackType = 2
+                cam_shape.playbackType = 0
 
         namespace = unique_namespace(
             name + "_",

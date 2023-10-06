@@ -19,6 +19,19 @@
             ],
             "ext": ".ass"
         },
+        "CreateStaticMesh": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ],
+            "static_mesh_prefix": "S",
+            "collision_prefixes": [
+                "UBX",
+                "UCP",
+                "USP",
+                "UCX"
+            ]
+        },
         "CreateAlembicCamera": {
             "enabled": true,
             "default_variants": [
@@ -100,6 +113,21 @@
         },
         "ValidateContainers": {
             "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateSubsetName": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshIsStatic": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": false,
             "optional": true,
             "active": true
         }

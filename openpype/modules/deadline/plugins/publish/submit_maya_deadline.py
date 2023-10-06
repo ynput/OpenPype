@@ -290,7 +290,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     def process_submission(self):
 
         instance = self._instance
-        context = instance.context
 
         filepath = self.scene_path  # publish if `use_publish` else workfile
 
@@ -306,13 +305,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             self._patch_workfile()
 
         # Gather needed data ------------------------------------------------
-        workspace = context.data["workspaceDir"]
-        default_render_file = instance.context.data.get('project_settings')\
-            .get('maya')\
-            .get('RenderSettings')\
-            .get('default_render_image_folder')
         filename = os.path.basename(filepath)
-        dirname = os.path.join(workspace, default_render_file)
+        dirname = os.path.join(
+            cmds.workspace(query=True, rootDirectory=True),
+            cmds.workspace(fileRuleEntry="images")
+        )
 
         # Fill in common data to payload ------------------------------------
         # TODO: Replace these with collected data from CollectRender

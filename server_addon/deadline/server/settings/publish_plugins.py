@@ -124,6 +124,24 @@ class LimitGroupsSubmodel(BaseSettingsModel):
     )
 
 
+def fusion_deadline_plugin_enum():
+    """Return a list of value/label dicts for the enumerator.
+
+    Returning a list of dicts is used to allow for a custom label to be
+    displayed in the UI.
+    """
+    return [
+        {
+            "value": "Fusion",
+            "label": "Fusion"
+        },
+        {
+            "value": "FusionCmd",
+            "label": "FusionCmd"
+        }
+    ]
+
+
 class FusionSubmitDeadlineModel(BaseSettingsModel):
     enabled: bool = Field(True, title="Enabled")
     optional: bool = Field(False, title="Optional")
@@ -132,6 +150,9 @@ class FusionSubmitDeadlineModel(BaseSettingsModel):
     chunk_size: int = Field(10, title="Frame per Task")
     concurrent_tasks: int = Field(1, title="Number of concurrent tasks")
     group: str = Field("", title="Group Name")
+    plugin: str = Field("Fusion",
+                        enum_resolver=fusion_deadline_plugin_enum,
+                        title="Deadline Plugin")
 
 
 class NukeSubmitDeadlineModel(BaseSettingsModel):
@@ -208,6 +229,16 @@ class CelactionSubmitDeadlineModel(BaseSettingsModel):
     )
 
 
+class BlenderSubmitDeadlineModel(BaseSettingsModel):
+    enabled: bool = Field(True)
+    optional: bool = Field(title="Optional")
+    active: bool = Field(title="Active")
+    use_published: bool = Field(title="Use Published scene")
+    priority: int = Field(title="Priority")
+    chunk_size: int = Field(title="Frame per Task")
+    group: str = Field("", title="Group Name")
+
+
 class AOVFilterSubmodel(BaseSettingsModel):
     _layout = "expanded"
     name: str = Field(title="Host")
@@ -276,8 +307,10 @@ class PublishPluginsModel(BaseSettingsModel):
         title="After Effects to deadline")
     CelactionSubmitDeadline: CelactionSubmitDeadlineModel = Field(
         default_factory=CelactionSubmitDeadlineModel,
-        title="Celaction Submit Deadline"
-    )
+        title="Celaction Submit Deadline")
+    BlenderSubmitDeadline: BlenderSubmitDeadlineModel = Field(
+        default_factory=BlenderSubmitDeadlineModel,
+        title="Blender Submit Deadline")
     ProcessSubmittedJobOnFarm: ProcessSubmittedJobOnFarmModel = Field(
         default_factory=ProcessSubmittedJobOnFarmModel,
         title="Process submitted job on farm.")
@@ -384,6 +417,15 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "deadline_chunk_size": 10,
         "deadline_job_delay": "00:00:00:00"
     },
+    "BlenderSubmitDeadline": {
+        "enabled": True,
+        "optional": False,
+        "active": True,
+        "use_published": True,
+        "priority": 50,
+        "chunk_size": 10,
+        "group": "none"
+    },
     "ProcessSubmittedJobOnFarm": {
         "enabled": True,
         "deadline_department": "",
@@ -396,6 +438,12 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "aov_filter": [
             {
                 "name": "maya",
+                "value": [
+                    ".*([Bb]eauty).*"
+                ]
+            },
+            {
+                "name": "blender",
                 "value": [
                     ".*([Bb]eauty).*"
                 ]
