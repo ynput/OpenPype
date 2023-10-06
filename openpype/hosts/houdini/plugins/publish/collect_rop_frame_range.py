@@ -15,6 +15,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
     hosts = ["houdini"]
     order = pyblish.api.CollectorOrder
     label = "Collect RopNode Frame Range"
+    use_asset_handles = True
 
     def process(self, instance):
 
@@ -40,7 +41,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
             return
 
         # Log artist friendly message about the collected frame range
-        if attr_values.get("use_handles"):
+        if attr_values.get("use_asset_handles"):
             self.log.info(
                 "Full Frame range with Handles "
                 "{0[frameStartHandle]} - {0[frameEndHandle]}\n"
@@ -72,10 +73,10 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
     @classmethod
     def get_attribute_defs(cls):
         return [
-            BoolDef("use_handles",
+            BoolDef("use_asset_handles",
                     tooltip="Disable this if you want the publisher to"
                     " ignore start and end handles specified in the"
                     " asset data for this publish instance",
-                    default=True,
+                    default=cls.use_asset_handles,
                     label="Use asset handles")
         ]

@@ -106,6 +106,9 @@
         }
     },
     "publish": {
+        "CollectRopFrameRange": {
+            "use_asset_handles": true
+        },
         "ValidateWorkfilePaths": {
             "enabled": true,
             "optional": true,
