@@ -283,7 +283,6 @@ class CreateShotClip(plugin.Creator):
                 data=instance_data,
                 creator=self
             )
-            instance.transient_data["publish_clip"] = publish_clip
             instance.transient_data["track_item"] = track_item
             self._add_instance_to_context(instance)
 
@@ -307,10 +306,6 @@ class CreateShotClip(plugin.Creator):
             if not tag_data:
                 continue
 
-            asset = tag_data.get("asset")
-            subset = tag_data.get("subset")
-            tag_data["label"] = f"{ti_name} [{asset}-{subset}]"
-
             instance = CreatedInstance.from_existing(tag_data, self)
             instance.transient_data["track_item"] = timeline_item
             self._add_instance_to_context(instance)
@@ -324,8 +319,12 @@ class CreateShotClip(plugin.Creator):
             update_list(List[UpdateData]): Gets list of tuples. Each item
                 contain changed instance and it's changes.
         """
-        # TODO: Implement this
-        pass
+        for created_inst, _changes in update_list:
+            track_item = created_inst.transient_data["track_item"]
+            data = created_inst.data_to_store()
+            self.log.info(f"Storing data: {data}")
+
+            lib.imprint(track_item, data)
 
     def remove_instances(self, instances):
         """Remove instance marker from track item.
