@@ -262,6 +262,7 @@ class CreateShotClip(plugin.Creator):
                 pre_create_data,
                 media_pool_folder,
                 rename_index=i,
+                # TODO: Refactor `avalon` to more sensible argument name
                 avalon=instance_data)
 
             track_item = publish_clip.convert()
