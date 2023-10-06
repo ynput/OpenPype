@@ -29,9 +29,8 @@ class FolderItem:
         parent_id (Union[str, None]): Parent folder id. If 'None' then project
             is parent.
         name (str): Name of folder.
-        label (str): Folder label.
-        icon_name (str): Name of icon from font awesome.
-        icon_color (str): Hex color string that will be used for icon.
+        label (Union[str, None]): Folder label.
+        icon (Union[dict[str, Any], None]): Icon definition.
     """
 
     def __init__(
