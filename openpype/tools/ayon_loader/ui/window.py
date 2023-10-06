@@ -110,6 +110,9 @@ class LoaderWindow(QtWidgets.QWidget):
             handle_expected_selection=True
         )
         projects_combobox.set_select_item_visible(True)
+        projects_combobox.set_standard_filter_enabled(
+            controller.is_standard_projects_filter_enabled()
+        )
 
         go_to_current_btn = GoToCurrentButton(context_top_widget)
         refresh_btn = RefreshButton(context_top_widget)
