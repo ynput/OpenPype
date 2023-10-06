@@ -30,7 +30,8 @@ class LoaderController(AbstractController):
 
         self._event_system = self._create_event_system()
 
-        self._project_anatomy_cache = NestedCacheItem(levels=1)
+        self._project_anatomy_cache = NestedCacheItem(
+            levels=1, lifetime=60)
         self._loaded_products_cache = CacheItem(
             default_factory=set, lifetime=60)
 

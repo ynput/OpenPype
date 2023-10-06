@@ -6,6 +6,7 @@ from openpype.tools.utils import (
     PlaceholderLineEdit,
     ErrorMessageBox,
     ThumbnailPainterWidget,
+    RefreshButton,
 )
 from openpype.tools.utils.lib import center_window
 from openpype.tools.ayon_utils.widgets import ProjectsCombobox
@@ -101,8 +102,19 @@ class LoaderWindow(QtWidgets.QWidget):
         # Context selection widget
         context_widget = QtWidgets.QWidget(context_splitter)
 
-        projects_combobox = ProjectsCombobox(controller, context_widget)
+        context_top_widget = QtWidgets.QWidget(context_widget)
+        projects_combobox = ProjectsCombobox(
+            controller,
+            context_top_widget,
+        )
         projects_combobox.set_select_item_visible(True)
+
+        refresh_btn = RefreshButton(context_top_widget)
+
+        context_top_layout = QtWidgets.QHBoxLayout(context_top_widget)
+        context_top_layout.setContentsMargins(0, 0, 0, 0,)
+        context_top_layout.addWidget(projects_combobox, 1)
+        context_top_layout.addWidget(refresh_btn, 0)
 
         folders_filter_input = PlaceholderLineEdit(context_widget)
         folders_filter_input.setPlaceholderText("Folder name filter...")
@@ -113,7 +125,7 @@ class LoaderWindow(QtWidgets.QWidget):
 
         context_layout = QtWidgets.QVBoxLayout(context_widget)
         context_layout.setContentsMargins(0, 0, 0, 0)
-        context_layout.addWidget(projects_combobox, 0)
+        context_layout.addWidget(context_top_widget, 0)
         context_layout.addWidget(folders_filter_input, 0)
         context_layout.addWidget(folders_widget, 1)
 
@@ -196,6 +208,9 @@ class LoaderWindow(QtWidgets.QWidget):
         products_widget.selection_changed.connect(
             self._on_products_selection_change
         )
+        refresh_btn.clicked.connect(
+            self._on_refresh_click
+        )
         controller.register_event_callback(
             "load.finished",
             self._on_load_finished,
@@ -214,6 +229,7 @@ class LoaderWindow(QtWidgets.QWidget):
         )
 
         self._main_splitter = main_splitter
+        self._refresh_btn = refresh_btn
         self._projects_combobox = projects_combobox
 
         self._folders_filter_input = folders_filter_input
@@ -294,6 +310,9 @@ class LoaderWindow(QtWidgets.QWidget):
             self._projects_combobox.get_current_project_name(),
             items
         )
+
+    def _on_refresh_click(self):
+        self._controller.reset()
 
     def _on_load_finished(self, event):
         error_info = event["error_info"]
