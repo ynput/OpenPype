@@ -28,8 +28,6 @@ from openpype.lib import (
 from openpype.pipeline import (
     legacy_io,
     get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name,
     register_loader_plugin_path,
     register_inventory_action_path,
     register_creator_plugin_path,
@@ -108,7 +106,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         _set_project()
         self._register_callbacks()
 
-        menu.install()
+        menu.install(project_settings)
 
         register_event_callback("save", on_save)
         register_event_callback("open", on_open)

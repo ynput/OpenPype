@@ -372,6 +372,151 @@
             ]
         },
         {
+            "type": "label",
+            "label": "^ Settings and for <span style=\"color:#FF0000\";><b>ExtractReviewDataMov</b></span> is deprecated and will be soon removed.  <br> Please use <b>ExtractReviewIntermediates</b> instead."
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ExtractReviewIntermediates",
+            "label": "ExtractReviewIntermediates",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "viewer_lut_raw",
+                    "label": "Viewer LUT raw"
+                },
+                {
+                    "key": "outputs",
+                    "label": "Output Definitions",
+                    "type": "dict-modifiable",
+                    "highlight_content": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "dict",
+                                "collapsible": false,
+                                "key": "filter",
+                                "label": "Filtering",
+                                "children": [
+                                    {
+                                        "key": "task_types",
+                                        "label": "Task types",
+                                        "type": "task-types-enum"
+                                    },
+                                    {
+                                        "key": "families",
+                                        "label": "Families",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "subsets",
+                                        "label": "Subsets",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "read_raw",
+                                "label": "Read colorspace RAW",
+                                "default": false
+                            },
+                            {
+                                "type": "text",
+                                "key": "viewer_process_override",
+                                "label": "Viewer Process colorspace profile override"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "bake_viewer_process",
+                                "label": "Bake Viewer Process"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "bake_viewer_input_process",
+                                "label": "Bake Viewer Input Process (LUTs)"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "key": "reformat_nodes_config",
+                                "type": "dict",
+                                "label": "Reformat Nodes",
+                                "collapsible": true,
+                                "checkbox_key": "enabled",
+                                "children": [
+                                    {
+                                        "type": "boolean",
+                                        "key": "enabled",
+                                        "label": "Enabled"
+                                    },
+                                    {
+                                        "type": "label",
+                                        "label": "Reposition knobs supported only.<br/>You can add multiple reformat nodes <br/>and set their knobs. Order of reformat <br/>nodes is important. First reformat node <br/>will be applied first and last reformat <br/>node will be applied last."
+                                    },
+                                    {
+                                        "key": "reposition_nodes",
+                                        "type": "list",
+                                        "label": "Reposition nodes",
+                                        "object_type": {
+                                            "type": "dict",
+                                            "children": [
+                                                {
+                                                    "key": "node_class",
+                                                    "label": "Node class",
+                                                    "type": "text"
+                                                },
+                                                {
+                                                    "type": "schema_template",
+                                                    "name": "template_nuke_knob_inputs",
+                                                    "template_data": [
+                                                        {
+                                                            "label": "Node knobs",
+                                                            "key": "knobs"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "extension",
+                                "label": "Write node file type"
+                            },
+                            {
+                                "key": "add_custom_tags",
+                                "label": "Add custom tags",
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        ]
+                    }
+                }
+
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "ExtractSlateFrame",

@@ -289,6 +289,15 @@
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
+                        },
+                        {
+                            "type": "enum",
+                            "key": "plugin",
+                            "label": "Deadline Plugin",
+                            "enum_items": [
+                                {"Fusion": "Fusion"},
+                                {"FusionCmd": "FusionCmd"}
+                            ]
                         }
                     ]
                 },
@@ -528,6 +537,50 @@
                             "type": "text",
                             "key": "deadline_job_delay",
                             "label": "Delay job (timecode dd:hh:mm:ss)"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "BlenderSubmitDeadline",
+                    "label": "Blender Submit to Deadline",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "use_published",
+                            "label": "Use Published scene"
+                        },
+                        {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "number",
+                            "key": "chunk_size",
+                            "label": "Frame per Task"
+                        },
+                        {
+                            "type": "text",
+                            "key": "group",
+                            "label": "Group Name"
                         }
                     ]
                 },

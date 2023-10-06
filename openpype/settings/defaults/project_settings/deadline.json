@@ -52,7 +52,8 @@
             "priority": 50,
             "chunk_size": 10,
             "concurrent_tasks": 1,
-            "group": ""
+            "group": "",
+            "plugin": "Fusion"
         },
         "NukeSubmitDeadline": {
             "enabled": true,
@@ -99,6 +100,15 @@
             "deadline_chunk_size": 10,
             "deadline_job_delay": "00:00:00:00"
         },
+        "BlenderSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "use_published": true,
+            "priority": 50,
+            "chunk_size": 10,
+            "group": "none"
+        },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,
             "deadline_department": "",
@@ -110,6 +120,9 @@
             "skip_integration_repre_list": [],
             "aov_filter": {
                 "maya": [
+                    ".*([Bb]eauty).*"
+                ],
+                "blender": [
                     ".*([Bb]eauty).*"
                 ],
                 "aftereffects": [

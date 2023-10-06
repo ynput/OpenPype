@@ -501,6 +501,60 @@
                 }
             }
         },
+        "ExtractReviewIntermediates": {
+            "enabled": true,
+            "viewer_lut_raw": false,
+            "outputs": {
+                "baking": {
+                    "filter": {
+                        "task_types": [],
+                        "families": [],
+                        "subsets": []
+                    },
+                    "read_raw": false,
+                    "viewer_process_override": "",
+                    "bake_viewer_process": true,
+                    "bake_viewer_input_process": true,
+                    "reformat_nodes_config": {
+                        "enabled": false,
+                        "reposition_nodes": [
+                            {
+                                "node_class": "Reformat",
+                                "knobs": [
+                                    {
+                                        "type": "text",
+                                        "name": "type",
+                                        "value": "to format"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "name": "format",
+                                        "value": "HD_1080"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "name": "filter",
+                                        "value": "Lanczos6"
+                                    },
+                                    {
+                                        "type": "bool",
+                                        "name": "black_outside",
+                                        "value": true
+                                    },
+                                    {
+                                        "type": "bool",
+                                        "name": "pbb",
+                                        "value": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "extension": "mov",
+                    "add_custom_tags": []
+                }
+            }
+        },
         "ExtractSlateFrame": {
             "viewer_lut_raw": false,
             "key_value_mapping": {
