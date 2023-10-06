@@ -44,14 +44,20 @@ class TasksModel(QtGui.QStandardItemModel):
         # Initial state
         self._add_invalid_selection_item()
 
-    def clear(self):
+    def _clear_items(self):
         self._items_by_name = {}
         self._has_content = False
         self._remove_invalid_items()
-        super(TasksModel, self).clear()
+        root_item = self.invisibleRootItem()
+        root_item.removeRows(0, root_item.rowCount())
 
-    def refresh(self, project_name, folder_id):
-        """Refresh tasks for folder.
+    def refresh(self):
+        """Refresh tasks for last project and folder."""
+
+        self._refresh(self._last_project_name, self._last_folder_id)
+
+    def set_context(self, project_name, folder_id):
+        """Set context for which should be tasks showed.
 
         Args:
             project_name (Union[str]): Name of project.
@@ -121,7 +127,7 @@ class TasksModel(QtGui.QStandardItemModel):
         return self._empty_tasks_item
 
     def _add_invalid_item(self, item):
-        self.clear()
+        self._clear_items()
         root_item = self.invisibleRootItem()
         root_item.appendRow(item)
 
@@ -299,6 +305,7 @@ class TasksWidget(QtWidgets.QWidget):
         tasks_model = TasksModel(controller)
         tasks_proxy_model = QtCore.QSortFilterProxyModel()
         tasks_proxy_model.setSourceModel(tasks_model)
+        tasks_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         tasks_view.setModel(tasks_proxy_model)
 
@@ -334,8 +341,14 @@ class TasksWidget(QtWidgets.QWidget):
         self._handle_expected_selection = handle_expected_selection
         self._expected_selection_data = None
 
-    def _clear(self):
-        self._tasks_model.clear()
+    def refresh(self):
+        """Refresh folders for last selected project.
+
+        Force to update folders model from controller. This may or may not
+        trigger query from server, that's based on controller's cache.
+        """
+
+        self._tasks_model.refresh()
 
     def _on_tasks_refresh_finished(self, event):
         """Tasks were refreshed in controller.
@@ -353,13 +366,13 @@ class TasksWidget(QtWidgets.QWidget):
             or event["folder_id"] != self._selected_folder_id
         ):
             return
-        self._tasks_model.refresh(
+        self._tasks_model.set_context(
             event["project_name"], self._selected_folder_id
         )
 
     def _folder_selection_changed(self, event):
         self._selected_folder_id = event["folder_id"]
-        self._tasks_model.refresh(
+        self._tasks_model.set_context(
             event["project_name"], self._selected_folder_id
         )
 

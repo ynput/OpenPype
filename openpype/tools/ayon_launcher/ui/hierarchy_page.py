@@ -92,6 +92,10 @@ class HierarchyPage(QtWidgets.QWidget):
         if visible and project_name:
             self._projects_combobox.set_selection(project_name)
 
+    def refresh(self):
+        self._folders_widget.refresh()
+        self._tasks_widget.refresh()
+
     def _on_back_clicked(self):
         self._controller.set_selected_project(None)
 
