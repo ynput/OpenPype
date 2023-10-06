@@ -326,9 +326,9 @@ def build_workfile_sequence_template(*args, **kwargs):
                                  "{}_{}".format(asset_name, imported_comp.name)
                                  )
 
-                stub.add_item_as_layer_at_frame(current_comp.id,
-                                                imported_comp.id,
-                                                previous_end)
+                stub.add_item_as_layer_with_offset(current_comp.id,
+                                                   imported_comp.id,
+                                                   previous_end)
             except AttributeError as err:
                 error_messages.append((asset_name, str(err)))
                 stub.log.error("{}: {}\n".format(asset_name, str(err)))

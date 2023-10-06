@@ -715,7 +715,7 @@ class AfterEffectsServerStub():
             ret.append(item)
         return ret
 
-    def add_item_as_layer_at_frame(self, comp_id, item_id, offset):
+    def add_item_as_layer_with_offset(self, comp_id, item_id, offset):
         """
             Adds already imported FootageItem ('item_id') as a new
             layer to composition ('comp_id').
