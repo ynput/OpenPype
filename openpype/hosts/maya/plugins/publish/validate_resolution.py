@@ -34,6 +34,7 @@ class ValidateResolution(pyblish.api.InstancePlugin,
                     "make sure vraySettings node has been created"
                 )
             )
+
     @classmethod
     def get_invalid_resolution(cls, instance):
         width, height, pixelAspect = cls.get_db_resolution(instance)
