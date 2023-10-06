@@ -52,8 +52,6 @@ class CacheModelLoader(plugin.AssetLoader):
     def _process(self, libpath, asset_group, group_name):
         plugin.deselect_all()
 
-        collection = bpy.context.view_layer.active_layer_collection.collection
-
         relative = bpy.context.preferences.filepaths.use_relative_paths
         bpy.ops.wm.alembic_import(
             filepath=libpath,
@@ -76,6 +74,10 @@ class CacheModelLoader(plugin.AssetLoader):
         objects.reverse()
 
         for obj in objects:
+            # Unlink the object from all collections
+            collections = obj.users_collection
+            for collection in collections:
+                collection.objects.unlink(obj)
             name = obj.name
             obj.name = f"{group_name}:{name}"
             if obj.type != 'EMPTY':
@@ -93,8 +95,6 @@ class CacheModelLoader(plugin.AssetLoader):
             avalon_info.update({"container_name": group_name})
 
         plugin.deselect_all()
-
-        collection.objects.link(asset_group)
 
         return objects
 
@@ -129,6 +129,21 @@ class CacheModelLoader(plugin.AssetLoader):
         avalon_containers.objects.link(asset_group)
 
         objects = self._process(libpath, asset_group, group_name)
+
+        # Link the asset group to the active collection
+        collection = bpy.context.view_layer.active_layer_collection.collection
+        collection.objects.link(asset_group)
+
+        # Link the imported objects to any collection where the asset group is
+        # linked to, except the AVALON_CONTAINERS collection
+        group_collections = [
+            collection
+            for collection in asset_group.users_collection
+            if collection != avalon_containers]
+
+        for obj in objects:
+            for collection in group_collections:
+                collection.objects.link(obj)
 
         asset_group[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",
@@ -204,7 +219,20 @@ class CacheModelLoader(plugin.AssetLoader):
         mat = asset_group.matrix_basis.copy()
         self._remove(asset_group)
 
-        self._process(str(libpath), asset_group, object_name)
+        objects = self._process(str(libpath), asset_group, object_name)
+
+        # Link the imported objects to any collection where the asset group is
+        # linked to, except the AVALON_CONTAINERS collection
+        avalon_containers = bpy.data.collections.get(AVALON_CONTAINERS)
+        group_collections = [
+            collection
+            for collection in asset_group.users_collection
+            if collection != avalon_containers]
+
+        for obj in objects:
+            for collection in group_collections:
+                collection.objects.link(obj)
+
         asset_group.matrix_basis = mat
 
         metadata["libpath"] = str(libpath)
