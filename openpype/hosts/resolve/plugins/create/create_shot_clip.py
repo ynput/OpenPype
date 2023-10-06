@@ -333,7 +333,6 @@ class CreateShotClip(plugin.Creator):
             instance(List[CreatedInstance]): Instance objects which should be
                 removed.
         """
-        # TODO: Optimize this
         for instance in instances:
             track_item = instance.transient_data["track_item"]
 
