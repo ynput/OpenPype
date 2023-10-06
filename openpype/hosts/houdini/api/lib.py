@@ -831,17 +831,19 @@ def update_houdini_vars_context_dialog():
         return
 
     message = "\n".join(
-        "${}: {} -> {}".format(var, old or "None", new)
+        "${}: {} -> {}".format(var, old or "None", new or "None")
         for var, (old, new, _is_directory) in update_vars.items()
     )
+
+    # TODO: Use better UI!
     parent = hou.ui.mainQtWindow()
-    dialog = popup.PopupUpdateKeys(parent=parent)
+    dialog = popup.Popup(parent=parent)
     dialog.setModal(True)
     dialog.setWindowTitle("Houdini scene has outdated asset variables")
     dialog.setMessage(message)
     dialog.setButtonText("Fix")
 
     # on_show is the Fix button clicked callback
-    dialog.on_clicked_state.connect(update_houdini_vars_context)
+    dialog.on_clicked.connect(update_houdini_vars_context)
 
     dialog.show()
