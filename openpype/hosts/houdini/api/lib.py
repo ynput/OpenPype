@@ -577,10 +577,10 @@ def get_frame_data(node, asset_data=None, log=None):
         data["frameEndHandle"] = hou.intFrame()
         data["byFrameStep"] = 1.0
         log.debug(
-                "Node '{}' has 'Render current frame' set. "
-                "frameStart and frameEnd are set to the "
-                "current frame".format(node.path())
-            )
+            "Node '{}' has 'Render current frame' set. "
+            "frameStart and frameEnd are set to the "
+            "current frame".format(node.path())
+        )
     else:
         data["frameStartHandle"] = node.evalParm("f1")
         data["frameEndHandle"] = node.evalParm("f2")
