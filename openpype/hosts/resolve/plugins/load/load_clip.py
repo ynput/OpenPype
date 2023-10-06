@@ -170,6 +170,9 @@ class LoadClip(plugin.TimelineItemLoader):
         take_mp_item = timeline_item.GetMediaPoolItem()
         timeline = lib.get_current_timeline()
 
+        # DeleteClips function was added in Resolve 18.5+
+        # by checking None we can detect whether the
+        # function exists in Resolve
         if timeline.DeleteClips is not None:
             timeline.DeleteClips([timeline_item])
 
