@@ -275,6 +275,7 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
         folders_model = LoaderFoldersModel(controller)
         folders_proxy_model = RecursiveSortFilterProxyModel()
         folders_proxy_model.setSourceModel(folders_model)
+        folders_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         folders_label_delegate = UnderlinesFolderDelegate(folders_view)
 
