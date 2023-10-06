@@ -321,15 +321,17 @@ def get_timeline_item(media_pool_item: object,
 
 
 def get_video_track_names() -> list:
-    tracks = list()
-    track_type = "video"
     timeline = get_current_timeline()
+    if not timeline:
+        return []
+
+    track_type = "video"
 
     # get all tracks count filtered by track type
     selected_track_count = timeline.GetTrackCount(track_type)
 
     # loop all tracks and get items
-    track_index: int
+    tracks = list()
     for track_index in range(1, (int(selected_track_count) + 1)):
         track_name = timeline.GetTrackName("video", track_index)
         tracks.append(track_name)

@@ -2,288 +2,15 @@ import re
 import uuid
 
 import qargparse
-from qtpy import QtWidgets, QtCore
 
-from openpype.settings import get_current_project_settings
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
-    LegacyCreator,
     LoaderPlugin,
+    Creator as NewCreator
 )
+from openpype.lib import BoolDef
 
 from . import lib
-from .menu import load_stylesheet
-
-
-class CreatorWidget(QtWidgets.QDialog):
-
-    # output items
-    items = dict()
-
-    def __init__(self, name, info, ui_inputs, parent=None):
-        super(CreatorWidget, self).__init__(parent)
-
-        self.setObjectName(name)
-
-        self.setWindowFlags(
-            QtCore.Qt.Window
-            | QtCore.Qt.CustomizeWindowHint
-            | QtCore.Qt.WindowTitleHint
-            | QtCore.Qt.WindowCloseButtonHint
-            | QtCore.Qt.WindowStaysOnTopHint
-        )
-        self.setWindowTitle(name or "OpenPype Creator Input")
-        self.resize(500, 700)
-
-        # Where inputs and labels are set
-        self.content_widget = [QtWidgets.QWidget(self)]
-        top_layout = QtWidgets.QFormLayout(self.content_widget[0])
-        top_layout.setObjectName("ContentLayout")
-        top_layout.addWidget(Spacer(5, self))
-
-        # first add widget tag line
-        top_layout.addWidget(QtWidgets.QLabel(info))
-
-        # main dynamic layout
-        self.scroll_area = QtWidgets.QScrollArea(self, widgetResizable=True)
-        self.scroll_area.setVerticalScrollBarPolicy(
-            QtCore.Qt.ScrollBarAsNeeded)
-        self.scroll_area.setVerticalScrollBarPolicy(
-            QtCore.Qt.ScrollBarAlwaysOn)
-        self.scroll_area.setHorizontalScrollBarPolicy(
-            QtCore.Qt.ScrollBarAlwaysOff)
-        self.scroll_area.setWidgetResizable(True)
-
-        self.content_widget.append(self.scroll_area)
-
-        scroll_widget = QtWidgets.QWidget(self)
-        in_scroll_area = QtWidgets.QVBoxLayout(scroll_widget)
-        self.content_layout = [in_scroll_area]
-
-        # add preset data into input widget layout
-        self.items = self.populate_widgets(ui_inputs)
-        self.scroll_area.setWidget(scroll_widget)
-
-        # Confirmation buttons
-        btns_widget = QtWidgets.QWidget(self)
-        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
-
-        cancel_btn = QtWidgets.QPushButton("Cancel")
-        btns_layout.addWidget(cancel_btn)
-
-        ok_btn = QtWidgets.QPushButton("Ok")
-        btns_layout.addWidget(ok_btn)
-
-        # Main layout of the dialog
-        main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        main_layout.setSpacing(0)
-
-        # adding content widget
-        for w in self.content_widget:
-            main_layout.addWidget(w)
-
-        main_layout.addWidget(btns_widget)
-
-        ok_btn.clicked.connect(self._on_ok_clicked)
-        cancel_btn.clicked.connect(self._on_cancel_clicked)
-
-        stylesheet = load_stylesheet()
-        self.setStyleSheet(stylesheet)
-
-    def _on_ok_clicked(self):
-        self.result = self.value(self.items)
-        self.close()
-
-    def _on_cancel_clicked(self):
-        self.result = None
-        self.close()
-
-    def value(self, data, new_data=None):
-        new_data = new_data or dict()
-        for k, v in data.items():
-            new_data[k] = {
-                "target": None,
-                "value": None
-            }
-            if v["type"] == "dict":
-                new_data[k]["target"] = v["target"]
-                new_data[k]["value"] = self.value(v["value"])
-            if v["type"] == "section":
-                new_data.pop(k)
-                new_data = self.value(v["value"], new_data)
-            elif getattr(v["value"], "currentText", None):
-                new_data[k]["target"] = v["target"]
-                new_data[k]["value"] = v["value"].currentText()
-            elif getattr(v["value"], "isChecked", None):
-                new_data[k]["target"] = v["target"]
-                new_data[k]["value"] = v["value"].isChecked()
-            elif getattr(v["value"], "value", None):
-                new_data[k]["target"] = v["target"]
-                new_data[k]["value"] = v["value"].value()
-            elif getattr(v["value"], "text", None):
-                new_data[k]["target"] = v["target"]
-                new_data[k]["value"] = v["value"].text()
-
-        return new_data
-
-    def camel_case_split(self, text):
-        matches = re.finditer(
-            '.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', text)
-        return " ".join([str(m.group(0)).capitalize() for m in matches])
-
-    def create_row(self, layout, type, text, **kwargs):
-        # get type attribute from qwidgets
-        attr = getattr(QtWidgets, type)
-
-        # convert label text to normal capitalized text with spaces
-        label_text = self.camel_case_split(text)
-
-        # assign the new text to label widget
-        label = QtWidgets.QLabel(label_text)
-        label.setObjectName("LineLabel")
-
-        # create attribute name text strip of spaces
-        attr_name = text.replace(" ", "")
-
-        # create attribute and assign default values
-        setattr(
-            self,
-            attr_name,
-            attr(parent=self))
-
-        # assign the created attribute to variable
-        item = getattr(self, attr_name)
-        for func, val in kwargs.items():
-            if getattr(item, func):
-                func_attr = getattr(item, func)
-                if isinstance(val, tuple):
-                    func_attr(*val)
-                else:
-                    func_attr(val)
-
-        # add to layout
-        layout.addRow(label, item)
-
-        return item
-
-    def populate_widgets(self, data, content_layout=None):
-        """
-        Populate widget from input dict.
-
-        Each plugin has its own set of widget rows defined in dictionary
-        each row values should have following keys: `type`, `target`,
-        `label`, `order`, `value` and optionally also `toolTip`.
-
-        Args:
-            data (dict): widget rows or organized groups defined
-                         by types `dict` or `section`
-            content_layout (QtWidgets.QFormLayout)[optional]: used when nesting
-
-        Returns:
-            dict: redefined data dict updated with created widgets
-
-        """
-
-        content_layout = content_layout or self.content_layout[-1]
-        # fix order of process by defined order value
-        ordered_keys = list(data.keys())
-        for k, v in data.items():
-            try:
-                # try removing a key from index which should
-                # be filled with new
-                ordered_keys.pop(v["order"])
-            except IndexError:
-                pass
-            # add key into correct order
-            ordered_keys.insert(v["order"], k)
-
-        # process ordered
-        for k in ordered_keys:
-            v = data[k]
-            tool_tip = v.get("toolTip", "")
-            if v["type"] == "dict":
-                # adding spacer between sections
-                self.content_layout.append(QtWidgets.QWidget(self))
-                content_layout.addWidget(self.content_layout[-1])
-                self.content_layout[-1].setObjectName("sectionHeadline")
-
-                headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
-                headline.addWidget(Spacer(20, self))
-                headline.addWidget(QtWidgets.QLabel(v["label"]))
-
-                # adding nested layout with label
-                self.content_layout.append(QtWidgets.QWidget(self))
-                self.content_layout[-1].setObjectName("sectionContent")
-
-                nested_content_layout = QtWidgets.QFormLayout(
-                    self.content_layout[-1])
-                nested_content_layout.setObjectName("NestedContentLayout")
-                content_layout.addWidget(self.content_layout[-1])
-
-                # add nested key as label
-                data[k]["value"] = self.populate_widgets(
-                    v["value"], nested_content_layout)
-
-            if v["type"] == "section":
-                # adding spacer between sections
-                self.content_layout.append(QtWidgets.QWidget(self))
-                content_layout.addWidget(self.content_layout[-1])
-                self.content_layout[-1].setObjectName("sectionHeadline")
-
-                headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
-                headline.addWidget(Spacer(20, self))
-                headline.addWidget(QtWidgets.QLabel(v["label"]))
-
-                # adding nested layout with label
-                self.content_layout.append(QtWidgets.QWidget(self))
-                self.content_layout[-1].setObjectName("sectionContent")
-
-                nested_content_layout = QtWidgets.QFormLayout(
-                    self.content_layout[-1])
-                nested_content_layout.setObjectName("NestedContentLayout")
-                content_layout.addWidget(self.content_layout[-1])
-
-                # add nested key as label
-                data[k]["value"] = self.populate_widgets(
-                    v["value"], nested_content_layout)
-
-            elif v["type"] == "QLineEdit":
-                data[k]["value"] = self.create_row(
-                    content_layout, "QLineEdit", v["label"],
-                    setText=v["value"], setToolTip=tool_tip)
-            elif v["type"] == "QComboBox":
-                data[k]["value"] = self.create_row(
-                    content_layout, "QComboBox", v["label"],
-                    addItems=v["value"], setToolTip=tool_tip)
-            elif v["type"] == "QCheckBox":
-                data[k]["value"] = self.create_row(
-                    content_layout, "QCheckBox", v["label"],
-                    setChecked=v["value"], setToolTip=tool_tip)
-            elif v["type"] == "QSpinBox":
-                data[k]["value"] = self.create_row(
-                    content_layout, "QSpinBox", v["label"],
-                    setRange=(0, 99999),
-                    setValue=v["value"],
-                    setToolTip=tool_tip)
-        return data
-
-
-class Spacer(QtWidgets.QWidget):
-    def __init__(self, height, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-
-        self.setFixedHeight(height)
-
-        real_spacer = QtWidgets.QWidget(self)
-        real_spacer.setObjectName("Spacer")
-        real_spacer.setFixedHeight(height)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(real_spacer)
-
-        self.setLayout(layout)
 
 
 class ClipLoader:
@@ -493,30 +220,38 @@ class TimelineItemLoader(LoaderPlugin):
         pass
 
 
-class Creator(LegacyCreator):
-    """Creator class wrapper
-    """
+class Creator(NewCreator):
+    """Creator class wrapper"""
+
     marker_color = "Purple"
+    presets = {}
 
-    def __init__(self, *args, **kwargs):
-        super(Creator, self).__init__(*args, **kwargs)
+    def apply_settings(self, project_settings):
+        resolve_create_settings = (
+            project_settings.get("resolve", {}).get("create")
+        )
+        self.presets = resolve_create_settings.get(
+            self.__class__.__name__, {}
+        )
 
-        resolve_p_settings = get_current_project_settings().get("resolve")
-        self.presets = {}
-        if resolve_p_settings:
-            self.presets = resolve_p_settings["create"].get(
-                self.__class__.__name__, {})
-
+    def create(self, subset_name, instance_data, pre_create_data):
         # adding basic current context resolve objects
         self.project = lib.get_current_project()
         self.timeline = lib.get_current_timeline()
 
-        if (self.options or {}).get("useSelection"):
+        if pre_create_data.get("use_selection", False):
             self.selected = lib.get_current_timeline_items(filter=True)
         else:
             self.selected = lib.get_current_timeline_items(filter=False)
 
-        self.widget = CreatorWidget
+        # TODO: Add a way to store/imprint data
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection",
+                    label="Use selection",
+                    default=True)
+        ]
 
 
 class PublishClip:
@@ -530,8 +265,6 @@ class PublishClip:
     Returns:
         hiero.core.TrackItem: hiero track item object with openpype tag
     """
-    vertical_clip_match = dict()
-    tag_data = dict()
     types = {
         "shot": "shot",
         "folder": "folder",
@@ -555,9 +288,28 @@ class PublishClip:
     vertical_sync_default = False
     driving_layer_default = ""
 
-    def __init__(self, cls, timeline_item_data, **kwargs):
-        # populate input cls attribute onto self.[attr]
-        self.__dict__.update(cls.__dict__)
+    # Define which keys of the pre create data should also be 'tag data'
+    tag_keys = {
+        # renameHierarchy
+        "hierarchy",
+        # hierarchyData
+        "folder", "episode", "sequence", "track", "shot",
+        # publish settings
+        "audio", "sourceResolution",
+        # shot attributes
+        "workfileFrameStart", "handleStart", "handleEnd"
+    }
+
+    def __init__(self,
+                 timeline_item_data,
+                 pre_create_data=None,
+                 media_pool_folder=None,
+                 rename_index=0,
+                 avalon=None):
+
+        self.rename_index = rename_index
+        self.vertical_clip_match = dict()
+        self.tag_data = dict()
 
         # get main parent objects
         self.timeline_item_data = timeline_item_data
@@ -575,14 +327,14 @@ class PublishClip:
         self.track_index = int(timeline_item_data["track"]["index"])
 
         # adding tag.family into tag
-        if kwargs.get("avalon"):
-            self.tag_data.update(kwargs["avalon"])
+        if avalon:
+            self.tag_data.update(avalon)
 
         # adding ui inputs if any
-        self.ui_inputs = kwargs.get("ui_inputs", {})
+        self.pre_create_data = pre_create_data or {}
 
         # adding media pool folder if any
-        self.mp_folder = kwargs.get("mp_folder")
+        self.media_pool_folder = media_pool_folder
 
         # populate default data before we get other attributes
         self._populate_timeline_item_default_data()
@@ -599,8 +351,10 @@ class PublishClip:
 
         # if track name is in review track name and also if driving track name
         # is not in review track name: skip tag creation
-        if (self.track_name in self.review_layer) and (
-                self.driving_layer not in self.review_layer):
+        if (
+            self.track_name in self.review_layer and
+            self.driving_layer not in self.review_layer
+        ):
             return
 
         # deal with clip name
@@ -616,7 +370,7 @@ class PublishClip:
             lib.create_compound_clip(
                 self.timeline_item_data,
                 self.tag_data["asset"],
-                self.mp_folder
+                self.media_pool_folder
             )
 
             # add timeline_item_data selection to tag
@@ -650,38 +404,36 @@ class PublishClip:
         # define ui inputs if non gui mode was used
         self.shot_num = self.ti_index
         print(
-            "____ self.shot_num: {}".format(self.shot_num))
+            "____ self.shot_num: {}".format(self.shot_num)
+        )
 
-        # ui_inputs data or default values if gui was not used
-        self.rename = self.ui_inputs.get(
-            "clipRename", {}).get("value") or self.rename_default
-        self.clip_name = self.ui_inputs.get(
-            "clipName", {}).get("value") or self.clip_name_default
-        self.hierarchy = self.ui_inputs.get(
-            "hierarchy", {}).get("value") or self.hierarchy_default
-        self.hierarchy_data = self.ui_inputs.get(
-            "hierarchyData", {}).get("value") or \
-            self.timeline_item_default_data.copy()
-        self.count_from = self.ui_inputs.get(
-            "countFrom", {}).get("value") or self.count_from_default
-        self.count_steps = self.ui_inputs.get(
-            "countSteps", {}).get("value") or self.count_steps_default
-        self.subset_name = self.ui_inputs.get(
-            "subsetName", {}).get("value") or self.subset_name_default
-        self.subset_family = self.ui_inputs.get(
-            "subsetFamily", {}).get("value") or self.subset_family_default
-        self.vertical_sync = self.ui_inputs.get(
-            "vSyncOn", {}).get("value") or self.vertical_sync_default
-        self.driving_layer = self.ui_inputs.get(
-            "vSyncTrack", {}).get("value") or self.driving_layer_default
-        self.review_track = self.ui_inputs.get(
-            "reviewTrack", {}).get("value") or self.review_track_default
+        # publisher ui attribute inputs or default values if gui was not used
+        def get(key):
+            """Shorthand access for code readability"""
+            return self.pre_create_data.get(key)
+
+        self.rename = get("clipRename") or self.rename_default
+        self.clip_name = get("clipName") or self.clip_name_default
+        self.hierarchy = get("hierarchy") or self.hierarchy_default
+        self.count_from = get("countFrom") or self.count_from_default
+        self.count_steps = get("countSteps") or self.count_steps_default
+        self.subset_name = get("subsetName") or self.subset_name_default
+        self.subset_family = get("subsetFamily") or self.subset_family_default
+        self.vertical_sync = get("vSyncOn") or self.vertical_sync_default
+        self.driving_layer = get("vSyncTrack") or self.driving_layer_default
+        self.review_track = get("reviewTrack") or self.review_track_default
+
+        self.hierarchy_data = {
+            key: get(key) or self.timeline_item_default_data[key]
+            for key in ["folder", "episode", "sequence", "track", "shot"]
+        }
 
         # build subset name from layer name
         if self.subset_name == "<track_name>":
             self.subset_name = self.track_name
 
         # create subset for publishing
+        # TODO: Use creator `get_subset_name` to correctly define name
         self.subset = self.subset_family + self.subset_name.capitalize()
 
     def _replace_hash_to_expression(self, name, text):
@@ -711,11 +463,12 @@ class PublishClip:
 
         hierarchy_formatting_data = dict()
         _data = self.timeline_item_default_data.copy()
-        if self.ui_inputs:
+        if self.pre_create_data:
+
             # adding tag metadata from ui
-            for _k, _v in self.ui_inputs.items():
-                if _v["target"] == "tag":
-                    self.tag_data[_k] = _v["value"]
+            for _key, _value in self.pre_create_data.items():
+                if _key in self.tag_keys:
+                    self.tag_data[_key] = _value
 
             # driving layer is set as positive match
             if hero_track or self.vertical_sync:
@@ -734,16 +487,16 @@ class PublishClip:
             _data.update({"shot": self.shot_num})
 
             # solve # in test to pythonic expression
-            for _k, _v in self.hierarchy_data.items():
-                if "#" not in _v["value"]:
+            for _key, _value in self.hierarchy_data.items():
+                if "#" not in _value:
                     continue
-                self.hierarchy_data[
-                    _k]["value"] = self._replace_hash_to_expression(
-                        _k, _v["value"])
+                self.hierarchy_data[_key] = self._replace_hash_to_expression(
+                    _key, _value
+                )
 
             # fill up pythonic expresisons in hierarchy data
-            for k, _v in self.hierarchy_data.items():
-                hierarchy_formatting_data[k] = _v["value"].format(**_data)
+            for _key, _value in self.hierarchy_data.items():
+                hierarchy_formatting_data[_key] = _value.format(**_data)
         else:
             # if no gui mode then just pass default data
             hierarchy_formatting_data = self.hierarchy_data
@@ -813,7 +566,7 @@ class PublishClip:
 
         return {
             "entity_type": entity_type,
-            "entity_name": self.hierarchy_data[key]["value"].format(
+            "entity_name": self.hierarchy_data[key].format(
                 **self.timeline_item_default_data
             )
         }

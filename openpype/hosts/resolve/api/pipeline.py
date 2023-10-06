@@ -17,7 +17,8 @@ from openpype.pipeline import (
 from openpype.host import (
     HostBase,
     IWorkfileHost,
-    ILoadHost
+    ILoadHost,
+    IPublishHost
 )
 
 from . import lib
@@ -42,7 +43,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
-class ResolveHost(HostBase, IWorkfileHost, ILoadHost):
+class ResolveHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "resolve"
 
     def install(self):
@@ -92,6 +93,22 @@ class ResolveHost(HostBase, IWorkfileHost, ILoadHost):
 
     def get_containers(self):
         return ls()
+
+    def get_context_data(self):
+        # data = cmds.fileInfo("OpenPypeContext", query=True)
+        # if not data:
+        #     return {}
+        #
+        # data = data[0]  # Maya seems to return a list
+        # decoded = base64.b64decode(data).decode("utf-8")
+        # return json.loads(decoded)
+        return {}
+
+    def update_context_data(self, data, changes):
+        # json_str = json.dumps(data)
+        # encoded = base64.b64encode(json_str.encode("utf-8"))
+        # return cmds.fileInfo("OpenPypeContext", encoded)
+        pass
 
 
 def containerise(timeline_item,
@@ -255,51 +272,3 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     # Whether instances should be passthrough based on new value
     timeline_item = instance.data["item"]
     set_publish_attribute(timeline_item, new_value)
-
-
-def remove_instance(instance):
-    """Remove instance marker from track item."""
-    instance_id = instance.get("uuid")
-
-    selected_timeline_items = lib.get_current_timeline_items(
-        filter=True, selecting_color=lib.publish_clip_color)
-
-    found_ti = None
-    for timeline_item_data in selected_timeline_items:
-        timeline_item = timeline_item_data["clip"]["item"]
-
-        # get openpype tag data
-        tag_data = lib.get_timeline_item_pype_tag(timeline_item)
-        _ti_id = tag_data.get("uuid")
-        if _ti_id == instance_id:
-            found_ti = timeline_item
-            break
-
-    if found_ti is None:
-        return
-
-    # removing instance by marker color
-    print(f"Removing instance: {found_ti.GetName()}")
-    found_ti.DeleteMarkersByColor(lib.pype_marker_color)
-
-
-def list_instances():
-    """List all created instances from current workfile."""
-    listed_instances = []
-    selected_timeline_items = lib.get_current_timeline_items(
-        filter=True, selecting_color=lib.publish_clip_color)
-
-    for timeline_item_data in selected_timeline_items:
-        timeline_item = timeline_item_data["clip"]["item"]
-        ti_name = timeline_item.GetName().split(".")[0]
-
-        # get openpype tag data
-        tag_data = lib.get_timeline_item_pype_tag(timeline_item)
-
-        if tag_data:
-            asset = tag_data.get("asset")
-            subset = tag_data.get("subset")
-            tag_data["label"] = f"{ti_name} [{asset}-{subset}]"
-            listed_instances.append(tag_data)
-
-    return listed_instances

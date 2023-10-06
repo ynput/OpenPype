@@ -10,9 +10,7 @@ from .pipeline import (
     ls,
     containerise,
     update_container,
-    maintained_selection,
-    remove_instance,
-    list_instances
+    maintained_selection
 )
 
 from .lib import (
@@ -78,8 +76,6 @@ __all__ = [
     "containerise",
     "update_container",
     "maintained_selection",
-    "remove_instance",
-    "list_instances",
 
     # utils
     "get_resolve_module",
