@@ -266,6 +266,11 @@ class CreateShotClip(plugin.Creator):
                 avalon=instance_data)
 
             track_item = publish_clip.convert()
+            if track_item is None:
+                # Ignore input clips that do not convert into a track item
+                # from `PublishClip.convert`
+                continue
+
             track_item.SetClipColor(lib.publish_clip_color)
 
             instance_data = copy.deepcopy(instance_data)
