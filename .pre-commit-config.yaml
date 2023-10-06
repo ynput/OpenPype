@@ -10,5 +10,4 @@ repos:
     -   id: check-added-large-files
     -   id: no-commit-to-branch
         always_run: false
-        # args: [ '--pattern', '(.*)' ]
         # args: [ '--pattern', '^(?!((release|enhancement|feature|bugfix|documentation|tests|local|chore)\/[a-zA-Z0-9\-_]+)$).*' ]
