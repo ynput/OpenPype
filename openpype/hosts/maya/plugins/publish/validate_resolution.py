@@ -13,7 +13,7 @@ class ValidateResolution(pyblish.api.InstancePlugin,
                          OptionalPyblishPluginMixin):
     """Validate the render resolution setting aligned with DB"""
 
-    order = pyblish.api.ValidatorOrder - 0.01
+    order = pyblish.api.ValidatorOrder
     families = ["renderlayer"]
     hosts = ["maya"]
     label = "Validate Resolution"
@@ -26,14 +26,17 @@ class ValidateResolution(pyblish.api.InstancePlugin,
         invalid = self.get_invalid_resolution(instance)
         if invalid:
             raise PublishValidationError(
-                "issues occurred", description=(
+                "Render resolution is invalid. See log for details.",
+                description=(
                     "Wrong render resolution setting. "
                     "Please use repair button to fix it.\n"
                     "If current renderer is V-Ray, "
-                    "make sure vraySettings node has been created"))
-
-    def get_invalid_resolution(self, instance):
-        width, height, pixelAspect = self.get_db_resolution(instance)
+                    "make sure vraySettings node has been created"
+                )
+            )
+    @classmethod
+    def get_invalid_resolution(cls, instance):
+        width, height, pixelAspect = cls.get_db_resolution(instance)
         current_renderer = instance.data["renderer"]
         layer = instance.data["renderlayer"]
         invalid = False
@@ -48,11 +51,11 @@ class ValidateResolution(pyblish.api.InstancePlugin,
                     "{}.pixelAspect".format(vray_node), layer=layer
                 )
             else:
-                self.log.error(
+                cls.log.error(
                     "Can't detect VRay resolution because there is no node "
                     "named: `{}`".format(vray_node)
                 )
-                invalid = True
+                return True
         else:
             current_width = lib.get_attr_in_layer(
                 "defaultResolution.width", layer=layer)
@@ -62,7 +65,7 @@ class ValidateResolution(pyblish.api.InstancePlugin,
                 "defaultResolution.pixelAspect", layer=layer
             )
         if current_width != width or current_height != height:
-            self.log.error(
+            cls.log.error(
                 "Render resolution {}x{} does not match "
                 "asset resolution {}x{}".format(
                     current_width, current_height,
@@ -70,7 +73,7 @@ class ValidateResolution(pyblish.api.InstancePlugin,
                 ))
             invalid = True
         if current_pixelAspect != pixelAspect:
-            self.log.error(
+            cls.log.error(
                 "Render pixel aspect {} does not match "
                 "asset pixel aspect {}".format(
                     current_pixelAspect, pixelAspect
@@ -78,12 +81,15 @@ class ValidateResolution(pyblish.api.InstancePlugin,
             invalid = True
         return invalid
 
-    def get_db_resolution(self, instance):
+    @classmethod
+    def get_db_resolution(cls, instance):
         asset_doc = instance.data["assetEntity"]
         project_doc = instance.context.data["projectEntity"]
         for data in [asset_doc["data"], project_doc["data"]]:
-            if "resolutionWidth" in data and (
-                "resolutionHeight" in data and "pixelAspect" in data
+            if (
+                "resolutionWidth" in data and
+                "resolutionHeight" in data and
+                "pixelAspect" in data
             ):
                 width = data["resolutionWidth"]
                 height = data["resolutionHeight"]
@@ -95,6 +101,16 @@ class ValidateResolution(pyblish.api.InstancePlugin,
 
     @classmethod
     def repair(cls, instance):
-        layer = instance.data["renderlayer"]
-        with lib.renderlayer(layer):
+        # Usually without renderlayer overrides the renderlayers
+        # all share the same resolution value - so fixing the first
+        # will have fixed all the others too. It's much faster to
+        # check whether it's invalid first instead of switching
+        # into all layers individually
+        if not cls.get_invalid_resolution(instance):
+            cls.log.debug(
+                "Nothing to repair on instance: {}".format(instance)
+            )
+            return
+        layer_node = instance.data['setMembers']
+        with lib.renderlayer(layer_node):
             reset_scene_resolution()
