@@ -7,7 +7,11 @@ from collections.abc import Iterable
 import bpy
 from openpype.client.entities import get_representations
 from openpype.pipeline.constants import AVALON_CONTAINER_ID, AVALON_INSTANCE_ID
-from openpype.pipeline.context_tools import get_current_project_name
+from openpype.pipeline.context_tools import (
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
+)
 from openpype.pipeline.load.plugins import (
     LoaderPlugin,
     discover_loader_plugins,
@@ -433,17 +437,45 @@ def make_paths_absolute(source_filepath: Path = None):
     relative_datablocks = get_datablocks_with_filepath(absolute=False)
     remapped_datablocks = set()
     if source_filepath:
+        workfile_repre = max(
+            filter(
+                lambda r: r["context"].get("version") is not None,
+                list(get_representations(
+                    get_current_project_name(),
+                    context_filters={
+                        "asset": get_current_asset_name(),
+                        "family": "workfile",
+                        "task": {"name": get_current_task_name()},
+                    },
+                ))
+            ),
+            key=lambda r: r["context"]["version"],
+        )
+
         for d in relative_datablocks:
             try:
-                d.filepath = str(
-                    Path(
-                        bpy.path.abspath(
-                            d.filepath,
-                            start=source_filepath.parent,
+                for file in workfile_repre.get("files"):
+                    if Path(file.get("path", "")).name == Path(
+                        d.filepath
+                    ).name:
+                        d.filepath = str(
+                            Path(
+                                bpy.path.abspath(
+                                    d.filepath,
+                                )
+                            ).resolve()
                         )
-                    ).resolve()
-                )
-                remapped_datablocks.add(d)
+                        break
+                else:
+                    d.filepath = str(
+                        Path(
+                            bpy.path.abspath(
+                                d.filepath,
+                                start=source_filepath.parent,
+                            )
+                        ).resolve()
+                    )
+                    remapped_datablocks.add(d)
             except (RuntimeError, ReferenceError, OSError) as err:
                 print(err)
 
