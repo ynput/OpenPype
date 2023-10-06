@@ -40,8 +40,6 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
             return
 
         # Log artist friendly message about the collected frame range
-        message = ""
-
         if attr_values.get("use_handles"):
             self.log.info(
                 "Full Frame range with Handles "
@@ -60,7 +58,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
         )
 
         if frame_data.get("byFrameStep", 1.0) != 1.0:
-           self.log.info("Frame steps {0[byFrameStep]}".format(frame_data))
+            self.log.info("Frame steps {0[byFrameStep]}".format(frame_data))
 
         instance.data.update(frame_data)
 
