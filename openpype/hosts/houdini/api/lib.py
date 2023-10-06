@@ -573,21 +573,24 @@ def get_frame_data(node, asset_data=None, log=None):
         return data
 
     if node.evalParm("trange") == 0:
+        data["frameStartHandle"] = hou.intFrame()
+        data["frameEndHandle"] = hou.intFrame()
+        data["byFrameStep"] = 1.0
         log.debug(
-            "Node '{}' has 'Render current frame' set. "
-            "Time range data ignored.".format(node.path())
-        )
-        return data
+                "Node '{}' has 'Render current frame' set. "
+                "frameStart and frameEnd are set to the "
+                "current frame".format(node.path())
+            )
+    else:
+        data["frameStartHandle"] = node.evalParm("f1")
+        data["frameEndHandle"] = node.evalParm("f2")
+        data["byFrameStep"] = node.evalParm("f3")
 
-    data["frameStartHandle"] = node.evalParm("f1")
     data["handleStart"] = asset_data.get("handleStart", 0)
     data["frameStart"] = data["frameStartHandle"] + data["handleStart"]
 
-    data["frameEndHandle"] = node.evalParm("f2")
     data["handleEnd"] = asset_data.get("handleEnd", 0)
     data["frameEnd"] = data["frameEndHandle"] - data["handleEnd"]
-
-    data["byFrameStep"] = node.evalParm("f3")
 
     return data
 

@@ -95,8 +95,8 @@ class CollectKarmaROPRenderProducts(pyblish.api.InstancePlugin):
             return path
 
         expected_files = []
-        start = instance.data.get("frameStartHandle")
-        end = instance.data.get("frameEndHandle")
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         for i in range(int(start), (int(end) + 1)):
             expected_files.append(
