@@ -43,26 +43,24 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
         message = ""
 
         if attr_values.get("use_handles"):
-            message += (
+            self.log.info(
                 "Full Frame range with Handles "
                 "{0[frameStartHandle]} - {0[frameEndHandle]}\n"
                 .format(frame_data)
             )
         else:
-            message += (
+            self.log.info(
                 "Use handles is deactivated for this instance, "
                 "start and end handles are set to 0.\n"
             )
 
-        message += (
+        self.log.info(
             "Frame range {0[frameStart]} - {0[frameEnd]}"
             .format(frame_data)
         )
 
         if frame_data.get("byFrameStep", 1.0) != 1.0:
-            message += "\nFrame steps {0[byFrameStep]}".format(frame_data)
-
-        self.log.info(message)
+           self.log.info("Frame steps {0[byFrameStep]}".format(frame_data))
 
         instance.data.update(frame_data)
 
@@ -77,8 +75,8 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
     def get_attribute_defs(cls):
         return [
             BoolDef("use_handles",
-                    tooltip="Disable this if you don't want the publisher"
-                    " to ignore start and end handles specified in the"
+                    tooltip="Disable this if you want the publisher to"
+                    " ignore start and end handles specified in the"
                     " asset data for this publish instance",
                     default=True,
                     label="Use asset handles")
