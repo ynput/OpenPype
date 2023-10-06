@@ -1,14 +1,13 @@
 import os
 import logging
+from functools import partial
 
 from qtpy import QtWidgets, QtGui
 
 import maya.utils
 import maya.cmds as cmds
 
-from openpype.settings import get_project_settings
 from openpype.pipeline import (
-    get_current_project_name,
     get_current_asset_name,
     get_current_task_name
 )
@@ -46,12 +45,12 @@ def get_context_label():
     )
 
 
-def install():
+def install(project_settings):
     if cmds.about(batch=True):
         log.info("Skipping openpype.menu initialization in batch mode..")
         return
 
-    def deferred():
+    def add_menu():
         pyblish_icon = host_tools.get_pyblish_icon()
         parent_widget = get_main_window()
         cmds.menu(
@@ -191,7 +190,7 @@ def install():
 
         cmds.setParent(MENU_NAME, menu=True)
 
-    def add_scripts_menu():
+    def add_scripts_menu(project_settings):
         try:
             import scriptsmenu.launchformaya as launchformaya
         except ImportError:
@@ -201,9 +200,6 @@ def install():
             )
             return
 
-        # load configuration of custom menu
-        project_name = get_current_project_name()
-        project_settings = get_project_settings(project_name)
         config = project_settings["maya"]["scriptsmenu"]["definition"]
         _menu = project_settings["maya"]["scriptsmenu"]["name"]
 
@@ -225,8 +221,9 @@ def install():
     # so that it only gets called after Maya UI has initialized too.
     # This is crucial with Maya 2020+ which initializes without UI
     # first as a QCoreApplication
-    maya.utils.executeDeferred(deferred)
-    cmds.evalDeferred(add_scripts_menu, lowestPriority=True)
+    maya.utils.executeDeferred(add_menu)
+    cmds.evalDeferred(partial(add_scripts_menu, project_settings),
+                      lowestPriority=True)
 
 
 def uninstall():

@@ -26,8 +26,9 @@ class TestPipelineColorspace(TestPipeline):
 
     Example:
         cd to OpenPype repo root dir
-        poetry run python ./start.py runtests ../tests/unit/openpype/pipeline
-    """
+        poetry run python ./start.py runtests <openpype_root>/tests/unit/openpype/pipeline/test_colorspace.py
+    """  # noqa: E501
+
     TEST_FILES = [
         (
             "1csqimz8bbNcNgxtEXklLz6GRv91D3KgA",
@@ -131,14 +132,14 @@ class TestPipelineColorspace(TestPipeline):
         path_1 = "renderCompMain_ACES2065-1.####.exr"
         expected_1 = "ACES2065-1"
         ret_1 = colorspace.parse_colorspace_from_filepath(
-            path_1, "nuke", "test_project", project_settings=project_settings
+            path_1, config_path=config_path_asset
         )
         assert ret_1 == expected_1, f"Not matching colorspace {expected_1}"
 
         path_2 = "renderCompMain_BMDFilm_WideGamut_Gen5.mov"
         expected_2 = "BMDFilm WideGamut Gen5"
         ret_2 = colorspace.parse_colorspace_from_filepath(
-            path_2, "nuke", "test_project", project_settings=project_settings
+            path_2, config_path=config_path_asset
         )
         assert ret_2 == expected_2, f"Not matching colorspace {expected_2}"
 
@@ -183,6 +184,71 @@ class TestPipelineColorspace(TestPipeline):
             "test_project", "hiero", project_settings=project_settings)
         assert expected_hiero == hiero_file_rules, (
             f"Not matching file rules {expected_hiero}")
+
+    def test_get_imageio_colorspace_from_filepath_p3(self, project_settings):
+        """Test Colorspace from filepath with python 3 compatibility mode
+
+        Also test ocio v2 file rules
+        """
+        nuke_filepath = "renderCompMain_baking_h264.mp4"
+        hiero_filepath = "prerenderCompMain.mp4"
+
+        expected_nuke = "Camera Rec.709"
+        expected_hiero = "Gamma 2.2 Rec.709 - Texture"
+
+        nuke_colorspace = colorspace.get_colorspace_name_from_filepath(
+            nuke_filepath,
+            "nuke",
+            "test_project",
+            project_settings=project_settings
+        )
+        assert expected_nuke == nuke_colorspace, (
+            f"Not matching colorspace {expected_nuke}")
+
+        hiero_colorspace = colorspace.get_colorspace_name_from_filepath(
+            hiero_filepath,
+            "hiero",
+            "test_project",
+            project_settings=project_settings
+        )
+        assert expected_hiero == hiero_colorspace, (
+            f"Not matching colorspace {expected_hiero}")
+
+    def test_get_imageio_colorspace_from_filepath_python2mode(
+            self, project_settings):
+        """Test Colorspace from filepath with python 2 compatibility mode
+
+        Also test ocio v2 file rules
+        """
+        nuke_filepath = "renderCompMain_baking_h264.mp4"
+        hiero_filepath = "prerenderCompMain.mp4"
+
+        expected_nuke = "Camera Rec.709"
+        expected_hiero = "Gamma 2.2 Rec.709 - Texture"
+
+        # switch to python 2 compatibility mode
+        colorspace.CachedData.has_compatible_ocio_package = False
+
+        nuke_colorspace = colorspace.get_colorspace_name_from_filepath(
+            nuke_filepath,
+            "nuke",
+            "test_project",
+            project_settings=project_settings
+        )
+        assert expected_nuke == nuke_colorspace, (
+            f"Not matching colorspace {expected_nuke}")
+
+        hiero_colorspace = colorspace.get_colorspace_name_from_filepath(
+            hiero_filepath,
+            "hiero",
+            "test_project",
+            project_settings=project_settings
+        )
+        assert expected_hiero == hiero_colorspace, (
+            f"Not matching colorspace {expected_hiero}")
+
+        # return to python 3 compatibility mode
+        colorspace.CachedData.python3compatible = None
 
 
 test_case = TestPipelineColorspace()

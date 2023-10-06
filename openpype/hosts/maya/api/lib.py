@@ -183,6 +183,51 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
+def get_namespace(node):
+    """Return namespace of given node"""
+    node_name = node.rsplit("|", 1)[-1]
+    if ":" in node_name:
+        return node_name.rsplit(":", 1)[0]
+    else:
+        return ""
+
+
+def strip_namespace(node, namespace):
+    """Strip given namespace from node path.
+
+    The namespace will only be stripped from names
+    if it starts with that namespace. If the namespace
+    occurs within another namespace it's not removed.
+
+    Examples:
+        >>> strip_namespace("namespace:node", namespace="namespace:")
+        "node"
+        >>> strip_namespace("hello:world:node", namespace="hello:world")
+        "node"
+        >>> strip_namespace("hello:world:node", namespace="hello")
+        "world:node"
+        >>> strip_namespace("hello:world:node", namespace="world")
+        "hello:world:node"
+        >>> strip_namespace("ns:group|ns:node", namespace="ns")
+        "group|node"
+
+    Returns:
+        str: Node name without given starting namespace.
+
+    """
+
+    # Ensure namespace ends with `:`
+    if not namespace.endswith(":"):
+        namespace = "{}:".format(namespace)
+
+    # The long path for a node can also have the namespace
+    # in its parents so we need to remove it from each
+    return "|".join(
+        name[len(namespace):] if name.startswith(namespace) else name
+        for name in node.split("|")
+    )
+
+
 def get_custom_namespace(custom_namespace):
     """Return unique namespace.
 
@@ -922,7 +967,7 @@ def no_display_layers(nodes):
 
 
 @contextlib.contextmanager
-def namespaced(namespace, new=True):
+def namespaced(namespace, new=True, relative_names=None):
     """Work inside namespace during context
 
     Args:
@@ -934,15 +979,19 @@ def namespaced(namespace, new=True):
 
     """
     original = cmds.namespaceInfo(cur=True, absoluteName=True)
+    original_relative_names = cmds.namespace(query=True, relativeNames=True)
     if new:
         namespace = unique_namespace(namespace)
         cmds.namespace(add=namespace)
-
+    if relative_names is not None:
+        cmds.namespace(relativeNames=relative_names)
     try:
         cmds.namespace(set=namespace)
         yield namespace
     finally:
         cmds.namespace(set=original)
+        if relative_names is not None:
+            cmds.namespace(relativeNames=original_relative_names)
 
 
 @contextlib.contextmanager
@@ -2571,7 +2620,7 @@ def bake_to_world_space(nodes,
             new_name = "{0}_baked".format(short_name)
             new_node = cmds.duplicate(node,
                                       name=new_name,
-                                      renameChildren=True)[0]
+                                      renameChildren=True)[0]  # noqa
 
             # Connect all attributes on the node except for transform
             # attributes
@@ -4100,14 +4149,19 @@ def create_rig_animation_instance(
     """
     if options is None:
         options = {}
-
+    name = context["representation"]["name"]
     output = next((node for node in nodes if
                    node.endswith("out_SET")), None)
     controls = next((node for node in nodes if
                      node.endswith("controls_SET")), None)
+    if name != "fbx":
+        assert output, "No out_SET in rig, this is a bug."
+        assert controls, "No controls_SET in rig, this is a bug."
 
-    assert output, "No out_SET in rig, this is a bug."
-    assert controls, "No controls_SET in rig, this is a bug."
+    anim_skeleton = next((node for node in nodes if
+                          node.endswith("skeletonAnim_SET")), None)
+    skeleton_mesh = next((node for node in nodes if
+                          node.endswith("skeletonMesh_SET")), None)
 
     # Find the roots amongst the loaded nodes
     roots = (
@@ -4119,9 +4173,7 @@ def create_rig_animation_instance(
     custom_subset = options.get("animationSubsetName")
     if custom_subset:
         formatting_data = {
-            # TODO remove 'asset_type' and replace 'asset_name' with 'asset'
-            "asset_name": context['asset']['name'],
-            "asset_type": context['asset']['type'],
+            "asset": context["asset"],
             "subset": context['subset']['name'],
             "family": (
                 context['subset']['data'].get('family') or
@@ -4142,10 +4194,12 @@ def create_rig_animation_instance(
 
     host = registered_host()
     create_context = CreateContext(host)
-
     # Create the animation instance
+    rig_sets = [output, controls, anim_skeleton, skeleton_mesh]
+    # Remove sets that this particular rig does not have
+    rig_sets = [s for s in rig_sets if s is not None]
     with maintained_selection():
-        cmds.select([output, controls] + roots, noExpand=True)
+        cmds.select(rig_sets + roots, noExpand=True)
         create_context.create(
             creator_identifier=creator_identifier,
             variant=namespace,
