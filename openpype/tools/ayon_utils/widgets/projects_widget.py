@@ -149,6 +149,8 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
         super(ProjectSortFilterProxy, self).__init__(*args, **kwargs)
         self._filter_inactive = True
+        self._filter_standard = False
+        self._filter_library = False
         # Disable case sensitivity
         self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
@@ -175,19 +177,40 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
         project_name = index.data(PROJECT_NAME_ROLE)
         if project_name is None:
             return True
+
         string_pattern = self.filterRegularExpression().pattern()
+        if string_pattern:
+            return string_pattern.lower() in project_name.lower()
+
+        # Current project keep always visible
+        default = super(ProjectSortFilterProxy, self).filterAcceptsRow(
+            source_row, source_parent
+        )
+        if not default:
+            return default
+
+        # Make sure current project is visible
+        if index.data(PROJECT_IS_CURRENT_ROLE):
+            return True
+
         if (
             self._filter_inactive
             and not index.data(PROJECT_IS_ACTIVE_ROLE)
         ):
             return False
 
-        if string_pattern:
-            return string_pattern.lower() in project_name.lower()
+        if (
+            self._filter_standard
+            and not index.data(PROJECT_IS_LIBRARY_ROLE)
+        ):
+            return False
 
-        return super(ProjectSortFilterProxy, self).filterAcceptsRow(
-            source_row, source_parent
-        )
+        if (
+            self._filter_library
+            and index.data(PROJECT_IS_LIBRARY_ROLE)
+        ):
+            return False
+        return True
 
     def _custom_index_filter(self, index):
         return bool(index.data(PROJECT_IS_ACTIVE_ROLE))
@@ -199,6 +222,18 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
         if self._filter_inactive == enabled:
             return
         self._filter_inactive = enabled
+        self.invalidateFilter()
+
+    def set_library_filter_enabled(self, enabled):
+        if self._filter_library == enabled:
+            return
+        self._filter_library = enabled
+        self.invalidateFilter()
+
+    def set_standard_filter_enabled(self, enabled):
+        if self._filter_standard == enabled:
+            return
+        self._filter_standard = enabled
         self.invalidateFilter()
 
 
@@ -308,6 +343,12 @@ class ProjectsCombobox(QtWidgets.QWidget):
 
     def set_active_filter_enabled(self, enabled):
         return self._projects_proxy_model.set_active_filter_enabled(enabled)
+
+    def set_standard_filter_enabled(self, enabled):
+        return self._projects_proxy_model.set_standard_filter_enabled(enabled)
+
+    def set_library_filter_enabled(self, enabled):
+        return self._projects_proxy_model.set_library_filter_enabled(enabled)
 
     def _on_current_index_changed(self, idx):
         if not self._listen_selection_change:
