@@ -2,6 +2,7 @@ import sys
 import json
 import re
 import os
+import glob
 import contextlib
 from opentimelineio import opentime
 
@@ -183,8 +184,14 @@ def create_bin(name: str, root: object = None) -> object:
         return media_pool.GetCurrentFolder()
 
 
-def create_media_pool_item(fpath: str,
-                           root: object = None) -> object:
+def create_media_pool_item(
+        fpath: str,
+        frame_start: int,
+        frame_end: int,
+        handle_start: int,
+        handle_end: int,
+        root: object = None,
+) -> object:
     """
     Create media pool item.
 
@@ -204,8 +211,38 @@ def create_media_pool_item(fpath: str,
 
     if existing_mpi:
         return existing_mpi
+
+    files = []
+    first_frame = frame_start - handle_start
+    last_frame = frame_end + handle_end
+    dir_path = os.path.dirname(fpath)
+    base_name = os.path.basename(fpath)
+
+    # prepare glob pattern for searching
+    padding = len(str(last_frame))
+    str_first_frame = str(first_frame).zfill(padding)
+
+    # convert str_first_frame to glob pattern
+    # replace all digits with `?` and all other chars with `[char]`
+    # example: `0001` -> `????`
+    glob_pattern = re.sub(r"\d", "?", str_first_frame)
+
+    # in filename replace number with glob pattern
+    # example: `filename.0001.exr` -> `filename.????.exr`
+    base_name = re.sub(str_first_frame, glob_pattern, base_name)
+
+    # get all files in folder
+    for file in glob.glob(os.path.join(dir_path, base_name)):
+        files.append(file)
+
+    # iterate all files and check if they exists
+    # if not then remove them from list
+    for file in files[:]:
+        if not os.path.exists(file):
+            files.remove(file)
+
     # add all data in folder to media pool
-    media_pool_items = media_pool.ImportMedia(fpath)
+    media_pool_items = media_pool.ImportMedia(files)
 
     return media_pool_items.pop() if media_pool_items else False
 

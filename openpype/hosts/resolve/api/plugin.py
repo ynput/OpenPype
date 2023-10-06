@@ -1,6 +1,5 @@
 import re
 import uuid
-
 import qargparse
 from qtpy import QtWidgets, QtCore
 
@@ -393,16 +392,15 @@ class ClipLoader:
         asset_name = self.context["representation"]["context"]["asset"]
         self.data["assetData"] = get_current_project_asset(asset_name)["data"]
 
-    def load(self):
-        # create project bin for the media to be imported into
-        self.active_bin = lib.create_bin(self.data["binPath"])
-
+    def _get_frame_data(self):
         # create mediaItem in active project bin
         # create clip media
-
-        media_pool_item = lib.create_media_pool_item(
-            self.data["path"], self.active_bin)
-        _clip_property = media_pool_item.GetClipProperty
+        frame_start = self.data["versionData"].get("frameStart")
+        frame_end = self.data["versionData"].get("frameEnd")
+        if frame_start is None:
+            frame_start = int(self.data["assetData"]["frameStart"])
+        if frame_end is None:
+            frame_end = int(self.data["assetData"]["frameEnd"])
 
         # get handles
         handle_start = self.data["versionData"].get("handleStart")
@@ -411,6 +409,26 @@ class ClipLoader:
             handle_start = int(self.data["assetData"]["handleStart"])
         if handle_end is None:
             handle_end = int(self.data["assetData"]["handleEnd"])
+
+        return frame_start, frame_end, handle_start, handle_end
+
+    def load(self):
+        # create project bin for the media to be imported into
+        self.active_bin = lib.create_bin(self.data["binPath"])
+
+        frame_start, frame_end, handle_start, handle_end = \
+            self._get_frame_data()
+
+        media_pool_item = lib.create_media_pool_item(
+            self.data["path"],
+            frame_start,
+            frame_end,
+            handle_start,
+            handle_end,
+            self.active_bin
+        )
+        _clip_property = media_pool_item.GetClipProperty
+
 
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
@@ -435,10 +453,19 @@ class ClipLoader:
         # create project bin for the media to be imported into
         self.active_bin = lib.create_bin(self.data["binPath"])
 
+        frame_start, frame_end, handle_start, handle_end = \
+            self._get_frame_data()
+
         # create mediaItem in active project bin
         # create clip media
         media_pool_item = lib.create_media_pool_item(
-            self.data["path"], self.active_bin)
+            self.data["path"],
+            frame_start,
+            frame_end,
+            handle_start,
+            handle_end,
+            self.active_bin
+        )
         _clip_property = media_pool_item.GetClipProperty
 
         source_in = int(_clip_property("Start"))
