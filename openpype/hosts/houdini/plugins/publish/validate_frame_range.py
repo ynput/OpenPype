@@ -1,16 +1,9 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 from openpype.pipeline import PublishValidationError
-from openpype.pipeline.publish import RepairAction
 from openpype.hosts.houdini.api.action import SelectInvalidAction
 
 import hou
-
-
-class HotFixAction(RepairAction):
-    """Set End frame to the minimum valid value."""
-
-    label = "End frame hotfix"
 
 
 class ValidateFrameRange(pyblish.api.InstancePlugin):
@@ -24,7 +17,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder - 0.1
     hosts = ["houdini"]
     label = "Validate Frame Range"
-    actions = [HotFixAction, SelectInvalidAction]
+    actions = [SelectInvalidAction]
 
     def process(self, instance):
 
@@ -55,21 +48,3 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                 )
             )
             return [rop_node]
-
-    @classmethod
-    def repair(cls, instance):
-        rop_node = hou.node(instance.data["instance_node"])
-
-        frame_start = int(instance.data["frameStartHandle"])
-        frame_end = int(
-            instance.data["frameStartHandle"] +
-            instance.data["handleStart"] +
-            instance.data["handleEnd"]
-        )
-
-        if rop_node.parm("f2").rawValue() == "$FEND":
-            hou.playbar.setFrameRange(frame_start, frame_end)
-            hou.playbar.setPlaybackRange(frame_start, frame_end)
-            hou.setFrame(frame_start)
-        else:
-            rop_node.parm("f2").set(frame_end)
