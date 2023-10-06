@@ -168,5 +168,9 @@ class LoadClip(plugin.TimelineItemLoader):
         namespace = container['namespace']
         timeline_item = lib.get_pype_timeline_item_by_name(namespace)
         take_mp_item = timeline_item.GetMediaPoolItem()
+        timeline = lib.get_current_timeline()
+
+        if timeline.DeleteClips is not None:
+            timeline.DeleteClips([timeline_item])
 
         lib.remove_media_pool_item(take_mp_item)
