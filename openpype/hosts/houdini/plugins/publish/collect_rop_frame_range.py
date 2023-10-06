@@ -41,7 +41,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
             return
 
         # Log artist friendly message about the collected frame range
-        if attr_values.get("use_asset_handles"):
+        if attr_values.get("use_handles"):
             self.log.info(
                 "Full Frame range with Handles "
                 "{0[frameStartHandle]} - {0[frameEndHandle]}\n"
@@ -73,7 +73,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
     @classmethod
     def get_attribute_defs(cls):
         return [
-            BoolDef("use_asset_handles",
+            BoolDef("use_handles",
                     tooltip="Disable this if you want the publisher to"
                     " ignore start and end handles specified in the"
                     " asset data for this publish instance",
