@@ -116,12 +116,12 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_save_current_clicked(self):
         host = registered_host()
-        current_file = host.current_file()
+        current_file = host.get_current_workfile()
         if not current_file:
             return
 
         print(f"Saving current file to: {current_file}")
-        host.save_file(current_file)
+        host.save_workfile(current_file)
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
