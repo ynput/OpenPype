@@ -34,18 +34,9 @@ class CreateShotClip(plugin.Creator):
         # gui_info = "Define sequential rename and fill hierarchy data."
         gui_tracks = get_video_track_names()
 
-        # TODO: Apply defaults from `presets` in project settings
-        # get key pares from presets and match it on ui inputs
-        # for k, v in self.gui_inputs.items():
-        #     if v["type"] in ("dict", "section"):
-        #         # nested dictionary (only one level allowed
-        #         # for sections and dict)
-        #         for _k, _v in v["value"].items():
-        #             if self.presets.get(_k) is not None:
-        #                 self.gui_inputs[k][
-        #                     "value"][_k]["value"] = self.presets[_k]
-        #     if self.presets.get(k):
-        #         self.gui_inputs[k]["value"] = self.presets[k]
+        # Project settings might be applied to this creator via
+        # the inherited `Creator.apply_settings`
+        presets = self.presets
 
         return [
 
@@ -58,32 +49,32 @@ class CreateShotClip(plugin.Creator):
                 label="Shot Parent Hierarchy",
                 tooltip="Parents folder for shot root folder, "
                         "Template filled with *Hierarchy Data* section",
-                default="{folder}/{sequence}",
+                default=presets.get("hierarchy", "{folder}/{sequence}"),
             ),
             BoolDef(
                 "clipRename",
                 label="Rename clips",
                 tooltip="Renaming selected clips on fly",
-                default=False,
+                default=presets.get("clipRename", False),
             ),
             TextDef(
                 "clipName",
                 label="Clip Name Template",
                 tooltip="template for creating shot names, used for "
                         "renaming (use rename: on)",
-                default="{sequence}{shot}",
+                default=presets.get("clipName", "{sequence}{shot}"),
             ),
             NumberDef(
                 "countFrom",
                 label="Count sequence from",
                 tooltip="Set where the sequence number starts from",
-                default=10,
+                default=presets.get("countFrom", 10),
             ),
             NumberDef(
                 "countSteps",
                 label="Stepping number",
                 tooltip="What number is adding every new step",
-                default=10,
+                default=presets.get("countSteps", 10),
             ),
 
             # hierarchyData
@@ -95,32 +86,32 @@ class CreateShotClip(plugin.Creator):
                 label="{folder}",
                 tooltip="Name of folder used for root of generated shots.\n"
                         f"{tokens_help}",
-                default="shots",
+                default=presets.get("folder", "shots"),
             ),
             TextDef(
                 "episode",
                 label="{episode}",
                 tooltip=f"Name of episode.\n{tokens_help}",
-                default="ep01",
+                default=presets.get("episode", "ep01"),
             ),
             TextDef(
                 "sequence",
                 label="{sequence}",
                 tooltip=f"Name of sequence of shots.\n{tokens_help}",
-                default="sq01",
+                default=presets.get("sequence", "sq01"),
             ),
             TextDef(
                 "track",
                 label="{track}",
                 tooltip=f"Name of timeline track.\n{tokens_help}",
-                default="{_track_}",
+                default=presets.get("track", "{_track_}"),
             ),
             TextDef(
                 "shot",
                 label="{shot}",
                 tooltip="Name of shot. '#' is converted to padded number."
                         f"\n{tokens_help}",
-                default="sh###",
+                default=presets.get("shot", "sh###"),
             ),
 
             # verticalSync
@@ -132,7 +123,7 @@ class CreateShotClip(plugin.Creator):
                 label="Enable Vertical Sync",
                 tooltip="Switch on if you want clips above "
                         "each other to share its attributes",
-                default=True,
+                default=presets.get("vSyncOn", True),
             ),
             EnumDef(
                 "vSyncTrack",
@@ -187,19 +178,19 @@ class CreateShotClip(plugin.Creator):
                 "workfileFrameStart",
                 label="Workfiles Start Frame",
                 tooltip="Set workfile starting frame number",
-                default=1001,
+                default=presets.get("workfileFrameStart", 1001),
             ),
             NumberDef(
                 "handleStart",
                 label="Handle start (head)",
                 tooltip="Handle at start of clip",
-                default=0,
+                default=presets.get("handleStart", 0),
             ),
             NumberDef(
                 "handleEnd",
                 label="Handle end (tail)",
                 tooltip="Handle at end of clip",
-                default=0,
+                default=presets.get("handleEnd", 0),
             ),
         ]
 
