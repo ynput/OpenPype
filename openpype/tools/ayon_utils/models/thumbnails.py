@@ -72,11 +72,12 @@ class ThumbnailsModel:
             project_cache[thumbnail_id] = filepath
             return filepath
 
-        result = ayon_api.get_thumbnail_by_id(project_name, thumbnail_id)
+        # 'ayon_api' had a bug, public function
+        #   'get_thumbnail_by_id' did not return output of
+        #   'ServerAPI' method.
+        con = ayon_api.get_server_api_connection()
+        result = con.get_thumbnail_by_id(project_name, thumbnail_id)
         if result is None:
-            # Caused by bug in 'ayon_api'. Public function
-            #   'get_thumbnail_by_id' does not return output of
-            #   'ServerAPI' method.
             pass
 
         elif result.is_valid:
