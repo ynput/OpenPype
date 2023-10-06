@@ -163,3 +163,10 @@ class LoadClip(plugin.TimelineItemLoader):
             timeline_item.SetClipColor(cls.clip_color_last)
         else:
             timeline_item.SetClipColor(cls.clip_color)
+
+    def remove(self, container):
+        namespace = container['namespace']
+        timeline_item = lib.get_pype_timeline_item_by_name(namespace)
+        take_mp_item = timeline_item.GetMediaPoolItem()
+
+        lib.remove_media_pool_item(take_mp_item)
