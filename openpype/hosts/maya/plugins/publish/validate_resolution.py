@@ -27,10 +27,10 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
         if invalid:
             raise PublishValidationError(
                 "issues occurred", description=(
-                    "Wrong render resolution setting. "
-                    "Please use repair button to fix it.\n"
-                    "If current renderer is V-Ray, "
-                    "make sure vraySettings node has been created"
+                "Wrong render resolution setting. "
+                "Please use repair button to fix it.\n"
+                "If current renderer is V-Ray, "
+                "make sure vraySettings node has been created"
             ))
 
     def get_invalid_resolution(self, instance):
@@ -52,7 +52,8 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
             else:
                 invalid = self.log.error(
                     "Can't detect VRay resolution because there is no node "
-                    "named: `{}`".format(vray_node))
+                    "named: `{}`".format(vray_node)
+                )
                 invalids.append(invalid)
         else:
             current_width = lib.get_attr_in_layer(
@@ -63,12 +64,12 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
                 "defaultResolution.pixelAspect", layer=layer
             )
         if current_width != width or current_height != height:
-           invalid = self.log.error(
+            invalid = self.log.error(
                 "Render resolution {}x{} does not match asset resolution {}x{}".format(         # noqa:E501
                     current_width, current_height,
                     width, height
                 ))
-           invalids.append("{0}\n".format(invalid))
+            invalids.append("{0}\n".format(invalid))
         if current_pixelAspect != pixelAspect:
             invalid = self.log.error(
                 "Render pixel aspect {} does not match asset pixel aspect {}".format(            # noqa:E501
