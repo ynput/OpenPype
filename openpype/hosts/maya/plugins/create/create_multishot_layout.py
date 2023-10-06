@@ -52,14 +52,31 @@ class CreateMultishotLayout(plugin.MayaCreator):
 
         current_path_parts = current_folder["path"].split("/")
 
-        items_with_label = [
-            dict(
-                label=current_path_parts[p] if current_path_parts[p] != current_folder["name"] else f"{current_path_parts[p]} (current)",  # noqa
-                value="/".join(current_path_parts[:p + 1]),
-            )
-            for p in range(len(current_path_parts))
-        ]
+        items_with_label = []
+        # populate the list with parents of the current folder
+        # this will create menu items like:
+        # [
+        #   {
+        #       "value": "",
+        #       "label": "project (shots directly under the project)"
+        #   }, {
+        #       "value": "shots/shot_01", "label": "shot_01 (current)"
+        #   }, {
+        #       "value": "shots", "label": "shots"
+        #   }
+        # ]
 
+        # go through the current folder path and add each part to the list,
+        # but mark the current folder.
+        for part_idx in range(len(current_path_parts)):
+            label = current_path_parts[part_idx]
+            if current_path_parts[part_idx] == current_folder["name"]:
+                label = f"{current_path_parts[part_idx]} (current)"
+            items_with_label.append(
+                dict(label=label,
+                     value="/".join(current_path_parts[:part_idx + 1]))
+            )
+        # add the project as the first item
         items_with_label.insert(
             0, dict(label=f"{self.project_name} "
                           "(shots directly under the project)", value=""))
