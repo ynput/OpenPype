@@ -196,7 +196,6 @@ def create_media_pool_item(fpath: str,
         object: resolve.MediaPoolItem
     """
     # get all variables
-    media_storage = get_media_storage()
     media_pool = get_current_project().GetMediaPool()
     root_bin = root or media_pool.GetRootFolder()
 
@@ -205,23 +204,10 @@ def create_media_pool_item(fpath: str,
 
     if existing_mpi:
         return existing_mpi
+    # add all data in folder to media pool
+    media_pool_items = media_pool.ImportMedia(fpath)
 
-    dirname, file = os.path.split(fpath)
-    _name, ext = os.path.splitext(file)
-
-    # add all data in folder to mediapool
-    media_pool_items = media_storage.AddItemListToMediaPool(
-        os.path.normpath(dirname))
-
-    if not media_pool_items:
-        return False
-
-    # if any are added then look into them for the right extension
-    media_pool_item = [mpi for mpi in media_pool_items
-                       if ext in mpi.GetClipProperty("File Path")]
-
-    # return only first found
-    return media_pool_item.pop()
+    return media_pool_items.pop() if media_pool_items else False
 
 
 def get_media_pool_item(fpath, root: object = None) -> object:
