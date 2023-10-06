@@ -748,15 +748,17 @@ def _convert_nuke_project_settings(ayon_settings, output):
     )
 
     new_review_data_outputs = {}
-    outputs_settings = None
+    outputs_settings = []
     # Check deprecated ExtractReviewDataMov
     # settings for backwards compatibility
     deprecrated_review_settings = ayon_publish["ExtractReviewDataMov"]
     current_review_settings = (
-        ayon_publish["ExtractReviewIntermediates"]
+        ayon_publish.get("ExtractReviewIntermediates")
     )
     if deprecrated_review_settings["enabled"]:
         outputs_settings = deprecrated_review_settings["outputs"]
+    elif current_review_settings is None:
+        pass
     elif current_review_settings["enabled"]:
         outputs_settings = current_review_settings["outputs"]
 
