@@ -240,11 +240,8 @@ def create_media_pool_item(
     for file in glob.glob(os.path.join(dir_path, base_name)):
         files.append(file)
 
-    # iterate all files and check if they exists
-    # if not then remove them from list
-    for file in files[:]:
-        if not os.path.exists(file):
-            files.remove(file)
+    # keep only existing files
+    files = [f for f in files if os.path.exists(f)]
 
     # add all data in folder to media pool
     media_pool_items = media_pool.ImportMedia(files)
