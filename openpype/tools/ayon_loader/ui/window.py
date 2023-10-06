@@ -3,6 +3,7 @@ from qtpy import QtWidgets, QtCore, QtGui
 from openpype.resources import get_openpype_icon_filepath
 from openpype.style import load_stylesheet
 from openpype.tools.utils import PlaceholderLineEdit, ErrorMessageBox
+from openpype.tools.utils.lib import center_window
 from openpype.tools.ayon_utils.widgets import ProjectsCombobox
 from openpype.tools.ayon_loader.control import LoaderController
 
@@ -218,13 +219,10 @@ class LoaderWindow(QtWidgets.QWidget):
 
     def _on_first_show(self):
         self._first_show = False
-        # if self._controller.is_site_sync_enabled():
-        #     self.resize(1800, 900)
-        # else:
-        #     self.resize(1300, 700)
         self.resize(1800, 900)
-        self._main_splitter.setSizes([250, 1000, 550])
+        self._main_splitter.setSizes([350, 1000, 350])
         self.setStyleSheet(load_stylesheet())
+        center_window(self)
         self._controller.reset()
 
     def _on_show_timer(self):
