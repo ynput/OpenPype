@@ -382,7 +382,7 @@ class HierarchyModel(object):
             return
 
         project_cache = self._tasks_by_id[project_name]
-        tasks = ayon_api.get_folders(project_name, task_ids=task_ids)
+        tasks = ayon_api.get_tasks(project_name, task_ids=task_ids)
         for task in tasks:
             task_id = task["id"]
             project_cache[task_id].update_data(task)
