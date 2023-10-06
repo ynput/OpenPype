@@ -26,8 +26,7 @@ class CacheModelLoader(plugin.AssetLoader):
     Note:
         At least for now it only supports Alembic files.
     """
-
-    families = ["model", "pointcache"]
+    families = ["model", "pointcache", "animation"]
     representations = ["abc"]
 
     label = "Load Alembic"
@@ -61,8 +60,6 @@ class CacheModelLoader(plugin.AssetLoader):
             relative_path=relative
         )
 
-        parent = bpy.context.scene.collection
-
         imported = lib.get_selection()
 
         # Children must be linked before parents,
@@ -90,12 +87,14 @@ class CacheModelLoader(plugin.AssetLoader):
                     material_slot.material.name = f"{group_name}:{name_mat}"
 
             if not obj.get(AVALON_PROPERTY):
-                obj[AVALON_PROPERTY] = dict()
+                obj[AVALON_PROPERTY] = {}
 
             avalon_info = obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
 
         plugin.deselect_all()
+
+        collection.objects.link(asset_group)
 
         return objects
 
@@ -130,8 +129,6 @@ class CacheModelLoader(plugin.AssetLoader):
         avalon_containers.objects.link(asset_group)
 
         objects = self._process(libpath, asset_group, group_name)
-
-        bpy.context.scene.collection.objects.link(asset_group)
 
         asset_group[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",
