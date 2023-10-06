@@ -112,7 +112,7 @@ class CreateShotClip(plugin.Creator):
             TextDef(
                 "track",
                 label="{track}",
-                tooltip=f"Name of sequence of shots.\n{tokens_help}",
+                tooltip=f"Name of timeline track.\n{tokens_help}",
                 default="{_track_}",
             ),
             TextDef(
