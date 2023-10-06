@@ -14,7 +14,7 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
-class MissingKeyError(KeyError):
+class TemplateFillError(Exception):
     def __init__(self, msg=None):
         if not msg:
             msg = "Creator's subset name template is missing key value."
