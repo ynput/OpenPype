@@ -3425,34 +3425,6 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
     return "{} ({})".format(viewer, display)
 
 
-def get_head_filename_without_hashes(original_path, name):
-    """Function to get the renamed head filename without frame hashes
-    To avoid the system being confused on finding the filename with
-    frame hashes if the head of the filename has the hashed symbol
-
-    Examples:
-        >>> get_head_filename_without_hashes("render.####.exr", "baking")
-        render.baking.####.exr
-        >>> get_head_filename_without_hashes("render.%04d.exr", "tag")
-        render.tag.%d.exr
-        >>> get_head_filename_without_hashes("exr.####.exr", "foo")
-        exr.foo.%04d.exr
-
-    Args:
-        original_path (str): the filename with frame hashes
-        name (str): the name of the tags
-
-    Returns:
-        str: the renamed filename with the tag
-    """
-    filename = os.path.basename(original_path)
-
-    def insert_name(matchobj):
-        return "{}.{}".format(name, matchobj.group(0))
-
-    return re.sub(r"(%\d*d)|#+", insert_name, filename)
-
-
 def get_filenames_without_hash(filename, frame_start, frame_end):
     """Get filenames without frame hash
         i.e. "renderCompositingMain.baking.0001.exr"
