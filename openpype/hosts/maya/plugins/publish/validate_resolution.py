@@ -30,8 +30,7 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
                     "Wrong render resolution setting. "
                     "Please use repair button to fix it.\n"
                     "If current renderer is V-Ray, "
-                    "make sure vraySettings node has been created"
-        ))
+                    "make sure vraySettings node has been created"))
 
     def get_invalid_resolution(self, instance):
         width, height, pixelAspect = self.get_db_resolution(instance)
