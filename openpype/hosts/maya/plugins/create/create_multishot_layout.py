@@ -1,20 +1,24 @@
-from ayon_api import get_folder_by_name, get_folder_by_path, get_folders
+from ayon_api import (
+    get_folder_by_name,
+    get_folder_by_path,
+    get_folders,
+)
 from maya import cmds  # noqa: F401
 
 from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_assets
 from openpype.hosts.maya.api import plugin
-from openpype.lib import BoolDef, EnumDef
+from openpype.lib import BoolDef, EnumDef, TextDef
 from openpype.pipeline import (
     Creator,
     get_current_asset_name,
-    get_current_project_name
+    get_current_project_name,
 )
 from openpype.pipeline.create import CreatorError
 
 
 class CreateMultishotLayout(plugin.MayaCreator):
-    """Create a multishot layout in the Maya scene.
+    """Create a multi-shot layout in the Maya scene.
 
     This creator will create a Camera Sequencer in the Maya scene based on
     the shots found under the specified folder. The shots will be added to
@@ -23,7 +27,7 @@ class CreateMultishotLayout(plugin.MayaCreator):
 
     """
     identifier = "io.openpype.creators.maya.multishotlayout"
-    label = "Multishot Layout"
+    label = "Multi-shot Layout"
     family = "layout"
     icon = "project-diagram"
 
@@ -46,16 +50,19 @@ class CreateMultishotLayout(plugin.MayaCreator):
             folder_name=get_current_asset_name(),
         )
 
+        current_path_parts = current_folder["path"].split("/")
+
         items_with_label = [
-            dict(label=p if p != current_folder["name"] else f"{p} (current)",
-                 value=str(p))
-            for p in current_folder["path"].split("/")
+            dict(
+                label=current_path_parts[p] if current_path_parts[p] != current_folder["name"] else f"{current_path_parts[p]} (current)",  # noqa
+                value="/".join(current_path_parts[:p+1]),
+            )
+            for p in range(len(current_path_parts))
         ]
 
-        items_with_label.insert(0,
-            dict(label=f"{self.project_name} "
-                          "(shots directly under the project)",
-                 value=None))
+        items_with_label.insert(
+            0, dict(label=f"{self.project_name} "
+                          "(shots directly under the project)", value=""))
 
         return [
             EnumDef("shotParent",
@@ -67,7 +74,12 @@ class CreateMultishotLayout(plugin.MayaCreator):
                     label="Group Loaded Assets",
                     tooltip="Enable this when you want to publish group of "
                             "loaded asset",
-                    default=False)
+                    default=False),
+            TextDef("taskName",
+                    label="Associated Task Name",
+                    tooltip=("Task name to be associated "
+                             "with the created Layout"),
+                    default="layout"),
         ]
 
     def create(self, subset_name, instance_data, pre_create_data):
@@ -98,6 +110,18 @@ class CreateMultishotLayout(plugin.MayaCreator):
             if not shot["active"]:
                 continue
 
+            # get task for shot
+            asset_doc = next(
+                asset_doc for asset_doc in op_asset_docs
+                if asset_doc["_id"] == shot["id"]
+
+            )
+
+            tasks = list(asset_doc.get("data").get("tasks").keys())
+            layout_task = None
+            if pre_create_data["taskName"] in tasks:
+                layout_task = pre_create_data["taskName"]
+
             shot_name = f"{shot['name']}%s" % (
                 f" ({shot['label']})" if shot["label"] else "")
             cmds.shot(sst=shot["attrib"]["clipIn"],
@@ -105,18 +129,21 @@ class CreateMultishotLayout(plugin.MayaCreator):
                       shotName=shot_name)
 
             # Create layout instance by the layout creator
+
+            instance_data = {
+                "asset": shot["name"],
+                "variant": layout_creator.get_default_variant()
+            }
+            if layout_task:
+                instance_data["task"] = layout_task
+
             layout_creator.create(
                 subset_name=layout_creator.get_subset_name(
-                    self.get_default_variant(),
+                    layout_creator.get_default_variant(),
                     self.create_context.get_current_task_name(),
-                    next(
-                        asset_doc for asset_doc in op_asset_docs
-                        if asset_doc["_id"] == shot["id"]
-                    ),
+                    asset_doc,
                     self.project_name),
-                instance_data={
-                    "asset": shot["name"],
-                },
+                instance_data=instance_data,
                 pre_create_data={
                     "groupLoadedAssets": pre_create_data["groupLoadedAssets"]
                 }
