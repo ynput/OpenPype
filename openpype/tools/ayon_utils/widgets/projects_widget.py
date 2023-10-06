@@ -6,6 +6,7 @@ from .utils import RefreshThread, get_qt_icon
 PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 1
 PROJECT_IS_ACTIVE_ROLE = QtCore.Qt.UserRole + 2
 PROJECT_IS_LIBRARY_ROLE = QtCore.Qt.UserRole + 3
+PROJECT_IS_CURRENT_ROLE = QtCore.Qt.UserRole + 4
 
 
 class ProjectsModel(QtGui.QStandardItemModel):
@@ -25,6 +26,10 @@ class ProjectsModel(QtGui.QStandardItemModel):
 
         self._select_item_visible = None
 
+        self._current_context_project = None
+
+        self._selected_project = None
+
         self._is_refreshing = False
         self._refresh_thread = None
 
@@ -42,23 +47,46 @@ class ProjectsModel(QtGui.QStandardItemModel):
         if self._select_item_visible is visible:
             return
         self._select_item_visible = visible
-        self._add_select_item()
+
+        if self._selected_project is None:
+            self._add_select_item()
+
+    def set_selected_project(self, project_name):
+        if not self._select_item_visible:
+            return
+
+        self._selected_project = project_name
+        if project_name is None:
+            self._add_select_item()
+        else:
+            self._remove_select_item()
+
+    def set_current_context_project(self, project_name):
+        if project_name == self._current_context_project:
+            return
+        prev_item = self._project_items.get(self._current_context_project)
+        if prev_item is not None:
+            prev_item.setData(False, PROJECT_IS_CURRENT_ROLE)
+        self._current_context_project = project_name
+        item = self._project_items.get(project_name)
+        if item is not None:
+            item.setData(True, PROJECT_IS_CURRENT_ROLE)
 
     def _add_empty_item(self):
+        if self._empty_item_added:
+            return
+        self._empty_item_added = True
         item = self._get_empty_item()
-        if not self._empty_item_added:
-            root_item = self.invisibleRootItem()
-            root_item.appendRow(item)
-            self._empty_item_added = True
+        root_item = self.invisibleRootItem()
+        root_item.appendRow(item)
 
     def _remove_empty_item(self):
         if not self._empty_item_added:
             return
-
+        self._empty_item_added = False
         root_item = self.invisibleRootItem()
         item = self._get_empty_item()
         root_item.takeRow(item.row())
-        self._empty_item_added = False
 
     def _get_empty_item(self):
         if self._empty_item is None:
@@ -68,20 +96,20 @@ class ProjectsModel(QtGui.QStandardItemModel):
         return self._empty_item
 
     def _add_select_item(self):
+        if self._select_item_added:
+            return
+        self._select_item_added = True
         item = self._get_select_item()
-        if not self._select_item_added:
-            root_item = self.invisibleRootItem()
-            root_item.appendRow(item)
-            self._select_item_added = True
+        root_item = self.invisibleRootItem()
+        root_item.appendRow(item)
 
     def _remove_select_item(self):
         if not self._select_item_added:
             return
-
+        self._select_item_added = False
         root_item = self.invisibleRootItem()
         item = self._get_select_item()
         root_item.takeRow(item.row())
-        self._select_item_added = False
 
     def _get_select_item(self):
         if self._select_item is None:
@@ -115,11 +143,30 @@ class ProjectsModel(QtGui.QStandardItemModel):
         self.refreshed.emit()
 
     def _fill_items(self, project_items):
-        items_to_remove = set(self._project_items.keys())
+        new_project_names = {
+            project_item.name
+            for project_item in project_items
+        }
+
+        # Handle "Select item" visibility
+        if self._select_item_visible:
+            # Add select project. if previously selected project is not in
+            #   project items
+            if self._selected_project not in new_project_names:
+                self._add_select_item()
+            else:
+                self._remove_select_item()
+
+        root_item = self.invisibleRootItem()
+
+        items_to_remove = set(self._project_items.keys()) - new_project_names
+        for project_name in items_to_remove:
+            item = self._project_items.pop(project_name)
+            root_item.takeRow(item.row())
+
         new_items = []
         for project_item in project_items:
             project_name = project_item.name
-            items_to_remove.discard(project_name)
             item = self._project_items.get(project_name)
             if item is None:
                 item = QtGui.QStandardItem()
@@ -131,20 +178,20 @@ class ProjectsModel(QtGui.QStandardItemModel):
             item.setData(project_name, PROJECT_NAME_ROLE)
             item.setData(project_item.active, PROJECT_IS_ACTIVE_ROLE)
             item.setData(project_item.is_library, PROJECT_IS_LIBRARY_ROLE)
+            is_current = project_name == self._current_context_project
+            item.setData(is_current, PROJECT_IS_CURRENT_ROLE)
             self._project_items[project_name] = item
 
-        root_item = self.invisibleRootItem()
         if new_items:
             root_item.appendRows(new_items)
 
-        for project_name in items_to_remove:
-            item = self._project_items.pop(project_name)
-            root_item.removeRow(item.row())
-
         if self.has_content():
+            # Make sure "No projects" item is removed
             self._remove_empty_item()
         else:
+            # Keep only "No projects" item
             self._add_empty_item()
+            self._remove_select_item()
 
 
 class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
@@ -276,6 +323,7 @@ class ProjectsCombobox(QtWidgets.QWidget):
 
         self._controller = controller
         self._listen_selection_change = True
+        self._select_item_visible = False
 
         self._handle_expected_selection = handle_expected_selection
         self._expected_selection = None
@@ -337,8 +385,21 @@ class ProjectsCombobox(QtWidgets.QWidget):
             return None
         return self._projects_combobox.itemData(idx, PROJECT_NAME_ROLE)
 
+    def _update_select_item_visiblity(self, **kwargs):
+        if not self._select_item_visible:
+            return
+        if "project_name" not in kwargs:
+            project_name = self.get_current_project_name()
+        else:
+            project_name = kwargs.get("project_name")
+
+        # Hide the item if a project is selected
+        self._projects_model.set_selected_project(project_name)
+
     def set_select_item_visible(self, visible):
+        self._select_item_visible = visible
         self._projects_model.set_select_item_visible(visible)
+        self._update_select_item_visiblity()
 
     def is_active_filter_enabled(self):
         return self._projects_proxy_model.is_active_filter_enabled()
@@ -357,12 +418,15 @@ class ProjectsCombobox(QtWidgets.QWidget):
             return
         project_name = self._projects_combobox.itemData(
             idx, PROJECT_NAME_ROLE)
+        self._update_select_item_visiblity(project_name=project_name)
         self._controller.set_selected_project(project_name)
 
     def _on_model_refresh(self):
         self._projects_proxy_model.sort(0)
+        self._projects_proxy_model.invalidateFilter()
         if self._expected_selection:
             self._set_expected_selection()
+        self._update_select_item_visiblity()
 
     def _on_projects_refresh_finished(self, event):
         if event["sender"] != PROJECTS_MODEL_SENDER:
