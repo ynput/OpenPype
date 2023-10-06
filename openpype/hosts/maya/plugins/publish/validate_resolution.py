@@ -34,10 +34,9 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
 
     def get_invalid_resolution(self, instance):
         width, height, pixelAspect = self.get_db_resolution(instance)
-        current_renderer = cmds.getAttr(
-            "defaultRenderGlobals.currentRenderer")
+        current_renderer = instance.data["renderer"]
         layer = instance.data["renderlayer"]
-        invalids = []
+        invalid = False
         if current_renderer == "vray":
             vray_node = "vraySettings"
             if cmds.objExists(vray_node):
@@ -49,11 +48,11 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
                     "{}.pixelAspect".format(vray_node), layer=layer
                 )
             else:
-                invalid = self.log.error(
+                self.log.error(
                     "Can't detect VRay resolution because there is no node "
                     "named: `{}`".format(vray_node)
                 )
-                invalids.append(invalid)
+                invalid = True
         else:
             current_width = lib.get_attr_in_layer(
                 "defaultResolution.width", layer=layer)
@@ -63,19 +62,21 @@ class ValidateSceneResolution(pyblish.api.InstancePlugin,
                 "defaultResolution.pixelAspect", layer=layer
             )
         if current_width != width or current_height != height:
-            invalid = self.log.error(
-                "Render resolution {}x{} does not match asset resolution {}x{}".format(         # noqa:E501
+            self.log.error(
+                "Render resolution {}x{} does not match "
+                "asset resolution {}x{}".format(
                     current_width, current_height,
                     width, height
                 ))
-            invalids.append("{0}\n".format(invalid))
+            invalid = True
         if current_pixelAspect != pixelAspect:
-            invalid = self.log.error(
-                "Render pixel aspect {} does not match asset pixel aspect {}".format(            # noqa:E501
+            self.log.error(
+                "Render pixel aspect {} does not match "
+                "asset pixel aspect {}".format(
                     current_pixelAspect, pixelAspect
                 ))
-            invalids.append("{0}\n".format(invalid))
-        return invalids
+            invalid = True
+        return invalid
 
     def get_db_resolution(self, instance):
         asset_doc = instance.data["assetEntity"]
