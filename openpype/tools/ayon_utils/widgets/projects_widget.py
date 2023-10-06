@@ -5,6 +5,7 @@ from .utils import RefreshThread, get_qt_icon
 
 PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 1
 PROJECT_IS_ACTIVE_ROLE = QtCore.Qt.UserRole + 2
+PROJECT_IS_LIBRARY_ROLE = QtCore.Qt.UserRole + 3
 
 
 class ProjectsModel(QtGui.QStandardItemModel):
@@ -129,6 +130,7 @@ class ProjectsModel(QtGui.QStandardItemModel):
             item.setData(icon, QtCore.Qt.DecorationRole)
             item.setData(project_name, PROJECT_NAME_ROLE)
             item.setData(project_item.active, PROJECT_IS_ACTIVE_ROLE)
+            item.setData(project_item.is_library, PROJECT_IS_LIBRARY_ROLE)
             self._project_items[project_name] = item
 
         root_item = self.invisibleRootItem()
