@@ -23,17 +23,20 @@ if __name__ == "__main__":
     )
     errors = []
 
+    # Get last workfile representation
     workfile_repre = max(
         filter(
             lambda r: r["context"].get("version") is not None,
-            list(get_representations(
-                get_current_project_name(),
-                context_filters={
-                    "asset": get_current_asset_name(),
-                    "family": "workfile",
-                    "task": {"name": get_current_task_name()},
-                },
-            ))
+            list(
+                get_representations(
+                    get_current_project_name(),
+                    context_filters={
+                        "asset": get_current_asset_name(),
+                        "family": "workfile",
+                        "task": {"name": get_current_task_name()},
+                    },
+                )
+            ),
         ),
         key=lambda r: r["context"]["version"],
     )
@@ -42,27 +45,32 @@ if __name__ == "__main__":
     # Resolve path from source filepath with the relative filepath
     for datablock in get_datablocks_with_filepath(relative=False):
         # skip render result, compositing and generated images
-        if (
-            isinstance(datablock, bpy.types.Image)
-            and datablock.source in {"GENERATED", "VIEWER"}
-        ):
+        if isinstance(datablock, bpy.types.Image) and datablock.source in {
+            "GENERATED",
+            "VIEWER",
+        }:
             continue
         try:
             datablock_filename = Path(datablock.filepath).name
+
+            # Check if datablock is a resource file
             for file in workfile_repre.get("files"):
                 if Path(file.get("path", "")).name == datablock_filename:
+                    # Make resource datablock path relative,
+                    # starting from workdir
                     datablock.filepath = bpy.path.relpath(
                         str(
                             Path(
-                                workdir, "resources", Path(
-                                    datablock.filepath
-                                ).name
+                                workdir,
+                                "resources",
+                                Path(datablock.filepath).name,
                             )
                         ),
                         start=workdir,
                     )
                     break
             else:
+                # Make datablock path relative, starting from target path
                 datablock.filepath = bpy.path.relpath(
                     str(Path(datablock.filepath).resolve()),
                     start=str(Path(bpy.data.filepath).parent.resolve()),

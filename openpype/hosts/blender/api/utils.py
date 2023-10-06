@@ -437,27 +437,33 @@ def make_paths_absolute(source_filepath: Path = None):
     relative_datablocks = get_datablocks_with_filepath(absolute=False)
     remapped_datablocks = set()
     if source_filepath:
+        # Get last workfile representation
         workfile_repre = max(
             filter(
                 lambda r: r["context"].get("version") is not None,
-                list(get_representations(
-                    get_current_project_name(),
-                    context_filters={
-                        "asset": get_current_asset_name(),
-                        "family": "workfile",
-                        "task": {"name": get_current_task_name()},
-                    },
-                ))
+                list(
+                    get_representations(
+                        get_current_project_name(),
+                        context_filters={
+                            "asset": get_current_asset_name(),
+                            "family": "workfile",
+                            "task": {"name": get_current_task_name()},
+                        },
+                    )
+                )
             ),
             key=lambda r: r["context"]["version"],
         )
 
         for d in relative_datablocks:
             try:
+                # Check if datablock is a resource file
                 for file in workfile_repre.get("files"):
                     if Path(file.get("path", "")).name == Path(
                         d.filepath
                     ).name:
+                        # Make resource datablock path absolute,
+                        # starting from workdir
                         d.filepath = str(
                             Path(
                                 bpy.path.abspath(
@@ -467,6 +473,7 @@ def make_paths_absolute(source_filepath: Path = None):
                         )
                         break
                 else:
+                    # Make datablock path absolute, starting from source path
                     d.filepath = str(
                         Path(
                             bpy.path.abspath(
