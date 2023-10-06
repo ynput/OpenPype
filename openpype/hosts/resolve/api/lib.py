@@ -185,7 +185,6 @@ def create_bin(name: str, root: object = None) -> object:
 
 
 def remove_media_pool_item(media_pool_item: object) -> bool:
-    print(media_pool_item)
     media_pool = get_current_project().GetMediaPool()
     return media_pool.DeleteClips([media_pool_item])
 
