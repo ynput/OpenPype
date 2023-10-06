@@ -87,7 +87,7 @@ class LoaderWindow(QtWidgets.QWidget):
 
         icon = QtGui.QIcon(get_openpype_icon_filepath())
         self.setWindowIcon(icon)
-        self.setWindowTitle("Loader")
+        self.setWindowTitle("AYON Loader")
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.Window)
