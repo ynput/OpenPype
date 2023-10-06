@@ -2,7 +2,11 @@ from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.resources import get_openpype_icon_filepath
 from openpype.style import load_stylesheet
-from openpype.tools.utils import PlaceholderLineEdit, ErrorMessageBox
+from openpype.tools.utils import (
+    PlaceholderLineEdit,
+    ErrorMessageBox,
+    ThumbnailPainterWidget,
+)
 from openpype.tools.utils.lib import center_window
 from openpype.tools.ayon_utils.widgets import ProjectsCombobox
 from openpype.tools.ayon_loader.control import LoaderController
@@ -144,12 +148,19 @@ class LoaderWindow(QtWidgets.QWidget):
         right_panel_splitter = QtWidgets.QSplitter(main_splitter)
         right_panel_splitter.setOrientation(QtCore.Qt.Vertical)
 
+        thumbnails_widget = ThumbnailPainterWidget(right_panel_splitter)
+
         info_widget = InfoWidget(controller, right_panel_splitter)
 
         repre_widget = RepresentationsWidget(controller, right_panel_splitter)
 
+        right_panel_splitter.addWidget(thumbnails_widget)
         right_panel_splitter.addWidget(info_widget)
         right_panel_splitter.addWidget(repre_widget)
+
+        right_panel_splitter.setStretchFactor(0, 1)
+        right_panel_splitter.setStretchFactor(1, 1)
+        right_panel_splitter.setStretchFactor(2, 2)
 
         main_splitter.addWidget(context_splitter)
         main_splitter.addWidget(products_wrap_widget)
@@ -189,6 +200,18 @@ class LoaderWindow(QtWidgets.QWidget):
             "load.finished",
             self._on_load_finished,
         )
+        controller.register_event_callback(
+            "selection.project.changed",
+            self._on_project_selection_changed,
+        )
+        controller.register_event_callback(
+            "selection.folders.changed",
+            self._on_folders_selection_changed,
+        )
+        controller.register_event_callback(
+            "selection.versions.changed",
+            self._on_versions_selection_changed,
+        )
 
         self._main_splitter = main_splitter
         self._projects_combobox = projects_combobox
@@ -202,13 +225,19 @@ class LoaderWindow(QtWidgets.QWidget):
         self._product_group_checkbox = product_group_checkbox
         self._products_widget = products_widget
 
+        self._right_panel_splitter = right_panel_splitter
+        self._thumbnails_widget = thumbnails_widget
         self._info_widget = info_widget
+        self._repre_widget = repre_widget
 
         self._controller = controller
         self._first_show = True
         self._reset_on_show = True
         self._show_counter = 0
         self._show_timer = show_timer
+        self._selected_project_name = None
+        self._selected_folder_ids = set()
+        self._selected_version_ids = set()
 
     def showEvent(self, event):
         super(LoaderWindow, self).showEvent(event)
@@ -222,6 +251,7 @@ class LoaderWindow(QtWidgets.QWidget):
         self._first_show = False
         self.resize(1800, 900)
         self._main_splitter.setSizes([350, 1000, 350])
+        self._right_panel_splitter.setSizes([250, 325, 325])
         self.setStyleSheet(load_stylesheet())
         center_window(self)
         self._controller.reset()
@@ -272,3 +302,44 @@ class LoaderWindow(QtWidgets.QWidget):
 
         box = LoadErrorMessageBox(error_info, self)
         box.show()
+
+    def _on_project_selection_changed(self, event):
+        self._selected_project_name = event["project_name"]
+
+    def _on_folders_selection_changed(self, event):
+        self._selected_folder_ids = set(event["folder_ids"])
+        self._update_thumbnails()
+
+    def _on_versions_selection_changed(self, event):
+        self._selected_version_ids = set(event["version_ids"])
+        self._update_thumbnails()
+
+    def _update_thumbnails(self):
+        project_name = self._selected_project_name
+        thumbnail_ids = set()
+        if self._selected_version_ids:
+            thumbnail_id_by_entity_id = self._controller.get_version_thumbnail_ids(
+                project_name,
+                self._selected_version_ids
+            )
+            thumbnail_ids = set(thumbnail_id_by_entity_id.values())
+        elif self._selected_folder_ids:
+            thumbnail_id_by_entity_id = self._controller.get_folder_thumbnail_ids(
+                project_name,
+                self._selected_folder_ids
+            )
+            thumbnail_ids = set(thumbnail_id_by_entity_id.values())
+
+        thumbnail_ids.discard(None)
+
+        if not thumbnail_ids:
+            self._thumbnails_widget.set_current_thumbnails(None)
+            return
+
+        thumbnail_paths = set()
+        for thumbnail_id in thumbnail_ids:
+            thumbnail_path = self._controller.get_thumbnail_path(
+                project_name, thumbnail_id)
+            thumbnail_paths.add(thumbnail_path)
+        thumbnail_paths.discard(None)
+        self._thumbnails_widget.set_current_thumbnail_paths(thumbnail_paths)

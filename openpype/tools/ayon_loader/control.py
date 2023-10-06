@@ -10,6 +10,7 @@ from openpype.tools.ayon_utils.models import (
     HierarchyModel,
     NestedCacheItem,
     CacheItem,
+    ThumbnailsModel,
 )
 
 from .abstract import AbstractController
@@ -38,6 +39,7 @@ class LoaderController(AbstractController):
         self._hierarchy_model = HierarchyModel(self)
         self._products_model = ProductsModel(self)
         self._loader_actions_model = LoaderActionsModel(self)
+        self._thumbnails_model = ThumbnailsModel()
 
     @property
     def log(self):
@@ -69,6 +71,7 @@ class LoaderController(AbstractController):
         self._hierarchy_model.reset()
         self._loader_actions_model.reset()
         self._projects_model.refresh()
+        self._thumbnails_model.reset()
 
         self._emit_event("controller.reset.finished")
 
@@ -100,6 +103,19 @@ class LoaderController(AbstractController):
 
     def get_folder_entity(self, project_name, folder_id):
         self._hierarchy_model.get_folder_entity(project_name, folder_id)
+
+    def get_folder_thumbnail_ids(self, project_name, folder_ids):
+        return self._thumbnails_model.get_folder_thumbnail_ids(
+            project_name, folder_ids)
+
+    def get_version_thumbnail_ids(self, project_name, version_ids):
+        return self._thumbnails_model.get_version_thumbnail_ids(
+            project_name, version_ids)
+
+    def get_thumbnail_path(self, project_name, thumbnail_id):
+        return self._thumbnails_model.get_thumbnail_path(
+            project_name, thumbnail_id
+        )
 
     def get_versions_action_items(self, project_name, version_ids):
         return self._loader_actions_model.get_versions_action_items(

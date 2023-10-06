@@ -233,6 +233,18 @@ class AbstractController:
     def get_folder_entity(self, project_name, folder_id):
         pass
 
+    @abstractmethod
+    def get_version_thumbnail_ids(self, project_name, version_ids):
+        pass
+
+    @abstractmethod
+    def get_folder_thumbnail_ids(self, project_name, folder_ids):
+        pass
+
+    @abstractmethod
+    def get_thumbnail_path(self, project_name, thumbnail_id):
+        pass
+
     # Load action items
     @abstractmethod
     def get_versions_action_items(self, project_name, version_ids):
