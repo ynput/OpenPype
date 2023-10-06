@@ -40,6 +40,17 @@ class CreateShotClip(plugin.Creator):
 
         return [
 
+            BoolDef("use_selection",
+                    label="Use only clips with <b>Chocolate</b>  clip color",
+                    tooltip=(
+                        "When enabled only clips of Chocolate clip color are "
+                        "considered.\n\n"
+                        "Acts as a replacement to 'Use selection' because "
+                        "Resolves API exposes no functionality to retrieve "
+                        "the currently selected timeline items."
+                    ),
+                    default=True),
+
             # renameHierarchy
             UILabelDef(
                 label=header_label("Shot Hierarchy And Rename Settings")
