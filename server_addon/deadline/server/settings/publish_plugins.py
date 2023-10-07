@@ -124,6 +124,24 @@ class LimitGroupsSubmodel(BaseSettingsModel):
     )
 
 
+def fusion_deadline_plugin_enum():
+    """Return a list of value/label dicts for the enumerator.
+
+    Returning a list of dicts is used to allow for a custom label to be
+    displayed in the UI.
+    """
+    return [
+        {
+            "value": "Fusion",
+            "label": "Fusion"
+        },
+        {
+            "value": "FusionCmd",
+            "label": "FusionCmd"
+        }
+    ]
+
+
 class FusionSubmitDeadlineModel(BaseSettingsModel):
     enabled: bool = Field(True, title="Enabled")
     optional: bool = Field(False, title="Optional")
@@ -132,6 +150,9 @@ class FusionSubmitDeadlineModel(BaseSettingsModel):
     chunk_size: int = Field(10, title="Frame per Task")
     concurrent_tasks: int = Field(1, title="Number of concurrent tasks")
     group: str = Field("", title="Group Name")
+    plugin: str = Field("Fusion",
+                        enum_resolver=fusion_deadline_plugin_enum,
+                        title="Deadline Plugin")
 
 
 class NukeSubmitDeadlineModel(BaseSettingsModel):
