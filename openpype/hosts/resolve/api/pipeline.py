@@ -12,14 +12,24 @@ from openpype.pipeline import (
     schema,
     register_loader_plugin_path,
     register_creator_plugin_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
-from openpype.tools.utils import host_tools
+from openpype.host import (
+    HostBase,
+    IWorkfileHost,
+    ILoadHost
+)
 
 from . import lib
 from .utils import get_resolve_module
+from .workio import (
+    open_file,
+    save_file,
+    file_extensions,
+    has_unsaved_changes,
+    work_root,
+    current_file
+)
 
 log = Logger.get_logger(__name__)
 
@@ -32,53 +42,56 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
-def install():
-    """Install resolve-specific functionality of avalon-core.
+class ResolveHost(HostBase, IWorkfileHost, ILoadHost):
+    name = "resolve"
 
-    This is where you install menus and register families, data
-    and loaders into resolve.
+    def install(self):
+        """Install resolve-specific functionality of avalon-core.
 
-    It is called automatically when installing via `api.install(resolve)`.
+        This is where you install menus and register families, data
+        and loaders into resolve.
 
-    See the Maya equivalent for inspiration on how to implement this.
+        It is called automatically when installing via `api.install(resolve)`.
 
-    """
+        See the Maya equivalent for inspiration on how to implement this.
 
-    log.info("openpype.hosts.resolve installed")
+        """
 
-    pyblish.register_host("resolve")
-    pyblish.register_plugin_path(PUBLISH_PATH)
-    log.info("Registering DaVinci Resovle plug-ins..")
+        log.info("openpype.hosts.resolve installed")
 
-    register_loader_plugin_path(LOAD_PATH)
-    register_creator_plugin_path(CREATE_PATH)
+        pyblish.register_host(self.name)
+        pyblish.register_plugin_path(PUBLISH_PATH)
+        print("Registering DaVinci Resolve plug-ins..")
 
-    # register callback for switching publishable
-    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
+        register_loader_plugin_path(LOAD_PATH)
+        register_creator_plugin_path(CREATE_PATH)
 
-    get_resolve_module()
+        # register callback for switching publishable
+        pyblish.register_callback("instanceToggled",
+                                  on_pyblish_instance_toggled)
 
+        get_resolve_module()
 
-def uninstall():
-    """Uninstall all that was installed
+    def open_workfile(self, filepath):
+        return open_file(filepath)
 
-    This is where you undo everything that was done in `install()`.
-    That means, removing menus, deregistering families and  data
-    and everything. It should be as though `install()` was never run,
-    because odds are calling this function means the user is interested
-    in re-installing shortly afterwards. If, for example, he has been
-    modifying the menu or registered families.
+    def save_workfile(self, filepath=None):
+        return save_file(filepath)
 
-    """
-    pyblish.deregister_host("resolve")
-    pyblish.deregister_plugin_path(PUBLISH_PATH)
-    log.info("Deregistering DaVinci Resovle plug-ins..")
+    def work_root(self, session):
+        return work_root(session)
 
-    deregister_loader_plugin_path(LOAD_PATH)
-    deregister_creator_plugin_path(CREATE_PATH)
+    def get_current_workfile(self):
+        return current_file()
 
-    # register callback for switching publishable
-    pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
+    def workfile_has_unsaved_changes(self):
+        return has_unsaved_changes()
+
+    def get_workfile_extensions(self):
+        return file_extensions()
+
+    def get_containers(self):
+        return ls()
 
 
 def containerise(timeline_item,
@@ -204,15 +217,6 @@ def update_container(timeline_item, data=None):
 
     log.info("Updating container: `{}`".format(timeline_item))
     return bool(lib.set_timeline_item_pype_tag(timeline_item, container))
-
-
-def launch_workfiles_app(*args):
-    host_tools.show_workfiles()
-
-
-def publish(parent):
-    """Shorthand to publish from within host"""
-    return host_tools.show_publish()
 
 
 @contextlib.contextmanager

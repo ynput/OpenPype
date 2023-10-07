@@ -8,12 +8,13 @@ log = Logger.get_logger(__name__)
 
 
 def main(env):
-    import openpype.hosts.resolve.api as bmdvr
+    from openpype.hosts.resolve.api import ResolveHost, launch_pype_menu
 
     # activate resolve from openpype
-    install_host(bmdvr)
+    host = ResolveHost()
+    install_host(host)
 
-    bmdvr.launch_pype_menu()
+    launch_pype_menu()
 
 
 if __name__ == "__main__":

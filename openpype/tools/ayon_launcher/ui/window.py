@@ -99,8 +99,8 @@ class LauncherWindow(QtWidgets.QWidget):
         message_timer.setInterval(self.message_interval)
         message_timer.setSingleShot(True)
 
-        refresh_timer = QtCore.QTimer()
-        refresh_timer.setInterval(self.refresh_interval)
+        actions_refresh_timer = QtCore.QTimer()
+        actions_refresh_timer.setInterval(self.refresh_interval)
 
         page_slide_anim = QtCore.QVariantAnimation(self)
         page_slide_anim.setDuration(self.page_side_anim_interval)
@@ -108,8 +108,10 @@ class LauncherWindow(QtWidgets.QWidget):
         page_slide_anim.setEndValue(1.0)
         page_slide_anim.setEasingCurve(QtCore.QEasingCurve.OutQuad)
 
+        projects_page.refreshed.connect(self._on_projects_refresh)
         message_timer.timeout.connect(self._on_message_timeout)
-        refresh_timer.timeout.connect(self._on_refresh_timeout)
+        actions_refresh_timer.timeout.connect(
+            self._on_actions_refresh_timeout)
         page_slide_anim.valueChanged.connect(
             self._on_page_slide_value_changed)
         page_slide_anim.finished.connect(self._on_page_slide_finished)
@@ -132,6 +134,7 @@ class LauncherWindow(QtWidgets.QWidget):
         self._is_on_projects_page = True
         self._window_is_active = False
         self._refresh_on_activate = False
+        self._selected_project_name = None
 
         self._pages_widget = pages_widget
         self._pages_layout = pages_layout
@@ -143,7 +146,7 @@ class LauncherWindow(QtWidgets.QWidget):
         # self._action_history = action_history
 
         self._message_timer = message_timer
-        self._refresh_timer = refresh_timer
+        self._actions_refresh_timer = actions_refresh_timer
         self._page_slide_anim = page_slide_anim
 
         hierarchy_page.setVisible(not self._is_on_projects_page)
@@ -152,14 +155,14 @@ class LauncherWindow(QtWidgets.QWidget):
     def showEvent(self, event):
         super(LauncherWindow, self).showEvent(event)
         self._window_is_active = True
-        if not self._refresh_timer.isActive():
-            self._refresh_timer.start()
+        if not self._actions_refresh_timer.isActive():
+            self._actions_refresh_timer.start()
         self._controller.refresh()
 
     def closeEvent(self, event):
         super(LauncherWindow, self).closeEvent(event)
         self._window_is_active = False
-        self._refresh_timer.stop()
+        self._actions_refresh_timer.stop()
 
     def changeEvent(self, event):
         if event.type() in (
@@ -170,15 +173,15 @@ class LauncherWindow(QtWidgets.QWidget):
             self._window_is_active = is_active
             if is_active and self._refresh_on_activate:
                 self._refresh_on_activate = False
-                self._on_refresh_timeout()
-                self._refresh_timer.start()
+                self._on_actions_refresh_timeout()
+                self._actions_refresh_timer.start()
 
         super(LauncherWindow, self).changeEvent(event)
 
-    def _on_refresh_timeout(self):
+    def _on_actions_refresh_timeout(self):
         # Stop timer if widget is not visible
         if self._window_is_active:
-            self._controller.refresh()
+            self._controller.refresh_actions()
         else:
             self._refresh_on_activate = True
 
@@ -191,11 +194,25 @@ class LauncherWindow(QtWidgets.QWidget):
 
     def _on_project_selection_change(self, event):
         project_name = event["project_name"]
+        self._selected_project_name = project_name
         if not project_name:
             self._go_to_projects_page()
 
         elif self._is_on_projects_page:
             self._go_to_hierarchy_page(project_name)
+
+    def _on_projects_refresh(self):
+        # There is nothing to do, we're on projects page
+        if self._is_on_projects_page:
+            return
+
+        # No projects were found -> go back to projects page
+        if not self._projects_page.has_content():
+            self._go_to_projects_page()
+            return
+
+        self._hierarchy_page.refresh()
+        self._actions_widget.refresh()
 
     def _on_action_trigger_started(self, event):
         self._echo("Running action: {}".format(event["full_label"]))
