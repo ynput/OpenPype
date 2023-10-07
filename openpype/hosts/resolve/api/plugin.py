@@ -338,8 +338,6 @@ class ClipLoader:
         else:
             self.active_timeline = lib.get_current_timeline()
 
-
-
     def _populate_data(self):
         """ Gets context and convert it to self.data
         data structure:
@@ -428,7 +426,6 @@ class ClipLoader:
             self.active_bin
         )
         _clip_property = media_pool_item.GetClipProperty
-
 
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
