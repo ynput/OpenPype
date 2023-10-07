@@ -73,6 +73,9 @@ class ProjectIconView(QtWidgets.QListView):
 
 class ProjectsWidget(QtWidgets.QWidget):
     """Projects Page"""
+
+    refreshed = QtCore.Signal()
+
     def __init__(self, controller, parent=None):
         super(ProjectsWidget, self).__init__(parent=parent)
 
@@ -104,6 +107,7 @@ class ProjectsWidget(QtWidgets.QWidget):
         main_layout.addWidget(projects_view, 1)
 
         projects_view.clicked.connect(self._on_view_clicked)
+        projects_model.refreshed.connect(self.refreshed)
         projects_filter_text.textChanged.connect(
             self._on_project_filter_change)
         refresh_btn.clicked.connect(self._on_refresh_clicked)
@@ -118,6 +122,15 @@ class ProjectsWidget(QtWidgets.QWidget):
         self._projects_view = projects_view
         self._projects_model = projects_model
         self._projects_proxy_model = projects_proxy_model
+
+    def has_content(self):
+        """Model has at least one project.
+
+        Returns:
+             bool: True if there is any content in the model.
+        """
+
+        return self._projects_model.has_content()
 
     def _on_view_clicked(self, index):
         if index.isValid():
