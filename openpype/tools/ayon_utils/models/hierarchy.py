@@ -199,13 +199,18 @@ class HierarchyModel(object):
     Hierarchy items are folders and tasks. Folders can have as parent another
     folder or project. Tasks can have as parent only folder.
     """
+    lifetime = 60  # A minute
 
     def __init__(self, controller):
-        self._folders_items = NestedCacheItem(levels=1, default_factory=dict)
-        self._folders_by_id = NestedCacheItem(levels=2, default_factory=dict)
+        self._folders_items = NestedCacheItem(
+            levels=1, default_factory=dict, lifetime=self.lifetime)
+        self._folders_by_id = NestedCacheItem(
+            levels=2, default_factory=dict, lifetime=self.lifetime)
 
-        self._task_items = NestedCacheItem(levels=2, default_factory=dict)
-        self._tasks_by_id = NestedCacheItem(levels=2, default_factory=dict)
+        self._task_items = NestedCacheItem(
+            levels=2, default_factory=dict, lifetime=self.lifetime)
+        self._tasks_by_id = NestedCacheItem(
+            levels=2, default_factory=dict, lifetime=self.lifetime)
 
         self._folders_refreshing = set()
         self._tasks_refreshing = set()
