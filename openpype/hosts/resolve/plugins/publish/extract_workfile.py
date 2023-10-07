@@ -24,8 +24,8 @@ class ExtractWorkfile(publish.Extractor):
         project = instance.context.data["activeProject"]
         staging_dir = self.staging_dir(instance)
 
-        resolve_workfile_ext = ".drp"
-        drp_file_name = name + resolve_workfile_ext
+        ext = ".drp"
+        drp_file_name = name + ext
         drp_file_path = os.path.normpath(
             os.path.join(staging_dir, drp_file_name))
 
@@ -35,17 +35,18 @@ class ExtractWorkfile(publish.Extractor):
 
         # create drp workfile representation
         representation_drp = {
-            'name': resolve_workfile_ext[1:],
-            'ext': resolve_workfile_ext[1:],
+            'name': ext.lstrip("."),
+            'ext': ext.lstrip("."),
             'files': drp_file_name,
             "stagingDir": staging_dir,
         }
-
-        instance.data["representations"].append(representation_drp)
+        representations = instance.data.setdefault("representations", [])
+        representations.append(representation_drp)
 
         # add sourcePath attribute to instance
         if not instance.data.get("sourcePath"):
             instance.data["sourcePath"] = drp_file_path
 
-        self.log.info("Added Resolve file representation: {}".format(
-            representation_drp))
+        self.log.debug(
+            "Added Resolve file representation: {}".format(representation_drp)
+        )
