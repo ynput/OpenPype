@@ -694,16 +694,6 @@ def _convert_nuke_project_settings(ayon_settings, output):
         dirmap["paths"][dst_key] = dirmap["paths"].pop(src_key)
     ayon_nuke["nuke-dirmap"] = dirmap
 
-    # --- Filters ---
-    new_gui_filters = {}
-    for item in ayon_nuke.pop("filters"):
-        subvalue = {}
-        key = item["name"]
-        for subitem in item["value"]:
-            subvalue[subitem["name"]] = subitem["value"]
-        new_gui_filters[key] = subvalue
-    ayon_nuke["filters"] = new_gui_filters
-
     # --- Load ---
     ayon_load = ayon_nuke["load"]
     ayon_load["LoadClip"]["_representations"] = (
