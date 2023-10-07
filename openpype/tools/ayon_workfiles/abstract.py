@@ -914,10 +914,12 @@ class AbstractWorkfilesFrontend(AbstractWorkfilesCommon):
 
     # Controller actions
     @abstractmethod
-    def open_workfile(self, filepath):
-        """Open a workfile.
+    def open_workfile(self, folder_id, task_id, filepath):
+        """Open a workfile for context.
 
         Args:
+            folder_id (str): Folder id.
+            task_id (str): Task id.
             filepath (str): Workfile path.
         """
 

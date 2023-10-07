@@ -1,0 +1,53 @@
+{
+    "type": "dict",
+    "key": "general",
+    "label": "General",
+    "collapsible": true,
+    "is_group": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "update_houdini_var_context",
+            "label": "Update Houdini Vars on context change",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Sync vars with context changes.<br>If a value is treated as a directory on update it will be ensured the folder exists"
+                },
+                {
+                    "type": "list",
+                    "key": "houdini_vars",
+                    "label": "Houdini Vars",
+                    "collapsible": false,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "var",
+                                "label": "Var"
+                            },
+                            {
+                                "type": "text",
+                                "key": "value",
+                                "label": "Value"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "is_directory",
+                                "label": "Treat as directory"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
