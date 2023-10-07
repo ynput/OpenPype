@@ -150,6 +150,15 @@ class LoadClip(plugin.TimelineItemLoader):
         # function exists in Resolve
         if timeline.DeleteClips is not None:
             timeline.DeleteClips([timeline_item])
+        else:
+            # Resolve versions older than 18.5 can't delete clips via API
+            # so all we can do is just remove the pype marker to 'untag' it
+            if lib.get_pype_marker(timeline_item):
+                # Note: We must call `get_pype_marker` because
+                # `delete_pype_marker` uses a global variable set by
+                # `get_pype_marker` to delete the right marker
+                # TODO: Improve code to avoid the global `temp_marker_frame`
+                lib.delete_pype_marker(timeline_item)
 
         # if media pool item has no remaining usages left
         # remove it from the media pool
