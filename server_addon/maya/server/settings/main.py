@@ -60,7 +60,7 @@ class MayaSettings(BaseSettingsModel):
         default_factory=TemplatedProfilesModel,
         title="Templated Workfile Build Settings")
 
-    @validator("filters", "ext_mapping")
+    @validator("ext_mapping")
     def validate_unique_outputs(cls, value):
         ensure_unique_names(value)
         return value

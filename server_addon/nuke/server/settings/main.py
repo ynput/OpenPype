@@ -97,12 +97,6 @@ class NukeSettings(BaseSettingsModel):
         default_factory=TemplatedWorkfileBuildModel
     )
 
-    @validator("filters")
-    def ensure_unique_names(cls, value):
-        """Ensure name fields within the lists have unique names."""
-        ensure_unique_names(value)
-        return value
-
 
 DEFAULT_VALUES = {
     "general": DEFAULT_GENERAL_SETTINGS,
