@@ -580,11 +580,11 @@ def set_pype_marker(timeline_item, tag_data):
 
 def get_pype_marker(timeline_item):
     timeline_item_markers = timeline_item.GetMarkers()
-    for marker_frame in timeline_item_markers:
-        note = timeline_item_markers[marker_frame]["note"]
-        color = timeline_item_markers[marker_frame]["color"]
-        name = timeline_item_markers[marker_frame]["name"]
+    for marker_frame, marker in timeline_item_markers.items():
+        color = marker["color"]
+        name = marker["name"]
         if name == self.pype_marker_name and color == self.pype_marker_color:
+            note = marker["note"]
             self.temp_marker_frame = marker_frame
             return json.loads(note)
 
