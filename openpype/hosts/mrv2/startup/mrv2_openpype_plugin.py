@@ -40,3 +40,14 @@ class MyPlugin(plugin.Plugin):
             f"{top}/": separator,
             f"{top}/Workfiles...": self.on_workfiles,
         }
+
+
+def install():
+    from openpype.pipeline import install_host
+    from openpype.hosts.mrv2.api import Mrv2Host
+    print("Installing OpenPype..")
+    host = Mrv2Host()
+    install_host(host)
+
+
+install()
