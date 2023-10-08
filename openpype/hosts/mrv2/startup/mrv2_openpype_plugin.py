@@ -2,8 +2,10 @@ from mrv2 import plugin
 # TODO: We must first distribute Qt to MRV2's Python 3.10
 # from openpype.tools.utils import host_tools
 
+
 def separator():
     pass
+
 
 class MyPlugin(plugin.Plugin):
     # Should be made available on MRV_PLUGIN_PATH
