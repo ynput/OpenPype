@@ -346,9 +346,22 @@ class LoaderWindow(QtWidgets.QWidget):
 
     def _on_first_show(self):
         self._first_show = False
-        self.resize(1800, 900)
-        self._main_splitter.setSizes([350, 1000, 350])
-        self._right_panel_splitter.setSizes([250, 325, 325])
+        # width, height = 1800, 900
+        width, height = 1500, 750
+
+        self.resize(width, height)
+
+        mid_width = int(width / 1.8)
+        sides_width = int((width - mid_width) * 0.5)
+        self._main_splitter.setSizes(
+            [sides_width, mid_width, sides_width]
+        )
+
+        thumbnail_height = int(height / 3.6)
+        info_height = int((height - thumbnail_height) * 0.5)
+        self._right_panel_splitter.setSizes(
+            [thumbnail_height, info_height, info_height]
+        )
         self.setStyleSheet(load_stylesheet())
         center_window(self)
         self._controller.reset()
