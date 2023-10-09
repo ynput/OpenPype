@@ -90,7 +90,9 @@ def generate_shelves():
                         "script path of the tool.")
                     continue
 
-                tool = get_or_create_tool(tool_definition, shelf, template_data)
+                tool = get_or_create_tool(
+                    tool_definition, shelf, template_data
+                )
 
                 if not tool:
                     continue
