@@ -66,20 +66,22 @@ class CreateMultishotLayout(plugin.MayaCreator):
         #   }
         # ]
 
+        # add the project as the first item
+        items_with_label = [
+            dict(label=f"{self.project_name} "
+                        "(shots directly under the project)", value="")
+        ]
+
         # go through the current folder path and add each part to the list,
         # but mark the current folder.
-        for part_idx in range(len(current_path_parts)):
-            label = current_path_parts[part_idx]
-            if current_path_parts[part_idx] == current_folder["name"]:
-                label = f"{current_path_parts[part_idx]} (current)"
-            items_with_label.append(
-                dict(label=label,
-                     value="/".join(current_path_parts[:part_idx + 1]))
-            )
-        # add the project as the first item
-        items_with_label.insert(
-            0, dict(label=f"{self.project_name} "
-                          "(shots directly under the project)", value=""))
+        for part_idx, part in enumerate(current_path_parts):
+            label = part
+            if label == current_folder["name"]:
+                label = f"{label} (current)"
+
+            value = "/".join(current_path_parts[:part_idx + 1])
+
+            items_with_label.append({"label": label, "value": value})
 
         return [
             EnumDef("shotParent",
@@ -115,10 +117,14 @@ class CreateMultishotLayout(plugin.MayaCreator):
         layout_creator_id = "io.openpype.creators.maya.layout"
         layout_creator: Creator = self.create_context.creators.get(
             layout_creator_id)
+        if not layout_creator:
+            raise CreatorError(
+                f"Creator {layout_creator_id} not found.")
 
         # Get OpenPype style asset documents for the shots
         op_asset_docs = get_assets(
             self.project_name, [s["id"] for s in shots])
+        asset_docs_by_id = {doc["_id"]: doc for doc in op_asset_docs}
         for shot in shots:
             # we are setting shot name to be displayed in the sequencer to
             # `shot name (shot label)` if the label is set, otherwise just
@@ -128,13 +134,9 @@ class CreateMultishotLayout(plugin.MayaCreator):
                 continue
 
             # get task for shot
-            asset_doc = next(
-                asset_doc for asset_doc in op_asset_docs
-                if asset_doc["_id"] == shot["id"]
+            asset_doc = asset_docs_by_id[shot["id"]]
 
-            )
-
-            tasks = list(asset_doc.get("data").get("tasks").keys())
+            tasks = asset_doc.get("data").get("tasks").keys()
             layout_task = None
             if pre_create_data["taskName"] in tasks:
                 layout_task = pre_create_data["taskName"]
