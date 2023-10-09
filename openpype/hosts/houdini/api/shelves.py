@@ -178,6 +178,11 @@ def get_or_create_tool(tool_definition, shelf, template_data):
         log.warning("This path doesn't exist - {}".format(script_path))
         return
 
+    icon_path = tool_definition["icon"]
+    if icon_path:
+        icon_path = get_path_using_template_data(icon_path, template_data)
+        tool_definition["icon"] = icon_path
+
     existing_tools = shelf.tools()
     existing_tool = next(
         (tool for tool in existing_tools if tool.label() == tool_label),
