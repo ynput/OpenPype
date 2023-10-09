@@ -156,14 +156,10 @@ class ProductsWidget(QtWidgets.QWidget):
             "products.refresh.finished",
             self._on_products_refresh_finished
         )
-        # controller.register_event_callback(
-        #     "controller.refresh.finished",
-        #     self._on_controller_refresh
-        # )
-        # controller.register_event_callback(
-        #     "expected_selection_changed",
-        #     self._on_expected_selection_change
-        # )
+        controller.register_event_callback(
+            "products.group.changed",
+            self._on_group_changed
+        )
 
         self._products_view = products_view
         self._products_model = products_model
@@ -394,3 +390,11 @@ class ProductsWidget(QtWidgets.QWidget):
     def _on_products_refresh_finished(self, event):
         if event["sender"] != PRODUCTS_MODEL_SENDER_NAME:
             self._refresh_model()
+
+    def _on_group_changed(self, event):
+        if event["project_name"] != self._selected_project_name:
+            return
+        folder_ids = event["folder_ids"]
+        if not set(folder_ids).intersection(set(self._selected_folder_ids)):
+            return
+        self.refresh()

@@ -3,6 +3,7 @@ import contextlib
 
 import arrow
 import ayon_api
+from ayon_api.operations import OperationsSession
 
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.ayon_utils.models import NestedCacheItem
@@ -219,6 +220,40 @@ class ProductsModel:
             project_name, version_ids=version_ids, fields=["productId"]
         )
         return {v["productId"] for v in versions}
+
+    def change_products_group(self, project_name, product_ids, group_name):
+        if not product_ids:
+            return
+
+        product_items = self._get_product_items_by_id(
+            project_name, product_ids
+        )
+        if not product_items:
+            return
+
+        session = OperationsSession()
+        folder_ids = set()
+        for product_item in product_items.values():
+            session.update_entity(
+                project_name,
+                "product",
+                product_item.product_id,
+                {"attrib": {"productGroup": group_name}}
+            )
+            folder_ids.add(product_item.folder_id)
+            product_item.group_name = group_name
+
+        session.commit()
+        self._controller.emit_event(
+            "products.group.changed",
+            {
+                "project_name": project_name,
+                "folder_ids": folder_ids,
+                "product_ids": product_ids,
+                "group_name": group_name,
+            },
+            PRODUCTS_MODEL_SENDER
+        )
 
     def _get_product_items_by_id(self, project_name, product_ids):
         product_item_by_id = self._product_item_by_id[project_name]

@@ -261,6 +261,10 @@ class AbstractController:
     def get_thumbnail_path(self, project_name, thumbnail_id):
         pass
 
+    @abstractmethod
+    def change_products_group(self, project_name, product_ids, group_name):
+        pass
+
     # Load action items
     @abstractmethod
     def get_versions_action_items(self, project_name, version_ids):

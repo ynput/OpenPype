@@ -210,6 +210,11 @@ class LoaderController(AbstractController):
             project_name, thumbnail_id
         )
 
+    def change_products_group(self, project_name, product_ids, group_name):
+        self._products_model.change_products_group(
+            project_name, product_ids, group_name
+        )
+
     def get_versions_action_items(self, project_name, version_ids):
         return self._loader_actions_model.get_versions_action_items(
             project_name, version_ids)

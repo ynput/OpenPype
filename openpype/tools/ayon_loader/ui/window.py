@@ -16,6 +16,7 @@ from openpype.tools.ayon_loader.control import LoaderController
 from .folders_widget import LoaderFoldersWidget
 from .products_widget import ProductsWidget
 from .product_types_widget import ProductTypesView
+from .product_group_dialog import ProductGroupDialog
 from .info_widget import InfoWidget
 from .repres_widget import RepresentationsWidget
 
@@ -283,6 +284,8 @@ class LoaderWindow(QtWidgets.QWidget):
             self._on_controller_reset_finish,
         )
 
+        self._group_dialog = ProductGroupDialog(controller, self)
+
         self._main_splitter = main_splitter
 
         self._go_to_current_btn = go_to_current_btn
@@ -325,6 +328,22 @@ class LoaderWindow(QtWidgets.QWidget):
 
         self._show_timer.start()
 
+    def keyPressEvent(self, event):
+        modifiers = event.modifiers()
+        ctrl_pressed = QtCore.Qt.ControlModifier & modifiers
+
+        # Grouping products on pressing Ctrl + G
+        if (
+            ctrl_pressed
+            and event.key() == QtCore.Qt.Key_G
+            and not event.isAutoRepeat()
+        ):
+            self._show_group_dialog()
+            event.setAccepted(True)
+            return
+
+        super(LoaderWindow, self).keyPressEvent(event)
+
     def _on_first_show(self):
         self._first_show = False
         self.resize(1800, 900)
@@ -345,6 +364,21 @@ class LoaderWindow(QtWidgets.QWidget):
         if self._reset_on_show:
             self._reset_on_show = False
             self._controller.reset()
+
+    def _show_group_dialog(self):
+        project_name = self._projects_combobox.get_current_project_name()
+        if not project_name:
+            return
+
+        product_ids = {
+            i["product_id"]
+            for i in self._products_widget.get_selected_version_info()
+        }
+        if not product_ids:
+            return
+
+        self._group_dialog.set_product_ids(project_name, product_ids)
+        self._group_dialog.show()
 
     def _on_folder_filter_change(self, text):
         self._folders_widget.set_name_filer(text)
