@@ -204,6 +204,12 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
         self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
     def lessThan(self, left_index, right_index):
+        if left_index.data(PROJECT_IS_CURRENT_ROLE):
+            return True
+
+        if right_index.data(PROJECT_IS_CURRENT_ROLE):
+            return False
+
         if left_index.data(PROJECT_NAME_ROLE) is None:
             return True
 
@@ -384,6 +390,10 @@ class ProjectsCombobox(QtWidgets.QWidget):
         if idx < 0:
             return None
         return self._projects_combobox.itemData(idx, PROJECT_NAME_ROLE)
+
+    def set_current_context_project(self, project_name):
+        self._projects_model.set_current_context_project(project_name)
+        self._projects_proxy_model.invalidateFilter()
 
     def _update_select_item_visiblity(self, **kwargs):
         if not self._select_item_visible:
