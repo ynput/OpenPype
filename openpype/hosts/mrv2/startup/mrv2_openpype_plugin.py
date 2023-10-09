@@ -59,6 +59,12 @@ class MyPlugin(plugin.Plugin):
         }
 
 
+def qt_app_shutdown():
+    print("Shutting down QApplication and QTimer")
+    global timer
+    timer.stop()
+
+
 @contextlib.contextmanager
 def qt_with_mrv_update():
     from qtpy import QtCore
@@ -66,11 +72,20 @@ def qt_with_mrv_update():
     with qt_app_context() as app:
         global timer
         if timer is None:
+            print("Initializing and starting QTimer..")
             timer = QtCore.QTimer(parent=app)
             timer.setInterval(0)
             timer.timeout.connect(cmd.update)
             timer.start()
-        yield
+            app.aboutToQuit.connect(qt_app_shutdown)
+
+        yield app
+
+        if not timer.isActive():
+            # Restarting QApplication, reopen after last window close
+            print("Restarting QApplication and QTimer..")
+            timer.start()
+            app.exec_()
 
 
 def install():
