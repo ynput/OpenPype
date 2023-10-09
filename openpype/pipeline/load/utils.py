@@ -292,7 +292,7 @@ def get_representation_files(context, filepath):
     """Return list of files for representation.
 
     Args:
-        representation (dict): Representation document.
+        context (dict): The full loading context.
         filepath (str): Filepath of the representation.
 
     Returns:
