@@ -76,6 +76,7 @@ class ProductsProxyModel(RecursiveSortFilterProxyModel):
 
 
 class ProductsWidget(QtWidgets.QWidget):
+    refreshed = QtCore.Signal()
     merged_products_selection_changed = QtCore.Signal()
     selection_changed = QtCore.Signal()
     version_changed = QtCore.Signal()
@@ -216,6 +217,9 @@ class ProductsWidget(QtWidgets.QWidget):
     def get_selected_version_info(self):
         return self._selected_versions_info
 
+    def refresh(self):
+        self._refresh_model()
+
     def _fill_version_editor(self):
         model = self._products_proxy_model
         index_queue = collections.deque()
@@ -241,6 +245,7 @@ class ProductsWidget(QtWidgets.QWidget):
 
     def _on_refresh(self):
         self._fill_version_editor()
+        self.refreshed.emit()
 
     def _on_rows_inserted(self):
         self._fill_version_editor()

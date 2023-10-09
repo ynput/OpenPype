@@ -264,6 +264,8 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
             the expected selection. Defaults to False.
     """
 
+    refreshed = QtCore.Signal()
+
     def __init__(self, controller, parent, handle_expected_selection=False):
         super(LoaderFoldersWidget, self).__init__(parent)
 
@@ -336,6 +338,9 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
 
         self._folders_model.set_merged_products_selection(items)
 
+    def refresh(self):
+        self._folders_model.refresh()
+
     def _on_project_selection_change(self, event):
         project_name = event["project_name"]
         self._set_project_name(project_name)
@@ -357,6 +362,7 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
         if self._expected_selection:
             self._set_expected_selection()
         self._folders_proxy_model.sort(0)
+        self.refreshed.emit()
 
     def _get_selected_item_ids(self):
         selection_model = self._folders_view.selectionModel()

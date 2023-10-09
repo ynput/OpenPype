@@ -293,6 +293,8 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
 
 
 class ProjectsCombobox(QtWidgets.QWidget):
+    refreshed = QtCore.Signal()
+
     def __init__(self, controller, parent, handle_expected_selection=False):
         super(ProjectsCombobox, self).__init__(parent)
 
@@ -437,6 +439,7 @@ class ProjectsCombobox(QtWidgets.QWidget):
         if self._expected_selection:
             self._set_expected_selection()
         self._update_select_item_visiblity()
+        self.refreshed.emit()
 
     def _on_projects_refresh_finished(self, event):
         if event["sender"] != PROJECTS_MODEL_SENDER:

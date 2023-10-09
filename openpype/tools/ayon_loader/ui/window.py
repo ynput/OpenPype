@@ -81,6 +81,39 @@ class LoadErrorMessageBox(ErrorMessageBox):
                 content_layout.addWidget(tb_widget)
 
 
+class RefreshHandler:
+    def __init__(self):
+        self._project_refreshed = False
+        self._folders_refreshed = False
+        self._products_refreshed = False
+
+    @property
+    def project_refreshed(self):
+        return self._products_refreshed
+
+    @property
+    def folders_refreshed(self):
+        return self._folders_refreshed
+
+    @property
+    def products_refreshed(self):
+        return self._products_refreshed
+
+    def reset(self):
+        self._project_refreshed = False
+        self._folders_refreshed = False
+        self._products_refreshed = False
+
+    def set_project_refreshed(self):
+        self._project_refreshed = True
+
+    def set_folders_refreshed(self):
+        self._folders_refreshed = True
+
+    def set_products_refreshed(self):
+        self._products_refreshed = True
+
+
 class LoaderWindow(QtWidgets.QWidget):
     def __init__(self, controller=None, parent=None):
         super(LoaderWindow, self).__init__(parent)
@@ -197,6 +230,9 @@ class LoaderWindow(QtWidgets.QWidget):
 
         show_timer.timeout.connect(self._on_show_timer)
 
+        projects_combobox.refreshed.connect(self._on_projects_refresh)
+        folders_widget.refreshed.connect(self._on_folders_refresh)
+        products_widget.refreshed.connect(self._on_products_refresh)
         folders_filter_input.textChanged.connect(
             self._on_folder_filter_change
         )
@@ -238,8 +274,12 @@ class LoaderWindow(QtWidgets.QWidget):
             self._on_versions_selection_changed,
         )
         controller.register_event_callback(
+            "controller.reset.started",
+            self._on_controller_reset_start,
+        )
+        controller.register_event_callback(
             "controller.reset.finished",
-            self._on_controller_reset,
+            self._on_controller_reset_finish,
         )
 
         self._main_splitter = main_splitter
@@ -263,6 +303,7 @@ class LoaderWindow(QtWidgets.QWidget):
         self._repre_widget = repre_widget
 
         self._controller = controller
+        self._refresh_handler = RefreshHandler()
         self._first_show = True
         self._reset_on_show = True
         self._show_counter = 0
@@ -337,11 +378,16 @@ class LoaderWindow(QtWidgets.QWidget):
     def _on_refresh_click(self):
         self._controller.reset()
 
-    def _on_controller_reset(self):
+    def _on_controller_reset_start(self):
+        self._refresh_handler.reset()
+
+    def _on_controller_reset_finish(self):
         context = self._controller.get_current_context()
         project_name = context["project_name"]
         self._go_to_current_btn.setVisible(bool(project_name))
         self._projects_combobox.set_current_context_project(project_name)
+        if not self._refresh_handler.project_refreshed:
+            self._projects_combobox.refresh()
 
     def _on_load_finished(self, event):
         error_info = event["error_info"]
@@ -391,3 +437,16 @@ class LoaderWindow(QtWidgets.QWidget):
             thumbnail_paths.add(thumbnail_path)
         thumbnail_paths.discard(None)
         self._thumbnails_widget.set_current_thumbnail_paths(thumbnail_paths)
+
+    def _on_projects_refresh(self):
+        self._refresh_handler.set_project_refreshed()
+        if not self._refresh_handler.folders_refreshed:
+            self._folders_widget.refresh()
+
+    def _on_folders_refresh(self):
+        self._refresh_handler.set_folders_refreshed()
+        if not self._refresh_handler.products_refreshed:
+            self._products_widget.refresh()
+
+    def _on_products_refresh(self):
+        self._refresh_handler.set_products_refreshed()
