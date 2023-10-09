@@ -92,14 +92,12 @@ class OpenInMRV2(load.LoaderPlugin):
         self.log.info("Opening : {}".format(filepath))
         last_executable_version = sorted(self.executables)[-1]
 
-        # TODO: Why doesn't this work to pass the app arguments?
-        # self.app_manager.launch(last_executable_version,
-        #                         data={"app_args": app_args})
-
-        app = self.app_manager.applications.get(last_executable_version)
-        app.arguments.extend(app_args)
-        self.app_manager.launch(last_executable_version)
-        app.arguments.pop()
+        self.app_manager.launch(last_executable_version,
+                                # Additional data for launch
+                                **dict(
+                                    app_args=app_args,
+                                    start_last_workfile=False
+                                ))
 
     def get_colorspace_data(self, context):
         """Return colorspace of the file to load.
