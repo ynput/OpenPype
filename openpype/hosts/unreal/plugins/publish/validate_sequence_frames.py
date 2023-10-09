@@ -39,8 +39,20 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
             collections, remainder = clique.assemble(
                 repr["files"], minimum_items=1, patterns=patterns)
 
-            assert not remainder, "Must not have remainder"
-            assert len(collections) == 1, "Must detect single collection"
+            if remainder:
+                raise ValueError(
+                    "Some files have been found outside a sequence."
+                    f"Invalid files: {remainder}")
+            if not collections:
+                raise ValueError(
+                    "No collections found. There should be a single "
+                    "collection per representation.")
+            if len(collections) > 1:
+                raise ValueError(
+                    "Multiple collections detected. There should be a single"
+                    "collection per representation."
+                    f"Collections identified: {collections}")
+
             collection = collections[0]
             frames = list(collection.indexes)
 
@@ -57,4 +69,7 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
                                  f"expected: {required_range}")
 
             missing = collection.holes().indexes
-            assert not missing, "Missing frames: %s" % (missing,)
+            if missing:
+                raise ValueError(
+                    "Missing frames have been detected."
+                    f"Missing frames: {missing}")
