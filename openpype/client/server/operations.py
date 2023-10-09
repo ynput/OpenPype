@@ -647,7 +647,7 @@ class ServerDeleteOperation(DeleteOperation):
         self._session = session
 
         if entity_type == "asset":
-            entity_type == "folder"
+            entity_type = "folder"
 
         elif entity_type == "hero_version":
             entity_type = "version"
