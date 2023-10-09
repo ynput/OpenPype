@@ -387,6 +387,39 @@ class LoaderActionsModel:
 
         return action_item.order, action_item.label
 
+    def _get_version_docs(self, project_name, version_ids):
+        """Get version documents for given version ids.
+
+        This function also handles hero versions and copies data from
+        source version to it.
+
+        Todos:
+            Remove this function when this is completely rewritten to
+                use AYON calls.
+        """
+
+        version_docs = list(get_versions(
+            project_name, version_ids=version_ids, hero=True
+        ))
+        hero_versions_by_src_id = collections.defaultdict(list)
+        src_hero_version = set()
+        for version_doc in version_docs:
+            if version_doc["type"] != "hero":
+                continue
+            version_id = ""
+            src_hero_version.add(version_id)
+            hero_versions_by_src_id[version_id].append(version_doc)
+
+        src_versions = []
+        if src_hero_version:
+            src_versions = get_versions(project_name, version_ids=version_ids)
+        for src_version in src_versions:
+            src_version_id = src_version["_id"]
+            for hero_version in hero_versions_by_src_id[src_version_id]:
+                hero_version["data"] = copy.deepcopy(src_version["data"])
+
+        return version_docs
+
     def _contexts_for_versions(self, project_name, version_ids):
         # TODO fix hero version
         version_context_by_id = {}
@@ -394,7 +427,7 @@ class LoaderActionsModel:
         if not project_name and not version_ids:
             return version_context_by_id, repre_context_by_id
 
-        version_docs = list(get_versions(project_name, version_ids))
+        version_docs = self._get_version_docs(project_name, version_ids)
         version_docs_by_id = {}
         version_docs_by_product_id = collections.defaultdict(list)
         for version_doc in version_docs:
@@ -456,7 +489,7 @@ class LoaderActionsModel:
             project_name, representation_ids=repre_ids
         ))
         version_ids = {r["parent"] for r in repre_docs}
-        version_docs = get_versions(project_name, version_ids=version_ids)
+        version_docs = self._get_version_docs(project_name, version_ids)
         version_docs_by_id = {
             v["_id"]: v for v in version_docs
         }
@@ -585,8 +618,7 @@ class LoaderActionsModel:
         project_doc = get_project(project_name)
         project_doc["code"] = project_doc["data"]["code"]
 
-        version_docs = list(
-            get_versions(project_name, version_ids=version_ids))
+        version_docs = self._get_version_docs(project_name, version_ids)
         product_ids = {v["parent"] for v in version_docs}
         product_docs = get_subsets(project_name, subset_ids=product_ids)
         product_docs_by_id = {f["_id"]: f for f in product_docs}
@@ -623,7 +655,7 @@ class LoaderActionsModel:
             project_name, representation_ids=representation_ids
         ))
         version_ids = {r["parent"] for r in repre_docs}
-        version_docs = get_versions(project_name, version_ids=version_ids)
+        version_docs = self._get_version_docs(project_name, version_ids)
         version_docs_by_id = {v["_id"]: v for v in version_docs}
         product_ids = {v["parent"] for v in version_docs_by_id.values()}
         product_docs = get_subsets(project_name, subset_ids=product_ids)
