@@ -422,7 +422,7 @@ def failed_json_default(value):
 
 
 class ServerCreateOperation(CreateOperation):
-    """Opeartion to create an entity.
+    """Operation to create an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -634,7 +634,7 @@ class ServerUpdateOperation(UpdateOperation):
 
 
 class ServerDeleteOperation(DeleteOperation):
-    """Opeartion to delete an entity.
+    """Operation to delete an entity.
 
     Args:
         project_name (str): On which project operation will happen.
