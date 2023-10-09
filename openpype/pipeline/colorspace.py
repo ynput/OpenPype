@@ -600,7 +600,8 @@ def get_colorspaces_enumerator_items(
     Families can be used for building menu and submenus in gui.
 
     Args:
-        config_items (dict[str,dict]): colorspace data
+        config_items (dict[str,dict]): colorspace data coming from
+            `get_ocio_config_colorspaces` function
         include_aliases (bool): include aliases in result
         include_looks (bool): include looks in result
         include_roles (bool): include roles in result

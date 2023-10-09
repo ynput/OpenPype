@@ -4,6 +4,7 @@ import pyblish.api
 from openpype.pipeline import publish
 from openpype.pipeline import colorspace
 
+
 class CollectColorspaceLook(pyblish.api.InstancePlugin,
                             publish.OpenPypePyblishPluginMixin):
     """Collect OCIO colorspace look from LUT file
@@ -29,7 +30,6 @@ class CollectColorspaceLook(pyblish.api.InstancePlugin,
                                 .replace("-", " ")
                                 .title()
                                 .replace(" ", ""))
-
 
         # get config items
         config_items = instance.data["transientData"]["config_items"]

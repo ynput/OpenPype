@@ -77,14 +77,12 @@ This creator publishes color space look file (LUT).
 
         self._store_new_instance(new_instance)
 
-
     def collect_instances(self):
         super().collect_instances()
         for instance in self.create_context.instances:
             if instance.creator_identifier == self.identifier:
                 instance.transient_data["config_items"] = self.config_items
                 instance.transient_data["config_data"] = self.config_data
-
 
     def get_instance_attr_defs(self):
         return [
