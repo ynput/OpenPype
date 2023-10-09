@@ -7,6 +7,7 @@ PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 1
 PROJECT_IS_ACTIVE_ROLE = QtCore.Qt.UserRole + 2
 PROJECT_IS_LIBRARY_ROLE = QtCore.Qt.UserRole + 3
 PROJECT_IS_CURRENT_ROLE = QtCore.Qt.UserRole + 4
+LIBRARY_PROJECT_SEPARATOR_ROLE = QtCore.Qt.UserRole + 5
 
 
 class ProjectsModel(QtGui.QStandardItemModel):
@@ -17,14 +18,18 @@ class ProjectsModel(QtGui.QStandardItemModel):
         self._controller = controller
 
         self._project_items = {}
+        self._has_libraries = False
 
         self._empty_item = None
         self._empty_item_added = False
 
         self._select_item = None
         self._select_item_added = False
-
         self._select_item_visible = None
+
+        self._libraries_sep_item = None
+        self._libraries_sep_item_added = False
+        self._libraries_sep_item_visible = False
 
         self._current_context_project = None
 
@@ -51,6 +56,11 @@ class ProjectsModel(QtGui.QStandardItemModel):
         if self._selected_project is None:
             self._add_select_item()
 
+    def set_libraries_separator_visible(self, visible):
+        if self._libraries_sep_item_visible is visible:
+            return
+        self._libraries_sep_item_visible = visible
+
     def set_selected_project(self, project_name):
         if not self._select_item_visible:
             return
@@ -64,13 +74,21 @@ class ProjectsModel(QtGui.QStandardItemModel):
     def set_current_context_project(self, project_name):
         if project_name == self._current_context_project:
             return
-        prev_item = self._project_items.get(self._current_context_project)
-        if prev_item is not None:
-            prev_item.setData(False, PROJECT_IS_CURRENT_ROLE)
+        self._unset_current_context_project(self._current_context_project)
         self._current_context_project = project_name
+        self._set_current_context_project(project_name)
+
+    def _set_current_context_project(self, project_name):
         item = self._project_items.get(project_name)
-        if item is not None:
-            item.setData(True, PROJECT_IS_CURRENT_ROLE)
+        if item is None:
+            return
+        item.setData(True, PROJECT_IS_CURRENT_ROLE)
+
+    def _unset_current_context_project(self, project_name):
+        item = self._project_items.get(project_name)
+        if item is None:
+            return
+        item.setData(False, PROJECT_IS_CURRENT_ROLE)
 
     def _add_empty_item(self):
         if self._empty_item_added:
@@ -94,6 +112,38 @@ class ProjectsModel(QtGui.QStandardItemModel):
             item.setFlags(QtCore.Qt.NoItemFlags)
             self._empty_item = item
         return self._empty_item
+
+    def _get_library_sep_item(self):
+        if self._libraries_sep_item is not None:
+            return self._libraries_sep_item
+
+        item = QtGui.QStandardItem()
+        item.setData("Libraries", QtCore.Qt.DisplayRole)
+        item.setData(True, LIBRARY_PROJECT_SEPARATOR_ROLE)
+        item.setFlags(QtCore.Qt.NoItemFlags)
+        self._libraries_sep_item = item
+        return item
+
+    def _add_library_sep_item(self):
+        if (
+            not self._libraries_sep_item_visible
+            or self._libraries_sep_item_added
+        ):
+            return
+        self._libraries_sep_item_added = True
+        item = self._get_library_sep_item()
+        root_item = self.invisibleRootItem()
+        root_item.appendRow(item)
+
+    def _remove_library_sep_item(self):
+        if (
+            not self._libraries_sep_item_added
+        ):
+            return
+        self._libraries_sep_item_added = False
+        item = self._get_library_sep_item()
+        root_item = self.invisibleRootItem()
+        root_item.takeRow(item.row())
 
     def _add_select_item(self):
         if self._select_item_added:
@@ -164,10 +214,13 @@ class ProjectsModel(QtGui.QStandardItemModel):
             item = self._project_items.pop(project_name)
             root_item.takeRow(item.row())
 
+        has_library_project = False
         new_items = []
         for project_item in project_items:
             project_name = project_item.name
             item = self._project_items.get(project_name)
+            if project_item.is_library:
+                has_library_project = True
             if item is None:
                 item = QtGui.QStandardItem()
                 item.setEditable(False)
@@ -182,16 +235,25 @@ class ProjectsModel(QtGui.QStandardItemModel):
             item.setData(is_current, PROJECT_IS_CURRENT_ROLE)
             self._project_items[project_name] = item
 
+        self._set_current_context_project(self._current_context_project)
+
+        self._has_libraries = has_library_project
+
         if new_items:
             root_item.appendRows(new_items)
 
         if self.has_content():
             # Make sure "No projects" item is removed
             self._remove_empty_item()
+            if has_library_project:
+                self._add_library_sep_item()
+            else:
+                self._remove_library_sep_item()
         else:
             # Keep only "No projects" item
             self._add_empty_item()
             self._remove_select_item()
+            self._remove_library_sep_item()
 
 
 class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
@@ -200,15 +262,48 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
         self._filter_inactive = True
         self._filter_standard = False
         self._filter_library = False
+        self._sort_by_type = True
         # Disable case sensitivity
         self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-    def lessThan(self, left_index, right_index):
-        if left_index.data(PROJECT_IS_CURRENT_ROLE):
+    def _type_sort(self, l_index, r_index):
+        if not self._sort_by_type:
+            return None
+
+        l_is_library = l_index.data(PROJECT_IS_LIBRARY_ROLE)
+        r_is_library = r_index.data(PROJECT_IS_LIBRARY_ROLE)
+        # Both hare project items
+        if l_is_library is not None and r_is_library is not None:
+            if l_is_library is r_is_library:
+                return None
+            if l_is_library:
+                return False
             return True
 
+        if l_index.data(LIBRARY_PROJECT_SEPARATOR_ROLE):
+            if r_is_library is None:
+                return False
+            return r_is_library
+
+        if r_index.data(LIBRARY_PROJECT_SEPARATOR_ROLE):
+            if l_is_library is None:
+                return True
+            return l_is_library
+        return None
+
+    def lessThan(self, left_index, right_index):
+        # Current project always on top
+        # - make sure this is always first, before any other sorting
+        #   e.g. type sort would move the item lower
+        if left_index.data(PROJECT_IS_CURRENT_ROLE):
+            return True
         if right_index.data(PROJECT_IS_CURRENT_ROLE):
             return False
+
+        # Library separator should be before library projects
+        result = self._type_sort(left_index, right_index)
+        if result is not None:
+            return result
 
         if left_index.data(PROJECT_NAME_ROLE) is None:
             return True
@@ -290,6 +385,12 @@ class ProjectSortFilterProxy(QtCore.QSortFilterProxyModel):
             return
         self._filter_standard = enabled
         self.invalidateFilter()
+
+    def set_sort_by_type(self, enabled):
+        if self._sort_by_type is enabled:
+            return
+        self._sort_by_type = enabled
+        self.invalidate()
 
 
 class ProjectsCombobox(QtWidgets.QWidget):
@@ -412,6 +513,9 @@ class ProjectsCombobox(QtWidgets.QWidget):
         self._select_item_visible = visible
         self._projects_model.set_select_item_visible(visible)
         self._update_select_item_visiblity()
+
+    def set_libraries_separator_visible(self, visible):
+        self._projects_model.set_libraries_separator_visible(visible)
 
     def is_active_filter_enabled(self):
         return self._projects_proxy_model.is_active_filter_enabled()
