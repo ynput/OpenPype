@@ -68,8 +68,11 @@ class CreateMultishotLayout(plugin.MayaCreator):
 
         # add the project as the first item
         items_with_label = [
-            dict(label=f"{self.project_name} "
-                        "(shots directly under the project)", value="")
+            {
+                "label": f"{self.project_name} "
+                         "(shots directly under the project)",
+                "value": ""
+            }
         ]
 
         # go through the current folder path and add each part to the list,
