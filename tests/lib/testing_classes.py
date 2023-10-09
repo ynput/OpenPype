@@ -130,7 +130,7 @@ class ModuleUnitTest(BaseTest):
 
         #reset connection to openpype DB with new env var
         if mongo_url:
-            os.environ["OPENPYPE_MONGO"] = mongo_url
+            monkeypatch_session.setenv("OPENPYPE_MONGO", mongo_url)
 
         import openpype.settings.lib as sett_lib
         sett_lib._SETTINGS_HANDLER = None
