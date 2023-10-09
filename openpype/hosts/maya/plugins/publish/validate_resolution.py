@@ -29,7 +29,7 @@ class ValidateResolution(pyblish.api.InstancePlugin,
                 "Render resolution is invalid. See log for details.",
                 description=(
                     "Wrong render resolution setting. "
-                    "Please use repair button to fix it.\n"
+                    "Please use repair button to fix it.\n\n"
                     "If current renderer is V-Ray, "
                     "make sure vraySettings node has been created"
                 )
