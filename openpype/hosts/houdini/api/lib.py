@@ -580,8 +580,11 @@ def get_frame_data(node, asset_data=None, log=None):
         data["frameStartHandle"] = hou.intFrame()
         data["frameEndHandle"] = hou.intFrame()
         data["byFrameStep"] = 1.0
-        log.debug(
-            "Node '{}' has 'Render current frame' set. "
+        data["handleStart"] = 0
+        data["handleEnd"] = 0
+        log.info(
+            "Node '{}' has 'Render current frame' set. \n"
+            "Asset Handles are ignored. \n"
             "frameStart and frameEnd are set to the "
             "current frame".format(node.path())
         )
@@ -589,11 +592,10 @@ def get_frame_data(node, asset_data=None, log=None):
         data["frameStartHandle"] = node.evalParm("f1")
         data["frameEndHandle"] = node.evalParm("f2")
         data["byFrameStep"] = node.evalParm("f3")
+        data["handleStart"] = asset_data.get("handleStart", 0)
+        data["handleEnd"] = asset_data.get("handleEnd", 0)
 
-    data["handleStart"] = asset_data.get("handleStart", 0)
     data["frameStart"] = data["frameStartHandle"] + data["handleStart"]
-
-    data["handleEnd"] = asset_data.get("handleEnd", 0)
     data["frameEnd"] = data["frameEndHandle"] - data["handleEnd"]
 
     return data
