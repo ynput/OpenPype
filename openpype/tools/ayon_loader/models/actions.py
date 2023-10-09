@@ -27,6 +27,7 @@ from openpype.tools.ayon_utils.models import NestedCacheItem
 from openpype.tools.ayon_loader.abstract import ActionItem
 
 ACTIONS_MODEL_SENDER = "actions.model"
+NOT_SET = object()
 
 
 class LoaderActionsModel:
@@ -52,7 +53,7 @@ class LoaderActionsModel:
 
     def __init__(self, controller):
         self._controller = controller
-        self._tool_name = ""
+        self._current_context_project = NOT_SET
         self._loaders_by_identifier = NestedCacheItem(
             levels=1, lifetime=self.loaders_cache_lifetime)
         self._product_loaders = NestedCacheItem(
@@ -61,6 +62,7 @@ class LoaderActionsModel:
             levels=1, lifetime=self.loaders_cache_lifetime)
 
     def reset(self):
+        self._current_context_project = NOT_SET
         self._loaders_by_identifier.reset()
         self._product_loaders.reset()
         self._repre_loaders.reset()
@@ -138,6 +140,12 @@ class LoaderActionsModel:
             ACTIONS_MODEL_SENDER,
         )
 
+    def _get_current_context_project(self):
+        if self._current_context_project is NOT_SET:
+            context = self._controller.get_current_context()
+            self._current_context_project = context["project_name"]
+        return self._current_context_project
+
     def _get_loader_label(self, loader, representation=None):
         """Pull label info from loader class"""
         label = getattr(loader, "label", None)
@@ -165,16 +173,22 @@ class LoaderActionsModel:
         # Add tooltip and statustip from Loader docstring
         return inspect.getdoc(loader)
 
-    def _filter_loaders_by_tool_name(self, loaders):
-        if not self._tool_name:
-            return loaders
+    def _filter_loaders_by_tool_name(self, project_name, loaders):
+        # Keep filtering by tool name
+        # - if current context project name is same as project name we do
+        #   expect the tool is used as OpenPype loader tool, otherwise
+        #   as library loader tool.
+        if project_name == self._get_current_context_project():
+            tool_name = "loader"
+        else:
+            tool_name = "library_loader"
         filtered_loaders = []
         for loader in loaders:
             tool_names = getattr(loader, "tool_names", None)
             if (
                 tool_names is None
                 or "*" in tool_names
-                or self._tool_name in tool_names
+                or tool_name in tool_names
             ):
                 filtered_loaders.append(loader)
         return filtered_loaders
@@ -231,7 +245,7 @@ class LoaderActionsModel:
         # Get all representation->loader combinations available for the
         # index under the cursor, so we can list the user the options.
         available_loaders = self._filter_loaders_by_tool_name(
-            discover_loader_plugins(project_name)
+            project_name, discover_loader_plugins(project_name)
         )
 
         repre_loaders = []
