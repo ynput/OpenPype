@@ -38,10 +38,10 @@ class LoaderActionsModel:
     which are expecting mongo documents.
 
     TODOs:
+        Deprecate 'qargparse' usage in loaders and implement conversion
+            of 'ActionItem' to data (and 'from_data').
         Use controller to get entities (documents) -> possible only when
             loaders are able to handle AYON vs. OpenPype logic.
-        Cache loaders for time period and reset them on controller refresh.
-            Also cache them per project.
         Add missing site sync logic, and if possible remove it from loaders.
         Implement loader actions to replace load plugins.
         Ask loader actions to return action items instead of guessing them.
@@ -62,12 +62,24 @@ class LoaderActionsModel:
             levels=1, lifetime=self.loaders_cache_lifetime)
 
     def reset(self):
+        """Reset the model with all cached items."""
+
         self._current_context_project = NOT_SET
         self._loaders_by_identifier.reset()
         self._product_loaders.reset()
         self._repre_loaders.reset()
 
     def get_versions_action_items(self, project_name, version_ids):
+        """Get action items for given version ids.
+
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+
+        Returns:
+            list[ActionItem]: List of action items.
+        """
+
         (
             version_context_by_id,
             repre_context_by_id
@@ -84,6 +96,16 @@ class LoaderActionsModel:
     def get_representations_action_items(
         self, project_name, representation_ids
     ):
+        """Get action items for given representation ids.
+
+        Args:
+            project_name (str): Project name.
+            representation_ids (Iterable[str]): Representation ids.
+
+        Returns:
+            list[ActionItem]: List of action items.
+        """
+
         (
             product_context_by_id,
             repre_context_by_id
@@ -105,6 +127,22 @@ class LoaderActionsModel:
         version_ids,
         representation_ids
     ):
+        """Trigger action by identifier.
+
+        Triggers the action by identifier for given contexts.
+
+        Triggers events "load.started" and "load.finished". Finished event
+            also contains "error_info" key with error information if any
+            happened.
+
+        Args:
+            identifier (str): Loader identifier.
+            options (dict[str, Any]): Loader option values.
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+            representation_ids (Iterable[str]): Representation ids.
+        """
+
         event_data = {
             "identifier": identifier,
             "id": uuid.uuid4().hex,
@@ -141,13 +179,30 @@ class LoaderActionsModel:
         )
 
     def _get_current_context_project(self):
+        """Get current context project name.
+
+        The value is based on controller (host) and cached.
+
+        Returns:
+            Union[str, None]: Current context project.
+        """
+
         if self._current_context_project is NOT_SET:
             context = self._controller.get_current_context()
             self._current_context_project = context["project_name"]
         return self._current_context_project
 
-    def _get_loader_label(self, loader, representation=None):
-        """Pull label info from loader class"""
+    def _get_action_label(self, loader, representation=None):
+        """Pull label info from loader class.
+
+        Args:
+            loader (LoaderPlugin): Plugin class.
+            representation (Optional[dict[str, Any]]): Representation data.
+
+        Returns:
+            str: Action label.
+        """
+
         label = getattr(loader, "label", None)
         if label is None:
             label = loader.__name__
@@ -156,8 +211,17 @@ class LoaderActionsModel:
             label = "{} ({})".format(label, representation["name"])
         return label
 
-    def _get_loader_icon(self, loader):
-        """Pull icon info from loader class"""
+    def _get_action_icon(self, loader):
+        """Pull icon info from loader class.
+
+        Args:
+            loader (LoaderPlugin): Plugin class.
+
+        Returns:
+            Union[dict[str, Any], None]: Icon definition based on
+                loader plugin.
+        """
+
         # Support font-awesome icons using the `.icon` and `.color`
         # attributes on plug-ins.
         icon = getattr(loader, "icon", None)
@@ -169,11 +233,34 @@ class LoaderActionsModel:
             }
         return icon
 
-    def _get_loader_tooltip(self, loader):
+    def _get_action_tooltip(self, loader):
+        """Pull tooltip info from loader class.
+
+        Args:
+            loader (LoaderPlugin): Plugin class.
+
+        Returns:
+            str: Action tooltip.
+        """
+
         # Add tooltip and statustip from Loader docstring
         return inspect.getdoc(loader)
 
     def _filter_loaders_by_tool_name(self, project_name, loaders):
+        """Filter loaders by tool name.
+
+        Tool names are based on OpenPype tools loader tool and library
+        loader tool. The new tool merged both into one tool and the difference
+        is based only on current project name.
+
+        Args:
+            project_name (str): Project name.
+            loaders (list[LoaderPlugin]): List of loader plugins.
+
+        Returns:
+            list[LoaderPlugin]: Filtered list of loader plugins.
+        """
+
         # Keep filtering by tool name
         # - if current context project name is same as project name we do
         #   expect the tool is used as OpenPype loader tool, otherwise
@@ -204,14 +291,14 @@ class LoaderActionsModel:
         representation_ids=None,
         repre_name=None,
     ):
-        label = self._get_loader_label(loader)
+        label = self._get_action_label(loader)
         if repre_name:
             label = "{} ({})".format(label, repre_name)
         return ActionItem(
             get_loader_identifier(loader),
             label=label,
-            icon=self._get_loader_icon(loader),
-            tooltip=self._get_loader_tooltip(loader),
+            icon=self._get_action_icon(loader),
+            tooltip=self._get_action_tooltip(loader),
             options=loader.get_options(contexts),
             order=loader.order,
             project_name=project_name,
@@ -222,18 +309,16 @@ class LoaderActionsModel:
         )
 
     def _get_loaders(self, project_name):
-        """
-
-        TODOs:
-            Cache loaders for time period and reset them on controller
-                refresh.
-            Cache them per project name. Right now they are collected per
-                project, but not cached per project.
+        """Loaders with loaded settings for a project.
 
         Questions:
-            Project name is required because of settings. Should be actually
+            Project name is required because of settings. Should we actually
                 pass in current project name instead of project name where
                 we want to show loaders for?
+
+        Returns:
+            tuple[list[SubsetLoaderPlugin], list[LoaderPlugin]]: Discovered
+                loader plugins.
         """
 
         loaders_by_identifier_c = self._loaders_by_identifier[project_name]
@@ -268,14 +353,18 @@ class LoaderActionsModel:
         return product_loaders, repre_loaders
 
     def _get_loader_by_identifier(self, project_name, identifier):
-        loaders_by_identifier_c = self._loaders_by_identifier[project_name]
-        if not loaders_by_identifier_c.is_valid:
+        if not self._loaders_by_identifier[project_name].is_valid:
             self._get_loaders(project_name)
+        loaders_by_identifier_c = self._loaders_by_identifier[project_name]
         loaders_by_identifier = loaders_by_identifier_c.get_data()
         return loaders_by_identifier.get(identifier)
 
     def _actions_sorter(self, action_item):
-        """Sort the Loaders by their order and then their name"""
+        """Sort the Loaders by their order and then their name.
+
+        Returns:
+            tuple[int, str]: Sort keys.
+        """
 
         return action_item.order, action_item.label
 
@@ -313,6 +402,24 @@ class LoaderActionsModel:
         return version_docs
 
     def _contexts_for_versions(self, project_name, version_ids):
+        """Get contexts for given version ids.
+
+        Prepare version contexts for 'SubsetLoaderPlugin' and representation
+        contexts for 'LoaderPlugin' for all children representations of
+        given versions.
+
+        This method is very similar to '_contexts_for_representations' but the
+        queries of documents are called in a different order.
+
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+
+        Returns:
+            tuple[list[dict[str, Any]], list[dict[str, Any]]]: Version and
+                representation contexts.
+        """
+
         # TODO fix hero version
         version_context_by_id = {}
         repre_context_by_id = {}
@@ -372,6 +479,24 @@ class LoaderActionsModel:
         return version_context_by_id, repre_context_by_id
 
     def _contexts_for_representations(self, project_name, repre_ids):
+        """Get contexts for given representation ids.
+
+        Prepare version contexts for 'SubsetLoaderPlugin' and representation
+        contexts for 'LoaderPlugin' for all children representations of
+        given versions.
+
+        This method is very similar to '_contexts_for_versions' but the
+        queries of documents are called in a different order.
+
+        Args:
+            project_name (str): Project name.
+            repre_ids (Iterable[str]): Representation ids.
+
+        Returns:
+            tuple[list[dict[str, Any]], list[dict[str, Any]]]: Version and
+                representation contexts.
+        """
+
         product_context_by_id = {}
         repre_context_by_id = {}
         if not project_name and not repre_ids:
@@ -433,6 +558,18 @@ class LoaderActionsModel:
         version_context_by_id,
         repre_context_by_id
     ):
+        """Prepare action items based on contexts.
+
+        Actions are prepared based on discovered loader plugins and contexts.
+        The context must be valid for the loader plugin.
+
+        Args:
+            project_name (str): Project name.
+            version_context_by_id (dict[str, dict[str, Any]]): Version
+                contexts by version id.
+            repre_context_by_id (dict[str, dict[str, Any]]): Representation
+        """
+
         action_items = []
         if not version_context_by_id and not repre_context_by_id:
             return action_items
@@ -507,6 +644,25 @@ class LoaderActionsModel:
         project_name,
         version_ids,
     ):
+        """Trigger version loader.
+
+        This triggers 'load' method of 'SubsetLoaderPlugin' for given version
+        ids.
+
+        Note:
+            Even when the plugin is 'SubsetLoaderPlugin' it actually expects
+                versions and should be named 'VersionLoaderPlugin'. Because it
+                is planned to refactor load system and introduce
+                'LoaderAction' plugins it is not relevant to change it
+                anymore.
+
+        Args:
+            loader (SubsetLoaderPlugin): Loader plugin to use.
+            options (dict): Option values for loader.
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+        """
+
         project_doc = get_project(project_name)
         project_doc["code"] = project_doc["data"]["code"]
 
@@ -541,6 +697,19 @@ class LoaderActionsModel:
         project_name,
         representation_ids,
     ):
+        """Trigger representation loader.
+
+        This triggers 'load' method of 'LoaderPlugin' for given representation
+            ids. For that are prepared contexts for each representation, with
+            all parent documents.
+
+        Args:
+            loader (LoaderPlugin): Loader plugin to use.
+            options (dict): Option values for loader.
+            project_name (str): Project name.
+            representation_ids (Iterable[str]): Representation ids.
+        """
+
         project_doc = get_project(project_name)
         project_doc["code"] = project_doc["data"]["code"]
         repre_docs = list(get_representations(

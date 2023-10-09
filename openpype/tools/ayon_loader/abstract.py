@@ -351,7 +351,11 @@ class _BaseLoaderController(object):
 
     @abstractmethod
     def reset(self):
-        """Reset all cached data to reload everything."""
+        """Reset all cached data to reload everything.
+
+        Triggers events "controller.reset.started" and
+        "controller.reset.finished".
+        """
 
         pass
 
@@ -764,6 +768,19 @@ class FrontendLoaderController(_BaseLoaderController):
         representation_ids
     ):
         """Trigger action item.
+
+        Triggers event "load.started" with data:
+            {
+                "identifier": identifier,
+                "id": <Random UUID>,
+            }
+
+        And triggers "load.finished" with data:
+            {
+                "identifier": identifier,
+                "id": <Random UUID>,
+                "error_info": [...],
+            }
 
         Args:
             identifier (str): Action identifier.

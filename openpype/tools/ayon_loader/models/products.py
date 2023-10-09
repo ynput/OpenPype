@@ -118,6 +118,16 @@ def product_type_item_from_data(product_type_data):
 
 
 class ProductsModel:
+    """Model for products, version and representation.
+
+    All of the entities are product based. This model prepares data for UI
+    and caches it for faster access.
+
+    Note:
+        Data are not used for actions model because that would require to
+            break OpenPype compatibility of 'LoaderPlugin's.
+    """
+
     lifetime = 60  # In seconds (minute by default)
 
     def __init__(self, controller):
@@ -138,6 +148,8 @@ class ProductsModel:
             levels=2, default_factory=dict, lifetime=self.lifetime)
 
     def reset(self):
+        """Reset model with all cached data."""
+
         self._product_item_by_id.clear()
         self._version_item_by_id.clear()
         self._product_folder_ids_mapping.clear()
@@ -147,6 +159,15 @@ class ProductsModel:
         self._repre_items_cache.reset()
 
     def get_product_type_items(self, project_name):
+        """Product type items for project.
+
+        Args:
+            project_name (str): Project name.
+
+        Returns:
+            list[ProductTypeItem]: Product type items.
+        """
+
         cache = self._product_type_items_cache[project_name]
         if not cache.is_valid:
             product_types = ayon_api.get_project_product_types(project_name)
@@ -157,7 +178,15 @@ class ProductsModel:
         return cache.get_data()
 
     def get_product_items(self, project_name, folder_ids, sender):
-        """
+        """Product items with versions for project and folder ids.
+
+        Product items also contain version items. They're directly connected
+        to product items in the UI and the separation is not needed.
+
+        Args:
+            project_name (Union[str, None]): Project name.
+            folder_ids (Iterable[str]): Folder ids.
+            sender (Union[str, None]): Who triggered the method.
 
         Returns:
             list[ProductItem]: Product items.
@@ -185,6 +214,19 @@ class ProductsModel:
         return output
 
     def get_product_item(self, project_name, product_id):
+        """Get product item based on passed product id.
+
+        This method is using cached items, but if cache is not valid it also
+        can query the item.
+
+        Args:
+            project_name (Union[str, None]): Where to look for product.
+            product_id (Union[str, None]): Product id to receive.
+
+        Returns:
+            Union[ProductItem, None]: Product item or 'None' if not found.
+        """
+
         if not any((project_name, product_id)):
             return None
 
@@ -222,7 +264,62 @@ class ProductsModel:
         )
         return {v["productId"] for v in versions}
 
+    def get_repre_items(self, project_name, version_ids, sender):
+        """Get representation items for passed version ids.
+
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+            sender (Union[str, None]): Who triggered the method.
+
+        Returns:
+            list[RepreItem]: Representation items.
+        """
+
+        output = []
+        if not any((project_name, version_ids)):
+            return output
+
+        invalid_version_ids = set()
+        project_cache = self._repre_items_cache[project_name]
+        for version_id in version_ids:
+            version_cache = project_cache[version_id]
+            if version_cache.is_valid:
+                output.extend(version_cache.get_data().values())
+            else:
+                invalid_version_ids.add(version_id)
+
+        if invalid_version_ids:
+            self.refresh_representation_items(
+                project_name, invalid_version_ids, sender
+            )
+
+        for version_id in invalid_version_ids:
+            version_cache = project_cache[version_id]
+            output.extend(version_cache.get_data().values())
+
+        return output
+
     def change_products_group(self, project_name, product_ids, group_name):
+        """Change group name for passed product ids.
+
+        Group name is stored in 'attrib' of product entity and is used in UI
+        to group items.
+
+        Method triggers "products.group.changed" event with data:
+            {
+                "project_name": project_name,
+                "folder_ids": folder_ids,
+                "product_ids": product_ids,
+                "group_name": group_name
+            }
+
+        Args:
+            project_name (str): Project name.
+            product_ids (Iterable[str]): Product ids to change group name for.
+            group_name (str): Group name to set.
+        """
+
         if not product_ids:
             return
 
@@ -397,31 +494,6 @@ class ProductsModel:
             version_items.update(product_item.version_items)
         return version_items
 
-    def get_repre_items(self, project_name, version_ids, sender):
-        output = []
-        if not any((project_name, version_ids)):
-            return output
-
-        invalid_version_ids = set()
-        project_cache = self._repre_items_cache[project_name]
-        for version_id in version_ids:
-            version_cache = project_cache[version_id]
-            if version_cache.is_valid:
-                output.extend(version_cache.get_data().values())
-            else:
-                invalid_version_ids.add(version_id)
-
-        if invalid_version_ids:
-            self.refresh_representation_items(
-                project_name, invalid_version_ids, sender
-            )
-
-        for version_id in invalid_version_ids:
-            version_cache = project_cache[version_id]
-            output.extend(version_cache.get_data().values())
-
-        return output
-
     def _clear_product_version_items(self, project_name, folder_ids):
         """Clear product and version items from memory.
 
@@ -543,7 +615,7 @@ class ProductsModel:
                 "version_ids": version_ids,
                 "sender": sender,
             },
-            "products.model"
+            PRODUCTS_MODEL_SENDER
         )
         failed = False
         try:
@@ -560,7 +632,7 @@ class ProductsModel:
                 "sender": sender,
                 "failed": failed,
             },
-            "products.model"
+            PRODUCTS_MODEL_SENDER
         )
 
     def _refresh_representation_items(self, project_name, version_ids):
