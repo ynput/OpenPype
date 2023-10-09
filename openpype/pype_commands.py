@@ -271,12 +271,6 @@ class PypeCommands:
 
         if mongo_url:
             args.extend(["--mongo_url", mongo_url])
-        else:
-            msg = (
-                "Either provide uri to MongoDB through environment variable"
-                " OPENPYPE_MONGO or the command flag --mongo_url"
-            )
-            assert not os.environ.get("OPENPYPE_MONGO"), msg
 
         print("run_tests args: {}".format(args))
         import pytest
