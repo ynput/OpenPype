@@ -208,8 +208,8 @@ def get_openpype_versions(dir_list):
         if install_dir:
             print("--- Looking for OpenPype at: {}".format(install_dir))
             sub_dirs = [
-                f.path for f in os.scandir(install_dir)
-                if f.is_dir()
+                os.path.join(install_dir, x) for x in os.listdir(install_dir)
+                if os.path.isdir(os.path.join(install_dir, x))
             ]
             for subdir in sub_dirs:
                 version = get_openpype_version_from_path(subdir)
@@ -388,7 +388,11 @@ def inject_openpype_environment(deadlinePlugin):
         if "PATH" in contents:
             # Set os.environ[PATH] so studio settings' path entries
             # can be used to define search path for executables.
-            print(f">>> Setting 'PATH' Environment to: {contents['PATH']}")
+            print(
+                ">>> Setting 'PATH' Environment to: {}".format(
+                    contents['PATH']
+                )
+            )
             os.environ["PATH"] = contents["PATH"]
 
         script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
@@ -518,7 +522,11 @@ def inject_ayon_environment(deadlinePlugin):
         if "PATH" in contents:
             # Set os.environ[PATH] so studio settings' path entries
             # can be used to define search path for executables.
-            print(f">>> Setting 'PATH' Environment to: {contents['PATH']}")
+            print(
+                ">>> Setting 'PATH' Environment to: {}".format(
+                    contents['PATH']
+                )
+            )
             os.environ["PATH"] = contents["PATH"]
 
         script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
