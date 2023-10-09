@@ -381,7 +381,6 @@ class ClipLoader:
         asset_name = self.context["representation"]["context"]["asset"]
         self.data["assetData"] = get_current_project_asset(asset_name)["data"]
 
-
     def load(self, files):
         """Load clip into timeline
 
