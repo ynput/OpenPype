@@ -1,33 +1,41 @@
 from mrv2 import plugin
-# TODO: We must first distribute Qt to MRV2's Python 3.10
-# from openpype.tools.utils import host_tools
 
 
 def separator():
+    # Do nothing function, temporary until mrv2 exposes separator functionality
     pass
 
 
 class MyPlugin(plugin.Plugin):
-    # Should be made available on MRV_PLUGIN_PATH
-    # See: https://github.com/ggarra13/mrv2/issues/68
     def on_create(self):
         print("Create..")
+        from openpype.tools.utils import host_tools
+        host_tools.show_publisher(tab="create")
 
     def on_load(self):
         print("Load..")
+        from openpype.tools.utils import host_tools
+        host_tools.show_loader(use_context=True)
 
     def on_publish(self):
-        print("Manage..")
+        print("Publish..")
+        from openpype.tools.utils import host_tools
+        host_tools.show_publisher(tab="publish")
 
     def on_manage(self):
         print("Manage..")
+        from openpype.tools.utils import host_tools
+        host_tools.show_scene_inventory()
 
     def on_library(self):
         print("Library..")
+        from openpype.tools.utils import host_tools
+        host_tools.show_library_loader()
 
     def on_workfiles(self):
         print("Workfiles..")
-        # host_tools.show_workfiles()
+        from openpype.tools.utils import host_tools
+        host_tools.show_workfiles()
 
     def menus(self):
         top = "OpenPype"
@@ -37,7 +45,7 @@ class MyPlugin(plugin.Plugin):
             f"{top}/Publish...": self.on_publish,
             f"{top}/Manage...": self.on_manage,
             f"{top}/Library...": self.on_library,
-            f"{top}/": separator,
+            f"{top}/-------": separator,
             f"{top}/Workfiles...": self.on_workfiles,
         }
 
