@@ -55,11 +55,15 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
                          "tycacheSplines",
                          "tycacheSplinesAdditionalSplines"
                          ]
-
+        tyc_default_attrs = ["tycacheChanGroups", "tycacheChanPos",
+                             "tycacheChanRot", "tycacheChanScale",
+                             "tycacheChanVel", "tycacheChanShape",
+                             "tycacheChanMatID", "tycacheChanMapping",
+                             "tycacheChanMaterials"]
         return [
             EnumDef("all_tyc_attrs",
                     tyc_attr_enum,
-                    default=None,
+                    default=tyc_default_attrs,
                     multiselection=True,
                     label="TyCache Attributes"),
             TextDef("tycache_layer",
