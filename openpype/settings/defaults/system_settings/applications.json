@@ -157,7 +157,7 @@
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/autodesk/maya2024/bin/mayapy"
+                        "/usr/autodesk/maya2023/bin/mayapy"
                     ]
                 },
                 "arguments": {
