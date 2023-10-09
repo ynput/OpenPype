@@ -297,6 +297,12 @@ class CreateRender(plugin.Creator):
             self.data["secondaryPool"] = self._set_default_pool(pool_names,
                                                                 secondary_pool)
 
+            limit_groups = self.deadline_module.get_deadline_limit_groups(
+                deadline_url,
+                self.log
+            )
+            self.data["limits"] = {"limits": limit_groups}
+
         if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
             self._load_credentials()
