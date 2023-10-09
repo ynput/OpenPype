@@ -27,7 +27,7 @@ import PyOpenColorIO as ocio
 
 @click.group()
 def main():
-    pass
+    pass  # noqa: WPS100
 
 
 @main.group()
@@ -37,7 +37,17 @@ def config():
     Example of use:
     > pyton.exe ./ocio_wrapper.py config <command> *args
     """
-    pass
+    pass  # noqa: WPS100
+
+
+@main.group()
+def colorspace():
+    """Colorspace related commands group
+
+    Example of use:
+    > pyton.exe ./ocio_wrapper.py config <command> *args
+    """
+    pass  # noqa: WPS100
 
 
 @config.command(
@@ -70,8 +80,8 @@ def get_colorspace(in_path, out_path):
 
     out_data = _get_colorspace_data(in_path)
 
-    with open(json_path, "w") as f:
-        json.dump(out_data, f)
+    with open(json_path, "w") as f_:
+        json.dump(out_data, f_)
 
     print(f"Colorspace data are saved to '{json_path}'")
 
@@ -97,8 +107,8 @@ def _get_colorspace_data(config_path):
     config = ocio.Config().CreateFromFile(str(config_path))
 
     return {
-        c.getName(): c.getFamily()
-        for c in config.getColorSpaces()
+        c_.getName(): c_.getFamily()
+        for c_ in config.getColorSpaces()
     }
 
 
@@ -132,8 +142,8 @@ def get_views(in_path, out_path):
 
     out_data = _get_views_data(in_path)
 
-    with open(json_path, "w") as f:
-        json.dump(out_data, f)
+    with open(json_path, "w") as f_:
+        json.dump(out_data, f_)
 
     print(f"Viewer data are saved to '{json_path}'")
 
@@ -157,7 +167,7 @@ def _get_views_data(config_path):
 
     config = ocio.Config().CreateFromFile(str(config_path))
 
-    data = {}
+    data_ = {}
     for display in config.getDisplays():
         for view in config.getViews(display):
             colorspace = config.getDisplayViewColorSpaceName(display, view)
@@ -165,13 +175,148 @@ def _get_views_data(config_path):
             if colorspace == "<USE_DISPLAY_NAME>":
                 colorspace = display
 
-            data[f"{display}/{view}"] = {
+            data_[f"{display}/{view}"] = {
                 "display": display,
                 "view": view,
                 "colorspace": colorspace
             }
 
-    return data
+    return data_
+
+
+@config.command(
+    name="get_version",
+    help=(
+        "return major and minor version from config file "
+        "--config_path input arg is required"
+        "--out_path input arg is required"
+    )
+)
+@click.option("--config_path", required=True,
+              help="path where to read ocio config file",
+              type=click.Path(exists=True))
+@click.option("--out_path", required=True,
+              help="path where to write output json file",
+              type=click.Path())
+def get_version(config_path, out_path):
+    """Get version of config.
+
+    Python 2 wrapped console command
+
+    Args:
+        config_path (str): ocio config file path string
+        out_path (str): temp json file path string
+
+    Example of use:
+    > pyton.exe ./ocio_wrapper.py config get_version \
+        --config_path=<path> --out_path=<path>
+    """
+    json_path = Path(out_path)
+
+    out_data = _get_version_data(config_path)
+
+    with open(json_path, "w") as f_:
+        json.dump(out_data, f_)
+
+    print(f"Config version data are saved to '{json_path}'")
+
+
+def _get_version_data(config_path):
+    """Return major and minor version info.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+
+    Raises:
+        IOError: Input config does not exist.
+
+    Returns:
+        dict: minor and major keys with values
+    """
+    config_path = Path(config_path)
+
+    if not config_path.is_file():
+        raise IOError("Input path should be `config.ocio` file")
+
+    config = ocio.Config().CreateFromFile(str(config_path))
+
+    return {
+        "major": config.getMajorVersion(),
+        "minor": config.getMinorVersion()
+    }
+
+
+@colorspace.command(
+    name="get_config_file_rules_colorspace_from_filepath",
+    help=(
+        "return colorspace from filepath "
+        "--config_path - ocio config file path (input arg is required) "
+        "--filepath - any file path (input arg is required) "
+        "--out_path - temp json file path (input arg is required)"
+    )
+)
+@click.option("--config_path", required=True,
+              help="path where to read ocio config file",
+              type=click.Path(exists=True))
+@click.option("--filepath", required=True,
+              help="path to file to get colorspace from",
+              type=click.Path())
+@click.option("--out_path", required=True,
+              help="path where to write output json file",
+              type=click.Path())
+def get_config_file_rules_colorspace_from_filepath(
+    config_path, filepath, out_path
+):
+    """Get colorspace from file path wrapper.
+
+    Python 2 wrapped console command
+
+    Args:
+        config_path (str): config file path string
+        filepath (str): path string leading to file
+        out_path (str): temp json file path string
+
+    Example of use:
+    > pyton.exe ./ocio_wrapper.py \
+        colorspace get_config_file_rules_colorspace_from_filepath \
+        --config_path=<path> --filepath=<path> --out_path=<path>
+    """
+    json_path = Path(out_path)
+
+    colorspace = _get_config_file_rules_colorspace_from_filepath(
+        config_path, filepath)
+
+    with open(json_path, "w") as f_:
+        json.dump(colorspace, f_)
+
+    print(f"Colorspace name is saved to '{json_path}'")
+
+
+def _get_config_file_rules_colorspace_from_filepath(config_path, filepath):
+    """Return found colorspace data found in v2 file rules.
+
+    Args:
+        config_path (str): path string leading to config.ocio
+        filepath (str): path string leading to v2 file rules
+
+    Raises:
+        IOError: Input config does not exist.
+
+    Returns:
+        dict: aggregated available colorspaces
+    """
+    config_path = Path(config_path)
+
+    if not config_path.is_file():
+        raise IOError(
+            f"Input path `{config_path}` should be `config.ocio` file")
+
+    config = ocio.Config().CreateFromFile(str(config_path))
+
+    # TODO: use `parseColorSpaceFromString` instead if ocio v1
+    colorspace = config.getColorSpaceFromFilepath(str(filepath))
+
+    return colorspace
 
 
 def _get_display_view_colorspace_name(config_path, display, view):

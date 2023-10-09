@@ -26,14 +26,6 @@ class ScreenMarquee(QtWidgets.QDialog):
         self.setCursor(QtCore.Qt.CrossCursor)
         self.setMouseTracking(True)
 
-        fade_anim = QtCore.QVariantAnimation()
-        fade_anim.setStartValue(0)
-        fade_anim.setEndValue(50)
-        fade_anim.setDuration(200)
-        fade_anim.setEasingCurve(QtCore.QEasingCurve.OutCubic)
-
-        fade_anim.valueChanged.connect(self._on_fade_anim)
-
         app = QtWidgets.QApplication.instance()
         if hasattr(app, "screenAdded"):
             app.screenAdded.connect(self._on_screen_added)
@@ -45,11 +37,9 @@ class ScreenMarquee(QtWidgets.QDialog):
         for screen in QtWidgets.QApplication.screens():
             screen.geometryChanged.connect(self._fit_screen_geometry)
 
-        self._opacity = fade_anim.startValue()
+        self._opacity = 50
         self._click_pos = None
         self._capture_rect = None
-
-        self._fade_anim = fade_anim
 
     def get_captured_pixmap(self):
         if self._capture_rect is None:
@@ -67,28 +57,33 @@ class ScreenMarquee(QtWidgets.QDialog):
             click_pos = self.mapFromGlobal(self._click_pos)
 
         painter = QtGui.QPainter(self)
+        painter.setRenderHints(
+            QtGui.QPainter.Antialiasing
+            | QtGui.QPainter.SmoothPixmapTransform
+        )
 
         # Draw background. Aside from aesthetics, this makes the full
         # tool region accept mouse events.
         painter.setBrush(QtGui.QColor(0, 0, 0, self._opacity))
         painter.setPen(QtCore.Qt.NoPen)
-        painter.drawRect(event.rect())
+        rect = event.rect()
+        fill_path = QtGui.QPainterPath()
+        fill_path.addRect(rect)
 
         # Clear the capture area
         if click_pos is not None:
+            sub_path = QtGui.QPainterPath()
             capture_rect = QtCore.QRect(click_pos, mouse_pos)
-            painter.setCompositionMode(
-                QtGui.QPainter.CompositionMode_Clear)
-            painter.drawRect(capture_rect)
-            painter.setCompositionMode(
-                QtGui.QPainter.CompositionMode_SourceOver)
+            sub_path.addRect(capture_rect)
+            fill_path = fill_path.subtracted(sub_path)
 
-        pen_color = QtGui.QColor(255, 255, 255, 64)
+        painter.drawPath(fill_path)
+
+        pen_color = QtGui.QColor(255, 255, 255, self._opacity)
         pen = QtGui.QPen(pen_color, 1, QtCore.Qt.DotLine)
         painter.setPen(pen)
 
         # Draw cropping markers at click position
-        rect = event.rect()
         if click_pos is not None:
             painter.drawLine(
                 rect.left(), click_pos.y(),
@@ -108,6 +103,7 @@ class ScreenMarquee(QtWidgets.QDialog):
             mouse_pos.x(), rect.top(),
             mouse_pos.x(), rect.bottom()
         )
+        painter.end()
 
     def mousePressEvent(self, event):
         """Mouse click event"""
@@ -138,13 +134,13 @@ class ScreenMarquee(QtWidgets.QDialog):
         if event.key() == QtCore.Qt.Key_Escape:
             self._click_pos = None
             self._capture_rect = None
+            event.accept()
             self.close()
             return
-        return super(ScreenMarquee, self).mousePressEvent(event)
+        return super(ScreenMarquee, self).keyPressEvent(event)
 
     def showEvent(self, event):
         self._fit_screen_geometry()
-        self._fade_anim.start()
 
     def _fit_screen_geometry(self):
         # Compute the union of all screen geometries, and resize to fit.
@@ -152,12 +148,6 @@ class ScreenMarquee(QtWidgets.QDialog):
         for screen in QtWidgets.QApplication.screens():
             workspace_rect = workspace_rect.united(screen.geometry())
         self.setGeometry(workspace_rect)
-
-    def _on_fade_anim(self):
-        """Animation callback for opacity."""
-
-        self._opacity = self._fade_anim.currentValue()
-        self.repaint()
 
     def _on_screen_added(self):
         for screen in QtGui.QGuiApplication.screens():

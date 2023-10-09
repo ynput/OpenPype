@@ -28,8 +28,6 @@ from openpype.lib import (
 from openpype.pipeline import (
     legacy_io,
     get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name,
     register_loader_plugin_path,
     register_inventory_action_path,
     register_creator_plugin_path,
@@ -108,7 +106,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         _set_project()
         self._register_callbacks()
 
-        menu.install()
+        menu.install(project_settings)
 
         register_event_callback("save", on_save)
         register_event_callback("open", on_open)
@@ -658,17 +656,6 @@ def on_task_changed():
     with lib.suspended_refresh():
         lib.set_context_settings()
         lib.update_content_on_context_change()
-
-    msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        get_current_project_name(),
-        get_current_asset_name(),
-        get_current_task_name()
-    )
-
-    lib.show_message(
-        "Context was changed",
-        ("Context was changed to:\n{}".format(msg)),
-    )
 
 
 def before_workfile_open():

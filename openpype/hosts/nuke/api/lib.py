@@ -2316,27 +2316,53 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         ''' Adds correct colorspace to write node dict
 
         '''
-        for node in nuke.allNodes(filter="Group"):
+        for node in nuke.allNodes(filter="Group", group=self._root_node):
+            log.info("Setting colorspace to `{}`".format(node.name()))
 
             # get data from avalon knob
             avalon_knob_data = read_avalon_data(node)
+            node_data = get_node_data(node, INSTANCE_DATA_KNOB)
 
-            if avalon_knob_data.get("id") != "pyblish.avalon.instance":
+            if (
+                # backward compatibility
+                # TODO: remove this once old avalon data api will be removed
+                avalon_knob_data
+                and avalon_knob_data.get("id") != "pyblish.avalon.instance"
+            ):
+                continue
+            elif (
+                node_data
+                and node_data.get("id") != "pyblish.avalon.instance"
+            ):
                 continue
 
-            if "creator" not in avalon_knob_data:
+            if (
+                # backward compatibility
+                # TODO: remove this once old avalon data api will be removed
+                avalon_knob_data
+                and "creator" not in avalon_knob_data
+            ):
+                continue
+            elif (
+                node_data
+                and "creator_identifier" not in node_data
+            ):
                 continue
 
-            # establish families
-            families = [avalon_knob_data["family"]]
-            if avalon_knob_data.get("families"):
-                families.append(avalon_knob_data.get("families"))
+            nuke_imageio_writes = None
+            if avalon_knob_data:
+                # establish families
+                families = [avalon_knob_data["family"]]
+                if avalon_knob_data.get("families"):
+                    families.append(avalon_knob_data.get("families"))
 
-            nuke_imageio_writes = get_imageio_node_setting(
-                node_class=avalon_knob_data["families"],
-                plugin_name=avalon_knob_data["creator"],
-                subset=avalon_knob_data["subset"]
-            )
+                nuke_imageio_writes = get_imageio_node_setting(
+                    node_class=avalon_knob_data["families"],
+                    plugin_name=avalon_knob_data["creator"],
+                    subset=avalon_knob_data["subset"]
+                )
+            elif node_data:
+                nuke_imageio_writes = get_write_node_template_attr(node)
 
             log.debug("nuke_imageio_writes: `{}`".format(nuke_imageio_writes))
 
@@ -3397,3 +3423,27 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
     if path_like:
         return "{}/{}".format(display, viewer)
     return "{} ({})".format(viewer, display)
+
+
+def get_filenames_without_hash(filename, frame_start, frame_end):
+    """Get filenames without frame hash
+        i.e. "renderCompositingMain.baking.0001.exr"
+
+    Args:
+        filename (str): filename with frame hash
+        frame_start (str): start of the frame
+        frame_end (str): end of the frame
+
+    Returns:
+        list: filename per frame of the sequence
+    """
+    filenames = []
+    for frame in range(int(frame_start), (int(frame_end) + 1)):
+        if "#" in filename:
+            # use regex to convert #### to {:0>4}
+            def replace(match):
+                return "{{:0>{}}}".format(len(match.group()))
+            filename_without_hashes = re.sub("#+", replace, filename)
+            new_filename = filename_without_hashes.format(frame)
+            filenames.append(new_filename)
+    return filenames

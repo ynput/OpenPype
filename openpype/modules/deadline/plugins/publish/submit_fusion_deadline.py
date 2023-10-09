@@ -6,6 +6,7 @@ import requests
 
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
     OpenPypePyblishPluginMixin
@@ -34,6 +35,8 @@ class FusionSubmitDeadline(
     targets = ["local"]
 
     # presets
+    plugin = None
+
     priority = 50
     chunk_size = 1
     concurrent_tasks = 1
@@ -173,7 +176,7 @@ class FusionSubmitDeadline(
                 "SecondaryPool": instance.data.get("secondaryPool"),
                 "Group": self.group,
 
-                "Plugin": "Fusion",
+                "Plugin": self.plugin,
                 "Frames": "{start}-{end}".format(
                     start=int(instance.data["frameStartHandle"]),
                     end=int(instance.data["frameEndHandle"])
@@ -216,15 +219,28 @@ class FusionSubmitDeadline(
 
         # Include critical variables with submission
         keys = [
-            # TODO: This won't work if the slaves don't have access to
-            # these paths, such as if slaves are running Linux and the
-            # submitter is on Windows.
-            "PYTHONPATH",
-            "OFX_PLUGIN_PATH",
-            "FUSION9_MasterPrefs"
+            "FTRACK_API_KEY",
+            "FTRACK_API_USER",
+            "FTRACK_SERVER",
+            "AVALON_PROJECT",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "AVALON_APP_NAME",
+            "OPENPYPE_DEV",
+            "OPENPYPE_LOG_NO_COLORS",
+            "IS_TEST"
         ]
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
+
+        # to recognize render jobs
+        if AYON_SERVER_ENABLED:
+            environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
+            render_job_label = "AYON_RENDER_JOB"
+        else:
+            render_job_label = "OPENPYPE_RENDER_JOB"
+
+        environment[render_job_label] = "1"
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(

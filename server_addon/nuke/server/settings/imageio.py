@@ -61,22 +61,6 @@ def ocio_configs_switcher_enum():
 
 class WorkfileColorspaceSettings(BaseSettingsModel):
     """Nuke workfile colorspace preset. """
-    """# TODO: enhance settings with host api:
-    we need to add mapping to resolve properly keys.
-    Nuke is excpecting camel case key names,
-    but for better code consistency we need to
-    be  using snake_case:
-
-    color_management = colorManagement
-    ocio_config = OCIO_config
-    working_space_name = workingSpaceLUT
-    monitor_name = monitorLut
-    monitor_out_name = monitorOutLut
-    int_8_name = int8Lut
-    int_16_name = int16Lut
-    log_name = logLut
-    float_name = floatLut
-    """
 
     colorManagement: Literal["Nuke", "OCIO"] = Field(
         title="Color Management"
@@ -94,18 +78,6 @@ class WorkfileColorspaceSettings(BaseSettingsModel):
     )
     monitorLut: str = Field(
         title="Monitor"
-    )
-    int8Lut: str = Field(
-        title="8-bit files"
-    )
-    int16Lut: str = Field(
-        title="16-bit files"
-    )
-    logLut: str = Field(
-        title="Log files"
-    )
-    floatLut: str = Field(
-        title="Float files"
     )
 
 
@@ -233,10 +205,6 @@ DEFAULT_IMAGEIO_SETTINGS = {
         "OCIO_config": "nuke-default",
         "workingSpaceLUT": "linear",
         "monitorLut": "sRGB",
-        "int8Lut": "sRGB",
-        "int16Lut": "sRGB",
-        "logLut": "Cineon",
-        "floatLut": "linear"
     },
     "nodes": {
         "requiredNodes": [

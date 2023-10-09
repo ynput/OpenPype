@@ -14,6 +14,7 @@ import pyblish.api
 from openpype.pipeline import (
     register_creator_plugin_path,
     register_loader_plugin_path,
+    register_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
@@ -55,6 +56,7 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
+        register_inventory_action_path(INVENTORY_PATH)
 
         log.info("Installing callbacks ... ")
         # register_event_callback("init", on_init)
@@ -298,6 +300,9 @@ def on_save():
 
     log.info("Running callback on save..")
 
+    # update houdini vars
+    lib.update_houdini_vars_context_dialog()
+
     nodes = lib.get_id_required_nodes()
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
@@ -332,6 +337,9 @@ def on_open():
         return
 
     log.info("Running callback on open..")
+
+    # update houdini vars
+    lib.update_houdini_vars_context_dialog()
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
@@ -397,6 +405,7 @@ def _set_context_settings():
     """
 
     lib.reset_framerange()
+    lib.update_houdini_vars_context()
 
 
 def on_pyblish_instance_toggled(instance, new_value, old_value):

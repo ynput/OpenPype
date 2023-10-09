@@ -34,7 +34,11 @@ def _get_qt_app():
         if attr is not None:
             QtWidgets.QApplication.setAttribute(attr)
 
-    if hasattr(QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy"):
+    policy = os.getenv("QT_SCALE_FACTOR_ROUNDING_POLICY")
+    if (
+        hasattr(QtWidgets.QApplication, "setHighDpiScaleFactorRoundingPolicy")
+        and not policy
+    ):
         QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(
             QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
         )
