@@ -225,17 +225,53 @@ class ActionItem:
 
 
 @six.add_metaclass(ABCMeta)
-class AbstractController:
+class BaseLoaderController(object):
+    @abstractmethod
+    def get_current_context(self):
+        """Current context is a context of the current scene.
+
+        Example output:
+            {
+                "project_name": "MyProject",
+                "folder_id": "0011223344-5566778-99",
+                "task_name": "Compositing",
+            }
+
+        Returns:
+            dict[str, Union[str, None]]: Context data.
+        """
+
+        pass
+
+    @abstractmethod
+    def reset(self):
+        pass
+
+    # Model wrappers
+    @abstractmethod
+    def get_folder_items(self, project_name, sender=None):
+        pass
+
+
+class BackendLoaderController(BaseLoaderController):
     @abstractmethod
     def emit_event(self, topic, data=None, source=None):
         pass
 
     @abstractmethod
-    def register_event_callback(self, topic, callback):
+    def get_loaded_product_ids(self):
+        """Return set of loaded product ids.
+
+        Returns:
+            set[str]: Set of loaded product ids.
+        """
+
         pass
 
+
+class FrontendLoaderController(BaseLoaderController):
     @abstractmethod
-    def reset(self):
+    def register_event_callback(self, topic, callback):
         pass
 
     # Expected selection helpers
@@ -258,10 +294,6 @@ class AbstractController:
     # Model wrapper calls
     @abstractmethod
     def get_project_items(self):
-        pass
-
-    @abstractmethod
-    def get_folder_items(self, project_name, sender=None):
         pass
 
     @abstractmethod
@@ -290,10 +322,6 @@ class AbstractController:
     def get_representation_items(
         self, project_name, version_ids, sender=None
     ):
-        pass
-
-    @abstractmethod
-    def get_folder_entity(self, project_name, folder_id):
         pass
 
     @abstractmethod
@@ -340,15 +368,7 @@ class AbstractController:
         pass
 
     @abstractmethod
-    def set_selected_project(self, project_name):
-        pass
-
-    @abstractmethod
     def get_selected_folder_ids(self):
-        pass
-
-    @abstractmethod
-    def set_selected_folders(self, folder_ids):
         pass
 
     @abstractmethod
@@ -356,11 +376,19 @@ class AbstractController:
         pass
 
     @abstractmethod
-    def set_selected_versions(self, version_ids):
+    def get_selected_representation_ids(self):
         pass
 
     @abstractmethod
-    def get_selected_representation_ids(self):
+    def set_selected_project(self, project_name):
+        pass
+
+    @abstractmethod
+    def set_selected_folders(self, folder_ids):
+        pass
+
+    @abstractmethod
+    def set_selected_versions(self, version_ids):
         pass
 
     @abstractmethod
@@ -369,23 +397,6 @@ class AbstractController:
 
     @abstractmethod
     def fill_root_in_source(self, source):
-        pass
-
-    @abstractmethod
-    def get_current_context(self):
-        """Current context is a context of the current scene.
-
-        Example output:
-            {
-                "project_name": "MyProject",
-                "folder_id": "0011223344-5566778-99",
-                "task_name": "Compositing",
-            }
-
-        Returns:
-            dict[str, Union[str, None]]: Context data.
-        """
-
         pass
 
     @abstractmethod
@@ -400,14 +411,4 @@ class AbstractController:
 
     @abstractmethod
     def is_standard_projects_filter_enabled(self):
-        pass
-
-    @abstractmethod
-    def get_loaded_product_ids(self):
-        """Return set of loaded product ids.
-
-        Returns:
-            set[str]: Set of loaded product ids.
-        """
-
         pass

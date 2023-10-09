@@ -13,7 +13,7 @@ from openpype.tools.ayon_utils.models import (
     ThumbnailsModel,
 )
 
-from .abstract import AbstractController
+from .abstract import BackendLoaderController, FrontendLoaderController
 from .models import SelectionModel, ProductsModel, LoaderActionsModel
 
 
@@ -82,7 +82,7 @@ class ExpectedSelection:
         return True
 
 
-class LoaderController(AbstractController):
+class LoaderController(BackendLoaderController, FrontendLoaderController):
     """
 
     Args:
@@ -193,9 +193,6 @@ class LoaderController(AbstractController):
         return self._products_model.get_repre_items(
             project_name, version_ids, sender
         )
-
-    def get_folder_entity(self, project_name, folder_id):
-        self._hierarchy_model.get_folder_entity(project_name, folder_id)
 
     def get_folder_thumbnail_ids(self, project_name, folder_ids):
         return self._thumbnails_model.get_folder_thumbnail_ids(
