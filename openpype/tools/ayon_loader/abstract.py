@@ -1,6 +1,12 @@
 from abc import ABCMeta, abstractmethod
 import six
 
+from openpype.lib.attribute_definitions import (
+    AbstractAttrDef,
+    serialize_attr_defs,
+    deserialize_attr_defs,
+)
+
 
 class ProductTypeItem:
     """Item representing product type.
@@ -278,13 +284,30 @@ class ActionItem:
         self.version_ids = version_ids
         self.representation_ids = representation_ids
 
+    def _options_to_data(self):
+        options = self.options
+        if not options:
+            return options
+        if isinstance(options[0], AbstractAttrDef):
+            return serialize_attr_defs(options)
+        # NOTE: Data conversion is not used by default in loader tool. But for
+        #   future development of detached UI tools it would be better to be
+        #   prepared for it.
+        raise NotImplementedError(
+            "{}.to_data is not implemented. Use Attribute definitions"
+            " from 'openpype.lib' instead of 'qargparse'.".format(
+                self.__class__.__name__
+            )
+        )
+
     def to_data(self):
+        options = self._options_to_data()
         return {
             "identifier": self.identifier,
             "label": self.label,
             "icon": self.icon,
             "tooltip": self.tooltip,
-            "options": self.options,
+            "options": options,
             "order": self.order,
             "project_name": self.project_name,
             "folder_ids": self.folder_ids,
@@ -295,6 +318,10 @@ class ActionItem:
 
     @classmethod
     def from_data(cls, data):
+        options = data["options"]
+        if options:
+            options = deserialize_attr_defs(options)
+        data["options"] = options
         return cls(**data)
 
 
