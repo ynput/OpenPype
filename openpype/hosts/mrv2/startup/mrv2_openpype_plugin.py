@@ -1,7 +1,7 @@
 import contextlib
 import sys
 
-from mrv2 import plugin, cmd
+from mrv2 import plugin
 
 from openpype.pipeline import install_host
 from openpype.hosts.mrv2.api import Mrv2Host
