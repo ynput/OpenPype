@@ -5,10 +5,7 @@ from openpype.tools.utils import (
     RecursiveSortFilterProxyModel,
     DeselectableTreeView,
 )
-from openpype.style import (
-    get_objected_colors,
-    get_default_tools_icon_color,
-)
+from openpype.style import get_objected_colors
 
 from openpype.tools.ayon_utils.widgets import (
     FoldersModel,

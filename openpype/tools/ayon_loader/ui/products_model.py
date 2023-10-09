@@ -386,10 +386,10 @@ class ProductsModel(QtGui.QStandardItemModel):
                 else:
                     path = "/".join(key_parts + [product_name])
                     merged_paths.add(path)
-                    merged_product_items[path] = {
-                        "product_name": product_name,
-                        "product_items": product_items,
-                    }
+                    merged_product_items[path] = (
+                        product_name,
+                        product_items,
+                    )
 
             parent_item = None
             if group_name:
@@ -405,9 +405,8 @@ class ProductsModel(QtGui.QStandardItemModel):
                 item = self._get_product_model_item(product_item)
                 new_items.append(item)
 
-            for path, path_info in merged_product_items.items():
-                product_items = path_info["product_items"]
-                product_name = path_info["product_name"]
+            for path_info in merged_product_items.values():
+                product_name, product_items = path_info
                 (merged_color_hex, merged_color_qt) = self._get_next_color()
                 merged_color = qtawesome.icon(
                     "fa.circle", color=merged_color_qt)

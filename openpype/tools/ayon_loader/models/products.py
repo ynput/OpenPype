@@ -118,7 +118,8 @@ def product_type_item_from_data(product_type_data):
 
 
 class ProductsModel:
-    lifetime = 60  # A minutes
+    lifetime = 60  # In seconds (minute by default)
+
     def __init__(self, controller):
         self._controller = controller
 

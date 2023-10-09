@@ -580,8 +580,9 @@ class LoaderActionsModel:
 
         Args:
             loader (LoaderPlugin): Loader plugin to use.
-            repre_contexts (list[dict]): Full info about selected representations,
-                containing repre, version, subset, asset and project documents.
+            repre_contexts (list[dict]): Full info about selected
+                representations, containing repre, version, subset, asset and
+                project documents.
             options (dict): Data from options.
         """
 
@@ -683,9 +684,11 @@ class LoaderActionsModel:
                     formatted_traceback = None
                     if not isinstance(exc, LoadError):
                         exc_type, exc_value, exc_traceback = sys.exc_info()
-                        formatted_traceback = "".join(traceback.format_exception(
-                            exc_type, exc_value, exc_traceback
-                        ))
+                        formatted_traceback = "".join(
+                            traceback.format_exception(
+                                exc_type, exc_value, exc_traceback
+                            )
+                        )
 
                     error_info.append((
                         str(exc),

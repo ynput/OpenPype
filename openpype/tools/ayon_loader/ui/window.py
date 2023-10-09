@@ -464,15 +464,19 @@ class LoaderWindow(QtWidgets.QWidget):
         project_name = self._selected_project_name
         thumbnail_ids = set()
         if self._selected_version_ids:
-            thumbnail_id_by_entity_id = self._controller.get_version_thumbnail_ids(
-                project_name,
-                self._selected_version_ids
+            thumbnail_id_by_entity_id = (
+                self._controller.get_version_thumbnail_ids(
+                    project_name,
+                    self._selected_version_ids
+                )
             )
             thumbnail_ids = set(thumbnail_id_by_entity_id.values())
         elif self._selected_folder_ids:
-            thumbnail_id_by_entity_id = self._controller.get_folder_thumbnail_ids(
-                project_name,
-                self._selected_folder_ids
+            thumbnail_id_by_entity_id = (
+                self._controller.get_folder_thumbnail_ids(
+                    project_name,
+                    self._selected_folder_ids
+                )
             )
             thumbnail_ids = set(thumbnail_id_by_entity_id.values())
 

@@ -8,7 +8,8 @@ from .cache import NestedCacheItem
 
 
 class ThumbnailsModel:
-    entity_cache_lifetime = 240
+    entity_cache_lifetime = 240  # In seconds
+
     def __init__(self):
         self._thumbnail_cache = AYONThumbnailCache()
         self._paths_cache = collections.defaultdict(dict)
