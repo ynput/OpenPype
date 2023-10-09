@@ -1,7 +1,7 @@
 from mrv2 import plugin, cmd
-import contextlib
 
-timer = None
+from openpype.pipeline import install_host
+from openpype.hosts.mrv2.api import Mrv2Host
 
 
 def separator():
@@ -11,39 +11,33 @@ def separator():
 
 class MyPlugin(plugin.Plugin):
     def on_create(self):
-        print("Create..")
         from openpype.tools.utils import host_tools
-        with qt_with_mrv_update():
+        with qt_app():
             host_tools.show_publisher(tab="create")
 
     def on_load(self):
-        print("Load..")
         from openpype.tools.utils import host_tools
-        with qt_with_mrv_update():
+        with qt_app():
             host_tools.show_loader(use_context=True)
 
     def on_publish(self):
-        print("Publish..")
         from openpype.tools.utils import host_tools
-        with qt_with_mrv_update():
+        with qt_app():
             host_tools.show_publisher(tab="publish")
 
     def on_manage(self):
-        print("Manage..")
         from openpype.tools.utils import host_tools
-        with qt_with_mrv_update():
+        with qt_app():
             host_tools.show_scene_inventory()
 
     def on_library(self):
-        print("Library..")
         from openpype.tools.utils import host_tools
-        with qt_with_mrv_update():
+        with qt_app():
             host_tools.show_library_loader()
 
     def on_workfiles(self):
-        print("Workfiles..")
         from openpype.tools.utils import host_tools
-        with qt_with_mrv_update():
+        with qt_app():
             host_tools.show_workfiles()
 
     def menus(self):
@@ -59,38 +53,25 @@ class MyPlugin(plugin.Plugin):
         }
 
 
-def qt_app_shutdown():
-    print("Shutting down QApplication and QTimer")
-    global timer
-    timer.stop()
-
-
 @contextlib.contextmanager
-def qt_with_mrv_update():
-    from qtpy import QtCore
-    from openpype.tools.utils import qt_app_context
-    with qt_app_context() as app:
-        global timer
-        if timer is None:
-            print("Initializing and starting QTimer..")
-            timer = QtCore.QTimer(parent=app)
-            timer.setInterval(0)
-            timer.timeout.connect(cmd.update)
-            timer.start()
-            app.aboutToQuit.connect(qt_app_shutdown)
+def qt_app():
+    """Create QApplication instance without calling `exec_()`
 
-        yield app
+    Somehow the Qt UI updates fine within MRV2 without calling exec.
+    It even performs better because it doesnt crash MRV2, see:
+        https://github.com/ggarra13/mrv2/issues/130
 
-        if not timer.isActive():
-            # Restarting QApplication, reopen after last window close
-            print("Restarting QApplication and QTimer..")
-            timer.start()
-            app.exec_()
+    """
+    from qtpy import QtWidgets
+    app = QtWidgets.QApplication.instance()
+    if not app:
+        print("Creating QApplication instance")
+        app = QtWidgets.QApplication(sys.argv)
+
+    yield app
 
 
 def install():
-    from openpype.pipeline import install_host
-    from openpype.hosts.mrv2.api import Mrv2Host
     print("Installing OpenPype..")
     host = Mrv2Host()
     install_host(host)
