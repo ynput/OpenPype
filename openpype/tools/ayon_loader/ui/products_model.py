@@ -3,6 +3,7 @@ import collections
 import qtawesome
 from qtpy import QtGui, QtCore
 
+from openpype.style import get_default_entity_icon_color
 from openpype.tools.ayon_utils.widgets import get_qt_icon
 
 PRODUCTS_MODEL_SENDER_NAME = "qt_products_model"
@@ -82,9 +83,10 @@ class ProductsModel(QtGui.QStandardItemModel):
 
         # product item objects (they have version information)
         self._product_items_by_id = {}
-        self._grouping_enabled = False
+        self._grouping_enabled = True
         self._reset_merge_color = False
         self._color_iterator = self._color_iter()
+        self._group_icon = None
 
         self._last_project_name = None
         self._last_folder_ids = []
@@ -112,8 +114,6 @@ class ProductsModel(QtGui.QStandardItemModel):
             return
         self._grouping_enabled = enable_grouping
         # Ignore change if groups are not available
-        if not self._group_items_by_name:
-            return
         self.refresh(self._last_project_name, self._last_folder_ids)
 
     def flags(self, index):
@@ -244,10 +244,21 @@ class ProductsModel(QtGui.QStandardItemModel):
         self._product_items_by_id = {}
         self._reset_merge_color = True
 
+    def _get_group_icon(self):
+        if self._group_icon is None:
+            self._group_icon = qtawesome.icon(
+                "fa.object-group",
+                color=get_default_entity_icon_color()
+            )
+        return self._group_icon
+
     def _get_group_model_item(self, group_name):
         model_item = self._group_items_by_name.get(group_name)
         if model_item is None:
             model_item = QtGui.QStandardItem(group_name)
+            model_item.setData(
+                self._get_group_icon(), QtCore.Qt.DecorationRole
+            )
             model_item.setData(0, GROUP_TYPE_ROLE)
             model_item.setEditable(False)
             model_item.setColumnCount(self.columnCount())
@@ -375,7 +386,10 @@ class ProductsModel(QtGui.QStandardItemModel):
                 else:
                     path = "/".join(key_parts + [product_name])
                     merged_paths.add(path)
-                    merged_product_items[path] = product_items
+                    merged_product_items[path] = {
+                        "product_name": product_name,
+                        "product_items": product_items,
+                    }
 
             parent_item = None
             if group_name:
@@ -391,12 +405,14 @@ class ProductsModel(QtGui.QStandardItemModel):
                 item = self._get_product_model_item(product_item)
                 new_items.append(item)
 
-            for path, product_items in merged_product_items.items():
+            for path, path_info in merged_product_items.items():
+                product_items = path_info["product_items"]
+                product_name = path_info["product_name"]
                 (merged_color_hex, merged_color_qt) = self._get_next_color()
                 merged_color = qtawesome.icon(
                     "fa.circle", color=merged_color_qt)
                 merged_item = self._get_merged_model_item(
-                    path, len(product_items), merged_color_hex)
+                    product_name, len(product_items), merged_color_hex)
                 merged_item.setData(merged_color, QtCore.Qt.DecorationRole)
                 new_items.append(merged_item)
 

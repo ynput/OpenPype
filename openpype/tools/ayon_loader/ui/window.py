@@ -313,6 +313,10 @@ class LoaderWindow(QtWidgets.QWidget):
         self._selected_folder_ids = set()
         self._selected_version_ids = set()
 
+        self._products_widget.set_enable_grouping(
+            self._product_group_checkbox.isChecked()
+        )
+
     def showEvent(self, event):
         super(LoaderWindow, self).showEvent(event)
 
