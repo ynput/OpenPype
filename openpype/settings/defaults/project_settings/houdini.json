@@ -1,4 +1,16 @@
 {
+    "general": {
+        "update_houdini_var_context": {
+            "enabled": true,
+            "houdini_vars":[
+                {
+                    "var": "JOB",
+                    "value": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",
+                    "is_directory": true
+                }
+            ]
+        }
+    },
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {
