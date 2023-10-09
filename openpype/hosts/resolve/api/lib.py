@@ -190,11 +190,7 @@ def remove_media_pool_item(media_pool_item: object) -> bool:
 
 
 def create_media_pool_item(
-        fpath: str,
-        frame_start: int,
-        frame_end: int,
-        handle_start: int,
-        handle_end: int,
+        files: list,
         root: object = None,
 ) -> object:
     """
@@ -212,36 +208,10 @@ def create_media_pool_item(
     root_bin = root or media_pool.GetRootFolder()
 
     # try to search in bin if the clip does not exist
-    existing_mpi = get_media_pool_item(fpath, root_bin)
+    existing_mpi = get_media_pool_item(files[0], root_bin)
 
     if existing_mpi:
         return existing_mpi
-
-    files = []
-    first_frame = frame_start - handle_start
-    last_frame = frame_end + handle_end
-    dir_path = os.path.dirname(fpath)
-    base_name = os.path.basename(fpath)
-
-    # prepare glob pattern for searching
-    padding = len(str(last_frame))
-    str_first_frame = str(first_frame).zfill(padding)
-
-    # convert str_first_frame to glob pattern
-    # replace all digits with `?` and all other chars with `[char]`
-    # example: `0001` -> `????`
-    glob_pattern = re.sub(r"\d", "?", str_first_frame)
-
-    # in filename replace number with glob pattern
-    # example: `filename.0001.exr` -> `filename.????.exr`
-    base_name = re.sub(str_first_frame, glob_pattern, base_name)
-
-    # get all files in folder
-    for file in glob.glob(os.path.join(dir_path, base_name)):
-        files.append(file)
-
-    # keep only existing files
-    files = [f for f in files if os.path.exists(f)]
 
     # add all data in folder to media pool
     media_pool_items = media_pool.ImportMedia(files)
@@ -249,12 +219,12 @@ def create_media_pool_item(
     return media_pool_items.pop() if media_pool_items else False
 
 
-def get_media_pool_item(fpath, root: object = None) -> object:
+def get_media_pool_item(filepath, root: object = None) -> object:
     """
     Return clip if found in folder with use of input file path.
 
     Args:
-        fpath (str): absolute path to a file
+        filepath (str): absolute path to a file
         root (resolve.Folder)[optional]: root folder / bin object
 
     Returns:
@@ -262,7 +232,7 @@ def get_media_pool_item(fpath, root: object = None) -> object:
     """
     media_pool = get_current_project().GetMediaPool()
     root = root or media_pool.GetRootFolder()
-    fname = os.path.basename(fpath)
+    fname = os.path.basename(filepath)
 
     for _mpi in root.GetClipList():
         _mpi_name = _mpi.GetClipProperty("File Name")

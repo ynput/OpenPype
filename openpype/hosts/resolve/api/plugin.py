@@ -290,7 +290,7 @@ class ClipLoader:
     active_bin = None
     data = dict()
 
-    def __init__(self, loader_obj, context, path, **options):
+    def __init__(self, loader_obj, context, **options):
         """ Initialize object
 
         Arguments:
@@ -303,7 +303,6 @@ class ClipLoader:
         self.__dict__.update(loader_obj.__dict__)
         self.context = context
         self.active_project = lib.get_current_project()
-        self.fname = path
 
         # try to get value from options or evaluate key value for `handles`
         self.with_handles = options.get("handles") or bool(
@@ -343,37 +342,29 @@ class ClipLoader:
         data structure:
             {
                 "name": "assetName_subsetName_representationName"
-                "path": "path/to/file/created/by/get_repr..",
                 "binPath": "projectBinPath",
             }
         """
         # create name
-        repr = self.context["representation"]
-        repr_cntx = repr["context"]
-        asset = str(repr_cntx["asset"])
-        subset = str(repr_cntx["subset"])
-        representation = str(repr_cntx["representation"])
+        representation = self.context["representation"]
+        representation_context = representation["context"]
+        asset = str(representation_context["asset"])
+        subset = str(representation_context["subset"])
+        representation_name = str(representation_context["representation"])
         self.data["clip_name"] = "_".join([
             asset,
             subset,
-            representation
+            representation_name
         ])
         self.data["versionData"] = self.context["version"]["data"]
-        # gets file path
-        file = self.fname
-        if not file:
-            repr_id = repr["_id"]
-            print(
-                "Representation id `{}` is failing to load".format(repr_id))
-            return None
-        self.data["path"] = file.replace("\\", "/")
+
         self.data["timeline_basename"] = "timeline_{}_{}".format(
-            subset, representation)
+            subset, representation_name)
 
         # solve project bin structure path
         hierarchy = str("/".join((
             "Loader",
-            repr_cntx["hierarchy"].replace("\\", "/"),
+            representation_context["hierarchy"].replace("\\", "/"),
             asset
         )))
 
@@ -390,39 +381,20 @@ class ClipLoader:
         asset_name = self.context["representation"]["context"]["asset"]
         self.data["assetData"] = get_current_project_asset(asset_name)["data"]
 
-    def _get_frame_data(self):
-        # create mediaItem in active project bin
-        # create clip media
-        frame_start = self.data["versionData"].get("frameStart")
-        frame_end = self.data["versionData"].get("frameEnd")
-        if frame_start is None:
-            frame_start = int(self.data["assetData"]["frameStart"])
-        if frame_end is None:
-            frame_end = int(self.data["assetData"]["frameEnd"])
 
-        # get handles
-        handle_start = self.data["versionData"].get("handleStart")
-        handle_end = self.data["versionData"].get("handleEnd")
-        if handle_start is None:
-            handle_start = int(self.data["assetData"]["handleStart"])
-        if handle_end is None:
-            handle_end = int(self.data["assetData"]["handleEnd"])
+    def load(self, files):
+        """Load clip into timeline
 
-        return frame_start, frame_end, handle_start, handle_end
-
-    def load(self):
+        Arguments:
+            files (list): list of files to load into timeline
+        """
         # create project bin for the media to be imported into
         self.active_bin = lib.create_bin(self.data["binPath"])
-
-        frame_start, frame_end, handle_start, handle_end = \
-            self._get_frame_data()
+        handle_start = self.data["versionData"].get("handleStart", 0)
+        handle_end = self.data["versionData"].get("handleEnd", 0)
 
         media_pool_item = lib.create_media_pool_item(
-            self.data["path"],
-            frame_start,
-            frame_end,
-            handle_start,
-            handle_end,
+            files,
             self.active_bin
         )
         _clip_property = media_pool_item.GetClipProperty
@@ -446,21 +418,14 @@ class ClipLoader:
         print("Loading clips: `{}`".format(self.data["clip_name"]))
         return timeline_item
 
-    def update(self, timeline_item):
+    def update(self, timeline_item, files):
         # create project bin for the media to be imported into
         self.active_bin = lib.create_bin(self.data["binPath"])
-
-        frame_start, frame_end, handle_start, handle_end = \
-            self._get_frame_data()
 
         # create mediaItem in active project bin
         # create clip media
         media_pool_item = lib.create_media_pool_item(
-            self.data["path"],
-            frame_start,
-            frame_end,
-            handle_start,
-            handle_end,
+            files,
             self.active_bin
         )
         _clip_property = media_pool_item.GetClipProperty

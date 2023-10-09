@@ -3,6 +3,7 @@ from openpype.pipeline import (
     get_representation_path,
     get_representation_context,
     get_current_project_name,
+    get_representation_files
 )
 from openpype.hosts.resolve.api import lib, plugin
 from openpype.hosts.resolve.api.pipeline import (
@@ -44,9 +45,11 @@ class LoadClip(plugin.TimelineItemLoader):
     def load(self, context, name, namespace, options):
 
         # load clip to timeline and get main variables
-        path = self.filepath_from_context(context)
+        filepath = self.filepath_from_context(context)
+        files = get_representation_files(context, filepath)
+
         timeline_item = plugin.ClipLoader(
-            self, context, path, **options).load()
+            self, context, **options).load(files)
         namespace = namespace or timeline_item.GetName()
 
         # update color of clip regarding the version order
@@ -73,9 +76,11 @@ class LoadClip(plugin.TimelineItemLoader):
 
         media_pool_item = timeline_item.GetMediaPoolItem()
 
-        path = get_representation_path(representation)
-        loader = plugin.ClipLoader(self, context, path)
-        timeline_item = loader.update(timeline_item)
+        filepath = get_representation_path(representation)
+        files = get_representation_files(context, filepath)
+
+        loader = plugin.ClipLoader(self, context)
+        timeline_item = loader.update(timeline_item, files)
 
         # update color of clip regarding the version order
         self.set_item_color(timeline_item, version=context["version"])
