@@ -829,6 +829,11 @@
             "redshift_render_attributes": [],
             "renderman_render_attributes": []
         },
+        "ValidateResolution": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateCurrentRenderLayerIsRenderable": {
             "enabled": true,
             "optional": false,
