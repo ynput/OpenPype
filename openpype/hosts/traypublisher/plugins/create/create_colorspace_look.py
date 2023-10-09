@@ -14,10 +14,6 @@ from openpype.pipeline import (
     CreatedInstance,
     CreatorError
 )
-from openpype.pipeline.create import (
-    get_subset_name,
-    TaskNotSetError,
-)
 from openpype.pipeline import colorspace
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
 
@@ -61,9 +57,11 @@ This creator publishes color space look file (LUT).
         asset_doc = get_asset_by_name(
             self.project_name, instance_data["asset"])
 
-        subset_name = self._get_subset(
-            asset_doc, instance_data["variant"], self.project_name,
-            instance_data["task"]
+        subset_name = self.get_subset_name(
+            variant=instance_data["variant"],
+            task_name=instance_data["task"] or "Not set",
+            project_name=self.project_name,
+            asset_doc=asset_doc,
         )
 
         instance_data["creator_attributes"] = {
@@ -175,30 +173,3 @@ This creator publishes color space look file (LUT).
         self.config_data = config_data
         self.colorspace_items.extend(labeled_colorspaces)
         self.enabled = True
-
-    def _get_subset(self, asset_doc, variant, project_name, task_name=None):
-        """Create subset name according to standard template process"""
-
-        try:
-            subset_name = get_subset_name(
-                self.family,
-                variant,
-                task_name,
-                asset_doc,
-                project_name
-            )
-        except TaskNotSetError:
-            # Create instance with fake task
-            # - instance will be marked as invalid so it can't be published
-            #   but user have ability to change it
-            # NOTE: This expect that there is not task 'Undefined' on asset
-            task_name = "Undefined"
-            subset_name = get_subset_name(
-                self.family,
-                variant,
-                task_name,
-                asset_doc,
-                project_name
-            )
-
-        return subset_name
