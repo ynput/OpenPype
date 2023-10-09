@@ -1,4 +1,3 @@
-from ast import alias
 import unittest
 from openpype.pipeline.colorspace import convert_colorspace_enumerator_item
 
@@ -113,6 +112,7 @@ class TestConvertColorspaceEnumeratorItem(unittest.TestCase):
         config_items = {}
         with self.assertRaises(KeyError):
             convert_colorspace_enumerator_item("RGB::sRGB", config_items)
+
 
 if __name__ == '__main__':
     unittest.main()

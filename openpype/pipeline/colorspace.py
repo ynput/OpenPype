@@ -573,7 +573,10 @@ def convert_colorspace_enumerator_item(
     # raise exception if item is not found
     if not item_data:
         message_config_keys = ", ".join(
-            "'{}':{}".format(key, set(config_items.get(key, {}).keys())) for key in config_items.keys()
+            "'{}':{}".format(
+                key,
+                set(config_items.get(key, {}).keys())
+            ) for key in config_items.keys()
         )
         raise KeyError(
             "Missing colorspace item '{}' in config data: [{}]".format(
