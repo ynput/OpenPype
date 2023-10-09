@@ -11,9 +11,9 @@ from openpype.hosts.nuke.api.lib import (
 
 
 class ExtractModel(publish.Extractor):
-    """ 3D model exctractor
+    """ 3D model extractor
     """
-    label = 'Exctract Model'
+    label = 'Extract Model'
     order = pyblish.api.ExtractorOrder
     families = ["model"]
     hosts = ["nuke"]

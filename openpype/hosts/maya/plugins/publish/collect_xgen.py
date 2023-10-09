@@ -67,5 +67,5 @@ class CollectXgen(pyblish.api.InstancePlugin):
 
         data["transfers"] = transfers
 
-        self.log.info(data)
+        self.log.debug(data)
         instance.data.update(data)

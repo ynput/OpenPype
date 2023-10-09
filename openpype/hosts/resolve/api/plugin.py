@@ -413,8 +413,6 @@ class ClipLoader:
         if self.with_handles:
             source_in -= handle_start
             source_out += handle_end
-            handle_start = 0
-            handle_end = 0
 
         # make track item from source in bin as item
         timeline_item = lib.create_timeline_item(
@@ -432,14 +430,6 @@ class ClipLoader:
         media_pool_item = lib.create_media_pool_item(
             self.data["path"], self.active_bin)
         _clip_property = media_pool_item.GetClipProperty
-
-        # get handles
-        handle_start = self.data["versionData"].get("handleStart")
-        handle_end = self.data["versionData"].get("handleEnd")
-        if handle_start is None:
-            handle_start = int(self.data["assetData"]["handleStart"])
-        if handle_end is None:
-            handle_end = int(self.data["assetData"]["handleEnd"])
 
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))

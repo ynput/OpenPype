@@ -8,7 +8,7 @@ from openpype.lib import EnumDef
 class CreateBGEO(plugin.HoudiniCreator):
     """BGEO pointcache creator."""
     identifier = "io.openpype.creators.houdini.bgeo"
-    label = "BGEO PointCache"
+    label = "PointCache (Bgeo)"
     family = "pointcache"
     icon = "gears"
 

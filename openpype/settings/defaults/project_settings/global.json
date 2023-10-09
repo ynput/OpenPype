@@ -1,4 +1,7 @@
 {
+    "version_start_category": {
+        "profiles": []
+    },
     "imageio": {
         "activate_global_color_management": false,
         "ocio_config": {

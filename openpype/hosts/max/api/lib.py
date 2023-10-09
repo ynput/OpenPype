@@ -1,15 +1,35 @@
 # -*- coding: utf-8 -*-
 """Library of functions useful for 3dsmax pipeline."""
 import contextlib
+import logging
 import json
 from typing import Any, Dict, Union
 
 import six
+from openpype.pipeline import get_current_project_name, colorspace
+from openpype.settings import get_project_settings
 from openpype.pipeline.context_tools import (
-    get_current_project, get_current_project_asset,)
+    get_current_project, get_current_project_asset)
+from openpype.style import load_stylesheet
 from pymxs import runtime as rt
 
+
 JSON_PREFIX = "JSON::"
+log = logging.getLogger("openpype.hosts.max")
+
+
+def get_main_window():
+    """Acquire Max's main window"""
+    from qtpy import QtWidgets
+    top_widgets = QtWidgets.QApplication.topLevelWidgets()
+    name = "QmaxApplicationWindow"
+    for widget in top_widgets:
+        if (
+            widget.inherits("QMainWindow")
+            and widget.metaObject().className() == name
+        ):
+            return widget
+    raise RuntimeError('Count not find 3dsMax main window.')
 
 
 def imprint(node_name: str, data: dict) -> bool:
@@ -277,6 +297,7 @@ def set_context_setting():
     """
     reset_scene_resolution()
     reset_frame_range()
+    reset_colorspace()
 
 
 def get_max_version():
@@ -290,6 +311,14 @@ def get_max_version():
     """
     max_info = rt.MaxVersion()
     return max_info[7]
+
+
+def is_headless():
+    """Check if 3dsMax runs in batch mode.
+    If it returns True, it runs in 3dsbatch.exe
+    If it returns False, it runs in 3dsmax.exe
+    """
+    return rt.maxops.isInNonInteractiveMode()
 
 
 @contextlib.contextmanager
@@ -312,3 +341,159 @@ def set_timeline(frameStart, frameEnd):
     """
     rt.animationRange = rt.interval(frameStart, frameEnd)
     return rt.animationRange
+
+
+def reset_colorspace():
+    """OCIO Configuration
+    Supports in 3dsMax 2024+
+
+    """
+    if int(get_max_version()) < 2024:
+        return
+    project_name = get_current_project_name()
+    colorspace_mgr = rt.ColorPipelineMgr
+    project_settings = get_project_settings(project_name)
+
+    max_config_data = colorspace.get_imageio_config(
+        project_name, "max", project_settings)
+    if max_config_data:
+        ocio_config_path = max_config_data["path"]
+        colorspace_mgr = rt.ColorPipelineMgr
+        colorspace_mgr.Mode = rt.Name("OCIO_Custom")
+        colorspace_mgr.OCIOConfigPath = ocio_config_path
+
+    colorspace_mgr.OCIOConfigPath = ocio_config_path
+
+
+def check_colorspace():
+    parent = get_main_window()
+    if parent is None:
+        log.info("Skipping outdated pop-up "
+                 "because Max main window can't be found.")
+    if int(get_max_version()) >= 2024:
+        color_mgr = rt.ColorPipelineMgr
+        project_name = get_current_project_name()
+        project_settings = get_project_settings(project_name)
+        max_config_data = colorspace.get_imageio_config(
+            project_name, "max", project_settings)
+        if max_config_data and color_mgr.Mode != rt.Name("OCIO_Custom"):
+            if not is_headless():
+                from openpype.widgets import popup
+                dialog = popup.Popup(parent=parent)
+                dialog.setWindowTitle("Warning: Wrong OCIO Mode")
+                dialog.setMessage("This scene has wrong OCIO "
+                                  "Mode setting.")
+                dialog.setButtonText("Fix")
+                dialog.setStyleSheet(load_stylesheet())
+                dialog.on_clicked.connect(reset_colorspace)
+                dialog.show()
+
+def unique_namespace(namespace, format="%02d",
+                     prefix="", suffix="", con_suffix="CON"):
+    """Return unique namespace
+
+    Arguments:
+        namespace (str): Name of namespace to consider
+        format (str, optional): Formatting of the given iteration number
+        suffix (str, optional): Only consider namespaces with this suffix.
+        con_suffix: max only, for finding the name of the master container
+
+    >>> unique_namespace("bar")
+    # bar01
+    >>> unique_namespace(":hello")
+    # :hello01
+    >>> unique_namespace("bar:", suffix="_NS")
+    # bar01_NS:
+
+    """
+
+    def current_namespace():
+        current = namespace
+        # When inside a namespace Max adds no trailing :
+        if not current.endswith(":"):
+            current += ":"
+        return current
+
+    # Always check against the absolute namespace root
+    # There's no clash with :x if we're defining namespace :a:x
+    ROOT = ":" if namespace.startswith(":") else current_namespace()
+
+    # Strip trailing `:` tokens since we might want to add a suffix
+    start = ":" if namespace.startswith(":") else ""
+    end = ":" if namespace.endswith(":") else ""
+    namespace = namespace.strip(":")
+    if ":" in namespace:
+        # Split off any nesting that we don't uniqify anyway.
+        parents, namespace = namespace.rsplit(":", 1)
+        start += parents + ":"
+        ROOT += start
+
+    iteration = 1
+    increment_version = True
+    while increment_version:
+        nr_namespace = namespace + format % iteration
+        unique = prefix + nr_namespace + suffix
+        container_name = f"{unique}:{namespace}{con_suffix}"
+        if not rt.getNodeByName(container_name):
+            name_space = start + unique + end
+            increment_version = False
+            return name_space
+        else:
+            increment_version = True
+        iteration += 1
+
+
+def get_namespace(container_name):
+    """Get the namespace and name of the sub-container
+
+    Args:
+        container_name (str): the name of master container
+
+    Raises:
+        RuntimeError: when there is no master container found
+
+    Returns:
+        namespace (str): namespace of the sub-container
+        name (str): name of the sub-container
+    """
+    node = rt.getNodeByName(container_name)
+    if not node:
+        raise RuntimeError("Master Container Not Found..")
+    name = rt.getUserProp(node, "name")
+    namespace = rt.getUserProp(node, "namespace")
+    return namespace, name
+
+
+def object_transform_set(container_children):
+    """A function which allows to store the transform of
+    previous loaded object(s)
+    Args:
+        container_children(list): A list of nodes
+
+    Returns:
+        transform_set (dict): A dict with all transform data of
+        the previous loaded object(s)
+    """
+    transform_set = {}
+    for node in container_children:
+        name = f"{node.name}.transform"
+        transform_set[name] = node.pos
+        name = f"{node.name}.scale"
+        transform_set[name] = node.scale
+    return transform_set
+
+
+def get_plugins() -> list:
+    """Get all loaded plugins in 3dsMax
+
+    Returns:
+        plugin_info_list: a list of loaded plugins
+    """
+    manager = rt.PluginManager
+    count = manager.pluginDllCount
+    plugin_info_list = []
+    for p in range(1, count + 1):
+        plugin_info = manager.pluginDllName(p)
+        plugin_info_list.append(plugin_info)
+
+    return plugin_info_list

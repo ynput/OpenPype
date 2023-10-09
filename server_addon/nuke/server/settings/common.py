@@ -39,6 +39,15 @@ class Vector3d(BaseSettingsModel):
     z: float = Field(1.0, title="Z")
 
 
+class Box(BaseSettingsModel):
+    _layout = "compact"
+
+    x: float = Field(1.0, title="X")
+    y: float = Field(1.0, title="Y")
+    r: float = Field(1.0, title="R")
+    t: float = Field(1.0, title="T")
+
+
 def formatable_knob_type_enum():
     return [
         {"value": "text", "label": "Text"},
@@ -74,17 +83,12 @@ knob_types_enum = [
     {"value": "vector_2d", "label": "2D vector"},
     {"value": "vector_3d", "label": "3D vector"},
     {"value": "color", "label": "Color"},
+    {"value": "box", "label": "Box"},
     {"value": "expression", "label": "Expression"}
 ]
 
 
 class KnobModel(BaseSettingsModel):
-    """# TODO: new data structure
-    - v3 was having type, name, value but
-    ayon is not able to make it the same. Current model is
-    defining `type` as `text` and instead of `value` the key is `text`.
-    So if `type` is `boolean` then key is `boolean` (value).
-    """
     _layout = "expanded"
 
     type: str = Field(
@@ -117,6 +121,10 @@ class KnobModel(BaseSettingsModel):
     color: ColorRGBA_float = Field(
         (0.0, 0.0, 1.0, 1.0),
         title="RGBA Float"
+    )
+    box: Box = Field(
+        default_factory=Box,
+        title="Value"
     )
     formatable: Formatable = Field(
         default_factory=Formatable,

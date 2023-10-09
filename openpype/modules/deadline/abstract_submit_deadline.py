@@ -25,6 +25,7 @@ from openpype.pipeline.publish import (
 from openpype.pipeline.publish.lib import (
     replace_with_published_scene_path
 )
+from openpype import AYON_SERVER_ENABLED
 
 JSONDecodeError = getattr(json.decoder, "JSONDecodeError", ValueError)
 
@@ -396,6 +397,15 @@ class DeadlineJobInfo(object):
         """Update instance with data dict"""
         for key, value in data.items():
             setattr(self, key, value)
+
+    def add_render_job_env_var(self):
+        """Check if in OP or AYON mode and use appropriate env var."""
+        if AYON_SERVER_ENABLED:
+            self.EnvironmentKeyValue["AYON_RENDER_JOB"] = "1"
+            self.EnvironmentKeyValue["AYON_BUNDLE_NAME"] = (
+                os.environ["AYON_BUNDLE_NAME"])
+        else:
+            self.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
 
 
 @six.add_metaclass(AbstractMetaInstancePlugin)

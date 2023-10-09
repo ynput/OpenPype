@@ -28,11 +28,9 @@ def nuke_product_types_enum():
 
 
 class NodeModel(BaseSettingsModel):
-    # TODO: missing in host api
     name: str = Field(
         title="Node name"
     )
-    # TODO: `nodeclass` rename to `nuke_node_class`
     nodeclass: str = Field(
         "",
         title="Node class"
@@ -41,11 +39,8 @@ class NodeModel(BaseSettingsModel):
         "",
         title="Incoming dependency"
     )
-    """# TODO: Changes in host api:
-    - Need complete rework of knob types in nuke integration.
-    - We could not support v3 style of settings.
-    """
     knobs: list[KnobModel] = Field(
+        default_factory=list,
         title="Knobs",
     )
 
@@ -99,12 +94,9 @@ class ExtractThumbnailModel(BaseSettingsModel):
     use_rendered: bool = Field(title="Use rendered images")
     bake_viewer_process: bool = Field(title="Bake view process")
     bake_viewer_input_process: bool = Field(title="Bake viewer input process")
-    """# TODO: needs to rewrite from v3 to ayon
-    - `nodes` in v3 was dict but now `prenodes` is list of dict
-    - also later `nodes` should be `prenodes`
-    """
 
     nodes: list[NodeModel] = Field(
+        default_factory=list,
         title="Nodes (deprecated)"
     )
     reposition_nodes: list[ThumbnailRepositionNodeModel] = Field(
@@ -157,7 +149,7 @@ class ReformatNodesConfigModel(BaseSettingsModel):
     )
 
 
-class BakingStreamModel(BaseSettingsModel):
+class IntermediateOutputModel(BaseSettingsModel):
     name: str = Field(title="Output name")
     filter: BakingStreamFilterModel = Field(
         title="Filter", default_factory=BakingStreamFilterModel)
@@ -174,9 +166,22 @@ class BakingStreamModel(BaseSettingsModel):
 
 
 class ExtractReviewDataMovModel(BaseSettingsModel):
+    """[deprecated] use Extract Review Data Baking
+    Streams instead.
+    """
     enabled: bool = Field(title="Enabled")
     viewer_lut_raw: bool = Field(title="Viewer lut raw")
-    outputs: list[BakingStreamModel] = Field(
+    outputs: list[IntermediateOutputModel] = Field(
+        default_factory=list,
+        title="Baking streams"
+    )
+
+
+class ExtractReviewIntermediatesModel(BaseSettingsModel):
+    enabled: bool = Field(title="Enabled")
+    viewer_lut_raw: bool = Field(title="Viewer lut raw")
+    outputs: list[IntermediateOutputModel] = Field(
+        default_factory=list,
         title="Baking streams"
     )
 
@@ -213,12 +218,6 @@ class ExctractSlateFrameParamModel(BaseSettingsModel):
 
 class ExtractSlateFrameModel(BaseSettingsModel):
     viewer_lut_raw: bool = Field(title="Viewer lut raw")
-    """# TODO: v3 api different model:
-    - not possible to replicate v3 model:
-        {"name": [bool, str]}
-    - not it is:
-        {"name": {"enabled": bool, "template": str}}
-    """
     key_value_mapping: ExctractSlateFrameParamModel = Field(
         title="Key value mapping",
         default_factory=ExctractSlateFrameParamModel
@@ -283,11 +282,14 @@ class PublishPuginsModel(BaseSettingsModel):
         title="Extract Review Data Mov",
         default_factory=ExtractReviewDataMovModel
     )
+    ExtractReviewIntermediates: ExtractReviewIntermediatesModel = Field(
+        title="Extract Review Intermediates",
+        default_factory=ExtractReviewIntermediatesModel
+    )
     ExtractSlateFrame: ExtractSlateFrameModel = Field(
         title="Extract Slate Frame",
         default_factory=ExtractSlateFrameModel
     )
-    # TODO: plugin should be renamed - `workfile` not `script`
     IncrementScriptVersion: IncrementScriptVersionModel = Field(
         title="Increment Workfile Version",
         default_factory=IncrementScriptVersionModel,
@@ -425,6 +427,61 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
         "enabled": False
     },
     "ExtractReviewDataMov": {
+        "enabled": True,
+        "viewer_lut_raw": False,
+        "outputs": [
+            {
+                "name": "baking",
+                "filter": {
+                    "task_types": [],
+                    "product_types": [],
+                    "product_names": []
+                },
+                "read_raw": False,
+                "viewer_process_override": "",
+                "bake_viewer_process": True,
+                "bake_viewer_input_process": True,
+                "reformat_nodes_config": {
+                    "enabled": False,
+                    "reposition_nodes": [
+                        {
+                            "node_class": "Reformat",
+                            "knobs": [
+                                {
+                                    "type": "text",
+                                    "name": "type",
+                                    "text": "to format"
+                                },
+                                {
+                                    "type": "text",
+                                    "name": "format",
+                                    "text": "HD_1080"
+                                },
+                                {
+                                    "type": "text",
+                                    "name": "filter",
+                                    "text": "Lanczos6"
+                                },
+                                {
+                                    "type": "bool",
+                                    "name": "black_outside",
+                                    "boolean": True
+                                },
+                                {
+                                    "type": "bool",
+                                    "name": "pbb",
+                                    "boolean": False
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "extension": "mov",
+                "add_custom_tags": []
+            }
+        ]
+    },
+    "ExtractReviewIntermediates": {
         "enabled": True,
         "viewer_lut_raw": False,
         "outputs": [

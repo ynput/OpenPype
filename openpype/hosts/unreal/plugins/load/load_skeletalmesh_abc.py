@@ -78,11 +78,16 @@ class SkeletalMeshAlembicLoader(plugin.Loader):
             asset_name = "{}_{}".format(asset, name)
         else:
             asset_name = "{}".format(name)
-        version = context.get('version').get('name')
+        version = context.get('version')
+        # Check if version is hero version and use different name
+        if not version.get("name") and version.get('type') == "hero_version":
+            name_version = f"{name}_hero"
+        else:
+            name_version = f"{name}_v{version.get('name'):03d}"
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/{asset}/{name}_v{version:03d}", suffix="")
+            f"{root}/{asset}/{name_version}", suffix="")
 
         container_name += suffix
 

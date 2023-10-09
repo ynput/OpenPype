@@ -334,6 +334,9 @@ def get_usd_master_path(asset, subset, representation):
                 "name": project_name,
                 "code": project_doc.get("data", {}).get("code")
             },
+            "folder": {
+                "name": asset_doc["name"],
+            },
             "asset": asset_doc["name"],
             "subset": subset,
             "representation": representation,

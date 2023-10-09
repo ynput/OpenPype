@@ -8,6 +8,11 @@ from ayon_api import slugify_string
 from ayon_api.entity_hub import EntityHub
 
 from openpype import AYON_SERVER_ENABLED
+from openpype.client import get_assets
+from openpype.pipeline.template_data import (
+    get_asset_template_data,
+    get_task_template_data,
+)
 
 
 def _default_json_parse(value):
@@ -27,13 +32,51 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
 
         hierarchy_context = context.data.get("hierarchyContext")
         if not hierarchy_context:
-            self.log.info("Skipping")
+            self.log.debug("Skipping ExtractHierarchyToAYON")
             return
 
         project_name = context.data["projectName"]
+        self._create_hierarchy(context, project_name)
+        self._fill_instance_entities(context, project_name)
+
+    def _fill_instance_entities(self, context, project_name):
+        instances_by_asset_name = collections.defaultdict(list)
+        for instance in context:
+            if instance.data.get("publish") is False:
+                continue
+
+            instance_entity = instance.data.get("assetEntity")
+            if instance_entity:
+                continue
+
+            # Skip if instance asset does not match
+            instance_asset_name = instance.data.get("asset")
+            instances_by_asset_name[instance_asset_name].append(instance)
+
+        project_doc = context.data["projectEntity"]
+        asset_docs = get_assets(
+            project_name, asset_names=instances_by_asset_name.keys()
+        )
+        asset_docs_by_name = {
+            asset_doc["name"]: asset_doc
+            for asset_doc in asset_docs
+        }
+        for asset_name, instances in instances_by_asset_name.items():
+            asset_doc = asset_docs_by_name[asset_name]
+            asset_data = get_asset_template_data(asset_doc, project_name)
+            for instance in instances:
+                task_name = instance.data.get("task")
+                template_data = get_task_template_data(
+                    project_doc, asset_doc, task_name)
+                template_data.update(copy.deepcopy(asset_data))
+
+                instance.data["anatomyData"].update(template_data)
+                instance.data["assetEntity"] = asset_doc
+
+    def _create_hierarchy(self, context, project_name):
         hierarchy_context = self._filter_hierarchy(context)
         if not hierarchy_context:
-            self.log.info("All folders were filtered out")
+            self.log.debug("All folders were filtered out")
             return
 
         self.log.debug("Hierarchy_context: {}".format(

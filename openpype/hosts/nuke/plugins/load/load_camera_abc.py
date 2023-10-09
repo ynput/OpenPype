@@ -112,8 +112,6 @@ class AlembicCameraLoader(load.LoaderPlugin):
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         object_name = container['objectName']
-        # get corresponding node
-        camera_node = nuke.toNode(object_name)
 
         # get main variables
         version_data = version_doc.get("data", {})

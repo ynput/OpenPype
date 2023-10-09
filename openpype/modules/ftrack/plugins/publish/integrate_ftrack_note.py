@@ -47,7 +47,7 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
         app_label = context.data["appLabel"]
         comment = instance.data["comment"]
         if not comment:
-            self.log.info("Comment is not set.")
+            self.log.debug("Comment is not set.")
         else:
             self.log.debug("Comment is set to `{}`".format(comment))
 
@@ -127,14 +127,14 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
 
             note_text = StringTemplate.format_template(template, format_data)
             if not note_text.solved:
-                self.log.warning((
+                self.log.debug((
                     "Note template require more keys then can be provided."
                     "\nTemplate: {}\nMissing values for keys:{}\nData: {}"
                 ).format(template, note_text.missing_keys, format_data))
                 continue
 
             if not note_text:
-                self.log.info((
+                self.log.debug((
                     "Note for AssetVersion {} would be empty. Skipping."
                     "\nTemplate: {}\nData: {}"
                 ).format(asset_version["id"], template, format_data))

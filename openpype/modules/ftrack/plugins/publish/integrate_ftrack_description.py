@@ -40,7 +40,7 @@ class IntegrateFtrackDescription(pyblish.api.InstancePlugin):
 
         comment = instance.data["comment"]
         if not comment:
-            self.log.info("Comment is not set.")
+            self.log.debug("Comment is not set.")
         else:
             self.log.debug("Comment is set to `{}`".format(comment))
 

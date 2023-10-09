@@ -127,9 +127,7 @@
                         "linux": []
                     },
                     "arguments": {
-                        "windows": [
-                            "-U MAXScript {OPENPYPE_ROOT}\\openpype\\hosts\\max\\startup\\startup.ms"
-                        ],
+                        "windows": [],
                         "darwin": [],
                         "linux": []
                     },
@@ -239,6 +237,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [
@@ -321,6 +320,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [
@@ -407,6 +407,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [
@@ -493,6 +494,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [
@@ -579,6 +581,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [

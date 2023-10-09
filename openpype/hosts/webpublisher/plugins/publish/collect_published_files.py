@@ -25,6 +25,7 @@ from openpype.lib import (
 )
 from openpype.pipeline.create import get_subset_name
 from openpype_modules.webpublisher.lib import parse_json
+from openpype.pipeline.version_start import get_versioning_start
 
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
@@ -103,7 +104,13 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 project_settings=context.data["project_settings"]
             )
             version = self._get_next_version(
-                project_name, asset_doc, subset_name
+                project_name,
+                asset_doc,
+                task_name,
+                task_type,
+                family,
+                subset_name,
+                context
             )
             next_versions.append(version)
 
@@ -141,8 +148,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                     try:
                         no_of_frames = self._get_number_of_frames(file_url)
                         if no_of_frames:
-                            frame_end = int(frame_start) + \
-                                        math.ceil(no_of_frames)
+                            frame_end = (
+                                int(frame_start) + math.ceil(no_of_frames)
+                            )
                             frame_end = math.ceil(frame_end) - 1
                             instance.data["frameEnd"] = frame_end
                             self.log.debug("frameEnd:: {}".format(
@@ -270,7 +278,16 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 config["families"],
                 config["tags"])
 
-    def _get_next_version(self, project_name, asset_doc, subset_name):
+    def _get_next_version(
+        self,
+        project_name,
+        asset_doc,
+        task_name,
+        task_type,
+        family,
+        subset_name,
+        context
+    ):
         """Returns version number or 1 for 'asset' and 'subset'"""
 
         version_doc = get_last_version_by_subset_name(
@@ -279,9 +296,19 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             asset_doc["_id"],
             fields=["name"]
         )
-        version = 1
         if version_doc:
-            version += int(version_doc["name"])
+            version = int(version_doc["name"]) + 1
+        else:
+            version = get_versioning_start(
+                project_name,
+                "webpublisher",
+                task_name=task_name,
+                task_type=task_type,
+                family=family,
+                subset=subset_name,
+                project_settings=context.data["project_settings"]
+            )
+
         return version
 
     def _get_number_of_frames(self, file_url):

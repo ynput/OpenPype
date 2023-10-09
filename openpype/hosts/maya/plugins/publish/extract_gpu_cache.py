@@ -60,6 +60,6 @@ class ExtractGPUCache(publish.Extractor):
 
         instance.data["representations"].append(representation)
 
-        self.log.info(
+        self.log.debug(
             "Extracted instance {} to: {}".format(instance.name, staging_dir)
         )

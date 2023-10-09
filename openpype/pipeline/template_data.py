@@ -94,6 +94,9 @@ def get_asset_template_data(asset_doc, project_name):
 
     return {
         "asset": asset_doc["name"],
+        "folder": {
+            "name": asset_doc["name"]
+        },
         "hierarchy": hierarchy,
         "parent": parent_name
     }

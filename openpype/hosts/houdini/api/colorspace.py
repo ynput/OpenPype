@@ -1,7 +1,7 @@
 import attr
 import hou
 from openpype.hosts.houdini.api.lib import get_color_management_preferences
-
+from openpype.pipeline.colorspace import get_display_view_colorspace_name
 
 @attr.s
 class LayerMetadata(object):
@@ -54,3 +54,16 @@ class ARenderProduct(object):
             )
         ]
         return colorspace_data
+
+
+def get_default_display_view_colorspace():
+    """Returns the colorspace attribute of the default (display, view) pair.
+
+    It's used for 'ociocolorspace' parm in OpenGL Node."""
+
+    prefs = get_color_management_preferences()
+    return get_display_view_colorspace_name(
+        config_path=prefs["config"],
+        display=prefs["display"],
+        view=prefs["view"]
+    )

@@ -15,6 +15,10 @@ from .widgets import (
     IconButton,
     PixmapButton,
     SeparatorWidget,
+    VerticalExpandButton,
+    SquareButton,
+    RefreshButton,
+    GoToCurrentButton,
 )
 from .views import DeselectableTreeView
 from .error_dialog import ErrorMessageBox
@@ -38,6 +42,7 @@ from .models import (
 from .overlay_messages import (
     MessageOverlayObject,
 )
+from .multiselection_combobox import MultiSelectionComboBox
 
 
 __all__ = (
@@ -59,6 +64,11 @@ __all__ = (
     "PixmapButton",
     "SeparatorWidget",
 
+    "VerticalExpandButton",
+    "SquareButton",
+    "RefreshButton",
+    "GoToCurrentButton",
+
     "DeselectableTreeView",
 
     "ErrorMessageBox",
@@ -78,4 +88,6 @@ __all__ = (
     "RecursiveSortFilterProxyModel",
 
     "MessageOverlayObject",
+
+    "MultiSelectionComboBox",
 )

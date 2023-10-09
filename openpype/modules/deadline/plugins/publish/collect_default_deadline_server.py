@@ -48,3 +48,6 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
                 context.data["defaultDeadline"] = deadline_webservice
                 self.log.debug("Overriding from project settings with {}".format(  # noqa: E501
                     deadline_webservice))
+
+        context.data["defaultDeadline"] = \
+            context.data["defaultDeadline"].strip().rstrip("/")

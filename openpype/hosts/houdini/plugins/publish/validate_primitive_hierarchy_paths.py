@@ -32,8 +32,9 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
+            nodes = [n.path() for n in invalid]
             raise PublishValidationError(
-                "See log for details. " "Invalid nodes: {0}".format(invalid),
+                "See log for details. " "Invalid nodes: {0}".format(nodes),
                 title=self.label
             )
 

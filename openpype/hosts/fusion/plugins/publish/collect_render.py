@@ -108,7 +108,6 @@ class CollectFusionRender(
                 fam = "render.farm"
                 if fam not in instance.families:
                     instance.families.append(fam)
-                instance.toBeRenderedOn = "deadline"
                 instance.farm = True  # to skip integrate
                 if "review" in instance.families:
                     # to skip ExtractReview locally

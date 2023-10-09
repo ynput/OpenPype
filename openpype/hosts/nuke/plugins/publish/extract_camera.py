@@ -11,9 +11,9 @@ from openpype.hosts.nuke.api.lib import maintained_selection
 
 
 class ExtractCamera(publish.Extractor):
-    """ 3D camera exctractor
+    """ 3D camera extractor
     """
-    label = 'Exctract Camera'
+    label = 'Extract Camera'
     order = pyblish.api.ExtractorOrder
     families = ["camera"]
     hosts = ["nuke"]

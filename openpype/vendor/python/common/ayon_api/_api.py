@@ -392,6 +392,28 @@ def set_default_settings_variant(variant):
     return con.set_default_settings_variant(variant)
 
 
+def get_sender():
+    """Sender used to send requests.
+
+    Returns:
+        Union[str, None]: Sender name or None.
+    """
+
+    con = get_server_api_connection()
+    return con.get_sender()
+
+
+def set_sender(sender):
+    """Change sender used for requests.
+
+    Args:
+        sender (Union[str, None]): Sender name or None.
+    """
+
+    con = get_server_api_connection()
+    return con.set_sender(sender)
+
+
 def get_base_url():
     con = get_server_api_connection()
     return con.get_base_url()
@@ -450,6 +472,26 @@ def patch(*args, **kwargs):
 def delete(*args, **kwargs):
     con = get_server_api_connection()
     return con.delete(*args, **kwargs)
+
+
+def get_timeout(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_timeout(*args, **kwargs)
+
+
+def set_timeout(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.set_timeout(*args, **kwargs)
+
+
+def get_max_retries(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_max_retries(*args, **kwargs)
+
+
+def set_max_retries(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.set_max_retries(*args, **kwargs)
 
 
 def get_event(*args, **kwargs):
@@ -704,6 +746,26 @@ def get_addons_settings(*args, **kwargs):
     return con.get_addons_settings(*args, **kwargs)
 
 
+def get_secrets(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_secrets(*args, **kwargs)
+
+
+def get_secret(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.delete_secret(*args, **kwargs)
+
+
+def save_secret(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.delete_secret(*args, **kwargs)
+
+
+def delete_secret(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.delete_secret(*args, **kwargs)
+
+
 def get_project_names(*args, **kwargs):
     con = get_server_api_connection()
     return con.get_project_names(*args, **kwargs)
@@ -732,6 +794,16 @@ def get_folders_hierarchy(*args, **kwargs):
 def get_tasks(*args, **kwargs):
     con = get_server_api_connection()
     return con.get_tasks(*args, **kwargs)
+
+
+def get_task_by_id(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_task_by_id(*args, **kwargs)
+
+
+def get_task_by_name(*args, **kwargs):
+    con = get_server_api_connection()
+    return con.get_task_by_name(*args, **kwargs)
 
 
 def get_folder_by_id(*args, **kwargs):
@@ -904,6 +976,11 @@ def delete_project(project_name):
     return con.delete_project(project_name)
 
 
+def get_thumbnail_by_id(project_name, thumbnail_id):
+    con = get_server_api_connection()
+    con.get_thumbnail_by_id(project_name, thumbnail_id)
+
+
 def get_thumbnail(project_name, entity_type, entity_id, thumbnail_id=None):
     con = get_server_api_connection()
     con.get_thumbnail(project_name, entity_type, entity_id, thumbnail_id)
@@ -932,6 +1009,11 @@ def create_thumbnail(project_name, src_filepath, thumbnail_id=None):
 def update_thumbnail(project_name, thumbnail_id, src_filepath):
     con = get_server_api_connection()
     return con.update_thumbnail(project_name, thumbnail_id, src_filepath)
+
+
+def get_attributes_fields_for_type(entity_type):
+    con = get_server_api_connection()
+    return con.get_attributes_fields_for_type(entity_type)
 
 
 def get_default_fields_for_type(entity_type):

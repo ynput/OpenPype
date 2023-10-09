@@ -1,5 +1,8 @@
+import re
+
 import openpype.hosts.photoshop.api as api
 from openpype.client import get_asset_by_name
+from openpype.lib import prepare_template_data
 from openpype.pipeline import (
     AutoCreator,
     CreatedInstance
@@ -78,3 +81,17 @@ class PSAutoCreator(AutoCreator):
             existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
             existing_instance["subset"] = subset_name
+
+
+def clean_subset_name(subset_name):
+    """Clean all variants leftover {layer} from subset name."""
+    dynamic_data = prepare_template_data({"layer": "{layer}"})
+    for value in dynamic_data.values():
+        if value in subset_name:
+            subset_name = (subset_name.replace(value, "")
+                                      .replace("__", "_")
+                                      .replace("..", "."))
+    # clean trailing separator as Main_
+    pattern = r'[\W_]+$'
+    replacement = ''
+    return re.sub(pattern, replacement, subset_name)

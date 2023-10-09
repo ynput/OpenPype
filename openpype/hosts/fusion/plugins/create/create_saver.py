@@ -30,10 +30,6 @@ class CreateSaver(NewCreator):
     instance_attributes = [
         "reviewable"
     ]
-    default_variants = [
-        "Main",
-        "Mask"
-    ]
 
     # TODO: This should be renamed together with Nuke so it is aligned
     temp_rendering_path_template = (
@@ -127,6 +123,9 @@ class CreateSaver(NewCreator):
     def _imprint(self, tool, data):
         # Save all data in a "openpype.{key}" = value data
 
+        # Instance id is the tool's name so we don't need to imprint as data
+        data.pop("instance_id", None)
+
         active = data.pop("active", None)
         if active is not None:
             # Use active value to set the passthrough state
@@ -192,6 +191,10 @@ class CreateSaver(NewCreator):
         passthrough = attrs["TOOLB_PassThrough"]
         data["active"] = not passthrough
 
+        # Override publisher's UUID generation because tool names are
+        # already unique in Fusion in a comp
+        data["instance_id"] = tool.Name
+
         return data
 
     def get_pre_create_attr_defs(self):
@@ -250,11 +253,7 @@ class CreateSaver(NewCreator):
             label="Review",
         )
 
-    def apply_settings(
-        self,
-        project_settings,
-        system_settings
-    ):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings

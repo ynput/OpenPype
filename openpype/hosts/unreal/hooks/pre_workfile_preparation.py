@@ -2,14 +2,17 @@
 """Hook to launch Unreal and prepare projects."""
 import os
 import copy
+import shutil
+import tempfile
 from pathlib import Path
 
 from qtpy import QtCore
 
 from openpype import resources
-from openpype.lib import (
+from openpype.lib.applications import (
     PreLaunchHook,
     ApplicationLaunchFailed,
+    LaunchTypes,
 )
 from openpype.pipeline.workfile import get_workfile_template_key
 import openpype.hosts.unreal.lib as unreal_lib
@@ -29,6 +32,8 @@ class UnrealPrelaunchHook(PreLaunchHook):
     shell script.
 
     """
+    app_groups = {"unreal"}
+    launch_types = {LaunchTypes.local}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -221,10 +226,24 @@ class UnrealPrelaunchHook(PreLaunchHook):
         project_file = project_path / unreal_project_filename
 
         if not project_file.is_file():
-            self.exec_ue_project_gen(engine_version,
-                                     unreal_project_name,
-                                     engine_path,
-                                     project_path)
+            with tempfile.TemporaryDirectory() as temp_dir:
+                self.exec_ue_project_gen(engine_version,
+                                         unreal_project_name,
+                                         engine_path,
+                                         Path(temp_dir))
+                try:
+                    self.log.info((
+                        f"Moving from {temp_dir} to "
+                        f"{project_path.as_posix()}"
+                    ))
+                    shutil.copytree(
+                        temp_dir, project_path, dirs_exist_ok=True)
+
+                except shutil.Error as e:
+                    raise ApplicationLaunchFailed((
+                        f"{self.signature} Cannot copy directory {temp_dir} "
+                        f"to {project_path.as_posix()} - {e}"
+                    )) from e
 
         self.launch_context.env["AYON_UNREAL_VERSION"] = engine_version
         # Append project file to launch arguments
