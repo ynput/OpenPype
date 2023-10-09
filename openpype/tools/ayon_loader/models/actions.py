@@ -4,9 +4,6 @@ import inspect
 import copy
 import collections
 import uuid
-from abc import ABCMeta, abstractmethod
-
-import six
 
 from openpype.client import (
     get_project,
@@ -27,128 +24,9 @@ from openpype.pipeline.load import (
     IncompatibleLoaderError,
 )
 from openpype.tools.ayon_utils.models import NestedCacheItem
+from openpype.tools.ayon_loader.abstract import ActionItem
 
 ACTIONS_MODEL_SENDER = "actions.model"
-
-
-@six.add_metaclass(ABCMeta)
-class BaseActionItem(object):
-    @abstractmethod
-    def item_type(self):
-        pass
-
-    @abstractmethod
-    def to_data(self):
-        pass
-
-    @classmethod
-    @abstractmethod
-    def from_data(cls, data):
-        pass
-
-
-class ActionItem(BaseActionItem):
-    def __init__(
-        self,
-        identifier,
-        label,
-        icon,
-        tooltip,
-        options,
-        order,
-        project_name,
-        folder_ids,
-        product_ids,
-        version_ids,
-        representation_ids,
-    ):
-        self.identifier = identifier
-        self.label = label
-        self.icon = icon
-        self.tooltip = tooltip
-        self.options = options
-        self.order = order
-        self.project_name = project_name
-        self.folder_ids = folder_ids
-        self.product_ids = product_ids
-        self.version_ids = version_ids
-        self.representation_ids = representation_ids
-
-    def item_type(self):
-        return "action"
-
-    def to_data(self):
-        return {
-            "item_type": self.item_type(),
-            "identifier": self.identifier,
-            "label": self.label,
-            "icon": self.icon,
-            "tooltip": self.tooltip,
-            "options": self.options,
-            "order": self.order,
-            "project_name": self.project_name,
-            "folder_ids": self.folder_ids,
-            "product_ids": self.product_ids,
-            "version_ids": self.version_ids,
-            "representation_ids": self.representation_ids,
-        }
-
-    @classmethod
-    def from_data(cls, data):
-        new_data = copy.deepcopy(data)
-        new_data.pop("item_type")
-        return cls(**new_data)
-
-
-# NOTE This is just an idea. Not implemented on front end,
-#    also hits issues with sorting of items in the UI.
-# class SeparatorItem(BaseActionItem):
-#     def item_type(self):
-#         return "separator"
-#
-#     def to_data(self):
-#         return {"item_type": self.item_type()}
-#
-#     @classmethod
-#     def from_data(cls, data):
-#         return cls()
-#
-#
-# class MenuItem(BaseActionItem):
-#     def __init__(self, label, icon, children):
-#         self.label = label
-#         self.icon = icon
-#         self.children = children
-#
-#     def item_type(self):
-#         return "menu"
-#
-#     def to_data(self):
-#         return {
-#             "item_type": self.item_type(),
-#             "label": self.label,
-#             "icon": self.icon,
-#             "children": [child.to_data() for child in self.children]
-#         }
-#
-#     @classmethod
-#     def from_data(cls, data):
-#         new_data = copy.deepcopy(data)
-#         new_data.pop("item_type")
-#         children = []
-#         for child in data["children"]:
-#             child_type = child["item_type"]
-#             if child_type == "separator":
-#                 children.append(SeparatorItem.from_data(child))
-#             elif child_type == "menu":
-#                 children.append(MenuItem.from_data(child))
-#             elif child_type == "action":
-#                 children.append(ActionItem.from_data(child))
-#             else:
-#                 raise ValueError("Invalid child type: {}".format(child_type))
-#
-#         new_data["children"] = children
-#         return cls(**new_data)
 
 
 class LoaderActionsModel:

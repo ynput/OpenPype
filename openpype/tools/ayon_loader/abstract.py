@@ -177,6 +177,53 @@ class RepreItem:
         return cls(**data)
 
 
+class ActionItem:
+    def __init__(
+        self,
+        identifier,
+        label,
+        icon,
+        tooltip,
+        options,
+        order,
+        project_name,
+        folder_ids,
+        product_ids,
+        version_ids,
+        representation_ids,
+    ):
+        self.identifier = identifier
+        self.label = label
+        self.icon = icon
+        self.tooltip = tooltip
+        self.options = options
+        self.order = order
+        self.project_name = project_name
+        self.folder_ids = folder_ids
+        self.product_ids = product_ids
+        self.version_ids = version_ids
+        self.representation_ids = representation_ids
+
+    def to_data(self):
+        return {
+            "identifier": self.identifier,
+            "label": self.label,
+            "icon": self.icon,
+            "tooltip": self.tooltip,
+            "options": self.options,
+            "order": self.order,
+            "project_name": self.project_name,
+            "folder_ids": self.folder_ids,
+            "product_ids": self.product_ids,
+            "version_ids": self.version_ids,
+            "representation_ids": self.representation_ids,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        return cls(**data)
+
+
 @six.add_metaclass(ABCMeta)
 class AbstractController:
     @abstractmethod
