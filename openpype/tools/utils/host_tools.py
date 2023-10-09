@@ -119,7 +119,7 @@ class HostToolsHelper:
             if use_context is None:
                 use_context = False
 
-            if use_context:
+            if not AYON_SERVER_ENABLED and use_context:
                 context = {"asset": get_current_asset_name()}
                 loader_tool.set_context(context, refresh=True)
             else:
@@ -197,6 +197,9 @@ class HostToolsHelper:
 
     def get_library_loader_tool(self, parent):
         """Create, cache and return library loader tool window."""
+        if AYON_SERVER_ENABLED:
+            return self.get_loader_tool(parent)
+
         if self._library_loader_tool is None:
             from openpype.tools.libraryloader import LibraryLoaderWindow
 
@@ -209,6 +212,9 @@ class HostToolsHelper:
 
     def show_library_loader(self, parent=None):
         """Loader tool for loading representations from library project."""
+        if AYON_SERVER_ENABLED:
+            return self.show_loader(parent)
+
         with qt_app_context():
             library_loader_tool = self.get_library_loader_tool(parent)
             library_loader_tool.show()
