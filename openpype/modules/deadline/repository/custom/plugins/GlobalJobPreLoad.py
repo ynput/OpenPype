@@ -12,7 +12,6 @@ from Deadline.Scripting import (
     RepositoryUtils,
     FileUtils,
     DirectoryUtils,
-    ProcessUtils,
 )
 
 VERSION_REGEX = re.compile(
@@ -429,10 +428,10 @@ def inject_ayon_environment(deadlinePlugin):
 
         if not exe:
             raise RuntimeError((
-               "Ayon executable was not found in the semicolon "
-               "separated list \"{}\"."
-               "The path to the render executable can be configured"
-               " from the Plugin Configuration in the Deadline Monitor."
+                "Ayon executable was not found in the semicolon "
+                "separated list \"{}\"."
+                "The path to the render executable can be configured"
+                " from the Plugin Configuration in the Deadline Monitor."
             ).format(";".join(exe_list)))
 
         print("--- Ayon executable: {}".format(exe))
@@ -444,12 +443,12 @@ def inject_ayon_environment(deadlinePlugin):
 
         config = RepositoryUtils.GetPluginConfig("Ayon")
         ayon_server_url = (
-                job.GetJobEnvironmentKeyValue("AYON_SERVER_URL") or
-                config.GetConfigEntryWithDefault("AyonServerUrl", "")
+            job.GetJobEnvironmentKeyValue("AYON_SERVER_URL") or
+            config.GetConfigEntryWithDefault("AyonServerUrl", "")
         )
         ayon_api_key = (
-                job.GetJobEnvironmentKeyValue("AYON_API_KEY") or
-                config.GetConfigEntryWithDefault("AyonApiKey", "")
+            job.GetJobEnvironmentKeyValue("AYON_API_KEY") or
+            config.GetConfigEntryWithDefault("AyonApiKey", "")
         )
 
         if not all([ayon_server_url, ayon_api_key]):
