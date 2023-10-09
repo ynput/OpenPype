@@ -3,6 +3,14 @@ import six
 
 
 class ProductTypeItem:
+    """Item representing product type.
+
+    Args:
+        name (str): Product type name.
+        icon (dict[str, Any]): Product type icon definition.
+        checked (bool): Is product type checked for filtering.
+    """
+
     def __init__(self, name, icon, checked):
         self.name = name
         self.icon = icon
@@ -21,6 +29,21 @@ class ProductTypeItem:
 
 
 class ProductItem:
+    """Product item with it versions.
+
+    Args:
+        product_id (str): Product id.
+        product_type (str): Product type.
+        product_name (str): Product name.
+        product_icon (dict[str, Any]): Product icon definition.
+        product_type_icon (dict[str, Any]): Product type icon definition.
+        product_in_scene (bool): Is product in scene (only when used in DCC).
+        group_name (str): Group name.
+        folder_id (str): Folder id.
+        folder_label (str): Folder label.
+        version_items (dict[str, VersionItem]): Version items by id.
+    """
+
     def __init__(
         self,
         product_id,
@@ -73,6 +96,27 @@ class ProductItem:
 
 
 class VersionItem:
+    """Version item.
+
+    Object have implemented comparison operators to be sortable.
+
+    Args:
+        version_id (str): Version id.
+        version (int): Version. Can be negative when is hero version.
+        is_hero (bool): Is hero version.
+        product_id (str): Product id.
+        thumbnail_id (Union[str, None]): Thumbnail id.
+        published_time (Union[str, None]): Published time in format
+            '%Y%m%dT%H%M%SZ'.
+        author (Union[str, None]): Author.
+        frame_range (Union[str, None]): Frame range.
+        duration (Union[int, None]): Duration.
+        handles (Union[str, None]): Handles.
+        step (Union[int, None]): Step.
+        comment (Union[str, None]): Comment.
+        source (Union[str, None]): Source.
+    """
+
     def __init__(
         self,
         version_id,
@@ -149,6 +193,16 @@ class VersionItem:
 
 
 class RepreItem:
+    """Representation item.
+
+    Args:
+        representation_id (str): Representation id.
+        representation_name (str): Representation name.
+        representation_icon (dict[str, Any]): Representation icon definition.
+        product_name (str): Product name.
+        folder_label (str): Folder label.
+    """
+
     def __init__(
         self,
         representation_id,
@@ -178,6 +232,26 @@ class RepreItem:
 
 
 class ActionItem:
+    """Action item that can be triggered.
+
+    Action item is defined for a specific context. To trigger the action
+    use 'identifier' and context, it necessary also use 'options'.
+
+    Args:
+        identifier (str): Action identifier.
+        label (str): Action label.
+        icon (dict[str, Any]): Action icon definition.
+        tooltip (str): Action tooltip.
+        options (Union[list[AbstractAttrDef], list[qargparse.QArgument]]):
+            Action options. Note: 'qargparse' is considered as deprecated.
+        order (int): Action order.
+        project_name (str): Project name.
+        folder_ids (list[str]): Folder ids.
+        product_ids (list[str]): Product ids.
+        version_ids (list[str]): Version ids.
+        representation_ids (list[str]): Representation ids.
+    """
+
     def __init__(
         self,
         identifier,
@@ -225,7 +299,12 @@ class ActionItem:
 
 
 @six.add_metaclass(ABCMeta)
-class BaseLoaderController(object):
+class _BaseLoaderController(object):
+    """Base loader controller abstraction.
+
+    Abstract base class that is required for both frontend and backed.
+    """
+
     @abstractmethod
     def get_current_context(self):
         """Current context is a context of the current scene.
@@ -245,17 +324,70 @@ class BaseLoaderController(object):
 
     @abstractmethod
     def reset(self):
+        """Reset all cached data to reload everything."""
+
         pass
 
     # Model wrappers
     @abstractmethod
     def get_folder_items(self, project_name, sender=None):
+        """Folder items for a project.
+
+        Args:
+            project_name (str): Project name.
+            sender (Optional[str]): Sender who requested the name.
+
+        Returns:
+            list[FolderItem]: Folder items for the project.
+        """
+
+        pass
+
+    # Expected selection helpers
+    @abstractmethod
+    def get_expected_selection_data(self):
+        """Full expected selection information.
+
+        Expected selection is a selection that may not be yet selected in UI
+        e.g. because of refreshing, this data tell the UI what should be
+        selected when they finish their refresh.
+
+        Returns:
+            dict[str, Any]: Expected selection data.
+        """
+
+        pass
+
+    @abstractmethod
+    def set_expected_selection(self, project_name, folder_id):
+        """Set expected selection.
+
+        Args:
+            project_name (str): Name of project to be selected.
+            folder_id (str): Id of folder to be selected.
+        """
+
         pass
 
 
-class BackendLoaderController(BaseLoaderController):
+class BackendLoaderController(_BaseLoaderController):
+    """Backend loader controller abstraction.
+
+    What backend logic requires from a controller for proper logic.
+    """
+
     @abstractmethod
     def emit_event(self, topic, data=None, source=None):
+        """Emit event with a certain topic, data and source.
+
+        The event should be sent to both frontend and backend.
+
+        Args:
+            topic (str): Event topic name.
+            data (Optional[dict[str, Any]]): Event data.
+            source (Optional[str]): Event source.
+        """
+
         pass
 
     @abstractmethod
@@ -269,40 +401,88 @@ class BackendLoaderController(BaseLoaderController):
         pass
 
 
-class FrontendLoaderController(BaseLoaderController):
+class FrontendLoaderController(_BaseLoaderController):
     @abstractmethod
     def register_event_callback(self, topic, callback):
+        """Register callback for an event topic.
+
+        Args:
+            topic (str): Event topic name.
+            callback (func): Callback triggered when the event is emitted.
+        """
+
         pass
 
     # Expected selection helpers
     @abstractmethod
-    def get_expected_selection_data(self):
-        pass
-
-    @abstractmethod
-    def set_expected_selection(self, project_name, folder_id):
-        pass
-
-    @abstractmethod
     def expected_project_selected(self, project_name):
+        """Expected project was selected in frontend.
+
+        Args:
+            project_name (str): Project name.
+        """
+
         pass
 
     @abstractmethod
     def expected_folder_selected(self, folder_id):
+        """Expected folder was selected in frontend.
+
+        Args:
+            folder_id (str): Folder id.
+        """
+
         pass
 
     # Model wrapper calls
     @abstractmethod
-    def get_project_items(self):
+    def get_project_items(self, sender=None):
+        """Items for all projects available on server.
+
+        Triggers event topics "projects.refresh.started" and
+        "projects.refresh.finished" with data:
+            {
+                "sender": sender
+            }
+
+        Notes:
+            Filtering of projects is done in UI.
+
+        Args:
+            sender (Optional[str]): Sender who requested the items.
+
+        Returns:
+            list[ProjectItem]: List of project items.
+        """
+
         pass
 
     @abstractmethod
     def get_product_items(self, project_name, folder_ids, sender=None):
+        """Product items for folder ids.
+
+        Triggers event topics "products.refresh.started" and
+        "products.refresh.finished" with data:
+            {
+                "project_name": project_name,
+                "folder_ids": folder_ids,
+                "sender": sender
+            }
+
+        Args:
+            project_name (str): Project name.
+            folder_ids (Iterable[str]): Folder ids.
+            sender (Optional[str]): Sender who requested the items.
+
+        Returns:
+            list[ProductItem]: List of product items.
+        """
+
         pass
 
     @abstractmethod
     def get_product_item(self, project_name, product_id):
-        """
+        """Receive single product item.
 
         Args:
             project_name (str): Project name.
@@ -316,39 +496,235 @@ class FrontendLoaderController(BaseLoaderController):
 
     @abstractmethod
     def get_product_type_items(self, project_name):
+        """Product type items for a project.
+
+        Product types have defined if are checked for filtering or not.
+
+        Returns:
+            list[ProductTypeItem]: List of product type items for a project.
+        """
+
         pass
 
     @abstractmethod
     def get_representation_items(
         self, project_name, version_ids, sender=None
     ):
+        """Representation items for version ids.
+
+        Triggers event topics "model.representations.refresh.started" and
+        "model.representations.refresh.finished" with data:
+            {
+                "project_name": project_name,
+                "version_ids": version_ids,
+                "sender": sender
+            }
+
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+            sender (Optional[str]): Sender who requested the items.
+
+        Returns:
+            list[RepreItem]: List of representation items.
+        """
+
         pass
 
     @abstractmethod
     def get_version_thumbnail_ids(self, project_name, version_ids):
+        """Get thumbnail ids for version ids.
+
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+
+        Returns:
+            dict[str, Union[str, Any]]: Thumbnail id by version id.
+        """
+
         pass
 
     @abstractmethod
     def get_folder_thumbnail_ids(self, project_name, folder_ids):
+        """Get thumbnail ids for folder ids.
+
+        Args:
+            project_name (str): Project name.
+            folder_ids (Iterable[str]): Folder ids.
+
+        Returns:
+            dict[str, Union[str, Any]]: Thumbnail id by folder id.
+        """
+
         pass
 
     @abstractmethod
     def get_thumbnail_path(self, project_name, thumbnail_id):
+        """Get thumbnail path for thumbnail id.
+
+        This method should get a path to a thumbnail based on thumbnail id.
+        Which probably means to download the thumbnail from server and store
+        it locally.
+
+        Args:
+            project_name (str): Project name.
+            thumbnail_id (str): Thumbnail id.
+
+        Returns:
+            Union[str, None]: Thumbnail path or None if not found.
+        """
+
+        pass
+
+    # Selection model wrapper calls
+    @abstractmethod
+    def get_selected_project_name(self):
+        """Get selected project name.
+
+        The information is based on last selection from UI.
+
+        Returns:
+            Union[str, None]: Selected project name.
+        """
+
         pass
 
     @abstractmethod
-    def change_products_group(self, project_name, product_ids, group_name):
+    def get_selected_folder_ids(self):
+        """Get selected folder ids.
+
+        The information is based on last selection from UI.
+
+        Returns:
+            list[str]: Selected folder ids.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_selected_version_ids(self):
+        """Get selected version ids.
+
+        The information is based on last selection from UI.
+
+        Returns:
+            list[str]: Selected version ids.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_selected_representation_ids(self):
+        """Get selected representation ids.
+
+        The information is based on last selection from UI.
+
+        Returns:
+            list[str]: Selected representation ids.
+        """
+
+        pass
+
+    @abstractmethod
+    def set_selected_project(self, project_name):
+        """Set selected project.
+
+        Project selection changed in UI. Method triggers event with topic
+        "selection.project.changed" with data:
+            {
+                "project_name": self._project_name
+            }
+
+        Args:
+            project_name (Union[str, None]): Selected project name.
+        """
+
+        pass
+
+    @abstractmethod
+    def set_selected_folders(self, folder_ids):
+        """Set selected folders.
+
+        Folder selection changed in UI. Method triggers event with topic
+        "selection.folders.changed" with data:
+            {
+                "project_name": project_name,
+                "folder_ids": folder_ids
+            }
+
+        Args:
+            folder_ids (Iterable[str]): Selected folder ids.
+        """
+
+        pass
+
+    @abstractmethod
+    def set_selected_versions(self, version_ids):
+        """Set selected versions.
+
+        Version selection changed in UI. Method triggers event with topic
+        "selection.versions.changed" with data:
+            {
+                "project_name": project_name,
+                "folder_ids": folder_ids,
+                "version_ids": version_ids
+            }
+
+        Args:
+            version_ids (Iterable[str]): Selected version ids.
+        """
+
+        pass
+
+    @abstractmethod
+    def set_selected_representations(self, repre_ids):
+        """Set selected representations.
+
+        Representation selection changed in UI. Method triggers event with
+        topic "selection.representations.changed" with data:
+            {
+                "project_name": project_name,
+                "folder_ids": folder_ids,
+                "version_ids": version_ids,
+                "representation_ids": representation_ids
+            }
+
+        Args:
+            repre_ids (Iterable[str]): Selected representation ids.
+        """
+
         pass
 
     # Load action items
     @abstractmethod
     def get_versions_action_items(self, project_name, version_ids):
+        """Action items for versions selection.
+
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+
+        Returns:
+            list[ActionItem]: List of action items.
+        """
+
         pass
 
     @abstractmethod
     def get_representations_action_items(
         self, project_name, representation_ids
     ):
+        """Action items for representations selection.
+
+        Args:
+            project_name (str): Project name.
+            representation_ids (Iterable[str]): Representation ids.
+
+        Returns:
+            list[ActionItem]: List of action items.
+        """
+
         pass
 
     @abstractmethod
@@ -360,45 +736,52 @@ class FrontendLoaderController(BaseLoaderController):
         version_ids,
         representation_ids
     ):
-        pass
+        """Trigger action item.
 
-    # Selection model wrapper calls
-    @abstractmethod
-    def get_selected_project_name(self):
-        pass
+        Args:
+            identifier (str): Action identifier.
+            options (dict[str, Any]): Action option values from UI.
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+            representation_ids (Iterable[str]): Representation ids.
+        """
 
-    @abstractmethod
-    def get_selected_folder_ids(self):
-        pass
-
-    @abstractmethod
-    def get_selected_version_ids(self):
         pass
 
     @abstractmethod
-    def get_selected_representation_ids(self):
-        pass
+    def change_products_group(self, project_name, product_ids, group_name):
+        """Change group of products.
 
-    @abstractmethod
-    def set_selected_project(self, project_name):
-        pass
+        Triggers event "products.group.changed" with data:
+            {
+                "project_name": project_name,
+                "folder_ids": folder_ids,
+                "product_ids": product_ids,
+                "group_name": group_name,
+            }
 
-    @abstractmethod
-    def set_selected_folders(self, folder_ids):
-        pass
+        Args:
+            project_name (str): Project name.
+            product_ids (Iterable[str]): Product ids.
+            group_name (str): New group name.
+        """
 
-    @abstractmethod
-    def set_selected_versions(self, version_ids):
-        pass
-
-    @abstractmethod
-    def set_selected_representations(self, repre_ids):
         pass
 
     @abstractmethod
     def fill_root_in_source(self, source):
+        """Fill root in source path.
+
+        Args:
+            source (Union[str, None]): Source of a published version. Usually
+                rootless workfile path.
+        """
+
         pass
 
+    # NOTE: Methods 'is_loaded_products_supported' and
+    #   'is_standard_projects_filter_enabled' are both based on being in host
+    #   or not. Maybe we could implement only single method 'is_in_host'?
     @abstractmethod
     def is_loaded_products_supported(self):
         """Is capable to get information about loaded products.
@@ -411,4 +794,14 @@ class FrontendLoaderController(BaseLoaderController):
 
     @abstractmethod
     def is_standard_projects_filter_enabled(self):
+        """Is standard projects filter enabled.
+
+        This is used for filtering out when loader tool is used in a host. In
+        that case only current project and library projects should be shown.
+
+        Returns:
+            bool: Frontend should filter out non-library projects, except
+                current context project.
+        """
+
         pass
