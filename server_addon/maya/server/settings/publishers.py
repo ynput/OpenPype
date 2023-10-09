@@ -433,6 +433,10 @@ class PublishersModel(BaseSettingsModel):
         default_factory=ValidateRenderSettingsModel,
         title="Validate Render Settings"
     )
+    ValidateResolution: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Resolution Setting"
+    )
     ValidateCurrentRenderLayerIsRenderable: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Current Render Layer Has Renderable Camera"
@@ -901,6 +905,11 @@ DEFAULT_PUBLISH_SETTINGS = {
         "vray_render_attributes": [],
         "redshift_render_attributes": [],
         "renderman_render_attributes": []
+    },
+    "ValidateResolution": {
+        "enabled": True,
+        "optional": True,
+        "active": True
     },
     "ValidateCurrentRenderLayerIsRenderable": {
         "enabled": True,
