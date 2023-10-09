@@ -1,12 +1,7 @@
-from copy import deepcopy
-
-from openpype.client import (
-    get_version_by_id,
-    get_last_version_by_subset_id,
-)
-# from openpype.hosts import resolve
+from openpype.client import get_last_version_by_subset_id
 from openpype.pipeline import (
     get_representation_path,
+    get_representation_context,
     get_current_project_name,
 )
 from openpype.hosts.resolve.api import lib, plugin
@@ -53,37 +48,11 @@ class LoadClip(plugin.TimelineItemLoader):
         timeline_item = plugin.ClipLoader(
             self, context, path, **options).load()
         namespace = namespace or timeline_item.GetName()
-        version = context['version']
-        version_data = version.get("data", {})
-        version_name = version.get("name", None)
-        colorspace = version_data.get("colorspace", None)
-        object_name = "{}_{}".format(name, namespace)
-
-        # add additional metadata from the version to imprint Avalon knob
-        add_keys = [
-            "frameStart", "frameEnd", "source", "author",
-            "fps", "handleStart", "handleEnd"
-        ]
-
-        # move all version data keys to tag data
-        data_imprint = {}
-        for key in add_keys:
-            data_imprint.update({
-                key: version_data.get(key, str(None))
-            })
-
-        # add variables related to version context
-        data_imprint.update({
-            "version": version_name,
-            "colorspace": colorspace,
-            "objectName": object_name
-        })
 
         # update color of clip regarding the version order
-        self.set_item_color(timeline_item, version)
+        self.set_item_color(timeline_item, version=context["version"])
 
-        self.log.info("Loader done: `{}`".format(name))
-
+        data_imprint = self.get_tag_data(context, name, namespace)
         return containerise(
             timeline_item,
             name, namespace, context,
@@ -97,53 +66,60 @@ class LoadClip(plugin.TimelineItemLoader):
         """ Updating previously loaded clips
         """
 
-        # load clip to timeline and get main variables
-        context = deepcopy(representation["context"])
-        context.update({"representation": representation})
+        context = get_representation_context(representation)
         name = container['name']
         namespace = container['namespace']
-        timeline_item = lib.get_pype_timeline_item_by_name(namespace)
+        timeline_item = container["_timeline_item"]
 
-        project_name = get_current_project_name()
-        version = get_version_by_id(project_name, representation["parent"])
+        media_pool_item = timeline_item.GetMediaPoolItem()
+
+        path = get_representation_path(representation)
+        loader = plugin.ClipLoader(self, context, path)
+        timeline_item = loader.update(timeline_item)
+
+        # update color of clip regarding the version order
+        self.set_item_color(timeline_item, version=context["version"])
+
+        # if original media pool item has no remaining usages left
+        # remove it from the media pool
+        if int(media_pool_item.GetClipProperty("Usage")) == 0:
+            lib.remove_media_pool_item(media_pool_item)
+
+        data_imprint = self.get_tag_data(context, name, namespace)
+        return update_container(timeline_item, data_imprint)
+
+    def get_tag_data(self, context, name, namespace):
+        """Return data to be imprinted on the timeline item marker"""
+
+        representation = context["representation"]
+        version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
-        path = get_representation_path(representation)
-
-        context["version"] = {"data": version_data}
-        loader = plugin.ClipLoader(self, context, path)
-        timeline_item = loader.update(timeline_item)
 
         # add additional metadata from the version to imprint Avalon knob
-        add_keys = [
+        # move all version data keys to tag data
+        add_version_data_keys = [
             "frameStart", "frameEnd", "source", "author",
             "fps", "handleStart", "handleEnd"
         ]
-
-        # move all version data keys to tag data
-        data_imprint = {}
-        for key in add_keys:
-            data_imprint.update({
-                key: version_data.get(key, str(None))
-            })
+        data = {
+            key: version_data.get(key, "None") for key in add_version_data_keys
+        }
 
         # add variables related to version context
-        data_imprint.update({
+        data.update({
             "representation": str(representation["_id"]),
             "version": version_name,
             "colorspace": colorspace,
             "objectName": object_name
         })
-
-        # update color of clip regarding the version order
-        self.set_item_color(timeline_item, version)
-
-        return update_container(timeline_item, data_imprint)
+        return data
 
     @classmethod
     def set_item_color(cls, timeline_item, version):
+        """Color timeline item based on whether it is outdated or latest"""
         # define version name
         version_name = version.get("name", None)
         # get all versions in list
@@ -165,9 +141,8 @@ class LoadClip(plugin.TimelineItemLoader):
             timeline_item.SetClipColor(cls.clip_color)
 
     def remove(self, container):
-        namespace = container['namespace']
-        timeline_item = lib.get_pype_timeline_item_by_name(namespace)
-        take_mp_item = timeline_item.GetMediaPoolItem()
+        timeline_item = container["_timeline_item"]
+        media_pool_item = timeline_item.GetMediaPoolItem()
         timeline = lib.get_current_timeline()
 
         # DeleteClips function was added in Resolve 18.5+
@@ -175,5 +150,17 @@ class LoadClip(plugin.TimelineItemLoader):
         # function exists in Resolve
         if timeline.DeleteClips is not None:
             timeline.DeleteClips([timeline_item])
+        else:
+            # Resolve versions older than 18.5 can't delete clips via API
+            # so all we can do is just remove the pype marker to 'untag' it
+            if lib.get_pype_marker(timeline_item):
+                # Note: We must call `get_pype_marker` because
+                # `delete_pype_marker` uses a global variable set by
+                # `get_pype_marker` to delete the right marker
+                # TODO: Improve code to avoid the global `temp_marker_frame`
+                lib.delete_pype_marker(timeline_item)
 
-        lib.remove_media_pool_item(take_mp_item)
+        # if media pool item has no remaining usages left
+        # remove it from the media pool
+        if int(media_pool_item.GetClipProperty("Usage")) == 0:
+            lib.remove_media_pool_item(media_pool_item)
