@@ -1,12 +1,9 @@
+import os
 import json
-from collections import OrderedDict
 import nuke
 import six
 
-from openpype.client import (
-    get_version_by_id,
-    get_last_version_by_subset_id,
-)
+from openpype.client import get_version_by_id
 from openpype.pipeline import (
     load,
     get_current_project_name,
@@ -19,14 +16,14 @@ from openpype.hosts.nuke.api import (
 )
 
 
-class LoadOcioLook(load.LoaderPlugin):
+class LoadOcioLookNodes(load.LoaderPlugin):
     """Loading Ocio look to the nuke node graph"""
 
     families = ["ociolook"]
     representations = ["*"]
-    extension = {"json"}
+    extensions = {"json"}
 
-    label = "Load OcioLook"
+    label = "Load OcioLook [nodes]"
     order = 0
     icon = "cc"
     color = "white"
@@ -47,13 +44,13 @@ class LoadOcioLook(load.LoaderPlugin):
             data (dict): compulsory attribute > not used
 
         Returns:
-            nuke node: containerised nuke node object
+            nuke node: containerized nuke node object
         """
         # get main variables
         version = context['version']
         version_data = version.get("data", {})
         vname = version.get("name", None)
-        root_working_colorspace = nuke.root()["working_colorspace"].value()
+        root_working_colorspace = nuke.root()["workingSpaceLUT"].value()
 
         namespace = namespace or context['asset']['name']
         object_name = "{}_{}".format(name, namespace)
@@ -67,14 +64,16 @@ class LoadOcioLook(load.LoaderPlugin):
         }
 
         # getting file path
-        file = self.filepath_from_context(context).replace("\\", "/")
+        file = self.filepath_from_context(context)
+        print(file)
+
+        dir_path = os.path.dirname(file)
+        all_files = os.listdir(dir_path)
 
         # getting data from json file with unicode conversion
         with open(file, "r") as f:
-            json_f = {
-                self.byteify(key): self.byteify(value)
-                for key, value in json.load(f).items()
-            }
+            json_f = {self.bytify(key): self.bytify(value)
+                      for key, value in json.load(f).items()}
 
         # check if the version in json_f is the same as plugin version
         if json_f["version"] != self.schema_version:
@@ -82,7 +81,8 @@ class LoadOcioLook(load.LoaderPlugin):
                 "Version of json file is not the same as plugin version")
 
         json_data = json_f["data"]
-        ocio_working_colorspace = json_data["ocioLookWorkingSpace"]
+        ocio_working_colorspace = _colorspace_name_by_type(
+            json_data["ocioLookWorkingSpace"])
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -127,7 +127,19 @@ class LoadOcioLook(load.LoaderPlugin):
                 node = nuke.createNode("OCIOFileTransform")
 
                 # TODO: file path from lut representation
-                node["file"].setValue(ocio_item["file"])
+                extension = ocio_item["ext"]
+                item_lut_file = next(
+                    (file for file in all_files if file.endswith(extension)),
+                    None
+                )
+                if not item_lut_file:
+                    raise ValueError(
+                        "File with extension {} not found in directory".format(
+                            extension))
+
+                item_lut_path = os.path.join(
+                    dir_path, item_lut_file).replace("\\", "/")
+                node["file"].setValue(item_lut_path)
                 node["name"].setValue(ocio_item["name"])
                 node["direction"].setValue(ocio_item["direction"])
                 node["interpolation"].setValue(ocio_item["interpolation"])
@@ -186,7 +198,7 @@ class LoadOcioLook(load.LoaderPlugin):
         object_name = "{}_{}".format(name, namespace)
 
 
-    def byteify(self, input):
+    def bytify(self, input):
         """
         Converts unicode strings to strings
         It goes through all dictionary
@@ -200,10 +212,10 @@ class LoadOcioLook(load.LoaderPlugin):
         """
 
         if isinstance(input, dict):
-            return {self.byteify(key): self.byteify(value)
+            return {self.bytify(key): self.bytify(value)
                     for key, value in input.items()}
         elif isinstance(input, list):
-            return [self.byteify(element) for element in input]
+            return [self.bytify(element) for element in input]
         elif isinstance(input, six.text_type):
             return str(input)
         else:
