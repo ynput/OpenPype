@@ -98,6 +98,18 @@ class CacheModelLoader(plugin.AssetLoader):
 
         return objects
 
+    def _link_objects(self, objects, collection, containers, asset_group):
+        # Link the imported objects to any collection where the asset group is
+        # linked to, except the AVALON_CONTAINERS collection
+        group_collections = [
+            collection
+            for collection in asset_group.users_collection
+            if collection != containers]
+
+        for obj in objects:
+            for collection in group_collections:
+                collection.objects.link(obj)
+
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
         options: Optional[Dict] = None
@@ -119,14 +131,13 @@ class CacheModelLoader(plugin.AssetLoader):
         group_name = plugin.asset_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
-        avalon_containers = bpy.data.collections.get(AVALON_CONTAINERS)
-        if not avalon_containers:
-            avalon_containers = bpy.data.collections.new(
-                name=AVALON_CONTAINERS)
-            bpy.context.scene.collection.children.link(avalon_containers)
+        containers = bpy.data.collections.get(AVALON_CONTAINERS)
+        if not containers:
+            containers = bpy.data.collections.new(name=AVALON_CONTAINERS)
+            bpy.context.scene.collection.children.link(containers)
 
         asset_group = bpy.data.objects.new(group_name, object_data=None)
-        avalon_containers.objects.link(asset_group)
+        containers.objects.link(asset_group)
 
         objects = self._process(libpath, asset_group, group_name)
 
@@ -134,16 +145,7 @@ class CacheModelLoader(plugin.AssetLoader):
         collection = bpy.context.view_layer.active_layer_collection.collection
         collection.objects.link(asset_group)
 
-        # Link the imported objects to any collection where the asset group is
-        # linked to, except the AVALON_CONTAINERS collection
-        group_collections = [
-            collection
-            for collection in asset_group.users_collection
-            if collection != avalon_containers]
-
-        for obj in objects:
-            for collection in group_collections:
-                collection.objects.link(obj)
+        self._link_objects(objects, asset_group, containers, asset_group)
 
         asset_group[AVALON_PROPERTY] = {
             "schema": "openpype:container-2.0",
@@ -221,17 +223,8 @@ class CacheModelLoader(plugin.AssetLoader):
 
         objects = self._process(str(libpath), asset_group, object_name)
 
-        # Link the imported objects to any collection where the asset group is
-        # linked to, except the AVALON_CONTAINERS collection
-        avalon_containers = bpy.data.collections.get(AVALON_CONTAINERS)
-        group_collections = [
-            collection
-            for collection in asset_group.users_collection
-            if collection != avalon_containers]
-
-        for obj in objects:
-            for collection in group_collections:
-                collection.objects.link(obj)
+        containers = bpy.data.collections.get(AVALON_CONTAINERS)
+        self._link_objects(objects, asset_group, containers, asset_group)
 
         asset_group.matrix_basis = mat
 
