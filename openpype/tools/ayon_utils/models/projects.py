@@ -34,9 +34,13 @@ class ProjectItem:
         self.active = active
         self.is_library = is_library
         if icon is None:
+            if is_library:
+                name = "fa.book"
+            else:
+                name = "fa.map"
             icon = {
                 "type": "awesome-font",
-                "name": "fa.map",
+                "name": name,
                 "color": get_default_entity_icon_color(),
             }
         self.icon = icon
