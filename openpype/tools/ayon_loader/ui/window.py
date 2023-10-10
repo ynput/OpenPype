@@ -320,6 +320,9 @@ class LoaderWindow(QtWidgets.QWidget):
             self._product_group_checkbox.isChecked()
         )
 
+    def refresh(self):
+        self._controller.reset()
+
     def showEvent(self, event):
         super(LoaderWindow, self).showEvent(event)
 
