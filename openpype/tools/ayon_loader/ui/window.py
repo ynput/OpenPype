@@ -203,6 +203,7 @@ class LoaderWindow(QtWidgets.QWidget):
         right_panel_splitter.setOrientation(QtCore.Qt.Vertical)
 
         thumbnails_widget = ThumbnailPainterWidget(right_panel_splitter)
+        thumbnails_widget.set_use_checkboard(False)
 
         info_widget = InfoWidget(controller, right_panel_splitter)
 
