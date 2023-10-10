@@ -1,9 +1,7 @@
 from openpype.client import get_last_version_by_subset_id
 from openpype.pipeline import (
-    get_representation_path,
     get_representation_context,
-    get_current_project_name,
-    get_representation_files
+    get_current_project_name
 )
 from openpype.hosts.resolve.api import lib, plugin
 from openpype.hosts.resolve.api.pipeline import (
@@ -45,8 +43,7 @@ class LoadClip(plugin.TimelineItemLoader):
     def load(self, context, name, namespace, options):
 
         # load clip to timeline and get main variables
-        filepath = self.filepath_from_context(context)
-        files = get_representation_files(context, filepath)
+        files = plugin.get_representation_files(context["representation"])
 
         timeline_item = plugin.ClipLoader(
             self, context, **options).load(files)
@@ -76,8 +73,7 @@ class LoadClip(plugin.TimelineItemLoader):
 
         media_pool_item = timeline_item.GetMediaPoolItem()
 
-        filepath = get_representation_path(representation)
-        files = get_representation_files(context, filepath)
+        files = plugin.get_representation_files(representation)
 
         loader = plugin.ClipLoader(self, context)
         timeline_item = loader.update(timeline_item, files)

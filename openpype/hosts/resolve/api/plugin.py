@@ -8,6 +8,7 @@ from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
+    Anatomy
 )
 
 from . import lib
@@ -825,3 +826,12 @@ class PublishClip:
         for key in par_split:
             parent = self._convert_to_entity(key)
             self.parents.append(parent)
+
+
+def get_representation_files(representation):
+    anatomy = Anatomy()
+    files = []
+    for file_data in representation["files"]:
+        path = anatomy.fill_root(file_data["path"])
+        files.append(path)
+    return files
