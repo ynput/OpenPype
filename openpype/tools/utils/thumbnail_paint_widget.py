@@ -41,6 +41,26 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
         self._current_pixes = None
         self._has_pixes = False
 
+        self._bg_color = QtCore.Qt.transparent
+        self._use_checker = True
+        self._checker_color_1 = QtGui.QColor(89, 89, 89)
+        self._checker_color_2 = QtGui.QColor(188, 187, 187)
+
+    def set_background_color(self, color):
+        self._bg_color = color
+        self.repaint()
+
+    def set_use_checkboard(self, use_checker):
+        if self._use_checker is use_checker:
+            return
+        self._use_checker = use_checker
+        self.repaint()
+
+    def set_checker_colors(self, color_1, color_2):
+        self._checker_color_1 = color_1
+        self._checker_color_2 = color_2
+        self.repaint()
+
     def set_border_color(self, color):
         """Change border color.
 
@@ -128,7 +148,12 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
             self._default_pix = default_pix
         return self._default_pix
 
-    def _paint_checker(self, width, height):
+    def _paint_tile(self, width, height):
+        if not self._use_checker:
+            tile_pix = QtGui.QPixmap(width, width)
+            tile_pix.fill(self._bg_color)
+            return tile_pix
+
         checker_size = int(float(width) / self.checker_boxes_count)
         if checker_size < 1:
             checker_size = 1
@@ -138,11 +163,11 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
         checker_painter = QtGui.QPainter()
         checker_painter.begin(checker_pix)
         checker_painter.setPen(QtCore.Qt.NoPen)
-        checker_painter.setBrush(QtGui.QColor(89, 89, 89))
+        checker_painter.setBrush(self._checker_color_1)
         checker_painter.drawRect(
             0, 0, checker_pix.width(), checker_pix.height()
         )
-        checker_painter.setBrush(QtGui.QColor(188, 187, 187))
+        checker_painter.setBrush(self._checker_color_2)
         checker_painter.drawRect(
             0, 0, checker_size, checker_size
         )
@@ -191,7 +216,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
     def _draw_thumbnails(self, thumbnails, pix_width, pix_height):
         full_border_width = 2 * self.border_width
 
-        checker_pix = self._paint_checker(pix_width, pix_height)
+        checker_pix = self._paint_tile(pix_width, pix_height)
 
         backgrounded_images = []
         for src_pix in thumbnails:
