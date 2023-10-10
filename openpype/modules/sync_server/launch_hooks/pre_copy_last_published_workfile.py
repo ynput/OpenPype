@@ -11,6 +11,7 @@ from openpype.modules.sync_server.sync_server import (
 from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.workfile.path_resolving import (
     get_workfile_template_key,
+    get_last_workfile_representation,
 )
 from openpype.settings.lib import get_project_settings
 
@@ -111,45 +112,11 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         asset_doc = self.data.get("asset_doc")
         anatomy = self.data.get("anatomy")
 
-        context_filters = {
-            "asset": asset_name,
-            "family": "workfile",
-            "task": {"name": task_name, "type": task_type}
-        }
-
-        # Add version filter
-        workfile_version = self.launch_context.data.get("workfile_version", -1)
-        if workfile_version > 0 and workfile_version not in {None, "last"}:
-            context_filters["version"] = self.launch_context.data[
-                "workfile_version"
-            ]
-
-            # Only one version will be matched
-            version_index = 0
-        else:
-            version_index = workfile_version
-
-        workfile_representations = list(get_representations(
+        workfile_representation = get_last_workfile_representation(
             project_name,
-            context_filters=context_filters
-        ))
-
-        if not workfile_representations:
-            self.log.debug(
-                'No published workfile for task "{}" and host "{}".'.format(
-                    task_name, host_name
-                )
-            )
-            return
-
-        filtered_repres = filter(
-            lambda r: r["context"].get("version") is not None,
-            workfile_representations
+            asset_name,
+            task_name,
         )
-        # Get workfile version
-        workfile_representation = sorted(
-            filtered_repres, key=lambda r: r["context"]["version"]
-        )[version_index]
 
         # Copy file and substitute path
         last_published_workfile_path = download_last_published_workfile(
