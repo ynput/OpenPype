@@ -6,6 +6,7 @@ from .path_resolving import (
 
     get_last_workfile_with_version,
     get_last_workfile,
+    get_last_workfile_representation,
 
     get_custom_workfile_template,
     get_custom_workfile_template_by_string_context,
@@ -24,6 +25,7 @@ __all__ = (
 
     "get_last_workfile_with_version",
     "get_last_workfile",
+    "get_last_workfile_representation",
 
     "get_custom_workfile_template",
     "get_custom_workfile_template_by_string_context",

@@ -14,6 +14,7 @@ from openpype.modules.sync_server.sync_server import (
 from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.workfile.path_resolving import (
     get_workfile_template_key,
+    get_last_workfile_representation,
 )
 from openpype.settings.lib import get_project_settings
 
@@ -113,31 +114,10 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
         asset_doc = self.data.get("asset_doc")
         anatomy = self.data.get("anatomy")
 
-        context_filters = {
-            "asset": asset_name,
-            "family": "workfile",
-            "task": {"name": task_name, "type": task_type}
-        }
-
-        workfile_representations = list(get_representations(
+        workfile_representation = get_last_workfile_representation(
             project_name,
-            context_filters=context_filters
-        ))
-
-        if not workfile_representations:
-            self.log.debug(
-                'No published workfile for task "{}" and host "{}".'.format(
-                    task_name, host_name
-                )
-            )
-            return
-
-        filtered_repres = filter(
-            lambda r: r["context"].get("version") is not None,
-            workfile_representations
-        )
-        workfile_representation = max(
-            filtered_repres, key=lambda r: r["context"]["version"]
+            asset_name,
+            task_name,
         )
 
         # Copy file and substitute path
