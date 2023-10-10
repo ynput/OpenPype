@@ -533,7 +533,22 @@ def create_workdir_extra_folders(
         if not os.path.exists(fullpath):
             os.makedirs(fullpath)
 
-def get_last_workfile_representation(project_name, asset_name, task_name):
+
+def get_last_workfile_representation(
+    project_name: str,
+    asset_name: str,
+    task_name: str,
+) -> dict:
+    """Get last published workfile representation.
+
+    Args:
+        project_name(str): Project name.
+        asset_name(str): Asset/Shot name.
+        task_name(str): Task name.
+
+    Returns:
+        dict: Last workfile representation.
+    """
     return max(
         filter(
             lambda r: r["context"].get("version") is not None,
