@@ -11,7 +11,6 @@ from .utils import (
     get_contexts_for_repre_docs,
     get_subset_contexts,
     get_representation_context,
-    get_representation_files,
 
     load_with_repre_context,
     load_with_subset_context,
@@ -65,7 +64,6 @@ __all__ = (
     "get_contexts_for_repre_docs",
     "get_subset_contexts",
     "get_representation_context",
-    "get_representation_files",
 
     "load_with_repre_context",
     "load_with_subset_context",

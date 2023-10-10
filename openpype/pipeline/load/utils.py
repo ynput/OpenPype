@@ -1,6 +1,4 @@
 import os
-import re
-import glob
 import platform
 import copy
 import getpass
@@ -286,54 +284,6 @@ def get_representation_context(representation):
     }
 
     return context
-
-
-def get_representation_files(context, filepath):
-    """Return list of files for representation.
-
-    Args:
-        context (dict): The full loading context.
-        filepath (str): Filepath of the representation.
-
-    Returns:
-        list[str]: List of files for representation.
-    """
-    version = context["version"]
-    frame_start = version["data"]["frameStart"]
-    frame_end = version["data"]["frameEnd"]
-    handle_start = version["data"]["handleStart"]
-    handle_end = version["data"]["handleEnd"]
-
-    first_frame = frame_start - handle_start
-    last_frame = frame_end + handle_end
-    dir_path = os.path.dirname(filepath)
-    base_name = os.path.basename(filepath)
-
-    # prepare glob pattern for searching
-    padding = len(str(last_frame))
-    str_first_frame = str(first_frame).zfill(padding)
-
-    # convert str_first_frame to glob pattern
-    # replace all digits with `?` and all other chars with `[char]`
-    # example: `0001` -> `????`
-    glob_pattern = re.sub(r"\d", "?", str_first_frame)
-
-    # in filename replace number with glob pattern
-    # example: `filename.0001.exr` -> `filename.????.exr`
-    base_name = re.sub(str_first_frame, glob_pattern, base_name)
-
-    files = []
-    # get all files in folder
-    for file in glob.glob(os.path.join(dir_path, base_name)):
-        files.append(file)
-
-    # keep only existing files
-    files = [f for f in files if os.path.exists(f)]
-
-    # sort files by frame number
-    files.sort(key=lambda f: int(re.findall(r"\d+", f)[-1]))
-
-    return files
 
 
 def load_with_repre_context(
