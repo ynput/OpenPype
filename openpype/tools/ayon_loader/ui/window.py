@@ -367,7 +367,6 @@ class LoaderWindow(QtWidgets.QWidget):
         )
         self.setStyleSheet(load_stylesheet())
         center_window(self)
-        self._controller.reset()
 
     def _on_show_timer(self):
         if self._show_counter < 2:
