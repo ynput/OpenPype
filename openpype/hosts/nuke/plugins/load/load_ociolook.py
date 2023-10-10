@@ -1,5 +1,6 @@
 import os
 import json
+import secrets
 import nuke
 import six
 
@@ -17,7 +18,7 @@ from openpype.hosts.nuke.api import (
 
 
 class LoadOcioLookNodes(load.LoaderPlugin):
-    """Loading Ocio look to the nuke node graph"""
+    """Loading Ocio look to the nuke.Node graph"""
 
     families = ["ociolook"]
     representations = ["*"]
@@ -27,7 +28,7 @@ class LoadOcioLookNodes(load.LoaderPlugin):
     order = 0
     icon = "cc"
     color = "white"
-    ignore_attr = ["useLifetime"]
+    igroup_nodeore_attr = ["useLifetime"]
 
     # json file variables
     schema_version = 1
@@ -44,61 +45,98 @@ class LoadOcioLookNodes(load.LoaderPlugin):
             data (dict): compulsory attribute > not used
 
         Returns:
-            nuke node: containerized nuke node object
+            nuke.Node: containerized nuke.Node object
         """
-        # get main variables
-        version = context['version']
-        version_data = version.get("data", {})
-        vname = version.get("name", None)
-        root_working_colorspace = nuke.root()["workingSpaceLUT"].value()
-
         namespace = namespace or context['asset']['name']
-        object_name = "{}_{}".format(name, namespace)
-
-        data_imprint = {
-            "version": vname,
-            "objectName": object_name,
-            "source": version_data.get("source", None),
-            "author": version_data.get("author", None),
-            "fps": version_data.get("fps", None),
-        }
+        suffix = secrets.token_hex(nbytes=4)
+        object_name = "{}_{}_{}".format(
+            name, namespace, suffix)
 
         # getting file path
-        file = self.filepath_from_context(context)
-        print(file)
+        filepath = self.filepath_from_context(context)
 
-        dir_path = os.path.dirname(file)
+        json_f = self._load_json_data(filepath)
+
+        group_node = self._create_group_node(
+            object_name, filepath, json_f["data"])
+
+        group_node["tile_color"].setValue(int("0x3469ffff", 16))
+
+        self.log.info("Loaded lut setup: `{}`".format(group_node["name"].value()))
+
+        return containerise(
+            node=group_node,
+            name=name,
+            namespace=namespace,
+            context=context,
+            loader=self.__class__.__name__,
+            data={
+                "objectName": object_name,
+            }
+        )
+
+    def _create_group_node(
+        self,
+        object_name,
+        filepath,
+        data
+    ):
+        """Creates group node with all the nodes inside.
+
+        Creating mainly `OCIOFileTransform` nodes with `OCIOColorSpace` nodes
+        in between - in case those are needed.
+
+        Arguments:
+            object_name (str): name of the group node
+            filepath (str): path to json file
+            data (dict): data from json file
+
+        Returns:
+            nuke.Node: group node with all the nodes inside
+        """
+        # get corresponding node
+
+        root_working_colorspace = nuke.root()["workingSpaceLUT"].value()
+
+        dir_path = os.path.dirname(filepath)
         all_files = os.listdir(dir_path)
 
-        # getting data from json file with unicode conversion
-        with open(file, "r") as f:
-            json_f = {self.bytify(key): self.bytify(value)
-                      for key, value in json.load(f).items()}
-
-        # check if the version in json_f is the same as plugin version
-        if json_f["version"] != self.schema_version:
-            raise KeyError(
-                "Version of json file is not the same as plugin version")
-
-        json_data = json_f["data"]
         ocio_working_colorspace = _colorspace_name_by_type(
-            json_data["ocioLookWorkingSpace"])
+            data["ocioLookWorkingSpace"])
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        GN = nuke.createNode(
-            "Group",
-            "name {}_1".format(object_name),
-            inpanel=False
-        )
+        input_node = None
+        output_node = None
+        group_node = nuke.toNode(object_name)
+        if group_node:
+            # remove all nodes between Input and Output nodes
+            for node in group_node.nodes():
+                if node.Class() not in ["Input", "Output"]:
+                    nuke.delete(node)
+                if node.Class() == "Input":
+                    input_node = node
+                if node.Class() == "Output":
+                    output_node = node
+        else:
+            group_node = nuke.createNode(
+                "Group",
+                "name {}_1".format(object_name),
+                inpanel=False
+            )
 
         # adding content to the group node
-        with GN:
+        with group_node:
             pre_colorspace = root_working_colorspace
-            pre_node = nuke.createNode("Input")
-            pre_node["name"].setValue("rgb")
+
+            # reusing input node if it exists during update
+            if input_node:
+                pre_node = input_node
+            else:
+                pre_node = nuke.createNode("Input")
+                pre_node["name"].setValue("rgb")
 
             # Compare script working colorspace with ocio working colorspace
             # found in json file and convert to json's if needed
@@ -110,7 +148,7 @@ class LoadOcioLookNodes(load.LoaderPlugin):
                 )
                 pre_colorspace = ocio_working_colorspace
 
-            for ocio_item in json_data["ocioLookItems"]:
+            for ocio_item in data["ocioLookItems"]:
                 input_space = _colorspace_name_by_type(
                     ocio_item["input_colorspace"])
                 output_space = _colorspace_name_by_type(
@@ -126,10 +164,16 @@ class LoadOcioLookNodes(load.LoaderPlugin):
 
                 node = nuke.createNode("OCIOFileTransform")
 
-                # TODO: file path from lut representation
+                # file path from lut representation
                 extension = ocio_item["ext"]
+                item_name = ocio_item["name"]
+
                 item_lut_file = next(
-                    (file for file in all_files if file.endswith(extension)),
+                    (
+                        file for file in all_files
+                        if file.endswith(extension)
+                        and item_name in file
+                    ),
                     None
                 )
                 if not item_lut_file:
@@ -140,12 +184,14 @@ class LoadOcioLookNodes(load.LoaderPlugin):
                 item_lut_path = os.path.join(
                     dir_path, item_lut_file).replace("\\", "/")
                 node["file"].setValue(item_lut_path)
-                node["name"].setValue(ocio_item["name"])
+                node["name"].setValue(item_name)
                 node["direction"].setValue(ocio_item["direction"])
                 node["interpolation"].setValue(ocio_item["interpolation"])
                 node["working_space"].setValue(input_space)
 
+                pre_node.autoplace()
                 node.setInput(0, pre_node)
+                node.autoplace()
                 # pass output space into pre_colorspace for next iteration
                 # or for output node comparison
                 pre_colorspace = output_space
@@ -159,46 +205,48 @@ class LoadOcioLookNodes(load.LoaderPlugin):
                     root_working_colorspace
                 )
 
-            output = nuke.createNode("Output")
+            # reusing output node if it exists during update
+            if not output_node:
+                output = nuke.createNode("Output")
+            else:
+                output = output_node
+
             output.setInput(0, pre_node)
 
-        GN["tile_color"].setValue(int("0x3469ffff", 16))
-
-        self.log.info("Loaded lut setup: `{}`".format(GN["name"].value()))
-
-        return containerise(
-            node=GN,
-            name=name,
-            namespace=namespace,
-            context=context,
-            loader=self.__class__.__name__,
-            data=data_imprint)
+        return group_node
 
     def update(self, container, representation):
-        """Update the Loader's path
 
-        Nuke automatically tries to reset some variables when changing
-        the loader's path to a new file. These automatic changes are to its
-        inputs:
+        object_name = container['objectName']
 
-        """
-        # get main variables
-        # Get version from io
-        project_name = get_current_project_name()
-        version_doc = get_version_by_id(project_name, representation["parent"])
+        filepath = get_representation_path(representation)
 
-        # get corresponding node
-        GN = nuke.toNode(container['objectName'])
+        json_f = self._load_json_data(filepath)
 
-        file = get_representation_path(representation).replace("\\", "/")
-        name = container['name']
-        version_data = version_doc.get("data", {})
-        vname = version_doc.get("name", None)
-        namespace = container['namespace']
-        object_name = "{}_{}".format(name, namespace)
+        new_group_node = self._create_group_node(
+            object_name,
+            filepath,
+            json_f["data"]
+        )
+
+        self.log.info("Updated lut setup: `{}`".format(
+            new_group_node["name"].value()))
 
 
-    def bytify(self, input):
+    def _load_json_data(self, filepath):
+        # getting data from json file with unicode conversion
+        with open(filepath, "r") as _file:
+            json_f = {self._bytify(key): self._bytify(value)
+                      for key, value in json.load(_file).items()}
+
+        # check if the version in json_f is the same as plugin version
+        if json_f["version"] != self.schema_version:
+            raise KeyError(
+                "Version of json file is not the same as plugin version")
+
+        return json_f
+
+    def _bytify(self, input):
         """
         Converts unicode strings to strings
         It goes through all dictionary
@@ -212,10 +260,10 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         """
 
         if isinstance(input, dict):
-            return {self.bytify(key): self.bytify(value)
+            return {self._bytify(key): self._bytify(value)
                     for key, value in input.items()}
         elif isinstance(input, list):
-            return [self.bytify(element) for element in input]
+            return [self._bytify(element) for element in input]
         elif isinstance(input, six.text_type):
             return str(input)
         else:
@@ -256,17 +304,20 @@ def _add_ocio_colorspace_node(pre_node, input_space, output_space):
     Adds OCIOColorSpace node to the node graph
 
     Arguments:
-        pre_node (nuke node): node to connect to
+        pre_node (nuke.Node): node to connect to
         input_space (str): input colorspace
         output_space (str): output colorspace
 
     Returns:
-        nuke node: node with OCIOColorSpace node
+        nuke.Node: node with OCIOColorSpace node
     """
     node = nuke.createNode("OCIOColorSpace")
     node.setInput(0, pre_node)
     node["in_colorspace"].setValue(input_space)
     node["out_colorspace"].setValue(output_space)
 
+    pre_node.autoplace()
     node.setInput(0, pre_node)
+    node.autoplace()
+
     return node
