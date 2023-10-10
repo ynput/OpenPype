@@ -587,20 +587,20 @@ class LoaderActionsModel:
             #     continue
 
             for repre_name, repre_contexts in repre_contexts_by_name.items():
-                repre_ids = set()
-                repre_version_ids = set()
-                repre_product_ids = set()
-                repre_folder_ids = set()
-                for repre_context in repre_context_by_id.values():
-                    repre_ids.add(repre_context["representation"]["_id"])
-                    repre_product_ids.add(repre_context["subset"]["_id"])
-                    repre_version_ids.add(repre_context["version"]["_id"])
-                    repre_folder_ids.add(repre_context["asset"]["_id"])
-
                 filtered_repre_contexts = filter_repre_contexts_by_loader(
                     repre_contexts, loader)
                 if len(filtered_repre_contexts) != len(repre_contexts):
                     continue
+
+                repre_ids = set()
+                repre_version_ids = set()
+                repre_product_ids = set()
+                repre_folder_ids = set()
+                for repre_context in filtered_repre_contexts:
+                    repre_ids.add(repre_context["representation"]["_id"])
+                    repre_product_ids.add(repre_context["subset"]["_id"])
+                    repre_version_ids.add(repre_context["version"]["_id"])
+                    repre_folder_ids.add(repre_context["asset"]["_id"])
 
                 item = self._create_loader_action_item(
                     loader,
