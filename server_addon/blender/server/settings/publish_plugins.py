@@ -26,6 +26,16 @@ class ValidatePluginModel(BaseSettingsModel):
     active: bool = Field(title="Active")
 
 
+class ValidateFileSavedModel(BaseSettingsModel):
+    enabled: bool = Field(title="ValidateFileSaved")
+    optional: bool = Field(title="Optional")
+    active: bool = Field(title="Active")
+    exclude_families: list[str] = Field(
+        default_factory=list,
+        title="Exclude product types"
+    )
+
+
 class ExtractBlendModel(BaseSettingsModel):
     enabled: bool = Field(True)
     optional: bool = Field(title="Optional")
@@ -51,6 +61,21 @@ class PublishPuginsModel(BaseSettingsModel):
     ValidateCameraZeroKeyframe: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Validate Camera Zero Keyframe",
+        section="Validators"
+    )
+    ValidateFileSaved: ValidateFileSavedModel = Field(
+        default_factory=ValidateFileSavedModel,
+        title="Validate File Saved",
+        section="Validators"
+    )
+    ValidateRenderCameraIsSet: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Validate Render Camera Is Set",
+        section="Validators"
+    )
+    ValidateDeadlinePublish: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Validate Render Output for Deadline",
         section="Validators"
     )
     ValidateMeshHasUvs: ValidatePluginModel = Field(
@@ -116,6 +141,22 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
     "ValidateCameraZeroKeyframe": {
         "enabled": True,
         "optional": True,
+        "active": True
+    },
+    "ValidateFileSaved": {
+        "enabled": True,
+        "optional": False,
+        "active": True,
+        "exclude_families": []
+    },
+    "ValidateRenderCameraIsSet": {
+        "enabled": True,
+        "optional": False,
+        "active": True
+    },
+    "ValidateDeadlinePublish": {
+        "enabled": True,
+        "optional": False,
         "active": True
     },
     "ValidateMeshHasUvs": {

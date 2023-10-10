@@ -21,10 +21,28 @@ class CreateArnoldAssModel(BaseSettingsModel):
     ext: str = Field(Title="Extension")
 
 
+class CreateStaticMeshModel(BaseSettingsModel):
+    enabled: bool = Field(title="Enabled")
+    default_variants: list[str] = Field(
+        default_factory=list,
+        title="Default Products"
+    )
+    static_mesh_prefixes: str = Field("S", title="Static Mesh Prefix")
+    collision_prefixes: list[str] = Field(
+        default_factory=list,
+        title="Collision Prefixes"
+    )
+
+
 class CreatePluginsModel(BaseSettingsModel):
     CreateArnoldAss: CreateArnoldAssModel = Field(
         default_factory=CreateArnoldAssModel,
         title="Create Alembic Camera")
+    # "-" is not compatible in the new model
+    CreateStaticMesh: CreateStaticMeshModel = Field(
+        default_factory=CreateStaticMeshModel,
+        title="Create Static Mesh"
+    )
     CreateAlembicCamera: CreatorModel = Field(
         default_factory=CreatorModel,
         title="Create Alembic Camera")
@@ -62,6 +80,19 @@ DEFAULT_HOUDINI_CREATE_SETTINGS = {
         "enabled": True,
         "default_variants": ["Main"],
         "ext": ".ass"
+    },
+    "CreateStaticMesh": {
+        "enabled": True,
+        "default_variants": [
+            "Main"
+        ],
+        "static_mesh_prefix": "S",
+        "collision_prefixes": [
+            "UBX",
+            "UCP",
+            "USP",
+            "UCX"
+        ]
     },
     "CreateAlembicCamera": {
         "enabled": True,
@@ -136,6 +167,15 @@ class PublishPluginsModel(BaseSettingsModel):
     ValidateContainers: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Latest Containers.")
+    ValidateSubsetName: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Subset Name.")
+    ValidateMeshIsStatic: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Mesh is Static.")
+    ValidateUnrealStaticMeshName: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Unreal Static Mesh Name.")
 
 
 DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
@@ -158,6 +198,21 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
     },
     "ValidateContainers": {
         "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateSubsetName": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateMeshIsStatic": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateUnrealStaticMeshName": {
+        "enabled": False,
         "optional": True,
         "active": True
     }

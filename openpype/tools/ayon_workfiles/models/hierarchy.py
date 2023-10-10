@@ -77,8 +77,11 @@ class EntitiesModel(object):
     event_source = "entities.model"
 
     def __init__(self, controller):
+        project_cache = CacheItem()
+        project_cache.set_invalid({})
         folders_cache = CacheItem()
         folders_cache.set_invalid({})
+        self._project_cache = project_cache
         self._folders_cache = folders_cache
         self._tasks_cache = {}
 
@@ -90,6 +93,7 @@ class EntitiesModel(object):
         self._controller = controller
 
     def reset(self):
+        self._project_cache.set_invalid({})
         self._folders_cache.set_invalid({})
         self._tasks_cache = {}
 
@@ -98,6 +102,13 @@ class EntitiesModel(object):
 
     def refresh(self):
         self._refresh_folders_cache()
+
+    def get_project_entity(self):
+        if not self._project_cache.is_valid:
+            project_name = self._controller.get_current_project_name()
+            project_entity = ayon_api.get_project(project_name)
+            self._project_cache.update_data(project_entity)
+        return self._project_cache.get_data()
 
     def get_folder_items(self, sender):
         if not self._folders_cache.is_valid:

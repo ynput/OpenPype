@@ -16,6 +16,7 @@ import bpy
 import bpy.utils.previews
 
 from openpype import style
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import get_current_asset_name, get_current_task_name
 from openpype.tools.utils import host_tools
 
@@ -331,10 +332,11 @@ class LaunchWorkFiles(LaunchQtApp):
 
     def execute(self, context):
         result = super().execute(context)
-        self._window.set_context({
-            "asset": get_current_asset_name(),
-            "task": get_current_task_name()
-        })
+        if not AYON_SERVER_ENABLED:
+            self._window.set_context({
+                "asset": get_current_asset_name(),
+                "task": get_current_task_name()
+            })
         return result
 
     def before_window_show(self):

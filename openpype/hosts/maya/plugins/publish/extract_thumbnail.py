@@ -92,7 +92,6 @@ class ExtractThumbnail(publish.Extractor):
             "Create temp directory {} for thumbnail".format(dst_staging)
         )
         # Store new staging to cleanup paths
-        instance.context.data["cleanupFullPaths"].append(dst_staging)
         filename = "{0}".format(instance.name)
         path = os.path.join(dst_staging, filename)
 

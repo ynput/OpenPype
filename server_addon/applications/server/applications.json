@@ -109,6 +109,55 @@
                 }
             ]
         },
+        "maya": {
+            "enabled": true,
+            "label": "Maya",
+            "icon": "{}/app_icons/maya.png",
+            "host_name": "maya",
+            "environment": "{\n  \"MAYA_DISABLE_CLIC_IPM\": \"Yes\",\n  \"MAYA_DISABLE_CIP\": \"Yes\",\n  \"MAYA_DISABLE_CER\": \"Yes\",\n  \"PYMEL_SKIP_MEL_INIT\": \"Yes\",\n  \"LC_ALL\": \"C\"\n}\n",
+            "variants": [
+                {
+                    "name": "2024",
+                    "label": "2024",
+                    "executables": {
+                        "windows": [
+                            "C:\\Program Files\\Autodesk\\Maya2024\\bin\\mayapy.exe"
+                        ],
+                        "darwin": [],
+                        "linux": [
+                            "/usr/autodesk/maya2024/bin/mayapy"
+                        ]
+                    },
+                    "arguments": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "environment": "{\n  \"MAYA_VERSION\": \"2024\"\n}",
+                    "use_python_2": false
+                },
+                {
+                    "name": "2023",
+                    "label": "2023",
+                    "executables": {
+                        "windows": [
+                            "C:\\Program Files\\Autodesk\\Maya2023\\bin\\mayapy.exe"
+                        ],
+                        "darwin": [],
+                        "linux": [
+                            "/usr/autodesk/maya2023/bin/mayapy"
+                        ]
+                    },
+                    "arguments": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "environment": "{\n  \"MAYA_VERSION\": \"2023\"\n}",
+                    "use_python_2": false
+                }
+            ]
+        },
         "adsk_3dsmax": {
             "enabled": true,
             "label": "3ds Max",
@@ -237,6 +286,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [
@@ -319,6 +369,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [
@@ -405,6 +456,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [
@@ -491,6 +543,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [
@@ -577,6 +630,7 @@
                 },
                 {
                     "name": "13-0",
+                    "label": "13.0",
                     "use_python_2": false,
                     "executables": {
                         "windows": [

@@ -1,4 +1,16 @@
 {
+    "general": {
+        "update_houdini_var_context": {
+            "enabled": true,
+            "houdini_vars":[
+                {
+                    "var": "JOB",
+                    "value": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task[name]}",
+                    "is_directory": true
+                }
+            ]
+        }
+    },
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {
@@ -18,6 +30,19 @@
                 "Main"
             ],
             "ext": ".ass"
+        },
+        "CreateStaticMesh": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ],
+            "static_mesh_prefix": "S",
+            "collision_prefixes": [
+                "UBX",
+                "UCP",
+                "USP",
+                "UCX"
+            ]
         },
         "CreateAlembicCamera": {
             "enabled": true,
@@ -100,6 +125,21 @@
         },
         "ValidateContainers": {
             "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateSubsetName": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshIsStatic": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": false,
             "optional": true,
             "active": true
         }
