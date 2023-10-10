@@ -3,6 +3,8 @@ import sys
 
 from maya import cmds
 
+import pyblish.util
+
 
 def setup_pyblish_logging():
     log = logging.getLogger("pyblish")
@@ -15,12 +17,12 @@ def setup_pyblish_logging():
     log.addHandler(hnd)
 
 
-def main():
-    cmds.evalDeferred("setup_pyblish_logging()", evaluateNext=True)
-    cmds.evalDeferred(
-        "import pyblish.util;pyblish.util.publish()", lowestPriority=True
-    )
-    cmds.evalDeferred("cmds.quit(force=True)", lowestPriority=True)
+def _run_publish_test_deferred():
+    try:
+        pyblish.util.publish()
+    finally:
+        cmds.quit(force=True)
 
 
-main()
+cmds.evalDeferred("setup_pyblish_logging()", evaluateNext=True)
+cmds.evalDeferred("_run_publish_test_deferred()", lowestPriority=True)
