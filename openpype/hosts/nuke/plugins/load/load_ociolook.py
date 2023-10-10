@@ -4,7 +4,10 @@ import secrets
 import nuke
 import six
 
-from openpype.client import get_version_by_id
+from openpype.client import (
+    get_version_by_id,
+    get_last_version_by_subset_id
+)
 from openpype.pipeline import (
     load,
     get_current_project_name,
@@ -12,7 +15,6 @@ from openpype.pipeline import (
 )
 from openpype.hosts.nuke.api import (
     containerise,
-    update_container,
     viewer_update_and_undo_stop
 )
 
@@ -28,7 +30,11 @@ class LoadOcioLookNodes(load.LoaderPlugin):
     order = 0
     icon = "cc"
     color = "white"
-    igroup_nodeore_attr = ["useLifetime"]
+    ignore_attr = ["useLifetime"]
+
+    # plugin attributes
+    current_node_color = "0x4ecd91ff"
+    old_node_color = "0xd88467ff"
 
     # json file variables
     schema_version = 1
@@ -60,7 +66,8 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         group_node = self._create_group_node(
             object_name, filepath, json_f["data"])
 
-        group_node["tile_color"].setValue(int("0x3469ffff", 16))
+
+        self._node_version_color(context["version"], group_node)
 
         self.log.info("Loaded lut setup: `{}`".format(group_node["name"].value()))
 
@@ -217,20 +224,25 @@ class LoadOcioLookNodes(load.LoaderPlugin):
 
     def update(self, container, representation):
 
+        project_name = get_current_project_name()
+        version_doc = get_version_by_id(project_name, representation["parent"])
+
         object_name = container['objectName']
 
         filepath = get_representation_path(representation)
 
         json_f = self._load_json_data(filepath)
 
-        new_group_node = self._create_group_node(
+        group_node = self._create_group_node(
             object_name,
             filepath,
             json_f["data"]
         )
 
+        self._node_version_color(version_doc, group_node)
+
         self.log.info("Updated lut setup: `{}`".format(
-            new_group_node["name"].value()))
+            group_node["name"].value()))
 
 
     def _load_json_data(self, filepath):
@@ -277,6 +289,20 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         with viewer_update_and_undo_stop():
             nuke.delete(node)
 
+    def _node_version_color(self, version, node):
+        """ Coloring a node by correct color by actual version"""
+
+        project_name = get_current_project_name()
+        last_version_doc = get_last_version_by_subset_id(
+            project_name, version["parent"], fields=["_id"]
+        )
+
+        # change color of node
+        if version["_id"] == last_version_doc["_id"]:
+            color_value = self.current_node_color
+        else:
+            color_value = self.old_node_color
+        node["tile_color"].setValue(int(color_value, 16))
 
 def _colorspace_name_by_type(colorspace_data):
     """
