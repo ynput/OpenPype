@@ -174,6 +174,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Add OpenPype version if we are running from build.
         if is_running_from_build():
             keys.append("OPENPYPE_VERSION")
+            keys.append("OPENPYPE_CONSOLE") # updated for find the right version the render triggered.
 
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
