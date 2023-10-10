@@ -179,10 +179,13 @@ class ExtractThumbnail(publish.Extractor):
         temporary_nodes.append(write_node)
         tags = ["thumbnail", "publish_on_farm"]
 
+        thumb_output_name = "thumb"
+        if output_name:
+            thumb_output_name = "{}_{}".format(output_name, thumb_output_name)
         repre = {
             'name': name,
             'ext': "jpg",
-            "outputName": "thumb",
+            "outputName": thumb_output_name,
             'files': file,
             "stagingDir": staging_dir,
             "tags": tags
