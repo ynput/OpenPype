@@ -17,6 +17,7 @@ from openpype.pipeline.load.plugins import (
     discover_loader_plugins,
 )
 from openpype.pipeline.load.utils import loaders_from_repre_context
+from openpype.pipeline.workfile import get_last_workfile_representation
 
 
 # Key for metadata dict
@@ -438,21 +439,10 @@ def make_paths_absolute(source_filepath: Path = None):
     remapped_datablocks = set()
     if source_filepath:
         # Get last workfile representation
-        workfile_repre = max(
-            filter(
-                lambda r: r["context"].get("version") is not None,
-                list(
-                    get_representations(
-                        get_current_project_name(),
-                        context_filters={
-                            "asset": get_current_asset_name(),
-                            "family": "workfile",
-                            "task": {"name": get_current_task_name()},
-                        },
-                    )
-                )
-            ),
-            key=lambda r: r["context"]["version"],
+        workfile_repre = get_last_workfile_representation(
+            get_current_project_name(),
+            get_current_asset_name(),
+            get_current_task_name(),
         )
 
         for d in relative_datablocks:

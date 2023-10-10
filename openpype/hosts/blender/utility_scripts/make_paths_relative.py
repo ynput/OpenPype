@@ -14,6 +14,7 @@ from openpype.pipeline.context_tools import (
     get_current_task_name,
     get_workdir_from_session,
 )
+from openpype.pipeline.workfile import get_last_workfile_representation
 from openpype.lib.log import Logger
 
 if __name__ == "__main__":
@@ -24,22 +25,12 @@ if __name__ == "__main__":
     errors = []
 
     # Get last workfile representation
-    workfile_repre = max(
-        filter(
-            lambda r: r["context"].get("version") is not None,
-            list(
-                get_representations(
-                    get_current_project_name(),
-                    context_filters={
-                        "asset": get_current_asset_name(),
-                        "family": "workfile",
-                        "task": {"name": get_current_task_name()},
-                    },
-                )
-            ),
-        ),
-        key=lambda r: r["context"]["version"],
+    workfile_repre = get_last_workfile_representation(
+        get_current_project_name(),
+        get_current_asset_name(),
+        get_current_task_name(),
     )
+
     workdir = get_workdir_from_session()
 
     # Resolve path from source filepath with the relative filepath

@@ -3,7 +3,11 @@ import re
 import copy
 import platform
 
-from openpype.client import get_project, get_asset_by_name
+from openpype.client import (
+    get_project,
+    get_asset_by_name,
+    get_representations,
+)
 from openpype.settings import get_project_settings
 from openpype.lib import (
     filter_profiles,
@@ -528,3 +532,21 @@ def create_workdir_extra_folders(
         fullpath = os.path.join(workdir, subfolder)
         if not os.path.exists(fullpath):
             os.makedirs(fullpath)
+
+def get_last_workfile_representation(project_name, asset_name, task_name):
+    return max(
+        filter(
+            lambda r: r["context"].get("version") is not None,
+            list(
+                get_representations(
+                    project_name,
+                    context_filters={
+                        "asset": asset_name,
+                        "family": "workfile",
+                        "task": {"name": task_name},
+                    },
+                )
+            ),
+        ),
+        key=lambda r: r["context"]["version"],
+    )
