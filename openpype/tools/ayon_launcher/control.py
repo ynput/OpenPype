@@ -145,5 +145,17 @@ class BaseLauncherController(
 
         self._emit_event("controller.refresh.finished")
 
+    def refresh_actions(self):
+        self._emit_event("controller.refresh.actions.started")
+
+        # Refresh project settings (used for actions discovery)
+        self._project_settings = {}
+        # Refresh projects - they define applications
+        self._projects_model.reset()
+        # Refresh actions
+        self._actions_model.refresh()
+
+        self._emit_event("controller.refresh.actions.finished")
+
     def _emit_event(self, topic, data=None):
         self.emit_event(topic, data, "controller")
