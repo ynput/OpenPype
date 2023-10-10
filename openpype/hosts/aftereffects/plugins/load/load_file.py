@@ -18,7 +18,7 @@ class FileLoader(api.AfterEffectsLoader):
                 "prerender",
                 "review",
                 "audio",
-                "review"]
+                "workfile"]
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
