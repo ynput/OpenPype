@@ -323,8 +323,6 @@ def _colorspace_name_by_type(colorspace_data):
             colorspace_data["type"]))
 
 
-
-
 def _add_ocio_colorspace_node(pre_node, input_space, output_space):
     """
     Adds OCIOColorSpace node to the node graph
