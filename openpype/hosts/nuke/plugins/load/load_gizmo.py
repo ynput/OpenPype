@@ -26,7 +26,7 @@ class LoadGizmo(load.LoaderPlugin):
 
     families = ["gizmo"]
     representations = ["*"]
-    extension = {"gizmo"}
+    extensions = {"gizmo"}
 
     label = "Load Gizmo"
     order = 0

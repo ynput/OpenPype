@@ -26,7 +26,7 @@ class AlembicCameraLoader(load.LoaderPlugin):
 
     families = ["camera"]
     representations = ["*"]
-    extension = {"abc"}
+    extensions = {"abc"}
 
     label = "Load Alembic Camera"
     icon = "camera"
