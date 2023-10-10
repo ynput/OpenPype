@@ -589,7 +589,7 @@ class LoaderActionsModel:
             for repre_name, repre_contexts in repre_contexts_by_name.items():
                 filtered_repre_contexts = filter_repre_contexts_by_loader(
                     repre_contexts, loader)
-                if len(filtered_repre_contexts) != len(repre_contexts):
+                if not filtered_repre_contexts:
                     continue
 
                 repre_ids = set()
