@@ -438,7 +438,6 @@ def make_paths_absolute(source_filepath: Path = None):
     relative_datablocks = get_datablocks_with_filepath(absolute=False)
     remapped_datablocks = set()
     if source_filepath:
-        # Get last workfile representation
         workfile_repre = get_last_workfile_representation(
             get_current_project_name(),
             get_current_asset_name(),

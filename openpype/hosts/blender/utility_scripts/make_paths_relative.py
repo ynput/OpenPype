@@ -24,7 +24,6 @@ if __name__ == "__main__":
     )
     errors = []
 
-    # Get last workfile representation
     workfile_repre = get_last_workfile_representation(
         get_current_project_name(),
         get_current_asset_name(),
