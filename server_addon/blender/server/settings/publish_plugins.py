@@ -200,7 +200,7 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
     "ExtractModelABC": {
         "enabled": True,
         "optional": True,
-        "active": False
+        "active": True
     },
     "ExtractBlendAnimation": {
         "enabled": True,

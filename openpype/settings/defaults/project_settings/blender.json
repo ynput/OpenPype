@@ -92,7 +92,7 @@
         "ExtractModelABC": {
             "enabled": true,
             "optional": true,
-            "active": false
+            "active": true
         },
         "ExtractBlendAnimation": {
             "enabled": true,
