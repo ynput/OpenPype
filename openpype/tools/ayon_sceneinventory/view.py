@@ -15,13 +15,11 @@ from openpype.client import (
 )
 from openpype import style
 from openpype.pipeline import (
-    legacy_io,
     HeroVersionType,
     update_container,
     remove_container,
     discover_inventory_actions,
 )
-from openpype.modules import ModulesManager
 from openpype.tools.utils.lib import (
     iter_model_rows,
     format_version
@@ -40,7 +38,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
     data_changed = QtCore.Signal()
     hierarchy_view_changed = QtCore.Signal(bool)
 
-    def __init__(self, parent=None):
+    def __init__(self, controller, parent):
         super(SceneInventoryView, self).__init__(parent=parent)
 
         # view settings
@@ -49,16 +47,13 @@ class SceneInventoryView(QtWidgets.QTreeView):
         self.setSortingEnabled(True)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
         self.customContextMenuRequested.connect(self._show_right_mouse_menu)
+
         self._hierarchy_view = False
         self._selected = None
 
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name.get("sync_server")
-        sync_enabled = sync_server is not None and sync_server.enabled
-
-        self.sync_server = sync_server
-        self.sync_enabled = sync_enabled
+        self._controller = controller
 
     def _set_hierarchy_view(self, enabled):
         if enabled == self._hierarchy_view:
@@ -83,11 +78,9 @@ class SceneInventoryView(QtWidgets.QTreeView):
         self.setStyleSheet("QTreeView {}")
 
     def _build_item_menu_for_selection(self, items, menu):
-
         # Exclude items that are "NOT FOUND" since setting versions, updating
         # and removal won't work for those items.
         items = [item for item in items if not item.get("isNotFound")]
-
         if not items:
             return
 
@@ -98,7 +91,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             for item in items
         }
 
-        project_name = legacy_io.active_project()
+        project_name = self._controller.get_current_project_name()
         repre_docs = get_representations(
             project_name, representation_ids=repre_ids, fields=["parent"]
         )
@@ -301,16 +294,17 @@ class SceneInventoryView(QtWidgets.QTreeView):
         self._handle_sync_server(menu, repre_ids)
 
     def _handle_sync_server(self, menu, repre_ids):
-        """
-            Adds actions for download/upload when SyncServer is enabled
+        """Adds actions for download/upload when SyncServer is enabled
 
-            Args:
-                menu (OptionMenu)
-                repre_ids (list) of object_ids
-            Returns:
-                (OptionMenu)
+        Args:
+            menu (OptionMenu)
+            repre_ids (list) of object_ids
+
+        Returns:
+            (OptionMenu)
         """
-        if not self.sync_enabled:
+
+        if not self._controller.is_sync_server_enabled():
             return
 
         menu.addSeparator()
@@ -322,7 +316,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             menu
         )
         download_active_action.triggered.connect(
-            lambda: self._add_sites(repre_ids, 'active_site'))
+            lambda: self._add_sites(repre_ids, "active_site"))
 
         upload_icon = qtawesome.icon("fa.upload", color=DEFAULT_COLOR)
         upload_remote_action = QtWidgets.QAction(
@@ -331,55 +325,23 @@ class SceneInventoryView(QtWidgets.QTreeView):
             menu
         )
         upload_remote_action.triggered.connect(
-            lambda: self._add_sites(repre_ids, 'remote_site'))
+            lambda: self._add_sites(repre_ids, "remote_site"))
 
         menu.addAction(download_active_action)
         menu.addAction(upload_remote_action)
 
-    def _add_sites(self, repre_ids, side):
+    def _add_sites(self, repre_ids, site_type):
+        """(Re)sync all 'repre_ids' to specific site.
+
+        It checks if opposite site has fully available content to limit
+        accidents. (ReSync active when no remote >> losing active content)
+
+        Args:
+            repre_ids (list)
+            site_type (Literal[active_site, remote_site]): Site type.
         """
-            (Re)sync all 'repre_ids' to specific site.
 
-            It checks if opposite site has fully available content to limit
-            accidents. (ReSync active when no remote >> losing active content)
-
-            Args:
-                repre_ids (list)
-                side (str): 'active_site'|'remote_site'
-        """
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        active_site = self.sync_server.get_active_site(project_name)
-        remote_site = self.sync_server.get_remote_site(project_name)
-
-        repre_docs = get_representations(
-            project_name, representation_ids=repre_ids
-        )
-        repre_docs_by_id = {
-            repre_doc["_id"]: repre_doc
-            for repre_doc in repre_docs
-        }
-        for repre_id in repre_ids:
-            repre_doc = repre_docs_by_id.get(repre_id)
-            if not repre_doc:
-                continue
-
-            progress = self.sync_server.get_progress_for_repre(
-                repre_doc,
-                active_site,
-                remote_site
-            )
-            if side == "active_site":
-                # check opposite from added site, must be 1 or unable to sync
-                check_progress = progress[remote_site]
-                site = active_site
-            else:
-                check_progress = progress[active_site]
-                site = remote_site
-
-            if check_progress == 1:
-                self.sync_server.add_site(
-                    project_name, repre_id, site, force=True
-                )
+        self._controller.resync_representations(repre_ids, site_type)
 
         self.data_changed.emit()
 
@@ -421,6 +383,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             menu.addMenu(submenu)
 
         # go back to flat view
+        back_to_flat_action = None
         if self._hierarchy_view:
             back_to_flat_icon = qtawesome.icon("fa.list", color=DEFAULT_COLOR)
             back_to_flat_action = QtWidgets.QAction(
@@ -443,7 +406,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         if items:
             menu.addAction(enter_hierarchy_action)
 
-        if self._hierarchy_view:
+        if back_to_flat_action is not None:
             menu.addAction(back_to_flat_action)
 
         return menu
@@ -638,7 +601,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         active = items[-1]
 
-        project_name = legacy_io.active_project()
+        project_name = self._controller.get_current_project_name()
         # Get available versions for active representation
         repre_doc = get_representation_by_id(
             project_name,

@@ -1,18 +1,14 @@
-import os
-import sys
-
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
-from openpype import style
-from openpype.client import get_projects
-from openpype.pipeline import legacy_io
+from openpype import style, resources
 from openpype.tools.utils.delegates import VersionDelegate
 from openpype.tools.utils.lib import (
-    qt_app_context,
     preserve_expanded_rows,
     preserve_selection,
-    FamilyConfigCache
+)
+from openpype.tools.ayon_sceneinventory.control import (
+    SceneInventoryController,
 )
 
 from .model import (
@@ -22,28 +18,36 @@ from .model import (
 from .view import SceneInventoryView
 
 
-module = sys.modules[__name__]
-module.window = None
+class ControllerVersionDelegate(VersionDelegate):
+    """Version delegate that uses controller to get project.
+
+    Original VersionDelegate is using 'AvalonMongoDB' object instead. Don't
+    worry about the variable name, object is stored to '_dbcon' attribute.
+    """
+
+    def get_project_name(self):
+        self._dbcon.get_current_project_name()
 
 
 class SceneInventoryWindow(QtWidgets.QDialog):
     """Scene Inventory window"""
 
-    def __init__(self, parent=None):
+    def __init__(self, controller=None, parent=None):
         super(SceneInventoryWindow, self).__init__(parent)
 
-        if not parent:
-            self.setWindowFlags(
-                self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
-            )
+        if controller is None:
+            controller = SceneInventoryController()
 
-        project_name = os.getenv("AVALON_PROJECT") or "<Project not set>"
-        self.setWindowTitle("Scene Inventory 1.0 - {}".format(project_name))
+        project_name = controller.get_current_project_name()
+        icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setWindowTitle("Scene Inventory - {}".format(project_name))
         self.setObjectName("SceneInventory")
 
         self.resize(1100, 480)
 
         # region control
+
         filter_label = QtWidgets.QLabel("Search", self)
         text_filter = QtWidgets.QLineEdit(self)
 
@@ -70,17 +74,18 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         control_layout.addWidget(update_all_button)
         control_layout.addWidget(refresh_button)
 
-        # endregion control
-        family_config_cache = FamilyConfigCache(legacy_io)
-
-        model = InventoryModel(family_config_cache)
+        model = InventoryModel(project_name)
         proxy = FilterProxyModel()
         proxy.setSourceModel(model)
         proxy.setDynamicSortFilter(True)
         proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-        view = SceneInventoryView(self)
+        view = SceneInventoryView(controller, self)
         view.setModel(proxy)
+
+        sync_enabled = controller.is_sync_server_enabled()
+        view.setColumnHidden(model.active_site_col, not sync_enabled)
+        view.setColumnHidden(model.remote_site_col, not sync_enabled)
 
         # set some nice default widths for the view
         view.setColumnWidth(0, 250)  # name
@@ -91,7 +96,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         view.setColumnWidth(5, 150)  # loader
 
         # apply delegates
-        version_delegate = VersionDelegate(legacy_io, self)
+        version_delegate = ControllerVersionDelegate(controller, self)
         column = model.Columns.index("version")
         view.setItemDelegateForColumn(column, version_delegate)
 
@@ -111,17 +116,15 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         refresh_button.clicked.connect(self._on_refresh_request)
         update_all_button.clicked.connect(self._on_update_all)
 
+        self._controller = controller
         self._update_all_button = update_all_button
         self._outdated_only_checkbox = outdated_only_checkbox
         self._view = view
         self._model = model
         self._proxy = proxy
         self._version_delegate = version_delegate
-        self._family_config_cache = family_config_cache
 
         self._first_show = True
-
-        family_config_cache.refresh()
 
     def showEvent(self, event):
         super(SceneInventoryWindow, self).showEvent(event)
@@ -145,6 +148,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self.refresh()
 
     def refresh(self, items=None):
+        self._controller.reset()
         with preserve_expanded_rows(
             tree_view=self._view,
             role=self._model.UniqueRole
@@ -177,47 +181,3 @@ class SceneInventoryWindow(QtWidgets.QDialog):
 
     def _on_update_all(self):
         self._view.update_all()
-
-
-def show(root=None, debug=False, parent=None, items=None):
-    """Display Scene Inventory GUI
-
-    Arguments:
-        debug (bool, optional): Run in debug-mode,
-            defaults to False
-        parent (QtCore.QObject, optional): When provided parent the interface
-            to this QObject.
-        items (list) of dictionaries - for injection of items for standalone
-                testing
-
-    """
-
-    try:
-        module.window.close()
-        del module.window
-    except (RuntimeError, AttributeError):
-        pass
-
-    if debug is True:
-        legacy_io.install()
-
-        if not os.environ.get("AVALON_PROJECT"):
-            any_project = next(
-                project for project in get_projects()
-            )
-
-            project_name = any_project["name"]
-        else:
-            project_name = os.environ.get("AVALON_PROJECT")
-        legacy_io.Session["AVALON_PROJECT"] = project_name
-
-    with qt_app_context():
-        window = SceneInventoryWindow(parent)
-        window.show()
-        window.refresh(items=items)
-
-        module.window = window
-
-        # Pull window to the front.
-        module.window.raise_()
-        module.window.activateWindow()

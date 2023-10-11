@@ -30,8 +30,19 @@ from .lib import walk_hierarchy
 class InventoryModel(TreeModel):
     """The model for the inventory"""
 
-    Columns = ["Name", "version", "count", "family",
-               "group", "loader", "objectName"]
+    Columns = [
+        "Name",
+        "version",
+        "count",
+        "family",
+        "group",
+        "loader",
+        "objectName",
+        "active_site",
+        "remote_site",
+    ]
+    active_site_col = Columns.index("active_site")
+    remote_site_col = Columns.index("remote_site")
 
     OUTDATED_COLOR = QtGui.QColor(235, 30, 30)
     CHILD_OUTDATED_COLOR = QtGui.QColor(200, 160, 30)
@@ -39,58 +50,22 @@ class InventoryModel(TreeModel):
 
     UniqueRole = QtCore.Qt.UserRole + 2     # unique label role
 
-    def __init__(self, family_config_cache, parent=None):
+    def __init__(self, controller, parent=None):
         super(InventoryModel, self).__init__(parent)
         self.log = logging.getLogger(self.__class__.__name__)
 
-        self.family_config_cache = family_config_cache
+        self._controller = controller
 
         self._hierarchy_view = False
 
         self._default_icon_color = get_default_entity_icon_color()
 
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name.get("sync_server")
-        self.sync_enabled = (
-            sync_server is not None and sync_server.enabled
-        )
-        self._site_icons = {}
-        self.active_site = self.remote_site = None
-        self.active_provider = self.remote_provider = None
+        site_icons = self._controller.get_site_provider_icons()
 
-        if not self.sync_enabled:
-            return
-
-        project_name = get_current_project_name()
-        active_site = sync_server.get_active_site(project_name)
-        remote_site = sync_server.get_remote_site(project_name)
-
-        active_provider = "studio"
-        remote_provider = "studio"
-        if active_site != "studio":
-            # sanitized for icon
-            active_provider = sync_server.get_provider_for_site(
-                project_name, active_site
-            )
-
-        if remote_site != "studio":
-            remote_provider = sync_server.get_provider_for_site(
-                project_name, remote_site
-            )
-
-        self.sync_server = sync_server
-        self.active_site = active_site
-        self.active_provider = active_provider
-        self.remote_site = remote_site
-        self.remote_provider = remote_provider
         self._site_icons = {
             provider: QtGui.QIcon(icon_path)
-            for provider, icon_path in sync_server.get_site_icons().items()
+            for provider, icon_path in site_icons.items()
         }
-        if "active_site" not in self.Columns:
-            self.Columns.append("active_site")
-        if "remote_site" not in self.Columns:
-            self.Columns.append("remote_site")
 
     def outdated(self, item):
         value = item.get("version")
@@ -302,8 +277,8 @@ class InventoryModel(TreeModel):
                 "asset": asset
             })
 
-        for id in not_found_ids:
-            grouped.pop(id)
+        for _repre_id in not_found_ids:
+            grouped.pop(_repre_id)
 
         for where, group_items in not_found.items():
             # create the group header
@@ -324,6 +299,16 @@ class InventoryModel(TreeModel):
                 item_node["isNotFound"] = True
                 self.add_child(item_node, parent=group_node)
 
+        # TODO Use product icons
+        family_icon = qtawesome.icon(
+            "fa.folder", color="#0091B2"
+        )
+        # Prepare site sync specific data
+        progress_by_id = self._controller.get_representations_site_progress(
+            set(grouped.keys())
+        )
+        sites_info = self._controller.get_sites_information()
+
         for repre_id, group_dict in sorted(grouped.items()):
             group_items = group_dict["items"]
             representation = grouped[repre_id]["representation"]
@@ -343,11 +328,6 @@ class InventoryModel(TreeModel):
                 families = subset["data"].get("families") or []
                 prim_family = families[0] if families else no_family
 
-            # Get the label and icon for the family if in configuration
-            family_config = self.family_config_cache.family_config(prim_family)
-            family = family_config.get("label", prim_family)
-            family_icon = family_config.get("icon", None)
-
             # Store the highest available version so the model can know
             # whether current version is currently up-to-date.
             highest_version = get_last_version_by_subset_id(
@@ -356,28 +336,23 @@ class InventoryModel(TreeModel):
 
             # create the group header
             group_node = Item()
-            group_node["Name"] = "%s_%s: (%s)" % (asset["name"],
-                                                  subset["name"],
-                                                  representation["name"])
+            group_node["Name"] = "{}_{}: ({})".format(
+                asset["name"], subset["name"], representation["name"]
+            )
             group_node["representation"] = repre_id
             group_node["version"] = version["name"]
             group_node["highest_version"] = highest_version["name"]
-            group_node["family"] = family
+            group_node["family"] = prim_family
             group_node["familyIcon"] = family_icon
             group_node["count"] = len(group_items)
             group_node["isGroupNode"] = True
             group_node["group"] = subset["data"].get("subsetGroup")
 
-            if self.sync_enabled:
-                progress = self.sync_server.get_progress_for_repre(
-                    representation, self.active_site, self.remote_site
-                )
-                group_node["active_site"] = self.active_site
-                group_node["active_site_provider"] = self.active_provider
-                group_node["remote_site"] = self.remote_site
-                group_node["remote_site_provider"] = self.remote_provider
-                group_node["active_site_progress"] = progress[self.active_site]
-                group_node["remote_site_progress"] = progress[self.remote_site]
+            # Site sync specific data
+            progress = progress_by_id[repre_id]
+            group_node.update(sites_info)
+            group_node["active_site_progress"] = progress["active_site"]
+            group_node["remote_site_progress"] = progress["remote_site"]
 
             self.add_child(group_node, parent=parent)
 
