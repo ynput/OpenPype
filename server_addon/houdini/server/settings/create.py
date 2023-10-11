@@ -34,51 +34,109 @@ class CreateStaticMeshModel(BaseSettingsModel):
 
 
 class CreatePluginsModel(BaseSettingsModel):
-    CreateArnoldAss: CreateArnoldAssModel = Field(
-        default_factory=CreateArnoldAssModel,
-        title="Create Arnold Ass")
-    # "-" is not compatible in the new model
-    CreateStaticMesh: CreateStaticMeshModel = Field(
-        default_factory=CreateStaticMeshModel,
-        title="Create Static Mesh"
-    )
     CreateAlembicCamera: CreatorModel = Field(
         default_factory=CreatorModel,
         title="Create Alembic Camera")
+    CreateArnoldAss: CreateArnoldAssModel = Field(
+        default_factory=CreateArnoldAssModel,
+        title="Create Arnold Ass")
+    CreateArnoldRop: CreatorModel = Field(
+        default_factory=CreatorModel,
+        title="Create Arnold ROP")
     CreateCompositeSequence: CreatorModel = Field(
         default_factory=CreatorModel,
-        title="Create Composite Sequence")
+        title="Create Composite (Image Sequence)")
+    CreateHDA: CreatorModel = Field(
+        default_factory=CreatorModel,
+        title="Create Houdini Digital Asset")
+    CreateKarmaROP: CreatorModel = Field(
+        default_factory=CreatorModel,
+        title="Create Karma ROP")
+    CreateMantraROP: CreatorModel = Field(
+        default_factory=CreatorModel,
+        title="Create Mantra ROP")
     CreatePointCache: CreatorModel = Field(
         default_factory=CreatorModel,
-        title="Create Point Cache")
+        title="Create PointCache (Abc)")
+    CreateBGEO: CreatorModel = Field(
+        default_factory=CreatorModel,
+        title="Create PointCache (Bgeo)")
+    CreateRedshiftProxy: CreatorModel = Field(
+        default_factory=CreatorModel,
+        title="Create Redshift Proxy")
     CreateRedshiftROP: CreatorModel = Field(
         default_factory=CreatorModel,
-        title="Create RedshiftROP")
-    CreateRemotePublish: CreatorModel = Field(
+        title="Create Redshift ROP")
+    CreateReview: CreatorModel = Field(
         default_factory=CreatorModel,
-        title="Create Remote Publish")
+        title="Create Review")
+    # "-" is not compatible in the new model
+    CreateStaticMesh: CreateStaticMeshModel = Field(
+        default_factory=CreateStaticMeshModel,
+        title="Create Static Mesh")
+    CreateUSD: CreatorModel = Field(
+        default_factory=CreatorModel,
+        title="Create USD (experimental)")
+    CreateUSDRender: CreatorModel = Field(
+        default_factory=CreatorModel,
+        title="Create USD render (experimental)")
     CreateVDBCache: CreatorModel = Field(
         default_factory=CreatorModel,
         title="Create VDB Cache")
-    CreateUSD: CreatorModel = Field(
+    CreateVrayROP: CreatorModel = Field(
         default_factory=CreatorModel,
-        title="Create USD")
-    CreateUSDModel: CreatorModel = Field(
-        default_factory=CreatorModel,
-        title="Create USD model")
-    USDCreateShadingWorkspace: CreatorModel = Field(
-        default_factory=CreatorModel,
-        title="Create USD shading workspace")
-    CreateUSDRender: CreatorModel = Field(
-        default_factory=CreatorModel,
-        title="Create USD render")
+        title="Create VRay ROP")
 
 
 DEFAULT_HOUDINI_CREATE_SETTINGS = {
+    "CreateAlembicCamera": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
     "CreateArnoldAss": {
         "enabled": True,
         "default_variants": ["Main"],
         "ext": ".ass"
+    },
+    "CreateArnoldRop": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateCompositeSequence": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateHDA": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateKarmaROP": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateMantraROP": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreatePointCache": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateBGEO": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateRedshiftProxy": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateRedshiftROP": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateReview": {
+        "enabled": True,
+        "default_variants": ["Main"]
     },
     "CreateStaticMesh": {
         "enabled": True,
@@ -93,44 +151,20 @@ DEFAULT_HOUDINI_CREATE_SETTINGS = {
             "UCX"
         ]
     },
-    "CreateAlembicCamera": {
-        "enabled": True,
+    "CreateUSD": {
+        "enabled": False,
         "default_variants": ["Main"]
     },
-    "CreateCompositeSequence": {
-        "enabled": True,
-        "default_variants": ["Main"]
-    },
-    "CreatePointCache": {
-        "enabled": True,
-        "default_variants": ["Main"]
-    },
-    "CreateRedshiftROP": {
-        "enabled": True,
-        "default_variants": ["Main"]
-    },
-    "CreateRemotePublish": {
-        "enabled": True,
+    "CreateUSDRender": {
+        "enabled": False,
         "default_variants": ["Main"]
     },
     "CreateVDBCache": {
         "enabled": True,
         "default_variants": ["Main"]
     },
-    "CreateUSD": {
-        "enabled": False,
-        "default_variants": ["Main"]
-    },
-    "CreateUSDModel": {
-        "enabled": False,
-        "default_variants": ["Main"]
-    },
-    "USDCreateShadingWorkspace": {
-        "enabled": False,
-        "default_variants": ["Main"]
-    },
-    "CreateUSDRender": {
-        "enabled": False,
+    "CreateVrayROP": {
+        "enabled": True,
         "default_variants": ["Main"]
     },
 }

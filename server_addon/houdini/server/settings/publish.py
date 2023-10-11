@@ -23,27 +23,52 @@ class BasicValidateModel(BaseSettingsModel):
 
 
 class PublishPluginsModel(BaseSettingsModel):
-    ValidateWorkfilePaths: ValidateWorkfilePathsModel = Field(
-        default_factory=ValidateWorkfilePathsModel,
-        title="Validate workfile paths settings.")
-    ValidateReviewColorspace: BasicValidateModel = Field(
-        default_factory=BasicValidateModel,
-        title="Validate Review Colorspace.")
     ValidateContainers: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Latest Containers.")
-    ValidateSubsetName: BasicValidateModel = Field(
-        default_factory=BasicValidateModel,
-        title="Validate Subset Name.")
     ValidateMeshIsStatic: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Mesh is Static.")
+    ValidateReviewColorspace: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Review Colorspace.")
+    ValidateSubsetName: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Subset Name.")
     ValidateUnrealStaticMeshName: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Unreal Static Mesh Name.")
+    ValidateWorkfilePaths: ValidateWorkfilePathsModel = Field(
+        default_factory=ValidateWorkfilePathsModel,
+        title="Validate workfile paths settings.")
 
 
 DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
+    "ValidateContainers": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateMeshIsStatic": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateReviewColorspace": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateSubsetName": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ValidateUnrealStaticMeshName": {
+        "enabled": False,
+        "optional": True,
+        "active": True
+    },
     "ValidateWorkfilePaths": {
         "enabled": True,
         "optional": True,
@@ -55,30 +80,5 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
             "$HIP",
             "$JOB"
         ]
-    },
-    "ValidateReviewColorspace": {
-        "enabled": True,
-        "optional": True,
-        "active": True
-    },
-    "ValidateContainers": {
-        "enabled": True,
-        "optional": True,
-        "active": True
-    },
-    "ValidateSubsetName": {
-        "enabled": True,
-        "optional": True,
-        "active": True
-    },
-    "ValidateMeshIsStatic": {
-        "enabled": True,
-        "optional": True,
-        "active": True
-    },
-    "ValidateUnrealStaticMeshName": {
-        "enabled": False,
-        "optional": True,
-        "active": True
     }
 }
