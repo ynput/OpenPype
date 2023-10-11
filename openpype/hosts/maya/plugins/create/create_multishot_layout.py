@@ -185,18 +185,18 @@ class CreateMultishotLayout(plugin.MayaCreator):
         """
         # if folder_path is None, project is selected as a root
         # and its name is used as a parent id
-        parent_id = [self.project_name]
+        parent_id = self.project_name
         if folder_path:
             current_folder = get_folder_by_path(
                 project_name=self.project_name,
                 folder_path=folder_path,
             )
-            parent_id = [current_folder["id"]]
+            parent_id = current_folder["id"]
 
         # get all child folders of the current one
         child_folders = get_folders(
             project_name=self.project_name,
-            parent_ids=parent_id,
+            parent_ids=[parent_id],
             fields=[
                 "attrib.clipIn", "attrib.clipOut",
                 "attrib.frameStart", "attrib.frameEnd",
