@@ -1,0 +1,59 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:container-2.0",
+    "description": "A loaded asset",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "schema",
+        "id",
+        "objectName",
+        "name",
+        "namespace",
+        "loader",
+        "representation"
+    ],
+    "properties": {
+        "schema": {
+            "description": "Schema identifier for payload",
+            "type": "string",
+            "enum": ["openpype:container-2.0"],
+            "example": "openpype:container-2.0"
+        },
+          "id": {
+            "description": "Identifier for finding object in host",
+            "type": "string",
+            "enum": ["pyblish.avalon.container"],
+            "example": "pyblish.avalon.container"
+        },
+        "objectName": {
+            "description": "Name of internal object, such as the objectSet in Maya.",
+            "type": "string",
+            "example": "Bruce_:rigDefault_CON"
+        },
+        "loader": {
+            "description": "Name of loader plug-in used to produce this container",
+            "type": "string",
+            "example": "ModelLoader"
+        },
+        "name": {
+            "description": "Internal object name of container in application",
+            "type": "string",
+            "example": "modelDefault_01"
+        },
+        "namespace": {
+            "description": "Internal namespace of container in application",
+            "type": "string",
+            "example": "Bruce_"
+        },
+        "representation": {
+            "description": "Unique id of representation in database",
+            "type": "string",
+            "example": "59523f355f8c1b5f6c5e8348"
+        }
+    }
+}

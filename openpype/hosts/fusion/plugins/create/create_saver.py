@@ -30,10 +30,6 @@ class CreateSaver(NewCreator):
     instance_attributes = [
         "reviewable"
     ]
-    default_variants = [
-        "Main",
-        "Mask"
-    ]
 
     # TODO: This should be renamed together with Nuke so it is aligned
     temp_rendering_path_template = (
@@ -250,11 +246,7 @@ class CreateSaver(NewCreator):
             label="Review",
         )
 
-    def apply_settings(
-        self,
-        project_settings,
-        system_settings
-    ):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings

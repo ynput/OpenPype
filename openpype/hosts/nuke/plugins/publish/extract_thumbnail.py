@@ -54,6 +54,7 @@ class ExtractThumbnail(publish.Extractor):
     def render_thumbnail(self, instance, output_name=None, **kwargs):
         first_frame = instance.data["frameStartHandle"]
         last_frame = instance.data["frameEndHandle"]
+        colorspace = instance.data["colorspace"]
 
         # find frame range and define middle thumb frame
         mid_frame = int((last_frame - first_frame) / 2)
@@ -90,8 +91,6 @@ class ExtractThumbnail(publish.Extractor):
 
         if collection:
             # get path
-            fname = os.path.basename(collection.format(
-                "{head}{padding}{tail}"))
             fhead = collection.format("{head}")
 
             thumb_fname = list(collection)[mid_frame]
@@ -112,8 +111,8 @@ class ExtractThumbnail(publish.Extractor):
         if self.use_rendered and os.path.isfile(path_render):
             # check if file exist otherwise connect to write node
             rnode = nuke.createNode("Read")
-
             rnode["file"].setValue(path_render)
+            rnode["colorspace"].setValue(colorspace)
 
             # turn it raw if none of baking is ON
             if all([

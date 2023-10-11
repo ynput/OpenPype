@@ -100,7 +100,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
         instance.data["representations"].append(representation)
 
-        self.log.info(
+        self.log.debug(
             "Extracted instance {} to: {}".format(instance.name, staging_dir)
         )
 
@@ -126,7 +126,7 @@ class ExtractArnoldSceneSource(publish.Extractor):
         instance.data["representations"].append(representation)
 
     def _extract(self, nodes, attribute_data, kwargs):
-        self.log.info(
+        self.log.debug(
             "Writing {} with:\n{}".format(kwargs["filename"], kwargs)
         )
         filenames = []
@@ -180,12 +180,12 @@ class ExtractArnoldSceneSource(publish.Extractor):
 
             with lib.attribute_values(attribute_data):
                 with lib.maintained_selection():
-                    self.log.info(
+                    self.log.debug(
                         "Writing: {}".format(duplicate_nodes)
                     )
                     cmds.select(duplicate_nodes, noExpand=True)
 
-                    self.log.info(
+                    self.log.debug(
                         "Extracting ass sequence with: {}".format(kwargs)
                     )
 
@@ -194,6 +194,6 @@ class ExtractArnoldSceneSource(publish.Extractor):
                     for file in exported_files:
                         filenames.append(os.path.split(file)[1])
 
-                    self.log.info("Exported: {}".format(filenames))
+                    self.log.debug("Exported: {}".format(filenames))
 
         return filenames, nodes_by_id

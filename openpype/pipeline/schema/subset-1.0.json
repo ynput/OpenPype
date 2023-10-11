@@ -1,0 +1,35 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:subset-1.0",
+    "description": "A container of instances",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "schema",
+        "name",
+        "versions"
+    ],
+
+    "properties": {
+        "schema": {
+            "description": "Schema identifier for payload",
+            "type": "string"
+        },
+        "name": {
+            "description": "Name of directory",
+            "type": "string"
+        },
+        "versions": {
+            "type": "array",
+            "items": {
+                "$ref": "version.json"
+            }
+        }
+    },
+
+    "definitions": {}
+}

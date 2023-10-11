@@ -7,6 +7,7 @@ from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 
@@ -37,16 +38,19 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
         # if a deformer has been created on the shape
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Nodes found with mismatching "
-                               "IDs: {0}".format(invalid))
+            raise PublishValidationError(
+                "Nodes found with mismatching IDs: {0}".format(invalid)
+            )
 
     @classmethod
     def get_invalid(cls, instance):
         """Get all nodes which do not match the criteria"""
 
-        invalid = []
+        out_set = instance.data["rig_sets"].get("out_SET")
+        if not out_set:
+            return []
 
-        out_set = next(x for x in instance if x.endswith("out_SET"))
+        invalid = []
         members = cmds.sets(out_set, query=True)
         shapes = cmds.ls(members,
                          dag=True,

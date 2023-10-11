@@ -10,12 +10,15 @@ from openpype.hosts.maya.api.lib import (
     set_attribute
 )
 from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
     RepairAction,
     ValidateMeshOrder,
+    PublishValidationError
 )
 
 
-class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
+class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin,
+                                   OptionalPyblishPluginMixin):
     """Validate the mesh has default Arnold attributes.
 
     It compares all Arnold attributes from a default mesh. This is to ensure
@@ -30,29 +33,37 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
         openpype.hosts.maya.api.action.SelectInvalidAction,
         RepairAction
     ]
+
     optional = True
-    if cmds.getAttr(
-       "defaultRenderGlobals.currentRenderer").lower() == "arnold":
-        active = True
-    else:
-        active = False
+
+    # cache (will be `dict` when cached)
+    arnold_mesh_defaults = None
 
     @classmethod
     def get_default_attributes(cls):
+
+        if cls.arnold_mesh_defaults is not None:
+            # Use from cache
+            return cls.arnold_mesh_defaults
+
         # Get default arnold attribute values for mesh type.
         defaults = {}
         with delete_after() as tmp:
-            transform = cmds.createNode("transform")
+            transform = cmds.createNode("transform", skipSelect=True)
             tmp.append(transform)
 
-            mesh = cmds.createNode("mesh", parent=transform)
-            for attr in cmds.listAttr(mesh, string="ai*"):
+            mesh = cmds.createNode("mesh", parent=transform, skipSelect=True)
+            arnold_attributes = cmds.listAttr(mesh,
+                                              string="ai*",
+                                              fromPlugin=True) or []
+            for attr in arnold_attributes:
                 plug = "{}.{}".format(mesh, attr)
                 try:
                     defaults[attr] = get_attribute(plug)
-                except RuntimeError:
+                except PublishValidationError:
                     cls.log.debug("Ignoring arnold attribute: {}".format(attr))
 
+        cls.arnold_mesh_defaults = defaults  # assign cache
         return defaults
 
     @classmethod
@@ -101,10 +112,16 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
                     )
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
+        if not cmds.pluginInfo("mtoa", query=True, loaded=True):
+            # Arnold attributes only exist if plug-in is loaded
+            return
 
         invalid = self.get_invalid_attributes(instance, compute=True)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "Non-default Arnold attributes found in instance:"
                 " {0}".format(invalid)
             )

@@ -285,6 +285,10 @@
             "name": "template_workfile_options"
         },
         {
+            "type": "label",
+            "label": "^ Settings and for <span style=\"color:#FF0000\";><b>Workfile Builder</b></span> is deprecated and will be soon removed.  <br> Please use <b>Template Workfile Build Settings</b> instead."
+        },
+        {
             "type": "schema",
             "name": "schema_templated_workfile_build"
         },

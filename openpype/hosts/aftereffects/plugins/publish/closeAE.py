@@ -15,7 +15,7 @@ class CloseAE(pyblish.api.ContextPlugin):
     active = True
 
     hosts = ["aftereffects"]
-    targets = ["remotepublish"]
+    targets = ["automated"]
 
     def process(self, context):
         self.log.info("CloseAE")

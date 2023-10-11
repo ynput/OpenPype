@@ -1,0 +1,10 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:config-1.0",
+    "description": "A project configuration.",
+
+    "type": "object",
+
+    "additionalProperties": true
+}

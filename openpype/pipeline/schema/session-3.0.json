@@ -1,0 +1,81 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:session-3.0",
+    "description": "The Avalon environment",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "AVALON_PROJECT",
+        "AVALON_ASSET"
+    ],
+
+    "properties": {
+        "AVALON_PROJECTS": {
+            "description": "Absolute path to root of project directories",
+            "type": "string",
+            "example": "/nas/projects"
+        },
+        "AVALON_PROJECT": {
+            "description": "Name of project",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "Hulk"
+        },
+        "AVALON_ASSET": {
+            "description": "Name of asset",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "Bruce"
+        },
+        "AVALON_TASK": {
+            "description": "Name of task",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "modeling"
+        },
+        "AVALON_APP": {
+            "description": "Name of host",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "maya2016"
+        },
+        "AVALON_DB": {
+            "description": "Name of database",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "avalon",
+            "default": "avalon"
+        },
+        "AVALON_LABEL": {
+            "description": "Nice name of Avalon, used in e.g. graphical user interfaces",
+            "type": "string",
+            "example": "Mindbender",
+            "default": "Avalon"
+        },
+        "AVALON_TIMEOUT": {
+            "description": "Wherever there is a need for a timeout, this is the default value.",
+            "type": "string",
+            "pattern": "^[0-9]*$",
+            "default": "1000",
+            "example": "1000"
+        },
+        "AVALON_INSTANCE_ID": {
+            "description": "Unique identifier for instances in a working file",
+            "type": "string",
+            "pattern": "^[\\w.]*$",
+            "default": "avalon.instance",
+            "example": "avalon.instance"
+        },
+        "AVALON_CONTAINER_ID": {
+            "description": "Unique identifier for a loaded representation in a working file",
+            "type": "string",
+            "pattern": "^[\\w.]*$",
+            "default": "avalon.container",
+            "example": "avalon.container"
+        }
+    }
+}

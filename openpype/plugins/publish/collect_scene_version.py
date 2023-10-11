@@ -3,6 +3,7 @@ import pyblish.api
 
 from openpype.lib import get_version_from_path
 from openpype.tests.lib import is_in_tests
+from openpype.pipeline import KnownPublishError
 
 
 class CollectSceneVersion(pyblish.api.ContextPlugin):
@@ -38,11 +39,15 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         if (
             os.environ.get("HEADLESS_PUBLISH")
             and not is_in_tests()
-            and context.data["hostName"] in self.skip_hosts_headless_publish):
+            and context.data["hostName"] in self.skip_hosts_headless_publish
+        ):
             self.log.debug("Skipping for headless publishing")
             return
 
-        assert context.data.get('currentFile'), "Cannot get current file"
+        if not context.data.get('currentFile'):
+            raise KnownPublishError("Cannot get current workfile path. "
+                                    "Make sure your scene is saved.")
+
         filename = os.path.basename(context.data.get('currentFile'))
 
         if '<shell>' in filename:
@@ -53,8 +58,11 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         )
 
         version = get_version_from_path(filename)
-        assert version, "Cannot determine version"
+        if version is None:
+            raise KnownPublishError("Unable to retrieve version number from "
+                                    "filename: {}".format(filename))
 
-        rootVersion = int(version)
-        context.data['version'] = rootVersion
-        self.log.info('Scene Version: %s' % context.data.get('version'))
+        context.data['version'] = int(version)
+        self.log.debug(
+            "Collected scene version: {}".format(context.data.get('version'))
+        )

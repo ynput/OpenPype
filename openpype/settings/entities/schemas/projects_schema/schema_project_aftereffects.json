@@ -32,7 +32,7 @@
                     "children": [
                         {
                             "type": "list",
-                            "key": "defaults",
+                            "key": "default_variants",
                             "label": "Default Variants",
                             "object_type": "text",
                             "docstring": "Fill default variant(s) (like 'Main' or 'Default') used in subset name creation."

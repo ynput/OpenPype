@@ -106,8 +106,8 @@ class AfterEffectsSubmitDeadline(
             if value:
                 dln_job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        dln_job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        dln_job_info.add_render_job_env_var()
 
         return dln_job_info
 

@@ -48,7 +48,6 @@ class LoadClip(opfapi.ClipLoader):
         self.fpd = fproject.current_workspace.desktop
 
         # load clip to timeline and get main variables
-        namespace = namespace
         version = context['version']
         version_data = version.get("data", {})
         version_name = version.get("name", None)
@@ -82,8 +81,9 @@ class LoadClip(opfapi.ClipLoader):
             os.makedirs(openclip_dir)
 
         # prepare clip data from context ad send it to openClipLoader
+        path = self.filepath_from_context(context)
         loading_context = {
-            "path": self.fname.replace("\\", "/"),
+            "path": path.replace("\\", "/"),
             "colorspace": colorspace,
             "version": "v{:0>3}".format(version_name),
             "layer_rename_template": self.layer_rename_template,

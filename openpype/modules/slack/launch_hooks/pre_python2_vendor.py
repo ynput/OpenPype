@@ -1,5 +1,5 @@
 import os
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook
 from openpype_modules.slack import SLACK_MODULE_DIR
 
 
@@ -8,6 +8,7 @@ class PrePython2Support(PreLaunchHook):
 
     Path to vendor modules is added to the beginning of PYTHONPATH.
     """
+    launch_types = set()
 
     def execute(self):
         if not self.application.use_python_2:

@@ -2,7 +2,7 @@
 
 import bpy
 
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_task_name
 from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
@@ -37,7 +37,7 @@ class CreateAnimation(plugin.Creator):
         # asset_group.empty_display_type = 'SINGLE_ARROW'
         asset_group = bpy.data.collections.new(name=name)
         instances.children.link(asset_group)
-        self.data['task'] = legacy_io.Session.get('AVALON_TASK')
+        self.data['task'] = get_current_task_name()
         lib.imprint(asset_group, self.data)
 
         if (self.options or {}).get("useSelection"):

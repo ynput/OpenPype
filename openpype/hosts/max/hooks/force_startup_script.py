@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Pre-launch to force 3ds max startup script."""
-from openpype.lib import PreLaunchHook
 import os
+from openpype.hosts.max import MAX_HOST_DIR
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class ForceStartupScript(PreLaunchHook):
@@ -13,12 +14,14 @@ class ForceStartupScript(PreLaunchHook):
 
     Hook `GlobalHostDataHook` must be executed before this hook.
     """
-    app_groups = ["3dsmax"]
+    app_groups = {"3dsmax", "adsk_3dsmax"}
     order = 11
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         startup_args = [
             "-U",
             "MAXScript",
-            f"{os.getenv('OPENPYPE_ROOT')}\\openpype\\hosts\\max\\startup\\startup.ms"]  # noqa
+            os.path.join(MAX_HOST_DIR, "startup", "startup.ms"),
+        ]
         self.launch_context.launch_args.append(startup_args)

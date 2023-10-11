@@ -5,7 +5,6 @@ import tempfile
 import contextlib
 
 import pyblish
-import pyblish.cli
 import pyblish.plugin
 from pyblish.vendor import six
 

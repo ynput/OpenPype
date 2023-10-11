@@ -17,7 +17,7 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["pointcache"]
+    families = ["abc"]
     hosts = ["houdini"]
     label = "Validate Primitive to Detail (Abc)"
 

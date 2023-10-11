@@ -105,7 +105,11 @@
                 },
                 {
                     "key": "ExtractCamera",
-                    "label": "Extract FBX Camera as FBX"
+                    "label": "Extract Camera as FBX"
+                },
+                {
+                    "key": "ExtractCameraABC",
+                    "label": "Extract Camera as ABC"
                 },
                 {
                     "key": "ExtractLayout",

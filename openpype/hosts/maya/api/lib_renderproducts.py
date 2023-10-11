@@ -177,7 +177,7 @@ def get(layer, render_instance=None):
     }.get(renderer_name.lower(), None)
     if renderer is None:
         raise UnsupportedRendererException(
-            "unsupported {}".format(renderer_name)
+            "Unsupported renderer: {}".format(renderer_name)
         )
 
     return renderer(layer, render_instance)

@@ -1,7 +1,5 @@
-import os
-
 import pyblish.api
-from openpype.lib.mongo import OpenPypeMongoConnection
+from openpype.client.mongo import OpenPypeMongoConnection
 
 
 class CollectShotgridEntities(pyblish.api.ContextPlugin):
@@ -14,7 +12,7 @@ class CollectShotgridEntities(pyblish.api.ContextPlugin):
 
         avalon_project = context.data.get("projectEntity")
         avalon_asset = context.data.get("assetEntity")
-        avalon_task_name = os.getenv("AVALON_TASK")
+        avalon_task_name = context.data.get("task")
 
         self.log.info(avalon_project)
         self.log.info(avalon_asset)

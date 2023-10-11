@@ -1,7 +1,10 @@
 from maya import cmds
 
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
@@ -56,4 +59,4 @@ class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
                 invalid.append(plug)
 
         if invalid:
-            raise RuntimeError("Invalid connections.")
+            raise PublishValidationError("Invalid connections.")

@@ -1,0 +1,100 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:container-1.0",
+    "description": "A loaded asset",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "id",
+        "objectName",
+        "name",
+        "author",
+        "loader",
+        "families",
+        "time",
+        "subset",
+        "asset",
+        "representation",
+        "version",
+        "silo",
+        "path",
+        "source"
+    ],
+    "properties": {
+        "id": {
+            "description": "Identifier for finding object in host",
+            "type": "string",
+            "enum": ["pyblish.mindbender.container"],
+            "example": "pyblish.mindbender.container"
+        },
+        "objectName": {
+            "description": "Name of internal object, such as the objectSet in Maya.",
+            "type": "string",
+            "example": "Bruce_:rigDefault_CON"
+        },
+        "name": {
+            "description": "Full name of application object",
+            "type": "string",
+            "example": "modelDefault"
+        },
+        "author": {
+            "description": "Name of the author of the published version",
+            "type": "string",
+            "example": "Marcus Ottosson"
+        },
+        "loader": {
+            "description": "Name of loader plug-in used to produce this container",
+            "type": "string",
+            "example": "ModelLoader"
+        },
+        "families": {
+            "description": "Families associated with the this subset",
+            "type": "string",
+            "example": "mindbender.model"
+        },
+        "time": {
+            "description": "File-system safe, formatted time",
+            "type": "string",
+            "example": "20170329T131545Z"
+        },
+        "subset": {
+            "description": "Name of source subset",
+            "type": "string",
+            "example": "modelDefault"
+        },
+        "asset": {
+            "description": "Name of source asset",
+            "type": "string"  ,
+            "example": "Bruce"
+        },
+        "representation": {
+            "description": "Name of source representation",
+            "type": "string"  ,
+            "example": ".ma"
+        },
+        "version": {
+            "description": "Version number",
+            "type": "number",
+            "example": 12
+        },
+        "silo": {
+            "description": "Silo of parent asset",
+            "type": "string",
+            "example": "assets"
+        },
+        "path": {
+            "description": "Absolute path on disk",
+            "type": "string",
+            "example": "{root}/assets/Bruce/publish/rigDefault/v002"
+        },
+        "source": {
+            "description": "Absolute path to file from which this version was published",
+            "type": "string",
+            "example": "{root}/assets/Bruce/work/rigging/maya/scenes/rig_v001.ma"
+        }
+    }
+}

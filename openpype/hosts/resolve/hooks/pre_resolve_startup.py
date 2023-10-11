@@ -1,6 +1,6 @@
 import os
 
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 import openpype.hosts.resolve
 
 
@@ -9,7 +9,8 @@ class PreLaunchResolveStartup(PreLaunchHook):
 
     """
     order = 11
-    app_groups = ["resolve"]
+    app_groups = {"resolve"}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         # Set the openpype prelaunch startup script path for easy access

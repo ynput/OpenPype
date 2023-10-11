@@ -309,26 +309,6 @@
                                 "type": "separator"
                             },
                             {
-                                "type": "label",
-                                "label": "Currently we are supporting also multiple reposition nodes. <br/>Older single reformat node is still supported <br/>and if it is activated then preference will <br/>be on it. If you want to use multiple reformat <br/>nodes then you need to disable single reformat <br/>node and enable multiple <b>Reformat nodes</b> <a href=\"settings://project_settings/nuke/publish/ExtractReviewDataMov/outputs/baking/reformat_nodes_config/enabled\"><b>here</b></a>."
-                            },
-                            {
-                                "type": "boolean",
-                                "key": "reformat_node_add",
-                                "label": "Add Reformat Node",
-                                "default": false
-                            },
-                            {
-                                "type": "schema_template",
-                                "name": "template_nuke_knob_inputs",
-                                "template_data": [
-                                    {
-                                        "label": "Reformat Node Knobs",
-                                        "key": "reformat_node_config"
-                                    }
-                                ]
-                            },
-                            {
                                 "key": "reformat_nodes_config",
                                 "type": "dict",
                                 "label": "Reformat Nodes",

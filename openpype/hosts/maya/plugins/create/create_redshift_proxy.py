@@ -2,22 +2,24 @@
 """Creator of Redshift proxy subset types."""
 
 from openpype.hosts.maya.api import plugin, lib
+from openpype.lib import BoolDef
 
 
-class CreateRedshiftProxy(plugin.Creator):
+class CreateRedshiftProxy(plugin.MayaCreator):
     """Create instance of Redshift Proxy subset."""
 
-    name = "redshiftproxy"
+    identifier = "io.openpype.creators.maya.redshiftproxy"
     label = "Redshift Proxy"
     family = "redshiftproxy"
     icon = "gears"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateRedshiftProxy, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        animation_data = lib.collect_animation_data()
+        defs = [
+            BoolDef("animation",
+                    label="Export animation",
+                    default=False)
+        ]
 
-        self.data["animation"] = False
-        self.data["proxyFrameStart"] = animation_data["frameStart"]
-        self.data["proxyFrameEnd"] = animation_data["frameEnd"]
-        self.data["proxyFrameStep"] = animation_data["step"]
+        defs.extend(lib.collect_animation_defs())
+        return defs

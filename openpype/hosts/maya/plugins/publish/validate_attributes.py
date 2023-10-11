@@ -1,17 +1,16 @@
 from collections import defaultdict
 
-from maya import cmds
-
 import pyblish.api
+from maya import cmds
 
 from openpype.hosts.maya.api.lib import set_attribute
 from openpype.pipeline.publish import (
-    RepairAction,
-    ValidateContentsOrder,
-)
+    OptionalPyblishPluginMixin, PublishValidationError, RepairAction,
+    ValidateContentsOrder)
 
 
-class ValidateAttributes(pyblish.api.InstancePlugin):
+class ValidateAttributes(pyblish.api.InstancePlugin,
+                         OptionalPyblishPluginMixin):
     """Ensure attributes are consistent.
 
     Attributes to validate and their values comes from the
@@ -32,13 +31,16 @@ class ValidateAttributes(pyblish.api.InstancePlugin):
     attributes = None
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Check for preset existence.
         if not self.attributes:
             return
 
         invalid = self.get_invalid(instance, compute=True)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "Found attributes with invalid values: {}".format(invalid)
             )
 

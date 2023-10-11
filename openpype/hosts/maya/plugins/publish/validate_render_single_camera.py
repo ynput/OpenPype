@@ -5,7 +5,10 @@ from maya import cmds
 
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
@@ -28,7 +31,7 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
         """Process all the cameras in the instance"""
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Invalid cameras for render.")
+            raise PublishValidationError("Invalid cameras for render.")
 
     @classmethod
     def get_invalid(cls, instance):

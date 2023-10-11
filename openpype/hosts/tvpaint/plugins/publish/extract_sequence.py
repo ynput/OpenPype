@@ -63,7 +63,6 @@ class ExtractSequence(pyblish.api.Extractor):
             "ignoreLayersTransparency", False
         )
 
-        family_lowered = instance.data["family"].lower()
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
 
@@ -76,11 +75,9 @@ class ExtractSequence(pyblish.api.Extractor):
 
         # Frame start/end may be stored as float
         frame_start = int(instance.data["frameStart"])
-        frame_end = int(instance.data["frameEnd"])
 
         # Handles are not stored per instance but on Context
         handle_start = instance.context.data["handleStart"]
-        handle_end = instance.context.data["handleEnd"]
 
         scene_bg_color = instance.context.data["sceneBgColor"]
 
