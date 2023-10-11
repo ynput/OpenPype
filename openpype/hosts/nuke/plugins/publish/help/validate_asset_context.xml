@@ -3,10 +3,13 @@
     <error id="main">
         <title>Shot/Asset name</title>
         <description>
-## Invalid Shot/Asset name in subset
+## Invalid node context keys and values
 
-Following Node with name `{node_name}`:
-Is in context of `{correct_name}` but Node _asset_ knob is set as `{wrong_name}`.
+Following Node with name: \`{node_name}\`
+
+Context keys and values: \`{correct_values}\`
+
+Wrong keys and values: \`{wrong_values}\`.
 
 ### How to repair?
 

@@ -23,7 +23,7 @@ class ValidateOutputResolution(
     order = pyblish.api.ValidatorOrder
     optional = True
     families = ["render"]
-    label = "Write resolution"
+    label = "Validate Write resolution"
     hosts = ["nuke"]
     actions = [RepairAction]
 
