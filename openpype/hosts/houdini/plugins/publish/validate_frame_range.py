@@ -23,7 +23,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            node = invalid[0].path()
             raise PublishValidationError(
                 title="Invalid Frame Range",
                 message=(
@@ -41,8 +40,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                     "is set higher than the end frame.\n\nIf your ROP frame "
                     "range is correct and you do not want to apply asset "
                     "handles make sure to disable Use asset handles on the "
-                    "publish instance.\n\nAssociated Node: \"{0}\""
-                    .format(node)
+                    "publish instance."
                 )
             )
 
