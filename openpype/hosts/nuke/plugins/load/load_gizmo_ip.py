@@ -28,7 +28,7 @@ class LoadGizmoInputProcess(load.LoaderPlugin):
 
     families = ["gizmo"]
     representations = ["*"]
-    extension = {"gizmo"}
+    extensions = {"gizmo"}
 
     label = "Load Gizmo - Input Process"
     order = 0
