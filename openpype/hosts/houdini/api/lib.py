@@ -589,8 +589,8 @@ def get_frame_data(node, asset_data=None, log=None):
             "current frame".format(node.path())
         )
     else:
-        data["frameStartHandle"] = node.evalParm("f1")
-        data["frameEndHandle"] = node.evalParm("f2")
+        data["frameStartHandle"] = int(node.evalParm("f1"))
+        data["frameEndHandle"] = int(node.evalParm("f2"))
         data["byFrameStep"] = node.evalParm("f3")
         data["handleStart"] = asset_data.get("handleStart", 0)
         data["handleEnd"] = asset_data.get("handleEnd", 0)
