@@ -842,11 +842,20 @@ def _convert_nuke_project_settings(ayon_settings, output):
         ayon_imageio["regexInputs"] = regex_inputs
 
     # nodes
-    for item in ayon_imageio["nodes"]["required_nodes"]:
+    ayon_imageio_nodes = ayon_imageio["nodes"]
+    if ayon_imageio_nodes.get("required_nodes"):
+        ayon_imageio_nodes["requiredNodes"] = (
+            ayon_imageio_nodes.pop("required_nodes"))
+    if ayon_imageio_nodes.get("override_nodes"):
+        ayon_imageio_nodes["overrideNodes"] = (
+            ayon_imageio_nodes.pop("override_nodes"))
+
+    for item in ayon_imageio_nodes["requiredNodes"]:
         if item.get("nuke_node_class"):
             item["nukeNodeClass"] = item["nuke_node_class"]
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
-    for item in ayon_imageio["nodes"]["override_nodes"]:
+
+    for item in ayon_imageio["nodes"]["overrideNodes"]:
         if item.get("nuke_node_class"):
             item["nukeNodeClass"] = item["nuke_node_class"]
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
