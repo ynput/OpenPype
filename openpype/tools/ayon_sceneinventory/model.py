@@ -22,7 +22,6 @@ from openpype.pipeline import (
 )
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
-from openpype.modules import ModulesManager
 
 from .lib import walk_hierarchy
 
@@ -260,17 +259,17 @@ class InventoryModel(TreeModel):
 
             subset = get_subset_by_id(project_name, version["parent"])
             if not subset:
-                not_found["subset"].extend(group_items)
+                not_found["product"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
             asset = get_asset_by_id(project_name, subset["parent"])
             if not asset:
-                not_found["asset"].extend(group_items)
+                not_found["folder"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
-            grouped[repre_id].update({
+            group_dict.update({
                 "representation": representation,
                 "version": version,
                 "subset": subset,
@@ -311,22 +310,23 @@ class InventoryModel(TreeModel):
 
         for repre_id, group_dict in sorted(grouped.items()):
             group_items = group_dict["items"]
-            representation = grouped[repre_id]["representation"]
-            version = grouped[repre_id]["version"]
-            subset = grouped[repre_id]["subset"]
-            asset = grouped[repre_id]["asset"]
+            representation = group_dict["representation"]
+            version = group_dict["version"]
+            subset = group_dict["subset"]
+            asset = group_dict["asset"]
 
             # Get the primary family
-            no_family = ""
             maj_version, _ = schema.get_schema_version(subset["schema"])
             if maj_version < 3:
-                prim_family = version["data"].get("family")
-                if not prim_family:
-                    families = version["data"].get("families")
-                    prim_family = families[0] if families else no_family
+                src_doc = version
             else:
-                families = subset["data"].get("families") or []
-                prim_family = families[0] if families else no_family
+                src_doc = subset
+
+            prim_family = src_doc["data"].get("family")
+            if not prim_family:
+                families = src_doc["data"].get("families")
+                if families:
+                    prim_family = families[0]
 
             # Store the highest available version so the model can know
             # whether current version is currently up-to-date.
@@ -342,7 +342,7 @@ class InventoryModel(TreeModel):
             group_node["representation"] = repre_id
             group_node["version"] = version["name"]
             group_node["highest_version"] = highest_version["name"]
-            group_node["family"] = prim_family
+            group_node["family"] = prim_family or ""
             group_node["familyIcon"] = family_icon
             group_node["count"] = len(group_items)
             group_node["isGroupNode"] = True

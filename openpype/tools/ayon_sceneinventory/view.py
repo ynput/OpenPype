@@ -258,14 +258,14 @@ class SceneInventoryView(QtWidgets.QTreeView):
         set_version_action.triggered.connect(
             lambda: self._show_version_dialog(items))
 
-        # switch asset
-        switch_asset_icon = qtawesome.icon("fa.sitemap", color=DEFAULT_COLOR)
-        switch_asset_action = QtWidgets.QAction(
-            switch_asset_icon,
-            "Switch Asset",
+        # switch folder
+        switch_folder_icon = qtawesome.icon("fa.sitemap", color=DEFAULT_COLOR)
+        switch_folder_action = QtWidgets.QAction(
+            switch_folder_icon,
+            "Switch Folder",
             menu
         )
-        switch_asset_action.triggered.connect(
+        switch_folder_action.triggered.connect(
             lambda: self._show_switch_dialog(items))
 
         # remove
@@ -285,7 +285,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
             menu.addAction(change_to_hero)
 
         menu.addAction(set_version_action)
-        menu.addAction(switch_asset_action)
+        menu.addAction(switch_folder_action)
 
         menu.addSeparator()
 
@@ -734,7 +734,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         dialog.setWindowTitle("Update failed")
 
         switch_btn = dialog.addButton(
-            "Switch Asset",
+            "Switch Folder",
             QtWidgets.QMessageBox.ActionRole
         )
         switch_btn.clicked.connect(lambda: self._show_switch_dialog(items))
@@ -744,7 +744,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
         msg = (
             "Version update to '{}' failed as representation doesn't exist."
             "\n\nPlease update to version with a valid representation"
-            " OR \n use 'Switch Asset' button to change asset."
+            " OR \n use 'Switch Folder' button to change folder."
         ).format(version_str)
         dialog.setText(msg)
         dialog.exec_()

@@ -7,9 +7,7 @@ from openpype.tools.utils.lib import (
     preserve_expanded_rows,
     preserve_selection,
 )
-from openpype.tools.ayon_sceneinventory.control import (
-    SceneInventoryController,
-)
+from openpype.tools.ayon_sceneinventory import SceneInventoryController
 
 from .model import (
     InventoryModel,

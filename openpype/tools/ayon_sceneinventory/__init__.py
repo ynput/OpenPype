@@ -1,9 +1,6 @@
-from .window import (
-    show,
-    SceneInventoryWindow
-)
+from .control import SceneInventoryController
+
 
 __all__ = (
-    "show",
-    "SceneInventoryWindow"
+    "SceneInventoryController",
 )

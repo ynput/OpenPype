@@ -1,4 +1,5 @@
 from qtpy import QtWidgets, QtCore
+
 from openpype import style
 
 
