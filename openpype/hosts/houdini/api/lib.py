@@ -559,7 +559,7 @@ def get_frame_data(node, asset_data=None, log=None):
         node(hou.Node)
 
     Returns:
-        dict: frame data for star, end and steps.
+        dict: frame data for start, end and steps.
 
     """
     if asset_data is None:
