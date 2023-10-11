@@ -932,7 +932,6 @@ def self_publish():
 
         active = node_path in inputs_paths
         instance["active"] = active
-        hou.node(node_path).parm("active").set(active)
 
     context.save_changes()
 

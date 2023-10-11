@@ -250,11 +250,14 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
                 key: changes[key].new_value
                 for key in changes.changed_keys
             }
+            # Update ParmTemplates
             self.imprint(
                 instance_node,
                 new_values,
                 update=True
             )
+            # Update values
+            instance_node.setParms(new_values)
 
     def imprint(self, node, values, update=False):
         # Never store instance node and instance id since that data comes
