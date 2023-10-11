@@ -18,7 +18,6 @@ from openpype.pipeline import (
     get_current_project_name,
     schema,
     HeroVersionType,
-    registered_host,
 )
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
@@ -181,15 +180,9 @@ class InventoryModel(TreeModel):
     def refresh(self, selected=None, items=None):
         """Refresh the model"""
 
-        host = registered_host()
         # for debugging or testing, injecting items from outside
         if items is None:
-            if isinstance(host, ILoadHost):
-                items = host.get_containers()
-            elif hasattr(host, "ls"):
-                items = host.ls()
-            else:
-                items = []
+            items = self._controller.get_containers()
 
         self.clear()
         if not selected or not self._hierarchy_view:

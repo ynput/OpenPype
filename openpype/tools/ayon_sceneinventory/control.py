@@ -1,5 +1,6 @@
 import ayon_api
 
+from openpype.host import ILoadHost
 from openpype.pipeline import (
     registered_host,
     get_current_context,
@@ -72,6 +73,14 @@ class SceneInventoryController:
         self._current_folder_id = folder_id
         self._current_folder_set = True
         return self._current_folder_id
+
+    def get_containers(self):
+        host = self._host
+        if isinstance(host, ILoadHost):
+            return host.get_containers()
+        elif hasattr(host, "ls"):
+            return host.ls()
+        return []
 
     # Site Sync methods
     def is_sync_server_enabled(self):
