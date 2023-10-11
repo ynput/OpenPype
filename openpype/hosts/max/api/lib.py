@@ -500,3 +500,57 @@ def get_plugins() -> list:
         plugin_info_list.append(plugin_info)
 
     return plugin_info_list
+
+def set_preview_arg(instance, filepath,
+                    start, end, fps):
+    """Function to set up preview arguments in MaxScript.
+
+    Args:
+        instance (str): instance
+        filepath (str): output of the preview animation
+        start (int): startFrame
+        end (int): endFrame
+        fps (float): fps value
+
+    Returns:
+        list: job arguments
+    """
+    job_args = list()
+    default_option = f'CreatePreview filename:"{filepath}"'
+    job_args.append(default_option)
+    frame_option = f"outputAVI:false start:{start} end:{end} fps:{fps}" # noqa
+    job_args.append(frame_option)
+    options = [
+        "percentSize", "dspGeometry", "dspShapes",
+        "dspLights", "dspCameras", "dspHelpers", "dspParticles",
+        "dspBones", "dspBkg", "dspGrid", "dspSafeFrame", "dspFrameNums"
+    ]
+
+    for key in options:
+        enabled = instance.data.get(key)
+        if enabled:
+            job_args.append(f"{key}:{enabled}")
+    if get_max_version() >= 2024:
+        visual_style_preset = instance.data.get("visualStyleMode")
+        if visual_style_preset == "Realistic":
+            visual_style_preset = "defaultshading"
+        else:
+            visual_style_preset = visual_style_preset.lower()
+        # new argument exposed for Max 2024 for visual style
+        visual_style_option = f"vpStyle:#{visual_style_preset}"
+        job_args.append(visual_style_option)
+        # new argument for pre-view preset exposed in Max 2024
+        preview_preset = instance.data.get("viewportPreset")
+        if preview_preset == "Quality":
+            preview_preset = "highquality"
+        elif preview_preset == "Customize":
+            preview_preset = "userdefined"
+        else:
+            preview_preset = preview_preset.lower()
+        preview_preset.option = f"vpPreset:#{visual_style_preset}"
+        job_args.append(preview_preset)
+
+    job_str = " ".join(job_args)
+    log.debug(job_str)
+
+    return job_str

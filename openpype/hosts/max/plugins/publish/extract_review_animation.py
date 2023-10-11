@@ -5,7 +5,8 @@ from pymxs import runtime as rt
 from openpype.pipeline import publish
 from openpype.hosts.max.api.lib import (
     viewport_camera,
-    get_max_version
+    get_max_version,
+    set_preview_arg
 )
 
 
@@ -25,7 +26,7 @@ class ExtractReviewAnimation(publish.Extractor):
         filename = "{0}..{1}".format(instance.name, ext)
         start = int(instance.data["frameStart"])
         end = int(instance.data["frameEnd"])
-        fps = int(instance.data["fps"])
+        fps = float(instance.data["fps"])
         filepath = os.path.join(staging_dir, filename)
         filepath = filepath.replace("\\", "/")
         filenames = self.get_files(
@@ -38,7 +39,7 @@ class ExtractReviewAnimation(publish.Extractor):
         review_camera = instance.data["review_camera"]
         if get_max_version() >= 2024:
             with viewport_camera(review_camera):
-                preview_arg = self.set_preview_arg(
+                preview_arg = set_preview_arg(
                     instance, filepath, start, end, fps)
                 rt.execute(preview_arg)
         else:
@@ -51,7 +52,7 @@ class ExtractReviewAnimation(publish.Extractor):
             ):
                 viewport_setting.VisualStyleMode = rt.Name(
                     visual_style_preset)
-                preview_arg = self.set_preview_arg(
+                preview_arg = set_preview_arg(
                     instance, filepath, start, end, fps)
                 rt.execute(preview_arg)
 
@@ -86,38 +87,6 @@ class ExtractReviewAnimation(publish.Extractor):
             file_list.append(actual_name)
 
         return file_list
-
-    def set_preview_arg(self, instance, filepath,
-                        start, end, fps):
-        job_args = list()
-        default_option = f'CreatePreview filename:"{filepath}"'
-        job_args.append(default_option)
-        frame_option = f"outputAVI:false start:{start} end:{end} fps:{fps}" # noqa
-        job_args.append(frame_option)
-        options = [
-            "percentSize", "dspGeometry", "dspShapes",
-            "dspLights", "dspCameras", "dspHelpers", "dspParticles",
-            "dspBones", "dspBkg", "dspGrid", "dspSafeFrame", "dspFrameNums"
-        ]
-
-        for key in options:
-            enabled = instance.data.get(key)
-            if enabled:
-                job_args.append(f"{key}:{enabled}")
-        if get_max_version() >= 2024:
-            visual_style_preset = instance.data.get("visualStyleMode")
-            if visual_style_preset == "Realistic":
-                visual_style_preset = "defaultshading"
-            else:
-                visual_style_preset = visual_style_preset.lower()
-            # new argument exposed for Max 2024 for visual style
-            visual_style_option = f"vpStyle:#{visual_style_preset}"
-            job_args.append(visual_style_option)
-
-        job_str = " ".join(job_args)
-        self.log.debug(job_str)
-
-        return job_str
 
     @contextlib.contextmanager
     def _visual_style_option(self, viewport_setting, visual_style):

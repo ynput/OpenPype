@@ -13,11 +13,6 @@ class CreateReview(plugin.MaxCreator):
     icon = "video-camera"
 
     def create(self, subset_name, instance_data, pre_create_data):
-
-        instance_data["imageFormat"] = pre_create_data.get("imageFormat")
-        instance_data["keepImages"] = pre_create_data.get("keepImages")
-        instance_data["percentSize"] = pre_create_data.get("percentSize")
-        instance_data["visualStyleMode"] = pre_create_data.get("visualStyleMode")
         # Transfer settings from pre create to instance
         creator_attributes = instance_data.setdefault(
             "creator_attributes", dict())

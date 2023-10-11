@@ -3,7 +3,11 @@ import tempfile
 import pyblish.api
 from pymxs import runtime as rt
 from openpype.pipeline import publish
-from openpype.hosts.max.api.lib import viewport_camera, get_max_version
+from openpype.hosts.max.api.lib import (
+    viewport_camera,
+    get_max_version,
+    set_preview_arg
+)
 
 
 class ExtractThumbnail(publish.Extractor):
@@ -23,7 +27,7 @@ class ExtractThumbnail(publish.Extractor):
         self.log.debug(
             f"Create temp directory {tmp_staging} for thumbnail"
         )
-        fps = int(instance.data["fps"])
+        fps = float(instance.data["fps"])
         frame = int(instance.data["frameStart"])
         instance.context.data["cleanupFullPaths"].append(tmp_staging)
         filename = "{name}_thumbnail..png".format(**instance.data)
@@ -36,7 +40,7 @@ class ExtractThumbnail(publish.Extractor):
             " '%s' to '%s'" % (filename, tmp_staging))
         review_camera = instance.data["review_camera"]
         with viewport_camera(review_camera):
-            preview_arg = self.set_preview_arg(
+            preview_arg = set_preview_arg(
                 instance, filepath, fps, frame)
             rt.execute(preview_arg)
 
@@ -59,38 +63,3 @@ class ExtractThumbnail(publish.Extractor):
             filename, target_frame
         )
         return thumbnail_name
-
-    def set_preview_arg(self, instance, filepath, fps, frame):
-        job_args = list()
-        default_option = f'CreatePreview filename:"{filepath}"'
-        job_args.append(default_option)
-        frame_option = f"outputAVI:false start:{frame} end:{frame} fps:{fps}" # noqa
-        job_args.append(frame_option)
-        rndLevel = instance.data.get("rndLevel")
-        if rndLevel:
-            option = f"rndLevel:#{rndLevel}"
-            job_args.append(option)
-        options = [
-            "percentSize", "dspGeometry", "dspShapes",
-            "dspLights", "dspCameras", "dspHelpers", "dspParticles",
-            "dspBones", "dspBkg", "dspGrid", "dspSafeFrame", "dspFrameNums"
-        ]
-
-        for key in options:
-            enabled = instance.data.get(key)
-            if enabled:
-                job_args.append(f"{key}:{enabled}")
-        if get_max_version() == 2024:
-            visual_style_preset = instance.data.get("visualStyleMode")
-            if visual_style_preset == "Realistic":
-                visual_style_preset = "defaultshading"
-            else:
-                visual_style_preset = visual_style_preset.lower()
-            # new argument exposed for Max 2024 for visual style
-            visual_style_option = f"vpStyle:#{visual_style_preset}"
-            job_args.append(visual_style_option)
-
-        job_str = " ".join(job_args)
-        self.log.debug(job_str)
-
-        return job_str
