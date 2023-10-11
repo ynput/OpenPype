@@ -1,5 +1,4 @@
 import json
-from itertools import chain
 from typing import Generator
 
 import bpy
@@ -23,20 +22,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
         """Return all instances that are empty objects asset groups.
         """
         instances = bpy.data.collections.get(AVALON_INSTANCES)
-        for obj in instances.objects:
+        for obj in list(instances.objects) + list(instances.children):
             avalon_prop = obj.get(AVALON_PROPERTY) or {}
             if avalon_prop.get('id') == 'pyblish.avalon.instance':
                 yield obj
-
-    @staticmethod
-    def get_collections() -> Generator:
-        """Return all instances that are collections.
-        """
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        for collection in instances.children:
-            avalon_prop = collection.get(AVALON_PROPERTY) or {}
-            if avalon_prop.get('id') == 'pyblish.avalon.instance':
-                yield collection
 
     @staticmethod
     def create_instance(context, group):
@@ -58,11 +47,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         """Collect the models from the current Blender scene."""
         asset_groups = self.get_asset_groups()
-        collections = self.get_collections()
 
-        instances = chain(asset_groups, collections)
-
-        for group in instances:
+        for group in asset_groups:
             instance = self.create_instance(context, group)
             family = instance.data["family"]
             members = []
