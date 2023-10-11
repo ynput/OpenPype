@@ -49,7 +49,8 @@ class ExtractThumbnail(publish.Extractor):
                     "bake_viewer_process": True,
                     "bake_viewer_input_process": True
                 }
-                self.render_thumbnail(instance, None, **viewer_process_switches)
+                self.render_thumbnail(
+                    instance, None, **viewer_process_switches)
 
     def render_thumbnail(self, instance, output_name=None, **kwargs):
         first_frame = instance.data["frameStartHandle"]
