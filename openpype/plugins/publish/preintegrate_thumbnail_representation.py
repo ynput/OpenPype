@@ -31,7 +31,7 @@ class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
 
         thumbnail_repre = None
         for repre in repres:
-            if repre["name"] == "thumbnail":
+            if "thumbnail" in repre.get("tags", []):
                 thumbnail_repre = repre
                 break
 
