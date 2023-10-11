@@ -124,7 +124,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             self.log.debug(
                 'No published workfile for task "{}" and host "{}".'.format(
                     task_name, host_name
-                )   
+                )
             )
             return
 
