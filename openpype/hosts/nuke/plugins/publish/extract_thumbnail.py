@@ -187,10 +187,10 @@ class ExtractThumbnail(publish.Extractor):
 
         # make sure only one thumbnail path is set
         # and it is existing file
-        if instance.data.get("thumbnail"):
-            _path = instance.data["thumbnail"]
+        if instance.data.get("thumbnailPath"):
+            _path = instance.data["thumbnailPath"]
             if not os.path.isfile(_path):
-                instance.data["thumbnail"] = thumb_path
+                instance.data["thumbnailPath"] = thumb_path
 
         write_node["file"].setValue(thumb_path)
         write_node["file_type"].setValue("jpg")
