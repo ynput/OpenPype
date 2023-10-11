@@ -118,7 +118,11 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             project_name,
             asset_name,
             task_name,
+            asset_doc=asset_doc,
         )
+        if not workfile_representation:
+            self.log.debug("No workfile representation found.")
+            return
 
         # Copy file and substitute path
         last_published_workfile_path = download_last_published_workfile(
