@@ -688,7 +688,7 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
     def _show_switch_dialog(self, items):
         """Display Switch dialog"""
-        dialog = SwitchAssetDialog(self, items)
+        dialog = SwitchAssetDialog(self._controller, self, items)
         dialog.switched.connect(self.data_changed.emit)
         dialog.show()
 

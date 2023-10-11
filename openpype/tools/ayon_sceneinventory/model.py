@@ -23,7 +23,15 @@ from openpype.pipeline import (
 from openpype.style import get_default_entity_icon_color
 from openpype.tools.utils.models import TreeModel, Item
 
-from .lib import walk_hierarchy
+
+def walk_hierarchy(node):
+    """Recursively yield group node."""
+    for child in node.children():
+        if child.get("isGroupNode"):
+            yield child
+
+        for _child in walk_hierarchy(child):
+            yield _child
 
 
 class InventoryModel(TreeModel):

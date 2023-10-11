@@ -34,14 +34,14 @@ log = logging.getLogger("SwitchAssetDialog")
 
 class ValidationState:
     def __init__(self):
-        self.asset_ok = True
+        self.folder_ok = True
         self.subset_ok = True
         self.repre_ok = True
 
     @property
     def all_ok(self):
         return (
-            self.asset_ok
+            self.folder_ok
             and self.subset_ok
             and self.repre_ok
         )
@@ -54,7 +54,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
     switched = QtCore.Signal()
 
-    def __init__(self, parent=None, items=None):
+    def __init__(self, controller, parent=None, items=None):
         super(SwitchAssetDialog, self).__init__(parent)
 
         self.setWindowTitle("Switch selected items ...")
@@ -66,15 +66,15 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         subsets_combox = SearchComboBox(self)
         repres_combobox = SearchComboBox(self)
 
-        assets_combox.set_placeholder("<asset>")
-        subsets_combox.set_placeholder("<subset>")
+        assets_combox.set_placeholder("<folder>")
+        subsets_combox.set_placeholder("<product>")
         repres_combobox.set_placeholder("<representation>")
 
         asset_label = QtWidgets.QLabel(self)
         subset_label = QtWidgets.QLabel(self)
         repre_label = QtWidgets.QLabel(self)
 
-        current_asset_btn = QtWidgets.QPushButton("Use current asset")
+        current_asset_btn = QtWidgets.QPushButton("Use current folder")
 
         accept_icon = qtawesome.icon("fa.check", color="white")
         accept_btn = ButtonWithMenu(self)
@@ -98,6 +98,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         main_layout.setColumnStretch(2, 1)
         main_layout.setColumnStretch(3, 0)
 
+        show_timer = QtCore.QTimer()
+        show_timer.setInterval(0)
+        show_timer.setSingleShot(False)
+
+        show_timer.timeout.connect(self._on_show_timer)
         assets_combox.currentIndexChanged.connect(
             self._combobox_value_changed
         )
@@ -109,6 +114,9 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         )
         accept_btn.clicked.connect(self._on_accept)
         current_asset_btn.clicked.connect(self._on_current_asset)
+
+        self._show_timer = show_timer
+        self._show_counter = 0
 
         self._current_asset_btn = current_asset_btn
 
@@ -152,12 +160,112 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         self._fill_check = False
 
+        self._controller = controller
+
+        self._project_name = controller.get_current_project_name()
+        self._folder_id = controller.get_current_folder_id()
+
         self._items = items
         self._prepare_content_data()
-        self.refresh(True)
 
-    def active_project(self):
-        return legacy_io.active_project()
+        current_asset_btn.setEnabled(self._folder_id is not None)
+
+    def showEvent(self, event):
+        super(SwitchAssetDialog, self).showEvent(event)
+        self._show_timer.start()
+
+    def refresh(self, init_refresh=False):
+        """Build the need comboboxes with content"""
+        if not self._fill_check and not init_refresh:
+            return
+
+        self._fill_check = False
+
+        if init_refresh:
+            asset_values = self._get_asset_box_values()
+            self._fill_combobox(asset_values, "asset")
+
+        validation_state = ValidationState()
+
+        # Set other comboboxes to empty if any document is missing or any asset
+        # of loaded representations is archived.
+        self._is_folder_ok(validation_state)
+        if validation_state.folder_ok:
+            subset_values = self._get_subset_box_values()
+            self._fill_combobox(subset_values, "subset")
+            self._is_subset_ok(validation_state)
+
+        if validation_state.folder_ok and validation_state.subset_ok:
+            repre_values = sorted(self._representations_box_values())
+            self._fill_combobox(repre_values, "repre")
+            self._is_repre_ok(validation_state)
+
+        # Fill comboboxes with values
+        self.set_labels()
+
+        self.apply_validations(validation_state)
+
+        self._build_loaders_menu()
+
+        if init_refresh:  # pre select context if possible
+            self._assets_box.set_valid_value(self._init_asset_name)
+            self._subsets_box.set_valid_value(self._init_subset_name)
+            self._representations_box.set_valid_value(self._init_repre_name)
+
+        self._fill_check = True
+
+    def set_labels(self):
+        asset_label = self._assets_box.get_valid_value()
+        subset_label = self._subsets_box.get_valid_value()
+        repre_label = self._representations_box.get_valid_value()
+
+        default = "*No changes"
+        self._asset_label.setText(asset_label or default)
+        self._subset_label.setText(subset_label or default)
+        self._repre_label.setText(repre_label or default)
+
+    def apply_validations(self, validation_state):
+        error_msg = "*Please select"
+        error_sheet = "border: 1px solid red;"
+
+        asset_sheet = None
+        subset_sheet = None
+        repre_sheet = None
+        accept_state = ""
+        if validation_state.folder_ok is False:
+            asset_sheet = error_sheet
+            self._asset_label.setText(error_msg)
+        elif validation_state.subset_ok is False:
+            subset_sheet = error_sheet
+            self._subset_label.setText(error_msg)
+        elif validation_state.repre_ok is False:
+            repre_sheet = error_sheet
+            self._repre_label.setText(error_msg)
+
+        if validation_state.all_ok:
+            accept_state = "1"
+
+        self._assets_box.setStyleSheet(asset_sheet or "")
+        self._subsets_box.setStyleSheet(subset_sheet or "")
+        self._representations_box.setStyleSheet(repre_sheet or "")
+
+        self._accept_btn.setEnabled(validation_state.all_ok)
+        self._set_style_property(self._accept_btn, "state", accept_state)
+
+    def find_last_versions(self, subset_ids):
+        project_name = self._project_name
+        return get_last_versions(
+            project_name,
+            subset_ids=subset_ids,
+            fields=["_id", "parent", "type"]
+        )
+
+    def _on_show_timer(self):
+        if self._show_counter == 2:
+            self._show_timer.stop()
+            self.refresh(True)
+        else:
+            self._show_counter += 1
 
     def _prepare_content_data(self):
         repre_ids = set()
@@ -166,7 +274,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             repre_ids.add(str(item["representation"]))
             content_loaders.add(item["loader"])
 
-        project_name = self.active_project()
+        project_name = self._project_name
         repres = list(get_representations(
             project_name,
             representation_ids=repre_ids,
@@ -277,46 +385,6 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _combobox_value_changed(self, *args, **kwargs):
         self.refresh()
 
-    def refresh(self, init_refresh=False):
-        """Build the need comboboxes with content"""
-        if not self._fill_check and not init_refresh:
-            return
-
-        self._fill_check = False
-
-        if init_refresh:
-            asset_values = self._get_asset_box_values()
-            self._fill_combobox(asset_values, "asset")
-
-        validation_state = ValidationState()
-
-        # Set other comboboxes to empty if any document is missing or any asset
-        # of loaded representations is archived.
-        self._is_asset_ok(validation_state)
-        if validation_state.asset_ok:
-            subset_values = self._get_subset_box_values()
-            self._fill_combobox(subset_values, "subset")
-            self._is_subset_ok(validation_state)
-
-        if validation_state.asset_ok and validation_state.subset_ok:
-            repre_values = sorted(self._representations_box_values())
-            self._fill_combobox(repre_values, "repre")
-            self._is_repre_ok(validation_state)
-
-        # Fill comboboxes with values
-        self.set_labels()
-
-        self.apply_validations(validation_state)
-
-        self._build_loaders_menu()
-
-        if init_refresh:  # pre select context if possible
-            self._assets_box.set_valid_value(self._init_asset_name)
-            self._subsets_box.set_valid_value(self._init_subset_name)
-            self._representations_box.set_valid_value(self._init_repre_name)
-
-        self._fill_check = True
-
     def _build_loaders_menu(self):
         repre_ids = self._get_current_output_repre_ids()
         loaders = self._get_loaders(repre_ids)
@@ -426,44 +494,6 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 if index is not None:
                     combobox_widget.setCurrentIndex(index)
 
-    def set_labels(self):
-        asset_label = self._assets_box.get_valid_value()
-        subset_label = self._subsets_box.get_valid_value()
-        repre_label = self._representations_box.get_valid_value()
-
-        default = "*No changes"
-        self._asset_label.setText(asset_label or default)
-        self._subset_label.setText(subset_label or default)
-        self._repre_label.setText(repre_label or default)
-
-    def apply_validations(self, validation_state):
-        error_msg = "*Please select"
-        error_sheet = "border: 1px solid red;"
-
-        asset_sheet = None
-        subset_sheet = None
-        repre_sheet = None
-        accept_state = ""
-        if validation_state.asset_ok is False:
-            asset_sheet = error_sheet
-            self._asset_label.setText(error_msg)
-        elif validation_state.subset_ok is False:
-            subset_sheet = error_sheet
-            self._subset_label.setText(error_msg)
-        elif validation_state.repre_ok is False:
-            repre_sheet = error_sheet
-            self._repre_label.setText(error_msg)
-
-        if validation_state.all_ok:
-            accept_state = "1"
-
-        self._assets_box.setStyleSheet(asset_sheet or "")
-        self._subsets_box.setStyleSheet(subset_sheet or "")
-        self._representations_box.setStyleSheet(repre_sheet or "")
-
-        self._accept_btn.setEnabled(validation_state.all_ok)
-        self._set_style_property(self._accept_btn, "state", accept_state)
-
     def _set_style_property(self, widget, name, value):
         cur_value = widget.property(name)
         if cur_value == value:
@@ -487,7 +517,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         asset_doc = None
         if selected_asset:
             asset_doc = get_asset_by_name(
-                self.active_project(),
+                self._project_name,
                 selected_asset,
                 fields=["_id"]
             )
@@ -538,7 +568,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _get_current_output_repre_ids_xxx(
         self, asset_doc, selected_subset, selected_repre
     ):
-        project_name = self.active_project()
+        project_name = self._project_name
         subset_doc = get_subset_by_name(
             project_name,
             selected_subset,
@@ -561,7 +591,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_xxo(self, asset_doc, selected_subset):
-        project_name = self.active_project()
+        project_name = self._project_name
         subset_doc = get_subset_by_name(
             project_name,
             selected_subset,
@@ -590,7 +620,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         for subset_doc in self.content_subsets.values():
             subset_names.add(subset_doc["name"])
 
-        project_name = self.active_project()
+        project_name = self._project_name
         subset_docs = get_subsets(
             project_name,
             asset_ids=[asset_doc["_id"]],
@@ -619,7 +649,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_xoo(self, asset_doc):
-        project_name = self.active_project()
+        project_name = self._project_name
         repres_by_subset_name = collections.defaultdict(set)
         for repre_doc in self.content_repres.values():
             repre_name = repre_doc["name"]
@@ -664,7 +694,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _get_current_output_repre_ids_oxx(
         self, selected_subset, selected_repre
     ):
-        project_name = self.active_project()
+        project_name = self._project_name
         subset_docs = get_subsets(
             project_name,
             asset_ids=self.content_assets.keys(),
@@ -686,7 +716,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_oxo(self, selected_subset):
-        project_name = self.active_project()
+        project_name = self._project_name
         subset_docs = get_subsets(
             project_name,
             asset_ids=self.content_assets.keys(),
@@ -738,7 +768,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_oox(self, selected_repre):
-        project_name = self.active_project()
+        project_name = self._project_name
         repre_docs = get_representations(
             project_name,
             representation_names=[selected_repre],
@@ -748,7 +778,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_asset_box_values(self):
-        project_name = self.active_project()
+        project_name = self._project_name
         asset_docs = get_assets(project_name, fields=["_id", "name"])
         asset_names_by_id = {
             asset_doc["_id"]: asset_doc["name"]
@@ -767,7 +797,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return sorted(filtered_assets)
 
     def _get_subset_box_values(self):
-        project_name = self.active_project()
+        project_name = self._project_name
         selected_asset = self._assets_box.get_valid_value()
         if selected_asset:
             asset_doc = get_asset_by_name(
@@ -802,7 +832,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _representations_box_values(self):
         # NOTE hero versions are not used because it is expected that
         # hero version has same representations as latests
-        project_name = self.active_project()
+        project_name = self._project_name
         selected_asset = self._assets_box.currentText()
         selected_subset = self._subsets_box.currentText()
 
@@ -971,13 +1001,13 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         return list(available_repres)
 
-    def _is_asset_ok(self, validation_state):
+    def _is_folder_ok(self, validation_state):
         selected_asset = self._assets_box.get_valid_value()
         if (
             selected_asset is None
             and (self.missing_docs or self.archived_assets)
         ):
-            validation_state.asset_ok = False
+            validation_state.folder_ok = False
 
     def _is_subset_ok(self, validation_state):
         selected_asset = self._assets_box.get_valid_value()
@@ -996,7 +1026,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return
 
         # [x] [ ] [?]
-        project_name = self.active_project()
+        project_name = self._project_name
         asset_doc = get_asset_by_name(
             project_name, selected_asset, fields=["_id"]
         )
@@ -1013,14 +1043,6 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             if subset_doc["name"] not in subset_names:
                 validation_state.subset_ok = False
                 break
-
-    def find_last_versions(self, subset_ids):
-        project_name = self.active_project()
-        return get_last_versions(
-            project_name,
-            subset_ids=subset_ids,
-            fields=["_id", "parent", "type"]
-        )
 
     def _is_repre_ok(self, validation_state):
         selected_asset = self._assets_box.get_valid_value()
@@ -1043,7 +1065,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return
 
         # [x] [x] [ ]
-        project_name = self.active_project()
+        project_name = self._project_name
         if selected_asset is not None and selected_subset is not None:
             asset_doc = get_asset_by_name(
                 project_name, selected_asset, fields=["_id"]
@@ -1189,7 +1211,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         selected_subset = self._subsets_box.get_valid_value()
         selected_representation = self._representations_box.get_valid_value()
 
-        project_name = self.active_project()
+        project_name = self._project_name
         if selected_asset:
             asset_doc = get_asset_by_name(project_name, selected_asset)
             asset_docs_by_id = {asset_doc["_id"]: asset_doc}
