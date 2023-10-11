@@ -8,6 +8,7 @@ from openpype.hosts.nuke import api as napi
 from openpype.hosts.nuke.api.lib import set_node_knobs_from_settings
 
 
+# Python 2/3 compatibility
 if sys.version_info[0] >= 3:
     unicode = str
 
