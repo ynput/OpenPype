@@ -53,7 +53,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             subset=subset,
             asset=asset,
             task=task,
-        ), family
+        )
 
     def process(self, context):
         """Collect the models from the current Blender scene."""
@@ -63,7 +63,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         instances = chain(asset_groups, collections)
 
         for group in instances:
-            instance, family = self.create_instance(context, group)
+            instance = self.create_instance(context, group)
+            family = instance.data["family"]
             members = []
             if type(group) == bpy.types.Collection:
                 members = list(group.objects)
