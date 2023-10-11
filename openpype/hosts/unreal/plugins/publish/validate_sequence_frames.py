@@ -68,8 +68,9 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
                               data["clipOut"])
 
             if current_range != required_range:
-                raise PublishValidationError(f"Invalid frame range: {current_range} - "
-                                 f"expected: {required_range}")
+                raise PublishValidationError(
+                    f"Invalid frame range: {current_range} - "
+                    f"expected: {required_range}")
 
             missing = collection.holes().indexes
             if missing:
