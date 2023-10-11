@@ -3,6 +3,7 @@ import os
 import re
 
 import pyblish.api
+from openpype.pipeline.publish import PublishValidationError
 
 
 class ValidateSequenceFrames(pyblish.api.InstancePlugin):
@@ -40,15 +41,15 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
                 repr["files"], minimum_items=1, patterns=patterns)
 
             if remainder:
-                raise ValueError(
+                raise PublishValidationError(
                     "Some files have been found outside a sequence. "
                     f"Invalid files: {remainder}")
             if not collections:
-                raise ValueError(
+                raise PublishValidationError(
                     "No collections found. There should be a single "
                     "collection per representation.")
             if len(collections) > 1:
-                raise ValueError(
+                raise PublishValidationError(
                     "Multiple collections detected. There should be a single "
                     "collection per representation. "
                     f"Collections identified: {collections}")
@@ -65,11 +66,11 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
                               data["clipOut"])
 
             if current_range != required_range:
-                raise ValueError(f"Invalid frame range: {current_range} - "
+                raise PublishValidationError(f"Invalid frame range: {current_range} - "
                                  f"expected: {required_range}")
 
             missing = collection.holes().indexes
             if missing:
-                raise ValueError(
+                raise PublishValidationError(
                     "Missing frames have been detected. "
                     f"Missing frames: {missing}")
