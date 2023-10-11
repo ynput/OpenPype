@@ -134,7 +134,6 @@ class ValidateCorrectAssetContext(
 
         create_context.save_changes()
 
-
     @classmethod
     def select(cls, instance):
         """Select invalid node """
