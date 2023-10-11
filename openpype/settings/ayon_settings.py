@@ -819,9 +819,36 @@ def _convert_nuke_project_settings(ayon_settings, output):
     # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
     _convert_host_imageio(ayon_nuke)
     ayon_imageio = ayon_nuke["imageio"]
-    for item in ayon_imageio["nodes"]["requiredNodes"]:
+
+    # workfile
+    imageio_workfile = ayon_imageio["workfile"]
+    workfile_keys_mapping = (
+        ("color_management", "colorManagement"),
+        ("native_ocio_config", "OCIO_config"),
+        ("working_space", "workingSpaceLUT"),
+        ("thumbnail_space", "monitorLut"),
+    )
+    for src, dst in workfile_keys_mapping:
+        if (
+            src in imageio_workfile
+            and dst not in imageio_workfile
+        ):
+            imageio_workfile[dst] = imageio_workfile.pop(src)
+
+    # regex inputs
+    regex_inputs = ayon_imageio.get("regex_inputs")
+    if regex_inputs:
+        ayon_imageio.pop("regex_inputs")
+        ayon_imageio["regexInputs"] = regex_inputs
+
+    # nodes
+    for item in ayon_imageio["nodes"]["required_nodes"]:
+        if item.get("nuke_node_class"):
+            item["nukeNodeClass"] = item["nuke_node_class"]
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
-    for item in ayon_imageio["nodes"]["overrideNodes"]:
+    for item in ayon_imageio["nodes"]["override_nodes"]:
+        if item.get("nuke_node_class"):
+            item["nukeNodeClass"] = item["nuke_node_class"]
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
 
     output["nuke"] = ayon_nuke

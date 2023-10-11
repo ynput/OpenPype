@@ -155,8 +155,10 @@ class IntermediateOutputModel(BaseSettingsModel):
         title="Filter", default_factory=BakingStreamFilterModel)
     read_raw: bool = Field(title="Read raw switch")
     viewer_process_override: str = Field(title="Viewer process override")
-    bake_viewer_process: bool = Field(title="Bake view process")
-    bake_viewer_input_process: bool = Field(title="Bake viewer input process")
+    bake_viewer_process: bool = Field(title="Bake viewer process")
+    bake_viewer_input_process: bool = Field(
+        title="Bake viewer input process node (LUT)"
+    )
     reformat_nodes_config: ReformatNodesConfigModel = Field(
         default_factory=ReformatNodesConfigModel,
         title="Reformat Nodes")
@@ -407,12 +409,12 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
                         "text": "Lanczos6"
                     },
                     {
-                        "type": "bool",
+                        "type": "boolean",
                         "name": "black_outside",
                         "boolean": True
                     },
                     {
-                        "type": "bool",
+                        "type": "boolean",
                         "name": "pbb",
                         "boolean": False
                     }
@@ -427,7 +429,7 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
         "enabled": False
     },
     "ExtractReviewDataMov": {
-        "enabled": True,
+        "enabled": False,
         "viewer_lut_raw": False,
         "outputs": [
             {
@@ -463,12 +465,12 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
                                     "text": "Lanczos6"
                                 },
                                 {
-                                    "type": "bool",
+                                    "type": "boolean",
                                     "name": "black_outside",
                                     "boolean": True
                                 },
                                 {
-                                    "type": "bool",
+                                    "type": "boolean",
                                     "name": "pbb",
                                     "boolean": False
                                 }
@@ -518,12 +520,12 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
                                     "text": "Lanczos6"
                                 },
                                 {
-                                    "type": "bool",
+                                    "type": "boolean",
                                     "name": "black_outside",
                                     "boolean": True
                                 },
                                 {
-                                    "type": "bool",
+                                    "type": "boolean",
                                     "name": "pbb",
                                     "boolean": False
                                 }
