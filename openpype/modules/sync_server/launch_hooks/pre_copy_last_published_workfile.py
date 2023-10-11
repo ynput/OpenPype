@@ -119,7 +119,11 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             asset_doc=asset_doc,
         )
         if not workfile_representation:
-            self.log.debug("No workfile representation found.")
+            self.log.debug(
+                'No published workfile for task "{}" and host "{}".'.format(
+                    task_name, host_name
+                )   
+            )
             return
 
         # Copy file and substitute path
