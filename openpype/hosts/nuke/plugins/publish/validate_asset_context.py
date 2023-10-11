@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Validate if instance asset is the same as context asset."""
 from __future__ import absolute_import
-from typing_extensions import deprecated
 
 import pyblish.api
 
@@ -17,6 +16,7 @@ from openpype.pipeline.publish import (
 
 
 class SelectInvalidNodesAction(pyblish.api.Action):
+    """Select invalid nodes."""
 
     label = "Select Failed Node"
     icon = "briefcase"
@@ -45,8 +45,6 @@ class ValidateCorrectAssetContext(
     so it can be disabled when needed.
 
     Checking `asset` and `task` keys.
-
-    Action on this validator will select invalid instances in Outliner.
     """
     order = ValidateContentsOrder
     label = "Validate asset context"
@@ -59,8 +57,7 @@ class ValidateCorrectAssetContext(
 
     @classmethod
     def apply_settings(cls, project_settings):
-        """Apply the settings from the deprecated
-        ExtractReviewDataMov plugin for backwards compatibility
+        """Apply deprecated settings from project settings.
         """
         nuke_publish = project_settings["nuke"]["publish"]
         if "ValidateCorrectAssetName" not in nuke_publish:
@@ -105,6 +102,7 @@ class ValidateCorrectAssetContext(
 
     @classmethod
     def get_invalid(cls, instance, compute=False):
+        """Get invalid keys from instance data and context data."""
         invalid = instance.data.get("invalid_keys", [])
 
         if compute:
@@ -122,6 +120,7 @@ class ValidateCorrectAssetContext(
 
     @classmethod
     def repair(cls, instance):
+        """Repair instance data with context data."""
         invalid = cls.get_invalid(instance)
 
         create_context = instance.context.data["create_context"]
@@ -138,6 +137,7 @@ class ValidateCorrectAssetContext(
 
     @classmethod
     def select(cls, instance):
+        """Select invalid node """
         invalid = cls.get_invalid(instance)
         if not invalid:
             return
