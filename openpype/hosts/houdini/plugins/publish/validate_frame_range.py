@@ -23,10 +23,25 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            nodes = [n.path() for n in invalid]
+            node = invalid[0].path()
             raise PublishValidationError(
-                "Invalid Frame Range on: {0}".format(nodes),
-                title="Invalid Frame Range"
+                title="Invalid Frame Range",
+                message=(
+                    "Invalid frame range because the instance start frame ({0[frameStart]}) "
+                    "is higher than the end frame ({0[frameEnd]})"
+                    .format(instance.data)
+                ),
+                description=(
+                    "## Invalid Frame Range\n"
+                    "The frame range for the instance is invalid because the "
+                    "start frame is higher than the end frame.\n\nThis is likely "
+                    "due to asset handles being applied to your instance or may "
+                    "be because the ROP node's start frame is set higher than the "
+                    "end frame.\n\nIf your ROP frame range is correct and you do "
+                    "not want to apply asset handles make sure to disable Use "
+                    "asset handles on the publish instance.\n\n"
+                    "Associated Node: \"{0}\"".format(node)
+                )
             )
 
     @classmethod
@@ -37,14 +52,11 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         rop_node = hou.node(instance.data["instance_node"])
         if instance.data["frameStart"] > instance.data["frameEnd"]:
-            cls.log.error(
-                "Wrong frame range, please consider handle start and end.\n"
-                "frameEnd should at least be {}.\n"
-                "Use \"End frame hotfix\" action to do that."
-                .format(
-                    instance.data["handleEnd"] +
-                    instance.data["handleStart"] +
-                    instance.data["frameStartHandle"]
-                )
+            cls.log.info(
+                "The ROP node render range is set to "
+                "{0[frameStartHandle]} - {0[frameEndHandle]} "
+                "The asset handles applied to the instance are start handle "
+                "{0[handleStart]} and end handle {0[handleEnd]}"
+                .format(instance.data)
             )
             return [rop_node]
