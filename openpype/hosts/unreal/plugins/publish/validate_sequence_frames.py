@@ -46,8 +46,10 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
                     f"Invalid files: {remainder}")
             if not collections:
                 raise PublishValidationError(
-                    "No collections found. There should be a single "
-                    "collection per representation.")
+                    "We have been unable to find a sequence in the "
+                    "files. Please ensure the files are named "
+                    "appropriately. "
+                    f"Files: {repr_files}")
             if len(collections) > 1:
                 raise PublishValidationError(
                     "Multiple collections detected. There should be a single "
