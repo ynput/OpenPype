@@ -2,12 +2,15 @@ import os
 import re
 import copy
 import platform
+from typing import Iterable
 
 from openpype.client import (
     get_project,
     get_asset_by_name,
     get_representations,
+    get_last_version_by_subset_name,
 )
+from openpype.pipeline.create import get_subset_name
 from openpype.settings import get_project_settings
 from openpype.lib import (
     filter_profiles,
@@ -544,30 +547,44 @@ def get_last_workfile_representation(
     project_name: str,
     asset_name: str,
     task_name: str,
+    asset_id=None,
+    asset_doc: dict = None,
+    fields: Iterable[str] = None,
 ) -> dict:
     """Get last published workfile representation.
 
     Args:
         project_name(str): Project name.
         asset_name(str): Asset/Shot name.
-        task_name(str): Task name.
+        task_name (str): Task name.
+        asset_id (Optional[Union[str, ObjectId]]): Asset id.
+            subset name. Defaults to None.
+        asset_doc (Optional[dict]): Asset doc. Defaults to None.
+        fields (Optional[Iterable[str]]): Fields that should be returned.
+            Defaults to None.
 
     Returns:
         dict: Last workfile representation.
     """
-    return max(
-        filter(
-            lambda r: r["context"].get("version") is not None,
-            list(
-                get_representations(
-                    project_name,
-                    context_filters={
-                        "asset": asset_name,
-                        "family": "workfile",
-                        "task": {"name": task_name},
-                    },
-                )
-            ),
+    if not asset_doc:
+        asset_doc = get_asset_by_name(project_name, asset_name)
+
+    last_version = get_last_version_by_subset_name(
+        project_name,
+        get_subset_name(
+            "workfile",
+            "",
+            task_name,
+            asset_doc,
+            project_name=project_name,
         ),
-        key=lambda r: r["context"]["version"],
+        asset_id=asset_id,
+        asset_name=asset_name,
+        fields=["_id"],
     )
+
+    return get_representations(
+        project_name,
+        version_ids=[last_version["_id"]],
+        fields=fields,
+    )[0]
