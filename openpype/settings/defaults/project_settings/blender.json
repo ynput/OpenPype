@@ -89,7 +89,7 @@
             "optional": true,
             "active": false
         },
-        "ExtractABC": {
+        "ExtractModelABC": {
             "enabled": true,
             "optional": true,
             "active": false

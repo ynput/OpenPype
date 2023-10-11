@@ -12,8 +12,7 @@ class ExtractABC(publish.Extractor):
 
     label = "Extract ABC"
     hosts = ["blender"]
-    families = ["model", "pointcache"]
-    optional = True
+    families = ["abc.export"]
 
     def process(self, instance):
         # Define extract output file path

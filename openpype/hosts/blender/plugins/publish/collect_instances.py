@@ -76,6 +76,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             else:
                 members = group.children_recursive
 
+            if family == "pointcache":
+                instance.data["families"].append("abc.export")
+
             members.append(group)
             instance[:] = members
             self.log.debug(json.dumps(instance.data, indent=4))
