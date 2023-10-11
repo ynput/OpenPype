@@ -573,7 +573,7 @@ def get_last_workfile_representation(
         project_name,
         get_subset_name(
             "workfile",
-            "",
+            "main",
             task_name,
             asset_doc,
             project_name=project_name,
