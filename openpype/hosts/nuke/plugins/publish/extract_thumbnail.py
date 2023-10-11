@@ -183,8 +183,6 @@ class ExtractThumbnail(publish.Extractor):
         thumb_path = os.path.join(staging_dir, file).replace("\\", "/")
 
         # add thumbnail to cleanup
-        if not instance.context.data.get("cleanupFullPaths"):
-            instance.context.data["cleanupFullPaths"] = []
         instance.context.data["cleanupFullPaths"].append(thumb_path)
 
         # make sure only one thumbnail path is set
