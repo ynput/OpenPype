@@ -314,6 +314,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "tilesX": render_instance.data.get("tilesX") or 2,
                 "tilesY": render_instance.data.get("tilesY") or 2,
                 "priority": render_instance.data.get("priority"),
+                "machineLimit": render_instance.data.get("machineLimit") or 0,
                 "convertToScanline": render_instance.data.get(
                     "convertToScanline") or False,
                 "useReferencedAovs": render_instance.data.get(
@@ -398,6 +399,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         options["renderGlobals"].update({"Pool": pool_a})
         if pool_b:
             options["renderGlobals"].update({"SecondaryPool": pool_b})
+
+        # Number of workers for the current job
+        options["machineLimit"] = attributes["machineLimit"]
 
         # Machine list
         machine_list = attributes["machineList"]

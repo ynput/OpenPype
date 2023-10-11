@@ -224,6 +224,7 @@ class CreateRender(plugin.Creator):
         self.data["priority"] = default_priority
         self.data["tile_priority"] = default_priority
         self.data["framesPerTask"] = 1
+        self.data["machineLimit"] = 0
         self.data["whitelist"] = False
         self.data["machineList"] = ""
         self.data["useMayaBatch"] = False
