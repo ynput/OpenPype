@@ -63,8 +63,6 @@ class ExtractThumbnail(publish.Extractor):
 
         # solve output name if any is set
         output_name = output_name or ""
-        if output_name:
-            output_name = "_" + output_name
 
         bake_viewer_process = kwargs["bake_viewer_process"]
         bake_viewer_input_process_node = kwargs[
