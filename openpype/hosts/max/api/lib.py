@@ -501,6 +501,7 @@ def get_plugins() -> list:
 
     return plugin_info_list
 
+
 def set_preview_arg(instance, filepath,
                     start, end, fps):
     """Function to set up preview arguments in MaxScript.
