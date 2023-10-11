@@ -45,11 +45,11 @@ class ExtractThumbnail(publish.Extractor):
                 for o_name, o_data in instance.data["bakePresets"].items():
                     self.render_thumbnail(instance, o_name, **o_data)
             else:
-                viewer_process_swithes = {
+                viewer_process_switches = {
                     "bake_viewer_process": True,
                     "bake_viewer_input_process": True
                 }
-                self.render_thumbnail(instance, None, **viewer_process_swithes)
+                self.render_thumbnail(instance, None, **viewer_process_switches)
 
     def render_thumbnail(self, instance, output_name=None, **kwargs):
         first_frame = instance.data["frameStartHandle"]
@@ -166,29 +166,45 @@ class ExtractThumbnail(publish.Extractor):
             previous_node = dag_node
             temporary_nodes.append(dag_node)
 
+        thumb_name = "thumbnail"
+        # only add output name and
+        # if there are more than one bake preset
+        if (
+            output_name
+            and len(instance.data.get("bakePresets", {}).keys()) > 1
+        ):
+            thumb_name = "{}_{}".format(output_name, thumb_name)
+
         # create write node
         write_node = nuke.createNode("Write")
-        file = fhead[:-1] + output_name + ".jpg"
-        name = "thumbnail"
-        path = os.path.join(staging_dir, file).replace("\\", "/")
-        instance.data["thumbnail"] = path
-        write_node["file"].setValue(path)
+        file = fhead[:-1] + thumb_name + ".jpg"
+        thumb_path = os.path.join(staging_dir, file).replace("\\", "/")
+
+        # add thumbnail to cleanup
+        if not instance.context.data.get("cleanupFullPaths"):
+            instance.context.data["cleanupFullPaths"] = []
+        instance.context.data["cleanupFullPaths"].append(thumb_path)
+
+        # make sure only one thumbnail path is set
+        # and it is existing file
+        if instance.data.get("thumbnail"):
+            _path = instance.data["thumbnail"]
+            if not os.path.isfile(_path):
+                instance.data["thumbnail"] = thumb_path
+
+        write_node["file"].setValue(thumb_path)
         write_node["file_type"].setValue("jpg")
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
-        tags = ["thumbnail", "publish_on_farm"]
 
-        thumb_output_name = "thumb"
-        if output_name:
-            thumb_output_name = "{}_{}".format(output_name, thumb_output_name)
         repre = {
-            'name': name,
+            'name': thumb_name,
             'ext': "jpg",
-            "outputName": thumb_output_name,
+            "outputName": thumb_name,
             'files': file,
             "stagingDir": staging_dir,
-            "tags": tags
+            "tags": ["thumbnail", "publish_on_farm", "delete"]
         }
         instance.data["representations"].append(repre)
 
