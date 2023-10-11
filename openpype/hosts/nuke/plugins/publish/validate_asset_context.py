@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Validate if instance asset is the same as context asset."""
 from __future__ import absolute_import
+from typing_extensions import deprecated
 
 import pyblish.api
 
@@ -56,8 +57,20 @@ class ValidateCorrectAssetContext(
     ]
     optional = True
 
-    # TODO: apply_settigs to maintain backwards compatibility
-    # with `ValidateCorrectAssetName`
+    @classmethod
+    def apply_settings(cls, project_settings):
+        """Apply the settings from the deprecated
+        ExtractReviewDataMov plugin for backwards compatibility
+        """
+        nuke_publish = project_settings["nuke"]["publish"]
+        if "ValidateCorrectAssetName" not in nuke_publish:
+            return
+
+        deprecated_setting = nuke_publish["ValidateCorrectAssetName"]
+        cls.enabled = deprecated_setting["enabled"]
+        cls.optional = deprecated_setting["optional"]
+        cls.active = deprecated_setting["active"]
+
     def process(self, instance):
         if not self.is_active(instance.data):
             return
