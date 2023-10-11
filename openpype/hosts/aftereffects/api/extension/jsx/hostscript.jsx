@@ -920,19 +920,21 @@ function addItemInstead(placeholder_item_id, item_id){
         if (!(comp instanceof CompItem)){
             continue
         }
+        if ((comp instanceof CompItem) && (comp.id == item.id)){
+            continue
+        }
 
-        var i = 1;
-        while (i <= comp.numLayers) {
-            var layer = comp.layer(i);
+        var j = 1;
+        while (j <= comp.numLayers) {
+            var layer = comp.layer(j);
             var layer_source = layer.source;
             if (layer_source && layer_source.id == placeholder_item_id){
                 var new_layer = comp.layers.add(item);
                 new_layer.moveAfter(layer);
                 // copy all(?) properties to new layer
                 layer.property("ADBE Transform Group").copyToComp(new_layer);
-                i = i + 1;
             }
-            i = i + 1;
+            j = j + 1;
         }
     }
     app.endUndoGroup();
