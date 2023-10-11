@@ -25,10 +25,15 @@ class CollectReview(pyblish.api.InstancePlugin,
             if rt.classOf(node) in rt.Camera.classes:
                 camera_name = node.name
                 focal_length = node.fov
-
+        creator_attrs = instance.data["creator_attributes"]
         attr_values = self.get_attr_values_from_data(instance.data)
         data = {
             "review_camera": camera_name,
+            "imageFormat": creator_attrs["imageFormat"],
+            "keepImages": creator_attrs["keepImages"],
+            "percentSize": creator_attrs["percentSize"],
+            "visualStyleMode": creator_attrs["visualStyleMode"],
+            "viewportPreset": creator_attrs["viewportPreset"],
             "frameStart": instance.context.data["frameStart"],
             "frameEnd": instance.context.data["frameEnd"],
             "fps": instance.context.data["fps"],

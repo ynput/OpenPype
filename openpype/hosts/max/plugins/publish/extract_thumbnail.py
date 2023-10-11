@@ -81,9 +81,14 @@ class ExtractThumbnail(publish.Extractor):
             if enabled:
                 job_args.append(f"{key}:{enabled}")
         if get_max_version() == 2024:
-            # hardcoded for current stage
-            auto_play_option = "autoPlay:false"
-            job_args.append(auto_play_option)
+            visual_style_preset = instance.data.get("visualStyleMode")
+            if visual_style_preset == "Realistic":
+                visual_style_preset = "defaultshading"
+            else:
+                visual_style_preset = visual_style_preset.lower()
+            # new argument exposed for Max 2024 for visual style
+            visual_style_option = f"vpStyle:#{visual_style_preset}"
+            job_args.append(visual_style_option)
 
         job_str = " ".join(job_args)
         self.log.debug(job_str)

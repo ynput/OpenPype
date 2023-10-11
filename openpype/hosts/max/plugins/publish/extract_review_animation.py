@@ -1,8 +1,12 @@
 import os
+import contextlib
 import pyblish.api
 from pymxs import runtime as rt
 from openpype.pipeline import publish
-from openpype.hosts.max.api.lib import viewport_camera, get_max_version
+from openpype.hosts.max.api.lib import (
+    viewport_camera,
+    get_max_version
+)
 
 
 class ExtractReviewAnimation(publish.Extractor):
@@ -32,10 +36,24 @@ class ExtractReviewAnimation(publish.Extractor):
             " '%s' to '%s'" % (filename, staging_dir))
 
         review_camera = instance.data["review_camera"]
-        with viewport_camera(review_camera):
-            preview_arg = self.set_preview_arg(
-                instance, filepath, start, end, fps)
-            rt.execute(preview_arg)
+        if get_max_version() >= 2024:
+            with viewport_camera(review_camera):
+                preview_arg = self.set_preview_arg(
+                    instance, filepath, start, end, fps)
+                rt.execute(preview_arg)
+        else:
+            visual_style_preset = instance.data.get("visualStyleMode")
+            nitrousGraphicMgr = rt.NitrousGraphicsManager
+            viewport_setting = nitrousGraphicMgr.GetActiveViewportSetting()
+            with viewport_camera(review_camera) and (
+                self._visual_style_option(
+                    viewport_setting, visual_style_preset)
+            ):
+                viewport_setting.VisualStyleMode = rt.Name(
+                    visual_style_preset)
+                preview_arg = self.set_preview_arg(
+                    instance, filepath, start, end, fps)
+                rt.execute(preview_arg)
 
         tags = ["review"]
         if not instance.data.get("keepImages"):
@@ -76,10 +94,6 @@ class ExtractReviewAnimation(publish.Extractor):
         job_args.append(default_option)
         frame_option = f"outputAVI:false start:{start} end:{end} fps:{fps}" # noqa
         job_args.append(frame_option)
-        rndLevel = instance.data.get("rndLevel")
-        if rndLevel:
-            option = f"rndLevel:#{rndLevel}"
-            job_args.append(option)
         options = [
             "percentSize", "dspGeometry", "dspShapes",
             "dspLights", "dspCameras", "dspHelpers", "dspParticles",
@@ -90,13 +104,36 @@ class ExtractReviewAnimation(publish.Extractor):
             enabled = instance.data.get(key)
             if enabled:
                 job_args.append(f"{key}:{enabled}")
-
-        if get_max_version() == 2024:
-            # hardcoded for current stage
-            auto_play_option = "autoPlay:false"
-            job_args.append(auto_play_option)
+        if get_max_version() >= 2024:
+            visual_style_preset = instance.data.get("visualStyleMode")
+            if visual_style_preset == "Realistic":
+                visual_style_preset = "defaultshading"
+            else:
+                visual_style_preset = visual_style_preset.lower()
+            # new argument exposed for Max 2024 for visual style
+            visual_style_option = f"vpStyle:#{visual_style_preset}"
+            job_args.append(visual_style_option)
 
         job_str = " ".join(job_args)
         self.log.debug(job_str)
 
         return job_str
+
+    @contextlib.contextmanager
+    def _visual_style_option(self, viewport_setting, visual_style):
+        """Function to set visual style options
+
+        Args:
+            visual_style (str): visual style for active viewport
+
+        Returns:
+            list: the argument which can set visual style
+        """
+        current_setting = viewport_setting.VisualStyleMode
+        if visual_style != current_setting:
+            try:
+                viewport_setting.VisualStyleMode = rt.Name(
+                    visual_style)
+                yield
+            finally:
+                viewport_setting.VisualStyleMode = current_setting
