@@ -277,15 +277,53 @@
     ],
     "editorial_creators": {
         "editorial_csv_ingest": {
-            "column_map": {
-                "Submission": "label",
-                "Vendor": "label",
-                "Filename": "filename",
-                "Shot": "folder",
-                "Task": "task",
-                "Version": "version",
-                "Notes": "notes"
-            }
+            "csv_ingest": [
+                {
+                    "required": "Optional",
+                    "name": "Submission",
+                    "value": "metadata"
+                },
+                {
+                    "required": "Optional",
+                    "name": "Vendor",
+                    "value": "metadata"
+                },
+                {
+                    "required": "Required",
+                    "name": "Filename",
+                    "value": "filename"
+                },
+                {
+                    "required": "Required",
+                    "name": "Shot",
+                    "value": "folder"
+                },
+                {
+                    "required": "Required",
+                    "name": "Task",
+                    "value": "task"
+                },
+                {
+                    "required": "Optional",
+                    "name": "Notes",
+                    "value": "notes"
+                },
+                {
+                    "required": "Required",
+                    "name": "Variant",
+                    "value": "variant"
+                },
+                {
+                    "required": "Required",
+                    "name": "Product Type",
+                    "value": "product"
+                },
+                {
+                    "required": "Required",
+                    "name": "Hierarchy",
+                    "value": "hierarch"
+                }
+            ]
         },
         "editorial_simple": {
             "default_variants": [

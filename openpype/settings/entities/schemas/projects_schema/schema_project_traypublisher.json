@@ -120,13 +120,36 @@
                     "collapsible_key": true,
                     "children": [
                         {
-                            "key": "column_map",
-                            "label": "CSV Headers Map",
-                            "type": "dict-modifiable",
+                            "key": "csv_ingest",
+                            "label": "Editorial CSV Ingest",
+                            "type": "list",
                             "highlight_content": true,
-                            "tooltip": "Define what each header in the CSV translates to in OpenPype.",
+                            "tooltip": "Add or remove the columns that should be present in the CSV file.",
                             "object_type": {
-                                "type": "text"
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "key": "name",
+                                        "label": "Column Header",
+                                        "tooltip": "The name of the column as in the CSV."
+                                    },
+                                    {
+                                        "type": "text",
+                                        "key": "value",
+                                        "label": "Open Pype entity",
+                                        "tooltip": "The entity this column's items match to in OpenPype."
+                                    },
+                                    {
+                                        "type": "enum",
+                                        "key": "required",
+                                        "label": "Is it required?",
+                                        "enum_items": [
+                                            {"Required": "Required"},
+                                            {"Optional": "Optional"}
+                                        ]
+                                    }
+                                ]
                             }
                         }
                     ]
