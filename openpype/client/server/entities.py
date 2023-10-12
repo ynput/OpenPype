@@ -75,9 +75,9 @@ def _get_subsets(
         ):
             fields.add(key)
 
-    active = None
+    active = True
     if archived:
-        active = False
+        active = None
 
     for subset in con.get_products(
         project_name,
