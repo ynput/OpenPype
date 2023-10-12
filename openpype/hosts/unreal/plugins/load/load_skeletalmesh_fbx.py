@@ -10,9 +10,6 @@ from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api.pipeline import (
     create_container,
     imprint,
-    replace_static_mesh_actors,
-    replace_skeletal_mesh_actors,
-    delete_previous_asset_if_unused,
 )
 import unreal  # noqa
 
