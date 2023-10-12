@@ -102,7 +102,12 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         layout.addLayout(control_layout)
         layout.addWidget(view)
 
+        show_timer = QtCore.QTimer()
+        show_timer.setInterval(0)
+        show_timer.setSingleShot(False)
+
         # signals
+        show_timer.timeout.connect(self._on_show_timer)
         text_filter.textChanged.connect(self._on_text_filter_change)
         outdated_only_checkbox.stateChanged.connect(
             self._on_outdated_state_change
@@ -114,6 +119,8 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         refresh_button.clicked.connect(self._on_refresh_request)
         update_all_button.clicked.connect(self._on_update_all)
 
+        self._show_timer = show_timer
+        self._show_counter = 0
         self._controller = controller
         self._update_all_button = update_all_button
         self._outdated_only_checkbox = outdated_only_checkbox
@@ -123,12 +130,16 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self._version_delegate = version_delegate
 
         self._first_show = True
+        self._first_refresh = True
 
     def showEvent(self, event):
         super(SceneInventoryWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
             self.setStyleSheet(style.load_stylesheet())
+
+        self._show_counter = 0
+        self._show_timer.start()
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -146,6 +157,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         self.refresh()
 
     def refresh(self, items=None):
+        self._first_refresh = False
         self._controller.reset()
         with preserve_expanded_rows(
             tree_view=self._view,
@@ -161,6 +173,13 @@ class SceneInventoryWindow(QtWidgets.QDialog):
                 if self._view._hierarchy_view:
                     kwargs["selected"] = self._view._selected
                 self._model.refresh(**kwargs)
+
+    def _on_show_timer(self):
+        if self._show_counter < 3:
+            self._show_counter += 1
+            return
+        self._show_timer.stop()
+        self.refresh()
 
     def _on_hierarchy_view_change(self, enabled):
         self._proxy.set_hierarchy_view(enabled)
