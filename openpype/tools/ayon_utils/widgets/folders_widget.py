@@ -84,6 +84,15 @@ class FoldersModel(QtGui.QStandardItemModel):
             return QtCore.QModelIndex()
         return self.indexFromItem(item)
 
+    def get_project_name(self):
+        """Project name which model currently use.
+
+        Returns:
+            Union[str, None]: Currently used project name.
+        """
+
+        return self._last_project_name
+
     def set_project_name(self, project_name):
         """Refresh folders items.
 
@@ -155,7 +164,6 @@ class FoldersModel(QtGui.QStandardItemModel):
         item.setData(folder_item.name, ITEM_NAME_ROLE)
         item.setData(folder_item.label, QtCore.Qt.DisplayRole)
         item.setData(icon, QtCore.Qt.DecorationRole)
-
 
     def _fill_items(self, folder_items_by_id):
         if not folder_items_by_id:
@@ -259,6 +267,12 @@ class FoldersWidget(QtWidgets.QWidget):
             the expected selection. Defaults to False.
     """
 
+    double_clicked = QtCore.Signal()
+    double_clicked_left = QtCore.Signal()
+    double_clicked_right = QtCore.Signal()
+    selection_changed = QtCore.Signal()
+    refreshed = QtCore.Signal()
+
     def __init__(self, controller, parent, handle_expected_selection=False):
         super(FoldersWidget, self).__init__(parent)
 
@@ -295,7 +309,8 @@ class FoldersWidget(QtWidgets.QWidget):
 
         selection_model = folders_view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
-
+        folders_view.double_clicked_left.connect(self._on_left_double_click)
+        folders_view.double_clicked_right.connect(self._on_right_double_click)
         folders_model.refreshed.connect(self._on_model_refresh)
 
         self._controller = controller
@@ -306,7 +321,26 @@ class FoldersWidget(QtWidgets.QWidget):
         self._handle_expected_selection = handle_expected_selection
         self._expected_selection = None
 
-    def set_name_filer(self, name):
+    @property
+    def is_refreshing(self):
+        """Model is refreshing.
+
+        Returns:
+            bool: True if model is refreshing.
+        """
+        return self._folders_model.is_refreshing
+
+    @property
+    def has_content(self):
+        """Has at least one folder.
+
+        Returns:
+            bool: True if model has at least one folder.
+        """
+
+        return self._folders_model.has_content
+
+    def set_name_filter(self, name):
         """Set filter of folder name.
 
         Args:
@@ -323,12 +357,84 @@ class FoldersWidget(QtWidgets.QWidget):
 
         self._folders_model.refresh()
 
-    def _on_project_selection_change(self, event):
-        project_name = event["project_name"]
-        self._set_project_name(project_name)
+    def get_project_name(self):
+        """Project name in which folders widget currently is.
 
-    def _set_project_name(self, project_name):
+        Returns:
+            Union[str, None]: Currently used project name.
+        """
+
+        return self._folders_model.get_project_name()
+
+    def set_project_name(self, project_name):
+        """Set project name.
+
+        Do not use this method when controller is handling selection of
+        project using 'selection.project.changed' event.
+
+        Args:
+            project_name (str): Project name.
+        """
+
         self._folders_model.set_project_name(project_name)
+
+    def get_selected_folder_id(self):
+        """Get selected folder id.
+
+        Returns:
+            Union[str, None]: Folder id which is selected.
+        """
+
+        return self._get_selected_item_id()
+
+    def get_selected_folder_label(self):
+        """Selected folder label.
+
+        Returns:
+            Union[str, None]: Selected folder label.
+        """
+
+        item_id = self._get_selected_item_id()
+        return self.get_folder_label(item_id)
+
+    def get_folder_label(self, folder_id):
+        """Folder label for a given folder id.
+
+        Returns:
+            Union[str, None]: Folder label.
+        """
+
+        index = self._folders_model.get_index_by_id(folder_id)
+        if index.isValid():
+            return index.data(QtCore.Qt.DisplayRole)
+        return None
+
+    def set_selected_folder(self, folder_id):
+        """Change selection.
+
+        Args:
+            folder_id (Union[str, None]): Folder id or None to deselect.
+        """
+
+        if folder_id is None:
+            self._folders_view.clearSelection()
+            return True
+
+        if folder_id == self._get_selected_item_id():
+            return True
+        index = self._folders_model.get_index_by_id(folder_id)
+        if not index.isValid():
+            return False
+
+        proxy_index = self._folders_proxy_model.mapFromSource(index)
+        if not proxy_index.isValid():
+            return False
+
+        selection_model = self._folders_view.selectionModel()
+        selection_model.setCurrentIndex(
+            proxy_index, QtCore.QItemSelectionModel.SelectCurrent
+        )
+        return True
 
     def set_deselectable(self, enabled):
         """Set deselectable mode.
@@ -341,9 +447,26 @@ class FoldersWidget(QtWidgets.QWidget):
 
         self._folders_view.set_deselectable(enabled)
 
+    def _on_left_double_click(self):
+        self.double_clicked_left.emit()
+        self.double_clicked.emit()
+
+    def _on_right_double_click(self):
+        self.double_clicked_right.emit()
+        self.double_clicked.emit()
+
+    def _get_selected_index(self):
+        return self._folders_model.get_index_by_id(
+            self.get_selected_folder_id()
+        )
+
+    def _on_project_selection_change(self, event):
+        project_name = event["project_name"]
+        self.set_project_name(project_name)
+
     def _on_folders_refresh_finished(self, event):
         if event["sender"] != FOLDERS_MODEL_SENDER_NAME:
-            self._set_project_name(event["project_name"])
+            self.set_project_name(event["project_name"])
 
     def _on_controller_refresh(self):
         self._update_expected_selection()
@@ -352,6 +475,7 @@ class FoldersWidget(QtWidgets.QWidget):
         if self._expected_selection:
             self._set_expected_selection()
         self._folders_proxy_model.sort(0)
+        self.refreshed.emit()
 
     def _get_selected_item_id(self):
         selection_model = self._folders_view.selectionModel()
@@ -364,6 +488,7 @@ class FoldersWidget(QtWidgets.QWidget):
     def _on_selection_change(self):
         item_id = self._get_selected_item_id()
         self._controller.set_selected_folder(item_id)
+        self.selection_changed.emit()
 
     # Expected selection handling
     def _on_expected_selection_change(self, event):
@@ -391,12 +516,6 @@ class FoldersWidget(QtWidgets.QWidget):
 
         folder_id = self._expected_selection
         self._expected_selection = None
-        if (
-            folder_id is not None
-            and folder_id != self._get_selected_item_id()
-        ):
-            index = self._folders_model.get_index_by_id(folder_id)
-            if index.isValid():
-                proxy_index = self._folders_proxy_model.mapFromSource(index)
-                self._folders_view.setCurrentIndex(proxy_index)
+        if folder_id is not None:
+            self.set_selected_folder(folder_id)
         self._controller.expected_folder_selected(folder_id)
