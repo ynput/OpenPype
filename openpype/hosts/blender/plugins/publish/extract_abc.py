@@ -62,6 +62,7 @@ class ExtractABC(publish.Extractor):
         self.log.info("Extracted instance '%s' to: %s",
                       instance.name, representation)
 
+
 class ExtractModelABC(ExtractABC):
     """Extract model as ABC."""
 
