@@ -42,6 +42,30 @@ class ClickableLineEdit(QtWidgets.QLineEdit):
         event.accept()
 
 
+class ControllerWrap:
+    def __init__(self, controller):
+        self._controller = controller
+        self._selected_folder_id = None
+
+    def emit_event(self, *args, **kwargs):
+        self._controller.emit_event(*args, **kwargs)
+
+    def register_event_callback(self, *args, **kwargs):
+        self._controller.register_event_callback(*args, **kwargs)
+
+    def get_current_project_name(self):
+        return self._controller.get_current_project_name()
+
+    def get_folder_items(self, *args, **kwargs):
+        return self._controller.get_folder_items(*args, **kwargs)
+
+    def set_selected_folder(self, folder_id):
+        self._selected_folder_id = folder_id
+
+    def get_selected_folder_id(self):
+        return self._selected_folder_id
+
+
 class FoldersDialog(QtWidgets.QDialog):
     """Dialog to select asset for a context of instance."""
 
@@ -52,7 +76,9 @@ class FoldersDialog(QtWidgets.QDialog):
         filter_input = PlaceholderLineEdit(self)
         filter_input.setPlaceholderText("Filter folders..")
 
-        folders_widget = FoldersWidget(controller, self)
+        controller_wrap = ControllerWrap(controller)
+        folders_widget = FoldersWidget(controller_wrap, self)
+        folders_widget.set_deselectable(True)
 
         ok_btn = QtWidgets.QPushButton("OK", self)
         cancel_btn = QtWidgets.QPushButton("Cancel", self)
@@ -78,8 +104,11 @@ class FoldersDialog(QtWidgets.QDialog):
         self._cancel_btn = cancel_btn
 
         self._folders_widget = folders_widget
+        self._controller_wrap = controller_wrap
 
+        # Set selected folder only when user confirms the dialog
         self._selected_folder_id = None
+        self._selected_folder_label = None
 
         self._folder_id_to_select = NOT_SET
 
@@ -92,6 +121,10 @@ class FoldersDialog(QtWidgets.QDialog):
         if self._first_show:
             self._first_show = False
             self._on_first_show()
+
+    def refresh(self):
+        project_name = self._controller_wrap.get_current_project_name()
+        self._folders_widget.set_project_name(project_name)
 
     def _on_first_show(self):
         center = self.rect().center()
@@ -122,6 +155,9 @@ class FoldersDialog(QtWidgets.QDialog):
         self._selected_folder_id = (
             self._folders_widget.get_selected_folder_id()
         )
+        self._selected_folder_label = (
+            self._folders_widget.get_selected_folder_label()
+        )
         self.done(1)
 
     def set_selected_folder(self, folder_id):
@@ -143,6 +179,9 @@ class FoldersDialog(QtWidgets.QDialog):
                 is selected.
         """
         return self._selected_folder_id
+
+    def get_selected_folder_label(self):
+        return self._selected_folder_label
 
 
 class FoldersField(BaseClickableFrame):
@@ -184,15 +223,60 @@ class FoldersField(BaseClickableFrame):
         self._icon_btn = icon_btn
 
         self._selected_folder_id = None
+        self._selected_folder_label = None
         self._selected_items = []
         self._is_valid = True
+
+    def refresh(self):
+        self._dialog.refresh()
+
+    def is_valid(self):
+        """Is asset valid."""
+        return self._is_valid
+
+    def get_selected_folder_id(self):
+        """Selected asset names."""
+        return self._selected_folder_id
+
+    def get_selected_folder_label(self):
+        return self._selected_folder_label
+
+    def set_text(self, text):
+        """Set text in text field.
+
+        Does not change selected items (assets).
+        """
+        self._name_input.setText(text)
+
+    def set_valid(self, is_valid):
+        state = ""
+        if not is_valid:
+            state = "invalid"
+        self._set_state_property(state)
+
+    def set_selected_item(self, folder_id=None, folder_label=None):
+        """Set folder for selection.
+
+        Args:
+            folder_id (Optional[str]): Folder id to select.
+            folder_label (Optional[str]): Folder label.
+        """
+
+        self._selected_folder_id = folder_id
+        if not folder_id:
+            folder_label = None
+        elif folder_id and not folder_label:
+            folder_label = self._controller.get_folder_label(folder_id)
+        self._selected_folder_label = folder_label
+        self.set_text(folder_label if folder_label else "<folder>")
 
     def _on_dialog_finish(self, result):
         if not result:
             return
 
         folder_id = self._dialog.get_selected_folder_id()
-        self.set_selected_item(folder_id)
+        folder_label = self._dialog.get_selected_folder_label()
+        self.set_selected_item(folder_id, folder_label)
 
         self.value_changed.emit()
 
@@ -204,34 +288,3 @@ class FoldersField(BaseClickableFrame):
         set_style_property(self, "state", state)
         set_style_property(self._name_input, "state", state)
         set_style_property(self._icon_btn, "state", state)
-
-    def is_valid(self):
-        """Is asset valid."""
-        return self._is_valid
-
-    def get_selected_folder_id(self):
-        """Selected asset names."""
-        return self._selected_folder_id
-
-    def set_text(self, text):
-        """Set text in text field.
-
-        Does not change selected items (assets).
-        """
-        self._name_input.setText(text)
-
-    def set_selected_item(self, folder_id=None):
-        """Set folder for selection.
-
-        Args:
-            folder_id (Optional[str]): Folder id to select.
-        """
-
-        self._selected_folder_id = folder_id
-
-        label = None
-        if folder_id:
-            label = self._controller.get_folder_label(folder_id)
-        if label is None:
-            label = "<folder>"
-        self.set_text(label)
