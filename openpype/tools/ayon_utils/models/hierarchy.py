@@ -29,16 +29,21 @@ class FolderItem:
         parent_id (Union[str, None]): Parent folder id. If 'None' then project
             is parent.
         name (str): Name of folder.
+        path (str): Folder path.
+        folder_type (str): Type of folder.
         label (Union[str, None]): Folder label.
         icon (Union[dict[str, Any], None]): Icon definition.
     """
 
     def __init__(
-        self, entity_id, parent_id, name, label, icon
+        self, entity_id, parent_id, name, path, folder_type, label, icon
     ):
         self.entity_id = entity_id
         self.parent_id = parent_id
         self.name = name
+        self.path = path
+        self.folder_type = folder_type
+        self.label = label or name
         if not icon:
             icon = {
                 "type": "awesome-font",
@@ -46,7 +51,6 @@ class FolderItem:
                 "color": get_default_entity_icon_color()
             }
         self.icon = icon
-        self.label = label or name
 
     def to_data(self):
         """Converts folder item to data.
@@ -59,6 +63,8 @@ class FolderItem:
             "entity_id": self.entity_id,
             "parent_id": self.parent_id,
             "name": self.name,
+            "path": self.path,
+            "folder_type": self.folder_type,
             "label": self.label,
             "icon": self.icon,
         }
@@ -90,8 +96,7 @@ class TaskItem:
         name (str): Name of task.
         task_type (str): Type of task.
         parent_id (str): Parent folder id.
-        icon_name (str): Name of icon from font awesome.
-        icon_color (str): Hex color string that will be used for icon.
+        icon (Union[dict[str, Any], None]): Icon definitions.
     """
 
     def __init__(
@@ -183,12 +188,31 @@ def _get_task_items_from_tasks(tasks):
 
 
 def _get_folder_item_from_hierarchy_item(item):
+    name = item["name"]
+    path_parts = list(item["parents"])
+    path_parts.append(name)
+
     return FolderItem(
         item["id"],
         item["parentId"],
-        item["name"],
+        name,
+        "/".join(path_parts),
+        item["folderType"],
         item["label"],
-        None
+        None,
+    )
+
+
+def _get_folder_item_from_entity(entity):
+    name = entity["name"]
+    return FolderItem(
+        entity["id"],
+        entity["parentId"],
+        name,
+        entity["path"],
+        entity["folderType"],
+        entity["label"] or name,
+        None,
     )
 
 
@@ -273,12 +297,12 @@ class HierarchyModel(object):
         folders = ayon_api.get_folders(
             project_name,
             folder_ids=folder_ids,
-            fields=["id", "name", "label", "parentId"]
+            fields=["id", "name", "label", "parentId", "path", "folderType"]
         )
         # Make sure all folder ids are in output
         output = {folder_id: None for folder_id in folder_ids}
         output.update({
-            folder["id"]: _get_folder_item_from_hierarchy_item(folder)
+            folder["id"]: _get_folder_item_from_entity(folder)
             for folder in folders
         })
         return output

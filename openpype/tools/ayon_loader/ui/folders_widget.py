@@ -11,14 +11,14 @@ from openpype.tools.ayon_utils.widgets import (
     FoldersModel,
     FOLDERS_MODEL_SENDER_NAME,
 )
-from openpype.tools.ayon_utils.widgets.folders_widget import ITEM_ID_ROLE
+from openpype.tools.ayon_utils.widgets.folders_widget import FOLDER_ID_ROLE
 
 if qtpy.API == "pyside":
     from PySide.QtGui import QStyleOptionViewItemV4
 elif qtpy.API == "pyqt4":
     from PyQt4.QtGui import QStyleOptionViewItemV4
 
-UNDERLINE_COLORS_ROLE = QtCore.Qt.UserRole + 4
+UNDERLINE_COLORS_ROLE = QtCore.Qt.UserRole + 50
 
 
 class UnderlinesFolderDelegate(QtWidgets.QItemDelegate):
@@ -365,7 +365,7 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
         selection_model = self._folders_view.selectionModel()
         item_ids = []
         for index in selection_model.selectedIndexes():
-            item_id = index.data(ITEM_ID_ROLE)
+            item_id = index.data(FOLDER_ID_ROLE)
             if item_id is not None:
                 item_ids.append(item_id)
         return item_ids

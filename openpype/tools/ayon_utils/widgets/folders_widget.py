@@ -10,8 +10,10 @@ from openpype.tools.utils import (
 from .utils import RefreshThread, get_qt_icon
 
 FOLDERS_MODEL_SENDER_NAME = "qt_folders_model"
-ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
-ITEM_NAME_ROLE = QtCore.Qt.UserRole + 2
+FOLDER_ID_ROLE = QtCore.Qt.UserRole + 1
+FOLDER_NAME_ROLE = QtCore.Qt.UserRole + 2
+FOLDER_PATH_ROLE = QtCore.Qt.UserRole + 3
+FOLDER_TYPE_ROLE = QtCore.Qt.UserRole + 4
 
 
 class FoldersModel(QtGui.QStandardItemModel):
@@ -160,8 +162,10 @@ class FoldersModel(QtGui.QStandardItemModel):
         """
 
         icon = get_qt_icon(folder_item.icon)
-        item.setData(folder_item.entity_id, ITEM_ID_ROLE)
-        item.setData(folder_item.name, ITEM_NAME_ROLE)
+        item.setData(folder_item.entity_id, FOLDER_ID_ROLE)
+        item.setData(folder_item.name, FOLDER_NAME_ROLE)
+        item.setData(folder_item.path, FOLDER_PATH_ROLE)
+        item.setData(folder_item.folder_type, FOLDER_TYPE_ROLE)
         item.setData(folder_item.label, QtCore.Qt.DisplayRole)
         item.setData(icon, QtCore.Qt.DecorationRole)
 
@@ -201,7 +205,7 @@ class FoldersModel(QtGui.QStandardItemModel):
             folder_ids_to_add = set(folder_items)
             for row_idx in reversed(range(parent_item.rowCount())):
                 child_item = parent_item.child(row_idx)
-                child_id = child_item.data(ITEM_ID_ROLE)
+                child_id = child_item.data(FOLDER_ID_ROLE)
                 if child_id in ids_to_remove:
                     removed_items.append(parent_item.takeRow(row_idx))
                 else:
@@ -480,7 +484,7 @@ class FoldersWidget(QtWidgets.QWidget):
     def _get_selected_item_id(self):
         selection_model = self._folders_view.selectionModel()
         for index in selection_model.selectedIndexes():
-            item_id = index.data(ITEM_ID_ROLE)
+            item_id = index.data(FOLDER_ID_ROLE)
             if item_id is not None:
                 return item_id
         return None
