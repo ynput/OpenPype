@@ -140,7 +140,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
                 "Plugin": "CelAction",
 
                 # Top-level group name
-                "BatchName": batch_name,
+                "BatchName": "Group: " + batch_name,
 
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": self._deadline_user,

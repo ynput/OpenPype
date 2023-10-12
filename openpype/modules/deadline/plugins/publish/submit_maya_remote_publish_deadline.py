@@ -67,7 +67,7 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         payload = {
             "JobInfo": {
                 "Plugin": "MayaBatch",
-                "BatchName": batch_name,
+                "BatchName": "Group: " + batch_name,
                 "Name": job_name,
                 "UserName": instance.context.data["user"],
                 "Comment": instance.context.data.get("comment", ""),

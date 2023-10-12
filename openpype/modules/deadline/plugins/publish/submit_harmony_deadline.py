@@ -269,7 +269,7 @@ class HarmonySubmitDeadline(
         batch_name = set_batch_name(self._instance, filename)
         if is_in_tests:
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
-        job_info.BatchName = batch_name
+        job_info.BatchName = "Group: " + batch_name
         job_info.Department = self.department
         job_info.Group = self.group
 

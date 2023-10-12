@@ -78,7 +78,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         batch_name = set_batch_name(instance, src_filename)
 
         job_info.Name = "%s - %s" % (src_filename, instance.name)
-        job_info.BatchName = batch_name
+        job_info.BatchName = "Group: " + batch_name
         job_info.Plugin = instance.data["plugin"]
         job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
         job_info.EnableAutoTimeout = True

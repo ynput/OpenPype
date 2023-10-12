@@ -59,7 +59,7 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         batch_name = set_batch_name(instance, filename)
 
         job_info.Name = "{} - {}".format(filename, instance.name)
-        job_info.BatchName = batch_name
+        job_info.BatchName = "Group: " + batch_name
         job_info.Plugin = "Houdini"
         job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())

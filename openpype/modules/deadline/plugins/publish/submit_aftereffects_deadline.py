@@ -57,7 +57,7 @@ class AfterEffectsSubmitDeadline(
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         dln_job_info.Name = self._instance.data["name"]
-        dln_job_info.BatchName = batch_name
+        dln_job_info.BatchName = "Group: " + batch_name
         dln_job_info.Plugin = "AfterEffects"
         dln_job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())

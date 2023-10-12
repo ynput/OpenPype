@@ -226,7 +226,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         payload = {
             "JobInfo": {
                 # Top-level group name
-                "BatchName": batch_name,
+                "BatchName": "Group: " + batch_name,
 
                 # Asset dependency to wait for at least the scene file to sync.
                 # "AssetDependency0": script_path,
