@@ -72,7 +72,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
         control_layout.addWidget(update_all_button)
         control_layout.addWidget(refresh_button)
 
-        model = InventoryModel(project_name)
+        model = InventoryModel(controller)
         proxy = FilterProxyModel()
         proxy.setSourceModel(model)
         proxy.setDynamicSortFilter(True)
