@@ -25,7 +25,8 @@ class BasicValidateModel(BaseSettingsModel):
 class PublishPluginsModel(BaseSettingsModel):
     ValidateContainers: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
-        title="Validate Latest Containers.")
+        title="Validate Latest Containers.",
+        section="Validators")
     ValidateMeshIsStatic: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Mesh is Static.")
