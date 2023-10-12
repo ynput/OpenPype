@@ -117,6 +117,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
             asset_name,
             task_name,
             asset_doc=asset_doc,
+            host_name=host_name,
         )
         if not workfile_representation:
             self.log.debug(

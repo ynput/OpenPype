@@ -549,6 +549,7 @@ def get_last_workfile_representation(
     task_name,
     asset_id=None,
     asset_doc=None,
+    host_name=None,
     fields=None,
 ):
     """Get last published workfile representation.
@@ -560,6 +561,7 @@ def get_last_workfile_representation(
         asset_id (Optional[Union[str, ObjectId]]): Asset id.
             subset name. Defaults to None.
         asset_doc (Optional[dict]): Asset doc. Defaults to None.
+        host_name (Optional[str]): Host name.
         fields (Optional[Iterable[str]]): Fields that should be returned.
             Defaults to None.
 
@@ -577,6 +579,7 @@ def get_last_workfile_representation(
             task_name,
             asset_doc,
             project_name=project_name,
+            host_name=host_name,
         ),
         asset_id=asset_id,
         asset_name=asset_name,
