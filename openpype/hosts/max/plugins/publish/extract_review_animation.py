@@ -1,5 +1,4 @@
 import os
-import contextlib
 import pyblish.api
 from pymxs import runtime as rt
 from openpype.pipeline import publish
@@ -48,9 +47,9 @@ class ExtractReviewAnimation(publish.Extractor):
             nitrousGraphicMgr = rt.NitrousGraphicsManager
             viewport_setting = nitrousGraphicMgr.GetActiveViewportSetting()
             with viewport_setup(
-                viewport_setting,
-                visual_style_preset,
-                review_camera):
+                    viewport_setting,
+                    visual_style_preset,
+                    review_camera):
                 viewport_setting.VisualStyleMode = rt.Name(
                     visual_style_preset)
                 preview_arg = set_preview_arg(
