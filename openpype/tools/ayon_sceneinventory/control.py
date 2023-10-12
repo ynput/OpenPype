@@ -1,10 +1,12 @@
 import ayon_api
 
+from openpype.lib.events import QueuedEventSystem
 from openpype.host import ILoadHost
 from openpype.pipeline import (
     registered_host,
     get_current_context,
 )
+from openpype.tools.ayon_utils.models import HierarchyModel
 
 from .models import SiteSyncModel
 
@@ -27,15 +29,27 @@ class SceneInventoryController:
         self._current_folder_id = None
         self._current_folder_set = False
 
-        self._site_sync_model = SiteSyncModel()
+        self._site_sync_model = SiteSyncModel(self)
+        # Switch dialog requirements
+        self._hierarchy_model = HierarchyModel(self)
+        self._event_system = self._create_event_system()
+
+    def emit_event(self, topic, data=None, source=None):
+        if data is None:
+            data = {}
+        self._event_system.emit(topic, data, source)
+
+    def register_event_callback(self, topic, callback):
+        self._event_system.add_callback(topic, callback)
 
     def reset(self):
-        self._site_sync_model.reset()
-
         self._current_context = None
         self._current_project = None
         self._current_folder_id = None
         self._current_folder_set = False
+
+        self._site_sync_model.reset()
+        self._hierarchy_model.reset()
 
     def get_current_context(self):
         if self._current_context is None:
@@ -101,3 +115,20 @@ class SceneInventoryController:
         return self._site_sync_model.resync_representations(
             representation_ids, site_type
         )
+
+    # Switch dialog methods
+    def get_folder_items(self, project_name, sender=None):
+        return self._hierarchy_model.get_folder_items(project_name, sender)
+
+    def get_folder_label(self, folder_id):
+        if not folder_id:
+            return None
+        project_name = self.get_current_project_name()
+        folder_item = self._hierarchy_model.get_folder_item(
+            project_name, folder_id)
+        if folder_item is None:
+            return None
+        return folder_item.label
+
+    def _create_event_system(self):
+        return QueuedEventSystem()

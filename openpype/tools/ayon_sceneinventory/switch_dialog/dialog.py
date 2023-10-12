@@ -4,6 +4,7 @@ from qtpy import QtWidgets, QtCore
 import qtawesome
 
 from openpype.client import (
+    get_asset_by_id,
     get_asset_by_name,
     get_assets,
     get_subset_by_name,
@@ -13,7 +14,6 @@ from openpype.client import (
     get_last_versions,
     get_representations,
 )
-from openpype.pipeline import legacy_io
 from openpype.pipeline.load import (
     discover_loader_plugins,
     switch_container,
@@ -28,6 +28,7 @@ from .widgets import (
     ButtonWithMenu,
     SearchComboBox
 )
+from .folders_input import FoldersField
 
 log = logging.getLogger("SwitchAssetDialog")
 
@@ -62,11 +63,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # Force and keep focus dialog
         self.setModal(True)
 
-        assets_combox = SearchComboBox(self)
+        folders_field = FoldersField(controller, self)
         subsets_combox = SearchComboBox(self)
         repres_combobox = SearchComboBox(self)
 
-        assets_combox.set_placeholder("<folder>")
         subsets_combox.set_placeholder("<product>")
         repres_combobox.set_placeholder("<representation>")
 
@@ -83,7 +83,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         main_layout = QtWidgets.QGridLayout(self)
         # Asset column
         main_layout.addWidget(current_asset_btn, 0, 0)
-        main_layout.addWidget(assets_combox, 1, 0)
+        main_layout.addWidget(folders_field, 1, 0)
         main_layout.addWidget(asset_label, 2, 0)
         # Subset column
         main_layout.addWidget(subsets_combox, 1, 1)
@@ -103,7 +103,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         show_timer.setSingleShot(False)
 
         show_timer.timeout.connect(self._on_show_timer)
-        assets_combox.currentIndexChanged.connect(
+        folders_field.value_changed.connect(
             self._combobox_value_changed
         )
         subsets_combox.currentIndexChanged.connect(
@@ -113,14 +113,14 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             self._combobox_value_changed
         )
         accept_btn.clicked.connect(self._on_accept)
-        current_asset_btn.clicked.connect(self._on_current_asset)
+        current_asset_btn.clicked.connect(self._on_current_folder)
 
         self._show_timer = show_timer
         self._show_counter = 0
 
         self._current_asset_btn = current_asset_btn
 
-        self._assets_box = assets_combox
+        self._folders_field = folders_field
         self._subsets_box = subsets_combox
         self._representations_box = repres_combobox
 
@@ -144,17 +144,17 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         self.hero_version_ids = set()
 
-        self.missing_assets = []
-        self.missing_versions = []
-        self.missing_subsets = []
-        self.missing_repres = []
+        self.missing_assets = set()
+        self.missing_versions = set()
+        self.missing_subsets = set()
+        self.missing_repres = set()
         self.missing_docs = False
 
         self.archived_assets = []
         self.archived_subsets = []
         self.archived_repres = []
 
-        self._init_asset_name = None
+        self._init_folder_id = None
         self._init_subset_name = None
         self._init_repre_name = None
 
@@ -181,12 +181,8 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         self._fill_check = False
 
-        if init_refresh:
-            asset_values = self._get_asset_box_values()
-            self._fill_combobox(asset_values, "asset")
-
         validation_state = ValidationState()
-
+        self._folders_field.refresh()
         # Set other comboboxes to empty if any document is missing or any asset
         # of loaded representations is archived.
         self._is_folder_ok(validation_state)
@@ -207,15 +203,16 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         self._build_loaders_menu()
 
-        if init_refresh:  # pre select context if possible
-            self._assets_box.set_valid_value(self._init_asset_name)
+        if init_refresh:
+            # pre select context if possible
+            self._folders_field.set_selected_item(self._init_folder_id)
             self._subsets_box.set_valid_value(self._init_subset_name)
             self._representations_box.set_valid_value(self._init_repre_name)
 
         self._fill_check = True
 
     def set_labels(self):
-        asset_label = self._assets_box.get_valid_value()
+        asset_label = self._folders_field.get_selected_folder_label()
         subset_label = self._subsets_box.get_valid_value()
         repre_label = self._representations_box.get_valid_value()
 
@@ -228,12 +225,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         error_msg = "*Please select"
         error_sheet = "border: 1px solid red;"
 
-        asset_sheet = None
         subset_sheet = None
         repre_sheet = None
         accept_state = ""
         if validation_state.folder_ok is False:
-            asset_sheet = error_sheet
             self._asset_label.setText(error_msg)
         elif validation_state.subset_ok is False:
             subset_sheet = error_sheet
@@ -245,7 +240,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         if validation_state.all_ok:
             accept_state = "1"
 
-        self._assets_box.setStyleSheet(asset_sheet or "")
+        self._folders_field.set_valid(validation_state.folder_ok)
         self._subsets_box.setStyleSheet(subset_sheet or "")
         self._representations_box.setStyleSheet(repre_sheet or "")
 
@@ -282,19 +277,13 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         ))
         repres_by_id = {str(repre["_id"]): repre for repre in repres}
 
-        # stash context values, works only for single representation
-        if len(repres) == 1:
-            self._init_asset_name = repres[0]["context"]["asset"]
-            self._init_subset_name = repres[0]["context"]["subset"]
-            self._init_repre_name = repres[0]["context"]["representation"]
-
         content_repres = {}
         archived_repres = []
-        missing_repres = []
+        missing_repres = set()
         version_ids = set()
         for repre_id in repre_ids:
             if repre_id not in repres_by_id:
-                missing_repres.append(repre_id)
+                missing_repres.add(repre_id)
             elif repres_by_id[repre_id]["type"] == "archived_representation":
                 repre = repres_by_id[repre_id]
                 archived_repres.append(repre)
@@ -316,13 +305,13 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             if version["type"] == "hero_version":
                 hero_version_ids.add(version["_id"])
 
-        missing_versions = []
-        subset_ids = []
+        missing_versions = set()
+        subset_ids = set()
         for version_id in version_ids:
             if version_id not in content_versions:
-                missing_versions.append(version_id)
+                missing_versions.add(version_id)
             else:
-                subset_ids.append(content_versions[version_id]["parent"])
+                subset_ids.add(content_versions[version_id]["parent"])
 
         subsets = get_subsets(
             project_name, subset_ids=subset_ids, archived=True
@@ -331,11 +320,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         asset_ids = []
         archived_subsets = []
-        missing_subsets = []
+        missing_subsets = set()
         content_subsets = {}
         for subset_id in subset_ids:
             if subset_id not in subsets_by_id:
-                missing_subsets.append(subset_id)
+                missing_subsets.add(subset_id)
             elif subsets_by_id[subset_id]["type"] == "archived_subset":
                 subset = subsets_by_id[subset_id]
                 asset_ids.append(subset["parent"])
@@ -345,15 +334,24 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 asset_ids.append(subset["parent"])
                 content_subsets[subset_id] = subset
 
+        # stash context values, works only for single representation
+        if len(repres) == 1:
+            folder_id = None
+            if asset_ids:
+                folder_id = asset_ids[0]
+            self._init_folder_id = folder_id
+            self._init_subset_name = repres[0]["context"]["subset"]
+            self._init_repre_name = repres[0]["context"]["representation"]
+
         assets = get_assets(project_name, asset_ids=asset_ids, archived=True)
         assets_by_id = {asset["_id"]: asset for asset in assets}
 
-        missing_assets = []
+        missing_assets = set()
         archived_assets = []
         content_assets = {}
         for asset_id in asset_ids:
             if asset_id not in assets_by_id:
-                missing_assets.append(asset_id)
+                missing_assets.add(asset_id)
             elif assets_by_id[asset_id]["type"] == "archived_asset":
                 archived_assets.append(assets_by_id[asset_id])
             else:
@@ -472,9 +470,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return loaders
 
     def _fill_combobox(self, values, combobox_type):
-        if combobox_type == "asset":
-            combobox_widget = self._assets_box
-        elif combobox_type == "subset":
+        if combobox_type == "subset":
             combobox_widget = self._subsets_box
         elif combobox_type == "repre":
             combobox_widget = self._representations_box
@@ -504,51 +500,44 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _get_current_output_repre_ids(self):
         # NOTE hero versions are not used because it is expected that
         # hero version has same representations as latests
-        selected_asset = self._assets_box.currentText()
+        selected_folder_id = self._folders_field.get_selected_folder_id()
         selected_subset = self._subsets_box.currentText()
         selected_repre = self._representations_box.currentText()
 
         # Nothing is selected
         # [ ] [ ] [ ]
-        if not selected_asset and not selected_subset and not selected_repre:
+        if (
+            not selected_folder_id
+            and not selected_subset
+            and not selected_repre
+        ):
             return list(self.content_repres.keys())
-
-        # Prepare asset document if asset is selected
-        asset_doc = None
-        if selected_asset:
-            asset_doc = get_asset_by_name(
-                self._project_name,
-                selected_asset,
-                fields=["_id"]
-            )
-            if not asset_doc:
-                return []
 
         # Everything is selected
         # [x] [x] [x]
-        if selected_asset and selected_subset and selected_repre:
+        if selected_folder_id and selected_subset and selected_repre:
             return self._get_current_output_repre_ids_xxx(
-                asset_doc, selected_subset, selected_repre
+                selected_folder_id, selected_subset, selected_repre
             )
 
         # [x] [x] [ ]
         # If asset and subset is selected
-        if selected_asset and selected_subset:
+        if selected_folder_id and selected_subset:
             return self._get_current_output_repre_ids_xxo(
-                asset_doc, selected_subset
+                selected_folder_id, selected_subset
             )
 
         # [x] [ ] [x]
         # If asset and repre is selected
-        if selected_asset and selected_repre:
+        if selected_folder_id and selected_repre:
             return self._get_current_output_repre_ids_xox(
-                asset_doc, selected_repre
+                selected_folder_id, selected_repre
             )
 
         # [x] [ ] [ ]
         # If asset and subset is selected
-        if selected_asset:
-            return self._get_current_output_repre_ids_xoo(asset_doc)
+        if selected_folder_id:
+            return self._get_current_output_repre_ids_xoo(selected_folder_id)
 
         # [ ] [x] [x]
         if selected_subset and selected_repre:
@@ -566,13 +555,13 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return self._get_current_output_repre_ids_oox(selected_repre)
 
     def _get_current_output_repre_ids_xxx(
-        self, asset_doc, selected_subset, selected_repre
+        self, folder_id, selected_subset, selected_repre
     ):
         project_name = self._project_name
         subset_doc = get_subset_by_name(
             project_name,
             selected_subset,
-            asset_doc["_id"],
+            folder_id,
             fields=["_id"]
         )
 
@@ -590,12 +579,12 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         )
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
-    def _get_current_output_repre_ids_xxo(self, asset_doc, selected_subset):
+    def _get_current_output_repre_ids_xxo(self, folder_id, selected_subset):
         project_name = self._project_name
         subset_doc = get_subset_by_name(
             project_name,
             selected_subset,
-            asset_doc["_id"],
+            folder_id,
             fields=["_id"]
         )
         if not subset_doc:
@@ -615,7 +604,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         )
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
-    def _get_current_output_repre_ids_xox(self, asset_doc, selected_repre):
+    def _get_current_output_repre_ids_xox(self, folder_id, selected_repre):
         subset_names = set()
         for subset_doc in self.content_subsets.values():
             subset_names.add(subset_doc["name"])
@@ -623,7 +612,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         project_name = self._project_name
         subset_docs = get_subsets(
             project_name,
-            asset_ids=[asset_doc["_id"]],
+            asset_ids=[folder_id],
             subset_names=subset_names,
             fields=["_id", "name"]
         )
@@ -648,7 +637,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         )
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
-    def _get_current_output_repre_ids_xoo(self, asset_doc):
+    def _get_current_output_repre_ids_xoo(self, folder_id):
         project_name = self._project_name
         repres_by_subset_name = collections.defaultdict(set)
         for repre_doc in self.content_repres.values():
@@ -660,7 +649,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         subset_docs = list(get_subsets(
             project_name,
-            asset_ids=[asset_doc["_id"]],
+            asset_ids=[folder_id],
             subset_names=repres_by_subset_name.keys(),
             fields=["_id", "name"]
         ))
@@ -777,33 +766,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         )
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
-    def _get_asset_box_values(self):
-        project_name = self._project_name
-        asset_docs = get_assets(project_name, fields=["_id", "name"])
-        asset_names_by_id = {
-            asset_doc["_id"]: asset_doc["name"]
-            for asset_doc in asset_docs
-        }
-        subsets = get_subsets(
-            project_name,
-            asset_ids=asset_names_by_id.keys(),
-            fields=["parent"]
-        )
-        filtered_assets = []
-        for subset in subsets:
-            asset_name = asset_names_by_id[subset["parent"]]
-            if asset_name not in filtered_assets:
-                filtered_assets.append(asset_name)
-        return sorted(filtered_assets)
-
     def _get_subset_box_values(self):
         project_name = self._project_name
-        selected_asset = self._assets_box.get_valid_value()
-        if selected_asset:
-            asset_doc = get_asset_by_name(
-                project_name, selected_asset, fields=["_id"]
-            )
-            asset_ids = [asset_doc["_id"]]
+        selected_folder_id = self._folders_field.get_selected_folder_id()
+        if selected_folder_id:
+            asset_ids = [selected_folder_id]
         else:
             asset_ids = list(self.content_assets.keys())
 
@@ -833,12 +800,12 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # NOTE hero versions are not used because it is expected that
         # hero version has same representations as latests
         project_name = self._project_name
-        selected_asset = self._assets_box.currentText()
+        selected_folder_id = self._folders_field.get_selected_folder_id()
         selected_subset = self._subsets_box.currentText()
 
         # If nothing is selected
         # [ ] [ ] [?]
-        if not selected_asset and not selected_subset:
+        if not selected_folder_id and not selected_subset:
             # Find all representations of selection's subsets
             possible_repres = get_representations(
                 project_name,
@@ -863,14 +830,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return list(output_repres or list())
 
         # [x] [x] [?]
-        if selected_asset and selected_subset:
-            asset_doc = get_asset_by_name(
-                project_name, selected_asset, fields=["_id"]
-            )
+        if selected_folder_id and selected_subset:
             subset_doc = get_subset_by_name(
                 project_name,
                 selected_subset,
-                asset_doc["_id"],
+                selected_folder_id,
                 fields=["_id"]
             )
 
@@ -889,13 +853,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [ ] [?]
         # If asset only is selected
-        if selected_asset:
-            asset_doc = get_asset_by_name(
-                project_name, selected_asset, fields=["_id"]
-            )
-            if not asset_doc:
-                return list()
-
+        if selected_folder_id:
             # Filter subsets by subset names from content
             subset_names = set()
             for subset_doc in self.content_subsets.values():
@@ -903,7 +861,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
             subset_docs = get_subsets(
                 project_name,
-                asset_ids=[asset_doc["_id"]],
+                asset_ids=[selected_folder_id],
                 subset_names=subset_names,
                 fields=["_id"]
             )
@@ -1002,15 +960,15 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return list(available_repres)
 
     def _is_folder_ok(self, validation_state):
-        selected_asset = self._assets_box.get_valid_value()
+        selected_folder_id = self._folders_field.get_selected_folder_id()
         if (
-            selected_asset is None
+            selected_folder_id is None
             and (self.missing_docs or self.archived_assets)
         ):
             validation_state.folder_ok = False
 
     def _is_subset_ok(self, validation_state):
-        selected_asset = self._assets_box.get_valid_value()
+        selected_folder_id = self._folders_field.get_selected_folder_id()
         selected_subset = self._subsets_box.get_valid_value()
 
         # [?] [x] [?]
@@ -1019,7 +977,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return
 
         # [ ] [ ] [?]
-        if selected_asset is None:
+        if selected_folder_id is None:
             # If there were archived subsets and asset is not selected
             if self.archived_subsets:
                 validation_state.subset_ok = False
@@ -1027,11 +985,8 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [ ] [?]
         project_name = self._project_name
-        asset_doc = get_asset_by_name(
-            project_name, selected_asset, fields=["_id"]
-        )
         subset_docs = get_subsets(
-            project_name, asset_ids=[asset_doc["_id"]], fields=["name"]
+            project_name, asset_ids=[selected_folder_id], fields=["name"]
         )
 
         subset_names = set(
@@ -1045,7 +1000,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 break
 
     def _is_repre_ok(self, validation_state):
-        selected_asset = self._assets_box.get_valid_value()
+        selected_folder_id = self._folders_field.get_selected_folder_id()
         selected_subset = self._subsets_box.get_valid_value()
         selected_repre = self._representations_box.get_valid_value()
 
@@ -1055,7 +1010,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return
 
         # [ ] [ ] [ ]
-        if selected_asset is None and selected_subset is None:
+        if selected_folder_id is None and selected_subset is None:
             if (
                 self.archived_repres
                 or self.missing_versions
@@ -1066,14 +1021,11 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [x] [ ]
         project_name = self._project_name
-        if selected_asset is not None and selected_subset is not None:
-            asset_doc = get_asset_by_name(
-                project_name, selected_asset, fields=["_id"]
-            )
+        if selected_folder_id is not None and selected_subset is not None:
             subset_doc = get_subset_by_name(
                 project_name,
                 selected_subset,
-                asset_doc["_id"],
+                selected_folder_id,
                 fields=["_id"]
             )
             subset_id = subset_doc["_id"]
@@ -1100,13 +1052,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return
 
         # [x] [ ] [ ]
-        if selected_asset is not None:
-            asset_doc = get_asset_by_name(
-                project_name, selected_asset, fields=["_id"]
-            )
+        if selected_folder_id is not None:
             subset_docs = list(get_subsets(
                 project_name,
-                asset_ids=[asset_doc["_id"]],
+                asset_ids=[selected_folder_id],
                 fields=["_id", "name"]
             ))
 
@@ -1192,36 +1141,27 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 validation_state.repre_ok = False
                 break
 
-    def _on_current_asset(self):
+    def _on_current_folder(self):
         # Set initial asset as current.
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        index = self._assets_box.findText(
-            asset_name, QtCore.Qt.MatchFixedString
-        )
-        if index >= 0:
-            print("Setting asset to {}".format(asset_name))
-            self._assets_box.setCurrentIndex(index)
+        folder_id = self._controller.get_current_folder_id()
+        if folder_id:
+            self._folders_field.set_selected_item(folder_id)
 
     def _on_accept(self):
         self._trigger_switch()
 
     def _trigger_switch(self, loader=None):
         # Use None when not a valid value or when placeholder value
-        selected_asset = self._assets_box.get_valid_value()
+        selected_folder_id = self._folders_field.get_selected_folder_id()
         selected_subset = self._subsets_box.get_valid_value()
         selected_representation = self._representations_box.get_valid_value()
 
         project_name = self._project_name
-        if selected_asset:
-            asset_doc = get_asset_by_name(project_name, selected_asset)
+        if selected_folder_id:
+            asset_doc = get_asset_by_id(project_name, selected_folder_id)
             asset_docs_by_id = {asset_doc["_id"]: asset_doc}
         else:
             asset_docs_by_id = self.content_assets
-
-        asset_docs_by_name = {
-            asset_doc["name"]: asset_doc
-            for asset_doc in asset_docs_by_id.values()
-        }
 
         subset_names = None
         if selected_subset:
@@ -1286,12 +1226,12 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
             container_asset_id = container_subset["parent"]
             container_asset = self.content_assets[container_asset_id]
-            container_asset_name = container_asset["name"]
+            container_asset_id = container_asset["_id"]
 
-            if selected_asset:
-                asset_doc = asset_docs_by_name[selected_asset]
+            if selected_folder_id:
+                asset_doc = asset_docs_by_id[selected_folder_id]
             else:
-                asset_doc = asset_docs_by_name[container_asset_name]
+                asset_doc = asset_docs_by_id[container_asset_id]
 
             subsets_by_name = subset_docs_by_parent_and_name[asset_doc["_id"]]
             if selected_subset:
