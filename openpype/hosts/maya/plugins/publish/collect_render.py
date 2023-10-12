@@ -504,9 +504,12 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # get default deadline webservice url from deadline module
             deadline_servers = deadline_module.deadline_urls
 
-        limit_groups = deadline_module.get_deadline_limit_groups(
+        requested_arguments = {"NamesOnly": True}
+        limit_groups = deadline_module.get_deadline_data(
             deadline_settings['deadline_urls']["default"],
-            self.log
+            "limitgroups",
+            log=self.log,
+            **requested_arguments
         )
         for group, value in zip(limit_groups, attributes['limits'][0]):
             if value is True:

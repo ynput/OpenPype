@@ -297,9 +297,12 @@ class CreateRender(plugin.Creator):
             self.data["secondaryPool"] = self._set_default_pool(pool_names,
                                                                 secondary_pool)
 
-            limit_groups = self.deadline_module.get_deadline_limit_groups(
+            requested_arguments = {"NamesOnly": True}
+            limit_groups = self.deadline_module.get_deadline_data(
                 deadline_url,
-                self.log
+                "limitgroups",
+                log=self.log,
+                **requested_arguments
             )
             self.data["limits"] = {"limits": limit_groups}
 
