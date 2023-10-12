@@ -4,34 +4,13 @@ from __future__ import absolute_import
 
 import pyblish.api
 
-import openpype.hosts.nuke.api.lib as nlib
-
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
     PublishXmlValidationError,
-    OptionalPyblishPluginMixin,
-    get_errored_instances_from_context
+    OptionalPyblishPluginMixin
 )
-
-
-class SelectInvalidNodesAction(pyblish.api.Action):
-    """Select invalid nodes."""
-
-    label = "Select Failed Node"
-    icon = "briefcase"
-    on = "failed"
-
-    def process(self, context, plugin):
-        if not hasattr(plugin, "select"):
-            raise RuntimeError("Plug-in does not have select method.")
-
-        # Get the failed instances
-        self.log.debug("Finding failed plug-ins..")
-        failed_instance = get_errored_instances_from_context(context, plugin)
-        if failed_instance:
-            self.log.debug("Attempting selection ...")
-            plugin.select(failed_instance.pop())
+from openpype.hosts.nuke.api import SelectInvalidAction
 
 
 class ValidateCorrectAssetContext(
@@ -51,7 +30,7 @@ class ValidateCorrectAssetContext(
     hosts = ["nuke"]
     actions = [
         RepairAction,
-        SelectInvalidNodesAction,
+        SelectInvalidAction
     ]
     optional = True
 
@@ -133,14 +112,3 @@ class ValidateCorrectAssetContext(
             created_instance[_key] = instance.context.data[_key]
 
         create_context.save_changes()
-
-    @classmethod
-    def select(cls, instance):
-        """Select invalid node """
-        invalid = cls.get_invalid(instance)
-        if not invalid:
-            return
-
-        select_node = instance.data["transientData"]["node"]
-        nlib.reset_selection()
-        select_node["selected"].setValue(True)
