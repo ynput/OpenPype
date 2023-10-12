@@ -474,7 +474,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         )
 
     def _get_checked_limit_groups(self, attributes):
-        self.log.debug(f"SELF METHODS: {dir(self)}")
         checked_limits = []
         deadline_settings = get_system_settings()["modules"]["deadline"]
 
