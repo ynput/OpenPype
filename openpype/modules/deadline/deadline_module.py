@@ -77,12 +77,14 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
 
     @staticmethod
     def get_deadline_data(webservice, endpoint, log=None, **kwargs):
-        """Get Limits groups for Deadlin
+        """Get Limits groups for Deadline
         Args:
             webservice (str): Server url
+            endpoint (str): Request endpoint
             log (Logger)
+            kwargs (Any): Request payload content as key=value pairs
         Returns:
-            list: Limits
+            Any: Returns the json-encoded content of a response, if any.
         Throws:
             RuntimeError: If Deadline webservice is unreachable.
         """
