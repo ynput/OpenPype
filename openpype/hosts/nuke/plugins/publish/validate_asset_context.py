@@ -24,7 +24,7 @@ class SelectInvalidNodesAction(pyblish.api.Action):
 
     def process(self, context, plugin):
         if not hasattr(plugin, "select"):
-            raise RuntimeError("Plug-in does not have repair method.")
+            raise RuntimeError("Plug-in does not have select method.")
 
         # Get the failed instances
         self.log.debug("Finding failed plug-ins..")
