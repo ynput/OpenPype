@@ -121,7 +121,7 @@ def get_subset_name(
             filtering. Value of 'family' is used when not passed.
 
     Raises:
-        KeyError if filled template contains placeholder key which is not
+        TemplateFillError: If filled template contains placeholder key which is not
             collected.
     """
 
