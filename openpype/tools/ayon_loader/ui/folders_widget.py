@@ -257,13 +257,11 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
     Args:
         controller (AbstractWorkfilesFrontend): The control object.
         parent (QtWidgets.QWidget): The parent widget.
-        handle_expected_selection (bool): If True, the widget will handle
-            the expected selection. Defaults to False.
     """
 
     refreshed = QtCore.Signal()
 
-    def __init__(self, controller, parent, handle_expected_selection=False):
+    def __init__(self, controller, parent):
         super(LoaderFoldersWidget, self).__init__(parent)
 
         folders_view = DeselectableTreeView(self)
@@ -313,7 +311,6 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
         self._folders_proxy_model = folders_proxy_model
         self._folders_label_delegate = folders_label_delegate
 
-        self._handle_expected_selection = handle_expected_selection
         self._expected_selection = None
 
     def set_name_filter(self, name):
@@ -379,9 +376,6 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
         self._update_expected_selection(event.data)
 
     def _update_expected_selection(self, expected_data=None):
-        if not self._handle_expected_selection:
-            return
-
         if expected_data is None:
             expected_data = self._controller.get_expected_selection_data()
 
@@ -395,9 +389,6 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
             self._set_expected_selection()
 
     def _set_expected_selection(self):
-        if not self._handle_expected_selection:
-            return
-
         folder_id = self._expected_selection
         selected_ids = self._get_selected_item_ids()
         self._expected_selection = None
