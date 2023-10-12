@@ -19,10 +19,10 @@ def setup_pyblish_logging():
 
 def _run_publish_test_deferred():
     try:
+        setup_pyblish_logging()
         pyblish.util.publish()
     finally:
         cmds.quit(force=True)
 
 
-cmds.evalDeferred("setup_pyblish_logging()", evaluateNext=True)
 cmds.evalDeferred("_run_publish_test_deferred()", lowestPriority=True)
