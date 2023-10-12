@@ -223,12 +223,83 @@ class HierarchyModel(object):
         self._tasks_by_id.reset()
 
     def refresh_project(self, project_name):
+        """Force to refresh folder items for a project.
+
+        Args:
+            project_name (str): Name of project to refresh.
+        """
+
         self._refresh_folders_cache(project_name)
 
     def get_folder_items(self, project_name, sender):
+        """Get folder items by project name.
+
+        The folders are cached per project name. If the cache is not valid
+        then the folders are queried from server.
+
+        Args:
+            project_name (str): Name of project where to look for folders.
+            sender (Union[str, None]): Who requested the folder ids.
+
+        Returns:
+            dict[str, FolderItem]: Folder items by id.
+        """
+
         if not self._folders_items[project_name].is_valid:
             self._refresh_folders_cache(project_name, sender)
         return self._folders_items[project_name].get_data()
+
+    def get_folder_items_by_id(self, project_name, folder_ids):
+        """Get folder items by ids.
+
+        This function will query folders if they are not in cache. But the
+        queried items are not added to cache back.
+
+        Args:
+            project_name (str): Name of project where to look for folders.
+            folder_ids (Iterable[str]): Folder ids.
+
+        Returns:
+            dict[str, Union[FolderItem, None]]: Folder items by id.
+        """
+
+        folder_ids = set(folder_ids)
+        if self._folders_items[project_name].is_valid:
+            cache_data = self._folders_items[project_name].get_data()
+            return {
+                folder_id: cache_data.get(folder_id)
+                for folder_id in folder_ids
+            }
+        folders = ayon_api.get_folders(
+            project_name,
+            folder_ids=folder_ids,
+            fields=["id", "name", "label", "parentId"]
+        )
+        # Make sure all folder ids are in output
+        output = {folder_id: None for folder_id in folder_ids}
+        output.update({
+            folder["id"]: _get_folder_item_from_hierarchy_item(folder)
+            for folder in folders
+        })
+        return output
+
+    def get_folder_item(self, project_name, folder_id):
+        """Get folder items by id.
+
+        This function will query folder if they is not in cache. But the
+        queried items are not added to cache back.
+
+        Args:
+            project_name (str): Name of project where to look for folders.
+            folder_id (str): Folder id.
+
+        Returns:
+            Union[FolderItem, None]: Folder item.
+        """
+        items = self.get_folder_items_by_id(
+            project_name, [folder_id]
+        )
+        return items.get(folder_id)
 
     def get_task_items(self, project_name, folder_id, sender):
         if not project_name or not folder_id:
