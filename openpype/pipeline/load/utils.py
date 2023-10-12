@@ -790,6 +790,24 @@ def loaders_from_repre_context(loaders, repre_context):
     ]
 
 
+def filter_repre_contexts_by_loader(repre_contexts, loader):
+    """Filter representation contexts for loader.
+
+    Args:
+        repre_contexts (list[dict[str, Ant]]): Representation context.
+        loader (LoaderPlugin): Loader plugin to filter contexts for.
+
+    Returns:
+        list[dict[str, Any]]: Filtered representation contexts.
+    """
+
+    return [
+        repre_context
+        for repre_context in repre_contexts
+        if is_compatible_loader(loader, repre_context)
+    ]
+
+
 def loaders_from_representation(loaders, representation):
     """Return all compatible loaders for a representation."""
 
