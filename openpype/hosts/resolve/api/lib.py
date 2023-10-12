@@ -196,7 +196,7 @@ def create_media_pool_item(
     Create media pool item.
 
     Args:
-        fpath (str): absolute path to a file
+        files (list[str]): list of absolute paths to files
         root (resolve.Folder)[optional]: root folder / bin object
 
     Returns:
@@ -206,8 +206,13 @@ def create_media_pool_item(
     media_pool = get_current_project().GetMediaPool()
     root_bin = root or media_pool.GetRootFolder()
 
+    # make sure files list is not empty and first available file exists
+    filepath = next((f for f in files if os.path.isfile(f)), None)
+    if not filepath:
+        raise FileNotFoundError("No file found in input files list")
+
     # try to search in bin if the clip does not exist
-    existing_mpi = get_media_pool_item(files[0], root_bin)
+    existing_mpi = get_media_pool_item(filepath, root_bin)
 
     if existing_mpi:
         return existing_mpi
