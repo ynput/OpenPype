@@ -83,7 +83,7 @@ class CacheModelLoader(plugin.AssetLoader):
 
         for obj in nodes:
             objects.append(obj)
-            nodes.extend(list(obj.children))
+            objects.extend(list(obj.children_recursive))
 
         objects.reverse()
 
