@@ -544,13 +544,13 @@ def create_workdir_extra_folders(
 
 
 def get_last_workfile_representation(
-    project_name: str,
-    asset_name: str,
-    task_name: str,
+    project_name,
+    asset_name,
+    task_name,
     asset_id=None,
-    asset_doc: dict = None,
-    fields: Iterable[str] = None,
-) -> dict:
+    asset_doc=None,
+    fields=None,
+):
     """Get last published workfile representation.
 
     Args:
