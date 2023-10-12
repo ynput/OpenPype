@@ -8,13 +8,13 @@ import pyblish.util
 
 def setup_pyblish_logging():
     log = logging.getLogger("pyblish")
-    hnd = logging.StreamHandler(sys.stdout)
-    fmt = logging.Formatter(
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(
         "pyblish (%(levelname)s) (line: %(lineno)d) %(name)s:"
         "\n%(message)s"
     )
-    hnd.setFormatter(fmt)
-    log.addHandler(hnd)
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
 
 
 def _run_publish_test_deferred():
