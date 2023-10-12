@@ -50,10 +50,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         for group in asset_groups:
             instance = self.create_instance(context, group)
-            family = instance.data["family"]
             members = []
             if type(group) == bpy.types.Collection:
                 members = list(group.objects)
+                family = instance.data["family"]
                 if family == "animation":
                     for obj in group.objects:
                         if obj.type == 'EMPTY' and obj.get(AVALON_PROPERTY):
@@ -62,9 +62,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
                                 if child.type == 'ARMATURE')
             else:
                 members = group.children_recursive
-
-            if family == "pointcache":
-                instance.data["families"].append("abc.export")
 
             members.append(group)
             instance[:] = members
