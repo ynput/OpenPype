@@ -4,7 +4,7 @@ from qtpy import QtWidgets, QtGui, QtCore
 
 from openpype.tools.utils import (
     RecursiveSortFilterProxyModel,
-    DeselectableTreeView,
+    TreeView,
 )
 
 from .utils import RefreshThread, get_qt_icon
@@ -262,7 +262,7 @@ class FoldersWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent, handle_expected_selection=False):
         super(FoldersWidget, self).__init__(parent)
 
-        folders_view = DeselectableTreeView(self)
+        folders_view = TreeView(self)
         folders_view.setHeaderHidden(True)
 
         folders_model = FoldersModel(controller)
