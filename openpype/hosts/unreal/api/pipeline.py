@@ -722,8 +722,8 @@ def replace_skeletal_mesh_actors(old_assets, new_assets):
 
 def replace_geometry_cache_actors(old_assets, new_assets):
     geometry_cache_comps, old_caches, new_caches = _get_comps_and_assets(
-        unreal.SkeletalMeshComponent,
-        unreal.SkeletalMesh,
+        unreal.GeometryCacheComponent,
+        unreal.GeometryCache,
         old_assets,
         new_assets
     )
