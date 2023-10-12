@@ -114,7 +114,6 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
                 DeadlineWebserviceError("{} - {}".format(msg, exc)),
                 sys.exc_info()[2]
             )
-        print(f"RESPONSE: {response.json()}")
         if not response.ok:
             log.warning("The data requested could not be retrieved")
             return []
