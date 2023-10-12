@@ -1,11 +1,10 @@
 import collections
 import logging
+
 from qtpy import QtWidgets, QtCore
 import qtawesome
 
 from openpype.client import (
-    get_asset_by_id,
-    get_asset_by_name,
     get_assets,
     get_subset_by_name,
     get_subsets,
@@ -36,14 +35,14 @@ log = logging.getLogger("SwitchAssetDialog")
 class ValidationState:
     def __init__(self):
         self.folder_ok = True
-        self.subset_ok = True
+        self.product_ok = True
         self.repre_ok = True
 
     @property
     def all_ok(self):
         return (
             self.folder_ok
-            and self.subset_ok
+            and self.product_ok
             and self.repre_ok
         )
 
@@ -64,30 +63,30 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         self.setModal(True)
 
         folders_field = FoldersField(controller, self)
-        subsets_combox = SearchComboBox(self)
+        products_combox = SearchComboBox(self)
         repres_combobox = SearchComboBox(self)
 
-        subsets_combox.set_placeholder("<product>")
+        products_combox.set_placeholder("<product>")
         repres_combobox.set_placeholder("<representation>")
 
-        asset_label = QtWidgets.QLabel(self)
-        subset_label = QtWidgets.QLabel(self)
+        folder_label = QtWidgets.QLabel(self)
+        product_label = QtWidgets.QLabel(self)
         repre_label = QtWidgets.QLabel(self)
 
-        current_asset_btn = QtWidgets.QPushButton("Use current folder")
+        current_folder_btn = QtWidgets.QPushButton("Use current folder", self)
 
         accept_icon = qtawesome.icon("fa.check", color="white")
         accept_btn = ButtonWithMenu(self)
         accept_btn.setIcon(accept_icon)
 
         main_layout = QtWidgets.QGridLayout(self)
-        # Asset column
-        main_layout.addWidget(current_asset_btn, 0, 0)
+        # Folder column
+        main_layout.addWidget(current_folder_btn, 0, 0)
         main_layout.addWidget(folders_field, 1, 0)
-        main_layout.addWidget(asset_label, 2, 0)
-        # Subset column
-        main_layout.addWidget(subsets_combox, 1, 1)
-        main_layout.addWidget(subset_label, 2, 1)
+        main_layout.addWidget(folder_label, 2, 0)
+        # Product column
+        main_layout.addWidget(products_combox, 1, 1)
+        main_layout.addWidget(product_label, 2, 1)
         # Representation column
         main_layout.addWidget(repres_combobox, 1, 2)
         main_layout.addWidget(repre_label, 2, 2)
@@ -106,26 +105,26 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         folders_field.value_changed.connect(
             self._combobox_value_changed
         )
-        subsets_combox.currentIndexChanged.connect(
+        products_combox.currentIndexChanged.connect(
             self._combobox_value_changed
         )
         repres_combobox.currentIndexChanged.connect(
             self._combobox_value_changed
         )
         accept_btn.clicked.connect(self._on_accept)
-        current_asset_btn.clicked.connect(self._on_current_folder)
+        current_folder_btn.clicked.connect(self._on_current_folder)
 
         self._show_timer = show_timer
         self._show_counter = 0
 
-        self._current_asset_btn = current_asset_btn
+        self._current_folder_btn = current_folder_btn
 
         self._folders_field = folders_field
-        self._subsets_box = subsets_combox
+        self._products_combox = products_combox
         self._representations_box = repres_combobox
 
-        self._asset_label = asset_label
-        self._subset_label = subset_label
+        self._folder_label = folder_label
+        self._product_label = product_label
         self._repre_label = repre_label
 
         self._accept_btn = accept_btn
@@ -136,39 +135,36 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # first asset field, this also allows to see the placeholder value.
         accept_btn.setFocus()
 
-        self.content_loaders = set()
-        self.content_assets = {}
-        self.content_subsets = {}
-        self.content_versions = {}
-        self.content_repres = {}
+        self._folder_docs_by_id = {}
+        self._product_docs_by_id = {}
+        self._version_docs_by_id = {}
+        self._repre_docs_by_id = {}
 
-        self.hero_version_ids = set()
+        self._missing_folder_ids = set()
+        self._missing_product_ids = set()
+        self._missing_version_ids = set()
+        self._missing_repre_ids = set()
+        self._missing_docs = False
 
-        self.missing_assets = set()
-        self.missing_versions = set()
-        self.missing_subsets = set()
-        self.missing_repres = set()
-        self.missing_docs = False
-
-        self.archived_assets = []
-        self.archived_subsets = []
-        self.archived_repres = []
+        self._inactive_folder_ids = set()
+        self._inactive_product_ids = set()
+        self._inactive_repre_ids = set()
 
         self._init_folder_id = None
-        self._init_subset_name = None
+        self._init_product_name = None
         self._init_repre_name = None
 
         self._fill_check = False
 
-        self._controller = controller
-
         self._project_name = controller.get_current_project_name()
         self._folder_id = controller.get_current_folder_id()
 
+        self._current_folder_btn.setEnabled(self._folder_id is not None)
+
+        self._controller = controller
+
         self._items = items
         self._prepare_content_data()
-
-        current_asset_btn.setEnabled(self._folder_id is not None)
 
     def showEvent(self, event):
         super(SwitchAssetDialog, self).showEvent(event)
@@ -183,15 +179,15 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         validation_state = ValidationState()
         self._folders_field.refresh()
-        # Set other comboboxes to empty if any document is missing or any asset
-        # of loaded representations is archived.
+        # Set other comboboxes to empty if any document is missing or
+        #   any folder of loaded representations is archived.
         self._is_folder_ok(validation_state)
         if validation_state.folder_ok:
-            subset_values = self._get_subset_box_values()
-            self._fill_combobox(subset_values, "subset")
-            self._is_subset_ok(validation_state)
+            product_values = self._get_product_box_values()
+            self._fill_combobox(product_values, "product")
+            self._is_product_ok(validation_state)
 
-        if validation_state.folder_ok and validation_state.subset_ok:
+        if validation_state.folder_ok and validation_state.product_ok:
             repre_values = sorted(self._representations_box_values())
             self._fill_combobox(repre_values, "repre")
             self._is_repre_ok(validation_state)
@@ -206,33 +202,33 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         if init_refresh:
             # pre select context if possible
             self._folders_field.set_selected_item(self._init_folder_id)
-            self._subsets_box.set_valid_value(self._init_subset_name)
+            self._products_combox.set_valid_value(self._init_product_name)
             self._representations_box.set_valid_value(self._init_repre_name)
 
         self._fill_check = True
 
     def set_labels(self):
-        asset_label = self._folders_field.get_selected_folder_label()
-        subset_label = self._subsets_box.get_valid_value()
+        folder_label = self._folders_field.get_selected_folder_label()
+        product_label = self._products_combox.get_valid_value()
         repre_label = self._representations_box.get_valid_value()
 
         default = "*No changes"
-        self._asset_label.setText(asset_label or default)
-        self._subset_label.setText(subset_label or default)
+        self._folder_label.setText(folder_label or default)
+        self._product_label.setText(product_label or default)
         self._repre_label.setText(repre_label or default)
 
     def apply_validations(self, validation_state):
         error_msg = "*Please select"
         error_sheet = "border: 1px solid red;"
 
-        subset_sheet = None
+        product_sheet = None
         repre_sheet = None
         accept_state = ""
         if validation_state.folder_ok is False:
-            self._asset_label.setText(error_msg)
-        elif validation_state.subset_ok is False:
-            subset_sheet = error_sheet
-            self._subset_label.setText(error_msg)
+            self._folder_label.setText(error_msg)
+        elif validation_state.product_ok is False:
+            product_sheet = error_sheet
+            self._product_label.setText(error_msg)
         elif validation_state.repre_ok is False:
             repre_sheet = error_sheet
             self._repre_label.setText(error_msg)
@@ -241,17 +237,17 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             accept_state = "1"
 
         self._folders_field.set_valid(validation_state.folder_ok)
-        self._subsets_box.setStyleSheet(subset_sheet or "")
+        self._products_combox.setStyleSheet(product_sheet or "")
         self._representations_box.setStyleSheet(repre_sheet or "")
 
         self._accept_btn.setEnabled(validation_state.all_ok)
         self._set_style_property(self._accept_btn, "state", accept_state)
 
-    def find_last_versions(self, subset_ids):
+    def find_last_versions(self, product_ids):
         project_name = self._project_name
         return get_last_versions(
             project_name,
-            subset_ids=subset_ids,
+            subset_ids=product_ids,
             fields=["_id", "parent", "type"]
         )
 
@@ -263,122 +259,139 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             self._show_counter += 1
 
     def _prepare_content_data(self):
-        repre_ids = set()
-        content_loaders = set()
-        for item in self._items:
-            repre_ids.add(str(item["representation"]))
-            content_loaders.add(item["loader"])
+        repre_ids = {
+            item["representation"]
+            for item in self._items
+        }
 
         project_name = self._project_name
         repres = list(get_representations(
             project_name,
             representation_ids=repre_ids,
-            archived=True
+            archived=True,
         ))
         repres_by_id = {str(repre["_id"]): repre for repre in repres}
 
-        content_repres = {}
-        archived_repres = []
-        missing_repres = set()
+        content_repre_docs_by_id = {}
+        inactive_repre_ids = set()
+        missing_repre_ids = set()
         version_ids = set()
         for repre_id in repre_ids:
-            if repre_id not in repres_by_id:
-                missing_repres.add(repre_id)
+            repre_doc = repres_by_id.get(repre_id)
+            if repre_doc is None:
+                missing_repre_ids.add(repre_id)
             elif repres_by_id[repre_id]["type"] == "archived_representation":
-                repre = repres_by_id[repre_id]
-                archived_repres.append(repre)
-                version_ids.add(repre["parent"])
+                inactive_repre_ids.add(repre_id)
+                version_ids.add(repre_doc["parent"])
             else:
-                repre = repres_by_id[repre_id]
-                content_repres[repre_id] = repres_by_id[repre_id]
-                version_ids.add(repre["parent"])
+                content_repre_docs_by_id[repre_id] = repre_doc
+                version_ids.add(repre_doc["parent"])
 
-        versions = get_versions(
+        version_docs = get_versions(
             project_name,
             version_ids=version_ids,
             hero=True
         )
-        content_versions = {}
-        hero_version_ids = set()
-        for version in versions:
-            content_versions[version["_id"]] = version
-            if version["type"] == "hero_version":
-                hero_version_ids.add(version["_id"])
+        content_version_docs_by_id = {}
+        for version_doc in version_docs:
+            version_id = version_doc["_id"]
+            content_version_docs_by_id[version_id] = version_doc
 
-        missing_versions = set()
-        subset_ids = set()
+        missing_version_ids = set()
+        product_ids = set()
         for version_id in version_ids:
-            if version_id not in content_versions:
-                missing_versions.add(version_id)
+            version_doc = content_version_docs_by_id.get(version_id)
+            if version_doc is None:
+                missing_version_ids.add(version_id)
             else:
-                subset_ids.add(content_versions[version_id]["parent"])
+                product_ids.add(version_doc["parent"])
 
-        subsets = get_subsets(
-            project_name, subset_ids=subset_ids, archived=True
+        product_docs = get_subsets(
+            project_name, subset_ids=product_ids, archived=True
         )
-        subsets_by_id = {sub["_id"]: sub for sub in subsets}
+        product_docs_by_id = {sub["_id"]: sub for sub in product_docs}
 
-        asset_ids = []
-        archived_subsets = []
-        missing_subsets = set()
-        content_subsets = {}
-        for subset_id in subset_ids:
-            if subset_id not in subsets_by_id:
-                missing_subsets.add(subset_id)
-            elif subsets_by_id[subset_id]["type"] == "archived_subset":
-                subset = subsets_by_id[subset_id]
-                asset_ids.append(subset["parent"])
-                archived_subsets.append(subset)
+        folder_ids = set()
+        inactive_product_ids = set()
+        missing_product_ids = set()
+        content_product_docs_by_id = {}
+        for product_id in product_ids:
+            product_doc = product_docs_by_id.get(product_id)
+            if product_doc is None:
+                missing_product_ids.add(product_id)
+            elif product_doc["type"] == "archived_subset":
+                folder_ids.add(product_doc["parent"])
+                inactive_product_ids.add(product_id)
             else:
-                subset = subsets_by_id[subset_id]
-                asset_ids.append(subset["parent"])
-                content_subsets[subset_id] = subset
+                folder_ids.add(product_doc["parent"])
+                content_product_docs_by_id[product_id] = product_doc
+
+        folder_docs = get_assets(
+            project_name, asset_ids=folder_ids, archived=True
+        )
+        folder_docs_by_id = {
+            folder_doc["_id"]: folder_doc
+            for folder_doc in folder_docs
+        }
+
+        missing_folder_ids = set()
+        inactive_folder_ids = set()
+        content_folder_docs_by_id = {}
+        for folder_id in folder_ids:
+            folder_doc = folder_docs_by_id.get(folder_id)
+            if folder_doc is None:
+                missing_folder_ids.add(folder_id)
+            elif folder_doc["type"] == "archived_asset":
+                inactive_folder_ids.add(folder_id)
+            else:
+                content_folder_docs_by_id[folder_id] = folder_doc
 
         # stash context values, works only for single representation
+        init_folder_id = None
+        init_product_name = None
+        init_repre_name = None
         if len(repres) == 1:
-            folder_id = None
-            if asset_ids:
-                folder_id = asset_ids[0]
-            self._init_folder_id = folder_id
-            self._init_subset_name = repres[0]["context"]["subset"]
-            self._init_repre_name = repres[0]["context"]["representation"]
+            init_repre_doc = repres[0]
+            init_version_doc = content_version_docs_by_id.get(
+                init_repre_doc["parent"])
+            init_product_doc = None
+            init_folder_doc = None
+            if init_version_doc:
+                init_product_doc = content_product_docs_by_id.get(
+                    init_version_doc["parent"]
+                )
+            if init_product_doc:
+                init_folder_doc = content_folder_docs_by_id.get(
+                    init_product_doc["parent"]
+                )
+            if init_folder_doc:
+                init_repre_name = init_repre_doc["name"]
+                init_product_name = init_product_doc["name"]
+                init_folder_id = init_folder_doc["_id"]
 
-        assets = get_assets(project_name, asset_ids=asset_ids, archived=True)
-        assets_by_id = {asset["_id"]: asset for asset in assets}
+        self._init_folder_id = init_folder_id
+        self._init_product_name = init_product_name
+        self._init_repre_name = init_repre_name
 
-        missing_assets = set()
-        archived_assets = []
-        content_assets = {}
-        for asset_id in asset_ids:
-            if asset_id not in assets_by_id:
-                missing_assets.add(asset_id)
-            elif assets_by_id[asset_id]["type"] == "archived_asset":
-                archived_assets.append(assets_by_id[asset_id])
-            else:
-                content_assets[asset_id] = assets_by_id[asset_id]
+        self._folder_docs_by_id = content_folder_docs_by_id
+        self._product_docs_by_id = content_product_docs_by_id
+        self._version_docs_by_id = content_version_docs_by_id
+        self._repre_docs_by_id = content_repre_docs_by_id
 
-        self.content_loaders = content_loaders
-        self.content_assets = content_assets
-        self.content_subsets = content_subsets
-        self.content_versions = content_versions
-        self.content_repres = content_repres
-
-        self.hero_version_ids = hero_version_ids
-
-        self.missing_assets = missing_assets
-        self.missing_versions = missing_versions
-        self.missing_subsets = missing_subsets
-        self.missing_repres = missing_repres
-        self.missing_docs = (
-            bool(missing_assets)
-            or bool(missing_versions)
-            or bool(missing_subsets)
-            or bool(missing_repres)
+        self._missing_folder_ids = missing_folder_ids
+        self._missing_product_ids = missing_product_ids
+        self._missing_version_ids = missing_version_ids
+        self._missing_repre_ids = missing_repre_ids
+        self._missing_docs = (
+            bool(missing_folder_ids)
+            or bool(missing_version_ids)
+            or bool(missing_product_ids)
+            or bool(missing_repre_ids)
         )
 
-        self.archived_assets = archived_assets
-        self.archived_subsets = archived_subsets
-        self.archived_repres = archived_repres
+        self._inactive_folder_ids = inactive_folder_ids
+        self._inactive_product_ids = inactive_product_ids
+        self._inactive_repre_ids = inactive_repre_ids
 
     def _combobox_value_changed(self, *args, **kwargs):
         self.refresh()
@@ -470,8 +483,8 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return loaders
 
     def _fill_combobox(self, values, combobox_type):
-        if combobox_type == "subset":
-            combobox_widget = self._subsets_box
+        if combobox_type == "product":
+            combobox_widget = self._products_combox
         elif combobox_type == "repre":
             combobox_widget = self._representations_box
         else:
@@ -501,73 +514,73 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         # NOTE hero versions are not used because it is expected that
         # hero version has same representations as latests
         selected_folder_id = self._folders_field.get_selected_folder_id()
-        selected_subset = self._subsets_box.currentText()
+        selected_product_name = self._products_combox.currentText()
         selected_repre = self._representations_box.currentText()
 
         # Nothing is selected
         # [ ] [ ] [ ]
         if (
             not selected_folder_id
-            and not selected_subset
+            and not selected_product_name
             and not selected_repre
         ):
-            return list(self.content_repres.keys())
+            return list(self._repre_docs_by_id.keys())
 
         # Everything is selected
         # [x] [x] [x]
-        if selected_folder_id and selected_subset and selected_repre:
+        if selected_folder_id and selected_product_name and selected_repre:
             return self._get_current_output_repre_ids_xxx(
-                selected_folder_id, selected_subset, selected_repre
+                selected_folder_id, selected_product_name, selected_repre
             )
 
         # [x] [x] [ ]
-        # If asset and subset is selected
-        if selected_folder_id and selected_subset:
+        # If folder and product is selected
+        if selected_folder_id and selected_product_name:
             return self._get_current_output_repre_ids_xxo(
-                selected_folder_id, selected_subset
+                selected_folder_id, selected_product_name
             )
 
         # [x] [ ] [x]
-        # If asset and repre is selected
+        # If folder and repre is selected
         if selected_folder_id and selected_repre:
             return self._get_current_output_repre_ids_xox(
                 selected_folder_id, selected_repre
             )
 
         # [x] [ ] [ ]
-        # If asset and subset is selected
+        # If folder and product is selected
         if selected_folder_id:
             return self._get_current_output_repre_ids_xoo(selected_folder_id)
 
         # [ ] [x] [x]
-        if selected_subset and selected_repre:
+        if selected_product_name and selected_repre:
             return self._get_current_output_repre_ids_oxx(
-                selected_subset, selected_repre
+                selected_product_name, selected_repre
             )
 
         # [ ] [x] [ ]
-        if selected_subset:
+        if selected_product_name:
             return self._get_current_output_repre_ids_oxo(
-                selected_subset
+                selected_product_name
             )
 
         # [ ] [ ] [x]
         return self._get_current_output_repre_ids_oox(selected_repre)
 
     def _get_current_output_repre_ids_xxx(
-        self, folder_id, selected_subset, selected_repre
+        self, folder_id, selected_product_name, selected_repre
     ):
         project_name = self._project_name
-        subset_doc = get_subset_by_name(
+        product_doc = get_subset_by_name(
             project_name,
-            selected_subset,
+            selected_product_name,
             folder_id,
             fields=["_id"]
         )
 
-        subset_id = subset_doc["_id"]
-        last_versions_by_subset_id = self.find_last_versions([subset_id])
-        version_doc = last_versions_by_subset_id.get(subset_id)
+        product_id = product_doc["_id"]
+        last_versions_by_product_id = self.find_last_versions([product_id])
+        version_doc = last_versions_by_product_id.get(product_id)
         if not version_doc:
             return []
 
@@ -579,19 +592,19 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         )
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
-    def _get_current_output_repre_ids_xxo(self, folder_id, selected_subset):
+    def _get_current_output_repre_ids_xxo(self, folder_id, product_name):
         project_name = self._project_name
-        subset_doc = get_subset_by_name(
+        product_doc = get_subset_by_name(
             project_name,
-            selected_subset,
+            product_name,
             folder_id,
             fields=["_id"]
         )
-        if not subset_doc:
+        if not product_doc:
             return []
 
         repre_names = set()
-        for repre_doc in self.content_repres.values():
+        for repre_doc in self._repre_docs_by_id.values():
             repre_names.add(repre_doc["name"])
 
         # TODO where to take version ids?
@@ -605,33 +618,34 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_xox(self, folder_id, selected_repre):
-        subset_names = set()
-        for subset_doc in self.content_subsets.values():
-            subset_names.add(subset_doc["name"])
+        product_names = {
+            product_doc["name"]
+            for product_doc in self._product_docs_by_id.values()
+        }
 
         project_name = self._project_name
-        subset_docs = get_subsets(
+        product_docs = get_subsets(
             project_name,
             asset_ids=[folder_id],
-            subset_names=subset_names,
+            subset_names=product_names,
             fields=["_id", "name"]
         )
-        subset_name_by_id = {
-            subset_doc["_id"]: subset_doc["name"]
-            for subset_doc in subset_docs
+        product_name_by_id = {
+            product_doc["_id"]: product_doc["name"]
+            for product_doc in product_docs
         }
-        subset_ids = list(subset_name_by_id.keys())
-        last_versions_by_subset_id = self.find_last_versions(subset_ids)
-        last_version_id_by_subset_name = {}
-        for subset_id, last_version in last_versions_by_subset_id.items():
-            subset_name = subset_name_by_id[subset_id]
-            last_version_id_by_subset_name[subset_name] = (
+        product_ids = list(product_name_by_id.keys())
+        last_versions_by_product_id = self.find_last_versions(product_ids)
+        last_version_id_by_product_name = {}
+        for product_id, last_version in last_versions_by_product_id.items():
+            product_name = product_name_by_id[product_id]
+            last_version_id_by_product_name[product_name] = (
                 last_version["_id"]
             )
 
         repre_docs = get_representations(
             project_name,
-            version_ids=last_version_id_by_subset_name.values(),
+            version_ids=last_version_id_by_product_name.values(),
             representation_names=[selected_repre],
             fields=["_id"]
         )
@@ -639,36 +653,35 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
     def _get_current_output_repre_ids_xoo(self, folder_id):
         project_name = self._project_name
-        repres_by_subset_name = collections.defaultdict(set)
-        for repre_doc in self.content_repres.values():
-            repre_name = repre_doc["name"]
-            version_doc = self.content_versions[repre_doc["parent"]]
-            subset_doc = self.content_subsets[version_doc["parent"]]
-            subset_name = subset_doc["name"]
-            repres_by_subset_name[subset_name].add(repre_name)
+        repres_by_product_name = collections.defaultdict(set)
+        for repre_doc in self._repre_docs_by_id.values():
+            version_doc = self._version_docs_by_id[repre_doc["parent"]]
+            product_doc = self._product_docs_by_id[version_doc["parent"]]
+            product_name = product_doc["name"]
+            repres_by_product_name[product_name].add(repre_doc["name"])
 
-        subset_docs = list(get_subsets(
+        product_docs = list(get_subsets(
             project_name,
             asset_ids=[folder_id],
-            subset_names=repres_by_subset_name.keys(),
+            subset_names=repres_by_product_name.keys(),
             fields=["_id", "name"]
         ))
-        subset_name_by_id = {
-            subset_doc["_id"]: subset_doc["name"]
-            for subset_doc in subset_docs
+        product_name_by_id = {
+            product_doc["_id"]: product_doc["name"]
+            for product_doc in product_docs
         }
-        subset_ids = list(subset_name_by_id.keys())
-        last_versions_by_subset_id = self.find_last_versions(subset_ids)
-        last_version_id_by_subset_name = {}
-        for subset_id, last_version in last_versions_by_subset_id.items():
-            subset_name = subset_name_by_id[subset_id]
-            last_version_id_by_subset_name[subset_name] = (
+        product_ids = list(product_name_by_id.keys())
+        last_versions_by_product_id = self.find_last_versions(product_ids)
+        last_version_id_by_product_name = {}
+        for product_id, last_version in last_versions_by_product_id.items():
+            product_name = product_name_by_id[product_id]
+            last_version_id_by_product_name[product_name] = (
                 last_version["_id"]
             )
 
         repre_names_by_version_id = {}
-        for subset_name, repre_names in repres_by_subset_name.items():
-            version_id = last_version_id_by_subset_name.get(subset_name)
+        for product_name, repre_names in repres_by_product_name.items():
+            version_id = last_version_id_by_product_name.get(product_name)
             # This should not happen but why to crash?
             if version_id is not None:
                 repre_names_by_version_id[version_id] = list(repre_names)
@@ -681,20 +694,20 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
     def _get_current_output_repre_ids_oxx(
-        self, selected_subset, selected_repre
+        self, product_name, selected_repre
     ):
         project_name = self._project_name
-        subset_docs = get_subsets(
+        product_docs = get_subsets(
             project_name,
-            asset_ids=self.content_assets.keys(),
-            subset_names=[selected_subset],
+            asset_ids=self._folder_docs_by_id.keys(),
+            subset_names=[product_name],
             fields=["_id"]
         )
-        subset_ids = [subset_doc["_id"] for subset_doc in subset_docs]
-        last_versions_by_subset_id = self.find_last_versions(subset_ids)
+        product_ids = [product_doc["_id"] for product_doc in product_docs]
+        last_versions_by_product_id = self.find_last_versions(product_ids)
         last_version_ids = [
             last_version["_id"]
-            for last_version in last_versions_by_subset_id.values()
+            for last_version in last_versions_by_product_id.values()
         ]
         repre_docs = get_representations(
             project_name,
@@ -704,47 +717,46 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         )
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
-    def _get_current_output_repre_ids_oxo(self, selected_subset):
+    def _get_current_output_repre_ids_oxo(self, product_name):
         project_name = self._project_name
-        subset_docs = get_subsets(
+        product_docs = get_subsets(
             project_name,
-            asset_ids=self.content_assets.keys(),
-            subset_names=[selected_subset],
+            asset_ids=self._folder_docs_by_id.keys(),
+            subset_names=[product_name],
             fields=["_id", "parent"]
         )
-        subset_docs_by_id = {
-            subset_doc["_id"]: subset_doc
-            for subset_doc in subset_docs
+        product_docs_by_id = {
+            product_doc["_id"]: product_doc
+            for product_doc in product_docs
         }
-        if not subset_docs:
+        if not product_docs:
             return list()
 
-        last_versions_by_subset_id = self.find_last_versions(
-            subset_docs_by_id.keys()
+        last_versions_by_product_id = self.find_last_versions(
+            product_docs_by_id.keys()
         )
 
-        subset_id_by_version_id = {}
-        for subset_id, last_version in last_versions_by_subset_id.items():
+        product_id_by_version_id = {}
+        for product_id, last_version in last_versions_by_product_id.items():
             version_id = last_version["_id"]
-            subset_id_by_version_id[version_id] = subset_id
+            product_id_by_version_id[version_id] = product_id
 
-        if not subset_id_by_version_id:
+        if not product_id_by_version_id:
             return list()
 
-        repre_names_by_asset_id = collections.defaultdict(set)
-        for repre_doc in self.content_repres.values():
-            version_doc = self.content_versions[repre_doc["parent"]]
-            subset_doc = self.content_subsets[version_doc["parent"]]
-            asset_doc = self.content_assets[subset_doc["parent"]]
-            repre_name = repre_doc["name"]
-            asset_id = asset_doc["_id"]
-            repre_names_by_asset_id[asset_id].add(repre_name)
+        repre_names_by_folder_id = collections.defaultdict(set)
+        for repre_doc in self._repre_docs_by_id.values():
+            version_doc = self._version_docs_by_id[repre_doc["parent"]]
+            product_doc = self._product_docs_by_id[version_doc["parent"]]
+            folder_doc = self._folder_docs_by_id[product_doc["parent"]]
+            folder_id = folder_doc["_id"]
+            repre_names_by_folder_id[folder_id].add(repre_doc["name"])
 
         repre_names_by_version_id = {}
-        for last_version_id, subset_id in subset_id_by_version_id.items():
-            subset_doc = subset_docs_by_id[subset_id]
-            asset_id = subset_doc["parent"]
-            repre_names = repre_names_by_asset_id.get(asset_id)
+        for last_version_id, product_id in product_id_by_version_id.items():
+            product_doc = product_docs_by_id[product_id]
+            folder_id = product_doc["parent"]
+            repre_names = repre_names_by_folder_id.get(folder_id)
             if not repre_names:
                 continue
             repre_names_by_version_id[last_version_id] = repre_names
@@ -761,55 +773,60 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         repre_docs = get_representations(
             project_name,
             representation_names=[selected_repre],
-            version_ids=self.content_versions.keys(),
+            version_ids=self._version_docs_by_id.keys(),
             fields=["_id"]
         )
         return [repre_doc["_id"] for repre_doc in repre_docs]
 
-    def _get_subset_box_values(self):
+    def _get_product_box_values(self):
         project_name = self._project_name
         selected_folder_id = self._folders_field.get_selected_folder_id()
         if selected_folder_id:
-            asset_ids = [selected_folder_id]
+            folder_ids = [selected_folder_id]
         else:
-            asset_ids = list(self.content_assets.keys())
+            folder_ids = list(self._folder_docs_by_id.keys())
 
-        subsets = get_subsets(
+        product_docs = get_subsets(
             project_name,
-            asset_ids=asset_ids,
+            asset_ids=folder_ids,
             fields=["parent", "name"]
         )
 
-        subset_names_by_parent_id = collections.defaultdict(set)
-        for subset in subsets:
-            subset_names_by_parent_id[subset["parent"]].add(subset["name"])
+        product_names_by_parent_id = collections.defaultdict(set)
+        for product_doc in product_docs:
+            product_names_by_parent_id[product_doc["parent"]].add(
+                product_doc["name"]
+            )
 
-        possible_subsets = None
-        for subset_names in subset_names_by_parent_id.values():
-            if possible_subsets is None:
-                possible_subsets = subset_names
+        possible_product_names = None
+        for product_names in product_names_by_parent_id.values():
+            if possible_product_names is None:
+                possible_product_names = product_names
             else:
-                possible_subsets = (possible_subsets & subset_names)
+                possible_product_names = possible_product_names.intersection(
+                    product_names)
 
-            if not possible_subsets:
+            if not possible_product_names:
                 break
 
-        return list(possible_subsets or list())
+        if not possible_product_names:
+            return []
+        return list(possible_product_names)
 
     def _representations_box_values(self):
         # NOTE hero versions are not used because it is expected that
         # hero version has same representations as latests
         project_name = self._project_name
         selected_folder_id = self._folders_field.get_selected_folder_id()
-        selected_subset = self._subsets_box.currentText()
+        selected_product_name = self._products_combox.currentText()
 
         # If nothing is selected
         # [ ] [ ] [?]
-        if not selected_folder_id and not selected_subset:
-            # Find all representations of selection's subsets
+        if not selected_folder_id and not selected_product_name:
+            # Find all representations of selection's products
             possible_repres = get_representations(
                 project_name,
-                version_ids=self.content_versions.keys(),
+                version_ids=self._version_docs_by_id.keys(),
                 fields=["parent", "name"]
             )
 
@@ -830,17 +847,17 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return list(output_repres or list())
 
         # [x] [x] [?]
-        if selected_folder_id and selected_subset:
-            subset_doc = get_subset_by_name(
+        if selected_folder_id and selected_product_name:
+            product_doc = get_subset_by_name(
                 project_name,
-                selected_subset,
+                selected_product_name,
                 selected_folder_id,
                 fields=["_id"]
             )
 
-            subset_id = subset_doc["_id"]
-            last_versions_by_subset_id = self.find_last_versions([subset_id])
-            version_doc = last_versions_by_subset_id.get(subset_id)
+            product_id = product_doc["_id"]
+            last_versions_by_product_id = self.find_last_versions([product_id])
+            version_doc = last_versions_by_product_id.get(product_id)
             repre_docs = get_representations(
                 project_name,
                 version_ids=[version_doc["_id"]],
@@ -852,38 +869,41 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             ]
 
         # [x] [ ] [?]
-        # If asset only is selected
+        # If only folder is selected
         if selected_folder_id:
-            # Filter subsets by subset names from content
-            subset_names = set()
-            for subset_doc in self.content_subsets.values():
-                subset_names.add(subset_doc["name"])
+            # Filter products by names from content
+            product_names = {
+                product_doc["name"]
+                for product_doc in self._product_docs_by_id.values()
+            }
 
-            subset_docs = get_subsets(
+            product_docs = get_subsets(
                 project_name,
                 asset_ids=[selected_folder_id],
-                subset_names=subset_names,
+                subset_names=product_names,
                 fields=["_id"]
             )
-            subset_ids = [
-                subset_doc["_id"]
-                for subset_doc in subset_docs
-            ]
-            if not subset_ids:
+            product_ids = {
+                product_doc["_id"]
+                for product_doc in product_docs
+            }
+            if not product_ids:
                 return list()
 
-            last_versions_by_subset_id = self.find_last_versions(subset_ids)
-            subset_id_by_version_id = {}
-            for subset_id, last_version in last_versions_by_subset_id.items():
+            last_versions_by_product_id = self.find_last_versions(product_ids)
+            product_id_by_version_id = {}
+            for product_id, last_version in (
+                last_versions_by_product_id.items()
+            ):
                 version_id = last_version["_id"]
-                subset_id_by_version_id[version_id] = subset_id
+                product_id_by_version_id[version_id] = product_id
 
-            if not subset_id_by_version_id:
+            if not product_id_by_version_id:
                 return list()
 
             repre_docs = list(get_representations(
                 project_name,
-                version_ids=subset_id_by_version_id.keys(),
+                version_ids=product_id_by_version_id.keys(),
                 fields=["name", "parent"]
             ))
             if not repre_docs:
@@ -906,51 +926,49 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             return list(available_repres)
 
         # [ ] [x] [?]
-        subset_docs = list(get_subsets(
+        product_docs = list(get_subsets(
             project_name,
-            asset_ids=self.content_assets.keys(),
-            subset_names=[selected_subset],
+            asset_ids=self._folder_docs_by_id.keys(),
+            subset_names=[selected_product_name],
             fields=["_id", "parent"]
         ))
-        if not subset_docs:
+        if not product_docs:
             return list()
 
-        subset_docs_by_id = {
-            subset_doc["_id"]: subset_doc
-            for subset_doc in subset_docs
+        product_docs_by_id = {
+            product_doc["_id"]: product_doc
+            for product_doc in product_docs
         }
-        last_versions_by_subset_id = self.find_last_versions(
-            subset_docs_by_id.keys()
+        last_versions_by_product_id = self.find_last_versions(
+            product_docs_by_id.keys()
         )
 
-        subset_id_by_version_id = {}
-        for subset_id, last_version in last_versions_by_subset_id.items():
+        product_id_by_version_id = {}
+        for product_id, last_version in last_versions_by_product_id.items():
             version_id = last_version["_id"]
-            subset_id_by_version_id[version_id] = subset_id
+            product_id_by_version_id[version_id] = product_id
 
-        if not subset_id_by_version_id:
+        if not product_id_by_version_id:
             return list()
 
         repre_docs = list(
             get_representations(
                 project_name,
-                version_ids=subset_id_by_version_id.keys(),
+                version_ids=product_id_by_version_id.keys(),
                 fields=["name", "parent"]
             )
         )
         if not repre_docs:
             return list()
 
-        repre_names_by_asset_id = {}
+        repre_names_by_folder_id = collections.defaultdict(set)
         for repre_doc in repre_docs:
-            subset_id = subset_id_by_version_id[repre_doc["parent"]]
-            asset_id = subset_docs_by_id[subset_id]["parent"]
-            if asset_id not in repre_names_by_asset_id:
-                repre_names_by_asset_id[asset_id] = set()
-            repre_names_by_asset_id[asset_id].add(repre_doc["name"])
+            product_id = product_id_by_version_id[repre_doc["parent"]]
+            folder_id = product_docs_by_id[product_id]["parent"]
+            repre_names_by_folder_id[folder_id].add(repre_doc["name"])
 
         available_repres = None
-        for repre_names in repre_names_by_asset_id.values():
+        for repre_names in repre_names_by_folder_id.values():
             if available_repres is None:
                 available_repres = repre_names
                 continue
@@ -963,74 +981,74 @@ class SwitchAssetDialog(QtWidgets.QDialog):
         selected_folder_id = self._folders_field.get_selected_folder_id()
         if (
             selected_folder_id is None
-            and (self.missing_docs or self.archived_assets)
+            and (self._missing_docs or self._inactive_folder_ids)
         ):
             validation_state.folder_ok = False
 
-    def _is_subset_ok(self, validation_state):
+    def _is_product_ok(self, validation_state):
         selected_folder_id = self._folders_field.get_selected_folder_id()
-        selected_subset = self._subsets_box.get_valid_value()
+        selected_product_name = self._products_combox.get_valid_value()
 
         # [?] [x] [?]
-        # If subset is selected then must be ok
-        if selected_subset is not None:
+        # If product is selected then must be ok
+        if selected_product_name is not None:
             return
 
         # [ ] [ ] [?]
         if selected_folder_id is None:
-            # If there were archived subsets and asset is not selected
-            if self.archived_subsets:
-                validation_state.subset_ok = False
+            # If there were archived products and folder is not selected
+            if self._inactive_product_ids:
+                validation_state.product_ok = False
             return
 
         # [x] [ ] [?]
         project_name = self._project_name
-        subset_docs = get_subsets(
+        product_docs = get_subsets(
             project_name, asset_ids=[selected_folder_id], fields=["name"]
         )
 
-        subset_names = set(
-            subset_doc["name"]
-            for subset_doc in subset_docs
+        product_names = set(
+            product_doc["name"]
+            for product_doc in product_docs
         )
 
-        for subset_doc in self.content_subsets.values():
-            if subset_doc["name"] not in subset_names:
-                validation_state.subset_ok = False
+        for product_doc in self._product_docs_by_id.values():
+            if product_doc["name"] not in product_names:
+                validation_state.product_ok = False
                 break
 
     def _is_repre_ok(self, validation_state):
         selected_folder_id = self._folders_field.get_selected_folder_id()
-        selected_subset = self._subsets_box.get_valid_value()
+        selected_product_name = self._products_combox.get_valid_value()
         selected_repre = self._representations_box.get_valid_value()
 
         # [?] [?] [x]
-        # If subset is selected then must be ok
+        # If product is selected then must be ok
         if selected_repre is not None:
             return
 
         # [ ] [ ] [ ]
-        if selected_folder_id is None and selected_subset is None:
+        if selected_folder_id is None and selected_product_name is None:
             if (
-                self.archived_repres
-                or self.missing_versions
-                or self.missing_repres
+                self._inactive_repre_ids
+                or self._missing_version_ids
+                or self._missing_repre_ids
             ):
                 validation_state.repre_ok = False
             return
 
         # [x] [x] [ ]
         project_name = self._project_name
-        if selected_folder_id is not None and selected_subset is not None:
-            subset_doc = get_subset_by_name(
+        if selected_folder_id is not None and selected_product_name is not None:
+            product_doc = get_subset_by_name(
                 project_name,
-                selected_subset,
+                selected_product_name,
                 selected_folder_id,
                 fields=["_id"]
             )
-            subset_id = subset_doc["_id"]
-            last_versions_by_subset_id = self.find_last_versions([subset_id])
-            last_version = last_versions_by_subset_id.get(subset_id)
+            product_id = product_doc["_id"]
+            last_versions_by_product_id = self.find_last_versions([product_id])
+            last_version = last_versions_by_product_id.get(product_id)
             if not last_version:
                 validation_state.repre_ok = False
                 return
@@ -1045,7 +1063,7 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 repre_doc["name"]
                 for repre_doc in repre_docs
             )
-            for repre_doc in self.content_repres.values():
+            for repre_doc in self._repre_docs_by_id.values():
                 if repre_doc["name"] not in repre_names:
                     validation_state.repre_ok = False
                     break
@@ -1053,90 +1071,82 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [ ] [ ]
         if selected_folder_id is not None:
-            subset_docs = list(get_subsets(
+            product_docs = list(get_subsets(
                 project_name,
                 asset_ids=[selected_folder_id],
                 fields=["_id", "name"]
             ))
 
-            subset_name_by_id = {}
-            subset_ids = set()
-            for subset_doc in subset_docs:
-                subset_id = subset_doc["_id"]
-                subset_ids.add(subset_id)
-                subset_name_by_id[subset_id] = subset_doc["name"]
+            product_name_by_id = {}
+            product_ids = set()
+            for product_doc in product_docs:
+                product_id = product_doc["_id"]
+                product_ids.add(product_id)
+                product_name_by_id[product_id] = product_doc["name"]
 
-            last_versions_by_subset_id = self.find_last_versions(subset_ids)
+            last_versions_by_product_id = self.find_last_versions(product_ids)
 
-            subset_id_by_version_id = {}
-            for subset_id, last_version in last_versions_by_subset_id.items():
+            product_id_by_version_id = {}
+            for product_id, last_version in last_versions_by_product_id.items():
                 version_id = last_version["_id"]
-                subset_id_by_version_id[version_id] = subset_id
+                product_id_by_version_id[version_id] = product_id
 
             repre_docs = get_representations(
                 project_name,
-                version_ids=subset_id_by_version_id.keys(),
+                version_ids=product_id_by_version_id.keys(),
                 fields=["name", "parent"]
             )
-            repres_by_subset_name = {}
+            repres_by_product_name = collections.defaultdict(set)
             for repre_doc in repre_docs:
-                subset_id = subset_id_by_version_id[repre_doc["parent"]]
-                subset_name = subset_name_by_id[subset_id]
-                if subset_name not in repres_by_subset_name:
-                    repres_by_subset_name[subset_name] = set()
-                repres_by_subset_name[subset_name].add(repre_doc["name"])
+                product_id = product_id_by_version_id[repre_doc["parent"]]
+                product_name = product_name_by_id[product_id]
+                repres_by_product_name[product_name].add(repre_doc["name"])
 
-            for repre_doc in self.content_repres.values():
-                version_doc = self.content_versions[repre_doc["parent"]]
-                subset_doc = self.content_subsets[version_doc["parent"]]
-                repre_names = (
-                    repres_by_subset_name.get(subset_doc["name"]) or []
-                )
+            for repre_doc in self._repre_docs_by_id.values():
+                version_doc = self._version_docs_by_id[repre_doc["parent"]]
+                product_doc = self._product_docs_by_id[version_doc["parent"]]
+                repre_names = repres_by_product_name[product_doc["name"]]
                 if repre_doc["name"] not in repre_names:
                     validation_state.repre_ok = False
                     break
             return
 
         # [ ] [x] [ ]
-        # Subset documents
-        subset_docs = get_subsets(
+        # Product documents
+        product_docs = get_subsets(
             project_name,
-            asset_ids=self.content_assets.keys(),
-            subset_names=[selected_subset],
+            asset_ids=self._folder_docs_by_id.keys(),
+            subset_names=[selected_product_name],
             fields=["_id", "name", "parent"]
         )
-        subset_docs_by_id = {}
-        for subset_doc in subset_docs:
-            subset_docs_by_id[subset_doc["_id"]] = subset_doc
+        product_docs_by_id = {}
+        for product_doc in product_docs:
+            product_docs_by_id[product_doc["_id"]] = product_doc
 
-        last_versions_by_subset_id = self.find_last_versions(
-            subset_docs_by_id.keys()
+        last_versions_by_product_id = self.find_last_versions(
+            product_docs_by_id.keys()
         )
-        subset_id_by_version_id = {}
-        for subset_id, last_version in last_versions_by_subset_id.items():
+        product_id_by_version_id = {}
+        for product_id, last_version in last_versions_by_product_id.items():
             version_id = last_version["_id"]
-            subset_id_by_version_id[version_id] = subset_id
+            product_id_by_version_id[version_id] = product_id
 
         repre_docs = get_representations(
             project_name,
-            version_ids=subset_id_by_version_id.keys(),
+            version_ids=product_id_by_version_id.keys(),
             fields=["name", "parent"]
         )
-        repres_by_asset_id = {}
+        repres_by_folder_id = collections.defaultdict(set)
         for repre_doc in repre_docs:
-            subset_id = subset_id_by_version_id[repre_doc["parent"]]
-            asset_id = subset_docs_by_id[subset_id]["parent"]
-            if asset_id not in repres_by_asset_id:
-                repres_by_asset_id[asset_id] = set()
-            repres_by_asset_id[asset_id].add(repre_doc["name"])
+            product_id = product_id_by_version_id[repre_doc["parent"]]
+            folder_id = product_docs_by_id[product_id]["parent"]
+            repres_by_folder_id[folder_id].add(repre_doc["name"])
 
-        for repre_doc in self.content_repres.values():
-            version_doc = self.content_versions[repre_doc["parent"]]
-            subset_doc = self.content_subsets[version_doc["parent"]]
-            asset_id = subset_doc["parent"]
-            repre_names = (
-                repres_by_asset_id.get(asset_id) or []
-            )
+        for repre_doc in self._repre_docs_by_id.values():
+            version_doc = self._version_docs_by_id[repre_doc["parent"]]
+            product_doc = self._product_docs_by_id[version_doc["parent"]]
+            folder_id = product_doc["parent"]
+            repre_names = repres_by_folder_id[folder_id]
             if repre_doc["name"] not in repre_names:
                 validation_state.repre_ok = False
                 break
@@ -1160,59 +1170,59 @@ class SwitchAssetDialog(QtWidgets.QDialog):
     def _trigger_switch(self, loader=None):
         # Use None when not a valid value or when placeholder value
         selected_folder_id = self._folders_field.get_selected_folder_id()
-        selected_subset = self._subsets_box.get_valid_value()
+        selected_product_name = self._products_combox.get_valid_value()
         selected_representation = self._representations_box.get_valid_value()
 
         project_name = self._project_name
         if selected_folder_id:
-            asset_doc = get_asset_by_id(project_name, selected_folder_id)
-            asset_docs_by_id = {asset_doc["_id"]: asset_doc}
+            folder_ids = {selected_folder_id}
         else:
-            asset_docs_by_id = self.content_assets
+            folder_ids = set(self._folder_docs_by_id.keys())
 
-        subset_names = None
-        if selected_subset:
-            subset_names = [selected_subset]
+        product_names = None
+        if selected_product_name:
+            product_names = [selected_product_name]
 
-        subset_docs = list(get_subsets(
+        product_docs = list(get_subsets(
             project_name,
-            subset_names=subset_names,
-            asset_ids=asset_docs_by_id.keys()
+            subset_names=product_names,
+            asset_ids=folder_ids
         ))
-        subset_ids = []
-        subset_docs_by_parent_and_name = collections.defaultdict(dict)
-        for subset in subset_docs:
-            subset_ids.append(subset["_id"])
-            parent_id = subset["parent"]
-            name = subset["name"]
-            subset_docs_by_parent_and_name[parent_id][name] = subset
+        product_ids = set()
+        product_docs_by_parent_and_name = collections.defaultdict(dict)
+        for product_doc in product_docs:
+            product_ids.add(product_doc["_id"])
+            folder_id = product_doc["parent"]
+            name = product_doc["name"]
+            product_docs_by_parent_and_name[folder_id][name] = product_doc
 
         # versions
-        _version_docs = get_versions(project_name, subset_ids=subset_ids)
+        _version_docs = get_versions(project_name, subset_ids=product_ids)
         version_docs = list(reversed(
             sorted(_version_docs, key=lambda item: item["name"])
         ))
 
         hero_version_docs = list(get_hero_versions(
-            project_name, subset_ids=subset_ids
+            project_name, subset_ids=product_ids
         ))
 
-        version_ids = list()
-
+        version_ids = set()
         version_docs_by_parent_id = {}
         for version_doc in version_docs:
             parent_id = version_doc["parent"]
             if parent_id not in version_docs_by_parent_id:
-                version_ids.append(version_doc["_id"])
+                version_ids.add(version_doc["_id"])
                 version_docs_by_parent_id[parent_id] = version_doc
 
         hero_version_docs_by_parent_id = {}
         for hero_version_doc in hero_version_docs:
-            version_ids.append(hero_version_doc["_id"])
+            version_ids.add(hero_version_doc["_id"])
             parent_id = hero_version_doc["parent"]
             hero_version_docs_by_parent_id[parent_id] = hero_version_doc
 
-        repre_docs = get_representations(project_name, version_ids=version_ids)
+        repre_docs = get_representations(
+            project_name, version_ids=version_ids
+        )
         repre_docs_by_parent_id_by_name = collections.defaultdict(dict)
         for repre_doc in repre_docs:
             parent_id = repre_doc["parent"]
@@ -1220,80 +1230,99 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             repre_docs_by_parent_id_by_name[parent_id][name] = repre_doc
 
         for container in self._items:
-            container_repre_id = container["representation"]
-            container_repre = self.content_repres[container_repre_id]
-            container_repre_name = container_repre["name"]
-
-            container_version_id = container_repre["parent"]
-            container_version = self.content_versions[container_version_id]
-
-            container_subset_id = container_version["parent"]
-            container_subset = self.content_subsets[container_subset_id]
-            container_subset_name = container_subset["name"]
-
-            container_asset_id = container_subset["parent"]
-            container_asset = self.content_assets[container_asset_id]
-            container_asset_id = container_asset["_id"]
-
-            if selected_folder_id:
-                asset_doc = asset_docs_by_id[selected_folder_id]
-            else:
-                asset_doc = asset_docs_by_id[container_asset_id]
-
-            subsets_by_name = subset_docs_by_parent_and_name[asset_doc["_id"]]
-            if selected_subset:
-                subset_doc = subsets_by_name[selected_subset]
-            else:
-                subset_doc = subsets_by_name[container_subset_name]
-
-            repre_doc = None
-            subset_id = subset_doc["_id"]
-            if container_version["type"] == "hero_version":
-                hero_version = hero_version_docs_by_parent_id.get(
-                    subset_id
-                )
-                if hero_version:
-                    _repres = repre_docs_by_parent_id_by_name.get(
-                        hero_version["_id"]
-                    )
-                    if selected_representation:
-                        repre_doc = _repres.get(selected_representation)
-                    else:
-                        repre_doc = _repres.get(container_repre_name)
-
-            if not repre_doc:
-                version_doc = version_docs_by_parent_id[subset_id]
-                version_id = version_doc["_id"]
-                repres_by_name = repre_docs_by_parent_id_by_name[version_id]
-                if selected_representation:
-                    repre_doc = repres_by_name[selected_representation]
-                else:
-                    repre_doc = repres_by_name[container_repre_name]
-
-            error = None
-            try:
-                switch_container(container, repre_doc, loader)
-            except (
-                LoaderSwitchNotImplementedError,
-                IncompatibleLoaderError,
-                LoaderNotFoundError,
-            ) as exc:
-                error = str(exc)
-            except Exception:
-                error = (
-                    "Switch asset failed. "
-                    "Search console log for more details."
-                )
-            if error is not None:
-                log.warning((
-                    "Couldn't switch asset."
-                    "See traceback for more information."
-                ), exc_info=True)
-                dialog = QtWidgets.QMessageBox(self)
-                dialog.setWindowTitle("Switch asset failed")
-                dialog.setText(error)
-                dialog.exec_()
+            self._switch_container(
+                container,
+                loader,
+                selected_folder_id,
+                selected_product_name,
+                selected_representation,
+                product_docs_by_parent_and_name,
+                version_docs_by_parent_id,
+                hero_version_docs_by_parent_id,
+                repre_docs_by_parent_id_by_name,
+            )
 
         self.switched.emit()
 
         self.close()
+
+    def _switch_container(
+        self,
+        container,
+        loader,
+        selected_folder_id,
+        product_name,
+        selected_representation,
+        product_docs_by_parent_and_name,
+        version_docs_by_parent_id,
+        hero_version_docs_by_parent_id,
+        repre_docs_by_parent_id_by_name,
+    ):
+        container_repre_id = container["representation"]
+        container_repre = self._repre_docs_by_id[container_repre_id]
+        container_repre_name = container_repre["name"]
+        container_version_id = container_repre["parent"]
+
+        container_version = self._version_docs_by_id[container_version_id]
+
+        container_product_id = container_version["parent"]
+        container_product = self._product_docs_by_id[container_product_id]
+
+        if selected_folder_id:
+            folder_id = selected_folder_id
+        else:
+            folder_id = container_product["parent"]
+
+        products_by_name = product_docs_by_parent_and_name[folder_id]
+        if product_name:
+            product_doc = products_by_name[product_name]
+        else:
+            product_doc = products_by_name[container_product["name"]]
+
+        repre_doc = None
+        product_id = product_doc["_id"]
+        if container_version["type"] == "hero_version":
+            hero_version = hero_version_docs_by_parent_id.get(
+                product_id
+            )
+            if hero_version:
+                _repres = repre_docs_by_parent_id_by_name.get(
+                    hero_version["_id"]
+                )
+                if selected_representation:
+                    repre_doc = _repres.get(selected_representation)
+                else:
+                    repre_doc = _repres.get(container_repre_name)
+
+        if not repre_doc:
+            version_doc = version_docs_by_parent_id[product_id]
+            version_id = version_doc["_id"]
+            repres_by_name = repre_docs_by_parent_id_by_name[version_id]
+            if selected_representation:
+                repre_doc = repres_by_name[selected_representation]
+            else:
+                repre_doc = repres_by_name[container_repre_name]
+
+        error = None
+        try:
+            switch_container(container, repre_doc, loader)
+        except (
+            LoaderSwitchNotImplementedError,
+            IncompatibleLoaderError,
+            LoaderNotFoundError,
+        ) as exc:
+            error = str(exc)
+        except Exception:
+            error = (
+                "Switch asset failed. "
+                "Search console log for more details."
+            )
+        if error is not None:
+            log.warning((
+                "Couldn't switch asset."
+                "See traceback for more information."
+            ), exc_info=True)
+            dialog = QtWidgets.QMessageBox(self)
+            dialog.setWindowTitle("Switch asset failed")
+            dialog.setText(error)
+            dialog.exec_()
