@@ -86,6 +86,14 @@ openpype.hosts.houdini.api.lib.reset_framerange()
 ]]></scriptCode>
             </scriptItem>
 
+            <scriptItem id="update_context_vars">
+                <label>Update Houdini Vars</label>
+                <scriptCode><![CDATA[
+import openpype.hosts.houdini.api.lib
+openpype.hosts.houdini.api.lib.update_houdini_vars_context_dialog()
+]]></scriptCode>
+            </scriptItem>
+
             <separatorItem/>
             <scriptItem id="experimental_tools">
                 <label>Experimental tools...</label>
