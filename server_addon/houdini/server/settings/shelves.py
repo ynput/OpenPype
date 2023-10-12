@@ -9,6 +9,7 @@ from ayon_server.settings import (
 class ShelfToolsModel(BaseSettingsModel):
     name: str = Field(title="Name")
     help: str = Field(title="Help text")
+    # TODO: The following settings are not compatible with OP
     script: MultiplatformPathModel = Field(
         default_factory=MultiplatformPathModel,
         title="Script Path "
