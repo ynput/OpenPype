@@ -71,8 +71,7 @@ class TreeView(QtWidgets.QTreeView):
         Add refresh animation.
     """
 
-    double_clicked_left = QtCore.Signal()
-    double_clicked_right = QtCore.Signal()
+    double_clicked = QtCore.Signal(QtCore.Qt.MouseButton)
 
     def __init__(self, *args, **kwargs):
         super(TreeView, self).__init__(*args, **kwargs)
@@ -101,11 +100,7 @@ class TreeView(QtWidgets.QTreeView):
         super(TreeView, self).mousePressEvent(event)
 
     def mouseDoubleClickEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.double_clicked_left.emit()
-
-        elif event.button() == QtCore.Qt.RightButton:
-            self.double_clicked_right.emit()
+        self.double_clicked.emit(event.button())
 
         return super(TreeView, self).mouseDoubleClickEvent(event)
 

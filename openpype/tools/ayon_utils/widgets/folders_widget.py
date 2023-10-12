@@ -271,9 +271,7 @@ class FoldersWidget(QtWidgets.QWidget):
             the expected selection. Defaults to False.
     """
 
-    double_clicked = QtCore.Signal()
-    double_clicked_left = QtCore.Signal()
-    double_clicked_right = QtCore.Signal()
+    double_clicked = QtCore.Signal(QtCore.Qt.MouseButton)
     selection_changed = QtCore.Signal()
     refreshed = QtCore.Signal()
 
@@ -313,8 +311,7 @@ class FoldersWidget(QtWidgets.QWidget):
 
         selection_model = folders_view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
-        folders_view.double_clicked_left.connect(self._on_left_double_click)
-        folders_view.double_clicked_right.connect(self._on_right_double_click)
+        folders_view.double_clicked.connect(self.double_clicked)
         folders_model.refreshed.connect(self._on_model_refresh)
 
         self._controller = controller
@@ -451,14 +448,6 @@ class FoldersWidget(QtWidgets.QWidget):
         """
 
         self._folders_view.set_deselectable(enabled)
-
-    def _on_left_double_click(self):
-        self.double_clicked_left.emit()
-        self.double_clicked.emit()
-
-    def _on_right_double_click(self):
-        self.double_clicked_right.emit()
-        self.double_clicked.emit()
 
     def _get_selected_index(self):
         return self._folders_model.get_index_by_id(
