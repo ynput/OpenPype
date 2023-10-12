@@ -41,7 +41,7 @@ class ExtractThumbnail(publish.Extractor):
             "Writing Thumbnail to"
             " '%s' to '%s'" % (filename, tmp_staging))
         review_camera = instance.data["review_camera"]
-        if get_max_version() >= 2024:
+        if int(get_max_version()) >= 2024:
             with viewport_setup_updated(review_camera):
                 preview_arg = set_preview_arg(
                     instance, filepath, frame, frame, fps)

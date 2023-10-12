@@ -578,8 +578,12 @@ def set_preview_arg(instance, filepath,
             preview_preset = "userdefined"
         else:
             preview_preset = preview_preset.lower()
-        preview_preset.option = f"vpPreset:#{visual_style_preset}"
-        job_args.append(preview_preset)
+        preview_preset_option = f"vpPreset:#{visual_style_preset}"
+        job_args.append(preview_preset_option)
+        viewport_texture = instance.data.get("vpTexture", True)
+        if viewport_texture:
+            viewport_texture_option = f"vpTexture:{viewport_texture}"
+            job_args.append(viewport_texture_option)
 
     job_str = " ".join(job_args)
     log.debug(job_str)
