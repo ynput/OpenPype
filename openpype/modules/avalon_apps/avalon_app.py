@@ -1,5 +1,6 @@
 import os
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.modules import OpenPypeModule, ITrayModule
 
 
@@ -75,20 +76,11 @@ class AvalonModule(OpenPypeModule, ITrayModule):
 
     def show_library_loader(self):
         if self._library_loader_window is None:
-            from qtpy import QtCore
-            from openpype.tools.libraryloader import LibraryLoaderWindow
             from openpype.pipeline import install_openpype_plugins
-
-            libraryloader = LibraryLoaderWindow(
-                show_projects=True,
-                show_libraries=True
-            )
-            # Remove always on top flag for tray
-            window_flags = libraryloader.windowFlags()
-            if window_flags | QtCore.Qt.WindowStaysOnTopHint:
-                window_flags ^= QtCore.Qt.WindowStaysOnTopHint
-                libraryloader.setWindowFlags(window_flags)
-            self._library_loader_window = libraryloader
+            if AYON_SERVER_ENABLED:
+                self._init_ayon_loader()
+            else:
+                self._init_library_loader()
 
             install_openpype_plugins()
 
@@ -106,3 +98,25 @@ class AvalonModule(OpenPypeModule, ITrayModule):
         if self.tray_initialized:
             from .rest_api import AvalonRestApiResource
             self.rest_api_obj = AvalonRestApiResource(self, server_manager)
+
+    def _init_library_loader(self):
+        from qtpy import QtCore
+        from openpype.tools.libraryloader import LibraryLoaderWindow
+
+        libraryloader = LibraryLoaderWindow(
+            show_projects=True,
+            show_libraries=True
+        )
+        # Remove always on top flag for tray
+        window_flags = libraryloader.windowFlags()
+        if window_flags | QtCore.Qt.WindowStaysOnTopHint:
+            window_flags ^= QtCore.Qt.WindowStaysOnTopHint
+            libraryloader.setWindowFlags(window_flags)
+        self._library_loader_window = libraryloader
+
+    def _init_ayon_loader(self):
+        from openpype.tools.ayon_loader.ui import LoaderWindow
+
+        libraryloader = LoaderWindow()
+
+        self._library_loader_window = libraryloader
