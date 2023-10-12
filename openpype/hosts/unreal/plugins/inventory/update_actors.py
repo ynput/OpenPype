@@ -4,6 +4,7 @@ from openpype.hosts.unreal.api.pipeline import (
     ls,
     replace_static_mesh_actors,
     replace_skeletal_mesh_actors,
+    replace_geometry_cache_actors,
     delete_previous_asset_if_unused,
 )
 from openpype.pipeline import InventoryAction
@@ -53,7 +54,13 @@ class UpdateActors(InventoryAction):
 
                 if container.get("family") == "rig":
                     replace_skeletal_mesh_actors(old_content, asset_content)
-                replace_static_mesh_actors(old_content, asset_content)
+                    replace_static_mesh_actors(old_content, asset_content)
+                elif container.get("family") == "model":
+                    if container.get("loader") == "PointCacheAlembicLoader":
+                        replace_geometry_cache_actors(
+                            old_content, asset_content)
+                    else:
+                        replace_static_mesh_actors(old_content, asset_content)
 
                 unreal.EditorLevelLibrary.save_current_level()
 
