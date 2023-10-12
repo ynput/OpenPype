@@ -13,8 +13,10 @@ from openpype.client import get_asset_by_name, get_assets
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
+    register_inventory_action_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
+    deregister_inventory_action_path,
     AYON_CONTAINER_ID,
     legacy_io,
 )
@@ -127,6 +129,7 @@ def install():
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
     register_loader_plugin_path(str(LOAD_PATH))
     register_creator_plugin_path(str(CREATE_PATH))
+    register_inventory_action_path(str(INVENTORY_PATH))
     _register_callbacks()
     _register_events()
 
@@ -136,6 +139,7 @@ def uninstall():
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
     deregister_loader_plugin_path(str(LOAD_PATH))
     deregister_creator_plugin_path(str(CREATE_PATH))
+    deregister_inventory_action_path(str(INVENTORY_PATH))
 
 
 def _register_callbacks():
