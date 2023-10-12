@@ -330,6 +330,17 @@ class FoldersWidget(QtWidgets.QWidget):
     def _set_project_name(self, project_name):
         self._folders_model.set_project_name(project_name)
 
+    def set_deselectable(self, enabled):
+        """Set deselectable mode.
+
+        Items in view can be deselected.
+
+        Args:
+            enabled (bool): Enable deselectable mode.
+        """
+
+        self._folders_view.set_deselectable(enabled)
+
     def _on_folders_refresh_finished(self, event):
         if event["sender"] != FOLDERS_MODEL_SENDER_NAME:
             self._set_project_name(event["project_name"])
