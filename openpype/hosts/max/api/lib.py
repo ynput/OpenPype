@@ -322,7 +322,7 @@ def is_headless():
 
 
 @contextlib.contextmanager
-def viewport_camera(camera):
+def viewport_setup_updated(camera):
     original = rt.viewport.getCamera()
     has_autoplay = rt.preferences.playPreviewWhenDone
     if not original:
@@ -336,6 +336,36 @@ def viewport_camera(camera):
         yield
     finally:
         rt.viewport.setCamera(original)
+        rt.preferences.playPreviewWhenDone = has_autoplay
+
+
+@contextlib.contextmanager
+def viewport_setup(viewport_setting, visual_style, camera):
+    """Function to set visual style options
+
+    Args:
+        visual_style (str): visual style for active viewport
+
+    Returns:
+        list: the argument which can set visual style
+    """
+    original = rt.viewport.getCamera()
+    has_autoplay = rt.preferences.playPreviewWhenDone
+    if not original:
+        # if there is no original camera
+        # use the current camera as original
+        original = rt.getNodeByName(camera)
+    review_camera = rt.getNodeByName(camera)
+    current_setting = viewport_setting.VisualStyleMode
+    try:
+        rt.viewport.setCamera(review_camera)
+        viewport_setting.VisualStyleMode = rt.Name(
+            visual_style)
+        rt.preferences.playPreviewWhenDone = False
+        yield
+    finally:
+        rt.viewport.setCamera(original)
+        viewport_setting.VisualStyleMode = current_setting
         rt.preferences.playPreviewWhenDone = has_autoplay
 
 

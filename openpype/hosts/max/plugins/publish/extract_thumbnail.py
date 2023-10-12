@@ -4,10 +4,12 @@ import pyblish.api
 from pymxs import runtime as rt
 from openpype.pipeline import publish
 from openpype.hosts.max.api.lib import (
-    viewport_camera,
+    viewport_setup_updated,
+    viewport_setup,
     get_max_version,
     set_preview_arg
 )
+
 
 
 class ExtractThumbnail(publish.Extractor):
@@ -39,10 +41,24 @@ class ExtractThumbnail(publish.Extractor):
             "Writing Thumbnail to"
             " '%s' to '%s'" % (filename, tmp_staging))
         review_camera = instance.data["review_camera"]
-        with viewport_camera(review_camera):
-            preview_arg = set_preview_arg(
-                instance, filepath, fps, frame)
-            rt.execute(preview_arg)
+        if get_max_version() >= 2024:
+            with viewport_setup_updated(review_camera):
+                preview_arg = set_preview_arg(
+                    instance, filepath, frame, frame, fps)
+                rt.execute(preview_arg)
+        else:
+            visual_style_preset = instance.data.get("visualStyleMode")
+            nitrousGraphicMgr = rt.NitrousGraphicsManager
+            viewport_setting = nitrousGraphicMgr.GetActiveViewportSetting()
+            with viewport_setup(
+                viewport_setting,
+                visual_style_preset,
+                review_camera):
+                viewport_setting.VisualStyleMode = rt.Name(
+                    visual_style_preset)
+                preview_arg = set_preview_arg(
+                    instance, filepath, frame, frame, fps)
+                rt.execute(preview_arg)
 
         representation = {
             "name": "thumbnail",
