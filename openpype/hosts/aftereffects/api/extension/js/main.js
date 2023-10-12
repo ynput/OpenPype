@@ -400,6 +400,16 @@ function main(websocket_url){
             });
     });
 
+    RPC.addRoute('AfterEffects.add_comp_to_queue', function (data) {
+        log.warn('Server called client route "add_comp_to_queue":', data);
+        return runEvalScript("addCompToQueue(" + data.comp_id + ",'" +
+            data.template_name + "')")
+            .then(function (result) {
+                log.warn("addCompToQueue: " + result);
+                return result;
+            });
+    });
+
 }
 
 /** main entry point **/

@@ -1000,6 +1000,45 @@ function addItemAsLayerToCompWithOffset(comp_id, item_id, offset) {
 }
 
 
+function addCompToQueue(item_id, template_name){
+    /** Add Comp to Render Queue
+     *
+     *
+     * Args:
+     *      item_id (int)
+     *      template_name (str)
+     */
+
+    var item = app.project.itemByID(item_id);
+    if (!item) {
+        return _prepareError("There is no item with " + item_id);
+    }
+
+    // Remove all items from the render queue
+    for (i = 1; i <= app.project.renderQueue.numItems; ++i) {
+        var render_item = app.project.renderQueue.item(i);
+        render_item.remove();
+    }
+
+    var renderQueueItem = app.project.renderQueue.items.add(item);
+    renderQueueItem.applyTemplate("Best Settings");
+
+    var outputModule = renderQueueItem.outputModule(1);
+
+    outputModule.applyTemplate(template_name)
+
+    var new_data = {
+        "Output File Info": {
+            "Base Path":      "Y:\\",
+            "Subfolder Path": "",
+            "File Name":      "[compName]_[####].[fileextension]"
+        }
+    };
+
+    outputModule.setSettings( new_data );
+}
+
+
 function getPrecompsFromComp(item_id) {
     /** Analyze a Comp and return the inserted PreComps
      *
@@ -1029,12 +1068,12 @@ function getPrecompsFromComp(item_id) {
                     "type": getLayerType(layer)
                 };
 
-                items.push(JSON.stringify(item))
+                items.push(JSON.stringify(item));
 
                 j = j + 1;
             }
 
-            return '[' + items.join() + ']'
+            return '[' + items.join() + ']';
         }
     }
 }
@@ -1054,8 +1093,8 @@ function setCompWorkArea(item_id, workAreaStart, workAreaDuration) {
     for (i = 1; i <= app.project.items.length; ++i) {
         var comp = app.project.items[i];
         if ((comp instanceof CompItem) && (comp.id == item.id)) {
-            comp.workAreaStart = workAreaStart
-            comp.workAreaDuration = workAreaDuration
+            comp.workAreaStart = workAreaStart;
+            comp.workAreaDuration = workAreaDuration;
 
             return
         }

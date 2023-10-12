@@ -765,6 +765,22 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
+    def add_comp_to_queue(self, comp_id, template_name):
+        """
+            Adds the comp to the Render Queue.
+
+            Args:
+                comp_id (int): id of target composition
+                template_name (str): The name of the export template.
+        """
+
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_comp_to_queue',
+                                         comp_id=comp_id,
+                                         template_name=template_name))
+
+        return self._handle_return(res)
+
 
 def get_stub():
     """
