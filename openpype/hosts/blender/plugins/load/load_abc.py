@@ -69,23 +69,26 @@ class CacheModelLoader(plugin.AssetLoader):
                 container = empty
                 break
 
-        assert container, "No asset group found"
-
-        # Children must be linked before parents,
-        # otherwise the hierarchy will break
         objects = []
-        nodes = list(container.children)
+        if container:
+            # Children must be linked before parents,
+            # otherwise the hierarchy will break
+            nodes = list(container.children)
 
-        for obj in nodes:
-            obj.parent = asset_group
+            for obj in nodes:
+                obj.parent = asset_group
 
-        bpy.data.objects.remove(container)
+            bpy.data.objects.remove(container)
 
-        for obj in nodes:
-            objects.append(obj)
-            objects.extend(list(obj.children_recursive))
+            for obj in nodes:
+                objects.append(obj)
+                objects.extend(list(obj.children_recursive))
 
-        objects.reverse()
+            objects.reverse()
+        else:
+            for obj in imported:
+                obj.parent = asset_group
+            objects = imported
 
         for obj in objects:
             # Unlink the object from all collections
