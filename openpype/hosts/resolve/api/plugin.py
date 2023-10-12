@@ -386,12 +386,13 @@ class ClipLoader:
         """Load clip into timeline
 
         Arguments:
-            files (list): list of files to load into timeline
+            files (list[str]): list of files to load into timeline
         """
         # create project bin for the media to be imported into
         self.active_bin = lib.create_bin(self.data["binPath"])
-        handle_start = self.data["versionData"].get("handleStart", 0)
-        handle_end = self.data["versionData"].get("handleEnd", 0)
+
+        handle_start = self.data["versionData"].get("handleStart") or 0
+        handle_end = self.data["versionData"].get("handleEnd") or 0
 
         media_pool_item = lib.create_media_pool_item(
             files,
