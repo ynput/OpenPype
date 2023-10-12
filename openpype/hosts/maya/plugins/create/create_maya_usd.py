@@ -19,6 +19,11 @@ class CreateMayaUsd(plugin.MayaCreator):
 
     cache = {}
 
+    # TODO: Remove these default variants - this is just to trivialize
+    #   the usage of the bootstrapping that was once built for Houdini
+    #   that bootstrapped usdModel and usdShade as usdAsset
+    default_variants = ["Model", "Shade"]
+
     def get_publish_families(self):
         return ["usd", "mayaUsd"]
 
@@ -99,4 +104,25 @@ class CreateMayaUsd(plugin.MayaCreator):
                     multiselection=True),
         ])
 
+        return defs
+
+
+class CreateMayaUsdContribution(CreateMayaUsd):
+
+
+    identifier = "io.openpype.creators.maya.mayausd.contribution"
+    label = "Maya USD Contribution"
+    family = "usd.layered"
+    icon = "cubes"
+    description = "Create Maya USD Contribution"
+
+    def get_instance_attr_defs(self):
+
+        import os
+        defs = super(CreateMayaUsdContribution, self).get_instance_attr_defs()
+        defs.insert(0, TextDef(
+            "sublayer",
+            label="Sublayer",
+            default=os.environ["AVALON_TASK"]
+        ))
         return defs

@@ -8,8 +8,16 @@ except ImportError:
     # Allow to fall back on Multiverse 6.3.0+ pxr usd library
     from mvpxr import Usd, UsdGeom, Sdf, Kind
 
-from openpype.client import get_project, get_asset_by_name
-from openpype.pipeline import Anatomy, get_current_project_name
+from openpype.client import (
+    get_asset_by_name,
+    get_subset_by_name,
+    get_representation_by_name,
+    get_hero_version_by_subset_id
+)
+from openpype.pipeline import (
+    get_current_project_name,
+    get_representation_path
+)
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +37,7 @@ PIPELINE = {
 
 
 def create_asset(
-    filepath, asset_name, reference_layers, kind=Kind.Tokens.component
+    filepath, asset_name, reference_layers=None, kind=Kind.Tokens.component
 ):
     """
     Creates an asset file that consists of a top level layer and sublayers for
@@ -50,32 +58,42 @@ def create_asset(
     log.info("Creating asset at %s", filepath)
 
     # Make the layer ascii - good for readability, plus the file is small
-    root_layer = Sdf.Layer.CreateNew(filepath, args={"format": "usda"})
-    stage = Usd.Stage.Open(root_layer)
+    layer = Sdf.Layer.CreateNew(filepath, args={"format": "usda"})
 
-    # Define a prim for the asset and make it the default for the stage.
-    asset_prim = UsdGeom.Xform.Define(stage, "/%s" % asset_name).GetPrim()
-    stage.SetDefaultPrim(asset_prim)
+    # Define root prim for the asset and make it the default for the stage.
+    prim_name = asset_name
+    asset_prim = Sdf.PrimSpec(
+        layer.pseudoRoot,
+        prim_name,
+        Sdf.SpecifierDef,
+        "Xform"
+    )
 
-    # Let viewing applications know how to orient a free camera properly
-    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
-
+    # Define Kind
     # Usually we will "loft up" the kind authored into the exported geometry
     # layer rather than re-stamping here; we'll leave that for a later
     # tutorial, and just be explicit here.
-    model = Usd.ModelAPI(asset_prim)
-    if kind:
-        model.SetKind(kind)
+    asset_prim.kind = kind
 
-    model.SetAssetName(asset_name)
-    model.SetAssetIdentifier("%s/%s.usd" % (asset_name, asset_name))
+    # Set asset info
+    asset_prim.assetInfo["name"] = asset_name
+    asset_prim.assetInfo["identifier"] = "%s/%s.usd" % (asset_name, asset_name)
+    # asset.assetInfo["version"] = asset_version
+
+    # Set default prim
+    layer.defaultPrim = prim_name
+
+    # Let viewing applications know how to orient a free camera properly
+    # Similar to: UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    layer.pseudoRoot.SetInfo(UsdGeom.Tokens.upAxis, UsdGeom.Tokens.y)
 
     # Add references to the  asset prim
-    references = asset_prim.GetReferences()
-    for reference_filepath in reference_layers:
-        references.AddReference(reference_filepath)
+    if reference_layers:
+        asset_prim.referenceList.prependedItems[:] = [
+            Sdf.Reference(assetPath=path) for path in reference_layers
+        ]
 
-    stage.GetRootLayer().Save()
+    layer.Save()
 
 
 def create_shot(filepath, layers, create_layers=False):
@@ -83,9 +101,9 @@ def create_shot(filepath, layers, create_layers=False):
 
     Args:
         filepath (str): Filepath where the asset.usd file will be saved.
-        layers (str): When provided this will be added verbatim in the
+        layers (list): When provided this will be added verbatim in the
             subLayerPaths layers. When the provided layer paths do not exist
-            they are generated using  Sdf.Layer.CreateNew
+            they are generated using Sdf.Layer.CreateNew
         create_layers (bool): Whether to create the stub layers on disk if
             they do not exist yet.
 
@@ -94,8 +112,7 @@ def create_shot(filepath, layers, create_layers=False):
 
     """
     # Also see create_shot.py in PixarAnimationStudios/USD endToEnd example
-
-    stage = Usd.Stage.CreateNew(filepath)
+    root_layer = Sdf.Layer.CreateNew(filepath)
     log.info("Creating shot at %s" % filepath)
 
     for layer_path in layers:
@@ -109,11 +126,12 @@ def create_shot(filepath, layers, create_layers=False):
 
             Sdf.Layer.CreateNew(layer_path)
 
-        stage.GetRootLayer().subLayerPaths.append(layer_path)
+        root_layer.subLayerPaths.append(layer_path)
 
-    # Lets viewing applications know how to orient a free camera properly
-    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
-    stage.GetRootLayer().Save()
+    # Let viewing applications know how to orient a free camera properly
+    # Similar to: UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    root_layer.pseudoRoot.SetInfo(UsdGeom.Tokens.upAxis, UsdGeom.Tokens.y)
+    root_layer.Save()
 
     return filepath
 
@@ -315,41 +333,30 @@ def get_usd_master_path(asset, subset, representation):
     """
 
     project_name = get_current_project_name()
-    anatomy = Anatomy(project_name)
-    project_doc = get_project(
-        project_name,
-        fields=["name", "data.code"]
-    )
 
     if isinstance(asset, dict) and "name" in asset:
         # Allow explicitly passing asset document
         asset_doc = asset
     else:
-        asset_doc = get_asset_by_name(project_name, asset, fields=["name"])
+        asset_doc = get_asset_by_name(project_name, asset, fields=["_id"])
 
-    template_obj = anatomy.templates_obj["publish"]["path"]
-    path = template_obj.format_strict(
-        {
-            "project": {
-                "name": project_name,
-                "code": project_doc.get("data", {}).get("code")
-            },
-            "folder": {
-                "name": asset_doc["name"],
-            },
-            "asset": asset_doc["name"],
-            "subset": subset,
-            "representation": representation,
-            "version": 0,  # stub version zero
-        }
-    )
+    if isinstance(subset, dict) and "name" in subset:
+        # Allow explicitly passing subset document
+        subset_doc = subset
+    else:
+        subset_doc = get_subset_by_name(project_name,
+                                        subset,
+                                        asset_id=asset_doc["_id"],
+                                        fields=["_id"])
 
-    # Remove the version folder
-    subset_folder = os.path.dirname(os.path.dirname(path))
-    master_folder = os.path.join(subset_folder, "master")
-    fname = "{0}.{1}".format(subset, representation)
+    version = get_hero_version_by_subset_id(project_name,
+                                            subset_id=subset_doc["_id"])
+    representation = get_representation_by_name(project_name,
+                                                representation,
+                                                version_id=version["_id"])
 
-    return os.path.join(master_folder, fname).replace("\\", "/")
+    path = get_representation_path(representation)
+    return path.replace("\\", "/")
 
 
 def parse_avalon_uri(uri):
