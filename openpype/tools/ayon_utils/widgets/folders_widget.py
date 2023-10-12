@@ -271,7 +271,7 @@ class FoldersWidget(QtWidgets.QWidget):
             the expected selection. Defaults to False.
     """
 
-    double_clicked = QtCore.Signal(QtCore.Qt.MouseButton)
+    double_clicked = QtCore.Signal(QtGui.QMouseEvent)
     selection_changed = QtCore.Signal()
     refreshed = QtCore.Signal()
 

@@ -332,9 +332,9 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         filepath = self.get_selected_path()
         self._controller.set_selected_workfile_path(filepath)
 
-    def _on_mouse_double_click(self, mouse_btn):
-        if mouse_btn == QtCore.Qt.LeftButton:
-            self.open_current_requested.emit()
+    def _on_mouse_double_click(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.save_as_requested.emit()
 
     def _on_context_menu(self, point):
         index = self._view.indexAt(point)
