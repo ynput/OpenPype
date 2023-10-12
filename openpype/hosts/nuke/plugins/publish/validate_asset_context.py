@@ -52,7 +52,7 @@ class ValidateCorrectAssetContext(
         if not self.is_active(instance.data):
             return
 
-        invalid_keys = self.get_invalid(instance, compute=True)
+        invalid_keys = self.get_invalid(instance)
 
         if not invalid_keys:
             return
@@ -81,27 +81,24 @@ class ValidateCorrectAssetContext(
         )
 
     @classmethod
-    def get_invalid(cls, instance, compute=False):
+    def get_invalid(cls, instance):
         """Get invalid keys from instance data and context data."""
-        invalid = instance.data.get("invalid_keys", [])
 
-        if compute:
-            testing_keys = ["asset", "task"]
-            for _key in testing_keys:
-                if _key not in instance.data:
-                    invalid.append(_key)
-                    continue
-                if instance.data[_key] != instance.context.data[_key]:
-                    invalid.append(_key)
+        invalid_keys = []
+        testing_keys = ["asset", "task"]
+        for _key in testing_keys:
+            if _key not in instance.data:
+                invalid_keys.append(_key)
+                continue
+            if instance.data[_key] != instance.context.data[_key]:
+                invalid_keys.append(_key)
 
-        instance.data["invalid_keys"] = invalid
-
-        return invalid
+        return invalid_keys
 
     @classmethod
     def repair(cls, instance):
         """Repair instance data with context data."""
-        invalid = cls.get_invalid(instance)
+        invalid_keys = cls.get_invalid(instance)
 
         create_context = instance.context.data["create_context"]
 
@@ -109,7 +106,7 @@ class ValidateCorrectAssetContext(
         created_instance = create_context.get_instance_by_id(
             instance_id
         )
-        for _key in invalid:
+        for _key in invalid_keys:
             created_instance[_key] = instance.context.data[_key]
 
         create_context.save_changes()

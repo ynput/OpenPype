@@ -3,19 +3,29 @@
     <error id="main">
         <title>Shot/Asset name</title>
         <description>
-## Invalid node context keys and values
+## Publishing to a different asset context
 
-Following Node with name: \`{node_name}\`
+There are publish instances present which are publishing into a different asset than your current context.
 
-Context keys and values: \`{correct_values}\`
+Usually this is not what you want but there can be cases where you might want to publish into another asset/shot or task.
 
-Wrong keys and values: \`{wrong_values}\`.
+If that's the case you can disable the validation on the instance to ignore it.
 
-### How to repair?
+Following Node with name is wrong: \`{node_name}\`
 
-1. Either use Repair or Select button.
-2. If you chose Select then rename asset knob to correct name.
-3. Hit Reload button on the publisher.
+### Correct context keys and values:
+
+\`{correct_values}\`
+
+### Wrong keys and values:
+
+\`{wrong_values}\`.
+
+
+## How to repair?
+
+1. Use \"Repair\" button.
+2. Hit Reload button on the publisher.
         </description>
     </error>
 </root>
