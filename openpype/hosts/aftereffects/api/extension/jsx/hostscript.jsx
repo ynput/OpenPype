@@ -5,33 +5,34 @@ indent: 4, maxerr: 50 */
 
 /* All public API function should return JSON! */
 
-app.preferences.savePrefAsBool("General Section", "Show Welcome Screen", false) ;
+app.preferences.savePrefAsBool("General Section", "Show Welcome Screen", false);
 
-if(!Array.prototype.indexOf) {
-    Array.prototype.indexOf = function ( item ) {
-        var index = 0, length = this.length;
-        for ( ; index < length; index++ ) {
-                  if ( this[index] === item )
-                        return index;
+if (!Array.prototype.indexOf) {
+    Array.prototype.indexOf = function(item) {
+        var index = 0,
+            length = this.length;
+        for (; index < length; index++) {
+            if (this[index] === item)
+                return index;
         }
         return -1;
-        };
+    };
 }
 
-function sayHello(){
+function sayHello() {
     alert("hello from ExtendScript");
 }
 
-function getEnv(variable){
+function getEnv(variable) {
     return $.getenv(variable);
 }
 
-function getMetadata(){
+function getMetadata() {
     /**
      *  Returns payload in 'Label' field of project's metadata
      *
      **/
-    if (ExternalObject.AdobeXMPScript === undefined){
+    if (ExternalObject.AdobeXMPScript === undefined) {
         ExternalObject.AdobeXMPScript =
             new ExternalObject('lib:AdobeXMPScript');
     }
@@ -41,7 +42,7 @@ function getMetadata(){
     var schemaNS = XMPMeta.getNamespaceURI("xmp");
     var label = "xmp:Label";
 
-    if (meta.doesPropertyExist(schemaNS, label)){
+    if (meta.doesPropertyExist(schemaNS, label)) {
         var prop = meta.getProperty(schemaNS, label);
         return prop.value;
     }
@@ -50,14 +51,14 @@ function getMetadata(){
 
 }
 
-function imprint(payload){
+function imprint(payload) {
     /**
      * Stores payload in 'Label' field of project's metadata
      *
      * Args:
      *     payload (string): json content
      */
-    if (ExternalObject.AdobeXMPScript === undefined){
+    if (ExternalObject.AdobeXMPScript === undefined) {
         ExternalObject.AdobeXMPScript =
             new ExternalObject('lib:AdobeXMPScript');
     }
@@ -74,7 +75,7 @@ function imprint(payload){
 }
 
 
-function fileOpen(path){
+function fileOpen(path) {
     /**
      * Opens (project) file on 'path'
      */
@@ -82,26 +83,26 @@ function fileOpen(path){
     return _prepareSingleValue(app.open(fp))
 }
 
-function getActiveDocumentName(){
+function getActiveDocumentName() {
     /**
      *   Returns file name of active document
      * */
     var file = app.project.file;
 
-    if (file){
+    if (file) {
         return _prepareSingleValue(file.name)
     }
 
     return _prepareError("No file open currently");
 }
 
-function getActiveDocumentFullName(){
+function getActiveDocumentFullName() {
     /**
      *   Returns absolute path to current project
      * */
     var file = app.project.file;
 
-    if (file){
+    if (file) {
         var f = new File(file.fullName);
         var path = f.fsName;
         f.close();
@@ -113,7 +114,7 @@ function getActiveDocumentFullName(){
 }
 
 
-function addItem(name, item_type){
+function addItem(name, item_type) {
     /**
      * Adds comp or folder to project items.
      *
@@ -126,19 +127,19 @@ function addItem(name, item_type){
      * Returns:
      *      SingleItemValue: eg {"result": VALUE}
      */
-    if (item_type == "COMP"){
+    if (item_type == "COMP") {
         // dummy values, will be rewritten later
         item = app.project.items.addComp(name, 1920, 1060, 1, 10, 25);
-    }else if (item_type == "FOLDER"){
+    } else if (item_type == "FOLDER") {
         item = app.project.items.addFolder(name);
-    }else{
+    } else {
         return _prepareError("Only 'COMP' or 'FOLDER' can be created");
     }
     return _prepareSingleValue(item.id);
 
 }
 
-function getItems(comps, folders, footages){
+function getItems(comps, folders, footages) {
     /**
      * Returns JSON representation of compositions and
      * if 'collectLayers' then layers in comps too.
@@ -151,13 +152,13 @@ function getItems(comps, folders, footages){
      *     (list) of JSON items
      */
     var items = []
-    for (i = 1; i <= app.project.items.length; ++i){
+    for (i = 1; i <= app.project.items.length; ++i) {
         var item = app.project.items[i];
-        if (!item){
+        if (!item) {
             continue;
         }
         var ret = _getItem(item, comps, folders, footages);
-        if (ret){
+        if (ret) {
             items.push(ret);
         }
     }
@@ -165,25 +166,25 @@ function getItems(comps, folders, footages){
 
 }
 
-function selectItems(items){
+function selectItems(items) {
     /**
      * Select all items from `items`, deselect other.
      *
      * Args:
      *      items (list)
      */
-    for (i = 1; i <= app.project.items.length; ++i){
+    for (i = 1; i <= app.project.items.length; ++i) {
         item = app.project.items[i];
-        if (items.indexOf(item.id) > -1){
+        if (items.indexOf(item.id) > -1) {
             item.selected = true;
-        }else{
+        } else {
             item.selected = false;
         }
     }
 
 }
 
-function getSelectedItems(comps, folders, footages){
+function getSelectedItems(comps, folders, footages) {
     /**
      * Returns list of selected items from Project menu
      *
@@ -195,20 +196,20 @@ function getSelectedItems(comps, folders, footages){
      *     (list) of JSON items
      */
     var items = []
-    for (i = 0; i < app.project.selection.length; ++i){
+    for (i = 0; i < app.project.selection.length; ++i) {
         var item = app.project.selection[i];
-        if (!item){
+        if (!item) {
             continue;
         }
         var ret = _getItem(item, comps, folders, footages);
-        if (ret){
+        if (ret) {
             items.push(ret);
         }
     }
     return '[' + items.join() + ']';
 }
 
-function _getItem(item, comps, folders, footages){
+function _getItem(item, comps, folders, footages) {
     /**
      * Auxiliary function as project items and selections
      * are indexed in different way :/
@@ -217,42 +218,44 @@ function _getItem(item, comps, folders, footages){
     var item_type = '';
     var path = '';
     var containing_comps = [];
-    if (item instanceof FolderItem){
+    if (item instanceof FolderItem) {
         item_type = 'folder';
-        if (!folders){
+        if (!folders) {
             return "{}";
         }
     }
-    if (item instanceof FootageItem){
-        if (!footages){
+    if (item instanceof FootageItem) {
+        if (!footages) {
             return "{}";
         }
         item_type = 'footage';
-        if (item.file){
+        if (item.file) {
             path = item.file.fsName;
         }
-        if (item.usedIn){
-            for (j = 0; j < item.usedIn.length; ++j){
+        if (item.usedIn) {
+            for (j = 0; j < item.usedIn.length; ++j) {
                 containing_comps.push(item.usedIn[j].id);
             }
         }
     }
-    if (item instanceof CompItem){
+    if (item instanceof CompItem) {
         item_type = 'comp';
-        if (!comps){
+        if (!comps) {
             return "{}";
         }
     }
 
-    var item = {"name": item.name,
-                "id": item.id,
-                "type": item_type,
-                "path": path,
-                "containing_comps": containing_comps};
+    var item = {
+        "name": item.name,
+        "id": item.id,
+        "type": item_type,
+        "path": path,
+        "containing_comps": containing_comps
+    };
     return JSON.stringify(item);
 }
 
-function importFile(path, item_name, import_options){
+function importFile(path, item_name, import_options) {
     /**
      * Imports file (image tested for now) as a FootageItem.
      * Creates new composition
@@ -265,63 +268,66 @@ function importFile(path, item_name, import_options){
      */
     var comp;
     var ret = {};
-    try{
+    try {
         import_options = JSON.parse(import_options);
-    } catch (e){
+    } catch (e) {
         return _prepareError("Couldn't parse import options " + import_options);
     }
 
     app.beginUndoGroup("Import File");
     fp = new File(path);
-    if (fp.exists){
+    if (fp.exists) {
         try {
             im_opt = new ImportOptions(fp);
             importAsType = import_options["ImportAsType"];
 
-            if ('ImportAsType' in import_options){ // refactor
-                if (importAsType.indexOf('COMP') > 0){
+            if ('ImportAsType' in import_options) { // refactor
+                if (importAsType.indexOf('COMP') > 0) {
                     im_opt.importAs = ImportAsType.COMP;
                 }
-                if (importAsType.indexOf('FOOTAGE') > 0){
+                if (importAsType.indexOf('FOOTAGE') > 0) {
                     im_opt.importAs = ImportAsType.FOOTAGE;
                 }
-                if (importAsType.indexOf('COMP_CROPPED_LAYERS') > 0){
+                if (importAsType.indexOf('COMP_CROPPED_LAYERS') > 0) {
                     im_opt.importAs = ImportAsType.COMP_CROPPED_LAYERS;
                 }
-                if (importAsType.indexOf('PROJECT') > 0){
+                if (importAsType.indexOf('PROJECT') > 0) {
                     im_opt.importAs = ImportAsType.PROJECT;
                 }
 
             }
-            if ('sequence' in import_options){
+            if ('sequence' in import_options) {
                 im_opt.sequence = true;
             }
 
             comp = app.project.importFile(im_opt);
 
             if (app.project.selection.length == 2 &&
-                app.project.selection[0] instanceof FolderItem){
-                 comp.parentFolder = app.project.selection[0]
+                app.project.selection[0] instanceof FolderItem) {
+                comp.parentFolder = app.project.selection[0]
             }
         } catch (error) {
             return _prepareError(error.toString() + importOptions.file.fsName);
         } finally {
             fp.close();
         }
-    }else{
-	    return _prepareError("File " + path + " not found.");
+    } else {
+        return _prepareError("File " + path + " not found.");
     }
-    if (comp){
+    if (comp) {
         comp.name = item_name;
         comp.label = 9; // Green
-        ret = {"name": comp.name, "id": comp.id}
+        ret = {
+            "name": comp.name,
+            "id": comp.id
+        }
     }
     app.endUndoGroup();
 
     return JSON.stringify(ret);
 }
 
-function setLabelColor(comp_id, color_idx){
+function setLabelColor(comp_id, color_idx) {
     /**
      * Set item_id label to 'color_idx' color
      * Args:
@@ -329,14 +335,14 @@ function setLabelColor(comp_id, color_idx){
      *     color_idx (int): 0-16 index from Label
      */
     var item = app.project.itemByID(comp_id);
-    if (item){
+    if (item) {
         item.label = color_idx;
-    }else{
-        return _prepareError("There is no composition with "+ comp_id);
+    } else {
+        return _prepareError("There is no composition with " + comp_id);
     }
 }
 
-function replaceItem(item_id, path, item_name){
+function replaceItem(item_id, path, item_name) {
     /**
      * Replaces loaded file with new file and updates name
      *
@@ -348,15 +354,15 @@ function replaceItem(item_id, path, item_name){
     app.beginUndoGroup("Replace File");
 
     fp = new File(path);
-    if (!fp.exists){
+    if (!fp.exists) {
         return _prepareError("File " + path + " not found.");
     }
     var item = app.project.itemByID(item_id);
-    if (item){
-        try{
+    if (item) {
+        try {
             if (isFileSequence(item)) {
                 item.replaceWithSequence(fp, false);
-            }else{
+            } else {
                 item.replace(fp);
             }
 
@@ -366,13 +372,13 @@ function replaceItem(item_id, path, item_name){
         } finally {
             fp.close();
         }
-    }else{
-        return _prepareError("There is no item with "+ item_id);
+    } else {
+        return _prepareError("There is no item with " + item_id);
     }
     app.endUndoGroup();
 }
 
-function renameItem(item_id, new_name){
+function renameItem(item_id, new_name) {
     /**
      * Renames item with 'item_id' to 'new_name'
      *
@@ -381,14 +387,14 @@ function renameItem(item_id, new_name){
      *    new_name (str)
      */
     var item = app.project.itemByID(item_id);
-    if (item){
+    if (item) {
         item.name = new_name;
-    }else{
-        return _prepareError("There is no composition with "+ comp_id);
+    } else {
+        return _prepareError("There is no composition with " + comp_id);
     }
 }
 
-function deleteItem(item_id){
+function deleteItem(item_id) {
     /**
      *  Delete any 'item_id'
      *
@@ -396,14 +402,14 @@ function deleteItem(item_id){
      *  any item with 'id'
      */
     var item = app.project.itemByID(item_id);
-    if (item){
+    if (item) {
         item.remove();
-    }else{
-        return _prepareError("There is no composition with "+ comp_id);
+    } else {
+        return _prepareError("There is no composition with " + comp_id);
     }
 }
 
-function getCompProperties(comp_id){
+function getCompProperties(comp_id) {
     /**
      * Returns information about composition - are that will be
      * rendered.
@@ -412,8 +418,8 @@ function getCompProperties(comp_id){
      *     (dict)
      */
     var comp = app.project.itemByID(comp_id);
-    if (!comp){
-        return _prepareError("There is no composition with "+ comp_id);
+    if (!comp) {
+        return _prepareError("There is no composition with " + comp_id);
     }
 
     return JSON.stringify({
@@ -423,73 +429,74 @@ function getCompProperties(comp_id){
         "framesDuration": comp.duration * comp.frameRate,
         "frameRate": comp.frameRate,
         "width": comp.width,
-        "height": comp.height});
+        "height": comp.height
+    });
 }
 
 function setCompProperties(comp_id, frameStart, framesCount, frameRate,
-                           width, height){
+    width, height) {
     /**
      * Sets work area info from outside (from Ftrack via OpenPype)
      */
     var comp = app.project.itemByID(comp_id);
-    if (!comp){
-        return _prepareError("There is no composition with "+ comp_id);
+    if (!comp) {
+        return _prepareError("There is no composition with " + comp_id);
     }
 
     app.beginUndoGroup('change comp properties');
-        if (frameStart && framesCount && frameRate){
-            comp.displayStartFrame = frameStart;
-            comp.duration = framesCount / frameRate;
-            comp.frameRate = frameRate;
-        }
-        if (width && height){
-            var widthOld = comp.width;
-            var widthNew = width;
-            var widthDelta = widthNew - widthOld;
+    if (frameStart && framesCount && frameRate) {
+        comp.displayStartFrame = frameStart;
+        comp.duration = framesCount / frameRate;
+        comp.frameRate = frameRate;
+    }
+    if (width && height) {
+        var widthOld = comp.width;
+        var widthNew = width;
+        var widthDelta = widthNew - widthOld;
 
-            var heightOld = comp.height;
-            var heightNew = height;
-            var heightDelta = heightNew - heightOld;
+        var heightOld = comp.height;
+        var heightNew = height;
+        var heightDelta = heightNew - heightOld;
 
-            var offset = [widthDelta / 2, heightDelta / 2];
+        var offset = [widthDelta / 2, heightDelta / 2];
 
-            comp.width = widthNew;
-            comp.height = heightNew;
+        comp.width = widthNew;
+        comp.height = heightNew;
 
-            for (var i = 1, il = comp.numLayers; i <= il; i++) {
-                var layer = comp.layer(i);
-                var positionProperty = layer.property('ADBE Transform Group').property('ADBE Position');
+        for (var i = 1, il = comp.numLayers; i <= il; i++) {
+            var layer = comp.layer(i);
+            var positionProperty = layer.property('ADBE Transform Group').property('ADBE Position');
 
-                if (positionProperty.numKeys > 0) {
-                    for (var j = 1, jl = positionProperty.numKeys; j <= jl; j++) {
-                        var keyValue = positionProperty.keyValue(j);
-                        positionProperty.setValueAtKey(j, keyValue + offset);
-                    }
-                } else {
-                    var positionValue = positionProperty.value;
-                    positionProperty.setValue(positionValue + offset);
+            if (positionProperty.numKeys > 0) {
+                for (var j = 1, jl = positionProperty.numKeys; j <= jl; j++) {
+                    var keyValue = positionProperty.keyValue(j);
+                    positionProperty.setValueAtKey(j, keyValue + offset);
                 }
+            } else {
+                var positionValue = positionProperty.value;
+                positionProperty.setValue(positionValue + offset);
             }
         }
+    }
 
     app.endUndoGroup();
 }
 
-function save(){
+function save() {
     /**
      * Saves current project
      */
-    app.project.save();  //TODO path is wrong, File instead
+    app.project.save(); //TODO path is wrong, File instead
 }
 
-function saveAs(path){
+function saveAs(path) {
     /**
      *   Saves current project as 'path'
      * */
     app.project.save(fp = new File(path));
 }
 
-function getRenderInfo(comp_id){
+function getRenderInfo(comp_id) {
     /***
         Get info from render queue.
         Currently pulls only file name to parse extension and
@@ -500,41 +507,41 @@ function getRenderInfo(comp_id){
         (list) [{file_name:"xx.png", width:00, height:00}]
     **/
     var item = app.project.itemByID(comp_id);
-    if (!item){
+    if (!item) {
         return _prepareError("Composition with '" + comp_id + "' wasn't found! Recreate publishable instance(s)")
     }
 
     var comp_name = item.name;
     var output_metadata = []
-    try{
+    try {
         // render_item.duplicate() should create new item on renderQueue
         // BUT it works only sometimes, there are some weird synchronization issue
         // this method will be called always before render, so prepare items here
         // for render to spare the hassle
-        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+        for (i = 1; i <= app.project.renderQueue.numItems; ++i) {
             var render_item = app.project.renderQueue.item(i);
-            if (render_item.comp.id != comp_id){
+            if (render_item.comp.id != comp_id) {
                 continue;
             }
 
-            if (render_item.status == RQItemStatus.DONE){
-                render_item.duplicate();  // create new, cannot change status if DONE
-                render_item.remove();  // remove existing to limit duplications
+            if (render_item.status == RQItemStatus.DONE) {
+                render_item.duplicate(); // create new, cannot change status if DONE
+                render_item.remove(); // remove existing to limit duplications
                 continue;
             }
         }
 
         // properly validate as `numItems` won't change magically
         var comp_id_count = 0;
-        for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+        for (i = 1; i <= app.project.renderQueue.numItems; ++i) {
             var render_item = app.project.renderQueue.item(i);
-            if (render_item.comp.id != comp_id){
+            if (render_item.comp.id != comp_id) {
                 continue;
             }
             comp_id_count += 1;
             var item = render_item.outputModule(1);
 
-            for (j = 1; j<= render_item.numOutputModules; ++j){
+            for (j = 1; j <= render_item.numOutputModules; ++j) {
                 var file_url = item.file.toString();
                 output_metadata.push(
                     JSON.stringify({
@@ -549,18 +556,18 @@ function getRenderInfo(comp_id){
         return _prepareError("There is no render queue, create one");
     }
 
-    if (comp_id_count > 1){
+    if (comp_id_count > 1) {
         return _prepareError("There cannot be more items in Render Queue for '" + comp_name + "'!")
     }
 
-    if (comp_id_count == 0){
+    if (comp_id_count == 0) {
         return _prepareError("There is no item in Render Queue for '" + comp_name + "'! Add composition to Render Queue.")
     }
 
     return '[' + output_metadata.join() + ']';
 }
 
-function getAudioUrlForComp(comp_id){
+function getAudioUrlForComp(comp_id) {
     /**
      * Searches composition for audio layer
      *
@@ -573,24 +580,24 @@ function getAudioUrlForComp(comp_id){
      *    (str) with url to audio content
      */
     var item = app.project.itemByID(comp_id);
-    if (item){
-        for (i = 1; i <= item.numLayers; ++i){
+    if (item) {
+        for (i = 1; i <= item.numLayers; ++i) {
             var layer = item.layers[i];
-            if (layer instanceof AVLayer){
-                if (layer.hasAudio){
+            if (layer instanceof AVLayer) {
+                if (layer.hasAudio) {
                     source_url = layer.source.file.fsName.toString()
                     return _prepareSingleValue(source_url);
                 }
             }
 
         }
-    }else{
-        return _prepareError("There is no composition with "+ comp_id);
+    } else {
+        return _prepareError("There is no composition with " + comp_id);
     }
 
 }
 
-function addItemAsLayerToComp(comp_id, item_id, found_comp){
+function addItemAsLayerToComp(comp_id, item_id, found_comp) {
     /**
      * Adds already imported FootageItem ('item_id') as a new
      * layer to composition ('comp_id').
@@ -602,19 +609,19 @@ function addItemAsLayerToComp(comp_id, item_id, found_comp){
      *      comp already found previously
      */
     var comp = found_comp || app.project.itemByID(comp_id);
-    if (comp){
+    if (comp) {
         item = app.project.itemByID(item_id);
-        if (item){
+        if (item) {
             comp.layers.add(item);
-        }else{
+        } else {
             return _prepareError("There is no item with " + item_id);
         }
-    }else{
-        return _prepareError("There is no composition with "+ comp_id);
+    } else {
+        return _prepareError("There is no composition with " + comp_id);
     }
 }
 
-function importBackground(comp_id, composition_name, files_to_import){
+function importBackground(comp_id, composition_name, files_to_import) {
     /**
      * Imports backgrounds images to existing or new composition.
      *
@@ -634,36 +641,36 @@ function importBackground(comp_id, composition_name, files_to_import){
     var comp;
     var folder;
     var imported_ids = [];
-    if (comp_id){
+    if (comp_id) {
         comp = app.project.itemByID(comp_id);
         folder = comp.parentFolder;
-    }else{
-        if (app.project.selection.length > 1){
+    } else {
+        if (app.project.selection.length > 1) {
             return _prepareError(
                 "Too many items selected, select only target composition!");
-        }else{
+        } else {
             selected_item = app.project.activeItem;
-            if (selected_item instanceof Folder){
+            if (selected_item instanceof Folder) {
                 comp = selected_item;
                 folder = selected_item;
             }
         }
     }
 
-    if (files_to_import){
-        for (i = 0; i < files_to_import.length; ++i){
+    if (files_to_import) {
+        for (i = 0; i < files_to_import.length; ++i) {
             item = _importItem(files_to_import[i]);
-            if (!item){
+            if (!item) {
                 return _prepareError(
                     "No item for " + item_json["id"] +
                     ". Import background failed.")
             }
-            if (!comp){
+            if (!comp) {
                 folder = app.project.items.addFolder(composition_name);
                 imported_ids.push(folder.id);
                 comp = app.project.items.addComp(composition_name, item.width,
                     item.height, item.pixelAspect,
-                    1, 26.7);  // hardcode defaults
+                    1, 26.7); // hardcode defaults
                 imported_ids.push(comp.id);
                 comp.parentFolder = folder;
             }
@@ -673,13 +680,15 @@ function importBackground(comp_id, composition_name, files_to_import){
             addItemAsLayerToComp(comp.id, item.id, comp);
         }
     }
-    var item = {"name": comp.name,
-                "id": folder.id,
-                "members": imported_ids};
+    var item = {
+        "name": comp.name,
+        "id": folder.id,
+        "members": imported_ids
+    };
     return JSON.stringify(item);
 }
 
-function reloadBackground(comp_id, composition_name, files_to_import){
+function reloadBackground(comp_id, composition_name, files_to_import) {
     /**
      * Reloads existing composition.
      *
@@ -699,21 +708,21 @@ function reloadBackground(comp_id, composition_name, files_to_import){
     var imported_ids = []; // keep track of members of composition
     comp = app.project.itemByID(comp_id);
     folder = comp.parentFolder;
-    if (folder){
+    if (folder) {
         renameItem(folder.id, composition_name);
         imported_ids.push(folder.id);
     }
-    if (comp){
+    if (comp) {
         renameItem(comp.id, composition_name);
         imported_ids.push(comp.id);
     }
 
     var existing_layer_names = [];
     var existing_layer_ids = []; // because ExtendedScript doesnt have keys()
-    for (i = 1; i <= folder.items.length; ++i){
+    for (i = 1; i <= folder.items.length; ++i) {
         layer = folder.items[i];
         //because comp.layers[i] doesnt have 'id' accessible
-        if (layer instanceof CompItem){
+        if (layer instanceof CompItem) {
             continue;
         }
         existing_layer_names.push(layer.name);
@@ -721,19 +730,19 @@ function reloadBackground(comp_id, composition_name, files_to_import){
     }
 
     var new_filenames = [];
-    if (files_to_import){
-        for (i = 0; i < files_to_import.length; ++i){
+    if (files_to_import) {
+        for (i = 0; i < files_to_import.length; ++i) {
             file_name = _get_file_name(files_to_import[i]);
             new_filenames.push(file_name);
 
             idx = existing_layer_names.indexOf(file_name);
-            if (idx >= 0){  // update
+            if (idx >= 0) { // update
                 var layer_id = existing_layer_ids[idx];
                 replaceItem(layer_id, files_to_import[i], file_name);
                 imported_ids.push(layer_id);
-            }else{ // new layer
+            } else { // new layer
                 item = _importItem(files_to_import[i]);
-                if (!item){
+                if (!item) {
                     return _prepareError(
                         "No item for " + files_to_import[i] +
                         ". Reload background failed.");
@@ -747,14 +756,16 @@ function reloadBackground(comp_id, composition_name, files_to_import){
 
     _delete_obsolete_items(folder, new_filenames);
 
-    var item = {"name": comp.name,
-                "id": folder.id,
-                "members": imported_ids};
+    var item = {
+        "name": comp.name,
+        "id": folder.id,
+        "members": imported_ids
+    };
 
     return JSON.stringify(item);
 }
 
-function _get_file_name(file_url){
+function _get_file_name(file_url) {
     /**
      * Returns file name without extension from 'file_url'
      *
@@ -768,7 +779,7 @@ function _get_file_name(file_url){
     return file_name;
 }
 
-function _delete_obsolete_items(folder, new_filenames){
+function _delete_obsolete_items(folder, new_filenames) {
     /***
      * Goes through 'folder' and removes layers not in new
      * background
@@ -779,22 +790,22 @@ function _delete_obsolete_items(folder, new_filenames){
      */
     // remove items in old, but not in new
     delete_ids = []
-    for (i = 1; i <= folder.items.length; ++i){
+    for (i = 1; i <= folder.items.length; ++i) {
         layer = folder.items[i];
         //because comp.layers[i] doesnt have 'id' accessible
-        if (layer instanceof CompItem){
+        if (layer instanceof CompItem) {
             continue;
         }
-        if (new_filenames.indexOf(layer.name) < 0){
+        if (new_filenames.indexOf(layer.name) < 0) {
             delete_ids.push(layer.id);
         }
     }
-    for (i = 0; i < delete_ids.length; ++i){
+    for (i = 0; i < delete_ids.length; ++i) {
         deleteItem(delete_ids[i]);
     }
 }
 
-function _importItem(file_url){
+function _importItem(file_url) {
     /**
      * Imports 'file_url' as new FootageItem
      *
@@ -806,18 +817,20 @@ function _importItem(file_url){
     file_name = _get_file_name(file_url);
 
     //importFile prepared previously to return json
-    item_json = importFile(file_url, file_name, JSON.stringify({"ImportAsType":"FOOTAGE"}));
+    item_json = importFile(file_url, file_name, JSON.stringify({
+        "ImportAsType": "FOOTAGE"
+    }));
     item_json = JSON.parse(item_json);
     item = app.project.itemByID(item_json["id"]);
 
     return item;
 }
 
-function isFileSequence (item){
+function isFileSequence(item) {
     /**
      * Check that item is a recognizable sequence
      */
-    if (item instanceof FootageItem && item.mainSource instanceof FileSource && !(item.mainSource.isStill) && item.hasVideo){
+    if (item instanceof FootageItem && item.mainSource instanceof FileSource && !(item.mainSource.isStill) && item.hasVideo) {
         var extname = item.mainSource.file.fsName.split('.').pop();
 
         return extname.match(new RegExp("(ai|bmp|bw|cin|cr2|crw|dcr|dng|dib|dpx|eps|erf|exr|gif|hdr|ico|icb|iff|jpe|jpeg|jpg|mos|mrw|nef|orf|pbm|pef|pct|pcx|pdf|pic|pict|png|ps|psd|pxr|raf|raw|rgb|rgbe|rla|rle|rpf|sgi|srf|tdi|tga|tif|tiff|vda|vst|x3f|xyze)", "i")) !== null;
@@ -826,14 +839,14 @@ function isFileSequence (item){
     return false;
 }
 
-function render(target_folder, comp_id){
+function render(target_folder, comp_id) {
     var out_dir = new Folder(target_folder);
     var out_dir = out_dir.fsName;
-    for (i = 1; i <= app.project.renderQueue.numItems; ++i){
+    for (i = 1; i <= app.project.renderQueue.numItems; ++i) {
         var render_item = app.project.renderQueue.item(i);
         var composition = render_item.comp;
-        if (composition.id == comp_id){
-            if (render_item.status == RQItemStatus.DONE){
+        if (composition.id == comp_id) {
+            if (render_item.status == RQItemStatus.DONE) {
                 var new_item = render_item.duplicate();
                 render_item.remove();
                 render_item = new_item;
@@ -842,9 +855,9 @@ function render(target_folder, comp_id){
             render_item.render = true;
 
             var om1 = app.project.renderQueue.item(i).outputModule(1);
-            var file_name = File.decode( om1.file.name ).replace('℗', ''); // Name contains special character, space?
+            var file_name = File.decode(om1.file.name).replace('℗', ''); // Name contains special character, space?
 
-            var omItem1_settable_str = app.project.renderQueue.item(i).outputModule(1).getSettings( GetSettingsFormat.STRING_SETTABLE );
+            var omItem1_settable_str = app.project.renderQueue.item(i).outputModule(1).getSettings(GetSettingsFormat.STRING_SETTABLE);
 
             var targetFolder = new Folder(target_folder);
             if (!targetFolder.exists) {
@@ -852,8 +865,8 @@ function render(target_folder, comp_id){
             }
 
             om1.file = new File(targetFolder.fsName + '/' + file_name);
-        }else{
-            if (render_item.status != RQItemStatus.DONE){
+        } else {
+            if (render_item.status != RQItemStatus.DONE) {
                 render_item.render = false;
             }
         }
@@ -864,20 +877,20 @@ function render(target_folder, comp_id){
     app.endSuppressDialogs(false);
 }
 
-function close(){
+function close() {
     app.project.close(CloseOptions.DO_NOT_SAVE_CHANGES);
     app.quit();
 }
 
-function getAppVersion(){
+function getAppVersion() {
     return _prepareSingleValue(app.version);
 }
 
-function printMsg(msg){
+function printMsg(msg) {
     alert(msg);
 }
 
-function addPlaceholder(name, width, height, fps, duration){
+function addPlaceholder(name, width, height, fps, duration) {
     /** Add AE PlaceholderItem to Project list.
      *
      * PlaceholderItem chosen as it doesn't require existing file and
@@ -885,18 +898,18 @@ function addPlaceholder(name, width, height, fps, duration){
      *
      */
     app.beginUndoGroup('change comp properties');
-    try{
+    try {
         item = app.project.importPlaceholder(name, width, height,
-                                             fps, duration);
+            fps, duration);
 
         return _prepareSingleValue(item.id);
-    }catch (error) {
+    } catch (error) {
         writeLn(_prepareError("Cannot add placeholder " + error.toString()));
     }
     app.endUndoGroup();
 }
 
-function addItemInstead(placeholder_item_id, item_id){
+function addItemInstead(placeholder_item_id, item_id) {
     /** Add new loaded item in place of load placeholder.
      *
      * Each placeholder could be placed multiple times into multiple
@@ -908,19 +921,19 @@ function addItemInstead(placeholder_item_id, item_id){
      * Args:
      *      placeholder_item_id (int)
      *      item_id (int)
-    */
+     */
     var item = app.project.itemByID(item_id);
-    if (!item){
-        return _prepareError("There is no item with "+ item_id);
+    if (!item) {
+        return _prepareError("There is no item with " + item_id);
     }
 
     app.beginUndoGroup('Add loaded items');
-    for (i = 1; i <= app.project.items.length; ++i){
+    for (i = 1; i <= app.project.items.length; ++i) {
         var comp = app.project.items[i];
-        if (!(comp instanceof CompItem)){
+        if (!(comp instanceof CompItem)) {
             continue
         }
-        if ((comp instanceof CompItem) && (comp.id == item.id)){
+        if ((comp instanceof CompItem) && (comp.id == item.id)) {
             continue
         }
 
@@ -928,7 +941,7 @@ function addItemInstead(placeholder_item_id, item_id){
         while (j <= comp.numLayers) {
             var layer = comp.layer(j);
             var layer_source = layer.source;
-            if (layer_source && layer_source.id == placeholder_item_id){
+            if (layer_source && layer_source.id == placeholder_item_id) {
                 var new_layer = comp.layers.add(item);
                 new_layer.moveAfter(layer);
                 // copy all(?) properties to new layer
@@ -940,14 +953,19 @@ function addItemInstead(placeholder_item_id, item_id){
     app.endUndoGroup();
 }
 
-function _prepareSingleValue(value){
-    return JSON.stringify({"result": value})
-}
-function _prepareError(error_msg){
-    return JSON.stringify({"error": error_msg})
+function _prepareSingleValue(value) {
+    return JSON.stringify({
+        "result": value
+    })
 }
 
-function addItemAsLayerToCompWithOffset(comp_id, item_id, offset){
+function _prepareError(error_msg) {
+    return JSON.stringify({
+        "error": error_msg
+    })
+}
+
+function addItemAsLayerToCompWithOffset(comp_id, item_id, offset) {
     /**
      * Adds already imported FootageItem ('item_id') as a new
      * layer to composition ('comp_id').
@@ -960,9 +978,9 @@ function addItemAsLayerToCompWithOffset(comp_id, item_id, offset){
      */
     var comp = app.project.itemByID(comp_id);
 
-    if (comp){
+    if (comp) {
         item = app.project.itemByID(item_id);
-        if (item){
+        if (item) {
             app.beginUndoGroup('Add item as layer ');
             last_displayStartFrame = app.project.displayStartFrame;
             app.project.displayStartFrame = 0;
@@ -973,10 +991,121 @@ function addItemAsLayerToCompWithOffset(comp_id, item_id, offset){
             app.project.displayStartFrame = last_displayStartFrame;
             app.endUndoGroup('Add comps to  comps to ');
             return
-        }else{
+        } else {
             return _prepareError("There is no item with " + item_id);
         }
-    }else{
-        return _prepareError("There is no composition with "+ comp_id);
+    } else {
+        return _prepareError("There is no composition with " + comp_id);
+    }
+}
+
+
+function getPrecompsFromComp(item_id) {
+    /** Analyze a Comp and return the inserted PreComps
+     *
+     *
+     * Args:
+     *      item_id (int)
+     */
+    var item = app.project.itemByID(item_id);
+    if (!item) {
+        return _prepareError("There is no item with " + item_id);
+    }
+
+    for (i = 1; i <= app.project.items.length; ++i) {
+        var comp = app.project.items[i];
+        if ((comp instanceof CompItem) && (comp.id == item.id)) {
+            var j = 1;
+            var items = [];
+            while (j <= comp.numLayers) {
+                var layer = comp.layer(j);
+                var item = {
+                    "name": layer.name,
+                    "id": layer.id,
+                    "index": layer.index,
+                    "inPoint": layer.inPoint,
+                    "outPoint": layer.outPoint,
+                    "startTime": layer.startTime,
+                    "type": getLayerType(layer)
+                };
+
+                items.push(JSON.stringify(item))
+
+                j = j + 1;
+            }
+
+            return '[' + items.join() + ']'
+        }
+    }
+}
+
+function setCompWorkArea(item_id, workAreaStart, workAreaDuration) {
+    /** Analyze a Comp and return the inserted PreComps
+     *
+     *
+     * Args:
+     *      item_id (int)
+     */
+    var item = app.project.itemByID(item_id);
+    if (!item) {
+        return _prepareError("There is no item with " + item_id);
+    }
+
+    for (i = 1; i <= app.project.items.length; ++i) {
+        var comp = app.project.items[i];
+        if ((comp instanceof CompItem) && (comp.id == item.id)) {
+            comp.workAreaStart = workAreaStart
+            comp.workAreaDuration = workAreaDuration
+
+            return
+        }
+    }
+}
+
+function getLayerType(layer) {
+    switch (layer.matchName) {
+        case "ADBE Vector Layer":
+            return layer.matchName;
+        case "ADBE Text Layer":
+            return layer.matchName;
+        case "ADBE Camera Layer":
+            return layer.matchName;
+        case "ADBE Light Layer":
+            return layer.matchName;
+        case "ADBE AV Layer":
+            if (layer.nullLayer === true) {
+                return "Null";
+            } else if (layer.adjustmentLayer === true) {
+                return "Adjustment";
+            } else if (layer.guideLayer === true) {
+                return "Guide";
+            } else if (layer.source instanceof CompItem) {
+                return "Precomp";
+            } else if (layer.source.mainSource instanceof SolidSource) {
+                return "Solid";
+            } else if (layer.source.mainSource instanceof PlaceholderSource) {
+                return "Placeholder";
+            } else if (layer.source.mainSource instanceof FileSource) {
+                if (layer.source.footageMissing == true) {
+                    return "Missing Footage";
+                }
+
+                var priorLayerState = layer.enabled;
+                layer.enabled = true;
+                var importIsData = layer.enabled == false;
+                layer.enabled = priorLayerState;
+
+                if (importIsData) {
+                    return "Data";
+                }
+
+                if (!layer.source.hasVideo && layer.source.hasAudio) {
+                    return "Audio";
+                }
+
+                return "Image";
+            }
+
+            return "Invalid";
     }
 }

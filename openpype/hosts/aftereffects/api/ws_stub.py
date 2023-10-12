@@ -735,6 +735,36 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
+    def get_precomps_from_comps(self, comp_id):
+        """
+            Returns the precomps used in comp_id
+            Args:
+                comp_id (int): id of target composition
+
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.get_precomps_from_comps',
+                                         comp_id=comp_id))
+
+        return self._handle_return(res)
+
+    def set_comp_work_area(self, comp_id, work_area_start, work_area_duration):
+        """
+            Sets the comp_id workarea
+
+            Args:
+                comp_id (int): id of target composition
+                work_area_start (float): The work area start time, in seconds.
+                work_area_duration (float): The work area duration, in seconds.
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.set_comp_work_area',
+                                         comp_id=comp_id,
+                                         work_area_start=work_area_start,
+                                         work_area_duration=work_area_duration))
+
+        return self._handle_return(res)
+
 
 def get_stub():
     """

@@ -321,7 +321,7 @@ def build_workfile_sequence_template(*args, **kwargs):
 
                 # Find recently imported comp.
                 # No way to filter by folders for granularity :(
-                imported_comp = get_comp_by_name("renderCompositingMain")
+                imported_comp = get_comp_by_name("renderCompositing")
                 stub.rename_item(imported_comp.id,
                                  "{}_{}".format(asset_name, imported_comp.name)
                                  )

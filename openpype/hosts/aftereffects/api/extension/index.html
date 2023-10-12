@@ -159,6 +159,17 @@
             });
     </script>
 
+    <script type=text/javascript>
+            $(function() {
+              $("a#multi-publish-button").bind("click", function() {
+                RPC.call('AfterEffects.multi_shot_publish_route').then(function (data) {
+                }, function (error) {
+                    alert(error);
+                });
+              });
+            });
+    </script>
+
 
 </head>
 
@@ -183,6 +194,8 @@
             <div><a href=# id=experimental-button><button class="hostFontSize">Experimental Tools...</button></a></div>
             <div><a href=# id=separator3><button class="hostFontSize">&nbsp;</button></a></div>
             <div><a href=# id=build-workfile-sequence-template-button><button class="hostFontSize">Build Workfile Sequence from template</button></a></div>
+            <div><a href=# id=multi-publish-button><button class="hostFontSize">Multi-shot Publish...</button></a></div>
+
         </div>
 
     </div>

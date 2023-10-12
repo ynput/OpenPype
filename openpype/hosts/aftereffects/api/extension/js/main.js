@@ -381,6 +381,25 @@ function main(websocket_url){
             });
     });
 
+    RPC.addRoute('AfterEffects.get_precomps_from_comps', function (data) {
+        log.warn('Server called client route "get_precomps_from_comps":', data);
+        return runEvalScript("getPrecompsFromComp(" + data.comp_id + ")")
+            .then(function (result) {
+                log.warn("getPrecompsFromComp: " + result);
+                return result;
+            });
+    });
+
+    RPC.addRoute('AfterEffects.set_comp_work_area', function (data) {
+        log.warn('Server called client route "set_comp_work_area":', data);
+        return runEvalScript("setCompWorkArea(" + data.comp_id + ", " +
+            data.work_area_start + "," + data.work_area_duration + ")")
+            .then(function (result) {
+                log.warn("setCompWorkArea: " + result);
+                return result;
+            });
+    });
+
 }
 
 /** main entry point **/
