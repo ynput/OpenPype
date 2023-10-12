@@ -332,6 +332,7 @@ class FoldersWidget(QtWidgets.QWidget):
         Returns:
             bool: True if model is refreshing.
         """
+
         return self._folders_model.is_refreshing
 
     @property
