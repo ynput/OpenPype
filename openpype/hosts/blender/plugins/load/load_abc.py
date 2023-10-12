@@ -60,16 +60,30 @@ class CacheModelLoader(plugin.AssetLoader):
 
         imported = lib.get_selection()
 
+        empties = [obj for obj in imported if obj.type == 'EMPTY']
+
+        container = None
+
+        for empty in empties:
+            if not empty.parent:
+                container = empty
+                break
+
+        assert container, "No asset group found"
+
         # Children must be linked before parents,
         # otherwise the hierarchy will break
         objects = []
+        nodes = list(container.children)
 
-        for obj in imported:
+        for obj in nodes:
             obj.parent = asset_group
 
-        for obj in imported:
+        bpy.data.objects.remove(container)
+
+        for obj in nodes:
             objects.append(obj)
-            imported.extend(list(obj.children))
+            nodes.extend(list(obj.children))
 
         objects.reverse()
 
