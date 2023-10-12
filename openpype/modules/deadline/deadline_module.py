@@ -76,7 +76,7 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
         return response.json()
 
     @staticmethod
-    def get_deadline_limit_groups(webservice, log=None):
+    def get_deadline_data(webservice, endpoint, log=None, **kwargs):
         """Get Limits groups for Deadlin
         Args:
             webservice (str): Server url
@@ -89,9 +89,23 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
         if not log:
             log = Logger.get_logger(__name__)
 
-        argument = "{}/api/limitgroups?NamesOnly=true".format(webservice)
+        request = "{}/api/{}".format(
+            webservice,
+            endpoint
+        )
+
+        # Construct the full request with arguments
+        arguments = []
+        for key, value in kwargs.items():
+            new_argument = "{}={}".format(key, value)
+            arguments.append(new_argument)
+
+        if arguments:
+            arguments = "&".join(arguments)
+            request = "{}?{}".format(request, arguments)
+
         try:
-            response = requests_get(argument)
+            response = requests_get(request)
         except requests.exceptions.ConnectionError as exc:
             msg = "Cannot connect to DL web service {}".format(webservice)
             log.error(msg)
@@ -100,8 +114,9 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
                 DeadlineWebserviceError("{} - {}".format(msg, exc)),
                 sys.exc_info()[2]
             )
+        print(f"RESPONSE: {response.json()}")
         if not response.ok:
-            log.warning("No limit group retrieved")
+            log.warning("The data requested could not be retrieved")
             return []
 
         return response.json()
