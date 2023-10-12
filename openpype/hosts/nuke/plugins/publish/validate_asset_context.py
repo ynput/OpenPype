@@ -39,13 +39,14 @@ class ValidateCorrectAssetContext(
         """Apply deprecated settings from project settings.
         """
         nuke_publish = project_settings["nuke"]["publish"]
-        if "ValidateCorrectAssetName" not in nuke_publish:
-            return
+        if "ValidateCorrectAssetName" in nuke_publish:
+            settings = nuke_publish["ValidateCorrectAssetName"]
+        else:
+            settings = nuke_publish["ValidateCorrectAssetContext"]
 
-        deprecated_setting = nuke_publish["ValidateCorrectAssetName"]
-        cls.enabled = deprecated_setting["enabled"]
-        cls.optional = deprecated_setting["optional"]
-        cls.active = deprecated_setting["active"]
+        cls.enabled = settings["enabled"]
+        cls.optional = settings["optional"]
+        cls.active = settings["active"]
 
     def process(self, instance):
         if not self.is_active(instance.data):
