@@ -182,16 +182,6 @@ class StaticMeshAlembicLoader(plugin.Loader):
         for a in asset_content:
             unreal.EditorAssetLibrary.save_asset(a)
 
-        old_assets = unreal.EditorAssetLibrary.list_assets(
-            container["namespace"], recursive=True, include_folder=False
-        )
-
-        replace_static_mesh_actors(old_assets, asset_content)
-
-        unreal.EditorLevelLibrary.save_current_level()
-
-        delete_previous_asset_if_unused(container, old_assets)
-
     def remove(self, container):
         path = container["namespace"]
         parent_path = os.path.dirname(path)
