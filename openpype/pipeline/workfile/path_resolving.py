@@ -2,7 +2,6 @@ import os
 import re
 import copy
 import platform
-from typing import Iterable
 
 from openpype.client import (
     get_project,
