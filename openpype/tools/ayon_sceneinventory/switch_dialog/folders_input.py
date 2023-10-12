@@ -216,6 +216,20 @@ class FoldersField(BaseClickableFrame):
         layout.addWidget(name_input, 1)
         layout.addWidget(icon_btn, 0)
 
+        # Make sure all widgets are vertically extended to highest widget
+        for widget in (
+            name_input,
+            icon_btn
+        ):
+            w_size_policy = widget.sizePolicy()
+            w_size_policy.setVerticalPolicy(
+                QtWidgets.QSizePolicy.MinimumExpanding)
+            widget.setSizePolicy(w_size_policy)
+
+        size_policy = self.sizePolicy()
+        size_policy.setVerticalPolicy(QtWidgets.QSizePolicy.Maximum)
+        self.setSizePolicy(size_policy)
+
         name_input.clicked.connect(self._mouse_release_callback)
         icon_btn.clicked.connect(self._mouse_release_callback)
         dialog.finished.connect(self._on_dialog_finish)
