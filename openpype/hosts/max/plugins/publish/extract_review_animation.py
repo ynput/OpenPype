@@ -37,7 +37,7 @@ class ExtractReviewAnimation(publish.Extractor):
             " '%s' to '%s'" % (filename, staging_dir))
 
         review_camera = instance.data["review_camera"]
-        if get_max_version() >= 2024:
+        if int(get_max_version()) >= 2024:
             with viewport_setup_updated(review_camera):
                 preview_arg = set_preview_arg(
                     instance, filepath, start, end, fps)
