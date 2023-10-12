@@ -316,7 +316,7 @@ class LoaderFoldersWidget(QtWidgets.QWidget):
         self._handle_expected_selection = handle_expected_selection
         self._expected_selection = None
 
-    def set_name_filer(self, name):
+    def set_name_filter(self, name):
         """Set filter of folder name.
 
         Args:

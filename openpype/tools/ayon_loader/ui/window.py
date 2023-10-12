@@ -397,7 +397,7 @@ class LoaderWindow(QtWidgets.QWidget):
         self._group_dialog.show()
 
     def _on_folder_filter_change(self, text):
-        self._folders_widget.set_name_filer(text)
+        self._folders_widget.set_name_filter(text)
 
     def _on_product_group_change(self):
         self._products_widget.set_enable_grouping(
@@ -405,7 +405,7 @@ class LoaderWindow(QtWidgets.QWidget):
         )
 
     def _on_product_filter_change(self, text):
-        self._products_widget.set_name_filer(text)
+        self._products_widget.set_name_filter(text)
 
     def _on_product_type_filter_change(self):
         self._products_widget.set_product_type_filter(
