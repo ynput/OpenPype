@@ -482,7 +482,7 @@ class ProjectsCombobox(QtWidgets.QWidget):
 
         self._listen_selection_change = listen
 
-    def get_current_project_name(self):
+    def get_selected_project_name(self):
         """Name of selected project.
 
         Returns:
@@ -502,7 +502,7 @@ class ProjectsCombobox(QtWidgets.QWidget):
         if not self._select_item_visible:
             return
         if "project_name" not in kwargs:
-            project_name = self.get_current_project_name()
+            project_name = self.get_selected_project_name()
         else:
             project_name = kwargs.get("project_name")
 
@@ -561,7 +561,7 @@ class ProjectsCombobox(QtWidgets.QWidget):
             return
         project_name = self._expected_selection
         if project_name is not None:
-            if project_name != self.get_current_project_name():
+            if project_name != self.get_selected_project_name():
                 self.set_selection(project_name)
             else:
                 # Fake project change
