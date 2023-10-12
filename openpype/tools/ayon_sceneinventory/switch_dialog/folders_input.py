@@ -166,7 +166,10 @@ class FoldersDialog(QtWidgets.QDialog):
         This also resets model and clean filter.
         """
 
-        if self._first_show:
+        if (
+            self._folders_widget.is_refreshing
+            or self._folders_widget.get_project_name() is None
+        ):
             self._folder_id_to_select = folder_id
         else:
             self._folders_widget.set_selected_folder(folder_id)
