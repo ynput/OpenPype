@@ -1142,10 +1142,17 @@ class SwitchAssetDialog(QtWidgets.QDialog):
                 break
 
     def _on_current_folder(self):
-        # Set initial asset as current.
+        # Set initial folder as current.
         folder_id = self._controller.get_current_folder_id()
-        if folder_id:
-            self._folders_field.set_selected_item(folder_id)
+        if not folder_id:
+            return
+
+        selected_folder_id = self._folders_field.get_selected_folder_id()
+        if folder_id == selected_folder_id:
+            return
+
+        self._folders_field.set_selected_item(folder_id)
+        self._combobox_value_changed()
 
     def _on_accept(self):
         self._trigger_switch()
