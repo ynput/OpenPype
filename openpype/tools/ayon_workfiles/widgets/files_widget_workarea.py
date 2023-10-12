@@ -5,9 +5,8 @@ from openpype.style import (
     get_default_entity_icon_color,
     get_disabled_entity_icon_color,
 )
+from openpype.tools.utils import TreeView
 from openpype.tools.utils.delegates import PrettyTimeDelegate
-
-from .utils import TreeView
 
 FILENAME_ROLE = QtCore.Qt.UserRole + 1
 FILEPATH_ROLE = QtCore.Qt.UserRole + 2
