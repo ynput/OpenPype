@@ -39,7 +39,7 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
 
             set_node_knobs_from_settings(write_node, correct_data["knobs"])
 
-            self.log.info("Node attributes were fixed")
+            self.log.debug("Node attributes were fixed")
 
 
 class ValidateNukeWriteNode(
