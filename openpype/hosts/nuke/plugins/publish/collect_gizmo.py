@@ -43,4 +43,4 @@ class CollectGizmo(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame
         })
-        self.log.info("Gizmo instance collected: `{}`".format(instance))
+        self.log.debug("Gizmo instance collected: `{}`".format(instance))

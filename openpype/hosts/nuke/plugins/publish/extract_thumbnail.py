@@ -69,7 +69,7 @@ class ExtractThumbnail(publish.Extractor):
             "bake_viewer_input_process"]
 
         node = instance.data["transientData"]["node"]  # group node
-        self.log.info("Creating staging dir...")
+        self.log.debug("Creating staging dir...")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -79,7 +79,7 @@ class ExtractThumbnail(publish.Extractor):
 
         instance.data["stagingDir"] = staging_dir
 
-        self.log.info(
+        self.log.debug(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
         temporary_nodes = []
