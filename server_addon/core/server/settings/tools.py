@@ -229,10 +229,19 @@ class CustomStagingDirProfileModel(BaseSettingsModel):
     product_names: list[str] = Field(
         default_factory=list, title="Product names"
     )
-    custom_staging_dir_persistent: bool = Field(
-        False, title="Custom Staging Folder Persistent"
+    data_persistence: bool = Field(
+        False, title="Folder is persistent"
     )
-    template_name: str = Field("", title="Template Name")
+    template: str = Field(
+        "",
+        title="Template",
+        placeholder="{root[work]}/{staging_dir}/{asset}/{subset}/{version}"
+    )
+    template_name: str = Field(
+        "",
+        title="Template Name",
+        placeholder="Shared templates: ayon+anatomy://templates/staging_directories"
+    )
 
 
 class PublishToolModel(BaseSettingsModel):
@@ -246,7 +255,7 @@ class PublishToolModel(BaseSettingsModel):
     )
     custom_staging_dir_profiles: list[CustomStagingDirProfileModel] = Field(
         default_factory=list,
-        title="Custom Staging Dir Profiles"
+        title="Staging Dir Profiles"
     )
 
 

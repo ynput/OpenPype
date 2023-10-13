@@ -94,7 +94,7 @@ class CleanUp(pyblish.api.InstancePlugin):
             self.log.debug("No staging directory found at: %s" % staging_dir)
             return
 
-        if instance.data.get("stagingDir_persistent"):
+        if instance.data.get("stagingDirPersistence"):
             self.log.debug(
                 "Staging dir {} should be persistent".format(staging_dir)
             )

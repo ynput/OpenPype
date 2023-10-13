@@ -266,7 +266,7 @@ class RepairContextAction(pyblish.api.Action):
             plugin.repair(context)
 
 
-class Extractor(pyblish.api.InstancePlugin):
+class Extractor(pyblish.api.Plugin):
     """Extractor base class.
 
     The extractor base class implements a "staging_dir" function used to

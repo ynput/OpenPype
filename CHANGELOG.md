@@ -135,7 +135,7 @@ ___
 <details>
 <summary>Bugfix: houdini switching context doesnt update variables <a href="https://github.com/ynput/OpenPype/pull/5651">#5651</a></summary>
 
-Allows admins to have a list of vars (e.g. JOB) with (dynamic) values that will be updated on context changes, e.g. when switching to another asset or task.Using template keys is supported but formatting keys capitalization variants is not, e.g. {Asset} and {ASSET} won't workDisabling Update Houdini vars on context change feature will leave all Houdini vars unmanaged and thus no context update changes will occur.Also, this PR adds a new button in menu to update vars on demand. 
+Allows admins to have a list of vars (e.g. JOB) with (dynamic) values that will be updated on context changes, e.g. when switching to another asset or task.Using template keys is supported but formatting keys capitalization variants is not, e.g. {Asset} and {ASSET} won't workDisabling Update Houdini vars on context change feature will leave all Houdini vars unmanaged and thus no context update changes will occur.Also, this PR adds a new button in menu to update vars on demand.
 
 
 ___
@@ -976,7 +976,7 @@ ___
 <details>
 <summary>General: Create a desktop icon is checked <a href="https://github.com/ynput/OpenPype/pull/5636">#5636</a></summary>
 
-In OP Installer `Create a desktop icon` is checked by default. 
+In OP Installer `Create a desktop icon` is checked by default.
 ___
 
 </details>
@@ -2278,7 +2278,7 @@ Linux / Centos
 
 ### Current Behavior:
 
-the previous behavior (bug) : 
+the previous behavior (bug) :
 ![image](https://github.com/quadproduction/OpenPype/assets/135602303/09bff9d5-3f8b-4339-a1e5-30c04ade828c)
 
 
@@ -2293,11 +2293,11 @@ Happened only once in a particular configuration
 
 ### Which project / workfile / asset / ...
 
-open settings with 3.14.7 
+open settings with 3.14.7
 
 ### Steps To Reproduce:
 
-1. Run openpype on the 3.15.11-nightly.3 version 
+1. Run openpype on the 3.15.11-nightly.3 version
 2. Open settings in 3.14.7 version
 
 ### Relevant log output:
@@ -2915,7 +2915,7 @@ ___
 <details>
 <summary>Nuke: returned not cleaning of renders folder on the farm <a href="https://github.com/ynput/OpenPype/pull/5374">#5374</a></summary>
 
-Previous PR enabled explicit cleanup of `renders` folder after farm publishing. This is not matching customer's workflows. Customer wants to have access to files in `renders` folder and potentially redo some frames for long frame sequences.This PR extends logic of marking rendered files for deletion only if instance doesn't have `stagingDir_persistent`.For backwards compatibility all Nuke instances have `stagingDir_persistent` set to True, eg. `renders` folder won't be cleaned after farm publish.
+Previous PR enabled explicit cleanup of `renders` folder after farm publishing. This is not matching customer's workflows. Customer wants to have access to files in `renders` folder and potentially redo some frames for long frame sequences.This PR extends logic of marking rendered files for deletion only if instance doesn't have `stagingDirPersistence`.For backwards compatibility all Nuke instances have `stagingDirPersistence` set to True, eg. `renders` folder won't be cleaned after farm publish.
 
 
 ___

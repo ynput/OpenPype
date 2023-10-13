@@ -27,6 +27,7 @@
         "path": "{@folder}/{@file}"
     },
     "delivery": {},
+    "staging_directories": {},
     "unreal": {
         "folder": "{root[work]}/{project[name]}/unreal/{task[name]}",
         "file": "{project[code]}_{asset}.{ext}",
@@ -57,9 +58,6 @@
             "folder": "{root[work]}/{originalDirname}",
             "file": "{originalBasename}.{ext}",
             "path": "{@folder}/{@file}"
-        },
-        "transient": {
-            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{family}/{subset}"
         },
         "__dynamic_keys_labels__": {
             "maya2unreal": "Maya to Unreal",

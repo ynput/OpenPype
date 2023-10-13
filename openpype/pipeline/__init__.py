@@ -9,6 +9,12 @@ from .mongodb import (
 )
 from .anatomy import Anatomy
 
+from .tempdir import get_temp_dir
+
+from .stagingdir import (
+    get_staging_dir
+)
+
 from .create import (
     BaseCreator,
     Creator,
@@ -110,6 +116,12 @@ __all__ = (
 
     # --- Anatomy ---
     "Anatomy",
+
+    # --- Temp dir ---
+    "get_temp_dir",
+
+    # --- Staging dir ---
+    "get_staging_dir",
 
     # --- Create ---
     "BaseCreator",
