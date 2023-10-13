@@ -1,5 +1,6 @@
 import re
 import logging
+import uuid
 
 from collections import defaultdict
 
@@ -232,11 +233,18 @@ class InventoryModel(TreeModel):
         not_found = defaultdict(list)
         not_found_ids = []
         for repre_id, group_dict in sorted(grouped.items()):
+            # Filter out invalid representation ids
+            # NOTE: This is added because scenes from OpenPype did contain
+            #   ObjectId from mongo.
+            try:
+                uuid.UUID(repre_id)
+                representation = get_representation_by_id(
+                    project_name, repre_id
+                )
+            except ValueError:
+                representation = None
+
             group_items = group_dict["items"]
-            # Get parenthood per group
-            representation = get_representation_by_id(
-                project_name, repre_id
-            )
             if not representation:
                 not_found["representation"].extend(group_items)
                 not_found_ids.append(repre_id)
