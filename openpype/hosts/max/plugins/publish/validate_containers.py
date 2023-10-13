@@ -3,8 +3,8 @@ import pyblish.api
 from openpype.pipeline import PublishValidationError
 
 
-class ValidateContainers(pyblish.api.InstancePlugin):
-    """Validates Containers.
+class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
+    """Validates Instance has members.
 
     Check if MaxScene containers includes any contents underneath.
     """
