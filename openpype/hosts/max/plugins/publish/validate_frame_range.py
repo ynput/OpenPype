@@ -30,7 +30,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
     order = ValidateContentsOrder
     families = ["camera", "maxrender",
                 "pointcache", "pointcloud",
-                "review"]
+                "review", "redshiftproxy"]
     hosts = ["max"]
     optional = True
     actions = [RepairAction]

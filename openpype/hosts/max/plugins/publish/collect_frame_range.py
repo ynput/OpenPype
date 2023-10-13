@@ -12,7 +12,7 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
     hosts = ['max']
     families = ["camera", "maxrender",
                 "pointcache", "pointcloud",
-                "review"]
+                "review", "redshiftproxy"]
 
     def process(self, instance):
         if instance.data["family"] == "maxrender":
