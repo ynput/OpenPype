@@ -1039,7 +1039,10 @@ class SwitchAssetDialog(QtWidgets.QDialog):
 
         # [x] [x] [ ]
         project_name = self._project_name
-        if selected_folder_id is not None and selected_product_name is not None:
+        if (
+            selected_folder_id is not None
+            and selected_product_name is not None
+        ):
             product_doc = get_subset_by_name(
                 project_name,
                 selected_product_name,
@@ -1087,7 +1090,9 @@ class SwitchAssetDialog(QtWidgets.QDialog):
             last_versions_by_product_id = self.find_last_versions(product_ids)
 
             product_id_by_version_id = {}
-            for product_id, last_version in last_versions_by_product_id.items():
+            for product_id, last_version in (
+                last_versions_by_product_id.items()
+            ):
                 version_id = last_version["_id"]
                 product_id_by_version_id[version_id] = product_id
 
