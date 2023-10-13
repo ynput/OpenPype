@@ -266,6 +266,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             "name": ext,
             "ext": ext,
             "stagingDir": output_dir,
+            # TODO: do we need to add persistance to representation?
+            # "stagingDirPersistence": True,
             "tags": []
         }
 
