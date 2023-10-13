@@ -36,7 +36,6 @@ class ExtractCamera(publish.Extractor):
         step = 1
         output_range = str(nuke.FrameRange(first_frame, last_frame, step))
 
-
         rm_nodes = []
         self.log.debug("Creating additional nodes for 3D Camera Extractor")
         subset = instance.data["subset"]
