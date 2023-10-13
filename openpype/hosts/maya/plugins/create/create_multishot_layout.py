@@ -114,7 +114,9 @@ class CreateMultishotLayout(plugin.MayaCreator):
             # want to create a new shot folders by publishing the layouts
             # and shot defined in the sequencer. Sort of editorial publish
             # in side of Maya.
-            raise CreatorError("No shots found under the specified folder.")
+            raise CreatorError((
+                "No shots found under the specified "
+                f"folder: {pre_create_data['shotParent']}."))
 
         # Get layout creator
         layout_creator_id = "io.openpype.creators.maya.layout"
