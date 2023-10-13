@@ -5,6 +5,7 @@ import sys
 import six
 import random
 import string
+import logging
 from collections import OrderedDict, defaultdict
 from abc import abstractmethod
 
@@ -39,7 +40,8 @@ from .lib import (
     get_view_process_node,
     get_viewer_config_from_string,
     deprecated,
-    get_filenames_without_hash
+    get_filenames_without_hash,
+    validate_node_files_exists,
 )
 from .pipeline import (
     list_instances,
@@ -215,11 +217,19 @@ class NukeCreator(NewCreator):
             ):
                 created_instance["creator_attributes"].pop(key)
 
-    def get_staging_dir(self, instance):
-        """Helper method for getting staging dir for instance"""
+    def get_staging_dir(self, instance, **kwargs):
+        """Helper method for getting staging dir for instance
+
+        Args:
+            instance (CreatedInstance): instance
+            **kwargs: kwargs for apply_staging_dir
+
+        Returns:
+            str: staging dir path
+        """
         versions = self.get_next_versions_for_instances([instance])
         instance["version"] = versions[instance.id]
-        return self.apply_staging_dir(instance)
+        return self.apply_staging_dir(instance, **kwargs)
 
     def apply_staging_dir_node(self, instance):
         """Apply staging dir to instance node
@@ -244,9 +254,11 @@ class NukeCreator(NewCreator):
 
         dir_path = self.get_staging_dir(instance)
         self.log.info("Staging Dir: {}".format(dir_path))
-        if dir_path and not os.path.exists(original_path):
+
+        if dir_path and not validate_node_files_exists(node):
             new_path = os.path.join(dir_path, filename).replace("\\", "/")
             node["file"].setValue(new_path)
+
 
     def update_instances(self, update_list):
         for created_inst, changes in update_list:
@@ -511,8 +523,8 @@ def get_colorspace_from_node(node):
     colorspace = node["colorspace"].value()
 
     # remove default part of the string
-    if "default (" in colorspace:
-        colorspace = re.sub(r"default.\(|\)", "", colorspace)
+    if "default" in colorspace:
+        colorspace = re.sub(r"default\s*\((.*)\)", r"\1", colorspace)
 
     return colorspace
 
@@ -1345,3 +1357,59 @@ def _remove_old_knobs(node):
                 node.removeKnob(knob)
         except ValueError:
             pass
+
+
+def mark_files_for_migration(instance, dir_path, source_files, log=None):
+    """Mark files for migration.
+
+    Args:
+        instance (pyblish.api.Instance): Instance
+        dir_path (str): Directory path
+        source_files (Any[list, str]): List of source files (base names)
+                                        or string if single file
+        log (Optional[logging.Logger]): Logger to use. Defaults to None.
+
+    Returns:
+        str: Staging directory
+    """
+    log = log or logging.getLogger(__name__)
+    staging_dir = instance.data.get("stagingDir")
+
+    if staging_dir:
+        # normalize the path to make sure we are comparing the same
+        staging_dir = os.path.normpath(staging_dir)
+
+        # debug info
+        log.debug('Node Dir path: {}'.format(dir_path))
+        log.debug("Staging dir: {}".format(staging_dir))
+
+        # compare staging dir with dir_path and if they are different
+        # then we need to add instance attribute with files to be migrated
+        # for later extractor plugin to process by copping it to staging
+        # directory
+        if staging_dir != dir_path:
+            log.info(
+                "Staging dir is different and needs to be migrated"
+            )
+
+            # make sure source files is list
+            if isinstance(source_files, str):
+                source_files = [source_files]
+
+            # create key in instance data and
+            # if does not exist create new dict and update it
+            instance.data.setdefault(
+                "stagingDirMigrateFiles", []).extend(
+                [
+                    {
+                        "src": os.path.join(dir_path, f_),
+                        "dst": os.path.join(staging_dir, f_)
+                    }
+                    for f_ in source_files
+                ]
+
+            )
+    else:
+        staging_dir = dir_path
+
+    return staging_dir

@@ -15,7 +15,8 @@ from .plugin import (
     NukeCreatorError,
     OpenPypeCreator,
     get_instance_group_node_childs,
-    get_colorspace_from_node
+    get_colorspace_from_node,
+    mark_files_for_migration
 )
 from .pipeline import (
     NukeHost,
@@ -43,7 +44,8 @@ from .lib import (
     get_node_data,
     set_node_data,
     update_node_data,
-    create_write_node
+    create_write_node,
+    collect_expected_files_from_node
 )
 from .utils import (
     colorspace_exists_on_node,
@@ -69,6 +71,7 @@ __all__ = (
     "NukeHost",
     "get_instance_group_node_childs",
     "get_colorspace_from_node",
+    "mark_files_for_migration",
 
     "ls",
 
@@ -92,6 +95,7 @@ __all__ = (
     "set_node_data",
     "update_node_data",
     "create_write_node",
+    "collect_expected_files_from_node",
 
     "colorspace_exists_on_node",
     "get_colorspace_list",

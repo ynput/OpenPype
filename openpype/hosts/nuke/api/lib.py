@@ -3449,3 +3449,87 @@ def get_filenames_without_hash(filename, frame_start, frame_end):
             new_filename = filename_without_hashes.format(frame)
             filenames.append(new_filename)
     return filenames
+
+
+def validate_node_files_exists(node):
+    """Helper method to validate if any files exists for node
+
+    Args:
+        node (nuke.Node): Read or Write node to be validated
+
+    Returns:
+        bool: True if some files exists
+    """
+    # make sure node is only Read or Write class
+    if node.Class() not in ["Read", "Write"]:
+        return False
+
+    # make some frames are defined
+    first_frame = int(nuke.root()["first_frame"].getValue())
+    last_frame = int(nuke.root()["last_frame"].getValue())
+
+    # make sure Read node is set to node frame range
+    if node.Class() == "Read":
+        first_frame = int(node["first"].getValue())
+        last_frame = int(node["last"].getValue())
+
+    # check if node has limit
+    if "use_limit" in node.knobs().keys() and node["use_limit"].getValue():
+        first_frame = int(node["first"].getValue())
+        last_frame = int(node["last"].getValue())
+
+    # check files if they exists
+    node_file_knob = node["file"]
+    test_files = list({
+        os.path.exists(node_file_knob.evaluate(frame))
+        for frame in range(first_frame, last_frame + 1)
+    })
+
+    if any(test_files):
+        return True
+
+
+def collect_expected_files_from_node(node):
+    """Helper method to collect expected files from node.
+
+    Args:
+        node (nuke.Node): Nuke node
+
+    Returns:
+        Any[list, str]: expected files, list if sequence or single string
+    """
+    # define frame range
+    first_frame = node['first'].value()
+    last_frame = node['last'].value()
+
+    # get node file and directory
+    file_path = nuke.filename(node)
+    dir_path = os.path.normpath(os.path.dirname(file_path))
+
+    # get all files from node
+    node_file_knob = node["file"]
+    expected_paths = list(sorted({
+        node_file_knob.evaluate(frame)
+        for frame in range(first_frame, last_frame + 1)
+    }))
+
+    # convert only to base names
+    expected_filenames = [
+        os.path.basename(filepath)
+        for filepath in expected_paths
+    ]
+
+    # make sure files are existing at folder
+    collected_frames = [
+        filename
+        for filename in os.listdir(dir_path)
+        if filename in expected_filenames
+    ]
+
+    collected_frames_len = len(collected_frames)
+    if collected_frames_len == 1:
+        # single file detected
+        return dir_path, collected_frames.pop()
+    else:
+        # sequence detected
+        return dir_path, collected_frames
