@@ -12,7 +12,7 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         version (int, optional): version number of the publish
     """
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.3
     label = 'Collect Scene Version'
     # configurable in Settings
     hosts = [
