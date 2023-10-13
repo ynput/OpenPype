@@ -1,6 +1,8 @@
+import collections
 import re
 import logging
 import uuid
+import copy
 
 from collections import defaultdict
 
@@ -8,11 +10,11 @@ from qtpy import QtCore, QtGui
 import qtawesome
 
 from openpype.client import (
-    get_asset_by_id,
-    get_subset_by_id,
-    get_version_by_id,
+    get_assets,
+    get_subsets,
+    get_versions,
     get_last_version_by_subset_id,
-    get_representation_by_id,
+    get_representations,
 )
 from openpype.pipeline import (
     get_current_project_name,
@@ -229,50 +231,37 @@ class InventoryModel(TreeModel):
         for item in items:
             grouped[item["representation"]]["items"].append(item)
 
+        (
+            repres_by_id,
+            versions_by_id,
+            products_by_id,
+            folders_by_id,
+        ) = self._query_entities(project_name, set(grouped.keys()))
         # Add to model
         not_found = defaultdict(list)
         not_found_ids = []
         for repre_id, group_dict in sorted(grouped.items()):
-            # Filter out invalid representation ids
-            # NOTE: This is added because scenes from OpenPype did contain
-            #   ObjectId from mongo.
-            try:
-                uuid.UUID(repre_id)
-                representation = get_representation_by_id(
-                    project_name, repre_id
-                )
-            except ValueError:
-                representation = None
-
             group_items = group_dict["items"]
+            representation = repres_by_id.get(repre_id)
             if not representation:
                 not_found["representation"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
-            version = get_version_by_id(
-                project_name, representation["parent"]
-            )
+            version = versions_by_id.get(representation["parent"])
             if not version:
                 not_found["version"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
-            elif version["type"] == "hero_version":
-                _version = get_version_by_id(
-                    project_name, version["version_id"]
-                )
-                version["name"] = HeroVersionType(_version["name"])
-                version["data"] = _version["data"]
-
-            subset = get_subset_by_id(project_name, version["parent"])
-            if not subset:
+            product = products_by_id.get(version["parent"])
+            if not product:
                 not_found["product"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
 
-            asset = get_asset_by_id(project_name, subset["parent"])
-            if not asset:
+            folder = folders_by_id.get(product["parent"])
+            if not folder:
                 not_found["folder"].extend(group_items)
                 not_found_ids.append(repre_id)
                 continue
@@ -280,8 +269,8 @@ class InventoryModel(TreeModel):
             group_dict.update({
                 "representation": representation,
                 "version": version,
-                "subset": subset,
-                "asset": asset
+                "subset": product,
+                "asset": folder
             })
 
         for _repre_id in not_found_ids:
@@ -381,6 +370,108 @@ class InventoryModel(TreeModel):
         self.endResetModel()
 
         return self._root_item
+
+    def _query_entities(self, project_name, repre_ids):
+        """Query entities for representations from containers.
+
+        Returns:
+            tuple[dict, dict, dict, dict]: Representation, version, product
+                and folder documents by id.
+        """
+
+        repres_by_id = {}
+        versions_by_id = {}
+        products_by_id = {}
+        folders_by_id = {}
+        output = (
+            repres_by_id,
+            versions_by_id,
+            products_by_id,
+            folders_by_id,
+        )
+
+        filtered_repre_ids = set()
+        for repre_id in repre_ids:
+            # Filter out invalid representation ids
+            # NOTE: This is added because scenes from OpenPype did contain
+            #   ObjectId from mongo.
+            try:
+                uuid.UUID(repre_id)
+                filtered_repre_ids.add(repre_id)
+            except ValueError:
+                continue
+        if not filtered_repre_ids:
+            return output
+
+        repre_docs = get_representations(project_name, repre_ids)
+        repres_by_id.update({
+            repre_doc["_id"]: repre_doc
+            for repre_doc in repre_docs
+        })
+        version_ids = {
+            repre_doc["parent"] for repre_doc in repres_by_id.values()
+        }
+        if not version_ids:
+            return output
+
+        version_docs = get_versions(project_name, version_ids, hero=True)
+        versions_by_id.update({
+            version_doc["_id"]: version_doc
+            for version_doc in version_docs
+        })
+        hero_versions_by_subversion_id = collections.defaultdict(list)
+        for version_doc in versions_by_id.values():
+            if version_doc["type"] != "hero_version":
+                continue
+            subversion = version_doc["version_id"]
+            hero_versions_by_subversion_id[subversion].append(version_doc)
+
+        if hero_versions_by_subversion_id:
+            subversion_ids = set(
+                hero_versions_by_subversion_id.keys()
+            )
+            subversion_docs = get_versions(project_name, subversion_ids)
+            for subversion_doc in subversion_docs:
+                subversion_id = subversion_doc["_id"]
+                subversion_ids.discard(subversion_id)
+                h_version_docs = hero_versions_by_subversion_id[subversion_id]
+                for version_doc in h_version_docs:
+                    version_doc["name"] = HeroVersionType(
+                        subversion_doc["name"]
+                    )
+                    version_doc["data"] = copy.deepcopy(
+                        subversion_doc["data"]
+                    )
+
+            for subversion_id in subversion_ids:
+                h_version_docs = hero_versions_by_subversion_id[subversion_id]
+                for version_doc in h_version_docs:
+                    versions_by_id.pop(version_doc["_id"])
+
+        product_ids = {
+            version_doc["parent"]
+            for version_doc in versions_by_id.values()
+        }
+        if not product_ids:
+            return output
+        product_docs = get_subsets(project_name, product_ids)
+        products_by_id.update({
+            product_doc["_id"]: product_doc
+            for product_doc in product_docs
+        })
+        folder_ids = {
+            product_doc["parent"]
+            for product_doc in products_by_id.values()
+        }
+        if not folder_ids:
+            return output
+
+        folder_docs = get_assets(project_name, folder_ids)
+        folders_by_id.update({
+            folder_doc["_id"]: folder_doc
+            for folder_doc in folder_docs
+        })
+        return output
 
 
 class FilterProxyModel(QtCore.QSortFilterProxyModel):
