@@ -62,6 +62,9 @@ class CreateSource(NukeCreator):
                     self
                 )
 
+                # add staging dir to instance transient data
+                self.get_staging_dir(instance, make_path=False)
+
                 instance.transient_data["node"] = instance_node
 
                 self._add_instance_to_context(instance)
