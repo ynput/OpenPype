@@ -12,14 +12,14 @@ from openpype.lib.events import QueuedEventSystem
 from openpype.pipeline.create import get_subset_name_template
 from openpype.tools.ayon_utils.models import ProjectsModel, HierarchyModel
 
-from .control_integrate import (
+from .models import (
+    PushToProjectSelectionModel,
+
+    UserPublishValuesModel,
+
     ProjectPushItem,
     ProjectPushItemProcess,
     ProjectPushItemStatus,
-)
-from .models import (
-    PushToProjectSelectionModel,
-    UserPublishValuesModel,
 )
 
 
