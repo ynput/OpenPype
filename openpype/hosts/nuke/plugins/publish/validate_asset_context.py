@@ -10,7 +10,7 @@ from openpype.pipeline.publish import (
     PublishXmlValidationError,
     OptionalPyblishPluginMixin
 )
-from openpype.hosts.nuke.api import SelectInvalidAction
+from openpype.hosts.nuke.api import SelectInstanceNodeAction
 
 
 class ValidateCorrectAssetContext(
@@ -30,7 +30,7 @@ class ValidateCorrectAssetContext(
     hosts = ["nuke"]
     actions = [
         RepairAction,
-        SelectInvalidAction
+        SelectInstanceNodeAction
     ]
     optional = True
 

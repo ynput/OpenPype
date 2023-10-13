@@ -50,7 +50,10 @@ from .utils import (
     get_colorspace_list
 )
 
-from .actions import SelectInvalidAction
+from .actions import (
+    SelectInvalidAction,
+    SelectInstanceNodeAction
+)
 
 __all__ = (
     "file_extensions",
@@ -97,4 +100,5 @@ __all__ = (
     "get_colorspace_list",
 
     "SelectInvalidAction",
+    "SelectInstanceNodeAction"
 )
