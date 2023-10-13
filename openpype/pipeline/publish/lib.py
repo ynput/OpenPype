@@ -905,12 +905,12 @@ def add_repre_files_for_cleanup(instance, repre):
     # first make sure representation level is not persistent
     if (
         not staging_dir
-        or repre.get("stagingDir_persistent")
+        or repre.get("stagingDirPersistence")
     ):
         return
 
     # then look into instance level if it's not persistent
-    if instance.data.get("stagingDir_persistent"):
+    if instance.data.get("stagingDirPersistence"):
         return
 
     if isinstance(files, str):

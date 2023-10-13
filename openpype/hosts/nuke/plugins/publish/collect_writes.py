@@ -199,7 +199,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
         # compatibility. This is mainly focused on `renders`folders which
         # were previously not cleaned up (and could be used in read notes)
         # this logic should be removed and replaced with custom staging dir
-        instance.data["stagingDir_persistent"] = True
+        instance.data["stagingDirPersistence"] = True
 
     def _write_node_helper(self, instance):
         """Helper function to get write node from instance.
