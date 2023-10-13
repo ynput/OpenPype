@@ -3,15 +3,16 @@ import copy
 import clique
 import pyblish.api
 
-from openpype.pipeline import publish
+from openpype.pipeline import (
+    publish,
+    get_temp_dir
+)
 from openpype.lib import (
-
     is_oiio_supported,
 )
 
 from openpype.lib.transcoding import (
-    convert_colorspace,
-    get_transcode_temp_directory,
+    convert_colorspace
 )
 
 from openpype.lib.profiles_filtering import filter_profiles
@@ -51,7 +52,7 @@ class ExtractOIIOTranscode(publish.Extractor):
     empty if transcoding should be only into display and viewer colorspace.
     (In that case both 'display' and 'view' must be filled.)
     """
-
+    # TODO: this is not only for color transcoding
     label = "Transcode color spaces"
     order = pyblish.api.ExtractorOrder + 0.019
 
@@ -102,7 +103,11 @@ class ExtractOIIOTranscode(publish.Extractor):
                 new_repre = copy.deepcopy(repre)
 
                 original_staging_dir = new_repre["stagingDir"]
-                new_staging_dir = get_transcode_temp_directory()
+                new_staging_dir = get_temp_dir(
+                    project_name=instance.context.data["projectName"],
+                    make_local=True,
+                    prefix="op_transcoding_"
+                )
                 new_repre["stagingDir"] = new_staging_dir
 
                 if isinstance(new_repre["files"], list):
@@ -271,7 +276,7 @@ class ExtractOIIOTranscode(publish.Extractor):
             (list) of [file.1001-1010#.exr] or [fileA.exr, fileB.exr]
         """
         pattern = [clique.PATTERNS["frames"]]
-        collections, remainder = clique.assemble(
+        collections, _ = clique.assemble(
             files_to_convert, patterns=pattern,
             assume_padded_when_ambiguous=True)
 
