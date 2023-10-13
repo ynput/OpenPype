@@ -43,6 +43,7 @@ from .overlay_messages import (
     MessageOverlayObject,
 )
 from .multiselection_combobox import MultiSelectionComboBox
+from .thumbnail_paint_widget import ThumbnailPainterWidget
 
 
 __all__ = (
@@ -90,4 +91,6 @@ __all__ = (
     "MessageOverlayObject",
 
     "MultiSelectionComboBox",
+
+    "ThumbnailPainterWidget",
 )
