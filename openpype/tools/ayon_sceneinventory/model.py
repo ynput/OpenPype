@@ -6,7 +6,6 @@ from collections import defaultdict
 from qtpy import QtCore, QtGui
 import qtawesome
 
-from openpype.host import ILoadHost
 from openpype.client import (
     get_asset_by_id,
     get_subset_by_id,
