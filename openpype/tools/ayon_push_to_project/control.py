@@ -102,7 +102,7 @@ class PushToContextController:
 
     def get_source_label(self):
         if self._src_label is None:
-            self._src_label = self._get_source_label()
+            self._src_label = self._prepare_source_label()
         return self._src_label
 
     def get_project_items(self, sender=None):
@@ -182,7 +182,7 @@ class PushToContextController:
         self._process_thread.join()
         self._process_thread = None
 
-    def _get_source_label(self):
+    def _prepare_source_label(self):
         if not self._src_project_name or not self._src_version_id:
             return "Source is not defined"
 
@@ -190,14 +190,14 @@ class PushToContextController:
         if not asset_doc:
             return "Source is invalid"
 
-        asset_path_parts = list(asset_doc["data"]["parents"])
-        asset_path_parts.append(asset_doc["name"])
-        asset_path = "/".join(asset_path_parts)
+        folder_path_parts = list(asset_doc["data"]["parents"])
+        folder_path_parts.append(asset_doc["name"])
+        folder_path = "/".join(folder_path_parts)
         subset_doc = self._src_subset_doc
         version_doc = self._src_version_doc
         return "Source: {}/{}/{}/v{:0>3}".format(
             self._src_project_name,
-            asset_path,
+            folder_path,
             subset_doc["name"],
             version_doc["name"]
         )
