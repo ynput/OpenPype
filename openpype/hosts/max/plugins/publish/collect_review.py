@@ -29,8 +29,6 @@ class CollectReview(pyblish.api.InstancePlugin,
         attr_values = self.get_attr_values_from_data(instance.data)
         data = {
             "review_camera": camera_name,
-            "frameStart": instance.context.data["frameStart"],
-            "frameEnd": instance.context.data["frameEnd"],
             "fps": instance.context.data["fps"],
             "dspGeometry": attr_values.get("dspGeometry"),
             "dspShapes": attr_values.get("dspShapes"),
