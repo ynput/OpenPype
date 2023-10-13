@@ -20,7 +20,10 @@ from .widgets import (
     RefreshButton,
     GoToCurrentButton,
 )
-from .views import DeselectableTreeView
+from .views import (
+    DeselectableTreeView,
+    TreeView,
+)
 from .error_dialog import ErrorMessageBox
 from .lib import (
     WrappedCallbackItem,
@@ -71,6 +74,7 @@ __all__ = (
     "GoToCurrentButton",
 
     "DeselectableTreeView",
+    "TreeView",
 
     "ErrorMessageBox",
 
