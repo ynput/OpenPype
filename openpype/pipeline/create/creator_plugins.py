@@ -14,6 +14,7 @@ from openpype.pipeline.plugin_discover import (
     deregister_plugin,
     deregister_plugin_path
 )
+from openpype.pipeline import get_staging_dir
 
 from .constants import DEFAULT_VARIANT_VALUE
 from .subset_name import get_subset_name
@@ -199,6 +200,7 @@ class BaseCreator:
         # Reference to CreateContext
         self.create_context = create_context
         self.project_settings = project_settings
+        self.system_settings = system_settings
 
         # Creator is running in headless mode (without UI elemets)
         # - we may use UI inside processing this attribute should be checked
@@ -722,6 +724,58 @@ class Creator(BaseCreator):
         """
         return self.pre_create_attr_defs
 
+
+    def apply_staging_dir(self, instance):
+        """Apply staging dir with persistence to instance's transient data.
+
+        Method is called on instance creation and on instance update.
+
+        Args:
+            instance (CreatedInstance): Instance for which should be staging
+                dir applied.
+
+        Returns:
+            str: Path to staging dir.
+        """
+        create_ctx = self.create_context
+        asset_name = instance.get("asset")
+        subset = instance.get("subset")
+        if not asset_name or not subset:
+            return None
+
+        version = instance.get("version")
+        if version is not None:
+            formatting_data = {"version": version}
+
+        project_name = create_ctx.get_current_project_name()
+        host_name = create_ctx.host_name
+        task_name = instance.get("task")
+
+        dir_data = get_staging_dir(
+            project_name, asset_name, host_name,
+            self.family, task_name, subset, self.project_anatomy,
+            project_settings=self.project_settings,
+            system_settings=self.system_settings,
+            always_return_path=False,
+            log=self.log,
+            formatting_data=formatting_data,
+        )
+
+        if not dir_data:
+            return None
+
+        staging_dir_path = dir_data["stagingDir"]
+
+        if not os.path.exists(staging_dir_path):
+            os.makedirs(staging_dir_path)
+
+        instance.transient_data.update(dir_data)
+
+        self.log.info(
+            "Applied staging dir to instance: {}".format(staging_dir_path)
+        )
+
+        return staging_dir_path
 
 class HiddenCreator(BaseCreator):
     @abstractmethod
