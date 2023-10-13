@@ -43,4 +43,4 @@ class CollectModel(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame
         })
-        self.log.info("Model instance collected: `{}`".format(instance))
+        self.log.debug("Model instance collected: `{}`".format(instance))
