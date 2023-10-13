@@ -160,9 +160,9 @@ class InventoryModel(TreeModel):
         if role == QtCore.Qt.DisplayRole and item.get("isGroupNode"):
             column_name = self.Columns[index.column()]
             progress = None
-            if column_name == 'active_site':
+            if column_name == "active_site":
                 progress = item.get("active_site_progress", 0)
-            elif column_name == 'remote_site':
+            elif column_name == "remote_site":
                 progress = item.get("remote_site_progress", 0)
             if progress is not None:
                 return "{}%".format(max(progress, 0) * 100)
@@ -179,26 +179,26 @@ class InventoryModel(TreeModel):
         if state != self._hierarchy_view:
             self._hierarchy_view = state
 
-    def refresh(self, selected=None, items=None):
+    def refresh(self, selected=None, containers=None):
         """Refresh the model"""
 
         # for debugging or testing, injecting items from outside
-        if items is None:
-            items = self._controller.get_containers()
+        if containers is None:
+            containers = self._controller.get_containers()
 
         self.clear()
         if not selected or not self._hierarchy_view:
-            self.add_items(items)
+            self._add_containers(containers)
             return
 
         # Filter by cherry-picked items
-        self.add_items((
-            item
-            for item in items
-            if item["objectName"] in selected
+        self._add_containers((
+            container
+            for container in containers
+            if container["objectName"] in selected
         ))
 
-    def add_items(self, items, parent=None):
+    def _add_containers(self, containers, parent=None):
         """Add the items to the model.
 
         The items should be formatted similar to `api.ls()` returns, an item
@@ -213,7 +213,7 @@ class InventoryModel(TreeModel):
             same type.
 
         Args:
-            items (generator): the items to be processed as returned by `ls()`
+            containers (generator): Container items.
             parent (Item, optional): Set this item as parent for the added
               items when provided. Defaults to the root of the model.
 
@@ -221,15 +221,15 @@ class InventoryModel(TreeModel):
             node.Item: root node which has children added based on the data
         """
 
-        # NOTE: @iLLiCiTiT this need refactor
         project_name = get_current_project_name()
 
         self.beginResetModel()
 
         # Group by representation
-        grouped = defaultdict(lambda: {"items": list()})
-        for item in items:
-            grouped[item["representation"]]["items"].append(item)
+        grouped = defaultdict(lambda: {"containers": list()})
+        for container in containers:
+            repre_id = container["representation"]
+            grouped[repre_id]["containers"].append(container)
 
         (
             repres_by_id,
@@ -241,28 +241,28 @@ class InventoryModel(TreeModel):
         not_found = defaultdict(list)
         not_found_ids = []
         for repre_id, group_dict in sorted(grouped.items()):
-            group_items = group_dict["items"]
+            group_containers = group_dict["containers"]
             representation = repres_by_id.get(repre_id)
             if not representation:
-                not_found["representation"].extend(group_items)
+                not_found["representation"].extend(group_containers)
                 not_found_ids.append(repre_id)
                 continue
 
             version = versions_by_id.get(representation["parent"])
             if not version:
-                not_found["version"].extend(group_items)
+                not_found["version"].extend(group_containers)
                 not_found_ids.append(repre_id)
                 continue
 
             product = products_by_id.get(version["parent"])
             if not product:
-                not_found["product"].extend(group_items)
+                not_found["product"].extend(group_containers)
                 not_found_ids.append(repre_id)
                 continue
 
             folder = folders_by_id.get(product["parent"])
             if not folder:
-                not_found["folder"].extend(group_items)
+                not_found["folder"].extend(group_containers)
                 not_found_ids.append(repre_id)
                 continue
 
@@ -276,22 +276,22 @@ class InventoryModel(TreeModel):
         for _repre_id in not_found_ids:
             grouped.pop(_repre_id)
 
-        for where, group_items in not_found.items():
+        for where, group_containers in not_found.items():
             # create the group header
             group_node = Item()
             name = "< NOT FOUND - {} >".format(where)
             group_node["Name"] = name
             group_node["representation"] = name
-            group_node["count"] = len(group_items)
+            group_node["count"] = len(group_containers)
             group_node["isGroupNode"] = False
             group_node["isNotSet"] = True
 
             self.add_child(group_node, parent=parent)
 
-            for item in group_items:
+            for container in group_containers:
                 item_node = Item()
-                item_node.update(item)
-                item_node["Name"] = item.get("objectName", "NO NAME")
+                item_node.update(container)
+                item_node["Name"] = container.get("objectName", "NO NAME")
                 item_node["isNotFound"] = True
                 self.add_child(item_node, parent=group_node)
 
@@ -306,7 +306,7 @@ class InventoryModel(TreeModel):
         sites_info = self._controller.get_sites_information()
 
         for repre_id, group_dict in sorted(grouped.items()):
-            group_items = group_dict["items"]
+            group_containers = group_dict["containers"]
             representation = group_dict["representation"]
             version = group_dict["version"]
             subset = group_dict["subset"]
@@ -341,7 +341,7 @@ class InventoryModel(TreeModel):
             group_node["highest_version"] = highest_version["name"]
             group_node["family"] = prim_family or ""
             group_node["familyIcon"] = family_icon
-            group_node["count"] = len(group_items)
+            group_node["count"] = len(group_containers)
             group_node["isGroupNode"] = True
             group_node["group"] = subset["data"].get("subsetGroup")
 
@@ -353,9 +353,9 @@ class InventoryModel(TreeModel):
 
             self.add_child(group_node, parent=parent)
 
-            for item in group_items:
+            for container in group_containers:
                 item_node = Item()
-                item_node.update(item)
+                item_node.update(container)
 
                 # store the current version on the item
                 item_node["version"] = version["name"]
@@ -363,7 +363,7 @@ class InventoryModel(TreeModel):
                 # Remapping namespace to item name.
                 # Noted that the name key is capital "N", by doing this, we
                 # can view namespace in GUI without changing container data.
-                item_node["Name"] = item["namespace"]
+                item_node["Name"] = container["namespace"]
 
                 self.add_child(item_node, parent=group_node)
 

@@ -156,7 +156,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
 
         self.refresh()
 
-    def refresh(self, items=None):
+    def refresh(self, containers=None):
         self._first_refresh = False
         self._controller.reset()
         with preserve_expanded_rows(
@@ -168,7 +168,7 @@ class SceneInventoryWindow(QtWidgets.QDialog):
                 role=self._model.UniqueRole,
                 current_index=False
             ):
-                kwargs = {"items": items}
+                kwargs = {"containers": containers}
                 # TODO do not touch view's inner attribute
                 if self._view._hierarchy_view:
                     kwargs["selected"] = self._view._selected
