@@ -111,7 +111,6 @@ class ValidateNukeWriteNode(
             for value in values:
                 if type(node_value) in (int, float):
                     try:
-
                         if isinstance(value, list):
                             value = color_gui_to_int(value)
                         else:
@@ -130,7 +129,7 @@ class ValidateNukeWriteNode(
                 and key != "file"
                 and key != "tile_color"
             ):
-                check.append([key, value, write_node[key].value()])
+                check.append([key, node_value, write_node[key].value()])
 
         if check:
             self._make_error(check)
