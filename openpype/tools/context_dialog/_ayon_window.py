@@ -356,27 +356,17 @@ class ContextDialogController:
             "task_name": None,
         }
 
-    def window_closed(self):
-        if not self._confirmed and not self._is_strict:
-            return
-
-        self._store_output()
-
     def confirm_selection(self):
         self._confirmed = True
-        self._emit_event(
-            "selection.confirmed",
-            {"confirmed": True}
-        )
 
-    def _store_output(self):
+    def store_output(self):
         if not self._output_path:
             return
 
         dirpath = os.path.dirname(self._output_path)
         os.makedirs(dirpath, exist_ok=True)
         with open(self._output_path, "w") as stream:
-            json.dump(self.get_selected_context(), stream)
+            json.dump(self.get_selected_context(), stream, indent=4)
 
     def _get_event_system(self):
         """Inner event system for workfiles tool controller.
@@ -627,7 +617,7 @@ class ContextDialog(QtWidgets.QDialog):
                 return
 
         if self.is_strict():
-            self._controller.confirm_selection()
+            self._confirm_selection()
         self._visible = False
         super(ContextDialog, self).closeEvent(event)
 
@@ -666,9 +656,12 @@ class ContextDialog(QtWidgets.QDialog):
 
     def _on_ok_click(self):
         # Store values to output
-        self._controller.confirm_selection()
+        self._confirm_selection()
         # Close dialog
         self.accept()
+
+    def _confirm_selection(self):
+        self._controller.confirm_selection()
 
     def _on_project_selection_change(self, event):
         self._on_selection_change(
@@ -769,15 +762,4 @@ def main(
     window = ContextDialog(controller=controller)
     window.show()
     app.exec_()
-
-    # Get result from window
-    data = window.get_context()
-
-    # Make sure json filepath directory exists
-    file_dir = os.path.dirname(path_to_store)
-    if not os.path.exists(file_dir):
-        os.makedirs(file_dir)
-
-    # Store result into json file
-    with open(path_to_store, "w") as stream:
-        json.dump(data, stream)
+    controller.store_output()
