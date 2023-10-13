@@ -496,6 +496,7 @@ class ContextDialog(QtWidgets.QDialog):
             parent=left_side_widget,
             handle_expected_selection=True
         )
+        project_combobox.set_select_item_visible(True)
 
         # Assets widget
         folders_widget = FoldersWidget(
