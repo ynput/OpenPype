@@ -12,7 +12,7 @@ from openpype.pipeline.template_data import (
 )
 
 
-STAGING_DIR_TEMPLATES = "staging_dir"
+STAGING_DIR_TEMPLATES = "staging_directories"
 
 
 def get_staging_dir_config(
