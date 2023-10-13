@@ -1,7 +1,17 @@
 import click
 
 from openpype.tools.utils import get_openpype_qt_app
-from openpype.tools.push_to_project.window import PushToContextSelectWindow
+from openpype.tools.ayon_push_to_project.ui import PushToContextSelectWindow
+
+
+def main_show(project_name, version_id):
+    app = get_openpype_qt_app()
+
+    window = PushToContextSelectWindow()
+    window.show()
+    window.set_source(project_name, version_id)
+
+    app.exec_()
 
 
 @click.command()
@@ -15,13 +25,7 @@ def main(project, version):
         version (str): Version id.
     """
 
-    app = get_openpype_qt_app()
-
-    window = PushToContextSelectWindow()
-    window.show()
-    window.controller.set_source(project, version)
-
-    app.exec_()
+    main_show(project, version)
 
 
 if __name__ == "__main__":
