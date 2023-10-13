@@ -185,9 +185,9 @@ class MakeRSTexBin(TextureProcessor):
                                    "{}".format(config_path))
 
             if not os.getenv("OCIO"):
-                self.log.warning(
+                self.log.debug(
                     "OCIO environment variable not set."
-                    "Setting it with OCIO config from OpenPype/AYON Settings."
+                    "Setting it with OCIO config from Maya."
                 )
                 os.environ["OCIO"] = config_path
 
