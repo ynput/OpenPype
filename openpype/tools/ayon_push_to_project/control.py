@@ -92,12 +92,12 @@ class PushToContextController:
             if comment:
                 self._user_values.set_comment(comment)
 
-        self._event_system.emit(
-            "source.changed", {
+        self._emit_event(
+            "source.changed",
+            {
                 "project_name": project_name,
                 "version_id": version_id
-            },
-            "controller"
+            }
         )
 
     def get_source_label(self):
@@ -165,7 +165,7 @@ class PushToContextController:
         status_item = ProjectPushItemStatus(event_system=self._event_system)
         process_item = ProjectPushItemProcess(item, status_item)
         self._process_item = process_item
-        self._event_system.emit("submit.started", {}, "controller")
+        self._emit_event("submit.started")
         if wait:
             self._submit_callback()
             self._process_item = None
@@ -291,17 +291,6 @@ class PushToContextController:
             subset_name = subset_name[:len(subset_e)]
         return subset_name
 
-    def _invalidate(self):
-        submission_enabled = self._check_submit_validations()
-        if submission_enabled == self._submission_enabled:
-            return
-        self._submission_enabled = submission_enabled
-        self._event_system.emit(
-            "submission.enabled.changed",
-            {"enabled": submission_enabled},
-            "controller"
-        )
-
     def _check_submit_validations(self):
         if not self._user_values.is_valid:
             return False
@@ -314,17 +303,31 @@ class PushToContextController:
             and not self._selection_model.get_selected_folder_id()
         ):
             return False
-
         return True
+
+    def _invalidate(self):
+        submission_enabled = self._check_submit_validations()
+        if submission_enabled == self._submission_enabled:
+            return
+        self._submission_enabled = submission_enabled
+        self._emit_event(
+            "submission.enabled.changed",
+            {"enabled": submission_enabled}
+        )
 
     def _submit_callback(self):
         process_item = self._process_item
         if process_item is None:
             return
         process_item.process()
-        self._event_system.emit("submit.finished", {}, "controller")
+        self._emit_event("submit.finished", {})
         if process_item is self._process_item:
             self._process_item = None
+
+    def _emit_event(self, topic, data=None):
+        if data is None:
+            data = {}
+        self.emit_event(topic, data, "controller")
 
     def _create_event_system(self):
         return QueuedEventSystem()
