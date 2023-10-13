@@ -1,4 +1,3 @@
-import re
 import threading
 
 from openpype.client import (
@@ -10,10 +9,7 @@ from openpype.client import (
 from openpype.settings import get_project_settings
 from openpype.lib import prepare_template_data
 from openpype.lib.events import QueuedEventSystem
-from openpype.pipeline.create import (
-    SUBSET_NAME_ALLOWED_SYMBOLS,
-    get_subset_name_template,
-)
+from openpype.pipeline.create import get_subset_name_template
 from openpype.tools.ayon_utils.models import ProjectsModel, HierarchyModel
 
 from .control_integrate import (
@@ -21,114 +17,10 @@ from .control_integrate import (
     ProjectPushItemProcess,
     ProjectPushItemStatus,
 )
-from .models import PushToProjectSelectionModel
-
-
-class UserPublishValues:
-    """Helper object to validate values required for push to different project.
-
-    Args:
-        controller (PushToContextController): Event system to catch
-            and emit events.
-    """
-
-    folder_name_regex = re.compile("^[a-zA-Z0-9_.]+$")
-    variant_regex = re.compile("^[{}]+$".format(SUBSET_NAME_ALLOWED_SYMBOLS))
-
-    def __init__(self, controller):
-        self._controller = controller
-        self._new_folder_name = None
-        self._variant = None
-        self._comment = None
-        self._is_variant_valid = False
-        self._is_new_folder_name_valid = False
-
-        self.set_new_folder_name("")
-        self.set_variant("")
-        self.set_comment("")
-
-    @property
-    def new_folder_name(self):
-        return self._new_folder_name
-
-    @property
-    def variant(self):
-        return self._variant
-
-    @property
-    def comment(self):
-        return self._comment
-
-    @property
-    def is_variant_valid(self):
-        return self._is_variant_valid
-
-    @property
-    def is_new_folder_name_valid(self):
-        return self._is_new_folder_name_valid
-
-    @property
-    def is_valid(self):
-        return self.is_variant_valid and self.is_new_folder_name_valid
-
-    def get_data(self):
-        return {
-            "new_folder_name": self._new_folder_name,
-            "variant": self._variant,
-            "comment": self._comment,
-            "is_variant_valid": self._is_variant_valid,
-            "is_new_folder_name_valid": self._is_new_folder_name_valid,
-            "is_valid": self.is_valid
-        }
-
-    def set_variant(self, variant):
-        if variant == self._variant:
-            return
-
-        self._variant = variant
-        is_valid = False
-        if variant:
-            is_valid = self.variant_regex.match(variant) is not None
-        self._is_variant_valid = is_valid
-
-        self._controller.emit_event(
-            "variant.changed",
-            {
-                "variant": variant,
-                "is_valid": self._is_variant_valid,
-            },
-            "user_values"
-        )
-
-    def set_new_folder_name(self, folder_name):
-        if self._new_folder_name == folder_name:
-            return
-
-        self._new_folder_name = folder_name
-        is_valid = True
-        if folder_name:
-            is_valid = (
-                self.folder_name_regex.match(folder_name) is not None
-            )
-        self._is_new_folder_name_valid = is_valid
-        self._controller.emit_event(
-            "new_folder_name.changed",
-            {
-                "new_folder_name": self._new_folder_name,
-                "is_valid": self._is_new_folder_name_valid,
-            },
-            "user_values"
-        )
-
-    def set_comment(self, comment):
-        if comment == self._comment:
-            return
-        self._comment = comment
-        self._controller.emit_event(
-            "comment.changed",
-            {"comment": comment},
-            "user_values"
-        )
+from .models import (
+    PushToProjectSelectionModel,
+    UserPublishValuesModel,
+)
 
 
 class PushToContextController:
@@ -139,7 +31,7 @@ class PushToContextController:
         self._hierarchy_model = HierarchyModel(self)
 
         self._selection_model = PushToProjectSelectionModel(self)
-        self._user_values = UserPublishValues(self)
+        self._user_values = UserPublishValuesModel(self)
 
         self._src_project_name = None
         self._src_version_id = None
@@ -229,18 +121,23 @@ class PushToContextController:
 
     def set_user_value_folder_name(self, folder_name):
         self._user_values.set_new_folder_name(folder_name)
+        self._invalidate()
 
     def set_user_value_variant(self, variant):
         self._user_values.set_variant(variant)
+        self._invalidate()
 
     def set_user_value_comment(self, comment):
         self._user_values.set_comment(comment)
+        self._invalidate()
 
     def set_selected_project(self, project_name):
         self._selection_model.set_selected_project(project_name)
+        self._invalidate()
 
     def set_selected_folder(self, folder_id):
         self._selection_model.set_selected_folder(folder_id)
+        self._invalidate()
 
     def set_selected_task(self, task_id, task_name):
         self._selection_model.set_selected_task(task_id, task_name)
@@ -393,9 +290,6 @@ class PushToContextController:
         if subset_e:
             subset_name = subset_name[:len(subset_e)]
         return subset_name
-
-    def _on_project_change(self, event):
-        self._invalidate()
 
     def _invalidate(self):
         submission_enabled = self._check_submit_validations()
