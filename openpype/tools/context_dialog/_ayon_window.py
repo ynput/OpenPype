@@ -277,52 +277,15 @@ class ContextDialogController:
     def is_initial_context_valid(self):
         return self._initial_folder_found and self._initial_project_found
 
-    def set_initial_context(
-        self, project_name=None, asset_name=None, folder_path=None
-    ):
-        if project_name is None:
-            project_found = True
-            asset_name = None
-            folder_path = None
-
-        else:
-            project = ayon_api.get_project(project_name)
-            project_found = project is not None
-
-        folder_id = None
-        folder_found = True
-        folder_label = None
-        if folder_path:
-            folder_label = folder_path
-            folder = ayon_api.get_folder_by_path(project_name, folder_path)
-            if folder:
-                folder_id = folder["id"]
-            else:
-                folder_found = False
-        elif asset_name:
-            folder_label = asset_name
-            for folder in ayon_api.get_folders(
-                project_name, folder_names=[asset_name]
-            ):
-                folder_id = folder["id"]
-                break
-            if not folder_id:
-                folder_found = False
-
-        tasks_found = True
-        if folder_found and (folder_path or asset_name):
-            tasks = list(ayon_api.get_tasks(
-                project_name, folder_ids=[folder_id], fields=["id"]
-            ))
-            if not tasks:
-                tasks_found = False
+    def set_initial_context(self, project_name=None, asset_name=None):
+        result = self._prepare_initial_context(project_name, asset_name)
 
         self._initial_project_name = project_name
-        self._initial_folder_id = folder_id
-        self._initial_folder_label = folder_label
-        self._initial_folder_found = project_found
-        self._initial_folder_found = folder_found
-        self._initial_tasks_found = tasks_found
+        self._initial_folder_id = result["folder_id"]
+        self._initial_folder_label = result["folder_label"]
+        self._initial_project_found = result["project_found"]
+        self._initial_folder_found = result["folder_found"]
+        self._initial_tasks_found = result["tasks_found"]
         self._emit_event(
             "initial.context.changed",
             self.get_initial_context()
@@ -345,15 +308,36 @@ class ContextDialogController:
 
     # Result of this tool
     def get_selected_context(self):
+        project_name = None
+        folder_id = None
+        task_id = None
+        task_name = None
+        folder_path = None
+        folder_name = None
+        if self._confirmed:
+            project_name = self.get_selected_project_name()
+            folder_id = self.get_selected_folder_id()
+            task_id = self.get_selected_task_id()
+            task_name = self.get_selected_task_name()
+
+        folder_item = None
+        if folder_id:
+            folder_item = self._hierarchy_model.get_folder_item(
+                project_name, folder_id)
+
+        if folder_item:
+            folder_path = folder_item.path
+            folder_name = folder_item.name
         return {
-            "project": None,
-            "project_name": None,
-            "asset": None,
-            "folder_id": None,
-            "folder_path": None,
-            "task": None,
-            "task_id": None,
-            "task_name": None,
+            "project": project_name,
+            "project_name": project_name,
+            "asset": folder_name,
+            "folder_id": folder_id,
+            "folder_path": folder_path,
+            "task": task_name,
+            "task_name": task_name,
+            "task_id": task_id,
+            "initial_context_valid": self.is_initial_context_valid(),
         }
 
     def confirm_selection(self):
@@ -367,6 +351,54 @@ class ContextDialogController:
         os.makedirs(dirpath, exist_ok=True)
         with open(self._output_path, "w") as stream:
             json.dump(self.get_selected_context(), stream, indent=4)
+
+    def _prepare_initial_context(self, project_name, asset_name):
+        project_found = True
+        output = {
+            "project_found": project_found,
+            "folder_id": None,
+            "folder_label": None,
+            "folder_found": True,
+            "tasks_found": True,
+        }
+        if project_name is None:
+            asset_name = None
+        else:
+            project = ayon_api.get_project(project_name)
+            project_found = project is not None
+        output["project_found"] = project_found
+        if not project_found or not asset_name:
+            return output
+
+        output["folder_label"] = asset_name
+
+        folder_id = None
+        folder_found = False
+        # First try to find by path
+        folder = ayon_api.get_folder_by_path(project_name, asset_name)
+        # Try to find by name if folder was not found by path
+        #   - prevent to query by name if 'asset_name' contains '/'
+        if not folder and "/" not in asset_name:
+            folder = next(
+                ayon_api.get_folders(
+                    project_name, folder_names=[asset_name], fields=["id"]),
+                None
+            )
+
+        if folder:
+            folder_id = folder["id"]
+            folder_found = True
+
+        output["folder_id"] = folder_id
+        output["folder_found"] = folder_found
+        if not folder_found:
+            return output
+
+        tasks = list(ayon_api.get_tasks(
+            project_name, folder_ids=[folder_id], fields=["id"]
+        ))
+        output["tasks_found"] = bool(tasks)
+        return output
 
     def _get_event_system(self):
         """Inner event system for workfiles tool controller.
