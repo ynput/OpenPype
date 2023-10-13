@@ -1,28 +1,21 @@
 import pyblish.api
-from openpype.pipeline import OptionalPyblishPluginMixin
 
 
-class CollectMissingFrameDataFromAssetEntity(
-    pyblish.api.InstancePlugin,
-    OptionalPyblishPluginMixin
-):
-    """Collect Missing Frame Range data From Asset Entity
+class CollectFrameDataFromAssetEntity(pyblish.api.InstancePlugin):
+    """Collect Frame Data From AssetEntity found in context
 
     Frame range data will only be collected if the keys
     are not yet collected for the instance.
     """
 
     order = pyblish.api.CollectorOrder + 0.491
-    label = "Collect Missing Frame Data From Asset Entity"
+    label = "Collect Missing Frame Data From Asset"
     families = ["plate", "pointcache",
                 "vdbcache", "online",
                 "render"]
     hosts = ["traypublisher"]
-    optional = True
 
     def process(self, instance):
-        if not self.is_active(instance.data):
-            return
         missing_keys = []
         for key in (
             "fps",

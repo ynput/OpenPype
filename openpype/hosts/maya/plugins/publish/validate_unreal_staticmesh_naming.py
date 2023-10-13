@@ -69,11 +69,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
 
         invalid = []
 
-        project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
         collision_prefixes = (
-            project_settings
+            instance.context.data["project_settings"]
             ["maya"]
             ["create"]
             ["CreateUnrealStaticMesh"]

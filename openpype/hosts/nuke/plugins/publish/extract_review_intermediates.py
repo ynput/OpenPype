@@ -8,15 +8,16 @@ from openpype.hosts.nuke.api import plugin
 from openpype.hosts.nuke.api.lib import maintained_selection
 
 
-class ExtractReviewDataMov(publish.Extractor):
-    """Extracts movie and thumbnail with baked in luts
+class ExtractReviewIntermediates(publish.Extractor):
+    """Extracting intermediate videos or sequences with
+    thumbnail for transcoding.
 
     must be run after extract_render_local.py
 
     """
 
     order = pyblish.api.ExtractorOrder + 0.01
-    label = "Extract Review Data Mov"
+    label = "Extract Review Intermediates"
 
     families = ["review"]
     hosts = ["nuke"]
@@ -24,6 +25,24 @@ class ExtractReviewDataMov(publish.Extractor):
     # presets
     viewer_lut_raw = None
     outputs = {}
+
+    @classmethod
+    def apply_settings(cls, project_settings):
+        """Apply the settings from the deprecated
+        ExtractReviewDataMov plugin for backwards compatibility
+        """
+        nuke_publish = project_settings["nuke"]["publish"]
+        deprecated_setting = nuke_publish["ExtractReviewDataMov"]
+        current_setting = nuke_publish.get("ExtractReviewIntermediates")
+        if deprecated_setting["enabled"]:
+            # Use deprecated settings if they are still enabled
+            cls.viewer_lut_raw = deprecated_setting["viewer_lut_raw"]
+            cls.outputs = deprecated_setting["outputs"]
+        elif current_setting is None:
+            pass
+        elif current_setting["enabled"]:
+            cls.viewer_lut_raw = current_setting["viewer_lut_raw"]
+            cls.outputs = current_setting["outputs"]
 
     def process(self, instance):
         families = set(instance.data["families"])

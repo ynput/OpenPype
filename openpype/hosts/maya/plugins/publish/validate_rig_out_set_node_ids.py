@@ -46,7 +46,7 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
         """Get all nodes which do not match the criteria"""
 
-        out_set = instance.data["rig_sets"].get("out_SET")
+        out_set = cls.get_node(instance)
         if not out_set:
             return []
 
@@ -85,3 +85,45 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
                 continue
 
             lib.set_id(node, sibling_id, overwrite=True)
+
+    @classmethod
+    def get_node(cls, instance):
+        """Get target object nodes from out_SET
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of object nodes from out_SET
+        """
+        return instance.data["rig_sets"].get("out_SET")
+
+
+class ValidateSkeletonRigOutSetNodeIds(ValidateRigOutSetNodeIds):
+    """Validate if deformed shapes have related IDs to the original shapes
+    from skeleton set.
+
+    When a deformer is applied in the scene on a referenced mesh that already
+    had deformers then Maya will create a new shape node for the mesh that
+    does not have the original id. This validator checks whether the ids are
+    valid on all the shape nodes in the instance.
+
+    """
+
+    order = ValidateContentsOrder
+    families = ["rig.fbx"]
+    hosts = ['maya']
+    label = 'Skeleton Rig Out Set Node Ids'
+
+    @classmethod
+    def get_node(cls, instance):
+        """Get target object nodes from skeletonMesh_SET
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of object nodes from skeletonMesh_SET
+        """
+        return instance.data["rig_sets"].get(
+            "skeletonMesh_SET")

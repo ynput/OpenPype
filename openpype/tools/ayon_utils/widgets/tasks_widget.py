@@ -5,7 +5,7 @@ from openpype.tools.utils import DeselectableTreeView
 
 from .utils import RefreshThread, get_qt_icon
 
-SENDER_NAME = "qt_tasks_model"
+TASKS_MODEL_SENDER_NAME = "qt_tasks_model"
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
 PARENT_ID_ROLE = QtCore.Qt.UserRole + 2
 ITEM_NAME_ROLE = QtCore.Qt.UserRole + 3
@@ -44,14 +44,20 @@ class TasksModel(QtGui.QStandardItemModel):
         # Initial state
         self._add_invalid_selection_item()
 
-    def clear(self):
+    def _clear_items(self):
         self._items_by_name = {}
         self._has_content = False
         self._remove_invalid_items()
-        super(TasksModel, self).clear()
+        root_item = self.invisibleRootItem()
+        root_item.removeRows(0, root_item.rowCount())
 
-    def refresh(self, project_name, folder_id):
-        """Refresh tasks for folder.
+    def refresh(self):
+        """Refresh tasks for last project and folder."""
+
+        self._refresh(self._last_project_name, self._last_folder_id)
+
+    def set_context(self, project_name, folder_id):
+        """Set context for which should be tasks showed.
 
         Args:
             project_name (Union[str]): Name of project.
@@ -121,7 +127,7 @@ class TasksModel(QtGui.QStandardItemModel):
         return self._empty_tasks_item
 
     def _add_invalid_item(self, item):
-        self.clear()
+        self._clear_items()
         root_item = self.invisibleRootItem()
         root_item.appendRow(item)
 
@@ -290,6 +296,9 @@ class TasksWidget(QtWidgets.QWidget):
         handle_expected_selection (Optional[bool]): Handle expected selection.
     """
 
+    refreshed = QtCore.Signal()
+    selection_changed = QtCore.Signal()
+
     def __init__(self, controller, parent, handle_expected_selection=False):
         super(TasksWidget, self).__init__(parent)
 
@@ -299,6 +308,7 @@ class TasksWidget(QtWidgets.QWidget):
         tasks_model = TasksModel(controller)
         tasks_proxy_model = QtCore.QSortFilterProxyModel()
         tasks_proxy_model.setSourceModel(tasks_model)
+        tasks_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         tasks_view.setModel(tasks_proxy_model)
 
@@ -334,8 +344,14 @@ class TasksWidget(QtWidgets.QWidget):
         self._handle_expected_selection = handle_expected_selection
         self._expected_selection_data = None
 
-    def _clear(self):
-        self._tasks_model.clear()
+    def refresh(self):
+        """Refresh folders for last selected project.
+
+        Force to update folders model from controller. This may or may not
+        trigger query from server, that's based on controller's cache.
+        """
+
+        self._tasks_model.refresh()
 
     def _on_tasks_refresh_finished(self, event):
         """Tasks were refreshed in controller.
@@ -349,17 +365,17 @@ class TasksWidget(QtWidgets.QWidget):
 
         # Refresh only if current folder id is the same
         if (
-            event["sender"] == SENDER_NAME
+            event["sender"] == TASKS_MODEL_SENDER_NAME
             or event["folder_id"] != self._selected_folder_id
         ):
             return
-        self._tasks_model.refresh(
+        self._tasks_model.set_context(
             event["project_name"], self._selected_folder_id
         )
 
     def _folder_selection_changed(self, event):
         self._selected_folder_id = event["folder_id"]
-        self._tasks_model.refresh(
+        self._tasks_model.set_context(
             event["project_name"], self._selected_folder_id
         )
 
@@ -367,6 +383,7 @@ class TasksWidget(QtWidgets.QWidget):
         if not self._set_expected_selection():
             self._on_selection_change()
         self._tasks_proxy_model.sort(0)
+        self.refreshed.emit()
 
     def _get_selected_item_ids(self):
         selection_model = self._tasks_view.selectionModel()
@@ -387,6 +404,7 @@ class TasksWidget(QtWidgets.QWidget):
 
         parent_id, task_id, task_name = self._get_selected_item_ids()
         self._controller.set_selected_task(task_id, task_name)
+        self.selection_changed.emit()
 
     # Expected selection handling
     def _on_expected_selection_change(self, event):

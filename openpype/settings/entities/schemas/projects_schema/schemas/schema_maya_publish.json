@@ -24,6 +24,20 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "CollectFbxAnimation",
+            "label": "Collect Fbx Animation",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "CollectFbxCamera",
             "label": "Collect Camera for FBX export",
             "checkbox_key": "enabled",
@@ -418,6 +432,10 @@
             "name": "template_publish_plugin",
             "template_data": [
                 {
+                    "key": "ValidateResolution",
+                    "label": "Validate Resolution Settings"
+                },
+                {
                     "key": "ValidateCurrentRenderLayerIsRenderable",
                     "label": "Validate Current Render Layer Has Renderable Camera"
                 },
@@ -794,6 +812,10 @@
                             "label": "Validate Rig Controllers"
                         },
                         {
+                            "key": "ValidateAnimatedReferenceRig",
+                            "label": "Validate Animated Reference Rig"
+                        },
+                        {
                             "key": "ValidateAnimationContent",
                             "label": "Validate Animation Content"
                         },
@@ -809,9 +831,51 @@
                             "key": "ValidateSkeletalMeshHierarchy",
                             "label": "Validate Skeletal Mesh Top Node"
                         },
-                         {
+                        {
+                            "key": "ValidateSkeletonRigContents",
+                            "label": "Validate Skeleton Rig Contents"
+                        },
+                        {
+                            "key": "ValidateSkeletonRigControllers",
+                            "label": "Validate Skeleton Rig Controllers"
+                        },
+                        {
                             "key": "ValidateSkinclusterDeformerSet",
                             "label": "Validate Skincluster Deformer Relationships"
+                        },
+                        {
+                            "key": "ValidateSkeletonRigOutputIds",
+                            "label": "Validate Skeleton Rig Output Ids"
+                        },
+                        {
+                            "key": "ValidateSkeletonTopGroupHierarchy",
+                            "label": "Validate Skeleton Top Group Hierarchy"
+                        }
+                    ]
+                },
+
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "ValidateRigOutSetNodeIds",
+                    "label": "Validate Rig Out Set Node Ids",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "allow_history_only",
+                            "label": "Allow history only"
                         }
                     ]
                 },
@@ -819,8 +883,8 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
-                    "key": "ValidateRigOutSetNodeIds",
-                    "label": "Validate Rig Out Set Node Ids",
+                    "key": "ValidateSkeletonRigOutSetNodeIds",
+                    "label": "Validate Skeleton Rig Out Set Node Ids",
                     "is_group": true,
                     "children": [
                         {
@@ -975,6 +1039,35 @@
                     "key": "bake_attributes",
                     "label": "Bake Attributes",
                     "is_list": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractCameraMayaScene",
+            "label": "Extract camera to Maya scene",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "boolean",
+                    "key": "keep_image_planes",
+                    "label": "Export Image planes"
                 }
             ]
         },
