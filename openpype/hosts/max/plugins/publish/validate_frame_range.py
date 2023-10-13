@@ -58,7 +58,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         if frame_end_handle != inst_frame_end:
             errors.append(
                 f"End frame ({inst_frame_end}) on instance does not match "
-                f"with the end frame ({frame_end_handle}) from the asset data. ")
+                f"with the end frame ({frame_end_handle}) "
+                "from the asset data. ")
 
         if errors:
             errors.append("You can use repair action to fix it.")
