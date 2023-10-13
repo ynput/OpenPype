@@ -352,7 +352,6 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self._header_label.setText(self._controller.get_source_label())
 
     def _invalidate_new_folder_name(self, folder_name, is_valid):
-        print(folder_name)
         self._tasks_widget.setVisible(not folder_name)
         if self._folder_is_valid is is_valid:
             return
