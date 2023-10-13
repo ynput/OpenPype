@@ -577,6 +577,9 @@ def get_last_workfile_representation(
         fields=["_id"],
     )
 
+    if not last_version:
+        return
+
     return get_representations(
         project_name,
         version_ids=[last_version["_id"]],
