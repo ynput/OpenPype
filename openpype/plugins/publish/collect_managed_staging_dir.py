@@ -6,7 +6,6 @@ Requires:
 Provides:
     instance.data     -> stagingDir (folder path)
                       -> stagingDirPersistence (bool)
-                      -> stagingDirPersistence (bool) [deprecated]
 """
 import pyblish.api
 
