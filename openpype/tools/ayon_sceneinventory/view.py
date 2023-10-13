@@ -1,3 +1,4 @@
+import uuid
 import collections
 import logging
 import itertools
@@ -86,10 +87,14 @@ class SceneInventoryView(QtWidgets.QTreeView):
 
         # An item might not have a representation, for example when an item
         # is listed as "NOT FOUND"
-        repre_ids = {
-            item["representation"]
-            for item in items
-        }
+        repre_ids = set()
+        for item in items:
+            repre_id = item["representation"]
+            try:
+                uuid.UUID(repre_id)
+                repre_ids.add(repre_id)
+            except ValueError:
+                pass
 
         project_name = self._controller.get_current_project_name()
         repre_docs = get_representations(
