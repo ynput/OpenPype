@@ -15,7 +15,6 @@ from qtpy import QtCore, QtWidgets
 
 from openpype.client import (
     get_project,
-    get_asset_by_name,
     get_versions,
     get_last_versions,
     get_representations,
@@ -668,7 +667,7 @@ def read_avalon_data(node):
     return data
 
 
-def get_node_path(path, padding=4):
+def get_node_path(path, padding=None, strict=False):
     """Get filename for the Nuke write with padded number as '#'
 
     Arguments:
@@ -708,6 +707,9 @@ def get_node_path(path, padding=4):
             # remove number from end since fusion
             # will swap it with the frame number
             filename = filename.replace(match.group(1), '')
+
+    if not strict and padding is None:
+        padding = 4
 
     return filename, padding, ext
 

@@ -215,6 +215,39 @@ class NukeCreator(NewCreator):
             ):
                 created_instance["creator_attributes"].pop(key)
 
+    def get_staging_dir(self, instance):
+        """Helper method for getting staging dir for instance"""
+        versions = self.get_next_versions_for_instances([instance])
+        instance["version"] = versions[instance.id]
+        return self.apply_staging_dir(instance)
+
+    def apply_staging_dir_node(self, instance):
+        """Apply staging dir to instance node
+
+        Args:
+            instance (CreatedInstance): create instance
+            node_class (Optional[str, any]): Nuke node class. Defaults to None.
+        """
+        node = instance.transient_data.get("node")
+        if node.Class() == "Group":
+            nodes_with_filepath = [
+                n_ for n_ in nuke.allNodes(group=node)
+                if nuke.filename(n_)
+            ]
+
+            if nodes_with_filepath:
+                node = nodes_with_filepath.pop()
+
+        original_path = nuke.filename(node)
+        filename = os.path.basename(original_path)
+        self.log.info("Original path: {}".format(original_path))
+
+        dir_path = self.get_staging_dir(instance)
+        self.log.info("Staging Dir: {}".format(dir_path))
+        if dir_path and not os.path.exists(original_path):
+            new_path = os.path.join(dir_path, filename).replace("\\", "/")
+            node["file"].setValue(new_path)
+
     def update_instances(self, update_list):
         for created_inst, changes in update_list:
             instance_node = created_inst.transient_data["node"]

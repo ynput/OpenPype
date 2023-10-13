@@ -1,7 +1,8 @@
 import os
-import re
 import nuke
 import pyblish.api
+
+from openpype.hosts.nuke.api.lib import get_node_path
 
 
 class CollectNukeReads(pyblish.api.InstancePlugin):
@@ -19,14 +20,8 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
         if node.Class() != "Read":
             return
 
-        file_path = node["file"].value()
+        file_path = nuke.filename(node)
         file_name = os.path.basename(file_path)
-        items = file_name.split(".")
-
-        if len(items) < 2:
-            raise ValueError
-
-        ext = items[-1]
 
         # Get frame range
         handle_start = instance.context.data["handleStart"]
@@ -39,30 +34,21 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
         if "default" in colorspace:
             colorspace = colorspace.replace("default (", "").replace(")", "")
 
-        # # Easier way to sequence - Not tested
-        # isSequence = True
-        # if first_frame == last_frame:
-        #     isSequence = False
-
         isSequence = False
-        if len(items) > 1:
-            sequence = items[-2]
-            hash_regex = re.compile(r'([#*])')
-            seq_regex = re.compile(r'[%0-9*d]')
-            hash_match = re.match(hash_regex, sequence)
-            seq_match = re.match(seq_regex, sequence)
-            if hash_match or seq_match:
-                isSequence = True
+        filename, padding, ext = get_node_path(file_name, strict=True)
+        if padding:
+            isSequence = True
 
         # get source path
-        path = nuke.filename(node)
-        source_dir = os.path.dirname(path)
+        source_dir = os.path.dirname(file_path)
         self.log.debug('source dir: {}'.format(source_dir))
 
         if isSequence:
-            source_files = [f for f in os.listdir(source_dir)
-                            if ext in f
-                            if items[0] in f]
+            source_files = [
+                f_ for f_ in os.listdir(source_dir)
+                if ext in f_
+                if filename in f_
+            ]
         else:
             source_files = file_name
 
@@ -80,8 +66,8 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
             instance.data["representations"] = []
 
         representation = {
-            'name': ext,
-            'ext': ext,
+            'name': ext[1:],
+            'ext': ext[1:],
             'files': source_files,
             "stagingDir": source_dir,
             "frameStart": "%0{}d".format(
@@ -106,9 +92,9 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
 
         instance.data.update({
             "versionData": version_data,
-            "path": path,
+            "path": file_path,
             "stagingDir": source_dir,
-            "ext": ext,
+            "ext": ext[1:],
             "label": label,
             "frameStart": first_frame,
             "frameEnd": last_frame,
