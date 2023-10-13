@@ -171,14 +171,23 @@ class HostToolsHelper:
     def get_scene_inventory_tool(self, parent):
         """Create, cache and return scene inventory tool window."""
         if self._scene_inventory_tool is None:
-            from openpype.tools.sceneinventory import SceneInventoryWindow
-
             host = registered_host()
             ILoadHost.validate_load_methods(host)
 
-            scene_inventory_window = SceneInventoryWindow(
-                parent=parent or self._parent
-            )
+            if AYON_SERVER_ENABLED:
+                from openpype.tools.ayon_sceneinventory.window import (
+                    SceneInventoryWindow)
+
+                scene_inventory_window = SceneInventoryWindow(
+                    parent=parent or self._parent
+                )
+
+            else:
+                from openpype.tools.sceneinventory import SceneInventoryWindow
+
+                scene_inventory_window = SceneInventoryWindow(
+                    parent=parent or self._parent
+                )
             self._scene_inventory_tool = scene_inventory_window
 
         return self._scene_inventory_tool

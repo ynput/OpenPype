@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <error id="main">
+        <title>Shot/Asset name</title>
+        <description>
+## Publishing to a different asset context
+
+There are publish instances present which are publishing into a different asset than your current context.
+
+Usually this is not what you want but there can be cases where you might want to publish into another asset/shot or task.
+
+If that's the case you can disable the validation on the instance to ignore it.
+
+The wrong node's name is: \`{node_name}\`
+
+### Correct context keys and values:
+
+\`{correct_values}\`
+
+### Wrong keys and values:
+
+\`{wrong_values}\`.
+
+
+## How to repair?
+
+1. Use \"Repair\" button.
+2. Hit Reload button on the publisher.
+        </description>
+    </error>
+</root>
