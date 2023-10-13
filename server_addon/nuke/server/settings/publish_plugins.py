@@ -263,8 +263,8 @@ class PublishPuginsModel(BaseSettingsModel):
         title="Validate Backdrop",
         default_factory=OptionalPluginModel
     )
-    ValidateScript: OptionalPluginModel = Field(
-        title="Validate Script",
+    ValidateScriptAttributes: OptionalPluginModel = Field(
+        title="Validate workfile attributes",
         default_factory=OptionalPluginModel
     )
     ExtractThumbnail: ExtractThumbnailModel = Field(
@@ -345,7 +345,7 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
         "optional": True,
         "active": True
     },
-    "ValidateScript": {
+    "ValidateScriptAttributes": {
         "enabled": True,
         "optional": True,
         "active": True

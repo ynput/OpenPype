@@ -113,8 +113,8 @@
                     "label": "Validate Gizmo (Group)"
                 },
                 {
-                    "key": "ValidateScript",
-                    "label": "Validate script settings"
+                    "key": "ValidateScriptAttributes",
+                    "label": "Validate workfile attributes"
                 }
             ]
         },
