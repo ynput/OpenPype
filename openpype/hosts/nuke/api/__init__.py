@@ -50,6 +50,8 @@ from .utils import (
     get_colorspace_list
 )
 
+from .actions import SelectInvalidAction
+
 __all__ = (
     "file_extensions",
     "has_unsaved_changes",
@@ -92,5 +94,7 @@ __all__ = (
     "create_write_node",
 
     "colorspace_exists_on_node",
-    "get_colorspace_list"
+    "get_colorspace_list",
+
+    "SelectInvalidAction",
 )
