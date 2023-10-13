@@ -468,7 +468,8 @@ class InvalidContextOverlay(QtWidgets.QFrame):
         lines = []
         if not project_found:
             lines.extend([
-                "Requested project {} was not found...".format(project_name),
+                "Requested project '{}' was not found...".format(
+                    project_name),
             ])
 
         elif not folder_found:
