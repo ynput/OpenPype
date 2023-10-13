@@ -5,7 +5,7 @@ from pymxs import runtime as rt
 
 
 class CollectFrameRange(pyblish.api.InstancePlugin):
-    """Collect Set Members."""
+    """Collect Frame Range."""
 
     order = pyblish.api.CollectorOrder + 0.01
     label = "Collect Frame Range"
