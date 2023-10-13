@@ -146,13 +146,15 @@ def suspended_refresh(suspend=True):
 
     cmds.ogs(pause=True) is a toggle so we cant pass False.
     """
-    original_state = cmds.ogs(query=True, pause=True)
+    original_state = None
+    if not IS_HEADLESS:
+        original_state = cmds.ogs(query=True, pause=True)
     try:
-        if suspend and not original_state:
+        if suspend and not original_state and not IS_HEADLESS:
             cmds.ogs(pause=True)
         yield
     finally:
-        if suspend and not original_state:
+        if suspend and not original_state and not IS_HEADLESS:
             cmds.ogs(pause=True)
 
 
