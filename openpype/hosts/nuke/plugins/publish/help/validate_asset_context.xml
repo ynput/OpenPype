@@ -11,7 +11,7 @@ Usually this is not what you want but there can be cases where you might want to
 
 If that's the case you can disable the validation on the instance to ignore it.
 
-Following Node with name is wrong: \`{node_name}\`
+The wrong node's name is: \`{node_name}\`
 
 ### Correct context keys and values:
 
