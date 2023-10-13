@@ -10,11 +10,13 @@ import six
 import pyblish.api
 
 from openpype import resources, PACKAGE_DIR
-from openpype.pipeline import publish
+from openpype.pipeline import (
+    publish,
+    get_temp_dir
+)
 from openpype.lib import (
     run_openpype_process,
 
-    get_transcode_temp_directory,
     convert_input_paths_for_ffmpeg,
     should_convert_for_ffmpeg
 )
@@ -233,7 +235,11 @@ class ExtractBurnin(publish.Extractor):
             #   - change staging dir of source representation
             #   - must be set back after output definitions processing
             if do_convert:
-                new_staging_dir = get_transcode_temp_directory()
+                new_staging_dir = get_temp_dir(
+                    project_name=instance.context.data["projectName"],
+                    make_local=True,
+                    prefix="op_transcoding_"
+                )
                 repre["stagingDir"] = new_staging_dir
 
                 convert_input_paths_for_ffmpeg(
