@@ -105,8 +105,8 @@ class CreateMultishotLayout(plugin.MayaCreator):
         ]
 
     def create(self, subset_name, instance_data, pre_create_data):
-        shots = self.get_related_shots(
-            folder_path=pre_create_data["shotParent"]
+        shots = list(
+            self.get_related_shots(folder_path=pre_create_data["shotParent"])
         )
         if not shots:
             # There are no shot folders under the specified folder.
