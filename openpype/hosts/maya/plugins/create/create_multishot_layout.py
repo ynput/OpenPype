@@ -194,7 +194,7 @@ class CreateMultishotLayout(plugin.MayaCreator):
             parent_id = current_folder["id"]
 
         # get all child folders of the current one
-        child_folders = get_folders(
+        return get_folders(
             project_name=self.project_name,
             parent_ids=[parent_id],
             fields=[
@@ -203,7 +203,6 @@ class CreateMultishotLayout(plugin.MayaCreator):
                 "name", "label", "path", "folderType", "id"
             ]
         )
-        return [f for f in child_folders if f["folderType"] == "Shot"]
 
 
 # blast this creator if Ayon server is not enabled
