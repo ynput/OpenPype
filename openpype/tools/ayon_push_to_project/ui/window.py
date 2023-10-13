@@ -11,7 +11,7 @@ from openpype.tools.utils import (
 )
 from openpype.tools.utils.views import DeselectableTreeView
 
-from .control_context import PushToContextController
+from openpype.tools.ayon_push_to_project import PushToContextController
 
 PROJECT_NAME_ROLE = QtCore.Qt.UserRole + 1
 ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
