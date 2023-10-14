@@ -338,7 +338,7 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self._side_panel.set_published_mode(published_mode)
 
     def _on_folder_filter_change(self, text):
-        self._folder_widget.set_name_filer(text)
+        self._folder_widget.set_name_filter(text)
 
     def _on_go_to_current_clicked(self):
         self._controller.go_to_current_context()

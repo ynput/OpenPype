@@ -382,7 +382,7 @@ class LoaderWindow(QtWidgets.QWidget):
             self._controller.reset()
 
     def _show_group_dialog(self):
-        project_name = self._projects_combobox.get_current_project_name()
+        project_name = self._projects_combobox.get_selected_project_name()
         if not project_name:
             return
 
@@ -397,7 +397,7 @@ class LoaderWindow(QtWidgets.QWidget):
         self._group_dialog.show()
 
     def _on_folder_filter_change(self, text):
-        self._folders_widget.set_name_filer(text)
+        self._folders_widget.set_name_filter(text)
 
     def _on_product_group_change(self):
         self._products_widget.set_enable_grouping(
@@ -405,7 +405,7 @@ class LoaderWindow(QtWidgets.QWidget):
         )
 
     def _on_product_filter_change(self, text):
-        self._products_widget.set_name_filer(text)
+        self._products_widget.set_name_filter(text)
 
     def _on_product_type_filter_change(self):
         self._products_widget.set_product_type_filter(
@@ -419,7 +419,7 @@ class LoaderWindow(QtWidgets.QWidget):
     def _on_products_selection_change(self):
         items = self._products_widget.get_selected_version_info()
         self._info_widget.set_selected_version_info(
-            self._projects_combobox.get_current_project_name(),
+            self._projects_combobox.get_selected_project_name(),
             items
         )
 

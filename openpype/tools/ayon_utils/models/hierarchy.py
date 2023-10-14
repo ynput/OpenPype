@@ -29,16 +29,21 @@ class FolderItem:
         parent_id (Union[str, None]): Parent folder id. If 'None' then project
             is parent.
         name (str): Name of folder.
+        path (str): Folder path.
+        folder_type (str): Type of folder.
         label (Union[str, None]): Folder label.
         icon (Union[dict[str, Any], None]): Icon definition.
     """
 
     def __init__(
-        self, entity_id, parent_id, name, label, icon
+        self, entity_id, parent_id, name, path, folder_type, label, icon
     ):
         self.entity_id = entity_id
         self.parent_id = parent_id
         self.name = name
+        self.path = path
+        self.folder_type = folder_type
+        self.label = label or name
         if not icon:
             icon = {
                 "type": "awesome-font",
@@ -46,7 +51,6 @@ class FolderItem:
                 "color": get_default_entity_icon_color()
             }
         self.icon = icon
-        self.label = label or name
 
     def to_data(self):
         """Converts folder item to data.
@@ -59,6 +63,8 @@ class FolderItem:
             "entity_id": self.entity_id,
             "parent_id": self.parent_id,
             "name": self.name,
+            "path": self.path,
+            "folder_type": self.folder_type,
             "label": self.label,
             "icon": self.icon,
         }
@@ -90,8 +96,7 @@ class TaskItem:
         name (str): Name of task.
         task_type (str): Type of task.
         parent_id (str): Parent folder id.
-        icon_name (str): Name of icon from font awesome.
-        icon_color (str): Hex color string that will be used for icon.
+        icon (Union[dict[str, Any], None]): Icon definitions.
     """
 
     def __init__(
@@ -183,12 +188,31 @@ def _get_task_items_from_tasks(tasks):
 
 
 def _get_folder_item_from_hierarchy_item(item):
+    name = item["name"]
+    path_parts = list(item["parents"])
+    path_parts.append(name)
+
     return FolderItem(
         item["id"],
         item["parentId"],
-        item["name"],
+        name,
+        "/".join(path_parts),
+        item["folderType"],
         item["label"],
-        None
+        None,
+    )
+
+
+def _get_folder_item_from_entity(entity):
+    name = entity["name"]
+    return FolderItem(
+        entity["id"],
+        entity["parentId"],
+        name,
+        entity["path"],
+        entity["folderType"],
+        entity["label"] or name,
+        None,
     )
 
 
@@ -223,12 +247,83 @@ class HierarchyModel(object):
         self._tasks_by_id.reset()
 
     def refresh_project(self, project_name):
+        """Force to refresh folder items for a project.
+
+        Args:
+            project_name (str): Name of project to refresh.
+        """
+
         self._refresh_folders_cache(project_name)
 
     def get_folder_items(self, project_name, sender):
+        """Get folder items by project name.
+
+        The folders are cached per project name. If the cache is not valid
+        then the folders are queried from server.
+
+        Args:
+            project_name (str): Name of project where to look for folders.
+            sender (Union[str, None]): Who requested the folder ids.
+
+        Returns:
+            dict[str, FolderItem]: Folder items by id.
+        """
+
         if not self._folders_items[project_name].is_valid:
             self._refresh_folders_cache(project_name, sender)
         return self._folders_items[project_name].get_data()
+
+    def get_folder_items_by_id(self, project_name, folder_ids):
+        """Get folder items by ids.
+
+        This function will query folders if they are not in cache. But the
+        queried items are not added to cache back.
+
+        Args:
+            project_name (str): Name of project where to look for folders.
+            folder_ids (Iterable[str]): Folder ids.
+
+        Returns:
+            dict[str, Union[FolderItem, None]]: Folder items by id.
+        """
+
+        folder_ids = set(folder_ids)
+        if self._folders_items[project_name].is_valid:
+            cache_data = self._folders_items[project_name].get_data()
+            return {
+                folder_id: cache_data.get(folder_id)
+                for folder_id in folder_ids
+            }
+        folders = ayon_api.get_folders(
+            project_name,
+            folder_ids=folder_ids,
+            fields=["id", "name", "label", "parentId", "path", "folderType"]
+        )
+        # Make sure all folder ids are in output
+        output = {folder_id: None for folder_id in folder_ids}
+        output.update({
+            folder["id"]: _get_folder_item_from_entity(folder)
+            for folder in folders
+        })
+        return output
+
+    def get_folder_item(self, project_name, folder_id):
+        """Get folder items by id.
+
+        This function will query folder if they is not in cache. But the
+        queried items are not added to cache back.
+
+        Args:
+            project_name (str): Name of project where to look for folders.
+            folder_id (str): Folder id.
+
+        Returns:
+            Union[FolderItem, None]: Folder item.
+        """
+        items = self.get_folder_items_by_id(
+            project_name, [folder_id]
+        )
+        return items.get(folder_id)
 
     def get_task_items(self, project_name, folder_id, sender):
         if not project_name or not folder_id:
