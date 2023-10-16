@@ -26,7 +26,8 @@ class TrayPublisherHost(HostBase, IPublishHost):
         os.environ["AVALON_APP"] = self.name
         legacy_io.Session["AVALON_APP"] = self.name
 
-        pyblish.api.register_host("traypublisher")
+        # pyblish.api.register_host("traypublisher")
+        pyblish.api.register_host(self.name)
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_creator_plugin_path(CREATE_PATH)
 
