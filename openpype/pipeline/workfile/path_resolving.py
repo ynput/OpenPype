@@ -7,16 +7,15 @@ from openpype.client import (
     get_project,
     get_asset_by_name,
     get_representations,
-    get_last_version_by_subset_name,
 )
-from openpype.pipeline.create import get_subset_name
+from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 from openpype.lib import (
     filter_profiles,
     Logger,
     StringTemplate,
 )
-from openpype.pipeline import version_start, Anatomy
+from openpype.pipeline import version_start, Anatomy, HOST_WORKFILE_EXTENSIONS
 from openpype.pipeline.template_data import get_template_data
 
 
@@ -546,8 +545,6 @@ def get_last_workfile_representation(
     project_name,
     asset_name,
     task_name,
-    asset_id=None,
-    asset_doc=None,
     host_name=None,
     fields=None,
 ):
@@ -557,9 +554,6 @@ def get_last_workfile_representation(
         project_name(str): Project name.
         asset_name(str): Asset/Shot name.
         task_name (str): Task name.
-        asset_id (Optional[Union[str, ObjectId]]): Asset id.
-            subset name. Defaults to None.
-        asset_doc (Optional[dict]): Asset doc. Defaults to None.
         host_name (Optional[str]): Host name.
         fields (Optional[Iterable[str]]): Fields that should be returned.
             Defaults to None.
@@ -567,29 +561,27 @@ def get_last_workfile_representation(
     Returns:
         dict: Last workfile representation.
     """
-    if not asset_doc:
-        asset_doc = get_asset_by_name(project_name, asset_name)
+    # Get workfile extensions
+    host_module = ModulesManager().get_host_module(host_name)
+    if host_module:
+        extensions = host_module.get_workfile_extensions()
+    else:
+        extensions = HOST_WORKFILE_EXTENSIONS.get(host_name)
 
-    last_version = get_last_version_by_subset_name(
-        project_name,
-        get_subset_name(
-            "workfile",
-            "main",
-            task_name,
-            asset_doc,
-            project_name=project_name,
-            host_name=host_name,
-        ),
-        asset_id=asset_id,
-        asset_name=asset_name,
-        fields=["_id"],
-    )
+    # Get filtered representations
+    filtered_repres = []
+    for repre in get_representations(project_name, fields=fields):
+        context = repre.get("context")
 
-    if not last_version:
-        return
+        if (
+            context.get("asset") == asset_name
+            and context.get("task", {}).get("name") == task_name
+            and context.get("family") == "workfile"
+            and ".{}".format(context.get('ext')) in extensions
+        ):
+            filtered_repres.append(repre)
 
-    return get_representations(
-        project_name,
-        version_ids=[last_version["_id"]],
-        fields=fields,
-    )[0]
+    if filtered_repres:
+        return max(
+            filtered_repres, key=lambda r: r.get("context", {}).get("version")
+        )

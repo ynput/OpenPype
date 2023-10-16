@@ -109,14 +109,12 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         self.log.info("Trying to fetch last published workfile...")
 
-        asset_doc = self.data.get("asset_doc")
         anatomy = self.data.get("anatomy")
 
         workfile_representation = get_last_workfile_representation(
             project_name,
             asset_name,
             task_name,
-            asset_doc=asset_doc,
             host_name=host_name,
         )
         if not workfile_representation:
@@ -151,7 +149,7 @@ class CopyLastPublishedWorkfile(PreLaunchHook):
 
         # Get workfile data
         workfile_data = get_template_data(
-            project_doc, asset_doc, task_name, host_name
+            project_doc, self.data.get("asset_doc"), task_name, host_name
         )
 
         extension = last_published_workfile_path.split(".")[-1]
