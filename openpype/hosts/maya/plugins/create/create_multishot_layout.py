@@ -37,7 +37,7 @@ class CreateMultishotLayout(plugin.MayaCreator):
         # selected folder to create the Camera Sequencer.
 
         """
-        Todo: get this needs to be switched to get_folder_by_path
+        Todo: `get_folder_by_name` should be switched to `get_folder_by_path`
               once the fork to pure AYON is done.
 
         Warning: this will not work for projects where the asset name
