@@ -34,14 +34,23 @@ def set_custom_deadline_name(instance, filename, setting):
     }
 
     custom_name_settings = get_current_project_settings()["deadline"][setting]  # noqa
-    custom_name = custom_name_settings.format_map(SafeDict(**formatting_data))
+    try:
+        custom_name = custom_name_settings.format_map(
+            SafeDict(**formatting_data)
+        )
 
-    for m in re.finditer("__", custom_name):
-        custom_name_list = list(custom_name)
-        custom_name_list.pop(m.start())
-        custom_name = "".join(custom_name_list)
+        for m in re.finditer("__", custom_name):
+            custom_name_list = list(custom_name)
+            custom_name_list.pop(m.start())
+            custom_name = "".join(custom_name_list)
 
-    if custom_name.endswith("_"):
-        custom_name = custom_name[:-1]
+        if custom_name.endswith("_"):
+            custom_name = custom_name[:-1]
+    except Exception as e:
+        raise KeyError(
+            "OpenPype Studio Settings (Deadline section): Syntax issue(s) "
+            "in \"Job Name\" or \"Batch Name\" for the current project. "
+            "Error: {}".format(e)
+        )
 
     return custom_name
