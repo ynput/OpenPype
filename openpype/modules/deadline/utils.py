@@ -23,6 +23,7 @@ def set_custom_deadline_name(instance, filename, setting):
         "family": instance.data.get("family"),
         "comment": instance.data.get("comment"),
         "subversion": subversion,
+        "inst_name": instance.data.get("name"),
         "ext": ext[1:]
     }
 
