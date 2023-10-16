@@ -11,9 +11,15 @@ Provides:
     instance -> families (adding ["review", "ftrack"])
 """
 
-import opentimelineio as otio
-import pyblish.api
 from pprint import pformat
+
+try:
+    import opentimelineio as otio
+except ImportError:
+    # Not all hosts can import this module.
+    pass
+
+import pyblish.api
 
 
 class CollectOtioReview(pyblish.api.InstancePlugin):

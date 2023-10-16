@@ -15,7 +15,12 @@ from openpype.lib import (
     run_subprocess,
 )
 from openpype.pipeline import publish
-from openpype.pipeline.editorial import frames_to_seconds
+
+try:
+    from openpype.pipeline.editorial import frames_to_seconds
+except ModuleNotFoundError:
+    # Not all hosts can import this modules.
+    pass
 
 
 class ExtractOTIOTrimmingVideo(publish.Extractor):

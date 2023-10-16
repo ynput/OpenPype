@@ -984,6 +984,9 @@ class ApplicationLaunchContext:
             self.launch_args.extend(self.data.pop("app_args"))
 
         # Handle launch environemtns
+        stdout = data.pop("stdout", None)
+        stderr = data.pop("stderr", None)
+
         src_env = self.data.pop("env", None)
         if src_env is not None and not isinstance(src_env, dict):
             self.log.warning((
@@ -1015,6 +1018,12 @@ class ApplicationLaunchContext:
         if not sys.stdout:
             self.kwargs["stdout"] = subprocess.DEVNULL
             self.kwargs["stderr"] = subprocess.DEVNULL
+
+        if stdout:
+            self.kwargs["stdout"] = stdout
+
+        if stderr:
+            self.kwargs["stderr"] = stderr
 
         self.prelaunch_hooks = None
         self.postlaunch_hooks = None

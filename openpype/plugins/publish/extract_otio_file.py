@@ -1,8 +1,14 @@
 import os
+
 import pyblish.api
-import opentimelineio as otio
 
 from openpype.pipeline import publish
+
+try:
+    import opentimelineio as otio
+except ModuleNotFoundError:
+    # Not all hosts can import this modules.
+    pass
 
 
 class ExtractOTIOFile(publish.Extractor):

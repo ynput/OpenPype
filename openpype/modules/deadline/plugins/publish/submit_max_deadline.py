@@ -1,8 +1,8 @@
 import os
 import getpass
 import copy
-
 import attr
+
 from openpype.lib import (
     TextDef,
     BoolDef,
@@ -15,14 +15,19 @@ from openpype.pipeline import (
 from openpype.pipeline.publish.lib import (
     replace_with_published_scene_path
 )
-from openpype.hosts.max.api.lib import (
-    get_current_renderer,
-    get_multipass_setting
-)
-from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import is_running_from_build
+
+try:
+    from openpype.hosts.max.api.lib_rendersettings import RenderSettings
+    from openpype.hosts.max.api.lib import (
+        get_current_renderer,
+        get_multipass_setting
+    )
+except ModuleNotFoundError:
+    # Not all hosts can import these modules.
+    pass
 
 
 @attr.s

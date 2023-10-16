@@ -6,8 +6,6 @@ import getpass
 import attr
 from datetime import datetime
 
-import bpy
-
 from openpype.lib import is_running_from_build
 from openpype.pipeline import legacy_io
 from openpype.pipeline.farm.tools import iter_expected_files
@@ -15,6 +13,12 @@ from openpype.tests.lib import is_in_tests
 
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+
+try:
+    import bpy
+except ModuleNotFoundError:
+    # Not all hosts can import this module.
+    pass
 
 
 @attr.s

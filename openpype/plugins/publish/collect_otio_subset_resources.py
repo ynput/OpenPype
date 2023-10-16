@@ -6,17 +6,26 @@ Provides:
     instance -> otioReviewClips
 """
 import os
+
 import clique
-import opentimelineio as otio
+
 import pyblish.api
-from openpype.pipeline.editorial import (
-    get_media_range_with_retimes,
-    range_from_frames,
-    make_sequence_collection
-)
+
+try:
+    import opentimelineio as otio
+    from openpype.pipeline.editorial import (
+        get_media_range_with_retimes,
+        range_from_frames,
+        make_sequence_collection
+    )
+except ModuleNotFoundError:
+    # Not all hosts can import these modules.
+    pass
+
 from openpype.pipeline.publish import (
     get_publish_template_name
 )
+
 
 class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
     """Get Resources for a subset version"""
@@ -25,7 +34,6 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.491
     families = ["clip"]
     hosts = ["resolve", "hiero", "flame"]
-
 
     def process(self, instance):
 

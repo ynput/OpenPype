@@ -15,8 +15,8 @@ Provides:
 """
 
 import os
+
 import clique
-import opentimelineio as otio
 from pyblish import api
 
 from openpype.lib import (
@@ -24,13 +24,19 @@ from openpype.lib import (
     run_subprocess,
 )
 from openpype.pipeline import publish
-from openpype.pipeline.editorial import (
-    otio_range_to_frame_range,
-    trim_media_range,
-    range_from_frames,
-    frames_to_seconds,
-    make_sequence_collection
-)
+
+try:
+    import opentimelineio as otio
+    from openpype.pipeline.editorial import (
+        otio_range_to_frame_range,
+        trim_media_range,
+        range_from_frames,
+        frames_to_seconds,
+        make_sequence_collection
+    )
+except ModuleNotFoundError:
+    # Not all hosts can import these modules.
+    pass
 
 
 class ExtractOTIOReview(publish.Extractor):

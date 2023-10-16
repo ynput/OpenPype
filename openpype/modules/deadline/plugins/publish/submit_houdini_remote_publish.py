@@ -3,13 +3,18 @@ import json
 from datetime import datetime
 
 import requests
-import hou
 
 import pyblish.api
 
 from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
+
+try:
+    import hou
+except ModuleNotFoundError:
+    # Not all hosts can import this module.
+    pass
 
 
 class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):

@@ -1,9 +1,8 @@
-import hou
-
 import os
 import attr
 import getpass
 from datetime import datetime
+
 import pyblish.api
 
 from openpype.pipeline import legacy_io
@@ -11,6 +10,12 @@ from openpype.tests.lib import is_in_tests
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import is_running_from_build
+
+try:
+    import hou
+except ModuleNotFoundError:
+    # Not all hosts can import this module.
+    pass
 
 
 @attr.s

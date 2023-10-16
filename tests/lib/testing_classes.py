@@ -10,6 +10,8 @@ import glob
 import platform
 import requests
 import re
+import time
+import subprocess
 
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler
@@ -315,7 +317,9 @@ class PublishTest(ModuleUnitTest):
             "start_last_workfile": True,
             "project_name": self.PROJECT,
             "asset_name": self.ASSET,
-            "task_name": self.TASK
+            "task_name": self.TASK,
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE
         }
         if app_args:
             data["app_args"] = app_args
@@ -331,11 +335,13 @@ class PublishTest(ModuleUnitTest):
             print("Creating only setup for test, not launching app")
             yield False
             return
-        import time
+
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
         timeout = float(timeout)
+
         while launched_app.poll() is None:
+            out, err = launched_app.communicate()
             time.sleep(0.5)
             if time.time() - time_start > timeout:
                 launched_app.terminate()
@@ -343,7 +349,10 @@ class PublishTest(ModuleUnitTest):
 
         # some clean exit test possible?
         print("Publish finished")
-        yield True
+        msg = "Launched app errored:\n{}"
+        assert launched_app.returncode == 0, msg.format(err.decode("utf-8"))
+
+        yield out.decode("utf-8")
 
     def test_folder_structure_same(self, dbcon, publish_finished,
                                    download_test_data, output_folder_url,

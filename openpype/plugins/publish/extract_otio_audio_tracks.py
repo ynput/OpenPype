@@ -1,11 +1,18 @@
 import os
+import tempfile
+
 import pyblish
+
 from openpype.lib import (
     get_ffmpeg_tool_args,
     run_subprocess
 )
-import tempfile
-import opentimelineio as otio
+
+try:
+    import opentimelineio as otio
+except ModuleNotFoundError:
+    # Not all hosts can import this modules.
+    pass
 
 
 class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
