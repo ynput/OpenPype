@@ -14,12 +14,8 @@ from openpype.tools.ayon_utils.models import ProjectsModel, HierarchyModel
 
 from .models import (
     PushToProjectSelectionModel,
-
     UserPublishValuesModel,
-
-    ProjectPushItem,
-    ProjectPushItemProcess,
-    ProjectPushItemStatus,
+    IntegrateModel,
 )
 
 
@@ -29,6 +25,7 @@ class PushToContextController:
 
         self._projects_model = ProjectsModel(self)
         self._hierarchy_model = HierarchyModel(self)
+        self._integrate_model = IntegrateModel(self)
 
         self._selection_model = PushToProjectSelectionModel(self)
         self._user_values = UserPublishValuesModel(self)
@@ -42,7 +39,7 @@ class PushToContextController:
 
         self._submission_enabled = False
         self._process_thread = None
-        self._process_item = None
+        self._process_item_id = None
 
         self.set_source(project_name, version_id)
 
@@ -58,6 +55,13 @@ class PushToContextController:
         self._event_system.add_callback(topic, callback)
 
     def set_source(self, project_name, version_id):
+        """Set source project and version.
+
+        Args:
+            project_name (Union[str, None]): Source project name.
+            version_id (Union[str, None]): Source version id.
+        """
+
         if (
             project_name == self._src_project_name
             and version_id == self._src_version_id
@@ -101,6 +105,12 @@ class PushToContextController:
         )
 
     def get_source_label(self):
+        """Get source label.
+
+        Returns:
+            str: Label describing source project and version as path.
+        """
+
         if self._src_label is None:
             self._src_label = self._prepare_source_label()
         return self._src_label
@@ -142,6 +152,9 @@ class PushToContextController:
     def set_selected_task(self, task_id, task_name):
         self._selection_model.set_selected_task(task_id, task_name)
 
+    def get_process_item_status(self, item_id):
+        return self._integrate_model.get_item_status(item_id)
+
     # Processing methods
     def submit(self, wait=True):
         if not self._submission_enabled:
@@ -150,7 +163,7 @@ class PushToContextController:
         if self._process_thread is not None:
             return
 
-        item = ProjectPushItem(
+        item_id = self._integrate_model.create_process_item(
             self._src_project_name,
             self._src_version_id,
             self._selection_model.get_selected_project_name(),
@@ -162,19 +175,17 @@ class PushToContextController:
             dst_version=1
         )
 
-        status_item = ProjectPushItemStatus(event_system=self._event_system)
-        process_item = ProjectPushItemProcess(item, status_item)
-        self._process_item = process_item
+        self._process_item_id = item_id
         self._emit_event("submit.started")
         if wait:
             self._submit_callback()
-            self._process_item = None
-            return process_item
+            self._process_item_id = None
+            return item_id
 
         thread = threading.Thread(target=self._submit_callback)
         self._process_thread = thread
         thread.start()
-        return process_item
+        return item_id
 
     def wait_for_process_thread(self):
         if self._process_thread is None:
@@ -316,13 +327,13 @@ class PushToContextController:
         )
 
     def _submit_callback(self):
-        process_item = self._process_item
-        if process_item is None:
+        process_item_id = self._process_item_id
+        if process_item_id is None:
             return
-        process_item.process()
+        self._integrate_model.integrate_item(process_item_id)
         self._emit_event("submit.finished", {})
-        if process_item is self._process_item:
-            self._process_item = None
+        if process_item_id == self._process_item_id:
+            self._process_item_id = None
 
     def _emit_event(self, topic, data=None):
         if data is None:

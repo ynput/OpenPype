@@ -4,6 +4,7 @@ from .integrate import (
     ProjectPushItem,
     ProjectPushItemProcess,
     ProjectPushItemStatus,
+    IntegrateModel,
 )
 
 
@@ -15,4 +16,5 @@ __all__ = (
     "ProjectPushItem",
     "ProjectPushItemProcess",
     "ProjectPushItemStatus",
+    "IntegrateModel",
 )

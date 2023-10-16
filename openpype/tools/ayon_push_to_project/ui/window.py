@@ -231,7 +231,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self._main_thread_timer = main_thread_timer
         self._main_thread_timer_can_stop = True
         self._last_submit_message = None
-        self._process_item = None
+        self._process_item_id = None
 
         self._variant_is_valid = None
         self._folder_is_valid = None
@@ -380,10 +380,10 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
         self.close()
 
     def _on_select_click(self):
-        self._process_item = self._controller.submit(wait=False)
+        self._process_item_id = self._controller.submit(wait=False)
 
     def _on_try_again_click(self):
-        self._process_item = None
+        self._process_item_id = None
         self._last_submit_message = None
 
         self._overlay_close_btn.setVisible(False)
@@ -395,9 +395,11 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
             self._overlay_label.setText(self._last_submit_message)
             self._last_submit_message = None
 
-        process_status = self._process_item.status
-        push_failed = process_status.failed
-        fail_traceback = process_status.traceback
+        process_status = self._controller.get_process_item_status(
+            self._process_item_id
+        )
+        push_failed = process_status["failed"]
+        fail_traceback = process_status["full_traceback"]
         if self._main_thread_timer_can_stop:
             self._main_thread_timer.stop()
             self._overlay_close_btn.setVisible(True)
@@ -405,7 +407,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
                 self._overlay_try_btn.setVisible(True)
 
         if push_failed:
-            message = "Push Failed:\n{}".format(process_status.fail_reason)
+            message = "Push Failed:\n{}".format(process_status["fail_reason"])
             if fail_traceback:
                 message += "\n{}".format(fail_traceback)
             self._overlay_label.setText(message)
@@ -415,7 +417,7 @@ class PushToContextSelectWindow(QtWidgets.QWidget):
             # Join thread in controller
             self._controller.wait_for_process_thread()
             # Reset process item to None
-            self._process_item = None
+            self._process_item_id = None
 
     def _on_controller_submit_start(self):
         self._main_thread_timer_can_stop = False

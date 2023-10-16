@@ -6,6 +6,7 @@ import itertools
 import datetime
 import sys
 import traceback
+import uuid
 
 from bson.objectid import ObjectId
 
@@ -98,38 +99,62 @@ class ProjectPushItem:
         src_project_name,
         src_version_id,
         dst_project_name,
-        dst_asset_id,
+        dst_folder_id,
         dst_task_name,
         variant,
-        comment=None,
-        new_asset_name=None,
-        dst_version=None
+        comment,
+        new_folder_name,
+        dst_version,
+        item_id=None,
     ):
+        if not item_id:
+            item_id = uuid.uuid4().hex
         self.src_project_name = src_project_name
         self.src_version_id = src_version_id
         self.dst_project_name = dst_project_name
-        self.dst_asset_id = dst_asset_id
+        self.dst_folder_id = dst_folder_id
         self.dst_task_name = dst_task_name
         self.dst_version = dst_version
         self.variant = variant
-        self.new_asset_name = new_asset_name
+        self.new_folder_name = new_folder_name
         self.comment = comment or ""
-        self._id = "|".join([
-            src_project_name,
-            src_version_id,
-            dst_project_name,
-            str(dst_asset_id),
-            str(new_asset_name),
-            str(dst_task_name),
-            str(dst_version)
-        ])
+        self.item_id = item_id
+        self._repr_value = None
 
     @property
-    def id(self):
-        return self._id
+    def _repr(self):
+        if not self._repr_value:
+            self._repr_value = "|".join([
+                self.src_project_name,
+                self.src_version_id,
+                self.dst_project_name,
+                str(self.dst_folder_id),
+                str(self.new_folder_name),
+                str(self.dst_task_name),
+                str(self.dst_version)
+            ])
+        return self._repr_value
 
     def __repr__(self):
-        return "<{} - {}>".format(self.__class__.__name__, self.id)
+        return "<{} - {}>".format(self.__class__.__name__, self._repr)
+
+    def to_data(self):
+        return {
+            "src_project_name": self.src_project_name,
+            "src_version_id": self.src_version_id,
+            "dst_project_name": self.dst_project_name,
+            "dst_folder_id": self.dst_folder_id,
+            "dst_task_name": self.dst_task_name,
+            "dst_version": self.dst_version,
+            "variant": self.variant,
+            "comment": self.comment,
+            "new_folder_name": self.new_folder_name,
+            "item_id": self.item_id,
+        }
+
+    @classmethod
+    def from_data(cls, data):
+        return cls(**data)
 
 
 class StatusMessage:
@@ -149,49 +174,17 @@ class StatusMessage:
 class ProjectPushItemStatus:
     def __init__(
         self,
+        started=False,
         failed=False,
         finished=False,
         fail_reason=None,
-        formatted_traceback=None,
-        messages=None,
-        event_system=None
+        full_traceback=None
     ):
-        if messages is None:
-            messages = []
-        self._failed = failed
-        self._finished = finished
-        self._fail_reason = fail_reason
-        self._traceback = formatted_traceback
-        self._messages = messages
-        self._event_system = event_system
-
-    def emit_event(self, topic, data=None):
-        if self._event_system is None:
-            return
-
-        self._event_system.emit(topic, data or {}, "push.status")
-
-    def get_finished(self):
-        """Processing of push to project finished.
-
-        Returns:
-            bool: Finished.
-        """
-
-        return self._finished
-
-    def set_finished(self, finished=True):
-        """Mark status as finished.
-
-        Args:
-            finished (bool): Processing finished (failed or not).
-        """
-
-        if finished != self._finished:
-            self._finished = finished
-            self.emit_event("push.finished.changed", {"finished": finished})
-
-    finished = property(get_finished, set_finished)
+        self.started = started
+        self.failed = failed
+        self.finished = finished
+        self.fail_reason = fail_reason
+        self.full_traceback = full_traceback
 
     def set_failed(self, fail_reason, exc_info=None):
         """Set status as failed.
@@ -201,8 +194,8 @@ class ProjectPushItemStatus:
         is set to 'True' and reason is not set.
 
         Args:
-            failed (bool): Push to project failed.
             fail_reason (str): Reason why failed.
+            exc_info(tuple): Exception info.
         """
 
         failed = True
@@ -215,84 +208,22 @@ class ProjectPushItemStatus:
             if not fail_reason:
                 fail_reason = "Failed without specified reason"
 
-        if (
-            self._failed == failed
-            and self._traceback == full_traceback
-            and self._fail_reason == fail_reason
-        ):
-            return
+        self.failed = failed
+        self.fail_reason = fail_reason or None
+        self.full_traceback = full_traceback
 
-        self._failed = failed
-        self._fail_reason = fail_reason or None
-        self._traceback = full_traceback
+    def to_data(self):
+        return {
+            "started": self.started,
+            "failed": self.failed,
+            "finished": self.finished,
+            "fail_reason": self.fail_reason,
+            "full_traceback": self.full_traceback,
+        }
 
-        self.emit_event(
-            "push.failed.changed",
-            {
-                "failed": failed,
-                "reason": fail_reason,
-                "traceback": full_traceback
-            }
-        )
-
-    @property
-    def failed(self):
-        """Processing failed.
-
-        Returns:
-            bool: Processing failed.
-        """
-
-        return self._failed
-
-    @property
-    def fail_reason(self):
-        """Reason why push to process failed.
-
-        Returns:
-            Union[str, None]: Reason why push failed or None.
-        """
-
-        return self._fail_reason
-
-    @property
-    def traceback(self):
-        """Traceback of failed process.
-
-        Traceback is available only if unhandled exception happened.
-
-        Returns:
-            Union[str, None]: Formatted traceback.
-        """
-
-        return self._traceback
-
-    # Loggin helpers
-    # TODO better logging
-    def add_message(self, message, level):
-        message_obj = StatusMessage(message, level)
-        self._messages.append(message_obj)
-        self.emit_event(
-            "push.message.added",
-            {"message": message, "level": level}
-        )
-        print(message_obj)
-        return message_obj
-
-    def debug(self, message):
-        return self.add_message(message, "debug")
-
-    def info(self, message):
-        return self.add_message(message, "info")
-
-    def warning(self, message):
-        return self.add_message(message, "warning")
-
-    def error(self, message):
-        return self.add_message(message, "error")
-
-    def critical(self, message):
-        return self.add_message(message, "critical")
+    @classmethod
+    def from_data(cls, data):
+        return cls(**data)
 
 
 class ProjectPushRepreItem:
@@ -508,22 +439,21 @@ class ProjectPushRepreItem:
 class ProjectPushItemProcess:
     """
     Args:
+        model (IntegrateModel): Model which is processing item.
         item (ProjectPushItem): Item which is being processed.
-        item_status (ProjectPushItemStatus): Object to store status.
     """
 
     # TODO where to get host?!!!
     host_name = "republisher"
 
-    def __init__(self, item, item_status=None):
+    def __init__(self, model, item):
+        self._model = model
         self._item = item
 
-        self._src_project_doc = None
         self._src_asset_doc = None
         self._src_subset_doc = None
         self._src_version_doc = None
         self._src_repre_items = None
-        self._src_anatomy = None
 
         self._project_doc = None
         self._anatomy = None
@@ -539,85 +469,98 @@ class ProjectPushItemProcess:
         self._project_settings = None
         self._template_name = None
 
-        if item_status is None:
-            item_status = ProjectPushItemStatus()
-        self._status = item_status
+        self._status = ProjectPushItemStatus()
         self._operations = OperationsSession()
         self._file_transaction = FileTransaction()
 
-    @property
-    def status(self):
-        return self._status
+        self._messages = []
 
     @property
-    def src_project_doc(self):
-        return self._src_project_doc
+    def item_id(self):
+        return self._item.item_id
 
     @property
-    def src_anatomy(self):
-        return self._src_anatomy
+    def started(self):
+        return self._status.started
 
-    @property
-    def src_asset_doc(self):
-        return self._src_asset_doc
+    def get_status_data(self):
+        return self._status.to_data()
 
-    @property
-    def src_subset_doc(self):
-        return self._src_subset_doc
+    def integrate(self):
+        self._status.started = True
+        try:
+            self._log_info("Process started")
+            self._fill_source_variables()
+            self._log_info("Source entities were found")
+            self._fill_destination_project()
+            self._log_info("Destination project was found")
+            self._fill_or_create_destination_asset()
+            self._log_info("Destination asset was determined")
+            self._determine_family()
+            self._determine_publish_template_name()
+            self._determine_subset_name()
+            self._make_sure_subset_exists()
+            self._make_sure_version_exists()
+            self._log_info("Prerequirements were prepared")
+            self._integrate_representations()
+            self._log_info("Integration finished")
 
-    @property
-    def src_version_doc(self):
-        return self._src_version_doc
+        except PushToProjectError as exc:
+            if not self._status.failed:
+                self._status.set_failed(str(exc))
 
-    @property
-    def src_repre_items(self):
-        return self._src_repre_items
+        except Exception as exc:
+            _exc, _value, _tb = sys.exc_info()
+            self._status.set_failed(
+                "Unhandled error happened: {}".format(str(exc)),
+                (_exc, _value, _tb)
+            )
 
-    @property
-    def project_doc(self):
-        return self._project_doc
+        finally:
+            self._status.finished = True
+            self._emit_event(
+                "push.finished.changed",
+                {
+                    "finished": True,
+                    "item_id": self.item_id,
+                }
+            )
 
-    @property
-    def anatomy(self):
-        return self._anatomy
+    def _emit_event(self, topic, data):
+        self._model.emit_event(topic, data)
 
-    @property
-    def project_settings(self):
-        return self._project_settings
+    # Loggin helpers
+    # TODO better logging
+    def _add_message(self, message, level):
+        message_obj = StatusMessage(message, level)
+        self._messages.append(message_obj)
+        self._emit_event(
+            "push.message.added",
+            {
+                "message": message,
+                "level": level,
+                "item_id": self.item_id,
+            }
+        )
+        print(message_obj)
+        return message_obj
 
-    @property
-    def asset_doc(self):
-        return self._asset_doc
+    def _log_debug(self, message):
+        return self._add_message(message, "debug")
 
-    @property
-    def task_info(self):
-        return self._task_info
+    def _log_info(self, message):
+        return self._add_message(message, "info")
 
-    @property
-    def subset_doc(self):
-        return self._subset_doc
+    def _log_warning(self, message):
+        return self._add_message(message, "warning")
 
-    @property
-    def version_doc(self):
-        return self._version_doc
+    def _log_error(self, message):
+        return self._add_message(message, "error")
 
-    @property
-    def variant(self):
-        return self._item.variant
+    def _log_critical(self, message):
+        return self._add_message(message, "critical")
 
-    @property
-    def family(self):
-        return self._family
-
-    @property
-    def subset_name(self):
-        return self._subset_name
-
-    @property
-    def template_name(self):
-        return self._template_name
-
-    def fill_source_variables(self):
+    def _fill_source_variables(self):
         src_project_name = self._item.src_project_name
         src_version_id = self._item.src_version_id
 
@@ -626,9 +569,14 @@ class ProjectPushItemProcess:
             self._status.set_failed(
                 f"Source project \"{src_project_name}\" was not found"
             )
+
+            self._emit_event(
+                "push.failed.changed",
+                {"item_id": self.item_id}
+            )
             raise PushToProjectError(self._status.fail_reason)
 
-        self._status.debug(f"Project '{src_project_name}' found")
+        self._log_debug(f"Project '{src_project_name}' found")
 
         version_doc = get_version_by_id(src_project_name, src_version_id)
         if not version_doc:
@@ -666,7 +614,7 @@ class ProjectPushItemProcess:
             ProjectPushRepreItem(repre_doc, anatomy.roots)
             for repre_doc in repre_docs
         ]
-        self._status.debug((
+        self._log_debug((
             f"Found {len(repre_items)} representations on"
             f" version {src_version_id} in project '{src_project_name}'"
         ))
@@ -677,14 +625,12 @@ class ProjectPushItemProcess:
             )
             raise PushToProjectError(self._status.fail_reason)
 
-        self._src_anatomy = anatomy
-        self._src_project_doc = project_doc
         self._src_asset_doc = asset_doc
         self._src_subset_doc = subset_doc
         self._src_version_doc = version_doc
         self._src_repre_items = repre_items
 
-    def fill_destination_project(self):
+    def _fill_destination_project(self):
         # --- Destination entities ---
         dst_project_name = self._item.dst_project_name
         # Validate project existence
@@ -695,7 +641,7 @@ class ProjectPushItemProcess:
             )
             raise PushToProjectError(self._status.fail_reason)
 
-        self._status.debug(
+        self._log_debug(
             f"Destination project '{dst_project_name}' found"
         )
         self._project_doc = dst_project_doc
@@ -739,7 +685,7 @@ class ProjectPushItemProcess:
                 ))
                 raise PushToProjectError(self._status.fail_reason)
 
-            self._status.debug((
+            self._log_debug((
                 f"Found already existing asset with name \"{other_name}\""
                 f" which match requested name \"{asset_name}\""
             ))
@@ -780,18 +726,18 @@ class ProjectPushItemProcess:
             asset_doc["type"],
             asset_doc
         )
-        self._status.info(
+        self._log_info(
             f"Creating new asset with name \"{asset_name}\""
         )
         self._created_asset_doc = asset_doc
         return asset_doc
 
-    def fill_or_create_destination_asset(self):
+    def _fill_or_create_destination_asset(self):
         dst_project_name = self._item.dst_project_name
-        dst_asset_id = self._item.dst_asset_id
+        dst_folder_id = self._item.dst_folder_id
         dst_task_name = self._item.dst_task_name
-        new_asset_name = self._item.new_asset_name
-        if not dst_asset_id and not new_asset_name:
+        new_folder_name = self._item.new_folder_name
+        if not dst_folder_id and not new_folder_name:
             self._status.set_failed(
                 "Push item does not have defined destination asset"
             )
@@ -799,25 +745,25 @@ class ProjectPushItemProcess:
 
         # Get asset document
         parent_asset_doc = None
-        if dst_asset_id:
+        if dst_folder_id:
             parent_asset_doc = get_asset_by_id(
-                self._item.dst_project_name, self._item.dst_asset_id
+                self._item.dst_project_name, self._item.dst_folder_id
             )
             if not parent_asset_doc:
                 self._status.set_failed(
-                    f"Could find asset with id \"{dst_asset_id}\""
+                    f"Could find asset with id \"{dst_folder_id}\""
                     f" in project \"{dst_project_name}\""
                 )
                 raise PushToProjectError(self._status.fail_reason)
 
-        if not new_asset_name:
+        if not new_folder_name:
             asset_doc = parent_asset_doc
         else:
             asset_doc = self._create_asset(
-                self.src_asset_doc,
-                self.project_doc,
+                self._src_asset_doc,
+                self._project_doc,
                 parent_asset_doc,
-                new_asset_name
+                new_folder_name
             )
         self._asset_doc = asset_doc
         if not dst_task_name:
@@ -842,12 +788,13 @@ class ProjectPushItemProcess:
         task_info["name"] = dst_task_name
         # Fill rest of task information based on task type
         task_type = task_info["type"]
-        task_type_info = self.project_doc["config"]["tasks"].get(task_type, {})
+        task_type_info = self._project_doc["config"]["tasks"].get(
+            task_type, {})
         task_info.update(task_type_info)
         self._task_info = task_info
 
-    def determine_family(self):
-        subset_doc = self.src_subset_doc
+    def _determine_family(self):
+        subset_doc = self._src_subset_doc
         family = subset_doc["data"].get("family")
         families = subset_doc["data"].get("families")
         if not family and families:
@@ -859,48 +806,48 @@ class ProjectPushItemProcess:
             )
             raise PushToProjectError(self._status.fail_reason)
 
-        self._status.debug(
+        self._log_debug(
             f"Publishing family is '{family}' (Based on source subset)"
         )
         self._family = family
 
-    def determine_publish_template_name(self):
+    def _determine_publish_template_name(self):
         template_name = get_publish_template_name(
             self._item.dst_project_name,
             self.host_name,
-            self.family,
-            self.task_info.get("name"),
-            self.task_info.get("type"),
-            project_settings=self.project_settings
+            self._family,
+            self._task_info.get("name"),
+            self._task_info.get("type"),
+            project_settings=self._project_settings
         )
-        self._status.debug(
+        self._log_debug(
             f"Using template '{template_name}' for integration"
         )
         self._template_name = template_name
 
-    def determine_subset_name(self):
-        family = self.family
-        asset_doc = self.asset_doc
-        task_info = self.task_info
+    def _determine_subset_name(self):
+        family = self._family
+        asset_doc = self._asset_doc
+        task_info = self._task_info
         subset_name = get_subset_name(
             family,
-            self.variant,
+            self._item.variant,
             task_info.get("name"),
             asset_doc,
             project_name=self._item.dst_project_name,
             host_name=self.host_name,
-            project_settings=self.project_settings
+            project_settings=self._project_settings
         )
-        self._status.info(
+        self._log_info(
             f"Push will be integrating to subset with name '{subset_name}'"
         )
         self._subset_name = subset_name
 
-    def make_sure_subset_exists(self):
+    def _make_sure_subset_exists(self):
         project_name = self._item.dst_project_name
-        asset_id = self.asset_doc["_id"]
-        subset_name = self.subset_name
-        family = self.family
+        asset_id = self._asset_doc["_id"]
+        subset_name = self._subset_name
+        family = self._family
         subset_doc = get_subset_by_name(project_name, subset_name, asset_id)
         if subset_doc:
             self._subset_doc = subset_doc
@@ -915,13 +862,13 @@ class ProjectPushItemProcess:
         self._operations.create_entity(project_name, "subset", subset_doc)
         self._subset_doc = subset_doc
 
-    def make_sure_version_exists(self):
+    def _make_sure_version_exists(self):
         """Make sure version document exits in database."""
 
         project_name = self._item.dst_project_name
         version = self._item.dst_version
-        src_version_doc = self.src_version_doc
-        subset_doc = self.subset_doc
+        src_version_doc = self._src_version_doc
+        subset_doc = self._subset_doc
         subset_id = subset_doc["_id"]
         src_data = src_version_doc["data"]
         families = subset_doc["data"].get("families")
@@ -947,8 +894,8 @@ class ProjectPushItemProcess:
                 version = get_versioning_start(
                     project_name,
                     self.host_name,
-                    task_name=self.task_info["name"],
-                    task_type=self.task_info["type"],
+                    task_name=self._task_info["name"],
+                    task_type=self._task_info["type"],
                     family=families[0],
                     subset=subset_doc["name"]
                 )
@@ -982,16 +929,16 @@ class ProjectPushItemProcess:
 
         self._version_doc = version_doc
 
-    def integrate_representations(self):
+    def _integrate_representations(self):
         try:
-            self._integrate_representations()
+            self._real_integrate_representations()
         except Exception:
             self._operations.clear()
             self._file_transaction.rollback()
             raise
 
-    def _integrate_representations(self):
-        version_doc = self.version_doc
+    def _real_integrate_representations(self):
+        version_doc = self._version_doc
         version_id = version_doc["_id"]
         existing_repres = get_representations(
             self._item.dst_project_name,
@@ -1001,17 +948,17 @@ class ProjectPushItemProcess:
             repre_doc["name"].lower(): repre_doc
             for repre_doc in existing_repres
         }
-        template_name = self.template_name
-        anatomy = self.anatomy
+        template_name = self._template_name
+        anatomy = self._anatomy
         formatting_data = get_template_data(
-            self.project_doc,
-            self.asset_doc,
-            self.task_info.get("name"),
+            self._project_doc,
+            self._asset_doc,
+            self._task_info.get("name"),
             self.host_name
         )
         formatting_data.update({
-            "subset": self.subset_name,
-            "family": self.family,
+            "subset": self._subset_name,
+            "family": self._family,
             "version": version_doc["name"]
         })
 
@@ -1021,19 +968,19 @@ class ProjectPushItemProcess:
         file_template = StringTemplate(
             anatomy.templates[template_name]["file"]
         )
-        self._status.info("Preparing files to transfer")
+        self._log_info("Preparing files to transfer")
         processed_repre_items = self._prepare_file_transactions(
             anatomy, template_name, formatting_data, file_template
         )
         self._file_transaction.process()
-        self._status.info("Preparing database changes")
+        self._log_info("Preparing database changes")
         self._prepare_database_operations(
             version_id,
             processed_repre_items,
             path_template,
             existing_repres_by_low_name
         )
-        self._status.info("Finalization")
+        self._log_info("Finalization")
         self._operations.commit()
         self._file_transaction.finalize()
 
@@ -1041,7 +988,7 @@ class ProjectPushItemProcess:
         self, anatomy, template_name, formatting_data, file_template
     ):
         processed_repre_items = []
-        for repre_item in self.src_repre_items:
+        for repre_item in self._src_repre_items:
             repre_doc = repre_item.repre_doc
             repre_name = repre_doc["name"]
             repre_format_data = copy.deepcopy(formatting_data)
@@ -1050,6 +997,9 @@ class ProjectPushItemProcess:
                 ext = os.path.splitext(src_file.path)[-1]
                 repre_format_data["ext"] = ext[1:]
                 break
+            repre_output_name = repre_doc["context"].get("output")
+            if repre_output_name is not None:
+                repre_format_data["output"] = repre_output_name
 
             template_obj = anatomy.templates_obj[template_name]["folder"]
             folder_path = template_obj.format_strict(formatting_data)
@@ -1177,34 +1127,86 @@ class ProjectPushItemProcess:
                 {"type": "archived_representation"}
             )
 
-    def process(self):
-        try:
-            self._status.info("Process started")
-            self.fill_source_variables()
-            self._status.info("Source entities were found")
-            self.fill_destination_project()
-            self._status.info("Destination project was found")
-            self.fill_or_create_destination_asset()
-            self._status.info("Destination asset was determined")
-            self.determine_family()
-            self.determine_publish_template_name()
-            self.determine_subset_name()
-            self.make_sure_subset_exists()
-            self.make_sure_version_exists()
-            self._status.info("Prerequirements were prepared")
-            self.integrate_representations()
-            self._status.info("Integration finished")
 
-        except PushToProjectError as exc:
-            if not self._status.failed:
-                self._status.set_failed(str(exc))
+class IntegrateModel:
+    def __init__(self, controller):
+        self._controller = controller
+        self._process_items = {}
 
-        except Exception as exc:
-            _exc, _value, _tb = sys.exc_info()
-            self._status.set_failed(
-                "Unhandled error happened: {}".format(str(exc)),
-                (_exc, _value, _tb)
-            )
+    def reset(self):
+        self._process_items = {}
 
-        finally:
-            self._status.set_finished()
+    def emit_event(self, topic, data=None, source=None):
+        self._controller.emit_event(topic, data, source)
+
+    def create_process_item(
+        self,
+        src_project_name,
+        src_version_id,
+        dst_project_name,
+        dst_folder_id,
+        dst_task_name,
+        variant,
+        comment,
+        new_folder_name,
+        dst_version,
+    ):
+        """Create new item for integration.
+
+        Args:
+            src_project_name (str): Source project name.
+            src_version_id (str): Source version id.
+            dst_project_name (str): Destination project name.
+            dst_folder_id (str): Destination folder id.
+            dst_task_name (str): Destination task name.
+            variant (str): Variant name.
+            comment (Union[str, None]): Comment.
+            new_folder_name (Union[str, None]): New folder name.
+            dst_version (int): Destination version number.
+
+        Returns:
+            str: Item id. The id can be used to trigger integration or get
+                status information.
+        """
+
+        item = ProjectPushItem(
+            src_project_name,
+            src_version_id,
+            dst_project_name,
+            dst_folder_id,
+            dst_task_name,
+            variant,
+            comment=comment,
+            new_folder_name=new_folder_name,
+            dst_version=dst_version
+        )
+        process_item = ProjectPushItemProcess(self, item)
+        self._process_items[item.item_id] = process_item
+        return item.item_id
+
+    def integrate_item(self, item_id):
+        """Start integration of item.
+
+        Args:
+            item_id (str): Item id which should be integrated.
+        """
+
+        item = self._process_items.get(item_id)
+        if item is None or item.started:
+            return
+        item.integrate()
+
+    def get_item_status(self, item_id):
+        """Status of an item.
+
+        Args:
+            item_id (str): Item id for which status should be returned.
+
+        Returns:
+            dict[str, Any]: Status data.
+        """
+
+        item = self._process_items.get(item_id)
+        if item is not None:
+            return item.get_status_data()
+        return None
