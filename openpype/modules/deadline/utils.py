@@ -1,6 +1,12 @@
 import os
 import re
+
 from openpype.settings import get_current_project_settings
+
+
+class SafeDict(dict):
+    def __missing__(self, key):
+        return '{' + key + '}'
 
 
 def set_custom_deadline_name(instance, filename, setting):
@@ -28,7 +34,7 @@ def set_custom_deadline_name(instance, filename, setting):
     }
 
     custom_name_settings = get_current_project_settings()["deadline"][setting]  # noqa
-    custom_name = custom_name_settings.format(**formatting_data)
+    custom_name = custom_name_settings.format_map(SafeDict(**formatting_data))
 
     for m in re.finditer("__", custom_name):
         custom_name_list = list(custom_name)
