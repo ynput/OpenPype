@@ -37,7 +37,7 @@ class ExtractTyCache(publish.Extractor):
         stagingdir = self.staging_dir(instance)
         filename = "{name}.tyc".format(**instance.data)
         path = os.path.join(stagingdir, filename)
-        filenames = self.get_file(instance, start, end)
+        filenames = self.get_files(instance, start, end)
         additional_attributes = instance.data.get("tyc_attrs", {})
 
         with maintained_selection():
@@ -55,14 +55,14 @@ class ExtractTyCache(publish.Extractor):
                     tycache_spline_enabled=has_tyc_spline)
             for job in job_args:
                 rt.Execute(job)
-
+        representations = instance.data.setdefault("representations", [])
         representation = {
             'name': 'tyc',
             'ext': 'tyc',
             'files': filenames if len(filenames) > 1 else filenames[0],
-            "stagingDir": stagingdir
+            "stagingDir": stagingdir,
         }
-        instance.data["representations"].append(representation)
+        representations.append(representation)
         self.log.info(f"Extracted instance '{instance.name}' to: {filenames}")
 
         # Get the tyMesh filename for extraction
@@ -71,13 +71,14 @@ class ExtractTyCache(publish.Extractor):
             'name': 'tyMesh',
             'ext': 'tyc',
             'files': mesh_filename,
-            "stagingDir": stagingdir
+            "stagingDir": stagingdir,
+            "outputName": '__tyMesh'
         }
-        instance.data["representations"].append(mesh_repres)
+        representations.append(mesh_repres)
         self.log.info(
             f"Extracted instance '{instance.name}' to: {mesh_filename}")
 
-    def get_file(self, instance, start_frame, end_frame):
+    def get_files(self, instance, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
 
         Set the filenames accordingly to the tyCache file

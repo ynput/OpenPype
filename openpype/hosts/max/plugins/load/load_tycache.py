@@ -13,7 +13,7 @@ from openpype.hosts.max.api.pipeline import (
 from openpype.pipeline import get_representation_path, load
 
 
-class PointCloudLoader(load.LoaderPlugin):
+class TyCacheLoader(load.LoaderPlugin):
     """Point Cloud Loader."""
 
     families = ["tycache"]

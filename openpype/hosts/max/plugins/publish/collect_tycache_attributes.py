@@ -42,6 +42,7 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
                          "tycacheChanMaterials", "tycacheChanCustomFloat"
                          "tycacheChanCustomVector", "tycacheChanCustomTM",
                          "tycacheChanPhysX", "tycacheMeshBackup",
+                         "tycacheCreateObject",
                          "tycacheCreateObjectIfNotCreated",
                          "tycacheAdditionalCloth",
                          "tycacheAdditionalSkin",
@@ -59,7 +60,8 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
                              "tycacheChanRot", "tycacheChanScale",
                              "tycacheChanVel", "tycacheChanShape",
                              "tycacheChanMatID", "tycacheChanMapping",
-                             "tycacheChanMaterials"]
+                             "tycacheChanMaterials", "tycacheCreateObject",
+                             "tycacheCreateObjectIfNotCreated"]
         return [
             EnumDef("all_tyc_attrs",
                     tyc_attr_enum,
