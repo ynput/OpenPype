@@ -55,7 +55,7 @@
         },
         "tycache": {
             "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
-            "file": "{originalBasename}<_{@version}><_{@frame}>.{ext}",
+            "file": "{originalBasename}<_{@frame}>.{ext}",
             "path": "{@folder}/{@file}"
         },
         "source": {
