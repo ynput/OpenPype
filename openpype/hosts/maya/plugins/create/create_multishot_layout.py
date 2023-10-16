@@ -52,7 +52,6 @@ class CreateMultishotLayout(plugin.MayaCreator):
 
         current_path_parts = current_folder["path"].split("/")
 
-        items_with_label = []
         # populate the list with parents of the current folder
         # this will create menu items like:
         # [
