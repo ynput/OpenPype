@@ -3,7 +3,7 @@ import re
 from openpype.settings import get_current_project_settings
 
 
-def set_batch_name(instance, filename):
+def set_custom_deadline_name(instance, filename, setting):
     context = instance.context
     basename, ext = os.path.splitext(filename)
     subversion = basename.split("_")[-1]
@@ -26,15 +26,15 @@ def set_batch_name(instance, filename):
         "ext": ext[1:]
     }
 
-    batch_name_settings = get_current_project_settings()["deadline"]["deadline_job_name"]  # noqa
-    batch_name = batch_name_settings.format(**formatting_data)
+    custom_name_settings = get_current_project_settings()["deadline"][setting]  # noqa
+    custom_name = custom_name_settings.format(**formatting_data)
 
-    for m in re.finditer("__", batch_name):
-        batch_name_list = list(batch_name)
-        batch_name_list.pop(m.start())
-        batch_name = "".join(batch_name_list)
+    for m in re.finditer("__", custom_name):
+        custom_name_list = list(custom_name)
+        custom_name_list.pop(m.start())
+        custom_name = "".join(custom_name_list)
 
-    if batch_name.endswith("_"):
-        batch_name = batch_name[:-1]
+    if custom_name.endswith("_"):
+        custom_name = custom_name[:-1]
 
-    return batch_name
+    return custom_name
