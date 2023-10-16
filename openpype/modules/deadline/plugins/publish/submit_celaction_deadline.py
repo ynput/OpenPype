@@ -5,7 +5,7 @@ import getpass
 import requests
 import pyblish.api
 
-from openpype.modules.deadline.utils import set_batch_name
+from openpype.modules.deadline.utils import set_custom_deadline_name
 
 
 class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
@@ -76,7 +76,11 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         render_path = os.path.normpath(render_path)
         script_name = os.path.basename(script_path)
 
-        batch_name = set_batch_name(instance, script_name)
+        batch_name = set_custom_deadline_name(
+            instance,
+            script_name,
+            "deadline_batch_name"
+        )
 
         for item in instance.context:
             if "workfile" in item.data["family"]:
@@ -97,7 +101,11 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
                     "Using published scene for render {}".format(script_path)
                 )
 
-        jobname = "%s - %s" % (script_name, instance.name)
+        jobname = set_custom_deadline_name(
+            instance,
+            script_name,
+            "deadline_job_name"
+        )
 
         output_filename_0 = self.preview_fname(render_path)
 

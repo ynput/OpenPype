@@ -14,7 +14,7 @@ from openpype.lib import (
     BoolDef,
     NumberDef
 )
-from openpype.modules.deadline.utils import set_batch_name
+from openpype.modules.deadline.utils import set_custom_deadline_name
 
 
 class FusionSubmitDeadline(
@@ -142,7 +142,16 @@ class FusionSubmitDeadline(
                 )
 
         filename = os.path.basename(script_path)
-        batch_name = set_batch_name(instance, filename)
+        job_name = set_custom_deadline_name(
+            instance,
+            filename,
+            "deadline_job_name"
+        )
+        batch_name = set_custom_deadline_name(
+            instance,
+            filename,
+            "deadline_batch_name"
+        )
 
         # Documentation for keys available at:
         # https://docs.thinkboxsoftware.com
@@ -157,7 +166,7 @@ class FusionSubmitDeadline(
                 "AssetDependency0": script_path,
 
                 # Job name, as seen in Monitor
-                "Name": filename,
+                "Name": job_name,
 
                 "Priority": attribute_values.get(
                     "priority", self.priority),

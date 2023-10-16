@@ -11,7 +11,7 @@ from openpype.lib import (
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_batch_name
+from openpype.modules.deadline.utils import set_custom_deadline_name
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 
@@ -53,10 +53,20 @@ class AfterEffectsSubmitDeadline(
         context = self._instance.context
         filename = os.path.basename(self._instance.data["source"])
 
-        batch_name = set_batch_name(self._instance, filename)
+        job_name = set_custom_deadline_name(
+            self._instance,
+            filename,
+            "deadline_job_name"
+        )
+        batch_name = set_custom_deadline_name(
+            self._instance,
+            filename,
+            "deadline_batch_name"
+        )
+
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
-        dln_job_info.Name = self._instance.data["name"]
+        dln_job_info.Name = job_name
         dln_job_info.BatchName = "Group: " + batch_name
         dln_job_info.Plugin = "AfterEffects"
         dln_job_info.UserName = context.data.get(
