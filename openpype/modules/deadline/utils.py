@@ -34,4 +34,7 @@ def set_batch_name(instance, filename):
         batch_name_list.pop(m.start())
         batch_name = "".join(batch_name_list)
 
+    if batch_name.endswith("_"):
+        batch_name = batch_name[:-1]
+
     return batch_name
