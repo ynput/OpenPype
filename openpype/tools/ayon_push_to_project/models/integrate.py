@@ -997,6 +997,8 @@ class ProjectPushItemProcess:
                 ext = os.path.splitext(src_file.path)[-1]
                 repre_format_data["ext"] = ext[1:]
                 break
+
+            # Re-use 'output' from source representation
             repre_output_name = repre_doc["context"].get("output")
             if repre_output_name is not None:
                 repre_format_data["output"] = repre_output_name
