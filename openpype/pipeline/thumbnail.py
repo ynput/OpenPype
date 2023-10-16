@@ -166,8 +166,12 @@ class ServerThumbnailResolver(ThumbnailResolver):
 
         # This is new way how thumbnails can be received from server
         #   - output is 'ThumbnailContent' object
-        if hasattr(ayon_api, "get_thumbnail_by_id"):
-            result = ayon_api.get_thumbnail_by_id(thumbnail_id)
+        # NOTE Use 'get_server_api_connection' because public function
+        #   'get_thumbnail_by_id' does not return output of 'ServerAPI'
+        #   method.
+        con = ayon_api.get_server_api_connection()
+        if hasattr(con, "get_thumbnail_by_id"):
+            result = con.get_thumbnail_by_id(thumbnail_id)
             if result.is_valid:
                 filepath = cache.store_thumbnail(
                     project_name,
@@ -178,7 +182,7 @@ class ServerThumbnailResolver(ThumbnailResolver):
         else:
             # Backwards compatibility for ayon api where 'get_thumbnail_by_id'
             #   is not implemented and output is filepath
-            filepath = ayon_api.get_thumbnail(
+            filepath = con.get_thumbnail(
                 project_name, entity_type, entity_id, thumbnail_id
             )
 

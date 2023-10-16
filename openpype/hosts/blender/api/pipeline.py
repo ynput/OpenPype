@@ -460,36 +460,6 @@ def ls() -> Iterator:
         yield parse_container(container)
 
 
-def update_hierarchy(containers):
-    """Hierarchical container support
-
-    This is the function to support Scene Inventory to draw hierarchical
-    view for containers.
-
-    We need both parent and children to visualize the graph.
-
-    """
-
-    all_containers = set(ls())  # lookup set
-
-    for container in containers:
-        # Find parent
-        # FIXME (jasperge): re-evaluate this. How would it be possible
-        # to 'nest' assets?  Collections can have several parents, for
-        # now assume it has only 1 parent
-        parent = [
-            coll for coll in bpy.data.collections if container in coll.children
-        ]
-        for node in parent:
-            if node in all_containers:
-                container["parent"] = node
-                break
-
-        log.debug("Container: %s", container)
-
-        yield container
-
-
 def publish():
     """Shorthand to publish from within host."""
 

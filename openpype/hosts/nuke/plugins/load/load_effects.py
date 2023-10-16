@@ -24,7 +24,7 @@ class LoadEffects(load.LoaderPlugin):
 
     families = ["effect"]
     representations = ["*"]
-    extension = {"json"}
+    extensions = {"json"}
 
     label = "Load Effects - nodes"
     order = 0
