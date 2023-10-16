@@ -25,7 +25,7 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
 
     families = ["effect"]
     representations = ["*"]
-    extension = {"json"}
+    extensions = {"json"}
 
     label = "Load Effects - Input Process"
     order = 0

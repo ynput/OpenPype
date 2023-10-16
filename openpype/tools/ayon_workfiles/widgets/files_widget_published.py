@@ -5,9 +5,10 @@ from openpype.style import (
     get_default_entity_icon_color,
     get_disabled_entity_icon_color,
 )
+from openpype.tools.utils import TreeView
 from openpype.tools.utils.delegates import PrettyTimeDelegate
 
-from .utils import TreeView, BaseOverlayFrame
+from .utils import BaseOverlayFrame
 
 
 REPRE_ID_ROLE = QtCore.Qt.UserRole + 1
@@ -306,7 +307,7 @@ class PublishedFilesWidget(QtWidgets.QWidget):
 
         selection_model = view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
-        view.double_clicked_left.connect(self._on_left_double_click)
+        view.double_clicked.connect(self._on_mouse_double_click)
 
         controller.register_event_callback(
             "expected_selection_changed",
@@ -350,8 +351,9 @@ class PublishedFilesWidget(QtWidgets.QWidget):
         repre_id = self.get_selected_repre_id()
         self._controller.set_selected_representation_id(repre_id)
 
-    def _on_left_double_click(self):
-        self.save_as_requested.emit()
+    def _on_mouse_double_click(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.save_as_requested.emit()
 
     def _on_expected_selection_change(self, event):
         if (

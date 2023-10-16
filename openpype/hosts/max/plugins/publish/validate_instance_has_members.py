@@ -1,21 +1,24 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 from openpype.pipeline import PublishValidationError
-from pymxs import runtime as rt
 
 
-class ValidateMaxContents(pyblish.api.InstancePlugin):
-    """Validates Max contents.
+class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
+    """Validates Instance has members.
 
-    Check if MaxScene container includes any contents underneath.
+    Check if MaxScene containers includes any contents underneath.
     """
 
     order = pyblish.api.ValidatorOrder
     families = ["camera",
+                "model",
                 "maxScene",
-                "review"]
+                "review",
+                "pointcache",
+                "pointcloud",
+                "redshiftproxy"]
     hosts = ["max"]
-    label = "Max Scene Contents"
+    label = "Container Contents"
 
     def process(self, instance):
         if not instance.data["members"]:
