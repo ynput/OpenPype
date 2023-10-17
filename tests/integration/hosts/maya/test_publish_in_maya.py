@@ -45,6 +45,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         download_test_data
     ):
 
+        # All maya output via MAYA_CMD_FILE_OUTPUT env var during test run
         logging_path = os.path.join(download_test_data, "output.log")
         with open(logging_path, "r") as f:
             logging_output = f.read()
