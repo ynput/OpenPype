@@ -194,10 +194,11 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
             "TypedContext where project_id is \"{}\" and name in ({})"
         ).format(project_entity["id"], joined_asset_names)).all()
 
-        entities_by_name = {
-            entity["name"]: entity
-            for entity in entities
-        }
+        entities_by_name = {}
+        for entity in entities:
+            if entity.entity_type.lower() == "task":
+                continue
+            entities_by_name[entity["name"]] = entity
 
         for asset_name, by_task_data in instance_by_asset_and_task.items():
             entity = entities_by_name.get(asset_name)
