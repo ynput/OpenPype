@@ -258,9 +258,10 @@ def create_timeline_item(
 
     Args:
         media_pool_item (resolve.MediaPoolItem): resolve's object
+        source_start (int): media source input frame (sequence frame)
+        source_end (int): media source output frame (sequence frame)
+        timeline_in (int): timeline input frame (sequence frame)
         timeline (resolve.Timeline)[optional]: resolve's object
-        source_start (int)[optional]: media source input frame (sequence frame)
-        source_end (int)[optional]: media source output frame (sequence frame)
 
     Returns:
         object: resolve.TimelineItem

@@ -418,12 +418,11 @@ class ClipLoader:
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
 
-        if _clip_property("Type") == "Video":
-            source_in += handle_start
-            source_out -= handle_end
-
         # include handles
-        if not self.with_handles:
+        if (
+            not self.with_handles
+            or _clip_property("Type") == "Video"
+        ):
             source_in += handle_start
             source_out -= handle_end
 
