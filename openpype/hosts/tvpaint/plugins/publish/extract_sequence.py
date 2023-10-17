@@ -31,11 +31,6 @@ class ExtractSequence(pyblish.api.Extractor):
     review_bg = [255, 255, 255, 255]
 
     def process(self, instance):
-        print('###\n####\n###')
-        print(ExtractSequence)
-        print('###\n####\n###')
-        self.log.debug(instance.data['family'])
-        self.log.debug(instance.data['families'])
         self.log.info(
             "* Processing instance \"{}\"".format(instance.data["label"])
         )
@@ -67,9 +62,7 @@ class ExtractSequence(pyblish.api.Extractor):
         ignore_layers_transparency = instance.data.get(
             "ignoreLayersTransparency", False
         )
-        print(instance.context.data)
 
-        print(instance.data)
         family_lowered = instance.data["family"].lower()
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
@@ -119,9 +112,6 @@ class ExtractSequence(pyblish.api.Extractor):
         )
 
         export_type = instance.data["creator_attributes"].get("export_type", "project")
-        print('####\n###\n### EXPORT TYPE')
-        print(export_type)
-        print('####\n###\n###')
 
         is_review = instance.data["family"] == "review"
         is_playblast = instance.data["creator_identifier"] == "render.playblast"
@@ -254,9 +244,6 @@ class ExtractSequence(pyblish.api.Extractor):
                 export_type, mark_in, mark_out
             )
         ]
-        print('####\n###\n### CMD')
-        print(george_script_lines)
-        print('####\n###\n###')
 
         if scene_bg_color:
             # Change bg color back to previous scene bg colorq
