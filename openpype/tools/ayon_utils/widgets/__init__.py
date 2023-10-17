@@ -8,11 +8,13 @@ from .projects_widget import (
 from .folders_widget import (
     FoldersWidget,
     FoldersModel,
+    FOLDERS_MODEL_SENDER_NAME,
 )
 
 from .tasks_widget import (
     TasksWidget,
     TasksModel,
+    TASKS_MODEL_SENDER_NAME,
 )
 from .utils import (
     get_qt_icon,
@@ -28,9 +30,11 @@ __all__ = (
 
     "FoldersWidget",
     "FoldersModel",
+    "FOLDERS_MODEL_SENDER_NAME",
 
     "TasksWidget",
     "TasksModel",
+    "TASKS_MODEL_SENDER_NAME",
 
     "get_qt_icon",
     "RefreshThread",

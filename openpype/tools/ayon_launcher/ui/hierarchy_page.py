@@ -103,4 +103,4 @@ class HierarchyPage(QtWidgets.QWidget):
         self._controller.refresh()
 
     def _on_filter_text_changed(self, text):
-        self._folders_widget.set_name_filer(text)
+        self._folders_widget.set_name_filter(text)
