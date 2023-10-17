@@ -17,8 +17,12 @@ import tde4
 
 import openpype.pipeline.load as load
 from openpype.client import get_version_by_id
+from openpype.hosts.equalizer.api import Container, EqualizerHost
 from openpype.lib.transcoding import IMAGE_EXTENSIONS
-from openpype.pipeline import get_current_project_name
+from openpype.pipeline import (
+    get_current_project_name,
+    get_representation_context,
+)
 
 
 class LoadPlate(load.LoaderPlugin):
@@ -39,15 +43,74 @@ class LoadPlate(load.LoaderPlugin):
     icon = "code-fork"
     color = "orange"
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name=None, namespace=None, options=None):
         representation = context["representation"]
-
         project_name = get_current_project_name()
         version = get_version_by_id(project_name, representation["parent"])
 
+        file_path = self.file_path(representation, context)
+
+        camera = tde4.createCamera("SEQUENCE")
+        tde4.setCameraName(camera, name)
+        camera_name = tde4.getCameraName(camera)
+
+        print(
+            f"Loading: {file_path} into {camera_name}")
+
+        # set the path to sequence on the camera
+        tde4.setCameraPath(camera, file_path)
+
+        # set the sequence attributes star/end/step
+        tde4.setCameraSequenceAttr(
+            camera, int(version["data"].get("frameStart")),
+            int(version["data"].get("frameEnd")), 1)
+
+        container = Container(
+            name=name,
+            namespace=camera_name,
+            loader=self.__class__.__name__,
+            representation=str(representation["_id"]),
+        )
+        print(container)
+        EqualizerHost.get_host().add_container(container)
+
+    def update(self, container, representation):
+        camera_list = tde4.getCameraList()
+        try:
+            camera = [
+                c for c in camera_list if
+                tde4.getCameraName(c) == container["namespace"]
+            ][0]
+        except IndexError:
+            self.log.error(f'Cannot find camera {container["namespace"]}')
+            print(f'Cannot find camera {container["namespace"]}')
+            return
+
+        context = get_representation_context(representation)
+        file_path = self.file_path(representation, context)
+
+        # set the path to sequence on the camera
+        tde4.setCameraPath(camera, file_path)
+
+        version = get_version_by_id(
+            get_current_project_name(), representation["parent"])
+
+        # set the sequence attributes star/end/step
+        tde4.setCameraSequenceAttr(
+            camera, int(version["data"].get("frameStart")),
+            int(version["data"].get("frameEnd")), 1)
+
+        print(container)
+        EqualizerHost.get_host().add_container(container)
+
+    def switch(self, container, representation):
+        self.update(container, representation)
+
+    def file_path(self, representation, context):
         is_sequence = len(representation["files"]) > 1
+        print(f"is sequence {is_sequence}")
         if is_sequence:
-            frame = context["frame"]
+            frame = representation["context"]["frame"]
             hashes = "#" * len(str(frame))
             if (
                     "{originalBasename}" in representation["data"]["template"]
@@ -60,19 +123,4 @@ class LoadPlate(load.LoaderPlugin):
             # Replace the frame with the hash in the frame
             representation["context"]["frame"] = hashes
 
-        file_path = self.filepath_from_context(context)
-
-        # Try to get current camera. If not found, use first that can
-        # be found in. If even that camera can't be found, create new one.
-        camera = tde4.getCurrentCamera() or tde4.getFirstCamera() or tde4.createCamera("SEQUENCE")  # noqa: E501
-
-        self.log.info(
-            f"Loading: {file_path} into {tde4.getCameraName(camera)}")
-
-        # set the path to sequence on the camera
-        tde4.setCameraPath(file_path)
-
-        # set the sequence attributes star/end/step
-        tde4.setCameraSequenceAttr(
-            camera, version["data"].get("frameStart"),
-            version["data"].get("frameEnd"), 1)
+        return self.filepath_from_context(context)

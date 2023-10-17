@@ -7,6 +7,8 @@ note:
 import json
 import os
 import re
+from attrs import asdict
+from attrs.exceptions import NotAnAttrsClassError
 
 import pyblish.api
 import tde4  # noqa: F401
@@ -19,6 +21,7 @@ from openpype.pipeline import (
     register_loader_plugin_path
 )
 from openpype.tools.utils import get_openpype_qt_app
+from openpype.hosts.equalizer.api.pipeline import Container
 
 CONTEXT_REGEX = re.compile(
     r"AYON_CONTEXT::(?P<context>(?:\n|.)*?)::AYON_CONTEXT_END",
@@ -78,6 +81,17 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_containers(self):
         return self.get_context_data().get("containers", [])
 
+    def add_container(self, container: Container):
+        context_data = self.get_context_data()
+        containers = self.get_containers()
+        try:
+            containers.append(asdict(container))
+        except NotAnAttrsClassError:
+            containers.append(container)
+
+        context_data["containers"] = containers
+        self.update_context_data(context_data, changes={})
+
     def get_context_data(self):
         """Get context data from the current workfile.
 
@@ -92,13 +106,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         # sourcery skip: use-named-expression
         m = re.search(CONTEXT_REGEX, tde4.getProjectNotes())
-        if m:
-            return json.loads(m["context"])
-
-        # context data not found, create empty placeholder
-        tde4.setProjectNotes(
-            f"{tde4.getProjectNotes()}\n"
-            "AYON_CONTEXT::{}::AYON_CONTEXT_END\n")
+        return json.loads(m["context"]) if m else {}
 
     def update_context_data(self, data, changes):
         """Update context data in the current workfile.
@@ -115,14 +123,20 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             RuntimeError: If the context data is not found.
         """
         notes = tde4.getProjectNotes()
-        if not re.search(CONTEXT_REGEX, notes):
+        m = re.search(CONTEXT_REGEX, notes)
+        if not m:
             # context data not found, create empty placeholder
             tde4.setProjectNotes(
                 f"{tde4.getProjectNotes()}\n"
                 f"AYON_CONTEXT::{json.dumps(data)}::AYON_CONTEXT_END\n")
             return
-        if not re.sub(CONTEXT_REGEX, json.dumps(data), notes):
-            raise RuntimeError("Failed to update context data.")
+
+        original_data = json.loads(m["context"])
+        original_data.update(data)
+
+        notes = re.sub(CONTEXT_REGEX,
+                       f"\g<context>{json.dumps(original_data)}", notes)
+        tde4.setProjectNotes(notes)
 
     def install(self):
         app = get_openpype_qt_app()
