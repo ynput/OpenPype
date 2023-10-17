@@ -388,19 +388,42 @@ class PublisherWindow(QtWidgets.QDialog):
     def controller(self):
         return self._controller
 
-    @property
-    def reset_on_show(self):
-        return self._reset_on_show
+    def show_and_publish(self, comment=None):
+        """Show the window and start publishing.
 
-    @reset_on_show.setter
-    def reset_on_show(self, value):
-        self._reset_on_show = value
+        The method will reset controller and start the publishing afterwards.
 
-    def set_comment_input_text(self, text=""):
-        self._comment_input.setText(text)
+        Todos:
+            Move validations from '_on_publish_clicked' and change of
+                'comment' value in controller to controller so it can be
+                simplified.
 
-    def click_publish(self):
+        Args:
+            comment (Optional[str]): Comment to be set to publish.
+                If is set to 'None' a comment is not changed at all.
+        """
+
+        if comment is not None:
+            self.set_comment(comment)
+        self._reset_on_show = False
+        self.make_sure_is_visible()
+        # Reset controller
+        self._controller.reset()
+        # Fake publish click to trigger save validation and propagate
+        #   comment to controller
         self._on_publish_clicked()
+
+    def set_comment(self, comment):
+        """Change comment text.
+
+        Todos:
+            Be able to set the comment via controller.
+
+        Args:
+            comment (str): Comment text.
+        """
+
+        self._comment_input.setText(comment)
 
     def make_sure_is_visible(self):
         if self._window_is_visible:

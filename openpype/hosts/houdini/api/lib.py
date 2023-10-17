@@ -856,22 +856,19 @@ def update_houdini_vars_context_dialog():
     dialog.show()
 
 
-def publisher_show_and_publish(comment=""):
-    """Open publisher window and trigger publishing action."""
+def publisher_show_and_publish(comment=None):
+    """Open publisher window and trigger publishing action.
+
+    Args:
+        comment (Optional[str]): Comment to set in publisher window.
+    """
 
     main_window = get_main_window()
     publisher_window = get_tool_by_name(
         tool_name="publisher",
         parent=main_window,
-        reset_on_show=False
     )
-
-    publisher_window.set_current_tab("publish")
-    publisher_window.make_sure_is_visible()
-    publisher_window.reset_on_show = False
-    publisher_window.set_comment_input_text(comment)
-    publisher_window.reset()
-    publisher_window.click_publish()
+    publisher_window.show_and_pubish(comment)
 
 
 def find_rop_input_dependencies(input_tuple):
