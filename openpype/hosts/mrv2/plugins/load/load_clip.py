@@ -28,3 +28,18 @@ class LoadClip(load.LoaderPlugin):
 
         from mrv2 import cmd
         cmd.open(path)
+
+        # Match publish fps if mrv2 supports `setSpeed` (0.8+)
+        if hasattr(cmd, "setSpeed"):
+            fps = self.get_fps(context)
+            cmd.setSpeed(fps)
+
+    def get_fps(self, context, default=25):
+        for entity in ["representation", "version", "asset", "project"]:
+            fps = context[entity].get("data", {}).get("fps")
+            if fps is not None:
+                self.log.info(f"Using FPS from {entity}: {fps}")
+                return fps
+
+        self.log.warning(f"Using fallback default FPS: {fps}")
+        return default
