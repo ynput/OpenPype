@@ -17,7 +17,15 @@ def has_unsaved_changes():
 
 
 def save_file(filepath):
-    return cmd.saveSessionAs(filepath)
+    success = cmd.saveSessionAs(filepath)
+    if success:
+        if not hasattr(cmd, "setCurrentSession"):
+            log.warning("mrv2 version lower than 0.8 does not support "
+                        "'cmd.setCurrentSession()'. Please update to a newer"
+                        "version of mrv2.")
+        else:
+            cmd.setCurrentSession(filepath)
+    return success
 
 
 def open_file(filepath):
