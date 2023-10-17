@@ -1189,7 +1189,7 @@ def convert_colorspace(
         "--colorconfig", config_path
     ]
 
-    # prepand any additional args if available
+    # prepend any additional args if available
     if additional_input_args:
         args = additional_input_args + args
 
