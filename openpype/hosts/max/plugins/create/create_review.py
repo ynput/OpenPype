@@ -20,7 +20,8 @@ class CreateReview(plugin.MaxCreator):
                     "keepImages",
                     "percentSize",
                     "visualStyleMode",
-                    "viewportPreset"]:
+                    "viewportPreset",
+                    "vpTexture"]:
             if key in pre_create_data:
                 creator_attributes[key] = pre_create_data[key]
 
@@ -66,7 +67,10 @@ class CreateReview(plugin.MaxCreator):
             EnumDef("viewportPreset",
                     preview_preset_enum,
                     default="Quality",
-                    label="Pre-View Preset")
+                    label="Pre-View Preset"),
+            BoolDef("vpTexture",
+                    label="Viewport Texture",
+                    default=False)
         ]
 
     def get_pre_create_attr_defs(self):

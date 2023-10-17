@@ -6,7 +6,8 @@ from openpype.hosts.max.api.lib import (
     viewport_setup_updated,
     viewport_setup,
     get_max_version,
-    set_preview_arg
+    publish_review_animation,
+    publish_preview_sequences
 )
 
 
@@ -37,22 +38,15 @@ class ExtractReviewAnimation(publish.Extractor):
             " '%s' to '%s'" % (filename, staging_dir))
 
         review_camera = instance.data["review_camera"]
-        if int(get_max_version()) >= 2024:
-            with viewport_setup_updated(review_camera):
-                preview_arg = set_preview_arg(
-                    instance, filepath, start, end, fps)
-                rt.execute(preview_arg)
-        else:
-            visual_style_preset = instance.data.get("visualStyleMode")
+        if int(get_max_version()) < 2024:
             nitrousGraphicMgr = rt.NitrousGraphicsManager
             viewport_setting = nitrousGraphicMgr.GetActiveViewportSetting()
-            with viewport_setup(
-                    viewport_setting,
-                    visual_style_preset,
-                    review_camera):
-                viewport_setting.VisualStyleMode = rt.Name(
-                    visual_style_preset)
-                preview_arg = set_preview_arg(
+            with viewport_setup(instance, viewport_setting, review_camera):
+                publish_preview_sequences(
+                    staging_dir, instance.name, start, end, ext)
+        else:
+            with viewport_setup_updated(review_camera):
+                preview_arg = publish_review_animation(
                     instance, filepath, start, end, fps)
                 rt.execute(preview_arg)
 

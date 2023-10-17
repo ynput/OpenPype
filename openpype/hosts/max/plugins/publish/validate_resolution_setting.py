@@ -12,7 +12,7 @@ class ValidateResolutionSetting(pyblish.api.InstancePlugin,
     """Validate the resolution setting aligned with DB"""
 
     order = pyblish.api.ValidatorOrder - 0.01
-    families = ["maxrender"]
+    families = ["maxrender", "review"]
     hosts = ["max"]
     label = "Validate Resolution Setting"
     optional = True

@@ -34,6 +34,7 @@ class CollectReview(pyblish.api.InstancePlugin,
             "percentSize": creator_attrs["percentSize"],
             "visualStyleMode": creator_attrs["visualStyleMode"],
             "viewportPreset": creator_attrs["viewportPreset"],
+            "vpTexture": creator_attrs["vpTexture"],
             "frameStart": instance.context.data["frameStart"],
             "frameEnd": instance.context.data["frameEnd"],
             "fps": instance.context.data["fps"],
@@ -59,7 +60,6 @@ class CollectReview(pyblish.api.InstancePlugin,
             instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
             instance.data["colorspaceDisplay"] = display
             instance.data["colorspaceView"] = view_transform
-            instance.data["vpTexture"] = attr_values.get("vpTexture")
 
         # Enable ftrack functionality
         instance.data.setdefault("families", []).append('ftrack')
@@ -72,14 +72,7 @@ class CollectReview(pyblish.api.InstancePlugin,
 
     @classmethod
     def get_attribute_defs(cls):
-        additional_attrs = []
-        if int(get_max_version()) >= 2024:
-            additional_attrs.append(
-                BoolDef("vpTexture",
-                        label="Viewport Texture",
-                        default=True),
-            )
-        return additional_attrs + [
+        return [
             BoolDef("dspGeometry",
                     label="Geometry",
                     default=True),

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Library of functions useful for 3dsmax pipeline."""
+import os
 import contextlib
 import logging
 import json
@@ -323,6 +324,11 @@ def is_headless():
 
 @contextlib.contextmanager
 def viewport_setup_updated(camera):
+    """Function to set viewport camera during context
+    ***For 3dsMax 2024+
+    Args:
+        camera (str): viewport camera for review render
+    """
     original = rt.viewport.getCamera()
     has_autoplay = rt.preferences.playPreviewWhenDone
     if not original:
@@ -340,32 +346,59 @@ def viewport_setup_updated(camera):
 
 
 @contextlib.contextmanager
-def viewport_setup(viewport_setting, visual_style, camera):
-    """Function to set visual style options
+def viewport_setup(instance, viewport_setting, camera):
+    """Function to set camera and other viewport options
+    during context
+    ****For Max Version < 2024
 
     Args:
-        visual_style (str): visual style for active viewport
+        instance (str): instance
+        viewport_setting (str): active viewport setting
+        camera (str): viewport camera
 
-    Returns:
-        list: the argument which can set visual style
     """
     original = rt.viewport.getCamera()
+    has_vp_btn = rt.ViewportButtonMgr.EnableButtons
     has_autoplay = rt.preferences.playPreviewWhenDone
     if not original:
         # if there is no original camera
         # use the current camera as original
         original = rt.getNodeByName(camera)
     review_camera = rt.getNodeByName(camera)
-    current_setting = viewport_setting.VisualStyleMode
+
+    current_visualStyle = viewport_setting.VisualStyleMode
+    current_visualPreset = viewport_setting.ViewportPreset
+    current_useTexture = viewport_setting.UseTextureEnabled
+    orig_vp_grid = rt.viewport.getGridVisibility(1)
+    orig_vp_bkg = rt.viewport.IsSolidBackgroundColorMode()
+
+    visualStyle = instance.data.get("visualStyleMode")
+    viewportPreset = instance.data.get("viewportPreset")
+    useTexture = instance.data.get("vpTexture")
+    has_grid_viewport = instance.data.get("dspGrid")
+    bkg_color_viewport = instance.data.get("dspBkg")
+
     try:
         rt.viewport.setCamera(review_camera)
-        viewport_setting.VisualStyleMode = rt.Name(
-            visual_style)
+        rt.viewport.setGridVisibility(1, has_grid_viewport)
         rt.preferences.playPreviewWhenDone = False
+        rt.ViewportButtonMgr.EnableButtons = False
+        rt.viewport.EnableSolidBackgroundColorMode(
+            bkg_color_viewport)
+        viewport_setting.VisualStyleMode = rt.Name(
+            visualStyle)
+        viewport_setting.ViewportPreset = rt.Name(
+            viewportPreset)
+        viewport_setting.UseTextureEnabled = useTexture
         yield
     finally:
         rt.viewport.setCamera(original)
-        viewport_setting.VisualStyleMode = current_setting
+        rt.viewport.setGridVisibility(1, orig_vp_grid)
+        rt.viewport.EnableSolidBackgroundColorMode(orig_vp_bkg)
+        viewport_setting.VisualStyleMode = current_visualStyle
+        viewport_setting.ViewportPreset = current_visualPreset
+        viewport_setting.UseTextureEnabled = current_useTexture
+        rt.ViewportButtonMgr.EnableButtons = has_vp_btn
         rt.preferences.playPreviewWhenDone = has_autoplay
 
 
@@ -532,9 +565,10 @@ def get_plugins() -> list:
     return plugin_info_list
 
 
-def set_preview_arg(instance, filepath,
-                    start, end, fps):
+def publish_review_animation(instance, filepath,
+                             start, end, fps):
     """Function to set up preview arguments in MaxScript.
+    ****For 3dsMax 2024+
 
     Args:
         instance (str): instance
@@ -561,31 +595,88 @@ def set_preview_arg(instance, filepath,
         enabled = instance.data.get(key)
         if enabled:
             job_args.append(f"{key}:{enabled}")
-    if get_max_version() >= 2024:
-        visual_style_preset = instance.data.get("visualStyleMode")
-        if visual_style_preset == "Realistic":
-            visual_style_preset = "defaultshading"
-        else:
-            visual_style_preset = visual_style_preset.lower()
-        # new argument exposed for Max 2024 for visual style
-        visual_style_option = f"vpStyle:#{visual_style_preset}"
-        job_args.append(visual_style_option)
-        # new argument for pre-view preset exposed in Max 2024
-        preview_preset = instance.data.get("viewportPreset")
-        if preview_preset == "Quality":
-            preview_preset = "highquality"
-        elif preview_preset == "Customize":
-            preview_preset = "userdefined"
-        else:
-            preview_preset = preview_preset.lower()
-        preview_preset_option = f"vpPreset:#{visual_style_preset}"
-        job_args.append(preview_preset_option)
-        viewport_texture = instance.data.get("vpTexture", True)
-        if viewport_texture:
-            viewport_texture_option = f"vpTexture:{viewport_texture}"
-            job_args.append(viewport_texture_option)
+
+    visual_style_preset = instance.data.get("visualStyleMode")
+    if visual_style_preset == "Realistic":
+        visual_style_preset = "defaultshading"
+    else:
+        visual_style_preset = visual_style_preset.lower()
+    # new argument exposed for Max 2024 for visual style
+    visual_style_option = f"vpStyle:#{visual_style_preset}"
+    job_args.append(visual_style_option)
+    # new argument for pre-view preset exposed in Max 2024
+    preview_preset = instance.data.get("viewportPreset")
+    if preview_preset == "Quality":
+        preview_preset = "highquality"
+    elif preview_preset == "Customize":
+        preview_preset = "userdefined"
+    else:
+        preview_preset = preview_preset.lower()
+    preview_preset_option = f"vpPreset:#{preview_preset}"
+    job_args.append(preview_preset_option)
+    viewport_texture = instance.data.get("vpTexture", True)
+    if viewport_texture:
+        viewport_texture_option = f"vpTexture:{viewport_texture}"
+        job_args.append(viewport_texture_option)
 
     job_str = " ".join(job_args)
     log.debug(job_str)
 
     return job_str
+
+def publish_preview_sequences(staging_dir, filename,
+                              startFrame, endFrame, ext):
+    """publish preview animation by creating bitmaps
+    ***For 3dsMax Version <2024
+
+    Args:
+        staging_dir (str): staging directory
+        filename (str): filename
+        startFrame (int): start frame
+        endFrame (int): end frame
+        ext (str): image extension
+    """
+    # get the screenshot
+    rt.forceCompleteRedraw()
+    rt.enableSceneRedraw()
+    res_width = rt.renderWidth
+    res_height = rt.renderHeight
+
+    viewportRatio = float(res_width / res_height)
+
+    for i in range(startFrame, endFrame + 1):
+        rt.sliderTime = i
+        fname = "{}.{:04}.{}".format(filename, i, ext)
+        filepath = os.path.join(staging_dir, fname)
+        filepath = filepath.replace("\\", "/")
+        preview_res = rt.bitmap(
+            res_width, res_height, filename=filepath)
+        dib = rt.gw.getViewportDib()
+        dib_width = float(dib.width)
+        dib_height = float(dib.height)
+        renderRatio = float(dib_width / dib_height)
+        if viewportRatio <= renderRatio:
+            heightCrop = (dib_width / renderRatio)
+            topEdge = int((dib_height - heightCrop) / 2.0)
+            tempImage_bmp = rt.bitmap(dib_width, heightCrop)
+            src_box_value = rt.Box2(0, topEdge, dib_width, heightCrop)
+        else:
+            widthCrop = dib_height * renderRatio
+            leftEdge = int((dib_width - widthCrop) / 2.0)
+            tempImage_bmp = rt.bitmap(widthCrop, dib_height)
+            src_box_value = rt.Box2(0, leftEdge, dib_width, dib_height)
+        rt.pasteBitmap(dib, tempImage_bmp, src_box_value, rt.Point2(0, 0))
+
+        # copy the bitmap and close it
+        rt.copy(tempImage_bmp, preview_res)
+        rt.close(tempImage_bmp)
+
+        rt.save(preview_res)
+        rt.close(preview_res)
+
+        rt.close(dib)
+
+        if rt.keyboard.escPressed:
+            rt.exit()
+    # clean up the cache
+    rt.gc()
