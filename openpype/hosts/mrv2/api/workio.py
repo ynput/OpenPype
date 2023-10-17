@@ -1,7 +1,10 @@
 """Host API required Work Files tool"""
 import os
-
+import logging
 from mrv2 import cmd
+
+
+log = logging.getLogger(__name__)
 
 
 def file_extensions():
@@ -28,9 +31,15 @@ def open_file(filepath):
 
 
 def current_file():
-    # It seems that MRV2 has no equivalent to the 'current session'?
+    # Backwards compatibility before MRV2 0.8
     # See: https://github.com/ggarra13/mrv2/issues/124
-    return None
+    if not hasattr(cmd, "currentSession"):
+        log.warning("mrv2 version lower than 0.8 does not support "
+                    "'cmd.currentSession()'. Please update to a newer"
+                    "version of mrv2.")
+        return
+
+    return cmd.currentSession()
 
 
 def work_root(session):
