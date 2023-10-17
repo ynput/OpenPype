@@ -286,9 +286,7 @@ class HostToolsHelper:
             dialog.activateWindow()
             dialog.showNormal()
 
-    def get_publisher_tool(
-        self, parent=None, controller=None, reset_on_show=None
-    ):
+    def get_publisher_tool(self, parent=None, controller=None):
         """Create, cache and return publisher window."""
 
         if self._publisher_tool is None:
@@ -299,18 +297,15 @@ class HostToolsHelper:
 
             publisher_window = PublisherWindow(
                 controller=controller,
-                parent=parent or self._parent,
-                reset_on_show=reset_on_show
+                parent=parent or self._parent
             )
             self._publisher_tool = publisher_window
 
         return self._publisher_tool
 
-    def show_publisher_tool(
-        self, parent=None, controller=None, reset_on_show=None, tab=None
-    ):
+    def show_publisher_tool(self, parent=None, controller=None, tab=None):
         with qt_app_context():
-            window = self.get_publisher_tool(parent, controller, reset_on_show)
+            window = self.get_publisher_tool(parent, controller)
             if tab:
                 window.set_current_tab(tab)
             window.make_sure_is_visible()
