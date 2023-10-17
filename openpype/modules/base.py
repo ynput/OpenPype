@@ -31,6 +31,7 @@ from openpype.settings.lib import (
     get_studio_system_settings_overrides,
     load_json_file
 )
+from openpype.settings.ayon_settings import is_dev_mode_enabled
 
 from openpype.lib import (
     Logger,
@@ -329,16 +330,6 @@ def _get_ayon_bundle_data():
     )
 
 
-def _is_dev_mode_enabled():
-    """Dev mode is enabled in AYON.
-
-    Returns:
-        bool: True if dev mode is enabled.
-    """
-
-    return os.getenv("AYON_USE_DEV") == "1"
-
-
 def _get_ayon_addons_information(bundle_info):
     """Receive information about addons to use from server.
 
@@ -400,7 +391,7 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
             "addons"
         )
 
-    dev_mode_enabled = _is_dev_mode_enabled()
+    dev_mode_enabled = is_dev_mode_enabled()
     dev_addons_info = {}
     if dev_mode_enabled:
         # Get dev addons info only when dev mode is enabled
