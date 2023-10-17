@@ -12,7 +12,7 @@ import requests
 import re
 
 from tests.lib.db_handler import DBHandler
-from common.openpype_common.distribution.file_handler import RemoteFileHandler
+from tests.lib.file_handler import RemoteFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
@@ -105,7 +105,7 @@ class ModuleUnitTest(BaseTest):
         yield path
 
     @pytest.fixture(scope="module")
-    def env_var(self, monkeypatch_session, download_test_data):
+    def env_var(self, monkeypatch_session, download_test_data, mongo_url):
         """Sets temporary env vars from json file."""
         env_url = os.path.join(download_test_data, "input",
                                "env_vars", "env_var.json")
@@ -129,6 +129,9 @@ class ModuleUnitTest(BaseTest):
             monkeypatch_session.setenv(key, str(value))
 
         #reset connection to openpype DB with new env var
+        if mongo_url:
+            monkeypatch_session.setenv("OPENPYPE_MONGO", mongo_url)
+
         import openpype.settings.lib as sett_lib
         sett_lib._SETTINGS_HANDLER = None
         sett_lib._LOCAL_SETTINGS_HANDLER = None
@@ -147,10 +150,9 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def db_setup(self, download_test_data, env_var, monkeypatch_session,
-                 request):
+                 request, mongo_url):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
-
         uri = os.environ.get("OPENPYPE_MONGO")
         db_handler = DBHandler(uri)
         db_handler.setup_from_dump(self.TEST_DB_NAME, backup_dir,

@@ -1,7 +1,5 @@
-from openpype.lib import (
-    PreLaunchHook,
-    get_openpype_execute_args
-)
+from openpype.lib import get_openpype_execute_args
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class TvpaintPrelaunchHook(PreLaunchHook):
@@ -13,7 +11,8 @@ class TvpaintPrelaunchHook(PreLaunchHook):
     Existence of last workfile is checked. If workfile does not exists tries
     to copy templated workfile from predefined path.
     """
-    app_groups = ["tvpaint"]
+    app_groups = {"tvpaint"}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         # Pop tvpaint executable

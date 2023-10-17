@@ -4,7 +4,7 @@ from PIL import Image
 
 from openpype.lib import (
     run_subprocess,
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
 )
 from openpype.pipeline import publish
 from openpype.hosts.photoshop import api as photoshop
@@ -56,6 +56,7 @@ class ExtractReview(publish.Extractor):
         }
 
         if instance.data["family"] != "review":
+            self.log.debug("Existing extracted file from image family used.")
             # enable creation of review, without this jpg review would clash
             # with jpg of the image family
             output_name = repre_name
@@ -63,8 +64,15 @@ class ExtractReview(publish.Extractor):
             repre_skeleton.update({"name": repre_name,
                                    "outputName": output_name})
 
-        if self.make_image_sequence and len(layers) > 1:
-            self.log.info("Extract layers to image sequence.")
+            img_file = self.output_seq_filename % 0
+            self._prepare_file_for_image_family(img_file, instance,
+                                                staging_dir)
+            repre_skeleton.update({
+                "files": img_file,
+            })
+            processed_img_names = [img_file]
+        elif self.make_image_sequence and len(layers) > 1:
+            self.log.debug("Extract layers to image sequence.")
             img_list = self._save_sequence_images(staging_dir, layers)
 
             repre_skeleton.update({
@@ -73,19 +81,19 @@ class ExtractReview(publish.Extractor):
                 "fps": fps,
                 "files": img_list,
             })
-            instance.data["representations"].append(repre_skeleton)
             processed_img_names = img_list
         else:
-            self.log.info("Extract layers to flatten image.")
-            img_list = self._save_flatten_image(staging_dir, layers)
+            self.log.debug("Extract layers to flatten image.")
+            img_file = self._save_flatten_image(staging_dir, layers)
 
             repre_skeleton.update({
-                "files": img_list,
+                "files": img_file,
             })
-            instance.data["representations"].append(repre_skeleton)
-            processed_img_names = [img_list]
+            processed_img_names = [img_file]
 
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        instance.data["representations"].append(repre_skeleton)
+
+        ffmpeg_args = get_ffmpeg_tool_args("ffmpeg")
 
         instance.data["stagingDir"] = staging_dir
 
@@ -94,15 +102,56 @@ class ExtractReview(publish.Extractor):
         source_files_pattern = self._check_and_resize(processed_img_names,
                                                       source_files_pattern,
                                                       staging_dir)
-        self._generate_thumbnail(ffmpeg_path, instance, source_files_pattern,
-                                 staging_dir)
+        self._generate_thumbnail(
+            list(ffmpeg_args),
+            instance,
+            source_files_pattern,
+            staging_dir)
 
         no_of_frames = len(processed_img_names)
         if no_of_frames > 1:
-            self._generate_mov(ffmpeg_path, instance, fps, no_of_frames,
-                               source_files_pattern, staging_dir)
+            self._generate_mov(
+                list(ffmpeg_args),
+                instance,
+                fps,
+                no_of_frames,
+                source_files_pattern,
+                staging_dir)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
+
+    def _prepare_file_for_image_family(self, img_file, instance, staging_dir):
+        """Converts existing file for image family to .jpg
+
+        Image instance could have its own separate review (instance per layer
+        for example). This uses extracted file instead of extracting again.
+        Args:
+            img_file (str): name of output file (with 0000 value for ffmpeg
+                later)
+            instance:
+            staging_dir (str): temporary folder where extracted file is located
+        """
+        repre_file = instance.data["representations"][0]
+        source_file_path = os.path.join(repre_file["stagingDir"],
+                                        repre_file["files"])
+        if not os.path.exists(source_file_path):
+            raise RuntimeError(f"{source_file_path} doesn't exist for "
+                               "review to create from")
+        _, ext = os.path.splitext(repre_file["files"])
+        if ext != ".jpg":
+            im = Image.open(source_file_path)
+            if (im.mode in ('RGBA', 'LA') or (
+                    im.mode == 'P' and 'transparency' in im.info)):
+                # without this it produces messy low quality jpg
+                rgb_im = Image.new("RGBA", (im.width, im.height), "#ffffff")
+                rgb_im.alpha_composite(im)
+                rgb_im.convert("RGB").save(os.path.join(staging_dir, img_file))
+            else:
+                im.save(os.path.join(staging_dir, img_file))
+        else:
+            # handles already .jpg
+            shutil.copy(source_file_path,
+                        os.path.join(staging_dir, img_file))
 
     def _generate_mov(self, ffmpeg_path, instance, fps, no_of_frames,
                       source_files_pattern, staging_dir):
@@ -142,8 +191,9 @@ class ExtractReview(publish.Extractor):
             "tags": self.mov_options['tags']
         })
 
-    def _generate_thumbnail(self, ffmpeg_path, instance, source_files_pattern,
-                            staging_dir):
+    def _generate_thumbnail(
+        self, ffmpeg_args, instance, source_files_pattern, staging_dir
+    ):
         """Generates scaled down thumbnail and adds it as representation.
 
         Args:
@@ -157,8 +207,7 @@ class ExtractReview(publish.Extractor):
         # Generate thumbnail
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         self.log.info(f"Generate thumbnail {thumbnail_path}")
-        args = [
-            ffmpeg_path,
+        args = ffmpeg_args + [
             "-y",
             "-i", source_files_pattern,
             "-vf", "scale=300:-1",
@@ -211,6 +260,11 @@ class ExtractReview(publish.Extractor):
             (list) of PSItem
         """
         layers = []
+        # creating review for existing 'image' instance
+        if instance.data["family"] == "image" and instance.data.get("layer"):
+            layers.append(instance.data["layer"])
+            return layers
+
         for image_instance in instance.context:
             if image_instance.data["family"] != "image":
                 continue

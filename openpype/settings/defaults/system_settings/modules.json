@@ -185,9 +185,9 @@
         "enabled": false,
         "rr_paths": {
             "default": {
-                "windows": "",
-                "darwin": "",
-                "linux": ""
+                "windows": "C:\\RR8",
+                "darwin": "/Volumes/share/RR8",
+                "linux": "/mnt/studio/RR8"
             }
         }
     },

@@ -28,7 +28,7 @@ class ValidateSkeletalMeshHierarchy(pyblish.api.InstancePlugin):
             parent.split("|")[1] for parent in (joints_parents + geo_parents)
         }
 
-        self.log.info(parents_set)
+        self.log.debug(parents_set)
 
         if len(set(parents_set)) > 2:
             raise PublishXmlValidationError(

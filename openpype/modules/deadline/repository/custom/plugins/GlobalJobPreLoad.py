@@ -355,6 +355,13 @@ def inject_openpype_environment(deadlinePlugin):
                 " AVALON_TASK, AVALON_APP_NAME"
             ))
 
+        openpype_mongo = job.GetJobEnvironmentKeyValue("OPENPYPE_MONGO")
+        if openpype_mongo:
+            # inject env var for OP extractenvironments
+            # SetEnvironmentVariable is important, not SetProcessEnv...
+            deadlinePlugin.SetEnvironmentVariable("OPENPYPE_MONGO",
+                                                  openpype_mongo)
+
         if not os.environ.get("OPENPYPE_MONGO"):
             print(">>> Missing OPENPYPE_MONGO env var, process won't work")
 
@@ -378,6 +385,12 @@ def inject_openpype_environment(deadlinePlugin):
         for key, value in contents.items():
             deadlinePlugin.SetProcessEnvironmentVariable(key, value)
 
+        if "PATH" in contents:
+            # Set os.environ[PATH] so studio settings' path entries
+            # can be used to define search path for executables.
+            print(f">>> Setting 'PATH' Environment to: {contents['PATH']}")
+            os.environ["PATH"] = contents["PATH"]
+
         script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
         if script_url:
             script_url = script_url.format(**contents).replace("\\", "/")
@@ -396,6 +409,164 @@ def inject_openpype_environment(deadlinePlugin):
         print("!!! Injection failed.")
         RepositoryUtils.FailJob(job)
         raise
+
+
+def inject_ayon_environment(deadlinePlugin):
+    """ Pull env vars from Ayon and push them to rendering process.
+
+        Used for correct paths, configuration from OpenPype etc.
+    """
+    job = deadlinePlugin.GetJob()
+
+    print(">>> Injecting Ayon environments ...")
+    try:
+        exe_list = get_ayon_executable()
+        exe = FileUtils.SearchFileList(exe_list)
+
+        if not exe:
+            raise RuntimeError((
+               "Ayon executable was not found in the semicolon "
+               "separated list \"{}\"."
+               "The path to the render executable can be configured"
+               " from the Plugin Configuration in the Deadline Monitor."
+            ).format(";".join(exe_list)))
+
+        print("--- Ayon executable: {}".format(exe))
+
+        ayon_bundle_name = job.GetJobEnvironmentKeyValue("AYON_BUNDLE_NAME")
+        if not ayon_bundle_name:
+            raise RuntimeError("Missing env var in job properties "
+                               "AYON_BUNDLE_NAME")
+
+        config = RepositoryUtils.GetPluginConfig("Ayon")
+        ayon_server_url = (
+                job.GetJobEnvironmentKeyValue("AYON_SERVER_URL") or
+                config.GetConfigEntryWithDefault("AyonServerUrl", "")
+        )
+        ayon_api_key = (
+                job.GetJobEnvironmentKeyValue("AYON_API_KEY") or
+                config.GetConfigEntryWithDefault("AyonApiKey", "")
+        )
+
+        if not all([ayon_server_url, ayon_api_key]):
+            raise RuntimeError((
+                "Missing required values for server url and api key. "
+                "Please fill in Ayon Deadline plugin or provide by "
+                "AYON_SERVER_URL and AYON_API_KEY"
+            ))
+
+        # tempfile.TemporaryFile cannot be used because of locking
+        temp_file_name = "{}_{}.json".format(
+            datetime.utcnow().strftime('%Y%m%d%H%M%S%f'),
+            str(uuid.uuid1())
+        )
+        export_url = os.path.join(tempfile.gettempdir(), temp_file_name)
+        print(">>> Temporary path: {}".format(export_url))
+
+        args = [
+            "--headless",
+            "extractenvironments",
+            export_url
+        ]
+
+        add_kwargs = {
+            "project": job.GetJobEnvironmentKeyValue("AVALON_PROJECT"),
+            "asset": job.GetJobEnvironmentKeyValue("AVALON_ASSET"),
+            "task": job.GetJobEnvironmentKeyValue("AVALON_TASK"),
+            "app": job.GetJobEnvironmentKeyValue("AVALON_APP_NAME"),
+            "envgroup": "farm",
+        }
+
+        if job.GetJobEnvironmentKeyValue('IS_TEST'):
+            args.append("--automatic-tests")
+
+        if all(add_kwargs.values()):
+            for key, value in add_kwargs.items():
+                args.extend(["--{}".format(key), value])
+        else:
+            raise RuntimeError((
+                "Missing required env vars: AVALON_PROJECT, AVALON_ASSET,"
+                " AVALON_TASK, AVALON_APP_NAME"
+            ))
+
+        environment = {
+            "AYON_SERVER_URL": ayon_server_url,
+            "AYON_API_KEY": ayon_api_key,
+            "AYON_BUNDLE_NAME": ayon_bundle_name,
+        }
+        for env, val in environment.items():
+            deadlinePlugin.SetEnvironmentVariable(env, val)
+
+        args_str = subprocess.list2cmdline(args)
+        print(">>> Executing: {} {}".format(exe, args_str))
+        process_exitcode = deadlinePlugin.RunProcess(
+            exe, args_str, os.path.dirname(exe), -1
+        )
+
+        if process_exitcode != 0:
+            raise RuntimeError(
+                "Failed to run Ayon process to extract environments."
+            )
+
+        print(">>> Loading file ...")
+        with open(export_url) as fp:
+            contents = json.load(fp)
+
+        for key, value in contents.items():
+            deadlinePlugin.SetProcessEnvironmentVariable(key, value)
+
+        if "PATH" in contents:
+            # Set os.environ[PATH] so studio settings' path entries
+            # can be used to define search path for executables.
+            print(f">>> Setting 'PATH' Environment to: {contents['PATH']}")
+            os.environ["PATH"] = contents["PATH"]
+
+        script_url = job.GetJobPluginInfoKeyValue("ScriptFilename")
+        if script_url:
+            script_url = script_url.format(**contents).replace("\\", "/")
+            print(">>> Setting script path {}".format(script_url))
+            job.SetJobPluginInfoKeyValue("ScriptFilename", script_url)
+
+        print(">>> Removing temporary file")
+        os.remove(export_url)
+
+        print(">> Injection end.")
+    except Exception as e:
+        if hasattr(e, "output"):
+            print(">>> Exception {}".format(e.output))
+        import traceback
+        print(traceback.format_exc())
+        print("!!! Injection failed.")
+        RepositoryUtils.FailJob(job)
+        raise
+
+
+def get_ayon_executable():
+    """Return OpenPype Executable from Event Plug-in Settings
+
+    Returns:
+            (list) of paths
+    Raises:
+        (RuntimeError) if no path configured at all
+    """
+    config = RepositoryUtils.GetPluginConfig("Ayon")
+    exe_list = config.GetConfigEntryWithDefault("AyonExecutable", "")
+
+    if not exe_list:
+        raise RuntimeError("Path to Ayon executable not configured."
+                           "Please set it in Ayon Deadline Plugin.")
+
+    # clean '\ ' for MacOS pasting
+    if platform.system().lower() == "darwin":
+        exe_list = exe_list.replace("\\ ", " ")
+
+    # Expand user paths
+    expanded_paths = []
+    for path in exe_list.split(";"):
+        if path.startswith("~"):
+            path = os.path.expanduser(path)
+        expanded_paths.append(path)
+    return ";".join(expanded_paths)
 
 
 def inject_render_job_id(deadlinePlugin):
@@ -422,16 +593,29 @@ def __main__(deadlinePlugin):
     openpype_publish_job = \
         job.GetJobEnvironmentKeyValue('OPENPYPE_PUBLISH_JOB') or '0'
     openpype_remote_job = \
-        job.GetJobEnvironmentKeyValue('OPENPYPE_REMOTE_JOB') or '0'
+        job.GetJobEnvironmentKeyValue('OPENPYPE_REMOTE_PUBLISH') or '0'
 
-    print("--- Job type - render {}".format(openpype_render_job))
-    print("--- Job type - publish {}".format(openpype_publish_job))
-    print("--- Job type - remote {}".format(openpype_remote_job))
     if openpype_publish_job == '1' and openpype_render_job == '1':
         raise RuntimeError("Misconfiguration. Job couldn't be both " +
                            "render and publish.")
 
     if openpype_publish_job == '1':
         inject_render_job_id(deadlinePlugin)
-    elif openpype_render_job == '1' or openpype_remote_job == '1':
+    if openpype_render_job == '1' or openpype_remote_job == '1':
         inject_openpype_environment(deadlinePlugin)
+
+    ayon_render_job = \
+        job.GetJobEnvironmentKeyValue('AYON_RENDER_JOB') or '0'
+    ayon_publish_job = \
+        job.GetJobEnvironmentKeyValue('AYON_PUBLISH_JOB') or '0'
+    ayon_remote_job = \
+        job.GetJobEnvironmentKeyValue('AYON_REMOTE_PUBLISH') or '0'
+
+    if ayon_publish_job == '1' and ayon_render_job == '1':
+        raise RuntimeError("Misconfiguration. Job couldn't be both " +
+                           "render and publish.")
+
+    if ayon_publish_job == '1':
+        inject_render_job_id(deadlinePlugin)
+    if ayon_render_job == '1' or ayon_remote_job == '1':
+        inject_ayon_environment(deadlinePlugin)

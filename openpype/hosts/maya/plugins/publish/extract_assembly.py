@@ -27,11 +27,11 @@ class ExtractAssembly(publish.Extractor):
         json_filename = "{}.json".format(instance.name)
         json_path = os.path.join(staging_dir, json_filename)
 
-        self.log.info("Dumping scene data for debugging ..")
+        self.log.debug("Dumping scene data for debugging ..")
         with open(json_path, "w") as filepath:
             json.dump(instance.data["scenedata"], filepath, ensure_ascii=False)
 
-        self.log.info("Extracting point cache ..")
+        self.log.debug("Extracting pointcache ..")
         cmds.select(instance.data["nodesHierarchy"])
 
         # Run basic alembic exporter

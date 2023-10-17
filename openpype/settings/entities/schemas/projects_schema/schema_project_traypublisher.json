@@ -350,6 +350,10 @@
                     "name": "template_validate_plugin",
                     "template_data": [
                         {
+                            "key": "CollectSequenceFrameData",
+                            "label": "Collect Original Sequence Frame Data"
+                        },
+                        {
                             "key": "ValidateFrameRange",
                             "label": "Validate frame range"
                         },

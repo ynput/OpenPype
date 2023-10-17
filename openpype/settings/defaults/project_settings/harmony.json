@@ -10,22 +10,6 @@
             "rules": {}
         }
     },
-    "load": {
-        "ImageSequenceLoader": {
-            "family": [
-                "shot",
-                "render",
-                "image",
-                "plate",
-                "reference"
-            ],
-            "representations": [
-                "jpeg",
-                "png",
-                "jpg"
-            ]
-        }
-    },
     "publish": {
         "CollectPalettes": {
             "allowed_tasks": [

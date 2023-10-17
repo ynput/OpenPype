@@ -75,7 +75,6 @@ class RenderInstance(object):
     tilesY = attr.ib(default=0)  # number of tiles in Y
 
     # submit_publish_job
-    toBeRenderedOn = attr.ib(default=None)
     deadlineSubmissionJob = attr.ib(default=None)
     anatomyData = attr.ib(default=None)
     outputDir = attr.ib(default=None)

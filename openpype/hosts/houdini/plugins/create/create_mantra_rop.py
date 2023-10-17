@@ -11,7 +11,6 @@ class CreateMantraROP(plugin.HoudiniCreator):
     label = "Mantra ROP"
     family = "mantra_rop"
     icon = "magic"
-    defaults = ["master"]
 
     def create(self, subset_name, instance_data, pre_create_data):
         import hou  # noqa
@@ -21,7 +20,7 @@ class CreateMantraROP(plugin.HoudiniCreator):
         # Add chunk size attribute
         instance_data["chunkSize"] = 10
         # Submit for job publishing
-        instance_data["farm"] = True
+        instance_data["farm"] = pre_create_data.get("farm")
 
         instance = super(CreateMantraROP, self).create(
             subset_name,
@@ -76,6 +75,9 @@ class CreateMantraROP(plugin.HoudiniCreator):
         ]
 
         return attrs + [
+            BoolDef("farm",
+                    label="Submitting to Farm",
+                    default=True),
             EnumDef("image_format",
                     image_format_enum,
                     default="exr",

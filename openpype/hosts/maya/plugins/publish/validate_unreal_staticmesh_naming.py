@@ -7,10 +7,15 @@ import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.pipeline import legacy_io
 from openpype.settings import get_project_settings
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
+    PublishValidationError
+)
 
 
-class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
+class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
+                                   OptionalPyblishPluginMixin):
     """Validate name of Unreal Static Mesh
 
     Unreals naming convention states that staticMesh should start with `SM`
@@ -64,11 +69,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
 
         invalid = []
 
-        project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
         collision_prefixes = (
-            project_settings
+            instance.context.data["project_settings"]
             ["maya"]
             ["create"]
             ["CreateUnrealStaticMesh"]
@@ -131,16 +133,19 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         if not self.validate_mesh and not self.validate_collision:
-            self.log.info("Validation of both mesh and collision names"
-                          "is disabled.")
+            self.log.debug("Validation of both mesh and collision names"
+                           "is disabled.")
             return
 
         if not instance.data.get("collisionMembers", None):
-            self.log.info("There are no collision objects to validate")
+            self.log.debug("There are no collision objects to validate")
             return
 
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("Model naming is invalid. See log.")
+            raise PublishValidationError("Model naming is invalid. See log.")

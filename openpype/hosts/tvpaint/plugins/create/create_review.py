@@ -12,7 +12,7 @@ class TVPaintReviewCreator(TVPaintAutoCreator):
     # Settings
     active_on_create = True
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["tvpaint"]["create"]["create_review"]
         )

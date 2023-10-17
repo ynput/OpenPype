@@ -23,11 +23,13 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # we cannot ask this until user open render settings as
-        # `defaultArnoldRenderOptions` doesn't exists
+        # `defaultArnoldRenderOptions` doesn't exist
+        errors = []
+
         try:
-            relative_texture = cmds.getAttr(
+            absolute_texture = cmds.getAttr(
                 "defaultArnoldRenderOptions.absolute_texture_paths")
-            relative_procedural = cmds.getAttr(
+            absolute_procedural = cmds.getAttr(
                 "defaultArnoldRenderOptions.absolute_procedural_paths")
             texture_search_path = cmds.getAttr(
                 "defaultArnoldRenderOptions.tspath"
@@ -42,10 +44,11 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
 
         scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
-        assert self.maya_is_true(relative_texture) is not True, \
-            ("Texture path is set to be absolute")
-        assert self.maya_is_true(relative_procedural) is not True, \
-            ("Procedural path is set to be absolute")
+
+        if self.maya_is_true(absolute_texture):
+            errors.append("Texture path is set to be absolute")
+        if self.maya_is_true(absolute_procedural):
+            errors.append("Procedural path is set to be absolute")
 
         anatomy = instance.context.data["anatomy"]
 
@@ -57,15 +60,20 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
         for k in keys:
             paths.append("[{}]".format(k))
 
-        self.log.info("discovered roots: {}".format(":".join(paths)))
+        self.log.debug("discovered roots: {}".format(":".join(paths)))
 
-        assert ":".join(paths) in texture_search_path, (
-            "Project roots are not in texture_search_path"
-        )
+        if ":".join(paths) not in texture_search_path:
+            errors.append((
+                "Project roots {} are not in texture_search_path: {}"
+            ).format(paths, texture_search_path))
 
-        assert ":".join(paths) in procedural_search_path, (
-            "Project roots are not in procedural_search_path"
-        )
+        if ":".join(paths) not in procedural_search_path:
+            errors.append((
+                "Project roots {} are not in procedural_search_path: {}"
+            ).format(paths, procedural_search_path))
+
+        if errors:
+            raise PublishValidationError("\n".join(errors))
 
     @classmethod
     def repair(cls, instance):

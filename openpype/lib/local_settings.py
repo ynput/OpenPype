@@ -29,6 +29,7 @@ except ImportError:
 import six
 import appdirs
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.settings import (
     get_local_settings,
     get_system_settings
@@ -493,10 +494,18 @@ class OpenPypeSettingsRegistry(JSONSettingRegistry):
     """
 
     def __init__(self, name=None):
-        self.vendor = "pypeclub"
-        self.product = "openpype"
+        if AYON_SERVER_ENABLED:
+            vendor = "Ynput"
+            product = "AYON"
+            default_name = "AYON_settings"
+        else:
+            vendor = "pypeclub"
+            product = "openpype"
+            default_name = "openpype_settings"
+        self.vendor = vendor
+        self.product = product
         if not name:
-            name = "openpype_settings"
+            name = default_name
         path = appdirs.user_data_dir(self.product, self.vendor)
         super(OpenPypeSettingsRegistry, self).__init__(name, path)
 
@@ -517,11 +526,54 @@ def _create_local_site_id(registry=None):
     return new_id
 
 
+def get_ayon_appdirs(*args):
+    """Local app data directory of AYON client.
+
+    Args:
+        *args (Iterable[str]): Subdirectories/files in local app data dir.
+
+    Returns:
+        str: Path to directory/file in local app data dir.
+    """
+
+    return os.path.join(
+        appdirs.user_data_dir("AYON", "Ynput"),
+        *args
+    )
+
+
+def _get_ayon_local_site_id():
+    # used for background syncing
+    site_id = os.environ.get("AYON_SITE_ID")
+    if site_id:
+        return site_id
+
+    site_id_path = get_ayon_appdirs("site_id")
+    if os.path.exists(site_id_path):
+        with open(site_id_path, "r") as stream:
+            site_id = stream.read()
+
+    if site_id:
+        return site_id
+
+    try:
+        from ayon_common.utils import get_local_site_id as _get_local_site_id
+        site_id = _get_local_site_id()
+    except ImportError:
+        raise ValueError("Couldn't access local site id")
+
+    return site_id
+
+
 def get_local_site_id():
     """Get local site identifier.
 
     Identifier is created if does not exists yet.
     """
+
+    if AYON_SERVER_ENABLED:
+        return _get_ayon_local_site_id()
+
     # override local id from environment
     # used for background syncing
     if os.environ.get("OPENPYPE_LOCAL_ID"):

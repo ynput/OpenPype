@@ -3,92 +3,19 @@
 from __future__ import absolute_import
 
 import pyblish.api
-from openpype.pipeline.publish import ValidateContentsOrder
+import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    RepairAction,
+    ValidateContentsOrder,
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 
 from maya import cmds
 
 
-class SelectInvalidInstances(pyblish.api.Action):
-    """Select invalid instances in Outliner."""
-
-    label = "Select Instances"
-    icon = "briefcase"
-    on = "failed"
-
-    def process(self, context, plugin):
-        """Process invalid validators and select invalid instances."""
-        # Get the errored instances
-        failed = []
-        for result in context.data["results"]:
-            if (
-                result["error"] is None
-                or result["instance"] is None
-                or result["instance"] in failed
-                or result["plugin"] != plugin
-            ):
-                continue
-
-            failed.append(result["instance"])
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(failed, plugin)
-
-        if instances:
-            self.log.info(
-                "Selecting invalid nodes: %s" % ", ".join(
-                    [str(x) for x in instances]
-                )
-            )
-            self.select(instances)
-        else:
-            self.log.info("No invalid nodes found.")
-            self.deselect()
-
-    def select(self, instances):
-        cmds.select(instances, replace=True, noExpand=True)
-
-    def deselect(self):
-        cmds.select(deselect=True)
-
-
-class RepairSelectInvalidInstances(pyblish.api.Action):
-    """Repair the instance asset."""
-
-    label = "Repair"
-    icon = "wrench"
-    on = "failed"
-
-    def process(self, context, plugin):
-        # Get the errored instances
-        failed = []
-        for result in context.data["results"]:
-            if result["error"] is None:
-                continue
-            if result["instance"] is None:
-                continue
-            if result["instance"] in failed:
-                continue
-            if result["plugin"] != plugin:
-                continue
-
-            failed.append(result["instance"])
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(failed, plugin)
-
-        context_asset = context.data["assetEntity"]["name"]
-        for instance in instances:
-            self.set_attribute(instance, context_asset)
-
-    def set_attribute(self, instance, context_asset):
-        cmds.setAttr(
-            instance.data.get("name") + ".asset",
-            context_asset,
-            type="string"
-        )
-
-
-class ValidateInstanceInContext(pyblish.api.InstancePlugin):
+class ValidateInstanceInContext(pyblish.api.InstancePlugin,
+                                OptionalPyblishPluginMixin):
     """Validator to check if instance asset match context asset.
 
     When working in per-shot style you always publish data in context of
@@ -102,10 +29,49 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin):
     label = "Instance in same Context"
     optional = True
     hosts = ["maya"]
-    actions = [SelectInvalidInstances, RepairSelectInvalidInstances]
+    actions = [
+        openpype.hosts.maya.api.action.SelectInvalidAction, RepairAction
+    ]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         asset = instance.data.get("asset")
-        context_asset = instance.context.data["assetEntity"]["name"]
-        msg = "{} has asset {}".format(instance.name, asset)
-        assert asset == context_asset, msg
+        context_asset = self.get_context_asset(instance)
+        if asset != context_asset:
+            raise PublishValidationError(
+                message=(
+                    "Instance '{}' publishes to different asset than current "
+                    "context: {}. Current context: {}".format(
+                        instance.name, asset, context_asset
+                    )
+                ),
+                description=(
+                    "## Publishing to a different asset\n"
+                    "There are publish instances present which are publishing "
+                    "into a different asset than your current context.\n\n"
+                    "Usually this is not what you want but there can be cases "
+                    "where you might want to publish into another asset or "
+                    "shot. If that's the case you can disable the validation "
+                    "on the instance to ignore it."
+                )
+            )
+
+    @classmethod
+    def get_invalid(cls, instance):
+        return [instance.data["instance_node"]]
+
+    @classmethod
+    def repair(cls, instance):
+        context_asset = cls.get_context_asset(instance)
+        instance_node = instance.data["instance_node"]
+        cmds.setAttr(
+            "{}.asset".format(instance_node),
+            context_asset,
+            type="string"
+        )
+
+    @staticmethod
+    def get_context_asset(instance):
+        return instance.context.data["assetEntity"]["name"]

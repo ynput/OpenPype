@@ -86,10 +86,12 @@ class LoadImage(plugin.Loader):
         subset_name = context["subset"]["name"]
         layer_name = self.get_unique_layer_name(asset_name, subset_name)
 
+        path = self.filepath_from_context(context)
+
         # Fill import script with filename and layer name
         # - filename mus not contain backwards slashes
         george_script = self.import_script.format(
-            self.fname.replace("\\", "/"),
+            path.replace("\\", "/"),
             layer_name,
             load_options_str
         )
@@ -169,7 +171,7 @@ class LoadImage(plugin.Loader):
         george_script = "\n".join(george_script_lines)
         execute_george_through_file(george_script)
 
-    def _remove_container(self, container, members=None):
+    def _remove_container(self, container):
         if not container:
             return
         representation = container["representation"]
@@ -270,9 +272,6 @@ class LoadImage(plugin.Loader):
         self._remove_container(container)
         # Remove old layers
         self._remove_layers(layer_ids=layer_ids_to_remove)
-
-        # Change `fname` to new representation
-        self.fname = self.filepath_from_context(context)
 
         name = container["name"]
         namespace = container["namespace"]

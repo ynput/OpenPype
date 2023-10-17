@@ -34,7 +34,7 @@ class CollectColorCodedInstances(pyblish.api.ContextPlugin):
     label = "Instances"
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
-    targets = ["remotepublish"]
+    targets = ["automated"]
 
     # configurable by Settings
     color_code_mapping = []

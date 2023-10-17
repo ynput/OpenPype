@@ -1,9 +1,10 @@
 {
     "events": {
         "sync_to_avalon": {
-            "statuses_name_change": [
-                "ready",
-                "not ready"
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project manager"
             ]
         },
         "prepare_project": {

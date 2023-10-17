@@ -4,7 +4,8 @@ from maya import cmds
 import pyblish.api
 from openpype.pipeline.publish import (
     RepairAction,
-    ValidateContentsOrder
+    ValidateContentsOrder,
+    PublishValidationError
 )
 
 
@@ -21,7 +22,7 @@ class ValidateGLSLPlugin(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         if not cmds.pluginInfo("maya2glTF", query=True, loaded=True):
-            raise RuntimeError("maya2glTF is not loaded")
+            raise PublishValidationError("maya2glTF is not loaded")
 
     @classmethod
     def repair(cls, instance):

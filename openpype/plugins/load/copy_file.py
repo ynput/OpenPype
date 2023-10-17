@@ -14,8 +14,9 @@ class CopyFile(load.LoaderPlugin):
     color = get_default_entity_icon_color()
 
     def load(self, context, name=None, namespace=None, data=None):
-        self.log.info("Added copy to clipboard: {0}".format(self.fname))
-        self.copy_file_to_clipboard(self.fname)
+        path = self.filepath_from_context(context)
+        self.log.info("Added copy to clipboard: {0}".format(path))
+        self.copy_file_to_clipboard(path)
 
     @staticmethod
     def copy_file_to_clipboard(path):

@@ -6,9 +6,12 @@ import qtawesome
 
 from openpype.style import (
     get_objected_colors,
-    get_style_image_path
+    get_style_image_path,
+    get_default_tools_icon_color,
 )
 from openpype.lib.attribute_definitions import AbstractAttrDef
+
+from .lib import get_qta_icon_by_name_and_color
 
 log = logging.getLogger(__name__)
 
@@ -410,6 +413,18 @@ class PixmapButtonPainter(QtWidgets.QWidget):
 
         self._pixmap = pixmap
         self._cached_pixmap = None
+        self._disabled = False
+
+    def resizeEvent(self, event):
+        super(PixmapButtonPainter, self).resizeEvent(event)
+        self._cached_pixmap = None
+        self.repaint()
+
+    def set_enabled(self, enabled):
+        if self._disabled != enabled:
+            return
+        self._disabled = not enabled
+        self.repaint()
 
     def set_pixmap(self, pixmap):
         self._pixmap = pixmap
@@ -444,6 +459,8 @@ class PixmapButtonPainter(QtWidgets.QWidget):
         if self._cached_pixmap is None:
             self._cache_pixmap()
 
+        if self._disabled:
+            painter.setOpacity(0.5)
         painter.drawPixmap(0, 0, self._cached_pixmap)
 
         painter.end()
@@ -463,6 +480,10 @@ class PixmapButton(ClickableFrame):
         layout = self.layout()
         layout.setContentsMargins(*args)
         self._update_painter_geo()
+
+    def setEnabled(self, enabled):
+        self._button_painter.set_enabled(enabled)
+        super(PixmapButton, self).setEnabled(enabled)
 
     def set_pixmap(self, pixmap):
         self._button_painter.set_pixmap(pixmap)
@@ -759,3 +780,77 @@ class SeparatorWidget(QtWidgets.QFrame):
         self._orientation = orientation
 
         self._set_size(self._size)
+
+
+def get_refresh_icon():
+    return get_qta_icon_by_name_and_color(
+        "fa.refresh", get_default_tools_icon_color()
+    )
+
+
+def get_go_to_current_icon():
+    return get_qta_icon_by_name_and_color(
+        "fa.arrow-down", get_default_tools_icon_color()
+    )
+
+
+class VerticalExpandButton(QtWidgets.QPushButton):
+    """Button which is expanding vertically.
+
+    By default, button is a little bit smaller than other widgets like
+        QLineEdit. This button is expanding vertically to match size of
+        other widgets, next to it.
+    """
+
+    def __init__(self, parent=None):
+        super(VerticalExpandButton, self).__init__(parent)
+
+        sp = self.sizePolicy()
+        sp.setVerticalPolicy(QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(sp)
+
+
+class SquareButton(QtWidgets.QPushButton):
+    """Make button square shape.
+
+    Change width to match height on resize.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(SquareButton, self).__init__(*args, **kwargs)
+
+        sp = self.sizePolicy()
+        sp.setVerticalPolicy(QtWidgets.QSizePolicy.Minimum)
+        sp.setHorizontalPolicy(QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(sp)
+        self._ideal_width = None
+
+    def showEvent(self, event):
+        super(SquareButton, self).showEvent(event)
+        self._ideal_width = self.height()
+        self.updateGeometry()
+
+    def resizeEvent(self, event):
+        super(SquareButton, self).resizeEvent(event)
+        self._ideal_width = self.height()
+        self.updateGeometry()
+
+    def sizeHint(self):
+        sh = super(SquareButton, self).sizeHint()
+        ideal_width = self._ideal_width
+        if ideal_width is None:
+            ideal_width = sh.height()
+        sh.setWidth(ideal_width)
+        return sh
+
+
+class RefreshButton(VerticalExpandButton):
+    def __init__(self, parent=None):
+        super(RefreshButton, self).__init__(parent)
+        self.setIcon(get_refresh_icon())
+
+
+class GoToCurrentButton(VerticalExpandButton):
+    def __init__(self, parent=None):
+        super(GoToCurrentButton, self).__init__(parent)
+        self.setIcon(get_go_to_current_icon())

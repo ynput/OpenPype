@@ -12,7 +12,7 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
     label = "Collect Workfile"
     hosts = ["photoshop"]
 
-    targets = ["remotepublish"]
+    targets = ["automated"]
 
     def process(self, context):
         family = "workfile"

@@ -1,7 +1,6 @@
 import os
 import re
 from openpype.modules import IHostAddon, OpenPypeModule
-from openpype.widgets.message_window import Window
 
 UNREAL_ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -13,6 +12,11 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
     def initialize(self, module_settings):
         self.enabled = True
 
+    def get_global_environments(self):
+        return {
+            "AYON_UNREAL_ROOT": UNREAL_ROOT_DIR,
+        }
+
     def add_implementation_envs(self, env, app):
         """Modify environments to contain all required for implementation."""
         # Set AYON_UNREAL_PLUGIN required for Unreal implementation
@@ -20,6 +24,8 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
         from pathlib import Path
 
         from .lib import get_compatible_integration
+
+        from openpype.widgets.message_window import Window
 
         pattern = re.compile(r'^\d+-\d+$')
 
@@ -53,7 +59,8 @@ class UnrealAddon(OpenPypeModule, IHostAddon):
 
         # Set default environments if are not set via settings
         defaults = {
-            "OPENPYPE_LOG_NO_COLORS": "True"
+            "OPENPYPE_LOG_NO_COLORS": "True",
+            "UE_PYTHONPATH": os.environ.get("PYTHONPATH", ""),
         }
         for key, value in defaults.items():
             if not env.get(key):

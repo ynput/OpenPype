@@ -4,6 +4,8 @@
         "apply_on_opening": false,
         "base_file_unit_scale": 0.01
     },
+    "set_resolution_startup": true,
+    "set_frames_startup": true,
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {
@@ -15,6 +17,14 @@
             "rules": {}
         }
     },
+    "RenderSettings": {
+        "default_render_image_folder": "renders/blender",
+        "aov_separator": "underscore",
+        "image_format": "exr",
+        "multilayer_exr": true,
+        "aov_list": [],
+        "custom_passes": []
+    },
     "workfile_builder": {
         "create_first_version": false,
         "custom_templates": []
@@ -23,6 +33,22 @@
         "ValidateCameraZeroKeyframe": {
             "enabled": true,
             "optional": true,
+            "active": true
+        },
+        "ValidateFileSaved": {
+            "enabled": true,
+            "optional": false,
+            "active": true,
+            "exclude_families": []
+        },
+        "ValidateRenderCameraIsSet": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
+        "ValidateDeadlinePublish": {
+            "enabled": true,
+            "optional": false,
             "active": true
         },
         "ValidateMeshHasUvs": {
@@ -54,7 +80,8 @@
                 "camera",
                 "rig",
                 "action",
-                "layout"
+                "layout",
+                "blendScene"
             ]
         },
         "ExtractFBX": {
@@ -78,6 +105,11 @@
             "active": false
         },
         "ExtractCamera": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractCameraABC": {
             "enabled": true,
             "optional": true,
             "active": true
