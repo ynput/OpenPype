@@ -1,15 +1,19 @@
 import contextlib
 import sys
-
 from mrv2 import plugin
 
 from openpype.pipeline import install_host
 from openpype.hosts.mrv2.api import Mrv2Host
+from openpype.hosts.mrv2.api.lib import get_version
 
 
-def separator():
+def separator_after(callback):
     # Do nothing function, temporary until mrv2 exposes separator functionality
-    pass
+    if get_version() <= (0, 8, 0):
+        # Separator support was added in mrv2 0.8
+        return callback
+    # See https://github.com/ggarra13/mrv2/issues/126
+    return callback, "__divider__"
 
 
 class MyPlugin(plugin.Plugin):
@@ -50,8 +54,7 @@ class MyPlugin(plugin.Plugin):
             f"{top}/Load...": self.on_load,
             f"{top}/Publish...": self.on_publish,
             f"{top}/Manage...": self.on_manage,
-            f"{top}/Library...": self.on_library,
-            f"{top}/-------": separator,
+            f"{top}/Library...": separator_after(self.on_library),
             f"{top}/Workfiles...": self.on_workfiles,
         }
 
