@@ -545,7 +545,7 @@ def get_last_workfile_representation(
     project_name,
     asset_name,
     task_name,
-    host_name=None,
+    host_name,
     fields=None,
 ):
     """Get last published workfile representation.
@@ -554,7 +554,7 @@ def get_last_workfile_representation(
         project_name(str): Project name.
         asset_name(str): Asset/Shot name.
         task_name (str): Task name.
-        host_name (Optional[str]): Host name.
+        host_name (str): Host name.
         fields (Optional[Iterable[str]]): Fields that should be returned.
             Defaults to None.
 
