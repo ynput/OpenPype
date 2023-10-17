@@ -57,4 +57,4 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
         if version:
             instance.data['version'] = version
 
-        self.log.info("Backdrop instance collected: `{}`".format(instance))
+        self.log.debug("Backdrop instance collected: `{}`".format(instance))

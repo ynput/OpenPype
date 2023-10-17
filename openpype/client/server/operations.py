@@ -422,7 +422,7 @@ def failed_json_default(value):
 
 
 class ServerCreateOperation(CreateOperation):
-    """Opeartion to create an entity.
+    """Operation to create an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -634,7 +634,7 @@ class ServerUpdateOperation(UpdateOperation):
 
 
 class ServerDeleteOperation(DeleteOperation):
-    """Opeartion to delete an entity.
+    """Operation to delete an entity.
 
     Args:
         project_name (str): On which project operation will happen.
@@ -647,7 +647,7 @@ class ServerDeleteOperation(DeleteOperation):
         self._session = session
 
         if entity_type == "asset":
-            entity_type == "folder"
+            entity_type = "folder"
 
         elif entity_type == "hero_version":
             entity_type = "version"

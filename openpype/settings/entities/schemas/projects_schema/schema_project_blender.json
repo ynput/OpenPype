@@ -55,6 +55,110 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "RenderSettings",
+            "label": "Render Settings",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "default_render_image_folder",
+                    "label": "Default render image folder"
+                },
+                {
+                    "key": "aov_separator",
+                    "label": "AOV Separator Character",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "underscore",
+                    "enum_items": [
+                        {"dash": "- (dash)"},
+                        {"underscore": "_ (underscore)"},
+                        {"dot": ". (dot)"}
+                    ]
+                },
+                {
+                    "key": "image_format",
+                    "label": "Output Image Format",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "exr",
+                    "enum_items": [
+                        {"exr": "OpenEXR"},
+                        {"bmp": "BMP"},
+                        {"rgb": "Iris"},
+                        {"png": "PNG"},
+                        {"jpg": "JPEG"},
+                        {"jp2": "JPEG 2000"},
+                        {"tga": "Targa"},
+                        {"tif": "TIFF"}
+                    ]
+                },
+                {
+                    "key": "multilayer_exr",
+                    "type": "boolean",
+                    "label": "Multilayer (EXR)"
+                },
+                {
+                    "type": "label",
+                    "label": "Note: Multilayer EXR is only used when output format type set to EXR."
+                },
+                {
+                    "key": "aov_list",
+                    "label": "AOVs to create",
+                    "type": "enum",
+                    "multiselection": true,
+                    "defaults": "empty",
+                    "enum_items": [
+                        {"empty": "< empty >"},
+                        {"combined": "Combined"},
+                        {"z": "Z"},
+                        {"mist": "Mist"},
+                        {"normal": "Normal"},
+                        {"diffuse_light": "Diffuse Light"},
+                        {"diffuse_color": "Diffuse Color"},
+                        {"specular_light": "Specular Light"},
+                        {"specular_color": "Specular Color"},
+                        {"volume_light": "Volume Light"},
+                        {"emission": "Emission"},
+                        {"environment": "Environment"},
+                        {"shadow": "Shadow"},
+                        {"ao": "Ambient Occlusion"},
+                        {"denoising": "Denoising"},
+                        {"volume_direct": "Direct Volumetric Scattering"},
+                        {"volume_indirect": "Indirect Volumetric Scattering"}
+                    ]
+                },
+                {
+                    "type": "label",
+                    "label": "Add custom AOVs. They are added to the view layer and in the Compositing Nodetree,\nbut they need to be added manually to the Shader Nodetree."
+                },
+                {
+                    "type": "dict-modifiable",
+                    "store_as_list": true,
+                    "key": "custom_passes",
+                    "label": "Custom Passes",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "type",
+                                "label": "Type",
+                                "type": "enum",
+                                "multiselection": false,
+                                "default": "COLOR",
+                                "enum_items": [
+                                    {"COLOR": "Color"},
+                                    {"VALUE": "Value"}
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_workfile_options",
             "skip_paths": [

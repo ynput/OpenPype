@@ -748,15 +748,17 @@ def _convert_nuke_project_settings(ayon_settings, output):
     )
 
     new_review_data_outputs = {}
-    outputs_settings = None
+    outputs_settings = []
     # Check deprecated ExtractReviewDataMov
     # settings for backwards compatibility
     deprecrated_review_settings = ayon_publish["ExtractReviewDataMov"]
     current_review_settings = (
-        ayon_publish["ExtractReviewIntermediates"]
+        ayon_publish.get("ExtractReviewIntermediates")
     )
     if deprecrated_review_settings["enabled"]:
         outputs_settings = deprecrated_review_settings["outputs"]
+    elif current_review_settings is None:
+        pass
     elif current_review_settings["enabled"]:
         outputs_settings = current_review_settings["outputs"]
 
@@ -1162,19 +1164,19 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
     for profile in extract_oiio_transcode_profiles:
         new_outputs = {}
         name_counter = {}
-        for output in profile["outputs"]:
-            if "name" in output:
-                name = output.pop("name")
+        for profile_output in profile["outputs"]:
+            if "name" in profile_output:
+                name = profile_output.pop("name")
             else:
                 # Backwards compatibility for setting without 'name' in model
-                name = output["extension"]
+                name = profile_output["extension"]
                 if name in new_outputs:
                     name_counter[name] += 1
                     name = "{}_{}".format(name, name_counter[name])
                 else:
                     name_counter[name] = 0
 
-            new_outputs[name] = output
+            new_outputs[name] = profile_output
         profile["outputs"] = new_outputs
 
     # Extract Burnin plugin

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import errno
 import re
 import uuid
 import logging
@@ -9,10 +10,15 @@ import json
 
 import six
 
+from openpype.lib import StringTemplate
 from openpype.client import get_asset_by_name
+from openpype.settings import get_current_project_settings
 from openpype.pipeline import get_current_project_name, get_current_asset_name
-from openpype.pipeline.context_tools import get_current_project_asset
-
+from openpype.pipeline.context_tools import (
+    get_current_context_template_data,
+    get_current_project_asset
+)
+from openpype.widgets import popup
 import hou
 
 
@@ -159,8 +165,6 @@ def validate_fps():
     current_fps = hou.fps()  # returns float
 
     if current_fps != fps:
-
-        from openpype.widgets import popup
 
         # Find main window
         parent = hou.ui.mainQtWindow()
@@ -747,3 +751,99 @@ def get_camera_from_container(container):
 
     assert len(cameras) == 1, "Camera instance must have only one camera"
     return cameras[0]
+
+
+def get_context_var_changes():
+    """get context var changes."""
+
+    houdini_vars_to_update = {}
+
+    project_settings = get_current_project_settings()
+    houdini_vars_settings = \
+        project_settings["houdini"]["general"]["update_houdini_var_context"]
+
+    if not houdini_vars_settings["enabled"]:
+        return houdini_vars_to_update
+
+    houdini_vars = houdini_vars_settings["houdini_vars"]
+
+    # No vars specified - nothing to do
+    if not houdini_vars:
+        return houdini_vars_to_update
+
+    # Get Template data
+    template_data = get_current_context_template_data()
+
+    # Set Houdini Vars
+    for item in houdini_vars:
+        # For consistency reasons we always force all vars to be uppercase
+        # Also remove any leading, and trailing whitespaces.
+        var = item["var"].strip().upper()
+
+        # get and resolve template in value
+        item_value = StringTemplate.format_template(
+            item["value"],
+            template_data
+        )
+
+        if var == "JOB" and item_value == "":
+            # sync $JOB to $HIP if $JOB is empty
+            item_value = os.environ["HIP"]
+
+        if item["is_directory"]:
+            item_value = item_value.replace("\\", "/")
+
+        current_value = hou.hscript("echo -n `${}`".format(var))[0]
+
+        if current_value != item_value:
+            houdini_vars_to_update[var] = (
+                current_value, item_value, item["is_directory"]
+            )
+
+    return houdini_vars_to_update
+
+
+def update_houdini_vars_context():
+    """Update asset context variables"""
+
+    for var, (_old, new, is_directory) in get_context_var_changes().items():
+        if is_directory:
+            try:
+                os.makedirs(new)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    print(
+                        "Failed to create ${} dir. Maybe due to "
+                        "insufficient permissions.".format(var)
+                    )
+
+        hou.hscript("set {}={}".format(var, new))
+        os.environ[var] = new
+        print("Updated ${} to {}".format(var, new))
+
+
+def update_houdini_vars_context_dialog():
+    """Show pop-up to update asset context variables"""
+    update_vars = get_context_var_changes()
+    if not update_vars:
+        # Nothing to change
+        print("Nothing to change, Houdini vars are already up to date.")
+        return
+
+    message = "\n".join(
+        "${}: {} -> {}".format(var, old or "None", new or "None")
+        for var, (old, new, _is_directory) in update_vars.items()
+    )
+
+    # TODO: Use better UI!
+    parent = hou.ui.mainQtWindow()
+    dialog = popup.Popup(parent=parent)
+    dialog.setModal(True)
+    dialog.setWindowTitle("Houdini scene has outdated asset variables")
+    dialog.setMessage(message)
+    dialog.setButtonText("Fix")
+
+    # on_show is the Fix button clicked callback
+    dialog.on_clicked.connect(update_houdini_vars_context)
+
+    dialog.show()

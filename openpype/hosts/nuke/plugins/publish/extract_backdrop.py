@@ -56,8 +56,6 @@ class ExtractBackdropNode(publish.Extractor):
             # connect output node
             for n, output in connections_out.items():
                 opn = nuke.createNode("Output")
-                self.log.info(n.name())
-                self.log.info(output.name())
                 output.setInput(
                     next((i for i, d in enumerate(output.dependencies())
                           if d.name() in n.name()), 0), opn)
@@ -102,5 +100,5 @@ class ExtractBackdropNode(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '{}' to: {}".format(
+        self.log.debug("Extracted instance '{}' to: {}".format(
             instance.name, path))

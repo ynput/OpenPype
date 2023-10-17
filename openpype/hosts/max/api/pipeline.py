@@ -57,6 +57,9 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         rt.callbacks.addScript(rt.Name('systemPostNew'),
                                context_setting)
 
+        rt.callbacks.addScript(rt.Name('filePostOpen'),
+                               lib.check_colorspace)
+
     def has_unsaved_changes(self):
         # TODO: how to get it from 3dsmax?
         return True
