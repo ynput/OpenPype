@@ -19,12 +19,6 @@ from openpype.lib import (
     NumberDef
 )
 
-try:
-    import nuke
-except ModuleNotFoundError:
-    # Not all hosts can import these modules.
-    pass
-
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                          OpenPypePyblishPluginMixin):
@@ -489,6 +483,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         Returning:
             list: captured groups list
         """
+        # Not all hosts can import this module.
+        import nuke
+
         captured_groups = []
         for lg_name, list_node_class in self.limit_groups.items():
             for node_class in list_node_class:

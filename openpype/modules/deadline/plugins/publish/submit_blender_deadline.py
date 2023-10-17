@@ -14,12 +14,6 @@ from openpype.tests.lib import is_in_tests
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 
-try:
-    import bpy
-except ModuleNotFoundError:
-    # Not all hosts can import this module.
-    pass
-
 
 @attr.s
 class BlenderPluginInfo():
@@ -146,6 +140,9 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         return job_info
 
     def get_plugin_info(self):
+        # Not all hosts can import this module.
+        import bpy
+
         plugin_info = BlenderPluginInfo(
             SceneFile=self.scene_path,
             Version=bpy.app.version_string,

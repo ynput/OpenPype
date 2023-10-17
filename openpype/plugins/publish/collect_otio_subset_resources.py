@@ -8,19 +8,7 @@ Provides:
 import os
 
 import clique
-
 import pyblish.api
-
-try:
-    import opentimelineio as otio
-    from openpype.pipeline.editorial import (
-        get_media_range_with_retimes,
-        range_from_frames,
-        make_sequence_collection
-    )
-except ModuleNotFoundError:
-    # Not all hosts can import these modules.
-    pass
 
 from openpype.pipeline.publish import (
     get_publish_template_name
@@ -36,6 +24,13 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
     hosts = ["resolve", "hiero", "flame"]
 
     def process(self, instance):
+        # Not all hosts can import these modules.
+        import opentimelineio as otio
+        from openpype.pipeline.editorial import (
+            get_media_range_with_retimes,
+            range_from_frames,
+            make_sequence_collection
+        )
 
         if "audio" in instance.data["family"]:
             return

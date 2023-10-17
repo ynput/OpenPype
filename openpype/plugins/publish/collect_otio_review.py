@@ -13,12 +13,6 @@ Provides:
 
 from pprint import pformat
 
-try:
-    import opentimelineio as otio
-except ImportError:
-    # Not all hosts can import this module.
-    pass
-
 import pyblish.api
 
 
@@ -31,6 +25,9 @@ class CollectOtioReview(pyblish.api.InstancePlugin):
     hosts = ["resolve", "hiero", "flame"]
 
     def process(self, instance):
+        # Not all hosts can import this module.
+        import opentimelineio as otio
+
         # get basic variables
         otio_review_clips = []
         otio_timeline = instance.context.data["otioTimeline"]

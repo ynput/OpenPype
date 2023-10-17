@@ -10,12 +10,6 @@ from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 
-try:
-    import hou
-except ModuleNotFoundError:
-    # Not all hosts can import this module.
-    pass
-
 
 class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
     """Submit Houdini scene to perform a local publish in Deadline.
@@ -36,6 +30,8 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
     targets = ["deadline"]
 
     def process(self, context):
+        # Not all hosts can import this module.
+        import hou
 
         # Ensure no errors so far
         assert all(

@@ -8,12 +8,6 @@ from openpype.lib import (
     run_subprocess
 )
 
-try:
-    import opentimelineio as otio
-except ModuleNotFoundError:
-    # Not all hosts can import this modules.
-    pass
-
 
 class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
     """Extract Audio tracks from OTIO timeline.
@@ -162,6 +156,9 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         Returns:
             list: list of audio clip dictionaries
         """
+        # Not all hosts can import this module.
+        import opentimelineio as otio
+
         output = []
         # go trough all audio tracks
         for otio_track in otio_timeline.tracks:
