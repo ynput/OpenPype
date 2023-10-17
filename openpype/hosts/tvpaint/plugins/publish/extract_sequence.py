@@ -31,6 +31,11 @@ class ExtractSequence(pyblish.api.Extractor):
     review_bg = [255, 255, 255, 255]
 
     def process(self, instance):
+        print('###\n####\n###')
+        print(ExtractSequence)
+        print('###\n####\n###')
+        self.log.debug(instance.data['family'])
+        self.log.debug(instance.data['families'])
         self.log.info(
             "* Processing instance \"{}\"".format(instance.data["label"])
         )
@@ -62,7 +67,9 @@ class ExtractSequence(pyblish.api.Extractor):
         ignore_layers_transparency = instance.data.get(
             "ignoreLayersTransparency", False
         )
+        print(instance.context.data)
 
+        print(instance.data)
         family_lowered = instance.data["family"].lower()
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
@@ -111,9 +118,16 @@ class ExtractSequence(pyblish.api.Extractor):
             "Files will be rendered to folder: {}".format(output_dir)
         )
 
-        if instance.data["family"] == "review":
+        export_type = instance.data["creator_attributes"].get("export_type", "project")
+        print('####\n###\n### EXPORT TYPE')
+        print(export_type)
+        print('####\n###\n###')
+
+        is_review = instance.data["family"] == "review"
+        is_playblast = instance.data["creator_identifier"] == "render.playblast"
+        if is_review or is_playblast:
             result = self.render_review(
-                output_dir, mark_in, mark_out, scene_bg_color
+                output_dir, export_type, mark_in, mark_out, scene_bg_color
             )
         else:
             # Render output
@@ -204,7 +218,7 @@ class ExtractSequence(pyblish.api.Extractor):
         return repre_filenames
 
     def render_review(
-        self, output_dir, mark_in, mark_out, scene_bg_color
+        self, output_dir, export_type, mark_in, mark_out, scene_bg_color
     ):
         """ Export images from TVPaint using `tv_savesequence` command.
 
@@ -236,12 +250,16 @@ class ExtractSequence(pyblish.api.Extractor):
             "export_path = \"{}\"".format(
                 first_frame_filepath.replace("\\", "/")
             ),
-            "tv_savesequence '\"'export_path'\"' {} {}".format(
-                mark_in, mark_out
+            "tv_projectsavesequence '\"'export_path'\"' \"{}\" {} {}".format(
+                export_type, mark_in, mark_out
             )
         ]
+        print('####\n###\n### CMD')
+        print(george_script_lines)
+        print('####\n###\n###')
+
         if scene_bg_color:
-            # Change bg color back to previous scene bg color
+            # Change bg color back to previous scene bg colorq
             _scene_bg_color = copy.deepcopy(scene_bg_color)
             bg_type = _scene_bg_color.pop(0)
             orig_color_command = [
