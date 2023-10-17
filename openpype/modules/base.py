@@ -336,7 +336,7 @@ def _is_dev_mode_enabled():
         bool: True if dev mode is enabled.
     """
 
-    return os.getenv("AYON_DEV_MODE") == "1"
+    return os.getenv("AYON_USE_DEV") == "1"
 
 
 def _get_ayon_addons_information(bundle_info):
