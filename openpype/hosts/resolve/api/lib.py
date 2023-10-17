@@ -251,10 +251,10 @@ def get_media_pool_item(filepath, root: object = None) -> object:
 
 def create_timeline_item(
         media_pool_item: object,
-        source_start: int,
-        source_end: int,
-        timeline_in: int,
-        timeline: object = None
+        timeline: object = None,
+        timeline_in: int = None,
+        source_start: int = None,
+        source_end: int = None,
 ) -> object:
     """
     Add media pool item to current or defined timeline.
