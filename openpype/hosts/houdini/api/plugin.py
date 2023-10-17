@@ -325,8 +325,9 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
         """Method called on initialization of plugin to apply settings."""
 
         # Apply General Settings
-        self.add_publish_button = \
-            project_settings["houdini"]["general"]["add_self_publish_button"]
+        houdini_general_settings = project_settings["houdini"]["general"]
+        self.add_publish_button = houdini_general_settings.get(
+            "add_self_publish_button", False)
 
         # Apply Creator Settings
         settings_name = self.settings_name

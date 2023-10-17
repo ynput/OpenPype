@@ -924,11 +924,7 @@ def self_publish():
 
     for instance in context.instances:
         node_path = instance.data.get("instance_node")
-        if not node_path:
-            continue
-
-        active = node_path in inputs_paths
-        instance["active"] = active
+        instance["active"] = node_path and node_path in inputs_paths
 
     context.save_changes()
 
@@ -941,7 +937,7 @@ def add_self_publish_button(node):
     label = os.environ.get("AVALON_LABEL") or "OpenPype"
 
     button_parm = hou.ButtonParmTemplate(
-        "{}_publish".format(label.lower()),
+        "ayon_self_publish",
         "{} Publish".format(label),
         script_callback="from openpype.hosts.houdini.api.lib import "
                         "self_publish; self_publish()",
