@@ -261,10 +261,10 @@ def create_timeline_item(
 
     Args:
         media_pool_item (resolve.MediaPoolItem): resolve's object
-        source_start (int): media source input frame (sequence frame)
-        source_end (int): media source output frame (sequence frame)
-        timeline_in (int): timeline input frame (sequence frame)
-        timeline (resolve.Timeline)[optional]: resolve's object
+        timeline (Optional[resolve.Timeline]): resolve's object
+        timeline_in (Optional[int]): timeline input frame (sequence frame)
+        source_start (Optional[int]): media source input frame (sequence frame)
+        source_end (Optional[int]): media source output frame (sequence frame)
 
     Returns:
         object: resolve.TimelineItem
@@ -277,20 +277,28 @@ def create_timeline_item(
     timeline = timeline or get_current_timeline()
 
     # timing variables
-    fps = project.GetSetting("timelineFrameRate")
-    duration = source_end - source_start
-    timecode_in = frames_to_timecode(timeline_in, fps)
-    timecode_out = frames_to_timecode(timeline_in + duration, fps)
+    if all([timeline_in, source_start, source_end]):
+        fps = project.GetSetting("timelineFrameRate")
+        duration = source_end - source_start
+        timecode_in = frames_to_timecode(timeline_in, fps)
+        timecode_out = frames_to_timecode(timeline_in + duration, fps)
+    else:
+        timecode_in = None
+        timecode_out = None
 
     # if timeline was used then switch it to current timeline
     with maintain_current_timeline(timeline):
         # Add input mediaPoolItem to clip data
         clip_data = {
             "mediaPoolItem": media_pool_item,
-            "startFrame": source_start,
-            "endFrame": source_end,
-            "recordFrame": timeline_in,
         }
+
+        if source_start:
+            clip_data["startFrame"] = source_start
+        if source_end:
+            clip_data["endFrame"] = source_end
+        if timecode_in:
+            clip_data["recordFrame"] = timecode_in
 
         # add to timeline
         media_pool.AppendToTimeline([clip_data])

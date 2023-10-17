@@ -434,10 +434,10 @@ class ClipLoader:
         # make track item from source in bin as item
         timeline_item = lib.create_timeline_item(
             media_pool_item,
+            self.active_timeline,
+            timeline_in,
             source_in,
             source_out,
-            timeline_in,
-            self.active_timeline,
         )
 
         print("Loading clips: `{}`".format(self.data["clip_name"]))
