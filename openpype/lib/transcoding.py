@@ -1149,9 +1149,9 @@ def convert_colorspace(
     target_colorspace=None,
     view=None,
     display=None,
+    additional_input_args=None,
     additional_command_args=None,
     logger=None,
-    input_args=None
 ):
     """Convert source file from one color space to another.
 
@@ -1170,6 +1170,8 @@ def convert_colorspace(
         view (str): name for viewer space (ocio valid)
             both 'view' and 'display' must be filled (if 'target_colorspace')
         display (str): name for display-referred reference space (ocio valid)
+            both 'view' and 'display' must be filled (if 'target_colorspace')
+        additional_input_args (list): input arguments for oiiotool
         additional_command_args (list): arguments for oiiotool (like binary
             depth for .dpx)
         logger (logging.Logger): Logger used for logging.
@@ -1179,12 +1181,21 @@ def convert_colorspace(
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    oiio_cmd = get_oiio_tool_args(
-        "oiiotool",
+    # prepare main oiio command args
+    args = [
         input_path,
         # Don't add any additional attributes
         "--nosoftwareattrib",
         "--colorconfig", config_path
+    ]
+
+    # prepand any additional args if available
+    if additional_input_args:
+        args = additional_input_args + args
+
+    oiio_cmd = get_oiio_tool_args(
+        "oiiotool",
+        *args
     )
 
     if all([target_colorspace, view, display]):
