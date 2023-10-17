@@ -624,6 +624,7 @@ def publish_review_animation(instance, filepath,
 
     return job_str
 
+
 def publish_preview_sequences(staging_dir, filename,
                               startFrame, endFrame, ext):
     """publish preview animation by creating bitmaps
