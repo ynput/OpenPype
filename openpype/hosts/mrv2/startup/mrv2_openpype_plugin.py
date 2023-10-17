@@ -8,7 +8,7 @@ from openpype.hosts.mrv2.api.lib import get_version
 
 
 def separator_after(callback):
-    # Do nothing function, temporary until mrv2 exposes separator functionality
+    """Use as callback for menu function to add a separator after the entry"""
     if get_version() <= (0, 8, 0):
         # Separator support was added in mrv2 0.8
         return callback
