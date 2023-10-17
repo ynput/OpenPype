@@ -341,19 +341,22 @@ class PublishTest(ModuleUnitTest):
         timeout = float(timeout)
 
         output = ""
+        errors = ""
         while launched_app.poll() is None:
             try:
                 out, err = launched_app.communicate(timeout=0.5)
             except subprocess.TimeoutExpired:
-                out, errs = launched_app.communicate()
-                output += out.decode("utf-8")
+                out, err = launched_app.communicate()
                 if time.time() - time_start > timeout:
                     launched_app.terminate()
                     raise ValueError("Timeout reached")
 
+            output += out.decode("utf-8")
+            errors += err.decode("utf-8")
+
         print("Publish finished")
         msg = "Launched app errored:\n{}"
-        assert launched_app.returncode == 0, msg.format(err.decode("utf-8"))
+        assert launched_app.returncode == 0, msg.format(errors)
 
         yield output
 
