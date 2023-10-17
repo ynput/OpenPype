@@ -119,8 +119,8 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
     def per_instance_process(
         self,
         context,
-        asset_entity,
-        task_entity,
+        context_asset_entity,
+        context_task_entity,
         task_object_type_id
     ):
         context_task_name = None
