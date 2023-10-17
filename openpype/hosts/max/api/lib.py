@@ -385,11 +385,14 @@ def viewport_setup(instance, viewport_setting, camera):
         rt.ViewportButtonMgr.EnableButtons = False
         rt.viewport.EnableSolidBackgroundColorMode(
             bkg_color_viewport)
-        viewport_setting.VisualStyleMode = rt.Name(
-            visualStyle)
-        viewport_setting.ViewportPreset = rt.Name(
-            viewportPreset)
-        viewport_setting.UseTextureEnabled = useTexture
+        if visualStyle != current_visualStyle:
+            viewport_setting.VisualStyleMode = rt.Name(
+                visualStyle)
+        elif viewportPreset != current_visualPreset:
+            viewport_setting.ViewportPreset = rt.Name(
+                viewportPreset)
+        elif useTexture != current_useTexture:
+            viewport_setting.UseTextureEnabled = useTexture
         yield
     finally:
         rt.viewport.setCamera(original)
@@ -400,6 +403,7 @@ def viewport_setup(instance, viewport_setting, camera):
         viewport_setting.UseTextureEnabled = current_useTexture
         rt.ViewportButtonMgr.EnableButtons = has_vp_btn
         rt.preferences.playPreviewWhenDone = has_autoplay
+
 
 
 def set_timeline(frameStart, frameEnd):
