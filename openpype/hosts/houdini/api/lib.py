@@ -868,7 +868,7 @@ def publisher_show_and_publish(comment=None):
         tool_name="publisher",
         parent=main_window,
     )
-    publisher_window.show_and_pubish(comment)
+    publisher_window.show_and_publish(comment)
 
 
 def find_rop_input_dependencies(input_tuple):
