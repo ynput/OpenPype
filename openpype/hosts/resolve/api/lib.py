@@ -292,10 +292,6 @@ def create_timeline_item(
             "recordFrame": timeline_in,
         }
 
-        print("clip_data", "_" * 50)
-        print(media_pool_item.GetName())
-        print(clip_data)
-
         # add to timeline
         media_pool.AppendToTimeline([clip_data])
 
@@ -511,7 +507,7 @@ def imprint(timeline_item, data=None):
 
     Arguments:
         timeline_item (hiero.core.TrackItem): hiero track item object
-        data (dict): Any data which needst to be imprinted
+        data (dict): Any data which needs to be imprinted
 
     Examples:
         data = {
