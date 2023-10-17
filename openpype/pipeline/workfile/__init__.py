@@ -14,6 +14,11 @@ from .path_resolving import (
 )
 
 from .build_workfile import BuildWorkfile
+from .artist_note import (
+    get_workfile_doc,
+    create_workfile_doc,
+    set_workfile_note,
+)
 
 
 __all__ = (
@@ -31,4 +36,8 @@ __all__ = (
     "create_workdir_extra_folders",
 
     "BuildWorkfile",
+
+    "get_workfile_doc",
+    "create_workfile_doc",
+    "set_workfile_note",
 )
