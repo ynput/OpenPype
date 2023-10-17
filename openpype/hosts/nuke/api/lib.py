@@ -2800,6 +2800,13 @@ def find_free_space_to_paste_nodes(
 def maintained_selection(exclude_nodes=None):
     """Maintain selection during context
 
+    Maintain selection during context and unselect
+    all nodes after context is done.
+
+    Arguments:
+        exclude_nodes (list[nuke.Node]): list of nodes to be unselected
+                                         before context is done
+
     Example:
         >>> with maintained_selection():
         ...     node["selected"].setValue(True)
