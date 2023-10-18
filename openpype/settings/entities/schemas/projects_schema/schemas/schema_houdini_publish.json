@@ -5,6 +5,10 @@
   "label": "Publish plugins",
   "children": [
     {
+      "type":"label",
+      "label":"Collectors"
+    },
+    {
       "type": "dict",
       "collapsible": true,
       "key": "CollectRopFrameRange",

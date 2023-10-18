@@ -158,7 +158,8 @@ class CollectRopFrameRangeModel(BaseSettingsModel):
     ignore start and end handles specified in the
     asset data for publish instances
     """
-    use_asset_handles: bool = Field(title="Use asset handles")
+    use_asset_handles: bool = Field(
+        title="Use asset handles")
 
 
 class BasicValidateModel(BaseSettingsModel):
@@ -170,7 +171,8 @@ class BasicValidateModel(BaseSettingsModel):
 class PublishPluginsModel(BaseSettingsModel):
     CollectRopFrameRange: CollectRopFrameRangeModel = Field(
         default_factory=CollectRopFrameRangeModel,
-        title="Collect Rop Frame Range."
+        title="Collect Rop Frame Range.",
+        section="Collectors"
     )
     ValidateWorkfilePaths: ValidateWorkfilePathsModel = Field(
         default_factory=ValidateWorkfilePathsModel,
