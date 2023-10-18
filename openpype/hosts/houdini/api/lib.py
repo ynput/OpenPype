@@ -363,11 +363,10 @@ def imprint(node, data, update=False):
         parm_folder.setParmTemplates(templates)
         parm_group.append(parm_folder)
     else:
+        # Add to parm folder instance, then replace with updated one in group
         for template in templates:
-            parm_group.appendToFolder(parm_folder, template)
-            # this is needed because the pointer to folder
-            # is for some reason lost every call to `appendToFolder()`
-            parm_folder = parm_group.findFolder("Extra")
+            parm_folder.addParmTemplate(template)
+        parm_group.replace(parm_folder.name(), parm_folder)
 
     for parm_template in update_parms:
         parm_group.replace(parm_template.name(), parm_template)
