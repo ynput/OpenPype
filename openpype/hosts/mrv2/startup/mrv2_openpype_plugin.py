@@ -16,7 +16,9 @@ def separator_after(callback):
     return callback, "__divider__"
 
 
-class MyPlugin(plugin.Plugin):
+class OpenPypePlugin(plugin.Plugin):
+    """OpenPype Plug-in for MRV2's Plug-in System to expose menu entries"""
+
     def on_create(self):
         from openpype.tools.utils import host_tools
         with qt_app():
