@@ -846,7 +846,7 @@ def _convert_nuke_project_settings(ayon_settings, output):
     if "required_nodes" in ayon_imageio_nodes:
         ayon_imageio_nodes["requiredNodes"] = (
             ayon_imageio_nodes.pop("required_nodes"))
-    if ayon_imageio_nodes.get("override_nodes"):
+    if "override_nodes" in ayon_imageio_nodes:
         ayon_imageio_nodes["overrideNodes"] = (
             ayon_imageio_nodes.pop("override_nodes"))
 
