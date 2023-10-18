@@ -836,10 +836,8 @@ def _convert_nuke_project_settings(ayon_settings, output):
             imageio_workfile[dst] = imageio_workfile.pop(src)
 
     # regex inputs
-    regex_inputs = ayon_imageio.get("regex_inputs")
-    if regex_inputs:
-        ayon_imageio.pop("regex_inputs")
-        ayon_imageio["regexInputs"] = regex_inputs
+    if "regex_inputs" in ayon_imageio:
+        ayon_imageio["regexInputs"] = ayon_imageio.pop("regex_inputs")
 
     # nodes
     ayon_imageio_nodes = ayon_imageio["nodes"]
