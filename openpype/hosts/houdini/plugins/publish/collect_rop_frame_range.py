@@ -41,11 +41,17 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
             return
 
         # Log artist friendly message about the collected frame range
+        frame_start=frame_data["frameStart"]
+        frame_end=frame_data["frameEnd"]
+
         if attr_values.get("use_handles"):
             self.log.info(
                 "Full Frame range with Handles "
-                "{0[frameStartHandle]} - {0[frameEndHandle]}\n"
-                .format(frame_data)
+                "[{frame_start_handle} - {frame_end_handle}]\n"
+                .format(
+                    frame_start_handle=frame_data["frameStartHandle"],
+                    frame_end_handle=frame_data["frameEndHandle"]
+                )
             )
         else:
             self.log.info(
@@ -54,20 +60,27 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
             )
 
         self.log.info(
-            "Frame range {0[frameStart]} - {0[frameEnd]}"
-            .format(frame_data)
+            "Frame range [{frame_start} - {frame_end}]"
+            .format(
+                frame_start=frame_start,
+                frame_end=frame_end
+            )
         )
 
         if frame_data.get("byFrameStep", 1.0) != 1.0:
-            self.log.info("Frame steps {0[byFrameStep]}".format(frame_data))
+            self.log.info("Frame steps {}".format(frame_data["byFrameStep"]))
 
         instance.data.update(frame_data)
 
         # Add frame range to label if the instance has a frame range.
         label = instance.data.get("label", instance.data["name"])
         instance.data["label"] = (
-            "{0} [{1[frameStart]} - {1[frameEnd]}]"
-            .format(label, frame_data)
+            "{label} [{frame_start} - {frame_end}]"
+            .format(
+                label=label,
+                frame_start=frame_start,
+                frame_end=frame_end
+            )
         )
 
     @classmethod

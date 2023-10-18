@@ -36,7 +36,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                     "The frame range for the instance is invalid because "
                     "the start frame is higher than the end frame.\n\nThis "
                     "is likely due to asset handles being applied to your "
-                    "instance or may be because the ROP node's start frame "
+                    "instance or the ROP node's start frame "
                     "is set higher than the end frame.\n\nIf your ROP frame "
                     "range is correct and you do not want to apply asset "
                     "handles make sure to disable Use asset handles on the "
