@@ -35,7 +35,7 @@ class CollectReview(pyblish.api.InstancePlugin,
             "percentSize": creator_attrs["percentSize"],
             "frameStart": instance.context.data["frameStart"],
             "frameEnd": instance.context.data["frameEnd"],
-            "fps": instance.context.data["fps"],
+            "fps": instance.context.data["fps"]
         }
 
         if int(get_max_version()) >= 2024:

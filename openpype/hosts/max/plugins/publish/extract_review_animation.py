@@ -1,14 +1,7 @@
 import os
 import pyblish.api
-from pymxs import runtime as rt
 from openpype.pipeline import publish
-from openpype.hosts.max.api.lib import (
-    viewport_camera,
-    viewport_preference_setting,
-    get_max_version,
-    publish_review_animation,
-    publish_preview_sequences
-)
+from openpype.hosts.max.api.lib import publish_preview_animation
 
 
 class ExtractReviewAnimation(publish.Extractor):
@@ -27,7 +20,6 @@ class ExtractReviewAnimation(publish.Extractor):
         filename = "{0}..{1}".format(instance.name, ext)
         start = int(instance.data["frameStart"])
         end = int(instance.data["frameEnd"])
-        fps = float(instance.data["fps"])
         filepath = os.path.join(staging_dir, filename)
         filepath = filepath.replace("\\", "/")
         filenames = self.get_files(
@@ -38,21 +30,10 @@ class ExtractReviewAnimation(publish.Extractor):
             " '%s' to '%s'" % (filename, staging_dir))
 
         review_camera = instance.data["review_camera"]
-        if int(get_max_version()) < 2024:
-            with viewport_preference_setting(review_camera,
-                                             instance.data["general_viewport"],
-                                             instance.data["nitrous_viewport"],
-                                             instance.data["vp_btn_mgr"],
-                                             instance.data["preferences"]):
-                percentSize = instance.data.get("percentSize")
-                publish_preview_sequences(
-                    staging_dir, instance.name,
-                    start, end, percentSize, ext)
-        else:
-            with viewport_camera(review_camera):
-                preview_arg = publish_review_animation(
-                    instance, filepath, start, end, fps)
-                rt.execute(preview_arg)
+        publish_preview_animation(
+            instance, staging_dir,
+            filepath, start, end,
+            review_camera)
 
         tags = ["review"]
         if not instance.data.get("keepImages"):

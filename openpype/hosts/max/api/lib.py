@@ -347,15 +347,22 @@ def viewport_camera(camera):
         rt.viewport.setCamera(original)
         rt.preferences.playPreviewWhenDone = has_autoplay
         viewport_setting.ViewportPreset = orig_preset
-        rt.completeRedraw()
 
 
 @contextlib.contextmanager
-def viewport_preference_setting(camera,
-                                general_viewport,
+def play_preview_when_done(has_autoplay):
+    current_playback = rt.preferences.playPreviewWhenDone
+    try:
+        rt.preferences.playPreviewWhenDone = has_autoplay
+        yield
+    finally:
+        rt.preferences.playPreviewWhenDone = current_playback
+
+
+@contextlib.contextmanager
+def viewport_preference_setting(general_viewport,
                                 nitrous_viewport,
-                                vp_button_mgr,
-                                preview_preferences):
+                                vp_button_mgr):
     """Function to set viewport setting during context
     ***For Max Version < 2024
     Args:
@@ -366,12 +373,6 @@ def viewport_preference_setting(camera,
         vp_button_mgr (dict): Viewport button manager Setting
         preview_preferences (dict): Preview Preferences Setting
     """
-    original_camera = rt.viewport.getCamera()
-    if not original_camera:
-        # if there is no original camera
-        # use the current camera as original
-        original_camera = rt.getNodeByName(camera)
-    review_camera = rt.getNodeByName(camera)
     orig_vp_grid = rt.viewport.getGridVisibility(1)
     orig_vp_bkg = rt.viewport.IsSolidBackgroundColorMode()
 
@@ -383,11 +384,8 @@ def viewport_preference_setting(camera,
     nitrous_viewport_original = {
         key: getattr(viewport_setting, key) for key in nitrous_viewport
     }
-    preview_preferences_original = {
-        key: getattr(rt.preferences, key) for key in preview_preferences
-    }
+
     try:
-        rt.viewport.setCamera(review_camera)
         rt.viewport.setGridVisibility(1, general_viewport["dspGrid"])
         rt.viewport.EnableSolidBackgroundColorMode(general_viewport["dspBkg"])
         for key, value in vp_button_mgr.items():
@@ -395,21 +393,15 @@ def viewport_preference_setting(camera,
         for key, value in nitrous_viewport.items():
             if nitrous_viewport[key] != nitrous_viewport_original[key]:
                 setattr(viewport_setting, key, value)
-        for key, value in preview_preferences.items():
-            setattr(rt.preferences, key, value)
         yield
 
     finally:
-        rt.viewport.setCamera(review_camera)
         rt.viewport.setGridVisibility(1, orig_vp_grid)
         rt.viewport.EnableSolidBackgroundColorMode(orig_vp_bkg)
         for key, value in vp_button_mgr_original.items():
             setattr(rt.ViewportButtonMgr, key, value)
         for key, value in nitrous_viewport_original.items():
             setattr(viewport_setting, key, value)
-        for key, value in preview_preferences_original.items():
-            setattr(rt.preferences, key, value)
-        rt.completeRedraw()
 
 
 def set_timeline(frameStart, frameEnd):
@@ -638,6 +630,9 @@ def publish_review_animation(instance, filepath,
         viewport_texture_option = f"vpTexture:{viewport_texture}"
         job_args.append(viewport_texture_option)
 
+    auto_play_option = "autoPlay:false"
+    job_args.append(auto_play_option)
+
     job_str = " ".join(job_args)
     log.debug(job_str)
 
@@ -659,8 +654,6 @@ def publish_preview_sequences(staging_dir, filename,
         ext (str): image extension
     """
     # get the screenshot
-    rt.forceCompleteRedraw()
-    rt.enableSceneRedraw()
     resolution_percentage = float(percentSize) / 100
     res_width = rt.renderWidth * resolution_percentage
     res_height = rt.renderHeight * resolution_percentage
@@ -703,3 +696,36 @@ def publish_preview_sequences(staging_dir, filename,
             rt.exit()
     # clean up the cache
     rt.gc(delayed=True)
+
+def publish_preview_animation(instance, staging_dir, filepath,
+                              startFrame, endFrame, review_camera):
+    """Publish Reivew Animation
+
+    Args:
+        instance (pyblish.api.instance): Instance
+        staging_dir (str): staging directory
+        filepath (str): filepath
+        startFrame (int): start frame
+        endFrame (int): end frame
+        review_camera (str): viewport camera for
+            preview render
+    """
+    with play_preview_when_done(False):
+        with viewport_camera(review_camera):
+            if int(get_max_version()) < 2024:
+                    with viewport_preference_setting(
+                        instance.data["general_viewport"],
+                        instance.data["nitrous_viewport"],
+                        instance.data["vp_btn_mgr"]):
+                            percentSize = instance.data.get("percentSize")
+                            ext = instance.data.get("imageFormat")
+                            rt.completeRedraw()
+                            publish_preview_sequences(
+                                staging_dir, instance.name,
+                                startFrame, endFrame, percentSize, ext)
+            else:
+                fps = instance.data["fps"]
+                rt.completeRedraw()
+                preview_arg = publish_review_animation(
+                    instance, filepath, startFrame, endFrame, fps)
+                rt.execute(preview_arg)
