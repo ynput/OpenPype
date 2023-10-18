@@ -2302,7 +2302,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
             if env_path in path:
                 # with regsub we make sure path format of slashes is correct
                 resub_expr = (
-                    "[regsub -all {{\\}} [getenv {}] \"/\"]").format(env_var)
+                    "[regsub -all {{\\\\}} [getenv {}] \"/\"]").format(env_var)
 
                 new_path = path.replace(
                     env_path, resub_expr
