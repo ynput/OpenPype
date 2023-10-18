@@ -332,8 +332,8 @@ def imprint(node, data, update=False):
         return
 
     current_parms = {p.name(): p for p in node.spareParms()}
-    update_parms = []
-    templates = []
+    update_parm_templates = []
+    new_parm_templates = []
 
     for key, value in data.items():
         if value is None:
@@ -348,27 +348,35 @@ def imprint(node, data, update=False):
                 log.debug(f"{key} already exists on {node}")
             else:
                 log.debug(f"replacing {key}")
-                update_parms.append(parm_template)
+                update_parm_templates.append(parm_template)
             continue
 
-        templates.append(parm_template)
+        new_parm_templates.append(parm_template)
+
+    if not new_parm_templates and not update_parm_templates:
+        return
 
     parm_group = node.parmTemplateGroup()
-    parm_folder = parm_group.findFolder("Extra")
 
-    # if folder doesn't exist yet, create one and append to it,
-    # else append to existing one
-    if not parm_folder:
-        parm_folder = hou.FolderParmTemplate("folder", "Extra")
-        parm_folder.setParmTemplates(templates)
-        parm_group.append(parm_folder)
-    else:
-        # Add to parm folder instance, then replace with updated one in group
-        for template in templates:
-            parm_folder.addParmTemplate(template)
-        parm_group.replace(parm_folder.name(), parm_folder)
+    # Add new parm templates
+    if new_parm_templates:
+        parm_folder = parm_group.findFolder("Extra")
 
-    for parm_template in update_parms:
+        # if folder doesn't exist yet, create one and append to it,
+        # else append to existing one
+        if not parm_folder:
+            parm_folder = hou.FolderParmTemplate("folder", "Extra")
+            parm_folder.setParmTemplates(new_parm_templates)
+            parm_group.append(parm_folder)
+        else:
+            # Add to parm template folder instance then replace with updated
+            # one in parm template group
+            for template in new_parm_templates:
+                parm_folder.addParmTemplate(template)
+            parm_group.replace(parm_folder.name(), parm_folder)
+
+    # Update existing parm templates
+    for parm_template in update_parm_templates:
         parm_group.replace(parm_template.name(), parm_template)
 
         # When replacing a parm with a parm of the same name it preserves its
