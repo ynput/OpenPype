@@ -39,7 +39,6 @@ class LoadOcioLookNodes(load.LoaderPlugin):
     # json file variables
     schema_version = 1
 
-
     def load(self, context, name, namespace, data):
         """
         Loading function to get the soft effects to particular read node
@@ -66,10 +65,10 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         group_node = self._create_group_node(
             object_name, filepath, json_f["data"])
 
-
         self._node_version_color(context["version"], group_node)
 
-        self.log.info("Loaded lut setup: `{}`".format(group_node["name"].value()))
+        self.log.info(
+            "Loaded lut setup: `{}`".format(group_node["name"].value()))
 
         return containerise(
             node=group_node,
@@ -244,7 +243,6 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         self.log.info("Updated lut setup: `{}`".format(
             group_node["name"].value()))
 
-
     def _load_json_data(self, filepath):
         # getting data from json file with unicode conversion
         with open(filepath, "r") as _file:
@@ -303,6 +301,7 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         else:
             color_value = self.old_node_color
         node["tile_color"].setValue(int(color_value, 16))
+
 
 def _colorspace_name_by_type(colorspace_data):
     """
