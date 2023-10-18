@@ -1,4 +1,3 @@
-from math import e
 import os
 from pprint import pformat
 import pyblish.api

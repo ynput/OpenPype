@@ -184,8 +184,9 @@ class LoadOcioLookNodes(load.LoaderPlugin):
                 )
                 if not item_lut_file:
                     raise ValueError(
-                        "File with extension '{}' not found in directory".format(
-                            extension))
+                        "File with extension '{}' not "
+                        "found in directory".format(extension)
+                    )
 
                 item_lut_path = os.path.join(
                     dir_path, item_lut_file).replace("\\", "/")
