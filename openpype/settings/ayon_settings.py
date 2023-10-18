@@ -1439,8 +1439,8 @@ class _AyonSettingsCache:
                 and bundle.get("activeUser") == username
             ):
                 return bundle["name"]
-        # Return fake variant - distribution logic will tell user that he does not
-        #   have set any dev bundle
+        # Return fake variant - distribution logic will tell user that he
+        #   does not have set any dev bundle
         return "dev"
 
     @classmethod
