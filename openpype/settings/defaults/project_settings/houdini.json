@@ -1,5 +1,6 @@
 {
     "general": {
+        "add_self_publish_button": false,
         "update_houdini_var_context": {
             "enabled": true,
             "houdini_vars":[

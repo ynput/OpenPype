@@ -432,6 +432,10 @@
             "name": "template_publish_plugin",
             "template_data": [
                 {
+                    "key": "ValidateResolution",
+                    "label": "Validate Resolution Settings"
+                },
+                {
                     "key": "ValidateCurrentRenderLayerIsRenderable",
                     "label": "Validate Current Render Layer Has Renderable Camera"
                 },
