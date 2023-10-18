@@ -567,8 +567,8 @@ def get_plugins() -> list:
     return plugin_info_list
 
 
-def publish_review_animation(instance, filepath,
-                             start, end, fps):
+def publish_review_animation(instance, staging_dir, start,
+                             end, ext, fps):
     """Function to set up preview arguments in MaxScript.
     ****For 3dsMax 2024+
 
@@ -583,6 +583,9 @@ def publish_review_animation(instance, filepath,
         list: job arguments
     """
     job_args = list()
+    filename = "{0}..{1}".format(instance.name, ext)
+    filepath = os.path.join(staging_dir, filename)
+    filepath = filepath.replace("\\", "/")
     default_option = f'CreatePreview filename:"{filepath}"'
     job_args.append(default_option)
     frame_option = f"outputAVI:false start:{start} end:{end} fps:{fps}" # noqa
@@ -698,13 +701,14 @@ def publish_preview_sequences(staging_dir, filename,
     rt.gc(delayed=True)
 
 
-def publish_preview_animation(instance, staging_dir, filepath,
-                              startFrame, endFrame, review_camera):
-    """Publish Reivew Animation
+def publish_preview_animation(
+        instance, staging_dir,
+        startFrame, endFrame,
+        ext, review_camera):
+    """Render camera review animation
 
     Args:
         instance (pyblish.api.instance): Instance
-        staging_dir (str): staging directory
         filepath (str): filepath
         startFrame (int): start frame
         endFrame (int): end frame
@@ -718,7 +722,6 @@ def publish_preview_animation(instance, staging_dir, filepath,
                         instance.data["nitrous_viewport"],
                         instance.data["vp_btn_mgr"]):
                     percentSize = instance.data.get("percentSize")
-                    ext = instance.data.get("imageFormat")
                     rt.completeRedraw()
                     publish_preview_sequences(
                         staging_dir, instance.name,
@@ -726,6 +729,7 @@ def publish_preview_animation(instance, staging_dir, filepath,
             else:
                 fps = instance.data["fps"]
                 rt.completeRedraw()
-                preview_arg = publish_review_animation(
-                    instance, filepath, startFrame, endFrame, fps)
+                preview_arg = publish_review_animation(instance, staging_dir,
+                                                       startFrame, endFrame,
+                                                       ext, fps)
                 rt.execute(preview_arg)
