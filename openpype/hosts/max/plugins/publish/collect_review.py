@@ -66,7 +66,7 @@ class CollectReview(pyblish.api.InstancePlugin,
             }
         else:
             preview_data = {}
-            general_viewport =  {
+            general_viewport = {
                 "dspBkg": attr_values.get("dspBkg"),
                 "dspGrid": attr_values.get("dspGrid")
             }
@@ -77,8 +77,8 @@ class CollectReview(pyblish.api.InstancePlugin,
             }
             preview_data["general_viewport"] = general_viewport
             preview_data["nitrous_viewport"] = nitrous_viewport
-            preview_data["vp_button_manager"] = {
-                "EnableButtons" : False
+            preview_data["vp_btn_mgr"] = {
+                "EnableButtons": False
             }
             preview_data["preferences"] = {
                 "playPreviewWhenDone": False

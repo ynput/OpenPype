@@ -42,7 +42,7 @@ class ExtractReviewAnimation(publish.Extractor):
             with viewport_preference_setting(review_camera,
                                              instance.data["general_viewport"],
                                              instance.data["nitrous_viewport"],
-                                             instance.data["vp_button_manager"],
+                                             instance.data["vp_btn_mgr"],
                                              instance.data["preferences"]):
                 percentSize = instance.data.get("percentSize")
                 publish_preview_sequences(
