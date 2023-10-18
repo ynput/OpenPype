@@ -438,10 +438,10 @@ class ClipLoader:
 
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
+        source_duration = int(_clip_property("Frames"))
 
         # check if source duration is shorter than db frame duration
         source_with_handles = True
-        source_duration = source_out - source_in + 1
         if source_duration < db_frame_duration:
             source_with_handles = False
 
