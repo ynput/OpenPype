@@ -351,6 +351,16 @@ def viewport_preference_setting(camera,
                                 nitrous_viewport,
                                 vp_button_mgr,
                                 preview_preferences):
+    """Function to set viewport setting during context
+
+    Args:
+        camera (str): Viewport camera for review render
+        general_viewport (dict): General viewport setting
+        nitrous_viewport (dict): Nitrous setting for
+            preview animation
+        vp_button_mgr (dict): Viewport button manager Setting
+        preview_preferences (dict): Preview Preferences Setting
+    """
     original_camera = rt.viewport.getCamera()
     if not original_camera:
         # if there is no original camera
