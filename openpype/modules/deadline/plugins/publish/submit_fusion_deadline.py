@@ -13,7 +13,8 @@ from openpype.pipeline.publish import (
 )
 from openpype.lib import (
     BoolDef,
-    NumberDef
+    NumberDef,
+    is_running_from_build
 )
 
 
@@ -230,6 +231,11 @@ class FusionSubmitDeadline(
             "OPENPYPE_LOG_NO_COLORS",
             "IS_TEST"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 

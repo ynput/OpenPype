@@ -183,7 +183,7 @@ class ProductsWidget(QtWidgets.QWidget):
             not controller.is_loaded_products_supported()
         )
 
-    def set_name_filer(self, name):
+    def set_name_filter(self, name):
         """Set filter of product name.
 
         Args:
