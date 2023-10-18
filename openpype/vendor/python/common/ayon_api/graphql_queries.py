@@ -144,6 +144,7 @@ def product_types_query(fields):
             query_queue.append((k, v, field))
     return query
 
+
 def project_product_types_query(fields):
     query = GraphQlQuery("ProjectProductTypes")
     project_query = query.add_field("project")
@@ -175,6 +176,8 @@ def folders_graphql_query(fields):
     parent_folder_ids_var = query.add_variable("parentFolderIds", "[String!]")
     folder_paths_var = query.add_variable("folderPaths", "[String!]")
     folder_names_var = query.add_variable("folderNames", "[String!]")
+    folder_types_var = query.add_variable("folderTypes", "[String!]")
+    statuses_var = query.add_variable("folderStatuses", "[String!]")
     has_products_var = query.add_variable("folderHasProducts", "Boolean!")
 
     project_field = query.add_field("project")
@@ -185,6 +188,8 @@ def folders_graphql_query(fields):
     folders_field.set_filter("parentIds", parent_folder_ids_var)
     folders_field.set_filter("names", folder_names_var)
     folders_field.set_filter("paths", folder_paths_var)
+    folders_field.set_filter("folderTypes", folder_types_var)
+    folders_field.set_filter("statuses", statuses_var)
     folders_field.set_filter("hasProducts", has_products_var)
 
     nested_fields = fields_to_dict(fields)
