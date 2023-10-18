@@ -308,9 +308,9 @@ def create_timeline_item(
 
     assert output_timeline_item, AssertionError((
         "Clip name '{}' was't created on the timeline: '{}' \n\n"
-        "Please check if the clip is in the media pool or if the timeline \n"
-        "is having activated correct track name, or if it is not already \n"
-        "having any clip add place on the timeline in: '{}' out: '{}'. \n\n"
+        "Please check if correct track position is activated, \n"
+        "or if a clip is not already at the timeline in \n"
+        "position: '{}' out: '{}'. \n\n"
         "Clip data: {}"
     ).format(
         clip_name, timeline.GetName(), timecode_in, timecode_out, clip_data
