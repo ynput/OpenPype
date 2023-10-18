@@ -1,23 +1,16 @@
 from pydantic import Field
 from ayon_server.settings import (
     BaseSettingsModel,
-    MultiplatformPathModel,
-    MultiplatformPathListModel,
+    MultiplatformPathModel
 )
 
 
 class ShelfToolsModel(BaseSettingsModel):
-    name: str = Field(title="Name")
-    help: str = Field(title="Help text")
-    # TODO: The following settings are not compatible with OP
-    script: MultiplatformPathModel = Field(
-        default_factory=MultiplatformPathModel,
-        title="Script Path "
-    )
-    icon: MultiplatformPathModel = Field(
-        default_factory=MultiplatformPathModel,
-        title="Icon Path "
-    )
+    """Name and Script Path are mandatory."""
+    label: str = Field(title="Name")
+    script: str = Field(title="Script Path")
+    icon: str = Field( "", title="Icon Path")
+    help: str = Field("", title="Help text")
 
 
 class ShelfDefinitionModel(BaseSettingsModel):
@@ -31,10 +24,10 @@ class ShelfDefinitionModel(BaseSettingsModel):
 
 class ShelvesModel(BaseSettingsModel):
     _layout = "expanded"
-    shelf_set_name: str = Field(title="Shelfs set name")
+    shelf_set_name: str = Field("", title="Shelfs set name")
 
-    shelf_set_source_path: MultiplatformPathListModel = Field(
-        default_factory=MultiplatformPathListModel,
+    shelf_set_source_path: MultiplatformPathModel = Field(
+        default_factory=MultiplatformPathModel,
         title="Shelf Set Path (optional)"
     )
 
