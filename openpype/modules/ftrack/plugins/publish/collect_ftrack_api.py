@@ -44,19 +44,25 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
         self.log.debug("Project found: {0}".format(project_entity))
 
+        task_object_type = session.query(
+            "ObjectType where name is 'Task'").one()
+        task_object_type_id = task_object_type["id"]
         asset_entity = None
         if asset_name:
             # Find asset entity
             entity_query = (
-                'TypedContext where project_id is "{0}"'
-                ' and name is "{1}"'
-            ).format(project_entity["id"], asset_name)
+                "TypedContext where project_id is '{}'"
+                " and name is '{}'"
+                " and object_type_id != '{}'"
+            ).format(
+                project_entity["id"],
+                asset_name,
+                task_object_type_id
+            )
             self.log.debug("Asset entity query: < {0} >".format(entity_query))
             asset_entities = []
             for entity in session.query(entity_query).all():
-                # Skip tasks
-                if entity.entity_type.lower() != "task":
-                    asset_entities.append(entity)
+                asset_entities.append(entity)
 
             if len(asset_entities) == 0:
                 raise AssertionError((
@@ -103,10 +109,19 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
         context.data["ftrackEntity"] = asset_entity
         context.data["ftrackTask"] = task_entity
 
-        self.per_instance_process(context, asset_entity, task_entity)
+        self.per_instance_process(
+            context,
+            asset_entity,
+            task_entity,
+            task_object_type_id
+        )
 
     def per_instance_process(
-        self, context, context_asset_entity, context_task_entity
+        self,
+        context,
+        context_asset_entity,
+        context_task_entity,
+        task_object_type_id
     ):
         context_task_name = None
         context_asset_name = None
@@ -182,23 +197,27 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
         session = context.data["ftrackSession"]
         project_entity = context.data["ftrackProject"]
-        asset_names = set()
-        for asset_name in instance_by_asset_and_task.keys():
-            asset_names.add(asset_name)
+        asset_names = set(instance_by_asset_and_task.keys())
 
         joined_asset_names = ",".join([
             "\"{}\"".format(name)
             for name in asset_names
         ])
-        entities = session.query((
-            "TypedContext where project_id is \"{}\" and name in ({})"
-        ).format(project_entity["id"], joined_asset_names)).all()
+        entities = session.query(
+            (
+                "TypedContext where project_id is \"{}\" and name in ({})"
+                " and object_type_id != '{}'"
+            ).format(
+                project_entity["id"],
+                joined_asset_names,
+                task_object_type_id
+            )
+        ).all()
 
         entities_by_name = {
             entity["name"]: entity
             for entity in entities
         }
-
         for asset_name, by_task_data in instance_by_asset_and_task.items():
             entity = entities_by_name.get(asset_name)
             task_entity_by_name = {}

@@ -100,8 +100,8 @@ class ValidatePointCloud(pyblish.api.InstancePlugin):
 
         selection_list = instance.data["members"]
 
-        project_setting = instance.data["project_setting"]
-        attr_settings = project_setting["max"]["PointCloud"]["attribute"]
+        project_settings = instance.context.data["project_settings"]
+        attr_settings = project_settings["max"]["PointCloud"]["attribute"]
         for sel in selection_list:
             obj = sel.baseobject
             anim_names = rt.GetSubAnimNames(obj)
