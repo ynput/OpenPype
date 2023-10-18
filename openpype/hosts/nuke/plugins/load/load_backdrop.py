@@ -27,7 +27,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
 
     families = ["workfile", "nukenodes"]
     representations = ["*"]
-    extension = {"nk"}
+    extensions = {"nk"}
 
     label = "Import Nuke Nodes"
     order = 0

@@ -23,7 +23,7 @@ class ValidateOutputResolution(
     order = pyblish.api.ValidatorOrder
     optional = True
     families = ["render"]
-    label = "Write resolution"
+    label = "Validate Write resolution"
     hosts = ["nuke"]
     actions = [RepairAction]
 
@@ -104,9 +104,9 @@ class ValidateOutputResolution(
                     _rfn["resize"].setValue(0)
                     _rfn["black_outside"].setValue(1)
 
-                cls.log.info("I am adding reformat node")
+                cls.log.info("Adding reformat node")
 
         if cls.resolution_msg == invalid:
             reformat = cls.get_reformat(instance)
             reformat["format"].setValue(nuke.root()["format"].value())
-            cls.log.info("I am fixing reformat to root.format")
+            cls.log.info("Fixing reformat to root.format")
