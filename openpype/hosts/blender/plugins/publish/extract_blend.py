@@ -161,6 +161,31 @@ class ExtractBlend(publish.Extractor):
             if users & datablocks
         }
 
+    def _process_resource_data(
+        self,
+        instance: dict,
+        filepath: str,
+        transfers: list[tuple],
+        hashes: dict,
+    ):
+        """Process resource publish data.
+
+        Args:
+            instance (dict): Pyblish instance.
+            filepath (str): Resource filepath.
+            transfers (list[tuple]): List of resource transfers.
+            hashes: Resource hashes.
+        """
+        destination = Path(instance.data["resourcesDir"], Path(filepath).name)
+
+        transfers.append((filepath, destination.as_posix()))
+        self.log.info(f"File will be copied {filepath} -> {destination}")
+
+        # Store the hashes from hash to destination to include in the
+        # database
+        # NOTE Keep source hash system in case HARDLINK system works again
+        hashes[source_hash(filepath)] = destination.as_posix()
+
     def _process_resources(
         self, instance: dict, images: set
     ) -> Tuple[List[Tuple[str, str]], dict, Set[Tuple[bpy.types.Image, Path]]]:
@@ -181,6 +206,9 @@ class ExtractBlend(publish.Extractor):
         transfers = []
         hashes = {}
         remapped = set()
+
+        udim_pattern = re.compile(r"<UDIM>")
+
         for image in {
             img
             for img in images
@@ -194,40 +222,27 @@ class ExtractBlend(publish.Extractor):
             # Get source and destination paths
             sourcepath = image.filepath  # Don't every modify source_image
 
+            # Check if image is an UDIM
             if image.source == "TILED":
+                # Process each UDIM tile
                 for tile in image.tiles:
-                    # TODO: Build regex
-                    tile_filepath = Path(
-                        Path(sourcepath).parent,
-                        re.sub(
-                            r"<UDIM>", str(tile.number), Path(sourcepath).name
-                        ),
-                    ).as_posix()
-
-                    destination = Path(
-                        instance.data["resourcesDir"],
-                        Path(tile_filepath).name,
+                    self._process_resource_data(
+                        instance,
+                        Path(
+                            Path(sourcepath).parent,
+                            re.sub(
+                                udim_pattern,
+                                str(tile.number),
+                                Path(sourcepath).name,
+                            ),
+                        ).as_posix(),
+                        transfers,
+                        hashes,
                     )
-
-                    transfers.append((tile_filepath, destination.as_posix()))
-                    self.log.info(
-                        f"file will be copied {tile_filepath} -> {destination}"
-                    )
-
-                    hashes[source_hash(tile_filepath)] = destination.as_posix()
             else:
-                destination = Path(
-                    instance.data["resourcesDir"], Path(sourcepath).name
+                self._process_resource_data(
+                    instance, sourcepath, transfers, hashes
                 )
-
-                transfers.append((sourcepath, destination.as_posix()))
-                self.log.info(f"file will be copied {sourcepath} -> {destination}")
-
-                # Store the hashes from hash to destination to include in the
-                # database
-                # NOTE Keep source hash system in case HARDLINK system works again
-                texture_hash = source_hash(sourcepath)
-                hashes[texture_hash] = destination.as_posix()
 
             # Remap source image to resources directory
             image.filepath = bpy.path.relpath(
