@@ -20,6 +20,7 @@ from openpype.tools.utils import (
     FocusSpinBox,
     FocusDoubleSpinBox,
     MultiSelectionComboBox,
+    ClickableFrame,
 )
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
@@ -251,6 +252,30 @@ class LabelAttrWidget(_BaseAttrDefWidget):
         self.main_layout.addWidget(input_widget, 0)
 
 
+class ClickableLineEdit(QtWidgets.QLineEdit):
+    clicked = QtCore.Signal()
+
+    def __init__(self, text, parent):
+        super(ClickableLineEdit, self).__init__(parent)
+        self.setText(text)
+        self.setReadOnly(True)
+
+        self._mouse_pressed = False
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(ClickableLineEdit, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+
+        super(ClickableLineEdit, self).mouseReleaseEvent(event)
+
+
 class NumberAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
         decimals = self.attr_def.decimals
@@ -271,19 +296,23 @@ class NumberAttrWidget(_BaseAttrDefWidget):
             QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons
         )
 
+        multisel_widget = ClickableLineEdit("< Multiselection >", self)
+
         input_widget.valueChanged.connect(self._on_value_change)
+        multisel_widget.clicked.connect(self._on_multi_click)
 
         self._input_widget = input_widget
+        self._multisel_widget = multisel_widget
+        self._last_multivalue = None
 
         self.main_layout.addWidget(input_widget, 0)
-
-    def _on_value_change(self, new_value):
-        self.value_changed.emit(new_value, self.attr_def.id)
+        self.main_layout.addWidget(multisel_widget, 0)
 
     def current_value(self):
         return self._input_widget.value()
 
     def set_value(self, value, multivalue=False):
+        self._last_multivalue = None
         if multivalue:
             set_value = set(value)
             if None in set_value:
@@ -291,12 +320,41 @@ class NumberAttrWidget(_BaseAttrDefWidget):
                 set_value.add(self.attr_def.default)
 
             if len(set_value) > 1:
-                self._input_widget.setSpecialValueText("Multiselection")
+                self._last_multivalue = next(iter(set_value), None)
+                self._set_multiselection_visible(True)
                 return
             value = tuple(set_value)[0]
 
+        self._set_multiselection_visible(False, False)
+
         if self.current_value != value:
             self._input_widget.setValue(value)
+
+    def _on_value_change(self, new_value):
+        self.value_changed.emit(new_value, self.attr_def.id)
+
+    def _on_multi_click(self):
+        self._set_multiselection_visible(False)
+
+    def _set_multiselection_visible(self, visible, change_focus=True):
+        self._input_widget.setVisible(not visible)
+        self._multisel_widget.setVisible(visible)
+        if visible:
+            return
+
+        # Change value once user clicked on the input field
+        if self._last_multivalue is None:
+            value = self.attr_def.default
+        else:
+            value = self._last_multivalue
+        self._input_widget.setValue(value)
+        if not change_focus:
+            return
+        # Change focus to input field and move cursor to the end
+        self._input_widget.setFocus(QtCore.Qt.MouseFocusReason)
+        line_edit = self._input_widget.lineEdit()
+        if line_edit is not None:
+            line_edit.setCursorPosition(len(line_edit.text()))
 
 
 class TextAttrWidget(_BaseAttrDefWidget):
