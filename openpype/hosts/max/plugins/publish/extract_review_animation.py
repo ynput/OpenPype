@@ -32,8 +32,8 @@ class ExtractReviewAnimation(publish.Extractor):
         review_camera = instance.data["review_camera"]
         publish_preview_animation(
             instance, staging_dir,
-            filepath, start, end,
-            review_camera)
+            ext, review_camera,
+            startFrame=start, endFrame=end)
 
         tags = ["review"]
         if not instance.data.get("keepImages"):
