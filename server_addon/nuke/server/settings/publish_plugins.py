@@ -238,7 +238,7 @@ class PublishPuginsModel(BaseSettingsModel):
         default_factory=CollectInstanceDataModel,
         section="Collectors"
     )
-    ValidateCorrectAssetName: OptionalPluginModel = Field(
+    ValidateCorrectAssetContext: OptionalPluginModel = Field(
         title="Validate Correct Folder Name",
         default_factory=OptionalPluginModel,
         section="Validators"
@@ -310,7 +310,7 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
             "write"
         ]
     },
-    "ValidateCorrectAssetName": {
+    "ValidateCorrectAssetContext": {
         "enabled": True,
         "optional": True,
         "active": True

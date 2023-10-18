@@ -36,11 +36,8 @@ class ExtractCamera(publish.Extractor):
         step = 1
         output_range = str(nuke.FrameRange(first_frame, last_frame, step))
 
-        self.log.info("instance.data: `{}`".format(
-            pformat(instance.data)))
-
         rm_nodes = []
-        self.log.info("Crating additional nodes")
+        self.log.debug("Creating additional nodes for 3D Camera Extractor")
         subset = instance.data["subset"]
         staging_dir = self.staging_dir(instance)
 
@@ -84,8 +81,6 @@ class ExtractCamera(publish.Extractor):
             for n in rm_nodes:
                 nuke.delete(n)
 
-            self.log.info(file_path)
-
         # create representation data
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -112,7 +107,7 @@ class ExtractCamera(publish.Extractor):
             "frameEndHandle": last_frame,
         })
 
-        self.log.info("Extracted instance '{0}' to: {1}".format(
+        self.log.debug("Extracted instance '{0}' to: {1}".format(
             instance.name, file_path))
 
 
