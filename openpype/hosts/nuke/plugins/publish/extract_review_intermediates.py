@@ -52,7 +52,7 @@ class ExtractReviewIntermediates(publish.Extractor):
 
         task_type = instance.context.data["taskType"]
         subset = instance.data["subset"]
-        self.log.info("Creating staging dir...")
+        self.log.debug("Creating staging dir...")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -62,10 +62,10 @@ class ExtractReviewIntermediates(publish.Extractor):
 
         instance.data["stagingDir"] = staging_dir
 
-        self.log.info(
+        self.log.debug(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
-        self.log.info(self.outputs)
+        self.log.debug("Outputs: {}".format(self.outputs))
 
         # generate data
         with maintained_selection():
@@ -104,9 +104,10 @@ class ExtractReviewIntermediates(publish.Extractor):
                         re.search(s, subset) for s in f_subsets):
                     continue
 
-                self.log.info(
+                self.log.debug(
                     "Baking output `{}` with settings: {}".format(
-                        o_name, o_data))
+                        o_name, o_data)
+                )
 
                 # check if settings have more then one preset
                 # so we dont need to add outputName to representation
@@ -155,10 +156,10 @@ class ExtractReviewIntermediates(publish.Extractor):
             instance.data["useSequenceForReview"] = False
         else:
             instance.data["families"].remove("review")
-            self.log.info((
+            self.log.debug(
                 "Removing `review` from families. "
                 "Not available baking profile."
-            ))
+            )
             self.log.debug(instance.data["families"])
 
         self.log.debug(

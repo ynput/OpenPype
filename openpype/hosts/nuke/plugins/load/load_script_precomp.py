@@ -22,7 +22,7 @@ class LinkAsGroup(load.LoaderPlugin):
 
     families = ["workfile", "nukenodes"]
     representations = ["*"]
-    extension = {"nk"}
+    extensions = {"nk"}
 
     label = "Load Precomp"
     order = 0

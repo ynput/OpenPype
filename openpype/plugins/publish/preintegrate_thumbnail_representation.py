@@ -29,13 +29,12 @@ class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
         if not repres:
             return
 
-        thumbnail_repre = None
+        thumbnail_repres = []
         for repre in repres:
-            if repre["name"] == "thumbnail":
-                thumbnail_repre = repre
-                break
+            if "thumbnail" in repre.get("tags", []):
+                thumbnail_repres.append(repre)
 
-        if not thumbnail_repre:
+        if not thumbnail_repres:
             return
 
         family = instance.data["family"]
@@ -60,14 +59,15 @@ class PreIntegrateThumbnails(pyblish.api.InstancePlugin):
         if not found_profile:
             return
 
-        thumbnail_repre.setdefault("tags", [])
+        for thumbnail_repre in thumbnail_repres:
+            thumbnail_repre.setdefault("tags", [])
 
-        if not found_profile["integrate_thumbnail"]:
-            if "delete" not in thumbnail_repre["tags"]:
-                thumbnail_repre["tags"].append("delete")
-        else:
-            if "delete" in thumbnail_repre["tags"]:
-                thumbnail_repre["tags"].remove("delete")
+            if not found_profile["integrate_thumbnail"]:
+                if "delete" not in thumbnail_repre["tags"]:
+                    thumbnail_repre["tags"].append("delete")
+            else:
+                if "delete" in thumbnail_repre["tags"]:
+                    thumbnail_repre["tags"].remove("delete")
 
-        self.log.debug(
-            "Thumbnail repre tags {}".format(thumbnail_repre["tags"]))
+            self.log.debug(
+                "Thumbnail repre tags {}".format(thumbnail_repre["tags"]))

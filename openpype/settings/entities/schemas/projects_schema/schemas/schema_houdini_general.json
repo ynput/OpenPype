@@ -6,6 +6,11 @@
     "is_group": true,
     "children": [
         {
+            "type": "boolean",
+            "key": "add_self_publish_button",
+            "label": "Add Self Publish Button"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
