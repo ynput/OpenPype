@@ -410,6 +410,18 @@ class ClipLoader:
         if handle_end is None:
             handle_end = int(self.data["assetData"]["handleEnd"])
 
+        # check frame duration from versionData or assetData
+        frame_start = self.data["versionData"].get("frameStart")
+        if frame_start is None:
+            frame_start = self.data["assetData"]["frameStart"]
+
+        # check frame duration from versionData or assetData
+        frame_end = self.data["versionData"].get("frameEnd")
+        if frame_end is None:
+            frame_end = self.data["assetData"]["frameEnd"]
+
+        db_frame_duration = int(frame_end) - int(frame_start) + 1
+
         # get timeline in
         timeline_start = self.active_timeline.GetStartFrame()
         if self.sequential_load:
@@ -423,10 +435,17 @@ class ClipLoader:
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
 
-        # include handles
+        # check if source duration is shorter than db frame duration
+        source_with_handles = True
+        source_duration = source_out - source_in + 1
+        if source_duration < db_frame_duration:
+            source_with_handles = False
+
+        # only exclude handles if source has no handles or
+        # if user wants to load without handles
         if (
             not self.with_handles
-            or _clip_property("Type") == "Video"
+            or not source_with_handles
         ):
             source_in += handle_start
             source_out -= handle_end
