@@ -48,20 +48,15 @@ from openpype.pipeline import (
     get_current_asset_name,
 )
 from openpype.pipeline.context_tools import (
-    get_current_project_asset,
     get_custom_workfile_template_from_session
 )
-from openpype.pipeline.colorspace import (
-    get_imageio_config
-)
+from openpype.pipeline.colorspace import get_imageio_config
 from openpype.pipeline.workfile import BuildWorkfile
 from . import gizmo_menu
 from .constants import ASSIST
 
-from .workio import (
-    save_file,
-    open_file
-)
+from .workio import save_file
+from .utils import get_node_outputs
 
 log = Logger.get_logger(__name__)
 
@@ -2802,8 +2797,15 @@ def find_free_space_to_paste_nodes(
 
 
 @contextlib.contextmanager
-def maintained_selection():
+def maintained_selection(exclude_nodes=None):
     """Maintain selection during context
+
+    Maintain selection during context and unselect
+    all nodes after context is done.
+
+    Arguments:
+        exclude_nodes (list[nuke.Node]): list of nodes to be unselected
+                                         before context is done
 
     Example:
         >>> with maintained_selection():
@@ -2811,7 +2813,12 @@ def maintained_selection():
         >>> print(node["selected"].value())
         False
     """
+    if exclude_nodes:
+        for node in exclude_nodes:
+            node["selected"].setValue(False)
+
     previous_selection = nuke.selectedNodes()
+
     try:
         yield
     finally:
@@ -2821,6 +2828,51 @@ def maintained_selection():
         # and select all previously selected nodes
         if previous_selection:
             select_nodes(previous_selection)
+
+
+@contextlib.contextmanager
+def swap_node_with_dependency(old_node, new_node):
+    """ Swap node with dependency
+
+    Swap node with dependency and reconnect all inputs and outputs.
+    It removes old node.
+
+    Arguments:
+        old_node (nuke.Node): node to be replaced
+        new_node (nuke.Node): node to replace with
+
+    Example:
+        >>> old_node_name = old_node["name"].value()
+        >>> print(old_node_name)
+        old_node_name_01
+        >>> with swap_node_with_dependency(old_node, new_node) as node_name:
+        ...     new_node["name"].setValue(node_name)
+        >>> print(new_node["name"].value())
+        old_node_name_01
+    """
+    # preserve position
+    xpos, ypos = old_node.xpos(), old_node.ypos()
+    # preserve selection after all is done
+    outputs = get_node_outputs(old_node)
+    inputs = old_node.dependencies()
+    node_name = old_node["name"].value()
+
+    try:
+        nuke.delete(old_node)
+
+        yield node_name
+    finally:
+
+        # Reconnect inputs
+        for i, node in enumerate(inputs):
+            new_node.setInput(i, node)
+        # Reconnect outputs
+        if outputs:
+            for n, pipes in outputs.items():
+                for i in pipes:
+                    n.setInput(i, new_node)
+        # return to original position
+        new_node.setXYpos(xpos, ypos)
 
 
 def reset_selection():
@@ -2920,13 +2972,13 @@ def process_workfile_builder():
         "workfile_builder", {})
 
     # get settings
-    createfv_on = workfile_builder.get("create_first_version") or None
+    create_fv_on = workfile_builder.get("create_first_version") or None
     builder_on = workfile_builder.get("builder_on_start") or None
 
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
     # generate first version in file not existing and feature is enabled
-    if createfv_on and not os.path.exists(last_workfile_path):
+    if create_fv_on and not os.path.exists(last_workfile_path):
         # get custom template path if any
         custom_template_path = get_custom_workfile_template_from_session(
             project_settings=project_settings
