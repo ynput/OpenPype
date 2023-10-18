@@ -403,9 +403,11 @@ class PublisherWindow(QtWidgets.QDialog):
                 If is set to 'None' a comment is not changed at all.
         """
 
+        self._reset_on_show = False
+        self._reset_on_first_show = False
+
         if comment is not None:
             self.set_comment(comment)
-        self._reset_on_show = False
         self.make_sure_is_visible()
         # Reset controller
         self._controller.reset()
