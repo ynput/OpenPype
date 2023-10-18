@@ -342,7 +342,7 @@ def imprint(node, data, update=False):
         parm_template = get_template_from_value(key, value)
 
         if key in current_parms:
-            if node.evalParm(key) == data[key]:
+            if node.evalParm(key) == value:
                 continue
             if not update:
                 log.debug(f"{key} already exists on {node}")
