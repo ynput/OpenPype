@@ -369,15 +369,17 @@ def imprint(node, data, update=False):
             # is for some reason lost every call to `appendToFolder()`
             parm_folder = parm_group.findFolder("Extra")
 
+    for parm_template in update_parms:
+        parm_group.replace(parm_template.name(), parm_template)
+
+        # When replacing a parm with a parm of the same name it preserves its
+        # value if before the replacement the parm was not at the default,
+        # because it has a value override set. Since we're trying to update the
+        # parm by using the new value as `default` we enforce the parm is at
+        # default state
+        node.parm(parm_template.name()).revertToDefaults()
+
     node.setParmTemplateGroup(parm_group)
-
-    # TODO: Updating is done here, by calling probably deprecated functions.
-    #       This needs to be addressed in the future.
-    if not update_parms:
-        return
-
-    for parm in update_parms:
-        node.replaceSpareParmTuple(parm.name(), parm)
 
 
 def lsattr(attr, value=None, root="/"):
