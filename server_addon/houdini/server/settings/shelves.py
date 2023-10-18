@@ -9,7 +9,7 @@ class ShelfToolsModel(BaseSettingsModel):
     """Name and Script Path are mandatory."""
     label: str = Field(title="Name")
     script: str = Field(title="Script Path")
-    icon: str = Field( "", title="Icon Path")
+    icon: str = Field("", title="Icon Path")
     help: str = Field("", title="Help text")
 
 
