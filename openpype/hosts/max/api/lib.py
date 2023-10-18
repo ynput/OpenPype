@@ -331,6 +331,9 @@ def viewport_camera(camera):
     """
     original = rt.viewport.getCamera()
     has_autoplay = rt.preferences.playPreviewWhenDone
+    nitrousGraphicMgr = rt.NitrousGraphicsManager
+    viewport_setting = nitrousGraphicMgr.GetActiveViewportSetting()
+    orig_preset = viewport_setting.ViewportPreset
     if not original:
         # if there is no original camera
         # use the current camera as original
@@ -343,6 +346,8 @@ def viewport_camera(camera):
     finally:
         rt.viewport.setCamera(original)
         rt.preferences.playPreviewWhenDone = has_autoplay
+        viewport_setting.ViewportPreset = orig_preset
+        rt.completeRedraw()
 
 
 @contextlib.contextmanager
@@ -604,6 +609,15 @@ def publish_review_animation(instance, filepath,
     visual_style_preset = instance.data.get("visualStyleMode")
     if visual_style_preset == "Realistic":
         visual_style_preset = "defaultshading"
+    elif visual_style_preset == "Shaded":
+        visual_style_preset = "defaultshading"
+        log.warning(
+            "'Shaded' Mode not supported in "
+            "preview animation in Max 2024..\n\n"
+            "Using 'defaultshading' instead")
+
+    elif visual_style_preset == "ConsistentColors":
+        visual_style_preset = "flatcolor"
     else:
         visual_style_preset = visual_style_preset.lower()
     # new argument exposed for Max 2024 for visual style
