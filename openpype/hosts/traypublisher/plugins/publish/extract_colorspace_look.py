@@ -16,6 +16,7 @@ class ExtractColorspaceLook(publish.Extractor,
 
     def process(self, instance):
         ociolook_items = instance.data["ocioLookItems"]
+        ociolook_working_color = instance.data["ocioLookWorkingSpace"]
         staging_dir = self.staging_dir(instance)
 
         # create ociolook file attributes
@@ -23,7 +24,8 @@ class ExtractColorspaceLook(publish.Extractor,
         ociolook_file_content = {
             "version": 1,
             "data": {
-                "ocioLookItems": ociolook_items
+                "ocioLookItems": ociolook_items,
+                "ocioLookWorkingSpace": ociolook_working_color
             }
         }
 

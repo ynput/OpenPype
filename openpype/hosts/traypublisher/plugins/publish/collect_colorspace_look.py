@@ -1,3 +1,4 @@
+from math import e
 import os
 from pprint import pformat
 import pyblish.api
@@ -42,9 +43,18 @@ class CollectColorspaceLook(pyblish.api.InstancePlugin,
             "input_colorspace",
             "output_colorspace"
         ]:
-            color_data = colorspace.convert_colorspace_enumerator_item(
-                creator_attrs[colorspace_key], config_items)
-            converted_color_data[colorspace_key] = color_data
+            if creator_attrs[colorspace_key]:
+                color_data = colorspace.convert_colorspace_enumerator_item(
+                    creator_attrs[colorspace_key], config_items)
+                converted_color_data[colorspace_key] = color_data
+            else:
+                converted_color_data[colorspace_key] = None
+
+        # add colorspace to config data
+        if converted_color_data["working_colorspace"]:
+            config_data["colorspace"] = (
+                converted_color_data["working_colorspace"]["name"]
+            )
 
         # create lut representation data
         lut_repre = {
@@ -58,12 +68,11 @@ class CollectColorspaceLook(pyblish.api.InstancePlugin,
         instance.data.update({
             "representations": [lut_repre],
             "source": file_url,
+            "ocioLookWorkingSpace": converted_color_data["working_colorspace"],
             "ocioLookItems": [
                 {
                     "name": lut_repre_name,
                     "ext": ext.lstrip("."),
-                    "working_colorspace": converted_color_data[
-                        "working_colorspace"],
                     "input_colorspace": converted_color_data[
                         "input_colorspace"],
                     "output_colorspace": converted_color_data[
@@ -72,7 +81,7 @@ class CollectColorspaceLook(pyblish.api.InstancePlugin,
                     "interpolation": creator_attrs["interpolation"],
                     "config_data": config_data
                 }
-            ]
+            ],
         })
 
         self.log.debug(pformat(instance.data))

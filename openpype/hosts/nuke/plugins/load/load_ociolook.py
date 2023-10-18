@@ -15,7 +15,8 @@ from openpype.pipeline import (
 )
 from openpype.hosts.nuke.api import (
     containerise,
-    viewer_update_and_undo_stop
+    viewer_update_and_undo_stop,
+    update_container,
 )
 
 
@@ -122,9 +123,9 @@ class LoadOcioLookNodes(load.LoaderPlugin):
             for node in group_node.nodes():
                 if node.Class() not in ["Input", "Output"]:
                     nuke.delete(node)
-                if node.Class() == "Input":
+                elif node.Class() == "Input":
                     input_node = node
-                if node.Class() == "Output":
+                elif node.Class() == "Output":
                     output_node = node
         else:
             group_node = nuke.createNode(
@@ -178,13 +179,12 @@ class LoadOcioLookNodes(load.LoaderPlugin):
                     (
                         file for file in all_files
                         if file.endswith(extension)
-                        and item_name in file
                     ),
                     None
                 )
                 if not item_lut_file:
                     raise ValueError(
-                        "File with extension {} not found in directory".format(
+                        "File with extension '{}' not found in directory".format(
                             extension))
 
                 item_lut_path = os.path.join(
@@ -242,6 +242,9 @@ class LoadOcioLookNodes(load.LoaderPlugin):
 
         self.log.info("Updated lut setup: `{}`".format(
             group_node["name"].value()))
+
+        return update_container(
+            group_node, {"representation": str(representation["_id"])})
 
     def _load_json_data(self, filepath):
         # getting data from json file with unicode conversion

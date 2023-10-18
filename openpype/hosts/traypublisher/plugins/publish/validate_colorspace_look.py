@@ -21,25 +21,54 @@ class ValidateColorspaceLook(pyblish.api.InstancePlugin,
             instance.data["instance_id"])
         creator_defs = created_instance.creator_attribute_defs
 
+        ociolook_working_color = instance.data.get("ocioLookWorkingSpace")
         ociolook_items = instance.data.get("ocioLookItems", [])
 
-        for ociolook_item in ociolook_items:
-            self.validate_colorspace_set_attrs(ociolook_item, creator_defs)
+        creator_defs_by_key = {_def.key: _def.label for _def in creator_defs}
 
-    def validate_colorspace_set_attrs(self, ociolook_item, creator_defs):
+        not_set_keys = {}
+        if not ociolook_working_color:
+            not_set_keys["working_colorspace"] = creator_defs_by_key[
+                "working_colorspace"]
+
+        for ociolook_item in ociolook_items:
+            item_not_set_keys = self.validate_colorspace_set_attrs(
+                ociolook_item, creator_defs_by_key)
+            if item_not_set_keys:
+                not_set_keys[ociolook_item["name"]] = item_not_set_keys
+
+        if not_set_keys:
+            message = (
+                "Colorspace look attributes are not set: \n"
+            )
+            for key, value in not_set_keys.items():
+                if isinstance(value, list):
+                    values_string = "\n\t- ".join(value)
+                    message += f"\n\t{key}:\n\t- {values_string}"
+                else:
+                    message += f"\n\t{value}"
+
+            raise PublishValidationError(
+                title="Colorspace Look attributes",
+                message=message,
+                description=message
+            )
+
+    def validate_colorspace_set_attrs(
+        self,
+        ociolook_item,
+        creator_defs_by_key
+    ):
         """Validate colorspace look attributes"""
 
         self.log.debug(f"Validate colorspace look attributes: {ociolook_item}")
-        self.log.debug(f"Creator defs: {creator_defs}")
 
         check_keys = [
-            "working_colorspace",
             "input_colorspace",
             "output_colorspace",
             "direction",
             "interpolation"
         ]
-        creator_defs_by_key = {_def.key: _def.label for _def in creator_defs}
 
         not_set_keys = []
         for key in check_keys:
@@ -57,13 +86,4 @@ class ValidateColorspaceLook(pyblish.api.InstancePlugin,
                 )
             not_set_keys.append(def_label)
 
-        if not_set_keys:
-            message = (
-                "Colorspace look attributes are not set: "
-                f"{', '.join(not_set_keys)}"
-            )
-            raise PublishValidationError(
-                title="Colorspace Look attributes",
-                message=message,
-                description=message
-            )
+        return not_set_keys

@@ -546,6 +546,9 @@ def convert_colorspace_enumerator_item(
     Returns:
         dict: colorspace data
     """
+    if "::" not in colorspace_enum_item:
+        return None
+
     # split string with `::` separator and set first as key and second as value
     item_type, item_name = colorspace_enum_item.split("::")
 
