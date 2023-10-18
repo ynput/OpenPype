@@ -33,7 +33,7 @@ class MayaHostFixtures(HostFixtures):
         yield dest_path
 
     @pytest.fixture(scope="module")
-    def startup_scripts(self, monkeypatch_session):
+    def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Maya to userSetup file from input data"""
         startup_path = os.path.join(
             os.path.dirname(__file__), "input", "startup"
