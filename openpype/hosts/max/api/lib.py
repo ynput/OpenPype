@@ -352,7 +352,7 @@ def viewport_preference_setting(camera,
                                 vp_button_mgr,
                                 preview_preferences):
     """Function to set viewport setting during context
-
+    ***For Max Version < 2024
     Args:
         camera (str): Viewport camera for review render
         general_viewport (dict): General viewport setting
