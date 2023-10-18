@@ -339,7 +339,7 @@ def imprint(node, data, update=False):
         if value is None:
             continue
 
-        parm = get_template_from_value(key, value)
+        parm_template = get_template_from_value(key, value)
 
         if key in current_parms:
             if node.evalParm(key) == data[key]:
@@ -348,10 +348,10 @@ def imprint(node, data, update=False):
                 log.debug(f"{key} already exists on {node}")
             else:
                 log.debug(f"replacing {key}")
-                update_parms.append(parm)
+                update_parms.append(parm_template)
             continue
 
-        templates.append(parm)
+        templates.append(parm_template)
 
     parm_group = node.parmTemplateGroup()
     parm_folder = parm_group.findFolder("Extra")
