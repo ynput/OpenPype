@@ -851,8 +851,8 @@ def _convert_nuke_project_settings(ayon_settings, output):
             ayon_imageio_nodes.pop("override_nodes"))
 
     for item in ayon_imageio_nodes["requiredNodes"]:
-        if item.get("nuke_node_class"):
-            item["nukeNodeClass"] = item["nuke_node_class"]
+        if "nuke_node_class" in item:
+            item["nukeNodeClass"] = item.pop("nuke_node_class")
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
 
     for item in ayon_imageio_nodes["overrideNodes"]:
