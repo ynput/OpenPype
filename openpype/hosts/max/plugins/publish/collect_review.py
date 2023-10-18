@@ -27,28 +27,15 @@ class CollectReview(pyblish.api.InstancePlugin,
                 focal_length = node.fov
         creator_attrs = instance.data["creator_attributes"]
         attr_values = self.get_attr_values_from_data(instance.data)
-        data = {
+
+        general_preview_data = {
             "review_camera": camera_name,
             "imageFormat": creator_attrs["imageFormat"],
             "keepImages": creator_attrs["keepImages"],
             "percentSize": creator_attrs["percentSize"],
-            "visualStyleMode": creator_attrs["visualStyleMode"],
-            "viewportPreset": creator_attrs["viewportPreset"],
-            "vpTexture": creator_attrs["vpTexture"],
             "frameStart": instance.context.data["frameStart"],
             "frameEnd": instance.context.data["frameEnd"],
             "fps": instance.context.data["fps"],
-            "dspGeometry": attr_values.get("dspGeometry"),
-            "dspShapes": attr_values.get("dspShapes"),
-            "dspLights": attr_values.get("dspLights"),
-            "dspCameras": attr_values.get("dspCameras"),
-            "dspHelpers": attr_values.get("dspHelpers"),
-            "dspParticles": attr_values.get("dspParticles"),
-            "dspBones": attr_values.get("dspBones"),
-            "dspBkg": attr_values.get("dspBkg"),
-            "dspGrid": attr_values.get("dspGrid"),
-            "dspSafeFrame": attr_values.get("dspSafeFrame"),
-            "dspFrameNums": attr_values.get("dspFrameNums")
         }
 
         if int(get_max_version()) >= 2024:
@@ -61,14 +48,50 @@ class CollectReview(pyblish.api.InstancePlugin,
             instance.data["colorspaceDisplay"] = display
             instance.data["colorspaceView"] = view_transform
 
+            preview_data = {
+                "visualStyleMode": creator_attrs["visualStyleMode"],
+                "viewportPreset": creator_attrs["viewportPreset"],
+                "vpTexture": creator_attrs["vpTexture"],
+                "dspGeometry": attr_values.get("dspGeometry"),
+                "dspShapes": attr_values.get("dspShapes"),
+                "dspLights": attr_values.get("dspLights"),
+                "dspCameras": attr_values.get("dspCameras"),
+                "dspHelpers": attr_values.get("dspHelpers"),
+                "dspParticles": attr_values.get("dspParticles"),
+                "dspBones": attr_values.get("dspBones"),
+                "dspBkg": attr_values.get("dspBkg"),
+                "dspGrid": attr_values.get("dspGrid"),
+                "dspSafeFrame": attr_values.get("dspSafeFrame"),
+                "dspFrameNums": attr_values.get("dspFrameNums")
+            }
+        else:
+            preview_data = {}
+            general_viewport =  {
+                "dspBkg": attr_values.get("dspBkg"),
+                "dspGrid": attr_values.get("dspGrid")
+            }
+            nitrous_viewport = {
+                "VisualStyleMode": creator_attrs["visualStyleMode"],
+                "ViewportPreset": creator_attrs["viewportPreset"],
+                "UseTextureEnabled": creator_attrs["vpTexture"]
+            }
+            preview_data["general_viewport"] = general_viewport
+            preview_data["nitrous_viewport"] = nitrous_viewport
+            preview_data["vp_button_manager"] = {
+                "EnableButtons" : False
+            }
+            preview_data["preferences"] = {
+                "playPreviewWhenDone": False
+            }
+
         # Enable ftrack functionality
         instance.data.setdefault("families", []).append('ftrack')
 
         burnin_members = instance.data.setdefault("burninDataMembers", {})
         burnin_members["focalLength"] = focal_length
 
-        instance.data.update(data)
-        self.log.debug(f"data:{data}")
+        instance.data.update(general_preview_data)
+        instance.data.update(preview_data)
 
     @classmethod
     def get_attribute_defs(cls):

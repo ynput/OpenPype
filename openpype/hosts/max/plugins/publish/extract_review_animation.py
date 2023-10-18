@@ -3,8 +3,8 @@ import pyblish.api
 from pymxs import runtime as rt
 from openpype.pipeline import publish
 from openpype.hosts.max.api.lib import (
-    viewport_setup_updated,
-    viewport_setup,
+    viewport_camera,
+    viewport_preference_setting,
     get_max_version,
     publish_review_animation,
     publish_preview_sequences
@@ -39,13 +39,17 @@ class ExtractReviewAnimation(publish.Extractor):
 
         review_camera = instance.data["review_camera"]
         if int(get_max_version()) < 2024:
-            nitrousGraphicMgr = rt.NitrousGraphicsManager
-            viewport_setting = nitrousGraphicMgr.GetActiveViewportSetting()
-            with viewport_setup(instance, viewport_setting, review_camera):
+            with viewport_preference_setting(review_camera,
+                                             instance.data["general_viewport"],
+                                             instance.data["nitrous_viewport"],
+                                             instance.data["vp_button_manager"],
+                                             instance.data["preferences"]):
+                percentSize = instance.data.get("percentSize")
                 publish_preview_sequences(
-                    staging_dir, instance.name, start, end, ext)
+                    staging_dir, instance.name,
+                    start, end, percentSize, ext)
         else:
-            with viewport_setup_updated(review_camera):
+            with viewport_camera(review_camera):
                 preview_arg = publish_review_animation(
                     instance, filepath, start, end, fps)
                 rt.execute(preview_arg)

@@ -323,7 +323,7 @@ def is_headless():
 
 
 @contextlib.contextmanager
-def viewport_setup_updated(camera):
+def viewport_camera(camera):
     """Function to set viewport camera during context
     ***For 3dsMax 2024+
     Args:
@@ -346,64 +346,55 @@ def viewport_setup_updated(camera):
 
 
 @contextlib.contextmanager
-def viewport_setup(instance, viewport_setting, camera):
-    """Function to set camera and other viewport options
-    during context
-    ****For Max Version < 2024
-
-    Args:
-        instance (str): instance
-        viewport_setting (str): active viewport setting
-        camera (str): viewport camera
-
-    """
-    original = rt.viewport.getCamera()
-    has_vp_btn = rt.ViewportButtonMgr.EnableButtons
-    has_autoplay = rt.preferences.playPreviewWhenDone
-    if not original:
+def viewport_preference_setting(camera,
+                                general_viewport,
+                                nitrous_viewport,
+                                vp_button_mgr,
+                                preview_preferences):
+    original_camera = rt.viewport.getCamera()
+    if not original_camera:
         # if there is no original camera
         # use the current camera as original
-        original = rt.getNodeByName(camera)
+        original_camera = rt.getNodeByName(camera)
     review_camera = rt.getNodeByName(camera)
-
-    current_visualStyle = viewport_setting.VisualStyleMode
-    current_visualPreset = viewport_setting.ViewportPreset
-    current_useTexture = viewport_setting.UseTextureEnabled
     orig_vp_grid = rt.viewport.getGridVisibility(1)
     orig_vp_bkg = rt.viewport.IsSolidBackgroundColorMode()
 
-    visualStyle = instance.data.get("visualStyleMode")
-    viewportPreset = instance.data.get("viewportPreset")
-    useTexture = instance.data.get("vpTexture")
-    has_grid_viewport = instance.data.get("dspGrid")
-    bkg_color_viewport = instance.data.get("dspBkg")
-
+    nitrousGraphicMgr = rt.NitrousGraphicsManager
+    viewport_setting = nitrousGraphicMgr.GetActiveViewportSetting()
+    vp_button_mgr_original = {
+        key: getattr(rt.ViewportButtonMgr, key) for key in vp_button_mgr
+    }
+    nitrous_viewport_original = {
+        key: getattr(viewport_setting, key) for key in nitrous_viewport
+    }
+    preview_preferences_original = {
+        key: getattr(rt.preferences, key) for key in preview_preferences
+    }
     try:
         rt.viewport.setCamera(review_camera)
-        rt.viewport.setGridVisibility(1, has_grid_viewport)
-        rt.preferences.playPreviewWhenDone = False
-        rt.ViewportButtonMgr.EnableButtons = False
-        rt.viewport.EnableSolidBackgroundColorMode(
-            bkg_color_viewport)
-        if visualStyle != current_visualStyle:
-            viewport_setting.VisualStyleMode = rt.Name(
-                visualStyle)
-        elif viewportPreset != current_visualPreset:
-            viewport_setting.ViewportPreset = rt.Name(
-                viewportPreset)
-        elif useTexture != current_useTexture:
-            viewport_setting.UseTextureEnabled = useTexture
+        rt.viewport.setGridVisibility(1, general_viewport["dspGrid"])
+        rt.viewport.EnableSolidBackgroundColorMode(general_viewport["dspBkg"])
+        for key, value in vp_button_mgr.items():
+            setattr(rt.ViewportButtonMgr, key, value)
+        for key, value in nitrous_viewport.items():
+            if nitrous_viewport[key] != nitrous_viewport_original[key]:
+                setattr(viewport_setting, key, value)
+        for key, value in preview_preferences.items():
+            setattr(rt.preferences, key, value)
         yield
+
     finally:
-        rt.viewport.setCamera(original)
+        rt.viewport.setCamera(review_camera)
         rt.viewport.setGridVisibility(1, orig_vp_grid)
         rt.viewport.EnableSolidBackgroundColorMode(orig_vp_bkg)
-        viewport_setting.VisualStyleMode = current_visualStyle
-        viewport_setting.ViewportPreset = current_visualPreset
-        viewport_setting.UseTextureEnabled = current_useTexture
-        rt.ViewportButtonMgr.EnableButtons = has_vp_btn
-        rt.preferences.playPreviewWhenDone = has_autoplay
-
+        for key, value in vp_button_mgr_original.items():
+            setattr(rt.ViewportButtonMgr, key, value)
+        for key, value in nitrous_viewport_original.items():
+            setattr(viewport_setting, key, value)
+        for key, value in preview_preferences_original.items():
+            setattr(rt.preferences, key, value)
+        rt.completeRedraw()
 
 
 def set_timeline(frameStart, frameEnd):
@@ -630,7 +621,8 @@ def publish_review_animation(instance, filepath,
 
 
 def publish_preview_sequences(staging_dir, filename,
-                              startFrame, endFrame, ext):
+                              startFrame, endFrame,
+                              percentSize, ext):
     """publish preview animation by creating bitmaps
     ***For 3dsMax Version <2024
 
@@ -639,13 +631,15 @@ def publish_preview_sequences(staging_dir, filename,
         filename (str): filename
         startFrame (int): start frame
         endFrame (int): end frame
+        percentSize (int): percentage of the resolution
         ext (str): image extension
     """
     # get the screenshot
     rt.forceCompleteRedraw()
     rt.enableSceneRedraw()
-    res_width = rt.renderWidth
-    res_height = rt.renderHeight
+    resolution_percentage = float(percentSize) / 100
+    res_width = rt.renderWidth * resolution_percentage
+    res_height = rt.renderHeight * resolution_percentage
 
     viewportRatio = float(res_width / res_height)
 
@@ -684,4 +678,4 @@ def publish_preview_sequences(staging_dir, filename,
         if rt.keyboard.escPressed:
             rt.exit()
     # clean up the cache
-    rt.gc()
+    rt.gc(delayed=True)

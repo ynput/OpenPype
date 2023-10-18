@@ -75,4 +75,5 @@ class CreateReview(plugin.MaxCreator):
 
     def get_pre_create_attr_defs(self):
         # Use same attributes as for instance attributes
-        return self.get_instance_attr_defs()
+        attrs = super().get_pre_create_attr_defs()
+        return attrs + self.get_instance_attr_defs()
