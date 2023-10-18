@@ -306,14 +306,18 @@ class ClipLoader:
         self.active_project = lib.get_current_project()
 
         # try to get value from options or evaluate key value for `handles`
-        self.with_handles = options.get("handles") or bool(
-            options.get("handles") is True)
+        self.with_handles = options.get("handles") is True
+
         # try to get value from options or evaluate key value for `load_to`
-        self.new_timeline = options.get("newTimeline") or bool(
-            "New timeline" in options.get("load_to", ""))
+        self.new_timeline = (
+            options.get("newTimeline") or
+            options.get("load_to") == "New timeline"
+        )
         # try to get value from options or evaluate key value for `load_how`
-        self.sequential_load = options.get("sequentially") or bool(
-            "Sequentially in order" in options.get("load_how", ""))
+        self.sequential_load = (
+            options.get("sequentially") or
+            options.get("load_how") == "Sequentially in order"
+        )
 
         assert self._populate_data(), str(
             "Cannot Load selected data, look into database "
