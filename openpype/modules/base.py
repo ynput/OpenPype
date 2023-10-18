@@ -434,8 +434,18 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
         sys.path.insert(0, addon_dir)
         imported_modules = []
         for name in os.listdir(addon_dir):
+            # Ignore of files is implemented to be able to run code from code
+            #   where usually is more files than just the addon
+            # Ignore start and setup scripts
+            if name in ("setup.py", "start.py"):
+                continue
+
             path = os.path.join(addon_dir, name)
             basename, ext = os.path.splitext(name)
+            # Ignore folders/files with dot in name
+            #   - dot names cannot be imported in Python
+            if "." in basename:
+                continue
             is_dir = os.path.isdir(path)
             is_py_file = ext.lower() == ".py"
             if not is_py_file and not is_dir:
