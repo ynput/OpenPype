@@ -1,3 +1,4 @@
+import re
 import os
 from pathlib import Path
 from typing import List, Set, Tuple
@@ -183,7 +184,7 @@ class ExtractBlend(publish.Extractor):
         for image in {
             img
             for img in images
-            if img.source in {"FILE", "SEQUENCE", "MOVIE"}
+            if img.source in {"FILE", "SEQUENCE", "MOVIE", "TILED"}
             and not img.packed_file
         }:
             # Skip image from library or internal
@@ -192,22 +193,48 @@ class ExtractBlend(publish.Extractor):
 
             # Get source and destination paths
             sourcepath = image.filepath  # Don't every modify source_image
-            destination = Path(
-                instance.data["resourcesDir"], Path(sourcepath).name
-            )
 
-            transfers.append((sourcepath, destination.as_posix()))
-            self.log.info(f"file will be copied {sourcepath} -> {destination}")
+            if image.source == "TILED":
+                for tile in image.tiles:
+                    # TODO: Build regex
+                    tile_filepath = Path(
+                        Path(sourcepath).parent,
+                        re.sub(
+                            r"<UDIM>", str(tile.number), Path(sourcepath).name
+                        ),
+                    ).as_posix()
 
-            # Store the hashes from hash to destination to include in the
-            # database
-            # NOTE Keep source hash system in case HARDLINK system works again
-            texture_hash = source_hash(sourcepath)
-            hashes[texture_hash] = destination.as_posix()
+                    destination = Path(
+                        instance.data["resourcesDir"],
+                        Path(tile_filepath).name,
+                    )
+
+                    transfers.append((tile_filepath, destination.as_posix()))
+                    self.log.info(
+                        f"file will be copied {tile_filepath} -> {destination}"
+                    )
+
+                    hashes[source_hash(tile_filepath)] = destination.as_posix()
+            else:
+                destination = Path(
+                    instance.data["resourcesDir"], Path(sourcepath).name
+                )
+
+                transfers.append((sourcepath, destination.as_posix()))
+                self.log.info(f"file will be copied {sourcepath} -> {destination}")
+
+                # Store the hashes from hash to destination to include in the
+                # database
+                # NOTE Keep source hash system in case HARDLINK system works again
+                texture_hash = source_hash(sourcepath)
+                hashes[texture_hash] = destination.as_posix()
 
             # Remap source image to resources directory
             image.filepath = bpy.path.relpath(
-                destination.as_posix(), start=instance.data["publishDir"]
+                Path(
+                    instance.data["resourcesDir"], Path(sourcepath).name
+                ).as_posix(),
+                start=instance.data["publishDir"],
             )
 
             # Keep remapped to restore after publishing
