@@ -60,7 +60,7 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
                              "tycacheChanRot", "tycacheChanScale",
                              "tycacheChanVel", "tycacheChanShape",
                              "tycacheChanMatID", "tycacheChanMapping",
-                             "tycacheChanMaterials", "tycacheCreateObject",
+                             "tycacheChanMaterials",
                              "tycacheCreateObjectIfNotCreated"]
         return [
             EnumDef("all_tyc_attrs",
