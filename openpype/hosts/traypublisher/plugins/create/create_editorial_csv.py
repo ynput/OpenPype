@@ -4,40 +4,26 @@ import os
 import re
 from copy import deepcopy
 import opentimelineio as otio
-from openpype.client import (
-    get_asset_by_name,
-    get_project,
-    get_assets
-)
+from openpype.client import get_project
 from openpype.hosts.traypublisher.api.plugin import (
     TrayPublishCreator,
-    HiddenTrayPublishCreator
-)
-from openpype.hosts.traypublisher.api.editorial import (
-    ShotMetadataSolver
+    HiddenTrayPublishCreator,
 )
 from openpype.pipeline import CreatedInstance, KnownPublishError
-from openpype.lib import (
-    get_ffprobe_data,
-    convert_ffprobe_fps_value,
-    FileDef,
-    get_version_from_path
-
-)
+from openpype.lib import FileDef
 
 import clique
 
 from pprint import pprint
 
+
 class EditorialCSVCreator(TrayPublishCreator):
-    """ Editorial CSV creator class
-    """
+    """Editorial CSV creator class"""
+
     label = "Editorial CSV Ingest"
     family = "editorial"
     identifier = "editorial_csv_ingest"
-    default_variants = [
-        "Main"
-    ]
+    default_variants = ["Main"]
     description = "Ingest an Editorial CSV file and generate an OTIO timeline(s)."
     detailed_description = """
 Supporting publishing by providing an CSV file, new shots to project
@@ -45,53 +31,70 @@ or updating already created. Publishing will create OTIO file(s).
 """
     icon = "fa.file"
 
-    def __init__(
-        self, project_settings, *args, **kwargs
-    ):
-        super(EditorialCSVCreator, self).__init__(
-            project_settings, *args, **kwargs
+    def __init__(self, project_settings, *args, **kwargs):
+        super(EditorialCSVCreator, self).__init__(project_settings, *args, **kwargs)
+        editorial_csv_settings = deepcopy(
+            project_settings.get("traypublisher", {})
+            .get("editorial_creators", {})
+            .get(self.identifier, {})
         )
-        editorial_csv_settings = deepcopy(project_settings.get(
-            "traypublisher", {}
-        ).get("editorial_creators", {}).get(self.identifier, {}))
 
         if not editorial_csv_settings:
-            raise ValueError("""Missing Editorial CSV settings in:
+            raise ValueError(
+                """Missing Editorial CSV settings in:
                 `settings/entities/schemas/project_schema/schema_project_traypublisher.json`
                 contact with the OpenPype admin.
-            """)
+                """
+            )
 
         self.project = get_project(self.project_name)
         self._creator_settings = editorial_csv_settings
         self.column_map = self._creator_settings["csv_ingest"]
-        self.required_columns = [column["name"] for column in self.column_map if column["required"] == "Required"]
+        self.required_columns = [
+            column["name"]
+            for column in self.column_map
+            if column["required"] == "Required"
+        ]
         self._shots = {}
 
-
     def create(self, subset_name, instance_data, pre_create_data):
-        #None
-        #{'asset': None, 'family': 'editorial', 'task': None, 'variant': 'Main'}
-        #{'csv_filepath_data': {'directory': '/home/minkiu/Projects/ynput/openpype-projects-root/editorial_csv_ingest',
-        #                    'filenames': ['2023-10-2_fcg_sub0001.csv'],
-        #                    'is_sequence': False}}
+        """Create an instance of each OTIO Timeline parsed from the CSV.
+
+        Args:
+            subset_name (str): The subset name.
+            instance_data (dict): The instance data.
+            pre_create_data (dict):
+        """
+        # None
+        # {'asset': None, 'family': 'editorial', 'task': None, 'variant': 'Main'}
+        # {'csv_filepath_data': {
+        #    'directory': '/home/minkiu/Projects/ynput/openpype-projects-root/editorial_csv_ingest',
+        #    'filenames': ['2023-10-2_fcg_sub0001.csv'],
+        #    'is_sequence': False}}
 
         ingest_root = pre_create_data.get("csv_filepath_data", {}).get("directory", "")
 
-        for csv_file in pre_create_data.get("csv_filepath_data", {}).get("filenames", []):
+        for csv_file in pre_create_data.get("csv_filepath_data", {}).get(
+            "filenames", []
+        ):
             csv_path = os.path.join(ingest_root, csv_file)
 
             if not os.path.exists(csv_path):
-                raise KnownPublishError(f"Provided CSV file does not exist in the filesystem: {csv_path}")
+                raise KnownPublishError(
+                    f"Provided CSV file does not exist in the filesystem: {csv_path}"
+                )
 
             with open(csv_path) as csvfile:
                 csv_dict = csv.DictReader(csvfile)
                 missing_columns = set(self.required_columns) - set(csv_dict.fieldnames)
 
                 if missing_columns:
-                    raise KnownPublishError("The CSV is missing columns:\n{0}".format(
-                        "\n".join(missing_columns)
-                    ))
-                _get_shots_from_csv(csv_dict, instance_data)
+                    raise KnownPublishError(
+                        "The CSV is missing columns:\n{0}".format(
+                            "\n".join(missing_columns)
+                        )
+                    )
+                _get_shots_from_csv(ingest_root, csv_dict, instance_data)
 
         if self._shots:
             for otio_timeline in _create_otio_timelines():
@@ -100,12 +103,17 @@ or updating already created. Publishing will create OTIO file(s).
                     otio_timeline["metadata"]["submission"]["family"],
                     subset_name,
                     instance_data,
-                    self
+                    self,
                 )
                 self._store_new_instance(new_instance)
 
-
     def _create_otio_timelines(self):
+        """Create OTIO timeline with all representations of each shot.
+
+        Returns:
+            otio_timelines (list(otio.schema.Timeline())): A OTIO Timeline for
+                each shot found in the CSV.
+        """
         otio_timelines = []
 
         for shot_name, shot_media in self._shots.items():
@@ -149,23 +157,33 @@ or updating already created. Publishing will create OTIO file(s).
 
         return otio_timelines
 
+    def _get_shots_from_csv(self, ingest_root, csv_dict, instance_data):
+        """Traverse the CSV file and extract the different found shots.
 
-    def _get_shots_from_csv(self, csv_dict, instance_data):
-        """Traverse the CSV file and extract the different foung shots.
+        So that we can group different representations of a shot together, and
+        populate a list in the `self._shots` for each shot.
 
+        Image sequences should be within a directory of the shot name within
+        the ingest root.
+
+        Args:
+            ingest_root (str): Directory where the CSV files is.
+            csv_dict (csv.DictReader): Dict-like representation of the CSV file.
+            instance_data (dict): The instance data.
         """
 
         for row in csv_dict:
             shot_name = row["Shot"]
             self._shots.setdefault(shot_name, [])
             instance = copy.deepcopy(instance_data)
-            instance.update({
-                "task": row["Task"],
-                "version": row["Version"],
-                "variant": row["Variant"],
-                "family": row["Product Type"],
-            })
-
+            instance.update(
+                {
+                    "task": row["Task"],
+                    "version": row["Version"],
+                    "variant": row["Variant"],
+                    "family": row["Product Type"],
+                }
+            )
 
             file_name = row["Filename"]
 
@@ -175,14 +193,14 @@ or updating already created. Publishing will create OTIO file(s).
             file_path = os.path.join(ingest_root, file_name)
 
             if file_extension == ".exr":
-                file_path =  os.path.join(ingest_root, shot_name, file_name)
+                file_path = os.path.join(ingest_root, shot_name, file_name)
 
             instance["file_path"] = file_path
 
             self._shots[shot_name].append(instance)
 
     def get_pre_create_attr_defs(self):
-        """ Creating pre-create attributes at creator plugin.
+        """Creating pre-create attributes at creator plugin.
 
         Returns:
             list: list of attribute object instances
@@ -192,9 +210,7 @@ or updating already created. Publishing will create OTIO file(s).
             FileDef(
                 "csv_filepath_data",
                 folders=False,
-                extensions=[
-                    ".csv"
-                ],
+                extensions=[".csv"],
                 allow_sequences=False,
                 single_item=True,
                 label="CSV File",
