@@ -714,10 +714,10 @@ def publish_preview_animation(
         endFrame (int): end frame
         review_camera (str): viewport camera for preview render
     """
-    if start_frame is None:
-        start_frame = int(rt.animationRange.start)
-    if end_frame is None:
-        end_frame = int(rt.animationRange.end)
+    if startFrame is None:
+        startFrame = int(rt.animationRange.start)
+    if endFrame is None:
+        endFrame = int(rt.animationRange.end)
     with play_preview_when_done(False):
         with viewport_camera(review_camera):
             if int(get_max_version()) < 2024:
