@@ -345,10 +345,14 @@ class PublishTest(ModuleUnitTest):
         print("Publish finished")
         yield True
 
+    @pytest.fixture(scope="module")
+    def expected_dir_base(self, download_test_data):
+        yield os.path.join(download_test_data, "expected")
+
     def test_folder_structure_same(self, dbcon, publish_finished,
                                    download_test_data, output_folder_url,
                                    skip_compare_folders,
-                                   setup_only):
+                                   setup_only, expected_dir_base):
         """Check if expected and published subfolders contain same files.
 
             Compares only presence, not size nor content!
@@ -358,8 +362,6 @@ class PublishTest(ModuleUnitTest):
             return
 
         published_dir_base = output_folder_url
-        expected_dir_base = os.path.join(download_test_data,
-                                         "expected")
 
         print("Comparing published:'{}' : expected:'{}'".format(
             published_dir_base, expected_dir_base))

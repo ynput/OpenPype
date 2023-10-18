@@ -1,3 +1,8 @@
+import re
+import os
+
+import pytest
+
 from tests.lib.assert_classes import DBAssert
 from tests.integration.hosts.maya.lib import MayaLocalPublishTestClass
 
@@ -73,6 +78,10 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
                                     additional_args=additional_args))
 
         assert not any(failures)
+
+    @pytest.fixture(scope="module")
+    def expected_dir_base(self):
+        yield os.path.join(os.path.dirname(__file__), "expected", "files")
 
 
 if __name__ == "__main__":
