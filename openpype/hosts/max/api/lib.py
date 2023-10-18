@@ -697,6 +697,7 @@ def publish_preview_sequences(staging_dir, filename,
     # clean up the cache
     rt.gc(delayed=True)
 
+
 def publish_preview_animation(instance, staging_dir, filepath,
                               startFrame, endFrame, review_camera):
     """Publish Reivew Animation
@@ -707,22 +708,21 @@ def publish_preview_animation(instance, staging_dir, filepath,
         filepath (str): filepath
         startFrame (int): start frame
         endFrame (int): end frame
-        review_camera (str): viewport camera for
-            preview render
+        review_camera (str): viewport camera for preview render
     """
     with play_preview_when_done(False):
         with viewport_camera(review_camera):
             if int(get_max_version()) < 2024:
-                    with viewport_preference_setting(
+                with viewport_preference_setting(
                         instance.data["general_viewport"],
                         instance.data["nitrous_viewport"],
                         instance.data["vp_btn_mgr"]):
-                            percentSize = instance.data.get("percentSize")
-                            ext = instance.data.get("imageFormat")
-                            rt.completeRedraw()
-                            publish_preview_sequences(
-                                staging_dir, instance.name,
-                                startFrame, endFrame, percentSize, ext)
+                    percentSize = instance.data.get("percentSize")
+                    ext = instance.data.get("imageFormat")
+                    rt.completeRedraw()
+                    publish_preview_sequences(
+                        staging_dir, instance.name,
+                        startFrame, endFrame, percentSize, ext)
             else:
                 fps = instance.data["fps"]
                 rt.completeRedraw()
