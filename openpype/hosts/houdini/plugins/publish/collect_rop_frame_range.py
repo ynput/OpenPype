@@ -41,8 +41,8 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
             return
 
         # Log artist friendly message about the collected frame range
-        frame_start=frame_data["frameStart"]
-        frame_end=frame_data["frameEnd"]
+        frame_start = frame_data["frameStart"]
+        frame_end = frame_data["frameEnd"]
 
         if attr_values.get("use_handles"):
             self.log.info(
