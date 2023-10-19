@@ -296,6 +296,9 @@ class TasksWidget(QtWidgets.QWidget):
         handle_expected_selection (Optional[bool]): Handle expected selection.
     """
 
+    refreshed = QtCore.Signal()
+    selection_changed = QtCore.Signal()
+
     def __init__(self, controller, parent, handle_expected_selection=False):
         super(TasksWidget, self).__init__(parent)
 
@@ -380,6 +383,7 @@ class TasksWidget(QtWidgets.QWidget):
         if not self._set_expected_selection():
             self._on_selection_change()
         self._tasks_proxy_model.sort(0)
+        self.refreshed.emit()
 
     def _get_selected_item_ids(self):
         selection_model = self._tasks_view.selectionModel()
@@ -400,6 +404,7 @@ class TasksWidget(QtWidgets.QWidget):
 
         parent_id, task_id, task_name = self._get_selected_item_ids()
         self._controller.set_selected_task(task_id, task_name)
+        self.selection_changed.emit()
 
     # Expected selection handling
     def _on_expected_selection_change(self, event):
