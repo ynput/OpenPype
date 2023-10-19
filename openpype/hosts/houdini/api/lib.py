@@ -559,7 +559,7 @@ def get_template_from_value(key, value):
     return parm
 
 
-def get_frame_data(node, asset_data=None, log=None):
+def get_frame_data(node, handle_start=0, handle_end=0, log=None):
     """Get the frame data: start frame, end frame and steps.
 
     Args:
@@ -569,8 +569,6 @@ def get_frame_data(node, asset_data=None, log=None):
         dict: frame data for start, end and steps.
 
     """
-    if asset_data is None:
-        asset_data = {}
 
     if log is None:
         log = self.log
@@ -587,21 +585,20 @@ def get_frame_data(node, asset_data=None, log=None):
         data["frameStartHandle"] = hou.intFrame()
         data["frameEndHandle"] = hou.intFrame()
         data["byFrameStep"] = 1.0
-        data["handleStart"] = 0
-        data["handleEnd"] = 0
+
         log.info(
-            "Node '{}' has 'Render current frame' set. \n"
-            "Asset Handles are ignored. \n"
+            "Node '{}' has 'Render current frame' set.\n"
+            "Asset Handles are ignored.\n"
             "frameStart and frameEnd are set to the "
-            "current frame".format(node.path())
+            "current frame.".format(node.path())
         )
     else:
         data["frameStartHandle"] = int(node.evalParm("f1"))
         data["frameEndHandle"] = int(node.evalParm("f2"))
         data["byFrameStep"] = node.evalParm("f3")
-        data["handleStart"] = asset_data.get("handleStart", 0)
-        data["handleEnd"] = asset_data.get("handleEnd", 0)
 
+    data["handleStart"] = handle_start
+    data["handleEnd"] = handle_end
     data["frameStart"] = data["frameStartHandle"] + data["handleStart"]
     data["frameEnd"] = data["frameEndHandle"] - data["handleEnd"]
 
