@@ -2,7 +2,7 @@ import os
 import logging
 import contextlib
 from pymxs import runtime as rt
-from .lib import get_max_version
+from .lib import get_max_version, render_resolution
 
 log = logging.getLogger("openpype.hosts.max")
 
@@ -22,26 +22,6 @@ def play_preview_when_done(has_autoplay):
         yield
     finally:
         rt.preferences.playPreviewWhenDone = current_playback
-
-
-@contextlib.contextmanager
-def render_resolution(width, height):
-    """Function to set render resolution option during
-       context
-
-    Args:
-        width (int): render width
-        height (int): render height
-    """
-    current_renderWidth = rt.renderWidth
-    current_renderHeight = rt.renderHeight
-    try:
-        rt.renderWidth = width
-        rt.renderHeight = height
-        yield
-    finally:
-        rt.renderWidth = current_renderWidth
-        rt.renderHeight = current_renderHeight
 
 
 @contextlib.contextmanager
