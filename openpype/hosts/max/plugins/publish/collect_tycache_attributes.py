@@ -14,22 +14,19 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
     families = ["tycache"]
 
     def process(self, instance):
-        all_tyc_attributes_dict = {}
         attr_values = self.get_attr_values_from_data(instance.data)
-        tycache_boolean_attributes = attr_values.get("all_tyc_attrs")
-        if tycache_boolean_attributes:
-            for attrs in tycache_boolean_attributes:
-                all_tyc_attributes_dict[attrs] = True
-        tyc_layer_attr = attr_values.get("tycache_layer")
-        if tyc_layer_attr:
-            all_tyc_attributes_dict["tycacheLayer"] = (
-                tyc_layer_attr)
-        tyc_objname_attr = attr_values.get("tycache_objname")
-        if tyc_objname_attr:
-            all_tyc_attributes_dict["tycache_objname"] = (
-                tyc_objname_attr)
+        attributes = {}
+        for attr_key in attr_values.get("tycacheAttributes", []):
+            attributes[attr_key] = True
+
+        for key in ["tycacheLayer", "tycacheObjectName"]:
+            attributes[key] = attr_values.get(key, "")
+
+        # Collect the selected channel data before exporting
+        instance.data["tyc_attrs"] = attributes
         self.log.debug(
-            f"Found tycache attributes: {all_tyc_attributes_dict}")
+            f"Found tycache attributes: {attributes}"
+        )
 
     @classmethod
     def get_attribute_defs(cls):
@@ -63,17 +60,17 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
                              "tycacheChanMaterials",
                              "tycacheCreateObjectIfNotCreated"]
         return [
-            EnumDef("all_tyc_attrs",
+            EnumDef("tycacheAttributes",
                     tyc_attr_enum,
                     default=tyc_default_attrs,
                     multiselection=True,
                     label="TyCache Attributes"),
-            TextDef("tycache_layer",
+            TextDef("tycacheLayer",
                     label="TyCache Layer",
                     tooltip="Name of tycache layer",
-                    default=""),
-            TextDef("tycache_objname",
+                    default="$(tyFlowLayer)"),
+            TextDef("tycacheObjectName",
                     label="TyCache Object Name",
                     tooltip="TyCache Object Name",
-                    default="")
+                    default="$(tyFlowName)_tyCache")
         ]

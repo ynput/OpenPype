@@ -40,7 +40,7 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
         and editable mesh(es)
 
         Args:
-            instance (str): instance node
+            instance (pyblish.api.Instance): instance
 
         Returns:
             invalid(list): list of invalid nodes which are not

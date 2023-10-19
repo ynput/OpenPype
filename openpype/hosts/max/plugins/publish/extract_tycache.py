@@ -13,9 +13,9 @@ class ExtractTyCache(publish.Extractor):
     Notes:
         - TyCache only works for TyFlow Pro Plugin.
 
-    Args:
-        self.export_particle(): sets up all job arguments for attributes
-            to be exported in MAXscript
+    Methods:
+        self.get_export_particles_job_args(): sets up all job arguments
+            for attributes to be exported in MAXscript
 
         self.get_operators(): get the export_particle operator
 
@@ -30,7 +30,7 @@ class ExtractTyCache(publish.Extractor):
 
     def process(self, instance):
         # TODO: let user decide the param
-        start = int(instance.context.data.get("frameStart"))
+        start = int(instance.context.data["frameStart"])
         end = int(instance.context.data.get("frameEnd"))
         self.log.info("Extracting Tycache...")
 
@@ -42,17 +42,11 @@ class ExtractTyCache(publish.Extractor):
 
         with maintained_selection():
             job_args = None
-            has_tyc_spline = (
-                True
-                if instance.data["tycache_type"] == "tycachespline"
-                else False
-            )
             if instance.data["tycache_type"] == "tycache":
-                job_args = self.export_particle(
+                job_args = self.get_export_particles_job_args(
                     instance.data["members"],
                     start, end, path,
-                    additional_attributes,
-                    tycache_spline_enabled=has_tyc_spline)
+                    additional_attributes)
             for job in job_args:
                 rt.Execute(job)
         representations = instance.data.setdefault("representations", [])
@@ -66,7 +60,7 @@ class ExtractTyCache(publish.Extractor):
         self.log.info(f"Extracted instance '{instance.name}' to: {filenames}")
 
         # Get the tyMesh filename for extraction
-        mesh_filename = "{}__tyMesh.tyc".format(instance.name)
+        mesh_filename = f"{instance.name}__tyMesh.tyc"
         mesh_repres = {
             'name': 'tyMesh',
             'ext': 'tyc',
@@ -90,7 +84,7 @@ class ExtractTyCache(publish.Extractor):
         e.g. tycacheMain__tyPart_00000.tyc
 
         Args:
-            instance (str): instance.
+            instance (pyblish.api.Instance): instance.
             start_frame (int): Start frame.
             end_frame (int): End frame.
 
@@ -101,13 +95,12 @@ class ExtractTyCache(publish.Extractor):
         filenames = []
         # should we include frame 0 ?
         for frame in range(int(start_frame), int(end_frame) + 1):
-            filename = "{}__tyPart_{:05}.tyc".format(instance.name, frame)
+            filename = f"{instance.name}__tyPart_{frame:05}.tyc"
             filenames.append(filename)
         return filenames
 
-    def export_particle(self, members, start, end,
-                        filepath, additional_attributes,
-                        tycache_spline_enabled=False):
+    def get_export_particles_job_args(self, members, start, end,
+                                      filepath, additional_attributes):
         """Sets up all job arguments for attributes.
 
         Those attributes are to be exported in MAX Script.
@@ -117,6 +110,8 @@ class ExtractTyCache(publish.Extractor):
             start (int): Start frame.
             end (int): End frame.
             filepath (str): Output path of the TyCache file.
+            additional_attributes (dict): channel attributes data
+                which needed to be exported
 
         Returns:
             list of arguments for MAX Script.
@@ -125,12 +120,7 @@ class ExtractTyCache(publish.Extractor):
         job_args = []
         opt_list = self.get_operators(members)
         for operator in opt_list:
-            if tycache_spline_enabled:
-                export_mode = f'{operator}.exportMode=3'
-                job_args.append(export_mode)
-            else:
-                export_mode = f'{operator}.exportMode=2'
-                job_args.append(export_mode)
+            job_args.append(f"{operator}.exportMode=2")
             start_frame = f"{operator}.frameStart={start}"
             job_args.append(start_frame)
             end_frame = f"{operator}.frameEnd={end}"
@@ -192,6 +182,7 @@ class ExtractTyCache(publish.Extractor):
             if isinstance(value, bool):
                 tyc_attribute = f"{operator}.{key}=True"
             elif isinstance(value, str):
-                tyc_attribute = f"{operator}.{key}={value}"
+                tyc_attribute = f'{operator}.{key}="{value}"'
             additional_args.append(tyc_attribute)
+        self.log.debug(additional_args)
         return additional_args
