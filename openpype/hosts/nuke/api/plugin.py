@@ -21,6 +21,9 @@ from openpype.pipeline import (
     CreatedInstance,
     get_current_task_name
 )
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS
+)
 from .lib import (
     INSTANCE_DATA_KNOB,
     Knobby,
@@ -35,7 +38,8 @@ from .lib import (
     get_node_data,
     get_view_process_node,
     get_viewer_config_from_string,
-    deprecated
+    deprecated,
+    get_filenames_without_hash
 )
 from .pipeline import (
     list_instances,
@@ -634,6 +638,10 @@ class ExporterReview(object):
                 "frameStart": self.first_frame,
                 "frameEnd": self.last_frame,
             })
+        if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
+            filenames = get_filenames_without_hash(
+                self.file, self.first_frame, self.last_frame)
+            repre["files"] = filenames
 
         if self.multiple_presets:
             repre["outputName"] = self.name
@@ -807,7 +815,20 @@ class ExporterReviewMov(ExporterReview):
 
         self.log.info("File info was set...")
 
-        self.file = self.fhead + self.name + ".{}".format(self.ext)
+        if ".{}".format(self.ext) in VIDEO_EXTENSIONS:
+            self.file = "{}{}.{}".format(
+                self.fhead, self.name, self.ext)
+        else:
+            # Output is image (or image sequence)
+            # When the file is an image it's possible it
+            # has extra information after the `fhead` that
+            # we want to preserve, e.g. like frame numbers
+            # or frames hashes like `####`
+            filename_no_ext = os.path.splitext(
+                os.path.basename(self.path_in))[0]
+            after_head = filename_no_ext[len(self.fhead):]
+            self.file = "{}{}.{}.{}".format(
+                self.fhead, self.name, after_head, self.ext)
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
 
@@ -933,7 +954,6 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug("Path: {}".format(self.path))
         write_node["file"].setValue(str(self.path))
         write_node["file_type"].setValue(str(self.ext))
-
         # Knobs `meta_codec` and `mov64_codec` are not available on centos.
         # TODO shouldn't this come from settings on outputs?
         try:

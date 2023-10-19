@@ -31,13 +31,13 @@ from openpype.settings.lib import (
     get_studio_system_settings_overrides,
     load_json_file
 )
+from openpype.settings.ayon_settings import is_dev_mode_enabled
 
 from openpype.lib import (
     Logger,
     import_filepath,
     import_module_from_dirpath,
 )
-from openpype.lib.openpype_version import is_staging_enabled
 
 from .interfaces import (
     OpenPypeInterface,
@@ -317,21 +317,10 @@ def load_modules(force=False):
             time.sleep(0.1)
 
 
-def _get_ayon_addons_information():
-    """Receive information about addons to use from server.
-
-    Todos:
-        Actually ask server for the information.
-        Allow project name as optional argument to be able to query information
-            about used addons for specific project.
-    Returns:
-        List[Dict[str, Any]]: List of addon information to use.
-    """
-
-    output = []
+def _get_ayon_bundle_data():
     bundle_name = os.getenv("AYON_BUNDLE_NAME")
     bundles = ayon_api.get_bundles()["bundles"]
-    final_bundle = next(
+    return next(
         (
             bundle
             for bundle in bundles
@@ -339,10 +328,22 @@ def _get_ayon_addons_information():
         ),
         None
     )
-    if final_bundle is None:
-        return output
 
-    bundle_addons = final_bundle["addons"]
+
+def _get_ayon_addons_information(bundle_info):
+    """Receive information about addons to use from server.
+
+    Todos:
+        Actually ask server for the information.
+        Allow project name as optional argument to be able to query information
+            about used addons for specific project.
+
+    Returns:
+        List[Dict[str, Any]]: List of addon information to use.
+    """
+
+    output = []
+    bundle_addons = bundle_info["addons"]
     addons = ayon_api.get_addons_info()["addons"]
     for addon in addons:
         name = addon["name"]
@@ -378,38 +379,73 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
 
     v3_addons_to_skip = []
 
-    addons_info = _get_ayon_addons_information()
+    bundle_info = _get_ayon_bundle_data()
+    addons_info = _get_ayon_addons_information(bundle_info)
     if not addons_info:
         return v3_addons_to_skip
+
     addons_dir = os.environ.get("AYON_ADDONS_DIR")
     if not addons_dir:
         addons_dir = os.path.join(
             appdirs.user_data_dir("AYON", "Ynput"),
             "addons"
         )
-    if not os.path.exists(addons_dir):
+
+    dev_mode_enabled = is_dev_mode_enabled()
+    dev_addons_info = {}
+    if dev_mode_enabled:
+        # Get dev addons info only when dev mode is enabled
+        dev_addons_info = bundle_info.get("addonDevelopment", dev_addons_info)
+
+    addons_dir_exists = os.path.exists(addons_dir)
+    if not addons_dir_exists:
         log.warning("Addons directory does not exists. Path \"{}\"".format(
             addons_dir
         ))
-        return v3_addons_to_skip
 
     for addon_info in addons_info:
         addon_name = addon_info["name"]
         addon_version = addon_info["version"]
 
-        folder_name = "{}_{}".format(addon_name, addon_version)
-        addon_dir = os.path.join(addons_dir, folder_name)
-        if not os.path.exists(addon_dir):
-            log.debug((
-                "No localized client code found for addon {} {}."
-            ).format(addon_name, addon_version))
+        dev_addon_info = dev_addons_info.get(addon_name, {})
+        use_dev_path = dev_addon_info.get("enabled", False)
+
+        addon_dir = None
+        if use_dev_path:
+            addon_dir = dev_addon_info["path"]
+            if not addon_dir or not os.path.exists(addon_dir):
+                log.warning((
+                    "Dev addon {} {} path does not exists. Path \"{}\""
+                ).format(addon_name, addon_version, addon_dir))
+                continue
+
+        elif addons_dir_exists:
+            folder_name = "{}_{}".format(addon_name, addon_version)
+            addon_dir = os.path.join(addons_dir, folder_name)
+            if not os.path.exists(addon_dir):
+                log.debug((
+                    "No localized client code found for addon {} {}."
+                ).format(addon_name, addon_version))
+                continue
+
+        if not addon_dir:
             continue
 
         sys.path.insert(0, addon_dir)
         imported_modules = []
         for name in os.listdir(addon_dir):
+            # Ignore of files is implemented to be able to run code from code
+            #   where usually is more files than just the addon
+            # Ignore start and setup scripts
+            if name in ("setup.py", "start.py"):
+                continue
+
             path = os.path.join(addon_dir, name)
             basename, ext = os.path.splitext(name)
+            # Ignore folders/files with dot in name
+            #   - dot names cannot be imported in Python
+            if "." in basename:
+                continue
             is_dir = os.path.isdir(path)
             is_py_file = ext.lower() == ".py"
             if not is_py_file and not is_dir:

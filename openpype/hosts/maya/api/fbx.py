@@ -6,6 +6,7 @@ from pyblish.api import Instance
 
 from maya import cmds  # noqa
 import maya.mel as mel  # noqa
+from openpype.hosts.maya.api.lib import maintained_selection
 
 
 class FBXExtractor:
@@ -53,7 +54,6 @@ class FBXExtractor:
             "bakeComplexEnd": int,
             "bakeComplexStep": int,
             "bakeResampleAnimation": bool,
-            "animationOnly": bool,
             "useSceneName": bool,
             "quaternion": str,  # "euler"
             "shapes": bool,
@@ -63,7 +63,10 @@ class FBXExtractor:
             "embeddedTextures": bool,
             "inputConnections": bool,
             "upAxis": str,  # x, y or z,
-            "triangulate": bool
+            "triangulate": bool,
+            "fileVersion": str,
+            "skeletonDefinitions": bool,
+            "referencedAssetsContent": bool
         }
 
     @property
@@ -94,7 +97,6 @@ class FBXExtractor:
             "bakeComplexEnd": end_frame,
             "bakeComplexStep": 1,
             "bakeResampleAnimation": True,
-            "animationOnly": False,
             "useSceneName": False,
             "quaternion": "euler",
             "shapes": True,
@@ -104,7 +106,10 @@ class FBXExtractor:
             "embeddedTextures": False,
             "inputConnections": True,
             "upAxis": "y",
-            "triangulate": False
+            "triangulate": False,
+            "fileVersion": "FBX202000",
+            "skeletonDefinitions": False,
+            "referencedAssetsContent": False
         }
 
     def __init__(self, log=None):
@@ -198,5 +203,9 @@ class FBXExtractor:
             path (str): Path to use for export.
 
         """
-        cmds.select(members, r=True, noExpand=True)
-        mel.eval('FBXExport -f "{}" -s'.format(path))
+        # The export requires forward slashes because we need
+        # to format it into a string in a mel expression
+        path = path.replace("\\", "/")
+        with maintained_selection():
+            cmds.select(members, r=True, noExpand=True)
+            mel.eval('FBXExport -f "{}" -s'.format(path))

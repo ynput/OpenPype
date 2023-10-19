@@ -64,4 +64,4 @@ class CollectContextData(pyblish.api.ContextPlugin):
         context.data["scriptData"] = script_data
         context.data.update(script_data)
 
-        self.log.info('Context from Nuke script collected')
+        self.log.debug('Context from Nuke script collected')

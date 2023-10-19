@@ -290,6 +290,16 @@ def _convert_modules_system(
             modules_settings[key] = value
 
 
+def is_dev_mode_enabled():
+    """Dev mode is enabled in AYON.
+
+    Returns:
+        bool: True if dev mode is enabled.
+    """
+
+    return os.getenv("AYON_USE_DEV") == "1"
+
+
 def convert_system_settings(ayon_settings, default_settings, addon_versions):
     default_settings = copy.deepcopy(default_settings)
     output = {
@@ -748,7 +758,21 @@ def _convert_nuke_project_settings(ayon_settings, output):
     )
 
     new_review_data_outputs = {}
-    for item in ayon_publish["ExtractReviewDataMov"]["outputs"]:
+    outputs_settings = []
+    # Check deprecated ExtractReviewDataMov
+    # settings for backwards compatibility
+    deprecrated_review_settings = ayon_publish["ExtractReviewDataMov"]
+    current_review_settings = (
+        ayon_publish.get("ExtractReviewIntermediates")
+    )
+    if deprecrated_review_settings["enabled"]:
+        outputs_settings = deprecrated_review_settings["outputs"]
+    elif current_review_settings is None:
+        pass
+    elif current_review_settings["enabled"]:
+        outputs_settings = current_review_settings["outputs"]
+
+    for item in outputs_settings:
         item_filter = item["filter"]
         if "product_names" in item_filter:
             item_filter["subsets"] = item_filter.pop("product_names")
@@ -767,7 +791,11 @@ def _convert_nuke_project_settings(ayon_settings, output):
 
         name = item.pop("name")
         new_review_data_outputs[name] = item
-    ayon_publish["ExtractReviewDataMov"]["outputs"] = new_review_data_outputs
+
+    if deprecrated_review_settings["enabled"]:
+        deprecrated_review_settings["outputs"] = new_review_data_outputs
+    elif current_review_settings["enabled"]:
+        current_review_settings["outputs"] = new_review_data_outputs
 
     collect_instance_data = ayon_publish["CollectInstanceData"]
     if "sync_workfile_version_on_product_types" in collect_instance_data:
@@ -1146,19 +1174,19 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
     for profile in extract_oiio_transcode_profiles:
         new_outputs = {}
         name_counter = {}
-        for output in profile["outputs"]:
-            if "name" in output:
-                name = output.pop("name")
+        for profile_output in profile["outputs"]:
+            if "name" in profile_output:
+                name = profile_output.pop("name")
             else:
                 # Backwards compatibility for setting without 'name' in model
-                name = output["extension"]
+                name = profile_output["extension"]
                 if name in new_outputs:
                     name_counter[name] += 1
                     name = "{}_{}".format(name, name_counter[name])
                 else:
                     name_counter[name] = 0
 
-            new_outputs[name] = output
+            new_outputs[name] = profile_output
         profile["outputs"] = new_outputs
 
     # Extract Burnin plugin
@@ -1382,14 +1410,38 @@ class _AyonSettingsCache:
         if _AyonSettingsCache.variant is None:
             from openpype.lib.openpype_version import is_staging_enabled
 
-            _AyonSettingsCache.variant = (
-                "staging" if is_staging_enabled() else "production"
-            )
+            variant = "production"
+            if is_dev_mode_enabled():
+                variant = cls._get_dev_mode_settings_variant()
+            elif is_staging_enabled():
+                variant = "staging"
+            _AyonSettingsCache.variant = variant
         return _AyonSettingsCache.variant
 
     @classmethod
     def _get_bundle_name(cls):
         return os.environ["AYON_BUNDLE_NAME"]
+
+    @classmethod
+    def _get_dev_mode_settings_variant(cls):
+        """Develop mode settings variant.
+
+        Returns:
+            str: Name of settings variant.
+        """
+
+        bundles = ayon_api.get_bundles()
+        user = ayon_api.get_user()
+        username = user["name"]
+        for bundle in bundles:
+            if (
+                bundle.get("isDev")
+                and bundle.get("activeUser") == username
+            ):
+                return bundle["name"]
+        # Return fake variant - distribution logic will tell user that he
+        #   does not have set any dev bundle
+        return "dev"
 
     @classmethod
     def get_value_by_project(cls, project_name):
