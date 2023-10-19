@@ -115,26 +115,23 @@ class ExtractTyCache(publish.Extractor):
             list of arguments for MAX Script.
 
         """
-        job_args = []
-        opt_list = self.get_operators(members)
-        for operator in opt_list:
-            job_args.append(f"{operator}.exportMode=2")
-            start_frame = f"{operator}.frameStart={start}"
-            job_args.append(start_frame)
-            end_frame = f"{operator}.frameEnd={end}"
-            job_args.append(end_frame)
-            filepath = filepath.replace("\\", "/")
-            tycache_filename = f'{operator}.tyCacheFilename="{filepath}"'
-            job_args.append(tycache_filename)
-            # TODO: add the additional job args for tycache attributes
-            if additional_attributes:
-                additional_args = self.get_additional_attribute_args(
-                    operator, additional_attributes
-                )
-                job_args.extend(additional_args)
-            tycache_export = f"{operator}.exportTyCache()"
-            job_args.append(tycache_export)
+        settings = {
+            "exportMode": 2,
+            "frameStart": start,
+            "frameEnd": end,
+            "tyCacheFilename": filepath.replace("\\", "/")
+        }
+        settings.update(additional_attributes)
 
+        job_args = []
+        for operator in self.get_operators(members):
+            for key, value in settings.items():
+                if isinstance(value, str):
+                    # embed in quotes
+                    value = f'"{value}"'
+
+                job_args.append(f"{operator}.{key}={value}")
+            job_args.append(f"{operator}.exportTyCache()")
         return job_args
 
     @staticmethod

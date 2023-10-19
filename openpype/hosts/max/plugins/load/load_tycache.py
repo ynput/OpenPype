@@ -46,8 +46,7 @@ class TyCacheLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
         node_list = get_previous_loaded_object(node)
-        update_custom_attribute_data(
-            node, node_list)
+        update_custom_attribute_data(node, node_list)
         with maintained_selection():
             for prt in node_list:
                 prt.filename = path

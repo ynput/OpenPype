@@ -52,12 +52,7 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
 
         selection_list = instance.data["members"]
         for sel in selection_list:
-            sel_tmp = str(sel)
-            if rt.ClassOf(sel) in [rt.tyFlow,
-                                   rt.Editable_Mesh]:
-                if "tyFlow" not in sel_tmp:
-                    invalid.append(sel)
-            else:
+            if rt.ClassOf(sel) not in [rt.tyFlow, rt.Editable_Mesh]:
                 invalid.append(sel)
 
         return invalid
@@ -75,22 +70,22 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
             of the node connections
         """
         invalid = []
-        container = instance.data["instance_node"]
-        self.log.debug(f"Validating tyFlow object for {container}")
-        selection_list = instance.data["members"]
-        bool_list = []
-        for sel in selection_list:
-            obj = sel.baseobject
+        members = instance.data["members"]
+        for member in members:
+            obj = member.baseobject
+
+            # There must be at least one animation with export
+            # particles enabled
+            has_export_particles = False
             anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
-                # get all the names of the related tyFlow nodes
+                # get name of the related tyFlow node
                 sub_anim = rt.GetSubAnim(obj, anim_name)
                 # check if there is export particle operator
-                boolean = rt.IsProperty(sub_anim, "Export_Particles")
-                bool_list.append(str(boolean))
-            # if the export_particles property is not there
-            # it means there is not a "Export Particle" operator
-            if "True" not in bool_list:
-                invalid.append(sel)
+                if rt.IsProperty(sub_anim, "Export_Particles"):
+                    has_export_particles = True
+                    break
 
+            if not has_export_particles:
+                invalid.append(member)
         return invalid

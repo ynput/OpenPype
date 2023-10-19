@@ -6,7 +6,7 @@ from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 class CollectTyCacheData(pyblish.api.InstancePlugin,
                          OpenPypePyblishPluginMixin):
-    """Collect Review Data for Preview Animation"""
+    """Collect Channel Attributes for TyCache Export"""
 
     order = pyblish.api.CollectorOrder + 0.02
     label = "Collect tyCache attribute Data"
