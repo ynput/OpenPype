@@ -347,7 +347,9 @@ class NumberAttrWidget(_BaseAttrDefWidget):
             value = self.attr_def.default
         else:
             value = self._last_multivalue
+        self._input_widget.blockSignals(True)
         self._input_widget.setValue(value)
+        self._input_widget.blockSignals(False)
         if not change_focus:
             return
         # Change focus to input field and move cursor to the end
