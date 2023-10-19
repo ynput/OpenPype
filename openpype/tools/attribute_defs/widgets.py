@@ -20,7 +20,6 @@ from openpype.tools.utils import (
     FocusSpinBox,
     FocusDoubleSpinBox,
     MultiSelectionComboBox,
-    ClickableFrame,
 )
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
