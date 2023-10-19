@@ -72,7 +72,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
         if not cls.get_invalid(instance):
             # Already fixed
-            print ("Not working")
             return
 
         # Disable use asset handles
