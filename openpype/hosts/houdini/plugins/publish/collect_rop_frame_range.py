@@ -66,9 +66,9 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
             )
 
         message = "Frame range [{frame_start} - {frame_end}]".format(
-                frame_start=frame_start,
-                frame_end=frame_end
-            )
+            frame_start=frame_start,
+            frame_end=frame_end
+        )
         if handle_start or handle_end:
             message += " with handles [{handle_start}]-[{handle_end}]".format(
                 handle_start=handle_start,
