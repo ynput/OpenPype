@@ -62,7 +62,8 @@ class CacheModelLoader(plugin.AssetLoader):
 
         # Use first EMPTY without parent as container
         container = next(
-            (obj for obj in imported if obj.type == "EMPTY" and not obj.parent),
+            (obj for obj in imported
+             if obj.type == "EMPTY" and not obj.parent),
             None
         )
 
