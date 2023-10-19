@@ -36,6 +36,7 @@ class ExtractPointCloud(publish.Extractor):
     label = "Extract Point Cloud"
     hosts = ["max"]
     families = ["pointcloud"]
+    settings = []
 
     def process(self, instance):
         self.settings = self.get_setting(instance)
