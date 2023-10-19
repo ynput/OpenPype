@@ -569,13 +569,23 @@ def get_template_from_value(key, value):
 
 
 def get_frame_data(node, handle_start=0, handle_end=0, log=None):
-    """Get the frame data: start frame, end frame and steps.
+    """Get the frame data: start frame, end frame, steps,
+    start frame with start handle and end frame with end handle.
+
+    This function uses Houdini node as the source of truth
+    therefore users are allowed to publish their desired frame range.
+
+    It also calculates frame start and end with handles.
 
     Args:
         node(hou.Node)
+        handle_start(int)
+        handle_end(int)
+        log(logging.Logger)
 
     Returns:
-        dict: frame data for start, end and steps.
+        dict: frame data for start, end, steps,
+              start with handle and end with handle
 
     """
 
