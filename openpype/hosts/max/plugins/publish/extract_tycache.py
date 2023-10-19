@@ -32,7 +32,7 @@ class ExtractTyCache(publish.Extractor):
         # TODO: let user decide the param
         start = int(instance.context.data["frameStart"])
         end = int(instance.context.data.get("frameEnd"))
-        self.log.info("Extracting Tycache...")
+        self.log.debug("Extracting Tycache...")
 
         stagingdir = self.staging_dir(instance)
         filename = "{name}.tyc".format(**instance.data)
@@ -55,7 +55,6 @@ class ExtractTyCache(publish.Extractor):
             "stagingDir": stagingdir,
         }
         representations.append(representation)
-        self.log.info(f"Extracted instance '{instance.name}' to: {filenames}")
 
         # Get the tyMesh filename for extraction
         mesh_filename = f"{instance.name}__tyMesh.tyc"
@@ -67,8 +66,7 @@ class ExtractTyCache(publish.Extractor):
             "outputName": '__tyMesh'
         }
         representations.append(mesh_repres)
-        self.log.info(
-            f"Extracted instance '{instance.name}' to: {mesh_filename}")
+        self.log.debug(f"Extracted instance '{instance.name}' to: {filenames}")
 
     def get_files(self, instance, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
