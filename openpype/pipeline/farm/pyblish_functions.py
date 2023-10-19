@@ -578,20 +578,21 @@ def _create_instances_for_aov(instance, skeleton, aov_filter, additional_data,
         else:
             group_name = subset
 
-        # if there are multiple cameras, we need to add camera name
-        expected_filepath = col[0] if isinstance(col, (list, tuple)) else col
-        cams = [cam for cam in cameras if cam in expected_filepath]
-        for cam in cams:
+        if isinstance(col, (list, tuple)):
+            cam = [c for c in cameras if c in col[0]]
+        else:
+            # in case of single frame
+            cam = [c for c in cameras if c in col]
+        if cam:
             if aov:
-                if aov.startswith(cam):
-                    subset_name = '{}_{}_{}'.format(group_name, cam, aov)
-                else:
-                    subset_name = "{}_{}".format(group_name, aov)
+                subset_name = '{}_{}_{}'.format(group_name, cam, aov)
             else:
-                if aov.startswith(cam):
-                    subset_name = '{}_{}'.format(group_name, cam)
-                else:
-                    subset_name = '{}'.format(group_name)
+                subset_name = '{}_{}'.format(group_name, cam)
+        else:
+            if aov:
+                subset_name = '{}_{}'.format(group_name, aov)
+            else:
+                subset_name = '{}'.format(group_name)
 
         if isinstance(col, (list, tuple)):
             staging = os.path.dirname(col[0])
