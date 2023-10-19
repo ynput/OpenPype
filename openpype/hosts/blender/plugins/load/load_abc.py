@@ -148,6 +148,7 @@ class CacheModelLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.link(containers)
 
         asset_group = bpy.data.objects.new(group_name, object_data=None)
+        asset_group.empty_display_type = 'SINGLE_ARROW'
         containers.objects.link(asset_group)
 
         objects = self._process(libpath, asset_group, group_name)
