@@ -287,7 +287,7 @@ def viewport_options_for_preview_animation():
             "dspBones": False,
             "dspBkg": True,
             "dspGrid": False,
-            "dspSafeFrame":False,
+            "dspSafeFrame": False,
             "dspFrameNums": False
         }
     else:

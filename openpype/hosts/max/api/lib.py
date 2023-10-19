@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Library of functions useful for 3dsmax pipeline."""
-import os
 import contextlib
 import logging
 import json
