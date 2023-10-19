@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 from openpype.pipeline import PublishValidationError
+from openpype.pipeline.publish import RepairAction
 from openpype.hosts.houdini.api.action import SelectInvalidAction
 
 import hou
+
+
+class DisableUseAssetHandlesAction(RepairAction):
+    label = "Disable use asset handles"
+    icon = "mdi.toggle-switch-off"
 
 
 class ValidateFrameRange(pyblish.api.InstancePlugin):
@@ -17,7 +23,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder - 0.1
     hosts = ["houdini"]
     label = "Validate Frame Range"
-    actions = [SelectInvalidAction]
+    actions = [DisableUseAssetHandlesAction, SelectInvalidAction]
 
     def process(self, instance):
 
@@ -60,3 +66,32 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                 .format(instance.data)
             )
             return [rop_node]
+
+    @classmethod
+    def repair(cls, instance):
+
+        if not cls.get_invalid(instance):
+            # Already fixed
+            print ("Not working")
+            return
+
+        # Disable use asset handles
+        context = instance.context
+        create_context = context.data["create_context"]
+        instance_id = instance.data.get("instance_id")
+        if not instance_id:
+            cls.log.debug("'{}' must have instance id"
+                          .format(instance))
+            return
+
+        created_instance = create_context.get_instance_by_id(instance_id)
+        if not instance_id:
+            cls.log.debug("Unable to find instance '{}' by id"
+                          .format(instance))
+            return
+
+        created_instance.publish_attributes["CollectRopFrameRange"]["use_handles"] = False  # noqa
+
+        create_context.save_changes()
+        cls.log.debug("use asset handles is turned off for '{}'"
+                      .format(instance))
