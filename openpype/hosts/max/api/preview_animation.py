@@ -25,6 +25,26 @@ def play_preview_when_done(has_autoplay):
 
 
 @contextlib.contextmanager
+def render_resolution(width, height):
+    """Function to set render resolution option during
+       context
+
+    Args:
+        width (int): render width
+        height (int): render height
+    """
+    current_renderWidth = rt.renderWidth
+    current_renderHeight = rt.renderHeight
+    try:
+        rt.renderWidth = width
+        rt.renderHeight = height
+        yield
+    finally:
+        rt.renderWidth = current_renderWidth
+        rt.renderHeight = current_renderHeight
+
+
+@contextlib.contextmanager
 def viewport_camera(camera):
     """Function to set viewport camera during context
     ***For 3dsMax 2024+
@@ -217,6 +237,7 @@ def publish_preview_animation(
         instance, staging_dir,
         ext, review_camera,
         startFrame=None, endFrame=None,
+        resolution=None,
         viewport_options=None):
     """Render camera review animation
 
@@ -235,25 +256,30 @@ def publish_preview_animation(
         endFrame = int(rt.animationRange.end)
     if viewport_options is None:
         viewport_options = viewport_options_for_preview_animation()
+    if resolution is None:
+        resolution = (1920, 1080)
     with play_preview_when_done(False):
         with viewport_camera(review_camera):
-            if int(get_max_version()) < 2024:
-                with viewport_preference_setting(
-                        viewport_options["general_viewport"],
-                        viewport_options["nitrous_viewport"],
-                        viewport_options["vp_btn_mgr"]):
-                    percentSize = viewport_options.get("percentSize", 100)
+            width, height = resolution
+            with render_resolution(width, height):
+                if int(get_max_version()) < 2024:
+                    with viewport_preference_setting(
+                            viewport_options["general_viewport"],
+                            viewport_options["nitrous_viewport"],
+                            viewport_options["vp_btn_mgr"]):
+                        percentSize = viewport_options.get("percentSize", 100)
 
-                    publish_preview_sequences(
-                        staging_dir, instance.name,
-                        startFrame, endFrame, percentSize, ext)
-            else:
-                fps = instance.data["fps"]
-                rt.completeRedraw()
-                preview_arg = publish_review_animation(instance, staging_dir,
-                                                       startFrame, endFrame,
-                                                       ext, fps, viewport_options)
-                rt.execute(preview_arg)
+                        publish_preview_sequences(
+                            staging_dir, instance.name,
+                            startFrame, endFrame, percentSize, ext)
+                else:
+                    fps = instance.data["fps"]
+                    rt.completeRedraw()
+                    preview_arg = publish_review_animation(
+                        instance, staging_dir,
+                        startFrame, endFrame,
+                        ext, fps, viewport_options)
+                    rt.execute(preview_arg)
 
     rt.completeRedraw()
 

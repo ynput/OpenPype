@@ -18,6 +18,8 @@ class CreateReview(plugin.MaxCreator):
             "creator_attributes", dict())
         for key in ["imageFormat",
                     "keepImages",
+                    "review_width",
+                    "review_height",
                     "percentSize",
                     "visualStyleMode",
                     "viewportPreset",
@@ -48,6 +50,16 @@ class CreateReview(plugin.MaxCreator):
             "DXMode", "Customize"]
 
         return [
+            NumberDef("review_width",
+                      label="Review width",
+                      decimals=0,
+                      minimum=0,
+                      default=1920),
+            NumberDef("review_height",
+                      label="Review height",
+                      decimals=0,
+                      minimum=0,
+                      default=1080),
             BoolDef("keepImages",
                     label="Keep Image Sequences",
                     default=False),

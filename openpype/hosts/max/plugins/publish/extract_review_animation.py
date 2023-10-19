@@ -33,10 +33,12 @@ class ExtractReviewAnimation(publish.Extractor):
 
         review_camera = instance.data["review_camera"]
         viewport_options = instance.data.get("viewport_options", {})
+        resolution = instance.data.get("resolution", ())
         publish_preview_animation(
             instance, staging_dir,
             ext, review_camera,
             startFrame=start, endFrame=end,
+            resolution=resolution,
             viewport_options=viewport_options)
 
         tags = ["review"]

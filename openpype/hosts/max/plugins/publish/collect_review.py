@@ -34,7 +34,9 @@ class CollectReview(pyblish.api.InstancePlugin,
             "keepImages": creator_attrs["keepImages"],
             "frameStart": instance.context.data["frameStart"],
             "frameEnd": instance.context.data["frameEnd"],
-            "fps": instance.context.data["fps"]
+            "fps": instance.context.data["fps"],
+            "resolution": (creator_attrs["review_width"],
+                           creator_attrs["review_height"])
         }
 
         if int(get_max_version()) >= 2024:
