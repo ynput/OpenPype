@@ -17,7 +17,8 @@ class ExtractReviewDataMov(publish.Extractor):
 
     order = pyblish.api.ExtractorOrder + 0.01
     label = "Extract Review Data Mov"
-    families = ["review","render.a_frames_farm"]
+    # families = ["review","render.a_frames_farm"]
+    families = ["review"]
     hosts = ["nuke"]
 
     # presets

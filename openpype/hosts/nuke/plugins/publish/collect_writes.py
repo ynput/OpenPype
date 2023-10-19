@@ -13,7 +13,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
     order = pyblish.api.CollectorOrder + 0.0021
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
-    families = ["render", "prerender", "image"]
+    families = ["render", "prerender", "image","render.a_frames_farm"]
 
     def process(self, instance):
         self.log.debug(pformat(instance.data))
@@ -79,7 +79,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
 
         self.log.debug('output dir: {}'.format(output_dir))
 
-        if render_target == "local_frames":
+        if render_target == "local_frames" or render_target == 'a_frames_farm':
             representation = {
                 'name': ext,
                 'ext': ext,
@@ -148,8 +148,24 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
             instance.data["representations"].append(representation)
             self.log.info("Publishing rendered frames ...")
 
+            if render_target == 'a_frames_farm':
+                farm_keys = ["farm_chunk", "farm_priority", "farm_concurrency"]
+                for key in farm_keys:
+                    # Skip if key is not in creator attributes
+                    if key not in creator_attributes:
+                        continue
+                    # Add farm attributes to instance
+                    instance.data[key] = creator_attributes[key]
+
+                # Farm rendering
+                instance.data["transfer"] = False
+                instance.data["farm"] = True
+                instance.data["representations"].append(representation)
+                self.log.info("Use existing frames on Farm rendering ON ...")
+
+
         # NOTE hornet update on use existing frames on farm
-        elif render_target == "farm" or render_target == 'a_frames_farm':
+        elif render_target == "farm" :
             farm_keys = ["farm_chunk", "farm_priority", "farm_concurrency"]
             for key in farm_keys:
                 # Skip if key is not in creator attributes

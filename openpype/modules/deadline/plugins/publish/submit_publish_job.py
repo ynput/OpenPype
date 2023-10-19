@@ -143,11 +143,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_USERNAME",
         "OPENPYPE_SG_USER",
     ]
-    environ_keys_review_off = [
-        "AVALON_APP_NAME",
-        "OPENPYPE_USERNAME",
-        "OPENPYPE_SG_USER",
-    ]
 
     # Add OpenPype version if we are running from build.
     if is_running_from_build():
@@ -214,7 +209,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         return metadata_path, rootless_mtdt_p
 
-    def _submit_deadline_post_job(self, instance, job, instances,**kwargs):
+    def _submit_deadline_post_job(self, instance, job, instances):
         """Submit publish job to Deadline.
 
         Deadline specific code separated from :meth:`process` for sake of
@@ -261,12 +256,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         }
 
         # add environments from self.environ_keys
-        if kwargs.get('review') == True and kwargs.get('render_type') == "a_frames_farm":
-            updated_environ_keys = self.environ_keys_review_off
-        else:
-            updated_environ_keys = self.environ_keys
-        self.log.info('self.environ_keys {}' .format(updated_environ_keys))
-        for env_key in updated_environ_keys:
+        for env_key in self.environ_keys:
             if os.getenv(env_key):
                 environment[env_key] = os.environ[env_key]
 
@@ -328,6 +318,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "AuxFiles": [],
         }
 
+        self.log.info('job {}'.format(job))
         # add assembly jobs as dependencies
         if instance.data.get("tileRendering"):
             self.log.info("Adding tile assembly jobs as dependencies...")
@@ -1091,9 +1082,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
-        render_target = ''
-        if data.get("creator_attributes"):
-            render_target = data.get("creator_attributes")['render_target'] or ''
         if submission_type == "deadline":
             # get default deadline webservice url from deadline module
             self.deadline_url = instance.context.data["defaultDeadline"]
@@ -1101,15 +1089,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if instance.data.get("deadlineUrl"):
                 self.deadline_url = instance.data.get("deadlineUrl")
             assert self.deadline_url, "Requires Deadline Webservice URL"
-
-            if render_target:
-                deadline_publish_job_id = \
-                    self._submit_deadline_post_job(instance, render_job, instances,
-                                                review=do_not_add_review,
-                                                render_type=render_target)
+            if data.get("review") == False:
+                if data.get('render_target') == 'a_frames_farm':
+                    deadline_publish_job_id = {}
+                else:
+                    deadline_publish_job_id = self._submit_deadline_post_job(instance, render_job, instances)
             else:
                 deadline_publish_job_id = \
-                self._submit_deadline_post_job(instance, render_job, instances)
+                    self._submit_deadline_post_job(instance, render_job, instances)
         # publish job file
         publish_job = {
             "asset": asset,
