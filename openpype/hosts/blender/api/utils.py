@@ -446,21 +446,25 @@ def make_paths_absolute(source_filepath: Path = None):
 
         for d in relative_datablocks:
             try:
-                # Check if datablock is a resource file
-                for file in workfile_repre.get("files"):
-                    if Path(file.get("path", "")).name == Path(
-                        d.filepath
-                    ).name:
-                        # Make resource datablock path absolute,
-                        # starting from workdir
-                        d.filepath = str(
-                            Path(
-                                bpy.path.abspath(
-                                    d.filepath,
-                                )
-                            ).resolve()
-                        )
-                        break
+                # Check if datablock is a resource file or an UDIM
+                if (
+                    isinstance(d, bpy.types.Image)
+                    and d.source == "TILED"
+                    and not d.packed_file
+                    or Path(d.filepath).name in {
+                        Path(file.get("path", "")).name
+                        for file in workfile_repre.get("files")
+                    }
+                ):
+                    # Make resource datablock path absolute,
+                    # starting from workdir
+                    d.filepath = str(
+                        Path(
+                            bpy.path.abspath(
+                                d.filepath,
+                            )
+                        ).resolve()
+                    )
                 else:
                     # Make datablock path absolute, starting from source path
                     d.filepath = str(

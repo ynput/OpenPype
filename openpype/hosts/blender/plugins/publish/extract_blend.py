@@ -1,3 +1,4 @@
+import re
 import os
 from pathlib import Path
 from typing import List, Set, Tuple
@@ -160,30 +161,62 @@ class ExtractBlend(publish.Extractor):
             if users & datablocks
         }
 
+    def _process_resource_file(
+        self,
+        instance: dict,
+        filepath: str,
+        transfers: list[tuple],
+        hashes: dict,
+    ):
+        """Process resource publish data.
+
+        Args:
+            instance (dict): Pyblish instance.
+            filepath (str): Resource filepath.
+            transfers (list[tuple]): List of resource transfers.
+            hashes: Resource hashes.
+        """
+        destination = Path(instance.data["resourcesDir"], Path(filepath).name)
+
+        transfers.append((filepath, destination.as_posix()))
+        self.log.info(f"File will be copied {filepath} -> {destination}")
+
+        # Store the hashes from hash to destination to include in the
+        # database
+        # NOTE Keep source hash system in case HARDLINK system works again
+        hashes[source_hash(filepath)] = destination.as_posix()
+
     def _process_resources(
         self, instance: dict, images: set
     ) -> Tuple[List[Tuple[str, str]], dict, Set[Tuple[bpy.types.Image, Path]]]:
-        """Extract the textures to transfer, copy them to the resource
-        directory and remap the node paths.
+        """Extract, copy to resource directory and remap resources.
+
+        UDIMs are handled as a single object that points to multiple files in
+        the same directory. Only this object needs to be remapped, then blender
+        will find all tiles by replacing `<UDIM>` by their number/label.
+        Each tile needs to be piped individually.
 
         Args:
-            instance (dict): Instance with textures
-            images (set): Blender Images to publish
+            instance (dict): Instance with textures.
+            images (set): Blender Images to publish.
 
         Returns:
             Tuple[Tuple[str, str], dict, Set[Tuple[bpy.types.Image, Path]]]:
                 (Files to copy and transfer with published blend,
                 source hashes for later file optim,
-                remapped images with source file path)
+                remapped images with source file path).
         """
         # Process the resource files
         transfers = []
         hashes = {}
         remapped = set()
+
+        udim_pattern = re.compile(r"<UDIM>")
+
         for image in {
             img
             for img in images
-            if img.source in {"FILE", "SEQUENCE", "MOVIE"}
+            if img.source in {"FILE", "SEQUENCE", "MOVIE", "TILED"}
             and not img.packed_file
         }:
             # Skip image from library or internal
@@ -191,27 +224,39 @@ class ExtractBlend(publish.Extractor):
                 continue
 
             # Get source and destination paths
-            sourcepath = image.filepath  # Don't every modify source_image
-            destination = Path(
-                instance.data["resourcesDir"], Path(sourcepath).name
-            )
+            sourcepath = Path(image.filepath)  # Don't ever modify source_image
 
-            transfers.append((sourcepath, destination.as_posix()))
-            self.log.info(f"file will be copied {sourcepath} -> {destination}")
-
-            # Store the hashes from hash to destination to include in the
-            # database
-            # NOTE Keep source hash system in case HARDLINK system works again
-            texture_hash = source_hash(sourcepath)
-            hashes[texture_hash] = destination.as_posix()
+            # Check if image is an UDIM
+            if image.source == "TILED":
+                # Process each UDIM tile
+                for tile in image.tiles:
+                    self._process_resource_file(
+                        instance,
+                        sourcepath.with_name(
+                            re.sub(
+                                udim_pattern,
+                                str(tile.number),
+                                sourcepath.name,
+                            )
+                        ).as_posix(),
+                        transfers,
+                        hashes,
+                    )
+            else:
+                self._process_resource_file(
+                    instance, sourcepath.as_posix(), transfers, hashes
+                )
 
             # Remap source image to resources directory
             image.filepath = bpy.path.relpath(
-                destination.as_posix(), start=instance.data["publishDir"]
+                Path(
+                    instance.data["resourcesDir"], sourcepath.name
+                ).as_posix(),
+                start=instance.data["publishDir"],
             )
 
             # Keep remapped to restore after publishing
-            remapped.add((image, sourcepath))
+            remapped.add((image, sourcepath.as_posix()))
 
         self.log.info("Finished remapping destinations...")
 
