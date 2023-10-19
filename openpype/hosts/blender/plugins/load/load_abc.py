@@ -60,19 +60,14 @@ class CacheModelLoader(plugin.AssetLoader):
 
         imported = lib.get_selection()
 
-        empties = [obj for obj in imported if obj.type == 'EMPTY']
-
-        container = None
-
-        for empty in empties:
-            if not empty.parent:
-                container = empty
-                break
+        # Use first EMPTY without parent as container
+        container = next(
+            (obj for obj in imported if obj.type == "EMPTY" and not obj.parent),
+            None
+        )
 
         objects = []
         if container:
-            # Children must be linked before parents,
-            # otherwise the hierarchy will break
             nodes = list(container.children)
 
             for obj in nodes:
@@ -80,11 +75,9 @@ class CacheModelLoader(plugin.AssetLoader):
 
             bpy.data.objects.remove(container)
 
+            objects.extend(nodes)
             for obj in nodes:
-                objects.append(obj)
-                objects.extend(list(obj.children_recursive))
-
-            objects.reverse()
+                objects.extend(obj.children_recursive)
         else:
             for obj in imported:
                 obj.parent = asset_group

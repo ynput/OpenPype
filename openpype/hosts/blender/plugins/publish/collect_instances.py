@@ -51,7 +51,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         for group in asset_groups:
             instance = self.create_instance(context, group)
             members = []
-            if type(group) == bpy.types.Collection:
+            if isinstance(group, bpy.types.Collection):
                 members = list(group.objects)
                 family = instance.data["family"]
                 if family == "animation":
