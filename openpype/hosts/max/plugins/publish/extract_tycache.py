@@ -41,12 +41,10 @@ class ExtractTyCache(publish.Extractor):
         additional_attributes = instance.data.get("tyc_attrs", {})
 
         with maintained_selection():
-            job_args = None
-            if instance.data["tycache_type"] == "tycache":
-                job_args = self.get_export_particles_job_args(
-                    instance.data["members"],
-                    start, end, path,
-                    additional_attributes)
+            job_args = self.get_export_particles_job_args(
+                instance.data["members"],
+                start, end, path,
+                additional_attributes)
             for job in job_args:
                 rt.Execute(job)
         representations = instance.data.setdefault("representations", [])
