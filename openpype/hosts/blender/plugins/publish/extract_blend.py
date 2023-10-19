@@ -189,8 +189,7 @@ class ExtractBlend(publish.Extractor):
     def _process_resources(
         self, instance: dict, images: set
     ) -> Tuple[List[Tuple[str, str]], dict, Set[Tuple[bpy.types.Image, Path]]]:
-        """Extract resources to transfer, copy them to the resource
-        directory and remap them.
+        """Extract, copy to resource directory and remap resources.
 
         UDIMs are handled as a single object that points to multiple files in
         the same directory. Only this object needs to be remapped, then blender
