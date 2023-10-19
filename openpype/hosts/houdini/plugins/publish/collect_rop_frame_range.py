@@ -46,11 +46,11 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
         if not frame_data:
             return
 
-        # Log artist friendly message about the collected frame range
+        # Log debug message about the collected frame range
         frame_start = frame_data["frameStart"]
         frame_end = frame_data["frameEnd"]
 
-        if attr_values.get("use_handles"):
+        if attr_values.get("use_handles", self.use_asset_handles):
             self.log.debug(
                 "Full Frame range with Handles "
                 "[{frame_start_handle} - {frame_end_handle}]"
@@ -65,6 +65,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
                 "start and end handles are set to 0."
             )
 
+        # Log collected frame range to the user
         message = "Frame range [{frame_start} - {frame_end}]".format(
             frame_start=frame_start,
             frame_end=frame_end
