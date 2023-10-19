@@ -33,9 +33,6 @@ def viewport_camera(camera):
     """
     original = rt.viewport.getCamera()
     has_autoplay = rt.preferences.playPreviewWhenDone
-    nitrousGraphicMgr = rt.NitrousGraphicsManager
-    viewport_setting = nitrousGraphicMgr.GetActiveViewportSetting()
-    orig_preset = viewport_setting.ViewportPreset
     if not original:
         # if there is no original camera
         # use the current camera as original
@@ -48,7 +45,6 @@ def viewport_camera(camera):
     finally:
         rt.viewport.setCamera(original)
         rt.preferences.playPreviewWhenDone = has_autoplay
-        viewport_setting.ViewportPreset = orig_preset
 
 
 @contextlib.contextmanager
@@ -94,6 +90,7 @@ def viewport_preference_setting(general_viewport,
             setattr(rt.ViewportButtonMgr, key, value)
         for key, value in nitrous_viewport_original.items():
             setattr(viewport_setting, key, value)
+
 
 def publish_review_animation(instance, staging_dir, start,
                              end, ext, fps, viewport_options):
