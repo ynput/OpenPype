@@ -24,8 +24,6 @@ class ExtractReviewAnimation(publish.Extractor):
         end = int(instance.data["frameEnd"])
         filepath = os.path.join(staging_dir, filename)
         filepath = filepath.replace("\\", "/")
-        filenames = self.get_files(
-            instance.name, start, end, ext)
 
         self.log.debug(
             "Writing Review Animation to"
@@ -34,12 +32,17 @@ class ExtractReviewAnimation(publish.Extractor):
         review_camera = instance.data["review_camera"]
         viewport_options = instance.data.get("viewport_options", {})
         resolution = instance.data.get("resolution", ())
-        render_preview_animation(
-            instance, staging_dir,
-            ext, review_camera,
-            startFrame=start, endFrame=end,
-            resolution=resolution,
+        files = render_preview_animation(
+            os.path.join(staging_dir, instance.name),
+            ext,
+            review_camera,
+            start,
+            end,
+            width=resolution[0],
+            height=resolution[1],
             viewport_options=viewport_options)
+
+        filenames = [os.path.basename(path) for path in files]
 
         tags = ["review"]
         if not instance.data.get("keepImages"):
@@ -63,12 +66,3 @@ class ExtractReviewAnimation(publish.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
         instance.data["representations"].append(representation)
-
-    def get_files(self, filename, start, end, ext):
-        file_list = []
-        for frame in range(int(start), int(end) + 1):
-            actual_name = "{}.{:04}.{}".format(
-                filename, frame, ext)
-            file_list.append(actual_name)
-
-        return file_list
