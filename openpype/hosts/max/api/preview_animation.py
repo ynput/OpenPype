@@ -1,4 +1,3 @@
-import os
 import logging
 import contextlib
 from pymxs import runtime as rt
