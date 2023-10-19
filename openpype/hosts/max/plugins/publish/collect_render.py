@@ -5,6 +5,7 @@ import pyblish.api
 
 from pymxs import runtime as rt
 from openpype.pipeline import get_current_asset_name
+from openpype.pipeline.publish import KnownPublishError
 from openpype.hosts.max.api import colorspace
 from openpype.hosts.max.api.lib import get_max_version, get_current_renderer
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
@@ -45,8 +46,8 @@ class CollectRender(pyblish.api.InstancePlugin):
         if instance.data.get("multiCamera"):
             cameras = instance.data.get("members")
             if not cameras:
-                raise RuntimeError("There should be at least"
-                                   " one renderable camera in container")
+                raise KnownPublishError("There should be at least"
+                                        " one renderable camera in container")
             sel_cam = [
                 c.name for c in cameras
                 if rt.classOf(c) in rt.Camera.classes]
