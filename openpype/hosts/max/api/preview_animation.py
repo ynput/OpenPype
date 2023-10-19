@@ -213,7 +213,7 @@ def publish_preview_sequences(staging_dir, filename,
     rt.gc(delayed=True)
 
 
-def publish_preview_animation(
+def render_preview_animation(
         instance, staging_dir,
         ext, review_camera,
         startFrame=None, endFrame=None,

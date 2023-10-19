@@ -2,7 +2,7 @@ import os
 import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.max.api.preview_animation import (
-    publish_preview_animation
+    render_preview_animation
 )
 
 
@@ -34,7 +34,7 @@ class ExtractReviewAnimation(publish.Extractor):
         review_camera = instance.data["review_camera"]
         viewport_options = instance.data.get("viewport_options", {})
         resolution = instance.data.get("resolution", ())
-        publish_preview_animation(
+        render_preview_animation(
             instance, staging_dir,
             ext, review_camera,
             startFrame=start, endFrame=end,
