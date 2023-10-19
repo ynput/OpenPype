@@ -159,25 +159,3 @@ class ExtractTyCache(publish.Extractor):
                     opt_list.append(opt)
 
         return opt_list
-
-    def get_additional_attribute_args(self, operator, attrs):
-        """Get Additional args with the attributes pre-set by user
-
-        Args:
-            operator (str): export particle operator
-            attrs (dict): a dict which stores the additional attributes
-            added by user
-
-        Returns:
-            additional_args(list): a list of additional args for MAX script
-        """
-        additional_args = []
-        for key, value in attrs.items():
-            tyc_attribute = None
-            if isinstance(value, bool):
-                tyc_attribute = f"{operator}.{key}=True"
-            elif isinstance(value, str):
-                tyc_attribute = f'{operator}.{key}="{value}"'
-            additional_args.append(tyc_attribute)
-        self.log.debug(additional_args)
-        return additional_args
