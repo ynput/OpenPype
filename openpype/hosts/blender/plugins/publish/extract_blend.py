@@ -161,7 +161,7 @@ class ExtractBlend(publish.Extractor):
             if users & datablocks
         }
 
-    def _process_resource_data(
+    def _process_resource_file(
         self,
         instance: dict,
         filepath: str,
@@ -189,18 +189,23 @@ class ExtractBlend(publish.Extractor):
     def _process_resources(
         self, instance: dict, images: set
     ) -> Tuple[List[Tuple[str, str]], dict, Set[Tuple[bpy.types.Image, Path]]]:
-        """Extract the textures to transfer, copy them to the resource
-        directory and remap the node paths.
+        """Extract resources to transfer, copy them to the resource
+        directory and remap them.
+
+        UDIMs are handled as a single object that points to multiple files in
+        the same directory. Only this object needs to be remapped, then blender
+        will find all tiles by replacing `<UDIM>` by their number/label.
+        Each tile needs to be piped individually.
 
         Args:
-            instance (dict): Instance with textures
-            images (set): Blender Images to publish
+            instance (dict): Instance with textures.
+            images (set): Blender Images to publish.
 
         Returns:
             Tuple[Tuple[str, str], dict, Set[Tuple[bpy.types.Image, Path]]]:
                 (Files to copy and transfer with published blend,
                 source hashes for later file optim,
-                remapped images with source file path)
+                remapped images with source file path).
         """
         # Process the resource files
         transfers = []
@@ -220,40 +225,39 @@ class ExtractBlend(publish.Extractor):
                 continue
 
             # Get source and destination paths
-            sourcepath = image.filepath  # Don't every modify source_image
+            sourcepath = Path(image.filepath)  # Don't ever modify source_image
 
             # Check if image is an UDIM
             if image.source == "TILED":
                 # Process each UDIM tile
                 for tile in image.tiles:
-                    self._process_resource_data(
+                    self._process_resource_file(
                         instance,
-                        Path(
-                            Path(sourcepath).parent,
+                        sourcepath.with_name(
                             re.sub(
                                 udim_pattern,
                                 str(tile.number),
-                                Path(sourcepath).name,
-                            ),
+                                sourcepath.name,
+                            )
                         ).as_posix(),
                         transfers,
                         hashes,
                     )
             else:
-                self._process_resource_data(
-                    instance, sourcepath, transfers, hashes
+                self._process_resource_file(
+                    instance, sourcepath.as_posix(), transfers, hashes
                 )
 
             # Remap source image to resources directory
             image.filepath = bpy.path.relpath(
                 Path(
-                    instance.data["resourcesDir"], Path(sourcepath).name
+                    instance.data["resourcesDir"], sourcepath.name
                 ).as_posix(),
                 start=instance.data["publishDir"],
             )
 
             # Keep remapped to restore after publishing
-            remapped.add((image, sourcepath))
+            remapped.add((image, sourcepath.as_posix()))
 
         self.log.info("Finished remapping destinations...")
 
