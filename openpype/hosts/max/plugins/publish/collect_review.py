@@ -32,7 +32,6 @@ class CollectReview(pyblish.api.InstancePlugin,
             "review_camera": camera_name,
             "imageFormat": creator_attrs["imageFormat"],
             "keepImages": creator_attrs["keepImages"],
-            "percentSize": creator_attrs["percentSize"],
             "frameStart": instance.context.data["frameStart"],
             "frameEnd": instance.context.data["frameEnd"],
             "fps": instance.context.data["fps"]
@@ -49,9 +48,10 @@ class CollectReview(pyblish.api.InstancePlugin,
             instance.data["colorspaceView"] = view_transform
 
             preview_data = {
-                "visualStyleMode": creator_attrs["visualStyleMode"],
-                "viewportPreset": creator_attrs["viewportPreset"],
-                "vpTexture": creator_attrs["vpTexture"],
+                "vpStyle": creator_attrs["visualStyleMode"],
+                "vpPreset": creator_attrs["viewportPreset"],
+                "percentSize": creator_attrs["percentSize"],
+                "vpTextures": creator_attrs["vpTexture"],
                 "dspGeometry": attr_values.get("dspGeometry"),
                 "dspShapes": attr_values.get("dspShapes"),
                 "dspLights": attr_values.get("dspLights"),
@@ -66,6 +66,8 @@ class CollectReview(pyblish.api.InstancePlugin,
             }
         else:
             preview_data = {}
+            preview_data.update({
+                "percentSize": creator_attrs["percentSize"]})
             general_viewport = {
                 "dspBkg": attr_values.get("dspBkg"),
                 "dspGrid": attr_values.get("dspGrid")
@@ -80,9 +82,6 @@ class CollectReview(pyblish.api.InstancePlugin,
             preview_data["vp_btn_mgr"] = {
                 "EnableButtons": False
             }
-            preview_data["preferences"] = {
-                "playPreviewWhenDone": False
-            }
 
         # Enable ftrack functionality
         instance.data.setdefault("families", []).append('ftrack')
@@ -91,7 +90,7 @@ class CollectReview(pyblish.api.InstancePlugin,
         burnin_members["focalLength"] = focal_length
 
         instance.data.update(general_preview_data)
-        instance.data.update(preview_data)
+        instance.data["viewport_options"] = preview_data
 
     @classmethod
     def get_attribute_defs(cls):

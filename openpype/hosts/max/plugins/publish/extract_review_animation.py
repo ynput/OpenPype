@@ -1,7 +1,9 @@
 import os
 import pyblish.api
 from openpype.pipeline import publish
-from openpype.hosts.max.api.lib import publish_preview_animation
+from openpype.hosts.max.api.preview_animation import (
+    publish_preview_animation
+)
 
 
 class ExtractReviewAnimation(publish.Extractor):
@@ -30,10 +32,12 @@ class ExtractReviewAnimation(publish.Extractor):
             " '%s' to '%s'" % (filename, staging_dir))
 
         review_camera = instance.data["review_camera"]
+        viewport_options = instance.data.get("viewport_options", {})
         publish_preview_animation(
             instance, staging_dir,
             ext, review_camera,
-            startFrame=start, endFrame=end)
+            startFrame=start, endFrame=end,
+            viewport_options=viewport_options)
 
         tags = ["review"]
         if not instance.data.get("keepImages"):

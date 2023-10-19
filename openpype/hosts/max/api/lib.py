@@ -568,7 +568,7 @@ def get_plugins() -> list:
 
 
 def publish_review_animation(instance, staging_dir, start,
-                             end, ext, fps):
+                             end, ext, fps, viewport_options):
     """Function to set up preview arguments in MaxScript.
     ****For 3dsMax 2024+
 
@@ -578,6 +578,7 @@ def publish_review_animation(instance, staging_dir, start,
         start (int): startFrame
         end (int): endFrame
         fps (float): fps value
+        viewport_options (dict): viewport setting options
 
     Returns:
         list: job arguments
@@ -590,48 +591,34 @@ def publish_review_animation(instance, staging_dir, start,
     job_args.append(default_option)
     frame_option = f"outputAVI:false start:{start} end:{end} fps:{fps}" # noqa
     job_args.append(frame_option)
-    options = [
-        "percentSize", "dspGeometry", "dspShapes",
-        "dspLights", "dspCameras", "dspHelpers", "dspParticles",
-        "dspBones", "dspBkg", "dspGrid", "dspSafeFrame", "dspFrameNums"
-    ]
 
-    for key in options:
-        enabled = instance.data.get(key)
-        if enabled:
-            job_args.append(f"{key}:{enabled}")
+    for key, value in viewport_options.items():
+        if isinstance(value, bool):
+            if value:
+                job_args.append(f"{key}:{value}")
 
-    visual_style_preset = instance.data.get("visualStyleMode")
-    if visual_style_preset == "Realistic":
-        visual_style_preset = "defaultshading"
-    elif visual_style_preset == "Shaded":
-        visual_style_preset = "defaultshading"
-        log.warning(
-            "'Shaded' Mode not supported in "
-            "preview animation in Max 2024..\n\n"
-            "Using 'defaultshading' instead")
-
-    elif visual_style_preset == "ConsistentColors":
-        visual_style_preset = "flatcolor"
-    else:
-        visual_style_preset = visual_style_preset.lower()
-    # new argument exposed for Max 2024 for visual style
-    visual_style_option = f"vpStyle:#{visual_style_preset}"
-    job_args.append(visual_style_option)
-    # new argument for pre-view preset exposed in Max 2024
-    preview_preset = instance.data.get("viewportPreset")
-    if preview_preset == "Quality":
-        preview_preset = "highquality"
-    elif preview_preset == "Customize":
-        preview_preset = "userdefined"
-    else:
-        preview_preset = preview_preset.lower()
-    preview_preset_option = f"vpPreset:#{preview_preset}"
-    job_args.append(preview_preset_option)
-    viewport_texture = instance.data.get("vpTexture", True)
-    if viewport_texture:
-        viewport_texture_option = f"vpTexture:{viewport_texture}"
-        job_args.append(viewport_texture_option)
+        elif isinstance(value, str):
+            if key == "vpStyle":
+                if viewport_options[key] == "Realistic":
+                    value = "defaultshading"
+                elif viewport_options[key] == "Shaded":
+                    log.warning(
+                        "'Shaded' Mode not supported in "
+                        "preview animation in Max 2024..\n"
+                        "Using 'defaultshading' instead")
+                    value = "defaultshading"
+                elif viewport_options[key] == "ConsistentColors":
+                    value = "flatcolor"
+                else:
+                    value = value.lower()
+            elif key == "vpPreset":
+                if viewport_options[key] == "Quality":
+                    value = "highquality"
+                elif viewport_options[key] == "Customize":
+                    value = "userdefined"
+                else:
+                    value = value.lower()
+            job_args.append(f"{key}: #{value}")
 
     auto_play_option = "autoPlay:false"
     job_args.append(auto_play_option)
@@ -704,29 +691,34 @@ def publish_preview_sequences(staging_dir, filename,
 def publish_preview_animation(
         instance, staging_dir,
         ext, review_camera,
-        startFrame=None, endFrame=None):
+        startFrame=None, endFrame=None,
+        viewport_options=None):
     """Render camera review animation
 
     Args:
         instance (pyblish.api.instance): Instance
         filepath (str): filepath
+        review_camera (str): viewport camera for preview render
         startFrame (int): start frame
         endFrame (int): end frame
-        review_camera (str): viewport camera for preview render
+        viewport_options (dict): viewport setting options
     """
+
     if startFrame is None:
         startFrame = int(rt.animationRange.start)
     if endFrame is None:
         endFrame = int(rt.animationRange.end)
+    if viewport_options is None:
+        viewport_options = viewport_options_for_preview_animation()
     with play_preview_when_done(False):
         with viewport_camera(review_camera):
             if int(get_max_version()) < 2024:
                 with viewport_preference_setting(
-                        instance.data["general_viewport"],
-                        instance.data["nitrous_viewport"],
-                        instance.data["vp_btn_mgr"]):
-                    percentSize = instance.data.get("percentSize")
-                    rt.completeRedraw()
+                        viewport_options["general_viewport"],
+                        viewport_options["nitrous_viewport"],
+                        viewport_options["vp_btn_mgr"]):
+                    percentSize = viewport_options.get("percentSize", 100)
+
                     publish_preview_sequences(
                         staging_dir, instance.name,
                         startFrame, endFrame, percentSize, ext)
@@ -735,5 +727,51 @@ def publish_preview_animation(
                 rt.completeRedraw()
                 preview_arg = publish_review_animation(instance, staging_dir,
                                                        startFrame, endFrame,
-                                                       ext, fps)
+                                                       ext, fps, viewport_options)
                 rt.execute(preview_arg)
+
+    rt.completeRedraw()
+
+def viewport_options_for_preview_animation():
+    """
+        Function to store the default data of viewport options
+    Returns:
+        dict: viewport setting options
+
+    """
+    # viewport_options should be the dictionary
+    if int(get_max_version()) < 2024:
+        return {
+            "visualStyleMode": "defaultshading",
+            "viewportPreset": "highquality",
+            "percentSize": 100,
+            "vpTexture": False,
+            "dspGeometry": True,
+            "dspShapes": False,
+            "dspLights": False,
+            "dspCameras": False,
+            "dspHelpers": False,
+            "dspParticles": True,
+            "dspBones": False,
+            "dspBkg": True,
+            "dspGrid": False,
+            "dspSafeFrame":False,
+            "dspFrameNums": False
+        }
+    else:
+        viewport_options = {}
+        viewport_options.update({"percentSize": 100})
+        general_viewport = {
+            "dspBkg": True,
+            "dspGrid": False
+        }
+        nitrous_viewport = {
+            "VisualStyleMode": "defaultshading",
+            "ViewportPreset": "highquality",
+            "UseTextureEnabled": False
+        }
+        viewport_options["general_viewport"] = general_viewport
+        viewport_options["nitrous_viewport"] = nitrous_viewport
+        viewport_options["vp_btn_mgr"] = {
+            "EnableButtons": False}
+        return viewport_options
