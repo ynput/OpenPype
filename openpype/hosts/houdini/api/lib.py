@@ -332,52 +332,61 @@ def imprint(node, data, update=False):
         return
 
     current_parms = {p.name(): p for p in node.spareParms()}
-    update_parms = []
-    templates = []
+    update_parm_templates = []
+    new_parm_templates = []
 
     for key, value in data.items():
         if value is None:
             continue
 
-        parm = get_template_from_value(key, value)
+        parm_template = get_template_from_value(key, value)
 
         if key in current_parms:
-            if node.evalParm(key) == data[key]:
+            if node.evalParm(key) == value:
                 continue
             if not update:
                 log.debug(f"{key} already exists on {node}")
             else:
                 log.debug(f"replacing {key}")
-                update_parms.append(parm)
+                update_parm_templates.append(parm_template)
             continue
 
-        templates.append(parm)
+        new_parm_templates.append(parm_template)
 
-    parm_group = node.parmTemplateGroup()
-    parm_folder = parm_group.findFolder("Extra")
-
-    # if folder doesn't exist yet, create one and append to it,
-    # else append to existing one
-    if not parm_folder:
-        parm_folder = hou.FolderParmTemplate("folder", "Extra")
-        parm_folder.setParmTemplates(templates)
-        parm_group.append(parm_folder)
-    else:
-        for template in templates:
-            parm_group.appendToFolder(parm_folder, template)
-            # this is needed because the pointer to folder
-            # is for some reason lost every call to `appendToFolder()`
-            parm_folder = parm_group.findFolder("Extra")
-
-    node.setParmTemplateGroup(parm_group)
-
-    # TODO: Updating is done here, by calling probably deprecated functions.
-    #       This needs to be addressed in the future.
-    if not update_parms:
+    if not new_parm_templates and not update_parm_templates:
         return
 
-    for parm in update_parms:
-        node.replaceSpareParmTuple(parm.name(), parm)
+    parm_group = node.parmTemplateGroup()
+
+    # Add new parm templates
+    if new_parm_templates:
+        parm_folder = parm_group.findFolder("Extra")
+
+        # if folder doesn't exist yet, create one and append to it,
+        # else append to existing one
+        if not parm_folder:
+            parm_folder = hou.FolderParmTemplate("folder", "Extra")
+            parm_folder.setParmTemplates(new_parm_templates)
+            parm_group.append(parm_folder)
+        else:
+            # Add to parm template folder instance then replace with updated
+            # one in parm template group
+            for template in new_parm_templates:
+                parm_folder.addParmTemplate(template)
+            parm_group.replace(parm_folder.name(), parm_folder)
+
+    # Update existing parm templates
+    for parm_template in update_parm_templates:
+        parm_group.replace(parm_template.name(), parm_template)
+
+        # When replacing a parm with a parm of the same name it preserves its
+        # value if before the replacement the parm was not at the default,
+        # because it has a value override set. Since we're trying to update the
+        # parm by using the new value as `default` we enforce the parm is at
+        # default state
+        node.parm(parm_template.name()).revertToDefaults()
+
+    node.setParmTemplateGroup(parm_group)
 
 
 def lsattr(attr, value=None, root="/"):
