@@ -295,6 +295,8 @@ class NumberAttrWidget(_BaseAttrDefWidget):
         input_widget.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons
         )
+        input_line_edit = input_widget.lineEdit()
+        input_widget.installEventFilter(self)
 
         multisel_widget = ClickableLineEdit("< Multiselection >", self)
 
@@ -302,11 +304,22 @@ class NumberAttrWidget(_BaseAttrDefWidget):
         multisel_widget.clicked.connect(self._on_multi_click)
 
         self._input_widget = input_widget
+        self._input_line_edit = input_line_edit
         self._multisel_widget = multisel_widget
         self._last_multivalue = None
+        self._multivalue = False
 
         self.main_layout.addWidget(input_widget, 0)
         self.main_layout.addWidget(multisel_widget, 0)
+
+    def eventFilter(self, obj, event):
+        if (
+            self._multivalue
+            and obj is self._input_widget
+            and event.type() == QtCore.QEvent.FocusOut
+        ):
+            self._set_multiselection_visible(True)
+        return False
 
     def current_value(self):
         return self._input_widget.value()
@@ -322,21 +335,24 @@ class NumberAttrWidget(_BaseAttrDefWidget):
             if len(set_value) > 1:
                 self._last_multivalue = next(iter(set_value), None)
                 self._set_multiselection_visible(True)
+                self._multivalue = True
                 return
             value = tuple(set_value)[0]
 
-        self._set_multiselection_visible(False, False)
+        self._multivalue = False
+        self._set_multiselection_visible(False)
 
         if self.current_value != value:
             self._input_widget.setValue(value)
 
     def _on_value_change(self, new_value):
+        self._multivalue = False
         self.value_changed.emit(new_value, self.attr_def.id)
 
     def _on_multi_click(self):
-        self._set_multiselection_visible(False)
+        self._set_multiselection_visible(False, True)
 
-    def _set_multiselection_visible(self, visible, change_focus=True):
+    def _set_multiselection_visible(self, visible, change_focus=False):
         self._input_widget.setVisible(not visible)
         self._multisel_widget.setVisible(visible)
         if visible:
@@ -354,9 +370,9 @@ class NumberAttrWidget(_BaseAttrDefWidget):
             return
         # Change focus to input field and move cursor to the end
         self._input_widget.setFocus(QtCore.Qt.MouseFocusReason)
-        line_edit = self._input_widget.lineEdit()
-        if line_edit is not None:
-            line_edit.setCursorPosition(len(line_edit.text()))
+        self._input_line_edit.setCursorPosition(
+            len(self._input_line_edit.text())
+        )
 
 
 class TextAttrWidget(_BaseAttrDefWidget):
