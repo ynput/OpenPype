@@ -75,6 +75,7 @@ from .utils import (
     TransferProgress,
     create_dependency_package_basename,
     ThumbnailContent,
+    get_default_timeout,
 )
 
 PatternType = type(re.compile(""))
@@ -351,7 +352,6 @@ class ServerAPI(object):
         timeout (Optional[float]): Timeout for requests.
         max_retries (Optional[int]): Number of retries for requests.
     """
-    _default_timeout = 10.0
     _default_max_retries = 3
 
     def __init__(
@@ -500,20 +500,13 @@ class ServerAPI(object):
     def get_default_timeout(cls):
         """Default value for requests timeout.
 
-        First looks for environment variable SERVER_TIMEOUT_ENV_KEY which
-        can affect timeout value. If not available then use class
-        attribute '_default_timeout'.
+        Utils function 'get_default_timeout' is used by default.
 
         Returns:
             float: Timeout value in seconds.
         """
 
-        try:
-            return float(os.environ.get(SERVER_TIMEOUT_ENV_KEY))
-        except (ValueError, TypeError):
-            pass
-
-        return cls._default_timeout
+        return get_default_timeout()
 
     @classmethod
     def get_default_max_retries(cls):
@@ -662,13 +655,10 @@ class ServerAPI(object):
                 as default variant.
 
         Args:
-            variant (Literal['production', 'staging']): Settings variant name.
+            variant (str): Settings variant name. It is possible to use
+                'production', 'staging' or name of dev bundle.
         """
 
-        if variant not in ("production", "staging"):
-            raise ValueError((
-                "Invalid variant name {}. Expected 'production' or 'staging'"
-            ).format(variant))
         self._default_settings_variant = variant
 
     default_settings_variant = property(
@@ -938,8 +928,8 @@ class ServerAPI(object):
                 int(re_match.group("major")),
                 int(re_match.group("minor")),
                 int(re_match.group("patch")),
-                re_match.group("prerelease"),
-                re_match.group("buildmetadata")
+                re_match.group("prerelease") or "",
+                re_match.group("buildmetadata") or "",
             )
         return self._server_version_tuple
 
@@ -1140,31 +1130,41 @@ class ServerAPI(object):
 
         response = None
         new_response = None
-        for _ in range(max_retries):
+        for retry_idx in reversed(range(max_retries)):
             try:
                 response = function(url, **kwargs)
                 break
 
             except ConnectionRefusedError:
+                if retry_idx == 0:
+                    self.log.warning(
+                        "Connection error happened.", exc_info=True
+                    )
+
                 # Server may be restarting
                 new_response = RestApiResponse(
                     None,
                     {"detail": "Unable to connect the server. Connection refused"}
                 )
+
             except requests.exceptions.Timeout:
                 # Connection timed out
                 new_response = RestApiResponse(
                     None,
                     {"detail": "Connection timed out."}
                 )
+
             except requests.exceptions.ConnectionError:
-                # Other connection error (ssl, etc) - does not make sense to
-                #   try call server again
+                # Log warning only on last attempt
+                if retry_idx == 0:
+                    self.log.warning(
+                        "Connection error happened.", exc_info=True
+                    )
+
                 new_response = RestApiResponse(
                     None,
                     {"detail": "Unable to connect the server. Connection error"}
                 )
-                break
 
             time.sleep(0.1)
 
@@ -1349,7 +1349,9 @@ class ServerAPI(object):
         status=None,
         description=None,
         summary=None,
-        payload=None
+        payload=None,
+        progress=None,
+        retries=None
     ):
         kwargs = {
             key: value
@@ -1360,9 +1362,27 @@ class ServerAPI(object):
                 ("description", description),
                 ("summary", summary),
                 ("payload", payload),
+                ("progress", progress),
+                ("retries", retries),
             )
             if value is not None
         }
+        # 'progress' and 'retries' are available since 0.5.x server version
+        major, minor, _, _, _ = self.server_version_tuple
+        if (major, minor) < (0, 5):
+            args = []
+            if progress is not None:
+                args.append("progress")
+            if retries is not None:
+                args.append("retries")
+            fields = ", ".join("'{}'".format(f) for f in args)
+            ending = "s" if len(args) > 1 else ""
+            raise ValueError((
+                 "Your server version '{}' does not support update"
+                 " of {} field{} on event. The fields are supported since"
+                 " server version '0.5'."
+            ).format(self.get_server_version(), fields, ending))
+
         response = self.patch(
             "events/{}".format(event_id),
             **kwargs
@@ -1434,6 +1454,7 @@ class ServerAPI(object):
         description=None,
         sequential=None,
         events_filter=None,
+        max_retries=None,
     ):
         """Enroll job based on events.
 
@@ -1475,8 +1496,12 @@ class ServerAPI(object):
                 in target event.
             sequential (Optional[bool]): The source topic must be processed
                 in sequence.
-            events_filter (Optional[ayon_server.sqlfilter.Filter]): A dict-like
-                with conditions to filter the source event.
+            events_filter (Optional[dict[str, Any]]): Filtering conditions
+                to filter the source event. For more technical specifications
+                look to server backed 'ayon_server.sqlfilter.Filter'.
+                TODO: Add example of filters.
+            max_retries (Optional[int]): How many times can be event retried.
+                Default value is based on server (3 at the time of this PR).
 
         Returns:
             Union[None, dict[str, Any]]: None if there is no event matching
@@ -1487,6 +1512,7 @@ class ServerAPI(object):
             "sourceTopic": source_topic,
             "targetTopic": target_topic,
             "sender": sender,
+            "maxRetries": max_retries,
         }
         if sequential is not None:
             kwargs["sequential"] = sequential
@@ -2236,6 +2262,34 @@ class ServerAPI(object):
         response.raise_for_status("Failed to create/update dependency")
         return response.data
 
+    def _get_dependency_package_route(
+        self, filename=None, platform_name=None
+    ):
+        major, minor, patch, _, _ = self.server_version_tuple
+        if (major, minor, patch) <= (0, 2, 0):
+            # Backwards compatibility for AYON server 0.2.0 and lower
+            self.log.warning((
+                "Using deprecated dependency package route."
+                " Please update your AYON server to version 0.2.1 or higher."
+                " Backwards compatibility for this route will be removed"
+                " in future releases of ayon-python-api."
+            ))
+            if platform_name is None:
+                platform_name = platform.system().lower()
+            base = "dependencies"
+            if not filename:
+                return base
+            return "{}/{}/{}".format(base, filename, platform_name)
+
+        if (major, minor) <= (0, 3):
+            endpoint = "desktop/dependency_packages"
+        else:
+            endpoint = "desktop/dependencyPackages"
+
+        if filename:
+            return "{}/{}".format(endpoint, filename)
+        return endpoint
+
     def get_dependency_packages(self):
         """Information about dependency packages on server.
 
@@ -2263,32 +2317,10 @@ class ServerAPI(object):
                 server.
         """
 
-        endpoint = "desktop/dependencyPackages"
-        major, minor, _, _, _ = self.server_version_tuple
-        if major == 0 and minor <= 3:
-            endpoint = "desktop/dependency_packages"
-
+        endpoint = self._get_dependency_package_route()
         result = self.get(endpoint)
         result.raise_for_status()
         return result.data
-
-    def _get_dependency_package_route(
-        self, filename=None, platform_name=None
-    ):
-        major, minor, patch, _, _ = self.server_version_tuple
-        if major == 0 and (minor > 2 or (minor == 2 and patch >= 1)):
-            base = "desktop/dependency_packages"
-            if not filename:
-                return base
-            return "{}/{}".format(base, filename)
-
-        # Backwards compatibility for AYON server 0.2.0 and lower
-        if platform_name is None:
-            platform_name = platform.system().lower()
-        base = "dependencies"
-        if not filename:
-            return base
-        return "{}/{}/{}".format(base, filename, platform_name)
 
     def create_dependency_package(
         self,
@@ -3515,7 +3547,9 @@ class ServerAPI(object):
         folder_ids=None,
         folder_paths=None,
         folder_names=None,
+        folder_types=None,
         parent_ids=None,
+        statuses=None,
         active=True,
         fields=None,
         own_attributes=False
@@ -3536,8 +3570,12 @@ class ServerAPI(object):
                 for filtering.
             folder_names (Optional[Iterable[str]]): Folder names used
                 for filtering.
+            folder_types (Optional[Iterable[str]]): Folder types used
+                for filtering.
             parent_ids (Optional[Iterable[str]]): Ids of folder parents.
                 Use 'None' if folder is direct child of project.
+            statuses (Optional[Iterable[str]]): Folder statuses used
+                for filtering.
             active (Optional[bool]): Filter active/inactive folders.
                 Both are returned if is set to None.
             fields (Optional[Iterable[str]]): Fields to be queried for
@@ -3573,6 +3611,18 @@ class ServerAPI(object):
             if not folder_names:
                 return
             filters["folderNames"] = list(folder_names)
+
+        if folder_types is not None:
+            folder_types = set(folder_types)
+            if not folder_types:
+                return
+            filters["folderTypes"] = list(folder_types)
+
+        if statuses is not None:
+            statuses = set(statuses)
+            if not statuses:
+                return
+            filters["folderStatuses"] = list(statuses)
 
         if parent_ids is not None:
             parent_ids = set(parent_ids)
@@ -4312,9 +4362,6 @@ class ServerAPI(object):
                 fields.remove("attrib")
                 fields |= self.get_attributes_fields_for_type("version")
 
-        if active is not None:
-            fields.add("active")
-
         # Make sure fields have minimum required fields
         fields |= {"id", "version"}
 
@@ -4322,6 +4369,9 @@ class ServerAPI(object):
         if "data" in fields:
             use_rest = True
             fields = {"id"}
+
+        if active is not None:
+            fields.add("active")
 
         if own_attributes:
             fields.add("ownAttrib")
@@ -5845,19 +5895,22 @@ class ServerAPI(object):
         """Helper method to get links from server for entity types.
 
         Example output:
-            [
-                {
-                    "id": "59a212c0d2e211eda0e20242ac120002",
-                    "linkType": "reference",
-                    "description": "reference link between folders",
-                    "projectName": "my_project",
-                    "author": "frantadmin",
-                    "entityId": "b1df109676db11ed8e8c6c9466b19aa8",
-                    "entityType": "folder",
-                    "direction": "out"
-                },
+            {
+                "59a212c0d2e211eda0e20242ac120001": [
+                    {
+                        "id": "59a212c0d2e211eda0e20242ac120002",
+                        "linkType": "reference",
+                        "description": "reference link between folders",
+                        "projectName": "my_project",
+                        "author": "frantadmin",
+                        "entityId": "b1df109676db11ed8e8c6c9466b19aa8",
+                        "entityType": "folder",
+                        "direction": "out"
+                    },
+                    ...
+                ],
                 ...
-            ]
+            }
 
         Args:
             project_name (str): Project where links are.
