@@ -24,8 +24,8 @@ from openpype.tools.utils import get_openpype_qt_app
 from openpype.hosts.equalizer.api.pipeline import Container
 
 CONTEXT_REGEX = re.compile(
-    r"AYON_CONTEXT::(?P<context>(?:\n|.)*?)::AYON_CONTEXT_END",
-    re.MULTILINE)
+    r"AYON_CONTEXT::(?P<context>.*?)::AYON_CONTEXT_END",
+    re.DOTALL)
 PLUGINS_DIR = os.path.join(EQUALIZER_HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
@@ -34,11 +34,11 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
-
     name = "equalizer"
+    _instance = None
 
     def __new__(cls):
-        if not hasattr(cls, "_instance"):
+        if not hasattr(cls, "_instance") or not cls._instance:
             cls._instance = super(EqualizerHost, cls).__new__(cls)
         return cls._instance
 
@@ -79,20 +79,30 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return tde4.getProjectPath()
 
     def get_containers(self):
-        return self.get_context_data().get("containers", [])
+        context = self.get_context_data()
+        if context:
+            return context.get("containers", [])
+        return []
 
     def add_container(self, container: Container):
         context_data = self.get_context_data()
         containers = self.get_containers()
+
+        for _container in containers:
+            if _container["name"] == container.name and _container["namespace"] == container.namespace:  # noqa: E501
+                containers.remove(_container)
+                break
+
         try:
             containers.append(asdict(container))
         except NotAnAttrsClassError:
+            print("not an attrs class")
             containers.append(container)
 
         context_data["containers"] = containers
         self.update_context_data(context_data, changes={})
 
-    def get_context_data(self):
+    def get_context_data(self) -> dict:
         """Get context data from the current workfile.
 
         3Dequalizer doesn't have any custom node or other
@@ -106,7 +116,13 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         # sourcery skip: use-named-expression
         m = re.search(CONTEXT_REGEX, tde4.getProjectNotes())
-        return json.loads(m["context"]) if m else {}
+        try:
+            context = json.loads(m["context"]) if m else {}
+        except ValueError:
+            self.log.debug("context data is not valid json")
+            context = {}
+
+        return context
 
     def update_context_data(self, data, changes):
         """Update context data in the current workfile.
@@ -128,15 +144,21 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             # context data not found, create empty placeholder
             tde4.setProjectNotes(
                 f"{tde4.getProjectNotes()}\n"
-                f"AYON_CONTEXT::{json.dumps(data)}::AYON_CONTEXT_END\n")
-            return
+                f"AYON_CONTEXT::::AYON_CONTEXT_END\n")
 
-        original_data = json.loads(m["context"])
-        original_data.update(data)
+        original_data = self.get_context_data()
 
-        notes = re.sub(CONTEXT_REGEX,
-                       f"\g<context>{json.dumps(original_data)}", notes)
-        tde4.setProjectNotes(notes)
+        updated_data = original_data.copy()
+        updated_data.update(data)
+        update_str = json.dumps(updated_data or {}, indent=4)
+
+        tde4.setProjectNotes(
+            re.sub(
+                CONTEXT_REGEX,
+                f"AYON_CONTEXT::{update_str}::AYON_CONTEXT_END",
+                tde4.getProjectNotes()
+            )
+        )
 
     def install(self):
         app = get_openpype_qt_app()
