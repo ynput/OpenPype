@@ -1,5 +1,3 @@
-import os
-
 from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.lib import (
     unique_namespace,
