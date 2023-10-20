@@ -25,7 +25,7 @@ class TyCacheLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         """Load tyCache"""
         from pymxs import runtime as rt
-        filepath = os.path.normpath(self.filepath_from_context(context))
+        filepath = self.filepath_from_context(context)
         obj = rt.tyCache()
         obj.filename = filepath
 

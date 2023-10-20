@@ -4,8 +4,7 @@ from pymxs import runtime as rt
 
 
 class ValidateTyFlowData(pyblish.api.InstancePlugin):
-    """Validate that TyFlow plugins or
-    relevant operators being set correctly."""
+    """Validate TyFlow plugins or relevant operators are set correctly."""
 
     order = pyblish.api.ValidatorOrder
     families = ["pointcloud", "tycache"]
@@ -31,9 +30,9 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
         if invalid_object or invalid_operator:
             raise PublishValidationError(
                 "issues occurred",
-                description="Container should only include tyFlow object\n "
-                "and tyflow operator 'Export Particle' should be in \n"
-                "the tyFlow editor")
+                description="Container should only include tyFlow object "
+                "and tyflow operator 'Export Particle' should be in "
+                "the tyFlow editor.")
 
     def get_tyflow_object(self, instance):
         """Get the nodes which are not tyFlow object(s)
@@ -43,19 +42,17 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
             instance (pyblish.api.Instance): instance
 
         Returns:
-            invalid(list): list of invalid nodes which are not
-            tyFlow object(s) and editable mesh(es).
+            list: invalid nodes which are not tyFlow
+                object(s) and editable mesh(es).
         """
-        invalid = []
         container = instance.data["instance_node"]
         self.log.debug(f"Validating tyFlow container for {container}")
 
-        selection_list = instance.data["members"]
-        for sel in selection_list:
-            if rt.ClassOf(sel) not in [rt.tyFlow, rt.Editable_Mesh]:
-                invalid.append(sel)
-
-        return invalid
+        allowed_classes = [rt.tyFlow, rt.Editable_Mesh]
+        return [
+            member for member in instance.data["members"]
+            if rt.ClassOf(member) not in allowed_classes
+        ]
 
     def get_tyflow_operator(self, instance):
         """Check if the Export Particle Operators in the node

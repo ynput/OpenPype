@@ -8,8 +8,7 @@ from openpype.pipeline import publish
 
 
 class ExtractTyCache(publish.Extractor):
-    """
-    Extract tycache format with tyFlow operators.
+    """Extract tycache format with tyFlow operators.
     Notes:
         - TyCache only works for TyFlow Pro Plugin.
 
@@ -89,7 +88,6 @@ class ExtractTyCache(publish.Extractor):
 
         """
         filenames = []
-        # should we include frame 0 ?
         for frame in range(int(start_frame), int(end_frame) + 1):
             filename = f"{instance.name}__tyPart_{frame:05}.tyc"
             filenames.append(filename)
@@ -146,7 +144,7 @@ class ExtractTyCache(publish.Extractor):
         opt_list = []
         for member in members:
             obj = member.baseobject
-        # TODO: to see if it can be used maxscript instead
+        # TODO: see if it can use maxscript instead
             anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
                 sub_anim = rt.GetSubAnim(obj, anim_name)
