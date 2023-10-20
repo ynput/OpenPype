@@ -5,7 +5,7 @@ from openpype.hosts.unreal.api.pipeline import (
     replace_static_mesh_actors,
     replace_skeletal_mesh_actors,
     replace_geometry_cache_actors,
-    delete_previous_asset_if_unused,
+    delete_asset_if_unused,
 )
 from openpype.pipeline import InventoryAction
 
@@ -60,7 +60,7 @@ def update_assets(containers, selected):
 
             unreal.EditorLevelLibrary.save_current_level()
 
-            delete_previous_asset_if_unused(sa_cont, old_content)
+            delete_asset_if_unused(sa_cont, old_content)
 
 
 class UpdateAllActors(InventoryAction):

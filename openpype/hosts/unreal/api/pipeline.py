@@ -750,7 +750,7 @@ def replace_geometry_cache_actors(old_assets, new_assets, selected):
                 comp.set_geometry_cache(new_mesh)
 
 
-def delete_previous_asset_if_unused(container, asset_content):
+def delete_asset_if_unused(container, asset_content):
     ar = unreal.AssetRegistryHelpers.get_asset_registry()
 
     references = set()
