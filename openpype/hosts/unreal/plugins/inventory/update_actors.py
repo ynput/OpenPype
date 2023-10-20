@@ -5,7 +5,6 @@ from openpype.hosts.unreal.api.pipeline import (
     replace_static_mesh_actors,
     replace_skeletal_mesh_actors,
     replace_geometry_cache_actors,
-    delete_asset_if_unused,
 )
 from openpype.pipeline import InventoryAction
 
