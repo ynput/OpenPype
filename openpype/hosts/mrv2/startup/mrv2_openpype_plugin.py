@@ -4,15 +4,10 @@ from mrv2 import plugin
 
 from openpype.pipeline import install_host
 from openpype.hosts.mrv2.api import Mrv2Host
-from openpype.hosts.mrv2.api.lib import get_version
 
 
 def separator_after(callback):
     """Use as callback for menu function to add a separator after the entry"""
-    if get_version() <= (0, 8, 0):
-        # Separator support was added in mrv2 0.8
-        return callback
-    # See https://github.com/ggarra13/mrv2/issues/126
     return callback, "__divider__"
 
 
@@ -66,7 +61,7 @@ def qt_app():
     """Create QApplication instance without calling `exec_()`
 
     Somehow the Qt UI updates fine within MRV2 without calling exec.
-    It even performs better because it doesnt crash MRV2, see:
+    It even performs better because it doesn't crash MRV2, see:
         https://github.com/ggarra13/mrv2/issues/130
 
     """

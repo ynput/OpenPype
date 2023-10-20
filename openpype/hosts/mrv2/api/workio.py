@@ -1,7 +1,7 @@
 """Host API required Work Files tool"""
 import os
 import logging
-from mrv2 import cmd
+from mrv2 import session
 
 
 log = logging.getLogger(__name__)
@@ -17,37 +17,18 @@ def has_unsaved_changes():
 
 
 def save_file(filepath):
-    success = cmd.saveSessionAs(filepath)
+    success = session.save(filepath)
     if success:
-        if not hasattr(cmd, "setCurrentSession"):
-            log.warning("mrv2 version lower than 0.8 does not support "
-                        "'cmd.setCurrentSession()'. Please update to a newer"
-                        "version of mrv2.")
-        else:
-            cmd.setCurrentSession(filepath)
+        session.setCurrent(filepath)
     return success
 
 
 def open_file(filepath):
-    if hasattr(cmd, "openSession"):
-        fn = cmd.openSession
-    else:
-        # Prior to mrv 0.8 there was a typo in the exposed python function
-        # See: https://github.com/ggarra13/mrv2/issues/123
-        fn = cmd.oepnSession
-    return fn(filepath)
+    return session.load(filepath)
 
 
 def current_file():
-    # Backwards compatibility before MRV2 0.8
-    # See: https://github.com/ggarra13/mrv2/issues/124
-    if not hasattr(cmd, "currentSession"):
-        log.warning("mrv2 version lower than 0.8 does not support "
-                    "'cmd.currentSession()'. Please update to a newer"
-                    "version of mrv2.")
-        return
-
-    return cmd.currentSession()
+    return session.current()
 
 
 def work_root(session):

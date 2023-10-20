@@ -55,13 +55,13 @@ class LoadClip(load.LoaderPlugin):
         path = self.filepath_from_context(context)
         cmd.open(path)
 
-        # Match publish fps if mrv2 supports `setSpeed` (0.8.0+)
-        if data.get("setFps", True) and hasattr(timeline, "setSpeed"):
+        # Match publish fps
+        if data.get("setFps", True):
             fps = self.get_fps(context)
             timeline.setSpeed(fps)
 
-        # Match publish colorspace if mrv2 supports `setOcioConfig` (0.8.2+)
-        if data.get("setColorspace", True) and hasattr(cmd, "setOcioConfig"):
+        # Match publish colorspace
+        if data.get("setColorspace", True):
             colorspace_data = self.get_colorspace_data(context)
             if colorspace_data:
                 self.set_colorspace(colorspace_data)
