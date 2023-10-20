@@ -7,7 +7,8 @@ from openpype.pipeline import (
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    KnownPublishError
 )
 from openpype.hosts.max.api.lib import get_frame_range, set_timeline
 
@@ -45,8 +46,13 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
 
         inst_frame_start = instance.data.get("frameStartHandle")
         inst_frame_end = instance.data.get("frameEndHandle")
-        frame_start_handle = frame_range["frame_start_handle"]
-        frame_end_handle = frame_range["frame_end_handle"]
+        if inst_frame_start is None or inst_frame_end is None:
+            raise KnownPublishError(
+                "Missing frame start and frame end on "
+                "instance to to validate."
+            )
+        frame_start_handle = frame_range["frameStartHandle"]
+        frame_end_handle = frame_range["frameEndHandle"]
         errors = []
         if frame_start_handle != inst_frame_start:
             errors.append(
@@ -72,12 +78,9 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
     @classmethod
     def repair(cls, instance):
         frame_range = get_frame_range()
-        frame_start_handle = frame_range["frameStart"] - int(
-            frame_range["handleStart"]
-        )
-        frame_end_handle = frame_range["frameEnd"] + int(
-            frame_range["handleEnd"]
-        )
+        frame_start_handle = frame_range["frameStartHandle"]
+        frame_end_handle = frame_range["frameEndHandle"]
+
         if instance.data["family"] == "maxrender":
             rt.rendStart = frame_start_handle
             rt.rendEnd = frame_end_handle

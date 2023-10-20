@@ -259,8 +259,12 @@ def get_frame_range(asset_doc=None) -> Union[Dict[str, Any], None]:
     frame_start_handle = int(frame_start) - int(handle_start)
     frame_end_handle = int(frame_end) + int(handle_end)
     return {
-        "frame_start_handle": frame_start_handle,
-        "frame_end_handle": frame_end_handle,
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end,
+        "frameStartHandle": frame_start_handle,
+        "frameEndHandle": frame_end_handle,
     }
 
 
@@ -282,9 +286,9 @@ def reset_frame_range(fps: bool = True):
     frame_range = get_frame_range()
 
     set_timeline(
-        frame_range["frame_start_handle"], frame_range["frame_end_handle"])
+        frame_range["frameStartHandle"], frame_range["frameEndHandle"])
     set_render_frame_range(
-        frame_range["frame_start_handle"], frame_range["frame_end_handle"])
+        frame_range["frameStartHandle"], frame_range["frameEndHandle"])
 
 
 def set_context_setting():
