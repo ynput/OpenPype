@@ -248,11 +248,11 @@ def get_frame_range(asset_doc=None) -> Union[Dict[str, Any], None]:
         asset_doc = get_current_project_asset()
 
     data = asset_doc["data"]
-    frame_start = data.get("frameStart", 0)
-    frame_end = data.get("frameEnd", 0)
+    frame_start = data.get("frameStart")
+    frame_end = data.get("frameEnd")
 
     if frame_start is None or frame_end is None:
-        return
+        return {}
 
     handle_start = data.get("handleStart", 0)
     handle_end = data.get("handleEnd", 0)
