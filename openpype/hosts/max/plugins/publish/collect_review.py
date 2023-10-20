@@ -35,8 +35,8 @@ class CollectReview(pyblish.api.InstancePlugin,
             "frameStart": instance.context.data["frameStart"],
             "frameEnd": instance.context.data["frameEnd"],
             "fps": instance.context.data["fps"],
-            "resolution": (creator_attrs["review_width"],
-                           creator_attrs["review_height"])
+            "review_width": creator_attrs["review_width"],
+            "review_height": creator_attrs["review_height"],
         }
 
         if int(get_max_version()) >= 2024:
@@ -67,9 +67,6 @@ class CollectReview(pyblish.api.InstancePlugin,
                 "dspFrameNums": attr_values.get("dspFrameNums")
             }
         else:
-            preview_data = {}
-            preview_data.update({
-                "percentSize": creator_attrs["percentSize"]})
             general_viewport = {
                 "dspBkg": attr_values.get("dspBkg"),
                 "dspGrid": attr_values.get("dspGrid")
@@ -79,10 +76,11 @@ class CollectReview(pyblish.api.InstancePlugin,
                 "ViewportPreset": creator_attrs["viewportPreset"],
                 "UseTextureEnabled": creator_attrs["vpTexture"]
             }
-            preview_data["general_viewport"] = general_viewport
-            preview_data["nitrous_viewport"] = nitrous_viewport
-            preview_data["vp_btn_mgr"] = {
-                "EnableButtons": False
+            preview_data = {
+                "percentSize": creator_attrs["percentSize"],
+                "general_viewport": general_viewport,
+                "nitrous_viewport": nitrous_viewport,
+                "vp_btn_mgr": {"EnableButtons": False}
             }
 
         # Enable ftrack functionality

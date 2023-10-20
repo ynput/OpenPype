@@ -1,20 +1,12 @@
 import os
 import tempfile
 import pyblish.api
-from pymxs import runtime as rt
 from openpype.pipeline import publish
-from openpype.hosts.max.api.lib import (
-    viewport_setup_updated,
-    viewport_setup,
-    get_max_version,
-    set_preview_arg
-)
-
+from openpype.hosts.max.api.preview_animation import render_preview_animation
 
 
 class ExtractThumbnail(publish.Extractor):
-    """
-    Extract Thumbnail for Review
+    """Extract Thumbnail for Review
     """
 
     order = pyblish.api.ExtractorOrder
@@ -29,36 +21,26 @@ class ExtractThumbnail(publish.Extractor):
         self.log.debug(
             f"Create temp directory {tmp_staging} for thumbnail"
         )
-        fps = float(instance.data["fps"])
+        ext = instance.data.get("imageFormat")
         frame = int(instance.data["frameStart"])
         instance.context.data["cleanupFullPaths"].append(tmp_staging)
-        filename = "{name}_thumbnail..png".format(**instance.data)
-        filepath = os.path.join(tmp_staging, filename)
-        filepath = filepath.replace("\\", "/")
-        thumbnail = self.get_filename(instance.name, frame)
+        filepath = os.path.join(tmp_staging, instance.name)
 
-        self.log.debug(
-            "Writing Thumbnail to"
-            " '%s' to '%s'" % (filename, tmp_staging))
+        self.log.debug("Writing Thumbnail to '{}'".format(filepath))
+
         review_camera = instance.data["review_camera"]
-        if int(get_max_version()) >= 2024:
-            with viewport_setup_updated(review_camera):
-                preview_arg = set_preview_arg(
-                    instance, filepath, frame, frame, fps)
-                rt.execute(preview_arg)
-        else:
-            visual_style_preset = instance.data.get("visualStyleMode")
-            nitrousGraphicMgr = rt.NitrousGraphicsManager
-            viewport_setting = nitrousGraphicMgr.GetActiveViewportSetting()
-            with viewport_setup(
-                    viewport_setting,
-                    visual_style_preset,
-                    review_camera):
-                viewport_setting.VisualStyleMode = rt.Name(
-                    visual_style_preset)
-                preview_arg = set_preview_arg(
-                    instance, filepath, frame, frame, fps)
-                rt.execute(preview_arg)
+        viewport_options = instance.data.get("viewport_options", {})
+        files = render_preview_animation(
+            filepath,
+            ext,
+            review_camera,
+            frame,
+            frame,
+            width=instance.data["review_width"],
+            height=instance.data["review_height"],
+            viewport_options=viewport_options)
+
+        thumbnail = next(os.path.basename(path) for path in files)
 
         representation = {
             "name": "thumbnail",
@@ -73,9 +55,3 @@ class ExtractThumbnail(publish.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
         instance.data["representations"].append(representation)
-
-    def get_filename(self, filename, target_frame):
-        thumbnail_name = "{}_thumbnail.{:04}.png".format(
-            filename, target_frame
-        )
-        return thumbnail_name

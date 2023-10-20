@@ -19,27 +19,22 @@ class ExtractReviewAnimation(publish.Extractor):
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
         ext = instance.data.get("imageFormat")
-        filename = "{0}..{1}".format(instance.name, ext)
         start = int(instance.data["frameStart"])
         end = int(instance.data["frameEnd"])
-        filepath = os.path.join(staging_dir, filename)
-        filepath = filepath.replace("\\", "/")
-
+        filepath = os.path.join(staging_dir, instance.name)
         self.log.debug(
-            "Writing Review Animation to"
-            " '%s' to '%s'" % (filename, staging_dir))
+            "Writing Review Animation to '{}'".format(filepath))
 
         review_camera = instance.data["review_camera"]
         viewport_options = instance.data.get("viewport_options", {})
-        resolution = instance.data.get("resolution", ())
         files = render_preview_animation(
-            os.path.join(staging_dir, instance.name),
+            filepath,
             ext,
             review_camera,
             start,
             end,
-            width=resolution[0],
-            height=resolution[1],
+            width=instance.data["review_width"],
+            height=instance.data["review_height"],
             viewport_options=viewport_options)
 
         filenames = [os.path.basename(path) for path in files]

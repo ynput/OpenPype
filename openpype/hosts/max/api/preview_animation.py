@@ -106,10 +106,10 @@ def _render_preview_animation_max_2024(
         list: Created files
     """
     filepath = filepath.replace("\\", "/")
-    filepath = f"{filepath}..{ext}"
+    preview_output = f"{filepath}..{ext}"
     frame_template = f"{filepath}.{{:04d}}.{ext}"
     job_args = list()
-    default_option = f'CreatePreview filename:"{filepath}"'
+    default_option = f'CreatePreview filename:"{preview_output}"'
     job_args.append(default_option)
     frame_option = f"outputAVI:false start:{start} end:{end}"
     job_args.append(frame_option)
@@ -199,10 +199,10 @@ def _render_preview_animation_max_pre_2024(
         rt.close(preview_res)
         rt.close(dib)
         files.append(filepath)
-    # clean up the cache
         if rt.keyboard.escPressed:
             user_cancelled = True
             break
+    # clean up the cache
     rt.gc(delayed=True)
     if user_cancelled:
         raise RuntimeError("User cancelled rendering of viewport animation.")
@@ -267,11 +267,10 @@ def render_preview_animation(
 
 
 def viewport_options_for_preview_animation():
-    """
-        Function to store the default data of viewport options
+    """Function to store the default data of viewport options
+
     Returns:
         dict: viewport setting options
-
     """
     # viewport_options should be the dictionary
     if int(get_max_version()) < 2024:
