@@ -60,8 +60,6 @@ def update_assets(containers, selected):
 
             unreal.EditorLevelLibrary.save_current_level()
 
-            delete_asset_if_unused(sa_cont, old_content)
-
 
 class UpdateAllActors(InventoryAction):
     """Update all the Actors in the current level to the version of the asset
