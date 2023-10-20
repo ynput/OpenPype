@@ -37,10 +37,11 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
 
     def process(self, instance):
         if not self.is_active(instance.data):
-            self.log.info("Skipping validation...")
+            self.log.debug("Skipping Validate Frame Range...")
             return
 
-        frame_range = get_frame_range()
+        frame_range = get_frame_range(
+            asset_doc=instance.data["assetEntity"])
 
         inst_frame_start = instance.data.get("frameStart")
         inst_frame_end = instance.data.get("frameEnd")

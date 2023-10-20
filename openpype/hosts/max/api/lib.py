@@ -234,22 +234,28 @@ def reset_scene_resolution():
     set_scene_resolution(width, height)
 
 
-def get_frame_range() -> Union[Dict[str, Any], None]:
+def get_frame_range(asset_doc=None) -> Union[Dict[str, Any], None]:
     """Get the current assets frame range and handles.
+
+    Args:
+        asset_doc (dict): Asset Entity Data
 
     Returns:
         dict: with frame start, frame end, handle start, handle end.
     """
     # Set frame start/end
-    asset = get_current_project_asset()
-    frame_start = asset["data"].get("frameStart")
-    frame_end = asset["data"].get("frameEnd")
+    if asset_doc is None:
+        asset_doc = get_current_project_asset()
+
+    data = asset_doc["data"]
+    frame_start = data.get("frameStart")
+    frame_end = data.get("frameEnd")
 
     if frame_start is None or frame_end is None:
         return
 
-    handle_start = asset["data"].get("handleStart", 0)
-    handle_end = asset["data"].get("handleEnd", 0)
+    handle_start = data.get("handleStart", 0)
+    handle_end = data.get("handleEnd", 0)
     return {
         "frameStart": frame_start,
         "frameEnd": frame_end,
