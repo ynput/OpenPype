@@ -157,15 +157,14 @@ def _render_preview_animation_max_pre_2024(
         filepath (str): filepath without frame numbers and extension
         startFrame (int): start frame
         endFrame (int): end frame
-        percentSize (int): percentage of the resolution
         ext (str): image extension
     Returns:
         list: Created filepaths
     """
     # get the screenshot
-    resolution_percentage = float(percentSize) / 100
-    res_width = rt.renderWidth * resolution_percentage
-    res_height = rt.renderHeight * resolution_percentage
+    percent = percentSize / 100.0
+    res_width = int(round(rt.renderWidth * percent))
+    res_height = int(round(rt.renderHeight * percent))
     viewportRatio = float(res_width / res_height)
     frame_template = "{}.{{:04}}.{}".format(filepath, ext)
     frame_template.replace("\\", "/")
@@ -212,7 +211,7 @@ def _render_preview_animation_max_pre_2024(
 def render_preview_animation(
         filepath,
         ext,
-        review_camera,
+        camera,
         start_frame=None,
         end_frame=None,
         width=1920,
@@ -223,7 +222,7 @@ def render_preview_animation(
         filepath (str): filepath to render to, without frame number and
             extension
         ext (str): output file extension
-        review_camera (str): viewport camera for preview render
+        camera (str): viewport camera for preview render
         start_frame (int): start frame
         end_frame (int): end frame
         width (int): render resolution width
@@ -240,7 +239,7 @@ def render_preview_animation(
     if viewport_options is None:
         viewport_options = viewport_options_for_preview_animation()
     with play_preview_when_done(False):
-        with viewport_camera(review_camera):
+        with viewport_camera(camera):
             with render_resolution(width, height):
                 if int(get_max_version()) < 2024:
                     with viewport_preference_setting(

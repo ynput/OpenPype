@@ -15,17 +15,11 @@ class ExtractThumbnail(publish.Extractor):
     families = ["review"]
 
     def process(self, instance):
-        # TODO: Create temp directory for thumbnail
-        # - this is to avoid "override" of source file
-        tmp_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
-        self.log.debug(
-            f"Create temp directory {tmp_staging} for thumbnail"
-        )
         ext = instance.data.get("imageFormat")
         frame = int(instance.data["frameStart"])
-        instance.context.data["cleanupFullPaths"].append(tmp_staging)
-        filepath = os.path.join(tmp_staging, instance.name)
-
+        staging_dir = self.staging_dir(instance)
+        filepath = os.path.join(
+            staging_dir, f"{instance.name}_thumbnail")
         self.log.debug("Writing Thumbnail to '{}'".format(filepath))
 
         review_camera = instance.data["review_camera"]
@@ -34,8 +28,8 @@ class ExtractThumbnail(publish.Extractor):
             filepath,
             ext,
             review_camera,
-            frame,
-            frame,
+            start_frame=frame,
+            end_frame=frame,
             width=instance.data["review_width"],
             height=instance.data["review_height"],
             viewport_options=viewport_options)
@@ -46,7 +40,7 @@ class ExtractThumbnail(publish.Extractor):
             "name": "thumbnail",
             "ext": "png",
             "files": thumbnail,
-            "stagingDir": tmp_staging,
+            "stagingDir": staging_dir,
             "thumbnail": True
         }
 
