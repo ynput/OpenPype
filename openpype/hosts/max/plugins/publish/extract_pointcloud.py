@@ -40,8 +40,8 @@ class ExtractPointCloud(publish.Extractor):
 
     def process(self, instance):
         self.settings = self.get_setting(instance)
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
         self.log.info("Extracting PRT...")
 
         stagingdir = self.staging_dir(instance)

@@ -43,14 +43,10 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         frame_range = get_frame_range(
             asset_doc=instance.data["assetEntity"])
 
-        inst_frame_start = instance.data.get("frameStart")
-        inst_frame_end = instance.data.get("frameEnd")
-        frame_start_handle = frame_range["frameStart"] - int(
-            frame_range["handleStart"]
-        )
-        frame_end_handle = frame_range["frameEnd"] + int(
-            frame_range["handleEnd"]
-        )
+        inst_frame_start = instance.data.get("frameStartHandle")
+        inst_frame_end = instance.data.get("frameEndHandle")
+        frame_start_handle = frame_range["frame_start_handle"]
+        frame_end_handle = frame_range["frame_end_handle"]
         errors = []
         if frame_start_handle != inst_frame_start:
             errors.append(
@@ -63,10 +59,14 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
                 "from the asset data. ")
 
         if errors:
-            errors.append("You can use repair action to fix it.")
-            report = "Frame range settings are incorrect.\n\n"
-            for error in errors:
-                report += "- {}\n\n".format(error)
+            bullet_point_errors = "\n".join(
+                "- {}".format(error) for error in errors
+            )
+            report = (
+                "Frame range settings are incorrect.\n\n"
+                f"{bullet_point_errors}\n\n"
+                "You can use repair action to fix it."
+            )
             raise PublishValidationError(report, title="Frame Range incorrect")
 
     @classmethod

@@ -248,19 +248,19 @@ def get_frame_range(asset_doc=None) -> Union[Dict[str, Any], None]:
         asset_doc = get_current_project_asset()
 
     data = asset_doc["data"]
-    frame_start = data.get("frameStart")
-    frame_end = data.get("frameEnd")
+    frame_start = data.get("frameStart", 0)
+    frame_end = data.get("frameEnd", 0)
 
     if frame_start is None or frame_end is None:
         return
 
     handle_start = data.get("handleStart", 0)
     handle_end = data.get("handleEnd", 0)
+    frame_start_handle = int(frame_start) - int(handle_start)
+    frame_end_handle = int(frame_end) + int(handle_end)
     return {
-        "frameStart": frame_start,
-        "frameEnd": frame_end,
-        "handleStart": handle_start,
-        "handleEnd": handle_end
+        "frame_start_handle": frame_start_handle,
+        "frame_end_handle": frame_end_handle,
     }
 
 
@@ -280,12 +280,11 @@ def reset_frame_range(fps: bool = True):
         fps_number = float(data_fps["data"]["fps"])
         rt.frameRate = fps_number
     frame_range = get_frame_range()
-    frame_start_handle = frame_range["frameStart"] - int(
-        frame_range["handleStart"]
-    )
-    frame_end_handle = frame_range["frameEnd"] + int(frame_range["handleEnd"])
-    set_timeline(frame_start_handle, frame_end_handle)
-    set_render_frame_range(frame_start_handle, frame_end_handle)
+
+    set_timeline(
+        frame_range["frame_start_handle"], frame_range["frame_end_handle"])
+    set_render_frame_range(
+        frame_range["frame_start_handle"], frame_range["frame_end_handle"])
 
 
 def set_context_setting():

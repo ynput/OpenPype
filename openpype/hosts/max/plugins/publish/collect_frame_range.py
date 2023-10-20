@@ -16,8 +16,8 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         if instance.data["family"] == "maxrender":
-            instance.data["frameStart"] = int(rt.rendStart)
-            instance.data["frameEnd"] = int(rt.rendEnd)
+            instance.data["frameStartHandle"] = int(rt.rendStart)
+            instance.data["frameEndHandle"] = int(rt.rendEnd)
         else:
-            instance.data["frameStart"] = int(rt.animationRange.start)
-            instance.data["frameEnd"] = int(rt.animationRange.end)
+            instance.data["frameStartHandle"] = int(rt.animationRange.start)
+            instance.data["frameEndHandle"] = int(rt.animationRange.end)

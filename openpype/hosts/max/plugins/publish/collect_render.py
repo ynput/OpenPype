@@ -97,8 +97,8 @@ class CollectRender(pyblish.api.InstancePlugin):
             "renderer": renderer,
             "source": filepath,
             "plugin": "3dsmax",
-            "frameStart": int(rt.rendStart),
-            "frameEnd": int(rt.rendEnd),
+            "frameStart": instance.data.get("frameStartHandle"),
+            "frameEnd": instance.data.get("frameEndHandle"),
             "version": version_int,
             "farm": True
         }
