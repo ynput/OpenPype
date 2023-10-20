@@ -35,6 +35,14 @@ class RenderSettings(object):
     def get_image_prefix_attr(cls, renderer):
         return cls._image_prefix_nodes[renderer]
 
+    @staticmethod
+    def get_padding_attr(renderer):
+        """Return attribute for renderer that defines frame padding amount"""
+        if renderer == "vray":
+            return "vraySettings.fileNamePadding"
+        else:
+            return "defaultRenderGlobals.extensionPadding"
+
     def __init__(self, project_settings=None):
         if not project_settings:
             project_settings = get_project_settings(
