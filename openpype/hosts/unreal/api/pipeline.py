@@ -654,13 +654,21 @@ def generate_sequence(h, h_dir):
 
 
 def _get_comps_and_assets(
-    component_class, asset_class, old_assets, new_assets
+    component_class, asset_class, old_assets, new_assets, selected
 ):
     eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    comps = eas.get_all_level_actors_components()
-    components = [
-        c for c in comps if isinstance(c, component_class)
-    ]
+
+    components = []
+    if selected:
+        sel_actors = eas.get_selected_level_actors()
+        for actor in sel_actors:
+            comps = actor.get_components_by_class(component_class)
+            components.extend(comps)
+    else:
+        comps = eas.get_all_level_actors_components()
+        components = [
+            c for c in comps if isinstance(c, component_class)
+        ]
 
     # Get all the static meshes among the old assets in a dictionary with
     # the name as key
@@ -681,14 +689,15 @@ def _get_comps_and_assets(
     return components, selected_old_assets, selected_new_assets
 
 
-def replace_static_mesh_actors(old_assets, new_assets):
+def replace_static_mesh_actors(old_assets, new_assets, selected):
     smes = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
 
     static_mesh_comps, old_meshes, new_meshes = _get_comps_and_assets(
         unreal.StaticMeshComponent,
         unreal.StaticMesh,
         old_assets,
-        new_assets
+        new_assets,
+        selected
     )
 
     for old_name, old_mesh in old_meshes.items():
@@ -701,12 +710,13 @@ def replace_static_mesh_actors(old_assets, new_assets):
             static_mesh_comps, old_mesh, new_mesh)
 
 
-def replace_skeletal_mesh_actors(old_assets, new_assets):
+def replace_skeletal_mesh_actors(old_assets, new_assets, selected):
     skeletal_mesh_comps, old_meshes, new_meshes = _get_comps_and_assets(
         unreal.SkeletalMeshComponent,
         unreal.SkeletalMesh,
         old_assets,
-        new_assets
+        new_assets,
+        selected
     )
 
     for old_name, old_mesh in old_meshes.items():
@@ -720,12 +730,13 @@ def replace_skeletal_mesh_actors(old_assets, new_assets):
                 comp.set_skeletal_mesh_asset(new_mesh)
 
 
-def replace_geometry_cache_actors(old_assets, new_assets):
+def replace_geometry_cache_actors(old_assets, new_assets, selected):
     geometry_cache_comps, old_caches, new_caches = _get_comps_and_assets(
         unreal.GeometryCacheComponent,
         unreal.GeometryCache,
         old_assets,
-        new_assets
+        new_assets,
+        selected
     )
 
     for old_name, old_mesh in old_caches.items():
