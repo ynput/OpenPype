@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Collect instance members."""
 import pyblish.api
 from pymxs import runtime as rt
 

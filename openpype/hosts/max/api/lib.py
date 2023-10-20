@@ -254,10 +254,13 @@ def get_frame_range(asset_doc=None) -> Union[Dict[str, Any], None]:
     if frame_start is None or frame_end is None:
         return {}
 
-    handle_start = data.get("handleStart", 0)
-    handle_end = data.get("handleEnd", 0)
-    frame_start_handle = int(frame_start) - int(handle_start)
-    frame_end_handle = int(frame_end) + int(handle_end)
+    frame_start = int(frame_start)
+    frame_end = int(frame_end)
+    handle_start = int(data.get("handleStart", 0))
+    handle_end = int(data.get("handleEnd", 0))
+    frame_start_handle = frame_start - handle_start
+    frame_end_handle = frame_end + handle_end
+
     return {
         "frameStart": frame_start,
         "frameEnd": frame_end,
