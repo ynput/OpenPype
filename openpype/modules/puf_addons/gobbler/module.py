@@ -157,16 +157,24 @@ def _copy_files(row, destination):
 
     # copy fg
     fg_destination = Path(destination)/shot/"fg"
-    shutil.copytree(fg, fg_destination)
+    if os.path.isfile(fg):
+        print(f"{fg} is a file.")
+        shutil.copy(fg, fg_destination)
+    elif os.path.isdir(fg):
+        shutil.copytree(fg, fg_destination)
 
     # copy bg
     bg_destination = Path(destination)/shot/"bg"
-    shutil.copytree(bg, bg_destination)
+    if os.path.isfile(bg):
+        print(f"{bg} is a file.")
+        shutil.copy(bg, bg_destination)
+    elif os.path.isdir(bg):
+        shutil.copytree(bg, bg_destination)
+
 
 
 def _load_data(named_range):
-    """Shows basic usage of the Sheets API.
-    Prints values from a sample spreadsheet.
+    """Gets values from a sample spreadsheet.
     """
     SPREADSHEET_ID = '18Z-fn_GUGdWTg0-LW1CcS0Bg75Iczu0qu0omH31yO8M'
     SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
@@ -275,23 +283,3 @@ def _copy_input_to_staging(source_directory):
     except Exception as e:
         raise(e)
         # print(f"An error occurred: {e}")
-
-
-def _print_stdout_until_timeout(popen,
-                                timeout=None,
-                                app_name=None):
-    """Print stdout until app close.
-
-    If app remains open for longer than `timeout` then app is terminated.
-
-    """
-    time_start = time.time()
-    prefix = f"{app_name}: " if app_name else " "
-    for line in popen.stdout:
-        # Print stdout
-        line_str = line.decode("utf-8")
-        print(f"{prefix}{line_str}", end='')
-
-        if timeout and time.time() - time_start > timeout:
-            popen.terminate()
-            raise RuntimeError("Timeout reached")
