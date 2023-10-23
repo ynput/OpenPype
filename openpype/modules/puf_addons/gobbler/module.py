@@ -157,6 +157,7 @@ def _copy_files(row, destination):
 
     # copy fg
     fg_destination = Path(destination)/shot/"fg"
+    os.makedirs(fg_destination, exist_ok=True)
     if os.path.isfile(fg):
         print(f"{fg} is a file.")
         shutil.copy(fg, fg_destination)
@@ -165,6 +166,7 @@ def _copy_files(row, destination):
 
     # copy bg
     bg_destination = Path(destination)/shot/"bg"
+    os.makedirs(bg_destination, exist_ok=True)
     if os.path.isfile(bg):
         print(f"{bg} is a file.")
         shutil.copy(bg, bg_destination)
