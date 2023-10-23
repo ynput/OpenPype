@@ -2336,6 +2336,10 @@ class CreateContext:
                         identifier, label, exc_info, add_traceback
                     )
                 )
+            else:
+                for update_data in update_list:
+                    instance = update_data.instance
+                    instance.mark_as_stored()
 
         if failed_info:
             raise CreatorsSaveFailed(failed_info)
