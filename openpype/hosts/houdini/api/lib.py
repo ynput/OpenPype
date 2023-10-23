@@ -572,9 +572,9 @@ def get_frame_data(node, handle_start=0, handle_end=0, log=None):
     """Get the frame data: start frame, end frame, steps,
     start frame with start handle and end frame with end handle.
 
-    This function uses Houdini node's `trange`, `t1, `t2` and `t3` 
-    parameters as the source of truth for the full inclusive frame 
-    range to render, as such these are considered as the frame 
+    This function uses Houdini node's `trange`, `t1, `t2` and `t3`
+    parameters as the source of truth for the full inclusive frame
+    range to render, as such these are considered as the frame
     range including the handles.
 
     The non-inclusive frame start and frame end without handles
