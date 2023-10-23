@@ -31,7 +31,6 @@ def viewport_camera(camera):
         camera (str): viewport camera for review render
     """
     original = rt.viewport.getCamera()
-    has_autoplay = rt.preferences.playPreviewWhenDone
     if not original:
         # if there is no original camera
         # use the current camera as original
@@ -39,11 +38,9 @@ def viewport_camera(camera):
     review_camera = rt.getNodeByName(camera)
     try:
         rt.viewport.setCamera(review_camera)
-        rt.preferences.playPreviewWhenDone = False
         yield
     finally:
         rt.viewport.setCamera(original)
-        rt.preferences.playPreviewWhenDone = has_autoplay
 
 
 @contextlib.contextmanager
