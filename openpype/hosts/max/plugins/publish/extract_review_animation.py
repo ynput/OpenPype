@@ -48,8 +48,8 @@ class ExtractReviewAnimation(publish.Extractor):
             "ext": instance.data["imageFormat"],
             "files": filenames,
             "stagingDir": staging_dir,
-            "frameStart": instance.data["frameStart"],
-            "frameEnd": instance.data["frameEnd"],
+            "frameStart": instance.data["frameStartHandle"],
+            "frameEnd": instance.data["frameEndHandle"],
             "tags": tags,
             "preview": True,
             "camera_name": review_camera
