@@ -55,7 +55,9 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             families = set(
                 [instance.data["family"]] + instance.data.get("families", [])
             )
-            if "review" not in families:
+            print("\n####\n###")
+            print(families)
+            if "render" not in families:
                 continue
 
             kitsu_task = instance.data.get("kitsu_task")
