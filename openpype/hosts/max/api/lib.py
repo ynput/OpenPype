@@ -498,8 +498,7 @@ def get_plugins() -> list:
 
 @contextlib.contextmanager
 def render_resolution(width, height):
-    """Function to set render resolution option during
-       context
+    """Set render resolution option during context
 
     Args:
         width (int): render width
