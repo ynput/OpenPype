@@ -582,10 +582,12 @@ def get_frame_data(node, handle_start=0, handle_end=0, log=None):
     frame range.
 
     Args:
-        node(hou.Node)
-        handle_start(int)
-        handle_end(int)
-        log(logging.Logger)
+        node (hou.Node): ROP node to retrieve frame range from,
+            the frame range is assumed to be the frame range
+            *including* the start and end handles.
+        handle_start (int): Start handles.
+        handle_end (int): End handles.
+        log (logging.Logger): Logger to log to.
 
     Returns:
         dict: frame data for start, end, steps,
