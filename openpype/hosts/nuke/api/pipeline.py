@@ -378,7 +378,10 @@ def add_rv_shortcut():
             log.info("Adding Shortcut `{}` to `{}`".format(
                 'Open in RV',
                 rv_settings['rvnuke_open_in_rv_shortcut']))
-
+        else:
+            log.warning("Cant't set up rv nuke plugin")
+    else:
+        log.info('RV Nuke Plugin not activated')
 def change_context_label():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(MENU_LABEL)
