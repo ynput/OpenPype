@@ -758,7 +758,7 @@ class PublishAttributes:
             yield name
 
     def mark_as_stored(self):
-        self._origin_data = copy.deepcopy(self._data)
+        self._origin_data = copy.deepcopy(self.data_to_store())
 
     def data_to_store(self):
         """Convert attribute values to "data to store"."""
