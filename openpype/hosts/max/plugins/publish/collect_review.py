@@ -30,10 +30,10 @@ class CollectReview(pyblish.api.InstancePlugin,
 
         general_preview_data = {
             "review_camera": camera_name,
+            "frameStart": instance.data["frameStartHandle"],
+            "frameEnd": instance.data["frameEndHandle"],
             "imageFormat": creator_attrs["imageFormat"],
             "keepImages": creator_attrs["keepImages"],
-            "frameStart": instance.context.data["frameStart"],
-            "frameEnd": instance.context.data["frameEnd"],
             "fps": instance.context.data["fps"],
             "review_width": creator_attrs["review_width"],
             "review_height": creator_attrs["review_height"],

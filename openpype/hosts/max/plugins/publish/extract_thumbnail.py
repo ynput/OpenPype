@@ -1,5 +1,4 @@
 import os
-import tempfile
 import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.max.api.preview_animation import render_preview_animation
