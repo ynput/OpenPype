@@ -22,7 +22,7 @@ class TestCreateContext(ModuleUnitTest):
     Example:
         cd to OpenPype repo root dir
         poetry run python ./start.py runtests <openpype_root>/tests/unit/openpype/pipeline/test_create_context_save.py
-    """
+    """  # noqa: E501
 
     @pytest.fixture
     def setup_dummy_host(self):
