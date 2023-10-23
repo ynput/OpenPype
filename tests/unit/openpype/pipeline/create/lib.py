@@ -19,7 +19,7 @@ from openpype.pipeline.create.creator_plugins import (
 
 @contextlib.contextmanager
 def no_plugins(plugins):
-    """Ensure no registered plug-ins of type `plugins` exist during the context.
+    """Deregister all plug-ins of class type `plugins` during context.
 
     Also reverts any plugins or plugin paths registered during
     the context to be undoed after the context of those plugin types.
@@ -46,14 +46,14 @@ def no_plugins(plugins):
         yield
     finally:
         # Revert registered plugins
-        for plugin_key, registered_plugins in original_registered_plugins.items():
+        for plugin_key, registered_plugins in original_registered_plugins.items():  # noqa: E501
             if plugin is None:
                 context._registered_plugins.pop(plugin_key, None)
             else:
                 context._registered_plugins[plugin_key] = registered_plugins
 
         # Revert registered plugins
-        for plugin_key, registered_plugin_paths in original_registered_plugin_paths.items():
+        for plugin_key, registered_plugin_paths in original_registered_plugin_paths.items():  # noqa: E501
             if plugin is None:
                 context._registered_plugin_paths.pop(plugin_key, None)
             else:
