@@ -174,7 +174,8 @@ def _copy_files(row, destination):
         _copymerge_dir(bg, bg_destination)
 
 
-def _copymerge_dir(source_directory, destination_directory)
+def _copymerge_dir(source_directory, destination_directory):
+    '''copy/merge directories'''
     if os.path.exists(destination_directory):
         # The destination directory exists; merge the contents.
         for root, dirs, files in os.walk(source_directory):
