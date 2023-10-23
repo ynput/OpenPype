@@ -15,7 +15,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
     hosts = ["houdini"]
     # This specific order value is used so that
     # this plugin runs after CollectAnatomyInstanceData
-    order = pyblish.api.CollectorOrder + 0.5
+    order = pyblish.api.CollectorOrder + 0.499
     label = "Collect RopNode Frame Range"
     use_asset_handles = True
 
