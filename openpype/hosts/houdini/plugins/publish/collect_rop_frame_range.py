@@ -13,7 +13,9 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
     """Collect all frames which would be saved from the ROP nodes"""
 
     hosts = ["houdini"]
-    order = pyblish.api.CollectorOrder
+    # This specific order value is used so that
+    # this plugin runs after CollectAnatomyInstanceData
+    order = pyblish.api.CollectorOrder + 0.5
     label = "Collect RopNode Frame Range"
     use_asset_handles = True
 
@@ -32,7 +34,7 @@ class CollectRopFrameRange(pyblish.api.InstancePlugin,
         attr_values = self.get_attr_values_from_data(instance.data)
 
         if attr_values.get("use_handles", self.use_asset_handles):
-            asset_data = instance.context.data["assetEntity"]["data"]
+            asset_data = instance.data["assetEntity"]["data"]
             handle_start = asset_data.get("handleStart", 0)
             handle_end = asset_data.get("handleEnd", 0)
         else:
