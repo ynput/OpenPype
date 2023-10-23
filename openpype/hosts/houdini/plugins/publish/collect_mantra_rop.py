@@ -24,7 +24,9 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
     """
 
     label = "Mantra ROP Render Products"
-    order = pyblish.api.CollectorOrder + 0.4
+    # This specific order value is used so that
+    # this plugin runs after CollectRopFrameRange
+    order = pyblish.api.CollectorOrder + 0.4999
     hosts = ["houdini"]
     families = ["mantra_rop"]
 
