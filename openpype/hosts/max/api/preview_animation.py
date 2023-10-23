@@ -8,8 +8,7 @@ log = logging.getLogger("openpype.hosts.max")
 
 @contextlib.contextmanager
 def play_preview_when_done(has_autoplay):
-    """Function to set preview playback option during
-       context
+    """Set preview playback option during context
 
     Args:
         has_autoplay (bool): autoplay during creating
@@ -25,10 +24,10 @@ def play_preview_when_done(has_autoplay):
 
 @contextlib.contextmanager
 def viewport_camera(camera):
-    """Function to set viewport camera during context
+    """Set viewport camera during context
     ***For 3dsMax 2024+
     Args:
-        camera (str): viewport camera for review render
+        camera (str): viewport camera
     """
     original = rt.viewport.getCamera()
     if not original:
@@ -90,7 +89,7 @@ def viewport_preference_setting(general_viewport,
 
 def _render_preview_animation_max_2024(
         filepath, start, end, ext, viewport_options):
-    """Function to set up preview arguments in MaxScript.
+    """Render viewport preview with MaxScript using `CreateAnimation`.
     ****For 3dsMax 2024+
     Args:
         filepath (str): filepath for render output without frame number and
@@ -263,7 +262,7 @@ def render_preview_animation(
 
 
 def viewport_options_for_preview_animation():
-    """Function to store the default data of viewport options
+    """Get default viewport options for `render_preview_animation`.
 
     Returns:
         dict: viewport setting options
