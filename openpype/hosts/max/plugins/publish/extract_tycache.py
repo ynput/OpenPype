@@ -144,7 +144,7 @@ class ExtractTyCache(publish.Extractor):
         opt_list = []
         for member in members:
             obj = member.baseobject
-        # TODO: see if it can use maxscript instead
+            # TODO: see if it can use maxscript instead
             anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
                 sub_anim = rt.GetSubAnim(obj, anim_name)
