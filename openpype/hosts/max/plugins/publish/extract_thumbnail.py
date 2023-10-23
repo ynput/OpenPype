@@ -29,6 +29,7 @@ class ExtractThumbnail(publish.Extractor):
             review_camera,
             start_frame=frame,
             end_frame=frame,
+            percentSize=instance.data["percentSize"],
             width=instance.data["review_width"],
             height=instance.data["review_height"],
             viewport_options=viewport_options)

@@ -88,7 +88,7 @@ def viewport_preference_setting(general_viewport,
 
 
 def _render_preview_animation_max_2024(
-        filepath, start, end, ext, viewport_options):
+        filepath, start, end, percentSize, ext, viewport_options):
     """Render viewport preview with MaxScript using `CreateAnimation`.
     ****For 3dsMax 2024+
     Args:
@@ -96,19 +96,25 @@ def _render_preview_animation_max_2024(
             extension, for example: /path/to/file
         start (int): startFrame
         end (int): endFrame
+        percentSize (float): render resolution multiplier by 100
+            e.g. 100.0 is 1x, 50.0 is 0.5x, 150.0 is 1.5x
         viewport_options (dict): viewport setting options, e.g.
             {"vpStyle": "defaultshading", "vpPreset": "highquality"}
     Returns:
         list: Created files
     """
+    # the percentSize argument must be integer
+    percent = int(percentSize)
     filepath = filepath.replace("\\", "/")
     preview_output = f"{filepath}..{ext}"
     frame_template = f"{filepath}.{{:04d}}.{ext}"
     job_args = list()
     default_option = f'CreatePreview filename:"{preview_output}"'
     job_args.append(default_option)
-    frame_option = f"outputAVI:false start:{start} end:{end}"
-    job_args.append(frame_option)
+    output_res_option = f"outputAVI:false percentSize:{percent}"
+    job_args.append(output_res_option)
+    frame_range_options = f"start:{start} end:{end}"
+    job_args.append(frame_range_options)
     for key, value in viewport_options.items():
         if isinstance(value, bool):
             if value:
@@ -153,6 +159,8 @@ def _render_preview_animation_max_pre_2024(
         filepath (str): filepath without frame numbers and extension
         startFrame (int): start frame
         endFrame (int): end frame
+        percentSize (float): render resolution multiplier by 100
+            e.g. 100.0 is 1x, 50.0 is 0.5x, 150.0 is 1.5x
         ext (str): image extension
     Returns:
         list: Created filepaths
@@ -210,6 +218,7 @@ def render_preview_animation(
         camera,
         start_frame=None,
         end_frame=None,
+        percentSize=100.0,
         width=1920,
         height=1080,
         viewport_options=None):
@@ -221,6 +230,8 @@ def render_preview_animation(
         camera (str): viewport camera for preview render
         start_frame (int): start frame
         end_frame (int): end frame
+        percentSize (float): render resolution multiplier by 100
+            e.g. 100.0 is 1x, 50.0 is 0.5x, 150.0 is 1.5x
         width (int): render resolution width
         height (int): render resolution height
         viewport_options (dict): viewport setting options
@@ -243,7 +254,6 @@ def render_preview_animation(
                             viewport_options["nitrous_viewport"],
                             viewport_options["vp_btn_mgr"]
                     ):
-                        percentSize = viewport_options.get("percentSize", 100)
                         return _render_preview_animation_max_pre_2024(
                             filepath,
                             start_frame,
@@ -256,6 +266,7 @@ def render_preview_animation(
                         filepath,
                         start_frame,
                         end_frame,
+                        percentSize,
                         ext,
                         viewport_options
                     )
@@ -272,7 +283,6 @@ def viewport_options_for_preview_animation():
         return {
             "visualStyleMode": "defaultshading",
             "viewportPreset": "highquality",
-            "percentSize": 100,
             "vpTexture": False,
             "dspGeometry": True,
             "dspShapes": False,
@@ -288,18 +298,15 @@ def viewport_options_for_preview_animation():
         }
     else:
         viewport_options = {}
-        viewport_options.update({"percentSize": 100})
-        general_viewport = {
+        viewport_options["general_viewport"] = {
             "dspBkg": True,
             "dspGrid": False
         }
-        nitrous_viewport = {
+        viewport_options["nitrous_viewport"] = {
             "VisualStyleMode": "defaultshading",
             "ViewportPreset": "highquality",
             "UseTextureEnabled": False
         }
-        viewport_options["general_viewport"] = general_viewport
-        viewport_options["nitrous_viewport"] = nitrous_viewport
         viewport_options["vp_btn_mgr"] = {
             "EnableButtons": False}
         return viewport_options

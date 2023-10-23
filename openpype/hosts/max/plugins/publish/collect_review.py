@@ -32,6 +32,7 @@ class CollectReview(pyblish.api.InstancePlugin,
             "review_camera": camera_name,
             "frameStart": instance.data["frameStartHandle"],
             "frameEnd": instance.data["frameEndHandle"],
+            "percentSize": creator_attrs["percentSize"],
             "imageFormat": creator_attrs["imageFormat"],
             "keepImages": creator_attrs["keepImages"],
             "fps": instance.context.data["fps"],
@@ -52,7 +53,6 @@ class CollectReview(pyblish.api.InstancePlugin,
             preview_data = {
                 "vpStyle": creator_attrs["visualStyleMode"],
                 "vpPreset": creator_attrs["viewportPreset"],
-                "percentSize": creator_attrs["percentSize"],
                 "vpTextures": creator_attrs["vpTexture"],
                 "dspGeometry": attr_values.get("dspGeometry"),
                 "dspShapes": attr_values.get("dspShapes"),
@@ -77,7 +77,6 @@ class CollectReview(pyblish.api.InstancePlugin,
                 "UseTextureEnabled": creator_attrs["vpTexture"]
             }
             preview_data = {
-                "percentSize": creator_attrs["percentSize"],
                 "general_viewport": general_viewport,
                 "nitrous_viewport": nitrous_viewport,
                 "vp_btn_mgr": {"EnableButtons": False}
