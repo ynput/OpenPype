@@ -1,6 +1,5 @@
 import os
 import datetime
-import copy
 import platform
 from qtpy import QtCore, QtWidgets, QtGui
 
@@ -11,7 +10,6 @@ from openpype.client import (
 from openpype.client.operations import (
     OperationsSession,
     new_workfile_info_doc,
-    prepare_workfile_info_update_data,
 )
 from openpype import style
 from openpype import resources
@@ -22,6 +20,7 @@ from openpype.pipeline import (
     get_current_task_name,
 )
 from openpype.pipeline import legacy_io
+from openpype.pipeline.workfile import set_workfile_note
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 
@@ -162,12 +161,6 @@ class SidePanelWidget(QtWidgets.QWidget):
                 username,
             )
         self._details_input.appendHtml("<br>".join(lines))
-
-    def get_workfile_data(self):
-        data = {
-            "note": self._note_input.toPlainText()
-        }
-        return self._workfile_doc, data
 
 
 class Window(QtWidgets.QWidget):
@@ -348,26 +341,14 @@ class Window(QtWidgets.QWidget):
         self.side_panel.set_published_visible(visible)
 
     def on_side_panel_save(self):
-        workfile_doc, data = self.side_panel.get_workfile_data()
-        if not workfile_doc:
-            filepath = self.files_widget._get_selected_filepath()
-            workfile_doc = self._create_workfile_doc(filepath)
-
-        new_workfile_doc = copy.deepcopy(workfile_doc)
-        new_workfile_doc["data"] = data
-        update_data = prepare_workfile_info_update_data(
-            workfile_doc, new_workfile_doc
+        """Save artist note when save button is pressed."""
+        set_workfile_note(
+            self.project_name,
+            self.assets_widget.get_selected_asset_id(),
+            self.tasks_widget.get_selected_task_name(),
+            self.files_widget._get_selected_filepath(),
+            self.side_panel._note_input.toPlainText(),
         )
-        if not update_data:
-            return
-
-        project_name = self.project_name
-
-        session = OperationsSession()
-        session.update_entity(
-            project_name, "workfile", workfile_doc["_id"], update_data
-        )
-        session.commit()
 
     def _get_current_workfile_doc(self, filepath=None):
         if filepath is None:
