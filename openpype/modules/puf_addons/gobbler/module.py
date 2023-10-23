@@ -176,6 +176,7 @@ def _copy_files(row, destination):
 
 def _copymerge_dir(source_directory, destination_directory):
     '''copy/merge directories'''
+    import shutil
     if os.path.exists(destination_directory):
         # The destination directory exists; merge the contents.
         for root, dirs, files in os.walk(source_directory):
