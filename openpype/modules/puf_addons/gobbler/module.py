@@ -162,7 +162,7 @@ def _copy_files(row, destination):
         print(f"{fg} is a file.")
         shutil.copy(fg, fg_destination)
     elif os.path.isdir(fg):
-        shutil.copytree(fg, fg_destination)
+        _copymerge_dir(fg, fg_destination)
 
     # copy bg
     bg_destination = Path(destination)/shot/"bg"
@@ -171,8 +171,27 @@ def _copy_files(row, destination):
         print(f"{bg} is a file.")
         shutil.copy(bg, bg_destination)
     elif os.path.isdir(bg):
-        shutil.copytree(bg, bg_destination)
+        _copymerge_dir(bg, bg_destination)
 
+
+def _copymerge_dir(source_directory, destination_directory)
+    if os.path.exists(destination_directory):
+        # The destination directory exists; merge the contents.
+        for root, dirs, files in os.walk(source_directory):
+            for file in files:
+                source_path = os.path.join(root, file)
+                relative_path = os.path.relpath(source_path, source_directory)
+                destination_path = os.path.join(destination_directory, relative_path)
+
+                # Ensure the destination directory exists for the file to be copied.
+                os.makedirs(os.path.dirname(destination_path), exist_ok=True)
+
+                # Copy the file from the source to the destination.
+                shutil.copy2(source_path, destination_path)
+    else:
+        # The destination directory doesn't exist; simply copy the source directory.
+        shutil.copytree(source_directory, destination_directory)
+        print(f"Directory '{source_directory}' copied to '{destination_directory}'.")
 
 
 def _load_data(named_range):
