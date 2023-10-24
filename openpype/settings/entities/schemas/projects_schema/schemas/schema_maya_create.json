@@ -29,14 +29,20 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]
         },
-            {
-            "type": "schema",
-            "name": "schema_maya_create_render"
+        {
+            "type": "schema_template",
+            "name": "template_create_plugin",
+            "template_data": [
+                {
+                    "key": "CreateRender",
+                    "label": "Create Render"
+                }
+            ]
         },
         {
             "type": "dict",
@@ -53,7 +59,7 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -85,7 +91,7 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -148,7 +154,7 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]
@@ -178,7 +184,7 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]
@@ -213,7 +219,7 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]
@@ -243,7 +249,7 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]
@@ -263,7 +269,7 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -288,7 +294,7 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 },
                 {
@@ -390,7 +396,7 @@
                 {
                     "type": "list",
                     "key": "default_variants",
-                    "label": "Default Subsets",
+                    "label": "Default Variants",
                     "object_type": "text"
                 }
             ]

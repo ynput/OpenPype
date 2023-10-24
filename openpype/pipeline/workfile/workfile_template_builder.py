@@ -1612,7 +1612,7 @@ class PlaceholderLoadMixin(object):
 
         pass
 
-    def delete_placeholder(self, placeholder, failed):
+    def delete_placeholder(self, placeholder):
         """Called when all item population is done."""
         self.log.debug("Clean up of placeholder is not implemented.")
 
@@ -1781,6 +1781,17 @@ class PlaceholderCreateMixin(object):
 
         self.post_placeholder_process(placeholder, failed)
 
+        if failed:
+            self.log.debug(
+                "Placeholder cleanup skipped due to failed placeholder "
+                "population."
+            )
+            return
+
+        if not placeholder.data.get("keep_placeholder", True):
+            self.delete_placeholder(placeholder)
+
+
     def create_failed(self, placeholder, creator_data):
         if hasattr(placeholder, "create_failed"):
             placeholder.create_failed(creator_data)
@@ -1800,8 +1811,11 @@ class PlaceholderCreateMixin(object):
                 representation.
             failed (bool): Loading of representation failed.
         """
-
         pass
+
+    def delete_placeholder(self, placeholder):
+        """Called when all item population is done."""
+        self.log.debug("Clean up of placeholder is not implemented.")
 
     def _before_instance_create(self, placeholder):
         """Can be overriden. Is called before instance is created."""

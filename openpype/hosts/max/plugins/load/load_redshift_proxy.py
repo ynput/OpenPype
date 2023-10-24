@@ -5,8 +5,17 @@ from openpype.pipeline import (
     load,
     get_representation_path
 )
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.pipeline.load import LoadError
+from openpype.hosts.max.api.pipeline import (
+    containerise,
+    update_custom_attribute_data,
+    get_previous_loaded_object
+)
 from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.lib import (
+    unique_namespace,
+    get_plugins
+)
 
 
 class RedshiftProxyLoader(load.LoaderPlugin):
@@ -21,7 +30,9 @@ class RedshiftProxyLoader(load.LoaderPlugin):
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
-
+        plugin_info = get_plugins()
+        if "redshift4max.dlr" not in plugin_info:
+            raise LoadError("Redshift not loaded/installed in Max..")
         filepath = self.filepath_from_context(context)
         rs_proxy = rt.RedshiftProxy()
         rs_proxy.file = filepath
@@ -30,24 +41,27 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         if collections:
             rs_proxy.is_sequence = True
 
-        container = rt.container()
-        container.name = name
-        rs_proxy.Parent = container
-
-        asset = rt.getNodeByName(name)
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+        rs_proxy.name = f"{namespace}:{rs_proxy.name}"
 
         return containerise(
-            name, [asset], context, loader=self.__class__.__name__)
+            name, [rs_proxy], context,
+            namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
         node = rt.getNodeByName(container["instance_node"])
-        for children in node.Children:
-            children_node = rt.getNodeByName(children.name)
-            for proxy in children_node.Children:
-                proxy.file = path
+        node_list = get_previous_loaded_object(node)
+        rt.Select(node_list)
+        update_custom_attribute_data(
+            node, rt.Selection)
+        for proxy in rt.Selection:
+            proxy.file = path
 
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])

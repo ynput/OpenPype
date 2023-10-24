@@ -241,7 +241,7 @@ class ExtractWorkfileXgen(publish.Extractor):
                     data[palette] = {attr: old_value}
 
                 cmds.setAttr(node_attr, value, type="string")
-                self.log.info(
+                self.log.debug(
                     "Setting \"{}\" on \"{}\"".format(value, node_attr)
                 )
 

@@ -37,13 +37,10 @@ class RenderSettings(object):
     def set_render_camera(self, selection):
         for sel in selection:
             # to avoid Attribute Error from pymxs wrapper
-            found = False
             if rt.classOf(sel) in rt.Camera.classes:
-                found = True
                 rt.viewport.setCamera(sel)
-                break
-            if not found:
-                raise RuntimeError("Camera not found")
+                return
+        raise RuntimeError("Active Camera not found")
 
     def render_output(self, container):
         folder = rt.maxFilePath
@@ -113,7 +110,8 @@ class RenderSettings(object):
         # for setting up renderable camera
         arv = rt.MAXToAOps.ArnoldRenderView()
         render_camera = rt.viewport.GetCamera()
-        arv.setOption("Camera", str(render_camera))
+        if render_camera:
+            arv.setOption("Camera", str(render_camera))
 
         # TODO: add AOVs and extension
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa

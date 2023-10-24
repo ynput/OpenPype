@@ -22,10 +22,10 @@ from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
     get_representation_path,
-
-    legacy_io,
 )
 from openpype.pipeline.load import LoadError
+from openpype.client import get_asset_by_name
+from openpype.pipeline.create import get_subset_name
 
 from . import lib
 from .lib import imprint, read
@@ -129,18 +129,50 @@ class MayaCreatorBase(object):
             shared_data["maya_cached_legacy_subsets"] = cache_legacy
         return shared_data
 
+    def get_publish_families(self):
+        """Return families for the instances of this creator.
+
+        Allow a Creator to define multiple families so that a creator can
+        e.g. specify `usd` and `usdMaya` and another USD creator can also
+        specify `usd` but apply different extractors like `usdMultiverse`.
+
+        There is no need to override this method if you only have the
+        primary family defined by the `family` property as that will always
+        be set.
+
+        Returns:
+            list: families for instances of this creator
+
+        """
+        return []
+
     def imprint_instance_node(self, node, data):
 
         # We never store the instance_node as value on the node since
         # it's the node name itself
         data.pop("instance_node", None)
+        data.pop("instance_id", None)
+
+        # Don't store `families` since it's up to the creator itself
+        # to define the initial publish families - not a stored attribute of
+        # `families`
+        data.pop("families", None)
 
         # We store creator attributes at the root level and assume they
         # will not clash in names with `subset`, `task`, etc. and other
         # default names. This is just so these attributes in many cases
         # are still editable in the maya UI by artists.
-        # pop to move to end of dict to sort attributes last on the node
+        # note: pop to move to end of dict to sort attributes last on the node
         creator_attributes = data.pop("creator_attributes", {})
+
+        # We only flatten value types which `imprint` function supports
+        json_creator_attributes = {}
+        for key, value in dict(creator_attributes).items():
+            if isinstance(value, (list, tuple, dict)):
+                creator_attributes.pop(key)
+                json_creator_attributes[key] = value
+
+        # Flatten remaining creator attributes to the node itself
         data.update(creator_attributes)
 
         # We know the "publish_attributes" will be complex data of
@@ -149,6 +181,10 @@ class MayaCreatorBase(object):
         data["publish_attributes"] = json.dumps(
             data.pop("publish_attributes", {})
         )
+
+        # Persist the non-flattened creator attributes (special value types,
+        # like multiselection EnumDef)
+        data["creator_attributes"] = json.dumps(json_creator_attributes)
 
         # Since we flattened the data structure for creator attributes we want
         # to correctly detect which flattened attributes should end back in the
@@ -170,21 +206,34 @@ class MayaCreatorBase(object):
         # being read as 'data'
         node_data.pop("cbId", None)
 
+        # Make sure we convert any creator attributes from the json string
+        creator_attributes = node_data.get("creator_attributes")
+        if creator_attributes:
+            node_data["creator_attributes"] = json.loads(creator_attributes)
+        else:
+            node_data["creator_attributes"] = {}
+
         # Move the relevant attributes into "creator_attributes" that
         # we flattened originally
-        node_data["creator_attributes"] = {}
         creator_attribute_keys = node_data.pop("__creator_attributes_keys",
                                                "").split(",")
         for key in creator_attribute_keys:
             if key in node_data:
                 node_data["creator_attributes"][key] = node_data.pop(key)
 
+        # Make sure we convert any publish attributes from the json string
         publish_attributes = node_data.get("publish_attributes")
         if publish_attributes:
             node_data["publish_attributes"] = json.loads(publish_attributes)
 
         # Explicitly re-parse the node name
         node_data["instance_node"] = node
+        node_data["instance_id"] = node
+
+        # If the creator plug-in specifies
+        families = self.get_publish_families()
+        if families:
+            node_data["families"] = families
 
         return node_data
 
@@ -230,6 +279,14 @@ class MayaCreator(NewCreator, MayaCreatorBase):
         if pre_create_data.get("use_selection"):
             members = cmds.ls(selection=True)
 
+        # Allow a Creator to define multiple families
+        publish_families = self.get_publish_families()
+        if publish_families:
+            families = instance_data.setdefault("families", [])
+            for family in self.get_publish_families():
+                if family not in families:
+                    families.append(family)
+
         with lib.undo_chunk():
             instance_node = cmds.sets(members, name=subset_name)
             instance_data["instance_node"] = instance_node
@@ -260,7 +317,7 @@ class MayaCreator(NewCreator, MayaCreatorBase):
                     default=True)
         ]
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         settings_name = self.settings_name
@@ -405,14 +462,21 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 # No existing scene instance node for this layer. Note that
                 # this instance will not have the `instance_node` data yet
                 # until it's been saved/persisted at least once.
-                # TODO: Correctly define the subset name using templates
-                prefix = self.layer_instance_prefix or self.family
-                subset_name = "{}{}".format(prefix, layer.name())
+                project_name = self.create_context.get_current_project_name()
+
                 instance_data = {
-                    "asset": legacy_io.Session["AVALON_ASSET"],
-                    "task": legacy_io.Session["AVALON_TASK"],
+                    "asset": self.create_context.get_current_asset_name(),
+                    "task": self.create_context.get_current_task_name(),
                     "variant": layer.name(),
                 }
+                asset_doc = get_asset_by_name(project_name,
+                                              instance_data["asset"])
+                subset_name = self.get_subset_name(
+                    layer.name(),
+                    instance_data["task"],
+                    asset_doc,
+                    project_name)
+
                 instance = CreatedInstance(
                     family=self.family,
                     subset_name=subset_name,
@@ -519,9 +583,80 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
                 if node and cmds.objExists(node):
                     cmds.delete(node)
 
+    def get_subset_name(
+        self,
+        variant,
+        task_name,
+        asset_doc,
+        project_name,
+        host_name=None,
+        instance=None
+    ):
+        # creator.family != 'render' as expected
+        return get_subset_name(self.layer_instance_prefix,
+                               variant,
+                               task_name,
+                               asset_doc,
+                               project_name)
+
 
 class Loader(LoaderPlugin):
     hosts = ["maya"]
+
+    load_settings = {}  # defined in settings
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        super(Loader, cls).apply_settings(project_settings, system_settings)
+        cls.load_settings = project_settings['maya']['load']
+
+    def get_custom_namespace_and_group(self, context, options, loader_key):
+        """Queries Settings to get custom template for namespace and group.
+
+        Group template might be empty >> this forces to not wrap imported items
+        into separate group.
+
+        Args:
+            context (dict)
+            options (dict): artist modifiable options from dialog
+            loader_key (str): key to get separate configuration from Settings
+                ('reference_loader'|'import_loader')
+        """
+
+        options["attach_to_root"] = True
+        custom_naming = self.load_settings[loader_key]
+
+        if not custom_naming['namespace']:
+            raise LoadError("No namespace specified in "
+                            "Maya ReferenceLoader settings")
+        elif not custom_naming['group_name']:
+            self.log.debug("No custom group_name, no group will be created.")
+            options["attach_to_root"] = False
+
+        asset = context['asset']
+        subset = context['subset']
+        formatting_data = {
+            "asset_name": asset['name'],
+            "asset_type": asset['type'],
+            "folder": {
+                "name": asset["name"],
+            },
+            "subset": subset['name'],
+            "family": (
+                subset['data'].get('family') or
+                subset['data']['families'][0]
+            )
+        }
+
+        custom_namespace = custom_naming['namespace'].format(
+            **formatting_data
+        )
+
+        custom_group_name = custom_naming['group_name'].format(
+            **formatting_data
+        )
+
+        return custom_group_name, custom_namespace, options
 
 
 class ReferenceLoader(Loader):
@@ -565,42 +700,13 @@ class ReferenceLoader(Loader):
         path = self.filepath_from_context(context)
         assert os.path.exists(path), "%s does not exist." % path
 
-        asset = context['asset']
-        subset = context['subset']
-        settings = get_project_settings(context['project']['name'])
-        custom_naming = settings['maya']['load']['reference_loader']
-        loaded_containers = []
-
-        if not custom_naming['namespace']:
-            raise LoadError("No namespace specified in "
-                            "Maya ReferenceLoader settings")
-        elif not custom_naming['group_name']:
-            self.log.debug("No custom group_name, no group will be created.")
-            options["attach_to_root"] = False
-
-        formatting_data = {
-            "asset_name": asset['name'],
-            "asset_type": asset['type'],
-            "folder": {
-                "name": asset["name"],
-            },
-            "subset": subset['name'],
-            "family": (
-                subset['data'].get('family') or
-                subset['data']['families'][0]
-            )
-        }
-
-        custom_namespace = custom_naming['namespace'].format(
-            **formatting_data
-        )
-
-        custom_group_name = custom_naming['group_name'].format(
-            **formatting_data
-        )
+        custom_group_name, custom_namespace, options = \
+            self.get_custom_namespace_and_group(context, options,
+                                                "reference_loader")
 
         count = options.get("count") or 1
 
+        loaded_containers = []
         for c in range(0, count):
             namespace = lib.get_custom_namespace(custom_namespace)
             group_name = "{}:{}".format(
@@ -640,7 +746,6 @@ class ReferenceLoader(Loader):
             loaded_containers.append(container)
             self._organize_containers(nodes, container)
             c += 1
-            namespace = None
 
         return loaded_containers
 

@@ -39,15 +39,11 @@ class CollectReview(pyblish.api.InstancePlugin):
         ]
 
         if not instance.data.get("remove"):
-
-            task = instance.context.data["task"]
-
             # Store focal length in `burninDataMembers`
             burninData = instance.data.setdefault("burninDataMembers", {})
             burninData["focalLength"] = focal_length
 
             instance.data.update({
-                "subset": f"{task}Review",
                 "review_camera": camera,
                 "frameStart": instance.context.data["frameStart"],
                 "frameEnd": instance.context.data["frameEnd"],

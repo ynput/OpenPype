@@ -17,7 +17,6 @@ class ScriptsmenuSettings(BaseSettingsModel):
     """Nuke script menu project settings."""
     _isGroup = True
 
-    # TODO: in api rename key `name` to `menu_name`
     name: str = Field(title="Menu Name")
     definition: list[ScriptsmenuSubmodel] = Field(
         default_factory=list,

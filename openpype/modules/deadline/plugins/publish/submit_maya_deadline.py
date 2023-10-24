@@ -290,7 +290,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     def process_submission(self):
 
         instance = self._instance
-        context = instance.context
 
         filepath = self.scene_path  # publish if `use_publish` else workfile
 
@@ -300,20 +299,17 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         first_file = next(iter_expected_files(expected_files))
         output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"
 
         # Patch workfile (only when use_published is enabled)
         if self.use_published:
             self._patch_workfile()
 
         # Gather needed data ------------------------------------------------
-        workspace = context.data["workspaceDir"]
-        default_render_file = instance.context.data.get('project_settings')\
-            .get('maya')\
-            .get('RenderSettings')\
-            .get('default_render_image_folder')
         filename = os.path.basename(filepath)
-        dirname = os.path.join(workspace, default_render_file)
+        dirname = os.path.join(
+            cmds.workspace(query=True, rootDirectory=True),
+            cmds.workspace(fileRuleEntry="images")
+        )
 
         # Fill in common data to payload ------------------------------------
         # TODO: Replace these with collected data from CollectRender
@@ -335,12 +331,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
             payload = self._get_vray_render_payload(payload_data)
 
-        elif "assscene" in instance.data["families"]:
-            self.log.debug("Submitting Arnold .ass standalone render..")
-            ass_export_payload = self._get_arnold_export_payload(payload_data)
-            export_job = self.submit(ass_export_payload)
-
-            payload = self._get_arnold_render_payload(payload_data)
         else:
             self.log.debug("Submitting MayaBatch render..")
             payload = self._get_maya_payload(payload_data)
@@ -434,7 +424,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             new_job_info.update(tiles_data["JobInfo"])
             new_plugin_info.update(tiles_data["PluginInfo"])
 
-            self.log.info("hashing {} - {}".format(file_index, file))
+            self.log.debug("hashing {} - {}".format(file_index, file))
             job_hash = hashlib.sha256(
                 ("{}_{}".format(file_index, file)).encode("utf-8"))
 
@@ -450,7 +440,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             )
             file_index += 1
 
-        self.log.info(
+        self.log.debug(
             "Submitting tile job(s) [{}] ...".format(len(frame_payloads)))
 
         # Submit frame tile jobs
@@ -560,7 +550,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         assembly_job_ids = []
         num_assemblies = len(assembly_payloads)
         for i, payload in enumerate(assembly_payloads):
-            self.log.info(
+            self.log.debug(
                 "submitting assembly job {} of {}".format(i + 1,
                                                           num_assemblies)
             )
@@ -633,53 +623,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             "UseLegacyRenderLayers": True,
             "OutputFilePath": os.path.dirname(vray_scene)
         }
-
-        return job_info, attr.asdict(plugin_info)
-
-    def _get_arnold_export_payload(self, data):
-
-        try:
-            from openpype.scripts import export_maya_ass_job
-        except Exception:
-            raise AssertionError(
-                "Expected module 'export_maya_ass_job' to be available")
-
-        module_path = export_maya_ass_job.__file__
-        if module_path.endswith(".pyc"):
-            module_path = module_path[: -len(".pyc")] + ".py"
-
-        script = os.path.normpath(module_path)
-
-        job_info = copy.deepcopy(self.job_info)
-        job_info.Name = self._job_info_label("Export")
-
-        # Force a single frame Python job
-        job_info.Plugin = "Python"
-        job_info.Frames = 1
-
-        renderlayer = self._instance.data["setMembers"]
-
-        # add required env vars for the export script
-        envs = {
-            "AVALON_APP_NAME": os.environ.get("AVALON_APP_NAME"),
-            "OPENPYPE_ASS_EXPORT_RENDER_LAYER": renderlayer,
-            "OPENPYPE_ASS_EXPORT_SCENE_FILE": self.scene_path,
-            "OPENPYPE_ASS_EXPORT_OUTPUT": job_info.OutputFilename[0],
-            "OPENPYPE_ASS_EXPORT_START": int(self._instance.data["frameStartHandle"]),  # noqa
-            "OPENPYPE_ASS_EXPORT_END":  int(self._instance.data["frameEndHandle"]),  # noqa
-            "OPENPYPE_ASS_EXPORT_STEP": 1
-        }
-        for key, value in envs.items():
-            if not value:
-                continue
-            job_info.EnvironmentKeyValue[key] = value
-
-        plugin_info = PythonPluginInfo(
-            ScriptFile=script,
-            Version="3.6",
-            Arguments="",
-            SingleFrameOnly="True"
-        )
 
         return job_info, attr.asdict(plugin_info)
 

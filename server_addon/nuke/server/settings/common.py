@@ -89,12 +89,6 @@ knob_types_enum = [
 
 
 class KnobModel(BaseSettingsModel):
-    """# TODO: new data structure
-    - v3 was having type, name, value but
-    ayon is not able to make it the same. Current model is
-    defining `type` as `text` and instead of `value` the key is `text`.
-    So if `type` is `boolean` then key is `boolean` (value).
-    """
     _layout = "expanded"
 
     type: str = Field(

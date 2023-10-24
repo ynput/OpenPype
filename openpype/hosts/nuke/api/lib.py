@@ -48,20 +48,15 @@ from openpype.pipeline import (
     get_current_asset_name,
 )
 from openpype.pipeline.context_tools import (
-    get_current_project_asset,
     get_custom_workfile_template_from_session
 )
-from openpype.pipeline.colorspace import (
-    get_imageio_config
-)
+from openpype.pipeline.colorspace import get_imageio_config
 from openpype.pipeline.workfile import BuildWorkfile
 from . import gizmo_menu
 from .constants import ASSIST
 
-from .workio import (
-    save_file,
-    open_file
-)
+from .workio import save_file
+from .utils import get_node_outputs
 
 log = Logger.get_logger(__name__)
 
@@ -2041,6 +2036,7 @@ class WorkfileSettings(object):
         )
 
         workfile_settings = imageio_host["workfile"]
+        viewer_process_settings = imageio_host["viewer"]["viewerProcess"]
 
         if not config_data:
             # TODO: backward compatibility for old projects - remove later
@@ -2076,13 +2072,29 @@ class WorkfileSettings(object):
                         str(workfile_settings["OCIO_config"]))
 
         else:
-            # set values to root
+            # OCIO config path is defined from prelaunch hook
             self._root_node["colorManagement"].setValue("OCIO")
+
+            # print previous settings in case some were found in workfile
+            residual_path = self._root_node["customOCIOConfigPath"].value()
+            if residual_path:
+                log.info("Residual OCIO config path found: `{}`".format(
+                    residual_path
+                ))
 
         # we dont need the key anymore
         workfile_settings.pop("customOCIOConfigPath", None)
         workfile_settings.pop("colorManagement", None)
         workfile_settings.pop("OCIO_config", None)
+
+        # get monitor lut from settings respecting Nuke version differences
+        monitor_lut = workfile_settings.pop("monitorLut", None)
+        monitor_lut_data = self._get_monitor_settings(
+            viewer_process_settings, monitor_lut)
+
+        # set monitor related knobs luts (MonitorOut, Thumbnails)
+        for knob, value_ in monitor_lut_data.items():
+            workfile_settings[knob] = value_
 
         # then set the rest
         for knob, value_ in workfile_settings.items():
@@ -2100,9 +2112,70 @@ class WorkfileSettings(object):
 
         # set ocio config path
         if config_data:
-            current_ocio_path = os.getenv("OCIO")
-            if current_ocio_path != config_data["path"]:
-                message = """
+            config_path = config_data["path"].replace("\\", "/")
+            log.info("OCIO config path found: `{}`".format(
+                config_path))
+
+            # check if there's a mismatch between environment and settings
+            correct_settings = self._is_settings_matching_environment(
+                config_data)
+
+            # if there's no mismatch between environment and settings
+            if correct_settings:
+                self._set_ocio_config_path_to_workfile(config_data)
+
+    def _get_monitor_settings(self, viewer_lut, monitor_lut):
+        """ Get monitor settings from viewer and monitor lut
+
+        Args:
+            viewer_lut (str): viewer lut string
+            monitor_lut (str): monitor lut string
+
+        Returns:
+            dict: monitor settings
+        """
+        output_data = {}
+        m_display, m_viewer = get_viewer_config_from_string(monitor_lut)
+        v_display, v_viewer = get_viewer_config_from_string(viewer_lut)
+
+        # set monitor lut differently for nuke version 14
+        if nuke.NUKE_VERSION_MAJOR >= 14:
+            output_data["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            output_data["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=False)
+
+        if nuke.NUKE_VERSION_MAJOR == 13:
+            output_data["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            output_data["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=True)
+        if nuke.NUKE_VERSION_MAJOR <= 12:
+            output_data["monitorLut"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=True)
+
+        return output_data
+
+    def _is_settings_matching_environment(self, config_data):
+        """ Check if OCIO config path is different from environment
+
+        Args:
+            config_data (dict): OCIO config data from settings
+
+        Returns:
+            bool: True if settings are matching environment, False otherwise
+        """
+        current_ocio_path = os.environ["OCIO"]
+        settings_ocio_path = config_data["path"]
+
+        # normalize all paths to forward slashes
+        current_ocio_path = current_ocio_path.replace("\\", "/")
+        settings_ocio_path = settings_ocio_path.replace("\\", "/")
+
+        if current_ocio_path != settings_ocio_path:
+            message = """
 It seems like there's a mismatch between the OCIO config path set in your Nuke
 settings and the actual path set in your OCIO environment.
 
@@ -2120,38 +2193,170 @@ Please note the paths for your reference:
 
 Reopening Nuke should synchronize these paths and resolve any discrepancies.
 """
-                nuke.message(
-                    message.format(
-                        env_path=current_ocio_path,
-                        settings_path=config_data["path"]
-                    )
+            nuke.message(
+                message.format(
+                    env_path=current_ocio_path,
+                    settings_path=settings_ocio_path
                 )
+            )
+            return False
+
+        return True
+
+    def _set_ocio_config_path_to_workfile(self, config_data):
+        """ Set OCIO config path to workfile
+
+        Path set into nuke workfile. It is trying to replace path with
+        environment variable if possible. If not, it will set it as it is.
+        It also saves the script to apply the change, but only if it's not
+        empty Untitled script.
+
+        Args:
+            config_data (dict): OCIO config data from settings
+
+        """
+        # replace path with env var if possible
+        ocio_path = self._replace_ocio_path_with_env_var(config_data)
+
+        log.info("Setting OCIO config path to: `{}`".format(
+            ocio_path))
+
+        self._root_node["customOCIOConfigPath"].setValue(
+            ocio_path
+        )
+        self._root_node["OCIO_config"].setValue("custom")
+
+        # only save script if it's not empty
+        if self._root_node["name"].value() != "":
+            log.info("Saving script to apply OCIO config path change.")
+            nuke.scriptSave()
+
+    def _get_included_vars(self, config_template):
+        """ Get all environment variables included in template
+
+        Args:
+            config_template (str): OCIO config template from settings
+
+        Returns:
+            list: list of environment variables included in template
+        """
+        # resolve all environments for whitelist variables
+        included_vars = [
+            "BUILTIN_OCIO_ROOT",
+        ]
+
+        # include all project root related env vars
+        for env_var in os.environ:
+            if env_var.startswith("OPENPYPE_PROJECT_ROOT_"):
+                included_vars.append(env_var)
+
+        # use regex to find env var in template with format {ENV_VAR}
+        # this way we make sure only template used env vars are included
+        env_var_regex = r"\{([A-Z0-9_]+)\}"
+        env_var = re.findall(env_var_regex, config_template)
+        if env_var:
+            included_vars.append(env_var[0])
+
+        return included_vars
+
+    def _replace_ocio_path_with_env_var(self, config_data):
+        """ Replace OCIO config path with environment variable
+
+        Environment variable is added as TCL expression to path. TCL expression
+        is also replacing backward slashes found in path for windows
+        formatted values.
+
+        Args:
+            config_data (str): OCIO config dict from settings
+
+        Returns:
+            str: OCIO config path with environment variable TCL expression
+        """
+        config_path = config_data["path"].replace("\\", "/")
+        config_template = config_data["template"]
+
+        included_vars = self._get_included_vars(config_template)
+
+        # make sure we return original path if no env var is included
+        new_path = config_path
+
+        for env_var in included_vars:
+            env_path = os.getenv(env_var)
+            if not env_path:
+                continue
+
+            # it has to be directory current process can see
+            if not os.path.isdir(env_path):
+                continue
+
+            # make sure paths are in same format
+            env_path = env_path.replace("\\", "/")
+            path = config_path.replace("\\", "/")
+
+            # check if env_path is in path and replace to first found positive
+            if env_path in path:
+                # with regsub we make sure path format of slashes is correct
+                resub_expr = (
+                    "[regsub -all {{\\\\}} [getenv {}] \"/\"]").format(env_var)
+
+                new_path = path.replace(
+                    env_path, resub_expr
+                )
+                break
+
+        return new_path
 
     def set_writes_colorspace(self):
         ''' Adds correct colorspace to write node dict
 
         '''
-        for node in nuke.allNodes(filter="Group"):
+        for node in nuke.allNodes(filter="Group", group=self._root_node):
+            log.info("Setting colorspace to `{}`".format(node.name()))
 
             # get data from avalon knob
             avalon_knob_data = read_avalon_data(node)
+            node_data = get_node_data(node, INSTANCE_DATA_KNOB)
 
-            if avalon_knob_data.get("id") != "pyblish.avalon.instance":
+            if (
+                # backward compatibility
+                # TODO: remove this once old avalon data api will be removed
+                avalon_knob_data
+                and avalon_knob_data.get("id") != "pyblish.avalon.instance"
+            ):
+                continue
+            elif (
+                node_data
+                and node_data.get("id") != "pyblish.avalon.instance"
+            ):
                 continue
 
-            if "creator" not in avalon_knob_data:
+            if (
+                # backward compatibility
+                # TODO: remove this once old avalon data api will be removed
+                avalon_knob_data
+                and "creator" not in avalon_knob_data
+            ):
+                continue
+            elif (
+                node_data
+                and "creator_identifier" not in node_data
+            ):
                 continue
 
-            # establish families
-            families = [avalon_knob_data["family"]]
-            if avalon_knob_data.get("families"):
-                families.append(avalon_knob_data.get("families"))
+            nuke_imageio_writes = None
+            if avalon_knob_data:
+                # establish families
+                families = [avalon_knob_data["family"]]
+                if avalon_knob_data.get("families"):
+                    families.append(avalon_knob_data.get("families"))
 
-            nuke_imageio_writes = get_imageio_node_setting(
-                node_class=avalon_knob_data["families"],
-                plugin_name=avalon_knob_data["creator"],
-                subset=avalon_knob_data["subset"]
-            )
+                nuke_imageio_writes = get_imageio_node_setting(
+                    node_class=avalon_knob_data["families"],
+                    plugin_name=avalon_knob_data["creator"],
+                    subset=avalon_knob_data["subset"]
+                )
+            elif node_data:
+                nuke_imageio_writes = get_write_node_template_attr(node)
 
             log.debug("nuke_imageio_writes: `{}`".format(nuke_imageio_writes))
 
@@ -2239,7 +2444,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
                             knobs["to"]))
 
     def set_colorspace(self):
-        ''' Setting colorpace following presets
+        ''' Setting colorspace following presets
         '''
         # get imageio
         nuke_colorspace = get_nuke_imageio_settings()
@@ -2247,17 +2452,16 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         log.info("Setting colorspace to workfile...")
         try:
             self.set_root_colorspace(nuke_colorspace)
-        except AttributeError:
-            msg = "set_colorspace(): missing `workfile` settings in template"
+        except AttributeError as _error:
+            msg = "Set Colorspace to workfile error: {}".format(_error)
             nuke.message(msg)
 
         log.info("Setting colorspace to viewers...")
         try:
             self.set_viewers_colorspace(nuke_colorspace["viewer"])
-        except AttributeError:
-            msg = "set_colorspace(): missing `viewer` settings in template"
+        except AttributeError as _error:
+            msg = "Set Colorspace to viewer error: {}".format(_error)
             nuke.message(msg)
-            log.error(msg)
 
         log.info("Setting colorspace to write nodes...")
         try:
@@ -2592,8 +2796,15 @@ def find_free_space_to_paste_nodes(
 
 
 @contextlib.contextmanager
-def maintained_selection():
+def maintained_selection(exclude_nodes=None):
     """Maintain selection during context
+
+    Maintain selection during context and unselect
+    all nodes after context is done.
+
+    Arguments:
+        exclude_nodes (list[nuke.Node]): list of nodes to be unselected
+                                         before context is done
 
     Example:
         >>> with maintained_selection():
@@ -2601,7 +2812,12 @@ def maintained_selection():
         >>> print(node["selected"].value())
         False
     """
+    if exclude_nodes:
+        for node in exclude_nodes:
+            node["selected"].setValue(False)
+
     previous_selection = nuke.selectedNodes()
+
     try:
         yield
     finally:
@@ -2611,6 +2827,51 @@ def maintained_selection():
         # and select all previously selected nodes
         if previous_selection:
             select_nodes(previous_selection)
+
+
+@contextlib.contextmanager
+def swap_node_with_dependency(old_node, new_node):
+    """ Swap node with dependency
+
+    Swap node with dependency and reconnect all inputs and outputs.
+    It removes old node.
+
+    Arguments:
+        old_node (nuke.Node): node to be replaced
+        new_node (nuke.Node): node to replace with
+
+    Example:
+        >>> old_node_name = old_node["name"].value()
+        >>> print(old_node_name)
+        old_node_name_01
+        >>> with swap_node_with_dependency(old_node, new_node) as node_name:
+        ...     new_node["name"].setValue(node_name)
+        >>> print(new_node["name"].value())
+        old_node_name_01
+    """
+    # preserve position
+    xpos, ypos = old_node.xpos(), old_node.ypos()
+    # preserve selection after all is done
+    outputs = get_node_outputs(old_node)
+    inputs = old_node.dependencies()
+    node_name = old_node["name"].value()
+
+    try:
+        nuke.delete(old_node)
+
+        yield node_name
+    finally:
+
+        # Reconnect inputs
+        for i, node in enumerate(inputs):
+            new_node.setInput(i, node)
+        # Reconnect outputs
+        if outputs:
+            for n, pipes in outputs.items():
+                for i in pipes:
+                    n.setInput(i, new_node)
+        # return to original position
+        new_node.setXYpos(xpos, ypos)
 
 
 def reset_selection():
@@ -2623,9 +2884,10 @@ def select_nodes(nodes):
     """Selects all inputted nodes
 
     Arguments:
-        nodes (list): nuke nodes to be selected
+        nodes (Union[list, tuple, set]): nuke nodes to be selected
     """
-    assert isinstance(nodes, (list, tuple)), "nodes has to be list or tuple"
+    assert isinstance(nodes, (list, tuple, set)), \
+        "nodes has to be list, tuple or set"
 
     for node in nodes:
         node["selected"].setValue(True)
@@ -2709,13 +2971,13 @@ def process_workfile_builder():
         "workfile_builder", {})
 
     # get settings
-    createfv_on = workfile_builder.get("create_first_version") or None
+    create_fv_on = workfile_builder.get("create_first_version") or None
     builder_on = workfile_builder.get("builder_on_start") or None
 
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
     # generate first version in file not existing and feature is enabled
-    if createfv_on and not os.path.exists(last_workfile_path):
+    if create_fv_on and not os.path.exists(last_workfile_path):
         # get custom template path if any
         custom_template_path = get_custom_workfile_template_from_session(
             project_settings=project_settings
@@ -3182,11 +3444,11 @@ def get_viewer_config_from_string(input_string):
         display = split[0]
     elif "(" in viewer:
         pattern = r"([\w\d\s\.\-]+).*[(](.*)[)]"
-        result = re.findall(pattern, viewer)
+        result_ = re.findall(pattern, viewer)
         try:
-            result = result.pop()
-            display = str(result[1]).rstrip()
-            viewer = str(result[0]).rstrip()
+            result_ = result_.pop()
+            display = str(result_[1]).rstrip()
+            viewer = str(result_[0]).rstrip()
         except IndexError:
             raise IndexError((
                 "Viewer Input string is not correct. "
@@ -3194,3 +3456,46 @@ def get_viewer_config_from_string(input_string):
             ).format(input_string))
 
     return (display, viewer)
+
+
+def create_viewer_profile_string(viewer, display=None, path_like=False):
+    """Convert viewer and display to string
+
+    Args:
+        viewer (str): viewer name
+        display (Optional[str]): display name
+        path_like (Optional[bool]): if True, return path like string
+
+    Returns:
+        str: viewer config string
+    """
+    if not display:
+        return viewer
+
+    if path_like:
+        return "{}/{}".format(display, viewer)
+    return "{} ({})".format(viewer, display)
+
+
+def get_filenames_without_hash(filename, frame_start, frame_end):
+    """Get filenames without frame hash
+        i.e. "renderCompositingMain.baking.0001.exr"
+
+    Args:
+        filename (str): filename with frame hash
+        frame_start (str): start of the frame
+        frame_end (str): end of the frame
+
+    Returns:
+        list: filename per frame of the sequence
+    """
+    filenames = []
+    for frame in range(int(frame_start), (int(frame_end) + 1)):
+        if "#" in filename:
+            # use regex to convert #### to {:0>4}
+            def replace(match):
+                return "{{:0>{}}}".format(len(match.group()))
+            filename_without_hashes = re.sub("#+", replace, filename)
+            new_filename = filename_without_hashes.format(frame)
+            filenames.append(new_filename)
+    return filenames

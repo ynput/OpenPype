@@ -4,11 +4,33 @@ from ayon_server.settings import (
     BaseSettingsModel,
     MultiplatformPathListModel,
     ensure_unique_names,
+    task_types_enum,
 )
 from ayon_server.exceptions import BadRequestException
 
 from .publish_plugins import PublishPuginsModel, DEFAULT_PUBLISH_VALUES
 from .tools import GlobalToolsModel, DEFAULT_TOOLS_VALUES
+
+
+class DiskMappingItemModel(BaseSettingsModel):
+    _layout = "expanded"
+    source: str = Field("", title="Source")
+    destination: str = Field("", title="Destination")
+
+
+class DiskMappingModel(BaseSettingsModel):
+    windows: list[DiskMappingItemModel] = Field(
+        title="Windows",
+        default_factory=list,
+    )
+    linux: list[DiskMappingItemModel] = Field(
+        title="Linux",
+        default_factory=list,
+    )
+    darwin: list[DiskMappingItemModel] = Field(
+        title="MacOS",
+        default_factory=list,
+    )
 
 
 class ImageIOFileRuleModel(BaseSettingsModel):
@@ -38,13 +60,52 @@ class CoreImageIOConfigModel(BaseSettingsModel):
 class CoreImageIOBaseModel(BaseSettingsModel):
     activate_global_color_management: bool = Field(
         False,
-        title="Override global OCIO config"
+        title="Enable Color Management"
     )
     ocio_config: CoreImageIOConfigModel = Field(
-        default_factory=CoreImageIOConfigModel, title="OCIO config"
+        default_factory=CoreImageIOConfigModel,
+        title="OCIO config"
     )
     file_rules: CoreImageIOFileRulesModel = Field(
-        default_factory=CoreImageIOFileRulesModel, title="File Rules"
+        default_factory=CoreImageIOFileRulesModel,
+        title="File Rules"
+    )
+
+
+class VersionStartCategoryProfileModel(BaseSettingsModel):
+    _layout = "expanded"
+    host_names: list[str] = Field(
+        default_factory=list,
+        title="Host names"
+    )
+    task_types: list[str] = Field(
+        default_factory=list,
+        title="Task types",
+        enum_resolver=task_types_enum
+    )
+    task_names: list[str] = Field(
+        default_factory=list,
+        title="Task names"
+    )
+    product_types: list[str] = Field(
+        default_factory=list,
+        title="Product types"
+    )
+    product_names: list[str] = Field(
+        default_factory=list,
+        title="Product names"
+    )
+    version_start: int = Field(
+        1,
+        title="Version Start",
+        ge=0
+    )
+
+
+class VersionStartCategoryModel(BaseSettingsModel):
+    profiles: list[VersionStartCategoryProfileModel] = Field(
+        default_factory=list,
+        title="Profiles"
     )
 
 
@@ -57,9 +118,17 @@ class CoreSettings(BaseSettingsModel):
         widget="textarea",
         scope=["studio"],
     )
+    disk_mapping: DiskMappingModel = Field(
+        default_factory=DiskMappingModel,
+        title="Disk mapping",
+    )
     tools: GlobalToolsModel = Field(
         default_factory=GlobalToolsModel,
         title="Tools"
+    )
+    version_start_category: VersionStartCategoryModel = Field(
+        default_factory=VersionStartCategoryModel,
+        title="Version start"
     )
     imageio: CoreImageIOBaseModel = Field(
         default_factory=CoreImageIOBaseModel,
@@ -131,6 +200,9 @@ DEFAULT_VALUES = {
     "studio_code": "",
     "environments": "{}",
     "tools": DEFAULT_TOOLS_VALUES,
+    "version_start_category": {
+        "profiles": []
+    },
     "publish": DEFAULT_PUBLISH_VALUES,
     "project_folder_structure": json.dumps({
         "__project_root__": {

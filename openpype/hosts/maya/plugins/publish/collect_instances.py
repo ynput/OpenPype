@@ -28,6 +28,8 @@ class CollectNewInstances(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["maya"]
 
+    valid_empty_families = {"workfile", "renderlayer"}
+
     def process(self, instance):
 
         objset = instance.data.get("instance_node")
@@ -58,7 +60,7 @@ class CollectNewInstances(pyblish.api.InstancePlugin):
 
             instance[:] = members_hierarchy
 
-        elif instance.data["family"] != "workfile":
+        elif instance.data["family"] not in self.valid_empty_families:
             self.log.warning("Empty instance: \"%s\" " % objset)
         # Store the exact members of the object set
         instance.data["setMembers"] = members

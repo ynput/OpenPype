@@ -80,14 +80,9 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
     def get_beauty_render_product(self, prefix, suffix="<reName>"):
         """Return the beauty output filename if render element enabled
         """
+        # Remove aov suffix from the product: `prefix.aov_suffix` -> `prefix`
         aov_parm = ".{}".format(suffix)
-        beauty_product = None
-        if aov_parm in prefix:
-            beauty_product = prefix.replace(aov_parm, "")
-        else:
-            beauty_product = prefix
-
-        return beauty_product
+        return prefix.replace(aov_parm, "")
 
     def get_render_element_name(self, node, prefix, suffix="<reName>"):
         """Return the output filename using the AOV prefix and suffix

@@ -290,6 +290,16 @@ def _convert_modules_system(
             modules_settings[key] = value
 
 
+def is_dev_mode_enabled():
+    """Dev mode is enabled in AYON.
+
+    Returns:
+        bool: True if dev mode is enabled.
+    """
+
+    return os.getenv("AYON_USE_DEV") == "1"
+
+
 def convert_system_settings(ayon_settings, default_settings, addon_versions):
     default_settings = copy.deepcopy(default_settings)
     output = {
@@ -300,6 +310,10 @@ def convert_system_settings(ayon_settings, default_settings, addon_versions):
 
     if "core" in ayon_settings:
         _convert_general(ayon_settings, output, default_settings)
+
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
 
     for key, value in default_settings.items():
         if key not in output:
@@ -602,7 +616,31 @@ def _convert_maya_project_settings(ayon_settings, output):
         .replace("{product[name]}", "{subset}")
     )
 
+    if ayon_maya_load.get("import_loader"):
+        import_loader = ayon_maya_load["import_loader"]
+        import_loader["namespace"] = (
+            import_loader["namespace"]
+            .replace("{product[name]}", "{subset}")
+        )
+
     output["maya"] = ayon_maya
+
+
+def _convert_3dsmax_project_settings(ayon_settings, output):
+    if "max" not in ayon_settings:
+        return
+
+    ayon_max = ayon_settings["max"]
+    _convert_host_imageio(ayon_max)
+    if "PointCloud" in ayon_max:
+        point_cloud_attribute = ayon_max["PointCloud"]["attribute"]
+        new_point_cloud_attribute = {
+            item["name"]: item["value"]
+            for item in point_cloud_attribute
+        }
+        ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
+
+    output["max"] = ayon_max
 
 
 def _convert_nuke_knobs(knobs):
@@ -720,15 +758,44 @@ def _convert_nuke_project_settings(ayon_settings, output):
     )
 
     new_review_data_outputs = {}
-    for item in ayon_publish["ExtractReviewDataMov"]["outputs"]:
+    outputs_settings = []
+    # Check deprecated ExtractReviewDataMov
+    # settings for backwards compatibility
+    deprecrated_review_settings = ayon_publish["ExtractReviewDataMov"]
+    current_review_settings = (
+        ayon_publish.get("ExtractReviewIntermediates")
+    )
+    if deprecrated_review_settings["enabled"]:
+        outputs_settings = deprecrated_review_settings["outputs"]
+    elif current_review_settings is None:
+        pass
+    elif current_review_settings["enabled"]:
+        outputs_settings = current_review_settings["outputs"]
+
+    for item in outputs_settings:
         item_filter = item["filter"]
         if "product_names" in item_filter:
             item_filter["subsets"] = item_filter.pop("product_names")
             item_filter["families"] = item_filter.pop("product_types")
 
+        reformat_nodes_config = item.get("reformat_nodes_config") or {}
+        reposition_nodes = reformat_nodes_config.get(
+            "reposition_nodes") or []
+
+        for reposition_node in reposition_nodes:
+            if "knobs" not in reposition_node:
+                continue
+            reposition_node["knobs"] = _convert_nuke_knobs(
+                reposition_node["knobs"]
+            )
+
         name = item.pop("name")
         new_review_data_outputs[name] = item
-    ayon_publish["ExtractReviewDataMov"]["outputs"] = new_review_data_outputs
+
+    if deprecrated_review_settings["enabled"]:
+        deprecrated_review_settings["outputs"] = new_review_data_outputs
+    elif current_review_settings["enabled"]:
+        current_review_settings["outputs"] = new_review_data_outputs
 
     collect_instance_data = ayon_publish["CollectInstanceData"]
     if "sync_workfile_version_on_product_types" in collect_instance_data:
@@ -1063,7 +1130,7 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
         "studio_name",
         "studio_code",
     ):
-        ayon_core.pop(key)
+        ayon_core.pop(key, None)
 
     # Publish conversion
     ayon_publish = ayon_core["publish"]
@@ -1099,6 +1166,27 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             if "output_height" in output_def:
                 output_def["height"] = output_def.pop("output_height")
 
+        profile["outputs"] = new_outputs
+
+    # ExtractOIIOTranscode plugin
+    extract_oiio_transcode = ayon_publish["ExtractOIIOTranscode"]
+    extract_oiio_transcode_profiles = extract_oiio_transcode["profiles"]
+    for profile in extract_oiio_transcode_profiles:
+        new_outputs = {}
+        name_counter = {}
+        for profile_output in profile["outputs"]:
+            if "name" in profile_output:
+                name = profile_output.pop("name")
+            else:
+                # Backwards compatibility for setting without 'name' in model
+                name = profile_output["extension"]
+                if name in new_outputs:
+                    name_counter[name] += 1
+                    name = "{}_{}".format(name, name_counter[name])
+                else:
+                    name_counter[name] = 0
+
+            new_outputs[name] = profile_output
         profile["outputs"] = new_outputs
 
     # Extract Burnin plugin
@@ -1250,6 +1338,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_flame_project_settings(ayon_settings, output)
     _convert_fusion_project_settings(ayon_settings, output)
     _convert_maya_project_settings(ayon_settings, output)
+    _convert_3dsmax_project_settings(ayon_settings, output)
     _convert_nuke_project_settings(ayon_settings, output)
     _convert_hiero_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)
@@ -1264,6 +1353,10 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_slack_project_settings(ayon_settings, output)
 
     _convert_global_project_settings(ayon_settings, output, default_settings)
+
+    for key, value in ayon_settings.items():
+        if key not in output:
+            output[key] = value
 
     for key, value in default_settings.items():
         if key not in output:
@@ -1317,14 +1410,38 @@ class _AyonSettingsCache:
         if _AyonSettingsCache.variant is None:
             from openpype.lib.openpype_version import is_staging_enabled
 
-            _AyonSettingsCache.variant = (
-                "staging" if is_staging_enabled() else "production"
-            )
+            variant = "production"
+            if is_dev_mode_enabled():
+                variant = cls._get_dev_mode_settings_variant()
+            elif is_staging_enabled():
+                variant = "staging"
+            _AyonSettingsCache.variant = variant
         return _AyonSettingsCache.variant
 
     @classmethod
     def _get_bundle_name(cls):
         return os.environ["AYON_BUNDLE_NAME"]
+
+    @classmethod
+    def _get_dev_mode_settings_variant(cls):
+        """Develop mode settings variant.
+
+        Returns:
+            str: Name of settings variant.
+        """
+
+        bundles = ayon_api.get_bundles()
+        user = ayon_api.get_user()
+        username = user["name"]
+        for bundle in bundles:
+            if (
+                bundle.get("isDev")
+                and bundle.get("activeUser") == username
+            ):
+                return bundle["name"]
+        # Return fake variant - distribution logic will tell user that he
+        #   does not have set any dev bundle
+        return "dev"
 
     @classmethod
     def get_value_by_project(cls, project_name):

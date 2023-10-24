@@ -106,7 +106,7 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 job_info.EnvironmentKeyValue[key] = value
 
         # to recognize render jobs
-        job_info.add_render_job_env_var(job_info)
+        job_info.add_render_job_env_var()
 
         for i, filepath in enumerate(instance.data["files"]):
             dirname = os.path.dirname(filepath)
@@ -141,4 +141,3 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Store output dir for unified publisher (filesequence)
         output_dir = os.path.dirname(instance.data["files"][0])
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"

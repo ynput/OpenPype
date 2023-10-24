@@ -265,7 +265,7 @@ class HarmonySubmitDeadline(
         job_info.SecondaryPool = self._instance.data.get("secondaryPool")
         job_info.ChunkSize = self.chunk_size
         batch_name = os.path.basename(self._instance.data["source"])
-        if is_in_tests:
+        if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
         job_info.BatchName = batch_name
         job_info.Department = self.department
@@ -369,7 +369,7 @@ class HarmonySubmitDeadline(
         # rendering, we need to unzip it.
         published_scene = Path(
             self.from_published_scene(False))
-        self.log.info(f"Processing {published_scene.as_posix()}")
+        self.log.debug(f"Processing {published_scene.as_posix()}")
         xstage_path = self._unzip_scene_file(published_scene)
         render_path = xstage_path.parent / "renders"
 

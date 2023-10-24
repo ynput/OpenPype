@@ -37,5 +37,5 @@ class ExtractRenderSetup(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info(
+        self.log.debug(
             "Extracted instance '%s' to: %s" % (instance.name, json_path))
