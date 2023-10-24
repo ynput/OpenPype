@@ -96,13 +96,15 @@ class DummyPublishHost(HostBase, IPublishHost):
 
     name = "dummy"
 
-    context_data = {}
+    def __init__(self):
+        super(DummyPublishHost, self).__init__()
+        self.context_data = {}
 
     def get_context_data(self):
-        return DummyPublishHost.context_data.copy()
+        return self.context_data.copy()
 
     def update_context_data(self, data, changes):
-        DummyPublishHost.context_data = data
+        self.context_data = data
 
 
 @contextlib.contextmanager
