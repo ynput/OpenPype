@@ -92,12 +92,22 @@ class OpenInMRV2(load.LoaderPlugin):
         self.log.info("Opening : {}".format(filepath))
         last_executable_version = sorted(self.executables)[-1]
 
+        launch_data = {
+            # Launch in the context of the original publish to allow e.g.
+            # global pre_ocio_hook to trigger without error
+            # TODO: Or should we prefer our local current context?
+            "project_name": context["project"]["name"],
+            "asset_name": context["asset"]["name"],
+            "task_name": context["representation"]["context"]["task"]["name"],
+
+            # Do not trigger any last workfile loading
+            "start_last_workfile": False,
+
+            "app_args": app_args,
+        }
         self.app_manager.launch(last_executable_version,
                                 # Additional data for launch
-                                **dict(
-                                    app_args=app_args,
-                                    start_last_workfile=False
-                                ))
+                                **launch_data)
 
     def get_colorspace_data(self, context):
         """Return colorspace of the file to load.
