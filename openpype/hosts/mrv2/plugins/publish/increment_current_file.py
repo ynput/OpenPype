@@ -27,7 +27,7 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin,
             return
 
         # Filename must not have changed since collecting
-        host = registered_host()  # type: Mrv2Host
+        host = registered_host()
         current_file = host.get_current_workfile()
         if context.data["currentFile"] != current_file:
             raise KnownPublishError(
