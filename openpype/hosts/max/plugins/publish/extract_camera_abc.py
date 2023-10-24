@@ -4,6 +4,7 @@ import pyblish.api
 from pymxs import runtime as rt
 
 from openpype.hosts.max.api import maintained_selection
+from openpype.hosts.max.api.lib import suspended_refresh
 from openpype.pipeline import OptionalPyblishPluginMixin, publish
 
 
@@ -22,33 +23,29 @@ class ExtractCameraAlembic(publish.Extractor, OptionalPyblishPluginMixin):
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
-        self.log.info("Extracting Camera ...")
-
         stagingdir = self.staging_dir(instance)
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(stagingdir, filename)
 
-        # We run the render
-        self.log.info(f"Writing alembic '{filename}' to '{stagingdir}'")
+        with suspended_refresh():
+            rt.AlembicExport.ArchiveType = rt.Name("ogawa")
+            rt.AlembicExport.CoordinateSystem = rt.Name("maya")
+            rt.AlembicExport.StartFrame = start
+            rt.AlembicExport.EndFrame = end
+            rt.AlembicExport.CustomAttributes = instance.data.get(
+                "custom_attrs", False)
 
-        rt.AlembicExport.ArchiveType = rt.Name("ogawa")
-        rt.AlembicExport.CoordinateSystem = rt.Name("maya")
-        rt.AlembicExport.StartFrame = start
-        rt.AlembicExport.EndFrame = end
-        rt.AlembicExport.CustomAttributes = True
+            with maintained_selection():
+                # select and export
+                node_list = instance.data["members"]
+                rt.Select(node_list)
+                rt.ExportFile(
+                    path,
+                    rt.Name("noPrompt"),
+                    selectedOnly=True,
+                    using=rt.AlembicExport,
+                )
 
-        with maintained_selection():
-            # select and export
-            node_list = instance.data["members"]
-            rt.Select(node_list)
-            rt.ExportFile(
-                path,
-                rt.Name("noPrompt"),
-                selectedOnly=True,
-                using=rt.AlembicExport,
-            )
-
-        self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
             instance.data["representations"] = []
 

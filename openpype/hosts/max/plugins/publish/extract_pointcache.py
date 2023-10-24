@@ -42,6 +42,7 @@ import pyblish.api
 from openpype.pipeline import publish
 from pymxs import runtime as rt
 from openpype.hosts.max.api import maintained_selection
+from openpype.hosts.max.api.lib import suspended_refresh
 
 
 class ExtractAlembic(publish.Extractor):
@@ -54,30 +55,28 @@ class ExtractAlembic(publish.Extractor):
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
-        self.log.debug("Extracting pointcache ...")
-
         parent_dir = self.staging_dir(instance)
         file_name = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, file_name)
 
-        # We run the render
-        self.log.info("Writing alembic '%s' to '%s'" % (file_name, parent_dir))
+        with suspended_refresh():
+            rt.AlembicExport.ArchiveType = rt.name("ogawa")
+            rt.AlembicExport.CoordinateSystem = rt.name("maya")
+            rt.AlembicExport.StartFrame = start
+            rt.AlembicExport.EndFrame = end
+            rt.AlembicExport.CustomAttributes = instance.data.get(
+                "custom_attrs", False)
 
-        rt.AlembicExport.ArchiveType = rt.name("ogawa")
-        rt.AlembicExport.CoordinateSystem = rt.name("maya")
-        rt.AlembicExport.StartFrame = start
-        rt.AlembicExport.EndFrame = end
-
-        with maintained_selection():
-            # select and export
-            node_list = instance.data["members"]
-            rt.Select(node_list)
-            rt.exportFile(
-                path,
-                rt.name("noPrompt"),
-                selectedOnly=True,
-                using=rt.AlembicExport,
-            )
+            with maintained_selection():
+                # select and export
+                node_list = instance.data["members"]
+                rt.Select(node_list)
+                rt.exportFile(
+                    path,
+                    rt.name("noPrompt"),
+                    selectedOnly=True,
+                    using=rt.AlembicExport,
+                )
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

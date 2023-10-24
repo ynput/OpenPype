@@ -497,3 +497,16 @@ def get_plugins() -> list:
         plugin_info_list.append(plugin_info)
 
     return plugin_info_list
+
+
+@contextlib.contextmanager
+def suspended_refresh():
+    rt.disableSceneRedraw()
+    rt.suspendEditing()
+
+    try:
+        yield
+
+    finally:
+        rt.enableSceneRedraw()
+        rt.resumeEditing()
