@@ -85,7 +85,7 @@ class AyonDeadlinePlugin(DeadlinePlugin):
         }
 
         for env, val in environment.items():
-            self.SetProcessEnvironmentVariable(env, val)
+            self.SetEnvironmentVariable(env, val)
 
         exe_list = self.GetConfigEntry("AyonExecutable")
         # clean '\ ' for MacOS pasting
