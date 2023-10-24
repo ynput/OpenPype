@@ -25,6 +25,10 @@ class UpdateHoudiniVarcontextModel(BaseSettingsModel):
 
 
 class GeneralSettingsModel(BaseSettingsModel):
+    add_self_publish_button: bool = Field(
+        False,
+        title="Add Self Publish Button"
+    )
     update_houdini_var_context: UpdateHoudiniVarcontextModel = Field(
         default_factory=UpdateHoudiniVarcontextModel,
         title="Update Houdini Vars on context change"
@@ -32,6 +36,7 @@ class GeneralSettingsModel(BaseSettingsModel):
 
 
 DEFAULT_GENERAL_SETTINGS = {
+    "add_self_publish_button": False,
     "update_houdini_var_context": {
         "enabled": True,
         "houdini_vars": [
