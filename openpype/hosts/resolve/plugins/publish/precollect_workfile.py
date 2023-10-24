@@ -15,6 +15,8 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
     def process(self, context):
 
         asset = get_current_asset_name()
+        # AYON compatibility split name and use last piece
+        _asset_name = asset.split("/")[-1]
         subset = "workfile"
         project = rapi.get_current_project()
         fps = project.GetSetting("timelineFrameRate")
@@ -24,9 +26,9 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         otio_timeline = davinci_export.create_otio_timeline(project)
 
         instance_data = {
-            "name": "{}_{}".format(asset, subset),
+            "name": "{}_{}".format(_asset_name, subset),
             "asset": asset,
-            "subset": "{}{}".format(asset, subset.capitalize()),
+            "subset": "{}{}".format(_asset_name, subset.capitalize()),
             "item": project,
             "family": "workfile",
             "families": []
