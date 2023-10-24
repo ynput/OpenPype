@@ -264,7 +264,7 @@ class FoldersWidget(QtWidgets.QWidget):
 
         self._expected_selection = None
 
-    def set_name_filer(self, name):
+    def set_name_filter(self, name):
         self._folders_proxy_model.setFilterFixedString(name)
 
     def _clear(self):

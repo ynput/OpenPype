@@ -55,6 +55,9 @@ def get_openpype_staging_icon_filepath():
 
 
 def get_openpype_icon_filepath(staging=None):
+    if AYON_SERVER_ENABLED and os.getenv("AYON_USE_DEV") == "1":
+        return get_resource("icons", "AYON_icon_dev.png")
+
     if staging is None:
         staging = is_running_staging()
 
@@ -68,7 +71,9 @@ def get_openpype_splash_filepath(staging=None):
         staging = is_running_staging()
 
     if AYON_SERVER_ENABLED:
-        if staging:
+        if os.getenv("AYON_USE_DEV") == "1":
+            splash_file_name = "AYON_splash_dev.png"
+        elif staging:
             splash_file_name = "AYON_splash_staging.png"
         else:
             splash_file_name = "AYON_splash.png"
