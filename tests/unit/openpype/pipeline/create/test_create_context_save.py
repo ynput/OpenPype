@@ -17,7 +17,7 @@ from tests.lib.testing_classes import ModuleUnitTest
 
 
 class TestCreateContext(ModuleUnitTest):
-    """ Testing Colorspace
+    """Test Create Context creation and managing of instances
 
     Example:
         cd to OpenPype repo root dir
