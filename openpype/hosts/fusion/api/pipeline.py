@@ -29,7 +29,8 @@ from openpype.tools.utils import host_tools
 from .lib import (
     get_current_comp,
     comp_lock_and_undo_chunk,
-    validate_comp_prefs
+    validate_comp_prefs,
+    save_image_from_first_active_viewer
 )
 
 log = Logger.get_logger(__name__)
@@ -168,6 +169,11 @@ def on_new(event):
 def on_save(event):
     comp = event["sender"]
     validate_comp_prefs(comp)
+
+    # Generate thumbnail
+    filepath = comp.GetAttrs()["COMPS_FileName"]
+    thumbnail = "{}_thumbnail.jpg".format(filepath)
+    save_image_from_first_active_viewer(comp, thumbnail)
 
 
 def on_after_open(event):

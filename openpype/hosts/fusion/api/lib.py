@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import contextlib
+import itertools
 
 from openpype.lib import Logger
 from openpype.client import (
@@ -289,3 +290,79 @@ def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
     finally:
         comp.Unlock()
         comp.EndUndo()
+
+
+def iter_viewers(comp):
+    """Iterate GLPreview views for Composition.
+
+    It prefers the active view first, then yields views
+    from the current frame (active window), then from the comp,
+    then from floating views last.
+
+    It does not return the "Monitor view" however.
+
+    Yields:
+        GLImageViewer: image viewers for the comp
+
+    """
+
+    processed = set()
+
+    # Prefer current view
+    fusion = comp.GetApp()
+    frame = comp.CurrentFrame
+    view = frame.CurrentViewer
+    if view:
+        yield "Active view", view
+        processed.add(str(view))
+
+    for name, preview in itertools.chain(
+            # all views for current active window/frame
+            frame.GetPreviewList().items(),
+            # all comp views
+            comp.GetPreviewList().items(),
+            # floating views for a comp are only returned by
+            # `fusion.GetPreviewList()so we will need to iterate those as a
+            # last resort too
+            fusion.GetPreviewList().items()
+    ):
+        # Avoid duplicates
+        key = str(preview)
+        if key in processed:
+            continue
+        processed.add(key)
+
+        # Only allow GLPreview
+        if preview.GetID() != "GLPreview":
+            continue
+
+        view = preview.View
+        if not view:
+            continue
+
+        if str(view.Composition()) != str(comp):
+            continue
+
+        for viewer in itertools.chain([view.CurrentViewer],
+                                      view.GetViewerList().values()):
+            if not viewer:
+                # CurrentViewer might be None
+                continue
+
+            key = str(viewer)
+            if key in processed:
+                continue
+            processed.add(key)
+
+            yield name, viewer
+
+
+def save_image_from_first_active_viewer(comp, destination):
+    """Save current image from first active viewer from Composition"""
+
+    for name, viewer in iter_viewers(comp):
+        if viewer.SaveFile(destination):
+            # Image only gets saved if has a tool set and only returns
+            # True in the case it has a valid image to save
+            print(f"Saved {name}: {destination}")
+            return destination
