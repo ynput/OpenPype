@@ -592,8 +592,7 @@ def generate_thumbnail():
         log.error("No current workfile path. Thumbnail generation skipped")
         return
 
-    base, _ = os.path.splitext(current_filepath)
-    thumbnail_path = "{}_thumbnail.jpg".format(base)
+    thumbnail_path = "{}_thumbnail.jpg".format(current_filepath)
 
     view = omui.M3dView.active3dView()
     image = om.MImage()

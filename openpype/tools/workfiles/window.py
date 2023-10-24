@@ -150,8 +150,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._details_input.setPlainText("")
 
         # Set thumbnail if found
-        base, _ = os.path.splitext(filepath)
-        thumbnail = "{}_thumbnail.jpg".format(base)
+        thumbnail = "{}_thumbnail.jpg".format(filepath)
         if os.path.exists(thumbnail):
             self._thumbnail.set_current_thumbnails([thumbnail])
         else:

@@ -311,8 +311,7 @@ def generate_thumbnail():
         log.error("No current workfile path. Thumbnail generation skipped")
         return
 
-    base, _ = os.path.splitext(current_filepath)
-    thumbnail_path = "{}_thumbnail.jpg".format(base)
+    thumbnail_path = "{}_thumbnail.jpg".format(current_filepath)
 
     sceneview = lib.get_scene_viewer()
     if not sceneview:
