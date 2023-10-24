@@ -78,7 +78,7 @@ class TestCreateContext(ModuleUnitTest):
         assert len(instances) == 1, "Must have one instance"
         instance = instances[0]
 
-        def get_saved_state_in_host():
+        def get_saved_state_on_host_instance():
             """Return 'host stored' state value for instance"""
             return (
                 dummy_creator.cache["instances"][instance.id]
@@ -87,26 +87,26 @@ class TestCreateContext(ModuleUnitTest):
 
         # Value must be unchanged and False
         assert instance.publish_attributes["Plugin"]["state"] is False
-        assert get_saved_state_in_host() is False  # noqa
-        assert instance.changes().changed is False
+        assert get_saved_state_on_host_instance() is False  # noqa
+        assert create_context.context_data_changes().changed is False
 
         # Set to True, value must be changed before save, and unchanged after
         # and host value must be updated along
         instance.publish_attributes["Plugin"]["state"] = True
-        assert instance.changes().changed is True
+        assert create_context.context_data_changes().changed is True
         create_context.save_changes()
-        assert instance.changes().changed is False
+        assert create_context.context_data_changes().changed is False
         assert instance.publish_attributes["Plugin"]["state"] is True
-        assert get_saved_state_in_host() is True
+        assert get_saved_state_on_host_instance() is True
 
         # Set to False, value must be changed before save, and unchanged after
         # and host value must be updated along
         instance.publish_attributes["Plugin"]["state"] = False
-        assert instance.changes().changed is True
+        assert create_context.context_data_changes().changed is True
         create_context.save_changes()
-        assert instance.changes().changed is False
+        assert create_context.context_data_changes().changed is False
         assert instance.publish_attributes["Plugin"]["state"] is False
-        assert get_saved_state_in_host() is False
+        assert get_saved_state_on_host_instance() is False
 
         pyblish.api.deregister_plugin(Plugin)
 
@@ -146,3 +146,63 @@ class TestCreateContext(ModuleUnitTest):
         create_context = CreateContext(host=registered_host())
         instances = list(create_context.instances)
         assert len(instances) == 2
+
+    def test_host_save_and_load_context_data(self,
+                                             setup_dummy_host,
+                                             dummy_creator):
+        """Test context publish attributes data save changes and persistence"""
+
+        class Plugin(pyblish.api.ContextPlugin,
+                     OpenPypePyblishPluginMixin):
+            """Publish Plug-in that exposes bool attribute definition"""
+            order = pyblish.api.ValidatorOrder
+
+            @classmethod
+            def get_attribute_defs(cls):
+                return [
+                    BoolDef("state",
+                            label="State",
+                            default=False)
+                ]
+
+        pyblish.api.register_plugin(Plugin)
+
+        host = registered_host()
+        create_context = CreateContext(host=host)
+        create_context.create(
+            creator_identifier=dummy_creator.identifier,
+            variant="main"
+        )
+        # Save the initial state of the attribute defs
+        create_context.save_changes()
+
+        def get_saved_state_in_host_context():
+            """Return 'host stored' state value for instance"""
+            return host.context_data["publish_attributes"]["Plugin"]["state"]
+
+        # Value must be unchanged and False
+        assert create_context.publish_attributes["Plugin"]["state"] is False
+        assert get_saved_state_in_host_context() is False  # noqa
+        assert create_context.context_data_changes().changed is False
+
+        # Set to True, value must be changed before save, and unchanged after
+        # and host value must be updated along
+        create_context.publish_attributes["Plugin"]["state"] = True
+        assert create_context.context_data_changes().changed is True
+        assert get_saved_state_in_host_context() is False
+        create_context.save_changes()
+        assert create_context.context_data_changes().changed is False
+        assert create_context.publish_attributes["Plugin"]["state"] is True
+        assert get_saved_state_in_host_context() is True
+
+        # Set to False, value must be changed before save, and unchanged after
+        # and host value must be updated along
+        create_context.publish_attributes["Plugin"]["state"] = False
+        assert create_context.context_data_changes().changed is True
+        assert get_saved_state_in_host_context() is True
+        create_context.save_changes()
+        assert create_context.context_data_changes().changed is False
+        assert create_context.publish_attributes["Plugin"]["state"] is False
+        assert get_saved_state_in_host_context() is False
+
+        pyblish.api.deregister_plugin(Plugin)

@@ -92,15 +92,17 @@ def no_pyblish_plugins():
 
 
 class DummyPublishHost(HostBase, IPublishHost):
-    """Dummy IPublishHost that does *not* store any context data"""
+    """Dummy IPublishHost"""
 
     name = "dummy"
 
+    context_data = {}
+
     def get_context_data(self):
-        return {}
+        return DummyPublishHost.context_data.copy()
 
     def update_context_data(self, data, changes):
-        pass
+        DummyPublishHost.context_data = data
 
 
 @contextlib.contextmanager
