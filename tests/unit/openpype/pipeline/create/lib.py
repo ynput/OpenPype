@@ -139,6 +139,14 @@ class DummyCreator(Creator):
         "instances": {}
     }
 
+    @classmethod
+    def clear_cache(cls):
+        # Recommended to call at end of test to ensure global cache doesn't
+        # influence other following tests
+        cls.cache = {
+            "instances": {}
+        }
+
     def create(self, subset_name, data, pre_create_data):
         instance = CreatedInstance(self.family, subset_name, data, self)
 

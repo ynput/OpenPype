@@ -36,6 +36,7 @@ class TestCreateContext(ModuleUnitTest):
         register_creator_plugin(DummyCreator)
         yield DummyCreator
         deregister_creator_plugin(DummyCreator)
+        DummyCreator.clear_cache()
 
     def test_save_instance_publish_attribute_changes(self,
                                                      setup_dummy_host,
