@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating workfiles."""
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import CreatedInstance, AutoCreator
 from openpype.client import get_asset_by_name
 
@@ -41,6 +42,13 @@ class CreateWorkfile(AutoCreator):
                 if instance.creator_identifier == self.identifier
             ), None)
 
+        current_instance_asset = None
+        if current_instance is not None:
+            if AYON_SERVER_ENABLED:
+                current_instance_asset = current_instance.get("folderPath")
+            if not current_instance_asset:
+                current_instance_asset = current_instance.get("asset")
+
         if current_instance is None:
             self.log.info("Auto-creating workfile instance...")
             asset_doc = get_asset_by_name(project_name, asset_name)
@@ -48,22 +56,28 @@ class CreateWorkfile(AutoCreator):
                 variant, task_name, asset_doc, project_name, host_name
             )
             data = {
-                "asset": asset_name,
                 "task": task_name,
                 "variant": variant
             }
+            if AYON_SERVER_ENABLED:
+                data["folderPath"] = asset_name
+            else:
+                data["asset"] = asset_name
             current_instance = self.create_instance_in_context(subset_name,
                                                                data)
         elif (
-                current_instance["asset"] != asset_name
-                or current_instance["task"] != task_name
+            current_instance_asset != asset_name
+            or current_instance["task"] != task_name
         ):
             # Update instance context if is not the same
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
                 variant, task_name, asset_doc, project_name, host_name
             )
-            current_instance["asset"] = asset_name
+            if AYON_SERVER_ENABLED:
+                current_instance["folderPath"] = asset_name
+            else:
+                current_instance["asset"] = asset_name
             current_instance["task"] = task_name
             current_instance["subset"] = subset_name
 
