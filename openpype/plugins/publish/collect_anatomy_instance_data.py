@@ -30,7 +30,8 @@ import pyblish.api
 from openpype.client import (
     get_assets,
     get_subsets,
-    get_last_versions
+    get_last_versions,
+    get_asset_name_identifier,
 )
 from openpype.pipeline.version_start import get_versioning_start
 
@@ -60,6 +61,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Querying asset documents for instances.")
 
         context_asset_doc = context.data.get("assetEntity")
+        context_asset_name = None
+        if context_asset_doc:
+            context_asset_name = get_asset_name_identifier(context_asset_doc)
 
         instances_with_missing_asset_doc = collections.defaultdict(list)
         for instance in context:
@@ -68,15 +72,15 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
             # There is possibility that assetEntity on instance is already set
             # which can happen in standalone publisher
-            if (
-                instance_asset_doc
-                and instance_asset_doc["name"] == _asset_name
-            ):
-                continue
+            if instance_asset_doc:
+                instance_asset_name = get_asset_name_identifier(
+                    instance_asset_doc)
+                if instance_asset_name == _asset_name:
+                    continue
 
             # Check if asset name is the same as what is in context
             # - they may be different, e.g. in NukeStudio
-            if context_asset_doc and context_asset_doc["name"] == _asset_name:
+            if context_asset_name and context_asset_name == _asset_name:
                 instance.data["assetEntity"] = context_asset_doc
 
             else:
@@ -93,7 +97,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
         asset_docs = get_assets(project_name, asset_names=asset_names)
         asset_docs_by_name = {
-            asset_doc["name"]: asset_doc
+            get_asset_name_identifier(asset_doc): asset_doc
             for asset_doc in asset_docs
         }
 
