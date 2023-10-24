@@ -1560,10 +1560,10 @@
         "host_name": "mrv2",
         "environment": {},
         "variants": {
-            "0-7-9": {
+            "0-8-2": {
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\mrv2 0.7.9\\bin\\mrv2.exe"
+                        "C:\\Program Files\\mrv2 0.8.2\\bin\\mrv2.exe"
                     ],
                     "darwin": [],
                     "linux": []
@@ -1576,7 +1576,7 @@
                 "environment": {}
             },
             "__dynamic_keys_labels__": {
-                "0-7-9": "0.7.9"
+                "0-8-2": "0.8.2"
             }
         }
     },
