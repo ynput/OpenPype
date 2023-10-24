@@ -5,7 +5,7 @@ from openpype.modules import ModulesManager
 import getpass
 import nuke
 import requests
-
+from datetime import datetime
 tempRenderTemplate = "{work}/renders/nuke/{subset}"
 ## copied from submit_nuke_to_deadline.py
 def GetDeadlineCommand():
@@ -80,19 +80,21 @@ def getNodeSubmissionInfo():
 def deadlineNetworkSubmit(dev=False):
     tempRenderPath = tempRenderTemplate.format(work=os.environ["AVALON_WORKDIR"], subset=nuke.thisNode().name())
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    nuke.saveAs("{path}/{name}_{time}.nk".format(path=tempRenderPath,name=nuke.root().name(), time=timestamp),overwrite=0)
+    nuke.scriptSaveToTemp("{path}/{name}_{time}.nk".format(path=tempRenderPath,
+                                                           name=os.path.splitext(os.path.basename(nuke.root().name()))[0],
+                                                           time=timestamp))
     modules = ModulesManager()
     deadline_module = modules.modules_by_name["deadline"]
     deadline_server = deadline_module.deadline_urls["default"] if not dev else deadline_module.deadline_urls["dev"]
     deadline_url = "{}/api/jobs".format(deadline_server)
-    body = build_request(getNodeSubmissionInfo())
+    body = build_request(getNodeSubmissionInfo(),timestamp)
     response = requests.post(deadline_url, json=body, timeout=10)
     if not response.ok:
         raise Exception(response.text)
     print(response)
 
 
-def build_request(knobValues):
+def build_request(knobValues,timestamp):
     # Include critical environment variables with submission
     return {
                 "JobInfo": {
