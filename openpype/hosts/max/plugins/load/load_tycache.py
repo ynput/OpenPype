@@ -13,7 +13,7 @@ from openpype.pipeline import get_representation_path, load
 
 
 class TyCacheLoader(load.LoaderPlugin):
-    """Point Cloud Loader."""
+    """TyCache Loader."""
 
     families = ["tycache"]
     representations = ["tyc"]
