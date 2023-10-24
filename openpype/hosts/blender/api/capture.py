@@ -148,7 +148,7 @@ def applied_view(window, camera, isolate=None, options=None):
 
     area.ui_type = "VIEW_3D"
 
-    types = ["MESH", "GPENCIL"]
+    types = {"MESH", "GPENCIL"}
     objects = [obj for obj in window.scene.objects if obj.type in types]
 
     if camera == "AUTO":
