@@ -1,4 +1,5 @@
 import os
+import json
 
 import pyblish.api
 
@@ -25,6 +26,9 @@ from .workio import (
     current_file
 )
 
+from mrv2 import session
+
+
 PLUGINS_DIR = os.path.join(MRV2_ROOT_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
@@ -34,6 +38,8 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 class Mrv2Host(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "mrv2"
+
+    context_metadata_key = "ayon_context"
 
     def install(self):
         pyblish.api.register_plugin_path(PUBLISH_PATH)
@@ -65,7 +71,10 @@ class Mrv2Host(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return []
 
     def get_context_data(self):
+        data = session.metadata(self.context_metadata_key)
+        if data:
+            return json.loads(data)
         return {}
 
     def update_context_data(self, data, changes):
-        pass
+        session.setMetadata(self.context_metadata_key, json.dumps(data))
