@@ -37,9 +37,9 @@ class TestCreateContext(ModuleUnitTest):
         yield DummyCreator
         deregister_creator_plugin(DummyCreator)
 
-    def test_save_publish_attribute_changes(self,
-                                            setup_dummy_host,
-                                            dummy_creator):
+    def test_save_instance_publish_attribute_changes(self,
+                                                     setup_dummy_host,
+                                                     dummy_creator):
         """Test CreateContext instance publish attribute change saves.
 
         Test whether changes on CreatedInstance publish attributes are marked
@@ -109,3 +109,40 @@ class TestCreateContext(ModuleUnitTest):
         assert get_saved_state_in_host() is False
 
         pyblish.api.deregister_plugin(Plugin)
+
+    def test_create_and_remove_instances(self,
+                                         setup_dummy_host,
+                                         dummy_creator):
+        """Test creation, removal and persistence of instances on resets"""
+
+        create_context = CreateContext(host=registered_host())
+        create_context.create(
+            creator_identifier=dummy_creator.identifier,
+            variant="A"
+        )
+        create_context.create(
+            creator_identifier=dummy_creator.identifier,
+            variant="B"
+        )
+        create_context.create(
+            creator_identifier=dummy_creator.identifier,
+            variant="C"
+        )
+
+        # There should be three instances
+        instances = list(create_context.instances)
+        assert len(instances) == 3
+
+        # Remove one instance
+        create_context.remove_instances([instances[-1]])
+        assert len(instances) == 2
+
+        # Make sure instances persist a reset
+        create_context.reset()
+        instances = list(create_context.instances)
+        assert len(instances) == 2
+
+        # Make sure instances are also found from a new Create Context
+        create_context = CreateContext(host=registered_host())
+        instances = list(create_context.instances)
+        assert len(instances) == 2
