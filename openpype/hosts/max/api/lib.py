@@ -501,6 +501,8 @@ def get_plugins() -> list:
 
 @contextlib.contextmanager
 def suspended_refresh():
+    """Suspended refresh for scene and modify panel redraw.
+    """
     rt.disableSceneRedraw()
     rt.suspendEditing()
 
