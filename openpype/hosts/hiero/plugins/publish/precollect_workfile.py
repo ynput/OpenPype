@@ -7,6 +7,7 @@ from qtpy.QtGui import QPixmap
 
 import hiero.ui
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.hosts.hiero.api.otio import hiero_export
 
 
@@ -17,9 +18,10 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.491
 
     def process(self, context):
+        asset_name = context.data["asset"]
+        if AYON_SERVER_ENABLED:
+            asset_name = asset_name.split("/")[-1]
 
-        asset = context.data["asset"]
-        subset = "workfile"
         active_timeline = hiero.ui.activeSequence()
         project = active_timeline.project()
         fps = active_timeline.framerate().toFloat()
@@ -59,13 +61,14 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             'files': base_name,
             "stagingDir": staging_dir,
         }
-
+        family = "workfile"
         instance_data = {
-            "name": "{}_{}".format(asset, subset),
-            "asset": asset,
-            "subset": "{}{}".format(asset, subset.capitalize()),
+            "name": "{}_{}".format(asset_name, family),
+            "asset": context.data["asset"],
+            # TODO use 'get_subset_name'
+            "subset": "{}{}".format(asset_name, family.capitalize()),
             "item": project,
-            "family": "workfile",
+            "family": family,
             "families": [],
             "representations": [workfile_representation, thumb_representation]
         }

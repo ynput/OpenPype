@@ -11,7 +11,6 @@ import qargparse
 from openpype.settings import get_current_project_settings
 from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
-from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline.load import get_representation_path_from_context
 from . import lib
 
@@ -494,9 +493,8 @@ class ClipLoader:
         joint `data` key with asset.data dict into the representation
 
         """
-        asset_name = self.context["representation"]["context"]["asset"]
-        asset_doc = get_current_project_asset(asset_name)
-        log.debug("__ asset_doc: {}".format(pformat(asset_doc)))
+
+        asset_doc = self.context["asset"]
         self.data["assetData"] = asset_doc["data"]
 
     def _make_track_item(self, source_bin_item, audio=False):
