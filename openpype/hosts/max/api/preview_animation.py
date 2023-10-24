@@ -108,13 +108,7 @@ def _render_preview_animation_max_2024(
     filepath = filepath.replace("\\", "/")
     preview_output = f"{filepath}..{ext}"
     frame_template = f"{filepath}.{{:04d}}.{ext}"
-    job_args = list()
-    default_option = f'CreatePreview filename:"{preview_output}"'
-    job_args.append(default_option)
-    output_res_option = f"outputAVI:false percentSize:{percent}"
-    job_args.append(output_res_option)
-    frame_range_options = f"start:{start} end:{end}"
-    job_args.append(frame_range_options)
+    job_args = []
     for key, value in viewport_options.items():
         if isinstance(value, bool):
             if value:
@@ -141,10 +135,13 @@ def _render_preview_animation_max_2024(
                 else:
                     value = value.lower()
             job_args.append(f"{key}: #{value}")
-    auto_play_option = "autoPlay:false"
-    job_args.append(auto_play_option)
-    job_str = " ".join(job_args)
-    log.debug(job_str)
+
+    job_str = (
+        f'CreatePreview filename:"{preview_output}" outputAVI:false '
+        f"percentSize:{percent} start:{start} end:{end} "
+        f"{' '.join(job_args)} "
+        "autoPlay:false"
+    )
     rt.completeRedraw()
     rt.execute(job_str)
     # Return the created files
