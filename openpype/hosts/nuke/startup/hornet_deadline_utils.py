@@ -90,8 +90,10 @@ def deadlineNetworkSubmit(dev=False):
     body = build_request(getNodeSubmissionInfo(),timestamp)
     response = requests.post(deadline_url, json=body, timeout=10)
     if not response.ok:
+        nuke.alert("Failed to submit to Deadline: {}".format(response.text))
         raise Exception(response.text)
-    print(response)
+    else:
+        nuke.alert("Submitted to Deadline Sucessfully: {}".format(json.loads(response.text).get('Name')))
 
 
 def build_request(knobValues,timestamp):
