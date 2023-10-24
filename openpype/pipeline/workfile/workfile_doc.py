@@ -83,7 +83,7 @@ def set_workfile_data(project_name, asset_id, task_name, filepath, data):
         return
 
     new_workfile_doc = copy.deepcopy(workfile_doc)
-    new_workfile_doc["data"] = data
+    new_workfile_doc.setdefault("data", {}).update(data)
     update_data = prepare_workfile_info_update_data(
         workfile_doc, new_workfile_doc
     )
