@@ -234,27 +234,40 @@ def reset_scene_resolution():
     set_scene_resolution(width, height)
 
 
-def get_frame_range() -> Union[Dict[str, Any], None]:
+def get_frame_range(asset_doc=None) -> Union[Dict[str, Any], None]:
     """Get the current assets frame range and handles.
+
+    Args:
+        asset_doc (dict): Asset Entity Data
 
     Returns:
         dict: with frame start, frame end, handle start, handle end.
     """
     # Set frame start/end
-    asset = get_current_project_asset()
-    frame_start = asset["data"].get("frameStart")
-    frame_end = asset["data"].get("frameEnd")
+    if asset_doc is None:
+        asset_doc = get_current_project_asset()
+
+    data = asset_doc["data"]
+    frame_start = data.get("frameStart")
+    frame_end = data.get("frameEnd")
 
     if frame_start is None or frame_end is None:
-        return
+        return {}
 
-    handle_start = asset["data"].get("handleStart", 0)
-    handle_end = asset["data"].get("handleEnd", 0)
+    frame_start = int(frame_start)
+    frame_end = int(frame_end)
+    handle_start = int(data.get("handleStart", 0))
+    handle_end = int(data.get("handleEnd", 0))
+    frame_start_handle = frame_start - handle_start
+    frame_end_handle = frame_end + handle_end
+
     return {
         "frameStart": frame_start,
         "frameEnd": frame_end,
         "handleStart": handle_start,
-        "handleEnd": handle_end
+        "handleEnd": handle_end,
+        "frameStartHandle": frame_start_handle,
+        "frameEndHandle": frame_end_handle,
     }
 
 
@@ -274,12 +287,11 @@ def reset_frame_range(fps: bool = True):
         fps_number = float(data_fps["data"]["fps"])
         rt.frameRate = fps_number
     frame_range = get_frame_range()
-    frame_start_handle = frame_range["frameStart"] - int(
-        frame_range["handleStart"]
-    )
-    frame_end_handle = frame_range["frameEnd"] + int(frame_range["handleEnd"])
-    set_timeline(frame_start_handle, frame_end_handle)
-    set_render_frame_range(frame_start_handle, frame_end_handle)
+
+    set_timeline(
+        frame_range["frameStartHandle"], frame_range["frameEndHandle"])
+    set_render_frame_range(
+        frame_range["frameStartHandle"], frame_range["frameEndHandle"])
 
 
 def set_context_setting():

@@ -797,6 +797,7 @@ class InstanceCardView(AbstractInstanceView):
                     widget.set_active(value)
         else:
             self._select_item_clear(instance_id, group_name, instance_widget)
+            self.selection_changed.emit()
         self.active_changed.emit()
 
     def _on_widget_selection(self, instance_id, group_name, selection_type):

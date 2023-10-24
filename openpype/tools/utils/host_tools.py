@@ -296,7 +296,8 @@ class HostToolsHelper:
             ILoadHost.validate_load_methods(host)
 
             publisher_window = PublisherWindow(
-                controller=controller, parent=parent or self._parent
+                controller=controller,
+                parent=parent or self._parent
             )
             self._publisher_tool = publisher_window
 

@@ -103,7 +103,7 @@ class PublishPuginsModel(BaseSettingsModel):
         default_factory=ValidatePluginModel,
         title="Extract FBX"
     )
-    ExtractABC: ValidatePluginModel = Field(
+    ExtractModelABC: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Extract ABC"
     )
@@ -197,10 +197,10 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "optional": True,
         "active": False
     },
-    "ExtractABC": {
+    "ExtractModelABC": {
         "enabled": True,
         "optional": True,
-        "active": False
+        "active": True
     },
     "ExtractBlendAnimation": {
         "enabled": True,

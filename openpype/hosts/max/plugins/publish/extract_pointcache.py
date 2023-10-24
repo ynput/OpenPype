@@ -52,8 +52,8 @@ class ExtractAlembic(publish.Extractor):
     families = ["pointcache"]
 
     def process(self, instance):
-        start = float(instance.data.get("frameStartHandle", 1))
-        end = float(instance.data.get("frameEndHandle", 1))
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         parent_dir = self.staging_dir(instance)
         file_name = "{name}.abc".format(**instance.data)

@@ -20,8 +20,8 @@ class ExtractCameraAlembic(publish.Extractor, OptionalPyblishPluginMixin):
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        start = float(instance.data.get("frameStartHandle", 1))
-        end = float(instance.data.get("frameEndHandle", 1))
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         stagingdir = self.staging_dir(instance)
         filename = "{name}.abc".format(**instance.data)
