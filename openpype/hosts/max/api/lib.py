@@ -517,7 +517,9 @@ def suspended_refresh():
     """
     rt.disableSceneRedraw()
     rt.suspendEditing()
-
+    if is_headless():
+        yield
+        return
     try:
         yield
 

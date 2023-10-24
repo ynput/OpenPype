@@ -39,34 +39,31 @@ Note:
 """
 import os
 import pyblish.api
-from openpype.pipeline import publish
+from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
 from openpype.hosts.max.api import maintained_selection
 from openpype.hosts.max.api.lib import suspended_refresh
+from openpype.lib import BoolDef
 
 
-class ExtractAlembic(publish.Extractor):
+class ExtractAlembic(publish.Extractor,
+                     OptionalPyblishPluginMixin):
     order = pyblish.api.ExtractorOrder
     label = "Extract Pointcache"
     hosts = ["max"]
     families = ["pointcache"]
+    optional = False
 
     def process(self, instance):
-        start = instance.data["frameStartHandle"]
-        end = instance.data["frameEndHandle"]
+        if not self.is_active(instance.data):
+            return
 
         parent_dir = self.staging_dir(instance)
         file_name = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, file_name)
 
         with suspended_refresh():
-            rt.AlembicExport.ArchiveType = rt.name("ogawa")
-            rt.AlembicExport.CoordinateSystem = rt.name("maya")
-            rt.AlembicExport.StartFrame = start
-            rt.AlembicExport.EndFrame = end
-            rt.AlembicExport.CustomAttributes = instance.data.get(
-                "custom_attrs", False)
-
+            self._set_abc_attributes(instance)
             with maintained_selection():
                 # select and export
                 node_list = instance.data["members"]
@@ -88,3 +85,54 @@ class ExtractAlembic(publish.Extractor):
             "stagingDir": parent_dir,
         }
         instance.data["representations"].append(representation)
+
+    def _set_abc_attributes(self, instance):
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
+        attr_values = self.get_attr_values_from_data(instance.data)
+        custom_attrs = attr_values.get("custom_attrs", False)
+        rt.AlembicExport.ArchiveType = rt.Name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.Name("maya")
+        rt.AlembicExport.StartFrame = start
+        rt.AlembicExport.EndFrame = end
+        rt.AlembicExport.CustomAttributes = custom_attrs
+
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            BoolDef("custom_attrs",
+                    label="Custom Attributes",
+                    default=False),
+        ]
+
+
+class ExtractCameraAlembic(ExtractAlembic):
+    """Extract Camera with AlembicExport."""
+
+    order = pyblish.api.ExtractorOrder - 0.1
+    label = "Extract Alembic Camera"
+    hosts = ["max"]
+    families = ["camera"]
+    optional = True
+
+
+class ExtractModel(ExtractAlembic):
+    """
+    Extract Geometry in Alembic Format
+    """
+
+    order = pyblish.api.ExtractorOrder - 0.1
+    label = "Extract Geometry (Alembic)"
+    hosts = ["max"]
+    families = ["model"]
+    optional = True
+
+    def _set_abc_attributes(self, instance):
+        attr_values = self.get_attr_values_from_data(instance.data)
+        custom_attrs = attr_values.get("custom_attrs", False)
+        rt.AlembicExport.ArchiveType = rt.name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.name("maya")
+        rt.AlembicExport.CustomAttributes = custom_attrs
+        rt.AlembicExport.UVs = True
+        rt.AlembicExport.VertexColors = True
+        rt.AlembicExport.PreserveInstances = True
