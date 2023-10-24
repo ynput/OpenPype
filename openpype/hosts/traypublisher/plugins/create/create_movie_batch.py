@@ -2,6 +2,8 @@ import copy
 import os
 import re
 
+from openpype import AYON_SERVER_ENABLED
+from openpype.client import get_asset_name_identifier
 from openpype.lib import (
     FileDef,
     BoolDef,
@@ -64,8 +66,13 @@ class BatchMovieCreator(TrayPublishCreator):
             subset_name, task_name = self._get_subset_and_task(
                 asset_doc, data["variant"], self.project_name)
 
+            asset_name = get_asset_name_identifier(asset_doc)
+
             instance_data["task"] = task_name
-            instance_data["asset"] = asset_doc["name"]
+            if AYON_SERVER_ENABLED:
+                instance_data["folderPath"] = asset_name
+            else:
+                instance_data["asset"] = asset_name
 
             # Create new instance
             new_instance = CreatedInstance(self.family, subset_name,

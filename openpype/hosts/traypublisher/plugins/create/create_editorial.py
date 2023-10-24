@@ -1,6 +1,7 @@
 import os
 from copy import deepcopy
 import opentimelineio as otio
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_asset_by_name,
     get_project
@@ -215,7 +216,10 @@ or updating already created. Publishing will create OTIO file.
             ]
         }
         # Create otio editorial instance
-        asset_name = instance_data["asset"]
+        if AYON_SERVER_ENABLED:
+            asset_name = instance_data["folderPath"]
+        else:
+            asset_name = instance_data["asset"]
         asset_doc = get_asset_by_name(self.project_name, asset_name)
 
         if pre_create_data["fps"] == "from_selection":
