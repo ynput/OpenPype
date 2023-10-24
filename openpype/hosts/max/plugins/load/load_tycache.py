@@ -1,3 +1,4 @@
+import os
 from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.lib import (
     unique_namespace,
@@ -23,7 +24,7 @@ class TyCacheLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         """Load tyCache"""
         from pymxs import runtime as rt
-        filepath = self.filepath_from_context(context)
+        filepath = os.path.normpath(self.filepath_from_context(context))
         obj = rt.tyCache()
         obj.filename = filepath
 
@@ -46,8 +47,8 @@ class TyCacheLoader(load.LoaderPlugin):
         node_list = get_previous_loaded_object(node)
         update_custom_attribute_data(node, node_list)
         with maintained_selection():
-            for prt in node_list:
-                prt.filename = path
+            for tyc in node_list:
+                tyc.filename = path
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
