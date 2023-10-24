@@ -103,7 +103,7 @@ class AyonDeadlinePlugin(DeadlinePlugin):
             self.FailRender(
                 "Ayon executable was not found " +
                 "in the semicolon separated list " +
-                "\"" + ";".join(exe_list) + "\". " +
+                "\"" + exe_list + "\". " +
                 "The path to the render executable can be configured " +
                 "from the Plugin Configuration in the Deadline Monitor.")
         return exe
