@@ -1,6 +1,6 @@
 from openpype.pipeline import install_host
 from openpype.hosts.nuke.api import NukeHost
-
+from hornet_deadline_utils import deadlineNetworkSubmit
 host = NukeHost()
 install_host(host)
 
@@ -194,7 +194,7 @@ def embedOptions():
     group.addKnob(endGroup)
     beginGroup = nuke.Tab_Knob('beginpipeline', 'Rendering and Pipeline', nuke.TABBEGINGROUP)
     group.addKnob(beginGroup)
-    sub = nuke.PyScript_Knob('submit', 'Submit to Deadline', "DeadlineNukeClient.main()")
+    sub = nuke.PyScript_Knob('submit', 'Submit to Deadline', "deadlineNetworkSubmit()")
     sub.setFlag(0x00001000)
     clr = nuke.PyScript_Knob('clear', 'Clear Temp Outputs', "import os;fpath = os.path.dirname(nuke.thisNode().knob('File output').value());[os.remove(os.path.join(fpath, f)) for f in os.listdir(fpath)]")
     pub = nuke.PyScript_Knob('publish', 'Publish', "from openpype.tools.utils import host_tools;host_tools.show_publisher(parent=(main_window if nuke.NUKE_VERSION_MAJOR >= 14 else None),tab='Publish')")

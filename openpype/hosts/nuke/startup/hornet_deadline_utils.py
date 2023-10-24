@@ -3,7 +3,10 @@ import os
 from openpype.modules.deadline.deadline_module import DeadlineModule
 from openpype.modules import ModulesManager
 import getpass
+import nuke
+import requests
 
+tempRenderTemplate = "{work}/renders/nuke/{subset}"
 ## copied from submit_nuke_to_deadline.py
 def GetDeadlineCommand():
     # type: () -> str
@@ -63,59 +66,65 @@ def CallDeadlineCommand(arguments, hideWindow=True):
 
 def getSubmitterInfo():
     try:
-        output = json.loads(CallDeadlineCommand([ "-prettyJSON", "-GetSubmissionInfo", "Pools", "Groups", "MaxPriority", "UserHomeDir", "RepoDir:submission/Nuke/Main", "RepoDir:submission/Integration/Main", ])) # type: Dict
+        return json.loads(CallDeadlineCommand([ "-prettyJSON", "-GetSubmissionInfo", "Pools", "Groups", "MaxPriority", "UserHomeDir", "RepoDir:submission/Nuke/Main", "RepoDir:submission/Integration/Main", ])) # type: Dict
     except Exception as e:
         print("Failed to get submitter info: {}".format(e))
 
 
 def getNodeSubmissionInfo():
     nde = nuke.thisNode()
-    relevant_knobs = ['file','deadlinePool','deadlineGroup','deadlinePriority','first','last']
-    submission_info = { knob: nde.knob(kname).value() for kname in relevant_knobs }
+    relevant_knobs = ['File output','deadlinePool','deadlineGroup','deadlinePriority','first','last']
+    all_knobs = nde.allKnobs()
+    return { knb.name(): knb.value() for knb in all_knobs if knb.name() in relevant_knobs }
 
 def deadlineNetworkSubmit(dev=False):
+    tempRenderPath = tempRenderTemplate.format(work=os.environ["AVALON_WORKDIR"], subset=nuke.thisNode().name())
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    nuke.saveAs("{path}/{name}_{time}.nk".format(path=tempRenderPath,name=nuke.root().name(), time=timestamp),overwrite=0)
     modules = ModulesManager()
     deadline_module = modules.modules_by_name["deadline"]
     deadline_server = deadline_module.deadline_urls["default"] if not dev else deadline_module.deadline_urls["dev"]
     deadline_url = "{}/api/jobs".format(deadline_server)
+    body = build_request(getNodeSubmissionInfo())
+    response = requests.post(deadline_url, json=body, timeout=10)
+    if not response.ok:
+        raise Exception(response.text)
+    print(response)
 
-    deadline_user = getpass.getuser()
 
 def build_request(knobValues):
-    payload = {
+    # Include critical environment variables with submission
+    return {
                 "JobInfo": {
-                    # Top-level group name
                     # Job name, as seen in Monitor
-                    "Name": nuke.scriptName(),
-                    # Arbitrary username, for visualisation in Monitor
-                    "UserName": knobValues['deadline_user'],
-                    # "InitialStatus":suspended, # NOTE hornet update on use existing frames on farm
-                    "Priority": knobValues['deadlinePriority'],
-
-                    "Pool": instance.data.get("primaryPool") or "local",
+                    "Name": os.environ['AVALON_PROJECT'].split("_")[0] + "_" + os.environ['AVALON_ASSET'] + '_' + nuke.thisNode().name(),
+                    # pass submitter user
+                    "UserName": getpass.getuser(),
+                    "Priority": knobValues.get('deadlinePriority') or 50,
+                    "Pool": knobValues.get("deadlinePool") or "local",
                     "SecondaryPool": "",
-                    "Group": knobValues['deadlineGroup'],
+                    "Group": knobValues.get('deadlineGroup') or 'nuke',
                     "Plugin": 'Nuke',
                     "Frames": "{start}-{end}".format(
-                        start=knobValues['first'],
-                        end=knobValues['last']
+                        start=knobValues['first'] or 1001,
+                        end=knobValues['last'] or 1001
                     ),
                     # Optional, enable double-click to preview rendered
                     # frames from Deadline Monitor
-                    "OutputFilename0": str(output_filename_0).replace("\\", "/"),
+                    #"OutputFilename0": str(output_filename_0).replace("\\", "/"),
                     # limiting groups
-                    "LimitGroups": ",".join(limit_groups)
+                    "LimitGroups": ''
                 },
                 "PluginInfo": {
                     # Input
-                    "SceneFile": nuke.scriptName().replace("\\", "/"),
+                    "SceneFile": (nuke.script_directory() + "{}_{}.nk".format(nuke.root().name(), timestamp)).replace("\\", "/"),
                     # Output directory and filename
-                    "OutputFilePath": render_dir.replace("\\", "/"),
+                    "OutputFilePath": knobValues['File output'].replace("\\", "/"),
                     # "OutputFilePrefix": render_variables["filename_prefix"],
                     # Mandatory for Deadline
                     "Version": nuke.NUKE_VERSION_STRING,
                     # Resolve relative references
-                    "ProjectPath": script_path,
+                    "ProjectPath": nuke.script_directory().replace("\\", "/"),
                     # using GPU by default
                     # Only the specific write node is rendered.
                     "WriteNode": nuke.thisNode().name(),
