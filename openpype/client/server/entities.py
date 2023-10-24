@@ -183,6 +183,20 @@ def get_asset_by_name(project_name, asset_name, fields=None):
     return None
 
 
+
+def _folders_query(project_name, con, fields, **kwargs):
+    if fields is None or "tasks" in fields:
+        folders = get_folders_with_tasks(
+            con, project_name, fields=fields, **kwargs
+        )
+
+    else:
+        folders = con.get_folders(project_name, fields=fields, **kwargs)
+
+    for folder in folders:
+        yield folder
+
+
 def get_assets(
     project_name,
     asset_ids=None,
@@ -199,22 +213,51 @@ def get_assets(
         active = None
 
     con = get_server_api_connection()
+
     fields = folder_fields_v3_to_v4(fields, con)
     kwargs = dict(
         folder_ids=asset_ids,
-        folder_names=asset_names,
         parent_ids=parent_ids,
         active=active,
-        fields=fields
     )
+    if not asset_names:
+        for folder in _folders_query(project_name, con, fields, **kwargs):
+            yield convert_v4_folder_to_v3(folder, project_name)
+        return
 
-    if fields is None or "tasks" in fields:
-        folders = get_folders_with_tasks(con, project_name, **kwargs)
+    new_asset_names = set()
+    folder_paths = set()
+    if asset_names:
+        for name in asset_names:
+            if "/" in name:
+                folder_paths.add(name)
+            else:
+                new_asset_names.add(name)
 
-    else:
-        folders = con.get_folders(project_name, **kwargs)
+    if folder_paths:
+        for folder in _folders_query(
+            project_name, con, fields, folder_paths=folder_paths, **kwargs
+        ):
+            yield convert_v4_folder_to_v3(folder, project_name)
 
-    for folder in folders:
+    if not new_asset_names:
+        return
+
+    folders_by_name = collections.defaultdict(list)
+    for folder in _folders_query(
+        project_name, con, fields, folder_names=new_asset_names, **kwargs
+    ):
+        folders_by_name[folder["name"]].append(folder)
+
+    for name, folders in folders_by_name.items():
+        folder = next(
+            (
+                folder
+                for folder in folders
+                if folder["path"] == name
+            ),
+            folders[0]
+        )
         yield convert_v4_folder_to_v3(folder, project_name)
 
 
