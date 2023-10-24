@@ -61,8 +61,8 @@ def create_workfile_doc(project_name, asset_id, task_name, filepath):
     return workfile_doc
 
 
-def set_workfile_note(project_name, asset_id, task_name, filepath, note):
-    """Update the artist note for a workfile.
+def set_workfile_data(project_name, asset_id, task_name, filepath, data):
+    """Update workfile data.
 
     If the workfile document does not exist in the database yet
     it will be created.
@@ -72,18 +72,18 @@ def set_workfile_note(project_name, asset_id, task_name, filepath, note):
         asset_id (ObjectID): Asset ID.
         task_name (str): Task name.
         filepath (str): Workfile filepath.
-        note (str): Artist note content.
+        data (dict): Workfile data content.
     """
     # This does not create the document if it already exists.
     workfile_doc = create_workfile_doc(
         project_name, asset_id, task_name, filepath
     )
-    if workfile_doc.get("data", {}).get("note") == note:
+    if workfile_doc.get("data") == data:
         # Nothing to update
         return
 
     new_workfile_doc = copy.deepcopy(workfile_doc)
-    new_workfile_doc.setdefault("data", {})["note"] = note
+    new_workfile_doc["data"] = data
     update_data = prepare_workfile_info_update_data(
         workfile_doc, new_workfile_doc
     )

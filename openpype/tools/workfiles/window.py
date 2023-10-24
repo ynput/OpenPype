@@ -20,7 +20,7 @@ from openpype.pipeline import (
     get_current_task_name,
 )
 from openpype.pipeline import legacy_io
-from openpype.pipeline.workfile import set_workfile_note
+from openpype.pipeline.workfile import set_workfile_data
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
 
@@ -342,12 +342,12 @@ class Window(QtWidgets.QWidget):
 
     def on_side_panel_save(self):
         """Save artist note when save button is pressed."""
-        set_workfile_note(
+        set_workfile_data(
             self.project_name,
             self.assets_widget.get_selected_asset_id(),
             self.tasks_widget.get_selected_task_name(),
             self.files_widget._get_selected_filepath(),
-            self.side_panel._note_input.toPlainText(),
+            {"note": self.side_panel._note_input.toPlainText()},
         )
 
     def _get_current_workfile_doc(self, filepath=None):

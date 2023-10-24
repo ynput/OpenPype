@@ -14,10 +14,10 @@ from .path_resolving import (
 )
 
 from .build_workfile import BuildWorkfile
-from .artist_note import (
+from .workfile_doc import (
     get_workfile_doc,
     create_workfile_doc,
-    set_workfile_note,
+    set_workfile_data,
 )
 
 
@@ -39,5 +39,5 @@ __all__ = (
 
     "get_workfile_doc",
     "create_workfile_doc",
-    "set_workfile_note",
+    "set_workfile_data",
 )
