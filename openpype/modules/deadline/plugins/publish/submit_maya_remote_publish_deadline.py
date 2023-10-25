@@ -8,6 +8,7 @@ from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.settings import get_project_settings
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
+from openpype.modules.deadline.utils import set_custom_deadline_name
 
 import pyblish.api
 
@@ -57,9 +58,16 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         scene = instance.context.data["currentFile"]
         scenename = os.path.basename(scene)
 
-        job_name = "{scene} [PUBLISH]".format(scene=scenename)
-        batch_name = "{code} - {scene}".format(code=project_name,
-                                               scene=scenename)
+        job_name = set_custom_deadline_name(
+            instance,
+            scenename,
+            "deadline_job_name"
+        )
+        batch_name = set_custom_deadline_name(
+            instance,
+            scenename,
+            "deadline_batch_name"
+        )
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
@@ -67,7 +75,7 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         payload = {
             "JobInfo": {
                 "Plugin": "MayaBatch",
-                "BatchName": batch_name,
+                "BatchName": "Group: " + batch_name,
                 "Name": job_name,
                 "UserName": instance.context.data["user"],
                 "Comment": instance.context.data.get("comment", ""),

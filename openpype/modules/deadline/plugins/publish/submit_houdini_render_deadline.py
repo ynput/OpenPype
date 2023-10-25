@@ -10,6 +10,7 @@ from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.modules.deadline.utils import set_custom_deadline_name
 from openpype.lib import is_running_from_build
 
 
@@ -55,8 +56,19 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         filepath = context.data["currentFile"]
         filename = os.path.basename(filepath)
 
-        job_info.Name = "{} - {}".format(filename, instance.name)
-        job_info.BatchName = filename
+        job_name = set_custom_deadline_name(
+            instance,
+            filename,
+            "deadline_job_name"
+        )
+        batch_name = set_custom_deadline_name(
+            instance,
+            filename,
+            "deadline_batch_name"
+        )
+
+        job_info.Name = job_name
+        job_info.BatchName = "Group: " + batch_name
         job_info.Plugin = "Houdini"
         job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())

@@ -76,7 +76,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             "JobInfo": {
                 "Plugin": "Houdini",
                 "Pool": "houdini",  # todo: remove hardcoded pool
-                "BatchName": batch_name,
+                "BatchName": "Group: " + batch_name,
                 "Comment": context.data.get("comment", ""),
                 "Priority": 50,
                 "Frames": "1-1",  # Always trigger a single frame
