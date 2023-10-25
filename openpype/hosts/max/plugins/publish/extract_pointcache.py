@@ -52,7 +52,7 @@ class ExtractAlembic(publish.Extractor,
     label = "Extract Pointcache"
     hosts = ["max"]
     families = ["pointcache"]
-    optional = False
+    optional = True
 
     def process(self, instance):
         if not self.is_active(instance.data):
@@ -111,14 +111,12 @@ class ExtractCameraAlembic(ExtractAlembic):
 
     label = "Extract Alembic Camera"
     families = ["camera"]
-    optional = True
 
 
 class ExtractModel(ExtractAlembic):
     """Extract Geometry in Alembic Format"""
     label = "Extract Geometry (Alembic)"
     families = ["model"]
-    optional = True
 
     def _set_abc_attributes(self, instance):
         attr_values = self.get_attr_values_from_data(instance.data)
