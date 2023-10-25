@@ -4,12 +4,16 @@ import os
 import csv
 from pprint import pformat
 import pyblish.api
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS
+)
 from openpype.client import get_asset_by_name
 from openpype.pipeline.create import get_subset_name
 from openpype.pipeline import (
     publish
 )
 import clique
+
 
 
 class CollectEditorialCSV(
@@ -82,9 +86,6 @@ class CollectEditorialCSV(
         staging_dir
     ):
         """Create instances from csv data"""
-        package_folder = os.path.dirname(staging_dir)
-        self.log.debug(f"__ package_folder: `{package_folder}`")
-        # TODO: validate package folder is in path
 
         for asset_name, _data in csv_data_for_instances.items():
             asset_doc = _data["asset_doc"]
@@ -92,6 +93,27 @@ class CollectEditorialCSV(
             products = _data["products"]
 
             for _, product_data in products.items():
+                # make sure frame start/end is always found from representations or added from asset doc
+                frame_start = None
+                frame_end = None
+                version = None
+                for filepath, repre_data in product_data["representations"].items():
+                    extension = os.path.splitext(filepath)[-1]
+                    if extension not in [".mov", ".exr"]:
+                        continue
+                    if not frame_start and repre_data["frameStart"]:
+                        frame_start = repre_data["frameStart"]
+                    if not frame_end and repre_data["frameEnd"]:
+                        frame_end = repre_data["frameEnd"]
+                    if not version and repre_data["version"]:
+                        version = repre_data["version"]
+                if not frame_start:
+                    frame_start = asset_doc["data"]["frameStart"]
+                if not frame_end:
+                    frame_end = asset_doc["data"]["frameEnd"]
+                self.log.debug(f"__ frame_start: `{frame_start}`")
+                self.log.debug(f"__ frame_end: `{frame_end}`")
+
                 task_name = product_data["task_name"]
                 variant_name = product_data["variant_name"]
                 product_type = product_data["product_type"]
@@ -119,6 +141,9 @@ class CollectEditorialCSV(
                     "source": passing_instance_data["source"],
                     "user": vendor_name,
                     "representations": [],
+                    "frameStart": frame_start,
+                    "frameEnd": frame_end,
+                    "version": version,
                 }
 
                 # create new instance
@@ -137,6 +162,22 @@ class CollectEditorialCSV(
                     new_instance.data["representations"].append(
                         representation_data)
 
+                # update instance data frame Start and End with representation
+                # this is for case when Start and End columns are missing
+                # since sequence representation will have frameStart and frameEnd
+                # we can override asset_doc frameStart and frameEnd
+                repre_frame_start = None
+                repre_frame_end = None
+                for repre in new_instance.data["representations"]:
+                    if repre["frameStart"] and repre["frameEnd"]:
+                        repre_frame_start = repre["frameStart"]
+                        repre_frame_end = repre["frameEnd"]
+                        break
+
+                if repre_frame_start and repre_frame_end:
+                    new_instance.data["frameStart"] = repre_frame_start
+                    new_instance.data["frameEnd"] = repre_frame_end
+
             self.log.debug(
                 f"__ new_instance.data: `{pformat(new_instance.data)}`")
 
@@ -152,7 +193,21 @@ class CollectEditorialCSV(
         basename = os.path.basename(filepath)
         _, extension = os.path.splitext(filepath)
 
-        is_sequence = False
+        # validate filepath is having correct extension based on output
+        config_repre_data = config_representation_data()
+        output = repre_data["output"]
+        if output not in config_repre_data:
+            raise KeyError(
+                f"Output '{output}' not found in config representation data."
+            )
+        validate_extensions = config_repre_data[output]["extensions"]
+        if extension not in validate_extensions:
+            raise TypeError(
+                f"File extension '{extension}' not valid for "
+                f"output '{validate_extensions}'."
+            )
+
+        is_sequence = (extension not in VIDEO_EXTENSIONS)
         # convert ### string in file name to %03d
         # this is for correct frame range validation
         # example: file.###.exr -> file.%03d.exr
@@ -196,9 +251,10 @@ class CollectEditorialCSV(
         else:
             files = basename
 
+        tags = deepcopy(repre_data["tags"])
         # if slate in repre_data is true then remove one frame from start
-        if repre_data["slate"] and is_sequence:
-            frame_start += 1
+        if repre_data["slate"]:
+            tags.append("slate")
 
         # get representation data
         representation_data = {
@@ -207,7 +263,7 @@ class CollectEditorialCSV(
             "files": files,
             "stagingDir": dirname,
             "stagingDir_persistent": True,
-            "tags": repre_data["tags"],
+            "tags": tags,
         }
         if frame_start:
             representation_data["frameStart"] = frame_start
@@ -229,6 +285,10 @@ class CollectEditorialCSV(
         # get current project name and code from context.data
         project_doc = context.data["projectEntity"]
         project_name = project_doc["name"]
+
+        # package name from csv file path
+        package_folder = os.path.basename(os.path.dirname(csv_file_path))
+        self.log.debug(f"__ package_folder: `{package_folder}`")
 
         # make sure csv file contains columns from following list
         column_config = config_columns_data()
@@ -268,6 +328,16 @@ class CollectEditorialCSV(
                         f"Project name in csv file '{row_project_name}' "
                         "must be equal to current project name: "
                         f"{project_name}"
+                    )
+                # get Package row value
+                package = self._get_row_value_with_validation(
+                    "Package", row, column_config, default_value=package_folder)
+
+                if (package and package != package_folder):
+                    raise ValueError(
+                        f"Package name in csv file '{package}' "
+                        "must be equal to package folder name: "
+                        f"{package_folder}"
                     )
 
                 row_vendor_name = self._get_row_value_with_validation(
@@ -357,13 +427,9 @@ class CollectEditorialCSV(
         # get Filename row value
         filename = self._get_row_value_with_validation(
             "Filename", row_data, column_config)
-        # get Package row value
-        package = self._get_row_value_with_validation(
-            "Package", row_data, column_config)
         # get Version row value
         version = self._get_row_value_with_validation(
             "Version", row_data, column_config)
-
         # get Color row value
         color = self._get_row_value_with_validation(
             "Color", row_data, column_config)
@@ -405,7 +471,6 @@ class CollectEditorialCSV(
             "Length", row_data, column_config)
 
         representation_data = {
-            "package": package,
             "version": int(version),
             "color": color,
             "notes": notes,
@@ -445,7 +510,10 @@ class CollectEditorialCSV(
                 column_value = column_default
 
         # check if column value matches validation regex
-        if not re.match(column_validation, column_value):
+        if (
+            column_value != None and
+            not re.match(column_validation, column_value)
+        ):
             raise ValueError(
                 f"Column '{column_name}' value '{column_value}' "
                 f"does not match validation regex '{column_validation}' \n"
@@ -584,12 +652,12 @@ def config_columns_data():
         "Start": {
             "column": "vendor_Start",
             "required": False,
-            "validate": "^(\\d{1,8})$|.*"
+            "validate": "^(\\d{1,8})$|.*|None"
         },
         "End": {
             "column": "vendor_End",
             "required": False,
-            "validate": "^(\\d{1,8})$|.*"
+            "validate": "^(\\d{1,8})$|.*|None"
         },
         "Length": {
             "column": "vendor_Length",
@@ -601,27 +669,27 @@ def config_columns_data():
 def config_representation_data():
     return {
         "preview": {
-            "extensions": ["mp4", "mov"],
+            "extensions": [".mp4", ".mov"],
             "codecs": ["h264"],
             "validate_frame_range": False,
-            "validate_fps": True
+            "validate_fps": True,
         },
         "exr": {
             "extensions": [".exr"],
             "codecs": ["exr"],
             "validate_frame_range": True,
-            "validate_fps": True
+            "validate_fps": True,
         },
         "edit": {
             "extensions": [".mov"],
             "codecs": ["prores"],
             "validate_frame_range": True,
-            "validate_fps": True
+            "validate_fps": True,
         },
         "review": {
             "extensions": [".mov"],
             "codecs": ["h264"],
             "validate_frame_range": True,
-            "validate_fps": True
+            "validate_fps": True,
         }
     }
