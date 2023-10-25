@@ -28,8 +28,10 @@ from google.oauth2.credentials import Credentials # this is deprecated
 
 import pandas
 
-# class GobblerHost(TrayPublisherHost):
-#     name = "gobbler"
+# TODO: ADD GOOGLE PANDAS AND FUZZYWUZZY TO REQUIREMENTS
+
+
+
 
 class GobblerModule(OpenPypeModule):
     label = "Gobble mess from client"
@@ -76,33 +78,34 @@ def go(project_name, directory=None):
 
     os.environ["AVALON_PROJECT"] = project_name
 
-    # host = GobblerHost()
-    # install_host(host)
-    # host.install()
-    # print(host.name)
-    # print(host.get_current_asset_name())
-
-    # host.set_project_name(project_name)
-    # print(host.get_context_data())
-    # host.
-    # data = json.loads(host.get_context_data())
-    # print(data)
     assets_list = list(client.get_assets(project_name))
     assets_dict = {asset['name']: asset for asset in assets_list}  # creating a dict {asset_name: asset} for quickly looking up assets by name later.
 
+    # HACK -- removing assets where [hierarchy includes 'Asset' to force psd backgrounds to go to shots instead of assets.]
+    filtered_assets_dict = {}
+    for asset_name, asset in assets_dict.items():
+        if asset.get('data').get('zou'): # this filters out folders and maybe other non-zou assets
+            if asset.get('data').get('zou').get('type') == 'Shot':
+                filtered_assets_dict[asset_name] = asset
+
+
+
+    # copy input to staging directory
     directory = _copy_input_to_staging(directory)
-    items_to_publish = _parse_directory_contents(directory)
+
+    # walk directory and find items to publish
+    items_to_publish = _find_sources(directory)
 
     # MAIN LOOP
     for item in items_to_publish:
+        # print(list(item))
+        asset = _fuzz_asset(item.frame(item.start()), filtered_assets_dict)  # fuzzy match asset
 
-        asset = _fuzz_asset(item.basename(), assets_dict)  # fuzzy match asset
-
-        # host.update_context_data()
         asset_name = asset['name']
+
         extension = item.extension().strip('.')
 
-        # set up repr path
+        # set up representation path
         if item.frameSet():
             print("sequence")
             representation_path = list(item)[0]
@@ -111,11 +114,35 @@ def go(project_name, directory=None):
             representation_path = str(item)
         expected_representations = {extension: representation_path}
 
-        family_name = "image"
-        task_name = "Concept"
-        subset_name = "Input"
+
+        # PRODUCTION LOGIC
+
+        # if extension=='psd': # photoshop file, goes to art task on asset
+        #     family_name = "image"
+        #     task_name = "Art"
+        #     subset_name = "imageTexture"
+
+        if extension in ['psd', 'jpg']: # photoshop or jpg file, goes to edit task on shot
+            family_name = "image"
+            task_name = "Edit"
+            subset_name = "imageTexture"
+
+        if extension=='png':
+            family_name = "render"
+            task_name = "Animation"
+            subset_name = "renderAnimationMain"
+
+
+        # family_name = "render"
+        # task_name = "Animation"
+        # subset_name = "renderAnimationMain"
+
+
+
         publish_data = {}
         batch_name = str(directory)
+
+
 
         easy_publish.publish_version(project_name,
                         asset_name,
@@ -125,6 +152,9 @@ def go(project_name, directory=None):
                         expected_representations,
                         publish_data,
                         batch_name,)
+
+
+    # clean up staging directory # TODO
 
 
 @cli_main.command()
@@ -251,11 +281,11 @@ def _fuzz_asset(item, assets_dict):
     # , scorer=fuzz.token_sort_ratio)
 
     asset = assets_dict.get(best_match)
-    print(f"Matched {item} to {asset['name']}")
+    print(f">>> Matched {item} to {asset['name']}")
     return asset
 
 
-def _parse_directory_contents(source_directory):
+def _find_sources(source_directory):
     import fileseq
     file_sequences = set()
 
