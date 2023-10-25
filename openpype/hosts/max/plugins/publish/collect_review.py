@@ -40,8 +40,9 @@ class CollectReview(pyblish.api.InstancePlugin,
             focal_length = camera.fov
         else:
             raise KnownPublishError(
-                "Invalid object found in 'Review' container."
-                " Only native max Camera supported"
+                "Unable to find a valid camera in 'Review' container."
+                " Only native max Camera supported. "
+                f"Found objects: {cameras}"
             )
         creator_attrs = instance.data["creator_attributes"]
         attr_values = self.get_attr_values_from_data(instance.data)
