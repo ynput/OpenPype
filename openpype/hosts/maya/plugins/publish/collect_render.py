@@ -51,6 +51,8 @@ import pyblish.api
 
 from openpype.lib import get_formatted_current_time
 from openpype.pipeline import legacy_io
+from openpype.settings import get_system_settings, get_project_settings
+from openpype.modules import ModulesManager
 from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
@@ -430,6 +432,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
         options["mayaRenderPlugin"] = maya_render_plugin
 
+        limits = self._get_checked_limit_groups(attributes)
+        options["limits"] = limits
+
         return options
 
     def _discover_pools(self, attributes):
@@ -471,3 +476,47 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         return lib.get_attr_in_layer(
             "defaultRenderGlobals.{}".format(attr), layer=layer
         )
+
+    def _get_checked_limit_groups(self, attributes):
+        checked_limits = []
+        deadline_settings = get_system_settings()["modules"]["deadline"]
+
+        if not deadline_settings["enabled"]:
+            return checked_limits
+
+        manager = ModulesManager()
+        deadline_module = manager.modules_by_name["deadline"]
+
+        try:
+            default_servers = deadline_settings["deadline_urls"]
+            project_settings = get_project_settings(
+                legacy_io.Session["AVALON_PROJECT"]
+            )
+            project_servers = (
+                project_settings["deadline"]["deadline_servers"]
+            )
+            deadline_servers = {
+                k: default_servers[k]
+                for k in project_servers
+                if k in default_servers
+            }
+
+            if not deadline_servers:
+                deadline_servers = default_servers
+        except AttributeError:
+            # Handle situation were we had only one url for deadline.
+            # get default deadline webservice url from deadline module
+            deadline_servers = deadline_module.deadline_urls
+
+        requested_arguments = {"NamesOnly": True}
+        limit_groups = deadline_module.get_deadline_data(
+            deadline_settings['deadline_urls']["default"],
+            "limitgroups",
+            log=self.log,
+            **requested_arguments
+        )
+        for group, value in zip(limit_groups, attributes['limits'][0]):
+            if value is True:
+                checked_limits.append(group)
+
+        return checked_limits

@@ -149,6 +149,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         if self.group != "none" and self.group:
             job_info.Group = self.group
 
+        self.limit = instance.data.get('limits')
+
         if self.limit:
             job_info.LimitGroups = ",".join(self.limit)
 
