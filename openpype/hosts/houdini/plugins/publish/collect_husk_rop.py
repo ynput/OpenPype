@@ -77,7 +77,7 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
         instance.data["colorspaceDisplay"] = colorspace_data["display"]
         instance.data["colorspaceView"] = colorspace_data["view"]
         
-        instance.data["huskCommandline"] = self.submit(rop)
+        instance.data["huskCommandline"] = self.submit(rop, instance)
 
     def get_render_product_name(self, prefix, suffix):
         product_name = prefix
@@ -112,8 +112,68 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
 
         return expected_files
 
-
-    def submit(self, rop_node):
+    def _generate_command(self, node, instance):
+        chunkSize = node.parm('chunkSize').eval()
+        renderer = node.parm('renderer')
+        self.log.debug("renderer: %s" % renderer)
+        verbosity = node.parm('verbosity').eval()
+        
+        usdfile = "the_path_for_usdfile.usd"
+        self.log.debug("usdfile: %s" % usdfile)
+        
+        start = instance.data["frameStart"]
+        end = instance.data["frameEnd"]
+        inc = instance.data["byFrameStep"]
+        
+        output = node.parm('outputimage').eval()
+        output = output[:-8] + '%04d.exr'
+        
+        outputDir = output.split('/')[:-1]
+        outputDir = '/'.join(outputDir)
+        
+        if not os.path.exists(outputDir):
+            os.makedirs(outputDir)
+        
+        self.log.debug("output: %s" % output)
+        
+        rendererLabel = renderer.eval()
+        self.log.debug("rendererLabel: %s" % rendererLabel)
+        
+        framesToRender = float(end - start) / inc
+        if framesToRender < chunkSize:
+            chunkSize = math.ceil(framesToRender)
+        self.log.debug("chunkSize: %s" % chunkSize)
+        
+        if os.name == 'nt':
+            husk_bin = 'husk.exe'
+        else:
+            hfs = hou.getenv('HFS')
+            if hfs:
+                husk_bin = hfs + '/bin/husk'
+            else:
+                print("$HFS variable is not set. It's required for running Husk command.")
+                raise ValueError('HFS missing')
+                
+        command = []
+        command.append(husk_bin)
+        command.append('-R %s' % rendererLabel)
+        command.append('-f <STARTFRAME>')
+        command.append('-n %s' % chunkSize)
+        command.append('-i %s' % inc)
+        command.append('-Va%s' % verbosity)
+        command.append('-o %s' % output)
+        command.append('--make-output-path')
+        command.append('--exrmode 0')
+        command.append('--snapshot 60')
+        command.append('--snapshot-suffix ""')
+        command.append(usdfile)
+        command = ' '.join(command)
+        
+        self.log.debug("command: %s" % command)
+        
+        return command
+    
+    def submit(self, rop_node, instance):
         print("submitting")
         node = rop_node
         self.log.debug("Node: %s" % node)
@@ -126,6 +186,8 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
         
         self.log.debug("checks: %s" % checks)
         
+        command = self._generate_command(rop_node, instance)
+        self.log.debug("command: %s" % command)
         
         if checks:
             nodes = []
