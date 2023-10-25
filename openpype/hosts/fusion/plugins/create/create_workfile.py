@@ -69,14 +69,12 @@ class FusionWorkfileCreator(AutoCreator):
         task_name = self.create_context.get_current_task_name()
         host_name = self.create_context.host_name
 
-        existing_instance_asset = None
-        if existing_instance is not None:
-            if AYON_SERVER_ENABLED:
-                existing_instance_asset = existing_instance.data.get(
-                    "folderPath")
-
-            if not existing_instance_asset:
-                existing_instance_asset = existing_instance.data.get("asset")
+        if existing_instance is None:
+            existing_instance_asset = None
+        elif AYON_SERVER_ENABLED:
+            existing_instance_asset = existing_instance["folderPath"]
+        else:
+            existing_instance_asset = existing_instance["asset"]
 
         if existing_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)

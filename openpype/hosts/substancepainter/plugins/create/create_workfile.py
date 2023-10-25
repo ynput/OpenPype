@@ -42,12 +42,12 @@ class CreateWorkfile(AutoCreator):
                 if instance.creator_identifier == self.identifier
             ), None)
 
-        current_instance_asset = None
-        if current_instance is not None:
-            if AYON_SERVER_ENABLED:
-                current_instance_asset = current_instance.get("folderPath")
-            if not current_instance_asset:
-                current_instance_asset = current_instance.get("asset")
+        if current_instance is None:
+            current_instance_asset = None
+        elif AYON_SERVER_ENABLED:
+            current_instance_asset = current_instance["folderPath"]
+        else:
+            current_instance_asset = current_instance["asset"]
 
         if current_instance is None:
             self.log.info("Auto-creating workfile instance...")
