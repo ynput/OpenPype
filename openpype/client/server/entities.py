@@ -183,7 +183,6 @@ def get_asset_by_name(project_name, asset_name, fields=None):
     return None
 
 
-
 def _folders_query(project_name, con, fields, **kwargs):
     if fields is None or "tasks" in fields:
         folders = get_folders_with_tasks(
