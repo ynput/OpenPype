@@ -515,11 +515,11 @@ def get_plugins() -> list:
 def suspended_refresh():
     """Suspended refresh for scene and modify panel redraw.
     """
-    rt.disableSceneRedraw()
-    rt.suspendEditing()
     if is_headless():
         yield
         return
+    rt.disableSceneRedraw()
+    rt.suspendEditing()
     try:
         yield
 

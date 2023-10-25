@@ -109,21 +109,14 @@ class ExtractAlembic(publish.Extractor,
 class ExtractCameraAlembic(ExtractAlembic):
     """Extract Camera with AlembicExport."""
 
-    order = pyblish.api.ExtractorOrder - 0.1
     label = "Extract Alembic Camera"
-    hosts = ["max"]
     families = ["camera"]
     optional = True
 
 
 class ExtractModel(ExtractAlembic):
-    """
-    Extract Geometry in Alembic Format
-    """
-
-    order = pyblish.api.ExtractorOrder - 0.1
+    """Extract Geometry in Alembic Format"""
     label = "Extract Geometry (Alembic)"
-    hosts = ["max"]
     families = ["model"]
     optional = True
 
