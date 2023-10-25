@@ -1,0 +1,26 @@
+[About]
+Type=label
+Label=About
+Category=About Plugin
+CategoryOrder=-1
+Index=0
+Default=VFX Tricks Husk Plugin for Deadline, based on Python plugin
+Description=Not configurable
+
+[ConcurrentTasks]
+Type=label
+Label=ConcurrentTasks
+Category=About Plugin
+CategoryOrder=-1
+Index=0
+Default=True
+Description=Not configurable
+
+[Python_Executable]
+Type=multilinemultifilename
+Label=Python3 Executable
+Category=Python Executables
+CategoryOrder=0
+Index=0
+Default=C:\Python36;C:\Users\<username>\AppData\Local\Programs\Python\Python36;/usr/bin/python3
+Description=The path to the Python executable. Enter alternative paths on separate lines.
