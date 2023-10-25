@@ -104,14 +104,20 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 config_path = colorspace_data.get("config", {}).get("path")
                 display = colorspace_data["display"]
                 view = colorspace_data["view"]
-                thumbnail_created = self.create_thumbnail_oiio(
-                    full_input_path,
-                    full_output_path,
-                    config_path,
-                    source_colorspace,
-                    display,
-                    view
-                )
+                try:
+                    thumbnail_created = self.create_thumbnail_oiio(
+                        full_input_path,
+                        full_output_path,
+                        config_path,
+                        source_colorspace,
+                        display,
+                        view
+                    )
+                except Exception as e:
+                    self.log.debug((
+                        "Converting with OIIO failed "
+                        "with the following error {}".format(e)
+                    ))
 
             # Try to use FFMPEG if OIIO is not supported or for cases when
             #    oiiotool isn't available
