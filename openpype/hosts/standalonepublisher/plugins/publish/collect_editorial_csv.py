@@ -169,7 +169,7 @@ class CollectEditorialCSV(
                 repre_frame_start = None
                 repre_frame_end = None
                 for repre in new_instance.data["representations"]:
-                    if repre["frameStart"] and repre["frameEnd"]:
+                    if repre.get("frameStart") and repre.get("frameEnd"):
                         repre_frame_start = repre["frameStart"]
                         repre_frame_end = repre["frameEnd"]
                         break
