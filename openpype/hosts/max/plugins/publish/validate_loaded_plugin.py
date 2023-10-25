@@ -53,7 +53,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
                 f"{bullet_point_invalid_statement}\n\n"
                 "You can use repair action to load the plugin."
             )
-            raise PublishValidationError(report, title="Required Plugins unloaded")
+            raise PublishValidationError(
+                report, title="Required Plugins unloaded")
 
     @classmethod
     def repair(cls, instance):
