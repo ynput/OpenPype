@@ -9,14 +9,14 @@ class CreateHuskROP(plugin.HoudiniCreator):
     """Husk ROP"""
     identifier = "io.openpype.creators.houdini.husk_rop"
     label = "Husk ROP"
-    family = "husk_rop"
+    family = "husk"
     icon = "magic"
 
     def create(self, subset_name, instance_data, pre_create_data):
         import hou  # noqa
 
         instance_data.pop("active", None)
-        instance_data.update({"node_type": "husk"})
+        instance_data.update({"node_type": "usdrender"})
         # Add chunk size attribute
         instance_data["chunkSize"] = 10
         # Submit for job publishing
@@ -39,9 +39,9 @@ class CreateHuskROP(plugin.HoudiniCreator):
 
         parms = {
             # Render Frame Range
-            # "trange": 1,
+            "trange": 1,
             # Husk ROP Setting
-            "output": filepath,
+            "outputimage": filepath,
         }
 
         # if self.selected_nodes:
@@ -63,7 +63,7 @@ class CreateHuskROP(plugin.HoudiniCreator):
         instance_node.setParms(parms)
 
         # Lock some Avalon attributes
-        to_lock = ["family", "husk_rop"]
+        to_lock = ["family", "husk"]
         self.lock_parameters(instance_node, to_lock)
 
     def get_pre_create_attr_defs(self):
