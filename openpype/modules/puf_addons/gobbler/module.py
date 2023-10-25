@@ -320,7 +320,7 @@ def _copy_input_to_staging(source_directory):
     root = a.get("roots")["work"][platform.system().lower()]  # get current work directory
     # print(f"Current work root: {root}")
     # Destination directory where you want to copy to
-    temp_name = uuid.uuid4()
+    temp_name = os.path.basename(source_directory)+"_"+str(uuid.uuid4())
     destination_directory = f'{root}/temp/{temp_name}'
 
     try:
