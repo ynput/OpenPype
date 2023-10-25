@@ -28,6 +28,31 @@
                 "label": "Active"
             }
         ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "key": "ValidateLoadedPlugin",
+        "label": "Validate Loaded Plugin",
+        "checkbox_key": "enabled",
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "list",
+                "key": "plugins_for_check",
+                "label": "Plugins Needed For Check",
+                "object_type": "text"
+            }
+        ]
       }
     ]
   }

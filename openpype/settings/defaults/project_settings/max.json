@@ -36,6 +36,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ValidateLoadedPlugin": {
+            "enabled": false,
+            "optional": true,
+            "plugins_for_check": []
         }
     }
 }
