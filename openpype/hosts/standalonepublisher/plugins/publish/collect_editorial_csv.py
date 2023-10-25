@@ -123,20 +123,20 @@ class CollectEditorialCSV(
                     task_name,
                     asset_doc,
                 )
-                # get task data from asset doc
-                task_data = asset_doc["data"]["tasks"][task_name]
 
                 # get representations from product data
                 representations = product_data["representations"]
-
+                label = f"{asset_name}_{product_name}"
                 # make product data
                 product_data = {
                     "asset": asset_name,
                     "subset": product_name,
                     "family": product_type,
-                    "label": f"{asset_name}_{product_name}",
+                    "families": ["csv"],
+                    "assetEntity": asset_doc,
+                    "label": label,
                     "publish": True,
-                    "tasks": {task_name: task_data},
+                    "task": task_name,
                     "variant": variant_name,
                     "source": passing_instance_data["source"],
                     "user": vendor_name,
@@ -148,7 +148,7 @@ class CollectEditorialCSV(
 
                 # create new instance
                 new_instance = context.create_instance(
-                    product_name, family=product_type,
+                    label, family=product_type,
                 )
                 # pass data from original instance to the new one
                 new_instance.data.update(product_data)
@@ -177,6 +177,15 @@ class CollectEditorialCSV(
                 if repre_frame_start and repre_frame_end:
                     new_instance.data["frameStart"] = repre_frame_start
                     new_instance.data["frameEnd"] = repre_frame_end
+
+                    # for thumbnail creation
+                    thumb_index = 0
+                    if "slate" in repre_data and repre_data["slate"]:
+                        thumb_index += 1
+                    thumbnail_source = os.path.join(
+                        repre["stagingDir"], repre["files"][thumb_index]
+                    )
+                    new_instance.data["thumbnailSource"] = thumbnail_source
 
             self.log.debug(
                 f"__ new_instance.data: `{pformat(new_instance.data)}`")
@@ -254,17 +263,23 @@ class CollectEditorialCSV(
         tags = deepcopy(repre_data["tags"])
         # if slate in repre_data is true then remove one frame from start
         if repre_data["slate"]:
-            tags.append("slate")
+            tags.append("has_slate")
 
         # get representation data
         representation_data = {
-            "name": extension[1:],
+            "name": output,
             "ext": extension[1:],
             "files": files,
             "stagingDir": dirname,
             "stagingDir_persistent": True,
             "tags": tags,
         }
+        if extension in VIDEO_EXTENSIONS:
+            representation_data.update({
+                "fps": 25,
+                "outputName": output,
+            })
+
         if frame_start:
             representation_data["frameStart"] = frame_start
         if frame_end:
