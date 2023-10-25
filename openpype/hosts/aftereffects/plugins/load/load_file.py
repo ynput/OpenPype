@@ -30,24 +30,25 @@ class FileLoader(api.AfterEffectsLoader):
         import_options = {}
 
         file = self.fname
-
-        repr_cont = context["representation"]["context"]
-        if "#" not in file:
-            frame = repr_cont.get("frame")
-            if frame:
-                padding = len(frame)
-                file = file.replace(frame, "#" * padding)
-                import_options['sequence'] = True
-
         if not file:
             repr_id = context["representation"]["_id"]
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
-        file = file.replace("\\", "/")
         if '.psd' in file:
             import_options['ImportAsType'] = 'ImportAsType.COMP'
+
+        elif "#" not in file:
+            repr_cont = context["representation"]["context"]
+            frame = repr_cont.get("frame")
+            if frame:
+                padding = len(frame)
+                file = file.replace(frame, "#" * padding)
+                import_options['sequence'] = True
+
+
+        file = file.replace("\\", "/")
 
         comp = stub.import_file(self.fname, stub.LOADED_ICON + comp_name,
                                 import_options)
