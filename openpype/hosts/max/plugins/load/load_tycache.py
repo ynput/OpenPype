@@ -42,7 +42,7 @@ class TyCacheLoader(load.LoaderPlugin):
         """update the container"""
         from pymxs import runtime as rt
 
-        path = os.path.normpath(get_representation_path(representation))
+        path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
         node_list = get_previous_loaded_object(node)
         update_custom_attribute_data(node, node_list)
