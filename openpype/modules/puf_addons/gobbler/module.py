@@ -325,8 +325,9 @@ def _copy_input_to_staging(source_directory):
 
     try:
         # Copy the source directory and its contents to the destination
+        print(f"Copying {source_directory} to staging: {destination_directory}")
         shutil.copytree(source_directory, destination_directory)
-        print(f"Directory copied from {source_directory} to {destination_directory} for staging")
+        print(f"Successfully copied from {source_directory} to {destination_directory} for staging")
         return destination_directory
     except shutil.Error as e:
         raise(e)
