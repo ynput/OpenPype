@@ -38,7 +38,7 @@ class CreateAction(openpype.hosts.blender.api.plugin.BlenderCreator):
             {
                 "id": "pyblish.avalon.instance",
                 "creator_identifier": self.identifier,
-                "label": self.label,
+                "label": subset_name,
                 "task": get_current_task_name(),
                 "subset": subset_name,
                 "instance_node": instance_node,
