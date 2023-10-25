@@ -22,18 +22,26 @@ class CollectReview(pyblish.api.InstancePlugin,
 
     def process(self, instance):
         nodes = instance.data["members"]
-        focal_length = None
-        camera_name = None
-        for node in nodes:
-            if rt.classOf(node) in rt.Camera.classes:
-                camera_name = node.name
-                if rt.isProperty(node, "fov"):
-                    focal_length = node.fov
-                else:
-                    raise KnownPublishError(
-                        "Invalid object found in 'Review' container."
-                        " Only native max Camera supported"
-                    )
+        def is_camera(node):
+            is_camera_class = rt.classOf(node) in rt.Camera.classes
+            return is_camera_class and rt.isProperty(node, "fov")
+
+        # Use first camera in instance
+        cameras = [node for node in nodes if is_camera(node)]
+        if cameras:
+            if len(cameras) > 1:
+                self.log.warning(
+                    "Found more than one camera in instance, using first "
+                    f"one found: {cameras[0]}"
+                )
+            camera = cameras[0]
+            camera_name = camera.name
+            focal_length = camera.fov
+        else:
+            raise KnownPublishError(
+                "Invalid object found in 'Review' container."
+                " Only native max Camera supported"
+            )
         creator_attrs = instance.data["creator_attributes"]
         attr_values = self.get_attr_values_from_data(instance.data)
 
