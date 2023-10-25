@@ -221,6 +221,7 @@ def run_checks():
     return True
     
 def submit():
+    print("submitting")
     node = hou.node('.')
     batch = node.parm('batch').eval()
     comment = node.parm('comment').eval()
@@ -251,6 +252,11 @@ def submit():
                 except:
                     sections = None
                     
+                print('-------------------')
+                print(node)
+                print(executeLocally)
+                print(sections)
+                
                 if sections:
                     start = node.parm('sectionrange1').eval()
                     end = node.parm('sectionrange2').eval()
