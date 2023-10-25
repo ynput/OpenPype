@@ -41,6 +41,7 @@ class CreateHuskROP(plugin.HoudiniCreator):
             # Render Frame Range
             "trange": 1,
             # Husk ROP Setting
+            "renderer": "HdVRayRendererPlugin",
             "outputimage": filepath,
         }
 
