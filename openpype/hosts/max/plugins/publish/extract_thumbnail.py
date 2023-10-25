@@ -24,7 +24,7 @@ class ExtractThumbnail(publish.Extractor):
             f"Create temp directory {tmp_staging} for thumbnail"
         )
         fps = int(instance.data["fps"])
-        frame = int(instance.data["frameStart"])
+        frame = int(instance.data["frameStartHandle"])
         instance.context.data["cleanupFullPaths"].append(tmp_staging)
         filename = "{name}_thumbnail..png".format(**instance.data)
         filepath = os.path.join(tmp_staging, filename)
