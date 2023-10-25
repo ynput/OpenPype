@@ -120,15 +120,14 @@ class HuskSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         hou_major_minor = hou.applicationVersionString().rsplit(".", 1)[0]
 
 # Arguments=husk.exe -R HdVRayRendererPlugin -f <STARTFRAME> -n 0 -i 1 -Va3 -o 
-# //172.16.22.40/000000_Pipeline_RND/60_PRODUCTION/work/render/shots/SEQ_TEST/SEQ_SH01/lighting/testPSB/SEQ_SH01_lighting_testPSB.v002.001/SEQ_SH01_lighting_testPSB.v002.001.%04d.exr 
+# //172.16.22.40/000000_Pipeline_RND/60_PRODUCTION/work/render/shots/SEQ_TEST/SEQ_SH01/lighting/testPSB/SEQ_SH01_lighting_testPSB.v002.001/SEQ_SH01_lighting_testPSB.v002.001.%04d.exr
 # --make-output-path --exrmode 0 --snapshot 60 --snapshot-suffix "" //172.16.22.40/000000_Pipeline_RND/60_PRODUCTION/work/render/shots/SEQ_TEST/SEQ_SH01/lighting/testPSB/SEQ_SH01_lighting_testPSB.v002.001/usd/SEQ_SH01_lighting_testPSB.v002.001.usd 
 # -e <ENDFRAME> -log //172.16.22.40/000000_Pipeline_RND/60_PRODUCTION/work/render/shots/SEQ_TEST/SEQ_SH01/lighting/testPSB/SEQ_SH01_lighting_testPSB.v002.001/log
 # ScriptFile=R:\HSITE\WORKGROUPS\houdini19.5\VFXTricks\scripts\run_husk.py
 
-
         plugin_info = DeadlinePluginInfo(
-            Arguments="husk.exe -R HdVRayRendererPlugin -f <STARTFRAME> -n 0 -i 1 -Va3 -o --make-output-path --exrmode 0 --snapshot 60 --snapshot-suffix "" //172.16.22.40/000000_Pipeline_RND/60_PRODUCTION/work/render/shots/SEQ_TEST/SEQ_SH01/lighting/testPSB/SEQ_SH01_lighting_testPSB.v002.001/usd/SEQ_SH01_lighting_testPSB.v002.001.usd -e <ENDFRAME> -log //172.16.22.40/000000_Pipeline_RND/60_PRODUCTION/work/render/shots/SEQ_TEST/SEQ_SH01/lighting/testPSB/SEQ_SH01_lighting_testPSB.v002.001/log",
-            ScriptFile="R:/HSITE/WORKGROUPS/houdini19.5/VFXTricks/scripts/run_husk.py",
+            Arguments="husk.exe -R HdVRayRendererPlugin -f <STARTFRAME> -n 0 -i 1 -Va3 -o --make-output-path --exrmode 0 --snapshot 60 --snapshot-suffix "" //172.16.22.40/000000_Pipeline_RND/60_PRODUCTION/work/render/shots/SEQ_TEST/SEQ_SH01/lighting/testPSB/SEQ_SH01_lighting_testPSB.v002.001/usd/SEQ_SH01_lighting_testPSB.v002.001.usd -e <ENDFRAME> -log //172.16.22.40/000000_Pipeline_RND/60_PRODUCTION/work/render/shots/SEQ_TEST/SEQ_SH01/lighting/testPSB/SEQ_SH01_lighting_testPSB.v002.001/log",  # noqa: E501
+            ScriptFile="R:/HSITE/WORKGROUPS/houdini19.5/VFXTricks/scripts/run_husk.py",  # noqa: E501
             OutputDriver=driver.path(),
             Version=hou_major_minor,
             IgnoreInputs=True
