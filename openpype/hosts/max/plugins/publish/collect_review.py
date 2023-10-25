@@ -22,6 +22,7 @@ class CollectReview(pyblish.api.InstancePlugin,
 
     def process(self, instance):
         nodes = instance.data["members"]
+
         def is_camera(node):
             is_camera_class = rt.classOf(node) in rt.Camera.classes
             return is_camera_class and rt.isProperty(node, "fov")
