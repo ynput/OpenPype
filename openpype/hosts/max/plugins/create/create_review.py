@@ -33,7 +33,7 @@ class CreateReview(plugin.MaxCreator):
             pre_create_data)
 
     def get_instance_attr_defs(self):
-        image_format_enum = ["exr", "jpg", "png", "tif"]
+        image_format_enum = ["exr", "jpg", "png"]
 
         visual_style_preset_enum = [
             "Realistic", "Shaded", "Facets",

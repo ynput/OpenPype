@@ -5,7 +5,10 @@ import pyblish.api
 from pymxs import runtime as rt
 from openpype.lib import BoolDef
 from openpype.hosts.max.api.lib import get_max_version
-from openpype.pipeline.publish import OpenPypePyblishPluginMixin
+from openpype.pipeline.publish import (
+    OpenPypePyblishPluginMixin,
+    KnownPublishError
+)
 
 
 class CollectReview(pyblish.api.InstancePlugin,
@@ -24,7 +27,13 @@ class CollectReview(pyblish.api.InstancePlugin,
         for node in nodes:
             if rt.classOf(node) in rt.Camera.classes:
                 camera_name = node.name
-                focal_length = node.fov
+                if rt.isProperty(node, "fov"):
+                    focal_length = node.fov
+                else:
+                    raise KnownPublishError(
+                        "Invalid object found in 'Review' container."
+                        " Only native max Camera supported"
+                    )
         creator_attrs = instance.data["creator_attributes"]
         attr_values = self.get_attr_values_from_data(instance.data)
 
