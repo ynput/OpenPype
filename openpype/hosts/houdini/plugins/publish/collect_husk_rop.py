@@ -77,7 +77,7 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
         instance.data["colorspaceDisplay"] = colorspace_data["display"]
         instance.data["colorspaceView"] = colorspace_data["view"]
         
-        instance.data["huskCommandline"] = submit()
+        instance.data["huskCommandline"] = self.submit(rop)
 
     def get_render_product_name(self, prefix, suffix):
         product_name = prefix
@@ -112,6 +112,87 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
 
         return expected_files
 
+
+    def submit(self, rop_node):
+        print("submitting")
+        node = rop_node
+        self.log.debug("Node: %s" % node)
+        # batch = node.parm('batch').eval()
+        # comment = node.parm('comment').eval()
+        # priority = node.parm('priority').eval()
+        # suspended = node.parm('submitsuspended').eval()
+        
+        checks = run_checks()
+        
+        self.log.debug("checks: %s" % checks)
+        
+        
+        if checks:
+            nodes = []
+            nodes = traverseInputs(node, nodes)
+            if nodes:
+                updateMode = hou.updateModeSetting()
+                hou.setUpdateMode(hou.updateMode.Manual)
+                prep_deadline()
+                hou.hipFile.save()
+                batch += ' - ' + strftime("%H:%M", localtime())
+                for node in nodes:
+                    # executeLocally
+                    try:
+                        executeLocally = node.parm('executelocally').eval()
+                    except:
+                        executeLocally = None
+                        
+                    # sections
+                    try:
+                        sections = node.parm("sections").eval()
+                    except:
+                        sections = None
+                        
+                    print('-------------------')
+                    print(node)
+                    print(executeLocally)
+                    print(sections)
+                    
+                    if sections:
+                        start = node.parm('sectionrange1').eval()
+                        end = node.parm('sectionrange2').eval()
+                        reader = hou.node(node.parm("readerpath").eval())
+                        currentSectionParm = reader.parm('currentsection')
+                        currentSection = currentSectionParm.eval()
+                        
+                        for section in range(start, end + 1):
+                            currentSectionParm.set(section)
+                            if executeLocally == True:
+                                node.render()
+                            else:
+                                node.hdaModule().writeSubmissionFiles(node, section, batch, comment, priority, suspended)
+                        currentSectionParm.set(currentSection)
+                    else:
+                        if executeLocally == True:
+                            frameRange = hou.playbar.frameRange()
+                            playbackRange = hou.playbar.playbackRange()
+                            frame = hou.frame()
+                            
+                            start = node.parm('f1').eval()
+                            end = node.parm('f2').eval()
+                            
+                            hou.playbar.setFrameRange(start, end)
+                            hou.playbar.setPlaybackRange(start, end)
+                            hou.setFrame(start)
+                            
+                            node.render()
+                            
+                            hou.playbar.setFrameRange(frameRange[0], frameRange[1])
+                            
+                            hou.playbar.setPlaybackRange(playbackRange[0], playbackRange[1])
+                            hou.setFrame(frame)
+                        else:
+                            node.hdaModule().writeSubmissionFiles(node, None, batch, comment, priority, suspended)
+                send_deadline()
+                hou.setUpdateMode(updateMode)
+                hou.node('.').parm('comment').set('')
+                
 
 import os
 import sys
@@ -220,80 +301,6 @@ def run_checks():
         return False
     return True
     
-def submit():
-    print("submitting")
-    node = hou.node('.')
-    batch = node.parm('batch').eval()
-    comment = node.parm('comment').eval()
-    priority = node.parm('priority').eval()
-    suspended = node.parm('submitsuspended').eval()
-    
-    checks = run_checks()
-    
-    if checks:
-        nodes = []
-        nodes = traverseInputs(node, nodes)
-        if nodes:
-            updateMode = hou.updateModeSetting()
-            hou.setUpdateMode(hou.updateMode.Manual)
-            prep_deadline()
-            hou.hipFile.save()
-            batch += ' - ' + strftime("%H:%M", localtime())
-            for node in nodes:
-                # executeLocally
-                try:
-                    executeLocally = node.parm('executelocally').eval()
-                except:
-                    executeLocally = None
-                    
-                # sections
-                try:
-                    sections = node.parm("sections").eval()
-                except:
-                    sections = None
-                    
-                print('-------------------')
-                print(node)
-                print(executeLocally)
-                print(sections)
-                
-                if sections:
-                    start = node.parm('sectionrange1').eval()
-                    end = node.parm('sectionrange2').eval()
-                    reader = hou.node(node.parm("readerpath").eval())
-                    currentSectionParm = reader.parm('currentsection')
-                    currentSection = currentSectionParm.eval()
-                    
-                    for section in range(start, end + 1):
-                        currentSectionParm.set(section)
-                        if executeLocally == True:
-                            node.render()
-                        else:
-                            node.hdaModule().writeSubmissionFiles(node, section, batch, comment, priority, suspended)
-                    currentSectionParm.set(currentSection)
-                else:
-                    if executeLocally == True:
-                        frameRange = hou.playbar.frameRange()
-                        playbackRange = hou.playbar.playbackRange()
-                        frame = hou.frame()
-                        
-                        start = node.parm('f1').eval()
-                        end = node.parm('f2').eval()
-                        
-                        hou.playbar.setFrameRange(start, end)
-                        hou.playbar.setPlaybackRange(start, end)
-                        hou.setFrame(start)
-                        
-                        node.render()
-                        
-                        hou.playbar.setFrameRange(frameRange[0], frameRange[1])
-                        hou.playbar.setPlaybackRange(playbackRange[0], playbackRange[1])
-                        hou.setFrame(frame)
-                    else:
-                        node.hdaModule().writeSubmissionFiles(node, None, batch, comment, priority, suspended)
-            send_deadline()
-            hou.setUpdateMode(updateMode)
-            hou.node('.').parm('comment').set('')
             
 import os
 import sys
