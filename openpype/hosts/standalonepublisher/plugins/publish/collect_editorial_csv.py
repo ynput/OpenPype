@@ -97,7 +97,16 @@ class CollectEditorialCSV(
                 frame_start = None
                 frame_end = None
                 version = None
+                comment = None
+                intent = None
                 for filepath, repre_data in product_data["representations"].items():
+                    if not comment and repre_data["notes"]:
+                        comment = repre_data["notes"]
+                    if not intent and repre_data["intent"]:
+                        intent = repre_data["intent"]
+                        if intent:
+                            comment = f"{intent}: {comment}"
+
                     extension = os.path.splitext(filepath)[-1]
                     if extension not in [".mov", ".exr"]:
                         continue
@@ -132,7 +141,7 @@ class CollectEditorialCSV(
                     "asset": asset_name,
                     "subset": product_name,
                     "family": product_type,
-                    "families": ["csv"],
+                    "families": ["csv", "ftrack"],
                     "assetEntity": asset_doc,
                     "label": label,
                     "publish": True,
@@ -144,6 +153,7 @@ class CollectEditorialCSV(
                     "frameStart": frame_start,
                     "frameEnd": frame_end,
                     "version": version,
+                    "comment": comment,
                 }
 
                 # create new instance
@@ -185,7 +195,12 @@ class CollectEditorialCSV(
                     thumbnail_source = os.path.join(
                         repre["stagingDir"], repre["files"][thumb_index]
                     )
-                    new_instance.data["thumbnailSource"] = thumbnail_source
+                else:
+                    thumbnail_source = os.path.join(
+                        repre["stagingDir"], repre["files"]
+                    )
+
+                new_instance.data["thumbnailSource"] = thumbnail_source
 
             self.log.debug(
                 f"__ new_instance.data: `{pformat(new_instance.data)}`")
