@@ -12,8 +12,7 @@ class ExtractABC(publish.Extractor):
 
     label = "Extract ABC"
     hosts = ["blender"]
-    families = ["model", "pointcache"]
-    optional = True
+    families = ["pointcache"]
 
     def process(self, instance):
         # Define extract output file path
@@ -62,3 +61,12 @@ class ExtractABC(publish.Extractor):
 
         self.log.info("Extracted instance '%s' to: %s",
                       instance.name, representation)
+
+
+class ExtractModelABC(ExtractABC):
+    """Extract model as ABC."""
+
+    label = "Extract Model ABC"
+    hosts = ["blender"]
+    families = ["model"]
+    optional = True

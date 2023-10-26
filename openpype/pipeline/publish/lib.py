@@ -25,7 +25,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.plugin_discover import DiscoverResult
 
-from .contants import (
+from .constants import (
     DEFAULT_PUBLISH_TEMPLATE,
     DEFAULT_HERO_PUBLISH_TEMPLATE,
     TRANSIENT_DIR_TEMPLATE

@@ -12,6 +12,7 @@ from .hierarchy import (
     HierarchyModel,
     HIERARCHY_MODEL_SENDER,
 )
+from .thumbnails import ThumbnailsModel
 
 
 __all__ = (
@@ -26,4 +27,6 @@ __all__ = (
     "TaskItem",
     "HierarchyModel",
     "HIERARCHY_MODEL_SENDER",
+
+    "ThumbnailsModel",
 )
