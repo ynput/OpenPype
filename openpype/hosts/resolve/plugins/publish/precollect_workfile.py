@@ -1,6 +1,7 @@
 import pyblish.api
 from pprint import pformat
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import get_current_asset_name
 from openpype.hosts.resolve import api as rapi
 from openpype.hosts.resolve.otio import davinci_export
@@ -13,10 +14,13 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.5
 
     def process(self, context):
+        current_asset = get_current_asset_name()
+        if AYON_SERVER_ENABLED:
+            # AYON compatibility split name and use last piece
+            asset_name = current_asset.split("/")[-1]
+        else:
+            asset_name = current_asset
 
-        asset = get_current_asset_name()
-        # AYON compatibility split name and use last piece
-        _asset_name = asset.split("/")[-1]
         subset = "workfile"
         project = rapi.get_current_project()
         fps = project.GetSetting("timelineFrameRate")
@@ -26,9 +30,9 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         otio_timeline = davinci_export.create_otio_timeline(project)
 
         instance_data = {
-            "name": "{}_{}".format(_asset_name, subset),
-            "asset": asset,
-            "subset": "{}{}".format(_asset_name, subset.capitalize()),
+            "name": "{}_{}".format(asset_name, subset),
+            "asset": current_asset,
+            "subset": "{}{}".format(asset_name, subset.capitalize()),
             "item": project,
             "family": "workfile",
             "families": []
