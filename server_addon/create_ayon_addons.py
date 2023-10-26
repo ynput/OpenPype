@@ -3,6 +3,7 @@ import sys
 import re
 import json
 import shutil
+import argparse
 import zipfile
 import platform
 import collections
@@ -185,8 +186,8 @@ def create_openpype_package(
     addon_output_dir = output_dir / "openpype" / addon_version
     private_dir = addon_output_dir / "private"
     # Make sure dir exists
-    addon_output_dir.mkdir(parents=True)
-    private_dir.mkdir(parents=True)
+    addon_output_dir.mkdir(parents=True, exist_ok=True)
+    private_dir.mkdir(parents=True, exist_ok=True)
 
     # Copy version
     shutil.copy(str(version_path), str(addon_output_dir))
@@ -268,19 +269,29 @@ def create_addon_package(
         )
 
 
-def main(create_zip=True, keep_source=False):
+def main(output_dir=None, skip_zip=True, keep_source=False, clear_output_dir=False):
     current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
     root_dir = current_dir.parent
-    output_dir = current_dir / "packages"
+    create_zip = not skip_zip
+
+    output_dir = Path(output_dir) if output_dir else current_dir / "packages"
+    print("Current directory:", current_dir)
+    print("Root directory:", root_dir)
+    print("Skip zip:", skip_zip)
+    print("Clear output dir:", clear_output_dir)
+    print("Keep source:", keep_source)
     print("Package creation started...")
+    print(f"Output directory: {output_dir}")
 
     # Make sure package dir is empty
-    if output_dir.exists():
+    if output_dir.exists() and clear_output_dir:
         shutil.rmtree(str(output_dir))
+
     # Make sure output dir is created
-    output_dir.mkdir(parents=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     for addon_dir in current_dir.iterdir():
+        print(f"Processing addon: {addon_dir.name}")
         if not addon_dir.is_dir():
             continue
 
@@ -303,6 +314,41 @@ def main(create_zip=True, keep_source=False):
 
 
 if __name__ == "__main__":
-    create_zip = "--skip-zip" not in sys.argv
-    keep_sources = "--keep-sources" in sys.argv
-    main(create_zip, keep_sources)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--skip-zip",
+        dest="skip_zip",
+        action="store_true",
+        help=(
+            "Skip zipping server package and create only"
+            " server folder structure."
+        )
+    )
+    parser.add_argument(
+        "--keep-sources",
+        dest="keep_sources",
+        action="store_true",
+        help=(
+            "Keep folder structure when server package is created."
+        )
+    )
+    parser.add_argument(
+        "-o", "--output",
+        dest="output_dir",
+        default=None,
+        help=(
+            "Directory path where package will be created"
+            " (Will be purged if already exists!)"
+        )
+    )
+    parser.add_argument(
+        "-c", "--dont-clear-output",
+        dest="clear_output_dir",
+        action="store_false",
+        help=(
+            "Clear output directory before creating packages."
+        )
+    )
+
+    args = parser.parse_args(sys.argv[1:])
+    main(args.output_dir, args.skip_zip, args.keep_sources, args.clear_output_dir)
