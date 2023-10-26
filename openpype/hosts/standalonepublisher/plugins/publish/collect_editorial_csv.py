@@ -14,6 +14,9 @@ from openpype.pipeline import (
 )
 import clique
 
+ACCEPTED_EXTENSIONS = {
+    ".nk"
+}
 
 
 class CollectEditorialCSV(
@@ -92,11 +95,27 @@ class CollectEditorialCSV(
             vendor_name = _data["vendor_name"]
             products = _data["products"]
 
-            for _, product_data in products.items():
-                # make sure frame start/end is always found from representations or added from asset doc
+            for instance_name, product_data in products.items():
+                # get important instance variables
+                task_name = product_data["task_name"]
+                variant_name = product_data["variant_name"]
+                product_type = product_data["product_type"]
+                version = product_data["version"]
+
+                # create subset/product name
+                product_name = get_subset_name(
+                    product_type,
+                    variant_name,
+                    task_name,
+                    asset_doc,
+                )
+
+                # make sure frame start/end is inherited from csv columns
+                # if they exists or inherit them from asset doc for case where
+                # columns are missing because only mov or mp4 files needs to be
+                # published
                 frame_start = None
                 frame_end = None
-                version = None
                 comment = None
                 intent = None
                 for filepath, repre_data in product_data["representations"].items():
@@ -108,34 +127,22 @@ class CollectEditorialCSV(
                             comment = f"{intent}: {comment}"
 
                     extension = os.path.splitext(filepath)[-1]
-                    if extension not in [".mov", ".exr"]:
+                    if extension in [".mp4"]:
                         continue
                     if not frame_start and repre_data["frameStart"]:
                         frame_start = repre_data["frameStart"]
                     if not frame_end and repre_data["frameEnd"]:
                         frame_end = repre_data["frameEnd"]
-                    if not version and repre_data["version"]:
-                        version = repre_data["version"]
+
                 if not frame_start:
                     frame_start = asset_doc["data"]["frameStart"]
                 if not frame_end:
                     frame_end = asset_doc["data"]["frameEnd"]
-                self.log.debug(f"__ frame_start: `{frame_start}`")
-                self.log.debug(f"__ frame_end: `{frame_end}`")
-
-                task_name = product_data["task_name"]
-                variant_name = product_data["variant_name"]
-                product_type = product_data["product_type"]
-                product_name = get_subset_name(
-                    product_type,
-                    variant_name,
-                    task_name,
-                    asset_doc,
-                )
 
                 # get representations from product data
                 representations = product_data["representations"]
-                label = f"{asset_name}_{product_name}"
+                label = f"{asset_name}_{product_name}_v{version:>03}"
+
                 # make product data
                 product_data = {
                     "asset": asset_name,
@@ -158,7 +165,7 @@ class CollectEditorialCSV(
 
                 # create new instance
                 new_instance = context.create_instance(
-                    label, family=product_type,
+                    instance_name, family=product_type,
                 )
                 # pass data from original instance to the new one
                 new_instance.data.update(product_data)
@@ -202,8 +209,8 @@ class CollectEditorialCSV(
 
                 new_instance.data["thumbnailSource"] = thumbnail_source
 
-            self.log.debug(
-                f"__ new_instance.data: `{pformat(new_instance.data)}`")
+                self.log.debug(
+                    f"__ new_instance.data: `{pformat(new_instance.data)}`")
 
     def _get_representation_data(
         self, context, filepath, repre_data, staging_dir
@@ -231,7 +238,8 @@ class CollectEditorialCSV(
                 f"output '{validate_extensions}'."
             )
 
-        is_sequence = (extension not in VIDEO_EXTENSIONS)
+        seq_extension_check = ACCEPTED_EXTENSIONS.union(VIDEO_EXTENSIONS)
+        is_sequence = (extension not in seq_extension_check)
         # convert ### string in file name to %03d
         # this is for correct frame range validation
         # example: file.###.exr -> file.%03d.exr
@@ -391,8 +399,14 @@ class CollectEditorialCSV(
                 product_type = self._get_row_value_with_validation(
                     "Family", row, column_config)
 
+                # get Version row value
+                version = self._get_row_value_with_validation(
+                    "Version", row, column_config)
+
                 pre_product_name = (
-                    f"{task_name}{variant_name}{product_type}".replace(" ", "").lower())
+                    f"{task_name}{variant_name}{product_type}"
+                    f"{version}".replace(" ", "").lower()
+                )
 
                 # get representation data
                 filename, representation_data = \
@@ -424,6 +438,7 @@ class CollectEditorialCSV(
                                 "task_name": task_name,
                                 "variant_name": variant_name,
                                 "product_type": product_type,
+                                "version": version,
                                 "representations": {
                                     filename: representation_data,
                                 },
@@ -438,6 +453,7 @@ class CollectEditorialCSV(
                             "task_name": task_name,
                             "variant_name": variant_name,
                             "product_type": product_type,
+                            "version": version,
                             "representations": {
                                 filename: representation_data,
                             },
@@ -654,13 +670,13 @@ def config_columns_data():
             "column": "vendor_Output",
             "default": "preview",
             "required": True,
-            "validate": "(exr|preview|edit|review)"
+            "validate": "(exr|preview|edit|review|nuke)"
         },
         "Family": {
             "column": "vendor_Family",
             "default": "render",
             "required": False,
-            "validate": "(render|plate)"
+            "validate": "(render|plate|workfile)"
         },
         "Slate": {
             "column": "vendor_Slate",
@@ -719,6 +735,11 @@ def config_representation_data():
         "review": {
             "extensions": [".mov"],
             "codecs": ["h264"],
+            "validate_frame_range": True,
+            "validate_fps": True,
+        },
+        "nuke": {
+            "extensions": [".nk"],
             "validate_frame_range": True,
             "validate_fps": True,
         }
