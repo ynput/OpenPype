@@ -30,12 +30,12 @@ class TVPaintWorkfileCreator(TVPaintAutoCreator):
         asset_name = create_context.get_current_asset_name()
         task_name = create_context.get_current_task_name()
 
-        existing_asset_name = None
-        if existing_instance is not None:
-            if AYON_SERVER_ENABLED:
-                existing_asset_name = existing_instance.get("folderPath")
-            if existing_asset_name is None:
-                existing_asset_name = existing_instance.get("asset")
+        if existing_instance is None:
+            existing_asset_name = None
+        elif AYON_SERVER_ENABLED:
+            existing_asset_name = existing_instance["folderPath"]
+        else:
+            existing_asset_name = existing_instance["asset"]
 
         if existing_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)
