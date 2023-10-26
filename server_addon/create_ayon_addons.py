@@ -185,6 +185,9 @@ def create_openpype_package(
 
     addon_output_dir = output_dir / "openpype" / addon_version
     private_dir = addon_output_dir / "private"
+    if addon_output_dir.exists():
+        shutil.rmtree(str(addon_output_dir))
+
     # Make sure dir exists
     addon_output_dir.mkdir(parents=True, exist_ok=True)
     private_dir.mkdir(parents=True, exist_ok=True)
@@ -269,13 +272,22 @@ def create_addon_package(
         )
 
 
-def main(output_dir=None, skip_zip=True, keep_source=False, clear_output_dir=False):
+def main(
+    output_dir=None,
+    skip_zip=True,
+    keep_source=False,
+    clear_output_dir=False,
+    addons=None,
+):
     current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
     root_dir = current_dir.parent
     create_zip = not skip_zip
 
+    if output_dir:
+        output_dir = Path(output_dir)
+    else:
+        output_dir = current_dir / "packages"
 
-    # Make sure package dir is empty
     if output_dir.exists() and clear_output_dir:
         shutil.rmtree(str(output_dir))
 
@@ -286,6 +298,9 @@ def main(output_dir=None, skip_zip=True, keep_source=False, clear_output_dir=Fal
     output_dir.mkdir(parents=True, exist_ok=True)
     for addon_dir in current_dir.iterdir():
         if not addon_dir.is_dir():
+            continue
+
+        if addons and addon_dir.name not in addons:
             continue
 
         server_dir = addon_dir / "server"
@@ -335,13 +350,26 @@ if __name__ == "__main__":
         )
     )
     parser.add_argument(
-        "-c", "--dont-clear-output",
+        "-c", "--clear-output-dir",
         dest="clear_output_dir",
-        action="store_false",
+        action="store_true",
         help=(
-            "Clear output directory before creating packages."
+            "Clear output directory before package creation."
         )
+    )
+    parser.add_argument(
+        "-a",
+        "--addon",
+        dest="addons",
+        action="append",
+        help="Limit addon creation to given addon name",
     )
 
     args = parser.parse_args(sys.argv[1:])
-    main(args.output_dir, args.skip_zip, args.keep_sources, args.clear_output_dir)
+    main(
+        args.output_dir,
+        args.skip_zip,
+        args.keep_sources,
+        args.clear_output_dir,
+        args.addons,
+    )
