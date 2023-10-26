@@ -3,6 +3,16 @@ from ayon_server.settings import BaseSettingsModel
 
 
 # Publish Plugins
+class CollectRopFrameRangeModel(BaseSettingsModel):
+    """Collect Frame Range
+    Disable this if you want the publisher to
+    ignore start and end handles specified in the
+    asset data for publish instances
+    """
+    use_asset_handles: bool = Field(
+        title="Use asset handles")
+
+
 class ValidateWorkfilePathsModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
@@ -23,6 +33,11 @@ class BasicValidateModel(BaseSettingsModel):
 
 
 class PublishPluginsModel(BaseSettingsModel):
+    CollectRopFrameRange: CollectRopFrameRangeModel = Field(
+        default_factory=CollectRopFrameRangeModel,
+        title="Collect Rop Frame Range.",
+        section="Collectors"
+    )
     ValidateContainers: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Latest Containers.",
@@ -45,6 +60,9 @@ class PublishPluginsModel(BaseSettingsModel):
 
 
 DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
+    "CollectRopFrameRange": {
+        "use_asset_handles": True
+    },
     "ValidateContainers": {
         "enabled": True,
         "optional": True,
