@@ -1,6 +1,274 @@
 # Changelog
 
 
+## [3.17.4](https://github.com/ynput/OpenPype/tree/3.17.4)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.17.3...3.17.4)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Add Support for Husk-AYON Integration <a href="https://github.com/ynput/OpenPype/pull/5816">#5816</a></summary>
+
+This draft pull request introduces support for integrating Husk with AYON within the OpenPype repository.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Push to project tool: Prepare push to project tool for AYON <a href="https://github.com/ynput/OpenPype/pull/5770">#5770</a></summary>
+
+Cloned Push to project tool for AYON and modified it.
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Max: tycache family support <a href="https://github.com/ynput/OpenPype/pull/5624">#5624</a></summary>
+
+Tycache family supports for Tyflow Plugin in Max
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Changed behaviour for updating assets <a href="https://github.com/ynput/OpenPype/pull/5670">#5670</a></summary>
+
+Changed how assets are updated in Unreal.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Unreal: Improved error reporting for Sequence Frame Validator <a href="https://github.com/ynput/OpenPype/pull/5730">#5730</a></summary>
+
+Improved error reporting for Sequence Frame Validator.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Setting tweaks on Review Family <a href="https://github.com/ynput/OpenPype/pull/5744">#5744</a></summary>
+
+- Bug fix of not being able to publish the preferred visual style when creating preview animation
+- Exposes the parameters after creating instance
+- Add the Quality settings and viewport texture settings for preview animation
+- add use selection for create review
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Add families with frame range extractions back to the frame range validator <a href="https://github.com/ynput/OpenPype/pull/5757">#5757</a></summary>
+
+In 3dsMax, there are some instances which exports the files in frame range but not being added to the optional frame range validator. In this PR, these instances would have the optional frame range validators to allow users to check if frame range aligns with the context data from DB.The following families have been added to have optional frame range validator:
+- maxrender
+- review
+- camera
+- redshift proxy
+- pointcache
+- point cloud(tyFlow PRT)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TimersManager: Use available data to get context info <a href="https://github.com/ynput/OpenPype/pull/5804">#5804</a></summary>
+
+Get context information from pyblish context data instead of using `legacy_io`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Removed unused variable from `AbstractCollectRender` <a href="https://github.com/ynput/OpenPype/pull/5805">#5805</a></summary>
+
+Removed unused `_asset` variable from `RenderInstance`.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Bugfix/houdini:  wrong frame calculation with handles <a href="https://github.com/ynput/OpenPype/pull/5698">#5698</a></summary>
+
+This PR make collect plugins to consider `handleStart` and `handleEnd` when collecting frame range it affects three parts:
+- get frame range in collect plugins
+- expected file in render plugins
+- submit houdini job deadline plugin
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: ayon server settings improvements <a href="https://github.com/ynput/OpenPype/pull/5746">#5746</a></summary>
+
+Nuke settings were not aligned with OpenPype settings. Also labels needed to be improved.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix pointcache family and fix alembic extractor <a href="https://github.com/ynput/OpenPype/pull/5747">#5747</a></summary>
+
+Fixed `pointcache` family and fixed behaviour of the alembic extractor.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Remove 'shotgun_api3' from dependencies <a href="https://github.com/ynput/OpenPype/pull/5803">#5803</a></summary>
+
+Removed `shotgun_api3` dependency from openpype dependencies for AYON launcher. The dependency is already defined in shotgrid addon and change of version causes clashes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Fix typo in filename <a href="https://github.com/ynput/OpenPype/pull/5807">#5807</a></summary>
+
+Move content of `contants.py` into `constants.py`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Create context respects instance changes <a href="https://github.com/ynput/OpenPype/pull/5809">#5809</a></summary>
+
+Fix issue with unrespected change propagation in `CreateContext`. All successfully saved instances are marked as saved so they have no changes. Origin data of an instance are explicitly not handled directly by the object but by the attribute wrappers.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix tools handling in AYON mode <a href="https://github.com/ynput/OpenPype/pull/5811">#5811</a></summary>
+
+Skip logic in `before_window_show` in blender when in AYON mode. Most of the stuff called there happes on show automatically.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Include Grease Pencil in review and thumbnails <a href="https://github.com/ynput/OpenPype/pull/5812">#5812</a></summary>
+
+Include Grease Pencil in review and thumbnails.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Workfiles tool AYON: Fix double click of workfile <a href="https://github.com/ynput/OpenPype/pull/5813">#5813</a></summary>
+
+Fix double click on workfiles in workfiles tool to open the file.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Webpublisher: removal of usage of no_of_frames in error message <a href="https://github.com/ynput/OpenPype/pull/5819">#5819</a></summary>
+
+If it throws exception, `no_of_frames` value  wont be available, so it doesn't make sense to log it.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Attribute Defs: Hide multivalue widget in Number by default <a href="https://github.com/ynput/OpenPype/pull/5821">#5821</a></summary>
+
+Fixed default look of `NumberAttrWidget` by hiding its multiselection widget.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Corrected a typo in Readme.md (Top -> To) <a href="https://github.com/ynput/OpenPype/pull/5800">#5800</a></summary>
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: Removed redundant copy of extension.zxp <a href="https://github.com/ynput/OpenPype/pull/5802">#5802</a></summary>
+
+`extension.zxp` shouldn't be inside of extension folder.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.17.3](https://github.com/ynput/OpenPype/tree/3.17.3)
 
 
