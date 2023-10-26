@@ -568,29 +568,64 @@ def get_template_from_value(key, value):
     return parm
 
 
-def get_frame_data(node):
-    """Get the frame data: start frame, end frame and steps.
+def get_frame_data(node, handle_start=0, handle_end=0, log=None):
+    """Get the frame data: start frame, end frame, steps,
+    start frame with start handle and end frame with end handle.
+
+    This function uses Houdini node's `trange`, `t1, `t2` and `t3`
+    parameters as the source of truth for the full inclusive frame
+    range to render, as such these are considered as the frame
+    range including the handles.
+
+    The non-inclusive frame start and frame end without handles
+    are computed by subtracting the handles from the inclusive
+    frame range.
 
     Args:
-        node(hou.Node)
+        node (hou.Node): ROP node to retrieve frame range from,
+            the frame range is assumed to be the frame range
+            *including* the start and end handles.
+        handle_start (int): Start handles.
+        handle_end (int): End handles.
+        log (logging.Logger): Logger to log to.
 
     Returns:
-        dict: frame data for star, end and steps.
+        dict: frame data for start, end, steps,
+              start with handle and end with handle
 
     """
+
+    if log is None:
+        log = self.log
+
     data = {}
 
     if node.parm("trange") is None:
-
+        log.debug(
+            "Node has no 'trange' parameter: {}".format(node.path())
+        )
         return data
 
     if node.evalParm("trange") == 0:
-        self.log.debug("trange is 0")
-        return data
+        data["frameStartHandle"] = hou.intFrame()
+        data["frameEndHandle"] = hou.intFrame()
+        data["byFrameStep"] = 1.0
 
-    data["frameStart"] = node.evalParm("f1")
-    data["frameEnd"] = node.evalParm("f2")
-    data["steps"] = node.evalParm("f3")
+        log.info(
+            "Node '{}' has 'Render current frame' set.\n"
+            "Asset Handles are ignored.\n"
+            "frameStart and frameEnd are set to the "
+            "current frame.".format(node.path())
+        )
+    else:
+        data["frameStartHandle"] = int(node.evalParm("f1"))
+        data["frameEndHandle"] = int(node.evalParm("f2"))
+        data["byFrameStep"] = node.evalParm("f3")
+
+    data["handleStart"] = handle_start
+    data["handleEnd"] = handle_end
+    data["frameStart"] = data["frameStartHandle"] + data["handleStart"]
+    data["frameEnd"] = data["frameEndHandle"] - data["handleEnd"]
 
     return data
 
