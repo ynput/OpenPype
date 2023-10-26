@@ -123,7 +123,3 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
             instance.data["ignoreLayersTransparency"] = (
                 self.ignore_render_pass_transparency
                 )
-
-        print('###\n###\n###')
-        print('IGNORE LAYERS TRANSPARENCY')
-        print(instance.data["ignoreLayersTransparency"])
