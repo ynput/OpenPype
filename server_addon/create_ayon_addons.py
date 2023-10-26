@@ -274,24 +274,17 @@ def main(output_dir=None, skip_zip=True, keep_source=False, clear_output_dir=Fal
     root_dir = current_dir.parent
     create_zip = not skip_zip
 
-    output_dir = Path(output_dir) if output_dir else current_dir / "packages"
-    print("Current directory:", current_dir)
-    print("Root directory:", root_dir)
-    print("Skip zip:", skip_zip)
-    print("Clear output dir:", clear_output_dir)
-    print("Keep source:", keep_source)
-    print("Package creation started...")
-    print(f"Output directory: {output_dir}")
 
     # Make sure package dir is empty
     if output_dir.exists() and clear_output_dir:
         shutil.rmtree(str(output_dir))
 
+    print("Package creation started...")
+    print(f"Output directory: {output_dir}")
+
     # Make sure output dir is created
     output_dir.mkdir(parents=True, exist_ok=True)
-
     for addon_dir in current_dir.iterdir():
-        print(f"Processing addon: {addon_dir.name}")
         if not addon_dir.is_dir():
             continue
 
