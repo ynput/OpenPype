@@ -61,8 +61,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
         return invalid
 
-    def process(self, instance):
-        invalid_plugins = self.get_invalid(instance)
+    def process(self, context):
+        invalid_plugins = self.get_invalid(context)
         if invalid_plugins:
             bullet_point_invalid_statement = "\n".join(
                 "- {}".format(invalid) for invalid in invalid_plugins
