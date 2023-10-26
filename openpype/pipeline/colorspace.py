@@ -748,10 +748,12 @@ def get_views_data_subprocess(config_path):
 def get_imageio_config(
     project_name,
     host_name,
+    asset_name=None,
+    task_name=None,
     project_settings=None,
-    anatomy_data=None,
     anatomy=None,
-    env=None
+    env=None,
+    anatomy_data=None,
 ):
     """Returns config data from settings
 
@@ -761,21 +763,32 @@ def get_imageio_config(
     Args:
         project_name (str): project name
         host_name (str): host name
+        asset_name (Optional[str]): asset name. Defaults to None.
+        task_name (Optional[str]): task name. Defaults to None.
         project_settings (Optional[dict]): Project settings.
-        anatomy_data (Optional[dict]): anatomy formatting data.
         anatomy (Optional[Anatomy]): Anatomy object.
         env (Optional[dict]): Environment variables.
+        anatomy_data (Optional[dict]): anatomy formatting data.
 
     Returns:
         dict: config path data or empty dict
     """
+    from openpype.pipeline import get_current_context
+    from openpype.pipeline.template_data import get_template_data_with_names
+
+    context = get_current_context()
+
     project_settings = project_settings or get_project_settings(project_name)
     anatomy = anatomy or Anatomy(project_name)
 
+    if project_name == context["project_name"] and not asset_name:
+        asset_name = context["asset_name"]
+        if not task_name:
+            task_name = context["task_name"]
+
     if not anatomy_data:
-        from openpype.pipeline.context_tools import (
-            get_template_data_from_session)
-        anatomy_data = get_template_data_from_session()
+        anatomy_data = get_template_data_with_names(
+            project_name, asset_name, task_name, host_name)
 
     formatting_data = deepcopy(anatomy_data)
 
