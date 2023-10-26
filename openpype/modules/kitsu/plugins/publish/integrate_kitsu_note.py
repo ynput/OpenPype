@@ -51,7 +51,7 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
     def _get_representations_with_sequence_tag(self, representations):
         return [
             repr for repr in representations
-            if 'sequence' in repr.get("tags", False)
+            if 'sequence' in repr.get("tags", [])
         ]
 
     def process(self, context):
