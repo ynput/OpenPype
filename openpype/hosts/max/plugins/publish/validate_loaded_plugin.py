@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Validator for USD plugin."""
-from pyblish.api import InstancePlugin, ValidatorOrder
+"""Validator for Loaded Plugin."""
+from pyblish.api import ContextPlugin, ValidatorOrder
 from pymxs import runtime as rt
 
 from openpype.pipeline.publish import (
-    RepairAction,
+    RepairContextAction,
     OptionalPyblishPluginMixin,
     PublishValidationError
 )
@@ -12,7 +12,7 @@ from openpype.hosts.max.api.lib import get_plugins
 
 
 class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
-                           InstancePlugin):
+                           ContextPlugin):
     """Validates if the specific plugin is loaded in 3ds max.
     User can add the plugins they want to check through"""
 
@@ -20,29 +20,38 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
     hosts = ["max"]
     label = "Validate Loaded Plugin"
     optional = True
-    actions = [RepairAction]
+    actions = [RepairContextAction]
 
-    def get_invalid(self, instance):
+    def get_invalid(self, context):
         """Plugin entry point."""
-        if not self.is_active(instance.data):
+        if not self.is_active(context.data):
             self.log.debug("Skipping Validate Loaded Plugin...")
             return
         invalid = []
-        # display all DLL loaded plugins in Max
-        plugin_info = get_plugins()
-        project_settings = instance.context.data[
-            "project_settings"]["max"]["publish"]
-        target_plugins = project_settings[
-            "ValidateLoadedPlugin"]["plugins_for_check"]
-        for plugin in target_plugins:
-            if plugin.lower() not in plugin_info:
+        # get all DLL loaded plugins in Max and their plugin index
+        available_plugins = {
+            plugin_name.lower(): index for index, plugin_name in enumerate(\
+                get_plugins())
+        }
+        required_plugins = (
+            context.data["project_settings"]["max"]["publish"]
+                        ["ValidateLoadedPlugin"]["plugins_for_check"]
+        )
+        for plugin in required_plugins:
+            plugin_name = plugin.lower()
+
+            plugin_index = available_plugins.get(plugin_name)
+
+            if plugin_index is None:
                 invalid.append(
-                    f"Plugin {plugin} not exists in 3dsMax Plugin List.")
-            for i, _ in enumerate(plugin_info):
-                if plugin.lower() == rt.pluginManager.pluginDllName(i):
-                    if not rt.pluginManager.isPluginDllLoaded(i):
-                        invalid.append(
-                            f"Plugin {plugin} not loaded.")
+                    f"Plugin {plugin} not exists in 3dsMax Plugin List."
+                )
+                continue
+
+            if not rt.pluginManager.isPluginDllLoaded(plugin_index):
+                invalid.append(
+                    f"Plugin {plugin} not loaded.")
+
         return invalid
 
     def process(self, instance):
@@ -60,14 +69,18 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
                 report, title="Required Plugins unloaded")
 
     @classmethod
-    def repair(cls, instance):
-        plugin_info = get_plugins()
-        project_settings = instance.context.data[
-            "project_settings"]["max"]["publish"]
-        target_plugins = project_settings[
-            "ValidateLoadedPlugin"]["plugins_for_check"]
-        for plugin in target_plugins:
-            for i, _ in enumerate(plugin_info):
-                if plugin == rt.pluginManager.pluginDllName(i):
-                    if not rt.pluginManager.isPluginDllLoaded(i):
-                        rt.pluginManager.loadPluginDll(i)
+    def repair(cls, context):
+        # get all DLL loaded plugins in Max and their plugin index
+        available_plugins = {
+            plugin_name.lower(): index for index, plugin_name in enumerate(
+                get_plugins())
+        }
+        required_plugins = (
+            context.data["project_settings"]["max"]["publish"]
+                        ["ValidateLoadedPlugin"]["plugins_for_check"]
+        )
+        for plugin in required_plugins:
+            plugin_name = plugin.lower()
+            plugin_index = available_plugins.get(plugin_name)
+            if not rt.pluginManager.isPluginDllLoaded(plugin_index):
+                rt.pluginManager.loadPluginDll(plugin_index)
