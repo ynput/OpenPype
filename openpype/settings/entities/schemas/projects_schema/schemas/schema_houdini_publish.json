@@ -5,6 +5,27 @@
   "label": "Publish plugins",
   "children": [
     {
+      "type":"label",
+      "label":"Collectors"
+    },
+    {
+      "type": "dict",
+      "collapsible": true,
+      "key": "CollectRopFrameRange",
+      "label": "Collect Rop Frame Range",
+      "children": [
+        {
+          "type": "label",
+          "label": "Disable this if you want the publisher to ignore start and end handles specified in the asset data for publish instances"
+        },
+        {
+            "type": "boolean",
+            "key": "use_asset_handles",
+            "label": "Use asset handles"
+        }
+      ]
+    },
+    {
       "type": "dict",
       "collapsible": true,
       "checkbox_key": "enabled",

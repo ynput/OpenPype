@@ -1051,6 +1051,11 @@ class ProjectPushItemProcess:
                 repre_format_data["ext"] = ext[1:]
                 break
 
+            # Re-use 'output' from source representation
+            repre_output_name = repre_doc["context"].get("output")
+            if repre_output_name is not None:
+                repre_format_data["output"] = repre_output_name
+
             template_obj = anatomy.templates_obj[template_name]["folder"]
             folder_path = template_obj.format_strict(formatting_data)
             repre_context = folder_path.used_values
