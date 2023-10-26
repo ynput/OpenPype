@@ -30,7 +30,7 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
         invalid = []
         # get all DLL loaded plugins in Max and their plugin index
         available_plugins = {
-            plugin_name.lower(): index for index, plugin_name in enumerate(\
+            plugin_name.lower(): index for index, plugin_name in enumerate(
                 get_plugins())
         }
         required_plugins = (
