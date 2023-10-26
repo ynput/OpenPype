@@ -48,6 +48,12 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
         pattern = r"\{([^}]*)\}"
         return re.sub(pattern, replace_missing_key, template)
 
+    def _get_representations_with_sequence_tag(self, representations):
+        return [
+            repr for repr in representations
+            if 'sequence' in repr.get("tags", False)
+        ]
+
     def process(self, context):
         for instance in context:
             # Check if instance is a review by checking its family
@@ -55,11 +61,11 @@ class IntegrateKitsuNote(pyblish.api.ContextPlugin):
             families = set(
                 [instance.data["family"]] + instance.data.get("families", [])
             )
-            representation = instance.data.get("representations", [])
+            representations = instance.data.get("representations", [])
 
             # Subset should have a review or a kitsureview tag
+            is_kitsu_review = self._get_representations_with_sequence_tag(representations)
             is_review = "review" in families
-            is_kitsu_review = 'kitsureview' in representation.get("tags", [])
             if not is_review and not is_kitsu_review:
                 continue
 
