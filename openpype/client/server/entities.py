@@ -226,12 +226,11 @@ def get_assets(
 
     new_asset_names = set()
     folder_paths = set()
-    if asset_names:
-        for name in asset_names:
-            if "/" in name:
-                folder_paths.add(name)
-            else:
-                new_asset_names.add(name)
+    for name in asset_names:
+        if "/" in name:
+            folder_paths.add(name)
+        else:
+            new_asset_names.add(name)
 
     if folder_paths:
         for folder in _folders_query(
