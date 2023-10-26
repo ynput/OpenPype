@@ -24,6 +24,9 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
     def get_invalid(self, instance):
         """Plugin entry point."""
+        if not self.is_active(instance.data):
+            self.log.debug("Skipping Validate Loaded Plugin...")
+            return
         invalid = []
         # display all DLL loaded plugins in Max
         plugin_info = get_plugins()
