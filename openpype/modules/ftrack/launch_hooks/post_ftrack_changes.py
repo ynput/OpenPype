@@ -141,6 +141,13 @@ class PostFtrackHook(PostLaunchHook):
                 break
 
             try:
+                # Cancel the status change if the current status is "Completed"
+                if actual_status.lower() == "completed":
+                    self.log.debug(
+                        f"Ftrack status is 'Completed' for {ent_path}. "
+                        "No status change."
+                    )
+                    break
                 query = "Status where name is \"{}\"".format(
                     next_status_name
                 )
