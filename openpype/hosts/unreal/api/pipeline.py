@@ -30,6 +30,7 @@ import unreal  # noqa
 logger = logging.getLogger("openpype.hosts.unreal")
 
 AYON_CONTAINERS = "AyonContainers"
+AYON_ASSET_DIR = "/Game/Ayon/Assets"
 CONTEXT_CONTAINER = "Ayon/context.json"
 UNREAL_VERSION = semver.VersionInfo(
     *os.getenv("AYON_UNREAL_VERSION").split(".")

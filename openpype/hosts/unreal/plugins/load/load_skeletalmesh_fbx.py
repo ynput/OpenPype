@@ -8,6 +8,7 @@ from openpype.pipeline import (
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api.pipeline import (
+    AYON_ASSET_DIR,
     create_container,
     imprint,
 )
@@ -23,7 +24,7 @@ class SkeletalMeshFBXLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
-    root = "/Game/Ayon/Assets"
+    root = AYON_ASSET_DIR
 
     @staticmethod
     def get_task(filename, asset_dir, asset_name, replace):
