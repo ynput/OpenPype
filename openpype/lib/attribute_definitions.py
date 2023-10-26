@@ -240,6 +240,11 @@ class UILabelDef(UIDef):
     def __init__(self, label):
         super(UILabelDef, self).__init__(label=label)
 
+    def __eq__(self, other):
+        if not super(UILabelDef, self).__eq__(other):
+            return False
+        return self.label == other.label:
+
 
 # ---------------------------------------
 # Attribute defintioins should hold value
