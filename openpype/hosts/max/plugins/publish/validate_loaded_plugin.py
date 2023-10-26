@@ -14,7 +14,8 @@ from openpype.hosts.max.api.lib import get_plugins
 class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
                            ContextPlugin):
     """Validates if the specific plugin is loaded in 3ds max.
-    User can add the plugins they want to check through"""
+    Studio Admin(s) can add the plugins they want to check in validation
+    via studio defined project settings"""
 
     order = ValidatorOrder
     hosts = ["max"]
