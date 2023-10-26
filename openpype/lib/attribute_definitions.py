@@ -243,7 +243,7 @@ class UILabelDef(UIDef):
     def __eq__(self, other):
         if not super(UILabelDef, self).__eq__(other):
             return False
-        return self.label == other.label:
+        return self.label == other.label
 
 
 # ---------------------------------------
