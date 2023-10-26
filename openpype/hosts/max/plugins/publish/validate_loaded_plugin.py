@@ -18,7 +18,7 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
     order = ValidatorOrder
     hosts = ["max"]
-    label = "Validate Loaded Plugin"
+    label = "Validate Loaded Plugins"
     optional = True
     actions = [RepairContextAction]
 
@@ -27,16 +27,23 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
         if not self.is_active(context.data):
             self.log.debug("Skipping Validate Loaded Plugin...")
             return
+
+        required_plugins = (
+            context.data["project_settings"]["max"]["publish"]
+                        ["ValidateLoadedPlugin"]["plugins_for_check"]
+        )
+
+        if not required_plugins:
+            return
+
         invalid = []
+
         # get all DLL loaded plugins in Max and their plugin index
         available_plugins = {
             plugin_name.lower(): index for index, plugin_name in enumerate(
                 get_plugins())
         }
-        required_plugins = (
-            context.data["project_settings"]["max"]["publish"]
-                        ["ValidateLoadedPlugin"]["plugins_for_check"]
-        )
+
         for plugin in required_plugins:
             plugin_name = plugin.lower()
 
@@ -49,8 +56,7 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
                 continue
 
             if not rt.pluginManager.isPluginDllLoaded(plugin_index):
-                invalid.append(
-                    f"Plugin {plugin} not loaded.")
+                invalid.append(f"Plugin {plugin} not loaded.")
 
         return invalid
 
@@ -82,5 +88,10 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
         for plugin in required_plugins:
             plugin_name = plugin.lower()
             plugin_index = available_plugins.get(plugin_name)
+
+            if plugin_index is None:
+                cls.log.warning(f"Can't enable missing plugin: {plugin}")
+                continue
+
             if not rt.pluginManager.isPluginDllLoaded(plugin_index):
                 rt.pluginManager.loadPluginDll(plugin_index)
