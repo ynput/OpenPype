@@ -4,7 +4,10 @@ import bpy
 
 from openpype.pipeline import get_current_task_name
 from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_INSTANCES,
+    AVALON_PROPERTY,
+)
 
 
 class CreateBlendScene(plugin.Creator):
@@ -15,12 +18,18 @@ class CreateBlendScene(plugin.Creator):
     family = "blendScene"
     icon = "cubes"
 
-    def process(self):
+    def create(
+        self, subset_name: str, instance_data: dict, pre_create_data: dict
+    ):
         """ Run the creator on Blender main thread"""
-        mti = ops.MainThreadItem(self._process)
+        mti = ops.MainThreadItem(
+            self._process, subset_name, instance_data, pre_create_data
+        )
         ops.execute_in_main_thread(mti)
 
-    def _process(self):
+    def _process(
+        self, subset_name: str, instance_data: dict, pre_create_data: dict
+    ):
         # Get Instance Container or create it if it does not exist
         instances = bpy.data.collections.get(AVALON_INSTANCES)
         if not instances:
@@ -28,14 +37,28 @@ class CreateBlendScene(plugin.Creator):
             bpy.context.scene.collection.children.link(instances)
 
         # Create instance object
-        asset = self.data["asset"]
-        subset = self.data["subset"]
-        name = plugin.asset_name(asset, subset)
+        asset = instance_data.get("asset")
+        name = plugin.asset_name(asset, subset_name)
         asset_group = bpy.data.objects.new(name=name, object_data=None)
         asset_group.empty_display_type = 'SINGLE_ARROW'
         instances.objects.link(asset_group)
-        self.data['task'] = get_current_task_name()
-        lib.imprint(asset_group, self.data)
+
+        asset_group[AVALON_PROPERTY] = instance_node = {
+            "name": asset_group.name
+        }
+
+        instance_data.update(
+            {
+                "id": "publish.avalon.instance",
+                "creator_identifier": self.identifier,
+                "label": subset_name,
+                "task": get_current_task_name(),
+                "subset": subset_name,
+                "instance_node": instance_node,
+            }
+        )
+
+        lib.imprint(asset_group, instance_data)
 
         # Add selected objects to instance
         if (self.options or {}).get("useSelection"):
