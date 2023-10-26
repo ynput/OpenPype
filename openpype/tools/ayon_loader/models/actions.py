@@ -447,11 +447,12 @@ class LoaderActionsModel:
         project_doc["code"] = project_doc["data"]["code"]
 
         for version_doc in version_docs:
+            version_id = version_doc["_id"]
             product_id = version_doc["parent"]
             product_doc = product_docs_by_id[product_id]
             folder_id = product_doc["parent"]
             folder_doc = folder_docs_by_id[folder_id]
-            version_context_by_id[product_id] = {
+            version_context_by_id[version_id] = {
                 "project": project_doc,
                 "asset": folder_doc,
                 "subset": product_doc,
