@@ -902,7 +902,7 @@ class PublishClip:
                     tag_hierarchy_data = hero_data
 
         # add data to return data dict
-        return  tag_hierarchy_data
+        return tag_hierarchy_data
 
     def _solve_tag_hierarchy_data(self, hierarchy_formatting_data):
         """ Solve tag data from hierarchy data and templates. """
