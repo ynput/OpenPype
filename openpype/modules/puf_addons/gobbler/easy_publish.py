@@ -35,7 +35,6 @@ def publish_version(
     # TODO: write some logic that finds the main path from the list of
     # representations
     source_path = list(expected_representations.values())[0]
-    print(source_path)
     instance_data = {
         "project": project_name,
         "family": family_name,
@@ -50,6 +49,7 @@ def publish_version(
         "colorspace": publish_data.get("colorspace"),
         "version": publish_data.get("version"),
         "outputDir": os.path.dirname(source_path),
+        "fps": publish_data.get("fps", 23.976),
     }
 
     representations = utils.get_representations(
@@ -140,25 +140,36 @@ def publish_version(
         # batch_name=publish_data.get("jobBatchName") or deadline_task_name,
         task_name=deadline_task_name,
         group=dl_constants.OP_GROUP,
+        pool=dl_constants.OP_POOL,
         extra_env=extra_env,
     )
-    print(">>>>>>>>>>>>>>> DEBUG >>>>>>>>>>>>>")
-    print(legacy_io.Session)
     legacy_io.install()
-    print(legacy_io.Session)
     # publish job file
+    # publish_job = {
+    #     "asset": instance_data["asset"],
+    #     "frameStart": instance_data["frameStartHandle"],
+    #     "frameEnd": instance_data["frameEndHandle"],
+    #     "source": instance_data["source"],
+    #     "user": getpass.getuser(),
+    #     "version": None,  # this is workfile version
+    #     "comment": instance_data["comment"],
+    #     "job": {},
+    #     "session": legacy_io.Session.copy(),
+    #     "instances": instances,
+    #     "deadline_publish_job_id": response.get("_id")
+    # }
     publish_job = {
         "asset": instance_data["asset"],
-        "frameStart": instance_data["frameStartHandle"],
-        "frameEnd": instance_data["frameEndHandle"],
-        "source": instance_data["source"],
-        "user": getpass.getuser(),
-        "version": None,  # this is workfile version
         "comment": instance_data["comment"],
+        "deadline_publish_job_id": response.get("_id"),
+        "frameEnd": instance_data["frameStartHandle"],
+        "frameStart": instance_data["frameEndHandle"],
+        "instances": instances,
         "job": {},
         "session": legacy_io.Session.copy(),
-        "instances": instances,
-        "deadline_publish_job_id": response.get("_id")
+        "source": instance_data["source"],
+        "user": getpass.getuser(),
+        "version": None
     }
 
     logger.info("Writing json file: {}".format(metadata_path))
