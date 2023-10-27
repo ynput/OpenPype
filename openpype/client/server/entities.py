@@ -241,21 +241,9 @@ def get_assets(
     if not new_asset_names:
         return
 
-    folders_by_name = collections.defaultdict(list)
     for folder in _folders_query(
         project_name, con, fields, folder_names=new_asset_names, **kwargs
     ):
-        folders_by_name[folder["name"]].append(folder)
-
-    for name, folders in folders_by_name.items():
-        folder = next(
-            (
-                folder
-                for folder in folders
-                if folder["path"] == name
-            ),
-            folders[0]
-        )
         yield convert_v4_folder_to_v3(folder, project_name)
 
 
