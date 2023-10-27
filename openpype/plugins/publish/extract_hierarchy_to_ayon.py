@@ -191,15 +191,15 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
         """
 
         # filter only the active publishing instances
-        active_folder_names = set()
+        active_folder_paths = set()
         for instance in context:
             if instance.data.get("publish") is not False:
-                active_folder_names.add(instance.data.get("asset"))
+                active_folder_paths.add(instance.data.get("asset"))
 
-        active_folder_names.discard(None)
+        active_folder_paths.discard(None)
 
-        self.log.debug("Active folder names: {}".format(active_folder_names))
-        if not active_folder_names:
+        self.log.debug("Active folder paths: {}".format(active_folder_paths))
+        if not active_folder_paths:
             return None
 
         project_item = None
@@ -230,12 +230,13 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
             if not children_context:
                 continue
 
-            for asset_name, asset_info in children_context.items():
+            for asset, asset_info in children_context.items():
                 if (
-                    asset_name not in active_folder_names
+                    asset not in active_folder_paths
                     and not asset_info.get("childs")
                 ):
                     continue
+                asset_name = asset.split("/")[-1]
                 item_id = uuid.uuid4().hex
                 new_item = copy.deepcopy(asset_info)
                 new_item["name"] = asset_name
@@ -252,7 +253,7 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
                 items_by_id[item_id] = new_item
                 parent_id_by_item_id[item_id] = parent_id
 
-                if asset_name in active_folder_names:
+                if asset in active_folder_paths:
                     valid_ids.add(item_id)
                 hierarchy_queue.append((item_id, new_children_context))
 
