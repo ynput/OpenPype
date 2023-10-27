@@ -21,7 +21,7 @@ class CreateBlendScene(plugin.Creator):
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
-        """ Run the creator on Blender main thread"""
+        """Run the creator on Blender main thread."""
         mti = ops.MainThreadItem(
             self._process, subset_name, instance_data, pre_create_data
         )

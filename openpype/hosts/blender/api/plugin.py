@@ -9,6 +9,7 @@ from openpype.pipeline import (
     Creator,
     CreatedInstance,
     LoaderPlugin,
+    get_current_task_name,
 )
 from .pipeline import (
     AVALON_CONTAINERS,
@@ -235,11 +236,20 @@ class BlenderCreator(Creator):
         collection = bpy.data.collections.new(name=subset_name)
         bpy.context.scene.collection.children.link(collection)
 
-        collection["instance_node"] = instance_node = {
+        collection[AVALON_PROPERTY] = instance_node = {
             "name": collection.name,
         }
 
-        instance_data["instance_node"] = instance_node
+        instance_data.update(
+            {
+                "id": "pyblish.avalon.instance",
+                "creator_identifier": self.identifier,
+                "label": subset_name,
+                "task": get_current_task_name(),
+                "subset": subset_name,
+                "instance_node": instance_node,
+            }
+        )
 
         instance = CreatedInstance(
             self.family, subset_name, instance_data, self
