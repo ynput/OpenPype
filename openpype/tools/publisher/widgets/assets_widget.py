@@ -140,9 +140,11 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
             for name in sorted(children_by_name.keys()):
                 child = children_by_name[name]
                 child_id = child["_id"]
-                child_path = name
                 if parent_path:
-                    child_path = "{}/{}".format(parent_path, child_path)
+                    child_path = "{}/{}".format(parent_path, name)
+                else:
+                    child_path = "/{}".format(name)
+
                 has_children = bool(assets_by_parent_id.get(child_id))
                 icon = get_asset_icon(child, has_children)
 
