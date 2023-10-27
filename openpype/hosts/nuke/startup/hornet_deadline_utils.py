@@ -6,7 +6,6 @@ import getpass
 import nuke
 import requests
 from datetime import datetime
-tempRenderTemplate = "{work}/renders/nuke/{subset}"
 ## copied from submit_nuke_to_deadline.py
 def GetDeadlineCommand():
     # type: () -> str
@@ -78,9 +77,8 @@ def getNodeSubmissionInfo():
     return { knb.name(): knb.value() for knb in all_knobs if knb.name() in relevant_knobs }
 
 def deadlineNetworkSubmit(dev=False):
-    tempRenderPath = tempRenderTemplate.format(work=os.environ["AVALON_WORKDIR"], subset=nuke.thisNode().name())
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    nuke.scriptSaveToTemp("{path}/{name}_{time}.nk".format(path=tempRenderPath,
+    nuke.scriptSaveToTemp("{path}/{name}_{time}.nk".format(path=os.environ['AVALON_WORKDIR'],
                                                            name=os.path.splitext(os.path.basename(nuke.root().name()))[0],
                                                            time=timestamp))
     modules = ModulesManager()
