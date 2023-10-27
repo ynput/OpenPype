@@ -117,20 +117,31 @@ def go(project_name, directory=None):
 
         # PRODUCTION LOGIC
 
+        # if asset.get('data').get('zou'): # this filters out folders and maybe other non-zou assets
+        if asset.get('data').get('zou').get('type') == 'Shot':
+            family_name = "render"
+            task_name = "Animation"
+            subset_name = "renderAnimationMain"
+
+        if asset.get('data').get('zou').get('type') == 'Asset':
+            family_name = "image"
+            task_name = "Concept"
+            subset_name = "imageTexture"
+
         # if extension=='psd': # photoshop file, goes to art task on asset
         #     family_name = "image"
         #     task_name = "Art"
         #     subset_name = "imageTexture"
 
-        if extension in ['psd', 'jpg']: # photoshop or jpg file, goes to edit task on shot
-            family_name = "image"
-            task_name = "Concept"
-            subset_name = "imageTexture"
+        # if extension in ['psd', 'jpg']: # photoshop or jpg file, goes to edit task on shot
+        #     family_name = "image"
+        #     task_name = "Concept"
+        #     subset_name = "imageTexture"
 
-        if extension=='png':
-            family_name = "render"
-            task_name = "Animation"
-            subset_name = "renderAnimationMain"
+        # if extension=='png':
+        #     family_name = "render"
+        #     task_name = "Animation"
+        #     subset_name = "renderAnimationMain"
 
 
         # family_name = "render"
