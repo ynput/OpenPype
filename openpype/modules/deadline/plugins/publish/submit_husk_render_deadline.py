@@ -38,7 +38,7 @@ class HuskSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     label = "Submit Husk Render to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["houdini"]
-    families = ["husk_rop"]
+    families = ["husk"]
     targets = ["local"]
     use_published = True
 
