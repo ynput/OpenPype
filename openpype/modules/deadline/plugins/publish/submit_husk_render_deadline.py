@@ -121,6 +121,10 @@ class HuskSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         plugin_info = DeadlinePluginInfo(
             Arguments=instance.data["huskCommandline"],
+            # the script below is required to process the commandline arguments,
+            # the original place is inside:
+            # openpype/hosts/houdini/scripts/run_husk.py
+            # I don't know how to point it here to fix the hardcoded path.
             ScriptFile="R:/HSITE/WORKGROUPS/houdini19.5/VFXTricks/scripts/run_husk.py",  # noqa: E501
             OutputDriver=driver.path(),
             Version=hou_major_minor,
