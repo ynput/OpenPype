@@ -78,8 +78,8 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
         instance.data["colorspaceView"] = colorspace_data["view"]
 
         # Generate the commandline
-        instance.data["huskCommandline"] = self._generate_command(
-                                                rop, instance)
+        instance.data["huskCommandline"] = self._generate_command(rop,
+                                                             instance)
 
     def get_render_product_name(self, prefix, suffix):
         product_name = prefix
