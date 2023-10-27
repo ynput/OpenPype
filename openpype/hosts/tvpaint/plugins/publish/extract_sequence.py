@@ -112,10 +112,14 @@ class ExtractSequence(pyblish.api.Extractor):
         )
 
         export_type = instance.data["creator_attributes"].get("export_type", "project")
-
         is_review = instance.data["family"] == "review"
         is_playblast = instance.data["creator_identifier"] == "render.playblast"
-        if is_review or is_playblast:
+        publish_sequence_with_transparency = (
+            instance.data["creator_identifier"] == "publish.sequence" and \
+            not ignore_layers_transparency
+        )
+
+        if is_review or is_playblast or publish_sequence_with_transparency:
             result = self.render_review(
                 output_dir, export_type, mark_in, mark_out, scene_bg_color
             )
@@ -150,6 +154,8 @@ class ExtractSequence(pyblish.api.Extractor):
         tags = []
         if "review" in instance.data["families"]:
             tags.append("review")
+        else:
+            tags.append("sequence")
 
         # Sequence of one frame
         single_file = len(repre_files) == 1

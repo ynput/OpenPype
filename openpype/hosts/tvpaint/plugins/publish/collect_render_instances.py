@@ -24,7 +24,7 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
             self._collect_data_for_render_scene(instance)
 
         else:
-            if creator_identifier == "scene.review":
+            if creator_identifier in ["scene.review", "publish.sequence"]:
                 self._collect_data_for_review(instance)
             return
 
@@ -109,7 +109,32 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
                 **prepare_template_data({"renderpass": render_pass_name})
             )
 
+    def _get_ignore_transparency_option(self, instance):
+        ignore_transparency = instance.data["creator_attributes"].get(
+            "ignore_layers_transparency", None
+        )
+
+        if not ignore_transparency:
+            keep_transparency = instance.data["creator_attributes"].get(
+                "keep_layers_transparency", None
+            )
+            return not keep_transparency
+
+        else:
+            return ignore_transparency
+
+
     def _collect_data_for_review(self, instance):
         instance.data["layers"] = copy.deepcopy(
             instance.context.data["layersData"]
         )
+
+        ignore_transparency = self._get_ignore_transparency_option(instance)
+        if ignore_transparency:
+            instance.data["ignoreLayersTransparency"] = (
+                ignore_transparency
+            )
+        else:
+            instance.data["ignoreLayersTransparency"] = (
+                self.ignore_render_pass_transparency
+            )
