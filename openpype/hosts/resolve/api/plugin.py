@@ -1,10 +1,11 @@
 import re
 import uuid
+import copy
+
 import qargparse
 from qtpy import QtWidgets, QtCore
 
 from openpype.settings import get_current_project_settings
-from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
@@ -379,8 +380,8 @@ class ClipLoader:
         joint `data` key with asset.data dict into the representation
 
         """
-        asset_name = self.context["representation"]["context"]["asset"]
-        self.data["assetData"] = get_current_project_asset(asset_name)["data"]
+
+        self.data["assetData"] = copy.deepcopy(self.context["asset"]["data"])
 
     def load(self, files):
         """Load clip into timeline

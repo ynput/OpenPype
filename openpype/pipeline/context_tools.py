@@ -17,6 +17,7 @@ from openpype.client import (
     get_asset_by_id,
     get_asset_by_name,
     version_is_latest,
+    get_asset_name_identifier,
 )
 from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
@@ -568,14 +569,12 @@ def compute_session_changes(
         Dict[str, str]: Changes in the Session dictionary.
     """
 
-    changes = {}
-
     # Get asset document and asset
     if not asset_doc:
         task_name = None
         asset_name = None
     else:
-        asset_name = asset_doc["name"]
+        asset_name = get_asset_name_identifier(asset_doc)
 
     # Detect any changes compared session
     mapping = {

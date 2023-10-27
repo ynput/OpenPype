@@ -8,7 +8,7 @@ from ayon_api import slugify_string
 from ayon_api.entity_hub import EntityHub
 
 from openpype import AYON_SERVER_ENABLED
-from openpype.client import get_assets
+from openpype.client import get_assets, get_asset_name_identifier
 from openpype.pipeline.template_data import (
     get_asset_template_data,
     get_task_template_data,
@@ -58,7 +58,7 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
             project_name, asset_names=instances_by_asset_name.keys()
         )
         asset_docs_by_name = {
-            asset_doc["name"]: asset_doc
+            get_asset_name_identifier(asset_doc): asset_doc
             for asset_doc in asset_docs
         }
         for asset_name, instances in instances_by_asset_name.items():

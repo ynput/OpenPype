@@ -178,7 +178,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
     def create_shot_instance(self, context, **data):
         master_layer = data.get("heroTrack")
         hierarchy_data = data.get("hierarchyData")
-        asset = data.get("asset")
         item = data.get("item")
         clip_name = item.name()
 
