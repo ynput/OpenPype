@@ -3,6 +3,7 @@ import os
 
 import hou
 import pyblish.api
+import math
 
 from openpype.hosts.houdini.api.lib import (
     evalParmNoFrame,
