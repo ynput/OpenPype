@@ -27,6 +27,7 @@ from google.oauth2.credentials import Credentials # this is deprecated
 # from google.auth.credentials import Credentials # but using the new one requires refactoring so not using it for now
 
 import pandas
+import pprint
 
 log = Logger.get_logger("Gobbler")
 
@@ -99,7 +100,10 @@ def go(project_name, directory=None):
     # MAIN LOOP
     for item in items_to_publish:
         # fuzzy match asset
-        asset = _fuzz_asset(item.frame(item.start()), filtered_assets_dict)
+        search_term = item.frame(item.start())
+        search_term = search_term.replace(directory + "\\", "")
+
+        asset = _fuzz_asset(search_term, filtered_assets_dict)
 
         asset_name = asset['name']
 
@@ -107,7 +111,7 @@ def go(project_name, directory=None):
 
         # set up representation path
         if item.frameSet():
-            log.info("sequence")
+            log.info(f"sequence {list(item)[0]}")
             representation_path = list(item)[0]
         else:
             log.info("single")
