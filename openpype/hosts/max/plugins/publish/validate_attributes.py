@@ -29,10 +29,20 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
         if not attributes:
             return
 
-        invalid_attributes = [key for key, value in attributes.items()
-                              if rt.Execute(attributes[key]) != value]
+        for wrap_object, property_name in attributes.items():
+            invalid_properties = [key for key in property_name.keys()
+                                  if not rt.Execute(
+                                      f'isProperty {wrap_object} "{key}"')]
+            if invalid_properties:
+                cls.log.error(
+                    "Unknown Property Values:{}".format(invalid_properties))
+                return invalid_properties
+            # TODO: support multiple varaible types in maxscript
+            invalid_attributes = [key for key, value in property_name.items()
+                                  if rt.Execute("{}.{}".format(
+                                      wrap_object, property_name[key]))!=value]
 
-        return invalid_attributes
+            return invalid_attributes
 
     def process(self, context):
         if not self.is_active(context.data):
@@ -57,6 +67,10 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
             context.data["project_settings"]["max"]["publish"]
                         ["ValidateAttributes"]["attributes"]
         )
-        invalid_attribute_keys = cls.get_invalid(context)
-        for key in invalid_attribute_keys:
-            attributes[key] = rt.Execute(attributes[key])
+        for wrap_object, property_name in attributes.items():
+            invalid_attributes = [key for key, value in property_name.items()
+                                  if rt.Execute("{}.{}".format(
+                                      wrap_object, property_name[key]))!=value]
+            for attrs in invalid_attributes:
+                rt.Execute("{}.{}={}".format(
+                    wrap_object, attrs, attributes[wrap_object][attrs]))
