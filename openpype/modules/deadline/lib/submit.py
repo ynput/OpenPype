@@ -6,6 +6,7 @@ import requests
 import json
 from openpype.modules.deadline import constants
 
+import getpass
 logger = Logger.get_logger(__name__)
 
 # Default Deadline job
@@ -20,6 +21,7 @@ def payload_submit(
     batch_name,
     task_name,
     group="",
+    pool="",
     comment="",
     priority=DEFAULT_PRIORITY,
     chunk_size=DEFAULT_CHUNK_SIZE,
@@ -41,13 +43,13 @@ def payload_submit(
             # Job name, as seen in Monitor
             "Name": task_name,
             # Arbitrary username, for visualisation in Monitor
-            # "UserName": getpass.getuser(),
-            "UserName": "santi",
+            "UserName": getpass.getuser(),
+            # "UserName": "santi",
             "Priority": priority,
             "ChunkSize": chunk_size,
             "ConcurrentTasks": concurrent_tasks,
             "Department": department,
-            "Pool": "",
+            "Pool": pool,
             "SecondaryPool": "",
             "Group": group,
             "Plugin": plugin,
@@ -109,7 +111,6 @@ def payload_submit(
     logger.info("using render plugin : {}".format(plugin))
 
     logger.info("Submitting..")
-    logger.info(json.dumps(payload, indent=4, sort_keys=True))
 
     url = "{}/api/jobs".format(constants.DEADLINE_URL)
     response = requests.post(url, json=payload, timeout=10)

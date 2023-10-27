@@ -83,13 +83,13 @@ def get_representations(
         ext = None
         # Convert file path so it can be used with glob and find all the
         # frames for the sequence
-        print(file_path)
+        # print(file_path)
         file_pattern = replace_frame_number_with_token(file_path, "*")
         representation_files = glob.glob(file_pattern)
-        print(file_pattern, representation_files)
+        # print(file_pattern, representation_files)
         collections, remainder = clique.assemble(representation_files)
 
-        print(collections, remainder)
+        # print(collections, remainder)
         # If file path is in remainder it means it was a single file
         if file_path in remainder:
             collections = [remainder]
