@@ -22,4 +22,4 @@ def get_asset_name_identifier(asset_doc):
         return asset_doc["name"]
     parents = list(asset_doc["data"]["parents"])
     parents.append(asset_doc["name"])
-    return "/".join(parents)
+    return "/" + "/".join(parents)
