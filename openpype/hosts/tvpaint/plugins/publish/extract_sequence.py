@@ -115,7 +115,7 @@ class ExtractSequence(pyblish.api.Extractor):
         is_review = instance.data["family"] == "review"
         publish_sequence_with_transparency = (
             instance.data["creator_identifier"] == "publish.sequence" and \
-            not instance.data["creator_attributes"].get('ignore_layers_transparency', False)
+            not ignore_layers_transparency
         )
 
         if is_review or publish_sequence_with_transparency:
