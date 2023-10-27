@@ -81,12 +81,12 @@ def go(project_name, directory=None):
     assets_list = list(client.get_assets(project_name))
     assets_dict = {asset['name']: asset for asset in assets_list}  # creating a dict {asset_name: asset} for quickly looking up assets by name later.
 
-    # HACK -- removing assets where [hierarchy includes 'Asset' to force psd backgrounds to go to shots instead of assets.]
-    filtered_assets_dict = {}
-    for asset_name, asset in assets_dict.items():
-        if asset.get('data').get('zou'): # this filters out folders and maybe other non-zou assets
-            if asset.get('data').get('zou').get('type') == 'Shot':
-                filtered_assets_dict[asset_name] = asset
+    # # HACK -- removing assets where [hierarchy includes 'Asset' to force psd backgrounds to go to shots instead of assets.]
+    # filtered_assets_dict = {}
+    # for asset_name, asset in assets_dict.items():
+    #     if asset.get('data').get('zou'): # this filters out folders and maybe other non-zou assets
+    #         if asset.get('data').get('zou').get('type') == 'Shot':
+    #             filtered_assets_dict[asset_name] = asset
 
 
 
@@ -99,7 +99,7 @@ def go(project_name, directory=None):
     # MAIN LOOP
     for item in items_to_publish:
         # print(list(item))
-        asset = _fuzz_asset(item.frame(item.start()), filtered_assets_dict)  # fuzzy match asset
+        asset = _fuzz_asset(item.frame(item.start()), assets_dict)  # fuzzy match asset
 
         asset_name = asset['name']
 
@@ -124,7 +124,7 @@ def go(project_name, directory=None):
 
         if extension in ['psd', 'jpg']: # photoshop or jpg file, goes to edit task on shot
             family_name = "image"
-            task_name = "Edit"
+            task_name = "Concept"
             subset_name = "imageTexture"
 
         if extension=='png':
@@ -281,7 +281,7 @@ def _fuzz_asset(item, assets_dict):
     # , scorer=fuzz.token_sort_ratio)
 
     asset = assets_dict.get(best_match)
-    print(f">>> Matched {item} to {asset['name']}")
+    print(f">>> Matched {item} to {asset['name']} <<<")
     return asset
 
 
