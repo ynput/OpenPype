@@ -102,7 +102,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "prerender.farm", "prerender.frames_farm",
                 "renderlayer", "imagesequence",
                 "vrayscene", "maxrender",
-                "arnold_rop", "mantra_rop",
+                "arnold_rop", "mantra_rop", "husk",
                 "karma_rop", "vray_rop",
                 "redshift_rop"]
 
