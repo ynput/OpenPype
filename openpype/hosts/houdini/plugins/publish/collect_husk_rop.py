@@ -80,8 +80,6 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
         # Generate the commandline
         instance.data["huskCommandline"] = self._generate_command(rop, instance)
 
-        # submit to deadline for test purposes only
-        self.submit(rop, instance)
 
     def get_render_product_name(self, prefix, suffix):
         product_name = prefix
