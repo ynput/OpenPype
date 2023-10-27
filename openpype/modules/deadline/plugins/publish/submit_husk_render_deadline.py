@@ -83,7 +83,6 @@ class HuskSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_APP_NAME",
         ]
 
-
         # Add OpenPype version if we are running from build.
         if is_running_from_build():
             keys.append("OPENPYPE_VERSION")
@@ -121,8 +120,8 @@ class HuskSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         plugin_info = DeadlinePluginInfo(
             Arguments=instance.data["huskCommandline"],
-            # the script below is required to process the commandline arguments,
-            # the original place is inside:
+            # the script below is required to process the commandline
+            # arguments, the original place is inside:
             # openpype/hosts/houdini/scripts/run_husk.py
             # I don't know how to point it here to fix the hardcoded path.
             ScriptFile="R:/HSITE/WORKGROUPS/houdini19.5/VFXTricks/scripts/run_husk.py",  # noqa: E501

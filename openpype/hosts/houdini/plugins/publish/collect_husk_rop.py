@@ -78,8 +78,8 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
         instance.data["colorspaceView"] = colorspace_data["view"]
 
         # Generate the commandline
-        instance.data["huskCommandline"] = self._generate_command(rop, instance)
-
+        instance.data["huskCommandline"] = self._generate_command(
+                                                rop, instance)
 
     def get_render_product_name(self, prefix, suffix):
         product_name = prefix
@@ -154,7 +154,7 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
             if hfs:
                 husk_bin = hfs + '/bin/husk'
             else:
-                print("$HFS variable is not set. It's required for running Husk command.")
+                print("$HFS variable is not set. It's required for running Husk command.")  # noqa: E501
                 raise ValueError('HFS missing')
 
         command = []
