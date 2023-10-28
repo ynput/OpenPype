@@ -75,8 +75,15 @@ class EventCallback(object):
             ).format(str(func)))
 
         # Collect function name and path to file for logging
-        func_name = func.__name__
-        func_path = os.path.abspath(inspect.getfile(func))
+        try:
+            func_name = func.__name__
+        except AttributeError:
+            func_name = str(func)
+
+        try:
+            func_path = os.path.abspath(inspect.getfile(func))
+        except TypeError:
+            func_path = "<unknown path>"
 
         # Get expected arguments from function spec
         # - positional arguments are always preferred
