@@ -450,6 +450,51 @@ class QueuedEventSystem(EventSystem):
         self._current_event = None
 
 
+class OrderedEventSystem(EventSystem):
+    """Event System that allows to register callbacks at a specific order.
+
+    Callbacks registered at the same order at processed in order of how they
+    were registered, but it is possible to e.g. register an event at order 10,
+    then 100, then 5. They will then run in that order.
+
+    >>> events = OrderedEventSystem()
+    >>> events.add_callback("example", callback_a, order=10)
+    >>> events.add_callback("example", callback_b, order=100)
+    >>> events.add_callback("example", callback_c, order=5)
+    >>> events.emit("example")
+
+    """
+    def __init__(self):
+        # Registered callback by order
+        self._registered_callbacks_by_order = collections.defaultdict(list)
+
+    def add_callback(self, topic, callback, order=0):
+        callback = EventCallback(topic, callback)
+        self._registered_callbacks_by_order[order].append(callback)
+        return callback
+
+    def _process_event(self, event):
+        """Process event topic and trigger callbacks.
+
+        Args:
+            event (Event): Prepared event with topic and data.
+        """
+
+        invalid_callbacks = []
+        for order, callbacks in sorted(
+            self._registered_callbacks_by_order.items()
+        ):
+            for callback in callbacks:
+                callback.process_event(event)
+                if not callback.is_ref_valid:
+                    invalid_callbacks.append((order, callback))
+
+        for order, callback in invalid_callbacks:
+            self._registered_callbacks_by_order[order].remove(callback)
+            if not self._registered_callbacks_by_order[order]:
+                del self._registered_callbacks_by_order[order]
+
+
 class GlobalEventSystem:
     """Event system living in global scope of process.
 
