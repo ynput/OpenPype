@@ -35,6 +35,7 @@ from openpype.lib import (
     filter_profiles,
     attribute_definitions,
 )
+from openpype.pipeline.plugin_discover import discover
 from openpype.lib.attribute_definitions import get_attributes_keys
 from openpype.pipeline import Anatomy
 from openpype.pipeline.load import (
@@ -210,9 +211,15 @@ class AbstractTemplateBuilder(object):
             List[PlaceholderPlugin]: Plugin classes available for host.
         """
 
+        plugins = []
+
+        # Backwards compatibility
         if hasattr(self._host, "get_workfile_build_placeholder_plugins"):
-            return self._host.get_workfile_build_placeholder_plugins()
-        return []
+            plugins = self._host.get_workfile_build_placeholder_plugins()
+
+        plugins.extend(discover(PlaceholderPlugin))
+
+        return plugins
 
     @property
     def host(self):
