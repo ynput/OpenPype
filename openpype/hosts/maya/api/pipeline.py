@@ -36,6 +36,10 @@ from openpype.pipeline import (
     deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
+from openpype.pipeline.plugin_discover import register_plugin_path
+from openpype.pipeline.workfile.workfile_template_builder import (
+    PlaceholderPlugin
+)
 from openpype.pipeline.load import any_outdated_containers
 from openpype.pipeline.workfile.lock_workfile import (
     create_workfile_lock,
@@ -47,7 +51,6 @@ from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import create_workspace_mel
 
 from . import menu, lib
-from .workfile_template_builder import MayaPlaceholderLoadPlugin
 from .workio import (
     open_file,
     save_file,
@@ -64,6 +67,7 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
+TEMPLATE_PLUGINS_PATH = os.path.join(PLUGINS_DIR, "template_loaders")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
@@ -90,7 +94,9 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
         register_inventory_action_path(INVENTORY_PATH)
-        self.log.info(PUBLISH_PATH)
+
+        # TODO: Expose this via a dedicated `register_template_plugin_path`
+        register_plugin_path(PlaceholderPlugin, TEMPLATE_PLUGINS_PATH)
 
         self.log.info("Installing callbacks ... ")
         register_event_callback("init", on_init)
@@ -144,11 +150,6 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def get_containers(self):
         return ls()
-
-    def get_workfile_build_placeholder_plugins(self):
-        return [
-            MayaPlaceholderLoadPlugin
-        ]
 
     @contextlib.contextmanager
     def maintained_selection(self):

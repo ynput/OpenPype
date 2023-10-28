@@ -5,6 +5,7 @@ from pprint import pformat
 import sys
 import uuid
 import re
+import operator
 
 import json
 import logging
@@ -4209,3 +4210,248 @@ def create_rig_animation_instance(
             variant=namespace,
             pre_create_data={"use_selection": True}
         )
+
+
+class Reorder(object):
+    """Helper functions for reordering in Maya outliner"""
+
+    @staticmethod
+    def group_by_parent(nodes):
+        """Groups the given input list of nodes by parent.
+
+        This is a convenience function for the Reorder functionality.
+        This function assumes the nodes are in the `long/fullPath` format.
+        """
+        nodes = cmds.ls(nodes, long=True)
+        nodes_by_parent = defaultdict(list)
+        for node in nodes:
+            parent = node.rsplit("|", 1)[0]
+            nodes_by_parent[parent].append(node)
+        return nodes_by_parent
+
+    @staticmethod
+    def get_children_with_index(parent):
+        """Get children under parent with their indices"""
+        def node_to_index(nodes):
+            return {node: index for index, node in enumerate(nodes)}
+
+        if not parent:
+            return node_to_index(cmds.ls(assemblies=True, long=True))
+        else:
+            return node_to_index(
+                cmds.listRelatives(parent,
+                                   children=True,
+                                   fullPath=True) or []
+            )
+
+    @staticmethod
+    def get_index(node):
+        node = cmds.ls(node, long=True)[0]  # enforce long names
+        parent = node.rsplit("|", 1)[0]
+        if not parent:
+            return cmds.ls(assemblies=True, long=True).index(node)
+        else:
+            return cmds.listRelatives(parent,
+                                      children=True,
+                                      fullPath=True).index(node)
+
+    @staticmethod
+    def get_indices(nodes):
+        """Returns a dictionary with node, index pairs.
+
+        This is preferred over get_index method for larger number of nodes,
+        because it is more optimal in performance.
+
+        eg:
+            {
+                '|side': 3,
+                '|top': 1,
+                '|pSphere1': 4,
+                '|persp': 0,
+                '|front': 2
+            }
+
+        :rtype: dict
+        :return: Dictionary with (node, index) pairs.
+        """
+        nodes = cmds.ls(nodes, long=True)  # enforce long names
+        node_indices = dict()
+        cached_children = dict()
+        for node in nodes:
+            parent = node.rsplit("|", 1)[0]
+            if parent not in cached_children:
+                cached_children[parent] = Reorder.get_children_with_index(parent)  # noqa: E501
+
+            node_indices[node] = cached_children[parent][node]
+        return node_indices
+
+    @staticmethod
+    def set_index(node, index):
+        if not node:
+            return
+        cmds.reorder(node, front=True)
+        cmds.reorder(node, r=index)
+
+    @staticmethod
+    def set_indices(node_indices):
+        if not isinstance(node_indices, dict):
+            raise TypeError(
+                "Reorder.set_indices() requires a dictionary with "
+                "(node, index) pairs as input. "
+                "`{0}` is an invalid input type.".format(
+                    type(node_indices).__name__)
+            )
+
+        if not node_indices:
+            return
+
+        # force nodes to the back to not influence each other during reorder
+        cmds.reorder(node_indices.keys(), back=True)
+
+        for node, index in sorted(node_indices.items(),
+                                  key=operator.itemgetter(1)):
+            Reorder.set_index(node, index)
+
+    @staticmethod
+    def sort(nodes, key=lambda x: x.rsplit("|", 1)[-1], reverse=False):
+        """Sorts the node in scene by the key function.
+
+        Default sorting key is alphabetically by using the object's short name.
+        """
+        nodes = cmds.ls(nodes, long=True) # ensure long paths
+        if not nodes:
+            return
+
+        # Group by parent to sort nodes per parent
+        parents = Reorder.group_by_parent(nodes)
+
+        for parent, child_nodes in parents.items():
+
+            node_indices = Reorder.get_indices(child_nodes)
+            indices = sorted(node_indices.values())
+
+            new_indices = {
+                node: indices[i] for i, node in
+                enumerate(sorted(child_nodes, key=key, reverse=reverse))
+            }
+            Reorder.set_indices(new_indices)
+
+    @staticmethod
+    def reverse(nodes):
+        nodes = cmds.ls(nodes, long=True)  # ensure long paths
+        if not nodes:
+            return
+
+        # Group by parent to sort nodes per parent
+        parents = Reorder.group_by_parent(nodes)
+
+        for child_nodes in parents.values():
+
+            node_indices = Reorder.get_indices(child_nodes)
+            indices = sorted(node_indices.values(), reverse=False)
+
+            iterable = enumerate(sorted(node_indices.items(),
+                                        key=operator.itemgetter(1),
+                                        reverse=True))
+            new_indices = {
+                node: indices[i] for i, (node, _old_index) in iterable
+            }
+            Reorder.set_indices(new_indices)
+
+    @staticmethod
+    def align_bottom(nodes):
+        """Reorder to the lowest (most back) of node in `nodes`."""
+        nodes = cmds.ls(nodes, long=True)  # ensure long paths
+        if not nodes:
+            return
+
+        # Group by parent to sort nodes per parent
+        parents = Reorder.group_by_parent(nodes)
+        for child_nodes in parents.values():
+
+            # Reorder.set_index forces to front and then moves all objects
+            # together (so they will be stacked together). Then it applies the
+            # index as relative offset, we can use that here to our advantage.
+            # And it is a lot faster than Reorder.set_indices in that scenario.
+            index_per_node = Reorder.get_indices(child_nodes)
+            back_index = max(index_per_node.values())
+            new_front_index = back_index - len(child_nodes) + 1
+            Reorder.set_index(child_nodes, new_front_index)
+
+    @staticmethod
+    def align_top(nodes):
+        """Reorder to the highest (most front) of node in `nodes`."""
+        nodes = cmds.ls(nodes, long=True) # ensure long paths
+        if not nodes:
+            return
+
+        # Group by parent to sort nodes per parent
+        parents = Reorder.group_by_parent(nodes)
+        for childNodes in parents.values():
+
+            # Reorder.set_index forces to front and then moves all objects
+            # together (so they will be stacked together). Then it applies the
+            # index as relative offset, we can use that here to our advantage.
+            # And it is a lot faster than Reorder.set_indices in that scenario.
+            index_per_node = Reorder.get_indices(childNodes)
+            front_index = min(index_per_node.values())
+            Reorder.set_index(childNodes, front_index)
+
+    @staticmethod
+    def move(nodes, relative, wrap=True):
+        """ Reorder by the given relative amount. """
+        # TODO: Implement the disabling of wrapping around when at bottom.
+        if not nodes:
+            return
+        cmds.reorder(nodes, r=relative)
+
+    @staticmethod
+    def to_bottom(nodes):
+        """Reorder to all the way to the bottom."""
+        if not nodes:
+            return
+        cmds.reorder(nodes, back=True)
+
+    @staticmethod
+    def to_top(nodes):
+        """Reorder to all the way to the top."""
+        if not nodes:
+            return
+        cmds.reorder(nodes, front=True)
+
+    @staticmethod
+    def order_to(nodes):
+        """Reorder the nodes to the order of the input list.
+
+        Tip:
+            If you pass this your current selection list it will reorder
+            the nodes to the order of your selection.
+
+        """
+        nodes = cmds.ls(nodes, long=True)  # ensure long paths
+        if not nodes:
+            return
+
+        # Make a dictionary of the input order so we can optimize the look-up
+        # of the index in the order of the input `nodes`.
+        selected_order = {node: i for i, node in enumerate(nodes)}
+
+        # Group by parent since we want to sort nodes under its current parent
+        parents = Reorder.group_by_parent(nodes)
+        for child_nodes in parents.values():
+
+            # Get the current indices
+            node_indices = Reorder.get_indices(child_nodes)
+
+            # We get the original indices so we can position to those same
+            # positions, albeit with the new ordering of the nodes.
+            orig_indices = sorted(node_indices.values())
+
+            # Order the nodes by current selection (input list) and then apply
+            # the list of indices from `nodeIndices` in low-to-high order.
+            new_indices = dict(
+                zip(sorted(node_indices.keys(),
+                           key=lambda x: selected_order[x]),
+                    orig_indices)
+            )
+            Reorder.set_indices(new_indices)
