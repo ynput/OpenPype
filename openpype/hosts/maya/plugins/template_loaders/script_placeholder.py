@@ -1,9 +1,11 @@
 from functools import partial
 
+from maya import cmds
+
 from openpype.hosts.maya.api.workfile_template_builder import (
     MayaPlaceholderPlugin
 )
-from openpype.lib import NumberDef, TextDef
+from openpype.lib import NumberDef, TextDef, EnumDef
 
 EXAMPLE_SCRIPT = """
 # Access maya commands
@@ -28,6 +30,12 @@ class MayaPlaceholderScriptPlugin(MayaPlaceholderPlugin):
 
     This is a very low-level placeholder to run Python scripts at a given
     point in time during the workfile template build.
+
+    It can create either a locator or an objectSet as placeholder node.
+    It defaults to an objectSet, since allowing to run on e.g. other
+    placeholder node members can be useful, e.g. using:
+
+    >>> members = cmds.sets(placeholder.scene_identifier, query=True)
 
     """
 
@@ -85,7 +93,37 @@ class MayaPlaceholderScriptPlugin(MayaPlaceholderPlugin):
                 multiline=True,
                 default=options.get("finished_script", "")
             ),
+            EnumDef(
+                "create_nodetype",
+                label="Nodetype",
+                items={
+                    "spaceLocator": "Locator",
+                    "objectSet": "ObjectSet"
+                },
+                tooltip=(
+                    "The placeholder's node type to be created.<br>"
+                    "<b>Note</b> this only works on create, not on update"
+                ),
+                default=options.get("create_nodetype", "objectSet")
+            ),
         ]
+
+    def create_placeholder(self, placeholder_data):
+        nodetype = placeholder_data.get("create_nodetype", "objectSet")
+
+        if nodetype == "spaceLocator":
+            super(MayaPlaceholderScriptPlugin, self).create_placeholder(
+                placeholder_data
+            )
+        elif nodetype == "objectSet":
+            placeholder_data["plugin_identifier"] = self.identifier
+
+            # Create maya objectSet on selection
+            selection = cmds.ls(selection=True, long=True)
+            name = self._create_placeholder_name(placeholder_data)
+            node = cmds.sets(selection, name=name)
+
+            self.imprint(node, placeholder_data)
 
     def prepare_placeholders(self, placeholders):
         super(MayaPlaceholderScriptPlugin, self).prepare_placeholders(
