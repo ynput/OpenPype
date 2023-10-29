@@ -1773,15 +1773,11 @@ def assign_look(nodes, subset="lookDefault"):
         subset_doc["_id"]
         for subset_doc in subset_docs_by_asset_id.values()
     }
-    last_version_docs = get_last_versions(
+    last_version_docs_by_subset_id = get_last_versions(
         project_name,
         subset_ids=subset_ids,
         fields=["_id", "name", "data.families"]
     )
-    last_version_docs_by_subset_id = {
-        last_version_doc["parent"]: last_version_doc
-        for last_version_doc in last_version_docs
-    }
 
     for asset_id, asset_nodes in grouped.items():
         # create objectId for database
