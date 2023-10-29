@@ -74,6 +74,7 @@ def gobble(project_name, input_dir):
     import pyblish.api
     import pyblish.util
     from datetime import datetime
+    import string
     pyblish.api.register_host("standalonepublisher")
 
     os.environ["AVALON_PROJECT"] = project_name
