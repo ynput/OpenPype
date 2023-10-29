@@ -125,7 +125,7 @@ def gobble(project_name, input_dir):
             family_name = "render"
             task_name = "Animation"
             if file_seq:
-                subset_name = file_seq.basename()
+                subset_name = file_seq.basename().lstrip(string.whitespace + "_")
             else:
                 subset_name = "renderAnimationMain"
 
