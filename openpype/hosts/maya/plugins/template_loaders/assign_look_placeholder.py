@@ -97,9 +97,6 @@ class AssignLookPlaceholderPlugin(MayaPlaceholderPlugin):
         subset = placeholder.data["subset"]
         assert subset, "Must have defined look subset to assign"
 
-        placeholders_by_id = event.get("placeholders_by_scene_id", {})
-        assert placeholders_by_id, "No placeholders by scene id found in event"
-
         members = cmds.ls(
             cmds.sets(placeholder.scene_identifier, query=True), long=True
         )
