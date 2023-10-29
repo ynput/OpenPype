@@ -88,7 +88,7 @@ class AssignLookPlaceholderPlugin(MayaPlaceholderPlugin):
             self.register_on_finished_callback(placeholder,
                                                delete_callback)
 
-    def assign_look(self, placeholder, event):
+    def assign_look(self, placeholder):
         if placeholder.data.get("finished", False):
             # If not recursive we mark it finished after the first depth
             # iteration - otherwise run it again to find any new members
