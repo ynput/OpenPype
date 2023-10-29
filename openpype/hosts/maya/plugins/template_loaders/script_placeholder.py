@@ -53,9 +53,17 @@ class MayaPlaceholderScriptPlugin(MayaPlaceholderPlugin):
                 )
             ),
             TextDef(
+                "prepare_script",
+                label="Run at\nprepare",
+                tooltip="Run before populate at prepare order",
+                multiline=True,
+                default=options.get("prepare_script", "")
+            ),
+            TextDef(
                 "populate_script",
                 label="Run at\npopulate",
-                tooltip="Run script at populate node order",
+                tooltip="Run script at populate node order<br>"
+                        "This is the <b>default</b> behavior",
                 multiline=True,
                 default=options.get("populate_script", EXAMPLE_SCRIPT)
             ),
@@ -78,6 +86,17 @@ class MayaPlaceholderScriptPlugin(MayaPlaceholderPlugin):
                 default=options.get("finished_script", "")
             ),
         ]
+
+    def prepare_placeholders(self, placeholders):
+        super(MayaPlaceholderScriptPlugin, self).prepare_placeholders(
+            placeholders
+        )
+        for placeholder in placeholders:
+            prepare_script = placeholder.data.get("prepare_script")
+            if not prepare_script:
+                continue
+
+            self.run_script(placeholder, prepare_script)
 
     def populate_placeholder(self, placeholder):
 
