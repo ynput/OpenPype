@@ -115,7 +115,7 @@ class MayaPlaceholderScriptPlugin(MayaPlaceholderPlugin):
             delete_callback = partial(self.delete_placeholder, placeholder)
             self.register_on_finished_callback(placeholder,
                                                delete_callback,
-                                               order=placeholder.order+1)
+                                               order=placeholder.order + 1)
 
     def run_script(self, placeholder, script, event=None):
         """Run script

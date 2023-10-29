@@ -4318,14 +4318,14 @@ class Reorder(object):
 
         Default sorting key is alphabetically by using the object's short name.
         """
-        nodes = cmds.ls(nodes, long=True) # ensure long paths
+        nodes = cmds.ls(nodes, long=True)  # ensure long paths
         if not nodes:
             return
 
         # Group by parent to sort nodes per parent
         parents = Reorder.group_by_parent(nodes)
 
-        for parent, child_nodes in parents.items():
+        for child_nodes in parents.values():
 
             node_indices = Reorder.get_indices(child_nodes)
             indices = sorted(node_indices.values())
@@ -4381,7 +4381,7 @@ class Reorder(object):
     @staticmethod
     def align_top(nodes):
         """Reorder to the highest (most front) of node in `nodes`."""
-        nodes = cmds.ls(nodes, long=True) # ensure long paths
+        nodes = cmds.ls(nodes, long=True)  # ensure long paths
         if not nodes:
             return
 

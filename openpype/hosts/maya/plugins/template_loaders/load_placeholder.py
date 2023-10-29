@@ -128,4 +128,4 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, PlaceholderLoadMixin):
             cmds.reorder(node, back=True)
             index = Reorder.get_index(placeholder.scene_identifier)
             cmds.reorder(node, front=True)
-            cmds.reorder(node, relative=index+1)
+            cmds.reorder(node, relative=index + 1)
