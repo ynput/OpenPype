@@ -156,7 +156,9 @@ class MayaPlaceholderPlugin(PlaceholderPlugin):
         # Delete attributes to ensure we imprint new data with correct type
         for key in changed_values.keys():
             placeholder_item.data[key] = value
-            cmds.deleteAttr(node_name + "." + key)
+            if cmds.attributeQuery(key, node=node_name, exists=True):
+                attribute = "{}.{}".format(node_name, key)
+                cmds.deleteAttr(attribute)
 
         self.imprint(node_name, changed_values)
 
