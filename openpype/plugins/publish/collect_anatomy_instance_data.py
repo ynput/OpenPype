@@ -187,35 +187,29 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Storing anatomy data to instance data.")
 
         project_doc = context.data["projectEntity"]
-        context_asset_doc = context.data.get("assetEntity")
-
         project_task_types = project_doc["config"]["tasks"]
 
         for instance in context:
+            asset_doc = instance.data.get("assetEntity")
             anatomy_updates = {
-                "asset": instance.data["asset"],
-                "folder": {
-                    "name": instance.data["asset"],
-                },
                 "family": instance.data["family"],
                 "subset": instance.data["subset"],
             }
-
-            # Hierarchy
-            asset_doc = instance.data.get("assetEntity")
-            if (
-                asset_doc
-                and (
-                    not context_asset_doc
-                    or asset_doc["_id"] != context_asset_doc["_id"]
-                )
-            ):
+            if asset_doc:
                 parents = asset_doc["data"].get("parents") or list()
                 parent_name = project_doc["name"]
                 if parents:
                     parent_name = parents[-1]
-                anatomy_updates["hierarchy"] = "/".join(parents)
-                anatomy_updates["parent"] = parent_name
+
+                hierarchy = "/".join(parents)
+                anatomy_updates.update({
+                    "asset": asset_doc["name"],
+                    "hierarchy": hierarchy,
+                    "parent": parent_name,
+                    "folder": {
+                        "name": asset_doc["name"],
+                    },
+                })
 
             # Task
             task_type = None
