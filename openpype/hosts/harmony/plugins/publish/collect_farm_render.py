@@ -147,13 +147,13 @@ class CollectFarmRender(publish.AbstractCollectRender):
                 attachTo=False,
                 setMembers=[node],
                 publish=info[4],
-                review=False,
                 renderer=None,
                 priority=50,
                 name=node.split("/")[1],
 
                 family="render.farm",
                 families=["render.farm"],
+                farm=True,
 
                 resolutionWidth=context.data["resolutionWidth"],
                 resolutionHeight=context.data["resolutionHeight"],
@@ -174,7 +174,6 @@ class CollectFarmRender(publish.AbstractCollectRender):
                 outputFormat=info[1],
                 outputStartFrame=info[3],
                 leadingZeros=info[2],
-                toBeRenderedOn='deadline',
                 ignoreFrameHandleCheck=True
 
             )

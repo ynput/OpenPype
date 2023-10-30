@@ -75,18 +75,18 @@ def _get_subsets(
         ):
             fields.add(key)
 
-    active = None
+    active = True
     if archived:
-        active = False
+        active = None
 
     for subset in con.get_products(
         project_name,
         subset_ids,
         subset_names,
-        folder_ids,
-        names_by_folder_ids,
-        active,
-        fields
+        folder_ids=folder_ids,
+        names_by_folder_ids=names_by_folder_ids,
+        active=active,
+        fields=fields,
     ):
         yield convert_v4_subset_to_v3(subset)
 
@@ -196,7 +196,7 @@ def get_assets(
 
     active = True
     if archived:
-        active = False
+        active = None
 
     con = get_server_api_connection()
     fields = folder_fields_v3_to_v4(fields, con)
@@ -422,7 +422,7 @@ def get_last_version_by_subset_name(
     if not subset:
         return None
     return get_last_version_by_subset_id(
-        project_name, subset["id"], fields=fields
+        project_name, subset["_id"], fields=fields
     )
 
 

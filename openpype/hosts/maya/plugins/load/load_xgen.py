@@ -53,8 +53,6 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         )
 
         # Reference xgen. Xgen does not like being referenced in under a group.
-        new_nodes = []
-
         with maintained_selection():
             nodes = cmds.file(
                 maya_filepath,

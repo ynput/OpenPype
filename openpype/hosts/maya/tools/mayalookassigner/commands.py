@@ -138,8 +138,13 @@ def create_items_from_nodes(nodes):
         asset_doc = asset_docs_by_id.get(asset_id)
         # Skip if asset id is not found
         if not asset_doc:
-            log.warning("Id not found in the database, skipping '%s'." % _id)
-            log.warning("Nodes: %s" % id_nodes)
+            log.warning(
+                "Id found on {num} nodes for which no asset is found database,"
+                " skipping '{asset_id}'".format(
+                    num=len(nodes),
+                    asset_id=asset_id
+                )
+            )
             continue
 
         # Collect available look subsets for this asset

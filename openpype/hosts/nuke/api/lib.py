@@ -40,7 +40,6 @@ from openpype.settings import (
 from openpype.modules import ModulesManager
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
-    get_current_project_name,
     discover_legacy_creator_plugins,
     Anatomy,
     get_current_host_name,
@@ -48,20 +47,15 @@ from openpype.pipeline import (
     get_current_asset_name,
 )
 from openpype.pipeline.context_tools import (
-    get_current_project_asset,
     get_custom_workfile_template_from_session
 )
-from openpype.pipeline.colorspace import (
-    get_imageio_config
-)
+from openpype.pipeline.colorspace import get_imageio_config
 from openpype.pipeline.workfile import BuildWorkfile
 from . import gizmo_menu
 from .constants import ASSIST
 
-from .workio import (
-    save_file,
-    open_file
-)
+from .workio import save_file
+from .utils import get_node_outputs
 
 log = Logger.get_logger(__name__)
 
@@ -1104,26 +1098,6 @@ def check_subsetname_exists(nodes, subset_name):
                 False)
 
 
-def get_render_path(node):
-    ''' Generate Render path from presets regarding avalon knob data
-    '''
-    avalon_knob_data = read_avalon_data(node)
-
-    nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["families"],
-        plugin_name=avalon_knob_data["creator"],
-        subset=avalon_knob_data["subset"]
-    )
-
-    data = {
-        "avalon": avalon_knob_data,
-        "nuke_imageio_writes": nuke_imageio_writes
-    }
-
-    anatomy_filled = format_anatomy(data)
-    return anatomy_filled["render"]["path"].replace("\\", "/")
-
-
 def format_anatomy(data):
     ''' Helping function for formatting of anatomy paths
 
@@ -2041,6 +2015,7 @@ class WorkfileSettings(object):
         )
 
         workfile_settings = imageio_host["workfile"]
+        viewer_process_settings = imageio_host["viewer"]["viewerProcess"]
 
         if not config_data:
             # TODO: backward compatibility for old projects - remove later
@@ -2091,6 +2066,15 @@ class WorkfileSettings(object):
         workfile_settings.pop("colorManagement", None)
         workfile_settings.pop("OCIO_config", None)
 
+        # get monitor lut from settings respecting Nuke version differences
+        monitor_lut = workfile_settings.pop("monitorLut", None)
+        monitor_lut_data = self._get_monitor_settings(
+            viewer_process_settings, monitor_lut)
+
+        # set monitor related knobs luts (MonitorOut, Thumbnails)
+        for knob, value_ in monitor_lut_data.items():
+            workfile_settings[knob] = value_
+
         # then set the rest
         for knob, value_ in workfile_settings.items():
             # skip unfilled ocio config path
@@ -2107,8 +2091,9 @@ class WorkfileSettings(object):
 
         # set ocio config path
         if config_data:
+            config_path = config_data["path"].replace("\\", "/")
             log.info("OCIO config path found: `{}`".format(
-                config_data["path"]))
+                config_path))
 
             # check if there's a mismatch between environment and settings
             correct_settings = self._is_settings_matching_environment(
@@ -2117,6 +2102,40 @@ class WorkfileSettings(object):
             # if there's no mismatch between environment and settings
             if correct_settings:
                 self._set_ocio_config_path_to_workfile(config_data)
+
+    def _get_monitor_settings(self, viewer_lut, monitor_lut):
+        """ Get monitor settings from viewer and monitor lut
+
+        Args:
+            viewer_lut (str): viewer lut string
+            monitor_lut (str): monitor lut string
+
+        Returns:
+            dict: monitor settings
+        """
+        output_data = {}
+        m_display, m_viewer = get_viewer_config_from_string(monitor_lut)
+        v_display, v_viewer = get_viewer_config_from_string(viewer_lut)
+
+        # set monitor lut differently for nuke version 14
+        if nuke.NUKE_VERSION_MAJOR >= 14:
+            output_data["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            output_data["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=False)
+
+        if nuke.NUKE_VERSION_MAJOR == 13:
+            output_data["monitorOutLUT"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=False)
+            # monitorLut=thumbnails - viewerProcess makes more sense
+            output_data["monitorLut"] = create_viewer_profile_string(
+                v_viewer, v_display, path_like=True)
+        if nuke.NUKE_VERSION_MAJOR <= 12:
+            output_data["monitorLut"] = create_viewer_profile_string(
+                m_viewer, m_display, path_like=True)
+
+        return output_data
 
     def _is_settings_matching_environment(self, config_data):
         """ Check if OCIO config path is different from environment
@@ -2232,7 +2251,7 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         Returns:
             str: OCIO config path with environment variable TCL expression
         """
-        config_path = config_data["path"]
+        config_path = config_data["path"].replace("\\", "/")
         config_template = config_data["template"]
 
         included_vars = self._get_included_vars(config_template)
@@ -2270,27 +2289,53 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         ''' Adds correct colorspace to write node dict
 
         '''
-        for node in nuke.allNodes(filter="Group"):
+        for node in nuke.allNodes(filter="Group", group=self._root_node):
+            log.info("Setting colorspace to `{}`".format(node.name()))
 
             # get data from avalon knob
             avalon_knob_data = read_avalon_data(node)
+            node_data = get_node_data(node, INSTANCE_DATA_KNOB)
 
-            if avalon_knob_data.get("id") != "pyblish.avalon.instance":
+            if (
+                # backward compatibility
+                # TODO: remove this once old avalon data api will be removed
+                avalon_knob_data
+                and avalon_knob_data.get("id") != "pyblish.avalon.instance"
+            ):
+                continue
+            elif (
+                node_data
+                and node_data.get("id") != "pyblish.avalon.instance"
+            ):
                 continue
 
-            if "creator" not in avalon_knob_data:
+            if (
+                # backward compatibility
+                # TODO: remove this once old avalon data api will be removed
+                avalon_knob_data
+                and "creator" not in avalon_knob_data
+            ):
+                continue
+            elif (
+                node_data
+                and "creator_identifier" not in node_data
+            ):
                 continue
 
-            # establish families
-            families = [avalon_knob_data["family"]]
-            if avalon_knob_data.get("families"):
-                families.append(avalon_knob_data.get("families"))
+            nuke_imageio_writes = None
+            if avalon_knob_data:
+                # establish families
+                families = [avalon_knob_data["family"]]
+                if avalon_knob_data.get("families"):
+                    families.append(avalon_knob_data.get("families"))
 
-            nuke_imageio_writes = get_imageio_node_setting(
-                node_class=avalon_knob_data["families"],
-                plugin_name=avalon_knob_data["creator"],
-                subset=avalon_knob_data["subset"]
-            )
+                nuke_imageio_writes = get_imageio_node_setting(
+                    node_class=avalon_knob_data["families"],
+                    plugin_name=avalon_knob_data["creator"],
+                    subset=avalon_knob_data["subset"]
+                )
+            elif node_data:
+                nuke_imageio_writes = get_write_node_template_attr(node)
 
             log.debug("nuke_imageio_writes: `{}`".format(nuke_imageio_writes))
 
@@ -2730,8 +2775,15 @@ def find_free_space_to_paste_nodes(
 
 
 @contextlib.contextmanager
-def maintained_selection():
+def maintained_selection(exclude_nodes=None):
     """Maintain selection during context
+
+    Maintain selection during context and unselect
+    all nodes after context is done.
+
+    Arguments:
+        exclude_nodes (list[nuke.Node]): list of nodes to be unselected
+                                         before context is done
 
     Example:
         >>> with maintained_selection():
@@ -2739,7 +2791,12 @@ def maintained_selection():
         >>> print(node["selected"].value())
         False
     """
+    if exclude_nodes:
+        for node in exclude_nodes:
+            node["selected"].setValue(False)
+
     previous_selection = nuke.selectedNodes()
+
     try:
         yield
     finally:
@@ -2749,6 +2806,51 @@ def maintained_selection():
         # and select all previously selected nodes
         if previous_selection:
             select_nodes(previous_selection)
+
+
+@contextlib.contextmanager
+def swap_node_with_dependency(old_node, new_node):
+    """ Swap node with dependency
+
+    Swap node with dependency and reconnect all inputs and outputs.
+    It removes old node.
+
+    Arguments:
+        old_node (nuke.Node): node to be replaced
+        new_node (nuke.Node): node to replace with
+
+    Example:
+        >>> old_node_name = old_node["name"].value()
+        >>> print(old_node_name)
+        old_node_name_01
+        >>> with swap_node_with_dependency(old_node, new_node) as node_name:
+        ...     new_node["name"].setValue(node_name)
+        >>> print(new_node["name"].value())
+        old_node_name_01
+    """
+    # preserve position
+    xpos, ypos = old_node.xpos(), old_node.ypos()
+    # preserve selection after all is done
+    outputs = get_node_outputs(old_node)
+    inputs = old_node.dependencies()
+    node_name = old_node["name"].value()
+
+    try:
+        nuke.delete(old_node)
+
+        yield node_name
+    finally:
+
+        # Reconnect inputs
+        for i, node in enumerate(inputs):
+            new_node.setInput(i, node)
+        # Reconnect outputs
+        if outputs:
+            for n, pipes in outputs.items():
+                for i in pipes:
+                    n.setInput(i, new_node)
+        # return to original position
+        new_node.setXYpos(xpos, ypos)
 
 
 def reset_selection():
@@ -2761,9 +2863,10 @@ def select_nodes(nodes):
     """Selects all inputted nodes
 
     Arguments:
-        nodes (list): nuke nodes to be selected
+        nodes (Union[list, tuple, set]): nuke nodes to be selected
     """
-    assert isinstance(nodes, (list, tuple)), "nodes has to be list or tuple"
+    assert isinstance(nodes, (list, tuple, set)), \
+        "nodes has to be list, tuple or set"
 
     for node in nodes:
         node["selected"].setValue(True)
@@ -2847,13 +2950,13 @@ def process_workfile_builder():
         "workfile_builder", {})
 
     # get settings
-    createfv_on = workfile_builder.get("create_first_version") or None
+    create_fv_on = workfile_builder.get("create_first_version") or None
     builder_on = workfile_builder.get("builder_on_start") or None
 
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
     # generate first version in file not existing and feature is enabled
-    if createfv_on and not os.path.exists(last_workfile_path):
+    if create_fv_on and not os.path.exists(last_workfile_path):
         # get custom template path if any
         custom_template_path = get_custom_workfile_template_from_session(
             project_settings=project_settings
@@ -3320,11 +3423,11 @@ def get_viewer_config_from_string(input_string):
         display = split[0]
     elif "(" in viewer:
         pattern = r"([\w\d\s\.\-]+).*[(](.*)[)]"
-        result = re.findall(pattern, viewer)
+        result_ = re.findall(pattern, viewer)
         try:
-            result = result.pop()
-            display = str(result[1]).rstrip()
-            viewer = str(result[0]).rstrip()
+            result_ = result_.pop()
+            display = str(result_[1]).rstrip()
+            viewer = str(result_[0]).rstrip()
         except IndexError:
             raise IndexError((
                 "Viewer Input string is not correct. "
@@ -3332,3 +3435,46 @@ def get_viewer_config_from_string(input_string):
             ).format(input_string))
 
     return (display, viewer)
+
+
+def create_viewer_profile_string(viewer, display=None, path_like=False):
+    """Convert viewer and display to string
+
+    Args:
+        viewer (str): viewer name
+        display (Optional[str]): display name
+        path_like (Optional[bool]): if True, return path like string
+
+    Returns:
+        str: viewer config string
+    """
+    if not display:
+        return viewer
+
+    if path_like:
+        return "{}/{}".format(display, viewer)
+    return "{} ({})".format(viewer, display)
+
+
+def get_filenames_without_hash(filename, frame_start, frame_end):
+    """Get filenames without frame hash
+        i.e. "renderCompositingMain.baking.0001.exr"
+
+    Args:
+        filename (str): filename with frame hash
+        frame_start (str): start of the frame
+        frame_end (str): end of the frame
+
+    Returns:
+        list: filename per frame of the sequence
+    """
+    filenames = []
+    for frame in range(int(frame_start), (int(frame_end) + 1)):
+        if "#" in filename:
+            # use regex to convert #### to {:0>4}
+            def replace(match):
+                return "{{:0>{}}}".format(len(match.group()))
+            filename_without_hashes = re.sub("#+", replace, filename)
+            new_filename = filename_without_hashes.format(frame)
+            filenames.append(new_filename)
+    return filenames

@@ -119,7 +119,7 @@ class BlendLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-        libpath = self.fname
+        libpath = self.filepath_from_context(context)
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
@@ -244,7 +244,7 @@ class BlendLoader(plugin.AssetLoader):
         for parent in parent_containers:
             parent.get(AVALON_PROPERTY)["members"] = list(filter(
                 lambda i: i not in members,
-                parent.get(AVALON_PROPERTY)["members"]))
+                parent.get(AVALON_PROPERTY).get("members", [])))
 
         for attr in attrs:
             for data in getattr(bpy.data, attr):

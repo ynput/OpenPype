@@ -14,7 +14,6 @@ class CreateRender(plugin.MaxCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
         from pymxs import runtime as rt
-        sel_obj = list(rt.selection)
         file = rt.maxFileName
         filename, _ = os.path.splitext(file)
         instance_data["AssetName"] = filename

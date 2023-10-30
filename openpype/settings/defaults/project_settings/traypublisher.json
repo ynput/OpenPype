@@ -256,6 +256,23 @@
             "allow_multiple_items": true,
             "allow_version_control": false,
             "extensions": []
+        },
+        {
+            "family": "audio",
+            "identifier": "",
+            "label": "Audio ",
+            "icon": "fa5s.file-audio",
+            "default_variants": [
+                "Main"
+            ],
+            "description": "Audio product",
+            "detailed_description": "Audio files for review or final delivery",
+            "allow_sequences": false,
+            "allow_multiple_items": false,
+            "allow_version_control": false,
+            "extensions": [
+                ".wav"
+            ]
         }
     ],
     "editorial_creators": {
@@ -329,10 +346,10 @@
         }
     },
     "publish": {
-        "CollectFrameDataFromAssetEntity": {
+        "CollectSequenceFrameData": {
             "enabled": true,
             "optional": true,
-            "active": true
+            "active": false
         },
         "ValidateFrameRange": {
             "enabled": true,

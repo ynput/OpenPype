@@ -17,11 +17,6 @@ SHAPE_ATTRS = ["castsShadows",
                "visibleInRefractions",
                "doubleSided",
                "opposite"]
-
-RENDERER_NODE_TYPES = [
-    # redshift
-    "RedshiftMeshParameters"
-]
 SHAPE_ATTRS = set(SHAPE_ATTRS)
 
 
@@ -36,18 +31,35 @@ def get_pxr_multitexture_file_attrs(node):
 
 
 FILE_NODES = {
+    # maya
     "file": "fileTextureName",
-
+    # arnold (mtoa)
     "aiImage": "filename",
-
+    # redshift
     "RedshiftNormalMap": "tex0",
-
+    # renderman
     "PxrBump": "filename",
     "PxrNormalMap": "filename",
     "PxrMultiTexture": get_pxr_multitexture_file_attrs,
     "PxrPtexture": "filename",
     "PxrTexture": "filename"
 }
+
+# Keep only node types that actually exist
+all_node_types = set(cmds.allNodeTypes())
+for node_type in list(FILE_NODES.keys()):
+    if node_type not in all_node_types:
+        FILE_NODES.pop(node_type)
+del all_node_types
+
+# Cache pixar dependency node types so we can perform a type lookup against it
+PXR_NODES = set()
+if cmds.pluginInfo("RenderMan_for_Maya", query=True, loaded=True):
+    PXR_NODES = set(
+        cmds.pluginInfo("RenderMan_for_Maya",
+                        query=True,
+                        dependNode=True)
+    )
 
 
 def get_attributes(dictionary, attr, node=None):
@@ -232,20 +244,17 @@ def get_file_node_files(node):
 
     """
     paths = get_file_node_paths(node)
-    sequences = []
-    replaces = []
+
+    # For sequences get all files and filter to only existing files
+    result = []
     for index, path in enumerate(paths):
         if node_uses_image_sequence(node, path):
             glob_pattern = seq_to_glob(path)
-            sequences.extend(glob.glob(glob_pattern))
-            replaces.append(index)
+            result.extend(glob.glob(glob_pattern))
+        elif os.path.exists(path):
+            result.append(path)
 
-    for index in replaces:
-        paths.pop(index)
-
-    paths.extend(sequences)
-
-    return [p for p in paths if os.path.exists(p)]
+    return result
 
 
 class CollectLook(pyblish.api.InstancePlugin):
@@ -260,7 +269,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     membership relations.
 
     Collects:
-        lookAttribtutes (list): Nodes in instance with their altered attributes
+        lookAttributes (list): Nodes in instance with their altered attributes
         lookSetRelations (list): Sets and their memberships
         lookSets (list): List of set names included in the look
 
@@ -286,7 +295,10 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         """
         self.log.debug("Looking for look associations "
-                      "for %s" % instance.data['name'])
+                       "for %s" % instance.data['name'])
+
+        # Lookup set (optimization)
+        instance_lookup = set(cmds.ls(instance, long=True))
 
         # Discover related object sets
         self.log.debug("Gathering sets ...")
@@ -296,68 +308,24 @@ class CollectLook(pyblish.api.InstancePlugin):
         instance_lookup = set(cmds.ls(instance, long=True))
 
         self.log.debug("Gathering set relations ...")
-        # Ensure iteration happen in a list so we can remove keys from the
+        # Ensure iteration happen in a list to allow removing keys from the
         # dict within the loop
-
-        # skipped types of attribute on render specific nodes
-        disabled_types = ["message", "TdataCompound"]
-
         for obj_set in list(sets):
             self.log.debug("From {}".format(obj_set))
-
-            # if node is specified as renderer node type, it will be
-            # serialized with its attributes.
-            if cmds.nodeType(obj_set) in RENDERER_NODE_TYPES:
-                self.log.debug("- {} is {}".format(
-                    obj_set, cmds.nodeType(obj_set)))
-
-                node_attrs = []
-
-                # serialize its attributes so they can be recreated on look
-                # load.
-                for attr in cmds.listAttr(obj_set):
-                    # skip publishedNodeInfo attributes as they break
-                    # getAttr() and we don't need them anyway
-                    if attr.startswith("publishedNodeInfo"):
-                        continue
-
-                    # skip attributes types defined in 'disabled_type' list
-                    if cmds.getAttr("{}.{}".format(obj_set, attr), type=True) in disabled_types:  # noqa
-                        continue
-
-                    node_attrs.append((
-                        attr,
-                        cmds.getAttr("{}.{}".format(obj_set, attr)),
-                        cmds.getAttr(
-                            "{}.{}".format(obj_set, attr), type=True)
-                    ))
-
-                for member in cmds.ls(
-                        cmds.sets(obj_set, query=True), long=True):
-                    member_data = self.collect_member_data(member,
-                                                           instance_lookup)
-                    if not member_data:
-                        continue
-
-                    # Add information of the node to the members list
-                    sets[obj_set]["members"].append(member_data)
-
             # Get all nodes of the current objectSet (shadingEngine)
             for member in cmds.ls(cmds.sets(obj_set, query=True), long=True):
                 member_data = self.collect_member_data(member,
                                                        instance_lookup)
-                if not member_data:
-                    continue
-
-                # Add information of the node to the members list
-                sets[obj_set]["members"].append(member_data)
+                if member_data:
+                    # Add information of the node to the members list
+                    sets[obj_set]["members"].append(member_data)
 
             # Remove sets that didn't have any members assigned in the end
             # Thus the data will be limited to only what we need.
-            self.log.debug("obj_set {}".format(sets[obj_set]))
             if not sets[obj_set]["members"]:
-                self.log.info(
-                    "Removing redundant set information: {}".format(obj_set))
+                self.log.debug(
+                    "Removing redundant set information: {}".format(obj_set)
+                )
                 sets.pop(obj_set, None)
 
         self.log.debug("Gathering attribute changes to instance members..")
@@ -382,35 +350,28 @@ class CollectLook(pyblish.api.InstancePlugin):
             "rman__displacement"
         ]
         if look_sets:
-            materials = []
+            self.log.debug("Found look sets: {}".format(look_sets))
 
+            # Get all material attrs for all look sets to retrieve their inputs
+            existing_attrs = []
             for look in look_sets:
-                for at in shader_attrs:
-                    try:
-                        con = cmds.listConnections("{}.{}".format(look, at))
-                    except ValueError:
-                        # skip attributes that are invalid in current
-                        # context. For example in the case where
-                        # Arnold is not enabled.
-                        continue
-                    if con:
-                        materials.extend(con)
+                for attr in shader_attrs:
+                    if cmds.attributeQuery(attr, node=look, exists=True):
+                        existing_attrs.append("{}.{}".format(look, attr))
+            materials = cmds.listConnections(existing_attrs,
+                                             source=True,
+                                             destination=False) or []
 
-            self.log.info("Found materials:\n{}".format(materials))
+            self.log.debug("Found materials:\n{}".format(materials))
 
-            self.log.info("Found the following sets:\n{}".format(look_sets))
+            self.log.debug("Found the following sets:\n{}".format(look_sets))
             # Get the entire node chain of the look sets
-            # history = cmds.listHistory(look_sets)
-            history = []
-            for material in materials:
-                history.extend(cmds.listHistory(material, ac=True))
+            # history = cmds.listHistory(look_sets, allConnections=True)
+            history = cmds.listHistory(materials, allConnections=True)
 
-            # handle VrayPluginNodeMtl node - see #1397
-            vray_plugin_nodes = cmds.ls(
-                history, type="VRayPluginNodeMtl", long=True)
-            for vray_node in vray_plugin_nodes:
-                history.extend(cmds.listHistory(vray_node, ac=True))
-
+            # Since we retrieved history only of the connected materials
+            # connected to the look sets above we now add direct history
+            # for some of the look sets directly
             # handling render attribute sets
             render_set_types = [
                 "VRayDisplacement",
@@ -428,20 +389,26 @@ class CollectLook(pyblish.api.InstancePlugin):
                     or []
                 )
 
-            all_supported_nodes = FILE_NODES.keys()
-            files = []
-            for node_type in all_supported_nodes:
-                files.extend(cmds.ls(history, type=node_type, long=True))
+            # Ensure unique entries only
+            history = list(set(history))
+
+            files = cmds.ls(history,
+                            # It's important only node types are passed that
+                            # exist (e.g. for loaded plugins) because otherwise
+                            # the result will turn back empty
+                            type=list(FILE_NODES.keys()),
+                            long=True)
+
+            # Sort for log readability
+            files.sort()
 
         self.log.debug("Collected file nodes:\n{}".format(files))
         # Collect textures if any file nodes are found
-        instance.data["resources"] = []
-        for n in files:
-            for res in self.collect_resources(n):
-                instance.data["resources"].append(res)
-
-        self.log.debug("Collected resources: {}".format(
-            instance.data["resources"]))
+        resources = []
+        for node in files:  # sort for log readability
+            resources.extend(self.collect_resources(node))
+        instance.data["resources"] = resources
+        self.log.debug("Collected resources: {}".format(resources))
 
         # Log warning when no relevant sets were retrieved for the look.
         if (
@@ -456,7 +423,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         instance.extend(shader for shader in look_sets if shader
                         not in instance_lookup)
 
-        self.log.info("Collected look for %s" % instance)
+        self.log.debug("Collected look for %s" % instance)
 
     def collect_sets(self, instance):
         """Collect all objectSets which are of importance for publishing
@@ -536,13 +503,13 @@ class CollectLook(pyblish.api.InstancePlugin):
             # Collect changes to "custom" attributes
             node_attrs = get_look_attrs(node)
 
-            self.log.debug(
-                "Node \"{0}\" attributes: {1}".format(node, node_attrs)
-            )
-
             # Only include if there are any properties we care about
             if not node_attrs:
                 continue
+
+            self.log.debug(
+                "Node \"{0}\" attributes: {1}".format(node, node_attrs)
+            )
 
             node_attributes = {}
             for attr in node_attrs:
@@ -574,14 +541,14 @@ class CollectLook(pyblish.api.InstancePlugin):
         Returns:
             dict
         """
-        self.log.debug("processing: {}".format(node))
-        all_supported_nodes = FILE_NODES.keys()
-        if cmds.nodeType(node) not in all_supported_nodes:
+        if cmds.nodeType(node) not in FILE_NODES:
             self.log.error(
                 "Unsupported file node: {}".format(cmds.nodeType(node)))
             raise AssertionError("Unsupported file node")
 
-        self.log.debug("  - got {}".format(cmds.nodeType(node)))
+        self.log.debug(
+            "Collecting resource: {} ({})".format(node, cmds.nodeType(node))
+        )
 
         attributes = get_attributes(FILE_NODES, cmds.nodeType(node), node)
         for attribute in attributes:
@@ -589,39 +556,34 @@ class CollectLook(pyblish.api.InstancePlugin):
                 node,
                 attribute
             ))
-            computed_attribute = "{}.{}".format(node, attribute)
-            if attribute == "fileTextureName":
-                computed_attribute = node + ".computedFileTextureNamePattern"
 
-            self.log.info("  - file source: {}".format(source))
+            self.log.debug("  - file source: {}".format(source))
             color_space_attr = "{}.colorSpace".format(node)
             try:
                 color_space = cmds.getAttr(color_space_attr)
             except ValueError:
                 # node doesn't have colorspace attribute
                 color_space = "Raw"
+
             # Compare with the computed file path, e.g. the one with
             # the <UDIM> pattern in it, to generate some logging information
             # about this difference
-            computed_source = cmds.getAttr(computed_attribute)
-            if source != computed_source:
-                self.log.debug("Detected computed file pattern difference "
-                               "from original pattern: {0} "
-                               "({1} -> {2})".format(node,
-                                                     source,
-                                                     computed_source))
+            # Only for file nodes with `fileTextureName` attribute
+            if attribute == "fileTextureName":
+                computed_source = cmds.getAttr(
+                    "{}.computedFileTextureNamePattern".format(node)
+                )
+                if source != computed_source:
+                    self.log.debug("Detected computed file pattern difference "
+                                   "from original pattern: {0} "
+                                   "({1} -> {2})".format(node,
+                                                         source,
+                                                         computed_source))
 
             # renderman allows nodes to have filename attribute empty while
             # you can have another incoming connection from different node.
-            pxr_nodes = set()
-            if cmds.pluginInfo("RenderMan_for_Maya", query=True, loaded=True):
-                pxr_nodes = set(
-                    cmds.pluginInfo("RenderMan_for_Maya",
-                                    query=True,
-                                    dependNode=True)
-                )
-            if not source and cmds.nodeType(node) in pxr_nodes:
-                self.log.info("Renderman: source is empty, skipping...")
+            if not source and cmds.nodeType(node) in PXR_NODES:
+                self.log.debug("Renderman: source is empty, skipping...")
                 continue
             # We replace backslashes with forward slashes because V-Ray
             # can't handle the UDIM files with the backslashes in the
@@ -630,14 +592,14 @@ class CollectLook(pyblish.api.InstancePlugin):
 
             files = get_file_node_files(node)
             if len(files) == 0:
-                self.log.error("No valid files found from node `%s`" % node)
+                self.log.debug("No valid files found from node `%s`" % node)
 
-            self.log.info("collection of resource done:")
-            self.log.info("  - node: {}".format(node))
-            self.log.info("  - attribute: {}".format(attribute))
-            self.log.info("  - source: {}".format(source))
-            self.log.info("  - file: {}".format(files))
-            self.log.info("  - color space: {}".format(color_space))
+            self.log.debug("collection of resource done:")
+            self.log.debug("  - node: {}".format(node))
+            self.log.debug("  - attribute: {}".format(attribute))
+            self.log.debug("  - source: {}".format(source))
+            self.log.debug("  - file: {}".format(files))
+            self.log.debug("  - color space: {}".format(color_space))
 
             # Define the resource
             yield {

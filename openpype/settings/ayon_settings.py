@@ -290,6 +290,16 @@ def _convert_modules_system(
             modules_settings[key] = value
 
 
+def is_dev_mode_enabled():
+    """Dev mode is enabled in AYON.
+
+    Returns:
+        bool: True if dev mode is enabled.
+    """
+
+    return os.getenv("AYON_USE_DEV") == "1"
+
+
 def convert_system_settings(ayon_settings, default_settings, addon_versions):
     default_settings = copy.deepcopy(default_settings)
     output = {
@@ -616,6 +626,23 @@ def _convert_maya_project_settings(ayon_settings, output):
     output["maya"] = ayon_maya
 
 
+def _convert_3dsmax_project_settings(ayon_settings, output):
+    if "max" not in ayon_settings:
+        return
+
+    ayon_max = ayon_settings["max"]
+    _convert_host_imageio(ayon_max)
+    if "PointCloud" in ayon_max:
+        point_cloud_attribute = ayon_max["PointCloud"]["attribute"]
+        new_point_cloud_attribute = {
+            item["name"]: item["value"]
+            for item in point_cloud_attribute
+        }
+        ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
+
+    output["max"] = ayon_max
+
+
 def _convert_nuke_knobs(knobs):
     new_knobs = []
     for knob in knobs:
@@ -731,15 +758,44 @@ def _convert_nuke_project_settings(ayon_settings, output):
     )
 
     new_review_data_outputs = {}
-    for item in ayon_publish["ExtractReviewDataMov"]["outputs"]:
+    outputs_settings = []
+    # Check deprecated ExtractReviewDataMov
+    # settings for backwards compatibility
+    deprecrated_review_settings = ayon_publish["ExtractReviewDataMov"]
+    current_review_settings = (
+        ayon_publish.get("ExtractReviewIntermediates")
+    )
+    if deprecrated_review_settings["enabled"]:
+        outputs_settings = deprecrated_review_settings["outputs"]
+    elif current_review_settings is None:
+        pass
+    elif current_review_settings["enabled"]:
+        outputs_settings = current_review_settings["outputs"]
+
+    for item in outputs_settings:
         item_filter = item["filter"]
         if "product_names" in item_filter:
             item_filter["subsets"] = item_filter.pop("product_names")
             item_filter["families"] = item_filter.pop("product_types")
 
+        reformat_nodes_config = item.get("reformat_nodes_config") or {}
+        reposition_nodes = reformat_nodes_config.get(
+            "reposition_nodes") or []
+
+        for reposition_node in reposition_nodes:
+            if "knobs" not in reposition_node:
+                continue
+            reposition_node["knobs"] = _convert_nuke_knobs(
+                reposition_node["knobs"]
+            )
+
         name = item.pop("name")
         new_review_data_outputs[name] = item
-    ayon_publish["ExtractReviewDataMov"]["outputs"] = new_review_data_outputs
+
+    if deprecrated_review_settings["enabled"]:
+        deprecrated_review_settings["outputs"] = new_review_data_outputs
+    elif current_review_settings["enabled"]:
+        current_review_settings["outputs"] = new_review_data_outputs
 
     collect_instance_data = ayon_publish["CollectInstanceData"]
     if "sync_workfile_version_on_product_types" in collect_instance_data:
@@ -773,9 +829,43 @@ def _convert_nuke_project_settings(ayon_settings, output):
     # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
     _convert_host_imageio(ayon_nuke)
     ayon_imageio = ayon_nuke["imageio"]
-    for item in ayon_imageio["nodes"]["requiredNodes"]:
+
+    # workfile
+    imageio_workfile = ayon_imageio["workfile"]
+    workfile_keys_mapping = (
+        ("color_management", "colorManagement"),
+        ("native_ocio_config", "OCIO_config"),
+        ("working_space", "workingSpaceLUT"),
+        ("thumbnail_space", "monitorLut"),
+    )
+    for src, dst in workfile_keys_mapping:
+        if (
+            src in imageio_workfile
+            and dst not in imageio_workfile
+        ):
+            imageio_workfile[dst] = imageio_workfile.pop(src)
+
+    # regex inputs
+    if "regex_inputs" in ayon_imageio:
+        ayon_imageio["regexInputs"] = ayon_imageio.pop("regex_inputs")
+
+    # nodes
+    ayon_imageio_nodes = ayon_imageio["nodes"]
+    if "required_nodes" in ayon_imageio_nodes:
+        ayon_imageio_nodes["requiredNodes"] = (
+            ayon_imageio_nodes.pop("required_nodes"))
+    if "override_nodes" in ayon_imageio_nodes:
+        ayon_imageio_nodes["overrideNodes"] = (
+            ayon_imageio_nodes.pop("override_nodes"))
+
+    for item in ayon_imageio_nodes["requiredNodes"]:
+        if "nuke_node_class" in item:
+            item["nukeNodeClass"] = item.pop("nuke_node_class")
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
-    for item in ayon_imageio["nodes"]["overrideNodes"]:
+
+    for item in ayon_imageio_nodes["overrideNodes"]:
+        if "nuke_node_class" in item:
+            item["nukeNodeClass"] = item.pop("nuke_node_class")
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
 
     output["nuke"] = ayon_nuke
@@ -1074,7 +1164,7 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
         "studio_name",
         "studio_code",
     ):
-        ayon_core.pop(key)
+        ayon_core.pop(key, None)
 
     # Publish conversion
     ayon_publish = ayon_core["publish"]
@@ -1110,6 +1200,27 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             if "output_height" in output_def:
                 output_def["height"] = output_def.pop("output_height")
 
+        profile["outputs"] = new_outputs
+
+    # ExtractOIIOTranscode plugin
+    extract_oiio_transcode = ayon_publish["ExtractOIIOTranscode"]
+    extract_oiio_transcode_profiles = extract_oiio_transcode["profiles"]
+    for profile in extract_oiio_transcode_profiles:
+        new_outputs = {}
+        name_counter = {}
+        for profile_output in profile["outputs"]:
+            if "name" in profile_output:
+                name = profile_output.pop("name")
+            else:
+                # Backwards compatibility for setting without 'name' in model
+                name = profile_output["extension"]
+                if name in new_outputs:
+                    name_counter[name] += 1
+                    name = "{}_{}".format(name, name_counter[name])
+                else:
+                    name_counter[name] = 0
+
+            new_outputs[name] = profile_output
         profile["outputs"] = new_outputs
 
     # Extract Burnin plugin
@@ -1261,6 +1372,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_flame_project_settings(ayon_settings, output)
     _convert_fusion_project_settings(ayon_settings, output)
     _convert_maya_project_settings(ayon_settings, output)
+    _convert_3dsmax_project_settings(ayon_settings, output)
     _convert_nuke_project_settings(ayon_settings, output)
     _convert_hiero_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)
@@ -1332,14 +1444,38 @@ class _AyonSettingsCache:
         if _AyonSettingsCache.variant is None:
             from openpype.lib.openpype_version import is_staging_enabled
 
-            _AyonSettingsCache.variant = (
-                "staging" if is_staging_enabled() else "production"
-            )
+            variant = "production"
+            if is_dev_mode_enabled():
+                variant = cls._get_dev_mode_settings_variant()
+            elif is_staging_enabled():
+                variant = "staging"
+            _AyonSettingsCache.variant = variant
         return _AyonSettingsCache.variant
 
     @classmethod
     def _get_bundle_name(cls):
         return os.environ["AYON_BUNDLE_NAME"]
+
+    @classmethod
+    def _get_dev_mode_settings_variant(cls):
+        """Develop mode settings variant.
+
+        Returns:
+            str: Name of settings variant.
+        """
+
+        bundles = ayon_api.get_bundles()
+        user = ayon_api.get_user()
+        username = user["name"]
+        for bundle in bundles:
+            if (
+                bundle.get("isDev")
+                and bundle.get("activeUser") == username
+            ):
+                return bundle["name"]
+        # Return fake variant - distribution logic will tell user that he
+        #   does not have set any dev bundle
+        return "dev"
 
     @classmethod
     def get_value_by_project(cls, project_name):

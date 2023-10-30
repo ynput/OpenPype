@@ -9,22 +9,37 @@ from .common import KnobModel
 
 
 class NodesModel(BaseSettingsModel):
-    """# TODO: This needs to be somehow labeled in settings panel
-    or at least it could show gist of configuration
-    """
     _layout = "expanded"
     plugins: list[str] = Field(
+        default_factory=list,
         title="Used in plugins"
     )
-    # TODO: rename `nukeNodeClass` to `nuke_node_class`
-    nukeNodeClass: str = Field(
+    nuke_node_class: str = Field(
         title="Nuke Node Class",
     )
 
-    """ # TODO: Need complete rework of knob types
-    in nuke integration. We could not support v3 style of settings.
-    """
+
+class RequiredNodesModel(NodesModel):
     knobs: list[KnobModel] = Field(
+        default_factory=list,
+        title="Knobs",
+    )
+
+    @validator("knobs")
+    def ensure_unique_names(cls, value):
+        """Ensure name fields within the lists have unique names."""
+        ensure_unique_names(value)
+        return value
+
+
+class OverrideNodesModel(NodesModel):
+    subsets: list[str] = Field(
+        default_factory=list,
+        title="Subsets"
+    )
+
+    knobs: list[KnobModel] = Field(
+        default_factory=list,
         title="Knobs",
     )
 
@@ -36,13 +51,11 @@ class NodesModel(BaseSettingsModel):
 
 
 class NodesSetting(BaseSettingsModel):
-    # TODO: rename `requiredNodes` to `required_nodes`
-    requiredNodes: list[NodesModel] = Field(
+    required_nodes: list[RequiredNodesModel] = Field(
         title="Plugin required",
         default_factory=list
     )
-    # TODO: rename `overrideNodes` to `override_nodes`
-    overrideNodes: list[NodesModel] = Field(
+    override_nodes: list[OverrideNodesModel] = Field(
         title="Plugin's node overrides",
         default_factory=list
     )
@@ -51,66 +64,40 @@ class NodesSetting(BaseSettingsModel):
 def ocio_configs_switcher_enum():
     return [
         {"value": "nuke-default", "label": "nuke-default"},
-        {"value": "spi-vfx", "label": "spi-vfx"},
-        {"value": "spi-anim", "label": "spi-anim"},
-        {"value": "aces_0.1.1", "label": "aces_0.1.1"},
-        {"value": "aces_0.7.1", "label": "aces_0.7.1"},
-        {"value": "aces_1.0.1", "label": "aces_1.0.1"},
-        {"value": "aces_1.0.3", "label": "aces_1.0.3"},
-        {"value": "aces_1.1", "label": "aces_1.1"},
-        {"value": "aces_1.2", "label": "aces_1.2"},
-        {"value": "aces_1.3", "label": "aces_1.3"},
-        {"value": "custom", "label": "custom"}
+        {"value": "spi-vfx", "label": "spi-vfx (11)"},
+        {"value": "spi-anim", "label": "spi-anim (11)"},
+        {"value": "aces_0.1.1", "label": "aces_0.1.1 (11)"},
+        {"value": "aces_0.7.1", "label": "aces_0.7.1 (11)"},
+        {"value": "aces_1.0.1", "label": "aces_1.0.1 (11)"},
+        {"value": "aces_1.0.3", "label": "aces_1.0.3 (11, 12)"},
+        {"value": "aces_1.1", "label": "aces_1.1 (12, 13)"},
+        {"value": "aces_1.2", "label": "aces_1.2 (13, 14)"},
+        {"value": "studio-config-v1.0.0_aces-v1.3_ocio-v2.1",
+         "label": "studio-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"},
+        {"value": "cg-config-v1.0.0_aces-v1.3_ocio-v2.1",
+         "label": "cg-config-v1.0.0_aces-v1.3_ocio-v2.1 (14)"},
     ]
 
 
 class WorkfileColorspaceSettings(BaseSettingsModel):
     """Nuke workfile colorspace preset. """
-    """# TODO: enhance settings with host api:
-    we need to add mapping to resolve properly keys.
-    Nuke is excpecting camel case key names,
-    but for better code consistency we need to
-    be  using snake_case:
 
-    color_management = colorManagement
-    ocio_config = OCIO_config
-    working_space_name = workingSpaceLUT
-    monitor_name = monitorLut
-    monitor_out_name = monitorOutLut
-    int_8_name = int8Lut
-    int_16_name = int16Lut
-    log_name = logLut
-    float_name = floatLut
-    """
-
-    colorManagement: Literal["Nuke", "OCIO"] = Field(
-        title="Color Management"
+    color_management: Literal["Nuke", "OCIO"] = Field(
+        title="Color Management Workflow"
     )
 
-    OCIO_config: str = Field(
-        title="OpenColorIO Config",
-        description="Switch between OCIO configs",
+    native_ocio_config: str = Field(
+        title="Native OpenColorIO Config",
+        description="Switch between native OCIO configs",
         enum_resolver=ocio_configs_switcher_enum,
         conditionalEnum=True
     )
 
-    workingSpaceLUT: str = Field(
+    working_space: str = Field(
         title="Working Space"
     )
-    monitorLut: str = Field(
-        title="Monitor"
-    )
-    int8Lut: str = Field(
-        title="8-bit files"
-    )
-    int16Lut: str = Field(
-        title="16-bit files"
-    )
-    logLut: str = Field(
-        title="Log files"
-    )
-    floatLut: str = Field(
-        title="Float files"
+    thumbnail_space: str = Field(
+        title="Thumbnail Space"
     )
 
 
@@ -170,7 +157,7 @@ class ImageIOSettings(BaseSettingsModel):
     _isGroup: bool = True
 
     """# TODO: enhance settings with host api:
-    to restruture settings for simplification.
+    to restructure settings for simplification.
 
     now: nuke/imageio/viewer/viewerProcess
     future: nuke/imageio/viewer
@@ -193,7 +180,7 @@ class ImageIOSettings(BaseSettingsModel):
     )
 
     """# TODO: enhance settings with host api:
-    to restruture settings for simplification.
+    to restructure settings for simplification.
 
     now: nuke/imageio/baking/viewerProcess
     future: nuke/imageio/baking
@@ -215,12 +202,10 @@ class ImageIOSettings(BaseSettingsModel):
         title="Nodes"
     )
     """# TODO: enhance settings with host api:
-    - old settings are using `regexInputs` key but we
-      need to rename to `regex_inputs`
-    - no need for `inputs` middle part. It can stay
+    - [ ] no need for `inputs` middle part. It can stay
       directly on `regex_inputs`
     """
-    regexInputs: RegexInputsModel = Field(
+    regex_inputs: RegexInputsModel = Field(
         default_factory=RegexInputsModel,
         title="Assign colorspace to read nodes via rules"
     )
@@ -234,22 +219,18 @@ DEFAULT_IMAGEIO_SETTINGS = {
         "viewerProcess": "rec709"
     },
     "workfile": {
-        "colorManagement": "Nuke",
-        "OCIO_config": "nuke-default",
-        "workingSpaceLUT": "linear",
-        "monitorLut": "sRGB",
-        "int8Lut": "sRGB",
-        "int16Lut": "sRGB",
-        "logLut": "Cineon",
-        "floatLut": "linear"
+        "color_management": "Nuke",
+        "native_ocio_config": "nuke-default",
+        "working_space": "linear",
+        "thumbnail_space": "sRGB",
     },
     "nodes": {
-        "requiredNodes": [
+        "required_nodes": [
             {
                 "plugins": [
                     "CreateWriteRender"
                 ],
-                "nukeNodeClass": "Write",
+                "nuke_node_class": "Write",
                 "knobs": [
                     {
                         "type": "text",
@@ -301,7 +282,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                 "plugins": [
                     "CreateWritePrerender"
                 ],
-                "nukeNodeClass": "Write",
+                "nuke_node_class": "Write",
                 "knobs": [
                     {
                         "type": "text",
@@ -353,7 +334,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                 "plugins": [
                     "CreateWriteImage"
                 ],
-                "nukeNodeClass": "Write",
+                "nuke_node_class": "Write",
                 "knobs": [
                     {
                         "type": "text",
@@ -397,9 +378,9 @@ DEFAULT_IMAGEIO_SETTINGS = {
                 ]
             }
         ],
-        "overrideNodes": []
+        "override_nodes": []
     },
-    "regexInputs": {
+    "regex_inputs": {
         "inputs": [
             {
                 "regex": "(beauty).*(?=.exr)",

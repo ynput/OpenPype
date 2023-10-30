@@ -1,3 +1,4 @@
+import os
 import copy
 import collections
 import uuid
@@ -22,6 +23,8 @@ def new_folder_entity(
     name,
     folder_type,
     parent_id=None,
+    status=None,
+    tags=None,
     attribs=None,
     data=None,
     thumbnail_id=None,
@@ -32,12 +35,14 @@ def new_folder_entity(
     Args:
         name (str): Is considered as unique identifier of folder in project.
         folder_type (str): Type of folder.
-        parent_id (Optional[str]]): Id of parent folder.
+        parent_id (Optional[str]): Parent folder id.
+        status (Optional[str]): Product status.
+        tags (Optional[List[str]]): List of tags.
         attribs (Optional[Dict[str, Any]]): Explicitly set attributes
             of folder.
         data (Optional[Dict[str, Any]]): Custom folder data. Empty dictionary
             is used if not passed.
-        thumbnail_id (Optional[str]): Id of thumbnail related to folder.
+        thumbnail_id (Optional[str]): Thumbnail id related to folder.
         entity_id (Optional[str]): Predefined id of entity. New id is
             created if not passed.
 
@@ -54,7 +59,7 @@ def new_folder_entity(
     if parent_id is not None:
         parent_id = _create_or_convert_to_id(parent_id)
 
-    return {
+    output = {
         "id": _create_or_convert_to_id(entity_id),
         "name": name,
         # This will be ignored
@@ -64,6 +69,11 @@ def new_folder_entity(
         "attrib": attribs,
         "thumbnailId": thumbnail_id
     }
+    if status:
+        output["status"] = status
+    if tags:
+        output["tags"] = tags
+    return output
 
 
 def new_product_entity(
@@ -71,6 +81,7 @@ def new_product_entity(
     product_type,
     folder_id,
     status=None,
+    tags=None,
     attribs=None,
     data=None,
     entity_id=None
@@ -81,8 +92,9 @@ def new_product_entity(
         name (str): Is considered as unique identifier of
             product under folder.
         product_type (str): Product type.
-        folder_id (str): Id of parent folder.
+        folder_id (str): Parent folder id.
         status (Optional[str]): Product status.
+        tags (Optional[List[str]]): List of tags.
         attribs (Optional[Dict[str, Any]]): Explicitly set attributes
             of product.
         data (Optional[Dict[str, Any]]): product entity data. Empty dictionary
@@ -110,6 +122,8 @@ def new_product_entity(
     }
     if status:
         output["status"] = status
+    if tags:
+        output["tags"] = tags
     return output
 
 
@@ -119,6 +133,8 @@ def new_version_entity(
     task_id=None,
     thumbnail_id=None,
     author=None,
+    status=None,
+    tags=None,
     attribs=None,
     data=None,
     entity_id=None
@@ -128,10 +144,12 @@ def new_version_entity(
     Args:
         version (int): Is considered as unique identifier of version
             under product.
-        product_id (str): Id of parent product.
-        task_id (Optional[str]]): Id of task under which product was created.
-        thumbnail_id (Optional[str]]): Thumbnail related to version.
-        author (Optional[str]]): Name of version author.
+        product_id (str): Parent product id.
+        task_id (Optional[str]): Task id under which product was created.
+        thumbnail_id (Optional[str]): Thumbnail related to version.
+        author (Optional[str]): Name of version author.
+        status (Optional[str]): Version status.
+        tags (Optional[List[str]]): List of tags.
         attribs (Optional[Dict[str, Any]]): Explicitly set attributes
             of version.
         data (Optional[Dict[str, Any]]): Version entity custom data.
@@ -164,6 +182,10 @@ def new_version_entity(
         output["thumbnailId"] = thumbnail_id
     if author:
         output["author"] = author
+    if tags:
+        output["tags"] = tags
+    if status:
+        output["status"] = status
     return output
 
 
@@ -173,6 +195,8 @@ def new_hero_version_entity(
     task_id=None,
     thumbnail_id=None,
     author=None,
+    status=None,
+    tags=None,
     attribs=None,
     data=None,
     entity_id=None
@@ -182,10 +206,12 @@ def new_hero_version_entity(
     Args:
         version (int): Is considered as unique identifier of version
             under product. Should be same as standard version if there is any.
-        product_id (str): Id of parent product.
-        task_id (Optional[str]): Id of task under which product was created.
+        product_id (str): Parent product id.
+        task_id (Optional[str]): Task id under which product was created.
         thumbnail_id (Optional[str]): Thumbnail related to version.
         author (Optional[str]): Name of version author.
+        status (Optional[str]): Version status.
+        tags (Optional[List[str]]): List of tags.
         attribs (Optional[Dict[str, Any]]): Explicitly set attributes
             of version.
         data (Optional[Dict[str, Any]]): Version entity data.
@@ -215,18 +241,32 @@ def new_hero_version_entity(
         output["thumbnailId"] = thumbnail_id
     if author:
         output["author"] = author
+    if tags:
+        output["tags"] = tags
+    if status:
+        output["status"] = status
     return output
 
 
 def new_representation_entity(
-    name, version_id, attribs=None, data=None, entity_id=None
+    name,
+    version_id,
+    files,
+    status=None,
+    tags=None,
+    attribs=None,
+    data=None,
+    entity_id=None
 ):
     """Create skeleton data of representation entity.
 
     Args:
         name (str): Representation name considered as unique identifier
             of representation under version.
-        version_id (str): Id of parent version.
+        version_id (str): Parent version id.
+        files (list[dict[str, str]]): List of files in representation.
+        status (Optional[str]): Representation status.
+        tags (Optional[List[str]]): List of tags.
         attribs (Optional[Dict[str, Any]]): Explicitly set attributes
             of representation.
         data (Optional[Dict[str, Any]]): Representation entity data.
@@ -243,27 +283,42 @@ def new_representation_entity(
     if data is None:
         data = {}
 
-    return {
+    output = {
         "id": _create_or_convert_to_id(entity_id),
         "versionId": _create_or_convert_to_id(version_id),
+        "files": files,
         "name": name,
         "data": data,
         "attrib": attribs
     }
+    if tags:
+        output["tags"] = tags
+    if status:
+        output["status"] = status
+    return output
 
 
-def new_workfile_info_doc(
-    filename, folder_id, task_name, files, data=None, entity_id=None
+def new_workfile_info(
+    filepath,
+    task_id,
+    status=None,
+    tags=None,
+    attribs=None,
+    description=None,
+    data=None,
+    entity_id=None
 ):
     """Create skeleton data of workfile info entity.
 
     Workfile entity is at this moment used primarily for artist notes.
 
     Args:
-        filename (str): Filename of workfile.
-        folder_id (str): Id of folder under which workfile live.
-        task_name (str): Task under which was workfile created.
-        files (List[str]): List of rootless filepaths related to workfile.
+        filepath (str): Rootless workfile filepath.
+        task_id (str): Task under which was workfile created.
+        status (Optional[str]): Workfile status.
+        tags (Optional[List[str]]): Workfile tags.
+        attribs (Options[dic[str, Any]]): Explicitly set attributes.
+        description (Optional[str]): Workfile description.
         data (Optional[Dict[str, Any]]): Additional metadata.
         entity_id (Optional[str]): Predefined id of entity. New id is created
             if not passed.
@@ -272,17 +327,31 @@ def new_workfile_info_doc(
         Dict[str, Any]: Skeleton of workfile info entity.
     """
 
+    if attribs is None:
+        attribs = {}
+
+    if "extension" not in attribs:
+        attribs["extension"] = os.path.splitext(filepath)[-1]
+
+    if description:
+        attribs["description"] = description
+
     if not data:
         data = {}
 
-    return {
+    output = {
         "id": _create_or_convert_to_id(entity_id),
-        "parent": _create_or_convert_to_id(folder_id),
-        "task_name": task_name,
-        "filename": filename,
+        "taskId": task_id,
+        "path": filepath,
         "data": data,
-        "files": files
+        "attrib": attribs
     }
+    if status:
+        output["status"] = status
+
+    if tags:
+        output["tags"] = tags
+    return output
 
 
 @six.add_metaclass(ABCMeta)

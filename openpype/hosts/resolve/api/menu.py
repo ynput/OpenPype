@@ -5,11 +5,6 @@ from qtpy import QtWidgets, QtCore
 
 from openpype.tools.utils import host_tools
 
-from .pipeline import (
-    publish,
-    launch_workfiles_app
-)
-
 
 def load_stylesheet():
     path = os.path.join(os.path.dirname(__file__), "menu_style.qss")
@@ -113,7 +108,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
-        launch_workfiles_app()
+        host_tools.show_workfiles()
 
     def on_create_clicked(self):
         print("Clicked Create")
@@ -121,7 +116,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
     def on_publish_clicked(self):
         print("Clicked Publish")
-        publish(None)
+        host_tools.show_publish(parent=None)
 
     def on_load_clicked(self):
         print("Clicked Load")

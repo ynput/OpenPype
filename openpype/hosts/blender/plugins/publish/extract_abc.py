@@ -12,8 +12,7 @@ class ExtractABC(publish.Extractor):
 
     label = "Extract ABC"
     hosts = ["blender"]
-    families = ["model", "pointcache"]
-    optional = True
+    families = ["pointcache"]
 
     def process(self, instance):
         # Define extract output file path
@@ -21,10 +20,8 @@ class ExtractABC(publish.Extractor):
         filename = f"{instance.name}.abc"
         filepath = os.path.join(stagingdir, filename)
 
-        context = bpy.context
-
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         plugin.deselect_all()
 
@@ -64,3 +61,12 @@ class ExtractABC(publish.Extractor):
 
         self.log.info("Extracted instance '%s' to: %s",
                       instance.name, representation)
+
+
+class ExtractModelABC(ExtractABC):
+    """Extract model as ABC."""
+
+    label = "Extract Model ABC"
+    hosts = ["blender"]
+    families = ["model"]
+    optional = True

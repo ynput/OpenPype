@@ -108,7 +108,6 @@ class CollectFusionRender(
                 fam = "render.farm"
                 if fam not in instance.families:
                     instance.families.append(fam)
-                instance.toBeRenderedOn = "deadline"
                 instance.farm = True  # to skip integrate
                 if "review" in instance.families:
                     # to skip ExtractReview locally
@@ -146,9 +145,11 @@ class CollectFusionRender(
         start = render_instance.frameStart - render_instance.handleStart
         end = render_instance.frameEnd + render_instance.handleEnd
 
-        path = (
-            render_instance.tool["Clip"]
-            [render_instance.workfileComp.TIME_UNDEFINED]
+        comp = render_instance.workfileComp
+        path = comp.MapPath(
+            render_instance.tool["Clip"][
+                render_instance.workfileComp.TIME_UNDEFINED
+            ]
         )
         output_dir = os.path.dirname(path)
         render_instance.outputDir = output_dir

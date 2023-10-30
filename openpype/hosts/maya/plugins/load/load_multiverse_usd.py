@@ -43,8 +43,6 @@ class MultiverseUsdLoader(load.LoaderPlugin):
         import multiverse
 
         # Create the shape
-        shape = None
-        transform = None
         with maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):

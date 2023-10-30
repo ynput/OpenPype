@@ -9,7 +9,7 @@ class TVPaintWorkfileCreator(TVPaintAutoCreator):
     label = "Workfile"
     icon = "fa.file-o"
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["tvpaint"]["create"]["create_workfile"]
         )

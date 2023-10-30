@@ -65,9 +65,11 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             job_info.BatchName += datetime.now().strftime("%d%m%Y%H%M%S")
 
         # Deadline requires integers in frame range
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
         frames = "{start}-{end}x{step}".format(
-            start=int(instance.data["frameStart"]),
-            end=int(instance.data["frameEnd"]),
+            start=int(start),
+            end=int(end),
             step=int(instance.data["byFrameStep"]),
         )
         job_info.Frames = frames
@@ -141,4 +143,3 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Store output dir for unified publisher (filesequence)
         output_dir = os.path.dirname(instance.data["files"][0])
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"

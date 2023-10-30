@@ -171,7 +171,7 @@ class LoadImage(plugin.Loader):
         george_script = "\n".join(george_script_lines)
         execute_george_through_file(george_script)
 
-    def _remove_container(self, container, members=None):
+    def _remove_container(self, container):
         if not container:
             return
         representation = container["representation"]

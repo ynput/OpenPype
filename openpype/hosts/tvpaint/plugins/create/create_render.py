@@ -139,7 +139,7 @@ class CreateRenderlayer(TVPaintCreator):
     # - Mark by default instance for review
     mark_for_review = True
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["tvpaint"]["create"]["create_render_layer"]
         )
@@ -387,7 +387,7 @@ class CreateRenderPass(TVPaintCreator):
     # Settings
     mark_for_review = True
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["tvpaint"]["create"]["create_render_pass"]
         )
@@ -690,7 +690,7 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
     group_idx_offset = 10
     group_idx_padding = 3
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings
             ["tvpaint"]
@@ -1029,7 +1029,7 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
     mark_for_review = True
     active_on_create = False
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["tvpaint"]["create"]["create_render_scene"]
         )

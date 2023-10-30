@@ -20,10 +20,8 @@ class ExtractAnimationABC(publish.Extractor):
         filename = f"{instance.name}.abc"
         filepath = os.path.join(stagingdir, filename)
 
-        context = bpy.context
-
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         plugin.deselect_all()
 

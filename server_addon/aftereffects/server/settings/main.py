@@ -40,7 +40,7 @@ DEFAULT_AFTEREFFECTS_SETTING = {
     "create": {
         "RenderCreator": {
             "mark_for_review": True,
-            "defaults": [
+            "default_variants": [
                 "Main"
             ]
         }
