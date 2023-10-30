@@ -30,7 +30,6 @@ class LoadAsTemplate(load.LoaderPlugin):
     ]
 
     def load(self, context, name, namespace, data):
-
         keep_placeholders = data.get("keep_placeholders", False)
         create_first_version = data.get("create_first_version", False)
         path = self.filepath_from_context(context)
