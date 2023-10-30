@@ -18,9 +18,9 @@ placeholder_node = placeholder.scene_identifier
 if event is None:
     print(f"Populating {placeholder}")
 else:
-    if event.topic == "on_depth_processed":
+    if event.topic == "template.depth_processed":
         print(f"Processed depth: {event.get('depth')}")
-    elif event.topic == "on_finished":
+    elif event.topic == "template.finished":
         print("Build finished.")
 """.strip()
 

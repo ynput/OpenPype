@@ -726,7 +726,7 @@ class AbstractTemplateBuilder(object):
 
             # Trigger on_depth_processed event
             self.event_system.emit(
-                topic="on_depth_processed",
+                topic="template.depth_processed",
                 data={
                     "depth": iter_counter,
                     "placeholders_by_scene_id": placeholder_by_scene_id
@@ -754,7 +754,7 @@ class AbstractTemplateBuilder(object):
 
         # Trigger on_finished event
         self.event_system.emit(
-            topic="on_finished",
+            topic="template.finished",
             data={
                 "depth": iter_counter,
                 "placeholders_by_scene_id": placeholder_by_scene_id,
@@ -1122,7 +1122,7 @@ class PlaceholderPlugin(object):
     ):
         self.register_callback(
             placeholder,
-            topic="on_finished",
+            topic="template.finished",
             callback=callback,
             order=order
         )
@@ -1132,7 +1132,7 @@ class PlaceholderPlugin(object):
     ):
         self.register_callback(
             placeholder,
-            topic="on_depth_processed",
+            topic="template.depth_processed",
             callback=callback,
             order=order
         )
