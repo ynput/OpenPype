@@ -91,6 +91,9 @@ class ExtractAlembic(publish.Extractor,
         end = instance.data["frameEndHandle"]
         attr_values = self.get_attr_values_from_data(instance.data)
         custom_attrs = attr_values.get("custom_attrs", False)
+        if not custom_attrs:
+            self.log.debug(
+                "No Custom Attributes included in this abc export...")
         rt.AlembicExport.ArchiveType = rt.Name("ogawa")
         rt.AlembicExport.CoordinateSystem = rt.Name("maya")
         rt.AlembicExport.StartFrame = start
@@ -121,6 +124,9 @@ class ExtractModel(ExtractAlembic):
     def _set_abc_attributes(self, instance):
         attr_values = self.get_attr_values_from_data(instance.data)
         custom_attrs = attr_values.get("custom_attrs", False)
+        if not custom_attrs:
+            self.log.debug(
+                "No Custom Attributes included in this abc export...")
         rt.AlembicExport.ArchiveType = rt.name("ogawa")
         rt.AlembicExport.CoordinateSystem = rt.name("maya")
         rt.AlembicExport.CustomAttributes = custom_attrs

@@ -41,7 +41,7 @@ class UAssetLoader(plugin.Loader):
         """
 
         # Create directory for asset and Ayon container
-        root = "/Game/Ayon/Assets"
+        root = unreal_pipeline.AYON_ASSET_DIR
         asset = context.get('asset').get('name')
         suffix = "_CON"
         asset_name = f"{asset}_{name}" if asset else f"{name}"

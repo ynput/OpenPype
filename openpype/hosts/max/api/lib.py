@@ -333,21 +333,6 @@ def is_headless():
     return rt.maxops.isInNonInteractiveMode()
 
 
-@contextlib.contextmanager
-def viewport_camera(camera):
-    original = rt.viewport.getCamera()
-    if not original:
-        # if there is no original camera
-        # use the current camera as original
-        original = rt.getNodeByName(camera)
-    review_camera = rt.getNodeByName(camera)
-    try:
-        rt.viewport.setCamera(review_camera)
-        yield
-    finally:
-        rt.viewport.setCamera(original)
-
-
 def set_timeline(frameStart, frameEnd):
     """Set frame range for timeline editor in Max
     """
@@ -509,6 +494,25 @@ def get_plugins() -> list:
         plugin_info_list.append(plugin_info)
 
     return plugin_info_list
+
+
+@contextlib.contextmanager
+def render_resolution(width, height):
+    """Set render resolution option during context
+
+    Args:
+        width (int): render width
+        height (int): render height
+    """
+    current_renderWidth = rt.renderWidth
+    current_renderHeight = rt.renderHeight
+    try:
+        rt.renderWidth = width
+        rt.renderHeight = height
+        yield
+    finally:
+        rt.renderWidth = current_renderWidth
+        rt.renderHeight = current_renderHeight
 
 
 @contextlib.contextmanager
