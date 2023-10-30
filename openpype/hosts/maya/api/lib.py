@@ -115,8 +115,6 @@ _alembic_options = {
 INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
 FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
-RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
-
 
 DISPLAY_LIGHTS_ENUM = [
     {"label": "Use Project Settings", "value": "project_settings"},
@@ -3032,41 +3030,6 @@ class shelf():
                     cmds.deleteUI(each)
         else:
             cmds.shelfLayout(self.name, p="ShelfLayout")
-
-
-def _get_render_instances():
-    """Return all 'render-like' instances.
-
-    This returns list of instance sets that needs to receive information
-    about render layer changes.
-
-    Returns:
-        list: list of instances
-
-    """
-    objectset = cmds.ls("*.id", long=True, exactType="objectSet",
-                        recursive=True, objectsOnly=True)
-
-    instances = []
-    for objset in objectset:
-        if not cmds.attributeQuery("id", node=objset, exists=True):
-            continue
-
-        id_attr = "{}.id".format(objset)
-        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
-            continue
-
-        has_family = cmds.attributeQuery("family",
-                                         node=objset,
-                                         exists=True)
-        if not has_family:
-            continue
-
-        if cmds.getAttr(
-                "{}.family".format(objset)) in RENDERLIKE_INSTANCE_FAMILIES:
-            instances.append(objset)
-
-    return instances
 
 
 def update_content_on_context_change():
