@@ -118,6 +118,9 @@ class OpenPypeMenu(QtWidgets.QWidget):
         host = registered_host()
         current_file = host.get_current_workfile()
         if not current_file:
+            print("Current project is not saved. "
+                  "Please save once first via workfiles tool.")
+            host_tools.show_workfiles()
             return
 
         print(f"Saving current file to: {current_file}")
