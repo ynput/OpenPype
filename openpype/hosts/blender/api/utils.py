@@ -361,9 +361,10 @@ def transfer_stack(
         target_stack_datablock = target_col.get(stack_datablock.name)
         if not target_stack_datablock:
             if stack_name == "modifiers":
-                target_stack_datablock = target_col.new(
-                    stack_datablock.name, stack_datablock.type
-                )
+                if not stack_datablock.is_override_data:
+                    target_stack_datablock = target_col.new(
+                        stack_datablock.name, stack_datablock.type
+                    )
             else:
                 target_stack_datablock = target_col.new(stack_datablock.type)
 
