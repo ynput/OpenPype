@@ -733,11 +733,6 @@ class PublishClip:
             self.tag_data["asset_name"]
         )
         self.tag_data["folderPath"] = folder_path
-
-        # TODO: remove debug print
-        log.debug("___ folder_path: {}".format(
-            folder_path))
-
         if self.tag_data["heroTrack"] and self.review_layer:
             self.tag_data.update({"reviewTrack": self.review_layer})
         else:
