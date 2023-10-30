@@ -301,11 +301,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             )
         }
 
-        is_symlink_mode = False
-        hierarchy_data = instance.data.get("hierarchyData")
-        if hierarchy_data:
-            is_symlink_mode = hierarchy_data.get("symlink")
-
         # Prepare all representations
         prepared_representations = []
         for repre in filtered_repres:
@@ -320,14 +315,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
             for src, dst in prepared["transfers"]:
                 # todo: add support for hardlink transfers
-                if is_symlink_mode:
-                    file_transactions.add(
-                        src,
-                        dst,
-                        mode=FileTransaction.MODE_SYMLINK
-                    )
-                else:
-                    file_transactions.add(src, dst)
+                file_transaction_mode = self.get_file_transaction_mode(instance, src)
+                file_transactions.add(src, dst, mode=file_transaction_mode)
 
             prepared_representations.append(prepared)
 
@@ -438,6 +427,29 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         self.log.info("Registered {} representations"
                       "".format(len(prepared_representations)))
+
+    @staticmethod
+    def get_file_transaction_mode(instance, src):
+        import re
+        is_symlink_mode_enable = False
+        hierarchy_data = instance.data.get("hierarchyData")
+        if hierarchy_data:
+            is_symlink_mode_enable = (hierarchy_data.get("symlink") == "True")
+
+        if not is_symlink_mode_enable:
+            return FileTransaction.MODE_COPY
+
+        pattern = instance.context.data["project_settings"]["global"]["tools"]["publish"]["symlink"][
+            "file_regex_pattern"]
+        if not pattern:
+            is_valid_symlink_path = True
+        else:
+            is_valid_symlink_path = bool(re.match(pattern, src))
+
+        if is_symlink_mode_enable and is_valid_symlink_path:
+            return FileTransaction.MODE_SYMLINK
+
+        return FileTransaction.MODE_COPY
 
     def prepare_subset(self, instance, op_session, project_name):
         asset_doc = instance.data["assetEntity"]

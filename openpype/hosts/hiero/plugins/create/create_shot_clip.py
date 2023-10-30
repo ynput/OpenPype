@@ -108,7 +108,7 @@ class CreateShotClip(phiero.Creator):
                     "type": "QCheckBox",
                     "label": "Publish using symlink",
                     "target": "tag",
-                    "toolTip": "Publish symlinks and not copied files",
+                    "toolTip": "Publish symlinks, don't copy files",
                     "order": 5}
             }
         },
