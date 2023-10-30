@@ -2256,6 +2256,7 @@ def get_frame_range(include_animation_range=False):
         "handleStart": handle_start,
         "handleEnd": handle_end
     }
+
     if include_animation_range:
         # The animation range values are only included to define whether
         # the Maya time slider should include the handles or not.
@@ -2279,6 +2280,8 @@ def get_frame_range(include_animation_range=False):
             animation_start -= int(handle_start)
             animation_end += int(handle_end)
 
+        frame_range["frameStart"] = animation_start
+        frame_range["frameEnd"] = animation_end
         frame_range["animationStart"] = animation_start
         frame_range["animationEnd"] = animation_end
 

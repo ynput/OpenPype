@@ -11,7 +11,7 @@ class ImageLoader(photoshop.PhotoshopLoader):
     Stores the imported asset in a container named after the asset.
     """
 
-    families = ["image", "render"]
+    families = ["image", "render", "workfile"]
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):

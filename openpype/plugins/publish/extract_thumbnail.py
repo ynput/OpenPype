@@ -102,8 +102,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 colorspace_data = repre["colorspaceData"]
                 source_colorspace = colorspace_data["colorspace"]
                 config_path = colorspace_data.get("config", {}).get("path")
-                display = colorspace_data["display"]
-                view = colorspace_data["view"]
+                display = colorspace_data.get("display")
+                view = colorspace_data.get("view")
                 try:
                     thumbnail_created = self.create_thumbnail_oiio(
                         full_input_path,

@@ -20,11 +20,11 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
         elif creator_identifier == "render.pass":
             self._collect_data_for_render_pass(instance)
 
-        elif creator_identifier == "render.scene":
+        elif creator_identifier in ["render.scene", "render.playblast"]:
             self._collect_data_for_render_scene(instance)
 
         else:
-            if creator_identifier == "scene.review":
+            if creator_identifier in ["scene.review", "publish.sequence"]:
                 self._collect_data_for_review(instance)
             return
 
@@ -100,15 +100,41 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
             instance.context.data["layersData"]
         )
 
-        render_pass_name = (
-            instance.data["creator_attributes"]["render_pass_name"]
+        if instance.data["creator_attributes"].get('render_pass_name'):
+            render_pass_name = (
+                instance.data["creator_attributes"]["render_pass_name"]
+            )
+            subset_name = instance.data["subset"]
+            instance.data["subset"] = subset_name.format(
+                **prepare_template_data({"renderpass": render_pass_name})
+            )
+
+    def _get_ignore_transparency_option(self, instance):
+        ignore_transparency = instance.data["creator_attributes"].get(
+            "ignore_layers_transparency", None
         )
-        subset_name = instance.data["subset"]
-        instance.data["subset"] = subset_name.format(
-            **prepare_template_data({"renderpass": render_pass_name})
-        )
+
+        if not ignore_transparency:
+            keep_transparency = instance.data["creator_attributes"].get(
+                "keep_layers_transparency", None
+            )
+            return not keep_transparency
+
+        else:
+            return ignore_transparency
+
 
     def _collect_data_for_review(self, instance):
         instance.data["layers"] = copy.deepcopy(
             instance.context.data["layersData"]
         )
+
+        ignore_transparency = self._get_ignore_transparency_option(instance)
+        if ignore_transparency:
+            instance.data["ignoreLayersTransparency"] = (
+                ignore_transparency
+            )
+        else:
+            instance.data["ignoreLayersTransparency"] = (
+                self.ignore_render_pass_transparency
+            )
