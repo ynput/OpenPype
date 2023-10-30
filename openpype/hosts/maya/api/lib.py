@@ -4267,8 +4267,8 @@ class Reorder(object):
                 '|front': 2
             }
 
-        :rtype: dict
-        :return: Dictionary with (node, index) pairs.
+        Returns:
+            dict: index by node
         """
         nodes = cmds.ls(nodes, long=True)  # enforce long names
         node_indices = dict()
@@ -4290,6 +4290,12 @@ class Reorder(object):
 
     @staticmethod
     def set_indices(node_indices):
+        """Set node order by node to index dict.
+
+        Args:
+            node_indices (dict): Node name to index dictionary
+
+        """
         if not isinstance(node_indices, dict):
             raise TypeError(
                 "Reorder.set_indices() requires a dictionary with "
