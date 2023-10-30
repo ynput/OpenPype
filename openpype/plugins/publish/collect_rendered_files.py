@@ -56,6 +56,17 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             data_object["stagingDir"] = anatomy.fill_root(staging_dir)
 
     def _process_path(self, data, anatomy):
+        """Process data of a single JSON publish metadata file.
+
+        Args:
+            data: The loaded metadata from the JSON file
+            anatomy: Anatomy for the current context
+
+        Returns:
+            bool: Whether any instance of this particular metadata file
+                has a persistent staging dir.
+
+        """
         # validate basic necessary data
         data_err = "invalid json file - missing data"
         required = ["asset", "user", "comment",
@@ -89,6 +100,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             os.environ["FTRACK_SERVER"] = ftrack["FTRACK_SERVER"]
 
         # now we can just add instances from json file and we are done
+        any_staging_dir_persistent = True
         for instance_data in data.get("instances"):
 
             self.log.debug("  - processing instance for {}".format(
@@ -106,6 +118,9 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             staging_dir_persistent = instance.data.get(
                 "stagingDir_persistent", False
             )
+            if staging_dir_persistent:
+                any_staging_dir_persistent = True
+
             representations = []
             for repre_data in instance_data.get("representations") or []:
                 self._fill_staging_dir(repre_data, anatomy)
@@ -127,7 +142,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 self.log.debug(
                     f"Adding audio to instance: {instance.data['audio']}")
 
-            return staging_dir_persistent
+        return any_staging_dir_persistent
 
     def process(self, context):
         self._context = context
