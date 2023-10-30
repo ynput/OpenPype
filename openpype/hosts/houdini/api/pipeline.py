@@ -289,7 +289,7 @@ def parse_container(container):
                 pass
         data[name] = value
 
-    #data = lib.read(container)
+    # data = lib.read(container)
 
     # Backwards compatibility pre-schemas for containers
     data["schema"] = data.get("schema", "openpype:container-1.0")
