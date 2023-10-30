@@ -124,7 +124,7 @@ class AbstractTemplateBuilder(object):
         self._linked_asset_docs = None
         self._task_type = None
 
-        self._events = OrderedEventSystem()
+        self._event_system = OrderedEventSystem()
 
     @property
     def project_name(self):
@@ -253,8 +253,8 @@ class AbstractTemplateBuilder(object):
         return self._log
 
     @property
-    def events(self):
-        return self._events
+    def event_system(self):
+        return self._event_system
 
     def refresh(self):
         """Reset cached data."""
@@ -270,7 +270,7 @@ class AbstractTemplateBuilder(object):
         self._system_settings = None
         self._project_settings = None
 
-        self._events = OrderedEventSystem()
+        self._event_system = OrderedEventSystem()
 
         self.clear_shared_data()
         self.clear_shared_populate_data()
@@ -725,7 +725,7 @@ class AbstractTemplateBuilder(object):
                 placeholder.set_finished()
 
             # Trigger on_depth_processed event
-            self.events.emit(
+            self.event_system.emit(
                 topic="on_depth_processed",
                 data={
                     "depth": iter_counter,
@@ -753,7 +753,7 @@ class AbstractTemplateBuilder(object):
                 placeholders.append(placeholder)
 
         # Trigger on_finished event
-        self.events.emit(
+        self.event_system.emit(
             topic="on_finished",
             data={
                 "depth": iter_counter,
@@ -1149,8 +1149,7 @@ class PlaceholderPlugin(object):
         # be partials or lambdas
         placeholder.data.setdefault("callbacks", []).append(callback)
         self.log.debug("Registering '%s' callback: %s", topic, callback)
-        self.builder.events.add_callback(topic, callback, order=order)
-
+        self.builder.event_system.add_callback(topic, callback, order=order)
 
 
 class PlaceholderItem(object):
