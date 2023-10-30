@@ -27,7 +27,7 @@ class CreateOutputNode(pyblish.api.ContextPlugin):
 
             if active_node:
                 active_node = active_node.pop()
-                self.log.info(active_node)
+                self.log.debug("Active node: {}".format(active_node))
                 active_node['selected'].setValue(True)
 
             # select only instance render node

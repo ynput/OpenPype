@@ -3,6 +3,7 @@ import os
 import re
 
 import pyblish.api
+from openpype.pipeline.publish import PublishValidationError
 
 
 class ValidateSequenceFrames(pyblish.api.InstancePlugin):
@@ -39,8 +40,22 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
             collections, remainder = clique.assemble(
                 repr["files"], minimum_items=1, patterns=patterns)
 
-            assert not remainder, "Must not have remainder"
-            assert len(collections) == 1, "Must detect single collection"
+            if remainder:
+                raise PublishValidationError(
+                    "Some files have been found outside a sequence. "
+                    f"Invalid files: {remainder}")
+            if not collections:
+                raise PublishValidationError(
+                    "We have been unable to find a sequence in the "
+                    "files. Please ensure the files are named "
+                    "appropriately. "
+                    f"Files: {repr_files}")
+            if len(collections) > 1:
+                raise PublishValidationError(
+                    "Multiple collections detected. There should be a single "
+                    "collection per representation. "
+                    f"Collections identified: {collections}")
+
             collection = collections[0]
             frames = list(collection.indexes)
 
@@ -53,8 +68,12 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
                               data["clipOut"])
 
             if current_range != required_range:
-                raise ValueError(f"Invalid frame range: {current_range} - "
-                                 f"expected: {required_range}")
+                raise PublishValidationError(
+                    f"Invalid frame range: {current_range} - "
+                    f"expected: {required_range}")
 
             missing = collection.holes().indexes
-            assert not missing, "Missing frames: %s" % (missing,)
+            if missing:
+                raise PublishValidationError(
+                    "Missing frames have been detected. "
+                    f"Missing frames: {missing}")

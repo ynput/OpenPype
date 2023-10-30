@@ -96,7 +96,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     targets = ["local"]
 
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
-             "celaction", "aftereffects", "harmony"]
+             "celaction", "aftereffects", "harmony", "blender"]
 
     families = ["render.farm", "render.frames_farm",
                 "prerender.farm", "prerender.frames_farm",
@@ -107,6 +107,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "redshift_rop"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
+                  "blender": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"],

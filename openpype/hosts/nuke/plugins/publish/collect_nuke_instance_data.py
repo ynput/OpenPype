@@ -2,7 +2,7 @@ import nuke
 import pyblish.api
 
 
-class CollectNukeInstanceData(pyblish.api.InstancePlugin):
+class CollectInstanceData(pyblish.api.InstancePlugin):
     """Collect Nuke instance data
 
     """

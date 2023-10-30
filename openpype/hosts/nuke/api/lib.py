@@ -40,7 +40,6 @@ from openpype.settings import (
 from openpype.modules import ModulesManager
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
-    get_current_project_name,
     discover_legacy_creator_plugins,
     Anatomy,
     get_current_host_name,
@@ -48,20 +47,15 @@ from openpype.pipeline import (
     get_current_asset_name,
 )
 from openpype.pipeline.context_tools import (
-    get_current_project_asset,
     get_custom_workfile_template_from_session
 )
-from openpype.pipeline.colorspace import (
-    get_imageio_config
-)
+from openpype.pipeline.colorspace import get_imageio_config
 from openpype.pipeline.workfile import BuildWorkfile
 from . import gizmo_menu
 from .constants import ASSIST
 
-from .workio import (
-    save_file,
-    open_file
-)
+from .workio import save_file
+from .utils import get_node_outputs
 
 log = Logger.get_logger(__name__)
 
@@ -1102,26 +1096,6 @@ def check_subsetname_exists(nodes, subset_name):
     return next((True for n in nodes
                  if subset_name in read_avalon_data(n).get("subset", "")),
                 False)
-
-
-def get_render_path(node):
-    ''' Generate Render path from presets regarding avalon knob data
-    '''
-    avalon_knob_data = read_avalon_data(node)
-
-    nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["families"],
-        plugin_name=avalon_knob_data["creator"],
-        subset=avalon_knob_data["subset"]
-    )
-
-    data = {
-        "avalon": avalon_knob_data,
-        "nuke_imageio_writes": nuke_imageio_writes
-    }
-
-    anatomy_filled = format_anatomy(data)
-    return anatomy_filled["render"]["path"].replace("\\", "/")
 
 
 def format_anatomy(data):
@@ -2222,7 +2196,6 @@ Reopening Nuke should synchronize these paths and resolve any discrepancies.
         """
         # replace path with env var if possible
         ocio_path = self._replace_ocio_path_with_env_var(config_data)
-        ocio_path = ocio_path.replace("\\", "/")
 
         log.info("Setting OCIO config path to: `{}`".format(
             ocio_path))
@@ -2802,8 +2775,15 @@ def find_free_space_to_paste_nodes(
 
 
 @contextlib.contextmanager
-def maintained_selection():
+def maintained_selection(exclude_nodes=None):
     """Maintain selection during context
+
+    Maintain selection during context and unselect
+    all nodes after context is done.
+
+    Arguments:
+        exclude_nodes (list[nuke.Node]): list of nodes to be unselected
+                                         before context is done
 
     Example:
         >>> with maintained_selection():
@@ -2811,7 +2791,12 @@ def maintained_selection():
         >>> print(node["selected"].value())
         False
     """
+    if exclude_nodes:
+        for node in exclude_nodes:
+            node["selected"].setValue(False)
+
     previous_selection = nuke.selectedNodes()
+
     try:
         yield
     finally:
@@ -2821,6 +2806,51 @@ def maintained_selection():
         # and select all previously selected nodes
         if previous_selection:
             select_nodes(previous_selection)
+
+
+@contextlib.contextmanager
+def swap_node_with_dependency(old_node, new_node):
+    """ Swap node with dependency
+
+    Swap node with dependency and reconnect all inputs and outputs.
+    It removes old node.
+
+    Arguments:
+        old_node (nuke.Node): node to be replaced
+        new_node (nuke.Node): node to replace with
+
+    Example:
+        >>> old_node_name = old_node["name"].value()
+        >>> print(old_node_name)
+        old_node_name_01
+        >>> with swap_node_with_dependency(old_node, new_node) as node_name:
+        ...     new_node["name"].setValue(node_name)
+        >>> print(new_node["name"].value())
+        old_node_name_01
+    """
+    # preserve position
+    xpos, ypos = old_node.xpos(), old_node.ypos()
+    # preserve selection after all is done
+    outputs = get_node_outputs(old_node)
+    inputs = old_node.dependencies()
+    node_name = old_node["name"].value()
+
+    try:
+        nuke.delete(old_node)
+
+        yield node_name
+    finally:
+
+        # Reconnect inputs
+        for i, node in enumerate(inputs):
+            new_node.setInput(i, node)
+        # Reconnect outputs
+        if outputs:
+            for n, pipes in outputs.items():
+                for i in pipes:
+                    n.setInput(i, new_node)
+        # return to original position
+        new_node.setXYpos(xpos, ypos)
 
 
 def reset_selection():
@@ -2833,9 +2863,10 @@ def select_nodes(nodes):
     """Selects all inputted nodes
 
     Arguments:
-        nodes (list): nuke nodes to be selected
+        nodes (Union[list, tuple, set]): nuke nodes to be selected
     """
-    assert isinstance(nodes, (list, tuple)), "nodes has to be list or tuple"
+    assert isinstance(nodes, (list, tuple, set)), \
+        "nodes has to be list, tuple or set"
 
     for node in nodes:
         node["selected"].setValue(True)
@@ -2919,13 +2950,13 @@ def process_workfile_builder():
         "workfile_builder", {})
 
     # get settings
-    createfv_on = workfile_builder.get("create_first_version") or None
+    create_fv_on = workfile_builder.get("create_first_version") or None
     builder_on = workfile_builder.get("builder_on_start") or None
 
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
     # generate first version in file not existing and feature is enabled
-    if createfv_on and not os.path.exists(last_workfile_path):
+    if create_fv_on and not os.path.exists(last_workfile_path):
         # get custom template path if any
         custom_template_path = get_custom_workfile_template_from_session(
             project_settings=project_settings
@@ -3423,34 +3454,6 @@ def create_viewer_profile_string(viewer, display=None, path_like=False):
     if path_like:
         return "{}/{}".format(display, viewer)
     return "{} ({})".format(viewer, display)
-
-
-def get_head_filename_without_hashes(original_path, name):
-    """Function to get the renamed head filename without frame hashes
-    To avoid the system being confused on finding the filename with
-    frame hashes if the head of the filename has the hashed symbol
-
-    Examples:
-        >>> get_head_filename_without_hashes("render.####.exr", "baking")
-        render.baking.####.exr
-        >>> get_head_filename_without_hashes("render.%04d.exr", "tag")
-        render.tag.%d.exr
-        >>> get_head_filename_without_hashes("exr.####.exr", "foo")
-        exr.foo.%04d.exr
-
-    Args:
-        original_path (str): the filename with frame hashes
-        name (str): the name of the tags
-
-    Returns:
-        str: the renamed filename with the tag
-    """
-    filename = os.path.basename(original_path)
-
-    def insert_name(matchobj):
-        return "{}.{}".format(name, matchobj.group(0))
-
-    return re.sub(r"(%\d*d)|#+", insert_name, filename)
 
 
 def get_filenames_without_hash(filename, frame_start, frame_end):

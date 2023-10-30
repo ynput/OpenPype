@@ -28,8 +28,6 @@ from openpype.lib import (
 from openpype.pipeline import (
     legacy_io,
     get_current_project_name,
-    get_current_asset_name,
-    get_current_task_name,
     register_loader_plugin_path,
     register_inventory_action_path,
     register_creator_plugin_path,
@@ -97,6 +95,8 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         self.log.info("Installing callbacks ... ")
         register_event_callback("init", on_init)
 
+        _set_project()
+
         if lib.IS_HEADLESS:
             self.log.info((
                 "Running in headless mode, skipping Maya save/open/new"
@@ -105,10 +105,9 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
             return
 
-        _set_project()
         self._register_callbacks()
 
-        menu.install()
+        menu.install(project_settings)
 
         register_event_callback("save", on_save)
         register_event_callback("open", on_open)

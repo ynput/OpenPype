@@ -14,7 +14,7 @@ from openpype.client import get_last_version_by_subset_name
 class CollectRender(pyblish.api.InstancePlugin):
     """Collect Render for Deadline"""
 
-    order = pyblish.api.CollectorOrder + 0.01
+    order = pyblish.api.CollectorOrder + 0.02
     label = "Collect 3dsmax Render Layers"
     hosts = ['max']
     families = ["maxrender"]
@@ -34,6 +34,12 @@ class CollectRender(pyblish.api.InstancePlugin):
         files_by_aov.update(aovs)
 
         camera = rt.viewport.GetCamera()
+        if instance.data.get("members"):
+            camera_list = [member for member in instance.data["members"]
+                           if rt.ClassOf(member) == rt.Camera.Classes]
+            if camera_list:
+                camera = camera_list[-1]
+
         instance.data["cameras"] = [camera.name] if camera else None        # noqa
 
         if "expectedFiles" not in instance.data:
@@ -63,6 +69,17 @@ class CollectRender(pyblish.api.InstancePlugin):
         instance.data["colorspaceConfig"] = ""
         instance.data["colorspaceDisplay"] = "sRGB"
         instance.data["colorspaceView"] = "ACES 1.0 SDR-video"
+
+        if int(get_max_version()) >= 2024:
+            colorspace_mgr = rt.ColorPipelineMgr      # noqa
+            display = next(
+                (display for display in colorspace_mgr.GetDisplayList()))
+            view_transform = next(
+                (view for view in colorspace_mgr.GetViewList(display)))
+            instance.data["colorspaceConfig"] = colorspace_mgr.OCIOConfigPath
+            instance.data["colorspaceDisplay"] = display
+            instance.data["colorspaceView"] = view_transform
+
         instance.data["renderProducts"] = colorspace.ARenderProduct()
         instance.data["publishJobState"] = "Suspended"
         instance.data["attachTo"] = []
@@ -80,8 +97,8 @@ class CollectRender(pyblish.api.InstancePlugin):
             "renderer": renderer,
             "source": filepath,
             "plugin": "3dsmax",
-            "frameStart": int(rt.rendStart),
-            "frameEnd": int(rt.rendEnd),
+            "frameStart": instance.data["frameStartHandle"],
+            "frameEnd": instance.data["frameEndHandle"],
             "version": version_int,
             "farm": True
         }
