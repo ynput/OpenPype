@@ -38,9 +38,20 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
                     "Unknown Property Values:{}".format(invalid_properties))
                 return invalid_properties
             # TODO: support multiple varaible types in maxscript
-            invalid_attributes = [key for key, value in property_name.items()
-                                  if rt.Execute("{}.{}".format(
-                                      wrap_object, property_name[key]))!=value]
+            invalid_attributes = []
+            for key, value in property_name.items():
+                property_key = rt.Execute("{}.{}".format(
+                    wrap_object, key))
+                if isinstance(value, str) and "#" not in value:
+                    if property_key != '"{}"'.format(value):
+                        invalid_attributes.append(key)
+
+                elif isinstance(value, bool):
+                    if property_key != value:
+                        invalid_attributes.append(key)
+                else:
+                    if property_key != '{}'.format(value):
+                        invalid_attributes.append(key)
 
             return invalid_attributes
 
@@ -71,6 +82,7 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
             invalid_attributes = [key for key, value in property_name.items()
                                   if rt.Execute("{}.{}".format(
                                       wrap_object, property_name[key]))!=value]
+
             for attrs in invalid_attributes:
                 rt.Execute("{}.{}={}".format(
                     wrap_object, attrs, attributes[wrap_object][attrs]))
