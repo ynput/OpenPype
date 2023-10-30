@@ -11,6 +11,8 @@ def merge_paths(*paths):
     >>> merge_paths("A", "A;B;C", "D;E")
     "A;B;C;D;E"
 
+    Returns:
+        str: Single joined path using `os.pathsep`
 
     """
     result = []
