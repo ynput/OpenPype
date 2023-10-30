@@ -177,10 +177,17 @@ class MayaPlaceholderPlugin(PlaceholderPlugin):
         return placeholders
 
     def post_placeholder_process(self, placeholder, failed):
-        """Hide placeholder, add them to placeholder set
+        """Cleanup placeholder after load of its corresponding representations.
 
-        Used only by PlaceholderCreateMixin and PlaceholderLoadMixin.
+        Hide placeholder, add them to placeholder set.
+        Used only by PlaceholderCreateMixin and PlaceholderLoadMixin
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
         """
+        # Hide placeholder and add them to placeholder set
         node = placeholder.scene_identifier
 
         cmds.sets(node, addElement=PLACEHOLDER_SET)

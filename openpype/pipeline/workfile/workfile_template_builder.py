@@ -1544,8 +1544,15 @@ class PlaceholderLoadMixin(object):
             context_filters=context_filters
         ))
 
+    def _before_placeholder_load(self, placeholder):
+        """Can be overridden. It's called before placeholder representations
+        are loaded.
+        """
+
+        pass
+
     def _before_repre_load(self, placeholder, representation):
-        """Can be overriden. Is called before representation is loaded."""
+        """Can be overridden. It's called before representation is loaded."""
 
         pass
 
@@ -1578,7 +1585,7 @@ class PlaceholderLoadMixin(object):
         return output
 
     def populate_load_placeholder(self, placeholder, ignore_repre_ids=None):
-        """Load placeholder is goind to load matching representations.
+        """Load placeholder is going to load matching representations.
 
         Note:
             Ignore repre ids is to avoid loading the same representation again
@@ -1600,7 +1607,7 @@ class PlaceholderLoadMixin(object):
 
         # TODO check loader existence
         loader_name = placeholder.data["loader"]
-        loader_args = placeholder.data["loader_args"]
+        loader_args = self.parse_loader_args(placeholder.data["loader_args"])
 
         placeholder_representations = self._get_representations(placeholder)
 
@@ -1622,6 +1629,10 @@ class PlaceholderLoadMixin(object):
             self.project_name, filtered_representations
         )
         loaders_by_name = self.builder.get_loaders_by_name()
+        self._before_placeholder_load(
+            placeholder
+        )
+
         failed = False
         for repre_load_context in repre_load_contexts.values():
             representation = repre_load_context["representation"]
@@ -1635,23 +1646,24 @@ class PlaceholderLoadMixin(object):
                     repre_context["subset"],
                     repre_context["asset"],
                     loader_name,
-                    loader_args
+                    placeholder.data["loader_args"],
                 )
             )
             try:
                 container = load_with_repre_context(
                     loaders_by_name[loader_name],
                     repre_load_context,
-                    options=self.parse_loader_args(loader_args)
+                    options=loader_args
                 )
 
             except Exception:
-                failed = True
                 self.load_failed(placeholder, representation)
-
+                failed = True
             else:
                 self.load_succeed(placeholder, container)
-            self.post_placeholder_process(placeholder, failed)
+
+        # Run post placeholder process after load of all representations
+        self.post_placeholder_process(placeholder, failed)
 
         if failed:
             self.log.debug(
@@ -1671,10 +1683,7 @@ class PlaceholderLoadMixin(object):
             placeholder.load_succeed(container)
 
     def post_placeholder_process(self, placeholder, failed):
-        """Cleanup placeholder after load of single representation.
-
-        Can be called multiple times during placeholder item populating and is
-        called even if loading failed.
+        """Cleanup placeholder after load of its corresponding representations.
 
         Args:
             placeholder (PlaceholderItem): Item which was just used to load
@@ -1872,10 +1881,7 @@ class PlaceholderCreateMixin(object):
             placeholder.create_succeed(creator_instance)
 
     def post_placeholder_process(self, placeholder, failed):
-        """Cleanup placeholder after load of single representation.
-
-        Can be called multiple times during placeholder item populating and is
-        called even if loading failed.
+        """Cleanup placeholder after load of its corresponding representations.
 
         Args:
             placeholder (PlaceholderItem): Item which was just used to load
