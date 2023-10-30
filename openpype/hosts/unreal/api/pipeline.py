@@ -13,8 +13,10 @@ from openpype.client import get_asset_by_name, get_assets
 from openpype.pipeline import (
     register_loader_plugin_path,
     register_creator_plugin_path,
+    register_inventory_action_path,
     deregister_loader_plugin_path,
     deregister_creator_plugin_path,
+    deregister_inventory_action_path,
     AYON_CONTAINER_ID,
     legacy_io,
 )
@@ -28,6 +30,7 @@ import unreal  # noqa
 logger = logging.getLogger("openpype.hosts.unreal")
 
 AYON_CONTAINERS = "AyonContainers"
+AYON_ASSET_DIR = "/Game/Ayon/Assets"
 CONTEXT_CONTAINER = "Ayon/context.json"
 UNREAL_VERSION = semver.VersionInfo(
     *os.getenv("AYON_UNREAL_VERSION").split(".")
@@ -127,6 +130,7 @@ def install():
     pyblish.api.register_plugin_path(str(PUBLISH_PATH))
     register_loader_plugin_path(str(LOAD_PATH))
     register_creator_plugin_path(str(CREATE_PATH))
+    register_inventory_action_path(str(INVENTORY_PATH))
     _register_callbacks()
     _register_events()
 
@@ -136,6 +140,7 @@ def uninstall():
     pyblish.api.deregister_plugin_path(str(PUBLISH_PATH))
     deregister_loader_plugin_path(str(LOAD_PATH))
     deregister_creator_plugin_path(str(CREATE_PATH))
+    deregister_inventory_action_path(str(INVENTORY_PATH))
 
 
 def _register_callbacks():
@@ -647,6 +652,141 @@ def generate_sequence(h, h_dir):
             unreal.MovieSceneCameraCutTrack)
 
     return sequence, (min_frame, max_frame)
+
+
+def _get_comps_and_assets(
+    component_class, asset_class, old_assets, new_assets, selected
+):
+    eas = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+
+    components = []
+    if selected:
+        sel_actors = eas.get_selected_level_actors()
+        for actor in sel_actors:
+            comps = actor.get_components_by_class(component_class)
+            components.extend(comps)
+    else:
+        comps = eas.get_all_level_actors_components()
+        components = [
+            c for c in comps if isinstance(c, component_class)
+        ]
+
+    # Get all the static meshes among the old assets in a dictionary with
+    # the name as key
+    selected_old_assets = {}
+    for a in old_assets:
+        asset = unreal.EditorAssetLibrary.load_asset(a)
+        if isinstance(asset, asset_class):
+            selected_old_assets[asset.get_name()] = asset
+
+    # Get all the static meshes among the new assets in a dictionary with
+    # the name as key
+    selected_new_assets = {}
+    for a in new_assets:
+        asset = unreal.EditorAssetLibrary.load_asset(a)
+        if isinstance(asset, asset_class):
+            selected_new_assets[asset.get_name()] = asset
+
+    return components, selected_old_assets, selected_new_assets
+
+
+def replace_static_mesh_actors(old_assets, new_assets, selected):
+    smes = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+
+    static_mesh_comps, old_meshes, new_meshes = _get_comps_and_assets(
+        unreal.StaticMeshComponent,
+        unreal.StaticMesh,
+        old_assets,
+        new_assets,
+        selected
+    )
+
+    for old_name, old_mesh in old_meshes.items():
+        new_mesh = new_meshes.get(old_name)
+
+        if not new_mesh:
+            continue
+
+        smes.replace_mesh_components_meshes(
+            static_mesh_comps, old_mesh, new_mesh)
+
+
+def replace_skeletal_mesh_actors(old_assets, new_assets, selected):
+    skeletal_mesh_comps, old_meshes, new_meshes = _get_comps_and_assets(
+        unreal.SkeletalMeshComponent,
+        unreal.SkeletalMesh,
+        old_assets,
+        new_assets,
+        selected
+    )
+
+    for old_name, old_mesh in old_meshes.items():
+        new_mesh = new_meshes.get(old_name)
+
+        if not new_mesh:
+            continue
+
+        for comp in skeletal_mesh_comps:
+            if comp.get_skeletal_mesh_asset() == old_mesh:
+                comp.set_skeletal_mesh_asset(new_mesh)
+
+
+def replace_geometry_cache_actors(old_assets, new_assets, selected):
+    geometry_cache_comps, old_caches, new_caches = _get_comps_and_assets(
+        unreal.GeometryCacheComponent,
+        unreal.GeometryCache,
+        old_assets,
+        new_assets,
+        selected
+    )
+
+    for old_name, old_mesh in old_caches.items():
+        new_mesh = new_caches.get(old_name)
+
+        if not new_mesh:
+            continue
+
+        for comp in geometry_cache_comps:
+            if comp.get_editor_property("geometry_cache") == old_mesh:
+                comp.set_geometry_cache(new_mesh)
+
+
+def delete_asset_if_unused(container, asset_content):
+    ar = unreal.AssetRegistryHelpers.get_asset_registry()
+
+    references = set()
+
+    for asset_path in asset_content:
+        asset = ar.get_asset_by_object_path(asset_path)
+        refs = ar.get_referencers(
+            asset.package_name,
+            unreal.AssetRegistryDependencyOptions(
+                include_soft_package_references=False,
+                include_hard_package_references=True,
+                include_searchable_names=False,
+                include_soft_management_references=False,
+                include_hard_management_references=False
+            ))
+        if not refs:
+            continue
+        references = references.union(set(refs))
+
+    # Filter out references that are in the Temp folder
+    cleaned_references = {
+        ref for ref in references if not str(ref).startswith("/Temp/")}
+
+    # Check which of the references are Levels
+    for ref in cleaned_references:
+        loaded_asset = unreal.EditorAssetLibrary.load_asset(ref)
+        if isinstance(loaded_asset, unreal.World):
+            # If there is at least a level, we can stop, we don't want to
+            # delete the container
+            return
+
+    unreal.log("Previous version unused, deleting...")
+
+    # No levels, delete the asset
+    unreal.EditorAssetLibrary.delete_directory(container["namespace"])
 
 
 @contextmanager

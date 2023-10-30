@@ -25,7 +25,10 @@ from openpype.tests.lib import is_in_tests
 
 from .publish.lib import filter_pyblish_plugins
 from .anatomy import Anatomy
-from .template_data import get_template_data_with_names
+from .template_data import (
+    get_template_data_with_names,
+    get_template_data
+)
 from .workfile import (
     get_workfile_template_key,
     get_custom_workfile_template_by_string_context,
@@ -658,3 +661,70 @@ def get_process_id():
     if _process_id is None:
         _process_id = str(uuid.uuid4())
     return _process_id
+
+
+def get_current_context_template_data():
+    """Template data for template fill from current context
+
+    Returns:
+        Dict[str, Any] of the following tokens and their values
+        Supported Tokens:
+            - Regular Tokens
+                - app
+                - user
+                - asset
+                - parent
+                - hierarchy
+                - folder[name]
+                - root[work, ...]
+                - studio[code, name]
+                - project[code, name]
+                - task[type, name, short]
+
+            - Context Specific Tokens
+                - assetData[frameStart]
+                - assetData[frameEnd]
+                - assetData[handleStart]
+                - assetData[handleEnd]
+                - assetData[frameStartHandle]
+                - assetData[frameEndHandle]
+                - assetData[resolutionHeight]
+                - assetData[resolutionWidth]
+
+    """
+
+    # pre-prepare get_template_data args
+    current_context = get_current_context()
+    project_name = current_context["project_name"]
+    asset_name = current_context["asset_name"]
+    anatomy = Anatomy(project_name)
+
+    # prepare get_template_data args
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
+    task_name = current_context["task_name"]
+    host_name = get_current_host_name()
+
+    # get regular template data
+    template_data = get_template_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+
+    template_data["root"] = anatomy.roots
+
+    # get context specific vars
+    asset_data = asset_doc["data"].copy()
+
+    # compute `frameStartHandle` and `frameEndHandle`
+    if "frameStart" in asset_data and "handleStart" in asset_data:
+        asset_data["frameStartHandle"] = \
+            asset_data["frameStart"] - asset_data["handleStart"]
+
+    if "frameEnd" in asset_data and "handleEnd" in asset_data:
+        asset_data["frameEndHandle"] = \
+            asset_data["frameEnd"] + asset_data["handleEnd"]
+
+    # add assetData
+    template_data["assetData"] = asset_data
+
+    return template_data

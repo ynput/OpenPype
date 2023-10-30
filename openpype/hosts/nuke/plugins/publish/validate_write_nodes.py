@@ -39,7 +39,7 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
 
             set_node_knobs_from_settings(write_node, correct_data["knobs"])
 
-            self.log.info("Node attributes were fixed")
+            self.log.debug("Node attributes were fixed")
 
 
 class ValidateNukeWriteNode(
@@ -82,12 +82,6 @@ class ValidateNukeWriteNode(
         correct_data = get_write_node_template_attr(write_group_node)
 
         check = []
-        self.log.debug("__ write_node: {}".format(
-            write_node
-        ))
-        self.log.debug("__ correct_data: {}".format(
-            correct_data
-        ))
 
         # Collect key values of same type in a list.
         values_by_name = defaultdict(list)
@@ -96,9 +90,6 @@ class ValidateNukeWriteNode(
 
         for knob_data in correct_data["knobs"]:
             knob_type = knob_data["type"]
-            self.log.debug("__ knob_type: {}".format(
-                knob_type
-            ))
 
             if (
                 knob_type == "__legacy__"
@@ -134,17 +125,12 @@ class ValidateNukeWriteNode(
 
                 fixed_values.append(value)
 
-            self.log.debug("__ key: {} | values: {}".format(
-                key, fixed_values
-            ))
             if (
                 node_value not in fixed_values
                 and key != "file"
                 and key != "tile_color"
             ):
                 check.append([key, value, write_node[key].value()])
-
-        self.log.info(check)
 
         if check:
             self._make_error(check)

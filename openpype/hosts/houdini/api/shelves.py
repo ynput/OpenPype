@@ -6,6 +6,9 @@ import platform
 from openpype.settings import get_project_settings
 from openpype.pipeline import get_current_project_name
 
+from openpype.lib import StringTemplate
+from openpype.pipeline.context_tools import get_current_context_template_data
+
 import hou
 
 log = logging.getLogger("openpype.hosts.houdini.shelves")
@@ -26,10 +29,16 @@ def generate_shelves():
         log.debug("No custom shelves found in project settings.")
         return
 
+    # Get Template data
+    template_data = get_current_context_template_data()
+
     for shelf_set_config in shelves_set_config:
         shelf_set_filepath = shelf_set_config.get('shelf_set_source_path')
         shelf_set_os_filepath = shelf_set_filepath[current_os]
         if shelf_set_os_filepath:
+            shelf_set_os_filepath = get_path_using_template_data(
+                shelf_set_os_filepath, template_data
+            )
             if not os.path.isfile(shelf_set_os_filepath):
                 log.error("Shelf path doesn't exist - "
                           "{}".format(shelf_set_os_filepath))
@@ -81,7 +90,9 @@ def generate_shelves():
                         "script path of the tool.")
                     continue
 
-                tool = get_or_create_tool(tool_definition, shelf)
+                tool = get_or_create_tool(
+                    tool_definition, shelf, template_data
+                )
 
                 if not tool:
                     continue
@@ -144,7 +155,7 @@ def get_or_create_shelf(shelf_label):
     return new_shelf
 
 
-def get_or_create_tool(tool_definition, shelf):
+def get_or_create_tool(tool_definition, shelf, template_data):
     """This function verifies if the tool exists and updates it. If not, creates
     a new one.
 
@@ -162,9 +173,15 @@ def get_or_create_tool(tool_definition, shelf):
         return
 
     script_path = tool_definition["script"]
+    script_path = get_path_using_template_data(script_path, template_data)
     if not script_path or not os.path.exists(script_path):
         log.warning("This path doesn't exist - {}".format(script_path))
         return
+
+    icon_path = tool_definition["icon"]
+    if icon_path:
+        icon_path = get_path_using_template_data(icon_path, template_data)
+        tool_definition["icon"] = icon_path
 
     existing_tools = shelf.tools()
     existing_tool = next(
@@ -184,3 +201,10 @@ def get_or_create_tool(tool_definition, shelf):
 
     tool_name = re.sub(r"[^\w\d]+", "_", tool_label).lower()
     return hou.shelves.newTool(name=tool_name, **tool_definition)
+
+
+def get_path_using_template_data(path, template_data):
+    path = StringTemplate.format_template(path, template_data)
+    path = path.replace("\\", "/")
+
+    return path

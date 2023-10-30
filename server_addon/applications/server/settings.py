@@ -115,9 +115,7 @@ class ToolGroupModel(BaseSettingsModel):
     name: str = Field("", title="Name")
     label: str = Field("", title="Label")
     environment: str = Field("{}", title="Environments", widget="textarea")
-    variants: list[ToolVariantModel] = Field(
-        default_factory=ToolVariantModel
-    )
+    variants: list[ToolVariantModel] = Field(default_factory=list)
 
     @validator("environment")
     def validate_json(cls, value):
