@@ -992,3 +992,183 @@ def add_self_publish_button(node):
     template = node.parmTemplateGroup()
     template.insertBefore((0,), button_parm)
     node.setParmTemplateGroup(template)
+
+
+def get_background_images(node, raw=False):
+    """"Return background images defined inside node.
+
+    Similar to `nodegraphutils.saveBackgroundImages` but this method also
+    allows to retrieve the data as JSON encodable data instead of
+    `hou.NetworkImage` instances when using `raw=True`
+    """
+
+    def _parse(image_data):
+        image = hou.NetworkImage(image_data["path"],
+                                 hou.BoundingRect(*image_data["rect"]))
+        if "relativetopath" in image_data:
+            image.setRelativeToPath(image_data["relativetopath"])
+        if "brightness" in image_data:
+            image.setBrightness(image_data["brightness"])
+        return image
+
+    data = node.userData("backgroundimages")
+    if not data:
+        return []
+
+    try:
+        images = json.loads(data)
+        if not raw:
+            images = [_parse(_data) for _data in images]
+    except json.decoder.JSONDecodeError:
+        images = []
+
+    return images
+
+
+def set_background_images(node, images):
+    """Set hou.NetworkImage background images under given hou.Node
+
+    Similar to: `nodegraphutils.loadBackgroundImages`
+
+    """
+
+    def _serialize(image):
+        """Return hou.NetworkImage as serialized dict"""
+        if isinstance(image, dict):
+            # Assume already serialized, only do some minor validations
+            assert "path" in image
+            assert "rect" in image
+            assert len(image["rect"]) == 4
+            return image
+
+        rect = image.rect()
+        rect_min = rect.min()
+        rect_max = rect.max()
+        data = {
+            "path": image.path(),
+            "rect": [rect_min.x(), rect_min.y(), rect_max.x(), rect_max.y()],
+            "brightness": image.brightness(),
+            "relativetopath": image.relativeToPath()
+        }
+        if data["brightness"] == 1.0:
+            del data["brightness"]
+        if data["relativetopath"] == "":
+            del data["relativetopath"]
+        return data
+
+    with hou.undos.group('Edit Background Images'):
+        if images:
+            assert all(isinstance(image, (dict, hou.NetworkImage))
+                       for image in images)
+            data = json.dumps([_serialize(image) for image in images])
+            node.setUserData("backgroundimages", data)
+        else:
+            node.destroyUserData("backgroundimages", must_exist=False)
+
+
+def set_node_thumbnail(node,
+                       image_path,
+                       rect=None):
+    """Set hou.NetworkImage attached to node.
+
+    If an existing connected image is found it assumes that is the existing
+    thumbnail and will update that particular instance instead.
+
+    When `image_path` is None an existing attached `hou.NetworkImage` will be
+    removed.
+
+    Arguments:
+        node (hou.Node): Node to set thumbnail for.
+        image_path (Union[str, None]): Path to image to set.
+            If None is set then the thumbnail will be removed if it exists.
+        rect (hou.BoundingRect): Bounding rect for the relative placement
+            to the node.
+
+    Returns:
+        hou.NetworkImage or None: The network image that was set or None if
+            instead it not set or removed.
+
+    """
+
+    parent = node.parent()
+    images = get_background_images(parent)
+
+    node_path = node.path()
+    # Find first existing image attached to node
+    index, image = next(
+        (
+            (index, image) for index, image in enumerate(images) if
+            image.relativeToPath() == node_path
+        ),
+        (None, None)
+    )
+    if image_path is None:
+        # Remove image if it exists
+        if image:
+            images.remove(image)
+            set_background_images(parent, images)
+        return
+
+    if rect is None:
+        rect = hou.BoundingRect(-1, -1, 1, 1)
+
+    if isinstance(image_path, hou.NetworkImage):
+        image = image_path
+        if index is not None:
+            images[index] = image
+        else:
+            images.append(image)
+    elif image is None:
+        # Create the image
+        image = hou.NetworkImage(image_path, rect)
+        image.setRelativeToPath(node.path())
+        images.append(image)
+    else:
+        # Update first existing image
+        image.setRect(rect)
+        image.setPath(image_path)
+
+    set_background_images(parent, images)
+
+    return image
+
+
+def remove_all_thumbnails(node):
+    """Remove all node thumbnails.
+
+    Removes all network background images that are linked to the given node.
+    """
+    parent = node.parent()
+    images = get_background_images(parent)
+    node_path = node.path()
+    images = [
+        image for image in images if image.relativeToPath() != node_path
+    ]
+    set_background_images(parent, images)
+
+
+def get_node_thumbnail(node, first_only=True):
+    """Return node thumbnails.
+
+    Return network background images that are linked to the given node.
+    By default, only returns the first one found, unless `first_only` is False.
+
+    Returns:
+        Union[hou.NetworkImage, List[hou.NetworkImage]]:
+            Connected network images
+
+    """
+    parent = node.parent()
+    images = get_background_images(parent)
+    node_path = node.path()
+
+    def is_attached_to_node(image):
+        return image.relativeToPath() == node_path
+
+    attached_images = filter(is_attached_to_node, images)
+
+    # Find first existing image attached to node
+    if first_only:
+        return next(attached_images, None)
+    else:
+        return attached_images
