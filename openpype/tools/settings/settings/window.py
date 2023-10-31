@@ -273,9 +273,6 @@ class MainWidget(QtWidgets.QWidget):
         if self._password_dialog:
             return
 
-        if not self._user_passed:
-            self._user_passed = not is_admin_password_required()
-
         self._on_state_change()
 
         if not self._user_passed:

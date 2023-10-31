@@ -49,15 +49,11 @@ class LauncherAction(OpenPypeModule, ITrayAction):
         self.show_launcher()
 
     def show_launcher(self):
-        if not self._user_passed:
-            self._user_passed = not is_admin_password_required()
-
-        if not self._user_passed:
-            dialog = PasswordDialog(allow_remember=False)
-            dialog.setModal(True)
-            dialog.exec_()
-            if not dialog.result():
-                return
+        dialog = PasswordDialog(allow_remember=False)
+        dialog.setModal(True)
+        dialog.exec_()
+        if not dialog.result():
+            return
 
         if self.window:
             self.window.show()
