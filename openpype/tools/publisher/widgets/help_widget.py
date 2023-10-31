@@ -12,7 +12,6 @@ class HelpButton(QtWidgets.QPushButton):
     def __init__(self, parent):
         super(HelpButton, self).__init__(parent)
         self.setObjectName("CreateDialogHelpButton")
-        self.setFocusPolicy(QtCore.Qt.NoFocus)
         self.setText("?")
 
 
