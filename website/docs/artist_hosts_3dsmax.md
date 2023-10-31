@@ -129,7 +129,7 @@ Some validators are mandatory while some are optional and user can choose to ena
     in MaxWrapper Class.
 :::note
     Users can write the properties' attributes they want to check in dict format in the setting
-    before validation.
+    before validation. The attributes are then to be converted into Maxscript and do a check.
     E.g. ```renderers.current.separateAovFiles``` and ```renderers.current.PrimaryGIEngine```
     User can put the attributes in the dict format below
     ```
