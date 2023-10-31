@@ -44,7 +44,7 @@ def generate_shelves():
                           "{}".format(shelf_set_os_filepath))
                 continue
 
-            hou.shelves.newShelfSet(file_path=shelf_set_os_filepath)
+            hou.shelves.loadFile(shelf_set_os_filepath)
             continue
 
         shelf_set_name = shelf_set_config.get('shelf_set_name')
