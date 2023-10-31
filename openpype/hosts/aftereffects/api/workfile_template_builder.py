@@ -321,7 +321,7 @@ def build_workfile_sequence_template(*args, **kwargs):
 
                 # Find recently imported comp.
                 # No way to filter by folders for granularity :(
-                imported_comp = get_comp_by_name("renderCompositing")
+                imported_comp = get_comp_by_name(startswith="renderCompositing")
                 stub.rename_item(imported_comp.id,
                                  "{}_{}".format(asset_name, imported_comp.name)
                                  )
@@ -348,11 +348,13 @@ def build_workfile_sequence_template(*args, **kwargs):
         stub.print_msg("There were errors while importing. Check the console.")
 
 
-def get_comp_by_name(comp_name):
+def get_comp_by_name(exact_match=None, startswith=None):
     stub = get_stub()
     for item in stub.get_items(True):
-        if item.name == comp_name:
-            # print("Found", comp_name, item)
+        if startswith and item.name.startswith(startswith):
+            return item
+
+        if exact_match and item.name == exact_match:
             return item
 
 
