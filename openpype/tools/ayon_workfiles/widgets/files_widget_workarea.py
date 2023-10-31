@@ -334,7 +334,7 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
 
     def _on_mouse_double_click(self, event):
         if event.button() == QtCore.Qt.LeftButton:
-            self.save_as_requested.emit()
+            self.open_current_requested.emit()
 
     def _on_context_menu(self, point):
         index = self._view.indexAt(point)

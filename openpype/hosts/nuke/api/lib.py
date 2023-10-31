@@ -40,7 +40,6 @@ from openpype.settings import (
 from openpype.modules import ModulesManager
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
-    get_current_project_name,
     discover_legacy_creator_plugins,
     Anatomy,
     get_current_host_name,
@@ -1097,26 +1096,6 @@ def check_subsetname_exists(nodes, subset_name):
     return next((True for n in nodes
                  if subset_name in read_avalon_data(n).get("subset", "")),
                 False)
-
-
-def get_render_path(node):
-    ''' Generate Render path from presets regarding avalon knob data
-    '''
-    avalon_knob_data = read_avalon_data(node)
-
-    nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["families"],
-        plugin_name=avalon_knob_data["creator"],
-        subset=avalon_knob_data["subset"]
-    )
-
-    data = {
-        "avalon": avalon_knob_data,
-        "nuke_imageio_writes": nuke_imageio_writes
-    }
-
-    anatomy_filled = format_anatomy(data)
-    return anatomy_filled["render"]["path"].replace("\\", "/")
 
 
 def format_anatomy(data):

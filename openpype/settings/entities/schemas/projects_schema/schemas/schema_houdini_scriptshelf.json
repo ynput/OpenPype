@@ -41,6 +41,10 @@
                                 "type": "dict",
                                 "children": [
                                     {
+                                        "type": "label",
+                                        "label": "Name and Script Path are mandatory."
+                                    },
+                                    {
                                         "type": "text",
                                         "key": "label",
                                         "label": "Name"

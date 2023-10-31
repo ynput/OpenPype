@@ -16,7 +16,7 @@ from openpype.client import get_last_version_by_subset_name
 class CollectRender(pyblish.api.InstancePlugin):
     """Collect Render for Deadline"""
 
-    order = pyblish.api.CollectorOrder + 0.01
+    order = pyblish.api.CollectorOrder + 0.02
     label = "Collect 3dsmax Render Layers"
     hosts = ['max']
     families = ["maxrender"]
@@ -121,8 +121,8 @@ class CollectRender(pyblish.api.InstancePlugin):
             "renderer": renderer,
             "source": filepath,
             "plugin": "3dsmax",
-            "frameStart": int(rt.rendStart),
-            "frameEnd": int(rt.rendEnd),
+            "frameStart": instance.data["frameStartHandle"],
+            "frameEnd": instance.data["frameEndHandle"],
             "version": version_int,
             "farm": True
         }

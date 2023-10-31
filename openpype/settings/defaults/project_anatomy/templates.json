@@ -53,6 +53,11 @@
             "file": "{originalBasename}<.{@frame}><_{udim}>.{ext}",
             "path": "{@folder}/{@file}"
         },
+        "tycache": {
+            "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+            "file": "{originalBasename}.{ext}",
+            "path": "{@folder}/{@file}"
+        },
         "source": {
             "folder": "{root[work]}/{originalDirname}",
             "file": "{originalBasename}.{ext}",
@@ -66,6 +71,7 @@
             "simpleUnrealTextureHero": "Simple Unreal Texture - Hero",
             "simpleUnrealTexture": "Simple Unreal Texture",
             "online": "online",
+            "tycache": "tycache",
             "source": "source",
             "transient": "transient"
         }
