@@ -1,0 +1,19 @@
+[tool.commitizen]
+name = "cz_customize"
+
+[tool.commitizen.customize]
+message_template = "(quadproduction/issue_tracker#{{ticket_number}}) : {{message}}"
+example = "(quadproduction/issue_tracker#111): Fixing ident on bla bla bla"
+schema = "(quadproduction/issue_tracker#000) : <body>"
+schema_pattern = "^\\(quadproduction/issue_tracker#\\d+\\) : .*$"
+commit_parser = "^(?P<change_type>feature|bug fix):\\s(?P<message>.*)?"
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "ticket_number"
+message = "Ticket number"
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "message"
+message = "Commit message"
