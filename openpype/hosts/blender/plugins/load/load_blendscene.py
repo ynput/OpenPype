@@ -4,7 +4,6 @@ from pathlib import Path
 import bpy
 
 from openpype.pipeline import (
-    legacy_create,
     get_representation_path,
     AVALON_CONTAINER_ID,
 )
@@ -17,10 +16,10 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class BlendLoader(plugin.AssetLoader):
+class BlendSceneLoader(plugin.AssetLoader):
     """Load assets from a .blend file."""
 
-    families = ["model", "rig", "layout", "camera"]
+    families = ["blendScene"]
     representations = ["blend"]
 
     label = "Append Blend"
@@ -28,52 +27,15 @@ class BlendLoader(plugin.AssetLoader):
     color = "orange"
 
     @staticmethod
-    def _get_asset_container(objects):
-        empties = [obj for obj in objects if obj.type == 'EMPTY']
-
-        for empty in empties:
-            if empty.get(AVALON_PROPERTY):
-                return empty
+    def _get_asset_container(collections):
+        for coll in collections:
+            parents = [c for c in collections if c.user_of_id(coll)]
+            if coll.get(AVALON_PROPERTY) and not parents:
+                return coll
 
         return None
 
-    @staticmethod
-    def get_all_container_parents(asset_group):
-        parent_containers = []
-        parent = asset_group.parent
-        while parent:
-            if parent.get(AVALON_PROPERTY):
-                parent_containers.append(parent)
-            parent = parent.parent
-
-        return parent_containers
-
-    def _post_process_layout(self, container, asset, representation):
-        rigs = [
-            obj for obj in container.children_recursive
-            if (
-                obj.type == 'EMPTY' and
-                obj.get(AVALON_PROPERTY) and
-                obj.get(AVALON_PROPERTY).get('family') == 'rig'
-            )
-        ]
-
-        for rig in rigs:
-            creator_plugin = get_legacy_creator_by_name("CreateAnimation")
-            legacy_create(
-                creator_plugin,
-                name=rig.name.split(':')[-1] + "_animation",
-                asset=asset,
-                options={
-                    "useSelection": False,
-                    "asset_group": rig
-                },
-                data={
-                    "dependencies": representation
-                }
-            )
-
-    def _process_data(self, libpath, group_name):
+    def _process_data(self, libpath, group_name, family):
         # Append all the data from the .blend file
         with bpy.data.libraries.load(
             libpath, link=False, relative=False
@@ -89,18 +51,14 @@ class BlendLoader(plugin.AssetLoader):
                 data.name = f"{group_name}:{data.name}"
                 members.append(data)
 
-        container = self._get_asset_container(data_to.objects)
+        container = self._get_asset_container(
+            data_to.collections)
         assert container, "No asset group found"
 
         container.name = group_name
-        container.empty_display_type = 'SINGLE_ARROW'
 
-        # Link the collection to the scene
-        bpy.context.scene.collection.objects.link(container)
-
-        # Link all the container children to the collection
-        for obj in container.children_recursive:
-            bpy.context.scene.collection.objects.link(obj)
+        # Link the group to the scene
+        bpy.context.scene.collection.children.link(container)
 
         # Remove the library from the blend file
         library = bpy.data.libraries.get(bpy.path.basename(libpath))
@@ -128,8 +86,6 @@ class BlendLoader(plugin.AssetLoader):
         except ValueError:
             family = "model"
 
-        representation = str(context["representation"]["_id"])
-
         asset_name = plugin.asset_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
         group_name = plugin.asset_name(asset, subset, unique_number)
@@ -140,12 +96,9 @@ class BlendLoader(plugin.AssetLoader):
             avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
             bpy.context.scene.collection.children.link(avalon_container)
 
-        container, members = self._process_data(libpath, group_name)
+        container, members = self._process_data(libpath, group_name, family)
 
-        if family == "layout":
-            self._post_process_layout(container, asset, representation)
-
-        avalon_container.objects.link(container)
+        avalon_container.children.link(container)
 
         data = {
             "schema": "openpype:container-2.0",
@@ -177,26 +130,47 @@ class BlendLoader(plugin.AssetLoader):
         Update the loaded asset.
         """
         group_name = container["objectName"]
-        asset_group = bpy.data.objects.get(group_name)
+        asset_group = bpy.data.collections.get(group_name)
         libpath = Path(get_representation_path(representation)).as_posix()
 
         assert asset_group, (
             f"The asset is not loaded: {container['objectName']}"
         )
 
-        transform = asset_group.matrix_basis.copy()
+        collection_parents = {}
+        members = asset_group.get(AVALON_PROPERTY).get("members", [])
+        loaded_collections = {c for c in bpy.data.collections if c in members}
+        loaded_collections.add(bpy.data.collections.get(AVALON_CONTAINERS))
+        for member in members:
+            if isinstance(member, bpy.types.Object):
+                member_parents = set(member.users_collection)
+            elif isinstance(member, bpy.types.Collection):
+                member_parents = {
+                    c for c in bpy.data.collections if c.user_of_id(member)}
+            else:
+                continue
+
+            member_parents = member_parents.difference(loaded_collections)
+            if member_parents:
+                collection_parents[member.name] = list(member_parents)
+
         old_data = dict(asset_group.get(AVALON_PROPERTY))
-        parent = asset_group.parent
 
         self.exec_remove(container)
 
-        asset_group, members = self._process_data(libpath, group_name)
+        family = container["family"]
+        asset_group, members = self._process_data(libpath, group_name, family)
+
+        for member in members:
+            if member.name in collection_parents:
+                for parent in collection_parents[member.name]:
+                    if isinstance(member, bpy.types.Object):
+                        parent.objects.link(member)
+                    elif isinstance(member, bpy.types.Collection):
+                        parent.children.link(member)
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
-        avalon_container.objects.link(asset_group)
-
-        asset_group.matrix_basis = transform
-        asset_group.parent = parent
+        avalon_container.children.link(asset_group)
 
         # Restore the old data, but reset memebers, as they don't exist anymore
         # This avoids a crash, because the memory addresses of those members
@@ -213,20 +187,12 @@ class BlendLoader(plugin.AssetLoader):
 
         imprint(asset_group, new_data)
 
-        # We need to update all the parent container members
-        parent_containers = self.get_all_container_parents(asset_group)
-
-        for parent_container in parent_containers:
-            parent_members = parent_container[AVALON_PROPERTY]["members"]
-            parent_container[AVALON_PROPERTY]["members"] = (
-                parent_members + members)
-
     def exec_remove(self, container: Dict) -> bool:
         """
         Remove an existing container from a Blender scene.
         """
         group_name = container["objectName"]
-        asset_group = bpy.data.objects.get(group_name)
+        asset_group = bpy.data.collections.get(group_name)
 
         attrs = [
             attr for attr in dir(bpy.data)
@@ -238,14 +204,6 @@ class BlendLoader(plugin.AssetLoader):
 
         members = asset_group.get(AVALON_PROPERTY).get("members", [])
 
-        # We need to update all the parent container members
-        parent_containers = self.get_all_container_parents(asset_group)
-
-        for parent in parent_containers:
-            parent.get(AVALON_PROPERTY)["members"] = list(filter(
-                lambda i: i not in members,
-                parent.get(AVALON_PROPERTY).get("members", [])))
-
         for attr in attrs:
             for data in getattr(bpy.data, attr):
                 if data in members:
@@ -254,4 +212,4 @@ class BlendLoader(plugin.AssetLoader):
                         continue
                     getattr(bpy.data, attr).remove(data)
 
-        bpy.data.objects.remove(asset_group)
+        bpy.data.collections.remove(asset_group)
