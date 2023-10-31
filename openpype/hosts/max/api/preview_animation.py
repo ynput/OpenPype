@@ -23,8 +23,8 @@ def play_preview_when_done(has_autoplay):
 
 
 @contextlib.contextmanager
-def viewport_camera(camera):
-    """Set viewport camera during context
+def viewport_layout_and_camera(camera):
+    """Set viewport layout and camera during context
     ***For 3dsMax 2024+
     Args:
         camera (str): viewport camera
@@ -36,9 +36,12 @@ def viewport_camera(camera):
         original = rt.getNodeByName(camera)
     review_camera = rt.getNodeByName(camera)
     try:
+        if rt.viewport.getLayout() != rt.Name("layout_1"):
+            rt.viewport.setLayout(rt.Name("layout_1"))
         rt.viewport.setCamera(review_camera)
         yield
     finally:
+        rt.viewport.ResetAllViews()
         rt.viewport.setCamera(original)
 
 
@@ -162,6 +165,7 @@ def _render_preview_animation_max_pre_2024(
     Returns:
         list: Created filepaths
     """
+
     # get the screenshot
     percent = percentSize / 100.0
     res_width = int(round(rt.renderWidth * percent))
@@ -190,7 +194,7 @@ def _render_preview_animation_max_pre_2024(
             widthCrop = dib_height * renderRatio
             leftEdge = int((dib_width - widthCrop) / 2.0)
             tempImage_bmp = rt.bitmap(widthCrop, dib_height)
-            src_box_value = rt.Box2(0, leftEdge, dib_width, dib_height)
+            src_box_value = rt.Box2(0, leftEdge, widthCrop, dib_height)
         rt.pasteBitmap(dib, tempImage_bmp, src_box_value, rt.Point2(0, 0))
         # copy the bitmap and close it
         rt.copy(tempImage_bmp, preview_res)
@@ -243,7 +247,7 @@ def render_preview_animation(
     if viewport_options is None:
         viewport_options = viewport_options_for_preview_animation()
     with play_preview_when_done(False):
-        with viewport_camera(camera):
+        with viewport_layout_and_camera(camera):
             with render_resolution(width, height):
                 if int(get_max_version()) < 2024:
                     with viewport_preference_setting(
