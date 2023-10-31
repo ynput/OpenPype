@@ -69,8 +69,6 @@ class CreateSaver(NewCreator):
             # TODO Is this needed?
             saver[file_format]["SaveAlpha"] = 1
 
-        self._imprint(saver, instance_data)
-
         # Register the CreatedInstance
         instance = CreatedInstance(
             family=self.family,
@@ -78,6 +76,8 @@ class CreateSaver(NewCreator):
             data=instance_data,
             creator=self,
         )
+        data = instance.data_to_store()
+        self._imprint(saver, data)
 
         # Insert the transient data
         instance.transient_data["tool"] = saver
@@ -165,7 +165,8 @@ class CreateSaver(NewCreator):
         filepath = self.temp_rendering_path_template.format(
             **formatting_data)
 
-        tool["Clip"] = os.path.normpath(filepath)
+        comp = get_current_comp()
+        tool["Clip"] = comp.ReverseMapPath(os.path.normpath(filepath))
 
         # Rename tool
         if tool.Name != subset:

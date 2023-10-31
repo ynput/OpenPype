@@ -29,13 +29,14 @@ class ProjectItem:
             is parent.
     """
 
-    def __init__(self, name, active, icon=None):
+    def __init__(self, name, active, is_library, icon=None):
         self.name = name
         self.active = active
+        self.is_library = is_library
         if icon is None:
             icon = {
                 "type": "awesome-font",
-                "name": "fa.map",
+                "name": "fa.book" if is_library else "fa.map",
                 "color": get_default_entity_icon_color(),
             }
         self.icon = icon
@@ -50,6 +51,7 @@ class ProjectItem:
         return {
             "name": self.name,
             "active": self.active,
+            "is_library": self.is_library,
             "icon": self.icon,
         }
 
@@ -78,7 +80,7 @@ def _get_project_items_from_entitiy(projects):
     """
 
     return [
-        ProjectItem(project["name"], project["active"])
+        ProjectItem(project["name"], project["active"], project["library"])
         for project in projects
     ]
 
@@ -141,5 +143,5 @@ class ProjectsModel(object):
             self._projects_cache.update_data(project_items)
 
     def _query_projects(self):
-        projects = ayon_api.get_projects(fields=["name", "active"])
+        projects = ayon_api.get_projects(fields=["name", "active", "library"])
         return _get_project_items_from_entitiy(projects)

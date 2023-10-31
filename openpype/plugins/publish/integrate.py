@@ -107,6 +107,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
+                "ociolook",
                 "audio",
                 "yetiRig",
                 "yeticache",
@@ -140,7 +141,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "online",
                 "uasset",
                 "blendScene",
-                "yeticacheUE"
+                "yeticacheUE",
+                "tycache"
                 ]
 
     default_template_name = "publish"

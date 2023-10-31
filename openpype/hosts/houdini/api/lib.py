@@ -13,12 +13,19 @@ import six
 from openpype.lib import StringTemplate
 from openpype.client import get_asset_by_name
 from openpype.settings import get_current_project_settings
-from openpype.pipeline import get_current_project_name, get_current_asset_name
+from openpype.pipeline import (
+    get_current_project_name,
+    get_current_asset_name,
+    registered_host
+)
 from openpype.pipeline.context_tools import (
     get_current_context_template_data,
     get_current_project_asset
 )
 from openpype.widgets import popup
+from openpype.tools.utils.host_tools import get_tool_by_name
+from openpype.pipeline.create import CreateContext
+
 import hou
 
 
@@ -325,52 +332,61 @@ def imprint(node, data, update=False):
         return
 
     current_parms = {p.name(): p for p in node.spareParms()}
-    update_parms = []
-    templates = []
+    update_parm_templates = []
+    new_parm_templates = []
 
     for key, value in data.items():
         if value is None:
             continue
 
-        parm = get_template_from_value(key, value)
+        parm_template = get_template_from_value(key, value)
 
         if key in current_parms:
-            if node.evalParm(key) == data[key]:
+            if node.evalParm(key) == value:
                 continue
             if not update:
                 log.debug(f"{key} already exists on {node}")
             else:
                 log.debug(f"replacing {key}")
-                update_parms.append(parm)
+                update_parm_templates.append(parm_template)
             continue
 
-        templates.append(parm)
+        new_parm_templates.append(parm_template)
 
-    parm_group = node.parmTemplateGroup()
-    parm_folder = parm_group.findFolder("Extra")
-
-    # if folder doesn't exist yet, create one and append to it,
-    # else append to existing one
-    if not parm_folder:
-        parm_folder = hou.FolderParmTemplate("folder", "Extra")
-        parm_folder.setParmTemplates(templates)
-        parm_group.append(parm_folder)
-    else:
-        for template in templates:
-            parm_group.appendToFolder(parm_folder, template)
-            # this is needed because the pointer to folder
-            # is for some reason lost every call to `appendToFolder()`
-            parm_folder = parm_group.findFolder("Extra")
-
-    node.setParmTemplateGroup(parm_group)
-
-    # TODO: Updating is done here, by calling probably deprecated functions.
-    #       This needs to be addressed in the future.
-    if not update_parms:
+    if not new_parm_templates and not update_parm_templates:
         return
 
-    for parm in update_parms:
-        node.replaceSpareParmTuple(parm.name(), parm)
+    parm_group = node.parmTemplateGroup()
+
+    # Add new parm templates
+    if new_parm_templates:
+        parm_folder = parm_group.findFolder("Extra")
+
+        # if folder doesn't exist yet, create one and append to it,
+        # else append to existing one
+        if not parm_folder:
+            parm_folder = hou.FolderParmTemplate("folder", "Extra")
+            parm_folder.setParmTemplates(new_parm_templates)
+            parm_group.append(parm_folder)
+        else:
+            # Add to parm template folder instance then replace with updated
+            # one in parm template group
+            for template in new_parm_templates:
+                parm_folder.addParmTemplate(template)
+            parm_group.replace(parm_folder.name(), parm_folder)
+
+    # Update existing parm templates
+    for parm_template in update_parm_templates:
+        parm_group.replace(parm_template.name(), parm_template)
+
+        # When replacing a parm with a parm of the same name it preserves its
+        # value if before the replacement the parm was not at the default,
+        # because it has a value override set. Since we're trying to update the
+        # parm by using the new value as `default` we enforce the parm is at
+        # default state
+        node.parm(parm_template.name()).revertToDefaults()
+
+    node.setParmTemplateGroup(parm_group)
 
 
 def lsattr(attr, value=None, root="/"):
@@ -552,29 +568,64 @@ def get_template_from_value(key, value):
     return parm
 
 
-def get_frame_data(node):
-    """Get the frame data: start frame, end frame and steps.
+def get_frame_data(node, handle_start=0, handle_end=0, log=None):
+    """Get the frame data: start frame, end frame, steps,
+    start frame with start handle and end frame with end handle.
+
+    This function uses Houdini node's `trange`, `t1, `t2` and `t3`
+    parameters as the source of truth for the full inclusive frame
+    range to render, as such these are considered as the frame
+    range including the handles.
+
+    The non-inclusive frame start and frame end without handles
+    are computed by subtracting the handles from the inclusive
+    frame range.
 
     Args:
-        node(hou.Node)
+        node (hou.Node): ROP node to retrieve frame range from,
+            the frame range is assumed to be the frame range
+            *including* the start and end handles.
+        handle_start (int): Start handles.
+        handle_end (int): End handles.
+        log (logging.Logger): Logger to log to.
 
     Returns:
-        dict: frame data for star, end and steps.
+        dict: frame data for start, end, steps,
+              start with handle and end with handle
 
     """
+
+    if log is None:
+        log = self.log
+
     data = {}
 
     if node.parm("trange") is None:
-
+        log.debug(
+            "Node has no 'trange' parameter: {}".format(node.path())
+        )
         return data
 
     if node.evalParm("trange") == 0:
-        self.log.debug("trange is 0")
-        return data
+        data["frameStartHandle"] = hou.intFrame()
+        data["frameEndHandle"] = hou.intFrame()
+        data["byFrameStep"] = 1.0
 
-    data["frameStart"] = node.evalParm("f1")
-    data["frameEnd"] = node.evalParm("f2")
-    data["steps"] = node.evalParm("f3")
+        log.info(
+            "Node '{}' has 'Render current frame' set.\n"
+            "Asset Handles are ignored.\n"
+            "frameStart and frameEnd are set to the "
+            "current frame.".format(node.path())
+        )
+    else:
+        data["frameStartHandle"] = int(node.evalParm("f1"))
+        data["frameEndHandle"] = int(node.evalParm("f2"))
+        data["byFrameStep"] = node.evalParm("f3")
+
+    data["handleStart"] = handle_start
+    data["handleEnd"] = handle_end
+    data["frameStart"] = data["frameStartHandle"] + data["handleStart"]
+    data["frameEnd"] = data["frameEndHandle"] - data["handleEnd"]
 
     return data
 
@@ -847,3 +898,97 @@ def update_houdini_vars_context_dialog():
     dialog.on_clicked.connect(update_houdini_vars_context)
 
     dialog.show()
+
+
+def publisher_show_and_publish(comment=None):
+    """Open publisher window and trigger publishing action.
+
+    Args:
+        comment (Optional[str]): Comment to set in publisher window.
+    """
+
+    main_window = get_main_window()
+    publisher_window = get_tool_by_name(
+        tool_name="publisher",
+        parent=main_window,
+    )
+    publisher_window.show_and_publish(comment)
+
+
+def find_rop_input_dependencies(input_tuple):
+    """Self publish from ROP nodes.
+
+    Arguments:
+        tuple (hou.RopNode.inputDependencies) which can be a nested tuples
+        represents the input dependencies of the ROP node, consisting of ROPs,
+        and the frames that need to be be rendered prior to rendering the ROP.
+
+    Returns:
+        list of the RopNode.path() that can be found inside
+        the input tuple.
+    """
+
+    out_list = []
+    if isinstance(input_tuple[0], hou.RopNode):
+        return input_tuple[0].path()
+
+    if isinstance(input_tuple[0], tuple):
+        for item in input_tuple:
+            out_list.append(find_rop_input_dependencies(item))
+
+    return out_list
+
+
+def self_publish():
+    """Self publish from ROP nodes.
+
+    Firstly, it gets the node and its dependencies.
+    Then, it deactivates all other ROPs
+    And finaly, it triggers the publishing action.
+    """
+
+    result, comment = hou.ui.readInput(
+        "Add Publish Comment",
+        buttons=("Publish", "Cancel"),
+        title="Publish comment",
+        close_choice=1
+    )
+
+    if result:
+        return
+
+    current_node = hou.node(".")
+    inputs_paths = find_rop_input_dependencies(
+        current_node.inputDependencies()
+    )
+    inputs_paths.append(current_node.path())
+
+    host = registered_host()
+    context = CreateContext(host, reset=True)
+
+    for instance in context.instances:
+        node_path = instance.data.get("instance_node")
+        instance["active"] = node_path and node_path in inputs_paths
+
+    context.save_changes()
+
+    publisher_show_and_publish(comment)
+
+
+def add_self_publish_button(node):
+    """Adds a self publish button to the rop node."""
+
+    label = os.environ.get("AVALON_LABEL") or "OpenPype"
+
+    button_parm = hou.ButtonParmTemplate(
+        "ayon_self_publish",
+        "{} Publish".format(label),
+        script_callback="from openpype.hosts.houdini.api.lib import "
+                        "self_publish; self_publish()",
+        script_callback_language=hou.scriptLanguage.Python,
+        join_with_next=True
+    )
+
+    template = node.parmTemplateGroup()
+    template.insertBefore((0,), button_parm)
+    node.setParmTemplateGroup(template)
