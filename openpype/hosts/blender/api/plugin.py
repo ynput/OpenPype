@@ -29,6 +29,7 @@ from openpype.hosts.blender.api.utils import (
     get_root_datablocks,
     get_used_datablocks,
     link_to_collection,
+    transfer_action,
     transfer_stack,
     unlink_from_collection,
 )
@@ -787,8 +788,12 @@ class AssetLoader(Loader):
                 if d.override_library:
                     d["source_name"] = d.override_library.reference.name
 
-                # Override armature
-                if isinstance(d, bpy.types.Object) and d.type == "ARMATURE":
+                # Override datablock data
+                if (
+                    isinstance(d, bpy.types.Object)
+                    and hasattr(d, "data")
+                    and d.data
+                ):
                     d.data.override_create(remap_local_usages=True)
 
             # Add override datablocks to datablocks
@@ -1233,15 +1238,17 @@ class AssetLoader(Loader):
                     new_datablock.scale = old_datablock.scale
 
                 # Ensure action relink
-                if (
+                if (  # Object
                     hasattr(old_datablock, "animation_data")
                     and old_datablock.animation_data
                 ):
-                    if not new_datablock.animation_data:
-                        new_datablock.animation_data_create()
-                    new_datablock.animation_data.action = (
-                        old_datablock.animation_data.action
-                    )
+                    transfer_action(old_datablock, new_datablock)
+                if (  # Object data (ie mesh, light...)
+                    hasattr(old_datablock, "data")
+                    and hasattr(old_datablock.data, "animation_data")
+                    and old_datablock.data.animation_data
+                ):
+                    transfer_action(old_datablock.data, new_datablock.data)
 
                 # Ensure modifiers reassignation
                 if hasattr(old_datablock, "modifiers"):

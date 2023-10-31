@@ -338,6 +338,24 @@ def assign_loader_to_datablocks(
     return containers_loaders
 
 
+def transfer_action(old_datablock: bpy.types.ID, new_datablock: bpy.types.ID):
+    """Transfer action from a datablock to another one.
+
+    Args:
+        old_datablock (bpy.types.ID): Datablock to get action from.
+        new_datablock (bpy.types.ID): Datablock to create action to.
+    """
+    if (
+        hasattr(old_datablock, "animation_data")
+        and old_datablock.animation_data
+    ):
+        if not new_datablock.animation_data:
+            new_datablock.animation_data_create()
+        new_datablock.animation_data.action = (
+            old_datablock.animation_data.action
+        )
+
+
 def transfer_stack(
     source_datablock: bpy.types.ID,
     stack_name: str,
