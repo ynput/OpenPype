@@ -9,7 +9,10 @@ from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
 )
-from .pipeline import AVALON_CONTAINERS
+from .pipeline import (
+    AVALON_CONTAINERS,
+    AVALON_PROPERTY,
+)
 from .ops import (
     MainThreadItem,
     execute_in_main_thread
@@ -40,9 +43,16 @@ def get_unique_number(
     avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
     if not avalon_container:
         return "01"
-    asset_groups = avalon_container.all_objects
-
-    container_names = [c.name for c in asset_groups if c.type == 'EMPTY']
+    # Check the names of both object and collection containers
+    obj_asset_groups = avalon_container.all_objects
+    obj_group_names = [
+        c.name for c in obj_asset_groups
+        if c.type == 'EMPTY' and c.get(AVALON_PROPERTY)]
+    coll_asset_groups = avalon_container.children_recursive
+    coll_group_names = [
+        c.name for c in coll_asset_groups
+        if c.get(AVALON_PROPERTY)]
+    container_names = obj_group_names + coll_group_names
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
     while name in container_names:
