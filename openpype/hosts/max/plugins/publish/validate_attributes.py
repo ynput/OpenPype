@@ -10,9 +10,47 @@ from openpype.pipeline.publish import (
 )
 
 
+def has_property(object_name, property_name):
+    """Return whether an object has a property with given name"""
+    return rt.Execute(f'isProperty {object_name} "{property_name}"')
+
+def is_matching_value(object_name, property_name, value):
+    """Return whether an existing property matches value `value"""
+    property_value = rt.Execute(f"{object_name}.{property_name}")
+
+    # Wrap property value if value is a string valued attributes
+    # starting with a `#`
+    if (
+        isinstance(value, str) and
+        value.startswith("#") and
+        not value.endswith(")")
+    ):
+        # prefix value with `#`
+        # not applicable for #() array value type
+        # and only applicable for enum i.e. #bob, #sally
+        property_value = f"#{property_value}"
+
+    return property_value == value
+
+
 class ValidateAttributes(OptionalPyblishPluginMixin,
                          ContextPlugin):
-    """Validates attributes are consistent in 3ds max."""
+    """Validates attributes in the project setting are consistent
+    with the nodes from MaxWrapper Class in 3ds max.
+    E.g. "renderers.current.separateAovFiles",
+         "renderers.production.PrimaryGIEngine"
+    Admin(s) need to put json below and enable this validator for a check:
+    {
+       "renderers.current":{
+            "separateAovFiles" : True
+        }
+        "renderers.production":{
+            "PrimaryGIEngine": "#RS_GIENGINE_BRUTE_FORCE",
+        }
+        ....
+    }
+
+    """
 
     order = ValidatorOrder
     hosts = ["max"]
@@ -28,32 +66,24 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
         )
         if not attributes:
             return
+        invalid = []
+        for object_name, required_properties in attributes.items():
+            if not rt.Execute(f"isValidValue {object_name}"):
+                # Skip checking if the node does not
+                # exist in MaxWrapper Class
+                continue
 
-        for wrap_object, property_name in attributes.items():
-            invalid_properties = [key for key in property_name.keys()
-                                  if not rt.Execute(
-                                      f'isProperty {wrap_object} "{key}"')]
-            if invalid_properties:
-                cls.log.error(
-                    "Unknown Property Values:{}".format(invalid_properties))
-                return invalid_properties
-            # TODO: support multiple varaible types in maxscript
-            invalid_attributes = []
-            for key, value in property_name.items():
-                property_key = rt.Execute("{}.{}".format(
-                    wrap_object, key))
-                if isinstance(value, str) and (
-                    value.startswith("#") and not value.endswith(")")
-                ):
-                    # not applicable for #() array value type
-                    # and only applicable for enum i.e. #bob, #sally
-                    if "#{}".format(property_key) != value:
-                        invalid_attributes.append((wrap_object, key))
-                else:
-                    if property_key != value:
-                        invalid_attributes.append((wrap_object, key))
+            for property_name, value in required_properties.items():
+                if not has_property(object_name, property_name):
+                    cls.log.error(f"Non-existing property: {object_name}.{property_name}")
+                    invalid.append((object_name, property_name))
 
-            return invalid_attributes
+                if not is_matching_value(object_name, property_name, value):
+                    cls.log.error(
+                        f"Invalid value for: {object_name}.{property_name}. Should be: {value}")
+                    invalid.append((object_name, property_name))
+
+        return invalid
 
     def process(self, context):
         if not self.is_active(context.data):
