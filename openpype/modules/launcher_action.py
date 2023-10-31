@@ -4,7 +4,6 @@ from openpype.modules import (
 )
 
 from openpype.widgets import PasswordDialog
-from openpype.lib import is_admin_password_required
 
 
 class LauncherAction(OpenPypeModule, ITrayAction):
@@ -13,7 +12,6 @@ class LauncherAction(OpenPypeModule, ITrayAction):
 
     def __init__(self, manager, settings):
         super(LauncherAction, self).__init__(manager, settings)
-        self._user_passed = False
 
     def initialize(self, _modules_settings):
         # This module is always enabled
