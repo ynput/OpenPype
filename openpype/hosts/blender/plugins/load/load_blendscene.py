@@ -7,7 +7,6 @@ from openpype.pipeline import (
     get_representation_path,
     AVALON_CONTAINER_ID,
 )
-from openpype.pipeline.create import get_legacy_creator_by_name
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.lib import imprint
 from openpype.hosts.blender.api.pipeline import (
