@@ -66,6 +66,7 @@ IGNORED_FILENAMES_IN_AYON = {
     "shotgrid",
     "sync_server",
     "slack",
+    "kitsu",
 }
 
 

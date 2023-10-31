@@ -298,6 +298,7 @@ class NumberAttrWidget(_BaseAttrDefWidget):
         input_widget.installEventFilter(self)
 
         multisel_widget = ClickableLineEdit("< Multiselection >", self)
+        multisel_widget.setVisible(False)
 
         input_widget.valueChanged.connect(self._on_value_change)
         multisel_widget.clicked.connect(self._on_multi_click)
