@@ -40,11 +40,11 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
     with the nodes from MaxWrapper Class in 3ds max.
     E.g. "renderers.current.separateAovFiles",
          "renderers.production.PrimaryGIEngine"
-    Admin(s) need to put json below and enable this validator for a check:
+    Admin(s) need to put the dict below and enable this validator for a check:
     {
        "renderers.current":{
             "separateAovFiles" : True
-        }
+        },
         "renderers.production":{
             "PrimaryGIEngine": "#RS_GIENGINE_BRUTE_FORCE"
         }
