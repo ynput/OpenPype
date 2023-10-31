@@ -14,6 +14,7 @@ def has_property(object_name, property_name):
     """Return whether an object has a property with given name"""
     return rt.Execute(f'isProperty {object_name} "{property_name}"')
 
+
 def is_matching_value(object_name, property_name, value):
     """Return whether an existing property matches value `value"""
     property_value = rt.Execute(f"{object_name}.{property_name}")
