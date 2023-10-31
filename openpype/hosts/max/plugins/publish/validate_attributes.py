@@ -73,7 +73,7 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
                 # Skip checking if the node does not
                 # exist in MaxWrapper Class
                 cls.log.debug(f"Unable to find '{object_name}'."
-                              f" Skipping validation of attributes")
+                              " Skipping validation of attributes.")
                 continue
 
             for property_name, value in required_properties.items():
@@ -86,7 +86,7 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
                 if not is_matching_value(object_name, property_name, value):
                     cls.log.error(
                         f"Invalid value for: {object_name}.{property_name}"
-                        f". Should be: {value}")
+                        f" Should be: {value}")
                     invalid.append((object_name, property_name))
 
         return invalid
@@ -105,7 +105,7 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
                 "Required Attribute(s) have invalid value(s).\n\n"
                 f"{bullet_point_invalid_statement}\n\n"
                 "You can use repair action to fix them if they are not\n"
-                "unknown property value(s)"
+                "unknown property value(s)."
             )
             raise PublishValidationError(
                 report, title="Invalid Value(s) for Required Attribute(s)")
