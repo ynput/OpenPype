@@ -23,11 +23,13 @@ def play_preview_when_done(has_autoplay):
 
 
 @contextlib.contextmanager
-def viewport_layout_and_camera(camera):
+def viewport_layout_and_camera(camera, layout="layout_1"):
     """Set viewport layout and camera during context
     ***For 3dsMax 2024+
     Args:
         camera (str): viewport camera
+        layout (str): layout to use in viewport, defaults to `layout_1`
+            Use None to not change viewport layout during context.
     """
     original_camera = rt.viewport.getCamera()
     original_layout = rt.viewport.getLayout()
@@ -37,8 +39,10 @@ def viewport_layout_and_camera(camera):
         original_camera = rt.getNodeByName(camera)
     review_camera = rt.getNodeByName(camera)
     try:
-        if rt.viewport.getLayout() != rt.Name("layout_1"):
-            rt.viewport.setLayout(rt.Name("layout_1"))
+        if layout is not None:
+            layout = rt.Name(layout)
+            if rt.viewport.getLayout() != layout:
+                rt.viewport.setLayout(layout)
         rt.viewport.setCamera(review_camera)
         yield
     finally:
