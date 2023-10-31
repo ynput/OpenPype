@@ -31,21 +31,11 @@ class CreateBlendScene(plugin.Creator):
         asset = self.data["asset"]
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
-        asset_group = bpy.data.objects.new(name=name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
-        instances.objects.link(asset_group)
+
+        # Create the new asset group as collection
+        asset_group = bpy.data.collections.new(name=name)
+        instances.children.link(asset_group)
         self.data['task'] = get_current_task_name()
         lib.imprint(asset_group, self.data)
-
-        # Add selected objects to instance
-        if (self.options or {}).get("useSelection"):
-            bpy.context.view_layer.objects.active = asset_group
-            selected = lib.get_selection()
-            for obj in selected:
-                if obj.parent in selected:
-                    obj.select_set(False)
-                    continue
-            selected.append(asset_group)
-            bpy.ops.object.parent_set(keep_transform=True)
 
         return asset_group
