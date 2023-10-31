@@ -24,14 +24,18 @@ class ShelfDefinitionModel(BaseSettingsModel):
 
 class ShelvesModel(BaseSettingsModel):
     _layout = "expanded"
-    shelf_set_name: str = Field("", title="Shelfs set name")
-
     shelf_set_source_path: MultiplatformPathModel = Field(
         default_factory=MultiplatformPathModel,
-        title="Shelf Set Path (optional)"
+        title="Shelf Set Path",
+        section="Option 1: Add a .shelf file."
     )
-
+    shelf_set_name: str = Field(
+        "",
+        title="Shelf Set Name",
+        section=("OR Option 2: Add Shelf Set Name "
+                 "and Shelves Definitions.")
+    )
     shelf_definition: list[ShelfDefinitionModel] = Field(
         default_factory=list,
-        title="Shelf Definitions"
+        title="Shelves Definitions"
     )
