@@ -72,6 +72,8 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
             if not rt.Execute(f"isValidValue {object_name}"):
                 # Skip checking if the node does not
                 # exist in MaxWrapper Class
+                cls.log.debug(f"Unable to find '{object_name}'."
+                              f" Skipping validation of attributes")
                 continue
 
             for property_name, value in required_properties.items():
