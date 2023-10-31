@@ -241,6 +241,6 @@ class UnrealPrelaunchHook(PreLaunchHook):
             f"\"{project_file.as_posix()}\"")
 
     def launch_script_path(self):
-        from openpype.hosts.unreal import get_launch_script_path
+        from openpype.hosts.unreal.addon import get_launch_script_path
 
         return get_launch_script_path()
