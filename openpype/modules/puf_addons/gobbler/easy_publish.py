@@ -14,7 +14,9 @@ logger = Logger.get_logger(__name__)
 
 
 REVIEW_FAMILIES = {
-    "render"
+    "render",
+    "image"
+
 }
 
 PUBLISH_TO_SG_FAMILIES = {
@@ -86,10 +88,10 @@ def publish_version(
                 "Setting colorspace '%s' to representation", source_colorspace
             )
 
-    instance_data["frameStartHandle"] = representations[0]["frameStart"]
-    instance_data["frameEndHandle"] = representations[0]["frameEnd"]
-    instance_data["frameStart"] = representations[0]["frameStart"]
-    instance_data["frameEnd"] = representations[0]["frameEnd"]
+    instance_data["frameStartHandle"] = int(representations[0]["frameStart"])
+    instance_data["frameEndHandle"] = int(representations[0]["frameEnd"])
+    instance_data["frameStart"] = int(representations[0]["frameStart"])
+    instance_data["frameEnd"] = int(representations[0]["frameEnd"])
     instance_data["fps"] = 23.976
 
     # add representation

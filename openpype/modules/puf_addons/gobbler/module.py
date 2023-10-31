@@ -65,34 +65,37 @@ def cli_main():
               required=True,
               envvar="AVALON_PROJECT",
               help="Project name")
-@click.option("-d", "--directory",
+@click.option("-i", "--input_dir",
               required=True,
               help="Directory to gobble")
-def go(project_name, directory=None):
+def gobble(project_name, input_dir):
     '''Gobble folder and publish everything in it'''
-    log.info("GO!")
+    log.info(f"Will gobble {input_dir} to project {project_name}.")
     import pyblish.api
     import pyblish.util
+    from datetime import datetime
+    import string
     pyblish.api.register_host("standalonepublisher")
 
     os.environ["AVALON_PROJECT"] = project_name
+    current_datetime = datetime.now().strftime("%y%m%d%H%M%S") # Format the date and time as YYMMDDHHMMSS
 
-    assets_list = list(client.get_assets(project_name))
-    # creating a dict {asset_name: asset}
-    # for quickly looking up assets by name later.
-    assets_dict = {asset['name']: asset for asset in assets_list}
+    batch_name = f"Ingest: {os.path.basename(input_dir)}_{current_datetime}"
 
-    # HACK -- removing assets where [hierarchy includes 'Asset' to force
-    # psd backgrounds to go to shots instead of assets.]
-    # filtered_assets_dict = {}
-    # for asset_name, asset in assets_dict.items():
-    #     # this filters out folders and maybe other non-zou assets
-    #     if asset.get('data').get('zou'):
-    #         if asset.get('data').get('zou').get('type') == 'Shot':
-    #             filtered_assets_dict[asset_name] = asset
+    assets_and_shots_dict, shots_dict, assets_dict = _project_cache(project_name)
+
+    # create a dict {asset_name: asset} for quickly looking up assets by name later.
+    # assuming asset names are unique - which is not an OP requirement but a studio requirement.
+    # OP only requires unique hierarchy I believe?
 
     # copy input to staging directory
-    directory = _copy_input_to_staging(directory)
+    directory = _copy_input_to_staging(input_dir)
+    # # alternatively, work on input directory, without staging dir
+    # directory = input_dir
+
+    # create png from psd
+    # _create_png_from_psd(directory)
+
 
     # walk directory and find items to publish
     items_to_publish = _find_sources(directory)
@@ -100,63 +103,49 @@ def go(project_name, directory=None):
     # MAIN LOOP
     for item in items_to_publish:
         # fuzzy match asset
-        search_term = item.frame(item.start())
-        search_term = search_term.replace(directory + "\\", "")
+        file_seq = item[2]
+        representations = item[1]
+        # search_term = search_term.replace(directory + "\\", "")
+        # search_term = item[0]
+        search_term = os.path.relpath(item[0], start=directory)
+        item_name = os.path.basename(item[0])
 
-        asset = _fuzz_asset(search_term, filtered_assets_dict)
-
+        log.info(f"Repr: {representations.keys()}")
+        # PRODUCTION LOGIC
+        if 'psd' in representations.keys(): # asset!
+            log.info(f"asset!")
+            asset = _fuzz_asset(search_term, assets_dict)
+            log.info(asset['name'])
+            is_shot = False
+        else:
+            asset = _fuzz_asset(search_term, shots_dict)
+            is_shot = True
         asset_name = asset['name']
 
-        extension = item.extension().strip('.')
-
-        # set up representation path
-        if item.frameSet():
-            log.info(f"sequence {list(item)[0]}")
-            representation_path = list(item)[0]
-        else:
-            log.info("single")
-            representation_path = str(item)
-        expected_representations = {extension: representation_path}
-
-        # PRODUCTION LOGIC
-
-        # if asset.get('data').get('zou'): # this filters out folders and maybe other non-zou assets
-        if asset.get('data').get('zou').get('type') == 'Shot':
+        if is_shot:
             family_name = "render"
             task_name = "Animation"
-            subset_name = "renderAnimationMain"
+            if file_seq:
+                subset_name = file_seq.basename().lstrip(string.whitespace + "_")
+            else:
+                subset_name = "renderAnimationMain"
 
-        if asset.get('data').get('zou').get('type') == 'Asset':
+        else:
             family_name = "image"
             task_name = "Concept"
             subset_name = "imageTexture"
 
-        # if extension=='psd': # photoshop file, goes to art task on asset
-        #     family_name = "image"
-        #     task_name = "Art"
-        #     subset_name = "imageTexture"
-
-        # if extension in ['psd', 'jpg']: # photoshop or jpg file, goes to edit task on shot
-        #     family_name = "image"
-        #     task_name = "Concept"
-        #     subset_name = "imageTexture"
-
-        # if extension=='png':
-        #     family_name = "render"
-        #     task_name = "Animation"
-        #     subset_name = "renderAnimationMain"
 
         publish_data = {
-            # "families": ["review"],
+            "families": ["review"],
         }
-        batch_name = str(directory)
-
+        log.info(f"{representations}")
         easy_publish.publish_version(project_name,
                                      asset_name,
                                      task_name,
                                      family_name,
                                      subset_name,
-                                     expected_representations,
+                                     representations,
                                      publish_data,
                                      batch_name,)
 
@@ -173,7 +162,7 @@ def go(project_name, directory=None):
               help="Root directory IN",
               default="Y:\\WORKS\\_openpype\\cse\\in\\")
 @click.option("-s", "--spreadsheet",
-              required=True,
+              required=False,
               help="Id of the spreadsheet",
               default='18Z-fn_GUGdWTg0-LW1CcS0Bg75Iczu0qu0omH31yO8M')
 def collect_input(named_range, directory, spreadsheet):
@@ -192,6 +181,34 @@ def collect_input(named_range, directory, spreadsheet):
     for row in df.iterrows():
         _copy_files(row, destination)
 
+
+def _project_cache(project_name):
+    # build a few dicts to look up shots and assets quickly
+    all_list = list(client.get_assets(project_name))
+    all_dict = {asset['name']: asset for asset in all_list}
+
+
+    shots_dict = {}
+    assets_dict = {}
+    assets_and_shots_dict = {}
+    for asset_name, asset in all_dict.items():
+        # this filters out folders and maybe other non-zou elements
+        if asset.get('data').get('zou'):
+            if asset.get('data').get('zou').get('type') == 'Shot':
+                shots_dict[asset_name] = asset
+                assets_and_shots_dict[asset_name] = asset
+            if asset.get('data').get('zou').get('type') == 'Asset':
+                assets_dict[asset_name] = asset
+                assets_and_shots_dict[asset_name] = asset
+    return assets_and_shots_dict, shots_dict, assets_dict
+
+
+# def _create_png_from_psd(directory):
+#     # walk directory and create png from psd where missing
+#     import imageio
+#     for root, dirs, files in os.walk(directory):
+#         for file in files:
+#             if os.path(file)
 
 def _copy_files(row, destination):
     # copies files from row to destination
@@ -268,7 +285,7 @@ def _load_data(spreadsheet, named_range):
 
     service = build('sheets', 'v4', credentials=creds)
 
-    # Call the Sheets API and consume all 'data'
+    # Call the Sheets API and consume all data
     sheet = service.spreadsheets()
     all_lines = sheet.values().get(
         spreadsheetId=spreadsheet,
@@ -299,17 +316,39 @@ def _fuzz_asset(item, assets_dict):
 
 def _find_sources(source_directory):
     import fileseq
-    file_sequences = set()
+    results = list()
 
     for dirpath, dirnames, filenames in os.walk(source_directory):
         # Check if the file is part of a sequence
-        sequence = fileseq.findSequencesOnDisk(dirpath)
+        dir_contents = fileseq.findSequencesOnDisk(dirpath)
         # log.info(sequence)
 
-        if sequence:
-            # Append the sequence to the list
-            file_sequences = file_sequences | set(sequence)
-    return file_sequences
+        if dir_contents: # dir not empty
+            representations_found = {}
+            # log.info(f"Found {len(dir_contents)} items in {dirpath}")
+            for item in dir_contents:
+                # Append the sequence to the list
+                extension = item.extension().strip('.')
+
+                if item.frameSet():  # if sequence
+                    # if item.frameSet().start() != item.frameSet().end():  # and not single-frame sequence
+                    #     representation_path = item.frame(item.start())
+                    #     log.info(f"sequence {representation_path}")
+                    # else:  # single-frame sequence, so single frame really
+                    #     representation_path = item.frame(item.start())
+                    #     log.info(f"single-frame seq: {representation_path}")
+                    representation_path = item.frame(item.start())
+                    log.info(f"sequence: {representation_path}")
+                else:  # single
+                    representation_path = str(item)
+                    log.info(f"single file - no seq: {representation_path}")
+                representations_found[extension] = representation_path
+            # log.info(f"Repr found: {representations_found}")
+            publish_item = (representation_path, representations_found, item or None)
+            results.append(publish_item)
+    # log.info(f"Results: {results}")
+
+    return results
 
 
 def _copy_input_to_staging(source_directory):
