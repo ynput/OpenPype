@@ -53,6 +53,9 @@ class CaptureEnterKeyWidget(QtWidgets.QWidget):
             QtCore.Qt.Key_Enter,
         }:
             event.accept()
+            return
+
+        return super(CaptureEnterKeyWidget, self).keyPressEvent(event)
 
 
 class PublisherWindow(QtWidgets.QDialog):
