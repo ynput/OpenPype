@@ -76,12 +76,14 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
 
             for property_name, value in required_properties.items():
                 if not has_property(object_name, property_name):
-                    cls.log.error(f"Non-existing property: {object_name}.{property_name}")
+                    cls.log.error(
+                        f"Non-existing property: {object_name}.{property_name}")
                     invalid.append((object_name, property_name))
 
                 if not is_matching_value(object_name, property_name, value):
                     cls.log.error(
-                        f"Invalid value for: {object_name}.{property_name}. Should be: {value}")
+                        f"Invalid value for: {object_name}.{property_name}"
+                        f". Should be: {value}")
                     invalid.append((object_name, property_name))
 
         return invalid
