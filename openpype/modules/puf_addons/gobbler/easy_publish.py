@@ -31,6 +31,8 @@ def publish_version(
     expected_representations,
     publish_data,
     batch_name,
+    response_data=None,
+    representations_exists=True
 ):
     # TODO: write some logic that finds the main path from the list of
     # representations
@@ -52,12 +54,23 @@ def publish_version(
         "fps": publish_data.get("fps", 23.976),
     }
 
-    representations = utils.get_representations(
-        instance_data,
-        expected_representations,
-        add_review=family_name in REVIEW_FAMILIES,
-        publish_to_sg=family_name in PUBLISH_TO_SG_FAMILIES,
-    )
+    if representations_exists:
+        # Representations exists in the disk
+        representations = utils.get_representations(
+            instance_data,
+            expected_representations,
+            add_review=family_name in REVIEW_FAMILIES,
+            publish_to_sg=family_name in PUBLISH_TO_SG_FAMILIES,
+        )
+    else:
+        # Representations are parsed from info.
+        representations = utils.get_possible_representations(
+            instance_data,
+            expected_representations,
+            add_review=family_name in REVIEW_FAMILIES,
+            publish_to_sg=family_name in PUBLISH_TO_SG_FAMILIES,
+        )
+
     if not representations:
         logger.error(
             "No representations could be found on expected dictionary: %s",
@@ -72,9 +85,6 @@ def publish_version(
             logger.debug(
                 "Setting colorspace '%s' to representation", source_colorspace
             )
-            # utils.set_representation_colorspace(
-            #     rep, project_name, colorspace=source_colorspace
-            # )
 
     instance_data["frameStartHandle"] = representations[0]["frameStart"]
     instance_data["frameEndHandle"] = representations[0]["frameEnd"]
@@ -142,22 +152,11 @@ def publish_version(
         group=dl_constants.OP_GROUP,
         pool=dl_constants.OP_POOL,
         extra_env=extra_env,
+        response_data=response_data
     )
     legacy_io.install()
     # publish job file
-    # publish_job = {
-    #     "asset": instance_data["asset"],
-    #     "frameStart": instance_data["frameStartHandle"],
-    #     "frameEnd": instance_data["frameEndHandle"],
-    #     "source": instance_data["source"],
-    #     "user": getpass.getuser(),
-    #     "version": None,  # this is workfile version
-    #     "comment": instance_data["comment"],
-    #     "job": {},
-    #     "session": legacy_io.Session.copy(),
-    #     "instances": instances,
-    #     "deadline_publish_job_id": response.get("_id")
-    # }
+
     publish_job = {
         "asset": instance_data["asset"],
         "comment": instance_data["comment"],

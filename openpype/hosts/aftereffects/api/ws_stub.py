@@ -765,7 +765,10 @@ class AfterEffectsServerStub():
 
         return self._handle_return(res)
 
-    def add_comp_to_queue(self, comp_id, template_name):
+    def add_comp_to_queue(self,
+                          comp_id,
+                          template_name,
+                          file_name):
         """
             Adds the comp to the Render Queue.
 
@@ -777,7 +780,8 @@ class AfterEffectsServerStub():
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.add_comp_to_queue',
                                          comp_id=comp_id,
-                                         template_name=template_name))
+                                         template_name=template_name,
+                                         file_name=file_name))
 
         return self._handle_return(res)
 

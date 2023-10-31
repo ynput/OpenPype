@@ -20,7 +20,7 @@ def payload_submit(
     plugin_data,
     batch_name,
     task_name,
-    group="",
+    group=constants.OP_GROUP,
     pool="",
     comment="",
     priority=DEFAULT_PRIORITY,

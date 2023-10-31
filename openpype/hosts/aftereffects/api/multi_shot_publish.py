@@ -1,5 +1,6 @@
 
 import os
+import pprint
 import re
 import sys
 import subprocess
@@ -34,6 +35,8 @@ from .lib import set_settings
 from .workfile_template_builder import get_last_workfile_path, get_comp_by_name
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+from openpype.modules.deadline.lib import submit
 
 
 def publish():
@@ -75,7 +78,8 @@ def publish():
             asset = get_asset_by_name(original_context["project_name"],
                                       asset_name)
 
-            job = save_precomp_as_workfile(comp_name, asset, "Compositing")
+            job = save_precomp_as_workfile(comp_name, asset, "Compositing",
+                                           render_template_name="CSE")
             jobs_to_publish.append(job)
 
             # Return to original context
@@ -84,13 +88,15 @@ def publish():
 
     for job in jobs_to_publish:
         log.info(f"Submitting {job}")
-        submit_ae_job(job)
+        deadline_job = submit_ae_job(job)
+        submit_publish_job(job, deadline_job)
 
     log.info("bye")
 
 
 def save_precomp_as_workfile(comp_name, asset, task_name,
-                             render_template_name="OpenEXR"):
+                             render_template_name="OpenEXR",
+                             file_name="[compName].[####].[fileextension]"):
     """Changes the context to asset's task, add the precomp to
     the render queue using the render_template_name.
 
@@ -118,6 +124,10 @@ def save_precomp_as_workfile(comp_name, asset, task_name,
                                            current_context["asset_name"],
                                            current_context["task_name"])
     workfile_path = version_up(workfile_path)
+    workfile_path, workfile_ext = os.path.splitext(workfile_path)
+
+    # Add a subversion
+    workfile_path = f"{workfile_path}_batchPublish{workfile_ext}"
     host.save_workfile(workfile_path)
     log.info("Saving incremented workfile: {}".format(workfile_path))
 
@@ -126,7 +136,9 @@ def save_precomp_as_workfile(comp_name, asset, task_name,
     comp = get_comp_by_name(comp_name)
 
     stub.select_items([comp.id])
-    stub.add_comp_to_queue(comp.id, render_template_name)
+    stub.add_comp_to_queue(comp.id,
+                           render_template_name,
+                           file_name=file_name)
 
     host.save_workfile(workfile_path)
     print("Saving workfile: {}".format(workfile_path))
@@ -136,40 +148,51 @@ def save_precomp_as_workfile(comp_name, asset, task_name,
     filename = os.path.basename(render_info[0].file_name)
     name, ext = os.path.splitext(filename)
     ext = ext.replace(".", "")
-    # root, ext = os.path.splitext(render_info[0].file_name)
 
     output_dir = _get_output_dir(workfile_path)
     output_path = os.path.join(output_dir, filename)
+    output_path = output_path.replace("%5B", "[")
+    output_path = output_path.replace("%5D", "]")
+
+    comp_info = stub.get_comp_properties(comp.id)
+    frame_start = comp_info.frameStart
+    frame_end = round(comp_info.frameStart +
+                      comp_info.framesDuration) - 1
+
+    family_name = "render"
+    variant_name = "Main"
+
+    subset_name = family_name.lower()
+    subset_name += task_name.capitalize()
+    subset_name += variant_name.capitalize()
 
     job = {
         "context": current_context,
         "workfile_path": workfile_path,
-        "output_path": output_path
+        "output_path": output_path,
+        "comp_name": comp_name,
+        "frame_range": [frame_start, frame_end],
+        "batch_name": os.path.basename(workfile_path),
+        "subset_name": subset_name,
+        "family_name": family_name,
+        "variant_name": variant_name
     }
 
     return job
 
 
-def submit_ae_job(job, family_name="render", variant_name="Main"):
-    from openpype.modules.deadline.lib import submit
+def submit_ae_job(job):
 
-    host = registered_host()
     project_name = job["context"]["project_name"]
     asset_name = job["context"]["asset_name"]
     task_name = job["context"]["task_name"]
-    subset_name = f"{family_name.lower()} {task_name.capitalize()}\
-                    {variant_name.capitalize()}"
-
-    # expected_representations = job["representations"]
-
-    # publish_data = {}
-
-    batch_name = f"{project_name} {asset_name} {task_name}"
+    subset_name = job["subset_name"]
+    batch_name = job["batch_name"]
 
     plugin_data = {
         # "AWSAssetFile0":""
         "Arguments": "",
-        "Comp": subset_name,
+        "Comp": job["comp_name"],
         "MultiProcess": True,
         "Output": job["output_path"],
         "OutputFilePath": "",
@@ -180,7 +203,7 @@ def submit_ae_job(job, family_name="render", variant_name="Main"):
     }
 
     extra_env = {
-        "AVALON_APP_NAME": host.name,
+        "AVALON_APP_NAME": os.getenv("AVALON_APP_NAME"),
         "AVALON_ASSET": asset_name,
         "AVALON_PROJECT": project_name,
         "AVALON_TASK": task_name,
@@ -193,66 +216,173 @@ def submit_ae_job(job, family_name="render", variant_name="Main"):
         "AfterEffects",
         plugin_data,
         batch_name,
-        task_name,
-        # group="",
-        # comment="",
-        frame_range=0,
+        subset_name,
+        comment="from after effects",
+        frame_range=job["frame_range"],
         extra_env=extra_env,
-        # response_data=None,
     )
 
-# def get_expected_files(frameStart, frameEnd, workfile_path,
-#                        file_name, asset_name, subset_name, padding_width=6):
-#     """
-#         Copied from: openpype/hosts/aftereffects/plugins/publish/collect_render.py
-#         Returns list of rendered files that should be created by
-#         Deadline. These are not published directly, they are source
-#         for later 'submit_publish_job'.
+    return response
 
-#     Args:
-#         render_instance (RenderInstance): to pull anatomy and parts used
-#             in url
 
-#     Returns:
-#         (list) of absolute urls to rendered file
-#     """
-#     start = frameStart
-#     end = frameEnd
+def submit_publish_job(job, dependency):
+    # Publish Job
+    from openpype.modules.puf_addons.gobbler import easy_publish
+    from openpype.modules.delivery.scripts.utils import replace_frame_number_with_token
 
-#     base_dir = _get_output_dir(workfile_path)
-#     base_name = os.path.basename(workfile_path)
+    project_name = job["context"]["project_name"]
+    asset_name = job["context"]["asset_name"]
+    task_name = job["context"]["task_name"]
+    subset_name = job["subset_name"]
+    subset_name = job["subset_name"]
+    batch_name = job["batch_name"]
+    family_name = job["family_name"]
 
-#     regex = r"[._]v\d+"
-#     matches = re.findall(regex, str(base_name), re.IGNORECASE)
-#     label = matches[-1]
-#     version = re.search(r"\d+", label).group()
-#     version = int(version)
+    extension = os.path.splitext(job["output_path"])[-1][1:]
+    representation_path = job["output_path"]
+    representation_path = representation_path.replace("[", "")
+    representation_path = representation_path.replace("]", "")
 
-#     expected_files = []
+    # Replace multiples # with `<frameIn>-<frameOut>#` as fileseq expects
+    # when passing representations that does not exists.
+    f_in, f_out = job["frame_range"]
+    token = f"{f_in}-{f_out}#"
 
-#     _, ext = os.path.splitext(os.path.basename(file_name))
-#     ext = ext.replace('.', '')
-#     version_str = "v{:03d}".format(version)
-#     if "#" not in file_name:  # single frame (mov)W
-#         path = os.path.join(base_dir, "{}_{}_{}.{}".format(
-#             asset_name,
-#             subset_name,
-#             version_str,
-#             ext
-#         ))
-#         expected_files.append(path)
-#     else:
-#         for frame in range(start, end + 1):
-#             path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
-#                 asset_name,
-#                 subset_name,
-#                 version_str,
-#                 str(frame).zfill(padding_width),
-#                 ext
-#             ))
-#             expected_files.append(path)
-#     return expected_files
+    representation_path = representation_path.replace("####", token)
 
+    expected_representations = {extension: representation_path}
+    publish_data = {}
+
+    easy_publish.publish_version(
+        project_name,
+        asset_name,
+        task_name,
+        family_name,
+        subset_name,
+        expected_representations,
+        publish_data,
+        batch_name,
+        response_data=dependency,
+        representations_exists=False
+    )
+
+    # from openpype.pipeline import (
+    #     registered_host,
+    #     Anatomy,
+    # )
+    # from openpype.pipeline.workfile import (
+    #     get_workfile_template_key_from_context,
+    #     get_last_workfile
+    # )
+    # from openpype.pipeline.template_data import get_template_data_with_names
+
+    # from openpype.pipeline.farm.pyblish_functions import (
+    #     create_metadata_path
+    # )
+
+    # project_name = job["context"]["project_name"]
+    # asset_name = job["context"]["asset_name"]
+    # task_name = job["context"]["task_name"]
+    # host = registered_host()
+    # # host_name = host.name
+
+    # # template_key = get_workfile_template_key_from_context(
+    # #     asset_name,
+    # #     task_name,
+    # #     host_name,
+    # #     project_name=project_name
+    # # )
+    # anatomy = Anatomy(project_name)
+
+    # log.info("anatomy")
+    # log.info(pprint.pformat(anatomy.templates))
+
+    # extra_env = {
+    #     "AVALON_APP_NAME": os.getenv("AVALON_APP_NAME"),
+    #     "AVALON_ASSET": asset_name,
+    #     "AVALON_PROJECT": project_name,
+    #     "AVALON_TASK": task_name,
+    #     "OPENPYPE_LOG_NO_COLORS": "False",
+    #     "OPENPYPE_MONGO": os.getenv("OPENPYPE_MONGO"),
+    #     "OPENPYPE_PUBLISH_JOB":1,
+    #     "OPENPYPE_REMOTE_PUBLISH":0,
+    #     "KITSU_LOGIN": os.getenv("KITSU_LOGIN"),
+    #     "KITSU_PWD": os.getenv("KITSU_PWD"),
+    #     "OPENPYPE_USERNAME": os.getenv("KITSU_LOGIN"),
+    # }
+
+
+    # # Transfer the environment from the original job to this dependent
+    # # job so they use the same environment
+    # metadata_path, rootless_metadata_path = \
+    #     create_metadata_path(instance, anatomy)
+
+
+    # args = []
+    # args.append("--headless")
+    # args.append("publish")
+    # args.append(f"{work_folder}/renders/{host.name}/cse_CSE101_01_014_Compositing_v003/renderCompositingMain_metadata.json")
+    # args.append("--targets")
+    # args.append("deadline")
+    # args.append("--targets")
+    # args.append("farm")
+
+    # plugin_data = {
+    #     "Arguments": " ".join(args),
+    #     "SingleFrameOnly": True,
+    #     "Version": "3.0"
+    # }
+
+    # workfile_basename = os.path.basename(job["workfile_path"])
+    # batch_name = f"{workfile_basename}"
+    # job_name = "Publish - renderCompositingMain"
+
+    # response = submit.payload_submit(
+    #     "OpenPype",
+    #     plugin_data,
+    #     batch_name,
+    #     job_name,
+    #     comment="from after effects",
+    #     frame_range=0,
+    #     extra_env=extra_env,
+    #     response_data=dependency
+    # )
+
+    # """
+    # # Job Info
+    # BatchName=cse_CSE101_01_014_Compositing_v003.aep
+    # Denylist=
+    # EnvironmentKeyValue0=AVALON_PROJECT=cse
+    # EnvironmentKeyValue1=AVALON_ASSET=CSE101_01_014
+    # EnvironmentKeyValue10=KITSU_LOGIN=lucas.avfx@gmail.com
+    # EnvironmentKeyValue11=KITSU_PWD=lucasavfx321
+    # EnvironmentKeyValue12=OPENPYPE_VERSION=3.16.704
+    # EnvironmentKeyValue13=OPENPYPE_MONGO=mongodb://root:example@10.68.150.36:27017
+    # EnvironmentKeyValue2=AVALON_TASK=Compositing
+    # EnvironmentKeyValue3=OPENPYPE_USERNAME=Titan
+    # EnvironmentKeyValue4=OPENPYPE_LOG_NO_COLORS=1
+    # EnvironmentKeyValue5=IS_TEST=0
+    # EnvironmentKeyValue6=OPENPYPE_PUBLISH_JOB=1
+    # EnvironmentKeyValue7=OPENPYPE_RENDER_JOB=0
+    # EnvironmentKeyValue8=OPENPYPE_REMOTE_PUBLISH=0
+    # EnvironmentKeyValue9=AVALON_APP_NAME=aftereffects/2023
+    # EventOptIns=
+    # Frames=0
+    # JobDependency0=653c105c0147e761839c642b
+    # MachineName=d36f64297157
+    # Name=Publish - renderCompositingMain
+    # OutputDirectory0=Y:/WORKS/_openpype/cse/Shots/CSE101/CSE101_SEC01/CSE101_01_014/publish/render/renderCompositingMain/v003
+    # OverrideTaskExtraInfoNames=False
+    # Plugin=OpenPype
+    # Region=
+    # ScheduledStartDateTime=27/10/2023 16:32
+    # UserName=titan
+
+    # # Plugin Info
+    # Arguments=--headless publish "{root[work]}/cse/Shots/CSE101/CSE101_SEC01/CSE101_01_014/work/Compositing/renders/aftereffects/cse_CSE101_01_014_Compositing_v003/renderCompositingMain_metadata.json" --targets deadline --targets farm
+    # SingleFrameOnly=True
+    # Version=3.0
+    # """
 
 def _get_output_dir(workfile_path):
     """
@@ -275,207 +405,3 @@ def _get_output_dir(workfile_path):
 
     # for submit_publish_job
     return base_dir
-
-
-# def submit(job):
-#     import os
-#     import getpass
-#     import json
-
-#     from openpype.lib import Logger
-#     from openpype.pipeline import legacy_io, Anatomy
-#     from openpype.pipeline.publish.lib import get_template_name_profiles, \
-#                                               get_publish_template_name
-
-#     from openpype.modules.deadline import constants as dl_constants
-#     from openpype.modules.deadline.lib import submit
-#     from openpype.modules.delivery.scripts import utils
-
-#     from openpype.hosts.aftereffects.plugins.publish.collect_render import CollectAERender, RenderInstance
-
-#     profiles = get_template_name_profiles(job["context"]["project_name"])
-
-#     log.info(f"{profiles}")
-#     template_name = get_publish_template_name(
-#         job["context"]["project_name"],
-#         "aftereffects/2023",
-#         "render",
-#         job["context"]["task_name"],
-#         "Shot",
-#         {},
-#         False,
-#         log
-#     )
-#     log.info(f"{template_name}")
-
-#     instance = RenderInstance(
-#         families=[
-#             "review",
-#             "render",
-#         ]
-#     )
-
-
-#     collect = CollectAERender()
-#     collect.process([instance])
-
-#     log.info(collect.get_expected_files())
-
-#     REVIEW_FAMILIES = {
-#         "render"
-#     }
-
-#     PUBLISH_TO_SG_FAMILIES = {
-#         "render"
-#     }
-
-#     def publish_version(
-#         project_name,
-#         asset_name,
-#         task_name,
-#         family_name,
-#         subset_name,
-#         expected_representations,
-#         publish_data,
-#     ):
-#         # TODO: write some logic that finds the main path from the list of
-#         # representations
-#         source_path = list(expected_representations.values())[0]
-
-#         instance_data = {
-#             "project": project_name,
-#             "family": family_name,
-#             "subset": subset_name,
-#             "families": publish_data.get("families", []),
-#             "asset": asset_name,
-#             "task": task_name,
-#             "comment": publish_data.get("comment", ""),
-#             "source": source_path,
-#             "overrideExistingFrame": False,
-#             "useSequenceForReview": True,
-#             "colorspace": publish_data.get("colorspace"),
-#             "version": publish_data.get("version"),
-#             "outputDir": os.path.dirname(source_path),
-#         }
-
-#         representations = utils.get_representations(
-#             instance_data,
-#             expected_representations,
-#             add_review=family_name in REVIEW_FAMILIES,
-#             publish_to_sg=family_name in PUBLISH_TO_SG_FAMILIES,
-#         )
-#         if not representations:
-#             logger.error(
-#                 "No representations could be found on expected dictionary: %s",
-#                 expected_representations
-#             )
-#             return {}
-
-#         if family_name in REVIEW_FAMILIES:
-#             # inject colorspace data if we are generating a review
-#             for rep in representations:
-#                 source_colorspace = publish_data.get("colorspace") or "scene_linear"
-#                 logger.debug(
-#                     "Setting colorspace '%s' to representation", source_colorspace
-#                 )
-#                 # utils.set_representation_colorspace(
-#                 #     rep, project_name, colorspace=source_colorspace
-#                 # )
-
-#         instance_data["frameStartHandle"] = representations[0]["frameStart"]
-#         instance_data["frameEndHandle"] = representations[0]["frameEnd"]
-
-#         # add representation
-#         instance_data["representations"] = representations
-#         instances = [instance_data]
-
-#         # Create farm job to run OP publish
-#         metadata_path = utils.create_metadata_path(instance_data)
-#         logger.info("Metadata path: %s", metadata_path)
-
-#         publish_args = [
-#             "--headless",
-#             "publish",
-#             '"{}"'.format(metadata_path),
-#             "--targets",
-#             "deadline",
-#             "--targets",
-#             "farm",
-#         ]
-
-#         # Create dictionary of data specific to OP plugin for payload submit
-#         plugin_data = {
-#             "Arguments": " ".join(publish_args),
-#             "Version": os.getenv("OPENPYPE_VERSION"),
-#             "SingleFrameOnly": "True",
-#         }
-
-#         username = getpass.getuser()
-
-#         # Submit job to Deadline
-#         extra_env = {
-#             "AVALON_PROJECT": project_name,
-#             "AVALON_ASSET": asset_name,
-#             "AVALON_TASK": task_name,
-#             "OPENPYPE_USERNAME": username,
-#             "AVALON_WORKDIR": os.path.dirname(source_path),
-#             "OPENPYPE_PUBLISH_JOB": "1",
-#             "OPENPYPE_RENDER_JOB": "0",
-#             "OPENPYPE_REMOTE_JOB": "0",
-#             "OPENPYPE_LOG_NO_COLORS": "1",
-#             "OPENPYPE_SG_USER": username,
-#         }
-
-#         deadline_task_name = "Publish {} - {} - {} - {} - {}".format(
-#             family_name,
-#             subset_name,
-#             task_name,
-#             asset_name,
-#             project_name
-#         )
-
-#         response = submit.payload_submit(
-#             plugin="OpenPype",
-#             plugin_data=plugin_data,
-#             batch_name=publish_data.get("jobBatchName") or deadline_task_name,
-#             task_name=deadline_task_name,
-#             group=dl_constants.OP_GROUP,
-#             extra_env=extra_env,
-#         )
-
-#         # publish job file
-#         publish_job = {
-#             "asset": instance_data["asset"],
-#             "frameStart": instance_data["frameStartHandle"],
-#             "frameEnd": instance_data["frameEndHandle"],
-#             "source": instance_data["source"],
-#             "user": getpass.getuser(),
-#             "version": None,  # this is workfile version
-#             "comment": instance_data["comment"],
-#             "job": {},
-#             "session": legacy_io.Session.copy(),
-#             "instances": instances,
-#             "deadline_publish_job_id": response.get("_id")
-#         }
-
-#         logger.info("Writing json file: {}".format(metadata_path))
-#         with open(metadata_path, "w") as f:
-#             json.dump(publish_job, f, indent=4, sort_keys=True)
-
-#         return response
-
-#     expected_representations = {
-#         "exr": "/path/to/exr.exr"
-#     }
-
-#     publish_data = {}
-
-#     # publish_version(
-#     #     job["context"]["project_name"],
-#     #     job["context"]["asset_name"],
-#     #     job["context"]["task_name"],
-#     #     "render",
-#     #     "renderCompositingMain",
-#     #     expected_representations,
-#     #     publish_data
-#     # )

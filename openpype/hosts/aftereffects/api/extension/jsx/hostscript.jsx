@@ -1000,13 +1000,17 @@ function addItemAsLayerToCompWithOffset(comp_id, item_id, offset) {
 }
 
 
-function addCompToQueue(item_id, template_name){
+function addCompToQueue(item_id,
+                        template_name,
+                        file_name
+                        ){
     /** Add Comp to Render Queue
      *
      *
      * Args:
      *      item_id (int)
      *      template_name (str)
+            file_name: (str) [compName].[####].[fileextension]
      */
 
     var item = app.project.itemByID(item_id);
@@ -1029,9 +1033,9 @@ function addCompToQueue(item_id, template_name){
 
     var new_data = {
         "Output File Info": {
-            "Base Path":      "Y:\\",
+            "Base Path":      "Y:\\", // A random path that will be replaced by OP
             "Subfolder Path": "",
-            "File Name":      "[compName]_[####].[fileextension]"
+            "File Name":      file_name
         }
     };
 
