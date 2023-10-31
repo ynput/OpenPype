@@ -86,7 +86,7 @@ class ValidateAttributes(OptionalPyblishPluginMixin,
                 if not is_matching_value(object_name, property_name, value):
                     cls.log.error(
                         f"Invalid value for: {object_name}.{property_name}"
-                        f" Should be: {value}")
+                        f" should be: {value}")
                     invalid.append((object_name, property_name))
 
         return invalid
