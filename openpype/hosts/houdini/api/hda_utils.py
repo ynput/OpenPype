@@ -129,7 +129,7 @@ def set_representation(node, repre_id):
 
         if repre_doc:
             path = get_representation_path(repre_doc)
-            # Load fails on UNC paths with backslashes and also 
+            # Load fails on UNC paths with backslashes and also
             # fails to resolve @sourcename var with backslashed
             # paths correctly. So we force forward slashes
             path = path.replace("\\", "/")
