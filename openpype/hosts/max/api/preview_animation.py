@@ -29,11 +29,12 @@ def viewport_layout_and_camera(camera):
     Args:
         camera (str): viewport camera
     """
-    original = rt.viewport.getCamera()
-    if not original:
+    original_camera = rt.viewport.getCamera()
+    original_layout = rt.viewport.getLayout()
+    if not original_camera:
         # if there is no original camera
         # use the current camera as original
-        original = rt.getNodeByName(camera)
+        original_camera = rt.getNodeByName(camera)
     review_camera = rt.getNodeByName(camera)
     try:
         if rt.viewport.getLayout() != rt.Name("layout_1"):
@@ -41,8 +42,8 @@ def viewport_layout_and_camera(camera):
         rt.viewport.setCamera(review_camera)
         yield
     finally:
-        rt.viewport.ResetAllViews()
-        rt.viewport.setCamera(original)
+        rt.viewport.setLayout(original_layout)
+        rt.viewport.setCamera(original_camera)
 
 
 @contextlib.contextmanager
