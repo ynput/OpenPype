@@ -1579,7 +1579,7 @@
             }
         }
     },
-        "openrv": {
+    "openrv": {
         "enabled": true,
         "label": "OpenRV",
         "icon": "{}/app_icons/openrv.png",
