@@ -12,6 +12,26 @@
             "LC_ALL": "C"
         },
         "variants": {
+            "2024": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2024\\bin\\maya.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2024/bin/maya"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2024"
+                }
+            },
             "2023": {
                 "use_python_2": false,
                 "executables": {
@@ -51,66 +71,65 @@
                 "environment": {
                     "MAYA_VERSION": "2022"
                 }
-            },
-            "2020": {
-                "use_python_2": true,
+            }
+        }
+    },
+    "mayapy": {
+        "enabled": true,
+        "label": "MayaPy",
+        "icon": "{}/app_icons/maya.png",
+        "host_name": "maya",
+        "environment": {
+            "MAYA_DISABLE_CLIC_IPM": "Yes",
+            "MAYA_DISABLE_CIP": "Yes",
+            "MAYA_DISABLE_CER": "Yes",
+            "PYMEL_SKIP_MEL_INIT": "Yes",
+            "LC_ALL": "C"
+        },
+        "variants": {
+            "2024": {
+                "use_python_2": false,
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe"
+                        "C:\\Program Files\\Autodesk\\Maya2024\\bin\\mayapy.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/autodesk/maya2020/bin/maya"
+                        "/usr/autodesk/maya2024/bin/mayapy"
                     ]
                 },
                 "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "MAYA_VERSION": "2020"
-                }
-            },
-            "2019": {
-                "use_python_2": true,
-                "executables": {
                     "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe"
+                        "-I"
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/autodesk/maya2019/bin/maya"
+                        "-I"
                     ]
                 },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "MAYA_VERSION": "2019"
-                }
+                "environment": {}
             },
-            "2018": {
-                "use_python_2": true,
+            "2023": {
+                "use_python_2": false,
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2018\\bin\\maya.exe"
+                        "C:\\Program Files\\Autodesk\\Maya2023\\bin\\mayapy.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/autodesk/maya2018/bin/maya"
+                        "/usr/autodesk/maya2023/bin/mayapy"
                     ]
                 },
                 "arguments": {
-                    "windows": [],
+                    "windows": [
+                        "-I"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "-I"
+                    ]
                 },
-                "environment": {
-                    "MAYA_VERSION": "2018"
-                }
+                "environment": {}
             }
         }
     },

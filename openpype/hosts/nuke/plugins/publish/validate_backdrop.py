@@ -43,8 +43,8 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
                 all_xC.append(xC)
                 all_yC.append(yC)
 
-        self.log.info("all_xC: `{}`".format(all_xC))
-        self.log.info("all_yC: `{}`".format(all_yC))
+        self.log.debug("all_xC: `{}`".format(all_xC))
+        self.log.debug("all_yC: `{}`".format(all_yC))
 
         # zoom to nodes in node graph
         nuke.zoom(2, [min(all_xC), min(all_yC)])

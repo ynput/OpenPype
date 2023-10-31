@@ -33,13 +33,13 @@ class ExtractModel(publish.Extractor):
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
 
-        self.log.info("instance.data: `{}`".format(
+        self.log.debug("instance.data: `{}`".format(
             pformat(instance.data)))
 
         rm_nodes = []
         model_node = instance.data["transientData"]["node"]
 
-        self.log.info("Crating additional nodes")
+        self.log.debug("Creating additional nodes for Extract Model")
         subset = instance.data["subset"]
         staging_dir = self.staging_dir(instance)
 
@@ -76,7 +76,7 @@ class ExtractModel(publish.Extractor):
             for n in rm_nodes:
                 nuke.delete(n)
 
-            self.log.info(file_path)
+            self.log.debug("Filepath: {}".format(file_path))
 
         # create representation data
         if "representations" not in instance.data:
@@ -104,5 +104,5 @@ class ExtractModel(publish.Extractor):
             "frameEndHandle": last_frame,
         })
 
-        self.log.info("Extracted instance '{0}' to: {1}".format(
+        self.log.debug("Extracted instance '{0}' to: {1}".format(
             instance.name, file_path))
