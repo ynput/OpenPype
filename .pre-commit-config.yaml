@@ -1,19 +1,17 @@
 repos:
-- hooks:
-  - id: trailing-whitespace
-  - id: end-of-file-fixer
-  - id: check-yaml
-  - id: check-added-large-files
-  - args:
-    - --pattern
-    - ^(?!((release|enhancement|feature|bugfix|documentation|tests|local|chore)\/[a-zA-Z0-9\-_]+)$).*
-    id: no-commit-to-branch
-  repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
-- hooks:
-  - id: commitizen
-  - id: commitizen-branch
-    stages:
-    - push
-  repo: https://github.com/commitizen-tools/commitizen
-  rev: v3.12.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+    - id: trailing-whitespace
+    - id: end-of-file-fixer
+    - id: check-yaml
+    - id: check-added-large-files
+    - id: no-commit-to-branch
+      args: [ '--pattern', '^(?!((release|enhancement|feature|bugfix|documentation|tests|local|chore)\/[a-zA-Z0-9\-_]+)$).*' ]
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.12.0
+    hooks:
+    - id: commitizen
+    - id: commitizen-branch
+      stages:
+      - push
