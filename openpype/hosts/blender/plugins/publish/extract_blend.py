@@ -25,11 +25,11 @@ class ExtractBlend(publish.Extractor):
 
         data_blocks = set()
 
-        for obj in instance:
-            data_blocks.add(obj)
-            # Pack used images in the blend files.
-            if obj.type == 'MESH':
-                for material_slot in obj.material_slots:
+        for data in instance:
+            data_blocks.add(data)
+            if isinstance(data, bpy.types.Object) and data.type == 'MESH':
+                # Pack used images in the blend files.
+                for material_slot in data.material_slots:
                     mat = material_slot.material
                     if mat and mat.use_nodes:
                         tree = mat.node_tree
