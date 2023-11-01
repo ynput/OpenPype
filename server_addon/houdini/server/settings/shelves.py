@@ -30,7 +30,7 @@ class AddShelfFileModel(BaseSettingsModel):
 
 
 class AddSetAndDefinitionsModel(BaseSettingsModel):
-    shelf_set_name: str = Field(title="Shelf Set Name")
+    shelf_set_name: str = Field("", title="Shelf Set Name")
     shelf_definition: list[ShelfDefinitionModel] = Field(
         default_factory=list,
         title="Shelves Definitions"
