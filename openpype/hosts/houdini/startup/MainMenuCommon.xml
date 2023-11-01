@@ -4,7 +4,7 @@
         <subMenu id="openpype_menu">
             <labelExpression><![CDATA[
 import os
-return os.environ.get("AVALON_LABEL") or "OpenPype"
+return os.environ.get("AVALON_LABEL") or "AYON"
 ]]></labelExpression>
             <actionItem id="asset_name">
                     <labelExpression><![CDATA[
