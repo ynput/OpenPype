@@ -299,9 +299,6 @@ class LoadClip(plugin.NukeLoader):
                 "Representation id `{}` is failing to load".format(repre_id))
             return
 
-        read_name = self._get_node_name(representation)
-
-        read_node["name"].setValue(read_name)
         read_node["file"].setValue(filepath)
 
         # to avoid multiple undo steps for rest of process
