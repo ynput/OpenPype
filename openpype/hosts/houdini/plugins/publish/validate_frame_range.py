@@ -57,6 +57,14 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
             return
 
         rop_node = hou.node(instance.data["instance_node"])
+
+        if rop_node.parm("trange") is None:
+            cls.log.debug(
+                "Skipping Check, Node has no 'trange' parameter: {}"
+                .format(rop_node.path())
+            )
+            return
+
         if instance.data["frameStart"] > instance.data["frameEnd"]:
             cls.log.info(
                 "The ROP node render range is set to "
