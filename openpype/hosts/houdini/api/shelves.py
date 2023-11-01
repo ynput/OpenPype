@@ -46,7 +46,7 @@ def generate_shelves():
                 )
                 if not os.path.isfile(shelf_set_os_filepath):
                     log.error("Shelf path doesn't exist - "
-                            "{}".format(shelf_set_os_filepath))
+                              "{}".format(shelf_set_os_filepath))
                     continue
 
                 hou.shelves.loadFile(shelf_set_os_filepath)
