@@ -11,16 +11,23 @@ import json
 import six
 
 from openpype.lib import StringTemplate
-from openpype.client import get_asset_by_name
+from openpype.client import (
+    get_asset_by_name,
+    get_project
+)
 from openpype.settings import get_current_project_settings
 from openpype.pipeline import (
     get_current_project_name,
     get_current_asset_name,
     registered_host
 )
+
+from openpype.pipeline.template_data import get_template_data
+from openpype.pipeline.anatomy import Anatomy
 from openpype.pipeline.context_tools import (
-    get_current_context_template_data,
-    get_current_project_asset
+    get_current_project_asset,
+    get_current_context,
+    get_current_host_name
 )
 from openpype.widgets import popup
 from openpype.tools.utils.host_tools import get_tool_by_name
@@ -992,3 +999,69 @@ def add_self_publish_button(node):
     template = node.parmTemplateGroup()
     template.insertBefore((0,), button_parm)
     node.setParmTemplateGroup(template)
+
+
+def get_current_context_template_data():
+    """Template data for template fill from current context
+
+    Returns:
+        Dict[str, Any] of the following tokens and their values
+        Supported Tokens:
+            - Regular Tokens
+                - app
+                - user
+                - asset
+                - parent
+                - hierarchy
+                - folder[name]
+                - root[work, ...]
+                - studio[code, name]
+                - project[code, name]
+                - task[type, name, short]
+
+            - Context Specific Tokens
+                - assetData[frameStart]
+                - assetData[frameEnd]
+                - assetData[handleStart]
+                - assetData[handleEnd]
+                - assetData[frameStartHandle]
+                - assetData[frameEndHandle]
+                - assetData[resolutionHeight]
+                - assetData[resolutionWidth]
+    """
+
+    # pre-prepare get_template_data args
+    current_context = get_current_context()
+    project_name = current_context["project_name"]
+    asset_name = current_context["asset_name"]
+    anatomy = Anatomy(project_name)
+
+    # prepare get_template_data args
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
+    task_name = current_context["task_name"]
+    host_name = get_current_host_name()
+
+    # get regular template data
+    template_data = get_template_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+
+    template_data["root"] = anatomy.roots
+
+    # get context specific vars
+    asset_data = asset_doc["data"].copy()
+
+    # compute `frameStartHandle` and `frameEndHandle`
+    if "frameStart" in asset_data and "handleStart" in asset_data:
+        asset_data["frameStartHandle"] = \
+            asset_data["frameStart"] - asset_data["handleStart"]
+
+    if "frameEnd" in asset_data and "handleEnd" in asset_data:
+        asset_data["frameEndHandle"] = \
+            asset_data["frameEnd"] + asset_data["handleEnd"]
+
+    # add assetData
+    template_data["assetData"] = asset_data
+
+    return template_data

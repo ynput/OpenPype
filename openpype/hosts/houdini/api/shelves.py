@@ -7,7 +7,7 @@ from openpype.settings import get_project_settings
 from openpype.pipeline import get_current_project_name
 
 from openpype.lib import StringTemplate
-from openpype.pipeline.context_tools import get_current_context_template_data
+from .lib import get_current_context_template_data
 
 import hou
 
