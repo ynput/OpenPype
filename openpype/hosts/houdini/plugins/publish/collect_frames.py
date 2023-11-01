@@ -11,7 +11,9 @@ from openpype.hosts.houdini.api import lib
 class CollectFrames(pyblish.api.InstancePlugin):
     """Collect all frames which would be saved from the ROP nodes"""
 
-    order = pyblish.api.CollectorOrder + 0.01
+    # This specific order value is used so that
+    # this plugin runs after CollectRopFrameRange
+    order = pyblish.api.CollectorOrder + 0.4999
     label = "Collect Frames"
     families = ["vdbcache", "imagesequence", "ass",
                 "redshiftproxy", "review", "bgeo"]

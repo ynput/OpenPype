@@ -25,8 +25,8 @@ class CollectKarmaROPRenderProducts(pyblish.api.InstancePlugin):
 
     label = "Karma ROP Render Products"
     # This specific order value is used so that
-    # this plugin runs after CollectRopFrameRange
-    order = pyblish.api.CollectorOrder + 0.4999
+    # this plugin runs after CollectFrames
+    order = pyblish.api.CollectorOrder + 0.49999
     hosts = ["houdini"]
     families = ["karma_rop"]
 
