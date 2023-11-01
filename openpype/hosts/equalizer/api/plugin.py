@@ -19,6 +19,26 @@ class EqualizerCreator(ABC, Creator):
         # class is not aware of the host application.
         return super().host
 
+    def create(self, subset_name, instance_data, pre_create_data):
+        """Create a subset in the host application.
+
+        Args:
+            subset_name (str): Name of the subset to create.
+            instance_data (dict): Data of the instance to create.
+            pre_create_data (dict): Data from the pre-create step.
+
+        Returns:
+            openpype.pipeline.CreatedInstance: Created instance.
+        """
+        self.log.debug("EqualizerCreator.create")
+        instance = CreatedInstance(
+            self.family,
+            subset_name,
+            instance_data,
+            self)
+        self._add_instance_to_context(instance)
+        return instance
+
     def collect_instances(self):
         """Collect instances from the host application.
 
@@ -28,10 +48,11 @@ class EqualizerCreator(ABC, Creator):
         return self.host.get_context_data().get("publish_instances", [])
 
     def update_instances(self, update_list):
-        if not update_list:
-            return
-        context = self.host.get_context_data()
 
+        # if not update_list:
+        #     return
+        context = self.host.get_context_data()
+        self.log.debug("updating ...")
         if not context.get("publish_instances"):
             context["publish_instances"] = []
 

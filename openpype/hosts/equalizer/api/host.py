@@ -159,6 +159,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                 tde4.getProjectNotes()
             )
         )
+        tde4.updateGUI()
 
     def install(self):
         app = get_openpype_qt_app()
