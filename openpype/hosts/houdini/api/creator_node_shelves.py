@@ -173,7 +173,7 @@ def install():
         os.remove(filepath)
 
     icon = get_openpype_icon_filepath()
-    tab_menu_label = os.environ.get("AVALON_LABEL") or "OpenPype"
+    tab_menu_label = os.environ.get("AVALON_LABEL") or "AYON"
 
     # Create context only to get creator plugins, so we don't reset and only
     # populate what we need to retrieve the list of creator plugins
