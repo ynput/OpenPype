@@ -60,7 +60,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
         frame_start = instance.data.get("frameStart")
         frame_end = instance.data.get("frameEnd")
 
-        if not (frame_start or frame_end):
+        if frame_start is None or frame_end is None:
             cls.log.debug(
                 "Skipping frame range validation for "
                 "instance without frame data: {}".format(rop_node.path())
