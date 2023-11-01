@@ -21,9 +21,20 @@ class ShelfDefinitionModel(BaseSettingsModel):
         title="Shelf Tools"
     )
 
+def shelves_enum_options():
+    return [
+        {"value": "add_shelf_file", "label": "Add a .shelf file"},
+        {"value": "add_set_and_definitions", "label": "Add Shelf Set Name and Shelves Definitions"}
+    ]
 
 class ShelvesModel(BaseSettingsModel):
     _layout = "expanded"
+    options: str = Field(
+        title="Options",
+        description="Switch between shelves manager options",
+        enum_resolver=shelves_enum_options,
+        conditionalEnum=True
+    )
     shelf_set_source_path: MultiplatformPathModel = Field(
         default_factory=MultiplatformPathModel,
         title="Shelf Set Path",
