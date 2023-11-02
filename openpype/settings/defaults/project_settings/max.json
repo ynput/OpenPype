@@ -40,7 +40,7 @@
         "ValidateLoadedPlugin": {
             "enabled": false,
             "optional": true,
-            "plugins_for_check": []
+            "family_plugins_mapping": {}
         }
     }
 }

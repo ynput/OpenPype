@@ -3,11 +3,17 @@ from pydantic import Field
 from ayon_server.settings import BaseSettingsModel
 
 
+class FamilyPluginsMappingModel(BaseSettingsModel):
+    _layout = "compact"
+    families: str = Field(title="Families")
+    plugins: str = Field(title="Plugins")
+
+
 class ValidateLoadedPluginModel(BaseSettingsModel):
     enabled: bool = Field(title="ValidateLoadedPlugin")
     optional: bool = Field(title="Optional")
-    plugins_for_check: list[str] = Field(
-        default_factory=list, title="Plugins Needed For Check"
+    family_plugins_mapping: list[FamilyPluginsMappingModel] = Field(
+        default_factory=list, title="Family Plugins Mapping"
     )
 
 
@@ -37,6 +43,6 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ValidateLoadedPlugin": {
         "enabled": False,
         "optional": True,
-        "plugins_for_check": []
+        "family_plugins_mapping": {}
     }
 }

@@ -640,6 +640,19 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
         }
         ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
 
+    ayon_publish = ayon_max["publish"]
+    if "ValidateLoadedPlugin" in ayon_publish:
+        family_plugin_mapping = (
+            ayon_publish["ValidateLoadedPlugin"]["family_plugins_mapping"]
+        )
+        new_family_plugin_mapping = {
+            item["families"]: item["plugins"]
+            for item in family_plugin_mapping
+        }
+        ayon_max["ValidateLoadedPlugin"]["family_plugins_mapping"] = (
+            new_family_plugin_mapping
+        )
+
     output["max"] = ayon_max
 
 

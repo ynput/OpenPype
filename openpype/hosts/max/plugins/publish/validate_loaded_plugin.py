@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """Validator for Loaded Plugin."""
-from pyblish.api import ContextPlugin, ValidatorOrder
+import os
+from pyblish.api import InstancePlugin, ValidatorOrder
 from pymxs import runtime as rt
 
 from openpype.pipeline.publish import (
-    RepairContextAction,
+    RepairAction,
     OptionalPyblishPluginMixin,
     PublishValidationError
 )
@@ -12,7 +13,7 @@ from openpype.hosts.max.api.lib import get_plugins
 
 
 class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
-                           ContextPlugin):
+                           InstancePlugin):
     """Validates if the specific plugin is loaded in 3ds max.
     Studio Admin(s) can add the plugins they want to check in validation
     via studio defined project settings"""
@@ -21,17 +22,17 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
     hosts = ["max"]
     label = "Validate Loaded Plugins"
     optional = True
-    actions = [RepairContextAction]
+    actions = [RepairAction]
 
-    def get_invalid(self, context):
+    def get_invalid(self, instance):
         """Plugin entry point."""
-        if not self.is_active(context.data):
+        if not self.is_active(instance.data):
             self.log.debug("Skipping Validate Loaded Plugin...")
             return
 
         required_plugins = (
-            context.data["project_settings"]["max"]["publish"]
-                        ["ValidateLoadedPlugin"]["plugins_for_check"]
+            instance.context.data["project_settings"]["max"]["publish"]
+                                 ["ValidateLoadedPlugin"]["family_plugins_mapping"]
         )
 
         if not required_plugins:
@@ -45,9 +46,21 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
                 get_plugins())
         }
 
-        for plugin in required_plugins:
-            plugin_name = plugin.lower()
+        for families, plugin in required_plugins.items():
+            families_list = families.split(",")
+            excluded_families = [family for family in families_list
+                                 if instance.data["family"]!=family
+                                 and family!="_"]
+            if excluded_families:
+                self.log.debug("The {} instance is not part of {}.".format(
+                    instance.data["family"], excluded_families
+                ))
+                return
 
+            if not plugin:
+                return
+
+            plugin_name = plugin.format(**os.environ).lower()
             plugin_index = available_plugins.get(plugin_name)
 
             if plugin_index is None:
@@ -61,8 +74,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
         return invalid
 
-    def process(self, context):
-        invalid_plugins = self.get_invalid(context)
+    def process(self, instance):
+        invalid_plugins = self.get_invalid(instance)
         if invalid_plugins:
             bullet_point_invalid_statement = "\n".join(
                 "- {}".format(invalid) for invalid in invalid_plugins
@@ -76,18 +89,30 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
                 report, title="Required Plugins unloaded")
 
     @classmethod
-    def repair(cls, context):
+    def repair(cls, instance):
         # get all DLL loaded plugins in Max and their plugin index
         available_plugins = {
             plugin_name.lower(): index for index, plugin_name in enumerate(
                 get_plugins())
         }
         required_plugins = (
-            context.data["project_settings"]["max"]["publish"]
-                        ["ValidateLoadedPlugin"]["plugins_for_check"]
+            instance.context.data["project_settings"]["max"]["publish"]
+                                 ["ValidateLoadedPlugin"]["family_plugins_mapping"]
         )
-        for plugin in required_plugins:
-            plugin_name = plugin.lower()
+        for families, plugin in required_plugins.items():
+            families_list = families.split(",")
+            excluded_families = [family for family in families_list
+                                 if instance.data["family"]!=family
+                                 and family!="_"]
+            if excluded_families:
+                cls.log.debug("The {} instance is not part of {}.".format(
+                    instance.data["family"], excluded_families
+                ))
+                continue
+            if not plugin:
+                continue
+
+            plugin_name = plugin.format(**os.environ).lower()
             plugin_index = available_plugins.get(plugin_name)
 
             if plugin_index is None:

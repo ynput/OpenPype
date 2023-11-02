@@ -47,10 +47,14 @@
                 "label": "Optional"
             },
             {
-                "type": "list",
-                "key": "plugins_for_check",
-                "label": "Plugins Needed For Check",
-                "object_type": "text"
+                "type": "dict-modifiable",
+                "collapsible": true,
+                "key": "family_plugins_mapping",
+                "label": "Family Plugins Mapping",
+                "use_label_wrap": true,
+                "object_type": {
+                    "type": "text"
+                }
             }
         ]
       }
