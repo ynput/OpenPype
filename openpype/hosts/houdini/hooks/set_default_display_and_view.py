@@ -25,7 +25,7 @@ class SetDefaultDislayView(PreLaunchHook):
             return
 
         houdini_color_Settings = \
-           self.data["project_settings"]["houdini"]["imageio"]["workfile"]
+            self.data["project_settings"]["houdini"]["imageio"]["workfile"]
 
         if not houdini_color_Settings["enabled"]:
             self.log.info(
