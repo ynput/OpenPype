@@ -106,7 +106,7 @@ class _ModuleClass(object):
         if attr_name in self.__attributes__:
             self.log.warning(
                 "Duplicated name \"{}\" in {}. Overriding.".format(
-                    self.name, attr_name
+                    attr_name, self.name
                 )
             )
         self.__attributes__[attr_name] = value
