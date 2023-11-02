@@ -24,6 +24,7 @@
         "image_format": "png",
         "visual_style": "Realistic",
         "viewport_preset": "Quality",
+        "anti_aliasing": "None",
         "vp_texture": true
     },
     "PointCloud": {
