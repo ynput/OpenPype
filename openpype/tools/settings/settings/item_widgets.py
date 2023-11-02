@@ -2,6 +2,7 @@ import json
 
 from qtpy import QtWidgets, QtCore, QtGui
 
+from openpype.resources import get_resource
 from openpype.widgets.sliders import NiceSlider
 from openpype.tools.settings import CHILD_OFFSET
 from openpype.settings.entities.exceptions import BaseInvalidValue
@@ -10,6 +11,7 @@ from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
     GridLabelWidget,
+    PressHoverBtn,
     SettingsComboBox,
     SettingsPlainTextEdit,
     SettingsNiceCheckbox,
@@ -417,6 +419,52 @@ class TextWidget(InputWidget):
 
     def _on_value_change_timer(self):
         self.entity.set(self.input_value())
+
+
+class PasswordWidget(TextWidget):
+    def _add_inputs_to_layout(self):
+        input_field = SettingsLineEdit(self.content_widget)
+        input_field.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        placeholder_text = self.entity.placeholder_text
+        if placeholder_text:
+            input_field.setPlaceholderText(placeholder_text)
+
+        self.input_field = input_field
+        self.setFocusProxy(self.input_field)
+
+        layout_kwargs = {}
+        self.content_layout.addWidget(self.input_field, 1, **layout_kwargs)
+
+        show_password_icon_path = get_resource("icons", "eye.png")
+        show_password_icon = QtGui.QIcon(show_password_icon_path)
+        show_password_btn = PressHoverBtn(input_field)
+        show_password_btn.setObjectName("PasswordBtn")
+        show_password_btn.setIcon(show_password_icon)
+        show_password_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+        show_password_btn.change_state.connect(self._on_show_password)
+        self.content_layout.addWidget(show_password_btn, 0)
+
+        self.input_field.focused_in.connect(self._on_input_focus)
+        self.input_field.textChanged.connect(self._on_value_change)
+
+        self._refresh_completer()
+
+    def _on_show_password(self, show_password):
+        if show_password:
+            echo_mode = QtWidgets.QLineEdit.Normal
+        else:
+            echo_mode = QtWidgets.QLineEdit.Password
+        self.input_field.setEchoMode(echo_mode)
+
+    def _refresh_completer(self):
+        self.input_field.update_completer_values(self.entity.value_hints)
+
+    def set_entity_value(self):
+        self.input_field.setText(self.entity.value)
+
+    def input_value(self):
+        return self.input_field.text()
 
 
 class OpenPypeVersionText(TextWidget):

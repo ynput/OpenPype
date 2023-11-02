@@ -469,6 +469,10 @@ class TextEntity(InputEntity):
         return NOT_SET
 
 
+class PasswordEntity(TextEntity):
+    schema_types = ["password"]
+
+
 class PathInput(InputEntity):
     schema_types = ["path-input"]
 

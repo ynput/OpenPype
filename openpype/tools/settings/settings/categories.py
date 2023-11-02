@@ -23,10 +23,12 @@ from openpype.settings.entities import (
     BoolEntity,
     BaseEnumEntity,
     TextEntity,
+    PasswordEntity,
     PathInput,
     RawJsonEntity,
     ColorEntity,
-
+)
+from openpype.settings.entities.exceptions import (
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
     SchemaError
@@ -67,6 +69,7 @@ from .item_widgets import (
     BoolWidget,
     DictImmutableKeysWidget,
     TextWidget,
+    PasswordWidget,
     OpenPypeVersionText,
     NumberWidget,
     RawJsonWidget,
@@ -170,6 +173,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         elif isinstance(entity, TextEntity):
             return TextWidget(*args)
+
+        elif isinstance(entity, PasswordEntity):
+            return PasswordWidget(*args)
 
         elif isinstance(entity, NumberEntity):
             return NumberWidget(*args)

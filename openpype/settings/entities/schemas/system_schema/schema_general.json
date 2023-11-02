@@ -23,7 +23,7 @@
             "label": "This is <b>NOT a securely stored password!</b> It only acts as a simple barrier to stop users from accessing studio wide settings."
         },
         {
-            "type": "text",
+            "type": "password",
             "key": "admin_password",
             "label": "Admin password"
         },
