@@ -44,15 +44,15 @@ def get_unique_number(
     if not avalon_container:
         return "01"
     # Check the names of both object and collection containers
-    obj_asset_groups = avalon_container.all_objects
-    obj_group_names = [
+    obj_asset_groups = avalon_container.objects
+    obj_group_names = {
         c.name for c in obj_asset_groups
-        if c.type == 'EMPTY' and c.get(AVALON_PROPERTY)]
-    coll_asset_groups = avalon_container.children_recursive
-    coll_group_names = [
+        if c.type == 'EMPTY' and c.get(AVALON_PROPERTY)}
+    coll_asset_groups = avalon_container.children
+    coll_group_names = {
         c.name for c in coll_asset_groups
-        if c.get(AVALON_PROPERTY)]
-    container_names = obj_group_names + coll_group_names
+        if c.get(AVALON_PROPERTY)}
+    container_names = obj_group_names.union(coll_group_names)
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
     while name in container_names:
