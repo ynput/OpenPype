@@ -21,6 +21,12 @@
         "file_rules": {
             "activate_host_rules": false,
             "rules": {}
+        },
+        "workfile":{
+            "enabled": false,
+            "default_display": "ACES",
+            "default_view": "sRGB",
+            "review_color_space": "Output - sRGB"
         }
     },
     "shelves": [],

@@ -19,6 +19,40 @@
                 {
                     "type": "template",
                     "name": "template_host_color_management_ocio"
+                },
+                {
+                    "key": "workfile",
+                    "type": "dict",
+                    "label": "Workfile",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Render space in Houdini is always set to 'scene_linear' Role."
+                        },
+                        {
+                            "type": "text",
+                            "key": "default_display",
+                            "label": "Display"
+                        },
+                        {
+                            "type": "text",
+                            "key": "default_view",
+                            "label": "View"
+                        },
+                        {
+                            "type": "text",
+                            "key": "review_color_space",
+                            "label": "Review colorspace"
+                        }
+
+                    ]
                 }
             ]
         },
