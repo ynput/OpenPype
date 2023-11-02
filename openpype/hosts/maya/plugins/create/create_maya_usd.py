@@ -2,8 +2,12 @@ from openpype.hosts.maya.api import plugin, lib
 from openpype.lib import (
     BoolDef,
     EnumDef,
-    TextDef
+    TextDef,
+    UILabelDef,
+    UISeparatorDef,
+    usdlib
 )
+from openpype.pipeline.context_tools import get_current_context
 
 from maya import cmds
 
@@ -18,11 +22,6 @@ class CreateMayaUsd(plugin.MayaCreator):
     description = "Create Maya USD Export"
 
     cache = {}
-
-    # TODO: Remove these default variants - this is just to trivialize
-    #   the usage of the bootstrapping that was once built for Houdini
-    #   that bootstrapped usdModel and usdShade as usdAsset
-    default_variants = ["Model", "Shade"]
 
     def get_publish_families(self):
         return ["usd", "mayaUsd"]
@@ -108,21 +107,117 @@ class CreateMayaUsd(plugin.MayaCreator):
 
 
 class CreateMayaUsdContribution(CreateMayaUsd):
+    """
 
+    When writing a USD as 'contribution' it will be added into what it's
+    contributing to. It will usually contribute to either the main *asset*
+    or *shot* but can be customized.
+
+    Usually the contribution is done into a Department Layer, like e.g.
+    model, rig, look for models and layout, animation, fx, lighting for shots.
+
+    Each department contribution will be 'sublayered' into the departments
+    contribution.
+
+    """
 
     identifier = "io.openpype.creators.maya.mayausd.contribution"
     label = "Maya USD Contribution"
-    family = "usd.layered"
+    family = "usd"
     icon = "cubes"
     description = "Create Maya USD Contribution"
 
+    def get_publish_families(self):
+        families = ["usd", "mayaUsd", "usd.layered"]
+        if self.family not in families:
+            families.append(self.family)
+        return families
+
     def get_instance_attr_defs(self):
 
-        import os
-        defs = super(CreateMayaUsdContribution, self).get_instance_attr_defs()
-        defs.insert(0, TextDef(
-            "sublayer",
-            label="Sublayer",
-            default=os.environ["AVALON_TASK"]
-        ))
+        context = get_current_context()
+
+        # The departments must be 'ordered' so that e.g. a look can apply
+        # overrides to any opinion from the model department.
+        department = context["task_name"]  # usually equals the department?
+        variant = "Main"  # used as default for sublayer
+
+        defs = [
+            UISeparatorDef("contribution_settings1"),
+            UILabelDef(label="<b>Contribution</b>"),
+            UISeparatorDef("contribution_settings2"),
+            BoolDef("contribution_enabled",
+                    label="Add to USD container",
+                    default=True),
+            TextDef("contribution_department_layer",
+                    label="Department layer",
+                    default=department),
+            TextDef("contribution_sublayer",
+                    label="Sublayer",
+                    # Usually e.g. usdModel, usdLook, usdLookRed
+                    default=variant),
+            TextDef("contribution_variant_set_name",
+                    label="Variant Set Name",
+                    default=""),
+            TextDef("contribution_variant",
+                    label="Variant Name",
+                    default=""),
+            UISeparatorDef("export_settings1"),
+            UILabelDef(label="<b>Export Settings</b>"),
+            UISeparatorDef("export_settings2"),
+        ]
+        defs += super(CreateMayaUsdContribution, self).get_instance_attr_defs()
         return defs
+
+
+for contribution in usdlib.PIPELINE["asset"]:
+
+    step = contribution.step
+
+    class CreateMayaUsdDynamicStepContribution(CreateMayaUsdContribution):
+        identifier = f"{CreateMayaUsdContribution.identifier}.{step}"
+        default_variants = plugin.MayaCreator.default_variants
+        label = f"USD {step.title()}"
+        family = contribution.family
+
+        # Define some nice icons
+        icon = {
+            "look": "paint-brush",
+            "model": "cube",
+            "rig": "wheelchair"
+        }.get(step, "cubes")
+
+        description = f"Create USD {step.title()} Contribution"
+
+        bootstrap = "asset"
+
+        contribution = contribution
+
+        # TODO: Should these still be customizable
+        # contribution_sublayer_order = contribution.order
+        # contribution_department = contribution.step
+        # contribution_variant_set_name = contribution.step
+        # contribution_variant_name = "{variant}"
+
+        def add_transient_instance_data(self, instance_data):
+            super().add_transient_instance_data(instance_data)
+            instance_data["usd_bootstrap"] = self.bootstrap
+            instance_data["usd_contribution"] = self.contribution
+
+        def remove_transient_instance_data(self, instance_data):
+            super().remove_transient_instance_data(instance_data)
+            instance_data.pop("usd_bootstrap", None)
+            instance_data.pop("usd_contribution", None)
+
+    # Dynamically create USD creators for easy access to a certain step
+    # in production
+    global_variables = globals()
+    klass_name = f"CreateMayaUsd{step.title()}Contribution"
+    klass = type(klass_name, (CreateMayaUsdDynamicStepContribution,), {})
+    global_variables[klass_name] = klass
+
+    # We only want to store the global variables, and don't want the last
+    # iteration of the loop to persist after because Create Context will
+    # pick those up too
+    del klass
+    del CreateMayaUsdDynamicStepContribution

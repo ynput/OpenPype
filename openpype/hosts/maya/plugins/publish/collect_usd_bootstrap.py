@@ -2,6 +2,7 @@ import pyblish.api
 
 from openpype.client import get_subset_by_name, get_asset_by_name
 import openpype.lib.usdlib as usdlib
+from openpype.pipeline.create import get_subset_name
 
 
 class CollectUsdBootstrap(pyblish.api.InstancePlugin):
@@ -9,75 +10,71 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
 
     Some specific subsets are intended to be part of the default structure
     of an "Asset" or "Shot" in our USD pipeline. For example, for an Asset
-    we layer a Model and Shade USD file over each other and expose that in
+    we layer a Model and Look USD file over each other and expose that in
     a Asset USD file, ready to use.
 
-    On the first publish of any of the components of a Asset or Shot the
+    On the first publish of any components of an Asset or Shot the
     missing pieces are bootstrapped and generated in the pipeline too. This
     means that on the very first publish of your model the Asset USD file
     will exist too.
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.35
+    order = pyblish.api.CollectorOrder - 0.4
     label = "Collect USD Bootstrap"
     hosts = ["maya"]
-    families = ["usd", "usd.layered"]
-    # TODO: Implement feature, then enable
-    enabled = False
+    families = ["usd"]
 
     def process(self, instance):
 
-        # Detect whether the current subset is a subset in a pipeline
-        def get_bootstrap(instance):
-            instance_subset = instance.data["subset"]
-            for name, layers in usdlib.PIPELINE.items():
-                if instance_subset in set(layers):
-                    return name  # e.g. "asset"
-                    break
-            else:
-                return
-
-        bootstrap = get_bootstrap(instance)
+        bootstrap = instance.data.get("usd_bootstrap")
         if bootstrap:
+            self.log.debug("Add bootstrap for: %s" % bootstrap)
             self.add_bootstrap(instance, bootstrap)
 
-        # Check if any of the dependencies requires a bootstrap
-        for dependency in instance.data.get("publishDependencies", list()):
-            bootstrap = get_bootstrap(dependency)
-            if bootstrap:
-                self.add_bootstrap(dependency, bootstrap)
-
     def add_bootstrap(self, instance, bootstrap):
-
-        self.log.debug("Add bootstrap for: %s" % bootstrap)
 
         project_name = instance.context.data["projectName"]
         asset = get_asset_by_name(project_name, instance.data["asset"])
         assert asset, "Asset must exist: %s" % asset
 
         # Check which are not about to be created and don't exist yet
-        required = {"shot": ["usdShot"], "asset": ["usdAsset"]}.get(bootstrap)
+        variants_to_create = [bootstrap]
 
         require_all_layers = instance.data.get("requireAllLayers", False)
         if require_all_layers:
             # USD files load fine in usdview and Houdini even when layered or
             # referenced files do not exist. So by default we don't require
             # the layers to exist.
-            layers = usdlib.PIPELINE.get(bootstrap)
-            if layers:
-                required += list(layers)
+            contributions = usdlib.PIPELINE.get(bootstrap)
+            if contributions:
+                variants_to_create.extend(
+                    contribution.variant for contribution in contributions
+                )
 
-        if not required:
+        if not variants_to_create:
             return
 
-        for subset in required:
-            self.log.info("USD bootstrapping to: %s" % subset)
-            if self._subset_exists(project_name, instance, subset, asset):
+        for variant in variants_to_create:
+            self.log.info("USD bootstrapping usd-variant: %s", variant)
+
+            subset = get_subset_name(
+                family="usd",
+                variant=variant.title(),
+                task_name=instance.data["task"],
+                asset_doc=asset,
+                project_name=project_name
+            )
+            self.log.info(subset)
+
+            defined = self.get_subset_in_context(instance, subset, asset)
+            if defined:
+                defined.append(instance.id)
+                self.log.info("defined..")
                 continue
 
             self.log.debug(
-                "Creating {bootstrap} USD bootstrap: "
+                "Creating USD bootstrap: "
                 "{asset} > {subset}".format(
                     bootstrap=bootstrap,
                     asset=asset["name"],
@@ -86,22 +83,27 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
             )
 
             new = instance.context.create_instance(subset)
+
+            # Define subset with
             new.data["subset"] = subset
-            #new.data["label"] = "{0} ({1})".format(subset, asset["name"])
-            new.data["family"] = "usd.bootstrap"
+            new.data["variant"] = variant
+            new.data["label"] = "{0} ({1})".format(subset, asset["name"])
+            new.data["family"] = "usd"
+            new.data["families"] = ["usd", "usd.bootstrap"]
             new.data["icon"] = "link"
             new.data["comment"] = "Automated bootstrap USD file."
             new.data["publishFamilies"] = ["usd"]
+            new[:] = [instance.id]
 
             # Do not allow the user to toggle this instance
             new.data["optional"] = False
 
             # Copy some data from the instance for which we bootstrap
-            for key in ["asset"]:
+            for key in ["asset", "task"]:
                 new.data[key] = instance.data[key]
 
-    def _subset_exists(self, project_name, instance, subset, asset):
-        """Return whether subset exists in current context or in database."""
+    def get_subset_in_context(self, instance, subset, asset):
+        """Return whether subset exists in current context."""
         # Allow it to be created during this publish session
         context = instance.context
         for inst in context:
@@ -109,12 +111,15 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
                 inst.data["subset"] == subset
                 and inst.data["asset"] == asset["name"]
             ):
-                return True
+                return inst
 
+        # TODO: Since we don't have an asset resolver that will resolve
+        #  'to latest' we currently always want to push an update to the
+        #  bootstrap explicitly
         # Or, if they already exist in the database we can
         # skip them too.
-        if get_subset_by_name(
-            project_name, subset, asset["_id"], fields=["_id"]
-        ):
-            return True
-        return False
+        # if get_subset_by_name(
+        #     project_name, subset, asset["_id"], fields=["_id"]
+        # ):
+        #     return True
+        # return False
