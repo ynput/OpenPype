@@ -41,7 +41,7 @@ class BlenderSettings(BaseSettingsModel):
         default_factory=BlenderImageIOModel,
         title="Color Management (ImageIO)"
     )
-    render_settings: RenderSettingsModel = Field(
+    RenderSettings: RenderSettingsModel = Field(
         default_factory=RenderSettingsModel, title="Render Settings")
     workfile_builder: TemplateWorkfileBaseOptions = Field(
         default_factory=TemplateWorkfileBaseOptions,
@@ -61,7 +61,7 @@ DEFAULT_VALUES = {
     },
     "set_frames_startup": True,
     "set_resolution_startup": True,
-    "render_settings": DEFAULT_RENDER_SETTINGS,
+    "RenderSettings": DEFAULT_RENDER_SETTINGS,
     "publish": DEFAULT_BLENDER_PUBLISH_SETTINGS,
     "workfile_builder": {
         "create_first_version": False,

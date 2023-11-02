@@ -7,9 +7,10 @@ from openpype.settings import get_project_settings
 from openpype.pipeline import get_current_project_name
 
 from openpype.lib import StringTemplate
-from openpype.pipeline.context_tools import get_current_context_template_data
 
 import hou
+
+from .lib import get_current_context_template_data_with_asset_data
 
 log = logging.getLogger("openpype.hosts.houdini.shelves")
 
@@ -30,7 +31,7 @@ def generate_shelves():
         return
 
     # Get Template data
-    template_data = get_current_context_template_data()
+    template_data = get_current_context_template_data_with_asset_data()
 
     for shelf_set_config in shelves_set_config:
         shelf_set_filepath = shelf_set_config.get('shelf_set_source_path')
