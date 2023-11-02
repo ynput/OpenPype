@@ -171,11 +171,13 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         elif isinstance(entity, OpenPypeVersionInput):
             return OpenPypeVersionText(*args)
 
+        elif isinstance(entity, PasswordEntity):
+            # Order of this elif (before the TextEntity one) because
+            # PasswordEntity inherit from TextEntity
+            return PasswordWidget(*args)
+
         elif isinstance(entity, TextEntity):
             return TextWidget(*args)
-
-        elif isinstance(entity, PasswordEntity):
-            return PasswordWidget(*args)
 
         elif isinstance(entity, NumberEntity):
             return NumberWidget(*args)
