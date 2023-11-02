@@ -408,6 +408,10 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
         addon_name = addon_info["name"]
         addon_version = addon_info["version"]
 
+        # OpenPype addon does not have any addon object
+        if addon_name == "openpype":
+            continue
+
         dev_addon_info = dev_addons_info.get(addon_name, {})
         use_dev_path = dev_addon_info.get("enabled", False)
 
