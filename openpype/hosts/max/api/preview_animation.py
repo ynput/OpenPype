@@ -189,7 +189,8 @@ def _render_preview_animation_max_pre_2024(
         dib = rt.gw.getViewportDib()
         dib_width = float(dib.width)
         dib_height = float(dib.height)
-        renderRatio = float(dib_width / dib_height)
+        # aspect ratio
+        renderRatio = rt.getRendImageAspect()
         if viewportRatio <= renderRatio:
             heightCrop = (dib_width / renderRatio)
             topEdge = int((dib_height - heightCrop) / 2.0)
@@ -311,6 +312,7 @@ def viewport_options_for_preview_animation():
         viewport_options["nitrous_viewport"] = {
             "VisualStyleMode": "defaultshading",
             "ViewportPreset": "highquality",
+            "AntialiasingQuality": "None",
             "UseTextureEnabled": False
         }
         viewport_options["vp_btn_mgr"] = {

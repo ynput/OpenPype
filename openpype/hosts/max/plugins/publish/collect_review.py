@@ -93,6 +93,7 @@ class CollectReview(pyblish.api.InstancePlugin,
             nitrous_viewport = {
                 "VisualStyleMode": creator_attrs["visualStyleMode"],
                 "ViewportPreset": creator_attrs["viewportPreset"],
+                "AntialiasingQuality": creator_attrs["antialiasingQuality"],
                 "UseTextureEnabled": creator_attrs["vpTexture"]
             }
             preview_data = {
