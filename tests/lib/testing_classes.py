@@ -340,25 +340,24 @@ class PublishTest(ModuleUnitTest):
         timeout = timeout or self.TIMEOUT
         timeout = float(timeout)
 
-        output = ""
-        errors = ""
+        output = b""
+        errors = b""
         while launched_app.poll() is None:
-            try:
-                out, err = launched_app.communicate(timeout=0.5)
-            except subprocess.TimeoutExpired:
-                out, err = launched_app.communicate()
-                if time.time() - time_start > timeout:
-                    launched_app.terminate()
-                    raise ValueError("Timeout reached")
+            if launched_app.stdout is not None:
+                output += launched_app.stdout.read()
 
-            output += out.decode("utf-8")
-            errors += err.decode("utf-8")
+            if launched_app.stderr is not None:
+                errors += launched_app.stderr.read()
+
+            if time.time() - time_start > timeout:
+                launched_app.terminate()
+                raise ValueError("Timeout reached")
 
         print("Publish finished")
         msg = "Launched app errored:\n{}"
-        assert launched_app.returncode == 0, msg.format(errors)
+        assert launched_app.returncode == 0, msg.format(errors.decode("utf-8"))
 
-        yield output
+        yield output.decode("utf-8")
 
     def test_folder_structure_same(self, dbcon, publish_finished,
                                    download_test_data, output_folder_url,
