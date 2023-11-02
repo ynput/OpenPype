@@ -120,7 +120,6 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         frame_dur = frame_end - frame_start
 
         return {
-            "asset": _cr_attrs["asset_name"],
             "fps": float(_cr_attrs["fps"]),
             "handleStart": _cr_attrs["handle_start"],
             "handleEnd": _cr_attrs["handle_end"],

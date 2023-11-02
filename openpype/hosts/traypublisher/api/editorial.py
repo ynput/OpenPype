@@ -319,8 +319,12 @@ class ShotMetadataSolver:
             tasks = self._generate_tasks_from_settings(
                 project_doc)
 
+        # generate hierarchy path from parents
+        hierarchy_path = self._create_hierarchy_path(parents)
+
         return shot_name, {
-            "hierarchy": self._create_hierarchy_path(parents),
+            "hierarchy": hierarchy_path,
+            "folderPath": f"{hierarchy_path}/{shot_name}",
             "parents": parents,
             "tasks": tasks
         }

@@ -217,9 +217,10 @@ or updating already created. Publishing will create OTIO file.
         }
         # Create otio editorial instance
         if AYON_SERVER_ENABLED:
-            asset_name = instance_data["folderPath"]
+            asset_name = instance_data.pop("folderPath")
         else:
             asset_name = instance_data["asset"]
+
         asset_doc = get_asset_by_name(self.project_name, asset_name)
 
         if pre_create_data["fps"] == "from_selection":
@@ -682,6 +683,7 @@ or updating already created. Publishing will create OTIO file.
         # create creator attributes
         creator_attributes = {
             "asset_name": shot_name,
+            "Folder path": shot_metadata["folderPath"],
             "Parent hierarchy path": shot_metadata["hierarchy"],
             "workfile_start_frame": workfile_start_frame,
             "fps": fps,
