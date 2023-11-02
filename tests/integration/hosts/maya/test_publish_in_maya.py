@@ -44,6 +44,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         publish_finished,
         download_test_data
     ):
+        """Testing Pyblish and Python logs within Maya."""
 
         # All maya output via MAYA_CMD_FILE_OUTPUT env var during test run
         logging_path = os.path.join(download_test_data, "output.log")
