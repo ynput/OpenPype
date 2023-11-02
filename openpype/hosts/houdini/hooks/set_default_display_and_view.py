@@ -1,5 +1,4 @@
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
-from openpype.settings import get_project_settings
 
 
 class SetDefaultDislayView(PreLaunchHook):
@@ -19,21 +18,18 @@ class SetDefaultDislayView(PreLaunchHook):
 
         OCIO = self.launch_context.env.get("OCIO")
 
-        # This is a cheap way to skip this hook if either
-        # global color management or houdini color management was disabled.
+        # This is a cheap way to skip this hook if either global color
+        # management or houdini color management was disabled because the
+        # OCIO var would be set by the global OCIOEnvHook
         if not OCIO:
             return
 
-        project_settings = get_project_settings(
-            project_name=self.data["project_name"]
-        )
-
         houdini_color_Settings = \
-            project_settings["houdini"]["imageio"]["workfile"]
+           self.data["project_settings"]["houdini"]["imageio"]["workfile"]
 
         if not houdini_color_Settings["enabled"]:
             self.log.info(
-                "Houdini's workefile color settings are disabled."
+                "Houdini workfile color management is disabled."
             )
             return
 
