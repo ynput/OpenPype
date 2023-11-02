@@ -290,6 +290,16 @@ def _convert_modules_system(
             modules_settings[key] = value
 
 
+def is_dev_mode_enabled():
+    """Dev mode is enabled in AYON.
+
+    Returns:
+        bool: True if dev mode is enabled.
+    """
+
+    return os.getenv("AYON_USE_DEV") == "1"
+
+
 def convert_system_settings(ayon_settings, default_settings, addon_versions):
     default_settings = copy.deepcopy(default_settings)
     output = {
@@ -819,9 +829,43 @@ def _convert_nuke_project_settings(ayon_settings, output):
     # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
     _convert_host_imageio(ayon_nuke)
     ayon_imageio = ayon_nuke["imageio"]
-    for item in ayon_imageio["nodes"]["requiredNodes"]:
+
+    # workfile
+    imageio_workfile = ayon_imageio["workfile"]
+    workfile_keys_mapping = (
+        ("color_management", "colorManagement"),
+        ("native_ocio_config", "OCIO_config"),
+        ("working_space", "workingSpaceLUT"),
+        ("thumbnail_space", "monitorLut"),
+    )
+    for src, dst in workfile_keys_mapping:
+        if (
+            src in imageio_workfile
+            and dst not in imageio_workfile
+        ):
+            imageio_workfile[dst] = imageio_workfile.pop(src)
+
+    # regex inputs
+    if "regex_inputs" in ayon_imageio:
+        ayon_imageio["regexInputs"] = ayon_imageio.pop("regex_inputs")
+
+    # nodes
+    ayon_imageio_nodes = ayon_imageio["nodes"]
+    if "required_nodes" in ayon_imageio_nodes:
+        ayon_imageio_nodes["requiredNodes"] = (
+            ayon_imageio_nodes.pop("required_nodes"))
+    if "override_nodes" in ayon_imageio_nodes:
+        ayon_imageio_nodes["overrideNodes"] = (
+            ayon_imageio_nodes.pop("override_nodes"))
+
+    for item in ayon_imageio_nodes["requiredNodes"]:
+        if "nuke_node_class" in item:
+            item["nukeNodeClass"] = item.pop("nuke_node_class")
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
-    for item in ayon_imageio["nodes"]["overrideNodes"]:
+
+    for item in ayon_imageio_nodes["overrideNodes"]:
+        if "nuke_node_class" in item:
+            item["nukeNodeClass"] = item.pop("nuke_node_class")
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
 
     output["nuke"] = ayon_nuke
@@ -1400,14 +1444,38 @@ class _AyonSettingsCache:
         if _AyonSettingsCache.variant is None:
             from openpype.lib.openpype_version import is_staging_enabled
 
-            _AyonSettingsCache.variant = (
-                "staging" if is_staging_enabled() else "production"
-            )
+            variant = "production"
+            if is_dev_mode_enabled():
+                variant = cls._get_dev_mode_settings_variant()
+            elif is_staging_enabled():
+                variant = "staging"
+            _AyonSettingsCache.variant = variant
         return _AyonSettingsCache.variant
 
     @classmethod
     def _get_bundle_name(cls):
         return os.environ["AYON_BUNDLE_NAME"]
+
+    @classmethod
+    def _get_dev_mode_settings_variant(cls):
+        """Develop mode settings variant.
+
+        Returns:
+            str: Name of settings variant.
+        """
+
+        bundles = ayon_api.get_bundles()
+        user = ayon_api.get_user()
+        username = user["name"]
+        for bundle in bundles:
+            if (
+                bundle.get("isDev")
+                and bundle.get("activeUser") == username
+            ):
+                return bundle["name"]
+        # Return fake variant - distribution logic will tell user that he
+        #   does not have set any dev bundle
+        return "dev"
 
     @classmethod
     def get_value_by_project(cls, project_name):

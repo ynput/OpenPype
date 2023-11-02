@@ -37,7 +37,7 @@ class TestPipelinePublishPlugins(TestPipeline):
     # files are the same as those used in `test_pipeline_colorspace`
     TEST_FILES = [
         (
-            "1Lf-mFxev7xiwZCWfImlRcw7Fj8XgNQMh",
+            "1csqimz8bbNcNgxtEXklLz6GRv91D3KgA",
             "test_pipeline_colorspace.zip",
             ""
         )
@@ -123,8 +123,7 @@ class TestPipelinePublishPlugins(TestPipeline):
 
     def test_get_colorspace_settings(self, context, config_path_asset):
         expected_config_template = (
-            "{root[work]}/{project[name]}"
-            "/{hierarchy}/{asset}/config/aces.ocio"
+            "{root[work]}/{project[name]}/config/aces.ocio"
         )
         expected_file_rules = {
             "comp_review": {
@@ -177,16 +176,16 @@ class TestPipelinePublishPlugins(TestPipeline):
         # load plugin function for testing
         plugin = publish_plugins.ColormanagedPyblishPluginMixin()
         plugin.log = log
+        context.data["imageioSettings"] = (config_data_nuke, file_rules_nuke)
         plugin.set_representation_colorspace(
-            representation_nuke, context,
-            colorspace_settings=(config_data_nuke, file_rules_nuke)
+            representation_nuke, context
         )
         # load plugin function for testing
         plugin = publish_plugins.ColormanagedPyblishPluginMixin()
         plugin.log = log
+        context.data["imageioSettings"] = (config_data_hiero, file_rules_hiero)
         plugin.set_representation_colorspace(
-            representation_hiero, context,
-            colorspace_settings=(config_data_hiero, file_rules_hiero)
+            representation_hiero, context
         )
 
         colorspace_data_nuke = representation_nuke.get("colorspaceData")

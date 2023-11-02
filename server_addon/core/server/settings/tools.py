@@ -487,6 +487,17 @@ DEFAULT_TOOLS_VALUES = {
                 "task_types": [],
                 "task_names": [],
                 "template_name": "publish_online"
+            },
+            {
+                "families": [
+                    "tycache"
+                ],
+                "hosts": [
+                    "max"
+                ],
+                "task_types": [],
+                "task_names": [],
+                "template_name": "publish_tycache"
             }
         ],
         "hero_template_name_profiles": [
