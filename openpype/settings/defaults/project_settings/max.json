@@ -16,6 +16,16 @@
         "image_format": "exr",
         "multipass": true
     },
+    "PreviewAnimation": {
+        "review_width": 1920,
+        "review_height": 1080,
+        "percentSize": 100,
+        "keep_images": false,
+        "image_format": "png",
+        "visual_style": "Realistic",
+        "viewport_preset": "Quality",
+        "vp_texture": true
+    },
     "PointCloud": {
         "attribute": {
             "Age": "age",
