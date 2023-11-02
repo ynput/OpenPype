@@ -21,6 +21,7 @@ from aiohttp_json_rpc.protocol import (
 )
 from aiohttp_json_rpc.exceptions import RpcError
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.lib import emit_event
 from openpype.hosts.tvpaint.tvpaint_plugin import get_plugin_files_path
 
@@ -834,8 +835,12 @@ class BaseCommunicator:
 
 
 class QtCommunicator(BaseCommunicator):
+    label = os.getenv("AVALON_LABEL")
+    if not label:
+        label = "AYON" if AYON_SERVER_ENABLED else "OpenPype"
+    title = "{} Tools".format(label)
     menu_definitions = {
-        "title": "OpenPype Tools",
+        "title": title,
         "menu_items": [
             {
                 "callback": "workfiles_tool",
