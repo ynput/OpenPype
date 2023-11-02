@@ -9,12 +9,46 @@ class CollectCameraData(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder
     families = ["matchmove"]
     hosts = ["equalizer"]
-    label = "Collect cameras data"
+    label = "Collect camera data"
 
     def process(self, instance):
+        # handle camera selection.
+        # possible values are:
+        #   - __current__ - current camera
+        #   - __ref__ - reference cameras
+        #   - __seq__ - sequence cameras
+        #   - __all__ - all cameras
+        #   - camera_id - specific camera
+
+        try:
+            camera_sel = instance.data["camera_selection"]
+        except KeyError:
+            self.log.warning("No camera defined")
+            return
+
+        if camera_sel == "__current__":
+            cameras = [tde4.getCurrentCamera()]
+        elif camera_sel == "__ref__":
+            cameras = [
+                c for c in tde4.getCameraList()
+                if tde4.getCameraType(c) == "REF_FRAME"
+            ]
+        elif camera_sel == "__seq__":
+            cameras = [
+                c for c in tde4.getCameraList()
+                if tde4.getCameraType(c) == "REF_FRAME"
+            ]
+        elif camera_sel == "__all__":
+            cameras = tde4.getCameraList()
+        else:
+            if camera_sel not in tde4.getCameraList():
+                self.log.warning("Invalid camera found")
+                return
+            cameras = [camera_sel]
+
         data = []
-        camera_list = tde4.getCameraList()
-        for camera in camera_list:
+
+        for camera in cameras:
             camera_name = tde4.getCameraName(camera)
             enabled = tde4.getCameraEnabledFlag(camera)
             # calculation range
