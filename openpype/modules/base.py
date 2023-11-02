@@ -442,7 +442,7 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
             # Ignore of files is implemented to be able to run code from code
             #   where usually is more files than just the addon
             # Ignore start and setup scripts
-            if name in ("setup.py", "start.py"):
+            if name in ("setup.py", "start.py", "__pycache__"):
                 continue
 
             path = os.path.join(addon_dir, name)
