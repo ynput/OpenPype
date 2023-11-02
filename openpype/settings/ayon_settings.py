@@ -649,7 +649,7 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
             item["families"]: item["plugins"]
             for item in family_plugin_mapping
         }
-        ayon_max["ValidateLoadedPlugin"]["family_plugins_mapping"] = (
+        ayon_publish["ValidateLoadedPlugin"]["family_plugins_mapping"] = (
             new_family_plugin_mapping
         )
 

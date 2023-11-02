@@ -43,6 +43,6 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ValidateLoadedPlugin": {
         "enabled": False,
         "optional": True,
-        "family_plugins_mapping": {}
+        "family_plugins_mapping": []
     }
 }
