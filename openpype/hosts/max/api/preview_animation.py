@@ -52,6 +52,7 @@ def viewport_layout_and_camera(camera, layout="layout_1"):
 
 @contextlib.contextmanager
 def viewport_preference_setting(general_viewport,
+                                nitrous_manager,
                                 nitrous_viewport,
                                 vp_button_mgr):
     """Function to set viewport setting during context
@@ -59,6 +60,7 @@ def viewport_preference_setting(general_viewport,
     Args:
         camera (str): Viewport camera for review render
         general_viewport (dict): General viewport setting
+        nitrous_manager (dict): Nitrous graphic manager
         nitrous_viewport (dict): Nitrous setting for
             preview animation
         vp_button_mgr (dict): Viewport button manager Setting
@@ -72,6 +74,9 @@ def viewport_preference_setting(general_viewport,
     vp_button_mgr_original = {
         key: getattr(rt.ViewportButtonMgr, key) for key in vp_button_mgr
     }
+    nitrous_manager_original = {
+        key: getattr(nitrousGraphicMgr, key) for key in nitrous_manager
+    }
     nitrous_viewport_original = {
         key: getattr(viewport_setting, key) for key in nitrous_viewport
     }
@@ -81,6 +86,8 @@ def viewport_preference_setting(general_viewport,
         rt.viewport.EnableSolidBackgroundColorMode(general_viewport["dspBkg"])
         for key, value in vp_button_mgr.items():
             setattr(rt.ViewportButtonMgr, key, value)
+        for key, value in nitrous_manager.items():
+            setattr(nitrousGraphicMgr, key, value)
         for key, value in nitrous_viewport.items():
             if nitrous_viewport[key] != nitrous_viewport_original[key]:
                 setattr(viewport_setting, key, value)
@@ -91,6 +98,8 @@ def viewport_preference_setting(general_viewport,
         rt.viewport.EnableSolidBackgroundColorMode(orig_vp_bkg)
         for key, value in vp_button_mgr_original.items():
             setattr(rt.ViewportButtonMgr, key, value)
+        for key, value in nitrous_manager_original.items():
+            setattr(nitrousGraphicMgr, key, value)
         for key, value in nitrous_viewport_original.items():
             setattr(viewport_setting, key, value)
 
@@ -258,6 +267,7 @@ def render_preview_animation(
                 if int(get_max_version()) < 2024:
                     with viewport_preference_setting(
                             viewport_options["general_viewport"],
+                            viewport_options["nitrous_manager"],
                             viewport_options["nitrous_viewport"],
                             viewport_options["vp_btn_mgr"]
                     ):
@@ -309,10 +319,12 @@ def viewport_options_for_preview_animation():
             "dspBkg": True,
             "dspGrid": False
         }
+        viewport_options["nitrous_manager"] = {
+            "AntialiasingQuality": "None"
+        }
         viewport_options["nitrous_viewport"] = {
             "VisualStyleMode": "defaultshading",
             "ViewportPreset": "highquality",
-            "AntialiasingQuality": "None",
             "UseTextureEnabled": False
         }
         viewport_options["vp_btn_mgr"] = {
