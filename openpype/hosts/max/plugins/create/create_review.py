@@ -22,7 +22,6 @@ class CreateReview(plugin.MaxCreator):
     vp_texture = True
     anti_aliasing = None
 
-
     @classmethod
     def apply_settings(cls, project_settings):
         settings = project_settings["max"]["PreviewAnimation"]  # noqa
@@ -34,9 +33,11 @@ class CreateReview(plugin.MaxCreator):
         cls.keep_images = settings.get("keep_images", cls.keep_images)
         cls.image_format = settings.get("image_format", cls.image_format)
         cls.visual_style = settings.get("visual_style", cls.visual_style)
-        cls.viewport_preset = settings.get("viewport_preset", cls.viewport_preset)
+        cls.viewport_preset = settings.get(
+            "viewport_preset", cls.viewport_preset)
         cls.vp_texture = settings.get("vp_texture", cls.vp_texture)
-        cls.anti_aliasing = settings.get("anti_aliasing", cls.anti_aliasing)
+        cls.anti_aliasing = settings.get(
+            "anti_aliasing", cls.anti_aliasing)
 
     def create(self, subset_name, instance_data, pre_create_data):
         # Transfer settings from pre create to instance
@@ -49,7 +50,7 @@ class CreateReview(plugin.MaxCreator):
                     "percentSize",
                     "visualStyleMode",
                     "viewportPreset",
-                    "anti_aliasing",
+                    "antialiasingQuality",
                     "vpTexture"]:
             if key in pre_create_data:
                 creator_attributes[key] = pre_create_data[key]
@@ -105,7 +106,7 @@ class CreateReview(plugin.MaxCreator):
                     preview_preset_enum,
                     default=self.viewport_preset,
                     label="Pre-View Preset"),
-            EnumDef("anti_aliasing",
+            EnumDef("antialiasingQuality",
                     anti_aliasing_enum,
                     default=self.anti_aliasing,
                     label="Anti-aliasing Quality"),
