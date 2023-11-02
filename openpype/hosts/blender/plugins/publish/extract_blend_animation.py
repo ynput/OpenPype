@@ -21,7 +21,7 @@ class ExtractBlendAnimation(publish.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         data_blocks = set()
 
