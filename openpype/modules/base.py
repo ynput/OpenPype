@@ -458,7 +458,15 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
 
             try:
                 mod = __import__(basename, fromlist=("",))
-                imported_modules.append(mod)
+                for attr_name in dir(mod):
+                    attr = getattr(mod, attr_name)
+                    if (
+                        inspect.isclass(attr)
+                        and issubclass(attr, OpenPypeModule)
+                    ):
+                        imported_modules.append(mod)
+                        break
+
             except BaseException:
                 log.warning(
                     "Failed to import \"{}\"".format(basename),
