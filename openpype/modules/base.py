@@ -467,19 +467,19 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
             ))
             continue
 
-        if len(imported_modules) == 1:
-            mod = imported_modules[0]
-            addon_alias = getattr(mod, "V3_ALIAS", None)
-            if not addon_alias:
-                addon_alias = addon_name
-            v3_addons_to_skip.append(addon_alias)
-            new_import_str = "{}.{}".format(modules_key, addon_alias)
+        if len(imported_modules) > 1:
+            log.info("More then one module '{}' was imported.".format(name))
+            continue
 
-            sys.modules[new_import_str] = mod
-            setattr(openpype_modules, addon_alias, mod)
+        mod = imported_modules[0]
+        addon_alias = getattr(mod, "V3_ALIAS", None)
+        if not addon_alias:
+            addon_alias = addon_name
+        v3_addons_to_skip.append(addon_alias)
+        new_import_str = "{}.{}".format(modules_key, addon_alias)
 
-        else:
-            log.info("More then one module was imported")
+        sys.modules[new_import_str] = mod
+        setattr(openpype_modules, addon_alias, mod)
 
     return v3_addons_to_skip
 
