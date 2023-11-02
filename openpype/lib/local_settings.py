@@ -572,14 +572,15 @@ def get_openpype_username():
     return username
 
 
-def is_admin_password_required():
+def is_admin_password_required(ignore_admin_skip=False):
     system_settings = get_system_settings()
     password = system_settings["general"].get("admin_password")
     if not password:
         return False
 
-    local_settings = get_local_settings()
-    is_admin = local_settings.get("general", {}).get("is_admin", False)
-    if is_admin:
-        return False
+    if ignore_admin_skip:
+        local_settings = get_local_settings()
+        is_admin = local_settings.get("general", {}).get("is_admin", False)
+        if is_admin:
+            return False
     return True

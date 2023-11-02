@@ -274,13 +274,13 @@ class MainWidget(QtWidgets.QWidget):
             return
 
         if not self._user_passed:
-            self._user_passed = not is_admin_password_required()
+            self._user_passed = not is_admin_password_required(ignore_admin_skip=True)
 
         self._on_state_change()
 
         if not self._user_passed:
             # Avoid doubled dialog
-            dialog = PasswordDialog(self)
+            dialog = PasswordDialog(self, allow_remember=False)
             dialog.setModal(True)
             dialog.finished.connect(self._on_password_dialog_close)
 
@@ -298,6 +298,9 @@ class MainWidget(QtWidgets.QWidget):
             tab_widget.reset()
         self._main_reset = False
         self._check_on_reset()
+
+        # This is to show password dialog each time settings are opened
+        self._user_passed = False
 
     def _update_search_dialog(self, clear=False):
         if self._search_dialog.isVisible():
