@@ -2,7 +2,7 @@
 name = "cz_customize"
 
 [tool.commitizen.customize]
-message_template = "{{commit_msg}}{% if ticket_number == \"none\" %} (quadproduction/issues#{{ticket_number}}){% endif %}"
+message_template = "{{commit_msg}}{% if ticket_number != \"none\" %} (quadproduction/issues#{{ticket_number}}){% endif %}"
 example = "Commit message (quadproduction/issues#123)"
 schema = "<commit_msg> (quadproduction/issues#<ticket_number>)"
 schema_pattern = ".*( \\(quadproduction/issues#\\d+\\))?$"
