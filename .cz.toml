@@ -2,10 +2,10 @@
 name = "cz_customize"
 
 [tool.commitizen.customize]
-message_template = "{{message}} (quadproduction/issues#{{ticket_number}})"
-example = "(quadproduction/issues#111): Fixing ident on bla bla bla"
-schema = "(quadproduction/issues#000) : <body>"
-schema_pattern = ".* \\(quadproduction/issues#\\d+\\)$"
+message_template = "{{commit_msg}}{% if ticket_number == \"none\" %} (quadproduction/issues#{{ticket_number}}){% endif %}"
+example = "Commit message (quadproduction/issues#123)"
+schema = "<commit_msg> (quadproduction/issues#<ticket_number>)"
+schema_pattern = ".*( \\(quadproduction/issues#\\d+\\))?$"
 
 [[tool.commitizen.customize.questions]]
 type = "input"
@@ -14,5 +14,5 @@ message = "Ticket number: "
 
 [[tool.commitizen.customize.questions]]
 type = "input"
-name = "message"
+name = "commit_msg"
 message = "Commit message: "
