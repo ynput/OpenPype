@@ -19,11 +19,15 @@ from openpype.pipeline import (
 import openpype.hosts.houdini.api.usd as hou_usdlib
 from openpype.hosts.houdini.api.lib import render_rop
 
+try:
+    # Py 3.3+
+    from contextlib import ExitStack
+except ImportError:
+    # Implement for backwards compatibility
+    class ExitStack(object):
+        """Context manager for dynamic management of a stack of exit callbacks.
 
-class ExitStack(object):
-    """Context manager for dynamic management of a stack of exit callbacks.
-
-    For example:
+        For example:
 
         with ExitStack() as stack:
             files = [stack.enter_context(open(fname)) for fname in filenames]
@@ -31,114 +35,114 @@ class ExitStack(object):
             # the with statement, even if attempts to open files later
             # in the list raise an exception
 
-    """
-
-    def __init__(self):
-        self._exit_callbacks = deque()
-
-    def pop_all(self):
-        """Preserve the context stack by transferring it to a new instance"""
-        new_stack = type(self)()
-        new_stack._exit_callbacks = self._exit_callbacks
-        self._exit_callbacks = deque()
-        return new_stack
-
-    def _push_cm_exit(self, cm, cm_exit):
-        """Helper to correctly register callbacks to __exit__ methods"""
-
-        def _exit_wrapper(*exc_details):
-            return cm_exit(cm, *exc_details)
-
-        _exit_wrapper.__self__ = cm
-        self.push(_exit_wrapper)
-
-    def push(self, exit):
-        """Registers a callback with the standard __exit__ method signature.
-
-        Can suppress exceptions the same way __exit__ methods can.
-
-        Also accepts any object with an __exit__ method (registering a call
-        to the method instead of the object itself)
-
-        """
-        # We use an unbound method rather than a bound method to follow
-        # the standard lookup behaviour for special methods
-        _cb_type = type(exit)
-        try:
-            exit_method = _cb_type.__exit__
-        except AttributeError:
-            # Not a context manager, so assume its a callable
-            self._exit_callbacks.append(exit)
-        else:
-            self._push_cm_exit(exit, exit_method)
-        return exit  # Allow use as a decorator
-
-    def callback(self, callback, *args, **kwds):
-        """Registers an arbitrary callback and arguments.
-
-        Cannot suppress exceptions.
         """
 
-        def _exit_wrapper(exc_type, exc, tb):
-            callback(*args, **kwds)
+        def __init__(self):
+            self._exit_callbacks = deque()
 
-        # We changed the signature, so using @wraps is not appropriate, but
-        # setting __wrapped__ may still help with introspection
-        _exit_wrapper.__wrapped__ = callback
-        self.push(_exit_wrapper)
-        return callback  # Allow use as a decorator
+        def pop_all(self):
+            """Preserve context stack by transferring it to a new instance"""
+            new_stack = type(self)()
+            new_stack._exit_callbacks = self._exit_callbacks
+            self._exit_callbacks = deque()
+            return new_stack
 
-    def enter_context(self, cm):
-        """Enters the supplied context manager
+        def _push_cm_exit(self, cm, cm_exit):
+            """Helper to correctly register callbacks to __exit__ methods"""
 
-        If successful, also pushes its __exit__ method as a callback and
-        returns the result of the __enter__ method.
-        """
-        # We look up the special methods on the type to match the with
-        # statement
-        _cm_type = type(cm)
-        _exit = _cm_type.__exit__
-        result = _cm_type.__enter__(cm)
-        self._push_cm_exit(cm, _exit)
-        return result
+            def _exit_wrapper(*exc_details):
+                return cm_exit(cm, *exc_details)
 
-    def close(self):
-        """Immediately unwind the context stack"""
-        self.__exit__(None, None, None)
+            _exit_wrapper.__self__ = cm
+            self.push(_exit_wrapper)
 
-    def __enter__(self):
-        return self
+        def push(self, exit):
+            """Registers a callback with the standard __exit__ signature.
 
-    def __exit__(self, *exc_details):
-        # We manipulate the exception state so it behaves as though
-        # we were actually nesting multiple with statements
-        frame_exc = sys.exc_info()[1]
+            Can suppress exceptions the same way __exit__ methods can.
 
-        def _fix_exception_context(new_exc, old_exc):
-            while 1:
-                exc_context = new_exc.__context__
-                if exc_context in (None, frame_exc):
-                    break
-                new_exc = exc_context
-            new_exc.__context__ = old_exc
+            Also accepts any object with an __exit__ method (registering a call
+            to the method instead of the object itself)
 
-        # Callbacks are invoked in LIFO order to match the behaviour of
-        # nested context managers
-        suppressed_exc = False
-        while self._exit_callbacks:
-            cb = self._exit_callbacks.pop()
+            """
+            # We use an unbound method rather than a bound method to follow
+            # the standard lookup behaviour for special methods
+            _cb_type = type(exit)
             try:
-                if cb(*exc_details):
-                    suppressed_exc = True
-                    exc_details = (None, None, None)
-            except Exception:
-                new_exc_details = sys.exc_info()
-                # simulate the stack of exceptions by setting the context
-                _fix_exception_context(new_exc_details[1], exc_details[1])
-                if not self._exit_callbacks:
-                    raise
-                exc_details = new_exc_details
-        return suppressed_exc
+                exit_method = _cb_type.__exit__
+            except AttributeError:
+                # Not a context manager, so assume its a callable
+                self._exit_callbacks.append(exit)
+            else:
+                self._push_cm_exit(exit, exit_method)
+            return exit  # Allow use as a decorator
+
+        def callback(self, callback, *args, **kwds):
+            """Registers an arbitrary callback and arguments.
+
+            Cannot suppress exceptions.
+            """
+
+            def _exit_wrapper(exc_type, exc, tb):
+                callback(*args, **kwds)
+
+            # We changed the signature, so using @wraps is not appropriate, but
+            # setting __wrapped__ may still help with introspection
+            _exit_wrapper.__wrapped__ = callback
+            self.push(_exit_wrapper)
+            return callback  # Allow use as a decorator
+
+        def enter_context(self, cm):
+            """Enters the supplied context manager
+
+            If successful, also pushes its __exit__ method as a callback and
+            returns the result of the __enter__ method.
+            """
+            # We look up the special methods on the type to match the with
+            # statement
+            _cm_type = type(cm)
+            _exit = _cm_type.__exit__
+            result = _cm_type.__enter__(cm)
+            self._push_cm_exit(cm, _exit)
+            return result
+
+        def close(self):
+            """Immediately unwind the context stack"""
+            self.__exit__(None, None, None)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_details):
+            # We manipulate the exception state so it behaves as though
+            # we were actually nesting multiple with statements
+            frame_exc = sys.exc_info()[1]
+
+            def _fix_exception_context(new_exc, old_exc):
+                while 1:
+                    exc_context = new_exc.__context__
+                    if exc_context in (None, frame_exc):
+                        break
+                    new_exc = exc_context
+                new_exc.__context__ = old_exc
+
+            # Callbacks are invoked in LIFO order to match the behaviour of
+            # nested context managers
+            suppressed_exc = False
+            while self._exit_callbacks:
+                cb = self._exit_callbacks.pop()
+                try:
+                    if cb(*exc_details):
+                        suppressed_exc = True
+                        exc_details = (None, None, None)
+                except Exception:
+                    new_exc_details = sys.exc_info()
+                    # simulate the stack of exceptions by setting the context
+                    _fix_exception_context(new_exc_details[1], exc_details[1])
+                    if not self._exit_callbacks:
+                        raise
+                    exc_details = new_exc_details
+            return suppressed_exc
 
 
 @contextlib.contextmanager
@@ -168,7 +172,7 @@ class ExtractUSDLayered(publish.Extractor):
 
     # Force Output Processors so it will always save any file
     # into our unique staging directory with processed Avalon paths
-    output_processors = ["avalon_uri_processor", "stagingdir_processor"]
+    output_processors = ["ayon_uri_processor", "savepathsrelativetooutput"]
 
     def process(self, instance):
 
@@ -208,10 +212,10 @@ class ExtractUSDLayered(publish.Extractor):
         rop_overrides = {
             # This sets staging directory on the processor to force our
             # output files to end up in the Staging Directory.
-            "stagingdiroutputprocessor_stagingDir": staging_dir,
+            "savepathsrelativetooutput_rootdir": staging_dir,
             # Force the Avalon URI Output Processor to refactor paths for
             # references, payloads and layers to published paths.
-            "avalonurioutputprocessor_use_publish_paths": True,
+            "ayonurioutputprocessor_use_publish_paths": True,
             # Only write out specific USD files based on our outputs
             "savepattern": save_pattern,
         }
@@ -226,7 +230,7 @@ class ExtractUSDLayered(publish.Extractor):
                 )
                 stack.enter_context(manager)
 
-                # Some of these must be added after we enter the output
+                # These must be added after we enter the output
                 # processor context manager because those parameters only
                 # exist when the Output Processor is added to the ROP node.
                 for name, value in rop_overrides.items():
@@ -261,11 +265,11 @@ class ExtractUSDLayered(publish.Extractor):
                 # Deactivate this dependency
                 self.log.debug(
                     "Dependency matches previous publish version,"
-                    " deactivating %s for publish" % dependency
+                    " deactivating %s for publish", dependency
                 )
                 dependency.data["publish"] = False
             else:
-                self.log.debug("Extracted dependency: %s" % dependency)
+                self.log.debug("Extracted dependency: %s", dependency)
                 # This dependency should be published
                 dependency.data["files"] = [dependency_fname]
                 dependency.data["stagingDir"] = staging_dir
@@ -277,6 +281,12 @@ class ExtractUSDLayered(publish.Extractor):
         instance.data["files"].append(fname)
 
     def _compare_with_latest_publish(self, project_name, dependency, new_file):
+        """Compare whether last published version matches the current new file.
+
+        Returns:
+            bool: Whether it's a match or not.
+
+        """
         import filecmp
 
         _, ext = os.path.splitext(new_file)
@@ -306,7 +316,9 @@ class ExtractUSDLayered(publish.Extractor):
             return False
 
         representation = get_representation_by_name(
-            project_name, ext.lstrip("."), version["_id"]
+            project_name,
+            representation_name=ext.lstrip("."),
+            version_id=version["_id"]
         )
         if not representation:
             self.log.debug("No existing representation..")

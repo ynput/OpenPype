@@ -122,10 +122,6 @@ class CollectInstancesUsdLayered(pyblish.api.ContextPlugin):
                 instance.data.update(save_data)
                 instance.data["usdLayer"] = layer
 
-                # Don't allow the Pyblish `instanceToggled` we have installed
-                # to set this node to bypass.
-                instance.data["_allowToggleBypass"] = False
-
                 instances.append(instance)
 
         # Store the collected ROP node dependencies
@@ -136,14 +132,14 @@ class CollectInstancesUsdLayered(pyblish.api.ContextPlugin):
     def get_save_data(self, save_path):
 
         # Resolve Avalon URI
-        uri_data = usdlib.parse_avalon_uri(save_path)
+        uri_data = usdlib.parse_ayon_uri(save_path)
         if not uri_data:
             self.log.warning("Non Avalon URI Layer Path: %s" % save_path)
             return {}
 
         # Collect asset + subset from URI
-        name = "{subset} ({asset})".format(**uri_data)
-        fname = "{asset}_{subset}.{ext}".format(**uri_data)
+        name = "{product} ({asset})".format(**uri_data)
+        fname = "{asset}_{subset}.usd".format(**uri_data)
 
         data = dict(uri_data)
         data["usdSavePath"] = save_path
