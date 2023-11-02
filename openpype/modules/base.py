@@ -468,7 +468,7 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
             continue
 
         if len(imported_modules) > 1:
-            log.info("More then one module '{}' was imported.".format(name))
+            log.warning("More than one module '{}' was imported.".format(name))
             continue
 
         mod = imported_modules[0]
