@@ -997,7 +997,17 @@ class ModulesManager:
                 continue
 
             method = getattr(module, method_name)
-            paths = method(*args, **kwargs)
+            try:
+                paths = method(*args, **kwargs)
+            except Exception:
+                self.log.warning(
+                    "Failed to get plugin paths from module {}.".format(
+                        module.__class__.__name__
+                    ),
+                    exc_info=True
+                )
+                continue
+
             if paths:
                 # Convert to list if value is not list
                 if not isinstance(paths, (list, tuple, set)):
