@@ -1001,9 +1001,10 @@ class ModulesManager:
                 paths = method(*args, **kwargs)
             except Exception:
                 self.log.warning(
-                    "Failed to get plugin paths from module {}.".format(
-                        module.__class__.__name__
-                    ),
+                    (
+                        "Failed to get plugin paths from module"
+                        " '{}' using '{}'."
+                    ).format(module.__class__.__name__, method_name),
                     exc_info=True
                 )
                 continue
