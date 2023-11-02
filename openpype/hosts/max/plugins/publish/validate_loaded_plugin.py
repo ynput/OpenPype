@@ -32,7 +32,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
         required_plugins = (
             instance.context.data["project_settings"]["max"]["publish"]
-                                 ["ValidateLoadedPlugin"]["family_plugins_mapping"]
+                                 ["ValidateLoadedPlugin"]
+                                 ["family_plugins_mapping"]
         )
 
         if not required_plugins:
@@ -49,8 +50,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
         for families, plugin in required_plugins.items():
             families_list = families.split(",")
             excluded_families = [family for family in families_list
-                                 if instance.data["family"]!=family
-                                 and family!="_"]
+                                 if instance.data["family"] != family
+                                 and family != "_"]
             if excluded_families:
                 self.log.debug("The {} instance is not part of {}.".format(
                     instance.data["family"], excluded_families
@@ -97,13 +98,14 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
         }
         required_plugins = (
             instance.context.data["project_settings"]["max"]["publish"]
-                                 ["ValidateLoadedPlugin"]["family_plugins_mapping"]
+                                 ["ValidateLoadedPlugin"]
+                                 ["family_plugins_mapping"]
         )
         for families, plugin in required_plugins.items():
             families_list = families.split(",")
             excluded_families = [family for family in families_list
-                                 if instance.data["family"]!=family
-                                 and family!="_"]
+                                 if instance.data["family"] != family
+                                 and family != "_"]
             if excluded_families:
                 cls.log.debug("The {} instance is not part of {}.".format(
                     instance.data["family"], excluded_families
