@@ -10,7 +10,7 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class CreateCamera(plugin.BlenderCreator):
+class CreateCamera(plugin.BaseCreator):
     """Polygonal static geometry"""
 
     identifier = "io.openpype.creators.blender.camera"

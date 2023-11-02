@@ -10,7 +10,7 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class CreateRig(plugin.BlenderCreator):
+class CreateRig(plugin.BaseCreator):
     """Artist-friendly rig with controls to direct motion"""
 
     identifier = "io.openpype.creators.blender.rig"

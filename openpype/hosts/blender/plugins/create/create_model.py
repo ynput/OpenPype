@@ -10,7 +10,7 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class CreateModel(plugin.BlenderCreator):
+class CreateModel(plugin.BaseCreator):
     """Polygonal static geometry"""
 
     identifier = "io.openpype.creators.blender.model"

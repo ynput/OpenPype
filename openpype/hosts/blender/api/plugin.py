@@ -140,7 +140,7 @@ def deselect_all():
     bpy.context.view_layer.objects.active = active
 
 
-class BlenderCreator(Creator):
+class BaseCreator(Creator):
     """Base class for Blender Creator plug-ins."""
     defaults = ['Main']
 

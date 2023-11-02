@@ -10,7 +10,7 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class CreateRenderlayer(plugin.BlenderCreator):
+class CreateRenderlayer(plugin.BaseCreator):
     """Single baked camera"""
 
     name = "renderingMain"

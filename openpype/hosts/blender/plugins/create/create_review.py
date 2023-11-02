@@ -10,7 +10,7 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class CreateReview(plugin.BlenderCreator):
+class CreateReview(plugin.BaseCreator):
     """Single baked camera"""
 
     identifier = "io.openpype.creators.blender.review"

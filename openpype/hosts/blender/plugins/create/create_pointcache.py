@@ -8,7 +8,7 @@ from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class CreatePointcache(plugin.BlenderCreator):
+class CreatePointcache(plugin.BaseCreator):
     """Polygonal static geometry"""
 
     identifier = "io.openpype.creators.blender.pointcache"

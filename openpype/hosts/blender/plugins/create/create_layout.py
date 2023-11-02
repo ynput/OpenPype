@@ -10,7 +10,7 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class CreateLayout(plugin.BlenderCreator):
+class CreateLayout(plugin.BaseCreator):
     """Layout output for character rigs"""
 
     identifier = "io.openpype.creators.blender.layout"

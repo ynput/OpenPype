@@ -8,7 +8,7 @@ from openpype.hosts.blender.api import lib
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class CreateAction(openpype.hosts.blender.api.plugin.BlenderCreator):
+class CreateAction(openpype.hosts.blender.api.plugin.BaseCreator):
     """Action output for character rigs"""
 
     identifier = "io.openpype.creators.blender.action"

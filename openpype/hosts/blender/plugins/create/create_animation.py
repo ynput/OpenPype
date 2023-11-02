@@ -10,7 +10,7 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class CreateAnimation(plugin.BlenderCreator):
+class CreateAnimation(plugin.BaseCreator):
     """Animation output for character rigs"""
 
     identifier = "io.openpype.creators.blender.animation"
