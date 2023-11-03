@@ -180,7 +180,9 @@ class ProjectsQtModel(QtGui.QStandardItemModel):
         refresh_thread.start()
 
     def _query_project_items(self):
-        return self._controller.get_project_items()
+        return self._controller.get_project_items(
+            sender=PROJECTS_MODEL_SENDER
+        )
 
     def _refresh_finished(self):
         # TODO check if failed
