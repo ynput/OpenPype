@@ -104,11 +104,11 @@ class CollectAssetHandles(pyblish.api.InstancePlugin,
         # Add frame range to label if the instance has a frame range.
         label = instance.data.get("label", instance.data["name"])
         instance.data["label"] = (
-            "{label} [{frame_start} - {frame_end}]"
+            "{label} [{frame_start_handle} - {frame_end_handle}]"
             .format(
                 label=label,
-                frame_start=frame_start,
-                frame_end=frame_end
+                frame_start_handle=instance.data["frameStartHandle"],
+                frame_end_handle=instance.data["frameEndHandle"]
             )
         )
 
