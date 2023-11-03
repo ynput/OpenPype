@@ -24,6 +24,7 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         "hiero",
         "houdini",
         "maya",
+        "max",
         "nuke",
         "photoshop",
         "resolve",
