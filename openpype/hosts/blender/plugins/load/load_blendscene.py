@@ -174,7 +174,7 @@ class BlendSceneLoader(plugin.AssetLoader):
                         parent.children.link(member)
             if (member.name in member_transforms and
                 isinstance(member, bpy.types.Object)):
-                member.matrix_basis = member_transforms[member.name]
+                    member.matrix_basis = member_transforms[member.name]
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
         avalon_container.children.link(asset_group)
