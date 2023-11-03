@@ -172,9 +172,10 @@ class BlendSceneLoader(plugin.AssetLoader):
                         parent.objects.link(member)
                     elif isinstance(member, bpy.types.Collection):
                         parent.children.link(member)
-            if (member.name in member_transforms and
-                isinstance(member, bpy.types.Object)):
-                    member.matrix_basis = member_transforms[member.name]
+            if member.name in member_transforms and isinstance(
+                member, bpy.types.Object
+            ):
+                member.matrix_basis = member_transforms[member.name]
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
         avalon_container.children.link(asset_group)
