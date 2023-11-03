@@ -53,7 +53,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
             # Check if frames are bigger than 1 (file collection)
             # override the result
             if end_frame - start_frame > 0:
-                result = self.create_file_list(self,
+                result = self.create_file_list(
                     match, int(start_frame), int(end_frame)
                 )
 
@@ -62,7 +62,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
         instance.data.update({"frames": result})
 
     @staticmethod
-    def create_file_list(self,match, start_frame, end_frame):
+    def create_file_list(match, start_frame, end_frame):
         """Collect files based on frame range and `regex.match`
 
         Args:

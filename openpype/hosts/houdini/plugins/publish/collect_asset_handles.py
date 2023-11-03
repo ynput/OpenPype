@@ -32,7 +32,6 @@ class CollectAssetHandles(pyblish.api.InstancePlugin,
     label = "Collect Asset Handles"
     use_asset_handles = True
 
-
     def process(self, instance):
         # Only process instances without already existing handles data
         # but that do have frameStartHandle and frameEndHandle defined
