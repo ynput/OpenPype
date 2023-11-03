@@ -185,28 +185,7 @@ class TasksModel(QtGui.QStandardItemModel):
         thread.refresh_finished.connect(self._on_refresh_thread)
         thread.start()
 
-    def _on_refresh_thread(self, thread_id):
-        """Callback when refresh thread is finished.
-
-        Technically can be running multiple refresh threads at the same time,
-        to avoid using values from wrong thread, we check if thread id is
-        current refresh thread id.
-
-        Tasks are stored by name, so if a folder has same task name as
-        previously selected folder it keeps the selection.
-
-        Args:
-            thread_id (str): Thread id.
-        """
-
-        # Make sure to remove thread from '_refresh_threads' dict
-        thread = self._refresh_threads.pop(thread_id)
-        if (
-            self._current_refresh_thread is None
-            or thread_id != self._current_refresh_thread.id
-        ):
-            return
-
+    def _fill_data_from_thread(self, thread):
         task_items = thread.get_result()
         # Task items are refreshed
         if task_items is None:
@@ -247,7 +226,33 @@ class TasksModel(QtGui.QStandardItemModel):
         if new_items:
             root_item.appendRows(new_items)
 
+    def _on_refresh_thread(self, thread_id):
+        """Callback when refresh thread is finished.
+
+        Technically can be running multiple refresh threads at the same time,
+        to avoid using values from wrong thread, we check if thread id is
+        current refresh thread id.
+
+        Tasks are stored by name, so if a folder has same task name as
+        previously selected folder it keeps the selection.
+
+        Args:
+            thread_id (str): Thread id.
+        """
+
+        # Make sure to remove thread from '_refresh_threads' dict
+        thread = self._refresh_threads.pop(thread_id)
+        if (
+            self._current_refresh_thread is None
+            or thread_id != self._current_refresh_thread.id
+        ):
+            return
+
+        self._fill_data_from_thread(thread)
+
+        root_item = self.invisibleRootItem()
         self._has_content = root_item.rowCount() > 0
+        self._current_refresh_thread = None
         self._is_refreshing = False
         self.refreshed.emit()
 

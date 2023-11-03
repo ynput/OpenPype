@@ -35,12 +35,11 @@ class ProjectsModel(QtGui.QStandardItemModel):
 
         self._selected_project = None
 
-        self._is_refreshing = False
         self._refresh_thread = None
 
     @property
     def is_refreshing(self):
-        return self._is_refreshing
+        return self._refresh_thread is not None
 
     def refresh(self):
         self._refresh()
@@ -169,15 +168,16 @@ class ProjectsModel(QtGui.QStandardItemModel):
         return self._select_item
 
     def _refresh(self):
-        if self._is_refreshing:
+        if self._refresh_thread is not None:
             return
-        self._is_refreshing = True
+
         refresh_thread = RefreshThread(
             "projects", self._query_project_items
         )
         refresh_thread.refresh_finished.connect(self._refresh_finished)
-        refresh_thread.start()
+
         self._refresh_thread = refresh_thread
+        refresh_thread.start()
 
     def _query_project_items(self):
         return self._controller.get_project_items()
@@ -185,11 +185,10 @@ class ProjectsModel(QtGui.QStandardItemModel):
     def _refresh_finished(self):
         # TODO check if failed
         result = self._refresh_thread.get_result()
-        self._refresh_thread = None
 
         self._fill_items(result)
 
-        self._is_refreshing = False
+        self._refresh_thread = None
         self.refreshed.emit()
 
     def _fill_items(self, project_items):

@@ -104,8 +104,8 @@ class FoldersModel(QtGui.QStandardItemModel):
 
         if not project_name:
             self._last_project_name = project_name
-            self._current_refresh_thread = None
             self._fill_items({})
+            self._current_refresh_thread = None
             return
 
         self._is_refreshing = True
@@ -152,6 +152,7 @@ class FoldersModel(QtGui.QStandardItemModel):
             return
 
         self._fill_items(thread.get_result())
+        self._current_refresh_thread = None
 
     def _fill_item_data(self, item, folder_item):
         """
