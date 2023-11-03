@@ -1,3 +1,5 @@
+import uuid
+
 from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.ayon_utils.models import PROJECTS_MODEL_SENDER
@@ -187,11 +189,14 @@ class ProjectsQtModel(QtGui.QStandardItemModel):
     def _refresh_finished(self):
         # TODO check if failed
         result = self._refresh_thread.get_result()
-
-        self._fill_items(result)
+        if result is not None:
+            self._fill_items(result)
 
         self._refresh_thread = None
-        self.refreshed.emit()
+        if result is None:
+            self._refresh()
+        else:
+            self.refreshed.emit()
 
     def _fill_items(self, project_items):
         new_project_names = {
