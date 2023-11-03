@@ -57,7 +57,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
             instance_families.update(instance.data.get("families", []))
             self.log.debug(f"{instance_families}")
             # In the for loop check whether any family matches
-            match_families = {fam.strip() for fam in families.split(",") if fam.strip()}
+            match_families = {fam.strip() for fam in
+                              families.split(",") if fam.strip()}
             self.log.debug(f"match_families: {match_families}")
             has_match = "*" in match_families or match_families.intersection(
                 instance_families) or families == "_"
