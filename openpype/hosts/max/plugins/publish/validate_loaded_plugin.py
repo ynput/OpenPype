@@ -16,7 +16,11 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
                            InstancePlugin):
     """Validates if the specific plugin is loaded in 3ds max.
     Studio Admin(s) can add the plugins they want to check in validation
-    via studio defined project settings"""
+    via studio defined project settings
+    If families = ["*"], all the required plugins would be validated
+    If families
+
+    """
 
     order = ValidatorOrder
     hosts = ["max"]
@@ -48,15 +52,17 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
         }
 
         for families, plugin in required_plugins.items():
-            families_list = families.split(",")
-            excluded_families = [family for family in families_list
-                                 if instance.data["family"] != family
-                                 and family != "_"]
-            if excluded_families:
-                self.log.debug("The {} instance is not part of {}.".format(
-                    instance.data["family"], excluded_families
-                ))
-                return
+            # Out of for loop build the instance family lookup
+            instance_families = {instance.data["family"]}
+            instance_families.update(instance.data.get("families", []))
+            self.log.debug(f"{instance_families}")
+            # In the for loop check whether any family matches
+            match_families = {fam.strip() for fam in families.split(",") if fam.strip()}
+            self.log.debug(f"match_families: {match_families}")
+            has_match = "*" in match_families or match_families.intersection(
+                instance_families) or families == "_"
+            if not has_match:
+                continue
 
             if not plugin:
                 return
@@ -66,7 +72,7 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
             if plugin_index is None:
                 invalid.append(
-                    f"Plugin {plugin} not exists in 3dsMax Plugin List."
+                    f"Plugin {plugin} does not exist in 3dsMax Plugin List."
                 )
                 continue
 
@@ -82,12 +88,12 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
                 "- {}".format(invalid) for invalid in invalid_plugins
             )
             report = (
-                "Required plugins fails to load.\n\n"
+                "Required plugins are not loaded.\n\n"
                 f"{bullet_point_invalid_statement}\n\n"
                 "You can use repair action to load the plugin."
             )
             raise PublishValidationError(
-                report, title="Required Plugins unloaded")
+                report, title="Missing Required Plugins")
 
     @classmethod
     def repair(cls, instance):
