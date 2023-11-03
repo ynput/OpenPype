@@ -2,7 +2,7 @@ from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class SetDefaultDisplayView(PreLaunchHook):
-    """Set default view and default display for houdini host that use OpenColorIO.
+    """Set default view and default display for houdini via OpenColorIO.
 
     Houdini's defaultDisplay and defaultView are set by
     setting 'OCIO_ACTIVE_DISPLAYS' and 'OCIO_ACTIVE_VIEWS'
