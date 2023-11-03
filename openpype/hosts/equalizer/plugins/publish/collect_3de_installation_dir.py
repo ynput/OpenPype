@@ -4,7 +4,7 @@ import tde4
 from pathlib import Path
 
 
-class CollectCameraData(pyblish.api.InstancePlugin):
+class Collect3DE4InstallationDir(pyblish.api.InstancePlugin):
     """Collect camera data from the scene."""
 
     order = pyblish.api.CollectorOrder

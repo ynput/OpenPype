@@ -1,6 +1,7 @@
+import tde4
+
 from openpype.hosts.equalizer.api import EqualizerCreator
 from openpype.lib import BoolDef, EnumDef
-import tde4
 
 
 class CreateMatchMove(EqualizerCreator):
@@ -17,13 +18,11 @@ class CreateMatchMove(EqualizerCreator):
             {"value": "__seq__", "label": "Sequence Cameras"},
         ]
         camera_list = tde4.getCameraList()
-        for camera in camera_list:
-            if tde4.getCameraEnabledFlag(camera):
-                camera_enum.append({
-                    "label": tde4.getCameraName(camera),
-                    "value": camera
-                })
-
+        camera_enum.extend(
+            {"label": tde4.getCameraName(camera), "value": camera}
+            for camera in camera_list
+            if tde4.getCameraEnabledFlag(camera)
+        )
         # try to get list of models
         model_enum = [
             {"value": "__none__", "label": "No 3D Models At All"},
@@ -32,12 +31,12 @@ class CreateMatchMove(EqualizerCreator):
         point_groups = tde4.getPGroupList()
         for point_group in point_groups:
             model_list = tde4.get3DModelList(point_group, 0)
-            for model in model_list:
-                model_enum.append({
+            model_enum.extend(
+                {
                     "label": tde4.get3DModelName(point_group, model),
                     "value": model
-                })
-
+                } for model in model_list
+            )
         return [
             EnumDef("camera_selection",
                     items=camera_enum,

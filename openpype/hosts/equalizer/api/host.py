@@ -7,21 +7,21 @@ note:
 import json
 import os
 import re
-from attrs import asdict
-from attrs.exceptions import NotAnAttrsClassError
 
 import pyblish.api
 import tde4  # noqa: F401
-from qtpy import QtWidgets
+from attrs import asdict
+from attrs.exceptions import NotAnAttrsClassError
+from qtpy import QtCore, QtWidgets
 
 from openpype.host import HostBase, ILoadHost, IPublishHost, IWorkfileHost
 from openpype.hosts.equalizer import EQUALIZER_HOST_DIR
+from openpype.hosts.equalizer.api.pipeline import Container
 from openpype.pipeline import (
     register_creator_plugin_path,
-    register_loader_plugin_path
+    register_loader_plugin_path,
 )
 from openpype.tools.utils import get_openpype_qt_app
-from openpype.hosts.equalizer.api.pipeline import Container
 
 CONTEXT_REGEX = re.compile(
     r"AYON_CONTEXT::(?P<context>.*?)::AYON_CONTEXT_END",
@@ -176,7 +176,9 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     @staticmethod
     def _timer():
-        QtWidgets.QApplication.processEvents()
+        QtWidgets.QApplication.instance().processEvents(
+            QtCore.QEventLoop.AllEvents)
+        #QtWidgets.QApplication.processEvents()
 
     @classmethod
     def get_host(cls):

@@ -11,7 +11,7 @@ class CollectCameraData(pyblish.api.InstancePlugin):
     hosts = ["equalizer"]
     label = "Collect camera data"
 
-    def process(self, instance):
+    def process(self, instance: pyblish.api.Instance):
         # handle camera selection.
         # possible values are:
         #   - __current__ - current camera
@@ -21,25 +21,20 @@ class CollectCameraData(pyblish.api.InstancePlugin):
         #   - camera_id - specific camera
 
         try:
-            camera_sel = instance.data["camera_selection"]
+            camera_sel = instance.data["creator_attributes"]["camera_selection"]
         except KeyError:
             self.log.warning("No camera defined")
             return
 
-        if camera_sel == "__current__":
-            cameras = [tde4.getCurrentCamera()]
-        elif camera_sel == "__ref__":
-            cameras = [
-                c for c in tde4.getCameraList()
-                if tde4.getCameraType(c) == "REF_FRAME"
-            ]
-        elif camera_sel == "__seq__":
-            cameras = [
-                c for c in tde4.getCameraList()
-                if tde4.getCameraType(c) == "REF_FRAME"
-            ]
-        elif camera_sel == "__all__":
+        if camera_sel == "__all__":
             cameras = tde4.getCameraList()
+        elif camera_sel == "__current__":
+            cameras = [tde4.getCurrentCamera()]
+        elif camera_sel in ["__ref__", "__seq__"]:
+            cameras = [
+                c for c in tde4.getCameraList()
+                if tde4.getCameraType(c) == "REF_FRAME"
+            ]
         else:
             if camera_sel not in tde4.getCameraList():
                 self.log.warning("Invalid camera found")
@@ -57,19 +52,19 @@ class CollectCameraData(pyblish.api.InstancePlugin):
             p_range_start, p_range_end = tde4.getCameraPlaybackRange(camera)
             fov = tde4.getCameraFOV(camera)
             fps = tde4.getCameraFPS(camera)
-            # focal length
-            focal_length = tde4.getCameraFocalLength(camera)
+            # focal length is time based, so lets skip it for now
+            # focal_length = tde4.getCameraFocalLength(camera, frame)
             path = tde4.getCameraPath(camera)
 
             camera_data = {
-                "camera_name": camera_name,
-                "camera_id": camera,
+                "name": camera_name,
+                "id": camera,
                 "enabled": enabled,
                 "calculation_range": (c_range_start, c_range_end),
                 "playback_range": (p_range_start, p_range_end),
                 "fov": fov,
                 "fps": fps,
-                "focal_length": focal_length,
+                # "focal_length": focal_length,
                 "path": path
             }
             data.append(camera_data)

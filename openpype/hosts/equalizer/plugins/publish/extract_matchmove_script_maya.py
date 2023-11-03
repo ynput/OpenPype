@@ -1,49 +1,25 @@
 # -*- coding: utf-8 -*-
 """Extract project for Maya"""
 
-import contextlib
 from pathlib import Path
 
 import pyblish.api
 import tde4
 
-from openpype.lib import BoolDef, EnumDef, NumberDef, import_filepath
-from openpype.pipeline import (
-    KnownPublishError,
-    OpenPypePyblishPluginMixin,
-    publish,
+from openpype.lib import import_filepath
+from openpype.pipeline import KnownPublishError
+
+from openpype.hosts.equalizer.api import (
+    ExtractScriptBase,
+    maintained_model_selection,
 )
 
 
-@contextlib.contextmanager
-def maintained_model_selection():
-    """Maintain model selection during context."""
+class ExtractMatchmoveScriptMaya(ExtractScriptBase):
+    """Extract Maya MEL script for matchmove.
 
-    # 1 get camera point_group
-    point_group = None
-    selected_models = []
-    point_groups = tde4.getPGroupList()
-    for pg in point_groups:
-        if tde4.getPGroupType(point_group) == "CAMERA":
-            point_group = pg
-            break
-    if point_group:
-        # 2 get current model selection
-        selected_models = tde4.get3DModelList(point_group, 1)
-    try:
-        yield
-    finally:
-        if point_group:
-            # 3 restore model selection
-            for model in tde4.get3DModelList(point_group, 0):
-                if model in selected_models:
-                    tde4.set3DModelSelectionFlag(point_group, model, 1)
-                else:
-                    tde4.set3DModelSelectionFlag(point_group, model, 0)
-
-
-class ExtractMatchmoveScriptMaya(
-    publish.Extractor, OpenPypePyblishPluginMixin):
+    This is using built-in export script from 3DEqualizer.
+    """
 
     label = "Extract Maya Script"
     families = ["matchmove"]
@@ -51,69 +27,29 @@ class ExtractMatchmoveScriptMaya(
 
     order = pyblish.api.ExtractorOrder
 
-    hide_reference_frame = False
-    export_uv_textures = False
-    overscan_percent_width = 100
-    overscan_percent_height = 100
-    units = "mm"
+    def process(self, instance: pyblish.api.Instance):
+        """Extracts Maya script from 3DEqualizer.
 
-    @classmethod
-    def apply_settings(cls, project_settings, system_settings):
-        settings = project_settings["equalizer"]["publish"]["ExtractMatchmoveScriptMaya"]  # noqa
+        This method is using export script shipped with 3DEqualizer to
+        maintain as much compatibility as possible. Instead of invoking it
+        from the UI, it calls directly the function that is doing the export.
+        For that it needs to pass some data that are collected in 3dequalizer
+        from the UI, so we need to determine them from the instance itself and
+        from the state of the project.
 
-        cls.hide_reference_frame = settings.get(
-            "hide_reference_frame", cls.hide_reference_frame)
-        cls.export_uv_textures = settings.get(
-            "export_uv_textures", cls.export_uv_textures)
-        cls.overscan_percent_width = settings.get(
-            "overscan_percent_width", cls.overscan_percent_width)
-        cls.overscan_percent_height = settings.get(
-            "overscan_percent_height", cls.overscan_percent_height)
-        cls.units = settings.get("units", cls.units)
-
-    @classmethod
-    def get_attribute_defs(cls):
-        defs = super(ExtractMatchmoveScriptMaya, cls).get_attribute_defs()
-
-        defs.extend([
-            BoolDef("hide_reference_frame",
-                      label="Hide Reference Frame",
-                      default=cls.hide_reference_frame),
-            BoolDef("export_uv_textures",
-                    label="Export UV Textures",
-                    default=cls.export_uv_textures),
-            NumberDef("overscan_percent_width",
-                      label="Overscan Width %",
-                      default=cls.overscan_percent_width,
-                      decimals=0,
-                      minimum=1,
-                      maximum=1000),
-            NumberDef("overscan_percent_height",
-                      label="Overscan Height %",
-                      default=cls.overscan_percent_height,
-                      decimals=0,
-                      minimum=1,
-                      maximum=1000),
-            EnumDef("units",
-                    ["mm", "cm", "m", "in", "ft", "yd"],
-                    default=cls.units,
-                    label="Units"),
-        ])
-        return defs
-
-    def process(self, instance):
+        """
         attr_data = self.get_attr_values_from_data(instance.data)
 
-        # import maya export script from 3dequalizer
+        # import maya export script from 3DEqualizer
         exporter_path = instance.data["tde4_path"] / "sys_data" / "py_scripts" / "export_maya.py"  # noqa: E501
         self.log.debug(f"Importing {exporter_path.as_posix()}")
-        exporter = import_filepath(exporter_path)
+        exporter = import_filepath(exporter_path.as_posix())
 
         # get camera point group
         point_group = None
         point_groups = tde4.getPGroupList()
         for pg in point_groups:
-            if tde4.getPGroupType(point_group) == "CAMERA":
+            if tde4.getPGroupType(pg) == "CAMERA":
                 point_group = pg
                 break
         else:
@@ -135,6 +71,7 @@ class ExtractMatchmoveScriptMaya(
             "yd": 0.0109361  # cm -> yd
         }
         scale_factor = unit_scales[attr_data["units"]]
+        model_selection_enum = instance.data["creator_attributes"]["model_selection"]  # noqa: E501
 
         with maintained_model_selection():
             # handle model selection
@@ -143,9 +80,9 @@ class ExtractMatchmoveScriptMaya(
             # 1 - No models
             # 2 - Selected models
             # 3 - All models
-            if instance.data["model_selection"] == "__none__":
+            if model_selection_enum == "__none__":
                 model_selection = 1
-            elif instance.data["model_selection"] == "__all__":
+            elif model_selection_enum == "__all__":
                 model_selection = 3
             else:
                 # take model from instance and set its selection flag on
@@ -154,7 +91,7 @@ class ExtractMatchmoveScriptMaya(
                 point_groups = tde4.getPGroupList()
                 for point_group in point_groups:
                     model_list = tde4.get3DModelList(point_group, 0)
-                    if instance.data["model_selection"] in model_list:
+                    if model_selection_enum in model_list:
                         model_selection = 2
                         tde4.set3DModelSelectionFlag(
                             point_group, instance.data["model_selection"], 1)
@@ -178,3 +115,15 @@ class ExtractMatchmoveScriptMaya(
 
         if status != 1:
             raise KnownPublishError("Export failed.")
+
+        # create representation data
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        representation = {
+            'name': "mel",
+            'ext': "mel",
+            'files': "maya_export.mel",
+            "stagingDir": staging_dir,
+        }
+        instance.data["representations"].append(representation)

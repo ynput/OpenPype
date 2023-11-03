@@ -6,8 +6,14 @@ note:
 """
 from abc import ABC
 from typing import Dict, List
+
 from openpype.hosts.equalizer.api import EqualizerHost
 from openpype.pipeline import CreatedInstance, Creator, CreatorError
+from openpype.pipeline import (publish, OpenPypePyblishPluginMixin)
+
+from openpype.lib import BoolDef, EnumDef, NumberDef
+
+import pyblish
 
 
 class EqualizerCreator(ABC, Creator):
@@ -45,14 +51,18 @@ class EqualizerCreator(ABC, Creator):
         Returns:
             list[openpype.pipeline.CreatedInstance]: List of instances.
         """
-        return self.host.get_context_data().get("publish_instances", [])
+        for instance_data in self.host.get_context_data().get(
+                "publish_instances", []):
+            created_instance = CreatedInstance.from_existing(
+                instance_data, self
+            )
+            self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
 
         # if not update_list:
         #     return
         context = self.host.get_context_data()
-        self.log.debug("updating ...")
         if not context.get("publish_instances"):
             context["publish_instances"] = []
 
@@ -92,3 +102,58 @@ class EqualizerCreator(ABC, Creator):
                 context["publish_instances"].remove(instance)
 
         self.host.update_context_data(context, changes={})
+
+
+class ExtractScriptBase(
+        ABC, publish.Extractor, OpenPypePyblishPluginMixin):
+    """Base class for extract script plugins."""
+
+    hide_reference_frame = False
+    export_uv_textures = False
+    overscan_percent_width = 100
+    overscan_percent_height = 100
+    units = "mm"
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        settings = project_settings["equalizer"]["publish"]["ExtractMatchmoveScriptMaya"]  # noqa
+
+        cls.hide_reference_frame = settings.get(
+            "hide_reference_frame", cls.hide_reference_frame)
+        cls.export_uv_textures = settings.get(
+            "export_uv_textures", cls.export_uv_textures)
+        cls.overscan_percent_width = settings.get(
+            "overscan_percent_width", cls.overscan_percent_width)
+        cls.overscan_percent_height = settings.get(
+            "overscan_percent_height", cls.overscan_percent_height)
+        cls.units = settings.get("units", cls.units)
+
+    @classmethod
+    def get_attribute_defs(cls):
+        defs = super(ExtractScriptBase, cls).get_attribute_defs()
+
+        defs.extend([
+            BoolDef("hide_reference_frame",
+                      label="Hide Reference Frame",
+                      default=cls.hide_reference_frame),
+            BoolDef("export_uv_textures",
+                    label="Export UV Textures",
+                    default=cls.export_uv_textures),
+            NumberDef("overscan_percent_width",
+                      label="Overscan Width %",
+                      default=cls.overscan_percent_width,
+                      decimals=0,
+                      minimum=1,
+                      maximum=1000),
+            NumberDef("overscan_percent_height",
+                      label="Overscan Height %",
+                      default=cls.overscan_percent_height,
+                      decimals=0,
+                      minimum=1,
+                      maximum=1000),
+            EnumDef("units",
+                    ["mm", "cm", "m", "in", "ft", "yd"],
+                    default=cls.units,
+                    label="Units"),
+        ])
+        return defs
