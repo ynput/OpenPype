@@ -167,7 +167,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
         context.create_instance(**data)
 
-
     def create_audio_instance(
         self, context, otio_timeline, timeline_item_data, **data
     ):
@@ -177,8 +176,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             return
 
         asset = data.get("asset")
-        track_item = data.get("item")
-        clip_name = track_item.GetName()
 
         # test if any audio clips
         if not self.test_any_audio(timeline_item_data, otio_timeline):
