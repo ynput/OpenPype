@@ -1,7 +1,7 @@
 from .projects_widget import (
     # ProjectsWidget,
     ProjectsCombobox,
-    ProjectsModel,
+    ProjectsQtModel,
     ProjectSortFilterProxy,
 )
 
@@ -25,7 +25,7 @@ from .utils import (
 __all__ = (
     # "ProjectsWidget",
     "ProjectsCombobox",
-    "ProjectsModel",
+    "ProjectsQtModel",
     "ProjectSortFilterProxy",
 
     "FoldersWidget",

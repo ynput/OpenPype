@@ -10,11 +10,11 @@ PROJECT_IS_CURRENT_ROLE = QtCore.Qt.UserRole + 4
 LIBRARY_PROJECT_SEPARATOR_ROLE = QtCore.Qt.UserRole + 5
 
 
-class ProjectsModel(QtGui.QStandardItemModel):
+class ProjectsQtModel(QtGui.QStandardItemModel):
     refreshed = QtCore.Signal()
 
     def __init__(self, controller):
-        super(ProjectsModel, self).__init__()
+        super(ProjectsQtModel, self).__init__()
         self._controller = controller
 
         self._project_items = {}
@@ -402,7 +402,7 @@ class ProjectsCombobox(QtWidgets.QWidget):
         projects_combobox = QtWidgets.QComboBox(self)
         combobox_delegate = QtWidgets.QStyledItemDelegate(projects_combobox)
         projects_combobox.setItemDelegate(combobox_delegate)
-        projects_model = ProjectsModel(controller)
+        projects_model = ProjectsQtModel(controller)
         projects_proxy_model = ProjectSortFilterProxy()
         projects_proxy_model.setSourceModel(projects_model)
         projects_combobox.setModel(projects_proxy_model)

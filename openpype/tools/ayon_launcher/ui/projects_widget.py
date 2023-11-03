@@ -3,7 +3,7 @@ from qtpy import QtWidgets, QtCore
 from openpype.tools.flickcharm import FlickCharm
 from openpype.tools.utils import PlaceholderLineEdit, RefreshButton
 from openpype.tools.ayon_utils.widgets import (
-    ProjectsModel,
+    ProjectsQtModel,
     ProjectSortFilterProxy,
 )
 from openpype.tools.ayon_utils.models import PROJECTS_MODEL_SENDER
@@ -95,7 +95,7 @@ class ProjectsWidget(QtWidgets.QWidget):
         projects_view.setSelectionMode(QtWidgets.QListView.NoSelection)
         flick = FlickCharm(parent=self)
         flick.activateOn(projects_view)
-        projects_model = ProjectsModel(controller)
+        projects_model = ProjectsQtModel(controller)
         projects_proxy_model = ProjectSortFilterProxy()
         projects_proxy_model.setSourceModel(projects_model)
 
