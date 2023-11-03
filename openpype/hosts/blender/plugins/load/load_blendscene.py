@@ -136,13 +136,18 @@ class BlendSceneLoader(plugin.AssetLoader):
             f"The asset is not loaded: {container['objectName']}"
         )
 
+        # Get the parents of the members of the asset group, so we can
+        # re-link them after the update.
+        # Also gets the transform for each object to reapply after the update.
         collection_parents = {}
+        member_transforms = {}
         members = asset_group.get(AVALON_PROPERTY).get("members", [])
         loaded_collections = {c for c in bpy.data.collections if c in members}
         loaded_collections.add(bpy.data.collections.get(AVALON_CONTAINERS))
         for member in members:
             if isinstance(member, bpy.types.Object):
                 member_parents = set(member.users_collection)
+                member_transforms[member.name] = member.matrix_basis.copy()
             elif isinstance(member, bpy.types.Collection):
                 member_parents = {
                     c for c in bpy.data.collections if c.user_of_id(member)}
@@ -167,6 +172,9 @@ class BlendSceneLoader(plugin.AssetLoader):
                         parent.objects.link(member)
                     elif isinstance(member, bpy.types.Collection):
                         parent.children.link(member)
+            if (member.name in member_transforms and
+                isinstance(member, bpy.types.Object)):
+                member.matrix_basis = member_transforms[member.name]
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
         avalon_container.children.link(asset_group)
