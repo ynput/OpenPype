@@ -415,6 +415,19 @@ class ClipLoader:
         handle_start = self.data["versionData"].get("handleStart")
         handle_end = self.data["versionData"].get("handleEnd")
 
+        """
+        There are cases where representation could be published without
+        handles if the "Extract review output tags" is set to "no_handles".
+        This would result in a shorter source duration compared to the
+        db frame-range. In such cases, we need to assume that the source
+        has no handles.
+
+        To address this, we should compare the duration of the source
+        frame with the db frame-range. The duration of the db frame-range
+        should be calculated from the version data. If, for any reason,
+        the frame data is missing in the version data, we should again
+        assume that the source has no handles.
+        """
         # check if source duration is shorter than db frame duration
         source_with_handles = True
         # make sure all frame data is available
@@ -771,7 +784,7 @@ class PublishClip:
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
 
-        hierarchy_formatting_data = dict()
+        hierarchy_formatting_data = {}
         _data = self.timeline_item_default_data.copy()
         if self.ui_inputs:
             # adding tag metadata from ui
@@ -867,7 +880,7 @@ class PublishClip:
     def _convert_to_entity(self, key):
         """ Converting input key to key with type. """
         # convert to entity type
-        entity_type = self.types.get(key, None)
+        entity_type = self.types.get(key)
 
         assert entity_type, "Missing entity type for `{}`".format(
             key
