@@ -44,7 +44,7 @@ class ExtractRedshiftProxy(publish.Extractor):
         }
 
         # A single frame may also be rendered without start/end frame.
-        if "frameStartHandle" in instance.data and "frameEndHandle" in instance.data:
+        if "frameStartHandle" in instance.data and "frameEndHandle" in instance.data:  # noqa
             representation["frameStart"] = instance.data["frameStartHandle"]
             representation["frameEnd"] = instance.data["frameEndHandle"]
 
