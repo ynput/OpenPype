@@ -405,26 +405,41 @@ class ClipLoader:
             self.active_bin
         )
         _clip_property = media_pool_item.GetClipProperty
+        source_in = int(_clip_property("Start"))
+        source_out = int(_clip_property("End"))
+        source_duration = int(_clip_property("Frames"))
 
-        # get handles
+        # get version data frame data from db
+        frame_start = self.data["versionData"].get("frameStart")
+        frame_end = self.data["versionData"].get("frameEnd")
         handle_start = self.data["versionData"].get("handleStart")
         handle_end = self.data["versionData"].get("handleEnd")
-        if handle_start is None:
-            handle_start = int(self.data["assetData"]["handleStart"])
-        if handle_end is None:
-            handle_end = int(self.data["assetData"]["handleEnd"])
 
-        # check frame duration from versionData or assetData
-        frame_start = self.data["versionData"].get("frameStart")
-        if frame_start is None:
-            frame_start = self.data["assetData"]["frameStart"]
+        # check if source duration is shorter than db frame duration
+        source_with_handles = True
+        # make sure all frame data is available
+        if (
+            frame_start is None or
+            frame_end is None or
+            handle_start is None or
+            handle_end is None
+        ):
+            # if not then rather assume that source has no handles
+            source_with_handles = False
+        else:
+            # calculate db frame duration
+            db_frame_duration = (
+                # include handles
+                int(handle_start) + int(handle_end) +
+                # include frame duration
+                (int(frame_end) - int(frame_start) + 1)
+            )
 
-        # check frame duration from versionData or assetData
-        frame_end = self.data["versionData"].get("frameEnd")
-        if frame_end is None:
-            frame_end = self.data["assetData"]["frameEnd"]
-
-        db_frame_duration = int(frame_end) - int(frame_start) + 1
+            # compare source duration with db frame duration
+            # and assume that source has no handles if source duration
+            # is shorter than db frame duration
+            if source_duration < db_frame_duration:
+                source_with_handles = False
 
         # get timeline in
         timeline_start = self.active_timeline.GetStartFrame()
@@ -436,14 +451,6 @@ class ClipLoader:
             timeline_in = int(
                 timeline_start + self.data["assetData"]["clipIn"])
 
-        source_in = int(_clip_property("Start"))
-        source_out = int(_clip_property("End"))
-        source_duration = int(_clip_property("Frames"))
-
-        # check if source duration is shorter than db frame duration
-        source_with_handles = True
-        if source_duration < db_frame_duration:
-            source_with_handles = False
 
         # only exclude handles if source has no handles or
         # if user wants to load without handles
