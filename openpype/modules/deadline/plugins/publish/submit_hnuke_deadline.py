@@ -424,7 +424,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                     "BatchName": response_data["Props"]["Batch"],
                     # "JobDependency0": response_data["_id"], # NOTE hornet removing the dependency with the main workfile shot.
                     "ChunkSize": 99999999,
-                })
+            })
         else:
             if response_data.get("_id"):
                 payload["JobInfo"].update({

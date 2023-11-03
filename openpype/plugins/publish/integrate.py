@@ -158,7 +158,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         instance.data["processedWithNewIntegrator"] = True
 
         # Instance should be integrated on a farm
-        if instance.data.get("farm"):
+        if instance.data.get("farm") and not instance.data.get('render_target') == 'a_frames_farm':
             self.log.info(
                 "Instance is marked to be processed on farm. Skipping")
             return
