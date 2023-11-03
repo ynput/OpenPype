@@ -41,7 +41,7 @@ class CreateBlendScene(plugin.Creator):
         lib.imprint(asset_group, self.data)
 
         try:
-            area  = next(
+            area = next(
                 area for area in bpy.context.window.screen.areas
                 if area.type == 'OUTLINER')
             region = next(
