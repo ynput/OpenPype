@@ -34,6 +34,7 @@ def visual_style_enum():
         {"label": "ModelAssist", "value": "ModelAssist"}
     ]
 
+
 def visual_preset_enum():
     """Return enumerator for viewport visual preset."""
     return [
