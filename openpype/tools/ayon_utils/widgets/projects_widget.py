@@ -1,5 +1,3 @@
-import uuid
-
 from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype.tools.ayon_utils.models import PROJECTS_MODEL_SENDER
