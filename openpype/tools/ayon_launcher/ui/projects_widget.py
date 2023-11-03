@@ -133,9 +133,14 @@ class ProjectsWidget(QtWidgets.QWidget):
         return self._projects_model.has_content()
 
     def _on_view_clicked(self, index):
-        if index.isValid():
-            project_name = index.data(QtCore.Qt.DisplayRole)
-            self._controller.set_selected_project(project_name)
+        if not index.isValid():
+            return
+        model = index.model()
+        flags = model.flags(index)
+        if not flags & QtCore.Qt.ItemIsEnabled:
+            return
+        project_name = index.data(QtCore.Qt.DisplayRole)
+        self._controller.set_selected_project(project_name)
 
     def _on_project_filter_change(self, text):
         self._projects_proxy_model.setFilterFixedString(text)
