@@ -7,7 +7,7 @@ import requests
 
 import pyblish.api
 
-from openpype.client import get_project, get_asset_by_name
+from openpype.client import get_asset_by_name
 from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 from openpype.hosts.tvpaint import TVPAINT_ROOT_DIR
 from openpype.settings import get_current_project_settings
