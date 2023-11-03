@@ -201,7 +201,7 @@ def _render_preview_animation_max_pre_2024(
         dib_width = rt.renderWidth
         dib_height = rt.renderHeight
         # aspect ratio
-        viewportRatio = dib_width /dib_height
+        viewportRatio = dib_width / dib_height
         renderRatio = float(res_width / res_height)
         if viewportRatio <= renderRatio:
             heightCrop = (dib_width / renderRatio)
