@@ -103,8 +103,18 @@ class ProjectsModel(object):
         self._refresh_projects_cache()
 
     def get_project_items(self, sender):
+        """
+
+        Args:
+            sender (str): Name of sender who asked for items.
+
+        Returns:
+            Union[list[ProjectItem], None]: List of project items, or None
+                if model is refreshing.
+        """
+
         if not self._projects_cache.is_valid:
-            self._refresh_projects_cache(sender)
+            return self._refresh_projects_cache(sender)
         return self._projects_cache.get_data()
 
     def get_project_entity(self, project_name):
@@ -136,11 +146,12 @@ class ProjectsModel(object):
 
     def _refresh_projects_cache(self, sender=None):
         if self._is_refreshing:
-            return
+            return None
 
         with self._project_refresh_event_manager(sender):
             project_items = self._query_projects()
             self._projects_cache.update_data(project_items)
+        return self._projects_cache.get_data()
 
     def _query_projects(self):
         projects = ayon_api.get_projects(fields=["name", "active", "library"])
