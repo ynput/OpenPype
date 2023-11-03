@@ -72,13 +72,20 @@ def getSubmitterInfo():
 
 def getNodeSubmissionInfo():
     nde = nuke.thisNode()
-    relevant_knobs = ['File output','deadlinePool','deadlineGroup','deadlinePriority','first','last']
+    inside_write = nuke.toNode('inside_' + nde.name())
+    relevant_knobs = ['File output','deadlinePool','deadlineGroup','deadlinePriority']
+    relevant_inside_knobs = ['first', 'last']
     all_knobs = nde.allKnobs()
-    return { knb.name(): knb.value() for knb in all_knobs if knb.name() in relevant_knobs }
+    knob_values = { knb.name(): knb.value() for knb in all_knobs if knb.name() in relevant_knobs }
+    knob_values['first'] = inside_write.knob('first').value()
+    knob_values['last'] = inside_write.knob('last').value()
+    return knob_values
 
 def deadlineNetworkSubmit(dev=False):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    nuke.scriptSaveToTemp("{path}/{name}_{time}.nk".format(path=os.environ['AVALON_WORKDIR'],
+    if not os.path.exists(os.path.join(os.environ['AVALON_WORKDIR'], "submission")):
+        os.mkdir(os.path.join(os.environ['AVALON_WORKDIR'], "submission"))
+    nuke.scriptSaveToTemp("{path}/submission/{name}_{time}.nk".format(path=os.environ['AVALON_WORKDIR'],
                                                            name=os.path.splitext(os.path.basename(nuke.root().name()))[0],
                                                            time=timestamp))
     modules = ModulesManager()
@@ -91,7 +98,7 @@ def deadlineNetworkSubmit(dev=False):
         nuke.alert("Failed to submit to Deadline: {}".format(response.text))
         raise Exception(response.text)
     else:
-        nuke.alert("Submitted to Deadline Sucessfully: {}".format(json.loads(response.text).get('Name')))
+        nuke.alert("Submitted to Deadline Sucessfully: {}".format(response.text))
 
 
 def build_request(knobValues,timestamp):
@@ -102,14 +109,14 @@ def build_request(knobValues,timestamp):
                     "Name": os.environ['AVALON_PROJECT'].split("_")[0] + "_" + os.environ['AVALON_ASSET'] + '_' + nuke.thisNode().name(),
                     # pass submitter user
                     "UserName": getpass.getuser(),
-                    "Priority": knobValues.get('deadlinePriority') or 50,
-                    "Pool": knobValues.get("deadlinePool") or "local",
-                    "SecondaryPool": "",
+                    "Priority": int(knobValues.get('deadlinePriority')) or 90,
+                    "Pool": knobValues.get('deadlinePool') or "local",
+                    "SecondaryPool": '',
                     "Group": knobValues.get('deadlineGroup') or 'nuke',
                     "Plugin": 'Nuke',
                     "Frames": "{start}-{end}".format(
-                        start=knobValues['first'] or 1001,
-                        end=knobValues['last'] or 1001
+                        start=int(knobValues['first']) or 1001,
+                        end=int(knobValues['last']) or 1001
                     ),
                     # Optional, enable double-click to preview rendered
                     # frames from Deadline Monitor
@@ -119,12 +126,12 @@ def build_request(knobValues,timestamp):
                 },
                 "PluginInfo": {
                     # Input
-                    "SceneFile": (nuke.script_directory() + "{}_{}.nk".format(nuke.root().name(), timestamp)).replace("\\", "/"),
+                    "SceneFile": (nuke.script_directory() + "/submission/{}_{}.nk".format(os.path.splitext(os.path.basename(nuke.root().name()))[0], timestamp)).replace("\\", "/"),
                     # Output directory and filename
                     "OutputFilePath": knobValues['File output'].replace("\\", "/"),
                     # "OutputFilePrefix": render_variables["filename_prefix"],
                     # Mandatory for Deadline
-                    "Version": nuke.NUKE_VERSION_STRING,
+                    "Version": str(nuke.NUKE_VERSION_MAJOR) + "." + str(nuke.NUKE_VERSION_MINOR),
                     # Resolve relative references
                     "ProjectPath": nuke.script_directory().replace("\\", "/"),
                     # using GPU by default

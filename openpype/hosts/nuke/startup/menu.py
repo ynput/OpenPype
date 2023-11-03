@@ -210,7 +210,9 @@ def embedOptions():
     deadlinePriority = nuke.Int_Knob('deadlinePriority', 'Priority')
     deadlinePool = nuke.String_Knob('deadlinePool', 'Pool')
     deadlineGroup = nuke.String_Knob('deadlineGroup', 'Group')
-
+    deadlinePool.setValue('local')
+    deadlineGroup.setValue('nuke')
+    deadlinePriority.setValue(90)
 
     group.addKnob(readfrom)
     group.addKnob(clr)
