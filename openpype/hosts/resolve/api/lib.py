@@ -278,7 +278,7 @@ def create_timeline_item(
 
     # timing variables
     if all([timeline_in, source_start, source_end]):
-        fps = timeline.GetSetting("timelineFrameRate")
+        fps = float(timeline.GetSetting("timelineFrameRate"))
         duration = source_end - source_start
         timecode_in = frames_to_timecode(timeline_in, fps)
         timecode_out = frames_to_timecode(timeline_in + duration, fps)
@@ -298,7 +298,7 @@ def create_timeline_item(
         if source_end:
             clip_data["endFrame"] = source_end
         if timecode_in:
-            clip_data["recordFrame"] = timecode_in
+            clip_data["recordFrame"] = timeline_in
 
         # add to timeline
         media_pool.AppendToTimeline([clip_data])
