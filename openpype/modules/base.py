@@ -741,7 +741,7 @@ class ModulesManager:
 
         Returns:
             dict: Output is dictionary with keys "publish", "create", "load",
-                "actions" and "inventory" each containing list of paths.
+                "actions", "inventory", "builder" each containing list of paths.
         """
         # Output structure
         output = {
@@ -749,7 +749,8 @@ class ModulesManager:
             "create": [],
             "load": [],
             "actions": [],
-            "inventory": []
+            "inventory": [],
+            "builder": []
         }
         unknown_keys_by_module = {}
         for module in self.get_enabled_modules():
@@ -866,6 +867,21 @@ class ModulesManager:
 
         return self._collect_plugin_paths(
             "get_inventory_action_paths",
+            host_name
+        )
+
+    def collect_builder_action_paths(self, host_name):
+        """Helper to collect builder action paths from modules.
+
+        Args:
+            host_name (str): For which host are load action meant.
+
+        Returns:
+            list: List of builder action paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_builder_action_paths",
             host_name
         )
 

@@ -193,6 +193,9 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         if parent:
             placeholder = cmds.parent(placeholder, selection[0])[0]
 
+        if placeholder_data['action'] is None:
+            placeholder_data.pop('action')
+
         imprint(placeholder, placeholder_data)
 
         # Add helper attributes to keep placeholder info
@@ -214,7 +217,6 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
 
     def update_placeholder(self, placeholder_item, placeholder_data):
         node_name = placeholder_item.scene_identifier
-        print(node_name)
         new_values = {}
         for key, value in placeholder_data.items():
             placeholder_value = placeholder_item.data.get(key)

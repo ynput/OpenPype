@@ -38,6 +38,9 @@ from . import (
     deregister_inventory_action_path,
 )
 
+from .action import (
+    register_builder_action_path,
+)
 
 _is_installed = False
 _process_id = None
@@ -186,6 +189,10 @@ def install_openpype_plugins(project_name=None, host_name=None):
     for path in inventory_action_paths:
         register_inventory_action_path(path)
 
+    builder_action_paths = modules_manager.collect_builder_action_paths(host_name)
+    for path in builder_action_paths:
+        register_builder_action_path(path)
+
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
 
@@ -216,6 +223,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
             register_loader_plugin_path(path)
             register_creator_plugin_path(path)
             register_inventory_action_path(path)
+            register_builder_action_path(path)
 
 
 def uninstall_host():
