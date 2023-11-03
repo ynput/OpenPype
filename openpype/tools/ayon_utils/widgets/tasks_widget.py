@@ -12,7 +12,7 @@ ITEM_NAME_ROLE = QtCore.Qt.UserRole + 3
 TASK_TYPE_ROLE = QtCore.Qt.UserRole + 4
 
 
-class TasksModel(QtGui.QStandardItemModel):
+class TasksQtModel(QtGui.QStandardItemModel):
     """Tasks model which cares about refresh of tasks by folder id.
 
     Args:
@@ -22,7 +22,7 @@ class TasksModel(QtGui.QStandardItemModel):
     refreshed = QtCore.Signal()
 
     def __init__(self, controller):
-        super(TasksModel, self).__init__()
+        super(TasksQtModel, self).__init__()
 
         self._controller = controller
 
@@ -285,7 +285,7 @@ class TasksModel(QtGui.QStandardItemModel):
             if section == 0:
                 return "Tasks"
 
-        return super(TasksModel, self).headerData(
+        return super(TasksQtModel, self).headerData(
             section, orientation, role
         )
 
@@ -310,7 +310,7 @@ class TasksWidget(QtWidgets.QWidget):
         tasks_view = DeselectableTreeView(self)
         tasks_view.setIndentation(0)
 
-        tasks_model = TasksModel(controller)
+        tasks_model = TasksQtModel(controller)
         tasks_proxy_model = QtCore.QSortFilterProxyModel()
         tasks_proxy_model.setSourceModel(tasks_model)
         tasks_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
