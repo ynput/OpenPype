@@ -77,10 +77,7 @@ class DictImmutableKeysWidget(BaseWidget):
         self.entity_widget.add_widget_to_layout(self, label)
 
         if hasattr(self.entity, "read_only"):
-            children = self.entity_widget.findChildren(QtWidgets.QWidget)
-            for child in children:
-                if hasattr(child, "setReadOnly"):
-                    child.setReadOnly(True)
+            self.set_read_only(True)
 
     def _prepare_entity_layouts(self, children, widget):
         for child in children:
@@ -122,6 +119,14 @@ class DictImmutableKeysWidget(BaseWidget):
                 else:
                     self.scroll_to(self.input_fields[0])
             self.setFocus()
+
+    def set_read_only(self, status):
+        for direct_child in self._direct_children_widgets:
+            if hasattr(direct_child, "set_read_only"):
+                direct_child.set_read_only(status)
+            # vv REMOVE ME AND FINISH THE CODE
+            break # <<
+            # ^^
 
     def _ui_item_base(self):
         self.setObjectName("DictInvisible")

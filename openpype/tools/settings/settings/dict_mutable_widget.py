@@ -595,6 +595,7 @@ class DictMutableKeysWidget(BaseWidget):
     def create_ui(self):
         self.input_fields = []
         self.required_inputs_by_key = {}
+        self._read_only = False
 
         if self.entity.highlight_content:
             content_state = "highlighted"
@@ -776,6 +777,8 @@ class DictMutableKeysWidget(BaseWidget):
             self.entity.collapsible_key, self.entity.store_as_list,
             child_entity, self
         )
+
+        input_field.setEnabled(not self._read_only)
         self.input_fields.append(input_field)
 
         new_widget_index = self.content_layout.count() - 1
@@ -973,3 +976,8 @@ class DictMutableKeysWidget(BaseWidget):
         self.body_widget.side_line_widget.style().polish(
             self.body_widget.side_line_widget
         )
+
+    def set_read_only(self, status):
+        self._read_only = status
+        for input_field in self.input_fields:
+            input_field.setEnabled(not self._read_only)
