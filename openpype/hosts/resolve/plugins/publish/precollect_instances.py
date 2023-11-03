@@ -2,12 +2,15 @@ from pprint import pformat
 
 import pyblish
 
+from openpype.pipeline.editorial import is_overlapping_otio_ranges
+
 from openpype.hosts.resolve.api.lib import (
     get_current_timeline_items,
     get_timeline_item_pype_tag,
     publish_clip_color,
     get_publish_attribute,
     get_otio_clip_instance_data,
+    create_otio_time_range_from_timeline_item_data
 )
 
 
@@ -17,6 +20,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.49
     label = "Precollect Instances"
     hosts = ["resolve"]
+
+    audio_track_items = []
 
     def process(self, context):
         otio_timeline = context.data["otioTimeline"]
@@ -29,7 +34,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
         for timeline_item_data in selected_timeline_items:
 
-            data = dict()
+            data = {}
             timeline_item = timeline_item_data["clip"]["item"]
 
             # get pype tag data
@@ -53,6 +58,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                     source_duration - timeline_item.GetRightOffset()))
 
             self.log.debug("Handles: <{}, {}>".format(handle_start, handle_end))
+
+            # add audio to families
+            with_audio = False
+            if tag_data.pop("audio"):
+                with_audio = True
 
             # add tag data to instance data
             data.update({
@@ -93,6 +103,18 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
             # create shot instance for shot attributes create/update
             self.create_shot_instance(context, timeline_item, **data)
+
+            if not with_audio:
+                continue
+
+            # create audio subset instance
+            self.create_audio_instance(
+                context, otio_timeline, timeline_item_data, **data)
+
+            # add audioReview attribute to plate instance data
+            # if reviewTrack is on
+            if tag_data.get("reviewTrack") is not None:
+                instance.data["reviewAudio"] = True
 
             self.log.info("Creating instance: {}".format(instance))
             self.log.debug(
@@ -144,3 +166,69 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         })
 
         context.create_instance(**data)
+
+
+    def create_audio_instance(
+        self, context, otio_timeline, timeline_item_data, **data
+    ):
+        master_layer = data.get("heroTrack")
+
+        if not master_layer:
+            return
+
+        asset = data.get("asset")
+        track_item = data.get("item")
+        clip_name = track_item.GetName()
+
+        # test if any audio clips
+        if not self.test_any_audio(timeline_item_data, otio_timeline):
+            return
+
+        asset = data["asset"]
+        subset = "audioMain"
+
+        # insert family into families
+        family = "audio"
+
+        # form label
+        label = asset
+        label += " {}".format(subset)
+
+        data.update({
+            "name": "{}_{}".format(asset, subset),
+            "label": label,
+            "subset": subset,
+            "family": family,
+            "families": ["clip"]
+        })
+        # remove review track attr if any
+        data.pop("reviewTrack")
+
+        # create instance
+        instance = context.create_instance(**data)
+        self.log.info("Creating instance: {}".format(instance))
+        self.log.debug(
+            "_ instance.data: {}".format(pformat(instance.data)))
+
+    def test_any_audio(self, timeline_item_data, otio_timeline):
+        """Test if any audio clip is overlapping with given clip."""
+
+        # collect all audio tracks to class variable
+        if not self.audio_track_items:
+            for otio_clip in otio_timeline.each_clip():
+                if otio_clip.parent().kind != "Audio":
+                    continue
+                self.audio_track_items.append(otio_clip)
+
+        # get track item timeline range
+        timeline_range = create_otio_time_range_from_timeline_item_data(
+            timeline_item_data)
+
+        # loop through audio track items and search for overlapping clip
+        for otio_audio in self.audio_track_items:
+            parent_range = otio_audio.range_in_parent()
+
+            # if any overaling clip found then return True
+            if is_overlapping_otio_ranges(
+                    parent_range, timeline_range, strict=False):
+                return True
