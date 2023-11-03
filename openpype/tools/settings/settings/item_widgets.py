@@ -76,6 +76,12 @@ class DictImmutableKeysWidget(BaseWidget):
 
         self.entity_widget.add_widget_to_layout(self, label)
 
+        if hasattr(self.entity, "read_only"):
+            children = self.entity_widget.findChildren(QtWidgets.QWidget)
+            for child in children:
+                if hasattr(child, "setReadOnly"):
+                    child.setReadOnly(True)
+
     def _prepare_entity_layouts(self, children, widget):
         for child in children:
             if not isinstance(child, dict):
