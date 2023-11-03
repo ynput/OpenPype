@@ -87,7 +87,7 @@ def _get_project_items_from_entitiy(projects):
 
 class ProjectsModel(object):
     def __init__(self, controller):
-        self._projects_cache = CacheItem(default_factory=dict)
+        self._projects_cache = CacheItem(default_factory=list)
         self._project_items_by_name = {}
         self._projects_by_name = {}
 
