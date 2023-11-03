@@ -284,6 +284,8 @@ class LaunchLoader(LaunchQtApp):
     _tool_name = "loader"
 
     def before_window_show(self):
+        if AYON_SERVER_ENABLED:
+            return
         self._window.set_context(
             {"asset": get_current_asset_name()},
             refresh=True
@@ -309,6 +311,8 @@ class LaunchManager(LaunchQtApp):
     _tool_name = "sceneinventory"
 
     def before_window_show(self):
+        if AYON_SERVER_ENABLED:
+            return
         self._window.refresh()
 
 
@@ -320,6 +324,8 @@ class LaunchLibrary(LaunchQtApp):
     _tool_name = "libraryloader"
 
     def before_window_show(self):
+        if AYON_SERVER_ENABLED:
+            return
         self._window.refresh()
 
 
@@ -340,6 +346,8 @@ class LaunchWorkFiles(LaunchQtApp):
         return result
 
     def before_window_show(self):
+        if AYON_SERVER_ENABLED:
+            return
         self._window.root = str(Path(
             os.environ.get("AVALON_WORKDIR", ""),
             os.environ.get("AVALON_SCENEDIR", ""),

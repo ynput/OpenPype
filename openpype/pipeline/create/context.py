@@ -758,7 +758,7 @@ class PublishAttributes:
             yield name
 
     def mark_as_stored(self):
-        self._origin_data = copy.deepcopy(self._data)
+        self._origin_data = copy.deepcopy(self.data_to_store())
 
     def data_to_store(self):
         """Convert attribute values to "data to store"."""
@@ -912,6 +912,12 @@ class CreatedInstance:
 
         # Create a copy of passed data to avoid changing them on the fly
         data = copy.deepcopy(data or {})
+
+        # Pop dictionary values that will be converted to objects to be able
+        #   catch changes
+        orig_creator_attributes = data.pop("creator_attributes", None) or {}
+        orig_publish_attributes = data.pop("publish_attributes", None) or {}
+
         # Store original value of passed data
         self._orig_data = copy.deepcopy(data)
 
@@ -919,10 +925,6 @@ class CreatedInstance:
         data.pop("family", None)
         data.pop("subset", None)
 
-        # Pop dictionary values that will be converted to objects to be able
-        #   catch changes
-        orig_creator_attributes = data.pop("creator_attributes", None) or {}
-        orig_publish_attributes = data.pop("publish_attributes", None) or {}
 
         # QUESTION Does it make sense to have data stored as ordered dict?
         self._data = collections.OrderedDict()
@@ -1039,7 +1041,10 @@ class CreatedInstance:
 
     @property
     def origin_data(self):
-        return copy.deepcopy(self._orig_data)
+        output = copy.deepcopy(self._orig_data)
+        output["creator_attributes"] = self.creator_attributes.origin_data
+        output["publish_attributes"] = self.publish_attributes.origin_data
+        return output
 
     @property
     def creator_identifier(self):
@@ -1095,7 +1100,7 @@ class CreatedInstance:
     def changes(self):
         """Calculate and return changes."""
 
-        return TrackChangesItem(self._orig_data, self.data_to_store())
+        return TrackChangesItem(self.origin_data, self.data_to_store())
 
     def mark_as_stored(self):
         """Should be called when instance data are stored.
@@ -1211,7 +1216,7 @@ class CreatedInstance:
         publish_attributes = self.publish_attributes.serialize_attributes()
         return {
             "data": self.data_to_store(),
-            "orig_data": copy.deepcopy(self._orig_data),
+            "orig_data": self.origin_data,
             "creator_attr_defs": creator_attr_defs,
             "publish_attributes": publish_attributes,
             "creator_label": self._creator_label,
@@ -1251,7 +1256,7 @@ class CreatedInstance:
             creator_identifier=creator_identifier,
             creator_label=creator_label,
             group_label=group_label,
-            creator_attributes=creator_attr_defs
+            creator_attr_defs=creator_attr_defs
         )
         obj._orig_data = serialized_data["orig_data"]
         obj.publish_attributes.deserialize_attributes(publish_attributes)
@@ -2331,6 +2336,10 @@ class CreateContext:
                         identifier, label, exc_info, add_traceback
                     )
                 )
+            else:
+                for update_data in update_list:
+                    instance = update_data.instance
+                    instance.mark_as_stored()
 
         if failed_info:
             raise CreatorsSaveFailed(failed_info)
