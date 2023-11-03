@@ -26,7 +26,7 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
     label = "VRay ROP Render Products"
     # This specific order value is used so that
     # this plugin runs after CollectFrames
-    order = pyblish.api.CollectorOrder + 0.49999
+    order = pyblish.api.CollectorOrder + 0.11
     hosts = ["houdini"]
     families = ["vray_rop"]
 

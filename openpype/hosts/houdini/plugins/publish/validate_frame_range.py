@@ -89,7 +89,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                           .format(instance))
             return
 
-        created_instance.publish_attributes["CollectRopFrameRange"]["use_handles"] = False  # noqa
+        created_instance.publish_attributes["CollectAssetHandles"]["use_handles"] = False  # noqa
 
         create_context.save_changes()
         cls.log.debug("use asset handles is turned off for '{}'"

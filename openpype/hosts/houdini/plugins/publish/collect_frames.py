@@ -13,7 +13,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
     # This specific order value is used so that
     # this plugin runs after CollectRopFrameRange
-    order = pyblish.api.CollectorOrder + 0.4999
+    order = pyblish.api.CollectorOrder + 0.1
     label = "Collect Frames"
     families = ["vdbcache", "imagesequence", "ass",
                 "redshiftproxy", "review", "bgeo"]
@@ -22,8 +22,8 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
         ropnode = hou.node(instance.data["instance_node"])
 
-        start_frame = instance.data.get("frameStart", None)
-        end_frame = instance.data.get("frameEnd", None)
+        start_frame = instance.data.get("frameStartHandle", None)
+        end_frame = instance.data.get("frameEndHandle", None)
 
         output_parm = lib.get_output_parameter(ropnode)
         if start_frame is not None:
@@ -53,7 +53,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
             # Check if frames are bigger than 1 (file collection)
             # override the result
             if end_frame - start_frame > 0:
-                result = self.create_file_list(
+                result = self.create_file_list(self,
                     match, int(start_frame), int(end_frame)
                 )
 
@@ -62,7 +62,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
         instance.data.update({"frames": result})
 
     @staticmethod
-    def create_file_list(match, start_frame, end_frame):
+    def create_file_list(self,match, start_frame, end_frame):
         """Collect files based on frame range and `regex.match`
 
         Args:
