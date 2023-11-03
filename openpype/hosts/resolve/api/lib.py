@@ -856,16 +856,15 @@ def _convert_resolve_list_type(resolve_list):
 
 def create_otio_time_range_from_timeline_item_data(timeline_item_data):
     timeline_item = timeline_item_data["clip"]["item"]
-    project = timeline_item_data["project"]
     timeline = timeline_item_data["timeline"]
     timeline_start = timeline.GetStartFrame()
+    timeline_fps = timeline.GetSetting("timelineFrameRate")
 
     frame_start = int(timeline_item.GetStart() - timeline_start)
     frame_duration = int(timeline_item.GetDuration())
-    fps = project.GetSetting("timelineFrameRate")
 
     return otio_export.create_otio_time_range(
-        frame_start, frame_duration, fps)
+        frame_start, frame_duration, timeline_fps)
 
 
 def get_otio_clip_instance_data(otio_timeline, timeline_item_data):
