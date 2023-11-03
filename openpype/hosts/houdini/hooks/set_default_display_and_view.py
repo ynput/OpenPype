@@ -1,8 +1,8 @@
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
-class SetDefaultDislayView(PreLaunchHook):
-    """Set default view and default display for houdini host that use OpenColorIO.
+class SetDefaultDisplayView(PreLaunchHook):
+    """Set default view and default display for houdini via OpenColorIO.
 
     Houdini's defaultDisplay and defaultView are set by
     setting 'OCIO_ACTIVE_DISPLAYS' and 'OCIO_ACTIVE_VIEWS'
@@ -24,17 +24,17 @@ class SetDefaultDislayView(PreLaunchHook):
         if not OCIO:
             return
 
-        houdini_color_Settings = \
+        houdini_color_settings = \
             self.data["project_settings"]["houdini"]["imageio"]["workfile"]
 
-        if not houdini_color_Settings["enabled"]:
+        if not houdini_color_settings["enabled"]:
             self.log.info(
                 "Houdini workfile color management is disabled."
             )
             return
 
-        default_display = houdini_color_Settings["default_display"]
-        default_view = houdini_color_Settings["default_view"]
+        default_display = houdini_color_settings["default_display"]
+        default_view = houdini_color_settings["default_view"]
 
         self.log.info(
             "Setting OCIO_ACTIVE_DISPLAYS environment to : {}"
