@@ -35,9 +35,9 @@ class CreateReview(plugin.MaxCreator):
         cls.visual_style = settings.get("visual_style", cls.visual_style)
         cls.viewport_preset = settings.get(
             "viewport_preset", cls.viewport_preset)
-        cls.vp_texture = settings.get("vp_texture", cls.vp_texture)
         cls.anti_aliasing = settings.get(
             "anti_aliasing", cls.anti_aliasing)
+        cls.vp_texture = settings.get("vp_texture", cls.vp_texture)
 
     def create(self, subset_name, instance_data, pre_create_data):
         # Transfer settings from pre create to instance
