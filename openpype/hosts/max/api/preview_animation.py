@@ -166,13 +166,16 @@ def _render_preview_animation_max_2024(
 
 
 def _render_preview_animation_max_pre_2024(
-        filepath, startFrame, endFrame, percentSize, ext):
+        filepath, startFrame, endFrame,
+        width, height, percentSize, ext):
     """Render viewport animation by creating bitmaps
     ***For 3dsMax Version <2024
     Args:
         filepath (str): filepath without frame numbers and extension
         startFrame (int): start frame
         endFrame (int): end frame
+        width (int): render resolution width
+        height (int): render resolution height
         percentSize (float): render resolution multiplier by 100
             e.g. 100.0 is 1x, 50.0 is 0.5x, 150.0 is 1.5x
         ext (str): image extension
@@ -182,9 +185,8 @@ def _render_preview_animation_max_pre_2024(
 
     # get the screenshot
     percent = percentSize / 100.0
-    res_width = int(round(rt.renderWidth * percent))
-    res_height = int(round(rt.renderHeight * percent))
-    viewportRatio = float(res_width / res_height)
+    res_width = int(round(width * percent))
+    res_height = int(round(height * percent))
     frame_template = "{}.{{:04}}.{}".format(filepath, ext)
     frame_template.replace("\\", "/")
     files = []
@@ -196,10 +198,11 @@ def _render_preview_animation_max_pre_2024(
             res_width, res_height, filename=filepath
         )
         dib = rt.gw.getViewportDib()
-        dib_width = float(dib.width)
-        dib_height = float(dib.height)
+        dib_width = rt.renderWidth
+        dib_height = rt.renderHeight
         # aspect ratio
-        renderRatio = rt.getRendImageAspect()
+        viewportRatio = dib_width /dib_height
+        renderRatio = float(res_width / res_height)
         if viewportRatio <= renderRatio:
             heightCrop = (dib_width / renderRatio)
             topEdge = int((dib_height - heightCrop) / 2.0)
@@ -263,22 +266,24 @@ def render_preview_animation(
         viewport_options = viewport_options_for_preview_animation()
     with play_preview_when_done(False):
         with viewport_layout_and_camera(camera):
-            with render_resolution(width, height):
-                if int(get_max_version()) < 2024:
-                    with viewport_preference_setting(
-                            viewport_options["general_viewport"],
-                            viewport_options["nitrous_manager"],
-                            viewport_options["nitrous_viewport"],
-                            viewport_options["vp_btn_mgr"]
-                    ):
-                        return _render_preview_animation_max_pre_2024(
-                            filepath,
-                            start_frame,
-                            end_frame,
-                            percentSize,
-                            ext
-                        )
-                else:
+            if int(get_max_version()) < 2024:
+                with viewport_preference_setting(
+                        viewport_options["general_viewport"],
+                        viewport_options["nitrous_manager"],
+                        viewport_options["nitrous_viewport"],
+                        viewport_options["vp_btn_mgr"]
+                ):
+                    return _render_preview_animation_max_pre_2024(
+                        filepath,
+                        start_frame,
+                        end_frame,
+                        width,
+                        height,
+                        percentSize,
+                        ext
+                    )
+            else:
+                with render_resolution(width, height):
                     return _render_preview_animation_max_2024(
                         filepath,
                         start_frame,
