@@ -67,11 +67,12 @@ class DictImmutableKeysWidget(BaseWidget):
         )
 
         for child_obj in self.entity.children:
-            self.input_fields.append(
-                self.create_ui_for_entity(
+            input_field = self.create_ui_for_entity(
                     self.category_widget, child_obj, self
-                )
             )
+            if self._read_only:
+                input_field.set_read_only(self._read_only)
+            self.input_fields.append(input_field)
 
         if self.entity.use_label_wrap and self.content_layout.count() == 0:
             self.body_widget.hide_toolbox(True)
@@ -121,8 +122,8 @@ class DictImmutableKeysWidget(BaseWidget):
 
     def set_read_only(self, status):
         self._read_only = status
-        for direct_child in self._direct_children_widgets:
-            direct_child.set_read_only(self._read_only)
+        for input_field in self.input_fields:
+            input_field.set_read_only(self._read_only)
 
     def _ui_item_base(self):
         self.setObjectName("DictInvisible")
@@ -227,8 +228,6 @@ class DictImmutableKeysWidget(BaseWidget):
     def add_widget_to_layout(self, widget, label=None):
         if self.checkbox_child and widget.entity is self.checkbox_child:
             self.body_widget.add_widget_before_label(widget)
-            if self._read_only:
-                widget.set_read_only(self._read_only)
             self._direct_children_widgets.append(widget)
             return
 
@@ -245,8 +244,6 @@ class DictImmutableKeysWidget(BaseWidget):
                 self._added_wrapper_ids.add(wrapper.id)
             return
 
-        if self._read_only:
-            widget.set_read_only(self._read_only)
         self._direct_children_widgets.append(widget)
 
         row = self.content_layout.rowCount()
