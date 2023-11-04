@@ -39,6 +39,8 @@ class DictImmutableKeysWidget(BaseWidget):
         self.content_widget = None
         self.content_layout = None
 
+        self._read_only = getattr(self.entity, "read_only", False)
+
         label = None
         if self.entity.is_dynamic_item:
             self._ui_as_dynamic_item()
@@ -75,9 +77,6 @@ class DictImmutableKeysWidget(BaseWidget):
             self.body_widget.hide_toolbox(True)
 
         self.entity_widget.add_widget_to_layout(self, label)
-
-        if hasattr(self.entity, "read_only"):
-            self.set_read_only(True)
 
     def _prepare_entity_layouts(self, children, widget):
         for child in children:
@@ -121,12 +120,9 @@ class DictImmutableKeysWidget(BaseWidget):
             self.setFocus()
 
     def set_read_only(self, status):
+        self._read_only = status
         for direct_child in self._direct_children_widgets:
-            if hasattr(direct_child, "set_read_only"):
-                direct_child.set_read_only(status)
-            # vv REMOVE ME AND FINISH THE CODE
-            break # <<
-            # ^^
+            direct_child.set_read_only(self._read_only)
 
     def _ui_item_base(self):
         self.setObjectName("DictInvisible")
@@ -231,6 +227,8 @@ class DictImmutableKeysWidget(BaseWidget):
     def add_widget_to_layout(self, widget, label=None):
         if self.checkbox_child and widget.entity is self.checkbox_child:
             self.body_widget.add_widget_before_label(widget)
+            if self._read_only:
+                widget.set_read_only(self._read_only)
             self._direct_children_widgets.append(widget)
             return
 
@@ -247,6 +245,8 @@ class DictImmutableKeysWidget(BaseWidget):
                 self._added_wrapper_ids.add(wrapper.id)
             return
 
+        if self._read_only:
+            widget.set_read_only(self._read_only)
         self._direct_children_widgets.append(widget)
 
         row = self.content_layout.rowCount()

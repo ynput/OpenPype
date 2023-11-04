@@ -84,6 +84,7 @@ class BaseWidget(QtWidgets.QWidget):
 
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
+        self._read_only = False
         self._is_invalid = False
         self._style_state = None
 
@@ -562,6 +563,10 @@ class BaseWidget(QtWidgets.QWidget):
         if focused_in and not event.isAccepted():
             event.accept()
         return result
+
+    def set_read_only(self, status):
+        self._read_only = status
+        self.setEnabled(not self._read_only)
 
 
 class InputWidget(BaseWidget):

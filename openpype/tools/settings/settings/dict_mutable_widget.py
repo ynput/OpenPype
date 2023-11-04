@@ -33,6 +33,7 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         self.collapsible_key = entity_widget.entity.collapsible_key
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
+        self._read_only = False
         self.store_as_list = store_as_list
         self.is_duplicated = False
         self.key_is_valid = store_as_list
@@ -173,6 +174,10 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         self.wrapper_widget = wrapper_widget
         self.confirm_btn = confirm_btn
 
+    def set_read_only(self, status):
+        self._read_only = status
+        self.setEnabled(not self._read_only)
+
 
 class ModifiableDictItem(QtWidgets.QWidget):
     def __init__(self, collapsible_key, store_as_list, entity, entity_widget):
@@ -186,6 +191,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
+        self._read_only = False
         self.is_key_duplicated = False
         self.key_is_valid = store_as_list
         self.is_required = False
@@ -590,12 +596,15 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def mouseReleaseEvent(self, event):
         return QtWidgets.QWidget.mouseReleaseEvent(self, event)
 
+    def set_read_only(self, status):
+        self._read_only = status
+        self.setEnabled(not self._read_only)
+
 
 class DictMutableKeysWidget(BaseWidget):
     def create_ui(self):
         self.input_fields = []
         self.required_inputs_by_key = {}
-        self._read_only = False
 
         if self.entity.highlight_content:
             content_state = "highlighted"
@@ -712,6 +721,7 @@ class DictMutableKeysWidget(BaseWidget):
             input_field.set_key("")
 
         input_field.set_entity_value()
+        input_field.set_read_only(self._read_only)
 
         self.on_shuffle()
 
@@ -778,7 +788,7 @@ class DictMutableKeysWidget(BaseWidget):
             child_entity, self
         )
 
-        input_field.setEnabled(not self._read_only)
+        input_field.set_read_only(self._read_only)
         self.input_fields.append(input_field)
 
         new_widget_index = self.content_layout.count() - 1
@@ -979,5 +989,6 @@ class DictMutableKeysWidget(BaseWidget):
 
     def set_read_only(self, status):
         self._read_only = status
+        self.empty_row.set_read_only(self._read_only)
         for input_field in self.input_fields:
-            input_field.setEnabled(not self._read_only)
+            input_field.set_read_only(self._read_only)

@@ -6,10 +6,6 @@ from .exceptions import EntitySchemaError
 class AnatomyEntity(DictImmutableKeysEntity):
     schema_types = ["anatomy"]
 
-    def _item_initialization(self):
-        super(AnatomyEntity, self)._item_initialization()
-        self.read_only = self.schema_data.get("read_only", False)
-
     def _update_current_metadata(self):
         if self._override_state is OverrideState.PROJECT:
             return {}

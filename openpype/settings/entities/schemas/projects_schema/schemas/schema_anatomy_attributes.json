@@ -5,6 +5,7 @@
     "label": "Attributes",
     "is_file": true,
     "is_group": true,
+    "read_only": true,
     "children": [
         {
             "type": "number",
