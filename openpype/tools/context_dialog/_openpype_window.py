@@ -22,7 +22,7 @@ class ContextDialog(QtWidgets.QDialog):
 
     Context has 3 parts:
     - Project
-    - Aseet
+    - Asset
     - Task
 
     It is possible to predefine project and asset. In that case their widgets
@@ -268,7 +268,7 @@ class ContextDialog(QtWidgets.QDialog):
         if self._set_context_asset:
             self._dbcon.Session["AVALON_ASSET"] = self._set_context_asset
             self._assets_widget.setEnabled(False)
-            self._assets_widget.select_assets(self._set_context_asset)
+            self._assets_widget.select_asset_by_name(self._set_context_asset)
             self._set_asset_to_tasks_widget()
         else:
             self._assets_widget.setEnabled(True)
