@@ -38,6 +38,7 @@ class ExplicitCleanUp(pyblish.api.ContextPlugin):
             return
 
         # Separate paths into files and directories
+        self.log.debug("full_paths: %s" % full_paths)
         filepaths = set()
         dirpaths = set()
         for path in full_paths:

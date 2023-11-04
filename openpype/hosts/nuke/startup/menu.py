@@ -1,6 +1,6 @@
 from openpype.pipeline import install_host
 from openpype.hosts.nuke.api import NukeHost
-
+from hornet_deadline_utils import deadlineNetworkSubmit
 host = NukeHost()
 install_host(host)
 
@@ -135,13 +135,11 @@ def embedOptions():
     if ftype not in knobMatrix.keys():
         return
     allTrackedKnobs = [ value for sublist in knobMatrix.values() for value in sublist]
-    allTrackedKnobs.append("file_type")
-    allTrackedKnobs.append("file")
-    allTrackedKnobs.append("channels")
-    allTrackedKnobs.append("Render Local")
+    for kname in ['file_type','file','channels','Render Local']:
+        allTrackedKnobs.append(kname)
     allLinkedKnobs = [knob for knob in group.allKnobs() if isinstance(knob, nuke.Link_Knob)]
     allTabKnobs = [knob for knob in group.allKnobs() if isinstance(knob, nuke.Tab_Knob)]
-    allTextKnobs = [knob for knob in group.allKnobs() if isinstance(knob, nuke.Text_Knob)]
+    allTextKnobs = [knob for knob in group.allKnobs() if isinstance(knob, nuke.Text_Knob) or isinstance(knob, nuke.String_Knob) or isinstance(knob, nuke.Int_Knob)]
     allScriptKnobs = [knob for knob in group.allKnobs() if isinstance(knob, nuke.PyScript_Knob)]
     allMultiKnobs = [knob for knob in group.allKnobs() if isinstance(knob, nuke.Multiline_Eval_String_Knob)]
     for knob in allLinkedKnobs:
@@ -157,7 +155,7 @@ def embedOptions():
         if knob.name() == "File output":
             group.removeKnob(knob)
     for knob in allTextKnobs:
-        if knob.name() in ['tempwarn','reviewwarn','dlinewarn','div']:
+        if knob.name() in ['tempwarn','reviewwarn','dlinewarn','div','deadlinediv', 'deadlinePriority', 'deadlineGroup', 'deadlinePool']:
             group.removeKnob(knob)
     names = [knob.name() for knob in group.allKnobs()]
     if not 'htab' in names:
@@ -196,7 +194,8 @@ def embedOptions():
     group.addKnob(endGroup)
     beginGroup = nuke.Tab_Knob('beginpipeline', 'Rendering and Pipeline', nuke.TABBEGINGROUP)
     group.addKnob(beginGroup)
-    sub = nuke.PyScript_Knob('submit', 'Submit to Deadline', "DeadlineNukeClient.main()")
+    sub = nuke.PyScript_Knob('submit', 'Submit to Deadline', "deadlineNetworkSubmit()")
+    sub.setFlag(0x00001000)
     clr = nuke.PyScript_Knob('clear', 'Clear Temp Outputs', "import os;fpath = os.path.dirname(nuke.thisNode().knob('File output').value());[os.remove(os.path.join(fpath, f)) for f in os.listdir(fpath)]")
     pub = nuke.PyScript_Knob('publish', 'Publish', "from openpype.tools.utils import host_tools;host_tools.show_publisher(parent=(main_window if nuke.NUKE_VERSION_MAJOR >= 14 else None),tab='Publish')")
     readfrom_src = "import write_to_read;write_to_read.write_to_read(nuke.thisNode(), allow_relative=False)"
@@ -207,17 +206,28 @@ def embedOptions():
     group.addKnob(link)
 
     div = nuke.Text_Knob('div','','')
-    group.addKnob(sub)
+    deadlinediv = nuke.Text_Knob('deadlinediv','Deadline','')
+    deadlinePriority = nuke.Int_Knob('deadlinePriority', 'Priority')
+    deadlinePool = nuke.String_Knob('deadlinePool', 'Pool')
+    deadlineGroup = nuke.String_Knob('deadlineGroup', 'Group')
+    deadlinePool.setValue('local')
+    deadlineGroup.setValue('nuke')
+    deadlinePriority.setValue(90)
+
     group.addKnob(readfrom)
     group.addKnob(clr)
+    group.addKnob(deadlinediv)
+    group.addKnob(deadlinePriority)
+    group.addKnob(deadlinePool)
+    group.addKnob(deadlineGroup)
+    group.addKnob(sub)
     group.addKnob(div)
     group.addKnob(pub)
     tempwarn = nuke.Text_Knob('tempwarn', '', '- all rendered files are TEMPORARY and WILL BE OVERWRITTEN unless published ')
-    #reviewwarn = nuke.Text_Knob('reviewwarn', '', '- Check "Review" in the OpenPype tab to automatically generate an FTrack Review on Publish')
-    #dlinewarn = nuke.Text_Knob('dlinewarn', '', '- Deadline Submission settings are available in the Deadline Tab')
     group.addKnob(tempwarn)
-    #group.addKnob(reviewwarn)
-    #group.addKnob(dlinewarn)
+
+
+
     endGroup = nuke.Tab_Knob('endpipeline', None, nuke.TABENDGROUP)
     group.addKnob(endGroup)
 
@@ -231,6 +241,13 @@ def enable_disable_frame_range():
     group.knobs()['first'].setEnabled(enable)
     group.knobs()['last'].setEnabled(enable)
 
+
+
+
+def submit_selected_write():
+    for nde in nuke.selectedNodes():
+        if nde.Class() == 'Write':
+            submit_write(nde)
 
 nuke.addKnobChanged(switchExtension, nodeClass='Write')
 nuke.addKnobChanged(embedOptions, nodeClass='Write')
