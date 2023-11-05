@@ -73,16 +73,12 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             asset = tag_data["asset"]
             subset = tag_data["subset"]
 
-            # insert family into families
-            family = tag_data["family"]
-            families = [str(f) for f in tag_data["families"]]
-            families.insert(0, str(family))
-
             data.update({
-                "name": "{} {} {}".format(asset, subset, families),
+                "name": "{}_{}".format(asset, subset),
+                "label": "{} {}".format(asset, subset),
                 "asset": asset,
                 "item": timeline_item,
-                "families": families,
+                "families": ["clip"],
                 "publish": get_publish_attribute(timeline_item),
                 "fps": context.data["fps"],
                 "handleStart": handle_start,
@@ -157,7 +153,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         family = "shot"
 
         data.update({
-            "name": "{} {} {}".format(asset, subset, family),
+            "name": "{}_{}".format(asset, subset),
+            "label": "{} {}".format(asset, subset),
             "subset": subset,
             "asset": asset,
             "family": family,
@@ -184,18 +181,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         asset = data["asset"]
         subset = "audioMain"
 
-        # insert family into families
-        family = "audio"
-
-        # form label
-        label = asset
-        label += " {}".format(subset)
-
         data.update({
             "name": "{}_{}".format(asset, subset),
-            "label": label,
+            "label": "{} {}".format(asset, subset),
             "subset": subset,
-            "family": family,
+            "family": "audio",
             "families": ["clip"]
         })
         # remove review track attr if any

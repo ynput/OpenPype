@@ -853,8 +853,7 @@ class PublishClip:
             "parents": self.parents,
             "hierarchyData": hierarchy_formatting_data,
             "subset": self.subset,
-            "family": self.subset_family,
-            "families": ["clip"]
+            "family": self.subset_family
         }
 
     def _convert_to_entity(self, key):

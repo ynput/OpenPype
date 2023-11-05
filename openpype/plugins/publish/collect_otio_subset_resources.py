@@ -173,6 +173,34 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
             dirname, filename = os.path.split(media_ref.target_url)
             self.staging_dir = dirname
             if trimmed_duration < available_duration:
+                # first convert trimmed start to timecode with timeline fps
+                # and then convert to frames in media fps
+                timeline_fps = otio_clip.source_range.start_time.rate
+                self.log.debug("timeline_fps: {}".format(timeline_fps))
+                self.log.debug("media_fps: {}".format(media_fps))
+                if (
+                    instance.context.data["hostName"] == "resolve" and
+                    media_fps != timeline_fps
+                ):
+                    # convert timecode to media fps frames
+                    source_in_frames_with_media_fps = otio.opentime.to_frames(
+                        otio.opentime.RationalTime(a_frame_start_h, timeline_fps),
+                        media_fps
+                    )
+                    # convert timecode to media fps frames
+                    source_duration_frames_with_media_fps = otio.opentime.to_frames(
+                        otio.opentime.RationalTime(trimmed_duration, timeline_fps),
+                        media_fps
+                    )
+                    self.log.debug("source_in_frames_with_media_fps: {}".format(
+                        source_in_frames_with_media_fps))
+                    trimmed_media_range_h = range_from_frames(
+                        source_in_frames_with_media_fps,
+                        source_duration_frames_with_media_fps,
+                        media_fps
+                    )
+                    self.log.debug("trimmed_media_range_h: {}".format(
+                        trimmed_media_range_h))
                 self.log.debug("Ready for Trimming")
                 instance.data["families"].append("trim")
                 instance.data["otioTrimmingRange"] = trimmed_media_range_h
