@@ -22,16 +22,46 @@ class ShelfDefinitionModel(BaseSettingsModel):
     )
 
 
-class ShelvesModel(BaseSettingsModel):
-    _layout = "expanded"
-    shelf_set_name: str = Field("", title="Shelfs set name")
-
+class AddShelfFileModel(BaseSettingsModel):
     shelf_set_source_path: MultiplatformPathModel = Field(
         default_factory=MultiplatformPathModel,
-        title="Shelf Set Path (optional)"
+        title="Shelf Set Path"
     )
 
+
+class AddSetAndDefinitionsModel(BaseSettingsModel):
+    shelf_set_name: str = Field("", title="Shelf Set Name")
     shelf_definition: list[ShelfDefinitionModel] = Field(
         default_factory=list,
-        title="Shelf Definitions"
+        title="Shelves Definitions"
+    )
+
+
+def shelves_enum_options():
+    return [
+        {
+            "value": "add_shelf_file",
+            "label": "Add a .shelf file"
+        },
+        {
+            "value": "add_set_and_definitions",
+            "label": "Add Shelf Set Name and Shelves Definitions"
+        }
+    ]
+
+
+class ShelvesModel(BaseSettingsModel):
+    options: str = Field(
+        title="Options",
+        description="Switch between shelves manager options",
+        enum_resolver=shelves_enum_options,
+        conditionalEnum=True
+    )
+    add_shelf_file: AddShelfFileModel = Field(
+        title="Add a .shelf file",
+        default_factory=AddShelfFileModel
+    )
+    add_set_and_definitions: AddSetAndDefinitionsModel = Field(
+        title="Add Shelf Set Name and Shelves Definitions",
+        default_factory=AddSetAndDefinitionsModel
     )
