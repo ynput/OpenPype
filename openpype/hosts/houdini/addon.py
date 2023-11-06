@@ -45,7 +45,7 @@ class HoudiniAddon(OpenPypeModule, IHostAddon):
         resources_path = os.path.join(HOUDINI_HOST_DIR, "resources")
 
         # Add ampersand for safety.
-        # https://www.sidefx.com/docs/houdini/basics/config_env.html#special-characters-in-path-variables
+        # https://www.sidefx.com/docs/houdini/basics/config_env.html#special-characters-in-path-variables  # noqa
         env["HOUDINI_PATH"] = merge_paths(
             startup_path, env.get("HOUDINI_PATH", ""), "&"
         )
