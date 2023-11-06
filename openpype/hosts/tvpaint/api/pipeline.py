@@ -84,10 +84,6 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_loader_plugin_path(load_dir)
         register_creator_plugin_path(create_dir)
 
-        registered_callbacks = (
-            pyblish.api.registered_callbacks().get("instanceToggled") or []
-        )
-
         register_event_callback("application.launched", self.initial_launch)
         register_event_callback("application.exit", self.application_exit)
 
