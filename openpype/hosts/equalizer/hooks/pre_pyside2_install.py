@@ -35,8 +35,6 @@ class InstallPySide2(PreLaunchHook):
             )
 
     def _execute(self):
-        version_regex = re.compile(r"^[2-3]\.[0-9]+$")
-
         platform = system().lower()
         executable = Path(self.launch_context.executable.executable_path)
         expected_executable = "3de4"
@@ -53,7 +51,6 @@ class InstallPySide2(PreLaunchHook):
             return
 
         python_dir = executable.parent.parent / "sys_data" / "py37_inst"
-        python_lib = python_dir / "lib"
 
         if platform == "windows":
             python_executable = python_dir / "python.exe"
@@ -104,7 +101,6 @@ class InstallPySide2(PreLaunchHook):
         """
         try:
             import pywintypes
-            import win32api
             import win32con
             import win32event
             import win32process

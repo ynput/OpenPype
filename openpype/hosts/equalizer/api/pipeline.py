@@ -20,9 +20,13 @@ def maintained_model_selection():
 
     point_groups = tde4.getPGroupList()
     point_group = next(
-        (pg for pg in point_groups if tde4.getPGroupType(pg) == "CAMERA"), None
+        (
+            pg for pg in point_groups
+            if tde4.getPGroupType(pg) == "CAMERA"
+        ), None
     )
-    selected_models = tde4.get3DModelList(point_group, 1) if point_group else []
+    selected_models = tde4.get3DModelList(point_group, 1)\
+        if point_group else []
     try:
         yield
     finally:

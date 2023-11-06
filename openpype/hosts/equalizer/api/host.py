@@ -162,9 +162,10 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         tde4.updateGUI()
 
     def install(self):
-        app = get_openpype_qt_app()
-        app.setQuitOnLastWindowClosed(False)
-        self._qapp = app
+        if not QtCore.QCoreApplication.instance():
+            app = QtWidgets.QApplication([])
+            self._qapp = app
+            self._qapp.setQuitOnLastWindowClosed(False)
 
         pyblish.api.register_host("equalizer")
 
@@ -178,7 +179,6 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def _timer():
         QtWidgets.QApplication.instance().processEvents(
             QtCore.QEventLoop.AllEvents)
-        #QtWidgets.QApplication.processEvents()
 
     @classmethod
     def get_host(cls):

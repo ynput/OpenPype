@@ -12,13 +12,17 @@ class EqualizerAddon(OpenPypeModule, IHostAddon):
         self.enabled = True
 
     def add_implementation_envs(self, env, _app):
-        # 3dequalizer utilize PYTHON_CUSTOM_SCRIPTS_3DE4 for custom scripts
-        # and TDE4_ROOT for its root directory. Note that the custom script
-        # paths are semicolon separated even on Windows.
+        # 3dEqualizer utilize TDE4_ROOT for its root directory
+        # and PYTHON_CUSTOM_SCRIPTS_3DE4 as a colon separated list of
+        # directories to look for additional python scripts.
+        # (Windows: list is separated by semicolons).
+        # Ad
 
         startup_path = os.path.join(EQUALIZER_HOST_DIR, "startup")
         if "PYTHON_CUSTOM_SCRIPTS_3DE4" in env:
-            startup_path = env["PYTHON_CUSTOM_SCRIPTS_3DE4"] + ":" + startup_path
+            startup_path = os.path.join(
+                env["PYTHON_CUSTOM_SCRIPTS_3DE4"],
+                startup_path)
 
         env["PYTHON_CUSTOM_SCRIPTS_3DE4"] = startup_path
 

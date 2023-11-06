@@ -8,12 +8,13 @@ from abc import ABC
 from typing import Dict, List
 
 from openpype.hosts.equalizer.api import EqualizerHost
-from openpype.pipeline import CreatedInstance, Creator, CreatorError
-from openpype.pipeline import (publish, OpenPypePyblishPluginMixin)
-
 from openpype.lib import BoolDef, EnumDef, NumberDef
-
-import pyblish
+from openpype.pipeline import (
+    CreatedInstance,
+    Creator,
+    OpenPypePyblishPluginMixin,
+    publish,
+)
 
 
 class EqualizerCreator(ABC, Creator):
@@ -105,7 +106,7 @@ class EqualizerCreator(ABC, Creator):
 
 
 class ExtractScriptBase(
-        ABC, publish.Extractor, OpenPypePyblishPluginMixin):
+    ABC, publish.Extractor, OpenPypePyblishPluginMixin):
     """Base class for extract script plugins."""
 
     hide_reference_frame = False
@@ -116,7 +117,8 @@ class ExtractScriptBase(
 
     @classmethod
     def apply_settings(cls, project_settings, system_settings):
-        settings = project_settings["equalizer"]["publish"]["ExtractMatchmoveScriptMaya"]  # noqa
+        settings = project_settings["equalizer"]["publish"][
+            "ExtractMatchmoveScriptMaya"]  # noqa
 
         cls.hide_reference_frame = settings.get(
             "hide_reference_frame", cls.hide_reference_frame)
@@ -134,8 +136,8 @@ class ExtractScriptBase(
 
         defs.extend([
             BoolDef("hide_reference_frame",
-                      label="Hide Reference Frame",
-                      default=cls.hide_reference_frame),
+                    label="Hide Reference Frame",
+                    default=cls.hide_reference_frame),
             BoolDef("export_uv_textures",
                     label="Export UV Textures",
                     default=cls.export_uv_textures),

@@ -21,7 +21,7 @@ class CollectCameraData(pyblish.api.InstancePlugin):
         #   - camera_id - specific camera
 
         try:
-            camera_sel = instance.data["creator_attributes"]["camera_selection"]
+            camera_sel = instance.data["creator_attributes"]["camera_selection"]  # noqa: E501
         except KeyError:
             self.log.warning("No camera defined")
             return

@@ -1,7 +1,7 @@
 import tde4
 
 from openpype.hosts.equalizer.api import EqualizerCreator
-from openpype.lib import BoolDef, EnumDef
+from openpype.lib import EnumDef
 
 
 class CreateMatchMove(EqualizerCreator):

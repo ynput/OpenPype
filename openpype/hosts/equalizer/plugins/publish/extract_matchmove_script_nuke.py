@@ -5,7 +5,7 @@ import contextlib
 from pathlib import Path
 
 import pyblish.api
-import tde4
+import tde4  # noqa: F401
 
 from openpype.hosts.equalizer.api import (
     ExtractScriptBase,
