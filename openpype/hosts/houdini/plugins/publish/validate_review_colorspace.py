@@ -73,8 +73,8 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
                 color_settings["review_color_space"]:
 
             raise PublishValidationError(
-                "Invalid value: Colorspace name doesn't match studio settings.\n"
-                "Check 'OCIO Colorspace' parameter on '{}' ROP"
+                "Invalid value: Colorspace name doesn't match studio "
+                "settings.\nCheck 'OCIO Colorspace' parameter on '{}' ROP"
                 .format(rop_node.path())
             )
 

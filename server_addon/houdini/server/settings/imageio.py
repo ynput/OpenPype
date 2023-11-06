@@ -45,8 +45,8 @@ class WorkfileImageIOModel(BaseSettingsModel):
         False,
         title="Override review colorspace",
         description=("Allow artists to override review colorspace, "
-                    "therefore review color space validator won't error "
-                    "if artists used another review colorspace.")
+                     "therefore review color space validator won't error "
+                     "if artists used another review colorspace.")
     )
 
 

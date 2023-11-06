@@ -855,6 +855,7 @@ def get_houdini_color_settings():
 
     return {}
 
+
 def set_review_color_space(opengl_node, log=None):
     """Set ociocolorspace parameter for the given OpenGL node.
 
