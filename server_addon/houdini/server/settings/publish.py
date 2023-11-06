@@ -3,7 +3,7 @@ from ayon_server.settings import BaseSettingsModel
 
 
 # Publish Plugins
-class CollectRopFrameRangeModel(BaseSettingsModel):
+class CollectAssetHandlesModel(BaseSettingsModel):
     """Collect Frame Range
     Disable this if you want the publisher to
     ignore start and end handles specified in the

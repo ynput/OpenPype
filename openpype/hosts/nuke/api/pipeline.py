@@ -478,8 +478,6 @@ def parse_container(node):
     """
     data = read_avalon_data(node)
 
-    # (TODO) Remove key validation when `ls` has re-implemented.
-    #
     # If not all required data return the empty container
     required = ["schema", "id", "name",
                 "namespace", "loader", "representation"]
@@ -487,7 +485,10 @@ def parse_container(node):
         return
 
     # Store the node's name
-    data["objectName"] = node["name"].value()
+    data.update({
+        "objectName": node.fullName(),
+        "node": node,
+    })
 
     return data
 

@@ -39,8 +39,8 @@ class ExtractOpenGL(publish.Extractor):
             "ext": instance.data["imageFormat"],
             "files": output,
             "stagingDir": staging_dir,
-            "frameStart": instance.data["frameStart"],
-            "frameEnd": instance.data["frameEnd"],
+            "frameStart": instance.data["frameStartHandle"],
+            "frameEnd": instance.data["frameEndHandle"],
             "tags": tags,
             "preview": True,
             "camera_name": instance.data.get("review_camera")
