@@ -17,5 +17,8 @@
     },
     "production_version": "",
     "staging_version": "",
-    "version_check_interval": 5
+    "version_check_interval": 5,
+    "project": {
+        "protect_anatomy_attributes": false
+    }
 }

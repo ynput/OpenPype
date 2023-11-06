@@ -169,6 +169,23 @@
                     "minimum": 0
                 }
             ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "dict",
+            "key": "project",
+            "label": "Project",
+            "collapsible": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "protect_anatomy_attributes",
+                    "label": "Protect Anatomy Attributes",
+                    "require_restart": true
+                }
+            ]
         }
     ]
 }
