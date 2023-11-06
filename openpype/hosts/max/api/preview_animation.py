@@ -185,8 +185,8 @@ def _render_preview_animation_max_pre_2024(
 
     # get the screenshot
     percent = percentSize / 100.0
-    res_width = int(round(width * percent))
-    res_height = int(round(height * percent))
+    res_width = width * percent
+    res_height = height * percent
     frame_template = "{}.{{:04}}.{}".format(filepath, ext)
     frame_template.replace("\\", "/")
     files = []
@@ -212,7 +212,7 @@ def _render_preview_animation_max_pre_2024(
             widthCrop = dib_height * renderRatio
             leftEdge = int((dib_width - widthCrop) / 2.0)
             tempImage_bmp = rt.bitmap(widthCrop, dib_height)
-            src_box_value = rt.Box2(0, leftEdge, widthCrop, dib_height)
+            src_box_value = rt.Box2(leftEdge, 0, widthCrop, dib_height)
         rt.pasteBitmap(dib, tempImage_bmp, src_box_value, rt.Point2(0, 0))
         # copy the bitmap and close it
         rt.copy(tempImage_bmp, preview_res)
