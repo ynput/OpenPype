@@ -21,7 +21,7 @@ Once this sync is done, the thread will automatically start a loop to listen to 
 - `-prj, --project` This flag accepts multiple project name to sync specific projects, and the default to sync all projects.
 - `-lo, --listen-only` This flag to run listen to Kitsu events only without any sync.
 
-Note: You must use one argument of `-pro` or `-lo`, because the listen only flag override syncing flag. 
+Note: You must use one argument of `-pro` or `-lo`, because the listen only flag override syncing flag.
 
 ```bash
 // sync all projects then run listen
@@ -49,7 +49,12 @@ This functionality cannot deal with all cases and is not error proof, some inter
 openpype_console module kitsu push-to-zou -l me@domain.ext -p my_password
 ```
 
-## Integrate Kitsu Note
+### Entities naming pattern
+Organize hierarchically Episodes, Sequences, and Shots into their folders.
+
+![Kitsu Naming Pattern](assets/settings/settings_project_kitsu_NamingPattern.png)
+
+### Integrate Kitsu Note & Status Change Conditions
 Task status can be automatically set during publish thanks to `Integrate Kitsu Note`. This feature can be configured in:
 
 `Admin -> Studio Settings -> Project Settings -> Kitsu -> Integrate Kitsu Note`.
