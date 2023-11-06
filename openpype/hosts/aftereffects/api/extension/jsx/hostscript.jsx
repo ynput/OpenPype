@@ -282,7 +282,7 @@ function importFile(path, item_name, import_options){
 
             }
             if ('sequence' in import_options){
-                im_opt.sequence = false;
+                im_opt.sequence = true;
             }
 
             comp = app.project.importFile(im_opt);
