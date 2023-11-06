@@ -649,7 +649,6 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
         attributes = {}
     ayon_publish["ValidateAttributes"]["attributes"] = attributes
 
-    ayon_publish = ayon_max["publish"]
     if "ValidateLoadedPlugin" in ayon_publish:
         family_plugin_mapping = (
             ayon_publish["ValidateLoadedPlugin"]["family_plugins_mapping"]
