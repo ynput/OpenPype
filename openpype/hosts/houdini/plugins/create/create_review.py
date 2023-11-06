@@ -2,6 +2,7 @@
 """Creator plugin for creating openGL reviews."""
 from openpype.hosts.houdini.api import plugin
 from openpype.lib import EnumDef, BoolDef, NumberDef
+from openpype.settings import get_current_project_settings
 
 import os
 import hou
@@ -87,7 +88,7 @@ class CreateReview(plugin.HoudiniCreator):
         # Set OCIO Colorspace to the default output colorspace
         #  if there's OCIO
         if os.getenv("OCIO"):
-            self.set_colorcorrect_to_default_view_space(instance_node)
+            self.set_review_color_space(instance_node)
 
         to_lock = ["id", "family"]
 
@@ -131,22 +132,40 @@ class CreateReview(plugin.HoudiniCreator):
                       decimals=3)
         ]
 
-    def set_colorcorrect_to_default_view_space(self,
-                                               instance_node):
-        """Set ociocolorspace to the default output space."""
-        from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
+    def set_review_color_space(self, instance_node):
+        """Set ociocolorspace parameter.
 
-        # set Color Correction parameter to OpenColorIO
+        This function will use the value exposed in settings
+        if workfile settings were enabled.
+
+        Otherwise, it will use the default colorspace corresponding
+        to the display & view of the current Houdini session.
+        """
+
+        # Set Color Correction parameter to OpenColorIO
         instance_node.setParms({"colorcorrect": 2})
 
-        # Get default view space for ociocolorspace parm.
-        default_view_space = get_default_display_view_colorspace()
+        # Get view space for ociocolorspace parm.
+        view_space = self.get_review_colorspace_from_Settings()
+
+        if not view_space:
+            from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
+            view_space = get_default_display_view_colorspace()
+
         instance_node.setParms(
-            {"ociocolorspace": default_view_space}
+            {"ociocolorspace": view_space}
         )
 
         self.log.debug(
             "'OCIO Colorspace' parm on '{}' has been set to "
-            "the default view color space '{}'"
-            .format(instance_node, default_view_space)
+            "the view color space '{}'"
+            .format(instance_node, view_space)
         )
+
+    def get_review_colorspace_from_Settings(self):
+        project_settings = get_current_project_settings()
+        color_settings = project_settings["houdini"]["imageio"]["workfile"]
+        if color_settings["enabled"]:
+            return color_settings.get("review_color_space")
+
+        return ""
