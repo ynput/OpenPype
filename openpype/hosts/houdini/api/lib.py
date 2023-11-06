@@ -971,12 +971,26 @@ def find_rop_input_dependencies(input_tuple):
     return out_list
 
 
-def self_publish():
+def publish_trigger(nodes=None, mode=0):
     """Self publish from ROP nodes.
 
-    Firstly, it gets the node and its dependencies.
-    Then, it deactivates all other ROPs
-    And finaly, it triggers the publishing action.
+    Trigger Publish action for the given nodes.
+    publish modes:
+        0 : publish instances in one publish session (the same
+            behavior as using publisher UI)
+        1 : publish instance by instance (to force a certain publish
+            order at the cost of losing logs)
+
+    Args:
+        nodes: list of hou.Nodes
+        mode (int): publish mode
+
+    Hint:
+        you can use it as follows from anywhere in Houdini:
+
+        >>> from openpype.hosts.houdini.api.lib import publish_trigger
+        >>> nodes = hou.selectedNodes()
+        >>> publish_trigger(nodes)
     """
 
     result, comment = hou.ui.readInput(
@@ -989,22 +1003,40 @@ def self_publish():
     if result:
         return
 
-    current_node = hou.node(".")
-    inputs_paths = find_rop_input_dependencies(
-        current_node.inputDependencies()
-    )
-    inputs_paths.append(current_node.path())
+    if not nodes:
+        nodes = [hou.node(".")]
+
+    inputs_paths = [node.path() for node in nodes]
 
     host = registered_host()
-    context = CreateContext(host, reset=True)
+    context = CreateContext(host)
 
-    for instance in context.instances:
-        node_path = instance.data.get("instance_node")
-        instance["active"] = node_path and node_path in inputs_paths
+    if mode == 0:
+        for instance in context.instances:
+            node_path = instance.data.get("instance_node")
+            instance["active"] = node_path and node_path in inputs_paths
 
-    context.save_changes()
+        context.save_changes()
 
-    publisher_show_and_publish(comment)
+        publisher_show_and_publish(comment)
+
+    elif mode == 1:
+        for in_path in inputs_paths:
+            for instance in context.instances:
+                node_path = instance.data.get("instance_node")
+                instance["active"] = node_path and node_path == in_path
+
+            context.save_changes()
+
+            publisher_show_and_publish(comment)
+
+
+def self_publish():
+    """Self publish from ROP nodes.
+
+    It uses publish_trigger function without any arguments.
+    """
+    publish_trigger()
 
 
 def add_self_publish_button(node):
@@ -1013,8 +1045,8 @@ def add_self_publish_button(node):
     label = os.environ.get("AVALON_LABEL") or "AYON"
 
     button_parm = hou.ButtonParmTemplate(
-        "ayon_self_publish",
-        "{} Publish".format(label),
+        "ayon_publish_trigger",
+        "{} Publish Trigger".format(label),
         script_callback="from openpype.hosts.houdini.api.lib import "
                         "self_publish; self_publish()",
         script_callback_language=hou.scriptLanguage.Python,
