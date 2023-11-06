@@ -26,7 +26,8 @@
             "enabled": false,
             "default_display": "ACES",
             "default_view": "sRGB",
-            "review_color_space": "Output - sRGB"
+            "review_color_space": "Output - sRGB",
+            "override_review_color": false
         }
     },
     "shelves": [],
