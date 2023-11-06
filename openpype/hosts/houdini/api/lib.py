@@ -1010,7 +1010,7 @@ def self_publish():
 def add_self_publish_button(node):
     """Adds a self publish button to the rop node."""
 
-    label = os.environ.get("AVALON_LABEL") or "OpenPype"
+    label = os.environ.get("AVALON_LABEL") or "AYON"
 
     button_parm = hou.ButtonParmTemplate(
         "ayon_self_publish",
