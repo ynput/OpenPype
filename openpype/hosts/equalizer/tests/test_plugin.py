@@ -1,13 +1,12 @@
 """
-3dequalizer plugin tests
+3DEqualizer plugin tests
 
-These test need to be run in 3dequalizer.
+These test need to be run in 3DEqualizer.
 
 """
 import json
 import re
 import unittest
-from pprint import pprint
 
 from attrs import asdict, define, field
 from attrs.exceptions import NotAnAttrsClassError
@@ -15,8 +14,8 @@ from attrs.exceptions import NotAnAttrsClassError
 AVALON_CONTAINER_ID = "test.container"
 
 CONTEXT_REGEX = re.compile(
-        r"AYON_CONTEXT::(?P<context>.*?)::AYON_CONTEXT_END",
-        re.DOTALL)
+    r"AYON_CONTEXT::(?P<context>.*?)::AYON_CONTEXT_END",
+    re.DOTALL)
 
 
 @define
@@ -55,10 +54,10 @@ def get_context_data():
     return json.loads(m["context"]) if m else {}
 
 
-def update_context_data(data, changes):
+def update_context_data(data, _):
     m = re.search(CONTEXT_REGEX, tde4.getProjectNotes())
     if not m:
-        tde4.setProjectNotes(f"AYON_CONTEXT::::AYON_CONTEXT_END")
+        tde4.setProjectNotes("AYON_CONTEXT::::AYON_CONTEXT_END")
     update = json.dumps(data, indent=4)
     tde4.setProjectNotes(
         re.sub(
@@ -78,7 +77,7 @@ def add_container(container: Container):
     containers = get_containers()
 
     for _container in containers:
-        if _container["name"] == container.name and _container["namespace"] == container.namespace:
+        if _container["name"] == container.name and _container["namespace"] == container.namespace:  # noqa: E501
             containers.remove(_container)
             break
 
@@ -104,7 +103,8 @@ class TestEqualizer(unittest.TestCase):
             Container(name="test", representation="test_A")
         )
 
-        self.assertEqual(1, len(get_containers()),"container not added")
+        self.assertEqual(
+            1, len(get_containers()), "container not added")
         self.assertEqual(
             get_containers()[0]["name"],
             "test", "container name is not correct")
@@ -114,7 +114,8 @@ class TestEqualizer(unittest.TestCase):
             Container(name="test2", representation="test_B")
         )
 
-        self.assertEqual(2, len(get_containers()), "container not added")
+        self.assertEqual(
+            2, len(get_containers()), "container not added")
         self.assertEqual(
             get_containers()[1]["name"],
             "test2", "container name is not correct")
@@ -123,7 +124,8 @@ class TestEqualizer(unittest.TestCase):
         add_container(
             Container(name="test2", representation="test_C")
         )
-        self.assertEqual(2, len(get_containers()), "container not updated")
+        self.assertEqual(
+            2, len(get_containers()), "container not updated")
         self.assertEqual(
             get_containers()[1]["representation"],
             "test_C", "container name is not correct")

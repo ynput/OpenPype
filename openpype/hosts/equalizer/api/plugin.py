@@ -105,8 +105,7 @@ class EqualizerCreator(ABC, Creator):
         self.host.update_context_data(context, changes={})
 
 
-class ExtractScriptBase(
-    ABC, publish.Extractor, OpenPypePyblishPluginMixin):
+class ExtractScriptBase(ABC, publish.Extractor, OpenPypePyblishPluginMixin):
     """Base class for extract script plugins."""
 
     hide_reference_frame = False

@@ -21,7 +21,6 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     register_loader_plugin_path,
 )
-from openpype.tools.utils import get_openpype_qt_app
 
 CONTEXT_REGEX = re.compile(
     r"AYON_CONTEXT::(?P<context>.*?)::AYON_CONTEXT_END",
