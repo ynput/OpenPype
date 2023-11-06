@@ -489,7 +489,7 @@ DEFAULT_TOOLS_VALUES = {
                 "template_name": "publish_online"
             },
             {
-                "families": [
+                "product_types": [
                     "tycache"
                 ],
                 "hosts": [
