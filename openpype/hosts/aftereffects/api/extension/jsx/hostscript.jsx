@@ -321,20 +321,19 @@ function importFileWithDialog(path, item_name){
 
     importedComp = importedCompArray[0]
     if (importedComp.layers == undefined){
-        alert('Wrong file type imported (impossible to access layers composition).');
         undoLastActions();
-        return
+        return _prepareError('Wrong file type imported (impossible to access layers composition).')
     }
 
     importedCompFilePath = getCompFilepath(importedComp);
     if (extensionsAreDifferents(importedCompFilePath, path)){
-        alert('Wrong file selected (incorrect extension).')
         undoLastActions();
-        return
+        return _prepareError('Wrong file selected (incorrect extension).')
     }
 
     if (versionsAreDifferents(importedCompFilePath, path)){
-        alert('Wrong file selected (incorrect asset / version).')
+        undoLastActions();
+        return _prepareError('Wrong file selected (incorrect asset / version).')
     }
 
     importedCompFolder = getImportedCompFolder(importedComp);
@@ -343,7 +342,11 @@ function importFileWithDialog(path, item_name){
     importedComp.name = item_name
 
     renameFolderItems(importedCompFolder);
+
+    ret = {"name": importedComp.name, "id": importedComp.id}
     app.endUndoGroup();
+
+    return JSON.stringify(ret);
 }
 
 
