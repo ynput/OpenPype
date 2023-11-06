@@ -3,7 +3,7 @@ from maya import cmds, mel
 import pyblish.api
 
 from openpype.client import get_subset_by_name
-from openpype.pipeline import legacy_io, KnownPublishError
+from openpype.pipeline import KnownPublishError
 from openpype.hosts.maya.api import lib
 
 
@@ -116,10 +116,10 @@ class CollectReview(pyblish.api.InstancePlugin):
             instance.data['remove'] = True
 
         else:
-            task = legacy_io.Session["AVALON_TASK"]
-            legacy_subset_name = task + 'Review'
+            project_name = instance.context.data["projectName"]
             asset_doc = instance.context.data['assetEntity']
-            project_name = legacy_io.active_project()
+            task = instance.context.data["task"]
+            legacy_subset_name = task + 'Review'
             subset_doc = get_subset_by_name(
                 project_name,
                 legacy_subset_name,
