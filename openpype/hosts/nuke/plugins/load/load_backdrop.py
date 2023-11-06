@@ -64,8 +64,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
 
         data_imprint = {
             "version": vname,
-            "colorspaceInput": colorspace,
-            "objectName": object_name
+            "colorspaceInput": colorspace
         }
 
         for k in add_keys:
@@ -194,7 +193,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         # get corresponding node
-        GN = nuke.toNode(container['objectName'])
+        GN = container["node"]
 
         file = get_representation_path(representation).replace("\\", "/")
 
@@ -207,10 +206,11 @@ class LoadBackdropNodes(load.LoaderPlugin):
 
         add_keys = ["source", "author", "fps"]
 
-        data_imprint = {"representation": str(representation["_id"]),
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "representation": str(representation["_id"]),
+            "version": vname,
+            "colorspaceInput": colorspace,
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -252,6 +252,6 @@ class LoadBackdropNodes(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
         with viewer_update_and_undo_stop():
             nuke.delete(node)

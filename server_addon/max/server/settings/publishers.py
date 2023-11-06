@@ -1,6 +1,30 @@
-from pydantic import Field
+import json
+from pydantic import Field, validator
 
 from ayon_server.settings import BaseSettingsModel
+from ayon_server.exceptions import BadRequestException
+
+
+class ValidateAttributesModel(BaseSettingsModel):
+    enabled: bool = Field(title="ValidateAttributes")
+    attributes: str = Field(
+        "{}", title="Attributes", widget="textarea")
+
+    @validator("attributes")
+    def validate_json(cls, value):
+        if not value.strip():
+            return "{}"
+        try:
+            converted_value = json.loads(value)
+            success = isinstance(converted_value, dict)
+        except json.JSONDecodeError:
+            success = False
+
+        if not success:
+            raise BadRequestException(
+                "The attibutes can't be parsed as json object"
+            )
+        return value
 
 
 class FamilyPluginsMappingModel(BaseSettingsModel):
@@ -29,6 +53,11 @@ class PublishersModel(BaseSettingsModel):
         title="Validate Frame Range",
         section="Validators"
     )
+    ValidateAttributes: ValidateAttributesModel = Field(
+        default_factory=ValidateAttributesModel,
+        title="Validate Attributes"
+    )
+
     ValidateLoadedPlugin: ValidateLoadedPluginModel = Field(
         default_factory=ValidateLoadedPluginModel,
         title="Validate Loaded Plugin"
@@ -39,6 +68,10 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": True
+    },
+    "ValidateAttributes": {
+        "enabled": False,
+        "attributes": "{}"
     },
     "ValidateLoadedPlugin": {
         "enabled": False,

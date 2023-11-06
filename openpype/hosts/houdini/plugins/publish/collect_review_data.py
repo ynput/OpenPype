@@ -6,6 +6,8 @@ class CollectHoudiniReviewData(pyblish.api.InstancePlugin):
     """Collect Review Data."""
 
     label = "Collect Review Data"
+    # This specific order value is used so that
+    # this plugin runs after CollectRopFrameRange
     order = pyblish.api.CollectorOrder + 0.1
     hosts = ["houdini"]
     families = ["review"]
@@ -41,8 +43,8 @@ class CollectHoudiniReviewData(pyblish.api.InstancePlugin):
             return
 
         if focal_length_parm.isTimeDependent():
-            start = instance.data["frameStart"]
-            end = instance.data["frameEnd"] + 1
+            start = instance.data["frameStartHandle"]
+            end = instance.data["frameEndHandle"] + 1
             focal_length = [
                 focal_length_parm.evalAsFloatAtFrame(t)
                 for t in range(int(start), int(end))

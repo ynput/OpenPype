@@ -11,20 +11,21 @@ import json
 import six
 
 from openpype.lib import StringTemplate
-from openpype.client import get_asset_by_name
+from openpype.client import get_project, get_asset_by_name
 from openpype.settings import get_current_project_settings
 from openpype.pipeline import (
+    Anatomy,
     get_current_project_name,
     get_current_asset_name,
-    registered_host
+    registered_host,
+    get_current_context,
+    get_current_host_name,
 )
-from openpype.pipeline.context_tools import (
-    get_current_context_template_data,
-    get_current_project_asset
-)
+from openpype.pipeline.create import CreateContext
+from openpype.pipeline.template_data import get_template_data
+from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.widgets import popup
 from openpype.tools.utils.host_tools import get_tool_by_name
-from openpype.pipeline.create import CreateContext
 
 import hou
 
@@ -568,9 +569,9 @@ def get_template_from_value(key, value):
     return parm
 
 
-def get_frame_data(node, handle_start=0, handle_end=0, log=None):
-    """Get the frame data: start frame, end frame, steps,
-    start frame with start handle and end frame with end handle.
+def get_frame_data(node, log=None):
+    """Get the frame data: `frameStartHandle`, `frameEndHandle`
+    and `byFrameStep`.
 
     This function uses Houdini node's `trange`, `t1, `t2` and `t3`
     parameters as the source of truth for the full inclusive frame
@@ -578,20 +579,17 @@ def get_frame_data(node, handle_start=0, handle_end=0, log=None):
     range including the handles.
 
     The non-inclusive frame start and frame end without handles
-    are computed by subtracting the handles from the inclusive
+    can be computed by subtracting the handles from the inclusive
     frame range.
 
     Args:
         node (hou.Node): ROP node to retrieve frame range from,
             the frame range is assumed to be the frame range
             *including* the start and end handles.
-        handle_start (int): Start handles.
-        handle_end (int): End handles.
-        log (logging.Logger): Logger to log to.
 
     Returns:
-        dict: frame data for start, end, steps,
-              start with handle and end with handle
+        dict: frame data for `frameStartHandle`, `frameEndHandle`
+            and `byFrameStep`.
 
     """
 
@@ -621,11 +619,6 @@ def get_frame_data(node, handle_start=0, handle_end=0, log=None):
         data["frameStartHandle"] = int(node.evalParm("f1"))
         data["frameEndHandle"] = int(node.evalParm("f2"))
         data["byFrameStep"] = node.evalParm("f3")
-
-    data["handleStart"] = handle_start
-    data["handleEnd"] = handle_end
-    data["frameStart"] = data["frameStartHandle"] + data["handleStart"]
-    data["frameEnd"] = data["frameEndHandle"] - data["handleEnd"]
 
     return data
 
@@ -804,6 +797,45 @@ def get_camera_from_container(container):
     return cameras[0]
 
 
+def get_current_context_template_data_with_asset_data():
+    """
+    TODOs:
+        Support both 'assetData' and 'folderData' in future.
+    """
+
+    context = get_current_context()
+    project_name = context["project_name"]
+    asset_name = context["asset_name"]
+    task_name = context["task_name"]
+    host_name = get_current_host_name()
+
+    anatomy = Anatomy(project_name)
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
+
+    # get context specific vars
+    asset_data = asset_doc["data"]
+
+    # compute `frameStartHandle` and `frameEndHandle`
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart")
+    handle_end = asset_data.get("handleEnd")
+    if frame_start is not None and handle_start is not None:
+        asset_data["frameStartHandle"] = frame_start - handle_start
+
+    if frame_end is not None and handle_end is not None:
+        asset_data["frameEndHandle"] = frame_end + handle_end
+
+    template_data = get_template_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+    template_data["root"] = anatomy.roots
+    template_data["assetData"] = asset_data
+
+    return template_data
+
+
 def get_context_var_changes():
     """get context var changes."""
 
@@ -823,7 +855,7 @@ def get_context_var_changes():
         return houdini_vars_to_update
 
     # Get Template data
-    template_data = get_current_context_template_data()
+    template_data = get_current_context_template_data_with_asset_data()
 
     # Set Houdini Vars
     for item in houdini_vars:

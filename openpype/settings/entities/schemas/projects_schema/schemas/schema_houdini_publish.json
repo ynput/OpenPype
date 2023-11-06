@@ -11,8 +11,8 @@
     {
       "type": "dict",
       "collapsible": true,
-      "key": "CollectRopFrameRange",
-      "label": "Collect Rop Frame Range",
+      "key": "CollectAssetHandles",
+      "label": "Collect Asset Handles",
       "children": [
         {
           "type": "label",
@@ -23,6 +23,36 @@
             "key": "use_asset_handles",
             "label": "Use asset handles"
         }
+      ]
+    },
+    {
+        "type": "label",
+        "label": "Validators"
+    },
+    {
+      "type": "schema_template",
+      "name": "template_publish_plugin",
+      "template_data": [
+          {
+              "key": "ValidateContainers",
+              "label": "Validate Containers"
+          },
+          {
+            "key": "ValidateMeshIsStatic",
+            "label": "Validate Mesh is Static"
+          },
+          {
+            "key": "ValidateReviewColorspace",
+            "label": "Validate Review Colorspace"
+          },
+          {
+            "key": "ValidateSubsetName",
+            "label": "Validate Subset Name"
+          },
+          {
+            "key": "ValidateUnrealStaticMeshName",
+            "label": "Validate Unreal Static Mesh Name"
+          }
       ]
     },
     {
@@ -55,32 +85,6 @@
             "type": "list",
             "object_type": "text"
         }
-      ]
-    },
-    {
-      "type": "schema_template",
-      "name": "template_publish_plugin",
-      "template_data": [
-          {
-              "key": "ValidateReviewColorspace",
-              "label": "Validate Review Colorspace"
-          },
-          {
-              "key": "ValidateContainers",
-              "label": "ValidateContainers"
-          },
-          {
-            "key": "ValidateSubsetName",
-            "label": "Validate Subset Name"
-          },
-          {
-            "key": "ValidateMeshIsStatic",
-            "label": "Validate Mesh is Static"
-          },
-          {
-            "key": "ValidateUnrealStaticMeshName",
-            "label": "Validate Unreal Static Mesh Name"
-          }
       ]
     }
   ]

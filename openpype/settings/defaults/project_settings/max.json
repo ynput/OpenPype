@@ -37,6 +37,10 @@
             "optional": true,
             "active": true
         },
+        "ValidateAttributes": {
+            "enabled": false,
+            "attributes": {}
+        },
         "ValidateLoadedPlugin": {
             "enabled": false,
             "optional": true,
