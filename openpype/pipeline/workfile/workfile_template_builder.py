@@ -1291,7 +1291,7 @@ class PlaceholderLoadMixin(object):
                 items=[
                     {"label": "From Current asset", "value": "context_asset"},
                     {"label": "From Linked assets", "value": "linked_asset"},
-                    {"label": "From Others assets", "value": "all_assets"},
+                    {"label": "From All assets", "value": "all_assets"},
                 ] + libraries_project_items,
                 tooltip=(
                     "Asset Builder Type\n"
@@ -1305,8 +1305,8 @@ class PlaceholderLoadMixin(object):
                     " field \"inputLinks\""
                     "\nAll assets : Template loader will look for all assets"
                     " in database."
-                    "\nLibraries assets : Template loader will look for assets"
-                    "in libraries."
+                    "\nLibrary assets : Template loader will look for assets"
+                    "in given library."
                 )
             ),
             attribute_definitions.EnumDef(
@@ -1569,8 +1569,8 @@ class PlaceholderLoadMixin(object):
                 placeholder, representation
             )
             self.log.info(
-                "Loading {} from {} with loader {} with"
-                "Loader arguments used : {}".format(
+                "Loading {} from {} with loader {} with "
+                "loader arguments used : {}".format(
                     repre_context["subset"],
                     repre_context["asset"],
                     loader_name,
