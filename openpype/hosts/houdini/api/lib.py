@@ -976,13 +976,11 @@ def publish_trigger(nodes=None, mode=0):
 
     Trigger Publish action for the given nodes.
     publish modes:
-        0 : publish instances in one publish session (the same
-            behavior as using publisher UI)
-        1 : publish instance by instance (to force a certain publish
-            order at the cost of losing logs)
+        0 : publish all input instances in one publish session
+            (the same behavior as using publisher UI)
 
     Args:
-        nodes: list of hou.Nodes
+        nodes (list of hou.Nodes): publish instances
         mode (int): publish mode
 
     Hint:
@@ -1019,16 +1017,6 @@ def publish_trigger(nodes=None, mode=0):
         context.save_changes()
 
         publisher_show_and_publish(comment)
-
-    elif mode == 1:
-        for in_path in inputs_paths:
-            for instance in context.instances:
-                node_path = instance.data.get("instance_node")
-                instance["active"] = node_path and node_path == in_path
-
-            context.save_changes()
-
-            publisher_show_and_publish(comment)
 
 
 def self_publish():
