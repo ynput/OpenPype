@@ -859,11 +859,12 @@ def get_houdini_color_settings():
 def set_review_color_space(opengl_node, log=None):
     """Set ociocolorspace parameter for the given OpenGL node.
 
-    This function will use the value exposed in settings
-    if workfile settings were enabled.
+    if workfile settings are enabled, it will use the value
+    exposed in the settings.
 
-    Otherwise, it will use the default colorspace corresponding
-    to the display & view of the current Houdini session.
+    if workfile settings are disabled, it will use the default
+    colorspace corresponding to the display & view of
+    the current Houdini session.
 
     Args:
         OpenGl node (hou.Node): ROP node to set its ociocolorspace parameter.
