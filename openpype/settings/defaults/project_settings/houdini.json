@@ -144,7 +144,7 @@
         }
     },
     "publish": {
-        "CollectRopFrameRange": {
+        "CollectAssetHandles": {
             "use_asset_handles": true
         },
         "ValidateContainers": {

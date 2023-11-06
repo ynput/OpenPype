@@ -267,7 +267,7 @@ class ProcessSubmittedJobOnFarmModel(BaseSettingsModel):
         title="Reviewable products filter",
     )
 
-    @validator("aov_filter", "skip_integration_repre_list")
+    @validator("aov_filter")
     def validate_unique_names(cls, value):
         ensure_unique_names(value)
         return value

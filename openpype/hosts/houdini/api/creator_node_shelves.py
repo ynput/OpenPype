@@ -173,6 +173,7 @@ def install():
         os.remove(filepath)
 
     icon = get_openpype_icon_filepath()
+    tab_menu_label = os.environ.get("AVALON_LABEL") or "AYON"
 
     # Create context only to get creator plugins, so we don't reset and only
     # populate what we need to retrieve the list of creator plugins
@@ -197,14 +198,14 @@ def install():
             if not network_categories:
                 continue
 
-            key = "openpype_create.{}".format(identifier)
+            key = "ayon_create.{}".format(identifier)
             log.debug(f"Registering {key}")
             script = CREATE_SCRIPT.format(identifier=identifier)
             data = {
                 "script": script,
                 "language": hou.scriptLanguage.Python,
                 "icon": icon,
-                "help": "Create OpenPype publish instance for {}".format(
+                "help": "Create Ayon publish instance for {}".format(
                     creator.label
                 ),
                 "help_url": None,
@@ -213,7 +214,7 @@ def install():
                 "cop_viewer_categories": [],
                 "network_op_type": None,
                 "viewer_op_type": None,
-                "locations": ["OpenPype"]
+                "locations": [tab_menu_label]
             }
             label = "Create {}".format(creator.label)
             tool = hou.shelves.tool(key)
