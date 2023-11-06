@@ -1079,6 +1079,7 @@ def convert_colorspace(
         additional_command_args (list): arguments for oiiotool (like binary
             depth for .dpx)
         logger (logging.Logger): Logger used for logging.
+        input_args (list): input arguments for oiiotool
     Raises:
         ValueError: if misconfigured
     """
