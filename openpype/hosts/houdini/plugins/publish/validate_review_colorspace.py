@@ -6,13 +6,17 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.houdini.api.action import SelectROPAction
+from openpype.hosts.houdini.api.lib import (
+    get_houdini_color_settings,
+    set_review_color_space
+)
 
 import os
 import hou
 
 
-class SetDefaultViewSpaceAction(RepairAction):
-    label = "Set default view colorspace"
+class SetReviewColorSpaceAction(RepairAction):
+    label = "Set Review Color Space"
     icon = "mdi.monitor"
 
 
@@ -27,7 +31,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
     families = ["review"]
     hosts = ["houdini"]
     label = "Validate Review Colorspace"
-    actions = [SetDefaultViewSpaceAction, SelectROPAction]
+    actions = [SetReviewColorSpaceAction, SelectROPAction]
 
     optional = True
 
@@ -61,30 +65,32 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
                 .format(rop_node.path())
             )
 
+        color_settings = get_houdini_color_settings()
+        if color_settings.get("override_review_color"):
+            return
+
+        if rop_node.evalParm("ociocolorspace") != \
+                color_settings["review_color_space"]:
+
+            raise PublishValidationError(
+                "Invalid value: Colorspace name doesn't match studio settings.\n"
+                "Check 'OCIO Colorspace' parameter on '{}' ROP"
+                .format(rop_node.path())
+            )
+
     @classmethod
     def repair(cls, instance):
         """Set Default View Space Action.
 
-        It is a helper action more than a repair action,
-        used to set colorspace on opengl node to the default view.
+        It sets ociocolorspace parameter.
+
+        if workfile settings are enabled, it will use the value
+        exposed in the settings.
+
+        if workfile settings are disabled, it will use the default
+        colorspace corresponding to the display & view of
+        the current Houdini session.
         """
-        from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
 
-        rop_node = hou.node(instance.data["instance_node"])
-
-        if rop_node.evalParm("colorcorrect") != 2:
-            rop_node.setParms({"colorcorrect": 2})
-            cls.log.debug(
-                "'Color Correction' parm on '{}' has been set to"
-                " 'OpenColorIO'".format(rop_node.path())
-            )
-
-        # Get default view colorspace name
-        default_view_space = get_default_display_view_colorspace()
-
-        rop_node.setParms({"ociocolorspace": default_view_space})
-        cls.log.info(
-            "'OCIO Colorspace' parm on '{}' has been set to "
-            "the default view color space '{}'"
-            .format(rop_node, default_view_space)
-        )
+        opengl_node = hou.node(instance.data["instance_node"])
+        set_review_color_space(opengl_node, log=cls.log)

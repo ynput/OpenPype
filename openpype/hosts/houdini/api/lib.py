@@ -844,6 +844,68 @@ def get_current_context_template_data_with_asset_data():
     return template_data
 
 
+def get_houdini_color_settings():
+    """Get Houdini working file color settings.
+
+    Returns:
+        Dict: The dictionary contains the Houdini working file color settings
+              if the settings are enabled, otherwise it is an empty dictionary.
+    """
+
+    project_settings = get_current_project_settings()
+    color_settings = project_settings["houdini"]["imageio"]["workfile"]
+    if color_settings["enabled"]:
+        color_settings.pop("enabled")
+        # Remove leading, and trailing whitespaces
+        view_Space = color_settings["review_color_space"]
+        color_settings["review_color_space"] = view_Space.strip()
+        return color_settings
+
+    return {}
+
+def set_review_color_space(opengl_node, log=None):
+    """Set ociocolorspace parameter for the given OpenGL node.
+
+    This function will use the value exposed in settings
+    if workfile settings were enabled.
+
+    Otherwise, it will use the default colorspace corresponding
+    to the display & view of the current Houdini session.
+
+    Args:
+        OpenGl node (hou.Node): ROP node to set its ociocolorspace parameter.
+        log (logging.Logger): Logger to log to.
+    """
+
+    if log is None:
+        log = self.log
+
+    # Set Color Correction parameter to OpenColorIO
+    if opengl_node.evalParm("colorcorrect") != 2:
+        opengl_node.setParms({"colorcorrect": 2})
+        log.debug(
+            "'Color Correction' parm on '{}' has been set to"
+            " 'OpenColorIO'".format(opengl_node.path())
+        )
+
+    # Get view space for ociocolorspace parm.
+    view_space = get_houdini_color_settings().get("review_color_space")
+
+    if not view_space:
+        from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
+        view_space = get_default_display_view_colorspace()
+
+    opengl_node.setParms(
+        {"ociocolorspace": view_space}
+    )
+
+    self.log.debug(
+        "'OCIO Colorspace' parm on '{}' has been set to "
+        "the view color space '{}'"
+        .format(opengl_node, view_space)
+    )
+
+
 def get_context_var_changes():
     """get context var changes."""
 
