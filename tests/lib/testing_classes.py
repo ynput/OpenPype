@@ -11,7 +11,6 @@ import platform
 import requests
 import re
 import time
-import subprocess
 
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler
@@ -317,9 +316,7 @@ class PublishTest(ModuleUnitTest):
             "start_last_workfile": True,
             "project_name": self.PROJECT,
             "asset_name": self.ASSET,
-            "task_name": self.TASK,
-            "stdout": subprocess.PIPE,
-            "stderr": subprocess.PIPE
+            "task_name": self.TASK
         }
         if app_args:
             data["app_args"] = app_args
