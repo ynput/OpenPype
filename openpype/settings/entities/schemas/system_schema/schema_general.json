@@ -115,6 +115,24 @@
             "type": "splitter"
         },
         {
+            "type": "dict",
+            "key": "project",
+            "label": "Project",
+            "collapsible": true,
+            "collapsed": false,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "protect_anatomy_attributes",
+                    "label": "Protect Anatomy Attributes",
+                    "require_restart": true
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
             "type": "list",
             "key": "local_env_white_list",
             "label": "Local overrides of environment variable keys",
@@ -167,23 +185,6 @@
                     "key": "version_check_interval",
                     "label": "Version check interval",
                     "minimum": 0
-                }
-            ]
-        },
-        {
-            "type": "splitter"
-        },
-        {
-            "type": "dict",
-            "key": "project",
-            "label": "Project",
-            "collapsible": true,
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "protect_anatomy_attributes",
-                    "label": "Protect Anatomy Attributes",
-                    "require_restart": true
                 }
             ]
         }
