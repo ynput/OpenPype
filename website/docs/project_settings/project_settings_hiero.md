@@ -23,7 +23,7 @@ Find here the publish plugins.
 **Plugins list:** Collect Instance Version, Extract Review Cut Up Video.
 
 # Publish GUI Filters
-More informations about the Publish GUI Filters in [Maya's documentation](settings_project_maya.md#publish-gui-filter).
+More information about the Publish GUI Filters in [Maya's documentation](settings_project_maya.md#publish-gui-filter).
 
 # Scripts Menu Definition
-More informations about the Scripts Menu Definition in [Maya's documentation](settings_project_maya.md#script-menu-definition).
+More information about the Script Menu Definition in [Maya's documentation](settings_project_maya.md#script-menu-definition).
