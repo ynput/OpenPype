@@ -1,5 +1,5 @@
 ---
-id: settings_project_flame
+id: project_settings_flame
 title: Project Flame Setting
 sidebar_label: Flame
 ---

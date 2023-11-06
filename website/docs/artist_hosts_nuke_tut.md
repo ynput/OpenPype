@@ -179,7 +179,7 @@ After Nuke starts it will automatically **Apply All Settings** for you. If you a
 :::
 
 ### Save Nuke script – the Work File
-Use OpenPype - Work files menu to create a new Nuke script. Openpype offers you the preconfigured naming. 
+Use OpenPype - Work files menu to create a new Nuke script. Openpype offers you the preconfigured naming.
 ![Context](assets/nuke_tut/nuke_WorkFileSaveAs.png)
 
 The Next Available Version checks the work folder for already used versions and offers the lowest unused version number automatically.
@@ -196,11 +196,11 @@ More about [workfiles](artist_tools_workfiles).
 
 - **Open Workfile**
 
-  - You can [configure](project_settings/settings_project_nuke.md#create-first-workfile) Nuke to automatically open the last version, or create a file on startup. See **Studio Settings → Project → Global → Tools → Workfiles**
+  - You can [configure](project_settings/project_settings_nuke.md#create-first-workfile) Nuke to automatically open the last version, or create a file on startup. See **Studio Settings → Project → Global → Tools → Workfiles**
 
 - **Nuke Color Settings**
 
-  - [Color setting](project_settings/settings_project_nuke.md) for Nuke can be found in **Studio Settings → Project → Anatomy → Color Management and Output Formats → Nuke**
+  - [Color setting](project_settings/project_settings_nuke.md) for Nuke can be found in **Studio Settings → Project → Anatomy → Color Management and Output Formats → Nuke**
 :::
 
 ### Load plate
@@ -283,7 +283,7 @@ You can configure Nuke validators like Output Resolution in **Studio Settings �
 ![Write Node Review](assets/nuke_tut/nuke_WriteNodeReview.png)
 
 When you turn the review checkbox on in your OpenPype write node, here is what happens:
-- OpenPype uses the current Nuke script to 
+- OpenPype uses the current Nuke script to
   - Load the render
   - Optionally apply LUT
   - Render Prores 4444 with the same resolution as your render

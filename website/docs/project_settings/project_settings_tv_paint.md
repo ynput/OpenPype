@@ -28,4 +28,4 @@ Find here the loader plugins.
 Find more information about the Workfile Builder in the [Nuke Documentation](project_settings_nuke.md#workfile-builder).
 
 # Publish GUI Filters
-More information about the Publish GUI Filters in [Maya's documentation](settings_project_maya.md#publish-gui-filter).
+More information about the Publish GUI Filters in [Maya's documentation](project_settings_maya.md#publish-gui-filter).
