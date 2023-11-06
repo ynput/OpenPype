@@ -25,7 +25,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
-    # presetable attribute
+    # presentable attribute
     ffmpeg_args = None
 
     def process(self, instance):
@@ -94,12 +94,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             filename = os.path.splitext(input_file)[0]
             jpeg_file = filename + "_thumb.jpg"
             full_output_path = os.path.join(dst_staging, jpeg_file)
+            colorspace_data = repre.get("colorspaceData")
 
-            if oiio_supported:
+            if oiio_supported and colorspace_data:
                 self.log.debug("Trying to convert with OIIO")
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
-                colorspace_data = repre["colorspaceData"]
                 source_colorspace = colorspace_data["colorspace"]
                 config_path = colorspace_data.get("config", {}).get("path")
                 display = colorspace_data.get("display")
@@ -120,7 +120,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                     ))
 
             # Try to use FFMPEG if OIIO is not supported or for cases when
-            #    oiiotool isn't available
+            #   oiiotool isn't available or representation is not having
+            #   colorspace data
             if not thumbnail_created:
                 if oiio_supported:
                     self.log.info((
@@ -154,7 +155,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             break
 
         if not thumbnail_created:
-            self.log.warning("Thumbanil has not been created.")
+            self.log.warning("Thumbnail has not been created.")
 
     def _is_review_instance(self, instance):
         # TODO: We should probably handle "not creating" of thumbnail
