@@ -4,6 +4,34 @@ from openpype.modules import OpenPypeModule, IHostAddon
 HOUDINI_HOST_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
+def merge_paths(*paths):
+    """Merge path strings to a single uniqified `os.pathsep` joined string.
+
+    Each path argument can itself be `os.pathsep` joined string.
+    >>> merge_paths("A", "A;B;C", "D;E")
+    "A;B;C;D;E"
+
+    Returns:
+        str: Single joined path using `os.pathsep`
+
+    """
+    result = []
+    processed = set()
+    for paths_str in paths:
+        for path in paths_str.split(os.pathsep):
+            if not path:
+                continue
+
+            path = os.path.normpath(path)
+            if path in processed:
+                continue
+
+            result.append(path)
+            processed.add(path)
+
+    return os.pathsep.join(result)
+
+
 class HoudiniAddon(OpenPypeModule, IHostAddon):
     name = "houdini"
     host_name = "houdini"
@@ -12,36 +40,21 @@ class HoudiniAddon(OpenPypeModule, IHostAddon):
         self.enabled = True
 
     def add_implementation_envs(self, env, _app):
-        # Add requirements to HOUDINI_PATH and HOUDINI_MENU_PATH
+        # Add requirements to HOUDINI_PATH, HOUDINI_MENU_PATH, HOUDINI_OTL_PATH
         startup_path = os.path.join(HOUDINI_HOST_DIR, "startup")
-        new_houdini_path = [startup_path]
-        new_houdini_menu_path = [startup_path]
+        resources_path = os.path.join(HOUDINI_HOST_DIR, "resources")
 
-        old_houdini_path = env.get("HOUDINI_PATH") or ""
-        old_houdini_menu_path = env.get("HOUDINI_MENU_PATH") or ""
-
-        for path in old_houdini_path.split(os.pathsep):
-            if not path:
-                continue
-
-            norm_path = os.path.normpath(path)
-            if norm_path not in new_houdini_path:
-                new_houdini_path.append(norm_path)
-
-        for path in old_houdini_menu_path.split(os.pathsep):
-            if not path:
-                continue
-
-            norm_path = os.path.normpath(path)
-            if norm_path not in new_houdini_menu_path:
-                new_houdini_menu_path.append(norm_path)
-
-        # Add ampersand for unknown reason (Maybe is needed in Houdini?)
-        new_houdini_path.append("&")
-        new_houdini_menu_path.append("&")
-
-        env["HOUDINI_PATH"] = os.pathsep.join(new_houdini_path)
-        env["HOUDINI_MENU_PATH"] = os.pathsep.join(new_houdini_menu_path)
+        # Add ampersand for safety.
+        # https://www.sidefx.com/docs/houdini/basics/config_env.html#special-characters-in-path-variables
+        env["HOUDINI_PATH"] = merge_paths(
+            startup_path, env.get("HOUDINI_PATH", ""), "&"
+        )
+        env["HOUDINI_MENU_PATH"] = merge_paths(
+            startup_path, env.get("HOUDINI_MENU_PATH", ""), "&"
+        )
+        env["HOUDINI_OTL_PATH"] = merge_paths(
+            resources_path, env.get("HOUDINI_OTL_PATH", ""), "&"
+        )
 
     def get_launch_hook_paths(self, app):
         if app.host_name != self.host_name:
