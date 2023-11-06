@@ -4,7 +4,7 @@
         <subMenu id="openpype_menu">
             <labelExpression><![CDATA[
 import os
-return os.environ.get("AVALON_LABEL") or "OpenPype"
+return os.environ.get("AVALON_LABEL") or "AYON"
 ]]></labelExpression>
             <actionItem id="asset_name">
                     <labelExpression><![CDATA[
@@ -16,7 +16,7 @@ return label
 
             <separatorItem/>
 
-            <scriptItem id="openpype_create">
+            <scriptItem id="ayon_create">
                 <label>Create...</label>
                 <scriptCode><![CDATA[
 import hou
@@ -26,7 +26,7 @@ host_tools.show_publisher(parent, tab="create")
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="openpype_load">
+            <scriptItem id="ayon_load">
                 <label>Load...</label>
                 <scriptCode><![CDATA[
 import hou
@@ -46,7 +46,7 @@ host_tools.show_publisher(parent, tab="publish")
 ]]></scriptCode>
             </scriptItem>
 
-            <scriptItem id="openpype_manage">
+            <scriptItem id="ayon_manage">
                 <label>Manage...</label>
                 <scriptCode><![CDATA[
 import hou
