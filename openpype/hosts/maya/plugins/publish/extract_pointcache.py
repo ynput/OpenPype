@@ -107,7 +107,7 @@ class ExtractAlembic(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        if not instance.data.get("stagingDir_persistent", False):
+        if not instance.data.get("stagingDirPersistence", False):
             instance.context.data["cleanupFullPaths"].append(path)
 
         self.log.debug("Extracted {} to {}".format(instance, dirname))

@@ -1,11 +1,10 @@
 import os
 
-import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.photoshop import api as photoshop
 
 
-class ExtractImage(pyblish.api.ContextPlugin):
+class ExtractImage(publish.Extractor):
     """Extract all layers (groups) marked for publish.
 
     Usually publishable instance is created as a wrapper of layer(s). For each
@@ -88,14 +87,3 @@ class ExtractImage(pyblish.api.ContextPlugin):
 
                     for extracted_id in extract_ids:
                         stub.set_visible(extracted_id, False)
-
-    def staging_dir(self, instance):
-        """Provide a temporary directory in which to store extracted files
-
-        Upon calling this method the staging directory is stored inside
-        the instance.data['stagingDir']
-        """
-
-        from openpype.pipeline.publish import get_instance_staging_dir
-
-        return get_instance_staging_dir(instance)

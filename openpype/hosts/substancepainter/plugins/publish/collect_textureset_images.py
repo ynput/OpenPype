@@ -2,7 +2,7 @@ import os
 import copy
 import pyblish.api
 
-from openpype.pipeline import publish
+from openpype.pipeline.publish import get_instance_staging_dir
 
 import substance_painter.textureset
 from openpype.hosts.substancepainter.api.lib import (
@@ -165,7 +165,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         # See: https://substance3d.adobe.com/documentation/ptpy/api/substance_painter/export  # noqa
         config = {  # noqa
             "exportShaderParams": True,
-            "exportPath": publish.get_instance_staging_dir(instance),
+            "exportPath": get_instance_staging_dir(instance),
             "defaultExportPreset": preset_url,
 
             # Custom overrides to the exporter

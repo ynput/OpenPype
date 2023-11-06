@@ -23,8 +23,8 @@ from openpype.lib.transcoding import (
     should_convert_for_ffmpeg,
     get_review_layer_name,
     convert_input_paths_for_ffmpeg,
-    get_transcode_temp_directory,
 )
+from openpype.pipeline import get_temp_dir
 from openpype.pipeline.publish import (
     KnownPublishError,
     get_publish_instance_label,
@@ -273,7 +273,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             #   - change staging dir of source representation
             #   - must be set back after output definitions processing
             if do_convert:
-                new_staging_dir = get_transcode_temp_directory()
+                new_staging_dir = get_temp_dir(
+                    project_name=instance.context.data["projectName"],
+                    make_local=True,
+                    prefix="op_transcoding_"
+                )
                 repre["stagingDir"] = new_staging_dir
 
                 convert_input_paths_for_ffmpeg(

@@ -439,8 +439,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             # map inputVersions `ObjectId` -> `str` so json supports it
             "inputVersions": list(map(str, data.get("inputVersions", []))),
             "colorspace": instance.data.get("colorspace"),
-            "stagingDir_persistent": instance.data.get(
-                "stagingDir_persistent", False
+            "stagingDirPersistence": instance.data.get(
+                "stagingDirPersistence", False
             )
         }
 
