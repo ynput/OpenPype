@@ -53,12 +53,7 @@
                         },
                         {
                             "type": "label",
-                            "label": "Allow artists to override review colorspace, therefore review color space validator\nwon't error if artists used another review colorspace."
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "override_review_color",
-                            "label": "Override review colorspace"
+                            "label": "Leave Review colorspace empty to use the default colorspace."
                         }
                     ]
                 }

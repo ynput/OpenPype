@@ -40,13 +40,10 @@ class WorkfileImageIOModel(BaseSettingsModel):
     enabled: bool = Field(False, title="Enabled")
     default_display: str = Field(title="Display")
     default_view: str = Field(title="View")
-    review_color_space: str = Field(title="Review colorspace")
-    override_review_color: bool = Field(
-        False,
-        title="Override review colorspace",
-        description=("Allow artists to override review colorspace, "
-                     "therefore review color space validator won't error "
-                     "if artists used another review colorspace.")
+    review_color_space: str = Field(
+        title="Review colorspace",
+        description=("Leave Review colorspace empty to use the"
+                     " default colorspace.")
     )
 
 
@@ -82,7 +79,6 @@ DEFAULT_IMAGEIO_SETTINGS = {
         "enabled": False,
         "default_display": "ACES",
         "default_view": "sRGB",
-        "review_color_space": "Output - sRGB"
-    },
-    "override_review_color": False
+        "review_color_space": ""
+    }
 }
