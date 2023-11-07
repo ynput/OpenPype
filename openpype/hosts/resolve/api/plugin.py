@@ -307,11 +307,18 @@ class ClipLoader:
         self.active_project = lib.get_current_project()
 
         # try to get value from options or evaluate key value for `handles`
-        self.with_handles = options.get("handles") or bool(
-            options.get("handles") is True)
+        self.with_handles = options.get("handles") is True
+
         # try to get value from options or evaluate key value for `load_to`
-        self.new_timeline = options.get("newTimeline") or bool(
-            "New timeline" in options.get("load_to", ""))
+        self.new_timeline = (
+            options.get("newTimeline") or
+            options.get("load_to") == "New timeline"
+        )
+        # try to get value from options or evaluate key value for `load_how`
+        self.sequential_load = (
+            options.get("sequentially") or
+            options.get("load_how") == "Sequentially in order"
+        )
 
         assert self._populate_data(), str(
             "Cannot Load selected data, look into database "
@@ -392,30 +399,70 @@ class ClipLoader:
         # create project bin for the media to be imported into
         self.active_bin = lib.create_bin(self.data["binPath"])
 
-        handle_start = self.data["versionData"].get("handleStart") or 0
-        handle_end = self.data["versionData"].get("handleEnd") or 0
-
+        # create mediaItem in active project bin
+        # create clip media
         media_pool_item = lib.create_media_pool_item(
             files,
             self.active_bin
         )
         _clip_property = media_pool_item.GetClipProperty
 
+        # get handles
+        handle_start = self.data["versionData"].get("handleStart")
+        handle_end = self.data["versionData"].get("handleEnd")
+        if handle_start is None:
+            handle_start = int(self.data["assetData"]["handleStart"])
+        if handle_end is None:
+            handle_end = int(self.data["assetData"]["handleEnd"])
+
+        # check frame duration from versionData or assetData
+        frame_start = self.data["versionData"].get("frameStart")
+        if frame_start is None:
+            frame_start = self.data["assetData"]["frameStart"]
+
+        # check frame duration from versionData or assetData
+        frame_end = self.data["versionData"].get("frameEnd")
+        if frame_end is None:
+            frame_end = self.data["assetData"]["frameEnd"]
+
+        db_frame_duration = int(frame_end) - int(frame_start) + 1
+
+        # get timeline in
+        timeline_start = self.active_timeline.GetStartFrame()
+        if self.sequential_load:
+            # set timeline start frame
+            timeline_in = int(timeline_start)
+        else:
+            # set timeline start frame + original clip in frame
+            timeline_in = int(
+                timeline_start + self.data["assetData"]["clipIn"])
+
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
+        source_duration = int(_clip_property("Frames"))
 
-        if _clip_property("Type") == "Video":
+        # check if source duration is shorter than db frame duration
+        source_with_handles = True
+        if source_duration < db_frame_duration:
+            source_with_handles = False
+
+        # only exclude handles if source has no handles or
+        # if user wants to load without handles
+        if (
+            not self.with_handles
+            or not source_with_handles
+        ):
             source_in += handle_start
             source_out -= handle_end
 
-        # include handles
-        if self.with_handles:
-            source_in -= handle_start
-            source_out += handle_end
-
         # make track item from source in bin as item
         timeline_item = lib.create_timeline_item(
-            media_pool_item, self.active_timeline, source_in, source_out)
+            media_pool_item,
+            self.active_timeline,
+            timeline_in,
+            source_in,
+            source_out,
+        )
 
         print("Loading clips: `{}`".format(self.data["clip_name"]))
         return timeline_item
@@ -456,7 +503,7 @@ class TimelineItemLoader(LoaderPlugin):
     """
 
     options = [
-        qargparse.Toggle(
+        qargparse.Boolean(
             "handles",
             label="Include handles",
             default=0,
@@ -471,6 +518,16 @@ class TimelineItemLoader(LoaderPlugin):
             ],
             default=0,
             help="Where do you want clips to be loaded?"
+        ),
+        qargparse.Choice(
+            "load_how",
+            label="How to load clips",
+            items=[
+                "Original timing",
+                "Sequentially in order"
+            ],
+            default="Original timing",
+            help="Would you like to place it at original timing?"
         )
     ]
 

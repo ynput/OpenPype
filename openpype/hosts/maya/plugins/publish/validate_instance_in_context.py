@@ -74,4 +74,4 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin,
 
     @staticmethod
     def get_context_asset(instance):
-        return instance.context.data["assetEntity"]["name"]
+        return instance.context.data["asset"]

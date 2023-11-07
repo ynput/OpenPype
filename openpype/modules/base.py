@@ -66,6 +66,7 @@ IGNORED_FILENAMES_IN_AYON = {
     "shotgrid",
     "sync_server",
     "slack",
+    "kitsu",
 }
 
 
@@ -105,7 +106,7 @@ class _ModuleClass(object):
         if attr_name in self.__attributes__:
             self.log.warning(
                 "Duplicated name \"{}\" in {}. Overriding.".format(
-                    self.name, attr_name
+                    attr_name, self.name
                 )
             )
         self.__attributes__[attr_name] = value
@@ -407,6 +408,10 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
         addon_name = addon_info["name"]
         addon_version = addon_info["version"]
 
+        # OpenPype addon does not have any addon object
+        if addon_name == "openpype":
+            continue
+
         dev_addon_info = dev_addons_info.get(addon_name, {})
         use_dev_path = dev_addon_info.get("enabled", False)
 
@@ -437,7 +442,7 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
             # Ignore of files is implemented to be able to run code from code
             #   where usually is more files than just the addon
             # Ignore start and setup scripts
-            if name in ("setup.py", "start.py"):
+            if name in ("setup.py", "start.py", "__pycache__"):
                 continue
 
             path = os.path.join(addon_dir, name)
@@ -453,7 +458,15 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
 
             try:
                 mod = __import__(basename, fromlist=("",))
-                imported_modules.append(mod)
+                for attr_name in dir(mod):
+                    attr = getattr(mod, attr_name)
+                    if (
+                        inspect.isclass(attr)
+                        and issubclass(attr, OpenPypeModule)
+                    ):
+                        imported_modules.append(mod)
+                        break
+
             except BaseException:
                 log.warning(
                     "Failed to import \"{}\"".format(basename),
@@ -466,19 +479,26 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
             ))
             continue
 
-        if len(imported_modules) == 1:
-            mod = imported_modules[0]
-            addon_alias = getattr(mod, "V3_ALIAS", None)
-            if not addon_alias:
-                addon_alias = addon_name
-            v3_addons_to_skip.append(addon_alias)
-            new_import_str = "{}.{}".format(modules_key, addon_alias)
+        if len(imported_modules) > 1:
+            log.warning((
+                "Skipping addon '{}'."
+                " Multiple modules were found ({}) in dir {}."
+            ).format(
+                addon_name,
+                ", ".join([m.__name__ for m in imported_modules]),
+                addon_dir,
+            ))
+            continue
 
-            sys.modules[new_import_str] = mod
-            setattr(openpype_modules, addon_alias, mod)
+        mod = imported_modules[0]
+        addon_alias = getattr(mod, "V3_ALIAS", None)
+        if not addon_alias:
+            addon_alias = addon_name
+        v3_addons_to_skip.append(addon_alias)
+        new_import_str = "{}.{}".format(modules_key, addon_alias)
 
-        else:
-            log.info("More then one module was imported")
+        sys.modules[new_import_str] = mod
+        setattr(openpype_modules, addon_alias, mod)
 
     return v3_addons_to_skip
 
@@ -996,7 +1016,18 @@ class ModulesManager:
                 continue
 
             method = getattr(module, method_name)
-            paths = method(*args, **kwargs)
+            try:
+                paths = method(*args, **kwargs)
+            except Exception:
+                self.log.warning(
+                    (
+                        "Failed to get plugin paths from module"
+                        " '{}' using '{}'."
+                    ).format(module.__class__.__name__, method_name),
+                    exc_info=True
+                )
+                continue
+
             if paths:
                 # Convert to list if value is not list
                 if not isinstance(paths, (list, tuple, set)):

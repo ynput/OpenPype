@@ -639,6 +639,16 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
             for item in point_cloud_attribute
         }
         ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
+    # --- Publish (START) ---
+    ayon_publish = ayon_max["publish"]
+    if "ValidateAttributes" in ayon_publish:
+        try:
+            attributes = json.loads(
+                ayon_publish["ValidateAttributes"]["attributes"]
+            )
+        except ValueError:
+            attributes = {}
+        ayon_publish["ValidateAttributes"]["attributes"] = attributes
 
     output["max"] = ayon_max
 
@@ -1436,7 +1446,10 @@ class _AyonSettingsCache:
     def _use_bundles(cls):
         if _AyonSettingsCache.use_bundles is None:
             major, minor, _, _, _ = ayon_api.get_server_version_tuple()
-            _AyonSettingsCache.use_bundles = major == 0 and minor >= 3
+            use_bundles = True
+            if (major, minor) < (0, 3):
+                use_bundles = False
+            _AyonSettingsCache.use_bundles = use_bundles
         return _AyonSettingsCache.use_bundles
 
     @classmethod
@@ -1467,7 +1480,7 @@ class _AyonSettingsCache:
         bundles = ayon_api.get_bundles()
         user = ayon_api.get_user()
         username = user["name"]
-        for bundle in bundles:
+        for bundle in bundles["bundles"]:
             if (
                 bundle.get("isDev")
                 and bundle.get("activeUser") == username
