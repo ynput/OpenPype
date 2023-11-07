@@ -119,7 +119,8 @@ class ImageLoader(load.LoaderPlugin):
         if not parent.children():
             parent.destroy()
 
-    def _get_file_sequence(self, root):
+    def _get_file_sequence(self, file_path):
+        root = os.path.dirname(file_path)
         files = sorted(os.listdir(root))
 
         first_fname = files[0]

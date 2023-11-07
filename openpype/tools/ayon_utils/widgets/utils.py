@@ -54,6 +54,8 @@ class _IconsCache:
 
     @classmethod
     def get_icon(cls, icon_def):
+        if not icon_def:
+            return None
         icon_type = icon_def["type"]
         cache_key = cls._get_cache_key(icon_def)
         cache = cls._cache.get(cache_key)

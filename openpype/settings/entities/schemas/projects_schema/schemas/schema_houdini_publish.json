@@ -11,8 +11,8 @@
     {
       "type": "dict",
       "collapsible": true,
-      "key": "CollectRopFrameRange",
-      "label": "Collect Rop Frame Range",
+      "key": "CollectAssetHandles",
+      "label": "Collect Asset Handles",
       "children": [
         {
           "type": "label",
