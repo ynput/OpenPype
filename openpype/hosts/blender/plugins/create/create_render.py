@@ -13,6 +13,7 @@ from openpype.hosts.blender.api.pipeline import (
 class CreateRenderlayer(plugin.BaseCreator):
     """Single baked camera"""
 
+    identifier = "io.openpype.creators.blender.render"
     name = "renderingMain"
     label = "Render"
     family = "render"
@@ -28,8 +29,7 @@ class CreateRenderlayer(plugin.BaseCreator):
             bpy.context.scene.collection.children.link(instances)
 
         # Create instance object
-        asset = instance_data.get("asset")
-        name = plugin.asset_name(asset, subset_name)
+        name = plugin.asset_name(instance_data.get("asset"), subset_name)
         asset_group = bpy.data.collections.new(name=name)
 
         try:
