@@ -50,7 +50,10 @@ class ExtractPlayblast(publish.Extractor):
 
         # get output path
         stagingdir = self.staging_dir(instance)
-        filename = instance.name
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        filename = f"{asset_name}_{subset}"
+
         path = os.path.join(stagingdir, filename)
 
         self.log.debug(f"Outputting images to {path}")
