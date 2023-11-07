@@ -135,7 +135,9 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
             "workfileFrameStart": workfile_start_frame
         }
         if AYON_SERVER_ENABLED:
-            data["asset"] = _cr_attrs["asset"]
+            data["asset"] = _cr_attrs["folderPath"]
+        else:
+            data["asset"] = _cr_attrs["shotName"]
 
         return data
 
