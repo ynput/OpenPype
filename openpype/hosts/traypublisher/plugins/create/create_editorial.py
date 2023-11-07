@@ -606,19 +606,23 @@ or updating already created. Publishing will create OTIO file.
         Returns:
             str: label string
         """
-        shot_name = instance_data["shotName"]
+        if AYON_SERVER_ENABLED:
+            asset_name = instance_data["creator_attributes"]["folderPath"]
+        else:
+            asset_name = instance_data["creator_attributes"]["shotName"]
+
         variant_name = instance_data["variant"]
         family = preset["family"]
 
-        # get variant name from preset or from inharitance
+        # get variant name from preset or from inheritance
         _variant_name = preset.get("variant") or variant_name
 
         # subset name
         subset_name = "{}{}".format(
             family, _variant_name.capitalize()
         )
-        label = "{}_{}".format(
-            shot_name,
+        label = "{} {}".format(
+            asset_name,
             subset_name
         )
 

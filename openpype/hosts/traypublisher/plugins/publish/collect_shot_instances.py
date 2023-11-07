@@ -155,7 +155,7 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
             else {}
         )
 
-        name = instance.data["asset"]
+        asset_name = instance.data["asset"]
 
         # get handles
         handle_start = int(instance.data["handleStart"])
@@ -177,7 +177,7 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
 
         parents = instance.data.get('parents', [])
 
-        actual = {name: in_info}
+        actual = {asset_name: in_info}
 
         for parent in reversed(parents):
             parent_name = parent["entity_name"]
