@@ -1127,6 +1127,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         btns_layout = QtWidgets.QHBoxLayout()
         btns_layout.setContentsMargins(0, 0, 0, 0)
         btns_layout.addStretch(1)
+        btns_layout.setSpacing(5)
         btns_layout.addWidget(submit_btn)
         btns_layout.addWidget(cancel_btn)
 
