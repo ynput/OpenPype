@@ -19,7 +19,7 @@ Projects always use default project values unless they have [project override](.
 OpenPype distributes its own OCIO configs. Those can be found in `{openpype install dir}/{version}/vendor/bin/ocioconfig/OpenColorIOConfigs`. Windows example: `C:\Program Files (x86)\OpenPype\3.14.0\vendor\bin\ocioconfig\OpenColorIOConfigs`
 :::
 
-### Using OCIO config
+### OCIO config
 Global config path is set by default to OpenPype distributed configs. At the moment there are only two - **aces_1.2** and **nuke-default**. Since this path input is not platform specific it is required to use at least an environment variable do platform specific config root directory. Order of paths matter so first path found and existing first served.
 
 Each OCIO config path input supports formatting using environment variables and [anatomy template keys](../admin_settings_project_anatomy#available-template-keys). The default global OCIO config path is `{OPENPYPE_ROOT}/vendor/bin/ocioconfig/OpenColorIOConfigs/aces_1.2/config.ocio`.
@@ -36,7 +36,7 @@ If config path is defined to particular shot target with following path inputs:
 
 Procedure of resolving path (from above example) will look first into path 1st and if the path is not existing then it will try 2nd and if even that is not existing then it will fall back to global default.
 
-### Using File rules
+### File rules
 File rules are inspired by [OCIO v2 configuration]((https://opencolorio.readthedocs.io/en/latest/guides/authoring/rules.html)). Each rule has a unique name which can be overridden by host-specific _File rules_ (example: `project_settings/nuke/imageio/file_rules/rules`).
 
 The _input pattern_ matching uses REGEX expression syntax (try [regexr.com](https://regexr.com/)). Matching rules procedure's intention is to be used during publishing or loading of representation. Since the publishing procedure is run before integrator format publish template path, make sure the pattern is working or any work render path.
@@ -44,6 +44,51 @@ The _input pattern_ matching uses REGEX expression syntax (try [regexr.com](http
 :::warning Colorspace name input
 The **colorspace name** value is a raw string input and no validation is run after saving project settings. We recommend to open the specified `config.ocio` file and copy pasting the exact colorspace names.
 :::
+
+## Publish plugins
+
+Publish plugins used across all integrations.
+
+### Collect Anatomy Instance Data
+Switch on the **Follow worfile version** to copy the version data of the workfile project to the published one.
+
+![Collect Anatomy Data](assets/global_publishPlugins_collectAnatomy_Data.png)
+
+### Collect Audio
+Enable it to collect the audio data and add it a variant name.
+
+![Collect Audio](assets/global_publishPlugins_collectAudio.png)
+
+### Collect Version from Workfile
+1. Collect the version from Workfile while working on the indicated softwares.
+2. Skip the version collect if it's a headless publish for the indicated softwares.
+
+![Collect version from Workfile](assets/global_publishPlugins_CollectVersionFromWorkfile.png)
+### Collect comment per instance
+Enable it to collect the written comments for each instance. You can also add families to collect their comments.
+
+![Collect comment per instance](assets/global_publishPlugins_collectCommentPerInstance.png)
+### Collect Frames to Fix
+Collect the frames which hasn't rendered a render them again.
+
+![Collect frames to fix](assets/global_publishPlugins_collectFramesToFix.png)
+
+### Validate Editorial Asset Name
+Checks if the asset names in the scene are correct.
+
+![Validate Editorial Asset Name](assets/global_publishPlugins_ValidateEditorialAssetName.png)
+### Validate Version
+Checks if the published version doesn't already exist.
+If **optional** isn't enabled, it will inevitably check it. If it's enabled, you can choose later before publishing if you want it to be checked or not.
+
+![Validate Version](assets/global_publishPlugins_ValidateVersion.png)
+### Validate Intent
+//
+
+### ExtractThumbnail
+Extract the thumbnail, for example, from a video. You can add arguments to extract it.
+
+![Extract Thumbnail](assets/global_publishPlugins_ExtractThumbnail.png)
 
 ### Extract OIIO Transcode
 OIIOTools transcoder plugin with configurable output presets. Any incoming representation with `colorspaceData` is convertible to single or multiple representations with different target colorspaces or display and viewer names found in linked **config.ocio** file.
@@ -63,38 +108,13 @@ Example here describes use case for creation of new color coded review of png im
 ![global_oiio_transcode](assets/global_oiio_transcode.png)
 
 Another use case is to transcode in Maya only `beauty` render layers and use collected `Display` and `View` colorspaces from DCC.
+
 ![global_oiio_transcode_in_Maya](assets/global_oiio_transcode2.png)
-
-## Profile filters
-
-Many of the settings are using a concept of **Profile filters**
-
-You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a
-profile with filters matching the current context the most, is used.
-
-You can define profile without any filters and use it as **default**.
-
-Only **one or none** profile will be returned per context.
-
-All context filters are lists which may contain strings or Regular expressions (RegEx).
-- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
-- **`families`** - Main family of processed subset. `["plate", "model"]`
-- **`tasks`** - Currently processed task. `["modeling", "animation"]`
-
-:::important Filtering
-Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority than profile without filters.
-(The order the profiles in settings doesn't matter, only the precision of matching does.)
-:::
-
-## Publish plugins
-
-Publish plugins used across all integrations.
-
 
 ### Extract Review
 Plugin responsible for automatic FFmpeg conversion to variety of formats.
 
-Extract review uses [profile filtering](#profile-filters) to render different outputs for different situations.
+Extract review uses [profile filtering](#family-filtering) to render different outputs for different situations.
 
 Applicable context filters:
  **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
@@ -111,7 +131,7 @@ A profile may generate multiple outputs from a single input. Each output must de
     Define what will happen to output.
 
 - **`FFmpeg arguments`**
-    These arguments are appended to ffmpeg arguments auto generated by publish plugin. Some of arguments are handled automatically like rescaling or letterboxes.
+    These arguments are appended to ffmpeg arguments auto generated by publish plugin. Some arguments are handled automatically like rescaling or letterboxes.
     - **Video filters** additional FFmpeg filters that would be defined in `-filter:v` or `-vf` command line arguments.
     - **Audio filters** additional FFmpeg filters that would be defined in `-filter:a` or `-af` command line arguments.
     - **Input arguments** input definition arguments of video or image sequence - this setting has limitations as you have to know what is input.
@@ -136,19 +156,19 @@ A profile may generate multiple outputs from a single input. Each output must de
 
     **Example outputs for input size: 2200px**
 
-    | String | Output | Description |
-    |---|---|---|
-    | ` `      | 2200px | Empty string keep resolution unchanged. |
-    | `50%`    | 1100px | Crop 25% of input width on left and right side. |
-    | `300px`  | 300px | Keep 300px in center of input and crop rest on left and right. |
-    | `300`    | 300px | Values without units are used as pixels (`px`). |
-    | `+0px`   | 2200px | Keep resolution unchanged. |
-    | `0px`   | 2200px | Same as `+0px`. |
-    | `+300px` | 2500px | Add black pillars of 150px width on left and right side. |
-    | `-300px` | 1900px | Crop 150px on left and right side |
-    | `+10%`   | 2420px | Add black pillars of 5% size of input on left and right side. |
-    | `-10%`   | 1980px | Crop 5% of input size by on left and right side. |
-    | `-10%+`  | 2000px | Input width is 110% of output width. |
+    | String   | Output | Description                                                    |
+    |----------|--------|----------------------------------------------------------------|
+    | ` `      | 2200px | Empty string keep resolution unchanged.                        |
+    | `50%`    | 1100px | Crop 25% of input width on left and right side.                |
+    | `300px`  | 300px  | Keep 300px in center of input and crop rest on left and right. |
+    | `300`    | 300px  | Values without units are used as pixels (`px`).                |
+    | `+0px`   | 2200px | Keep resolution unchanged.                                     |
+    | `0px`    | 2200px | Same as `+0px`.                                                |
+    | `+300px` | 2500px | Add black pillars of 150px width on left and right side.       |
+    | `-300px` | 1900px | Crop 150px on left and right side                              |
+    | `+10%`   | 2420px | Add black pillars of 5% size of input on left and right side.  |
+    | `-10%`   | 1980px | Crop 5% of input size by on left and right side.               |
+    | `-10%+`  | 2000px | Input width is 110% of output width.                           |
 
     **Value "-10%+" is a special case which says that input's resolution is
     bigger by 10% than expected output.**
@@ -158,11 +178,11 @@ A profile may generate multiple outputs from a single input. Each output must de
 
     **Example for resolution: 2000px 1000px**
 
-    | String        | Output        |
-    |---------------|---------------|
-    | "100px 120px" | 2100px 1120px |
-    | "-10% -200px" | 1800px 800px  |
-    | "-10% -0px" | 1800px 1000px  |
+    | String         | Output         |
+    |----------------|----------------|
+    | "100px 120px"  | 2100px 1120px  |
+    | "-10% -200px"  | 1800px 800px   |
+    | "-10% -0px"    | 1800px 1000px  |
 
 - **`Overscan color`**
     - Color of empty area caused by different aspect ratio of input and output.
@@ -211,20 +231,20 @@ The X and Y offset define the margin around texts and (background) boxes.
 
 #### Burnin profiles (`profiles`)
 
-Plugin process is skipped if `profiles` are not set at all. Profiles contain list of profile items. Each burnin profile may specify filters for **hosts**, **tasks** and **families**. Filters work the same way as described in [Profile Filters](#profile-filters).
+Plugin process is skipped if `profiles` are not set at all. Profiles contain list of profile items. Each burnin profile may specify filters for **hosts**, **tasks** and **families**. Filters work the same way as described in [Profile Filters](#family-filtering).
 
 #### Profile burnins
 
 A burnin profile may set multiple burnin outputs from one input. The burnin's name represents the unique **filename suffix** to avoid overriding files with same name.
 
-| Key | Description | Type | Example |
-| --- | --- | --- | --- |
-| **Top Left** | Top left corner content. | str | "{dd}.{mm}.{yyyy}" |
-| **Top Centered** | Top center content. | str | "v{version:0>3}" |
-| **Top Right** | Top right corner content. | str | "Static text" |
-| **Bottom Left** | Bottom left corner content. | str | "{asset}" |
-| **Bottom Centered** | Bottom center content. | str | "{username}" |
-| **Bottom Right** | Bottom right corner content. | str | "{frame_start}-{current_frame}-{frame_end}" |
+| Key                 | Description                  | Type | Example                                     |
+|---------------------|------------------------------|------|---------------------------------------------|
+| **Top Left**        | Top left corner content.     | str  | "{dd}.{mm}.{yyyy}"                          |
+| **Top Centered**    | Top center content.          | str  | "v{version:0>3}"                            |
+| **Top Right**       | Top right corner content.    | str  | "Static text"                               |
+| **Bottom Left**     | Bottom left corner content.  | str  | "{asset}"                                   |
+| **Bottom Centered** | Bottom center content.       | str  | "{username}"                                |
+| **Bottom Right**    | Bottom right corner content. | str  | "{frame_start}-{current_frame}-{frame_end}" |
 
 Each burnin profile can be configured with additional family filtering and can
 add additional tags to the burnin representation, these can be configured under
@@ -243,46 +263,32 @@ suffix is **"client"** then the final suffix is **"h264_client"**.
 
 - Additional keys in burnins:
 
-  | Burnin key | Description |
-  | --- | --- |
-  | frame_start | First frame number. |
-  | frame_end | Last frame number. |
-  | current_frame | Frame number for each frame. |
-  | duration | Count number of frames. |
-  | resolution_width | Resolution width. |
-  | resolution_height | Resolution height. |
-  | fps | Fps of an output. |
-  | timecode | Timecode by frame start and fps. |
-  | focalLength | **Only available in Maya and Houdini**<br /><br />Camera focal length per frame. Use syntax `{focalLength:.2f}` for decimal truncating. Eg. `35.234985` with `{focalLength:.2f}` would produce `35.23`, whereas `{focalLength:.0f}` would produce `35`. |
+  | Burnin key        | Description                                                                                                                                                                                                                                             |
+  |-------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+  | frame_start       | First frame number.                                                                                                                                                                                                                                     |
+  | frame_end         | Last frame number.                                                                                                                                                                                                                                      |
+  | current_frame     | Frame number for each frame.                                                                                                                                                                                                                            |
+  | duration          | Count number of frames.                                                                                                                                                                                                                                 |
+  | resolution_width  | Resolution width.                                                                                                                                                                                                                                       |
+  | resolution_height | Resolution height.                                                                                                                                                                                                                                      |
+  | fps               | Fps of an output.                                                                                                                                                                                                                                       |
+  | timecode          | Timecode by frame start and fps.                                                                                                                                                                                                                        |
+  | focalLength       | **Only available in Maya and Houdini**<br /><br />Camera focal length per frame. Use syntax `{focalLength:.2f}` for decimal truncating. Eg. `35.234985` with `{focalLength:.2f}` would produce `35.23`, whereas `{focalLength:.0f}` would produce `35`. |
 
 :::warning
 `timecode` is a specific key that can be **only at the end of content**. (`"BOTTOM_RIGHT": "TC: {timecode}"`)
 :::
 
-
-### IntegrateAssetNew
-
-Saves information for all published subsets into DB, published assets are available for other hosts, tools and tasks after.
-#### Template name profiles
-
-Allows to select [anatomy template](admin_settings_project_anatomy.md#templates) based on context of subset being published.
-
-For example for `render` profile you might want to publish and store assets in different location (based on anatomy setting) then for `publish` profile.
-[Profile filtering](#profile-filters) is used to select between appropriate template for each context of published subsets.
-
-Applicable context filters:
-- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
-- **`tasks`** - Current task. `["modeling", "animation"]`
-
-    ![global_integrate_new_template_name_profile](assets/global_integrate_new_template_name_profile.png)
-
-(This image shows use case where `render` anatomy template is used for subsets of families ['review, 'render', 'prerender'], `publish` template is chosen for all other.)
-
+### Override Integrate Thumbnail Representations
+#### Integrate profiles
+Enable or exclude the thumbnail integration according to the profile set up
+![OverrideIntegrateThumbnailRepresentations](assets/global_publishPlugins_OverrideIntegrateThumbnailRepresentations.png)
+### Integrate Subset Group
 #### Subset grouping profiles
 
-Published subsets might be grouped together for cleaner and easier selection in the **[Subset Manager](artist_tools_subset_manager)**
+Published subsets might be grouped together for cleaner and easier selection in the **[Subset Manager](../artist_tools_subset_manager)**
 
-Group name is chosen with use of [profile filtering](#profile-filters)
+Group name is chosen with use of [profile filtering](#family-filtering)
 
 Applicable context filters:
 - **`families`** - Main family of processed subset. `["plate", "model"]`
@@ -293,11 +299,82 @@ Applicable context filters:
 
 (This image shows use case where only assets published from 'photoshop', for all families for all tasks should be marked as grouped with a capitalized name of Task where they are published from.)
 
+### IntegrateAsset (Legacy)
+#### Subset grouping profiles (DEPRECATED)
+*NOTE: Subset grouping profiles settings were moved to Integrate Subset Group. Please move values there.*
+
+#### Template name profiles (DEPRECATED)
+*NOTE: Publish template profiles settings were moved to Tools/Publish/Template name profiles. Please move values there.*
+
+Allows to select [anatomy template](admin_settings_project_anatomy.md#templates) based on context of subset being published.
+
+For example for `render` profile you might want to publish and store assets in different location (based on anatomy setting) then for `publish` profile.
+[Profile filtering](#family-filtering) is used to select between appropriate template for each context of published subsets.
+
+Applicable context filters:
+- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`tasks`** - Current task. `["modeling", "animation"]`
+
+![global_integrate_new_template_name_profile](assets/global_integrate_new_template_name_profile.png)
+
+(This image shows use case where `render` anatomy template is used for subsets of families ['review, 'render', 'prerender'], `publish` template is chosen for all other.)
+
+### Integrate Asset
+Saves information for all published subsets into DB, published assets are available for other hosts, tools and tasks after.
+
+![Integrate Asset](assets/global_publishPlugins_IntegrateAsset.png)
+#### Skip hosts and families
+Skip the saving according to the defined **host** or **family**.
+
+### IntegrateHeroVersion
+Integrate the Hero version of the indicated families.
+
+![Integrate Hero Version](assets/global_publishPlugins_IntegrateHeroVersion.png)
+
+#### Template name profiles (DEPRECATED)
+*NOTE: Hero publish template profiles settings were moved to Tools/Publish/Hero template name profiles. Please move values there.*
+
+Many of the settings are using a concept of **Profile filters**
+
+You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a profile with filters matching the current context the most, is used.
+
+You can define profile without any filters and use it as **default**.
+
+Only **one or none** profile will be returned per context.
+
+All context filters are lists which may contain strings or Regular expressions (RegEx).
+- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`families`** - Main family of processed subset. `["plate", "model"]`
+- **`tasks`** - Currently processed task. `["modeling", "animation"]`
+
+:::important Filtering
+Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority than profile without filters.
+(The order the profiles in settings doesn't matter, only the precision of matching does.)
+:::
+
+### Clean up
+Cleans up the staging directory after a successful publish. This will also clean published renders and delete their parent directories.
+
+![Clean Up](assets/global_publishPlugins_CleanUp.png)
+### Clean up Farm
+Cleans up the staging directory on a farm after a successful publish. This will also clean published renders and delete their parent directories.
+
+![Clean up Farm](assets/global_publishPlugins_CleanUpFarm.png)
 ## Tools
 Settings for OpenPype tools.
 
 ### Creator
-Settings related to [Creator tool](artist_tools_creator).
+Settings related to [Creator tool](../artist_tools_creator.md).
+
+#### Families smart select
+**Families smart select** selects automatically an attributed **Family** on a specific task.
+1. Add (+) or delete (-) a family.
+2. Add (+) or delete (-) a task.
+3. Switch position.
+
+For example, when you work on a *light* or *render* task. Go on the [**Creator**](../artist_tools_creator.md) and the **Family** will be automatically positionned on **Render**.
+
+![Families smart select](assets/tools_creator_familiesSmartSelect.png)
 
 #### Subset name profiles
 ![global_tools_creator_subset_template](assets/global_tools_creator_subset_template.png)
@@ -310,28 +387,81 @@ Usage of template is defined by profile filtering using creator's family, host a
 
 All templates can contain text and formatting keys **family**, **task** and **variant** e.g. `"MyStudio_{family}_{task}"` (example - not recommended in production).
 
-|Key|Description|
-|---|---|
-|family|Creators family|
-|task|Task under which is creation triggered|
-|variant|User input in creator tool|
+| Key     | Description                            |
+|---------|----------------------------------------|
+| family  | Creators family                        |
+| task    | Task under which is creation triggered |
+| variant | User input in creator tool             |
 
 **Formatting keys have 3 variants with different letter capitalization.**
 
-|Task|Key variant|Description|Result|
-|---|---|---|---|
-|`bgAnim`|`{task}`|Keep original value as is.|`bgAnim`|
-|`bgAnim`|`{Task}`|Capitalize first letter of value.|`BgAnim`|
-|`bgAnim`|`{TASK}`|Each letter which be capitalized.|`BGANIM`|
+| Task     | Key variant | Description                       | Result   |
+|----------|-------------|-----------------------------------|----------|
+| `bgAnim` | `{task}`    | Keep original value as is.        | `bgAnim` |
+| `bgAnim` | `{Task}`    | Capitalize first letter of value. | `BgAnim` |
+| `bgAnim` | `{TASK}`    | Each letter which be capitalized. | `BGANIM` |
 
 Template may look like `"{family}{Task}{Variant}"`.
 
 Some creators may have other keys as their context may require more information or more specific values. Make sure you've read documentation of host you're using.
 
+### Workfiles
+All settings related to Workfile tool.
 
-### Publish
+![Workfiles](assets/global_Tools_Workfiles.png)
 
-#### Custom Staging Directory Profiles
+#### Workfile template profiles
+Set up definition for the templates.
+
+#### Open last workfiles on launch
+This feature allows you to define a rule for each task/host or toggle the feature globally to all tasks as they are visible in the picture.
+
+![global_tools_workfile_open_last_version](assets/global_tools_workfile_open_last_version.png)
+
+
+ ***Known issues***
+- Any DCC that uses prefilled paths and store them inside of workfile nodes needs to implement resolving these paths with a configured profiles.
+- If studio uses Site Sync remote artists need to have access to configured custom staging folder!
+- Each node on the rendering farm must have access to configured custom staging folder!
+
+#### Open workfile tool on launch
+Open the workfile window at software's launch.
+
+#### Extra work folders
+Create other folders into the Workfile.
+
+#### Workfile lock profiles
+Block the access of the Workfile if a profile is already working on it.
+
+### Loader
+#### Family filtering
+Create family filters to show or hide in the loader.
+
+#### Publish
+
+**Template name profiles**
+Many of the settings are using a concept of **Profile filters**
+
+You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a profile with filters matching the current context the most, is used.
+
+You can define profile without any filters and use it as **default**.
+
+Only **one or none** profile will be returned per context.
+
+All context filters are lists which may contain strings or Regular expressions (RegEx).
+- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`families`** - Main family of processed subset. `["plate", "model"]`
+- **`tasks`** - Currently processed task. `["modeling", "animation"]`
+
+:::important Filtering
+Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority than profile without filters.
+(The order the profiles in settings doesn't matter, only the precision of matching does.)
+:::
+
+**Hero template name profiles**
+Same as the Template name profiles but for the Hero publishing.
+
+**Custom Staging Directory Profiles**
 With this feature, users can specify a custom data folder path based on presets, which can be used during the creation and publishing stages.
 
 ![global_tools_custom_staging_dir](assets/global_tools_custom_staging_dir.png)
@@ -345,15 +475,24 @@ In some cases, these DCCs (Nuke, Houdini, Maya) automatically add a rendering pa
 
 The custom staging folder uses a path template configured in `project_anatomy/templates/others` with `transient` being a default example path that could be used. The template requires a 'folder' key for it to be usable as custom staging folder.
 
-##### Known issues
-- Any DCC that uses prefilled paths and store them inside of workfile nodes needs to implement resolving these paths with a configured profiles.
-- If studio uses Site Sync remote artists need to have access to configured custom staging folder!
-- Each node on the rendering farm must have access to configured custom staging folder!
+## Project Folder Structure
 
-### Workfiles
-All settings related to Workfile tool.
+## Site Sync (beta testing)
+#### Config
+Aim of the Site Sync [here](../module_site_sync#google-drive).
 
-#### Open last workfile at launch
-This feature allows you to define a rule for each task/host or toggle the feature globally to all tasks as they are visible in the picture.
+![Site Sync](assets/site_sync_beta_testing.png)
 
-![global_tools_workfile_open_last_version](assets/global_tools_workfile_open_last_version.png)
+**Retry Count** : If sending or receiving a file fails, it will retry the amount of time you program (here, 3 times).
+**Loop Delay** : The retry will be each second you program (here, 60 seconds).
+
+**User Default Active Site** : default site for users (here, studio).
+
+**User Default Remote Site** : default site for remote (here, studio).
+
+#### Sites
+*empty*
+
+## Additional Project Plugin Paths
+
+## Additional Project Environments (set on applicaton launch)
