@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import bpy
 from pyblish.api import InstancePlugin, CollectorOrder
 
 
@@ -30,7 +29,7 @@ class CollectWorkfile(InstancePlugin):
                     {
                         "name": ext.lstrip("."),
                         "ext": ext,
-                        "files": filepath.name,  # TODO resources
+                        "files": filepath.name,
                         "stagingDir": filepath.parent,
                     }
                 ],
