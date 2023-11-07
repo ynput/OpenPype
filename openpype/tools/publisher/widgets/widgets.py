@@ -789,15 +789,12 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         self._set_is_valid(is_valid)
 
-    def confirm_value(self):
+    def confirm_value(self, asset_names):
         new_task_name = self._selected_items[0]
-        origin_value = copy.deepcopy(self._origin_value)
-        new_origin_value = [
+        self._origin_value = [
             (asset_name, new_task_name)
-            for (asset_name, task_name) in origin_value
+            for asset_name in asset_names
         ]
-
-        self._origin_value = new_origin_value
         self._origin_selection = copy.deepcopy(self._selected_items)
         self._has_value_changed = False
 
@@ -1180,6 +1177,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         subset_names = set()
         invalid_tasks = False
+        asset_names = []
         for instance in self._current_instances:
             new_variant_value = instance.get("variant")
             new_asset_name = instance.get("asset")
@@ -1193,6 +1191,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if task_name is not None:
                 new_task_name = task_name
 
+            asset_names.append(new_asset_name)
             try:
                 new_subset_name = self._controller.get_subset_name(
                     instance.creator_identifier,
@@ -1237,7 +1236,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             self.asset_value_widget.confirm_value()
 
         if task_name is not None:
-            self.task_value_widget.confirm_value()
+            self.task_value_widget.confirm_value(asset_names)
 
         self.instance_context_changed.emit()
 
