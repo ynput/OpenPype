@@ -875,8 +875,9 @@ def set_review_color_space(opengl_node, log=None):
         log = self.log
 
     # Set Color Correction parameter to OpenColorIO
-    if opengl_node.evalParm("colorcorrect") != 2:
-        opengl_node.setParms({"colorcorrect": 2})
+    colorcorrect_parm = opengl_node.parm("colorcorrect")
+    if colorcorrect_parm.eval() != 2:
+        colorcorrect_parm.set(2)
         log.debug(
             "'Color Correction' parm on '{}' has been set to"
             " 'OpenColorIO'".format(opengl_node.path())
