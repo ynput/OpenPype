@@ -641,13 +641,14 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
         ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
     # --- Publish (START) ---
     ayon_publish = ayon_max["publish"]
-    try:
-        attributes = json.loads(
-            ayon_publish["ValidateAttributes"]["attributes"]
-        )
-    except ValueError:
-        attributes = {}
-    ayon_publish["ValidateAttributes"]["attributes"] = attributes
+    if "ValidateAttributes" in ayon_publish:
+        try:
+            attributes = json.loads(
+                ayon_publish["ValidateAttributes"]["attributes"]
+            )
+        except ValueError:
+            attributes = {}
+        ayon_publish["ValidateAttributes"]["attributes"] = attributes
 
     output["max"] = ayon_max
 
