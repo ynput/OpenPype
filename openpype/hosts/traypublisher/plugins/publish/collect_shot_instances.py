@@ -2,6 +2,8 @@ from pprint import pformat
 import pyblish.api
 import opentimelineio as otio
 
+from openpype import AYON_SERVER_ENABLED
+
 
 class CollectShotInstance(pyblish.api.InstancePlugin):
     """ Collect shot instances
@@ -119,7 +121,7 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
         frame_end = _cr_attrs["frameEnd"]
         frame_dur = frame_end - frame_start
 
-        return {
+        data = {
             "fps": float(_cr_attrs["fps"]),
             "handleStart": _cr_attrs["handle_start"],
             "handleEnd": _cr_attrs["handle_end"],
@@ -132,6 +134,10 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
             "sourceOut": _cr_attrs["sourceOut"],
             "workfileFrameStart": workfile_start_frame
         }
+        if AYON_SERVER_ENABLED:
+            data["asset"] = _cr_attrs["asset"]
+
+        return data
 
     def _solve_hierarchy_context(self, instance):
         """ Adding hierarchy data to context shared data.
