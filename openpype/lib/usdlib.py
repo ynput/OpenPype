@@ -83,6 +83,15 @@ def setup_asset_layer(
     If `define_class` is enabled then a `/__class__/{asset_name}` class
     definition will be created that the root asset inherits from
 
+    Examples:
+        >>> create_asset("/path/to/asset.usd",
+        >>>              asset_name="test",
+        >>>              reference_layers=["./model.usd", "./look.usd"])
+
+    Returns:
+        List[Tuple[Sdf.Layer, str]]: List of created layers with their
+            preferred output save paths.
+
     Args:
         filepath (str): Filepath where the asset.usd file will be saved.
         reference_layers (list): USD Files to reference in the asset.
@@ -146,7 +155,7 @@ def setup_asset_layer(
         payload_layer = Sdf.Layer.CreateAnonymous("LOP",
                                                   args={"format": "usda"})
         set_layer_defaults(payload_layer, default_prim=asset_name)
-        created_layers.append(payload_layer)
+        created_layers.append((payload_layer, "./payload.usd"))
 
         # Add sublayers to the payload layer
         # Note: Sublayering is tricky because it requires that the sublayers
@@ -154,17 +163,6 @@ def setup_asset_layer(
         #   reference will not find the defaultPrim and turn up empty.
         for ref_layer in reference_layers:
             payload_layer.subLayerPaths.append(ref_layer)
-
-        # TODO: Remove referencing logic (for now just there for testing)
-        # payload_asset_prim = Sdf.PrimSpec(
-        #     payload_layer,
-        #     prim_name,
-        #     Sdf.SpecifierDef,
-        #     "Xform"
-        # )
-        # payload_asset_prim.referenceList.prependedItems[:] = [
-        #     Sdf.Reference(assetPath=path) for path in reference_layers
-        # ]
 
         # Add payload
         asset_prim.payloadList.prependedItems[:] = [
@@ -194,26 +192,52 @@ def create_asset(
     log.debug("Creating asset at %s", filepath)
 
     # Make the layer ascii - good for readability, plus the file is small
-    layer = Sdf.Layer.CreateNew(filepath, args={"format": "usda"})
+    layer = Sdf.Layer.CreateAnonymous()
 
-    created_layers = setup_asset_layer(
+    created_layers_with_paths = setup_asset_layer(
             layer=layer,
             asset_name=asset_name,
             reference_layers=reference_layers,
             kind=kind,
             define_class=define_class
     )
-    for created_layer in created_layers:
-        created_layer.save()
+    _save_layer_paths_anchored_to_layer(layer, filepath,
+                                        created_layers_with_paths)
+    layer.Export(filepath, args={"format": "usda"})
+    return [layer] + [layer for layer, _ in created_layers_with_paths]
 
-    layer.Save()
 
-    layers = [layer] + created_layers
-    return layers
+def _save_layer_paths_anchored_to_layer(base_layer,
+                                        base_layer_path,
+                                        sublayers_with_paths):
+    """Export and update layer asset identifiers for sublayers with paths.
+
+    The layers will be anchorde relative to the base layer and base layer's
+    filepath to allow for relative anchoring and saving for anonymous layers.
+
+    """
+    for layer, path in sublayers_with_paths:
+        if not os.path.isabs(path):
+            # Use relative path anchoring to the base layer
+            folder = os.path.dirname(base_layer_path)
+            full_path = os.path.join(folder, path)
+        else:
+            full_path = path
+
+        # Export the layer
+        layer.Export(full_path, args=layer.GetFileFormatArguments())
+
+        # Update dependencies on the base layer
+        base_layer.UpdateCompositionAssetDependency(layer.identifier, path)
 
 
 def create_shot(filepath, layers, create_layers=False):
     """Create a shot with separate layers for departments.
+
+    Examples:
+        >>> create_shot("/path/to/shot.usd",
+        >>>             layers=["lighting.usd", "fx.usd", "animation.usd"])
+        "/path/to/shot.usd"
 
     Args:
         filepath (str): Filepath where the asset.usd file will be saved.
@@ -228,9 +252,9 @@ def create_shot(filepath, layers, create_layers=False):
 
     """
     # Also see create_shot.py in PixarAnimationStudios/USD endToEnd example
-    root_layer = Sdf.Layer.CreateNew(filepath)
-    log.debug("Creating shot at %s" % filepath)
+    root_layer = Sdf.Layer.CreateAnonymous()
 
+    created_layers = [root_layer]
     for layer_path in layers:
         if create_layers and not os.path.exists(layer_path):
             # We use the Sdf API here to quickly create layers.  Also, we're
@@ -240,16 +264,16 @@ def create_shot(filepath, layers, create_layers=False):
             if not os.path.exists(layer_folder):
                 os.makedirs(layer_folder)
 
-            Sdf.Layer.CreateNew(layer_path)
+            new_layer = Sdf.Layer.CreateNew(layer_path)
+            created_layers.append(new_layer)
 
         root_layer.subLayerPaths.append(layer_path)
 
-    # Let viewing applications know how to orient a free camera properly
-    # Similar to: UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
-    root_layer.pseudoRoot.SetInfo(UsdGeom.Tokens.upAxis, UsdGeom.Tokens.y)
-    root_layer.Save()
+    set_layer_defaults(root_layer)
+    log.debug("Creating shot at %s" % filepath)
+    root_layer.Export(filepath, args={"format": "usda"})
 
-    return filepath
+    return created_layers
 
 
 def create_model(filename, asset, variant_subsets):
@@ -275,10 +299,15 @@ def create_model(filename, asset, variant_subsets):
                 "Model subsets must start " "with usdModel: %s" % subset
             )
 
-        path = get_latest_representation(
-            asset=asset_doc, subset=subset, representation="usd"
+        path = get_representation_path_by_names(
+            project_name=project_name,
+            asset_name=asset_doc,
+            subset_name=subset,
+            version_name="latest",
+            representation_name="usd"
         )
-        variants.append((variant, path))
+        if path:
+            variants.append((variant, path))
 
     stage = _create_variants_file(
         filename,
@@ -328,8 +357,12 @@ def create_shade(filename, asset, variant_subsets):
             )
 
         shade_subset = re.sub("^usdModel", "usdShade", subset)
-        path = get_latest_representation(
-            asset=asset_doc, subset=shade_subset, representation="usd"
+        path = get_representation_path_by_names(
+            project_name=project_name,
+            asset_name=asset_doc,
+            subset_name=shade_subset,
+            version_name="latest",
+            representation_name="usd"
         )
         variants.append((variant, path))
 
@@ -356,8 +389,12 @@ def create_shade_variation(filename, asset, model_variant, shade_variants):
         subset = "usdShade_{model}_{shade}".format(
             model=model_variant, shade=variant
         )
-        path = get_latest_representation(
-            asset=asset_doc, subset=subset, representation="usd"
+        path = get_representation_path_by_names(
+            project_name=project_name,
+            asset_name=asset_doc,
+            subset_name=subset,
+            version_name="latest",
+            representation_name="usd"
         )
         variants.append((variant, path))
 
@@ -484,7 +521,7 @@ def get_representation_path_by_names(
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
     if not asset_doc:
         return
-    print(asset_doc)
+
     if isinstance(subset_name, dict) and "name" in subset_name:
         # Allow explicitly passing subset document
         subset_doc = subset_name
@@ -495,7 +532,6 @@ def get_representation_path_by_names(
                                         fields=["_id"])
     if not subset_doc:
         return
-    print(subset_doc)
 
     if version_name == "hero":
         version = get_hero_version_by_subset_id(project_name,
