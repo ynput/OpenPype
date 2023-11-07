@@ -15,6 +15,11 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
+        "--app_group", action="store", default=None,
+        help="Keep empty to use default application or explicit"
+    )
+
+    parser.addoption(
         "--app_variant", action="store", default=None,
         help="Keep empty to locate latest installed variant or explicit"
     )
@@ -43,6 +48,11 @@ def test_data_folder(request):
 @pytest.fixture(scope="module")
 def persist(request):
     return request.config.getoption("--persist")
+
+
+@pytest.fixture(scope="module")
+def app_group(request):
+    return request.config.getoption("--app_group")
 
 
 @pytest.fixture(scope="module")
