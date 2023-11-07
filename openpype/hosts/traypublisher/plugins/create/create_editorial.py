@@ -683,13 +683,15 @@ or updating already created. Publishing will create OTIO file.
         # create creator attributes
         creator_attributes = {
             "asset_name": shot_name,
-            "Folder path": shot_metadata["folderPath"],
             "Parent hierarchy path": shot_metadata["hierarchy"],
             "workfile_start_frame": workfile_start_frame,
             "fps": fps,
             "handle_start": int(handle_start),
             "handle_end": int(handle_end)
         }
+        if AYON_SERVER_ENABLED:
+            creator_attributes["folderPath"] = shot_metadata["folderPath"]
+
         creator_attributes.update(timing_data)
 
         # create shared new instance data
