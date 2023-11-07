@@ -44,7 +44,8 @@ class ExtractFBXAnimation(publish.Extractor):
         # names as existing in the rig workfile
         if not out_members:
             self.log.debug(
-                "Top group of animated skeleton not found...skipping extraction")
+                "Top group of animated skeleton not found.."
+                "skipping extraction")
             return
 
         namespace = get_namespace(out_members[0])
