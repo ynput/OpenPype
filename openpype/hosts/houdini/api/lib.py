@@ -846,25 +846,22 @@ def get_houdini_color_settings():
 
     project_settings = get_current_project_settings()
     color_settings = project_settings["houdini"]["imageio"]["workfile"]
-    if color_settings["enabled"]:
-        color_settings.pop("enabled")
-        # Remove leading, and trailing whitespaces
-        color_settings["review_color_space"] = \
-            color_settings["review_color_space"].strip()
-        return color_settings
 
-    return {}
+    # Remove leading, and trailing whitespaces
+    color_settings["review_color_space"] = \
+        color_settings["review_color_space"].strip()
+    return color_settings
 
 
 def set_review_color_space(opengl_node, log=None):
     """Set ociocolorspace parameter for the given OpenGL node.
 
-    if workfile settings are enabled, it will use the value
+    If workfile settings are enabled, it will use the value
     exposed in the settings.
 
-    if workfile settings are disabled, it will use the default
-    colorspace corresponding to the display & view of
-    the current Houdini session.
+    If the value exposed in the settings is empty,
+    it will use the default colorspace corresponding to
+    the display & view of the current Houdini session.
 
     Args:
         OpenGl node (hou.Node): ROP node to set its ociocolorspace parameter.
@@ -884,8 +881,10 @@ def set_review_color_space(opengl_node, log=None):
         )
 
     # Get view space for ociocolorspace parm.
-    view_space = get_houdini_color_settings().get("review_color_space")
+    color_settings = get_houdini_color_settings()
+    view_space = color_settings["review_color_space"] if color_settings["enabled"] else ""  # noqa
 
+    # fall to default review color space if the setting is empty.
     if not view_space:
         from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
         view_space = get_default_display_view_colorspace()

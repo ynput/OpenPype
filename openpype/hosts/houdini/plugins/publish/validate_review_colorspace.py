@@ -66,17 +66,18 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
             )
 
         color_settings = get_houdini_color_settings()
-        if color_settings.get("override_review_color"):
-            return
+        # skip if houdini color settings are disabled
+        if color_settings["enabled"]:
+            view_space = color_settings["review_color_space"]
+            # skip if review color space setting is empty.
+            if view_space and \
+                    rop_node.evalParm("ociocolorspace") != view_space:
 
-        if rop_node.evalParm("ociocolorspace") != \
-                color_settings["review_color_space"]:
-
-            raise PublishValidationError(
-                "Invalid value: Colorspace name doesn't match studio "
-                "settings.\nCheck 'OCIO Colorspace' parameter on '{}' ROP"
-                .format(rop_node.path())
-            )
+                raise PublishValidationError(
+                    "Invalid value: Colorspace name doesn't match studio "
+                    "settings.\nCheck 'OCIO Colorspace' parameter on '{}' ROP"
+                    .format(rop_node.path())
+                )
 
     @classmethod
     def repair(cls, instance):
@@ -84,12 +85,12 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
 
         It sets ociocolorspace parameter.
 
-        if workfile settings are enabled, it will use the value
+        If workfile settings are enabled, it will use the value
         exposed in the settings.
 
-        if workfile settings are disabled, it will use the default
-        colorspace corresponding to the display & view of
-        the current Houdini session.
+        If the value exposed in the settings is empty,
+        it will use the default colorspace corresponding to
+        the display & view of the current Houdini session.
         """
 
         opengl_node = hou.node(instance.data["instance_node"])
