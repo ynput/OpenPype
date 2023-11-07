@@ -579,6 +579,10 @@ class AssetsField(BaseClickableFrame):
         """Change to asset names set with last `set_selected_items` call."""
         self.set_selected_items(self._origin_value)
 
+    def confirm_value(self):
+        self._origin_value = copy.deepcopy(self._selected_items)
+        self._has_value_changed = False
+
 
 class TasksComboboxProxy(QtCore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
@@ -785,6 +789,18 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         self._set_is_valid(is_valid)
 
+    def confirm_value(self):
+        new_task_name = self._selected_items[0]
+        origin_value = copy.deepcopy(self._origin_value)
+        new_origin_value = [
+            (asset_name, new_task_name)
+            for (asset_name, task_name) in origin_value
+        ]
+
+        self._origin_value = new_origin_value
+        self._origin_selection = copy.deepcopy(self._selected_items)
+        self._has_value_changed = False
+
     def set_selected_items(self, asset_task_combinations=None):
         """Set items for selected instances.
 
@@ -918,6 +934,10 @@ class VariantInputWidget(PlaceholderLineEdit):
     def set_multiselection_text(self, text):
         """Change text of multiselection."""
         self._multiselection_text = text
+
+    def confirm_value(self):
+        self._origin_value = copy.deepcopy(self._current_value)
+        self._has_value_changed = False
 
     def _set_is_valid(self, valid):
         if valid == self._is_valid:
@@ -1209,6 +1229,15 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         self._set_btns_enabled(False)
         self._set_btns_visible(invalid_tasks)
+
+        if variant_value is not None:
+            self.variant_input.confirm_value()
+
+        if asset_name is not None:
+            self.asset_value_widget.confirm_value()
+
+        if task_name is not None:
+            self.task_value_widget.confirm_value()
 
         self.instance_context_changed.emit()
 
