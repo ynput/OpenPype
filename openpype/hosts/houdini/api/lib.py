@@ -849,8 +849,8 @@ def get_houdini_color_settings():
     if color_settings["enabled"]:
         color_settings.pop("enabled")
         # Remove leading, and trailing whitespaces
-        view_Space = color_settings["review_color_space"]
-        color_settings["review_color_space"] = view_Space.strip()
+        color_settings["review_color_space"] = \
+            color_settings["review_color_space"].strip()
         return color_settings
 
     return {}
