@@ -1021,10 +1021,14 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
         item["family"] = item.pop("product_type")
 
     shot_add_tasks = ayon_editorial_simple["shot_add_tasks"]
+
+    # TODO: backward compatibility and remove in future
     if isinstance(shot_add_tasks, dict):
         shot_add_tasks = []
+
+    # aggregate shot_add_tasks items
     new_shot_add_tasks = {
-        item["name"]: item["task_type"]
+        item["name"]: {"type": item["task_type"]}
         for item in shot_add_tasks
     }
     ayon_editorial_simple["shot_add_tasks"] = new_shot_add_tasks
