@@ -322,10 +322,13 @@ class ShotMetadataSolver:
         # generate hierarchy path from parents
         hierarchy_path = self._create_hierarchy_path(parents)
         if hierarchy_path:
-            hierarchy_path = f"/{hierarchy_path}"
+            folder_path = f"/{hierarchy_path}/{shot_name}"
+        else:
+            folder_path = f"/{shot_name}"
+
         return shot_name, {
             "hierarchy": hierarchy_path,
-            "folderPath": f"{hierarchy_path}/{shot_name}",
+            "folderPath": folder_path,
             "parents": parents,
             "tasks": tasks
         }
