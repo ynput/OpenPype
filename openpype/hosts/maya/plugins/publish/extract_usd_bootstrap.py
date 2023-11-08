@@ -7,6 +7,28 @@ from openpype.pipeline import publish
 from openpype.pipeline.create import get_subset_name
 
 
+def get_instance_expected_output_path(instance, representation_name, ext=None):
+
+    if ext is None:
+        ext = representation_name
+
+    context = instance.context
+    anatomy = context.data["anatomy"]
+    path_template_obj = anatomy.templates_obj["publish"]["path"]
+    template_data = copy.deepcopy(instance.data["anatomyData"])
+    template_data.update({
+        "ext": ext,
+        "representation": representation_name,
+        "subset": instance.data["subset"],
+        "asset": instance.data["asset"],
+        "variant": instance.data["variant"],
+        "version": instance.data["version"]
+    })
+
+    template_filled = path_template_obj.format_strict(template_data)
+    return os.path.normpath(template_filled)
+
+
 class ExtractBootstrapUSD(publish.Extractor):
     """Extract in-memory bootstrap USD files for Assets and Shots.
 
@@ -33,13 +55,17 @@ class ExtractBootstrapUSD(publish.Extractor):
             # Asset
             contributions = usdlib.PIPELINE["asset"]
             layers = self.get_contribution_paths(contributions, instance)
-            relative_files = usdlib.create_asset(
+            created_layers = usdlib.create_asset(
                 filepath,
                 asset_name=instance.data["asset"],
                 reference_layers=layers
             )
-            for relative_file in relative_files:
-                self.add_relative_file(instance, relative_file)
+
+            # Ignore the first layer which is the asset layer that is not
+            # relative to itself
+            created_layers = created_layers[1:]
+            for layer in created_layers:
+                self.add_relative_file(instance, layer.get_full_path())
 
         elif subset == "usdShot":
             # Shot
@@ -86,7 +112,7 @@ class ExtractBootstrapUSD(publish.Extractor):
             "stagingDir": staging_dir
         })
 
-    def add_relative_file(self, instance, relative_path, staging_dir=None):
+    def add_relative_file(self, instance, source, staging_dir=None):
         """Add transfer for a relative path form staging to publish dir.
 
         Unlike files in representations, the file will not be renamed and
@@ -96,12 +122,13 @@ class ExtractBootstrapUSD(publish.Extractor):
         if staging_dir is None:
             staging_dir = self.staging_dir(instance)
         publish_dir = instance.data["publishDir"]
-        source = os.path.join(staging_dir, relative_path)
-        source = os.path.normpath(source)
+
+        relative_path = os.path.relpath(source, staging_dir)
         destination = os.path.join(publish_dir, relative_path)
         destination = os.path.normpath(destination)
 
         transfers = instance.data.setdefault("transfers", [])
+        self.log.debug(f"Adding relative file {source} -> {relative_path}")
         transfers.append((source, destination))
 
     def get_contribution_paths(self, contributions, instance):
@@ -203,27 +230,10 @@ class ExtractBootstrapUSD(publish.Extractor):
                     "subset {}".format(subset)
                 )
 
-            anatomy = context.data["anatomy"]
-            path_template_obj = anatomy.templates_obj["publish"]["path"]
-            template_data = copy.deepcopy(instance.data["anatomyData"])
-            template_data.update({
-                "ext": "usd",
-                "representation": "usd",
-                "subset": subset,
-                "asset": other_instance.data["asset"],
-                "variant": other_instance.data["variant"],
-                "version": other_instance.data["version"]
-            })
-            if "version" in other_instance.data:
-                template_data["version"] = other_instance.data["version"]
-
-            self.log.debug(
-                "Found publish session subset '{}' version 'v{:03d}'".format(
-                    subset, other_instance.data["version"]
-            ))
-
-            template_filled = path_template_obj.format_strict(template_data)
-            result[subset] = os.path.normpath(template_filled)
+            path = get_instance_expected_output_path(
+                other_instance, representation_name="usd"
+            )
+            result[subset] = path
 
         return result
 

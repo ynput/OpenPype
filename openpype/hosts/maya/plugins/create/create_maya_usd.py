@@ -5,22 +5,19 @@ from openpype.lib import (
     TextDef,
     UILabelDef,
     UISeparatorDef,
-    usdlib
 )
-from openpype.pipeline.context_tools import get_current_context
 
 from maya import cmds
 
 
 class CreateMayaUsd(plugin.MayaCreator):
-    """Create Maya USD Export"""
+    """Create Maya USD Export from maya scene objects"""
 
     identifier = "io.openpype.creators.maya.mayausd"
     label = "Maya USD"
     family = "usd"
     icon = "cubes"
     description = "Create Maya USD Export"
-
     cache = {}
 
     def get_publish_families(self):
@@ -127,97 +124,172 @@ class CreateMayaUsdContribution(CreateMayaUsd):
     icon = "cubes"
     description = "Create Maya USD Contribution"
 
+    default_variants = ["main"]
+    # TODO: Do not include material for model publish
+    # TODO: Do only include material + assignments for material publish
+    #       + attribute overrides onto existing geo? (`over`?)
+    #       Define all in `geo` as `over`?
+
+    bootstrap = "asset"
+
+    contribution_asset_layer = None
+
+    def create_template_hierarchy(self, asset_name, variant):
+        """Create the asset root template to hold the geo for the usd asset.
+
+        Args:
+            asset_name: Asset name to use for the group
+            variant: Variant name to use as namespace.
+                This is needed so separate asset contributions can be
+                correctly created from a single scene.
+
+        Returns:
+            list: The root node and geometry group.
+
+        """
+
+        def set_usd_type(node, value):
+            attr = "USD_typeName"
+            if not cmds.attributeQuery(attr, node=node, exists=True):
+                cmds.addAttr(node, ln=attr, dt="string")
+            cmds.setAttr(f"{node}.{attr}", value, type="string")
+
+        # Ensure simple unique namespace (add trailing number)
+        namespace = variant
+        name = f"{namespace}:{asset_name}"
+        i = 1
+        while cmds.objExists(name):
+            name = f"{namespace}{i}:{asset_name}"
+            i += 1
+
+        # Define template hierarchy {asset_name}/geo
+        root = cmds.createNode("transform",
+                               name=name,
+                               skipSelect=True)
+        geo = cmds.createNode("transform",
+                              name="geo",
+                              parent=root,
+                              skipSelect=True)
+        set_usd_type(geo, "Scope")
+        # Lock + hide transformations since we're exporting as Scope
+        for attr in ["tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"]:
+            cmds.setAttr(f"{geo}.{attr}", lock=True, keyable=False)
+
+        return [root, geo]
+
+    def create(self, subset_name, instance_data, pre_create_data):
+
+        # Create template hierarchy
+        if pre_create_data.get("createTemplateHierarchy", True):
+            members = []
+            if pre_create_data.get("use_selection"):
+                members = cmds.ls(selection=True,
+                                  long=True,
+                                  type="dagNode")
+
+            root, geo = self.create_template_hierarchy(
+                asset_name=instance_data["asset"],
+                variant=instance_data["variant"]
+            )
+
+            if members:
+                cmds.parent(members, geo)
+
+            # Select root and enable selection just so parent class'
+            # create adds it to the created instance
+            cmds.select(root, replace=True, noExpand=True)
+            pre_create_data["use_selection"] = True
+
+        super(CreateMayaUsdContribution, self).create(
+            subset_name,
+            instance_data,
+            pre_create_data
+        )
+
+    def add_transient_instance_data(self, instance_data):
+        super().add_transient_instance_data(instance_data)
+        instance_data["usd_bootstrap"] = self.bootstrap
+        instance_data["usd_contribution"] = "model"
+
+    def remove_transient_instance_data(self, instance_data):
+        super().remove_transient_instance_data(instance_data)
+        instance_data.pop("usd_bootstrap", None)
+        instance_data.pop("usd_contribution", None)
+
     def get_publish_families(self):
         families = ["usd", "mayaUsd", "usd.layered"]
         if self.family not in families:
             families.append(self.family)
         return families
 
+    def get_pre_create_attr_defs(self):
+        defs = super(CreateMayaUsdContribution, self).get_pre_create_attr_defs()
+        defs.extend([
+            BoolDef("createTemplateHierarchy",
+                    label="Create template hierarchy",
+                    default=True)
+        ])
+        return defs
+
     def get_instance_attr_defs(self):
-
-        context = get_current_context()
-
-        # The departments must be 'ordered' so that e.g. a look can apply
-        # overrides to any opinion from the model department.
-        department = context["task_name"]  # usually equals the department?
-        variant = "Main"  # used as default for sublayer
 
         defs = [
             UISeparatorDef("contribution_settings1"),
             UILabelDef(label="<b>Contribution</b>"),
             UISeparatorDef("contribution_settings2"),
-            BoolDef("contribution_enabled",
-                    label="Add to USD container",
-                    default=True),
-            TextDef("contribution_department_layer",
+            TextDef("contribution_asset",
+                    label="USD Asset subset",
+                    default="usdAsset"),
+
+            # Asset layer, e.g. model.usd, look.usd, rig.usd
+            EnumDef("contribution_asset_layer",
                     label="Department layer",
-                    default=department),
-            TextDef("contribution_sublayer",
-                    label="Sublayer",
-                    # Usually e.g. usdModel, usdLook, usdLookRed
-                    default=variant),
+                    tooltip="The layer the contribution should be made to in "
+                            "the usd asset.",
+                    items=["model", "look", "rig"],
+                    hidden=bool(self.contribution_asset_layer),
+                    default=self.contribution_asset_layer),
+            BoolDef("contribute_as_variant",
+                    label="Use as variant",
+                    default=True),
             TextDef("contribution_variant_set_name",
                     label="Variant Set Name",
-                    default=""),
+                    default="model"),
             TextDef("contribution_variant",
                     label="Variant Name",
-                    default=""),
+                    default="{variant}"),
+
+            # Separate the rest of the settings visually
             UISeparatorDef("export_settings1"),
             UILabelDef(label="<b>Export Settings</b>"),
             UISeparatorDef("export_settings2"),
         ]
         defs += super(CreateMayaUsdContribution, self).get_instance_attr_defs()
+
+        # Remove certain settings that we don't want to expose on asset
+        # creation
+        remove = {"stripNamespaces", "mergeTransformAndShape"}
+        defs = [attr_def for attr_def in defs if attr_def.key not in remove]
         return defs
 
 
-for contribution in usdlib.PIPELINE["asset"]:
+class CreateUsdLookContribution(CreateMayaUsdContribution):
+    """Look layer contribution to the USD Asset"""
+    identifier = CreateMayaUsdContribution.identifier + ".look"
+    label = "USD Look"
+    icon = "paint-brush"
+    description = "Create USD Look contribution"
+    family = "usd.look"
 
-    step = contribution.step
+    contribution_asset_layer = "look"
 
-    class CreateMayaUsdDynamicStepContribution(CreateMayaUsdContribution):
-        identifier = f"{CreateMayaUsdContribution.identifier}.{step}"
-        default_variants = plugin.MayaCreator.default_variants
-        label = f"USD {step.title()}"
-        family = contribution.family
 
-        # Define some nice icons
-        icon = {
-            "look": "paint-brush",
-            "model": "cube",
-            "rig": "wheelchair"
-        }.get(step, "cubes")
+class CreateUsdModelContribution(CreateMayaUsdContribution):
+    """Model layer contribution to the USD Asset"""
+    identifier = CreateMayaUsdContribution.identifier + ".model"
+    label = "USD Model"
+    icon = "cube"
+    description = "Create USD Model contribution"
+    family = "usd.model"
 
-        description = f"Create USD {step.title()} Contribution"
-
-        bootstrap = "asset"
-
-        contribution = contribution
-
-        # TODO: Should these still be customizable
-        # contribution_sublayer_order = contribution.order
-        # contribution_department = contribution.step
-        # contribution_variant_set_name = contribution.step
-        # contribution_variant_name = "{variant}"
-
-        def add_transient_instance_data(self, instance_data):
-            super().add_transient_instance_data(instance_data)
-            instance_data["usd_bootstrap"] = self.bootstrap
-            instance_data["usd_contribution"] = self.contribution
-
-        def remove_transient_instance_data(self, instance_data):
-            super().remove_transient_instance_data(instance_data)
-            instance_data.pop("usd_bootstrap", None)
-            instance_data.pop("usd_contribution", None)
-
-    # Dynamically create USD creators for easy access to a certain step
-    # in production
-    global_variables = globals()
-    klass_name = f"CreateMayaUsd{step.title()}Contribution"
-    klass = type(klass_name, (CreateMayaUsdDynamicStepContribution,), {})
-    global_variables[klass_name] = klass
-
-    # We only want to store the global variables, and don't want the last
-    # iteration of the loop to persist after because Create Context will
-    # pick those up too
-    del klass
-    del CreateMayaUsdDynamicStepContribution
+    contribution_asset_layer = "model"

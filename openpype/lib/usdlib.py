@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import re
 import logging
@@ -41,6 +42,44 @@ log = logging.getLogger(__name__)
 # bootstraps at that order
 Contribution = namedtuple("Contribution",
                           ("family", "variant", "order", "step"))
+
+
+@dataclasses.dataclass
+class Layer:
+    layer: Sdf.Layer
+    path: str
+    # Allow to anchor a layer to another so that when the layer would be
+    # exported it'd write itself out relative to its anchor
+    anchor: 'Layer' = None
+
+    @property
+    def identifier(self):
+        return self.layer.identifier
+
+    def get_full_path(self):
+        """Return full path relative to the anchor layer"""
+        if not os.path.isabs(self.path) and self.anchor:
+            anchor_path = self.anchor.get_full_path()
+            root = os.path.dirname(anchor_path)
+            return os.path.normpath(os.path.join(root, self.path))
+        else:
+            return self.path
+
+    def export(self, path=None, args=None):
+        """Save the layer"""
+        if path is None:
+            path = self.get_full_path()
+
+        if args is None:
+            args = self.layer.GetFileFormatArguments()
+
+        self.layer.Export(path, args=args)
+
+    @classmethod
+    def create_anonymous(cls, path, tag="LOP", anchor=None):
+        sdf_layer = Sdf.Layer.CreateAnonymous(tag)
+        return cls(layer=sdf_layer, path=path, anchor=anchor)
+
 
 # The predefined steps order used for bootstrapping USD Shots and Assets.
 # These are ordered in order from strongest to weakest opinions, like in USD.
@@ -93,12 +132,12 @@ def setup_asset_layer(
             preferred output save paths.
 
     Args:
-        filepath (str): Filepath where the asset.usd file will be saved.
+        layer (Sdf.Layer): Layer to set up the asset structure for.
+        asset_name (str): The name for the Asset identifier and default prim.
         reference_layers (list): USD Files to reference in the asset.
             Note that the bottom layer (first file, like a model) would
             be last in the list. The strongest layer will be the first
             index.
-        asset_name (str): The name for the Asset identifier and default prim.
         kind (pxr.Kind): A USD Kind for the root asset.
         define_class: Define a `/__class__/{asset_name}` class which the
             root asset prim will inherit from.
@@ -155,7 +194,8 @@ def setup_asset_layer(
         payload_layer = Sdf.Layer.CreateAnonymous("LOP",
                                                   args={"format": "usda"})
         set_layer_defaults(payload_layer, default_prim=asset_name)
-        created_layers.append((payload_layer, "./payload.usd"))
+        created_layers.append(Layer(layer=payload_layer,
+                                    path="./payload.usd"))
 
         # Add sublayers to the payload layer
         # Note: Sublayering is tricky because it requires that the sublayers
@@ -189,46 +229,31 @@ def create_asset(
 
     """
     # Also see create_asset.py in PixarAnimationStudios/USD endToEnd example
-    log.debug("Creating asset at %s", filepath)
 
-    # Make the layer ascii - good for readability, plus the file is small
-    layer = Sdf.Layer.CreateAnonymous()
+    sdf_layer = Sdf.Layer.CreateAnonymous()
+    layer = Layer(layer=sdf_layer, path=filepath)
 
-    created_layers_with_paths = setup_asset_layer(
-            layer=layer,
+    created_layers = setup_asset_layer(
+            layer=sdf_layer,
             asset_name=asset_name,
             reference_layers=reference_layers,
             kind=kind,
             define_class=define_class
     )
-    _save_layer_paths_anchored_to_layer(layer, filepath,
-                                        created_layers_with_paths)
-    layer.Export(filepath, args={"format": "usda"})
-    return [layer] + [layer for layer, _ in created_layers_with_paths]
+    for created_layer in created_layers:
+        created_layer.anchor = layer
+        created_layer.export()
 
+        # Update the dependency on the base layer
+        sdf_layer.UpdateCompositionAssetDependency(
+            created_layer.identifier, created_layer.get_full_path()
+        )
 
-def _save_layer_paths_anchored_to_layer(base_layer,
-                                        base_layer_path,
-                                        sublayers_with_paths):
-    """Export and update layer asset identifiers for sublayers with paths.
+    # Make the layer ascii - good for readability, plus the file is small
+    log.debug("Creating asset at %s", filepath)
+    layer.export(args={"format": "usda"})
 
-    The layers will be anchorde relative to the base layer and base layer's
-    filepath to allow for relative anchoring and saving for anonymous layers.
-
-    """
-    for layer, path in sublayers_with_paths:
-        if not os.path.isabs(path):
-            # Use relative path anchoring to the base layer
-            folder = os.path.dirname(base_layer_path)
-            full_path = os.path.join(folder, path)
-        else:
-            full_path = path
-
-        # Export the layer
-        layer.Export(full_path, args=layer.GetFileFormatArguments())
-
-        # Update dependencies on the base layer
-        base_layer.UpdateCompositionAssetDependency(layer.identifier, path)
+    return [layer] + created_layers
 
 
 def create_shot(filepath, layers, create_layers=False):
@@ -367,10 +392,9 @@ def create_shade(filename, asset, variant_subsets):
         variants.append((variant, path))
 
     stage = _create_variants_file(
-        filename, variants=variants, variantset="model", variant_prim="/root"
+        variants=variants, variantset="model", variant_prim="/root"
     )
-
-    stage.GetRootLayer().Save()
+    stage.GetRootLayer().Export(filename, args={"format": "usda"})
 
 
 def create_shade_variation(filename, asset, model_variant, shade_variants):
@@ -399,14 +423,12 @@ def create_shade_variation(filename, asset, model_variant, shade_variants):
         variants.append((variant, path))
 
     stage = _create_variants_file(
-        filename, variants=variants, variantset="shade", variant_prim="/root"
+        variants=variants, variantset="shade", variant_prim="/root"
     )
-
-    stage.GetRootLayer().Save()
+    stage.GetRootLayer().Export(filename, args={"format": "usda"})
 
 
 def _create_variants_file(
-    filename,
     variants,
     variantset,
     default_variant=None,
@@ -418,8 +440,17 @@ def _create_variants_file(
 ):
     """Create a USD file with references to given variants and their paths.
 
+    Examples:
+    >>> stage = _create_variants_file("model.usd",
+    >>>     variants=[
+    >>>         ("main", "main.usd"),
+    >>>         ("damaged", "damaged.usd"),
+    >>>         ("twisted", "twisted.usd")
+    >>>     ],
+    >>>     variantset="model")
+    >>> stage.rootLayer.Export("model.usd", args={"format": "usda"})
+
     Arguments:
-        filename (str): USD file containing the variant sets.
         variants (List[List[str, str]): List of two-tuples of variant name to
             the filepath that should be referenced in for that variant.
         variantset (str): Name of the variant set
@@ -440,7 +471,7 @@ def _create_variants_file(
 
     """
 
-    root_layer = Sdf.Layer.CreateNew(filename, args={"format": "usda"})
+    root_layer = Sdf.Layer.CreateAnonymous()
     stage = Usd.Stage.Open(root_layer)
 
     root_prim = stage.DefinePrim(variant_prim)
