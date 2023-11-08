@@ -6,16 +6,21 @@ from pathlib import Path
 import pyblish.api
 import tde4
 
-from openpype.lib import import_filepath
-from openpype.pipeline import KnownPublishError
-
 from openpype.hosts.equalizer.api import (
     ExtractScriptBase,
     maintained_model_selection,
 )
+from openpype.lib import import_filepath
+from openpype.pipeline import (
+    KnownPublishError,
+    OptionalPyblishPluginMixin,
+    publish,
+)
 
 
-class ExtractMatchmoveScriptMaya(ExtractScriptBase):
+class ExtractMatchmoveScriptMaya(publish.Extractor,
+                                 ExtractScriptBase,
+                                 OptionalPyblishPluginMixin):
     """Extract Maya MEL script for matchmove.
 
     This is using built-in export script from 3DEqualizer.
@@ -38,6 +43,8 @@ class ExtractMatchmoveScriptMaya(ExtractScriptBase):
         from the state of the project.
 
         """
+        if not self.is_active(instance.data):
+            return
         attr_data = self.get_attr_values_from_data(instance.data)
 
         # import maya export script from 3DEqualizer
@@ -60,7 +67,7 @@ class ExtractMatchmoveScriptMaya(ExtractScriptBase):
         overscan_width = attr_data["overscan_percent_width"] / 100.0
         overscan_height = attr_data["overscan_percent_height"] / 100.0
 
-        staging_dir = Path(self.staging_dir(instance))
+        staging_dir = self.staging_dir(instance)
 
         unit_scales = {
             "mm": 10.0,  # cm -> mm
@@ -101,8 +108,9 @@ class ExtractMatchmoveScriptMaya(ExtractScriptBase):
                         for model in model_list:
                             tde4.set3DModelSelectionFlag(point_group, model, 0)
 
+            file_path = Path(staging_dir) / "maya_export.mel"
             status = exporter._maya_export_mel_file(
-                (staging_dir / "maya_export.mel").as_posix(),  # staging path
+                file_path.as_posix(),  # staging path
                 point_group,  # camera point group
                 [c["id"] for c in instance.data["cameras"] if c["enabled"]],
                 model_selection,  # model selection mode
@@ -123,7 +131,8 @@ class ExtractMatchmoveScriptMaya(ExtractScriptBase):
         representation = {
             'name': "mel",
             'ext': "mel",
-            'files': "maya_export.mel",
+            'files': file_path.name,
             "stagingDir": staging_dir,
         }
+        self.log.debug(f"output: {file_path.as_posix()}")
         instance.data["representations"].append(representation)

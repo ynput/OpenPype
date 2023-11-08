@@ -19,8 +19,8 @@ import pyblish.api
 import tde4  # noqa: F401
 from vl_sdv import (rot3d, mat3d, VL_APPLY_ZXY)  # noqa: F401
 
-from openpype.hosts.equalizer.api import ExtractScriptBase
-from openpype.pipeline import KnownPublishError
+from openpype.pipeline import KnownPublishError, OptionalPyblishPluginMixin
+from openpype.pipeline import publish
 
 
 def sanitize_name(name: str) -> str:
@@ -51,13 +51,16 @@ def angle_mod360(d0, d):
     return d
 
 
-class ExtractMatchmoveScriptNuke(ExtractScriptBase):
+class ExtractMatchmoveScriptNuke(publish.Extractor,
+                                 OptionalPyblishPluginMixin):
     """Extract Nuke script for matchmove.
 
     Unfortunately built-in export script from 3DEqualizer is bound to its UI,
     and it is not possible to call it directly from python. Therefore, this
     method is using custom script that is trying to mimic the export script
     as much as possible.
+
+    TODO: Utilize attributes defined in ExtractScriptBase
     """
 
     label = "Extract Nuke Script"
@@ -67,6 +70,9 @@ class ExtractMatchmoveScriptNuke(ExtractScriptBase):
     order = pyblish.api.ExtractorOrder
 
     def process(self, instance: pyblish.api.Instance):
+
+        if not self.is_active(instance.data):
+            return
 
         # get camera point group
         point_groups = tde4.getPGroupList()
@@ -504,7 +510,8 @@ ScanlineRender {{
         representation = {
             'name': "nk",
             'ext': "nk",
-            'files': "nuke_export.mel",
+            'files': file_path.name,
             "stagingDir": staging_dir,
         }
+        self.log.debug(f"output: {file_path.as_posix()}")
         instance.data["representations"].append(representation)
