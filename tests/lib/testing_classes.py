@@ -10,9 +10,14 @@ import glob
 import platform
 import requests
 import re
+import inspect
 
 from tests.lib.db_handler import DBHandler
-from tests.lib.file_handler import RemoteFileHandler
+from tests.lib.file_handler import (
+    BaseFileHandler,
+    RemoteFileHandler,
+    LocalFileHandler
+)
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
@@ -79,14 +84,25 @@ class ModuleUnitTest(BaseTest):
             for test_file in self.TEST_FILES:
                 file_id, file_name, md5 = test_file
 
-                f_name, ext = os.path.splitext(file_name)
+                CURR_DIR = os.path.dirname(os.path.abspath(
+                    inspect.getfile(self.__class__)))
+                if os.path.exists(file_id):
+                    handler_class = LocalFileHandler
+                elif os.path.exists(os.path.join(CURR_DIR, file_id)):
+                    file_id = os.path.join(CURR_DIR, file_id)
+                    handler_class = LocalFileHandler
+                else:
+                    handler_class = RemoteFileHandler
 
-                RemoteFileHandler.download_file_from_google_drive(file_id,
-                                                                  str(tmpdir),
-                                                                  file_name)
+                handler_class.download_test_source_files(file_id, str(tmpdir),
+                                                         file_name)
+                ext = None
+                if "." in file_name:
+                    _, ext = os.path.splitext(file_name)
 
-                if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
-                    RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
+                if ext and ext.lstrip('.') in handler_class.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
+                    handler_class.unzip(os.path.join(tmpdir, file_name))
+
                 yield tmpdir
 
                 persist = (persist or self.PERSIST or

@@ -17,7 +17,7 @@ class MayaHostFixtures(HostFixtures):
             Maya expects workfile in proper folder, so copy is done first.
         """
         src_path = os.path.join(
-            os.path.dirname(__file__),
+            download_test_data,
             "input",
             "workfile",
             "test_project_test_asset_test_task_v001.ma"
@@ -40,10 +40,10 @@ class MayaHostFixtures(HostFixtures):
         yield dest_path
 
     @pytest.fixture(scope="module")
-    def startup_scripts(self, monkeypatch_session):
+    def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Maya to userSetup file from input data"""
         startup_path = os.path.join(
-            os.path.dirname(__file__), "input", "startup"
+            download_test_data, "input", "startup"
         )
         original_pythonpath = os.environ.get("PYTHONPATH")
         monkeypatch_session.setenv(

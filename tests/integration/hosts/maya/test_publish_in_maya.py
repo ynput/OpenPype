@@ -26,7 +26,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     PERSIST = False
 
     TEST_FILES = [
-        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
+        ("test_publish_in_maya", "", "")
     ]
 
     APP_GROUP = "maya"
