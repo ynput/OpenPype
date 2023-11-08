@@ -84,7 +84,21 @@ def register_root(path):
 
 
 def registered_root():
-    """Return currently registered root"""
+    """Return registered roots from current project anatomy.
+
+    Consider this does return roots only for current project and current
+        platforms, only if host was installer using 'install_host'.
+
+    Deprecated:
+        Please use project 'Anatomy' to get roots. This function is still used
+            at current core functions of load logic, but that will change
+            in future and this function will be removed eventually. Using this
+            function at new places can cause problems in the future.
+
+    Returns:
+        dict[str, str]: Root paths.
+    """
+
     return _registered_root["_"]
 
 
