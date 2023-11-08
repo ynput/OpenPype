@@ -33,7 +33,7 @@ class MayaHostFixtures(HostFixtures):
         yield dest_path
 
     @pytest.fixture(scope="module")
-    def startup_scripts(self, monkeypatch_session):
+    def startup_scripts(self, monkeypatch_session, download_test_data):
         """Points Maya to userSetup file from input data"""
         startup_path = os.path.join(
             os.path.dirname(__file__), "input", "startup"
@@ -42,6 +42,11 @@ class MayaHostFixtures(HostFixtures):
         monkeypatch_session.setenv(
             "PYTHONPATH",
             "{}{}{}".format(startup_path, os.pathsep, original_pythonpath)
+        )
+
+        monkeypatch_session.setenv(
+            "MAYA_CMD_FILE_OUTPUT",
+            os.path.join(download_test_data, "output.log")
         )
 
     @pytest.fixture(scope="module")
