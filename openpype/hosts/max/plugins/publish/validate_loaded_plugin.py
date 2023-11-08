@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Validator for Loaded Plugin."""
 import os
-from pyblish.api import InstancePlugin, ValidatorOrder
+import pyblish.api
 from pymxs import runtime as rt
 
 from openpype.pipeline.publish import (
@@ -13,7 +13,7 @@ from openpype.hosts.max.api.lib import get_plugins
 
 
 class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
-                           InstancePlugin):
+                           pyblish.api.InstancePlugin):
     """Validates if the specific plugin is loaded in 3ds max.
     Studio Admin(s) can add the plugins they want to check in validation
     via studio defined project settings
@@ -22,11 +22,13 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
     """
 
-    order = ValidatorOrder
+    order = pyblish.api.ValidatorOrder
     hosts = ["max"]
     label = "Validate Loaded Plugins"
     optional = True
     actions = [RepairAction]
+
+    family_plugins_mapping = {}
 
     def get_invalid(self, instance):
         """Plugin entry point."""
@@ -34,12 +36,7 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
             self.log.debug("Skipping Validate Loaded Plugin...")
             return
 
-        required_plugins = (
-            instance.context.data["project_settings"]["max"]["publish"]
-                                 ["ValidateLoadedPlugin"]
-                                 ["family_plugins_mapping"]
-        )
-
+        required_plugins = self.family_plugins_mapping
         if not required_plugins:
             return
 
@@ -54,11 +51,12 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
         # Build instance families lookup
         instance_families = {instance.data["family"]}
         instance_families.update(instance.data.get("families", []))
-        self.log.debug(f"Checking plug-in validation for instance families: {instance_families}")
-        for families in required_plugins.keys():
+        self.log.debug("Checking plug-in validation "
+                       f"for instance families: {instance_families}")
+        for family in required_plugins:
             # Check for matching families
             match_families = {fam.strip() for fam in
-                              families.split(",") if fam.strip()}
+                              family.split(",") if fam.strip()}
             self.log.debug(f"Plug-in family requirements: {match_families}")
             has_match = "*" in match_families or match_families.intersection(
                 instance_families)
@@ -66,7 +64,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
             if not has_match:
                 continue
 
-            plugins = [plugin for plugin in required_plugins[families]["plugins"]]
+            plugins = [plugin for plugin in
+                       required_plugins[family]["plugins"]]
             for plugin in plugins:
                 if not plugin:
                     return
@@ -75,7 +74,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
                 if plugin_index is None:
                     invalid.append(
-                        f"Plugin {plugin} does not exist in 3dsMax Plugin List."
+                        f"Plugin {plugin} does not exist"
+                        " in 3dsMax Plugin List."
                     )
                     continue
 
@@ -105,17 +105,14 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
             plugin_name.lower(): index for index, plugin_name in enumerate(
                 get_plugins())
         }
-        required_plugins = (
-            instance.context.data["project_settings"]["max"]["publish"]
-                                 ["ValidateLoadedPlugin"]
-                                 ["family_plugins_mapping"]
-        )
+        required_plugins = cls.family_plugins_mapping
         instance_families = {instance.data["family"]}
         instance_families.update(instance.data.get("families", []))
-        cls.log.debug(f"Checking plug-in validation for instance families: {instance_families}")
-        for families in required_plugins.keys():
+        cls.log.debug("Checking plug-in validation "
+                      f"for instance families: {instance_families}")
+        for family in required_plugins.keys():
             match_families = {fam.strip() for fam in
-                              families.split(",") if fam.strip()}
+                              family.split(",") if fam.strip()}
             cls.log.debug(f"Plug-in family requirements: {match_families}")
             has_match = "*" in match_families or match_families.intersection(
                 instance_families)
@@ -123,7 +120,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
             if not has_match:
                 continue
 
-            plugins = [plugin for plugin in required_plugins[families]["plugins"]]
+            plugins = [plugin for plugin in
+                       required_plugins[family]["plugins"]]
             for plugin in plugins:
                 if not plugin:
                     return
