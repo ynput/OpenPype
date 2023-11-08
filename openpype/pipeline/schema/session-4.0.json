@@ -9,8 +9,7 @@
     "additionalProperties": true,
 
     "required": [
-        "AVALON_PROJECT",
-        "AVALON_ASSET"
+        "AVALON_PROJECT"
     ],
 
     "properties": {
