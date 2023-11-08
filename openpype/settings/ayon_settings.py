@@ -650,19 +650,14 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
     ayon_publish["ValidateAttributes"]["attributes"] = attributes
 
     if "ValidateLoadedPlugin" in ayon_publish:
-        family_plugin_mapping = (
-            ayon_publish["ValidateLoadedPlugin"]["family_plugins_mapping"]
+        new_plugin_mapping = {}
+        loaded_plugin = (
+            ayon_publish["ValidateLoadedPlugin"]
         )
-        for item in family_plugin_mapping:
-            if "product_types" in item:
-                item["families"] = item.pop("product_types")
-        new_family_plugin_mapping = {
-            item["families"]: item["plugins"]
-            for item in family_plugin_mapping
-        }
-        ayon_publish["ValidateLoadedPlugin"]["family_plugins_mapping"] = (
-            new_family_plugin_mapping
-        )
+        for item in loaded_plugin["family_plugins_mapping"]:
+            name = item.pop("name")
+            new_plugin_mapping[name] = item
+        loaded_plugin["family_plugins_mapping"] = new_plugin_mapping
 
     output["max"] = ayon_max
 

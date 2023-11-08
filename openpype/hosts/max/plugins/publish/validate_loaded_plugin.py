@@ -63,12 +63,12 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
             if not has_match:
                 continue
-
-            plugins = [plugin for plugin in
-                       required_plugins[family]["plugins"]]
+            plugins = [plugin for plugin in required_plugins[family]["plugins"]]
             for plugin in plugins:
                 if not plugin:
                     return
+                # make sure the validation applied for
+                # plugins with different Max version
                 plugin_name = plugin.format(**os.environ).lower()
                 plugin_index = available_plugins.get(plugin_name)
 
@@ -110,7 +110,7 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
         instance_families.update(instance.data.get("families", []))
         cls.log.debug("Checking plug-in validation "
                       f"for instance families: {instance_families}")
-        for family in required_plugins.keys():
+        for family in required_plugins:
             match_families = {fam.strip() for fam in
                               family.split(",") if fam.strip()}
             cls.log.debug(f"Plug-in family requirements: {match_families}")
@@ -120,8 +120,7 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
             if not has_match:
                 continue
 
-            plugins = [plugin for plugin in
-                       required_plugins[family]["plugins"]]
+            plugins = [plugin for plugin in family["plugins"]]
             for plugin in plugins:
                 if not plugin:
                     return

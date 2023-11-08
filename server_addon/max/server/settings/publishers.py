@@ -1,7 +1,7 @@
 import json
 from pydantic import Field, validator
 
-from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import BaseSettingsModel, ensure_unique_names
 from ayon_server.exceptions import BadRequestException
 
 
@@ -27,19 +27,30 @@ class ValidateAttributesModel(BaseSettingsModel):
         return value
 
 
-class FamilyPluginsMappingModel(BaseSettingsModel):
+class FamilyMappingItemModel(BaseSettingsModel):
     _layout = "compact"
-    product_types: str = Field(title="Product Types")
+    name: str = Field("", title="Product type")
     plugins: list[str] = Field(
-        default_factory=list,title="Plugins")
+        default_factory=list,
+        title="Plugins"
+    )
 
 
 class ValidateLoadedPluginModel(BaseSettingsModel):
-    enabled: bool = Field(title="ValidateLoadedPlugin")
+    enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
-    family_plugins_mapping: list[FamilyPluginsMappingModel] = Field(
-        default_factory=list, title="Family Plugins Mapping"
+    family_plugins_mapping: list[FamilyMappingItemModel] = (
+        Field(
+        default_factory=list,
+        title="Family Plugins Mapping"
+        )
     )
+
+    # This is to validate unique names (like in dict)
+    @validator("family_plugins_mapping")
+    def validate_unique_outputs(cls, value):
+        ensure_unique_names(value)
+        return value
 
 
 class BasicValidateModel(BaseSettingsModel):
