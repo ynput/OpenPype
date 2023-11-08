@@ -44,6 +44,12 @@ class ValidateUSDOutputNode(pyblish.api.InstancePlugin):
 
             return [node.path()]
 
+        # TODO: Remove early return
+        #   This is just done so that for now the "CreatorNode" defined for
+        #   an explicit save path layer (upstream from the RopNode) can pass
+        #   through here, see "collect_usd_layers.py"
+        return
+
         # Output node must be a Sop node.
         if not isinstance(output_node, hou.LopNode):
             cls.log.error(

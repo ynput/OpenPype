@@ -495,6 +495,30 @@ def maintained_selection():
                 node.setSelected(on=True)
 
 
+@contextmanager
+def parm_values(overrides):
+    """Override Parameter values during the context.
+
+    Arguments:
+        overrides (List[Tuple[hou.Parm, Any]]): The overrides per parm
+            that should be applied during context.
+
+    """
+
+    originals = []
+    try:
+        for parm, value in overrides:
+            originals.append((parm, parm.eval()))
+            parm.set(value)
+        yield
+    finally:
+        for parm, value in originals:
+            # Parameter might not exist anymore so first
+            # check whether it's still valid
+            if hou.parm(parm.path()):
+                parm.set(value)
+
+
 def reset_framerange():
     """Set frame range and FPS to current asset"""
 

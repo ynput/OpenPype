@@ -2,6 +2,7 @@
 
 import contextlib
 import logging
+import json
 
 import hou
 from pxr import Sdf, Vt
@@ -186,8 +187,18 @@ def iter_layer_recursive(layer):
         yield layer
 
 
-def get_configured_save_layers(usd_rop):
-    """Retrieve the layer save paths from a USD ROP."""
+def get_configured_save_layers(usd_rop, strip_above_layer_break=True):
+    """Retrieve the layer save paths from a USD ROP.
+
+    Arguments:
+        usdrop (hou.RopNode): USD Rop Node
+        strip_above_layer_break (Optional[bool]): Whether to exclude any
+            layers that are above layer breaks. This defaults to True.
+
+    Returns:
+        List[Sdf.Layer]: The layers with configured save paths.
+
+    """
 
     lop_node = get_usd_rop_loppath(usd_rop)
     stage = lop_node.stage(apply_viewport_overrides=False)
@@ -198,8 +209,19 @@ def get_configured_save_layers(usd_rop):
 
     root_layer = stage.GetRootLayer()
 
+    if strip_above_layer_break:
+        layers_above_layer_break = set(lop_node.layersAboveLayerBreak())
+    else:
+        layers_above_layer_break = set()
+
     save_layers = []
     for layer in iter_layer_recursive(root_layer):
+        if (
+            strip_above_layer_break and
+            layer.identifier in layers_above_layer_break
+        ):
+            continue
+
         save_path = get_layer_save_path(layer)
         if save_path is not None:
             save_layers.append(layer)
@@ -261,3 +283,27 @@ def setup_lop_python_layer(layer, node, savepath=None,
     node.addHeldLayer(layer.identifier)
 
     return p
+
+
+@contextlib.contextmanager
+def remap_paths(rop_node, mapping):
+    """Enable the AyonRemapPaths output processor with provided `mapping`"""
+    from openpype.hosts.houdini.api.lib import parm_values
+
+    if not mapping:
+        # Do nothing
+        yield
+        return
+
+    # Houdini string parms need to escape backslashes due to the support
+    # of expressions - as such we do so on the json data
+    value = json.dumps(mapping).replace("\\", "\\\\")
+    with outputprocessors(
+        rop_node,
+        processors=["ayon_remap_paths"],
+        disable_all_others=True,
+    ):
+        with parm_values([
+            (rop_node.parm("ayon_remap_paths_remap_json"), value)
+        ]):
+            yield
