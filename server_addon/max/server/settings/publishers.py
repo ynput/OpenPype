@@ -39,11 +39,9 @@ class FamilyMappingItemModel(BaseSettingsModel):
 class ValidateLoadedPluginModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
-    family_plugins_mapping: list[FamilyMappingItemModel] = (
-        Field(
+    family_plugins_mapping: list[FamilyMappingItemModel] = Field(
         default_factory=list,
         title="Family Plugins Mapping"
-        )
     )
 
     # This is to validate unique names (like in dict)

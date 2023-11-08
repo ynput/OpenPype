@@ -63,7 +63,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
             if not has_match:
                 continue
-            plugins = [plugin for plugin in required_plugins[family]["plugins"]]
+            plugins = [plugin for plugin in
+                       required_plugins[family]["plugins"]]
             for plugin in plugins:
                 if not plugin:
                     return
