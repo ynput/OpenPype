@@ -51,6 +51,11 @@ class MayaHostFixtures(HostFixtures):
             "{}{}{}".format(startup_path, os.pathsep, original_pythonpath)
         )
 
+        monkeypatch_session.setenv(
+            "MAYA_CMD_FILE_OUTPUT",
+            os.path.join(download_test_data, "output.log")
+        )
+
     @pytest.fixture(scope="module")
     def skip_compare_folders(self):
         yield []

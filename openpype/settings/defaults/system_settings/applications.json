@@ -344,13 +344,30 @@
                 },
                 "environment": {}
             },
+            "11-0": {
+                "use_python_2": true,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.0v4\\Nuke11.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "__dynamic_keys_labels__": {
                 "13-2": "13.2",
                 "13-0": "13.0",
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
-                "11-2": "11.2"
+                "11-2": "11.2",
+                "11-0": "11.0"
             }
         }
     },

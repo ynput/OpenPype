@@ -5,6 +5,7 @@ from openpype.client import (
     get_subsets,
 )
 from openpype.hosts.houdini.api import plugin
+import hou
 
 
 class CreateHDA(plugin.HoudiniCreator):
@@ -35,7 +36,6 @@ class CreateHDA(plugin.HoudiniCreator):
 
     def create_instance_node(
             self, node_name, parent, node_type="geometry"):
-        import hou
 
         parent_node = hou.node("/obj")
         if self.selected_nodes:
@@ -81,3 +81,8 @@ class CreateHDA(plugin.HoudiniCreator):
             pre_create_data)  # type: plugin.CreatedInstance
 
         return instance
+
+    def get_network_categories(self):
+        return [
+            hou.objNodeTypeCategory()
+        ]
