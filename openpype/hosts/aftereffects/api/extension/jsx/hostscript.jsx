@@ -316,24 +316,24 @@ function importFileWithDialog(path, item_name){
 
     if (importedCompArray == undefined){
         // User has canceled the action, so we stop the script here
-        return _prepareSingleValue('Action canceled.')
+        return _prepareSingleValue('Action canceled.');
     }
 
     importedComp = importedCompArray[0]
     if (importedComp.layers == undefined){
         undoLastActions();
-        return _prepareError('Wrong file type imported (impossible to access layers composition).')
+        return _prepareError('Wrong file type imported (impossible to access layers composition).');
     }
 
     importedCompFilePath = getCompFilepath(importedComp);
     if (extensionsAreDifferents(importedCompFilePath, path)){
         undoLastActions();
-        return _prepareError('Wrong file selected (incorrect extension).')
+        return _prepareError('Wrong file selected (incorrect extension).');
     }
 
     if (versionsAreDifferents(importedCompFilePath, path)){
         undoLastActions();
-        return _prepareError('Wrong file selected (incorrect asset / version).')
+        return _prepareError('Wrong file selected (incorrect asset / version).');
     }
 
     importedCompFolder = getImportedCompFolder(importedComp);
