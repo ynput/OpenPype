@@ -10,6 +10,7 @@ import glob
 import platform
 import requests
 import re
+import time
 
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler
@@ -334,7 +335,7 @@ class PublishTest(ModuleUnitTest):
             print("Creating only setup for test, not launching app")
             yield False
             return
-        import time
+
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
         timeout = float(timeout)
