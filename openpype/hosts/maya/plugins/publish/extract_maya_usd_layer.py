@@ -5,7 +5,12 @@ from openpype.pipeline import publish
 
 
 class ExtractMayaUsdLayer(publish.Extractor):
-    """Extractor for Maya USD Layer from `mayaUsdProxyShape`"""
+    """Extractor for Maya USD Layer from `mayaUsdProxyShape`
+
+    Exports a single Sdf.Layer from a mayaUsdPlugin `mayaUsdProxyShape`.
+    These layers are the same managed via Maya's Windows > USD Layer Editor.
+
+    """
 
     label = "Extract Maya USD Layer"
     hosts = ["maya"]
