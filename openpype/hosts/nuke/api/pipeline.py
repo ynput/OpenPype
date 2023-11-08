@@ -352,6 +352,8 @@ def _install_menu():
 
 
 def change_context_label():
+    if ASSIST:
+        return
 
     context_action_item = Context.context_action_item
     if context_action_item is None:
