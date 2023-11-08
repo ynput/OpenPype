@@ -30,10 +30,10 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
         if not self.is_active(instance.data):
             return
 
-        # Skip the instance if does not have asset entity in database
-        asset_doc = instance.data.get("assetEntity")
-        if not asset_doc:
-            self.log.warning("No asset data found, skipping.")
+        # editorial would fail since they might not be in database yet
+        is_editorial = instance.data.get("isEditorial")
+        if is_editorial:
+            self.log.debug("Instance is Editorial. Skipping.")
             return
 
         if (self.skip_timelines_check and
