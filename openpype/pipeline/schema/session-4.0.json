@@ -14,11 +14,6 @@
     ],
 
     "properties": {
-        "AVALON_PROJECTS": {
-            "description": "Absolute path to root of project directories",
-            "type": "string",
-            "example": "/nas/projects"
-        },
         "AVALON_PROJECT": {
             "description": "Name of project",
             "type": "string",
@@ -62,20 +57,6 @@
             "pattern": "^[0-9]*$",
             "default": "1000",
             "example": "1000"
-        },
-        "AVALON_INSTANCE_ID": {
-            "description": "Unique identifier for instances in a working file",
-            "type": "string",
-            "pattern": "^[\\w.]*$",
-            "default": "avalon.instance",
-            "example": "avalon.instance"
-        },
-        "AVALON_CONTAINER_ID": {
-            "description": "Unique identifier for a loaded representation in a working file",
-            "type": "string",
-            "pattern": "^[\\w.]*$",
-            "default": "avalon.container",
-            "example": "avalon.container"
         }
     }
 }
