@@ -132,11 +132,11 @@
             "template_data": [
                 {
                     "key": "CreateUSD",
-                    "label": "Create USD (experimental)"
+                    "label": "Create USD"
                 },
                 {
                     "key": "CreateUSDRender",
-                    "label": "Create USD render (experimental)"
+                    "label": "Create USD render"
                 },
                 {
                     "key": "CreateVDBCache",

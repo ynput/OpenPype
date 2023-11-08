@@ -7,7 +7,7 @@ from openpype.pipeline import CreatedInstance
 class CreateUSDRender(plugin.HoudiniCreator):
     """USD Render ROP in /stage"""
     identifier = "io.openpype.creators.houdini.usdrender"
-    label = "USD Render (experimental)"
+    label = "USD Render"
     family = "usdrender"
     icon = "magic"
 
