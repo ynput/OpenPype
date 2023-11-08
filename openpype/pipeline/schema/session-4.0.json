@@ -35,7 +35,7 @@
             "description": "Name of host",
             "type": "string",
             "pattern": "^\\w*$",
-            "example": "maya2016"
+            "example": "maya"
         },
         "AVALON_DB": {
             "description": "Name of database",
@@ -47,7 +47,7 @@
         "AVALON_LABEL": {
             "description": "Nice name of Avalon, used in e.g. graphical user interfaces",
             "type": "string",
-            "example": "Mindbender",
+            "example": "MyLabel",
             "default": "Avalon"
         },
         "AVALON_TIMEOUT": {
