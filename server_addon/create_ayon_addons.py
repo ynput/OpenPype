@@ -209,7 +209,8 @@ def create_openpype_package(
         "shotgrid",
         "sync_server",
         "example_addons",
-        "slack"
+        "slack",
+        "kitsu",
     ]
     # Subdirs that won't be added to output zip file
     ignored_subpaths = [

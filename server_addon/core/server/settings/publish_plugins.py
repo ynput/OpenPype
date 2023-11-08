@@ -21,7 +21,7 @@ class ValidateBaseModel(BaseSettingsModel):
 class CollectAnatomyInstanceDataModel(BaseSettingsModel):
     _isGroup = True
     follow_workfile_version: bool = Field(
-        True, title="Collect Anatomy Instance Data"
+        True, title="Follow workfile version"
     )
 
 

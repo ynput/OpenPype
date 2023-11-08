@@ -46,8 +46,6 @@ class LinkAsGroup(load.LoaderPlugin):
         file = self.filepath_from_context(context).replace("\\", "/")
         self.log.info("file: {}\n".format(file))
 
-        precomp_name = context["representation"]["context"]["subset"]
-
         self.log.info("versionData: {}\n".format(context["version"]["data"]))
 
         # add additional metadata from the version to imprint to Avalon knob
@@ -62,7 +60,6 @@ class LinkAsGroup(load.LoaderPlugin):
         }
         for k in add_keys:
             data_imprint.update({k: context["version"]['data'][k]})
-        data_imprint.update({"objectName": precomp_name})
 
         # group context is set to precomp, so back up one level.
         nuke.endGroup()
@@ -118,7 +115,7 @@ class LinkAsGroup(load.LoaderPlugin):
         inputs:
 
         """
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
 
         root = get_representation_path(representation).replace("\\", "/")
 
@@ -159,6 +156,6 @@ class LinkAsGroup(load.LoaderPlugin):
         self.log.info("updated to version: {}".format(version_doc.get("name")))
 
     def remove(self, container):
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
         with viewer_update_and_undo_stop():
             nuke.delete(node)

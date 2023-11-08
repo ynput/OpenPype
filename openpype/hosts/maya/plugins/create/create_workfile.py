@@ -72,7 +72,10 @@ class CreateWorkfile(plugin.MayaCreatorBase, AutoCreator):
             )
             asset_name = get_asset_name_identifier(asset_doc)
 
-            current_instance["asset"] = asset_name
+            if AYON_SERVER_ENABLED:
+                current_instance["folderPath"] = asset_name
+            else:
+                current_instance["asset"] = asset_name
             current_instance["task"] = task_name
             current_instance["subset"] = subset_name
 

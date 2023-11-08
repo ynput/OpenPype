@@ -163,8 +163,10 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
             )
         return loaded_representation_ids
 
-    def _before_repre_load(self, placeholder, representation):
+    def _before_placeholder_load(self, placeholder):
         placeholder.data["nodes_init"] = nuke.allNodes()
+
+    def _before_repre_load(self, placeholder, representation):
         placeholder.data["last_repre_id"] = str(representation["_id"])
 
     def collect_placeholders(self):
@@ -197,6 +199,13 @@ class NukePlaceholderLoadPlugin(NukePlaceholderPlugin, PlaceholderLoadMixin):
         return self.get_load_plugin_options(options)
 
     def post_placeholder_process(self, placeholder, failed):
+        """Cleanup placeholder after load of its corresponding representations.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
+        """
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
@@ -603,6 +612,13 @@ class NukePlaceholderCreatePlugin(
         return self.get_create_plugin_options(options)
 
     def post_placeholder_process(self, placeholder, failed):
+        """Cleanup placeholder after load of its corresponding representations.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
+        """
         # deselect all selected nodes
         placeholder_node = nuke.toNode(placeholder.scene_identifier)
 
