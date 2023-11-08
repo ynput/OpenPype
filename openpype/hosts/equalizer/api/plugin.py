@@ -12,7 +12,7 @@ from openpype.lib import BoolDef, EnumDef, NumberDef
 from openpype.pipeline import (
     CreatedInstance,
     Creator,
-    OpenPypePyblishPluginMixin,
+    OptionalPyblishPluginMixin,
     publish,
 )
 
@@ -105,7 +105,7 @@ class EqualizerCreator(ABC, Creator):
         self.host.update_context_data(context, changes={})
 
 
-class ExtractScriptBase(ABC, publish.Extractor, OpenPypePyblishPluginMixin):
+class ExtractScriptBase(OptionalPyblishPluginMixin):
     """Base class for extract script plugins."""
 
     hide_reference_frame = False
