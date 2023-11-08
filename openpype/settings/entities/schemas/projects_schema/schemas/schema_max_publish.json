@@ -72,7 +72,15 @@
                 "label": "Family Plugins Mapping",
                 "use_label_wrap": true,
                 "object_type": {
-                    "type": "text"
+                    "type": "dict",
+                    "children": [
+                        {
+                            "key": "plugins",
+                            "label": "plugins",
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    ]
                 }
             }
         ]

@@ -29,8 +29,9 @@ class ValidateAttributesModel(BaseSettingsModel):
 
 class FamilyPluginsMappingModel(BaseSettingsModel):
     _layout = "compact"
-    families: str = Field(title="Families")
-    plugins: str = Field(title="Plugins")
+    product_types: str = Field(title="Product Types")
+    plugins: list[str] = Field(
+        default_factory=list,title="Plugins")
 
 
 class ValidateLoadedPluginModel(BaseSettingsModel):
