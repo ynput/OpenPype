@@ -155,7 +155,7 @@ def embedOptions():
         if knob.name() == "File output":
             group.removeKnob(knob)
     for knob in allTextKnobs:
-        if knob.name() in ['tempwarn','reviewwarn','dlinewarn','div','deadlinediv', 'deadlinePriority', 'deadlineGroup', 'deadlinePool']:
+        if knob.name() in ['tempwarn','reviewwarn','dlinewarn','div','deadlinediv', 'deadlinePriority', 'deadlineGroup', 'deadlinePool', 'deadlineChunkSize']:
             group.removeKnob(knob)
     names = [knob.name() for knob in group.allKnobs()]
     if not 'htab' in names:
@@ -210,6 +210,8 @@ def embedOptions():
     deadlinePriority = nuke.Int_Knob('deadlinePriority', 'Priority')
     deadlinePool = nuke.String_Knob('deadlinePool', 'Pool')
     deadlineGroup = nuke.String_Knob('deadlineGroup', 'Group')
+    deadlineChunkSize = nuke.Int_Knob('deadlineChunkSize', 'Chunk Size')
+    deadlineChunkSize.setValue(1)
     deadlinePool.setValue('local')
     deadlineGroup.setValue('nuke')
     deadlinePriority.setValue(90)
@@ -218,6 +220,7 @@ def embedOptions():
     group.addKnob(clr)
     group.addKnob(deadlinediv)
     group.addKnob(deadlinePriority)
+    group.addKnob(deadlineChunkSize)
     group.addKnob(deadlinePool)
     group.addKnob(deadlineGroup)
     group.addKnob(sub)
@@ -240,9 +243,6 @@ def enable_disable_frame_range():
     enable = nde.knob('use_limit').value()
     group.knobs()['first'].setEnabled(enable)
     group.knobs()['last'].setEnabled(enable)
-
-
-
 
 def submit_selected_write():
     for nde in nuke.selectedNodes():
