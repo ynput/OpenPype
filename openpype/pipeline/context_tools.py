@@ -43,7 +43,7 @@ from . import (
 
 _is_installed = False
 _process_id = None
-_registered_root = {"_": ""}
+_registered_root = {"_": {}}
 _registered_host = {"_": None}
 # Keep modules manager (and it's modules) in memory
 # - that gives option to register modules' callbacks
@@ -85,10 +85,7 @@ def register_root(path):
 
 def registered_root():
     """Return currently registered root"""
-    root = _registered_root["_"]
-    if root:
-        return root
-    return {}
+    return _registered_root["_"]
 
 
 def install_host(host):
