@@ -1,5 +1,4 @@
 import logging
-import os
 
 from husd.outputprocessor import OutputProcessor
 
@@ -24,7 +23,7 @@ class AyonURIOutputProcessor(OutputProcessor):
 
     @staticmethod
     def displayName():
-        return "Avalon URI Output Processor"
+        return "Ayon URI Output Processor"
 
     def processReferencePath(self,
                              asset_path,
