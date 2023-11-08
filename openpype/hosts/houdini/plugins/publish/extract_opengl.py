@@ -47,12 +47,14 @@ class ExtractOpenGL(publish.Extractor,
             "camera_name": instance.data.get("review_camera")
         }
 
-        colorspace = ropnode.evalParm("ociocolorspace")
-        # inject colorspace data
-        self.set_representation_colorspace(
-            representation, instance.context,
-            colorspace=colorspace
-        )
+        if ropnode.evalParm("colorcorrect") == 2:  # OpenColorIO enabled
+            colorspace = ropnode.evalParm("ociocolorspace")
+            # inject colorspace data
+            self.set_representation_colorspace(
+                representation, instance.context,
+                colorspace=colorspace
+            )
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
         instance.data["representations"].append(representation)
