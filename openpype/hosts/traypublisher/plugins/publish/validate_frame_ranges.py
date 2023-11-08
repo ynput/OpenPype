@@ -30,12 +30,17 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
         if not self.is_active(instance.data):
             return
 
+        # Skip the instance if does not have asset entity in database
+        asset_doc = instance.data.get("assetEntity")
+        if not asset_doc:
+            self.log.warning("No asset data found, skipping.")
+            return
+
         if (self.skip_timelines_check and
             any(re.search(pattern, instance.data["task"])
                 for pattern in self.skip_timelines_check)):
             self.log.info("Skipping for {} task".format(instance.data["task"]))
 
-        asset_doc = instance.data["assetEntity"]
         asset_data = asset_doc["data"]
         frame_start = asset_data["frameStart"]
         frame_end = asset_data["frameEnd"]
