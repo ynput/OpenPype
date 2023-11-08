@@ -28,7 +28,7 @@
         "AVALON_ASSET": {
             "description": "Name of asset",
             "type": "string",
-            "pattern": "^\\w*$",
+            "pattern": "^[\\/\\w]*$",
             "example": "Bruce"
         },
         "AVALON_TASK": {
