@@ -8,7 +8,7 @@ class ValidateHoudiniNotApprenticeLicense(pyblish.api.InstancePlugin):
 
     When extracting USD files from an apprentice Houdini license,
     the resulting files will get "scrambled" with a license protection
-    and get a special .usdnc or .usdlc suffix.
+    and get a special .usdnc suffix.
 
     This currently breaks the Subset/representation pipeline so we disallow
     any publish with apprentice license.
