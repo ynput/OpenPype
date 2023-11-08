@@ -88,11 +88,7 @@ def registered_root():
     root = _registered_root["_"]
     if root:
         return root
-
-    root = legacy_io.Session.get("AVALON_PROJECTS")
-    if root:
-        return os.path.normpath(root)
-    return ""
+    return {}
 
 
 def install_host(host):
