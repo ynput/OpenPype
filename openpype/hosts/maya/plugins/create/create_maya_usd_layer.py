@@ -19,6 +19,8 @@ class CreateMayaUsdLayer(plugin.MayaCreator):
         from maya import cmds
         import mayaUsd
 
+        # Construct the stage + layer EnumDef from the maya proxies in the
+        # scene and the Sdf.Layer stack of the Usd.Stage per proxy.
         items = []
         for proxy in cmds.ls(type="mayaUsdProxyShape", long=True):
             # Ignore unsharable proxies
@@ -42,6 +44,7 @@ class CreateMayaUsdLayer(plugin.MayaCreator):
                 })
 
         if not items:
+            # EnumDef is not allowed to be empty
             items.append("<NONE>")
 
         defs = [
