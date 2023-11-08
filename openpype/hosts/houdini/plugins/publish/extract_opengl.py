@@ -8,7 +8,8 @@ from openpype.hosts.houdini.api.lib import render_rop
 import hou
 
 
-class ExtractOpenGL(publish.Extractor):
+class ExtractOpenGL(publish.Extractor,
+                    publish.ColormanagedPyblishPluginMixin):
 
     order = pyblish.api.ExtractorOrder - 0.01
     label = "Extract OpenGL"
@@ -46,6 +47,12 @@ class ExtractOpenGL(publish.Extractor):
             "camera_name": instance.data.get("review_camera")
         }
 
+        colorspace = ropnode.evalParm("ociocolorspace")
+        # inject colorspace data
+        self.set_representation_colorspace(
+            representation, instance.context,
+            colorspace=colorspace
+        )
         if "representations" not in instance.data:
             instance.data["representations"] = []
         instance.data["representations"].append(representation)
