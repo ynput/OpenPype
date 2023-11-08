@@ -232,10 +232,12 @@ def get_assets(
         else:
             new_asset_names.add(name)
 
+    yielded_ids = set()
     if folder_paths:
         for folder in _folders_query(
             project_name, con, fields, folder_paths=folder_paths, **kwargs
         ):
+            yielded_ids.add(folder["id"])
             yield convert_v4_folder_to_v3(folder, project_name)
 
     if not new_asset_names:
@@ -244,7 +246,9 @@ def get_assets(
     for folder in _folders_query(
         project_name, con, fields, folder_names=new_asset_names, **kwargs
     ):
-        yield convert_v4_folder_to_v3(folder, project_name)
+        if folder["id"] not in yielded_ids:
+            yielded_ids.add(folder["id"])
+            yield convert_v4_folder_to_v3(folder, project_name)
 
 
 def get_archived_assets(
