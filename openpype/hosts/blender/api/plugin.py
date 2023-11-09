@@ -144,18 +144,6 @@ class BaseCreator(Creator):
     """Base class for Blender Creator plug-ins."""
     defaults = ['Main']
 
-    # Deprecated?
-    def process(self):
-        collection = bpy.data.collections.new(name=self.data["subset"])
-        bpy.context.scene.collection.children.link(collection)
-        imprint(collection, self.data)
-
-        if (self.options or {}).get("useSelection"):
-            for obj in get_selection():
-                collection.objects.link(obj)
-
-        return collection
-
     @staticmethod
     def cache_subsets(shared_data):
         """Cache instances for Creators shared data.
@@ -233,8 +221,17 @@ class BaseCreator(Creator):
             pre_create_data(dict): Data based on pre creation attributes.
                 Those may affect how creator works.
         """
-        collection = bpy.data.collections.new(name=subset_name)
-        bpy.context.scene.collection.children.link(collection)
+        # Get Instance Container or create it if it does not exist
+        instances = bpy.data.collections.get(AVALON_INSTANCES)
+        if not instances:
+            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
+            bpy.context.scene.collection.children.link(instances)
+
+        # Create instance collection
+        collection = bpy.data.collections.new(
+            name=asset_name(instance_data["asset"], subset_name)
+        )
+        instances.children.link(collection)
 
         collection[AVALON_PROPERTY] = instance_node = {
             "name": collection.name,
