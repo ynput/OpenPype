@@ -11,7 +11,7 @@ import platform
 import requests
 import re
 import inspect
-
+import time
 
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import (
