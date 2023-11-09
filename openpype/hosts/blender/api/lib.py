@@ -287,7 +287,7 @@ def get_selected_collections():
             if region.type == 'WINDOW')
     except StopIteration as e:
         raise RuntimeError("Could not find outliner. An outliner space "
-                            "must be in the main Blender window.") from e
+                           "must be in the main Blender window.") from e
 
     with bpy.context.temp_override(
         window=bpy.context.window,
@@ -311,7 +311,7 @@ def get_selection(include_collections: bool = False) -> List[bpy.types.Object]:
     Returns:
         List[bpy.types.Object]: A list of selected objects.
     """
-    selection =  [obj for obj in bpy.context.scene.objects if obj.select_get()]
+    selection = [obj for obj in bpy.context.scene.objects if obj.select_get()]
 
     if include_collections:
         selection.extend(get_selected_collections())
