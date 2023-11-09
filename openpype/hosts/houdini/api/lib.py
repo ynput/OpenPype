@@ -976,7 +976,7 @@ def self_publish():
 
     Firstly, it gets the node and its input nodes chain.
     Then, it deactivates all other ROPs
-    And finaly, it triggers the publishing action.
+    And finally, it triggers the publishing action.
     """
 
     result, comment = hou.ui.readInput(
