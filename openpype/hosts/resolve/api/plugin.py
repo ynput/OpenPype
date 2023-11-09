@@ -440,8 +440,8 @@ class ClipLoader:
         if (
             frame_start is None or
             frame_end is None or
-            handle_start is 0 or
-            handle_end is 0
+            handle_start == 0 or
+            handle_end == 0
         ):
             # if not then rather assume that source has no handles
             source_with_handles = False
@@ -473,8 +473,8 @@ class ClipLoader:
         # only exclude handles if source has no handles or
         # if user wants to load without handles
         if (
-            not self.with_handles # set by user
-            or not source_with_handles # result of source duration check
+            not self.with_handles  # set by user
+            or not source_with_handles  # result of source duration check
         ):
             source_in += handle_start
             source_out -= handle_end
