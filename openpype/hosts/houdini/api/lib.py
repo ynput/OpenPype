@@ -1017,7 +1017,8 @@ def publish_trigger(nodes=None, mode=0):
         context.save_changes()
 
         publisher_show_and_publish(comment)
-
+    else:
+        raise ValueError("Unsupported mode!")
 
 def self_publish():
     """Self publish from ROP nodes.
