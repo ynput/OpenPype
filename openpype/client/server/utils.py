@@ -1,6 +1,31 @@
+import os
 import uuid
 
+import ayon_api
+
 from openpype.client.operations_base import REMOVED_VALUE
+
+
+class _GlobalCache:
+    initialized = False
+
+
+def get_ayon_server_api_connection():
+    if _GlobalCache.initialized:
+        con = ayon_api.get_server_api_connection()
+    else:
+        from openpype.lib.local_settings import get_local_site_id
+
+        _GlobalCache.initialized = True
+        site_id = get_local_site_id()
+        version = os.getenv("AYON_VERSION")
+        if ayon_api.is_connection_created():
+            con = ayon_api.get_server_api_connection()
+            con.set_site_id(site_id)
+            con.set_client_version(version)
+        else:
+            con = ayon_api.create_connection(site_id, version)
+    return con
 
 
 def create_entity_id():
