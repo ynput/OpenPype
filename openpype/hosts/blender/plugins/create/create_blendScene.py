@@ -40,29 +40,13 @@ class CreateBlendScene(plugin.Creator):
         self.data['task'] = get_current_task_name()
         lib.imprint(asset_group, self.data)
 
-        try:
-            area = next(
-                area for area in bpy.context.window.screen.areas
-                if area.type == 'OUTLINER')
-            region = next(
-                region for region in area.regions
-                if region.type == 'WINDOW')
-        except StopIteration as e:
-            raise RuntimeError("Could not find outliner. An outliner space "
-                               "must be in the main Blender window.") from e
+        if (self.options or {}).get("useSelection"):
+            selection = lib.get_selection(include_collections=True)
 
-        with bpy.context.temp_override(
-            window=bpy.context.window,
-            area=area,
-            region=region,
-            screen=bpy.context.window.screen
-        ):
-            ids = bpy.context.selected_ids
-
-        for id in ids:
-            if isinstance(id, bpy.types.Collection):
-                asset_group.children.link(id)
-            elif isinstance(id, bpy.types.Object):
-                asset_group.objects.link(id)
+            for data in selection:
+                if isinstance(data, bpy.types.Collection):
+                    asset_group.children.link(data)
+                elif isinstance(data, bpy.types.Object):
+                    asset_group.objects.link(data)
 
         return asset_group
