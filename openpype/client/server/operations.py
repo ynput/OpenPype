@@ -5,7 +5,6 @@ import uuid
 import datetime
 
 from bson.objectid import ObjectId
-from ayon_api import get_server_api_connection
 
 from openpype.client.operations_base import (
     REMOVED_VALUE,
@@ -41,7 +40,7 @@ from .conversion_utils import (
     convert_update_representation_to_v4,
     convert_update_workfile_info_to_v4,
 )
-from .utils import create_entity_id
+from .utils import create_entity_id, get_ayon_server_api_connection
 
 
 def _create_or_convert_to_id(entity_id=None):
@@ -680,7 +679,7 @@ class OperationsSession(BaseOperationsSession):
     def __init__(self, con=None, *args, **kwargs):
         super(OperationsSession, self).__init__(*args, **kwargs)
         if con is None:
-            con = get_server_api_connection()
+            con = get_ayon_server_api_connection()
         self._con = con
         self._project_cache = {}
         self._nested_operations = collections.defaultdict(list)
@@ -858,7 +857,7 @@ def create_project(
     """
 
     if con is None:
-        con = get_server_api_connection()
+        con = get_ayon_server_api_connection()
 
     return con.create_project(
         project_name,
@@ -870,12 +869,12 @@ def create_project(
 
 def delete_project(project_name, con=None):
     if con is None:
-        con = get_server_api_connection()
+        con = get_ayon_server_api_connection()
 
     return con.delete_project(project_name)
 
 
 def create_thumbnail(project_name, src_filepath, thumbnail_id=None, con=None):
     if con is None:
-        con = get_server_api_connection()
+        con = get_ayon_server_api_connection()
     return con.create_thumbnail(project_name, src_filepath, thumbnail_id)
