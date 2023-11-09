@@ -1,4 +1,3 @@
-import copy
 import os
 
 import pyblish.api
@@ -58,9 +57,10 @@ class ExtractUSD(publish.Extractor):
         file to publish file so this can be used on the USD save to remap
         asset layer paths on publish via AyonRemapPaths output processor"""
 
+        from openpype.lib.usdlib import get_instance_expected_output_path
+
         mapping = {}
         for instance in context:
-
             if not instance.data.get("active", True):
                 continue
 
@@ -95,26 +95,3 @@ def get_source_paths(instance, repre):
     else:
         # Single file
         return [os.path.join(staging, files)]
-
-
-def get_instance_expected_output_path(instance, representation_name, ext=None):
-    """Return expected publish filepath for representation in instance"""
-
-    if ext is None:
-        ext = representation_name
-
-    context = instance.context
-    anatomy = context.data["anatomy"]
-    path_template_obj = anatomy.templates_obj["publish"]["path"]
-    template_data = copy.deepcopy(instance.data["anatomyData"])
-    template_data.update({
-        "ext": ext,
-        "representation": representation_name,
-        "subset": instance.data["subset"],
-        "asset": instance.data["asset"],
-        "variant": instance.data.get("variant"),
-        "version": instance.data["version"]
-    })
-
-    template_filled = path_template_obj.format_strict(template_data)
-    return os.path.normpath(template_filled)

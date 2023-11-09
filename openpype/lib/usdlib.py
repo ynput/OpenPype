@@ -1,5 +1,6 @@
 import dataclasses
 import os
+import copy
 import re
 import logging
 from urllib.parse import urlparse, parse_qs
@@ -530,14 +531,14 @@ def _create_variants_file(
     return stage
 
 
-def get_representation_path_by_names(
+def get_representation_by_names(
         project_name,
         asset_name,
         subset_name,
         version_name,
         representation_name,
 ):
-    """Get (latest) filepath for representation for asset and subset.
+    """Get representation entity for asset and subset.
 
     If version_name is "hero" then return the hero version
     If version_name is "latest" then return the latest version
@@ -577,12 +578,35 @@ def get_representation_path_by_names(
     if not version:
         return
 
-    representation = get_representation_by_name(project_name,
-                                                representation_name,
-                                                version_id=version["_id"])
+    return get_representation_by_name(project_name,
+                                      representation_name,
+                                      version_id=version["_id"])
 
-    path = get_representation_path(representation)
-    return path.replace("\\", "/")
+
+def get_representation_path_by_names(
+        project_name,
+        asset_name,
+        subset_name,
+        version_name,
+        representation_name):
+    """Get (latest) filepath for representation for asset and subset.
+
+    See `get_representation_by_names` for more details.
+
+    Returns:
+        str: The representation path if the representation exists.
+
+    """
+    representation = get_representation_by_names(
+        project_name,
+        asset_name,
+        subset_name,
+        version_name,
+        representation_name
+    )
+    if representation:
+        path = get_representation_path(representation)
+        return path.replace("\\", "/")
 
 
 def parse_ayon_uri(uri):
@@ -630,6 +654,129 @@ def parse_ayon_uri(uri):
         result["version"] = int(version)
 
     return result
+
+
+def construct_ayon_uri(
+        project_name,
+        asset_name,
+        product,
+        version,
+        representation_name
+):
+    if not (isinstance(version, int) or version in {"latest", "hero"}):
+        raise ValueError(
+            "Version must either be integer, 'latest' or 'hero'. "
+            "Got: {}".format(version)
+        )
+    return (
+        "ayon+entity://{project}/{asset}?product={product}&version={version}"
+        "&representation={representation}".format(
+            project=project_name,
+            asset=asset_name,
+            product=product,
+            version=version,
+            representation=representation_name
+        )
+    )
+
+
+def get_representation_path_by_ayon_uri(
+        uri,
+        context=None
+):
+    """Return resolved path for Ayon entity URI.
+
+    Allow resolving 'latest' paths from a publishing context's instances
+    as if they will exist after publishing without them being integrated yet.
+
+    Args:
+        uri (str): Ayon entity URI. See `parse_ayon_uri`
+        context (pyblish.api.Context): Publishing context.
+
+    Returns:
+        Union[str, None]: Returns the path if it could be resolved
+
+    """
+    query = parse_ayon_uri(uri)
+
+    if context is not None and context.data["projectName"] == query["project"]:
+        # Search first in publish context to allow resolving latest versions
+        # from e.g. the current publish session if the context is provided
+        if query["version"] == "hero":
+            raise NotImplementedError(
+                "Hero version resolving not implemented from context"
+            )
+
+        specific_version = isinstance(query["version"], int)
+        for instance in context:
+            if instance.data.get("asset") != query["asset"]:
+                continue
+
+            if instance.data.get("subset") != query["product"]:
+                continue
+
+            # Only consider if the instance has a representation by
+            # that name
+            representations = instance.data.get("representations", [])
+            if not any(representation.get("name") == query["representation"]
+                       for representation in representations):
+                continue
+
+            return get_instance_expected_output_path(
+                instance,
+                representation_name=query["representation"],
+                version=query["version"] if specific_version else None
+            )
+
+    return get_representation_path_by_names(
+        project_name=query["project"],
+        asset_name=query["asset"],
+        subset_name=query["product"],
+        version_name=query["version"],
+        representation_name=query["representation"],
+    )
+
+
+def get_instance_expected_output_path(instance, representation_name,
+                                      ext=None, version=None):
+    """Return expected publish filepath for representation in instance
+
+    This does not validate whether the instance has any representation by the
+    given name, extension and/or version.
+
+    Arguments:
+        instance (pyblish.api.Instance): publish instance
+        representation_name (str): representation name
+        ext (Optional[str]): extension for the file, useful if `name` += `ext`
+        version (Optional[int]): if provided, force it to format to this
+            particular version.
+        representation_name (str): representation name
+
+    Returns:
+        str: Resolved path
+
+    """
+
+    if ext is None:
+        ext = representation_name
+    if version is None:
+        version = instance.data["version"]
+
+    context = instance.context
+    anatomy = context.data["anatomy"]
+    path_template_obj = anatomy.templates_obj["publish"]["path"]
+    template_data = copy.deepcopy(instance.data["anatomyData"])
+    template_data.update({
+        "ext": ext,
+        "representation": representation_name,
+        "subset": instance.data["subset"],
+        "asset": instance.data["asset"],
+        "variant": instance.data.get("variant"),
+        "version": version
+    })
+
+    template_filled = path_template_obj.format_strict(template_data)
+    return os.path.normpath(template_filled)
 
 
 def set_layer_defaults(layer,
