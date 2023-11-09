@@ -410,10 +410,16 @@ class ClipLoader:
         source_duration = int(_clip_property("Frames"))
 
         # get version data frame data from db
-        frame_start = self.data["versionData"].get("frameStart")
-        frame_end = self.data["versionData"].get("frameEnd")
-        handle_start = self.data["versionData"].get("handleStart")
-        handle_end = self.data["versionData"].get("handleEnd")
+        version_data = self.data["versionData"]
+        frame_start = version_data.get("frameStart")
+        frame_end = version_data.get("frameEnd")
+
+        if self.with_handles:
+            handle_start = version_data.get("handleStart") or 0
+            handle_end = version_data.get("handleEnd") or 0
+        else:
+            handle_start = 0
+            handle_end = 0
 
         """
         There are cases where representation could be published without
@@ -434,8 +440,8 @@ class ClipLoader:
         if (
             frame_start is None or
             frame_end is None or
-            handle_start is None or
-            handle_end is None
+            handle_start is 0 or
+            handle_end is 0
         ):
             # if not then rather assume that source has no handles
             source_with_handles = False
@@ -464,12 +470,11 @@ class ClipLoader:
             timeline_in = int(
                 timeline_start + self.data["assetData"]["clipIn"])
 
-
         # only exclude handles if source has no handles or
         # if user wants to load without handles
         if (
-            not self.with_handles
-            or not source_with_handles
+            not self.with_handles # set by user
+            or not source_with_handles # result of source duration check
         ):
             source_in += handle_start
             source_out -= handle_end
