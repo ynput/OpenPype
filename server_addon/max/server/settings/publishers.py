@@ -29,7 +29,10 @@ class ValidateAttributesModel(BaseSettingsModel):
 
 class FamilyMappingItemModel(BaseSettingsModel):
     _layout = "compact"
-    name: str = Field("", title="Product type")
+    product_types: list[str] = Field(
+        default_factory=list,
+        title="Product Types"
+    )
     plugins: list[str] = Field(
         default_factory=list,
         title="Plugins"
@@ -43,12 +46,6 @@ class ValidateLoadedPluginModel(BaseSettingsModel):
         default_factory=list,
         title="Family Plugins Mapping"
     )
-
-    # This is to validate unique names (like in dict)
-    @validator("family_plugins_mapping")
-    def validate_unique_outputs(cls, value):
-        ensure_unique_names(value)
-        return value
 
 
 class BasicValidateModel(BaseSettingsModel):
