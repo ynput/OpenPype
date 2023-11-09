@@ -43,9 +43,13 @@ class ExtractFBXAnimation(publish.Extractor):
         # FBX does not include the namespace but preserves the node
         # names as existing in the rig workfile
         if not out_members:
+            skeleton_set = [
+            i for i in instance
+            if i.endswith("skeletonAnim_SET")
+            ]
             self.log.debug(
-                "Top group of animated skeleton not found.."
-                "skipping extraction")
+                "Top group of animated skeleton not found in "
+                "{}.\nSkipping fbx animation extraction".format(skeleton_set))
             return
 
         namespace = get_namespace(out_members[0])
