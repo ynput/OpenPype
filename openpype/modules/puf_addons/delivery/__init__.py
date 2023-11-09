@@ -4,6 +4,6 @@ If addon class or settings definition won't be here their definition won't
 be found by OpenPype discovery.
 """
 
-# from .module import GobblerModule
+from .module import DeliveryModule
 
-# __all__ = ("GobblerModule",)
+__all__ = ("DeliveryModule",)
