@@ -66,7 +66,7 @@
                 "label": "Optional"
             },
             {
-                "type": "dict-modifiable",
+                "type": "list",
                 "collapsible": true,
                 "key": "family_plugins_mapping",
                 "label": "Family Plugins Mapping",
@@ -75,8 +75,14 @@
                     "type": "dict",
                     "children": [
                         {
+                            "key": "families",
+                            "label": "Famiies",
+                            "type": "list",
+                            "object_type": "text"
+                        },
+                        {
                             "key": "plugins",
-                            "label": "plugins",
+                            "label": "Plugins",
                             "type": "list",
                             "object_type": "text"
                         }

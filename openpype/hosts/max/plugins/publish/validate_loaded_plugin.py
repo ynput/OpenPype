@@ -17,9 +17,6 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
     """Validates if the specific plugin is loaded in 3ds max.
     Studio Admin(s) can add the plugins they want to check in validation
     via studio defined project settings
-    If families = ["*"], all the required plugins would be validated
-    If families
-
     """
 
     order = pyblish.api.ValidatorOrder
@@ -30,66 +27,77 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
 
     family_plugins_mapping = {}
 
-    def get_invalid(self, instance):
+    @classmethod
+    def get_invalid(cls, instance):
         """Plugin entry point."""
-        if not self.is_active(instance.data):
-            self.log.debug("Skipping Validate Loaded Plugin...")
-            return
-
-        required_plugins = self.family_plugins_mapping
-        if not required_plugins:
+        family_plugins_mapping = cls.family_plugins_mapping
+        if not family_plugins_mapping:
             return
 
         invalid = []
+        # Find all plug-in requirements for current instance
+        instance_families = {instance.data["family"]}
+        instance_families.update(instance.data.get("families", []))
+        cls.log.debug("Checking plug-in validation "
+                       f"for instance families: {instance_families}")
+        all_required_plugins = set()
+
+        for mapping in family_plugins_mapping:
+            # Check for matching families
+            if not mapping:
+                return
+
+            match_families = {fam for fam in mapping["families"] if fam.strip()}
+            has_match = "*" in match_families or match_families.intersection(
+                instance_families)
+
+            if not has_match:
+                continue
+
+            cls.log.debug(f"Found plug-in family requirements: {match_families}")
+            required_plugins = [
+                # match lowercase and format with os.environ to allow
+                # plugin names defined by max version, e.g. {3DSMAX_VERSION}
+                plugin.format(**os.environ).lower()
+                for plugin in mapping["plugins"]
+                # ignore empty fields in settings
+                if plugin.strip()
+            ]
+
+            all_required_plugins.update(required_plugins)
+
+        if not all_required_plugins:
+            # Instance has no plug-in requirements
+            return
 
         # get all DLL loaded plugins in Max and their plugin index
         available_plugins = {
             plugin_name.lower(): index for index, plugin_name in enumerate(
                 get_plugins())
         }
-
-        # Build instance families lookup
-        instance_families = {instance.data["family"]}
-        instance_families.update(instance.data.get("families", []))
-        self.log.debug("Checking plug-in validation "
-                       f"for instance families: {instance_families}")
-        for family in required_plugins:
-            # Check for matching families
-            match_families = {fam.strip() for fam in
-                              family.split(",") if fam.strip()}
-            self.log.debug(f"Plug-in family requirements: {match_families}")
-            has_match = "*" in match_families or match_families.intersection(
-                instance_families)
-
-            if not has_match:
+        # validate the required plug-ins
+        for plugin in sorted(all_required_plugins):
+            plugin_index = available_plugins.get(plugin)
+            if plugin_index is None:
+                debug_msg = (
+                    f"Plugin {plugin} does not exist"
+                    " in 3dsMax Plugin List."
+                )
+                invalid.append((plugin, debug_msg))
                 continue
-            plugins = [plugin for plugin in
-                       required_plugins[family]["plugins"]]
-            for plugin in plugins:
-                if not plugin:
-                    return
-                # make sure the validation applied for
-                # plugins with different Max version
-                plugin_name = plugin.format(**os.environ).lower()
-                plugin_index = available_plugins.get(plugin_name)
-
-                if plugin_index is None:
-                    invalid.append(
-                        f"Plugin {plugin} does not exist"
-                        " in 3dsMax Plugin List."
-                    )
-                    continue
-
-                if not rt.pluginManager.isPluginDllLoaded(plugin_index):
-                    invalid.append(f"Plugin {plugin} not loaded.")
-
+            if not rt.pluginManager.isPluginDllLoaded(plugin_index):
+                debug_msg = f"Plugin {plugin} not loaded."
+                invalid.append((plugin, debug_msg))
         return invalid
 
     def process(self, instance):
-        invalid_plugins = self.get_invalid(instance)
-        if invalid_plugins:
+        if not self.is_active(instance.data):
+            self.log.debug("Skipping Validate Loaded Plugin...")
+            return
+        invalid = self.get_invalid(instance)
+        if invalid:
             bullet_point_invalid_statement = "\n".join(
-                "- {}".format(invalid) for invalid in invalid_plugins
+                "- {}".format(message) for _, message in invalid
             )
             report = (
                 "Required plugins are not loaded.\n\n"
@@ -102,35 +110,22 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
     @classmethod
     def repair(cls, instance):
         # get all DLL loaded plugins in Max and their plugin index
+        invalid = cls.get_invalid(instance)
+        if not invalid:
+            return
+
+        # get all DLL loaded plugins in Max and their plugin index
         available_plugins = {
             plugin_name.lower(): index for index, plugin_name in enumerate(
                 get_plugins())
         }
-        required_plugins = cls.family_plugins_mapping
-        instance_families = {instance.data["family"]}
-        instance_families.update(instance.data.get("families", []))
-        cls.log.debug("Checking plug-in validation "
-                      f"for instance families: {instance_families}")
-        for family in required_plugins:
-            match_families = {fam.strip() for fam in
-                              family.split(",") if fam.strip()}
-            cls.log.debug(f"Plug-in family requirements: {match_families}")
-            has_match = "*" in match_families or match_families.intersection(
-                instance_families)
 
-            if not has_match:
+        for invalid_plugin, _ in invalid:
+            plugin_index = available_plugins.get(invalid_plugin)
+
+            if plugin_index is None:
+                cls.log.warning(f"Can't enable missing plugin: {invalid_plugin}")
                 continue
 
-            plugins = [plugin for plugin in family["plugins"]]
-            for plugin in plugins:
-                if not plugin:
-                    return
-                plugin_name = plugin.format(**os.environ).lower()
-                plugin_index = available_plugins.get(plugin_name)
-
-                if plugin_index is None:
-                    cls.log.warning(f"Can't enable missing plugin: {plugin}")
-                    continue
-
-                if not rt.pluginManager.isPluginDllLoaded(plugin_index):
-                    rt.pluginManager.loadPluginDll(plugin_index)
+            if not rt.pluginManager.isPluginDllLoaded(plugin_index):
+                rt.pluginManager.loadPluginDll(plugin_index)
