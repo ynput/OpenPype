@@ -291,7 +291,10 @@ def render_rop(ropnode):
     try:
         ropnode.render(verbose=verbose,
                        # Allow Deadline to capture completion percentage
-                       output_progress=verbose)
+                       output_progress=verbose,
+                       # Render only this node
+                       # (do not render any of its dependencies)
+                       ignore_inputs=True)
     except hou.Error as exc:
         # The hou.Error is not inherited from a Python Exception class,
         # so we explicitly capture the houdini error, otherwise pyblish
@@ -947,34 +950,31 @@ def publisher_show_and_publish(comment=None):
     publisher_window.show_and_publish(comment)
 
 
-def find_rop_input_dependencies(input_tuple):
-    """Self publish from ROP nodes.
+def find_rop_inputs_chain(node):
+    """Find rop inputs chain.
+
+    This function retrieves input nodes and their inputs recursively.
 
     Arguments:
-        tuple (hou.RopNode.inputDependencies) which can be a nested tuples
-        represents the input dependencies of the ROP node, consisting of ROPs,
-        and the frames that need to be be rendered prior to rendering the ROP.
+        node (hou.Node) The node at which the find function starts.
 
     Returns:
-        list of the RopNode.path() that can be found inside
-        the input tuple.
+        list the paths of all input nodes.
     """
 
-    out_list = []
-    if isinstance(input_tuple[0], hou.RopNode):
-        return input_tuple[0].path()
+    all_input_nodes = []
+    input_nodes = node.inputs()
+    for input_node in input_nodes:
+        all_input_nodes.append(input_node.path())
+        all_input_nodes += find_rop_inputs_chain(input_node)
 
-    if isinstance(input_tuple[0], tuple):
-        for item in input_tuple:
-            out_list.append(find_rop_input_dependencies(item))
-
-    return out_list
+    return all_input_nodes
 
 
 def self_publish():
     """Self publish from ROP nodes.
 
-    Firstly, it gets the node and its dependencies.
+    Firstly, it gets the node and its input nodes chain.
     Then, it deactivates all other ROPs
     And finaly, it triggers the publishing action.
     """
@@ -990,8 +990,8 @@ def self_publish():
         return
 
     current_node = hou.node(".")
-    inputs_paths = find_rop_input_dependencies(
-        current_node.inputDependencies()
+    inputs_paths = find_rop_inputs_chain(
+        current_node
     )
     inputs_paths.append(current_node.path())
 
