@@ -193,6 +193,9 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         if parent:
             placeholder = cmds.parent(placeholder, selection[0])[0]
 
+        if placeholder_data['action'] is None:
+            placeholder_data.pop('action')
+
         imprint(placeholder, placeholder_data)
 
         # Add helper attributes to keep placeholder info
