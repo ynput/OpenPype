@@ -1497,7 +1497,8 @@ class _AyonSettingsCache:
             if cls._use_bundles():
                 value = ayon_api.get_addons_settings(
                     bundle_name=cls._get_bundle_name(),
-                    project_name=project_name
+                    project_name=project_name,
+                    variant=cls._get_variant()
                 )
             else:
                 value = ayon_api.get_addons_settings(project_name)
