@@ -6,8 +6,6 @@ import getpass
 import attr
 from datetime import datetime
 
-import bpy
-
 from openpype.lib import is_running_from_build
 from openpype.pipeline import legacy_io
 from openpype.pipeline.farm.tools import iter_expected_files
@@ -142,6 +140,9 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         return job_info
 
     def get_plugin_info(self):
+        # Not all hosts can import this module.
+        import bpy
+
         plugin_info = BlenderPluginInfo(
             SceneFile=self.scene_path,
             Version=bpy.app.version_string,

@@ -36,6 +36,10 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ValidateAttributes": {
+            "enabled": false,
+            "attributes": {}
         }
     }
 }

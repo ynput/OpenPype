@@ -10,6 +10,7 @@ import glob
 import platform
 import requests
 import re
+import time
 
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler
@@ -248,19 +249,22 @@ class PublishTest(ModuleUnitTest):
     SETUP_ONLY = False
 
     @pytest.fixture(scope="module")
-    def app_name(self, app_variant):
+    def app_name(self, app_variant, app_group):
         """Returns calculated value for ApplicationManager. Eg.(nuke/12-2)"""
         from openpype.lib import ApplicationManager
         app_variant = app_variant or self.APP_VARIANT
+        app_group = app_group or self.APP_GROUP
 
         application_manager = ApplicationManager()
         if not app_variant:
             variant = (
                 application_manager.find_latest_available_variant_for_group(
-                    self.APP_GROUP))
+                    app_group
+                )
+            )
             app_variant = variant.name
 
-        yield "{}/{}".format(self.APP_GROUP, app_variant)
+        yield "{}/{}".format(app_group, app_variant)
 
     @pytest.fixture(scope="module")
     def app_args(self, download_test_data):
@@ -331,7 +335,7 @@ class PublishTest(ModuleUnitTest):
             print("Creating only setup for test, not launching app")
             yield False
             return
-        import time
+
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
         timeout = float(timeout)
