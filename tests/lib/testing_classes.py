@@ -378,7 +378,7 @@ class PublishTest(ModuleUnitTest):
                                          "expected")
 
         print(
-            "Comparing published:'{}' : expected:'{}'".format(
+            "Comparing published: '{}' | expected: '{}'".format(
                 published_dir_base, expected_dir_base
             )
         )
