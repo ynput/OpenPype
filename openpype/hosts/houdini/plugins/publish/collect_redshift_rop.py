@@ -25,8 +25,8 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
 
     label = "Redshift ROP Render Products"
     # This specific order value is used so that
-    # this plugin runs after CollectRopFrameRange
-    order = pyblish.api.CollectorOrder + 0.4999
+    # this plugin runs after CollectFrames
+    order = pyblish.api.CollectorOrder + 0.11
     hosts = ["houdini"]
     families = ["redshift_rop"]
 

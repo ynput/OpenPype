@@ -1,6 +1,463 @@
 # Changelog
 
 
+## [3.17.5](https://github.com/ynput/OpenPype/tree/3.17.5)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.17.4...3.17.5)
+
+### **🆕 New features**
+
+
+<details>
+<summary>Fusion: Add USD loader <a href="https://github.com/ynput/OpenPype/pull/4896">#4896</a></summary>
+
+Add an OpenPype managed USD loader (`uLoader`) for Fusion.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Resolution validator <a href="https://github.com/ynput/OpenPype/pull/5325">#5325</a></summary>
+
+Added a resolution validator.The code is from my old PR (https://github.com/ynput/OpenPype/pull/4921) that I closed because the PR also contained a frame range validator that no longer is needed.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Context Selection tool: Refactor Context tool (for AYON) <a href="https://github.com/ynput/OpenPype/pull/5766">#5766</a></summary>
+
+Context selection tool has AYON variant.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Use AYON username for user in template data <a href="https://github.com/ynput/OpenPype/pull/5842">#5842</a></summary>
+
+Use ayon username for template data in AYON mode.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Testing: app_group flag <a href="https://github.com/ynput/OpenPype/pull/5869">#5869</a></summary>
+
+`app_group` command flag. This is for changing which flavour of the host to launch. In the case of Maya, you can launch Maya and MayaPy, but it can be used for the Nuke family as well.Split from #5644
+
+
+___
+
+</details>
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Enhancement: Fusion fix saver creation + minor Blender/Fusion logging tweaks <a href="https://github.com/ynput/OpenPype/pull/5558">#5558</a></summary>
+
+- Blender change logs to `debug` level in preparation for new publisher artist facing reports (note that it currently still uses the old publisher)
+- Fusion: Create Saver fix redeclaration of default_variants
+- Fusion: Fix saver being created in incorrect state without saving directly after create
+- Fusion: Allow reset frame range on render family
+- Fusion: Tweak logging level for artist-facing report
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Resolve: load clip to timeline at set time <a href="https://github.com/ynput/OpenPype/pull/5665">#5665</a></summary>
+
+It is possible to load clip to correct place on timeline.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Optional Deadline workfile dependency. <a href="https://github.com/ynput/OpenPype/pull/5732">#5732</a></summary>
+
+Adds option to add the workfile as dependency for the Deadline job.Think it used to have something like this, but it disappeared. Usecase is for remote workflow where the Nuke script needs to be synced before the job can start.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement/houdini rearrange ayon houdini settings files <a href="https://github.com/ynput/OpenPype/pull/5748">#5748</a></summary>
+
+Rearranging Houdini Settings to be more readable, easier to edit, update settings (include all families/product types)This PR is mainly for Ayon Settings to have more organized files. For Openpype, I'll make sure that  each Houdini setting in Ayon has an equivalent in Openpype.
+- [x] update Ayon settings, fix typos and remove deprecated settings.
+- [x] Sync with Openpype
+- [x] Test in Openpype
+- [x] Test in Ayon
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: updating create ayon addon script <a href="https://github.com/ynput/OpenPype/pull/5822">#5822</a></summary>
+
+Adding developers environment options.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Implement Validator for Properties/Attributes Value Check <a href="https://github.com/ynput/OpenPype/pull/5824">#5824</a></summary>
+
+Add optional validator which can check if the property attributes are valid in Max
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Remove unused 'get_render_path' function <a href="https://github.com/ynput/OpenPype/pull/5826">#5826</a></summary>
+
+Remove unused function `get_render_path` from nuke integration.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Limit current context template data function <a href="https://github.com/ynput/OpenPype/pull/5845">#5845</a></summary>
+
+Current implementation of `get_current_context_template_data` does return the same values as base template data function `get_template_data`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Make sure Collect Render not ignoring instance asset <a href="https://github.com/ynput/OpenPype/pull/5847">#5847</a></summary>
+
+- Make sure Collect Render is not always using asset from context.
+- Make sure Scene version being collected
+- Clean up unnecessary uses of code in the collector.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: Events are not processed if project is not available in OpenPype <a href="https://github.com/ynput/OpenPype/pull/5853">#5853</a></summary>
+
+Events that happened on project which is not in OpenPype is not processed.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Add Nuke 11.0 as default setting <a href="https://github.com/ynput/OpenPype/pull/5855">#5855</a></summary>
+
+Found I needed Nuke 11.0 in the default settings to help with unit testing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TVPaint: Code cleanup <a href="https://github.com/ynput/OpenPype/pull/5857">#5857</a></summary>
+
+Removed unused import. Use `AYON` label in ayon mode. Removed unused data in publish context `"previous_context"`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON settings: Use correct label for follow workfile version <a href="https://github.com/ynput/OpenPype/pull/5874">#5874</a></summary>
+
+Follow workfile version label was marked as Collect Anatomy Instance Data label.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Nuke: Fix workfile template builder so representations get loaded next to each other <a href="https://github.com/ynput/OpenPype/pull/5061">#5061</a></summary>
+
+Refactor when the cleanup of the placeholder happens for the cases where multiple representations are loaded by a single placeholder.The existing code didn't take into account the case where a template placeholder can load multiple representations so it was trying to do the cleanup of the placeholder node and the re-arrangement of the imported nodes too early. I assume this was designed only for the cases where a single representation can load multiple nodes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Dont update node name on update <a href="https://github.com/ynput/OpenPype/pull/5704">#5704</a></summary>
+
+When updating `Image` containers the code is trying to set the name of the node. This results in a warning message from Nuke shown below;Suggesting to not change the node name when updating.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>UIDefLabel can be unique <a href="https://github.com/ynput/OpenPype/pull/5827">#5827</a></summary>
+
+`UILabelDef` have implemented comparison and uniqueness.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Skip kitsu module when creating ayon addons <a href="https://github.com/ynput/OpenPype/pull/5828">#5828</a></summary>
+
+Create AYON packages is skipping kitsu module in creation of modules/addons and kitsu module is not loaded from modules on start. The addon already has it's repository https://github.com/ynput/ayon-kitsu.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: Collect Rendered Files only collecting first instance <a href="https://github.com/ynput/OpenPype/pull/5832">#5832</a></summary>
+
+Collect all instances from the metadata file - don't return on first instance iteration.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: set frame range for the created composite ROP <a href="https://github.com/ynput/OpenPype/pull/5833">#5833</a></summary>
+
+Quick bug fix for created composite ROP, set its frame range to the frame range of the playbar.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix registering launcher actions from OpenPypeModules <a href="https://github.com/ynput/OpenPype/pull/5843">#5843</a></summary>
+
+Fix typo `actions_dir` -> `path` to fix register launcher actions fromm OpenPypeModule
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix in houdini shelves manager and beautify settings  <a href="https://github.com/ynput/OpenPype/pull/5844">#5844</a></summary>
+
+This PR fixes the problem in this PR https://github.com/ynput/OpenPype/issues/5457 by using the right function to load a pre-made houdini `.shelf` fileAlso, it beautifies houdini shelves settings to provide better guidance for users which helps with other issue https://github.com/ynput/OpenPype/issues/5458 , Rather adding default shelf and set names, I'll educate users how to use the tool correctly.Users now are able to select between the two options.| OpenPype | Ayon || -- | -- ||  |  |
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix missing Grease Pencils in review <a href="https://github.com/ynput/OpenPype/pull/5848">#5848</a></summary>
+
+Fix Grease Pencil missing in review when isolating objects.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix Render Settings in Ayon <a href="https://github.com/ynput/OpenPype/pull/5849">#5849</a></summary>
+
+Fix Render Settings in Ayon for Blender.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: houdini tab menu working as expected <a href="https://github.com/ynput/OpenPype/pull/5850">#5850</a></summary>
+
+This PR:Tab menu name changes to Ayon when using ayon get_network_categories is checked in all creator plugins.  | Product | Network Category |  | -- | -- |  | Alembic camera | rop, obj | | Arnold Ass | rop | | Arnold ROP | rop | | Bgeo | rop, sop | | composite sequence | cop2, rop | | hda | obj | | Karma ROP | rop | | Mantra ROP | rop | | ABC | rop, sop | | RS proxy | rop, sop|  | RS ROP | rop | | Review | rop | | Static mesh | rop, obj, sop | | USD | lop, rop | | USD Render | rop | | VDB | rop, obj, sop | | V Ray | rop |
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bigfix: Houdini skip frame_range_validator if node has no 'trange' parameter <a href="https://github.com/ynput/OpenPype/pull/5851">#5851</a></summary>
+
+I faced a bug when publishing HDA instance as it has no `trange` parameter. As this PR title says : skip  frame_range_validator  if node has no 'trange' parameter
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: houdini image sequence loading and missing frames <a href="https://github.com/ynput/OpenPype/pull/5852">#5852</a></summary>
+
+I made this PR in to fix issues mentioned here https://github.com/ynput/OpenPype/pull/5833#issuecomment-1789207727in short:
+- image load doesn't work
+- publisher only publish one frame
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: loaders' containers updating as nodes <a href="https://github.com/ynput/OpenPype/pull/5854">#5854</a></summary>
+
+Nuke loaded containers are updating correctly even they have been duplicating of originally loaded nodes. This had previously been removed duplicated nodes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>deadline: settings are not blocking extension input <a href="https://github.com/ynput/OpenPype/pull/5864">#5864</a></summary>
+
+Settings are not blocking user input.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix loading of blend layouts <a href="https://github.com/ynput/OpenPype/pull/5866">#5866</a></summary>
+
+Fix a problem with loading blend layouts.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Launcher refresh issues <a href="https://github.com/ynput/OpenPype/pull/5867">#5867</a></summary>
+
+Fixed refresh of projects issue in launcher tool. And renamed Qt models to contain `Qt` in their name (it was really hard to find out where were used). It is not possible to click on disabled item in launcher's projects view.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fix the Wrong key words for tycache workfile template settings in AYON <a href="https://github.com/ynput/OpenPype/pull/5870">#5870</a></summary>
+
+Fix the wrong key words for the tycache workfile template settings in AYON(i.e. Instead of families, product_types should be used)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON tools: Handle empty icon definition <a href="https://github.com/ynput/OpenPype/pull/5876">#5876</a></summary>
+
+Ignore if passed icon definition is `None`.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Houdini: Remove on instance toggled callback <a href="https://github.com/ynput/OpenPype/pull/5860">#5860</a></summary>
+
+Remove on instance toggled callback which isn't relevant to the new publisher
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Remove unused `instanceToggled` callbacks <a href="https://github.com/ynput/OpenPype/pull/5862">#5862</a></summary>
+
+The `instanceToggled` callbacks should be irrelevant for new publisher.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.17.4](https://github.com/ynput/OpenPype/tree/3.17.4)
 
 

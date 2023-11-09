@@ -48,11 +48,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
-        log.info(PUBLISH_PATH)
-
-        pyblish.api.register_callback(
-            "instanceToggled", on_pyblish_instance_toggled
-        )
 
         register_event_callback("application.launched", on_application_launch)
 
@@ -175,11 +170,6 @@ def check_inventory():
 
 def on_application_launch():
     check_inventory()
-
-
-def on_pyblish_instance_toggled(instance, old_value, new_value):
-    """Toggle layer visibility on instance toggles."""
-    instance[0].Visible = new_value
 
 
 def ls():

@@ -118,4 +118,28 @@ Current OpenPype integration (ver 3.15.0) supports only ```PointCache```,  ```Ca
 This part of documentation is still work in progress.
 :::
 
+## Validators
+
+Current Openpype integration supports different validators such as Frame Range and Attributes.
+Some validators are mandatory while some are optional and user can choose to enable them in the setting.
+
+**Validate Frame Range**: Optional Validator for checking Frame Range
+
+**Validate Attributes**: Optional Validator for checking if object properties' attributes are valid
+    in MaxWrapper Class.
+:::note
+    Users can write the properties' attributes they want to check in dict format in the setting
+    before validation. The attributes are then to be converted into Maxscript and do a check.
+    E.g. ```renderers.current.separateAovFiles``` and ```renderers.current.PrimaryGIEngine```
+    User can put the attributes in the dict format below
+    ```
+    {
+        "renderer.current":{
+            "separateAovFiles" : True
+            "PrimaryGIEngine": "#RS_GIENGINE_BRUTE_FORCE"
+        }
+    }
+    ```
+    ![Validate Attribute Setting](assets/3dsmax_validate_attributes.png)
+:::
 ## ...to be added

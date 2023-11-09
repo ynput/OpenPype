@@ -569,9 +569,9 @@ def get_template_from_value(key, value):
     return parm
 
 
-def get_frame_data(node, handle_start=0, handle_end=0, log=None):
-    """Get the frame data: start frame, end frame, steps,
-    start frame with start handle and end frame with end handle.
+def get_frame_data(node, log=None):
+    """Get the frame data: `frameStartHandle`, `frameEndHandle`
+    and `byFrameStep`.
 
     This function uses Houdini node's `trange`, `t1, `t2` and `t3`
     parameters as the source of truth for the full inclusive frame
@@ -579,20 +579,17 @@ def get_frame_data(node, handle_start=0, handle_end=0, log=None):
     range including the handles.
 
     The non-inclusive frame start and frame end without handles
-    are computed by subtracting the handles from the inclusive
+    can be computed by subtracting the handles from the inclusive
     frame range.
 
     Args:
         node (hou.Node): ROP node to retrieve frame range from,
             the frame range is assumed to be the frame range
             *including* the start and end handles.
-        handle_start (int): Start handles.
-        handle_end (int): End handles.
-        log (logging.Logger): Logger to log to.
 
     Returns:
-        dict: frame data for start, end, steps,
-              start with handle and end with handle
+        dict: frame data for `frameStartHandle`, `frameEndHandle`
+            and `byFrameStep`.
 
     """
 
@@ -622,11 +619,6 @@ def get_frame_data(node, handle_start=0, handle_end=0, log=None):
         data["frameStartHandle"] = int(node.evalParm("f1"))
         data["frameEndHandle"] = int(node.evalParm("f2"))
         data["byFrameStep"] = node.evalParm("f3")
-
-    data["handleStart"] = handle_start
-    data["handleEnd"] = handle_end
-    data["frameStart"] = data["frameStartHandle"] + data["handleStart"]
-    data["frameEnd"] = data["frameEndHandle"] - data["handleEnd"]
 
     return data
 
@@ -1018,7 +1010,7 @@ def self_publish():
 def add_self_publish_button(node):
     """Adds a self publish button to the rop node."""
 
-    label = os.environ.get("AVALON_LABEL") or "OpenPype"
+    label = os.environ.get("AVALON_LABEL") or "AYON"
 
     button_parm = hou.ButtonParmTemplate(
         "ayon_self_publish",
