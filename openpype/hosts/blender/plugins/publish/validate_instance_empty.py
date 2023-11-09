@@ -13,15 +13,11 @@ class ValidateInstanceEmpty(pyblish.api.InstancePlugin):
     optional = False
 
     def process(self, instance):
-        self.log.debug(instance)
-        self.log.debug(instance.data)
-        if instance.data["family"] == "blendScene":
-            # blendScene instances are collections
-            collection = bpy.data.collections[instance.name]
-            if not (collection.objects or collection.children):
+        asset_group = instance.data["instance_group"]
+
+        if isinstance(asset_group, bpy.types.Collection):
+            if not (asset_group.objects or asset_group.children):
                 raise RuntimeError(f"Instance {instance.name} is empty.")
-        else:
-            # All other instances are objects
-            asset_group = bpy.data.objects[instance.name]
+        elif isinstance(asset_group, bpy.types.Object):
             if not asset_group.children:
                 raise RuntimeError(f"Instance {instance.name} is empty.")
