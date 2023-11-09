@@ -1,9 +1,8 @@
-import hou
-
 import os
 import attr
 import getpass
 from datetime import datetime
+
 import pyblish.api
 
 from openpype.pipeline import legacy_io
@@ -119,6 +118,8 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         return job_info
 
     def get_plugin_info(self):
+        # Not all hosts can import this module.
+        import hou
 
         instance = self._instance
         context = instance.context
