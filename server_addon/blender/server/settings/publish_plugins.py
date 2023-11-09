@@ -67,6 +67,10 @@ class PublishPuginsModel(BaseSettingsModel):
         default_factory=ValidateFileSavedModel,
         title="Validate File Saved",
     )
+    ValidateInstanceEmpty: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Validate Instance is not Empty"
+    )
     ValidateMeshHasUvs: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Validate Mesh Has Uvs",
@@ -83,11 +87,6 @@ class PublishPuginsModel(BaseSettingsModel):
     ValidateNoColonsInName: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Validate No Colons In Name"
-    )
-    ValidateInstanceEmpty: ValidatePluginModel = Field(
-        default_factory=ValidatePluginModel,
-        title="Validate Instance is not Empty",
-        section="BlendScene Validators"
     )
     ValidateRenderCameraIsSet: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
