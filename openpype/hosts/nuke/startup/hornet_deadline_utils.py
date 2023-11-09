@@ -98,12 +98,14 @@ def deadlineNetworkSubmit(dev=False):
         nuke.alert("Failed to submit to Deadline: {}".format(response.text))
         raise Exception(response.text)
     else:
-        nuke.alert("Submitted to Deadline Sucessfully: {}".format(response.text))
+        nuke.alert("Submitted to Deadline Sucessfully")
 
 
 def build_request(knobValues,timestamp):
     # Include critical environment variables with submission
-    return {
+    submissionEnvVars = ['HORNET_ROOT', 'NUKE_PATH', 'OCIO', 'OPTICAL_FLARES_PATH', 'peregrinel_LICENSE', 'OFX_PLUGIN_PATH', 'RVL_SERVER', 'neatlab_LICENSE']
+    environment = dict({k: os.environ[k] for k in submissionEnvVars if k in os.environ.keys()})
+    body = {
                 "JobInfo": {
                     # Job name, as seen in Monitor
                     "Name": os.environ['AVALON_PROJECT'].split("_")[0] + "_" + os.environ['AVALON_ASSET'] + '_' + nuke.thisNode().name(),
@@ -122,6 +124,7 @@ def build_request(knobValues,timestamp):
                     # frames from Deadline Monitor
                     #"OutputFilename0": str(output_filename_0).replace("\\", "/"),
                     # limiting groups
+                    "ChunkSize": int(knobValues.get('deadlineChunkSize',1)) or 1,
                     "LimitGroups": ''
                 },
                 "PluginInfo": {
@@ -141,3 +144,9 @@ def build_request(knobValues,timestamp):
                 # Mandatory for Deadline, may be empty
                 "AuxFiles": []
             }
+    body["JobInfo"].update({
+        "EnvironmentKeyValue%d" % index: "{key}={value}".format(
+        key=key,
+        value=str(environment[key])
+            ) for index, key in enumerate(environment)})
+    return body
