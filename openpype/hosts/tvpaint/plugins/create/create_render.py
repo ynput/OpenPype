@@ -1038,6 +1038,7 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
         self.mark_for_review = plugin_settings["mark_for_review"]
         self.active_on_create = plugin_settings["active_on_create"]
         self.default_pass_name = plugin_settings["default_pass_name"]
+        self.enabled = plugin_settings["enabled"]
 
     def get_dynamic_data(self, variant, *args, **kwargs):
         dynamic_data = super().get_dynamic_data(variant, *args, **kwargs)
