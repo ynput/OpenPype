@@ -76,7 +76,6 @@ class CollectUsdLayers(pyblish.api.InstancePlugin):
             info = layer.rootPrims.get("HoudiniLayerInfo")
             save_path = info.customData.get("HoudiniSavePath")
             creator = info.customData.get("HoudiniCreatorNode")
-            self.log.info(info.customData)
 
             self.log.debug("Found configured save path: "
                            "%s -> %s", layer, save_path)
