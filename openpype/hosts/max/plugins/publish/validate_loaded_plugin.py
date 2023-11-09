@@ -39,7 +39,7 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
         instance_families = {instance.data["family"]}
         instance_families.update(instance.data.get("families", []))
         cls.log.debug("Checking plug-in validation "
-                       f"for instance families: {instance_families}")
+                      f"for instance families: {instance_families}")
         all_required_plugins = set()
 
         for mapping in family_plugins_mapping:
@@ -47,14 +47,16 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
             if not mapping:
                 return
 
-            match_families = {fam for fam in mapping["families"] if fam.strip()}
+            match_families = {fam for fam in mapping["families"]
+                              if fam.strip()}
             has_match = "*" in match_families or match_families.intersection(
                 instance_families)
 
             if not has_match:
                 continue
 
-            cls.log.debug(f"Found plug-in family requirements: {match_families}")
+            cls.log.debug(
+                f"Found plug-in family requirements: {match_families}")
             required_plugins = [
                 # match lowercase and format with os.environ to allow
                 # plugin names defined by max version, e.g. {3DSMAX_VERSION}
@@ -124,7 +126,8 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
             plugin_index = available_plugins.get(invalid_plugin)
 
             if plugin_index is None:
-                cls.log.warning(f"Can't enable missing plugin: {invalid_plugin}")
+                cls.log.warning(
+                    f"Can't enable missing plugin: {invalid_plugin}")
                 continue
 
             if not rt.pluginManager.isPluginDllLoaded(plugin_index):
