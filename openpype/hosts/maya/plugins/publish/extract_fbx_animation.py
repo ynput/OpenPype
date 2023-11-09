@@ -44,8 +44,8 @@ class ExtractFBXAnimation(publish.Extractor):
         # names as existing in the rig workfile
         if not out_members:
             skeleton_set = [
-            i for i in instance
-            if i.endswith("skeletonAnim_SET")
+                i for i in instance
+                if i.endswith("skeletonAnim_SET")
             ]
             self.log.debug(
                 "Top group of animated skeleton not found in "
