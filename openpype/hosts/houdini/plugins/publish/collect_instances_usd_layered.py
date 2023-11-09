@@ -122,10 +122,6 @@ class CollectInstancesUsdLayered(pyblish.api.ContextPlugin):
                 instance.data.update(save_data)
                 instance.data["usdLayer"] = layer
 
-                # Don't allow the Pyblish `instanceToggled` we have installed
-                # to set this node to bypass.
-                instance.data["_allowToggleBypass"] = False
-
                 instances.append(instance)
 
         # Store the collected ROP node dependencies

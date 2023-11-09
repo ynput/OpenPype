@@ -8,7 +8,7 @@ from openpype.tools.utils import (
 from openpype.style import get_objected_colors
 
 from openpype.tools.ayon_utils.widgets import (
-    FoldersModel,
+    FoldersQtModel,
     FOLDERS_MODEL_SENDER_NAME,
 )
 from openpype.tools.ayon_utils.widgets.folders_widget import FOLDER_ID_ROLE
@@ -182,7 +182,7 @@ class UnderlinesFolderDelegate(QtWidgets.QItemDelegate):
         painter.restore()
 
 
-class LoaderFoldersModel(FoldersModel):
+class LoaderFoldersModel(FoldersQtModel):
     def __init__(self, *args, **kwargs):
         super(LoaderFoldersModel, self).__init__(*args, **kwargs)
 

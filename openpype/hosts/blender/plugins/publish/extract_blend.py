@@ -21,23 +21,29 @@ class ExtractBlend(publish.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         data_blocks = set()
 
         for obj in instance:
             data_blocks.add(obj)
             # Pack used images in the blend files.
-            if obj.type == 'MESH':
-                for material_slot in obj.material_slots:
-                    mat = material_slot.material
-                    if mat and mat.use_nodes:
-                        tree = mat.node_tree
-                        if tree.type == 'SHADER':
-                            for node in tree.nodes:
-                                if node.bl_idname == 'ShaderNodeTexImage':
-                                    if node.image:
-                                        node.image.pack()
+            if obj.type != 'MESH':
+                continue
+            for material_slot in obj.material_slots:
+                mat = material_slot.material
+                if not(mat and mat.use_nodes):
+                    continue
+                tree = mat.node_tree
+                if tree.type != 'SHADER':
+                    continue
+                for node in tree.nodes:
+                    if node.bl_idname != 'ShaderNodeTexImage':
+                        continue
+                    # Check if image is not packed already
+                    # and pack it if not.
+                    if node.image and node.image.packed_file is None:
+                        node.image.pack()
 
         bpy.data.libraries.write(filepath, data_blocks)
 
