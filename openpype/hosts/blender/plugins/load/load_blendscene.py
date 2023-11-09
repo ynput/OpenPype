@@ -180,7 +180,7 @@ class BlendSceneLoader(plugin.AssetLoader):
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
         avalon_container.children.link(asset_group)
 
-        # Restore the old data, but reset memebers, as they don't exist anymore
+        # Restore the old data, but reset members, as they don't exist anymore
         # This avoids a crash, because the memory addresses of those members
         # are not valid anymore
         old_data["members"] = []
@@ -202,22 +202,20 @@ class BlendSceneLoader(plugin.AssetLoader):
         group_name = container["objectName"]
         asset_group = bpy.data.collections.get(group_name)
 
-        attrs = [
-            attr for attr in dir(bpy.data)
-            if isinstance(
-                getattr(bpy.data, attr),
-                bpy.types.bpy_prop_collection
-            )
-        ]
+        members = set(asset_group.get(AVALON_PROPERTY).get("members", []))
 
-        members = asset_group.get(AVALON_PROPERTY).get("members", [])
+        if members:
+            for attr_name in dir(bpy.data):
+                attr = getattr(bpy.data, attr_name)
+                if not isinstance(attr, bpy.types.bpy_prop_collection):
+                    continue
 
-        for attr in attrs:
-            for data in getattr(bpy.data, attr):
-                if data in members:
-                    # Skip the asset group
-                    if data == asset_group:
+                # ensure to make a list copy because we
+                # we remove members as we iterate
+                for data in list(attr):
+                    if data not in members or data == asset_group:
                         continue
-                    getattr(bpy.data, attr).remove(data)
+
+                    attr.remove(data)
 
         bpy.data.collections.remove(asset_group)
