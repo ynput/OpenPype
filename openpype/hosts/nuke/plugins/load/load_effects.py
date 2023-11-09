@@ -62,11 +62,12 @@ class LoadEffects(load.LoaderPlugin):
         add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
                     "source", "author", "fps"]
 
-        data_imprint = {"frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname,
+            "colorspaceInput": colorspace,
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -159,7 +160,7 @@ class LoadEffects(load.LoaderPlugin):
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         # get corresponding node
-        GN = nuke.toNode(container['objectName'])
+        GN = container["node"]
 
         file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
@@ -175,12 +176,13 @@ class LoadEffects(load.LoaderPlugin):
         add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
                     "source", "author", "fps"]
 
-        data_imprint = {"representation": str(representation["_id"]),
-                        "frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "representation": str(representation["_id"]),
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname,
+            "colorspaceInput": colorspace
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -212,7 +214,7 @@ class LoadEffects(load.LoaderPlugin):
             pre_node = nuke.createNode("Input")
             pre_node["name"].setValue("rgb")
 
-            for ef_name, ef_val in nodes_order.items():
+            for _, ef_val in nodes_order.items():
                 node = nuke.createNode(ef_val["class"])
                 for k, v in ef_val["node"].items():
                     if k in self.ignore_attr:
@@ -346,6 +348,6 @@ class LoadEffects(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
         with viewer_update_and_undo_stop():
             nuke.delete(node)

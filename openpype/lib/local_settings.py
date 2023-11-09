@@ -611,6 +611,12 @@ def get_openpype_username():
     settings and last option is to use `getpass.getuser()` which returns
     machine username.
     """
+
+    if AYON_SERVER_ENABLED:
+        import ayon_api
+
+        return ayon_api.get_user()["name"]
+
     username = os.environ.get("OPENPYPE_USERNAME")
     if not username:
         local_settings = get_local_settings()

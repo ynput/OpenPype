@@ -16,7 +16,7 @@ FOLDER_PATH_ROLE = QtCore.Qt.UserRole + 3
 FOLDER_TYPE_ROLE = QtCore.Qt.UserRole + 4
 
 
-class FoldersModel(QtGui.QStandardItemModel):
+class FoldersQtModel(QtGui.QStandardItemModel):
     """Folders model which cares about refresh of folders.
 
     Args:
@@ -26,7 +26,7 @@ class FoldersModel(QtGui.QStandardItemModel):
     refreshed = QtCore.Signal()
 
     def __init__(self, controller):
-        super(FoldersModel, self).__init__()
+        super(FoldersQtModel, self).__init__()
 
         self._controller = controller
         self._items_by_id = {}
@@ -104,8 +104,8 @@ class FoldersModel(QtGui.QStandardItemModel):
 
         if not project_name:
             self._last_project_name = project_name
-            self._current_refresh_thread = None
             self._fill_items({})
+            self._current_refresh_thread = None
             return
 
         self._is_refreshing = True
@@ -152,6 +152,7 @@ class FoldersModel(QtGui.QStandardItemModel):
             return
 
         self._fill_items(thread.get_result())
+        self._current_refresh_thread = None
 
     def _fill_item_data(self, item, folder_item):
         """
@@ -281,7 +282,7 @@ class FoldersWidget(QtWidgets.QWidget):
         folders_view = TreeView(self)
         folders_view.setHeaderHidden(True)
 
-        folders_model = FoldersModel(controller)
+        folders_model = FoldersQtModel(controller)
         folders_proxy_model = RecursiveSortFilterProxyModel()
         folders_proxy_model.setSourceModel(folders_model)
         folders_proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
