@@ -81,12 +81,12 @@ class ModuleUnitTest(BaseTest):
             for test_file in self.TEST_FILES:
                 file_id, file_name, md5 = test_file
 
-                CURR_DIR = os.path.dirname(os.path.abspath(
+                current_dir = os.path.dirname(os.path.abspath(
                     inspect.getfile(self.__class__)))
                 if os.path.exists(file_id):
                     handler_class = LocalFileHandler
-                elif os.path.exists(os.path.join(CURR_DIR, file_id)):
-                    file_id = os.path.join(CURR_DIR, file_id)
+                elif os.path.exists(os.path.join(current_dir, file_id)):
+                    file_id = os.path.join(current_dir, file_id)
                     handler_class = LocalFileHandler
                 else:
                     handler_class = RemoteFileHandler
