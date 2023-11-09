@@ -377,26 +377,42 @@ class PublishTest(ModuleUnitTest):
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")
 
-        print("Comparing published:'{}' : expected:'{}'".format(
-            published_dir_base, expected_dir_base))
-        published = set(f.replace(published_dir_base, '') for f in
-                        glob.glob(published_dir_base + "\\**", recursive=True)
-                        if f != published_dir_base and os.path.exists(f))
-        expected = set(f.replace(expected_dir_base, '') for f in
-                       glob.glob(expected_dir_base + "\\**", recursive=True)
-                       if f != expected_dir_base and os.path.exists(f))
+        print(
+            "Comparing published:'{}' : expected:'{}'".format(
+                published_dir_base, expected_dir_base
+            )
+        )
 
-        filtered_published = self._filter_files(published,
-                                                skip_compare_folders)
+        def get_files(dir_base):
+            result = set()
+
+            for f in glob.glob(dir_base + "\\**", recursive=True):
+                if os.path.isdir(f):
+                    continue
+
+                if f != dir_base and os.path.exists(f):
+                    result.add(f.replace(dir_base, ""))
+
+            return result
+
+        published = get_files(published_dir_base)
+        expected = get_files(expected_dir_base)
+
+        filtered_published = self._filter_files(
+            published, skip_compare_folders
+        )
 
         # filter out temp files also in expected
         # could be polluted by accident by copying 'output' to zip file
         filtered_expected = self._filter_files(expected, skip_compare_folders)
 
-        not_mtched = filtered_expected.symmetric_difference(filtered_published)
-        if not_mtched:
-            raise AssertionError("Missing {} files".format(
-                "\n".join(sorted(not_mtched))))
+        not_matched = filtered_expected.symmetric_difference(
+            filtered_published
+        )
+        if not_matched:
+            raise AssertionError(
+                "Missing {} files".format("\n".join(sorted(not_matched)))
+            )
 
     def _filter_files(self, source_files, skip_compare_folders):
         """Filter list of files according to regex pattern."""
