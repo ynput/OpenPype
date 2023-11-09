@@ -49,7 +49,7 @@ class ExtractFBXAnimation(publish.Extractor):
             ]
             self.log.debug(
                 "Top group of animated skeleton not found in "
-                "{}.\nSkipping fbx animation extraction".format(skeleton_set))
+                "{}.\nSkipping fbx animation extraction.".format(skeleton_set))
             return
 
         namespace = get_namespace(out_members[0])
