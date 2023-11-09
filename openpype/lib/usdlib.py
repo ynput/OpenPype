@@ -610,7 +610,7 @@ def get_representation_path_by_names(
 
 
 def parse_ayon_uri(uri):
-    """Parse ayon+entity URI into individual components.
+    """Parse ayon entity URI into individual components.
 
     URI specification:
         ayon+entity://{project}/{asset}?product={product}
@@ -619,24 +619,34 @@ def parse_ayon_uri(uri):
     URI example:
         ayon+entity://test/hero?modelMain&version=2&representation=usd
 
+    However - if the netloc is `ayon://` it will by default also resolve as
+    `ayon+entity://` on AYON server, thus we need to support both. The shorter
+    `ayon://` is preferred for user readability.
+
     Example:
     >>> parse_ayon_uri(
-    >>>     "ayon+entity://test/villain?product=modelMain&version=2&representation=usd"  # noqa: E501
+    >>>     "ayon://test/villain?product=modelMain&version=2&representation=usd"  # noqa: E501
     >>> )
     {'project': 'test', 'asset': 'villain',
      'product': 'modelMain', 'version': 1,
      'representation': 'usd'}
+    >>> parse_ayon_uri(
+    >>>     "ayon+entity://project/asset?product=renderMain&version=3&representation=exr"  # noqa: E501
+    >>> )
+    {'project': 'project', 'asset': 'asset',
+     'product': 'renderMain', 'version': 3,
+     'representation': 'exr'}
 
     Returns:
         dict: The individual keys of the ayon entity query.
 
     """
 
-    if not uri.startswith("ayon+entity://"):
+    if not (uri.startswith("ayon+entity://") or uri.startswith("ayon://")):
         return
 
     parsed = urlparse(uri)
-    if parsed.scheme != "ayon+entity":
+    if parsed.scheme not in {"ayon+entity", "ayon"}:
         return
 
     result = {
@@ -663,13 +673,19 @@ def construct_ayon_uri(
         version,
         representation_name
 ):
+    """Construct Ayon entity URI from its components
+
+    Returns:
+        str: Ayon Entity URI to query entity path.
+            Also works with `get_representation_path_by_ayon_uri`
+    """
     if not (isinstance(version, int) or version in {"latest", "hero"}):
         raise ValueError(
             "Version must either be integer, 'latest' or 'hero'. "
             "Got: {}".format(version)
         )
     return (
-        "ayon+entity://{project}/{asset}?product={product}&version={version}"
+        "ayon://{project}/{asset}?product={product}&version={version}"
         "&representation={representation}".format(
             project=project_name,
             asset=asset_name,
