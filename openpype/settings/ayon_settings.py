@@ -1467,6 +1467,10 @@ class _AyonSettingsCache:
 
             # Cache variant
             _AyonSettingsCache.variant = variant
+
+            # Set the variant to global ayon api connection
+            con = get_ayon_server_api_connection()
+            con.set_default_settings_variant(variant)
         return _AyonSettingsCache.variant
 
     @classmethod
