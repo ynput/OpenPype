@@ -7,7 +7,8 @@ from openpype.hosts.houdini.api.lib import render_rop, splitext
 import hou
 
 
-class ExtractComposite(publish.Extractor):
+class ExtractComposite(publish.Extractor,
+                       publish.ColormanagedPyblishPluginMixin):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract Composite (Image Sequence)"
@@ -45,8 +46,11 @@ class ExtractComposite(publish.Extractor):
             "frameEnd": instance.data["frameEndHandle"],
         }
 
-        from pprint import pformat
-
-        self.log.info(pformat(representation))
+        # inject colorspace data
+        # It's always scene_linear (Houdini's default)
+        self.set_representation_colorspace(
+            representation, instance.context,
+            colorspace="scene_linear"
+        )
 
         instance.data["representations"].append(representation)
