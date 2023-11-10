@@ -237,6 +237,7 @@ class BaseCreator(Creator):
             "name": collection.name,
         }
 
+        # Set instance data
         instance_data.update(
             {
                 "id": "pyblish.avalon.instance",
@@ -248,16 +249,15 @@ class BaseCreator(Creator):
             }
         )
 
-        instance = CreatedInstance(
-            self.family, subset_name, instance_data, self
+        self._add_instance_to_context(
+            CreatedInstance(
+                self.family, subset_name, instance_data, self
+            )
         )
-        self._add_instance_to_context(instance)
 
         imprint(collection, instance_data)
 
-        if pre_create_data.get("useSelection"):
-            for obj in get_selection():
-                collection.objects.link(obj)
+        return collection
 
     def collect_instances(self):
         """Override abstract method from BaseCreator.
@@ -267,7 +267,9 @@ class BaseCreator(Creator):
         self.cache_subsets(self.collection_shared_data)
 
         # Get cached subsets
-        cached_subsets = self.collection_shared_data.get('blender_cached_subsets')
+        cached_subsets = self.collection_shared_data.get(
+            "blender_cached_subsets"
+        )
         if not cached_subsets:
             return
 

@@ -1,13 +1,8 @@
 """Create an animation asset."""
 
-import bpy
 
-from openpype.pipeline import get_current_task_name, CreatedInstance
+from openpype.pipeline import CreatedInstance
 from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import (
-    AVALON_INSTANCES,
-    AVALON_PROPERTY,
-)
 
 
 class CreateAnimation(plugin.BaseCreator):
@@ -35,43 +30,17 @@ class CreateAnimation(plugin.BaseCreator):
     def _process(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
-        # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
-
-        # Create instance object
-        # name = self.name
-        # if not name:
-        name = plugin.asset_name(instance_data["asset"], subset_name)
-        # asset_group = bpy.data.objects.new(name=name, object_data=None)
-        # asset_group.empty_display_type = 'SINGLE_ARROW'
-        asset_group = bpy.data.collections.new(name=name)
-        instances.children.link(asset_group)
-
-        asset_group[AVALON_PROPERTY] = instance_node = {
-            "name": asset_group.name,
-        }
-
-        instance_data.update(
-            {
-                "id": "pyblish.avalon.instance",
-                "creator_identifier": self.identifier,
-                "label": subset_name,
-                "task": get_current_task_name(),
-                "subset": subset_name,
-                "instance_node": instance_node,
-            }
+        # Run parent create method
+        collection = super().create(
+            subset_name, instance_data, pre_create_data
         )
-        lib.imprint(asset_group, instance_data)
 
         if pre_create_data.get("useSelection"):
             selected = lib.get_selection()
             for obj in selected:
-                asset_group.objects.link(obj)
+                collection.objects.link(obj)
         elif pre_create_data.get("asset_group"):
             obj = (self.options or {}).get("asset_group")
-            asset_group.objects.link(obj)
+            collection.objects.link(obj)
 
-        return asset_group
+        return collection
