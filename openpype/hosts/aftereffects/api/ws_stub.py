@@ -313,6 +313,10 @@ class AfterEffectsServerStub():
                              path=path,
                              item_name=item_name)
             )
+
+        if not res:
+            return None
+
         records = self._to_records(self._handle_return(res))
         if records:
             return records.pop()

@@ -316,7 +316,8 @@ function importFileWithDialog(path, item_name){
 
     if (importedCompArray == undefined){
         // User has canceled the action, so we stop the script here
-        return _prepareSingleValue('Action canceled.');
+        // and return an empty value to avoid parse errors later
+        return ''
     }
 
     importedComp = importedCompArray[0]
