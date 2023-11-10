@@ -121,7 +121,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     )
     protected_settings_label_text = (
         "Current version is different from the production version."
-        " You can not save the settings."
+        " You can not save the System settings."
     )
     source_version_tooltip = "Using settings of current OpenPype version"
     source_version_tooltip_outdated = (
@@ -231,7 +231,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             )
         elif mode == EditMode.PROTECT:
             tooltip = (
-                "Setting is protected."
+                "System settings can only be saved with the OpenPype production version."
             )
         else:
             tooltip = "Save settings"
@@ -332,6 +332,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         )
         protected_settings_label.setAlignment(labels_alignment)
         protected_settings_label.setVisible(False)
+        protected_settings_label.setObjectName("SettingsSystemProtected")
 
         # Label showing source version of loaded settings
         source_version_label = QtWidgets.QLabel("", footer_widget)
