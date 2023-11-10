@@ -203,20 +203,24 @@ def _render_preview_animation_max_pre_2024(
         # aspect ratio
         viewportRatio = dib_width / dib_height
         renderRatio = float(res_width / res_height)
-        if viewportRatio <= renderRatio:
+        if viewportRatio < renderRatio:
             heightCrop = (dib_width / renderRatio)
             topEdge = int((dib_height - heightCrop) / 2.0)
             tempImage_bmp = rt.bitmap(dib_width, heightCrop)
             src_box_value = rt.Box2(0, topEdge, dib_width, heightCrop)
-        else:
+            rt.pasteBitmap(dib, tempImage_bmp, src_box_value, rt.Point2(0, 0))
+            rt.copy(tempImage_bmp, preview_res)
+            rt.close(tempImage_bmp)
+        elif viewportRatio > renderRatio:
             widthCrop = dib_height * renderRatio
             leftEdge = int((dib_width - widthCrop) / 2.0)
             tempImage_bmp = rt.bitmap(widthCrop, dib_height)
             src_box_value = rt.Box2(leftEdge, 0, widthCrop, dib_height)
-        rt.pasteBitmap(dib, tempImage_bmp, src_box_value, rt.Point2(0, 0))
-        # copy the bitmap and close it
-        rt.copy(tempImage_bmp, preview_res)
-        rt.close(tempImage_bmp)
+            rt.pasteBitmap(dib, tempImage_bmp, src_box_value, rt.Point2(0, 0))
+            rt.copy(tempImage_bmp, preview_res)
+            rt.close(tempImage_bmp)
+        else:
+            rt.copy(dib, preview_res)
         rt.save(preview_res)
         rt.close(preview_res)
         rt.close(dib)
