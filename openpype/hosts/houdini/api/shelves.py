@@ -7,9 +7,10 @@ from openpype.settings import get_project_settings
 from openpype.pipeline import get_current_project_name
 
 from openpype.lib import StringTemplate
-from openpype.pipeline.context_tools import get_current_context_template_data
 
 import hou
+
+from .lib import get_current_context_template_data_with_asset_data
 
 log = logging.getLogger("openpype.hosts.houdini.shelves")
 
@@ -23,29 +24,33 @@ def generate_shelves():
     # load configuration of houdini shelves
     project_name = get_current_project_name()
     project_settings = get_project_settings(project_name)
-    shelves_set_config = project_settings["houdini"]["shelves"]
+    shelves_configs = project_settings["houdini"]["shelves"]
 
-    if not shelves_set_config:
+    if not shelves_configs:
         log.debug("No custom shelves found in project settings.")
         return
 
     # Get Template data
-    template_data = get_current_context_template_data()
+    template_data = get_current_context_template_data_with_asset_data()
 
-    for shelf_set_config in shelves_set_config:
+    for config in shelves_configs:
+        selected_option = config["options"]
+        shelf_set_config = config[selected_option]
+
         shelf_set_filepath = shelf_set_config.get('shelf_set_source_path')
-        shelf_set_os_filepath = shelf_set_filepath[current_os]
-        if shelf_set_os_filepath:
-            shelf_set_os_filepath = get_path_using_template_data(
-                shelf_set_os_filepath, template_data
-            )
-            if not os.path.isfile(shelf_set_os_filepath):
-                log.error("Shelf path doesn't exist - "
-                          "{}".format(shelf_set_os_filepath))
-                continue
+        if shelf_set_filepath:
+            shelf_set_os_filepath = shelf_set_filepath[current_os]
+            if shelf_set_os_filepath:
+                shelf_set_os_filepath = get_path_using_template_data(
+                    shelf_set_os_filepath, template_data
+                )
+                if not os.path.isfile(shelf_set_os_filepath):
+                    log.error("Shelf path doesn't exist - "
+                              "{}".format(shelf_set_os_filepath))
+                    continue
 
-            hou.shelves.newShelfSet(file_path=shelf_set_os_filepath)
-            continue
+                hou.shelves.loadFile(shelf_set_os_filepath)
+                continue
 
         shelf_set_name = shelf_set_config.get('shelf_set_name')
         if not shelf_set_name:
