@@ -727,6 +727,9 @@ class BaseWorkfileController(
         else:
             self._host_save_workfile(dst_filepath)
 
+        # Make sure workfile info exists
+        self.save_workfile_info(folder_id, task_id, dst_filepath, None)
+
         # Create extra folders
         create_workdir_extra_folders(
             workdir,

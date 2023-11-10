@@ -903,11 +903,14 @@ class AbstractWorkfilesFrontend(AbstractWorkfilesCommon):
         At this moment the only information which can be saved about
             workfile is 'note'.
 
+        When 'note' is 'None' it is only validated if workfile info exists,
+            and if not then creates one with empty note.
+
         Args:
             folder_id (str): Folder id.
             task_id (str): Task id.
             filepath (str): Workfile path.
-            note (str): Note.
+            note (Union[str, None]): Note.
         """
 
         pass

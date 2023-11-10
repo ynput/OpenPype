@@ -500,8 +500,11 @@ class WorkfileEntitiesModel:
         )
         if not workfile_info:
             self._cache[identifier] = self._create_workfile_info_entity(
-                task_id, rootless_path, note)
+                task_id, rootless_path, note or "")
             self._items.pop(identifier, None)
+            return
+
+        if note is None:
             return
 
         new_workfile_info = copy.deepcopy(workfile_info)
