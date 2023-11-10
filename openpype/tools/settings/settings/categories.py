@@ -121,7 +121,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     )
     protected_settings_label_text = (
         "Current version is different from the production version."
-        " You can not save the System settings."
+        " You cannot save the System settings."
     )
     source_version_tooltip = "Using settings of current OpenPype version"
     source_version_tooltip_outdated = (
@@ -221,9 +221,13 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             return
 
         was_disabled = (self._edit_mode == EditMode.DISABLE)
-        self._edit_mode =  mode
+        self._edit_mode = mode
 
         self.save_btn.setEnabled(mode == EditMode.ENABLE and not self._reset_crashed)
+
+        if mode != EditMode.ENABLE:
+            pass
+
         if mode == EditMode.DISABLE:
             tooltip = (
                 "Someone else has opened settings UI."
