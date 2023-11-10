@@ -11,7 +11,7 @@ from openpype.hosts.blender.api.pipeline import (
 
 
 class CreateLayout(plugin.BaseCreator):
-    """Layout output for character rigs"""
+    """Layout output for character rigs."""
 
     identifier = "io.openpype.creators.blender.layout"
     name = "layoutMain"
@@ -22,7 +22,7 @@ class CreateLayout(plugin.BaseCreator):
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
-        """ Run the creator on Blender main thread"""
+        """Run the creator on Blender main thread."""
         self._add_instance_to_context(
             CreatedInstance(self.family, subset_name, instance_data, self)
         )

@@ -11,7 +11,7 @@ from openpype.hosts.blender.api.pipeline import (
 
 
 class CreateModel(plugin.BaseCreator):
-    """Polygonal static geometry"""
+    """Polygonal static geometry."""
 
     identifier = "io.openpype.creators.blender.model"
     name = "modelMain"

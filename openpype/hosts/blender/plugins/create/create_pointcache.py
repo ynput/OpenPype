@@ -4,7 +4,7 @@ from openpype.hosts.blender.api import plugin, lib
 
 
 class CreatePointcache(plugin.BaseCreator):
-    """Polygonal static geometry"""
+    """Polygonal static geometry."""
 
     identifier = "io.openpype.creators.blender.pointcache"
     name = "pointcacheMain"

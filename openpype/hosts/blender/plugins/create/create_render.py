@@ -6,7 +6,7 @@ from openpype.hosts.blender.api.render_lib import prepare_rendering
 
 
 class CreateRenderlayer(plugin.BaseCreator):
-    """Single baked camera"""
+    """Single baked camera."""
 
     identifier = "io.openpype.creators.blender.render"
     name = "renderingMain"

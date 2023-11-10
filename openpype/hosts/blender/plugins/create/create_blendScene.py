@@ -11,7 +11,7 @@ from openpype.hosts.blender.api.pipeline import (
 
 
 class CreateBlendScene(plugin.Creator):
-    """Generic group of assets"""
+    """Generic group of assets."""
 
     name = "blendScene"
     label = "Blender Scene"

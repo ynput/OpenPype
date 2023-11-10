@@ -11,7 +11,7 @@ from openpype.hosts.blender.api.pipeline import (
 
 
 class CreateCamera(plugin.BaseCreator):
-    """Polygonal static geometry"""
+    """Polygonal static geometry."""
 
     identifier = "io.openpype.creators.blender.camera"
     name = "cameraMain"
@@ -22,7 +22,7 @@ class CreateCamera(plugin.BaseCreator):
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
-        """ Run the creator on Blender main thread"""
+        """Run the creator on Blender main thread."""
         self._add_instance_to_context(
             CreatedInstance(self.family, subset_name, instance_data, self)
         )

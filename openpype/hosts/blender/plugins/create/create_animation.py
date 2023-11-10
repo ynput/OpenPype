@@ -1,12 +1,10 @@
 """Create an animation asset."""
 
-
-from openpype.pipeline import CreatedInstance
-from openpype.hosts.blender.api import plugin, lib, ops
+from openpype.hosts.blender.api import plugin, lib
 
 
 class CreateAnimation(plugin.BaseCreator):
-    """Animation output for character rigs"""
+    """Animation output for character rigs."""
 
     identifier = "io.openpype.creators.blender.animation"
     name = "animationMain"
@@ -17,19 +15,7 @@ class CreateAnimation(plugin.BaseCreator):
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
-        """ Run the creator on Blender main thread"""
-        self._add_instance_to_context(
-            CreatedInstance(self.family, subset_name, instance_data, self)
-        )
-
-        mti = ops.MainThreadItem(
-            self._process, subset_name, instance_data, pre_create_data
-        )
-        ops.execute_in_main_thread(mti)
-
-    def _process(
-        self, subset_name: str, instance_data: dict, pre_create_data: dict
-    ):
+        """Run the creator on Blender main thread."""
         # Run parent create method
         collection = super().create(
             subset_name, instance_data, pre_create_data
