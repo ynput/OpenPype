@@ -163,9 +163,8 @@ class BaseWorkfileController(
 
         # Expected selected folder and task
         self._expected_selection = self._create_expected_selection_obj()
-
-        self._projects_model = self._create_projects_model()
         self._selection_model = self._create_selection_model()
+        self._projects_model = self._create_projects_model()
         self._hierarchy_model = self._create_hierarchy_model()
         self._workfiles_model = self._create_workfiles_model()
 
@@ -485,6 +484,9 @@ class BaseWorkfileController(
         self._current_folder_name = folder_name
         self._current_folder_id = folder_id
         self._current_task_name = task_name
+
+        self._projects_model.reset()
+        self._hierarchy_model.reset()
 
         if not expected_folder_id:
             expected_folder_id = folder_id
