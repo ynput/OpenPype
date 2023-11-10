@@ -146,6 +146,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self._edit_mode = EditMode.ENABLE
         self._last_saved_info = None
         self._reset_crashed = False
+        self._read_only = False
 
         self._state = CategoryState.Idle
 
@@ -224,6 +225,11 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def _edit_mode_changed(self, event):
         self.set_edit_mode(event["edit_mode"])
 
+    def set_read_only(self, status):
+        self._read_only = status
+        for input_field in self.input_fields:
+            input_field.set_read_only(self._read_only)
+
     def set_edit_mode(self, mode):
         if mode == self._edit_mode:
             return
@@ -233,8 +239,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         self.save_btn.setEnabled(mode == EditMode.ENABLE and not self._reset_crashed)
 
-        if mode != EditMode.ENABLE:
-            pass
+        self.set_read_only((mode != EditMode.ENABLE))
 
         if mode == EditMode.DISABLE:
             tooltip = (
@@ -759,6 +764,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def add_children_gui(self):
         for child_obj in self.entity.children:
             item = self.create_ui_for_entity(self, child_obj, self)
+            item.set_read_only(self._read_only)
             self.input_fields.append(item)
 
         # Add spacer to stretch children guis
