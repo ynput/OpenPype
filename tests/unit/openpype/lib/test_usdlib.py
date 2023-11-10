@@ -3,6 +3,7 @@ from pxr import Sdf
 
 
 def test_create_asset(tmp_path):
+    """Test creating the basics of an asset structure."""
     layers = usdlib.create_asset(str(tmp_path / "asset.usd"),
                                  asset_name="test",
                                  reference_layers=["./model.usd",
@@ -94,6 +95,7 @@ def test_add_contributions_to_asset(tmp_path):
 
 
 def test_create_shot(tmp_path):
+    """Test creating shot structure; which is just a bunch of layers"""
     usdlib.create_shot(str(tmp_path / "shot.usd"),
                        layers=["./lighting.usd",
                                "./fx.usd",
@@ -107,13 +109,18 @@ def test_create_shot(tmp_path):
 
 
 def test_add_variant_references_to_layer(tmp_path):
+    """Test adding variants to a layer, replacing older ones"""
+    # TODO: The code doesn't error but the data should still be validated
+
+    prim_path = "/root"
     layer = usdlib.add_variant_references_to_layer(variants=[
             ("main", "./main.usd"),
             ("twist", "./twist.usd"),
             ("damaged", "./damaged.usd"),
             ("tall", "./tall.usd"),
         ],
-        variantset="model"
+        variantset="model",
+        variant_prim=prim_path
     )
 
     # Allow recalling with a layer provided to operate on that layer
@@ -125,7 +132,8 @@ def test_add_variant_references_to_layer(tmp_path):
             ("tall", "./look_tall.usd"),
         ],
         variantset="look",
-        layer=layer
+        layer=layer,
+        variant_prim=prim_path
     )
 
     # Allow with a layer provided to operate on that layer
@@ -135,16 +143,27 @@ def test_add_variant_references_to_layer(tmp_path):
         ],
         variantset="look",
         layer=layer,
-        skip_variant_on_single_file=True
+        set_default_variant=False,
+        variant_prim=prim_path
     )
 
-    # Save
+    # Applying variants to another prim should not affect first prim
+    layer = usdlib.add_variant_references_to_layer(variants=[
+            ("short", "./look_short.usd"),
+        ],
+        variantset="look",
+        layer=layer,
+        set_default_variant=False,
+        variant_prim="/other_root"
+    )
+
+    # Export layer should work
     layer.Export(
         str(tmp_path / "model.usd"),
-        args={"format": "usda"}
+        args={"format": "usda"},
     )
+    assert (tmp_path / "model.usd").exists()
 
     # Debug print generated file (pytest excludes it by default but will
     # show it if the -s flag is passed)
     print(layer.ExportToString())
-    assert (tmp_path / "model.usd").exists()
