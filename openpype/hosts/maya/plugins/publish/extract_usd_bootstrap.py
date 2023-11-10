@@ -1,32 +1,17 @@
 import os
-import copy
 import operator
 
 import pyblish.api
 from openpype.pipeline import publish
 from openpype.pipeline.create import get_subset_name
+from openpype.lib.usdlib import get_instance_expected_output_path
 
-
-def get_instance_expected_output_path(instance, representation_name, ext=None):
-
-    if ext is None:
-        ext = representation_name
-
-    context = instance.context
-    anatomy = context.data["anatomy"]
-    path_template_obj = anatomy.templates_obj["publish"]["path"]
-    template_data = copy.deepcopy(instance.data["anatomyData"])
-    template_data.update({
-        "ext": ext,
-        "representation": representation_name,
-        "subset": instance.data["subset"],
-        "asset": instance.data["asset"],
-        "variant": instance.data["variant"],
-        "version": instance.data["version"]
-    })
-
-    template_filled = path_template_obj.format_strict(template_data)
-    return os.path.normpath(template_filled)
+from openpype.pipeline import get_representation_path
+from openpype.client import (
+    get_subsets,
+    get_last_versions,
+    get_representations
+)
 
 
 class ExtractBootstrapUSD(publish.Extractor):
@@ -74,18 +59,6 @@ class ExtractBootstrapUSD(publish.Extractor):
             usdlib.create_shot(filepath,
                                layers=layers)
 
-        elif subset == "usdModel":
-            variant_subsets = instance.data["variantSubsets"]
-            usdlib.create_model(filepath,
-                                asset=instance.data["asset"],
-                                variant_subsets=variant_subsets)
-
-        elif subset == "usdShade":
-            variant_subsets = instance.data["variantSubsets"]
-            usdlib.create_shade(filepath,
-                                asset=instance.data["asset"],
-                                variant_subsets=variant_subsets)
-
         elif subset in usdlib.PIPELINE["asset"]:
             # Asset layer
             # Generate the stub files with root primitive
@@ -118,7 +91,18 @@ class ExtractBootstrapUSD(publish.Extractor):
         Unlike files in representations, the file will not be renamed and
         will be ingested one-to-one into the publish directory.
 
+        Note: This file does not get registered as a representation, because
+          representation files always get renamed by the publish template
+          system. These files get included in the `representation["files"]`
+          info with all the representations of the version - and thus will
+          appear multiple times per version.
+
         """
+        # TODO: It can be nice to force a particular representation no matter
+        #  what to adhere to a certain filename on integration because e.g. a
+        #  particular file format relies on that file named like that or alike
+        #  and still allow regular registering with the database as a file of
+        #  the version. As such we might want to tweak integrator logic?
         if staging_dir is None:
             staging_dir = self.staging_dir(instance)
         publish_dir = instance.data["publishDir"]
@@ -247,13 +231,6 @@ class ExtractBootstrapUSD(publish.Extractor):
         context = instance.context
         project_name = context.data["projectName"]
         asset_entity = instance.data["assetEntity"]
-
-        from openpype.pipeline import get_representation_path
-        from openpype.client import (
-            get_subsets,
-            get_last_versions,
-            get_representations
-        )
 
         def to_id(entity):
             return entity["_id"]

@@ -1,7 +1,6 @@
 import dataclasses
 import os
 import copy
-import re
 import logging
 from urllib.parse import urlparse, parse_qs
 from collections import namedtuple
@@ -21,7 +20,6 @@ from openpype.client import (
     get_last_version_by_subset_id
 )
 from openpype.pipeline import (
-    get_current_project_name,
     get_representation_path
 )
 
@@ -302,134 +300,7 @@ def create_shot(filepath, layers, create_layers=False):
     return created_layers
 
 
-def create_model(filename, asset, variant_subsets):
-    """Create a USD Model file.
-
-    For each of the variation paths it will payload the path and set its
-    relevant variation name.
-
-    """
-
-    project_name = get_current_project_name()
-    asset_doc = get_asset_by_name(project_name, asset)
-    assert asset_doc, "Asset not found: %s" % asset
-
-    variants = []
-    for subset in variant_subsets:
-        prefix = "usdModel"
-        if subset.startswith(prefix):
-            # Strip off `usdModel_`
-            variant = subset[len(prefix):]
-        else:
-            raise ValueError(
-                "Model subsets must start " "with usdModel: %s" % subset
-            )
-
-        path = get_representation_path_by_names(
-            project_name=project_name,
-            asset_name=asset_doc,
-            subset_name=subset,
-            version_name="latest",
-            representation_name="usd"
-        )
-        if path:
-            variants.append((variant, path))
-
-    stage = _create_variants_file(
-        filename,
-        variants=variants,
-        variantset="model",
-        variant_prim="/root",
-        reference_prim="/root/geo",
-        as_payload=True,
-    )
-
-    UsdGeom.SetStageMetersPerUnit(stage, 1)
-    UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
-
-    # modelAPI = Usd.ModelAPI(root_prim)
-    # modelAPI.SetKind(Kind.Tokens.component)
-
-    # See http://openusd.org/docs/api/class_usd_model_a_p_i.html#details
-    # for more on assetInfo
-    # modelAPI.SetAssetName(asset)
-    # modelAPI.SetAssetIdentifier(asset)
-
-    stage.GetRootLayer().Save()
-
-
-def create_shade(filename, asset, variant_subsets):
-    """Create a master USD shade file for an asset.
-
-    For each available model variation this should generate a reference
-    to a `usdShade_{modelVariant}` subset.
-
-    """
-
-    project_name = get_current_project_name()
-    asset_doc = get_asset_by_name(project_name, asset)
-    assert asset_doc, "Asset not found: %s" % asset
-
-    variants = []
-
-    for subset in variant_subsets:
-        prefix = "usdModel"
-        if subset.startswith(prefix):
-            # Strip off `usdModel_`
-            variant = subset[len(prefix):]
-        else:
-            raise ValueError(
-                "Model subsets must start " "with usdModel: %s" % subset
-            )
-
-        shade_subset = re.sub("^usdModel", "usdShade", subset)
-        path = get_representation_path_by_names(
-            project_name=project_name,
-            asset_name=asset_doc,
-            subset_name=shade_subset,
-            version_name="latest",
-            representation_name="usd"
-        )
-        variants.append((variant, path))
-
-    stage = _create_variants_file(
-        variants=variants, variantset="model", variant_prim="/root"
-    )
-    stage.GetRootLayer().Export(filename, args={"format": "usda"})
-
-
-def create_shade_variation(filename, asset, model_variant, shade_variants):
-    """Create the master Shade file for a specific model variant.
-
-    This should reference all shade variants for the specific model variant.
-
-    """
-
-    project_name = get_current_project_name()
-    asset_doc = get_asset_by_name(project_name, asset)
-    assert asset_doc, "Asset not found: %s" % asset
-
-    variants = []
-    for variant in shade_variants:
-        subset = "usdShade_{model}_{shade}".format(
-            model=model_variant, shade=variant
-        )
-        path = get_representation_path_by_names(
-            project_name=project_name,
-            asset_name=asset_doc,
-            subset_name=subset,
-            version_name="latest",
-            representation_name="usd"
-        )
-        variants.append((variant, path))
-
-    stage = _create_variants_file(
-        variants=variants, variantset="shade", variant_prim="/root"
-    )
-    stage.GetRootLayer().Export(filename, args={"format": "usda"})
-
-
-def _create_variants_file(
+def add_variant_references_to_layer(
     variants,
     variantset,
     default_variant=None,
@@ -437,19 +308,35 @@ def _create_variants_file(
     reference_prim=None,
     set_default_variant=True,
     as_payload=False,
-    skip_variant_on_single_file=True,
+    skip_variant_on_single_file=False,
+    layer=None
 ):
-    """Create a USD file with references to given variants and their paths.
+    """Add or set a prim's variants to reference specified paths in the layer.
+
+    Note:
+        This does not clear any of the other opinions than replacing
+        `prim.referenceList.prependedItems` with the new reference.
+        If `as_payload=True` then this only does it for payloads and leaves
+        references as they were in-tact.
+
+    Note:
+        If `skip_variant_on_single_file=True` it does *not* check if any
+        other variants do exist; it only checks whether you are currently
+        adding more than one since it'd be hard to find out whether previously
+        this was also skipped and should now if you're adding a new one
+        suddenly also be its original 'variant'. As such it's recommended to
+        keep this disabled unless you know you're not updating the file later
+        into the same variant set.
 
     Examples:
-    >>> stage = _create_variants_file("model.usd",
+    >>> layer = add_variant_references_to_layer("model.usd",
     >>>     variants=[
     >>>         ("main", "main.usd"),
     >>>         ("damaged", "damaged.usd"),
     >>>         ("twisted", "twisted.usd")
     >>>     ],
     >>>     variantset="model")
-    >>> stage.rootLayer.Export("model.usd", args={"format": "usda"})
+    >>> layer.Export("model.usd", args={"format": "usda"})
 
     Arguments:
         variants (List[List[str, str]): List of two-tuples of variant name to
@@ -457,6 +344,7 @@ def _create_variants_file(
         variantset (str): Name of the variant set
         default_variant (str): Default variant to set. If not provided
             the first variant will be used.
+        variant_prim (str): Variant prim?
         reference_prim (str): Path to the reference prim where to add the
             references and variant sets.
         set_default_variant (bool): Whether to set the default variant.
@@ -466,69 +354,222 @@ def _create_variants_file(
         skip_variant_on_single_file (bool): If this is enabled and only
             a single variant is provided then do not create the variant set
             but just reference that single file.
+        layer (Sdf.Layer): When provided operate on this layer, otherwise
+            create an anonymous layer in memory.
 
     Returns:
         Usd.Stage: The saved usd stage
 
     """
+    if layer is None:
+        layer = Sdf.Layer.CreateAnonymous()
+        set_layer_defaults(layer, default_prim=variant_prim.strip("/"))
 
-    root_layer = Sdf.Layer.CreateAnonymous()
-    stage = Usd.Stage.Open(root_layer)
+    prim_path_to_get_variants = Sdf.Path(variant_prim)
+    root_prim = get_or_define_prim_spec(layer, variant_prim, "Xform")
 
-    root_prim = stage.DefinePrim(variant_prim)
-    stage.SetDefaultPrim(root_prim)
-
-    def _reference(path):
-        """Reference/Payload path depending on function arguments"""
-
-        if reference_prim:
-            prim = stage.DefinePrim(reference_prim)
-        else:
-            prim = root_prim
-
-        if as_payload:
-            # Payload
-            prim.GetPayloads().AddPayload(Sdf.Payload(path))
-        else:
-            # Reference
-            prim.GetReferences().AddReference(Sdf.Reference(path))
+    # TODO: Define why there's a need for separate variant_prim and
+    #   reference_prim attribute. When should they differ? Does it even work?
+    if not reference_prim:
+        reference_prim = root_prim
+    else:
+        reference_prim = get_or_define_prim_spec(layer, reference_prim,
+                                                 "Xform")
 
     assert variants, "Must have variants, got: %s" % variants
 
     if skip_variant_on_single_file and len(variants) == 1:
         # Reference directly, no variants
         variant_path = variants[0][1]
-        _reference(variant_path)
+        if as_payload:
+            # Payload
+            reference_prim.payloadList.prependedItems.append(
+                Sdf.Payload(variant_path)
+            )
+        else:
+            # Reference
+            reference_prim.referenceList.prependedItems.append(
+                Sdf.Reference(variant_path)
+            )
 
         log.debug("Creating without variants due to single file only.")
         log.debug("Path: %s", variant_path)
 
     else:
         # Variants
-        append = Usd.ListPositionBackOfAppendList
-        variant_set = root_prim.GetVariantSets().AddVariantSet(
-            variantset, append
-        )
-        debug_label = "Payloading" if as_payload else "Referencing"
-
-        for variant, variant_path in variants:
-
+        for variant, variant_filepath in variants:
             if default_variant is None:
                 default_variant = variant
 
-            variant_set.AddVariant(variant, append)
-            variant_set.SetVariantSelection(variant)
-            with variant_set.GetVariantEditContext():
-                _reference(variant_path)
-
-                log.debug("%s variants.", debug_label)
-                log.debug("Variant: %s",  variant)
-                log.debug("Path: %s", variant_path)
+            set_variant_reference(layer,
+                                  prim_path=prim_path_to_get_variants,
+                                  variant_selections=[[variantset, variant]],
+                                  path=variant_filepath,
+                                  as_payload=as_payload)
 
         if set_default_variant and default_variant is not None:
-            variant_set.SetVariantSelection(default_variant)
+            # Set default variant selection
+            root_prim.variantSelections[variantset] = default_variant
 
-    return stage
+    return layer
+
+
+def set_layer_defaults(layer,
+                       up_axis=UsdGeom.Tokens.y,
+                       meters_per_unit=1.0,
+                       default_prim=None):
+    """Set some default metadata for the SdfLayer.
+
+    Arguments:
+        layer (Sdf.Layer): The layer to set default for via Sdf API.
+        up_axis (UsdGeom.Token); Which axis is the up-axis
+        meters_per_unit (float): Meters per unit
+        default_prim (Optional[str]: Default prim name
+
+    """
+    # Set default prim
+    if default_prim is not None:
+        layer.defaultPrim = default_prim
+
+    # Let viewing applications know how to orient a free camera properly
+    # Similar to: UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
+    layer.pseudoRoot.SetInfo(UsdGeom.Tokens.upAxis, up_axis)
+
+    # Set meters per unit
+    layer.pseudoRoot.SetInfo(UsdGeom.Tokens.metersPerUnit,
+                             float(meters_per_unit))
+
+
+def get_or_define_prim_spec(layer, prim_path, type_name):
+    """Get or create a PrimSpec in the layer.
+
+    Note:
+        This creates a Sdf.PrimSpec with Sdf.SpecifierDef but if the PrimSpec
+        already exists this will not force it to be a Sdf.SpecifierDef and
+        it may remain what it was, e.g. Sdf.SpecifierOver
+
+    Args:
+        layer (Sdf.Layer): The layer to create it in.
+        prim_path (Any[str, Sdf.Path]): Prim path to create.
+        type_name (str): Type name for the PrimSpec.
+            This will only be set if the prim does not exist in the layer
+            yet. It does not update type for an existing prim.
+
+    Returns:
+        Sdf.PrimSpec: The PrimSpec in the layer for the given prim path.
+
+    """
+    prim_spec = layer.GetPrimAtPath(prim_path)
+    if prim_spec:
+        return prim_spec
+
+    prim_spec = Sdf.CreatePrimInLayer(layer, prim_path)
+    prim_spec.specifier = Sdf.SpecifierDef
+    prim_spec.typeName = type_name
+    return prim_spec
+
+
+def variant_nested_prim_path(prim_path, variant_selections):
+    """Return the Sdf.Path path for a nested variant selection at prim path.
+
+    Examples:
+    >>> prim_path = Sdf.Path("/asset")
+    >>> variant_spec = variant_nested_prim_path(
+    >>>     prim_path,
+    >>>     variant_selections=[["model", "main"], ["look", "main"]]
+    >>> )
+    >>> variant_spec.path
+
+    Args:
+        prim_path (Sdf.PrimPath): The prim path to create the spec in
+        variant_selections (List[List[str, str]]): A list of variant set names
+            and variant names to get the prim spec in.
+
+    Returns:
+        Sdf.Path: The variant prim path
+
+    """
+    variant_prim_path = Sdf.Path(prim_path)
+    for variant_set_name, variant_name in variant_selections:
+        variant_prim_path = variant_prim_path.AppendVariantSelection(
+            variant_set_name, variant_name)
+    return variant_prim_path
+
+
+def set_variant_reference(sdf_layer, prim_path, variant_selections, path,
+                          as_payload=False,
+                          append=True):
+    """Get or define variant selection at prim path and add a reference
+
+    If the Variant Prim already exists the prepended references are replaced
+    with a reference to `path`, it is overridden.
+
+    Args:
+        sdf_layer (Sdf.Layer): Layer to operate in.
+        prim_path (Any[str, Sdf.Path]): Prim path to add variant to.
+        variant_selections (List[List[str, str]]): A list of variant set names
+            and variant names to get the prim spec in.
+        path (str): Path to reference or payload
+        as_payload (bool): When enabled it will generate a payload instead of
+            a reference. Defaults to False.
+        append (bool): When enabled it will append the reference of payload
+            to prepended items, otherwise it will replace it.
+
+    Returns:
+        S
+
+    """
+    prim_path = Sdf.Path(prim_path)
+    # TODO: inherit type from outside of variants if it has it
+    get_or_define_prim_spec(sdf_layer, prim_path, "Xform")
+    variant_prim_path = variant_nested_prim_path(prim_path, variant_selections)
+    variant_prim = get_or_define_prim_spec(sdf_layer,
+                                           variant_prim_path,
+                                           "Xform")
+    # Replace the prepended references or payloads
+    if as_payload:
+        # Payload
+        if append:
+            variant_prim.payloadList.prependedItems.append(
+                Sdf.Payload(assetPath=path)
+            )
+        else:
+            variant_prim.payloadList.prependedItems.append(
+                Sdf.Payload(assetPath=path)
+            )
+    else:
+        # Reference
+        if append:
+            variant_prim.referenceList.prependedItems[:] = [
+                Sdf.Reference(assetPath=path)
+            ]
+        else:
+            variant_prim.payloadList.prependedItems[:] = [
+                Sdf.Payload(assetPath=path)
+            ]
+
+    return variant_prim
+
+
+def get_sdf_format_args(path):
+    """Return SDF_FORMAT_ARGS parsed to `dict`"""
+    if ":SDF_FORMAT_ARGS:" not in path:
+        return {}
+
+    format_args_str = path.split(":SDF_FORMAT_ARGS:", 1)[-1]
+    args = {}
+    for arg_str in format_args_str.split(":"):
+        if "=" not in arg_str:
+            # ill-formed argument key=value
+            continue
+
+        key, value = arg_str.split("=", 1)
+        args[key] = value
+    return args
+
+# TODO: Functions below are not necessarily USD functions and hence should not
+#  be in this file. Refactor by moving them elsewhere
+# region representations and Ayon uris
 
 
 def get_representation_by_names(
@@ -794,28 +835,4 @@ def get_instance_expected_output_path(instance, representation_name,
     template_filled = path_template_obj.format_strict(template_data)
     return os.path.normpath(template_filled)
 
-
-def set_layer_defaults(layer,
-                       up_axis=UsdGeom.Tokens.y,
-                       meters_per_unit=1.0,
-                       default_prim=None):
-    """Set some default metadata for the SdfLayer.
-
-    Arguments:
-        layer (Sdf.Layer): The layer to set default for via Sdf API.
-        up_axis (UsdGeom.Token); Which axis is the up-axis
-        meters_per_unit (float): Meters per unit
-        default_prim (Optional[str]: Default prim name
-
-    """
-    # Set default prim
-    if default_prim is not None:
-        layer.defaultPrim = default_prim
-
-    # Let viewing applications know how to orient a free camera properly
-    # Similar to: UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
-    layer.pseudoRoot.SetInfo(UsdGeom.Tokens.upAxis, up_axis)
-
-    # Set meters per unit
-    layer.pseudoRoot.SetInfo(UsdGeom.Tokens.metersPerUnit,
-                             float(meters_per_unit))
+# endregion
