@@ -11,12 +11,14 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype import AYON_SERVER_ENABLED
 from openpype.host import HostBase
 from openpype.client import (
     get_project,
     get_asset_by_id,
     get_asset_by_name,
     version_is_latest,
+    get_ayon_server_api_connection,
 )
 from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
@@ -104,6 +106,10 @@ def install_host(host):
     global _is_installed
 
     _is_installed = True
+
+    # Make sure global AYON connection has set site id and version
+    if AYON_SERVER_ENABLED:
+        get_ayon_server_api_connection()
 
     legacy_io.install()
     modules_manager = _get_modules_manager()
