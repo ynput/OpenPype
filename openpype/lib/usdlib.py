@@ -3,7 +3,6 @@ import os
 import copy
 import logging
 from urllib.parse import urlparse, parse_qs
-from collections import namedtuple
 
 try:
     from pxr import Usd, UsdGeom, Sdf, Kind
@@ -39,8 +38,12 @@ log = logging.getLogger(__name__)
 # directly from the publisher at that particular order. Future publishes will
 # then see the existing contribution and will persist adding it to future
 # bootstraps at that order
-Contribution = namedtuple("Contribution",
-                          ("family", "variant", "order", "step"))
+@dataclasses.dataclass
+class Contribution:
+    family: str
+    variant: str
+    order: int
+    step: str
 
 
 @dataclasses.dataclass
@@ -77,7 +80,7 @@ class Layer:
     @classmethod
     def create_anonymous(cls, path, tag="LOP", anchor=None):
         sdf_layer = Sdf.Layer.CreateAnonymous(tag)
-        return cls(layer=sdf_layer, path=path, anchor=anchor)
+        return cls(layer=sdf_layer, path=path, anchor=anchor, tag=tag)
 
 
 # The predefined steps order used for bootstrapping USD Shots and Assets.
@@ -298,6 +301,24 @@ def create_shot(filepath, layers, create_layers=False):
     root_layer.Export(filepath, args={"format": "usda"})
 
     return created_layers
+
+
+def update_ordered_sublayers(layer, layer_path_with_order):
+    """Add sublayer paths in the Sdf.Layer at given "orders"
+
+    USD does not provide a way to set metadata per sublayer entry, but we can
+    'sneak it in' by adding it as part of the file url after :SDF_FORMAT_ARGS:
+    There they will then just be unused args that we can parse later again
+    to access our data.
+
+    Args:
+        layer (Sdf.Layer): Layer to add sublayers in.
+        layer_path_with_order (List[List[Str, int]]):
+
+    Returns:
+
+    """
+    raise NotImplementedError("TODO")
 
 
 def add_variant_references_to_layer(
