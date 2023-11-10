@@ -28,7 +28,6 @@ class ValidateAttributesModel(BaseSettingsModel):
 
 
 class FamilyMappingItemModel(BaseSettingsModel):
-    _layout = "compact"
     product_types: list[str] = Field(
         default_factory=list,
         title="Product Types"
