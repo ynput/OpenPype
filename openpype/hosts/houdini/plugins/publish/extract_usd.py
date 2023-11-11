@@ -14,9 +14,7 @@ class ExtractUSD(publish.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Extract USD"
     hosts = ["houdini"]
-    families = ["usd",
-                "usdModel",
-                "usdSetDress"]
+    families = ["usd"]
 
     def process(self, instance):
 

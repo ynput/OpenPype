@@ -29,7 +29,8 @@ class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
                          "renderlayer",
                          "rendersetup",
                          "mayaUsdLayer",
-                         "usd.bootstrap"}
+                         "usdLayer",
+                         "usdAsset"}
         families = {instance.data.get("family")}
         families.update(instance.data.get("families", []))
         if families.intersection(skip_families):

@@ -106,7 +106,9 @@ def setup_asset_layer(
         asset_name,
         reference_layers=None,
         kind=Kind.Tokens.component,
-        define_class=True
+        define_class=True,
+        force_add_payload=False,
+        set_payload_path=False
 ):
     """
     Adds an asset prim to the layer with the `reference_layers` added as
@@ -143,6 +145,10 @@ def setup_asset_layer(
         kind (pxr.Kind): A USD Kind for the root asset.
         define_class: Define a `/__class__/{asset_name}` class which the
             root asset prim will inherit from.
+        force_add_payload (bool): Generate payload layer even if no
+            reference paths are set - thus generating an enmpty layer.
+        set_payload_path (bool): Whether to directly set the payload asset
+            path to `./payload.usd` or not Defaults to True.
 
     """
     # Define root prim for the asset and make it the default for the stage.
@@ -188,7 +194,7 @@ def setup_asset_layer(
     created_layers = []
 
     # Add references to the  asset prim
-    if reference_layers:
+    if force_add_payload or reference_layers:
         # Create a relative payload file to filepath through which we sublayer
         # the heavier payloads
         # Prefix with `LOP` just so so that if Houdini ROP were to save
@@ -199,17 +205,23 @@ def setup_asset_layer(
         created_layers.append(Layer(layer=payload_layer,
                                     path="./payload.usd"))
 
+        # Add payload
+        if set_payload_path:
+            payload_identifier = "./payload.usd"
+        else:
+            payload_identifier = payload_layer.identifier
+
+        asset_prim.payloadList.prependedItems[:] = [
+            Sdf.Payload(assetPath=payload_identifier)
+        ]
+
         # Add sublayers to the payload layer
         # Note: Sublayering is tricky because it requires that the sublayers
         #   actually define the path at defaultPrim otherwise the payload
         #   reference will not find the defaultPrim and turn up empty.
-        for ref_layer in reference_layers:
-            payload_layer.subLayerPaths.append(ref_layer)
-
-        # Add payload
-        asset_prim.payloadList.prependedItems[:] = [
-            Sdf.Payload(assetPath=payload_layer.identifier)
-        ]
+        if reference_layers:
+            for ref_layer in reference_layers:
+                payload_layer.subLayerPaths.append(ref_layer)
 
     return created_layers
 
@@ -240,16 +252,12 @@ def create_asset(
             asset_name=asset_name,
             reference_layers=reference_layers,
             kind=kind,
-            define_class=define_class
+            define_class=define_class,
+            set_payload_path=True
     )
     for created_layer in created_layers:
         created_layer.anchor = layer
         created_layer.export()
-
-        # Update the dependency on the base layer
-        sdf_layer.UpdateCompositionAssetDependency(
-            created_layer.identifier, created_layer.get_full_path()
-        )
 
     # Make the layer ascii - good for readability, plus the file is small
     log.debug("Creating asset at %s", filepath)
@@ -303,7 +311,8 @@ def create_shot(filepath, layers, create_layers=False):
     return created_layers
 
 
-def update_ordered_sublayers(layer, layer_path_with_order):
+def add_ordered_sublayer(layer, contribution_path, order, layer_id,
+                         add_sdf_arguments_metadata=True):
     """Add sublayer paths in the Sdf.Layer at given "orders"
 
     USD does not provide a way to set metadata per sublayer entry, but we can
@@ -313,12 +322,61 @@ def update_ordered_sublayers(layer, layer_path_with_order):
 
     Args:
         layer (Sdf.Layer): Layer to add sublayers in.
-        layer_path_with_order (List[List[Str, int]]):
+        contribution_path (str): Path/URI to add.
+        order (int): Order to place the contribution in the sublayers
+        layer_id (str): Token that if found for an existing layer it will
+            replace that layer
+        add_sdf_arguments_metadata (bool): Add metadata into the filepath
+            to store the `layer_id` and `order` so ordering can be maintained
+            in the future as intended.
 
     Returns:
 
     """
-    raise NotImplementedError("TODO")
+
+    # Add the order with the contribution path so that for future
+    # contributions we can again use it to magically fit into the
+    # ordering. We put this in the path because sublayer paths do
+    # not allow customData to be stored.
+    # TODO: Avoid this hack to store 'order' and 'layer' metadata
+    #   for sublayers; in USD sublayers can't hold customdata
+    if add_sdf_arguments_metadata:
+        contribution_path = (
+            "{}:SDF_FORMAT_ARGS:order={}:layer_id={}".format(
+                contribution_path,
+                order,
+                layer_id
+            )
+        )
+
+    # If the layer was already in the layers, then replace it
+    for index, existing_path in enumerate(layer.subLayerPaths):
+        args = get_sdf_format_args(existing_path)
+        existing_layer = args.get("layer_id")
+        if existing_layer == layer_id:
+            # Put it in the same position where it was before
+            # swapping it with the original
+            log.debug(
+                f"Replacing existing layer: {layer.subLayerPaths[index]} "
+                f"-> {contribution_path}"
+            )
+            layer.subLayerPaths[index] = contribution_path
+            return
+
+    # If other layers are ordered than place it after the last order where we
+    # are higher
+    for index, existing_path in enumerate(layer.subLayerPaths):
+        args = get_sdf_format_args(existing_path)
+        existing_order = args.get("order")
+        if existing_order is not None and order > int(existing_order):
+            log.debug(f"Inserting new layer at {index}: {contribution_path}")
+            layer.subLayerPaths.insert(index, contribution_path)
+            return
+
+    # If not paths found with an order to put it next to
+    # then put the sublayer at the end
+    log.debug(f"Appending new layer: {contribution_path}")
+    layer.subLayerPaths.append(contribution_path)
 
 
 def add_variant_references_to_layer(
