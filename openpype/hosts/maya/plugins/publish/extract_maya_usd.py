@@ -170,6 +170,8 @@ class ExtractMayaUsd(publish.Extractor):
             "exportRefsAsInstanceable": bool,
             "eulerFilter": bool,
             "renderableOnly": bool,
+            "convertMaterialsTo": str,
+            "shadingMode": (str, None),  # optional str
             "jobContext": (list, None)  # optional list
             # "worldspace": bool,
         }
@@ -192,6 +194,8 @@ class ExtractMayaUsd(publish.Extractor):
             "exportRefsAsInstanceable": False,
             "eulerFilter": True,
             "renderableOnly": False,
+            "shadingMode": "none",
+            "convertMaterialsTo": "none",
             "jobContext": None
             # "worldspace": False
         }
