@@ -64,6 +64,7 @@ class NodesSetting(BaseSettingsModel):
 def ocio_configs_switcher_enum():
     return [
         {"value": "nuke-default", "label": "nuke-default"},
+        {"value": "custom", "label": "custom"},
         {"value": "spi-vfx", "label": "spi-vfx (11)"},
         {"value": "spi-anim", "label": "spi-anim (11)"},
         {"value": "aces_0.1.1", "label": "aces_0.1.1 (11)"},
