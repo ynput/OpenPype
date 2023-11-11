@@ -112,6 +112,7 @@ class MayaUsdProxyReferenceUsd(load.LoaderPlugin):
 
         # Update representation id
         # TODO: Do this in prim spec where we update reference path?
+        # TODO: Store this in the Sdf.Reference CustomData instead?
         prim.SetCustomDataByKey(
             "openpype:representation", str(representation["_id"])
         )
