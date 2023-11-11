@@ -26,6 +26,17 @@ from openpype.lib.usdlib import (
 )
 
 
+# A contribution defines a contribution into a (department) layer which will
+# get layered into the target product, usually the asset or shot.
+# We need to at least know what it targets (e.g. where does it go into) and
+# in what order (which contribution is stronger?)
+# Preferably the bootstrapped data (e.g. the Shot) preserves metadata about
+# the contributions so that we can design a system where custom contributions
+# outside of the predefined orders are possible to be managed. So that if a
+# particular asset requires an extra contribution level, you can add it
+# directly from the publisher at that particular order. Future publishes will
+# then see the existing contribution and will persist adding it to future
+# bootstraps at that order
 # TODO: Avoid hardcoded ordering - might need to be set through settings?
 LAYER_ORDERS = {
     # asset layers

@@ -25,27 +25,6 @@ from openpype.pipeline import (
 log = logging.getLogger(__name__)
 
 
-# A contribution defines a layer or references into a particular bootstrap.
-# The idea is that contributions can be bootstrapped so, that for example
-# the bootstrap of a look variant would update the look bootstrap which updates
-# the asset bootstrap. The exact data structure to access and configure these
-# easily is still to be defined, but we need to at least know what it targets
-# (e.g. where does it go into) and in what order (which contribution is stronger?)
-# Preferably the bootstrapped data (e.g. the Shot) preserves metadata about
-# the contributions so that we can design a system where custom contributions
-# outside of the predefined orders are possible to be managed. So that if a
-# particular asset requires an extra contribution level, you can add it
-# directly from the publisher at that particular order. Future publishes will
-# then see the existing contribution and will persist adding it to future
-# bootstraps at that order
-@dataclasses.dataclass
-class Contribution:
-    family: str
-    variant: str
-    order: int
-    step: str
-
-
 @dataclasses.dataclass
 class Layer:
     layer: Sdf.Layer
@@ -81,24 +60,6 @@ class Layer:
     def create_anonymous(cls, path, tag="LOP", anchor=None):
         sdf_layer = Sdf.Layer.CreateAnonymous(tag)
         return cls(layer=sdf_layer, path=path, anchor=anchor, tag=tag)
-
-
-# The predefined steps order used for bootstrapping USD Shots and Assets.
-# These are ordered in order from strongest to weakest opinions, like in USD.
-PIPELINE = {
-    "shot": [
-        Contribution(family="usd", variant="lighting", order=500, step="lighting"),
-        Contribution(family="usd", variant="fx", order=400, step="fx"),
-        Contribution(family="usd", variant="simulation", order=300, step="simulation"),
-        Contribution(family="usd", variant="animation", order=200, step="animation"),
-        Contribution(family="usd", variant="layout", order=100, step="layout"),
-    ],
-    "asset": [
-        Contribution(family="usd.rig", variant="main", order=300, step="rig"),
-        Contribution(family="usd.look", variant="main", order=200, step="look"),
-        Contribution(family="usd.model", variant="main", order=100, step="model")
-    ],
-}
 
 
 def setup_asset_layer(
