@@ -14,14 +14,9 @@ class ExtractUSD(publish.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Extract USD"
     hosts = ["houdini"]
-    families = ["usd"]
+    families = ["usdrop"]
 
     def process(self, instance):
-
-        # TODO: Clean this up - for now this is used for runtime upstream
-        #   instances (explicit save path layers) from `collect_usd_layers.py`
-        if not instance.data.get("render", True):
-            return
 
         ropnode = hou.node(instance.data.get("instance_node"))
 

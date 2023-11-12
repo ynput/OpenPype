@@ -16,7 +16,7 @@ class ValidateHoudiniCommercialLicense(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["usd"]
+    families = ["usdrop"]
     hosts = ["houdini"]
     label = "Houdini Commercial License"
 

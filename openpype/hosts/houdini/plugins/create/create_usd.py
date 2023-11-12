@@ -50,3 +50,6 @@ class CreateUSD(plugin.HoudiniCreator):
             hou.ropNodeTypeCategory(),
             hou.lopNodeTypeCategory()
         ]
+
+    def get_publish_families(self):
+        return ["usd", "usdrop"]

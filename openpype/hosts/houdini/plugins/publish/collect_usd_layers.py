@@ -52,10 +52,10 @@ def copy_instance_data(instance_src, instance_dest, attr):
 class CollectUsdLayers(pyblish.api.InstancePlugin):
     """Collect the USD Layers that have configured save paths."""
 
-    order = pyblish.api.CollectorOrder + 0.35
+    order = pyblish.api.CollectorOrder + 0.25
     label = "Collect USD Layers"
     hosts = ["houdini"]
-    families = ["usd"]
+    families = ["usdrop"]
 
     def process(self, instance):
         # TODO: Replace this with a Hidden Creator so we collect these BEFORE
