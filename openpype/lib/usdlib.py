@@ -302,24 +302,35 @@ def add_ordered_sublayer(layer, contribution_path, layer_id, order=None,
     # contributions we can again use it to magically fit into the
     # ordering. We put this in the path because sublayer paths do
     # not allow customData to be stored.
-    # TODO: Avoid this hack to store 'order' and 'layer' metadata
-    #   for sublayers; in USD sublayers can't hold customdata
-    if add_sdf_arguments_metadata:
-        parts = [contribution_path,
+    def _format_path(path, layer_id, order):
+        # TODO: Avoid this hack to store 'order' and 'layer' metadata
+        #   for sublayers; in USD sublayers can't hold customdata
+        if add_sdf_arguments_metadata:
+            parts = [
+                contribution_path,
                  # Special separator for SDF Format Args used in USD
-                 "SDF_FORMAT_ARGS"]
-        parts.append("layer_id={}".format(layer_id))
-        if order is not None:
-            parts.append("order={}".format(order))
-        contribution_path = ":".join(parts)
+                 "SDF_FORMAT_ARGS",
+                 "layer_id={}".format(layer_id)
+            ]
+            if order is not None:
+                parts.append("order={}".format(order))
+            return ":".join(parts)
 
     # If the layer was already in the layers, then replace it
     for index, existing_path in enumerate(layer.subLayerPaths):
         args = get_sdf_format_args(existing_path)
         existing_layer = args.get("layer_id")
         if existing_layer == layer_id:
-            # Put it in the same position where it was before
-            # swapping it with the original
+            # Put it in the same position where it was before when swapping
+            # it with the original, also take over its order metadata
+            order = args.get("order")
+            if order is not None:
+                order = int(order)
+            else:
+                order = None
+            contribution_path = _format_path(contribution_path,
+                                             order=order,
+                                             layer_id=layer_id)
             log.debug(
                 f"Replacing existing layer: {layer.subLayerPaths[index]} "
                 f"-> {contribution_path}"
@@ -327,13 +338,17 @@ def add_ordered_sublayer(layer, contribution_path, layer_id, order=None,
             layer.subLayerPaths[index] = contribution_path
             return
 
-    # If an order is defined and other layers are ordered than place it after
-    # the last order where we are higher
+    contribution_path = _format_path(contribution_path,
+                                     order=order,
+                                     layer_id=layer_id)
+
+    # If an order is defined and other layers are ordered than place it before
+    # the first order where existing order is higher
     if order is not None:
         for index, existing_path in enumerate(layer.subLayerPaths):
             args = get_sdf_format_args(existing_path)
             existing_order = args.get("order")
-            if existing_order is not None and order > int(existing_order):
+            if existing_order is not None and int(existing_order) > order:
                 log.debug(
                     f"Inserting new layer at {index}: {contribution_path}"
                 )
