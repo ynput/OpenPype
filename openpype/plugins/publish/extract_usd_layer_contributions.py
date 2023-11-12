@@ -61,7 +61,7 @@ class Contribution:
     instance: pyblish.api.Instance  # instance that contributes it
 
     # Where are we contributing to?
-    layer_id: str  # usually the department or task layer
+    layer_id: str  # usually the department or task name
     target_product: str = "usdAsset"  # target subset the layer should merge to
 
     # Variant
@@ -171,9 +171,15 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.25
+    order = pyblish.api.CollectorOrder + 0.35
     label = "Collect USD Layer Contributions (Asset/Shot)"
     families = ["usd"]
+
+    # TODO: Currently asset and shot contributions both behave as creating
+    #   an "asset" with payload to put the layers in; however, shot-based
+    #   contributions don't need the payload nor the asset structure. We should
+    #   separate it so both can behave independently but still share most of
+    #   the code for easy maintenance
 
     def process(self, instance):
 
@@ -324,6 +330,7 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
 class ExtractUSDLayerContribution(publish.Extractor):
 
     families = ["usdLayer"]
+    label = "Extract USD Layer Contributions (Asset/Shot)"
     order = pyblish.api.ExtractorOrder + 0.45
 
     def process(self, instance):
@@ -386,6 +393,7 @@ class ExtractUSDLayerContribution(publish.Extractor):
 class ExtractUSDAssetContribution(publish.Extractor):
 
     families = ["usdAsset"]
+    label = "Extract USD Asset/Shot Contributions"
     order = ExtractUSDLayerContribution.order + 0.01
 
     def process(self, instance):
