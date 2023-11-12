@@ -52,7 +52,7 @@ LAYER_ORDERS = {
     "lighting": 600,
 }
 
-BUILD_INTO_LAST_VERSIONS = True
+BUILD_INTO_LAST_VERSIONS = False
 
 
 @dataclasses.dataclass
@@ -374,7 +374,18 @@ class ExtractUSDLayerContribution(publish.Extractor):
             else:
                 # Sublayer source file
                 self.log.debug("Adding sublayer")
-                sdf_layer.subLayerPaths.append(path)
+
+                # This replaces existing versions of itself so that
+                # republishing does not continuously add more versions of the
+                # same subset
+                subset = contribution.instance.data["subset"]
+                add_ordered_sublayer(
+                    layer=sdf_layer,
+                    contribution_path=path,
+                    layer_id=subset,
+                    order=None,  # unordered
+                    add_sdf_arguments_metadata=True
+                )
 
         # Save the file
         staging_dir = self.staging_dir(instance)
@@ -416,7 +427,7 @@ class ExtractUSDAssetContribution(publish.Extractor):
 
             asset_layer = Sdf.Layer.OpenAsAnonymous(path)
         else:
-            asset_layer, payload_layer = self.init_asset_layer(asset_name=asset)
+            asset_layer, payload_layer = self.init_layer(asset_name=asset)
 
         target_layer = payload_layer if payload_layer else asset_layer
 
@@ -443,8 +454,8 @@ class ExtractUSDAssetContribution(publish.Extractor):
             path = get_instance_uri_path(instance=layer_instance)
             add_ordered_sublayer(target_layer,
                                  contribution_path=path,
-                                 order=order,
                                  layer_id=layer_id,
+                                 order=order,
                                  # Add the sdf argument metadata which allows
                                  # us to later detect whether another path
                                  # has the same layer id, so we can replace it
@@ -469,7 +480,8 @@ class ExtractUSDAssetContribution(publish.Extractor):
             payload_layer.Export(payload_path, args={"format": "usda"})
             self.add_relative_file(instance, payload_path)
 
-    def init_asset_layer(self, asset_name):
+    def init_layer(self, asset_name):
+        """Initialize layer if no previous version exists"""
         asset_layer = Sdf.Layer.CreateAnonymous()
         created_layers = setup_asset_layer(asset_layer, asset_name,
                                            force_add_payload=True,
@@ -506,3 +518,14 @@ class ExtractUSDAssetContribution(publish.Extractor):
         transfers = instance.data.setdefault("transfers", [])
         self.log.debug(f"Adding relative file {source} -> {relative_path}")
         transfers.append((source, destination))
+
+
+class ExtractShotContribution(ExtractUSDAssetContribution):
+    """Shot contributions go into an empty layer as sublayers"""
+    families = ["usdShot"]
+
+    def init_layer(self, asset_name):
+        """Initialize layer if no previous version exists"""
+        layer = Sdf.Layer.CreateAnonymous()
+        set_layer_defaults(layer, default_prim=None)
+        return layer
