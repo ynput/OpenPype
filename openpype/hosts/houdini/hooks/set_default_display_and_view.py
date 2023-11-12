@@ -1,5 +1,5 @@
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
-import os
+
 
 class SetDefaultDisplayView(PreLaunchHook):
     """Set default view and default display for houdini via OpenColorIO.
@@ -35,9 +35,14 @@ class SetDefaultDisplayView(PreLaunchHook):
 
         # This is a way to get values specified by admins if they already
         # added 'OCIO_ACTIVE_DISPLAYS', 'OCIO_ACTIVE_VIEWS' manually
-        # using Ayon global env vars or Ayon app env vars or Ayon houdini tool
-        OCIO_ACTIVE_DISPLAYS = self.launch_context.env.get("OCIO_ACTIVE_DISPLAYS", "")
-        OCIO_ACTIVE_VIEWS = self.launch_context.env.get("OCIO_ACTIVE_VIEWS", "")
+        # using Ayon global env vars or Ayon app env vars
+        # or Ayon houdini tool
+        OCIO_ACTIVE_DISPLAYS = self.launch_context.env.get(
+            "OCIO_ACTIVE_DISPLAYS", ""
+        )
+        OCIO_ACTIVE_VIEWS = self.launch_context.env.get(
+            "OCIO_ACTIVE_VIEWS", ""
+        )
 
         # default_display and default_view
         default_display = houdini_color_settings["default_display"]
