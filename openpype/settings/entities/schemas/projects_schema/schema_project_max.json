@@ -98,10 +98,10 @@
                   "multiselection": false,
                   "defaults": "exr",
                   "enum_items": [
-                    {"exr":  "exr"},
+                    {"exr": "exr"},
                     {"jpg": "jpg"},
-                    {"png":  "png"},
-                    {"tga":  "tga"}
+                    {"png": "png"},
+                    {"tga": "tga"}
                   ]
                 },
                 {
@@ -111,11 +111,11 @@
                     "multiselection": false,
                     "defaults": "Realistic",
                     "enum_items": [
-                      {"Realistic":  "Realistic"},
+                      {"Realistic": "Realistic"},
                       {"Shaded": "Shaded"},
-                      {"Facets":  "Facets"},
-                      {"ConsistentColors":  "ConsistentColors"},
-                      {"HiddenLine":  "HiddenLine"},
+                      {"Facets": "Facets"},
+                      {"ConsistentColors": "ConsistentColors"},
+                      {"HiddenLine": "HiddenLine"},
                       {"Wireframe": "Wireframe"},
                       {"BoundingBox": "BoundingBox"},
                       {"Ink": "Ink"},
@@ -136,11 +136,11 @@
                     "multiselection": false,
                     "defaults": "Quality",
                     "enum_items": [
-                      {"Quality":  "Quality"},
+                      {"Quality": "Quality"},
                       {"Standard": "Standard"},
-                      {"Performance":  "Performance"},
-                      {"DXMode":  "DXMode"},
-                      {"Customize":  "Customize"}
+                      {"Performance": "Performance"},
+                      {"DXMode": "DXMode"},
+                      {"Customize": "Customize"}
                     ]
                 },
                 {
@@ -150,10 +150,10 @@
                     "multiselection": false,
                     "defaults": "None",
                     "enum_items": [
-                      {"None":  "None"},
+                      {"None": "None"},
                       {"2X": "2X"},
-                      {"4X":  "4X"},
-                      {"8X":  "8X"}
+                      {"4X": "4X"},
+                      {"8X": "8X"}
                     ]
                 },
                 {

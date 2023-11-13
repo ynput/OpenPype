@@ -108,7 +108,7 @@ class CreateReview(plugin.MaxCreator):
                     label="Pre-View Preset"),
             EnumDef("antialiasingQuality",
                     anti_aliasing_enum,
-                    default="None",
+                    default=self.anti_aliasing,
                     label="Anti-aliasing Quality"),
             BoolDef("vpTexture",
                     label="Viewport Texture",
