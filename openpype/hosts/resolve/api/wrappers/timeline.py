@@ -46,6 +46,7 @@ class Timeline(object):
 
     @property
     def video_tracks(self) -> list(api.VideoTrack):
+        # ! resolve uses 1-based indices
         if not self.__video_tracks:
             self.__video_tracks = [
                 api.VideoTrack(self, i, self.root.GetTrackName("video", i))
