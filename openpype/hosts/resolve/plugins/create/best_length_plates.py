@@ -4,8 +4,7 @@ import logging
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
-from openpype.hosts.resolve.api import plugin
-from openpype.hosts.resolve.api import ProjectManager
+import openpype.hosts.resolve.api as api
 
 clipcolor_names = [
     "Orange",
@@ -61,7 +60,7 @@ def get_logger() -> logging.Logger:
 log = get_logger()
 
 
-class CreateBestLengthTimeline(plugin.Creator):
+class CreateBestLengthTimeline(api.plugin.Creator):
     """Create Timeline from all Items in Timelines"""
 
     #! wait this gets instantiated everytime again
@@ -198,7 +197,7 @@ class CreateBestLengthTimeline(plugin.Creator):
 
     def create_bestlength_timeline(self, settings):
         log.info(f"I'm doing the merge")
-        pm = ProjectManager()
+        pm = api.ProjectManager()
         cp = pm.current_project
         # cp.log_info(log)
 
