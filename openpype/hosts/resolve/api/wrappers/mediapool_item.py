@@ -27,3 +27,9 @@ class MediapoolItem(object):
     @property
     def name(self) -> str:
         return self.root.GetName()
+
+    @property
+    def properties(self) -> dict:
+        result = self.root.GetMetadata()
+        result.update(self.root.GetClipProperty())
+        return result
