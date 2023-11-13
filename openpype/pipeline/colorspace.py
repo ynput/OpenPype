@@ -236,9 +236,11 @@ def _get_context_settings(
         asset_name (str): The name of the asset.
         task_name (str): The name of the task.
         host_name (str): The name of the host.
-        config_data (Optional[Dict]): The configuration data. Defaults to None.
+        config_data (Optional[Dict]): The configuration data.
+            Defaults to None.
         file_rules (Optional[Dict]): The file rules. Defaults to None.
-        project_settings (Optional[Dict]): The project settings. Defaults to None.
+        project_settings (Optional[Dict]): The project settings.
+            Defaults to None.
 
     Returns:
         Tuple[Optional[Dict], Optional[Dict], Optional[Dict]]: A tuple
