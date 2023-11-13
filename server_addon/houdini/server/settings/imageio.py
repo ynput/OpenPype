@@ -35,7 +35,13 @@ class ImageIOFileRulesModel(BaseSettingsModel):
 
 
 class WorkfileImageIOModel(BaseSettingsModel):
-    """Render space in Houdini is always set to 'scene_linear' Role."""
+    """Workfile settings help.
+
+    Empty values will be skipped, allowing any existing env vars to
+    pass through as defined.
+
+    Note: The render space in Houdini is
+    always set to the 'scene_linear' role."""
 
     enabled: bool = Field(False, title="Enabled")
     default_display: str = Field(title="Display")
