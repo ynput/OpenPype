@@ -33,3 +33,7 @@ class MediapoolItem(object):
         result = self.root.GetMetadata()
         result.update(self.root.GetClipProperty())
         return result
+
+    @property
+    def fps(self) -> float:
+        return float(self.properties["FPS"])
