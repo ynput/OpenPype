@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import copy
 import collections
 
@@ -264,6 +265,35 @@ class BaseCreator:
 
     def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings.
+
+        Default implementation tries to auto-apply settings values if are
+            in expected hierarchy.
+
+        Data hierarchy to auto-apply settings:
+            ├─ {self.settings_category}                 - Root key in settings
+            │ └─ "create"                               - Hardcoded key
+            │   └─ {self.settings_name} | {class name}  - Name of plugin
+            │     ├─ ... attribute values...            - Attribute/value pair
+
+        It is mandatory to define 'settings_category' attribute. Attribute
+        'settings_name' is optional and class name is used if is not defined.
+
+        Example data:
+            ProjectSettings {
+                "maya": {                    # self.settings_category
+                    "create": {              # Hardcoded key
+                        "CreateAnimation": { # self.settings_name / class name
+                            "enabled": True, # --- Attributes to set ---
+                            "optional": True,#
+                            "active": True,  #
+                            "fps": 25,       # -------------------------
+                        },
+                        ...
+                    },
+                    ...
+                },
+                ...
+            }
 
         Args:
             project_settings (dict[str, Any]): Project settings.
