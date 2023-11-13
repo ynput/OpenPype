@@ -46,19 +46,23 @@ class SetDefaultDisplayView(PreLaunchHook):
 
         # default_display and default_view
         default_display = houdini_color_settings["default_display"]
-        default_display = ":".join([default_display, OCIO_ACTIVE_DISPLAYS])
-
-        default_view = houdini_color_settings["default_view"]
-        default_view = ":".join([default_view, OCIO_ACTIVE_VIEWS])
-
-        self.log.info(
+        if default_display:
+            default_display = ":".join(
+                key for key in [default_display, OCIO_ACTIVE_DISPLAYS] if key
+            )
+            self.log.info(
             "Setting OCIO_ACTIVE_DISPLAYS environment to: {}"
             .format(default_display)
-        )
-        self.launch_context.env["OCIO_ACTIVE_DISPLAYS"] = default_display
+            )
+            self.launch_context.env["OCIO_ACTIVE_DISPLAYS"] = default_display
 
-        self.log.info(
-            "Setting OCIO_ACTIVE_VIEWS environment to: {}"
-            .format(default_view)
-        )
-        self.launch_context.env["OCIO_ACTIVE_VIEWS"] = default_view
+        default_view = houdini_color_settings["default_view"]
+        if default_view:
+            default_view = ":".join(
+                key for key in [default_view, OCIO_ACTIVE_VIEWS] if key
+            )
+            self.log.info(
+                "Setting OCIO_ACTIVE_VIEWS environment to: {}"
+                .format(default_view)
+            )
+            self.launch_context.env["OCIO_ACTIVE_VIEWS"] = default_view
