@@ -9,12 +9,12 @@ class VideoTrack(object):
         self.name: object
         self.index: int
         self.timeline: api.Timeline
-        self.__otio: otio.schema.Track
+        self.__jotio: dict
 
         if args:
             self.timeline = args[0]
-            self.name = args[2]
             self.index = args[1]
+            self.name = args[2]
 
     def __str__(self) -> str:
         return self.name
@@ -30,12 +30,12 @@ class VideoTrack(object):
         ]
 
     @property
-    def otio(self):
-        return self.__otio
+    def jotio(self):
+        return self.__jotio
 
-    @otio.setter
-    def otio(self, val):
-        self.__otio = val
+    @jotio.setter
+    def jotio(self, val):
+        self.__jotio = val
 
     def log_info(self, log):
         info = {

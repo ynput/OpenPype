@@ -18,10 +18,10 @@ class Timeline(object):
         self.__otio: otio.schema.Timeline
         self.__jotio: dict
         self.__root_object: object
+        self.__video_tracks: list[api.VideoTrack] = None
 
         if args:
             self.__root_object = args[0]
-            return
 
         # create new Timeline?
 
@@ -46,10 +46,12 @@ class Timeline(object):
 
     @property
     def video_tracks(self) -> list(api.VideoTrack):
-        return [
-            api.VideoTrack(self, i, self.root.GetTrackName("video", i))
-            for i in range(1, self.root.GetTrackCount("video") + 1)
-        ]
+        if not self.__video_tracks:
+            self.__video_tracks = [
+                api.VideoTrack(self, i, self.root.GetTrackName("video", i))
+                for i in range(1, self.root.GetTrackCount("video") + 1)
+            ]
+        return self.__video_tracks
 
     @property
     def clips(self) -> list(api.TimelineItem):
@@ -91,7 +93,13 @@ class Timeline(object):
     def import_bestlength_otio(self):
         self.otio = otio.adapters.read_from_file(str(self.otio_export_path))
         self.jotio = json.loads(self.otio.to_json_string())
-        # return otio.adapters.read_from_file(str(self.otio_export_path))
+        for vt in self.video_tracks:
+            vt.jotio = self._find_otio_track_by_name(vt.name)
+
+    def _find_otio_track_by_name(self, name):
+        for i in self.jotio["tracks"]["children"]:
+            if i["name"] == name:
+                return i
 
     def log_info(self, log):
         info = {
