@@ -59,6 +59,12 @@ class TimelineItem(object):
         return self.__video_track
 
     @property
+    def is_retimed(self) -> bool:
+        for e in self.jotio["effects"]:
+            if e["OTIO_SCHEMA"] in ["LinearTimeWarp.1", "TimeEffect.1"]:
+                return True
+        return False
+    @property
     def jotio(self) -> dict:
         return self.__jotio
 
