@@ -52,7 +52,13 @@ LAYER_ORDERS = {
     "lighting": 600,
 }
 
-BUILD_INTO_LAST_VERSIONS = False
+# This global toggle is here mostly for debugging purposes and should usually
+# be True so that new publishes merge and extend on previous contributions.
+# With this enabled a new variant model layer publish would e.g. merge with
+# the model layer's other variants nicely, so you can build up an asset by
+# individual publishes instead of requiring to republish each contribution
+# all the time at the same time
+BUILD_INTO_LAST_VERSIONS = True
 
 
 @dataclasses.dataclass
