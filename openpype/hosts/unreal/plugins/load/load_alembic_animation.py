@@ -69,7 +69,7 @@ class AnimationAlembicLoader(plugin.Loader):
         """
 
         # Create directory for asset and ayon container
-        root = "/Game/Ayon/Assets"
+        root = unreal_pipeline.AYON_ASSET_DIR
         asset = context.get('asset').get('name')
         suffix = "_CON"
         if asset:

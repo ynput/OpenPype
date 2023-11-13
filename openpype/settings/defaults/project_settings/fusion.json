@@ -27,5 +27,12 @@
                 "farm_rendering"
             ]
         }
+    },
+    "publish": {
+        "ValidateSaverResolution": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        }
     }
 }

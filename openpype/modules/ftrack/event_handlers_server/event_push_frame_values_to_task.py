@@ -3,6 +3,8 @@ import copy
 from typing import Any
 
 import ftrack_api
+
+from openpype.client import get_project
 from openpype_modules.ftrack.lib import (
     BaseEvent,
     query_custom_attributes,
@@ -139,6 +141,10 @@ class PushHierValuesToNonHierEvent(BaseEvent):
         project_name: str = self.get_project_name_from_event(
             session, event, project_id
         )
+        if get_project(project_name) is None:
+            self.log.debug("Project not found in OpenPype. Skipping")
+            return set(), set()
+
         # Load settings
         project_settings: dict[str, Any] = (
             self.get_project_settings_from_event(event, project_name)
