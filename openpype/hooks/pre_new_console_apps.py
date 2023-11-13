@@ -17,7 +17,7 @@ class LaunchNewConsoleApps(PreLaunchHook):
         "nuke", "nukeassist", "nukex", "hiero", "nukestudio", "mayapy"
     }
     platforms = {"windows"}
-    launch_types = {LaunchTypes.local, LaunchTypes.test}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         # Change `creationflags` to CREATE_NEW_CONSOLE
@@ -27,3 +27,9 @@ class LaunchNewConsoleApps(PreLaunchHook):
         self.launch_context.kwargs.update({
             "creationflags": subprocess.CREATE_NEW_CONSOLE
         })
+
+        if self.launch_context.kwargs["stdout"] == subprocess.DEVNULL:
+            self.launch_context.kwargs["stdout"] = None
+
+        if self.launch_context.kwargs["stderr"] == subprocess.DEVNULL:
+            self.launch_context.kwargs["stderr"] = None

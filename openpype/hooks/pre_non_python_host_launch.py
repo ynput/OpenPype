@@ -20,7 +20,7 @@ class NonPythonHostHook(PreLaunchHook):
     app_groups = {"harmony", "photoshop", "aftereffects"}
 
     order = 20
-    launch_types = {LaunchTypes.local, LaunchTypes.test}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         # Pop executable

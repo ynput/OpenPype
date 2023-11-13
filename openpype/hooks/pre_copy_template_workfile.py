@@ -20,7 +20,7 @@ class CopyTemplateWorkfile(PreLaunchHook):
     # Before `AddLastWorkfileToLaunchArgs`
     order = 0
     app_groups = {"blender", "photoshop", "tvpaint", "aftereffects"}
-    launch_types = {LaunchTypes.local, LaunchTypes.test}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         """Check if can copy template for context and do it if possible.

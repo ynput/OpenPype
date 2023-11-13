@@ -12,13 +12,11 @@ import requests
 import re
 import inspect
 import time
-import subprocess
 
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler, LocalFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
-from openpype.lib.applications import LaunchTypes
 
 
 class BaseTest:
@@ -351,8 +349,7 @@ class PublishTest(ModuleUnitTest):
             "asset_name": self.ASSET,
             "task_name": self.TASK,
             "stdout": stdout,
-            "stderr": stderr,
-            "launch_type": LaunchTypes.test
+            "stderr": stderr
         }
         if app_args:
             data["app_args"] = app_args

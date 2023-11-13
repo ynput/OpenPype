@@ -49,6 +49,9 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     ):
         """Testing Pyblish and Python logs within Maya."""
 
+        # We should have some output from publish_finished.
+        assert publish_finished, "No output of publish found."
+
         # All maya output via MAYA_CMD_FILE_OUTPUT env var during test run
         logging_path = os.path.join(download_test_data, "output.log")
         with open(logging_path, "r") as f:
@@ -56,6 +59,9 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
 
         print(("-" * 50) + "LOGGING" + ("-" * 50))
         print(logging_output)
+
+        print(("-" * 50) + "STDOUT" + ("-" * 50))
+        print(publish_finished)
 
         # Check for pyblish errors.
         error_regex = r"pyblish \(ERROR\)((.|\n)*?)((pyblish \())"

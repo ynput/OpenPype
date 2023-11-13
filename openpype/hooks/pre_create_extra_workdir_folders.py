@@ -14,7 +14,7 @@ class CreateWorkdirExtraFolders(PreLaunchHook):
 
     # Execute after workfile template copy
     order = 15
-    launch_types = {LaunchTypes.local, LaunchTypes.test}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         if not self.application.is_host:

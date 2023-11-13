@@ -7,7 +7,7 @@ class MayaPreOpenWorkfilePostInitialization(PreLaunchHook):
     # Before AddLastWorkfileToLaunchArgs.
     order = 9
     app_groups = {"maya"}
-    launch_types = {LaunchTypes.local, LaunchTypes.test}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
 

@@ -60,8 +60,6 @@ class LaunchTypes:
     remote = "remote"
     # Automated launch - application is launched with automated publishing
     automated = "automated"
-    # Testing launch - application is launched in a testing environment.
-    test = "test"
 
 
 def parse_environments(env_data, env_group=None, platform_name=None):
