@@ -56,7 +56,7 @@ def anti_aliasing_enum():
     ]
 
 
-class PreviewAnimationModel(BaseSettingsModel):
+class CreateReviewModel(BaseSettingsModel):
     review_width: int = Field(1920, title="Review Width")
     review_height: int = Field(1080, title="Review Height")
     percentSize: float = Field(100.0, title="Percent of Output")
@@ -80,7 +80,7 @@ class PreviewAnimationModel(BaseSettingsModel):
     vp_texture: bool = Field(True, title="Viewport Texture")
 
 
-DEFAULT_PREVIEW_ANIMATION_SETTINGS = {
+DEFAULT_CREATE_REVIEW_SETTINGS = {
     "review_width": 1920,
     "review_height": 1080,
     "percentSize": 100.0,

@@ -4,8 +4,8 @@ from .imageio import ImageIOSettings
 from .render_settings import (
     RenderSettingsModel, DEFAULT_RENDER_SETTINGS
 )
-from .preview_animation import (
-    PreviewAnimationModel, DEFAULT_PREVIEW_ANIMATION_SETTINGS
+from .create_review_settings import (
+    CreateReviewModel, DEFAULT_CREATE_REVIEW_SETTINGS
 )
 from .publishers import (
     PublishersModel, DEFAULT_PUBLISH_SETTINGS
@@ -32,9 +32,9 @@ class MaxSettings(BaseSettingsModel):
         default_factory=RenderSettingsModel,
         title="Render Settings"
     )
-    CreateReview: PreviewAnimationModel = Field(
-        default_factory=PreviewAnimationModel,
-        title="Preview Animation"
+    CreateReview: CreateReviewModel = Field(
+        default_factory=CreateReviewModel,
+        title="Create Review"
     )
     PointCloud: PointCloudSettings = Field(
         default_factory=PointCloudSettings,
@@ -47,7 +47,7 @@ class MaxSettings(BaseSettingsModel):
 
 DEFAULT_VALUES = {
     "RenderSettings": DEFAULT_RENDER_SETTINGS,
-    "CreateReview": DEFAULT_PREVIEW_ANIMATION_SETTINGS,
+    "CreateReview": DEFAULT_CREATE_REVIEW_SETTINGS,
     "PointCloud": {
         "attribute": [
             {"name": "Age", "value": "age"},
