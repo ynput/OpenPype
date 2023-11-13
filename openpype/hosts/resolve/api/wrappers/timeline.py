@@ -68,7 +68,7 @@ class Timeline(object):
         self.__otio = val
 
     @property
-    def jotio(self) -> jotio.schema.Timeline:
+    def jotio(self) -> dict:
         return self.__jotio
 
     @jotio.setter
