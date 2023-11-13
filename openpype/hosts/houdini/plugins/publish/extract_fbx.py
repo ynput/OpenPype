@@ -40,9 +40,9 @@ class ExtractFBX(publish.Extractor):
         }
 
         # A single frame may also be rendered without start/end frame.
-        if "frameStart" in instance.data and "frameEnd" in instance.data:
-            representation["frameStart"] = instance.data["frameStart"]
-            representation["frameEnd"] = instance.data["frameEnd"]
+        if "frameStartHandle" in instance.data and "frameEndHandle" in instance.data:  # noqa
+            representation["frameStart"] = instance.data["frameStartHandle"]
+            representation["frameEnd"] = instance.data["frameEndHandle"]
 
         # set value type for 'representations' key to list
         if "representations" not in instance.data:

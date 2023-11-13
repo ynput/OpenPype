@@ -18,6 +18,8 @@ class CreateBlendScene(plugin.Creator):
     family = "blendScene"
     icon = "cubes"
 
+    maintain_selection = False
+
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
@@ -39,10 +41,10 @@ class CreateBlendScene(plugin.Creator):
         # Create instance object
         asset = instance_data.get("asset")
         name = plugin.asset_name(asset, subset_name)
-        asset_group = bpy.data.objects.new(name=name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
-        instances.objects.link(asset_group)
 
+        # Create the new asset group as collection
+        asset_group = bpy.data.collections.new(name=name)
+        instances.children.link(asset_group)
         asset_group[AVALON_PROPERTY] = instance_node = {
             "name": asset_group.name
         }
@@ -50,15 +52,13 @@ class CreateBlendScene(plugin.Creator):
         self.set_instance_data(subset_name, instance_data, instance_node)
         lib.imprint(asset_group, instance_data)
 
-        # Add selected objects to instance
         if (self.options or {}).get("useSelection"):
-            bpy.context.view_layer.objects.active = asset_group
-            selected = lib.get_selection()
-            for obj in selected:
-                if obj.parent in selected:
-                    obj.select_set(False)
-                    continue
-            selected.append(asset_group)
-            bpy.ops.object.parent_set(keep_transform=True)
+            selection = lib.get_selection(include_collections=True)
+
+            for data in selection:
+                if isinstance(data, bpy.types.Collection):
+                    asset_group.children.link(data)
+                elif isinstance(data, bpy.types.Object):
+                    asset_group.objects.link(data)
 
         return asset_group

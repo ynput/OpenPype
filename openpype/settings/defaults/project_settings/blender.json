@@ -71,6 +71,11 @@
             "optional": false,
             "active": true
         },
+        "ValidateInstanceEmpty": {
+            "enabled": true,
+            "optional": false,
+            "active": true
+        },
         "ExtractBlend": {
             "enabled": true,
             "optional": true,
