@@ -110,31 +110,45 @@ def test_create_shot(tmp_path):
 
 def test_add_variant_references_to_layer(tmp_path):
     """Test adding variants to a layer, replacing older ones"""
-    # TODO: The code doesn't error but the data should still be validated
+
+    def get_references(layer, prim_path, variant_set, variant):
+        """Return prepended reference asset paths for prim in variant set"""
+        path = Sdf.Path(prim_path).AppendVariantSelection(variant_set, variant)
+        prim_spec = layer.GetPrimAtPath(path)
+        references = list(prim_spec.referenceList.prependedItems)
+        return [ref.assetPath for ref in references]
 
     prim_path = "/root"
     layer = usdlib.add_variant_references_to_layer(variants=[
             ("main", "./main.usd"),
             ("twist", "./twist.usd"),
-            ("damaged", "./damaged.usd"),
             ("tall", "./tall.usd"),
         ],
         variantset="model",
         variant_prim=prim_path
     )
+    assert get_references(layer, prim_path, "model", "main") == ["./main.usd"]
+    assert get_references(layer, prim_path, "model", "twist") == ["./twist.usd"]
+    assert get_references(layer, prim_path, "model", "tall") == ["./tall.usd"]
 
     # Allow recalling with a layer provided to operate on that layer
-    # instead; adding more variant definitions
+    # instead; adding more variant definitions, keeping existing definitions
+    # as well
     layer = usdlib.add_variant_references_to_layer(variants=[
             ("main", "./look_main.usd"),
             ("twist", "./look_twist.usd"),
-            ("damaged", "./look_damaged.usd"),
             ("tall", "./look_tall.usd"),
         ],
         variantset="look",
         layer=layer,
         variant_prim=prim_path
     )
+    assert get_references(layer, prim_path, "model", "main") == ["./main.usd"]
+    assert get_references(layer, prim_path, "model", "twist") == ["./twist.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "model", "tall") == ["./tall.usd"]
+    assert get_references(layer, prim_path, "look", "main") == ["./look_main.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "twist") == ["./look_twist.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "tall") == ["./look_tall.usd"]  # noqa: E501
 
     # Allow with a layer provided to operate on that layer
     # instead; adding more variant names to an existing variant set
@@ -146,6 +160,30 @@ def test_add_variant_references_to_layer(tmp_path):
         set_default_variant=False,
         variant_prim=prim_path
     )
+    assert get_references(layer, prim_path, "model", "main") == ["./main.usd"]
+    assert get_references(layer, prim_path, "model", "twist") == ["./twist.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "model", "tall") == ["./tall.usd"]
+    assert get_references(layer, prim_path, "look", "main") == ["./look_main.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "twist") == ["./look_twist.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "tall") == ["./look_tall.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "short") == ["./look_short.usd"]  # noqa: E501
+
+    # Allow updating an existing variant with a new file
+    layer = usdlib.add_variant_references_to_layer(variants=[
+            ("short", "./look_short_v02.usd"),
+        ],
+        variantset="look",
+        layer=layer,
+        set_default_variant=False,
+        variant_prim=prim_path
+    )
+    assert get_references(layer, prim_path, "model", "main") == ["./main.usd"]
+    assert get_references(layer, prim_path, "model", "twist") == ["./twist.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "model", "tall") == ["./tall.usd"]
+    assert get_references(layer, prim_path, "look", "main") == ["./look_main.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "twist") == ["./look_twist.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "tall") == ["./look_tall.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "short") == ["./look_short_v02.usd"]  # noqa: E501
 
     # Applying variants to another prim should not affect first prim
     layer = usdlib.add_variant_references_to_layer(variants=[
@@ -156,6 +194,14 @@ def test_add_variant_references_to_layer(tmp_path):
         set_default_variant=False,
         variant_prim="/other_root"
     )
+    assert get_references(layer, prim_path, "model", "main") == ["./main.usd"]
+    assert get_references(layer, prim_path, "model", "twist") == ["./twist.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "model", "tall") == ["./tall.usd"]
+    assert get_references(layer, prim_path, "look", "main") == ["./look_main.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "twist") == ["./look_twist.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "tall") == ["./look_tall.usd"]  # noqa: E501
+    assert get_references(layer, prim_path, "look", "short") == ["./look_short_v02.usd"]  # noqa: E501
+    assert get_references(layer, "/other_root", "look", "short") == ["./look_short.usd"]  # noqa: E501
 
     # Export layer should work
     layer.Export(
