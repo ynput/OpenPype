@@ -12,8 +12,16 @@ class PublishedFilesTycacheObject(pyblish.api.InstancePlugin):
     families = ["tycache"]
 
     def process(self, instance):
+        tycache_attrs = instance.data["tyc_attrs"]
+        if "tycacheCreateObjectIfNotCreated" not in tycache_attrs["tycacheAttributes"]:
+            self.log.debug("Attribute of 'Create Tycache Object' and "
+                           "'Only if one does not already exists' "
+                           "not being enabled. \n\n"
+                           "Skipping using published file as tyCache Object.")
+            return
+
         published_path = None
-        tycache_object_name = instance.data["tyc_attrs"]["tycacheObjectName"]
+        tycache_object_name = tycache_attrs["tycacheObjectName"]
         representation = instance.data["representations"]
         for repre in representation:
             published_path = repre["published_path"]
