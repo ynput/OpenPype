@@ -79,7 +79,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
 
         assert render_data, "No render data found."
 
-        self.log.info(f"render_data: {dict(render_data)}")
+        self.log.debug(f"render_data: {dict(render_data)}")
 
         render_product = render_data.get("render_product")
         aov_file_product = render_data.get("aov_file_product")
@@ -122,4 +122,4 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
             "renderProducts": colorspace.ARenderProduct(),
         })
 
-        self.log.info(f"data: {instance.data}")
+        self.log.debug(f"data: {instance.data}")

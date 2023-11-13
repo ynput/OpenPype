@@ -29,7 +29,7 @@ class ExtractAnimationFBX(
         stagingdir = self.staging_dir(instance)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         # The first collection object in the instance is taken, as there
         # should be only one that contains the asset group.
@@ -62,7 +62,7 @@ class ExtractAnimationFBX(
             starting_frames.append(curr_frame_range[0])
             ending_frames.append(curr_frame_range[1])
         else:
-            self.log.info("Object have no animation.")
+            self.log.info("Object has no animation.")
             return
 
         asset_group_name = asset_group.name
@@ -164,5 +164,5 @@ class ExtractAnimationFBX(
         instance.data["representations"].append(fbx_representation)
         instance.data["representations"].append(json_representation)
 
-        self.log.info("Extracted instance '{}' to: {}".format(
-                      instance.name, fbx_representation))
+        self.log.debug("Extracted instance '{}' to: {}".format(
+                       instance.name, fbx_representation))

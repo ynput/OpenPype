@@ -24,7 +24,7 @@ class ExtractCamera(publish.Extractor, publish.OptionalPyblishPluginMixin):
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         plugin.deselect_all()
 
@@ -76,5 +76,5 @@ class ExtractCamera(publish.Extractor, publish.OptionalPyblishPluginMixin):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, representation)

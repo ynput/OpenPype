@@ -45,7 +45,7 @@ class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
                 starting_frames.append(curr_frame_range[0])
                 ending_frames.append(curr_frame_range[1])
             else:
-                self.log.info("Object have no animation.")
+                self.log.info("Object has no animation.")
                 continue
 
             asset_group_name = asset.name
@@ -120,7 +120,7 @@ class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
         stagingdir = self.staging_dir(instance)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -248,5 +248,5 @@ class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
             }
             instance.data["representations"].append(fbx_representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, json_representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, json_representation)

@@ -27,8 +27,6 @@ class ExtractPlayblast(publish.Extractor, publish.OptionalPyblishPluginMixin):
         if not self.is_active(instance.data):
             return
 
-        self.log.info(instance.data)
-
         # get scene fps
         fps = instance.data.get("fps")
         if fps is None:
@@ -56,7 +54,7 @@ class ExtractPlayblast(publish.Extractor, publish.OptionalPyblishPluginMixin):
         filename = instance.name
         path = os.path.join(stagingdir, filename)
 
-        self.log.info(f"Outputting images to {path}")
+        self.log.debug(f"Outputting images to {path}")
 
         project_settings = instance.context.data["project_settings"]["blender"]
         presets = project_settings["publish"]["ExtractPlayblast"]["presets"]
@@ -101,7 +99,7 @@ class ExtractPlayblast(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         frame_collection = collections[0]
 
-        self.log.info(f"We found collection of interest {frame_collection}")
+        self.log.debug(f"We found collection of interest {frame_collection}")
 
         instance.data.setdefault("representations", [])
 
