@@ -177,6 +177,118 @@
         }
     },
     "publish": {
+        "CollectEditorialCSV": {
+            "csv_delimiter": ",",
+            "tags_delimiter": ";",
+            "default_tags": [
+                "review"
+            ],
+            "columns_config": {
+                "Project": {
+                    "default": null,
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Vendor": {
+                    "default": null,
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Package": {
+                    "default": null,
+                    "required": false,
+                    "validate": "([a-z]{3}_sub_\\d{6}_\\d{4})"
+                },
+                "Filename": {
+                    "default": "",
+                    "required": true,
+                    "validate": "^([a-z0-9#._\/]*)$"
+                },
+                "Context": {
+                    "default": "",
+                    "required": true,
+                    "validate": "^([a-zA-Z0-9_]*)$"
+                },
+                "Task": {
+                    "default": "",
+                    "required": true,
+                    "validate": "(lgt|comp|anim)"
+                },
+                "Version": {
+                    "default": 1,
+                    "required": true,
+                    "validate": "^(\\d{1,3})$"
+                },
+                "Color": {
+                    "default": "ACES - ACEScg",
+                    "required": true,
+                    "validate": "^(ACES - ACES2065-1|ACES - ACEScg|Output - Rec.709)$"
+                },
+                "Notes": {
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Intent": {
+                    "default": "WIP",
+                    "required": false,
+                    "validate": "^(WIP|PF|PAF|FINAL)$"
+                },
+                "Output": {
+                    "default": "preview",
+                    "required": true,
+                    "validate": "(exr|preview|edit|review|nuke)"
+                },
+                "Family": {
+                    "default": "render",
+                    "required": false,
+                    "validate": "(render|plate|workfile)"
+                },
+                "Slate": {
+                    "default": true,
+                    "required": false,
+                    "validate": "(true|false)"
+                },
+                "Tags": {
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Variant": {
+                    "default": "Main",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Start": {
+                    "required": false,
+                    "validate": "^(\\d{1,8})$|.*|None"
+                },
+                "End": {
+                    "required": false,
+                    "validate": "^(\\d{1,8})$|.*|None"
+                },
+                "Length": {
+                    "required": false,
+                    "validate": "^(\\d{1,8})$|.*"
+                }
+            },
+            "representation_config": {
+                "preview": {
+                    "extensions": [".mp4", ".mov"]
+                },
+                "exr": {
+                    "extensions": [".exr"]
+                },
+                "edit": {
+                    "extensions": [".mov"]
+                },
+                "review": {
+                    "extensions": [".mov"]
+                },
+                "nuke": {
+                    "extensions": [".nk"]
+                }
+            }
+        },
         "CollectTextures": {
             "enabled": true,
             "active": true,

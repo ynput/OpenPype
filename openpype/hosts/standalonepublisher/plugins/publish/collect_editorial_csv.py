@@ -35,6 +35,10 @@ class CollectEditorialCSV(
     tags_delimiter = ";"
     default_tags = ["review"]
 
+    # configs
+    columns_config = None
+    representation_config = None
+
     def process(self, instance):
         context = instance.context
 
@@ -599,148 +603,114 @@ class CollectEditorialCSV(
         })
 
 def config_columns_data():
+    if self.columns_config:
+        return self.columns_config
     return {
         "Project": {
-            "column": "vendor_Project",
             "default": None,
             "required": False,
             "validate": "^(.*)$"
         },
         "Vendor": {
-            "column": "vendor_Vendor",
             "default": None,
             "required": False,
             "validate": "^(.*)$"
         },
         "Package": {
-            "column": "vendor_Package",
             "default": None,
             "required": False,
             "validate": "([a-z]{3}_sub_\\d{6}_\\d{4})"
         },
         "Filename": {
-            "column": "vendor_Filename",
             "default": "",
             "required": True,
             "validate": "^([a-z0-9#._\/]*)$"
         },
         "Context": {
-            "column": "vendor_Context",
             "default": "",
             "required": True,
             "validate": "^([a-zA-Z0-9_]*)$"
         },
         "Task": {
-            "column": "vendor_Task",
             "default": "",
             "required": True,
             "validate": "(lgt|comp|anim)"
         },
-        "Output": {
-            "column": "vendor_Variant",
-            "default": "Main",
-            "required": False,
-            "validate": "^(.*)$"
-        },
         "Version": {
-            "column": "vendor_Version",
             "default": 1,
             "required": True,
             "validate": "^(\\d{1,3})$"
         },
         "Color": {
-            "column": "vendor_Color",
             "default": "ACES - ACEScg",
             "required": True,
             "validate": "^(ACES - ACES2065-1|ACES - ACEScg|Output - Rec.709)$"
         },
         "Notes": {
-            "column": "vendor_Notes",
             "default": "",
             "required": False,
             "validate": "^(.*)$"
         },
         "Intent": {
-            "column": "vendor_Intent",
             "default": "WIP",
             "required": False,
             "validate": "^(WIP|PF|PAF|FINAL)$"
         },
         "Output": {
-            "column": "vendor_Output",
             "default": "preview",
             "required": True,
             "validate": "(exr|preview|edit|review|nuke)"
         },
         "Family": {
-            "column": "vendor_Family",
             "default": "render",
             "required": False,
             "validate": "(render|plate|workfile)"
         },
         "Slate": {
-            "column": "vendor_Slate",
             "default": True,
             "required": False,
             "validate": "(True|False)"
         },
         "Tags": {
-            "column": "vendor_Tags",
             "required": False,
             "validate": "^(.*)$"
         },
         "Variant": {
-            "column": "vendor_Variant",
             "default": "Main",
             "required": False,
             "validate": "^(.*)$"
         },
         "Start": {
-            "column": "vendor_Start",
             "required": False,
             "validate": "^(\\d{1,8})$|.*|None"
         },
         "End": {
-            "column": "vendor_End",
             "required": False,
             "validate": "^(\\d{1,8})$|.*|None"
         },
         "Length": {
-            "column": "vendor_Length",
             "required": False,
             "validate": "^(\\d{1,8})$|.*"
         },
     }
 
 def config_representation_data():
+    if self.representation_config:
+        return self.representation_config
     return {
         "preview": {
-            "extensions": [".mp4", ".mov"],
-            "codecs": ["h264"],
-            "validate_frame_range": False,
-            "validate_fps": True,
+            "extensions": [".mp4", ".mov"]
         },
         "exr": {
-            "extensions": [".exr"],
-            "codecs": ["exr"],
-            "validate_frame_range": True,
-            "validate_fps": True,
+            "extensions": [".exr"]
         },
         "edit": {
-            "extensions": [".mov"],
-            "codecs": ["prores"],
-            "validate_frame_range": True,
-            "validate_fps": True,
+            "extensions": [".mov"]
         },
         "review": {
-            "extensions": [".mov"],
-            "codecs": ["h264"],
-            "validate_frame_range": True,
-            "validate_fps": True,
+            "extensions": [".mov"]
         },
         "nuke": {
-            "extensions": [".nk"],
-            "validate_frame_range": True,
-            "validate_fps": True,
+            "extensions": [".nk"]
         }
     }
