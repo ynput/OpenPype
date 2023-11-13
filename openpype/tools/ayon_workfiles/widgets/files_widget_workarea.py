@@ -5,9 +5,8 @@ from openpype.style import (
     get_default_entity_icon_color,
     get_disabled_entity_icon_color,
 )
+from openpype.tools.utils import TreeView
 from openpype.tools.utils.delegates import PrettyTimeDelegate
-
-from .utils import TreeView
 
 FILENAME_ROLE = QtCore.Qt.UserRole + 1
 FILEPATH_ROLE = QtCore.Qt.UserRole + 2
@@ -271,7 +270,7 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
 
         selection_model = view.selectionModel()
         selection_model.selectionChanged.connect(self._on_selection_change)
-        view.double_clicked_left.connect(self._on_left_double_click)
+        view.double_clicked.connect(self._on_mouse_double_click)
         view.customContextMenuRequested.connect(self._on_context_menu)
 
         controller.register_event_callback(
@@ -333,8 +332,9 @@ class WorkAreaFilesWidget(QtWidgets.QWidget):
         filepath = self.get_selected_path()
         self._controller.set_selected_workfile_path(filepath)
 
-    def _on_left_double_click(self):
-        self.open_current_requested.emit()
+    def _on_mouse_double_click(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.open_current_requested.emit()
 
     def _on_context_menu(self, point):
         index = self._view.indexAt(point)

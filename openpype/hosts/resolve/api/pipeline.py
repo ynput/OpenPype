@@ -127,10 +127,8 @@ def containerise(timeline_item,
     })
 
     if data:
-        for k, v in data.items():
-            data_imprint.update({k: v})
+        data_imprint.update(data)
 
-    print("_ data_imprint: {}".format(data_imprint))
     lib.set_timeline_item_pype_tag(timeline_item, data_imprint)
 
     return timeline_item

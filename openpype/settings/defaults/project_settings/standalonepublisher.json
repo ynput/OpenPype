@@ -149,6 +149,16 @@
             "defaults": [],
             "help": "Hierarchical data structure for the efficient storage and manipulation of sparse volumetric data discretized on three-dimensional grids"
         },
+        "editorial_csv": {
+            "name": "editorial_csv",
+            "label": "Editorial CSV",
+            "family": "editorialcsv",
+            "icon": "image",
+            "defaults": [
+                "Main"
+            ],
+            "help": "Publishing complex editorial from CSV"
+        },
         "__dynamic_keys_labels__": {
             "create_workfile": "Workfile",
             "create_model": "Model",

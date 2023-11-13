@@ -86,12 +86,22 @@ class HostToolsHelper:
     def get_loader_tool(self, parent):
         """Create, cache and return loader tool window."""
         if self._loader_tool is None:
-            from openpype.tools.loader import LoaderWindow
-
             host = registered_host()
             ILoadHost.validate_load_methods(host)
+            if AYON_SERVER_ENABLED:
+                from openpype.tools.ayon_loader.ui import LoaderWindow
+                from openpype.tools.ayon_loader import LoaderController
 
-            loader_window = LoaderWindow(parent=parent or self._parent)
+                controller = LoaderController(host=host)
+                loader_window = LoaderWindow(
+                    controller=controller,
+                    parent=parent or self._parent
+                )
+
+            else:
+                from openpype.tools.loader import LoaderWindow
+
+                loader_window = LoaderWindow(parent=parent or self._parent)
             self._loader_tool = loader_window
 
         return self._loader_tool
@@ -109,7 +119,7 @@ class HostToolsHelper:
             if use_context is None:
                 use_context = False
 
-            if use_context:
+            if not AYON_SERVER_ENABLED and use_context:
                 context = {"asset": get_current_asset_name()}
                 loader_tool.set_context(context, refresh=True)
             else:
@@ -161,14 +171,23 @@ class HostToolsHelper:
     def get_scene_inventory_tool(self, parent):
         """Create, cache and return scene inventory tool window."""
         if self._scene_inventory_tool is None:
-            from openpype.tools.sceneinventory import SceneInventoryWindow
-
             host = registered_host()
             ILoadHost.validate_load_methods(host)
 
-            scene_inventory_window = SceneInventoryWindow(
-                parent=parent or self._parent
-            )
+            if AYON_SERVER_ENABLED:
+                from openpype.tools.ayon_sceneinventory.window import (
+                    SceneInventoryWindow)
+
+                scene_inventory_window = SceneInventoryWindow(
+                    parent=parent or self._parent
+                )
+
+            else:
+                from openpype.tools.sceneinventory import SceneInventoryWindow
+
+                scene_inventory_window = SceneInventoryWindow(
+                    parent=parent or self._parent
+                )
             self._scene_inventory_tool = scene_inventory_window
 
         return self._scene_inventory_tool
@@ -187,6 +206,9 @@ class HostToolsHelper:
 
     def get_library_loader_tool(self, parent):
         """Create, cache and return library loader tool window."""
+        if AYON_SERVER_ENABLED:
+            return self.get_loader_tool(parent)
+
         if self._library_loader_tool is None:
             from openpype.tools.libraryloader import LibraryLoaderWindow
 
@@ -199,6 +221,9 @@ class HostToolsHelper:
 
     def show_library_loader(self, parent=None):
         """Loader tool for loading representations from library project."""
+        if AYON_SERVER_ENABLED:
+            return self.show_loader(parent)
+
         with qt_app_context():
             library_loader_tool = self.get_library_loader_tool(parent)
             library_loader_tool.show()
@@ -271,7 +296,8 @@ class HostToolsHelper:
             ILoadHost.validate_load_methods(host)
 
             publisher_window = PublisherWindow(
-                controller=controller, parent=parent or self._parent
+                controller=controller,
+                parent=parent or self._parent
             )
             self._publisher_tool = publisher_window
 
