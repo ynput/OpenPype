@@ -16,6 +16,9 @@ class ExtractCameraABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.abc"

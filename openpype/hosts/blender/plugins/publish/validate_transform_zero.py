@@ -6,10 +6,14 @@ import bpy
 import pyblish.api
 
 import openpype.hosts.blender.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
+)
 
 
-class ValidateTransformZero(pyblish.api.InstancePlugin):
+class ValidateTransformZero(pyblish.api.InstancePlugin,
+                            OptionalPyblishPluginMixin):
     """Transforms can't have any values
 
     To solve this issue, try freezing the transforms. So long
@@ -38,6 +42,9 @@ class ValidateTransformZero(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError(

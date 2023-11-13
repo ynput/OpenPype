@@ -14,6 +14,9 @@ class ExtractBlend(publish.Extractor, publish.OptionalPyblishPluginMixin):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
 
         if not self.is_active(instance.data):

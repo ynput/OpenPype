@@ -24,7 +24,8 @@ class ExtractPlayblast(publish.Extractor, publish.OptionalPyblishPluginMixin):
     order = pyblish.api.ExtractorOrder + 0.01
 
     def process(self, instance):
-        self.log.info("Extracting capture..")
+        if not self.is_active(instance.data):
+            return
 
         self.log.info(instance.data)
 

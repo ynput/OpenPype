@@ -29,6 +29,9 @@ class ValidateObjectIsInObjectMode(
         return invalid
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError(

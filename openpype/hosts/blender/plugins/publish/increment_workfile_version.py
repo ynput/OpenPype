@@ -17,6 +17,8 @@ class IncrementWorkfileVersion(
                 "pointcache", "render"]
 
     def process(self, context):
+        if not self.is_active(context.data):
+            return
 
         assert all(result["success"] for result in context.data["results"]), (
             "Publishing not successful so version is not increased.")

@@ -113,6 +113,9 @@ class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
         return None, n
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
 
