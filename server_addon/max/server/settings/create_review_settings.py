@@ -70,7 +70,7 @@ class CreateReviewModel(BaseSettingsModel):
         title="Preference"
     )
     viewport_preset: str = Field(
-        enum_resolver=preview_preset_enum ,
+        enum_resolver=preview_preset_enum,
         title="Preview Preset"
     )
     anti_aliasing: str = Field(
