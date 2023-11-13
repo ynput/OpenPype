@@ -1,5 +1,5 @@
 ---
-id: settings_project_standalone
+id: project_settings_standalone
 title: Project Standalone Publisher Setting
 sidebar_label: Standalone Publisher
 ---
@@ -29,7 +29,7 @@ Contains list of implemented families to show in middle menu in Standalone Publi
 
 ### Collect Textures
 
-Serves to collect all needed information about workfiles and textures created from those. Allows to publish 
+Serves to collect all needed information about workfiles and textures created from those. Allows to publish
 main workfile (for example from Mari), additional worfiles (from Substance Painter) and exported textures.
 
 Available configuration:
@@ -50,9 +50,9 @@ build name.)
 
 Example:
 
-- pattern: ```^([^.]+)(_[^_.]*)?_v([0-9]{3,}).+``` 
+- pattern: ```^([^.]+)(_[^_.]*)?_v([0-9]{3,}).+```
 - with groups: ```["asset", "filler", "version"]```
-  
+
 parses `corridorMain_v001` into three groups:
 - asset build (`corridorMain`)
 - filler (in this case empty)
@@ -60,9 +60,9 @@ parses `corridorMain_v001` into three groups:
 
 Advanced example (for texture files):
 
-- pattern: ```^([^_.]+)_([^_.]+)_v([0-9]{3,})_([^_.]+)_({color_space})_(1[0-9]{3}).+``` 
+- pattern: ```^([^_.]+)_([^_.]+)_v([0-9]{3,})_([^_.]+)_({color_space})_(1[0-9]{3}).+```
 - with groups: ```["asset", "shader", "version", "channel", "color_space", "udim"]```
-  
+
 parses `corridorMain_aluminiumID_v001_baseColor_linsRGB_1001.exr`:
 - asset build (`corridorMain`)
 - shader (`aluminiumID`)

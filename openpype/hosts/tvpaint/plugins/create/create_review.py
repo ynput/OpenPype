@@ -19,6 +19,7 @@ class TVPaintReviewCreator(TVPaintAutoCreator):
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]
         self.active_on_create = plugin_settings["active_on_create"]
+        self.enabled = plugin_settings.get("enabled", True)
 
     def create(self):
         existing_instance = None

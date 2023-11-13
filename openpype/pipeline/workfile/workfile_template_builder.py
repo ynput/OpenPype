@@ -44,6 +44,10 @@ from openpype.pipeline.load import (
     get_contexts_for_repre_docs,
     load_with_repre_context,
 )
+from openpype.pipeline.action import (
+    get_actions_by_name,
+    action_with_repre_context
+)
 
 from openpype.pipeline.create import (
     discover_legacy_creator_plugins,
@@ -114,6 +118,7 @@ class AbstractTemplateBuilder(object):
         # Where created objects of placeholder plugins will be stored
         self._placeholder_plugins = None
         self._loaders_by_name = None
+        self._actions_by_name = None
         self._creators_by_name = None
         self._create_context = None
 
@@ -240,6 +245,7 @@ class AbstractTemplateBuilder(object):
 
         self._placeholder_plugins = None
         self._loaders_by_name = None
+        self._actions_by_name = None
         self._creators_by_name = None
 
         self._current_asset_doc = None
@@ -256,6 +262,11 @@ class AbstractTemplateBuilder(object):
         if self._loaders_by_name is None:
             self._loaders_by_name = get_loaders_by_name()
         return self._loaders_by_name
+
+    def get_actions_by_name(self):
+        if self._actions_by_name is None:
+            self._actions_by_name = get_actions_by_name()
+        return self._actions_by_name
 
     def _collect_legacy_creators(self):
         creators_by_name = {}
@@ -1279,6 +1290,13 @@ class PlaceholderLoadMixin(object):
         # Sort for readability
         families = list(sorted(families))
 
+        actions_by_name = get_actions_by_name()
+        actions_items = [{"value": "", "label": ""}]
+        actions_items.extend(
+            {"value": action_name, "label": action.label or action_name}
+            for action_name, action in actions_by_name.items()
+        )
+
         return [
             attribute_definitions.UISeparatorDef(),
             attribute_definitions.UILabelDef("Main attributes"),
@@ -1291,7 +1309,7 @@ class PlaceholderLoadMixin(object):
                 items=[
                     {"label": "From Current asset", "value": "context_asset"},
                     {"label": "From Linked assets", "value": "linked_asset"},
-                    {"label": "From Others assets", "value": "all_assets"},
+                    {"label": "From All assets", "value": "all_assets"},
                 ] + libraries_project_items,
                 tooltip=(
                     "Asset Builder Type\n"
@@ -1305,8 +1323,8 @@ class PlaceholderLoadMixin(object):
                     " field \"inputLinks\""
                     "\nAll assets : Template loader will look for all assets"
                     " in database."
-                    "\nLibraries assets : Template loader will look for assets"
-                    "in libraries."
+                    "\nLibrary assets : Template loader will look for assets"
+                    "in given library."
                 )
             ),
             attribute_definitions.EnumDef(
@@ -1333,6 +1351,17 @@ class PlaceholderLoadMixin(object):
                     "\nUseable loader depends on current host's loader list."
                     "\nField is case sensitive."
                 )
+            ),
+            attribute_definitions.EnumDef(
+                "action",
+                label="Builder Action",
+                default=options.get("action"),
+                items=actions_items,
+                tooltip=(
+                    "Builder Action"
+                    "\nUsed to do actions before or after processing"
+                    " the placeholders."
+                ),
             ),
             attribute_definitions.TextDef(
                 "loader_args",
@@ -1569,8 +1598,8 @@ class PlaceholderLoadMixin(object):
                 placeholder, representation
             )
             self.log.info(
-                "Loading {} from {} with loader {} with"
-                "Loader arguments used : {}".format(
+                "Loading {} from {} with loader {} with "
+                "loader arguments used : {}".format(
                     repre_context["subset"],
                     repre_context["asset"],
                     loader_name,
@@ -1591,6 +1620,10 @@ class PlaceholderLoadMixin(object):
             else:
                 failed = False
                 self.load_succeed(placeholder, container)
+            self.populate_action_placeholder(
+                placeholder,
+                repre_load_contexts
+            )
             self.post_placeholder_process(placeholder, failed)
 
         if failed:
@@ -1599,8 +1632,30 @@ class PlaceholderLoadMixin(object):
                 "population."
             )
             return
+
         if not placeholder.data.get("keep_placeholder", True):
             self.delete_placeholder(placeholder)
+            self.cleanup_placeholder(placeholder, failed)
+
+    def populate_action_placeholder(self, placeholder, repre_load_contexts):
+        if "action" not in placeholder.data:
+            return
+
+        action_name = placeholder.data["action"]
+
+        if not action_name:
+            return
+
+        actions_by_name = self.builder.get_actions_by_name()
+
+        for context in repre_load_contexts.values():
+            try:
+                action_with_repre_context(
+                    actions_by_name[action_name],
+                    context
+                )
+            except Exception as e:
+                self.log.warning(f"Action {action_name} failed: {e}")
 
     def load_failed(self, placeholder, representation):
         if hasattr(placeholder, "load_failed"):

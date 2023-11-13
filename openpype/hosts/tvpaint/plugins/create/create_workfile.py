@@ -15,6 +15,7 @@ class TVPaintWorkfileCreator(TVPaintAutoCreator):
         )
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]
+        self.enabled = plugin_settings.get("enabled", True)
 
     def create(self):
         existing_instance = None

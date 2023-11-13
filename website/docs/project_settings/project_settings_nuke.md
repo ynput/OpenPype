@@ -1,5 +1,5 @@
 ---
-id: settings_project_nuke
+id: project_settings_nuke
 title: Project Nuke Setting
 sidebar_label: Nuke
 ---
@@ -24,7 +24,7 @@ All Workfile Builder related settings can be found here. This is a list of avail
 ![nuke_workfile_options_location](assets/nuke_workfile_builder_location.png)
 
 :::important Auto Load Last Version
-In case you want to set the auto load of the latest available version of workfiles, you can do it from [here](settings_project_global#open-last-workfile-at-launch).
+In case you want to set the auto load of the latest available version of workfiles, you can do it from [here](project_settings_global#open-last-workfile-at-launch).
 :::
 
 ### Create first workfile

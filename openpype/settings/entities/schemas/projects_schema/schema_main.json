@@ -150,6 +150,10 @@
                     "type": "schema",
                     "name": "schema_project_standalonepublisher"
                 },
+                                {
+                    "type": "schema",
+                    "name": "schema_project_openrv"
+                },
                 {
                     "type": "schema",
                     "name": "schema_project_traypublisher"

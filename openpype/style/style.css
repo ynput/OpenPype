@@ -1313,13 +1313,16 @@ CreateNextPageOverlay {
     color: {color:settings:project-light};
 }
 #ExpandLabel[state="invalid"], #SettingsLabel[state="invalid"] {
-    color:{color:settings:invalid-dark};
+    color: {color:settings:invalid-dark};
 }
 #ExpandLabel[state="invalid"]:hover, #SettingsLabel[state="invalid"]:hover {
     color: {color:settings:invalid-dark};
 }
 #SettingsOutdatedSourceVersion {
     color: {color:settings:source-version-outdated};
+}
+#SettingsSystemProtected {
+    color: {color:settings:system-protected};
 }
 #SourceVersionLabel {
     padding-left: 3px;
