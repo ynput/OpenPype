@@ -5,6 +5,7 @@ import openpype.hosts.resolve.api as api
 
 class TimelineItem(object):
     def __init__(self, *args) -> object:
+        self.__jotio: dict
         self.__index: int
         self.__root_object: object
         self.__video_track: api.VideoTrack
@@ -13,6 +14,14 @@ class TimelineItem(object):
             self.__root_object = args[0]
             self.__video_track = args[1]
             self.__index = args[2]
+
+        # initialize jotio
+        items = []
+        for i in self.video_track.jotio["children"]:
+            if i["OTIO_SCHEMA"] not in ["Clip.1", "Clip.2"]:
+                continue
+            items.append(i)
+        self.jotio = items[self.__index]
 
     def __str__(self) -> str:
         return self.name
@@ -48,6 +57,14 @@ class TimelineItem(object):
     @property
     def video_track(self) -> api.VideoTrack:
         return self.__video_track
+
+    @property
+    def jotio(self) -> dict:
+        return self.__jotio
+
+    @jotio.setter
+    def jotio(self, val):
+        self.__jotio = val
 
     def log_info(self, log):
         info = {
