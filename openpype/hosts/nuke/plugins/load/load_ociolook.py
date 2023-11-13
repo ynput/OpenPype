@@ -55,7 +55,7 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         """
         namespace = namespace or context['asset']['name']
         suffix = secrets.token_hex(nbytes=4)
-        object_name = "{}_{}_{}".format(
+        node_name = "{}_{}_{}".format(
             name, namespace, suffix)
 
         # getting file path
@@ -64,7 +64,9 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         json_f = self._load_json_data(filepath)
 
         group_node = self._create_group_node(
-            object_name, filepath, json_f["data"])
+            filepath, json_f["data"])
+        # renaming group node
+        group_node["name"].setValue(node_name)
 
         self._node_version_color(context["version"], group_node)
 
@@ -76,17 +78,14 @@ class LoadOcioLookNodes(load.LoaderPlugin):
             name=name,
             namespace=namespace,
             context=context,
-            loader=self.__class__.__name__,
-            data={
-                "objectName": object_name,
-            }
+            loader=self.__class__.__name__
         )
 
     def _create_group_node(
         self,
-        object_name,
         filepath,
-        data
+        data,
+        group_node=None
     ):
         """Creates group node with all the nodes inside.
 
@@ -94,9 +93,9 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         in between - in case those are needed.
 
         Arguments:
-            object_name (str): name of the group node
             filepath (str): path to json file
             data (dict): data from json file
+            group_node (Optional[nuke.Node]): group node or None
 
         Returns:
             nuke.Node: group node with all the nodes inside
@@ -117,7 +116,6 @@ class LoadOcioLookNodes(load.LoaderPlugin):
 
         input_node = None
         output_node = None
-        group_node = nuke.toNode(object_name)
         if group_node:
             # remove all nodes between Input and Output nodes
             for node in group_node.nodes():
@@ -130,7 +128,6 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         else:
             group_node = nuke.createNode(
                 "Group",
-                "name {}_1".format(object_name),
                 inpanel=False
             )
 
@@ -227,16 +224,16 @@ class LoadOcioLookNodes(load.LoaderPlugin):
         project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
-        object_name = container['objectName']
+        group_node = container["node"]
 
         filepath = get_representation_path(representation)
 
         json_f = self._load_json_data(filepath)
 
         group_node = self._create_group_node(
-            object_name,
             filepath,
-            json_f["data"]
+            json_f["data"],
+            group_node
         )
 
         self._node_version_color(version_doc, group_node)

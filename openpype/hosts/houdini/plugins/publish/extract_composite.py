@@ -41,8 +41,8 @@ class ExtractComposite(publish.Extractor):
             "ext": ext,
             "files": output,
             "stagingDir": staging_dir,
-            "frameStart": instance.data["frameStart"],
-            "frameEnd": instance.data["frameEnd"],
+            "frameStart": instance.data["frameStartHandle"],
+            "frameEnd": instance.data["frameEndHandle"],
         }
 
         from pprint import pformat
