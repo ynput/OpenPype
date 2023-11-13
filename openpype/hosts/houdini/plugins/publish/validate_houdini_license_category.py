@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 from openpype.pipeline import PublishValidationError
+import hou
 
 
 class ValidateHoudiniNotApprenticeLicense(pyblish.api.InstancePlugin):
@@ -16,16 +17,18 @@ class ValidateHoudiniNotApprenticeLicense(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["usd"]
+    families = ["usd", "abc"]
     hosts = ["houdini"]
     label = "Houdini Apprentice License"
 
     def process(self, instance):
 
-        import hou
+        if hou.isApprentice() or 1:
+            families = [instance.data["family"]]
+            families += instance.data.get("families", [])
+            families = " ".join(families).title()
 
-        if hou.isApprentice():
             raise PublishValidationError(
-                ("USD Publishing requires a non apprentice "
-                 "license."),
+                "{} Publishing requires a non apprentice license."
+                .format(families),
                 title=self.label)
