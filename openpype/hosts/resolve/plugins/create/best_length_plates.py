@@ -72,7 +72,7 @@ class CreateBestLengthTimeline(plugin.Creator):
     defaults = ["Main"]
 
     # gui_tracks = get_video_track_names()
-    gui_name = "BestLnegth Plate Creator"
+    gui_name = "BestLength Plate Creator"
     gui_info = "Analyzes all Timelines for BestLength Items"
 
     gui_inputs = {
