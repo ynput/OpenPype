@@ -1,9 +1,8 @@
 import collections
 
-from ayon_api import get_server_api_connection
-
 from openpype.client.mongo.operations import CURRENT_THUMBNAIL_SCHEMA
 
+from .utils import get_ayon_server_api_connection
 from .openpype_comp import get_folders_with_tasks
 from .conversion_utils import (
     project_fields_v3_to_v4,
@@ -37,7 +36,7 @@ def get_projects(active=True, inactive=False, library=None, fields=None):
     elif inactive:
         active = False
 
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     fields = project_fields_v3_to_v4(fields, con)
     for project in con.get_projects(active, library, fields=fields):
         yield convert_v4_project_to_v3(project)
@@ -45,7 +44,7 @@ def get_projects(active=True, inactive=False, library=None, fields=None):
 
 def get_project(project_name, active=True, inactive=False, fields=None):
     # Skip if both are disabled
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     fields = project_fields_v3_to_v4(fields, con)
     return convert_v4_project_to_v3(
         con.get_project(project_name, fields=fields)
@@ -66,7 +65,7 @@ def _get_subsets(
     fields=None
 ):
     # Convert fields and add minimum required fields
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     fields = subset_fields_v3_to_v4(fields, con)
     if fields is not None:
         for key in (
@@ -102,7 +101,7 @@ def _get_versions(
     active=None,
     fields=None
 ):
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
 
     fields = version_fields_v3_to_v4(fields, con)
 
@@ -198,7 +197,7 @@ def get_assets(
     if archived:
         active = None
 
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     fields = folder_fields_v3_to_v4(fields, con)
     kwargs = dict(
         folder_ids=asset_ids,
@@ -236,7 +235,7 @@ def get_archived_assets(
 
 
 def get_asset_ids_with_subsets(project_name, asset_ids=None):
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     return con.get_folder_ids_with_products(project_name, asset_ids)
 
 
@@ -282,7 +281,7 @@ def get_subsets(
 
 
 def get_subset_families(project_name, subset_ids=None):
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     return con.get_product_type_names(project_name, subset_ids)
 
 
@@ -430,7 +429,7 @@ def get_output_link_versions(project_name, version_id, fields=None):
     if not version_id:
         return []
 
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     version_links = con.get_version_links(
         project_name, version_id, link_direction="out")
 
@@ -446,7 +445,7 @@ def get_output_link_versions(project_name, version_id, fields=None):
 
 
 def version_is_latest(project_name, version_id):
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     return con.version_is_latest(project_name, version_id)
 
 
@@ -501,7 +500,7 @@ def get_representations(
     else:
         active = None
 
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     fields = representation_fields_v3_to_v4(fields, con)
     if fields and active is not None:
         fields.add("active")
@@ -535,7 +534,7 @@ def get_representations_parents(project_name, representations):
         repre["_id"]
         for repre in representations
     }
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     parents_by_repre_id = con.get_representations_parents(project_name,
                                                           repre_ids)
     folder_ids = set()
@@ -677,7 +676,7 @@ def get_workfile_info(
     if not asset_id or not task_name or not filename:
         return None
 
-    con = get_server_api_connection()
+    con = get_ayon_server_api_connection()
     task = con.get_task_by_name(
         project_name, asset_id, task_name, fields=["id", "name", "folderId"]
     )
