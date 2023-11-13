@@ -138,16 +138,22 @@ def _template_replacements_to_v3(template):
     )
 
 
-def _convert_template_item(template):
-    # Others won't have 'directory'
-    if "directory" not in template:
-        return
-    folder = _template_replacements_to_v3(template.pop("directory"))
-    template["folder"] = folder
-    template["file"] = _template_replacements_to_v3(template["file"])
-    template["path"] = "/".join(
-        (folder, template["file"])
-    )
+def _convert_template_item(template_item):
+    for key, value in tuple(template_item.items()):
+        template_item[key] = _template_replacements_to_v3(value)
+
+    # Change 'directory' to 'folder'
+    if "directory" in template_item:
+        template_item["folder"] = template_item.pop("directory")
+
+    if (
+        "path" not in template_item
+        and "file" in template_item
+        and "folder" in template_item
+    ):
+        template_item["path"] = "/".join(
+            (template_item["folder"], template_item["file"])
+        )
 
 
 def _fill_template_category(templates, cat_templates, cat_key):
