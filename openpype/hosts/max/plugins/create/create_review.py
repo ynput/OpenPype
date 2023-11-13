@@ -20,7 +20,7 @@ class CreateReview(plugin.MaxCreator):
     visual_style = "Realistic"
     viewport_preset = "Quality"
     vp_texture = True
-    anti_aliasing = None
+    anti_aliasing = "None"
 
     def apply_settings(self, project_settings):
         settings = project_settings["max"]["CreateReview"]  # noqa
