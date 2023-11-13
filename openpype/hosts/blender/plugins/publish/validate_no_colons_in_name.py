@@ -8,6 +8,7 @@ import openpype.hosts.blender.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 
 
@@ -45,6 +46,6 @@ class ValidateNoColonsInName(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 f"Objects found with colon in name: {invalid}"
             )

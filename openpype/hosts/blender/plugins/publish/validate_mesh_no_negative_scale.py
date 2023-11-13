@@ -7,6 +7,7 @@ import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 import openpype.hosts.blender.api.action
 
@@ -36,6 +37,6 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 f"Meshes found in instance with negative scale: {invalid}"
             )

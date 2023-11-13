@@ -7,6 +7,7 @@ import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 import openpype.hosts.blender.api.action
 
@@ -60,6 +61,6 @@ class ValidateMeshHasUvs(
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 f"Meshes found in instance without valid UV's: {invalid}"
             )

@@ -5,7 +5,10 @@ import bpy
 import pyblish.api
 
 import openpype.hosts.blender.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
@@ -45,6 +48,6 @@ class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 f"Camera must have a keyframe at frame 0: {invalid}"
             )

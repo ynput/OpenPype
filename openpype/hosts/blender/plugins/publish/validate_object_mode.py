@@ -3,7 +3,10 @@ from typing import List
 import bpy
 
 import pyblish.api
-from openpype.pipeline.publish import OptionalPyblishPluginMixin
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError
+)
 import openpype.hosts.blender.api.action
 
 
@@ -34,6 +37,6 @@ class ValidateObjectIsInObjectMode(
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 f"Object found in instance is not in Object Mode: {invalid}"
             )

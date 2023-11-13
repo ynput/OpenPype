@@ -9,6 +9,7 @@ import openpype.hosts.blender.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 
 
@@ -47,7 +48,7 @@ class ValidateTransformZero(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 "Object found in instance has not"
                 f" transform to zero: {invalid}"
             )

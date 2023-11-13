@@ -2,7 +2,10 @@ import bpy
 
 import pyblish.api
 
-from openpype.pipeline.publish import OptionalPyblishPluginMixin
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError
+)
 
 
 class ValidateRenderCameraIsSet(pyblish.api.InstancePlugin,
@@ -20,4 +23,4 @@ class ValidateRenderCameraIsSet(pyblish.api.InstancePlugin,
             return
 
         if not bpy.context.scene.camera:
-            raise RuntimeError("No camera is active for rendering.")
+            raise PublishValidationError("No camera is active for rendering.")
