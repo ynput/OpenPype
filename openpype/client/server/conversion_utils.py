@@ -218,10 +218,27 @@ def convert_v4_project_to_v3(project):
             _convert_template_item(template)
             new_others_templates[name] = template
 
+        staging_templates = templates.pop("staging_dir", None)
+        # Key 'staging_directories' is legacy key that changed
+        #   to 'staging_dir'
+        _legacy_staging_templates = templates.pop("staging_directories", None)
+        if staging_templates is None:
+            staging_templates = _legacy_staging_templates
+
+        if staging_templates is None:
+            staging_templates = {}
+
+        # Prefix all staging template names with 'staging_' prefix
+        #   and add them to 'others'
+        for name, template in staging_templates.items():
+            _convert_template_item(template)
+            new_name = "staging_{}".format(name)
+            new_others_templates[new_name] = template
+
         for key in (
             "work",
             "publish",
-            "hero"
+            "hero",
         ):
             cat_templates = templates.pop(key)
             _fill_template_category(templates, cat_templates, key)
