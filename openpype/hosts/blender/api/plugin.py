@@ -20,10 +20,7 @@ from .ops import (
     MainThreadItem,
     execute_in_main_thread
 )
-from .lib import (
-    imprint,
-    get_selection
-)
+from .lib import imprint
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
