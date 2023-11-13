@@ -34,7 +34,7 @@
                         },
                         {
                             "type": "label",
-                            "label": "Render space in Houdini is always set to 'scene_linear' Role."
+                            "label": "Empty values will be skipped, allowing any existing env vars to pass through as defined.\nNote: The render space in Houdini is always set to the 'scene_linear' role."
                         },
                         {
                             "type": "text",
