@@ -118,13 +118,13 @@ class CreateMayaUsdContribution(CreateMayaUsd):
 
     """
 
-    identifier = "io.openpype.creators.maya.mayausd.contribution"
-    label = "Maya USD Contribution"
+    identifier = "io.openpype.creators.maya.mayausd.assetcontribution"
+    label = "Maya USD Asset Contribution"
     family = "usd"
     icon = "cubes"
     description = "Create Maya USD Contribution"
 
-    default_variants = ["main"]
+    # default_variants = ["main"]
     # TODO: Do not include material for model publish
     # TODO: Do only include material + assignments for material publish
     #       + attribute overrides onto existing geo? (`over`?)
@@ -200,27 +200,19 @@ class CreateMayaUsdContribution(CreateMayaUsd):
             cmds.select(root, replace=True, noExpand=True)
             pre_create_data["use_selection"] = True
 
-        super(CreateMayaUsdContribution, self).create(
+        # Create as if we're the other plug-in so that the instance after
+        # creation thinks it was created by `CreateMayaUsd` and this Creator
+        # here is solely used to apply different default values
+        # TODO: Improve this hack
+        CreateMayaUsd(
+            project_settings=self.project_settings,
+            system_settings=None,
+            create_context=self.create_context
+        ).create(
             subset_name,
             instance_data,
             pre_create_data
         )
-
-    def add_transient_instance_data(self, instance_data):
-        super().add_transient_instance_data(instance_data)
-        instance_data["usd_bootstrap"] = self.bootstrap
-        instance_data["usd_contribution"] = "model"
-
-    def remove_transient_instance_data(self, instance_data):
-        super().remove_transient_instance_data(instance_data)
-        instance_data.pop("usd_bootstrap", None)
-        instance_data.pop("usd_contribution", None)
-
-    def get_publish_families(self):
-        families = ["usd", "mayaUsd", "usd.layered"]
-        if self.family not in families:
-            families.append(self.family)
-        return families
 
     def get_pre_create_attr_defs(self):
         defs = super(CreateMayaUsdContribution, self).get_pre_create_attr_defs()
@@ -231,65 +223,24 @@ class CreateMayaUsdContribution(CreateMayaUsd):
         ])
         return defs
 
-    def get_instance_attr_defs(self):
 
-        defs = [
-            UISeparatorDef("contribution_settings1"),
-            UILabelDef(label="<b>Contribution</b>"),
-            UISeparatorDef("contribution_settings2"),
-            TextDef("contribution_asset",
-                    label="USD Asset subset",
-                    default="usdAsset"),
-
-            # Asset layer, e.g. model.usd, look.usd, rig.usd
-            EnumDef("contribution_asset_layer",
-                    label="Department layer",
-                    tooltip="The layer the contribution should be made to in "
-                            "the usd asset.",
-                    items=["model", "look", "rig"],
-                    hidden=bool(self.contribution_asset_layer),
-                    default=self.contribution_asset_layer),
-            BoolDef("contribute_as_variant",
-                    label="Use as variant",
-                    default=True),
-            TextDef("contribution_variant_set_name",
-                    label="Variant Set Name",
-                    default="model"),
-            TextDef("contribution_variant",
-                    label="Variant Name",
-                    default="{variant}"),
-
-            # Separate the rest of the settings visually
-            UISeparatorDef("export_settings1"),
-            UILabelDef(label="<b>Export Settings</b>"),
-            UISeparatorDef("export_settings2"),
-        ]
-        defs += super(CreateMayaUsdContribution, self).get_instance_attr_defs()
-
-        # Remove certain settings that we don't want to expose on asset
-        # creation
-        remove = {"stripNamespaces", "mergeTransformAndShape"}
-        defs = [attr_def for attr_def in defs if attr_def.key not in remove]
-        return defs
-
-
-class CreateUsdLookContribution(CreateMayaUsdContribution):
-    """Look layer contribution to the USD Asset"""
-    identifier = CreateMayaUsdContribution.identifier + ".look"
-    label = "USD Look"
-    icon = "paint-brush"
-    description = "Create USD Look contribution"
-    family = "usd.look"
-
-    contribution_asset_layer = "look"
-
-
-class CreateUsdModelContribution(CreateMayaUsdContribution):
-    """Model layer contribution to the USD Asset"""
-    identifier = CreateMayaUsdContribution.identifier + ".model"
-    label = "USD Model"
-    icon = "cube"
-    description = "Create USD Model contribution"
-    family = "usd.model"
-
-    contribution_asset_layer = "model"
+# class CreateUsdLookContribution(CreateMayaUsdContribution):
+#     """Look layer contribution to the USD Asset"""
+#     identifier = CreateMayaUsdContribution.identifier + ".look"
+#     label = "USD Look"
+#     icon = "paint-brush"
+#     description = "Create USD Look contribution"
+#     family = "usd.look"
+#
+#     contribution_asset_layer = "look"
+#
+#
+# class CreateUsdModelContribution(CreateMayaUsdContribution):
+#     """Model layer contribution to the USD Asset"""
+#     identifier = CreateMayaUsdContribution.identifier + ".model"
+#     label = "USD Model"
+#     icon = "cube"
+#     description = "Create USD Model contribution"
+#     family = "usd.model"
+#
+#     contribution_asset_layer = "model"
