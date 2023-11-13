@@ -51,8 +51,8 @@ class SetDefaultDisplayView(PreLaunchHook):
                 key for key in [default_display, OCIO_ACTIVE_DISPLAYS] if key
             )
             self.log.info(
-            "Setting OCIO_ACTIVE_DISPLAYS environment to: {}"
-            .format(default_display)
+                "Setting OCIO_ACTIVE_DISPLAYS environment to: {}"
+                .format(default_display)
             )
             self.launch_context.env["OCIO_ACTIVE_DISPLAYS"] = default_display
 
