@@ -1,6 +1,5 @@
 import re
 import uuid
-
 import qargparse
 from qtpy import QtWidgets, QtCore
 
@@ -9,6 +8,7 @@ from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
+    Anatomy
 )
 
 from . import lib
@@ -291,27 +291,33 @@ class ClipLoader:
     active_bin = None
     data = dict()
 
-    def __init__(self, cls, context, path, **options):
+    def __init__(self, loader_obj, context, **options):
         """ Initialize object
 
         Arguments:
-            cls (openpype.pipeline.load.LoaderPlugin): plugin object
+            loader_obj (openpype.pipeline.load.LoaderPlugin): plugin object
             context (dict): loader plugin context
             options (dict)[optional]: possible keys:
                 projectBinPath: "path/to/binItem"
 
         """
-        self.__dict__.update(cls.__dict__)
+        self.__dict__.update(loader_obj.__dict__)
         self.context = context
         self.active_project = lib.get_current_project()
-        self.fname = path
 
         # try to get value from options or evaluate key value for `handles`
-        self.with_handles = options.get("handles") or bool(
-            options.get("handles") is True)
+        self.with_handles = options.get("handles") is True
+
         # try to get value from options or evaluate key value for `load_to`
-        self.new_timeline = options.get("newTimeline") or bool(
-            "New timeline" in options.get("load_to", ""))
+        self.new_timeline = (
+            options.get("newTimeline") or
+            options.get("load_to") == "New timeline"
+        )
+        # try to get value from options or evaluate key value for `load_how`
+        self.sequential_load = (
+            options.get("sequentially") or
+            options.get("load_how") == "Sequentially in order"
+        )
 
         assert self._populate_data(), str(
             "Cannot Load selected data, look into database "
@@ -319,54 +325,54 @@ class ClipLoader:
 
         # inject asset data to representation dict
         self._get_asset_data()
-        print("__init__ self.data: `{}`".format(self.data))
 
         # add active components to class
         if self.new_timeline:
-            if options.get("timeline"):
+            loader_cls = loader_obj.__class__
+            if loader_cls.timeline:
                 # if multiselection is set then use options sequence
-                self.active_timeline = options["timeline"]
+                self.active_timeline = loader_cls.timeline
             else:
                 # create new sequence
-                self.active_timeline = (
-                    lib.get_current_timeline() or
-                    lib.get_new_timeline()
+                self.active_timeline = lib.get_new_timeline(
+                    "{}_{}".format(
+                        self.data["timeline_basename"],
+                        str(uuid.uuid4())[:8]
+                    )
                 )
+                loader_cls.timeline = self.active_timeline
+
         else:
             self.active_timeline = lib.get_current_timeline()
-
-        cls.timeline = self.active_timeline
 
     def _populate_data(self):
         """ Gets context and convert it to self.data
         data structure:
             {
                 "name": "assetName_subsetName_representationName"
-                "path": "path/to/file/created/by/get_repr..",
                 "binPath": "projectBinPath",
             }
         """
         # create name
-        repr = self.context["representation"]
-        repr_cntx = repr["context"]
-        asset = str(repr_cntx["asset"])
-        subset = str(repr_cntx["subset"])
-        representation = str(repr_cntx["representation"])
-        self.data["clip_name"] = "_".join([asset, subset, representation])
+        representation = self.context["representation"]
+        representation_context = representation["context"]
+        asset = str(representation_context["asset"])
+        subset = str(representation_context["subset"])
+        representation_name = str(representation_context["representation"])
+        self.data["clip_name"] = "_".join([
+            asset,
+            subset,
+            representation_name
+        ])
         self.data["versionData"] = self.context["version"]["data"]
-        # gets file path
-        file = self.fname
-        if not file:
-            repr_id = repr["_id"]
-            print(
-                "Representation id `{}` is failing to load".format(repr_id))
-            return None
-        self.data["path"] = file.replace("\\", "/")
+
+        self.data["timeline_basename"] = "timeline_{}_{}".format(
+            subset, representation_name)
 
         # solve project bin structure path
         hierarchy = str("/".join((
             "Loader",
-            repr_cntx["hierarchy"].replace("\\", "/"),
+            representation_context["hierarchy"].replace("\\", "/"),
             asset
         )))
 
@@ -383,15 +389,21 @@ class ClipLoader:
         asset_name = self.context["representation"]["context"]["asset"]
         self.data["assetData"] = get_current_project_asset(asset_name)["data"]
 
-    def load(self):
+    def load(self, files):
+        """Load clip into timeline
+
+        Arguments:
+            files (list[str]): list of files to load into timeline
+        """
         # create project bin for the media to be imported into
         self.active_bin = lib.create_bin(self.data["binPath"])
 
         # create mediaItem in active project bin
         # create clip media
-
         media_pool_item = lib.create_media_pool_item(
-            self.data["path"], self.active_bin)
+            files,
+            self.active_bin
+        )
         _clip_property = media_pool_item.GetClipProperty
 
         # get handles
@@ -402,33 +414,68 @@ class ClipLoader:
         if handle_end is None:
             handle_end = int(self.data["assetData"]["handleEnd"])
 
+        # check frame duration from versionData or assetData
+        frame_start = self.data["versionData"].get("frameStart")
+        if frame_start is None:
+            frame_start = self.data["assetData"]["frameStart"]
+
+        # check frame duration from versionData or assetData
+        frame_end = self.data["versionData"].get("frameEnd")
+        if frame_end is None:
+            frame_end = self.data["assetData"]["frameEnd"]
+
+        db_frame_duration = int(frame_end) - int(frame_start) + 1
+
+        # get timeline in
+        timeline_start = self.active_timeline.GetStartFrame()
+        if self.sequential_load:
+            # set timeline start frame
+            timeline_in = int(timeline_start)
+        else:
+            # set timeline start frame + original clip in frame
+            timeline_in = int(
+                timeline_start + self.data["assetData"]["clipIn"])
+
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
+        source_duration = int(_clip_property("Frames"))
 
-        if _clip_property("Type") == "Video":
+        # check if source duration is shorter than db frame duration
+        source_with_handles = True
+        if source_duration < db_frame_duration:
+            source_with_handles = False
+
+        # only exclude handles if source has no handles or
+        # if user wants to load without handles
+        if (
+            not self.with_handles
+            or not source_with_handles
+        ):
             source_in += handle_start
             source_out -= handle_end
 
-        # include handles
-        if self.with_handles:
-            source_in -= handle_start
-            source_out += handle_end
-
         # make track item from source in bin as item
         timeline_item = lib.create_timeline_item(
-            media_pool_item, self.active_timeline, source_in, source_out)
+            media_pool_item,
+            self.active_timeline,
+            timeline_in,
+            source_in,
+            source_out,
+        )
 
         print("Loading clips: `{}`".format(self.data["clip_name"]))
         return timeline_item
 
-    def update(self, timeline_item):
+    def update(self, timeline_item, files):
         # create project bin for the media to be imported into
         self.active_bin = lib.create_bin(self.data["binPath"])
 
         # create mediaItem in active project bin
         # create clip media
         media_pool_item = lib.create_media_pool_item(
-            self.data["path"], self.active_bin)
+            files,
+            self.active_bin
+        )
         _clip_property = media_pool_item.GetClipProperty
 
         source_in = int(_clip_property("Start"))
@@ -455,7 +502,7 @@ class TimelineItemLoader(LoaderPlugin):
     """
 
     options = [
-        qargparse.Toggle(
+        qargparse.Boolean(
             "handles",
             label="Include handles",
             default=0,
@@ -470,6 +517,16 @@ class TimelineItemLoader(LoaderPlugin):
             ],
             default=0,
             help="Where do you want clips to be loaded?"
+        ),
+        qargparse.Choice(
+            "load_how",
+            label="How to load clips",
+            items=[
+                "Original timing",
+                "Sequentially in order"
+            ],
+            default="Original timing",
+            help="Would you like to place it at original timing?"
         )
     ]
 
@@ -649,8 +706,6 @@ class PublishClip:
 
         # define ui inputs if non gui mode was used
         self.shot_num = self.ti_index
-        print(
-            "____ self.shot_num: {}".format(self.shot_num))
 
         # ui_inputs data or default values if gui was not used
         self.rename = self.ui_inputs.get(
@@ -829,3 +884,12 @@ class PublishClip:
         for key in par_split:
             parent = self._convert_to_entity(key)
             self.parents.append(parent)
+
+
+def get_representation_files(representation):
+    anatomy = Anatomy()
+    files = []
+    for file_data in representation["files"]:
+        path = anatomy.fill_root(file_data["path"])
+        files.append(path)
+    return files

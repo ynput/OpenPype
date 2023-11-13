@@ -16,9 +16,9 @@ from abc import ABCMeta, abstractmethod
 
 import six
 import appdirs
-import ayon_api
 
 from openpype import AYON_SERVER_ENABLED
+from openpype.client import get_ayon_server_api_connection
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -31,13 +31,13 @@ from openpype.settings.lib import (
     get_studio_system_settings_overrides,
     load_json_file
 )
+from openpype.settings.ayon_settings import is_dev_mode_enabled
 
 from openpype.lib import (
     Logger,
     import_filepath,
     import_module_from_dirpath,
 )
-from openpype.lib.openpype_version import is_staging_enabled
 
 from .interfaces import (
     OpenPypeInterface,
@@ -59,6 +59,15 @@ IGNORED_DEFAULT_FILENAMES = (
     "example_addons",
     "default_modules",
 )
+# Modules that won't be loaded in AYON mode from "./openpype/modules"
+# - the same modules are ignored in "./server_addon/create_ayon_addons.py"
+IGNORED_FILENAMES_IN_AYON = {
+    "ftrack",
+    "shotgrid",
+    "sync_server",
+    "slack",
+    "kitsu",
+}
 
 
 # Inherit from `object` for Python 2 hosts
@@ -97,7 +106,7 @@ class _ModuleClass(object):
         if attr_name in self.__attributes__:
             self.log.warning(
                 "Duplicated name \"{}\" in {}. Overriding.".format(
-                    self.name, attr_name
+                    attr_name, self.name
                 )
             )
         self.__attributes__[attr_name] = value
@@ -309,21 +318,13 @@ def load_modules(force=False):
             time.sleep(0.1)
 
 
-def _get_ayon_addons_information():
-    """Receive information about addons to use from server.
+def _get_ayon_bundle_data():
+    con = get_ayon_server_api_connection()
+    bundles = con.get_bundles()["bundles"]
 
-    Todos:
-        Actually ask server for the information.
-        Allow project name as optional argument to be able to query information
-            about used addons for specific project.
-    Returns:
-        List[Dict[str, Any]]: List of addon information to use.
-    """
-
-    output = []
     bundle_name = os.getenv("AYON_BUNDLE_NAME")
-    bundles = ayon_api.get_bundles()["bundles"]
-    final_bundle = next(
+
+    return next(
         (
             bundle
             for bundle in bundles
@@ -331,11 +332,24 @@ def _get_ayon_addons_information():
         ),
         None
     )
-    if final_bundle is None:
-        return output
 
-    bundle_addons = final_bundle["addons"]
-    addons = ayon_api.get_addons_info()["addons"]
+
+def _get_ayon_addons_information(bundle_info):
+    """Receive information about addons to use from server.
+
+    Todos:
+        Actually ask server for the information.
+        Allow project name as optional argument to be able to query information
+            about used addons for specific project.
+
+    Returns:
+        List[Dict[str, Any]]: List of addon information to use.
+    """
+
+    output = []
+    bundle_addons = bundle_info["addons"]
+    con = get_ayon_server_api_connection()
+    addons = con.get_addons_info()["addons"]
     for addon in addons:
         name = addon["name"]
         versions = addon.get("versions")
@@ -370,38 +384,77 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
 
     v3_addons_to_skip = []
 
-    addons_info = _get_ayon_addons_information()
+    bundle_info = _get_ayon_bundle_data()
+    addons_info = _get_ayon_addons_information(bundle_info)
     if not addons_info:
         return v3_addons_to_skip
+
     addons_dir = os.environ.get("AYON_ADDONS_DIR")
     if not addons_dir:
         addons_dir = os.path.join(
             appdirs.user_data_dir("AYON", "Ynput"),
             "addons"
         )
-    if not os.path.exists(addons_dir):
+
+    dev_mode_enabled = is_dev_mode_enabled()
+    dev_addons_info = {}
+    if dev_mode_enabled:
+        # Get dev addons info only when dev mode is enabled
+        dev_addons_info = bundle_info.get("addonDevelopment", dev_addons_info)
+
+    addons_dir_exists = os.path.exists(addons_dir)
+    if not addons_dir_exists:
         log.warning("Addons directory does not exists. Path \"{}\"".format(
             addons_dir
         ))
-        return v3_addons_to_skip
 
     for addon_info in addons_info:
         addon_name = addon_info["name"]
         addon_version = addon_info["version"]
 
-        folder_name = "{}_{}".format(addon_name, addon_version)
-        addon_dir = os.path.join(addons_dir, folder_name)
-        if not os.path.exists(addon_dir):
-            log.warning((
-                "Directory for addon {} {} does not exists. Path \"{}\""
-            ).format(addon_name, addon_version, addon_dir))
+        # OpenPype addon does not have any addon object
+        if addon_name == "openpype":
+            continue
+
+        dev_addon_info = dev_addons_info.get(addon_name, {})
+        use_dev_path = dev_addon_info.get("enabled", False)
+
+        addon_dir = None
+        if use_dev_path:
+            addon_dir = dev_addon_info["path"]
+            if not addon_dir or not os.path.exists(addon_dir):
+                log.warning((
+                    "Dev addon {} {} path does not exists. Path \"{}\""
+                ).format(addon_name, addon_version, addon_dir))
+                continue
+
+        elif addons_dir_exists:
+            folder_name = "{}_{}".format(addon_name, addon_version)
+            addon_dir = os.path.join(addons_dir, folder_name)
+            if not os.path.exists(addon_dir):
+                log.debug((
+                    "No localized client code found for addon {} {}."
+                ).format(addon_name, addon_version))
+                continue
+
+        if not addon_dir:
             continue
 
         sys.path.insert(0, addon_dir)
         imported_modules = []
         for name in os.listdir(addon_dir):
+            # Ignore of files is implemented to be able to run code from code
+            #   where usually is more files than just the addon
+            # Ignore start and setup scripts
+            if name in ("setup.py", "start.py", "__pycache__"):
+                continue
+
             path = os.path.join(addon_dir, name)
             basename, ext = os.path.splitext(name)
+            # Ignore folders/files with dot in name
+            #   - dot names cannot be imported in Python
+            if "." in basename:
+                continue
             is_dir = os.path.isdir(path)
             is_py_file = ext.lower() == ".py"
             if not is_py_file and not is_dir:
@@ -409,7 +462,15 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
 
             try:
                 mod = __import__(basename, fromlist=("",))
-                imported_modules.append(mod)
+                for attr_name in dir(mod):
+                    attr = getattr(mod, attr_name)
+                    if (
+                        inspect.isclass(attr)
+                        and issubclass(attr, OpenPypeModule)
+                    ):
+                        imported_modules.append(mod)
+                        break
+
             except BaseException:
                 log.warning(
                     "Failed to import \"{}\"".format(basename),
@@ -422,19 +483,26 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
             ))
             continue
 
-        if len(imported_modules) == 1:
-            mod = imported_modules[0]
-            addon_alias = getattr(mod, "V3_ALIAS", None)
-            if not addon_alias:
-                addon_alias = addon_name
-            v3_addons_to_skip.append(addon_alias)
-            new_import_str = "{}.{}".format(modules_key, addon_alias)
+        if len(imported_modules) > 1:
+            log.warning((
+                "Skipping addon '{}'."
+                " Multiple modules were found ({}) in dir {}."
+            ).format(
+                addon_name,
+                ", ".join([m.__name__ for m in imported_modules]),
+                addon_dir,
+            ))
+            continue
 
-            sys.modules[new_import_str] = mod
-            setattr(openpype_modules, addon_alias, mod)
+        mod = imported_modules[0]
+        addon_alias = getattr(mod, "V3_ALIAS", None)
+        if not addon_alias:
+            addon_alias = addon_name
+        v3_addons_to_skip.append(addon_alias)
+        new_import_str = "{}.{}".format(modules_key, addon_alias)
 
-        else:
-            log.info("More then one module was imported")
+        sys.modules[new_import_str] = mod
+        setattr(openpype_modules, addon_alias, mod)
 
     return v3_addons_to_skip
 
@@ -483,6 +551,10 @@ def _load_modules():
 
         is_in_current_dir = dirpath == current_dir
         is_in_host_dir = dirpath == hosts_dir
+        ignored_current_dir_filenames = set(IGNORED_DEFAULT_FILENAMES)
+        if AYON_SERVER_ENABLED:
+            ignored_current_dir_filenames |= IGNORED_FILENAMES_IN_AYON
+
         for filename in os.listdir(dirpath):
             # Ignore filenames
             if filename in IGNORED_FILENAMES:
@@ -490,7 +562,7 @@ def _load_modules():
 
             if (
                 is_in_current_dir
-                and filename in IGNORED_DEFAULT_FILENAMES
+                and filename in ignored_current_dir_filenames
             ):
                 continue
 
@@ -948,7 +1020,18 @@ class ModulesManager:
                 continue
 
             method = getattr(module, method_name)
-            paths = method(*args, **kwargs)
+            try:
+                paths = method(*args, **kwargs)
+            except Exception:
+                self.log.warning(
+                    (
+                        "Failed to get plugin paths from module"
+                        " '{}' using '{}'."
+                    ).format(module.__class__.__name__, method_name),
+                    exc_info=True
+                )
+                continue
+
             if paths:
                 # Convert to list if value is not list
                 if not isinstance(paths, (list, tuple, set)):

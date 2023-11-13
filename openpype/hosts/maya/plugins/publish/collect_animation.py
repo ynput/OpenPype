@@ -57,33 +57,3 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
 
         if instance.data.get("farm"):
             instance.data["families"].append("publish.farm")
-
-        # Alembic and Multiverse share the same attribute functionality but
-        # different names.
-        instance.data["writeNormals"] = (
-            instance.data.get("writeNormals") or
-            not instance.data.get("noNormals") or
-            False
-        )
-
-        # Backwards compatibility for attributes.
-        backwards_mapping = {
-            "write_color_sets": "writeColorSets",
-            "write_face_sets": "writeFaceSets",
-            "include_parent_hierarchy": "includeParentHierarchy",
-            "include_user_defined_attributes": "includeUserDefinedAttributes"
-        }
-        for key, value in backwards_mapping.items():
-            if key in instance.data:
-                instance.data[value] = instance.data[key]
-
-        # Collect user defined attributes.
-        if instance.data.get("includeUserDefinedAttributes", False):
-            user_defined_attributes = set()
-            for node in hierarchy:
-                attrs = cmds.listAttr(node, userDefined=True) or list()
-                user_defined_attributes.update(attrs)
-
-            instance.data["userDefinedAttributes"] = list(
-                user_defined_attributes
-            )

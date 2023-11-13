@@ -28,8 +28,6 @@ from collections import OrderedDict
 
 import attr
 
-from maya import cmds
-
 from openpype.pipeline import (
     legacy_io,
     OpenPypePyblishPluginMixin
@@ -246,6 +244,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         return job_info
 
     def get_plugin_info(self):
+        # Not all hosts can import this module.
+        from maya import cmds
 
         instance = self._instance
         context = instance.context
@@ -288,9 +288,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         return plugin_payload
 
     def process_submission(self):
-
+        from maya import cmds
         instance = self._instance
-        context = instance.context
 
         filepath = self.scene_path  # publish if `use_publish` else workfile
 
@@ -306,13 +305,11 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             self._patch_workfile()
 
         # Gather needed data ------------------------------------------------
-        workspace = context.data["workspaceDir"]
-        default_render_file = instance.context.data.get('project_settings')\
-            .get('maya')\
-            .get('RenderSettings')\
-            .get('default_render_image_folder')
         filename = os.path.basename(filepath)
-        dirname = os.path.join(workspace, default_render_file)
+        dirname = os.path.join(
+            cmds.workspace(query=True, rootDirectory=True),
+            cmds.workspace(fileRuleEntry="images")
+        )
 
         # Fill in common data to payload ------------------------------------
         # TODO: Replace these with collected data from CollectRender
@@ -678,7 +675,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             str
 
         """
-
+        from maya import cmds
         # "vrayscene/<Scene>/<Scene>_<Layer>/<Layer>"
         vray_settings = cmds.ls(type="VRaySettingsNode")
         node = vray_settings[0]

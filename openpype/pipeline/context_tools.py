@@ -11,12 +11,14 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype import AYON_SERVER_ENABLED
 from openpype.host import HostBase
 from openpype.client import (
     get_project,
     get_asset_by_id,
     get_asset_by_name,
     version_is_latest,
+    get_ayon_server_api_connection,
 )
 from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
@@ -104,6 +106,10 @@ def install_host(host):
     global _is_installed
 
     _is_installed = True
+
+    # Make sure global AYON connection has set site id and version
+    if AYON_SERVER_ENABLED:
+        get_ayon_server_api_connection()
 
     legacy_io.install()
     modules_manager = _get_modules_manager()
@@ -474,6 +480,27 @@ def get_template_data_from_session(session=None, system_settings=None):
     asset_name = session["AVALON_ASSET"]
     task_name = session["AVALON_TASK"]
     host_name = session["AVALON_APP"]
+
+    return get_template_data_with_names(
+        project_name, asset_name, task_name, host_name, system_settings
+    )
+
+
+def get_current_context_template_data(system_settings=None):
+    """Prepare template data for current context.
+
+    Args:
+        system_settings (Optional[Dict[str, Any]]): Prepared system settings.
+
+    Returns:
+        Dict[str, Any] Template data for current context.
+    """
+
+    context = get_current_context()
+    project_name = context["project_name"]
+    asset_name = context["asset_name"]
+    task_name = context["task_name"]
+    host_name = get_current_host_name()
 
     return get_template_data_with_names(
         project_name, asset_name, task_name, host_name, system_settings

@@ -1,6 +1,8 @@
 import pyblish.api
-from openpype.pipeline import registered_host
-from openpype.pipeline import publish
+from openpype.pipeline import (
+    publish,
+    registered_host
+)
 from openpype.lib import EnumDef
 from openpype.pipeline import colorspace
 
@@ -13,11 +15,14 @@ class CollectColorspace(pyblish.api.InstancePlugin,
     label = "Choose representation colorspace"
     order = pyblish.api.CollectorOrder + 0.49
     hosts = ["traypublisher"]
+    families = ["render", "plate", "reference", "image", "online"]
+    enabled = False
 
     colorspace_items = [
         (None, "Don't override")
     ]
     colorspace_attr_show = False
+    config_items = None
 
     def process(self, instance):
         values = self.get_attr_values_from_data(instance.data)
@@ -48,10 +53,14 @@ class CollectColorspace(pyblish.api.InstancePlugin,
         if config_data:
             filepath = config_data["path"]
             config_items = colorspace.get_ocio_config_colorspaces(filepath)
-            cls.colorspace_items.extend((
-                (name, name) for name in config_items.keys()
-            ))
-            cls.colorspace_attr_show = True
+            labeled_colorspaces = colorspace.get_colorspaces_enumerator_items(
+                config_items,
+                include_aliases=True,
+                include_roles=True
+            )
+            cls.config_items = config_items
+            cls.colorspace_items.extend(labeled_colorspaces)
+            cls.enabled = True
 
     @classmethod
     def get_attribute_defs(cls):
@@ -60,7 +69,6 @@ class CollectColorspace(pyblish.api.InstancePlugin,
                 "colorspace",
                 cls.colorspace_items,
                 default="Don't override",
-                label="Override Colorspace",
-                hidden=not cls.colorspace_attr_show
+                label="Override Colorspace"
             )
         ]

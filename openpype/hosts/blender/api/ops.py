@@ -16,6 +16,7 @@ import bpy
 import bpy.utils.previews
 
 from openpype import style
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import get_current_asset_name, get_current_task_name
 from openpype.tools.utils import host_tools
 
@@ -283,6 +284,8 @@ class LaunchLoader(LaunchQtApp):
     _tool_name = "loader"
 
     def before_window_show(self):
+        if AYON_SERVER_ENABLED:
+            return
         self._window.set_context(
             {"asset": get_current_asset_name()},
             refresh=True
@@ -308,6 +311,8 @@ class LaunchManager(LaunchQtApp):
     _tool_name = "sceneinventory"
 
     def before_window_show(self):
+        if AYON_SERVER_ENABLED:
+            return
         self._window.refresh()
 
 
@@ -319,6 +324,8 @@ class LaunchLibrary(LaunchQtApp):
     _tool_name = "libraryloader"
 
     def before_window_show(self):
+        if AYON_SERVER_ENABLED:
+            return
         self._window.refresh()
 
 
@@ -331,13 +338,16 @@ class LaunchWorkFiles(LaunchQtApp):
 
     def execute(self, context):
         result = super().execute(context)
-        self._window.set_context({
-            "asset": get_current_asset_name(),
-            "task": get_current_task_name()
-        })
+        if not AYON_SERVER_ENABLED:
+            self._window.set_context({
+                "asset": get_current_asset_name(),
+                "task": get_current_task_name()
+            })
         return result
 
     def before_window_show(self):
+        if AYON_SERVER_ENABLED:
+            return
         self._window.root = str(Path(
             os.environ.get("AVALON_WORKDIR", ""),
             os.environ.get("AVALON_SCENEDIR", ""),

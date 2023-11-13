@@ -7,8 +7,6 @@ from datetime import datetime
 import requests
 import pyblish.api
 
-import nuke
-
 from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
@@ -48,6 +46,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}
+    workfile_dependency = True
 
     @classmethod
     def get_attribute_defs(cls):
@@ -83,6 +82,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "suspend_publish",
                 default=False,
                 label="Suspend publish"
+            ),
+            BoolDef(
+                "workfile_dependency",
+                default=True,
+                label="Workfile Dependency"
             )
         ]
 
@@ -313,6 +317,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             "AuxFiles": []
         }
 
+        # Add workfile dependency.
+        workfile_dependency = instance.data["attributeValues"].get(
+            "workfile_dependency", self.workfile_dependency
+        )
+        if workfile_dependency:
+            payload["JobInfo"].update({"AssetDependency0": script_path})
+
         # TODO: rewrite for baking with sequences
         if baking_submission:
             payload["JobInfo"].update({
@@ -485,6 +496,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         Returning:
             list: captured groups list
         """
+        # Not all hosts can import this module.
+        import nuke
+
         captured_groups = []
         for lg_name, list_node_class in self.limit_groups.items():
             for node_class in list_node_class:

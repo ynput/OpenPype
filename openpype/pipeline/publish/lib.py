@@ -25,7 +25,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.plugin_discover import DiscoverResult
 
-from .contants import (
+from .constants import (
     DEFAULT_PUBLISH_TEMPLATE,
     DEFAULT_HERO_PUBLISH_TEMPLATE,
     TRANSIENT_DIR_TEMPLATE
@@ -1002,3 +1002,27 @@ def get_publish_instance_label(instance):
         or instance.data.get("name")
         or str(instance)
     )
+
+
+def get_publish_instance_families(instance):
+    """Get all families of the instance.
+
+    Look for families under 'family' and 'families' keys in instance data.
+    Value of 'family' is used as first family and then all other families
+    in random order.
+
+    Args:
+        pyblish.api.Instance: Instance to get families from.
+
+    Returns:
+        list[str]: List of families.
+    """
+
+    family = instance.data.get("family")
+    families = set(instance.data.get("families") or [])
+    output = []
+    if family:
+        output.append(family)
+        families.discard(family)
+    output.extend(families)
+    return output

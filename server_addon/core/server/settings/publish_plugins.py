@@ -21,7 +21,7 @@ class ValidateBaseModel(BaseSettingsModel):
 class CollectAnatomyInstanceDataModel(BaseSettingsModel):
     _isGroup = True
     follow_workfile_version: bool = Field(
-        True, title="Collect Anatomy Instance Data"
+        True, title="Follow workfile version"
     )
 
 
@@ -116,6 +116,8 @@ class OIIOToolArgumentsModel(BaseSettingsModel):
 
 
 class ExtractOIIOTranscodeOutputModel(BaseSettingsModel):
+    _layout = "expanded"
+    name: str = Field("", title="Name")
     extension: str = Field("", title="Extension")
     transcoding_type: str = Field(
         "colorspace",
@@ -163,6 +165,11 @@ class ExtractOIIOTranscodeProfileModel(BaseSettingsModel):
         default_factory=list,
         title="Output Definitions",
     )
+
+    @validator("outputs")
+    def validate_unique_outputs(cls, value):
+        ensure_unique_names(value)
+        return value
 
 
 class ExtractOIIOTranscodeModel(BaseSettingsModel):

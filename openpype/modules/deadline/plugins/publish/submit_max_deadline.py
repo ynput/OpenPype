@@ -1,8 +1,8 @@
 import os
 import getpass
 import copy
-
 import attr
+
 from openpype.lib import (
     TextDef,
     BoolDef,
@@ -15,11 +15,6 @@ from openpype.pipeline import (
 from openpype.pipeline.publish.lib import (
     replace_with_published_scene_path
 )
-from openpype.hosts.max.api.lib import (
-    get_current_renderer,
-    get_multipass_setting
-)
-from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import is_running_from_build
@@ -191,6 +186,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         self.submit(self.assemble_payload(job_info, plugin_info))
 
     def _use_published_name(self, data, project_settings):
+        # Not all hosts can import these modules.
+        from openpype.hosts.max.api.lib import (
+            get_current_renderer,
+            get_multipass_setting
+        )
+        from openpype.hosts.max.api.lib_rendersettings import RenderSettings
+
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
@@ -238,9 +240,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
                 "separateAovFiles")
         if instance.data["cameras"]:
-            plugin_info["Camera0"] = None
-            plugin_info["Camera"] = instance.data["cameras"][0]
-            plugin_info["Camera1"] = instance.data["cameras"][0]
+            camera = instance.data["cameras"][0]
+            plugin_info["Camera0"] = camera
+            plugin_info["Camera"] = camera
+            plugin_info["Camera1"] = camera
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 
