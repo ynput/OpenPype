@@ -27,11 +27,12 @@ class ValidateHoudiniNotApprenticeLicense(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         if hou.isApprentice():
-            families = [instance.data["family"]]
-            families += instance.data.get("families", [])
+            # Find which family was matched with the plug-in
+            families = {instance.data["family"]}
+            families.update(instance.data.get("families", []))
             families = " ".join(families).title()
 
             raise PublishValidationError(
-                "{} Publishing requires a non apprentice license."
+                "{} publishing requires a non apprentice license."
                 .format(families),
                 title=self.label)
