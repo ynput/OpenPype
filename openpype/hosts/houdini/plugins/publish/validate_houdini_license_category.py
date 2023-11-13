@@ -23,7 +23,7 @@ class ValidateHoudiniNotApprenticeLicense(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        if hou.isApprentice() or 1:
+        if hou.isApprentice():
             families = [instance.data["family"]]
             families += instance.data.get("families", [])
             families = " ".join(families).title()
