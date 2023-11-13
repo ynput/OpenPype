@@ -5,12 +5,14 @@ import openpype.hosts.resolve.api as api
 
 class TimelineItem(object):
     def __init__(self, *args) -> object:
+        self.__index: int
         self.__root_object: object
         self.__video_track: api.VideoTrack
 
         if args:
             self.__root_object = args[0]
             self.__video_track = args[1]
+            self.__index = args[2]
 
     def __str__(self) -> str:
         return self.name
@@ -29,6 +31,10 @@ class TimelineItem(object):
     @property
     def name(self) -> str:
         return self.root.GetName()
+
+    @property
+    def index(self) -> int:
+        return self.__index
 
     @property
     def color(self) -> str:

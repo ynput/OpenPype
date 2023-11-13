@@ -25,8 +25,10 @@ class VideoTrack(object):
     @property
     def clips(self) -> list(api.TimelineItem):
         return [
-            api.TimelineItem(vti, self)
-            for vti in self.timeline.root.GetItemListInTrack("video", self.index)
+            api.TimelineItem(vti, self, i)
+            for i, vti in enumerate(
+                self.timeline.root.GetItemListInTrack("video", self.index)
+            )
         ]
 
     @property
