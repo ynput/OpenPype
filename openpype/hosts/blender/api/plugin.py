@@ -217,7 +217,7 @@ class BaseCreator(Creator):
 
         Args:
             subset_name(str): Subset name of created instance.
-            instance_data(dict): Base data for instance.
+            instance_data(dict): Instance base data.
             pre_create_data(dict): Data based on pre creation attributes.
                 Those may affect how creator works.
         """
@@ -237,17 +237,7 @@ class BaseCreator(Creator):
             "name": collection.name,
         }
 
-        # Set instance data
-        instance_data.update(
-            {
-                "id": "pyblish.avalon.instance",
-                "creator_identifier": self.identifier,
-                "label": subset_name,
-                "task": get_current_task_name(),
-                "subset": subset_name,
-                "instance_node": instance_node,
-            }
-        )
+        self.set_instance_data(subset_name, instance_data, instance_node)
 
         self._add_instance_to_context(
             CreatedInstance(
@@ -325,6 +315,33 @@ class BaseCreator(Creator):
                 bpy.data.objects.remove(outliner_entity)
 
             self._remove_instance_from_context(instance)
+
+    def set_instance_data(
+        self,
+        subset_name: str,
+        instance_data: dict,
+        instance_node: bpy.types.ID,
+    ):
+        """Fill instance data with required items.
+
+        Args:
+            subset_name(str): Subset name of created instance.
+            instance_data(dict): Instance base data.
+            instance_node(bpy.types.ID): Instance node in blender scene.
+        """
+        if not instance_data:
+            instance_data = {}
+
+        instance_data.update(
+            {
+                "id": "pyblish.avalon.instance",
+                "creator_identifier": self.identifier,
+                "label": subset_name,
+                "task": get_current_task_name(),
+                "subset": subset_name,
+                "instance_node": instance_node,
+            }
+        )
 
 
 class Loader(LoaderPlugin):

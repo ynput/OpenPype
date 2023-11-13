@@ -47,17 +47,7 @@ class CreateBlendScene(plugin.Creator):
             "name": asset_group.name
         }
 
-        instance_data.update(
-            {
-                "id": "publish.avalon.instance",
-                "creator_identifier": self.identifier,
-                "label": subset_name,
-                "task": get_current_task_name(),
-                "subset": subset_name,
-                "instance_node": instance_node,
-            }
-        )
-
+        self.set_instance_data(subset_name, instance_data, instance_node)
         lib.imprint(asset_group, instance_data)
 
         # Add selected objects to instance
