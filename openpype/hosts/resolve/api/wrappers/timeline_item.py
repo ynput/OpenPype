@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import opentimelineio as otio
 import openpype.hosts.resolve.api as api
 
 
@@ -9,6 +10,8 @@ class TimelineItem(object):
         self.__index: int
         self.__root_object: object
         self.__video_track: api.VideoTrack
+        self.linear_timeremap_effect: dict
+        self.keyframed_timeremap_effect: dict
 
         if args:
             self.__root_object = args[0]
@@ -59,11 +62,67 @@ class TimelineItem(object):
         return self.__video_track
 
     @property
-    def is_retimed(self) -> bool:
+    def is_enabled(self) -> bool:
+        raise NotImplementedError
+
+    @property
+    def is_offline(self) -> bool:
+        raise NotImplementedError
+
+    @property
+    def is_linear_timeremap(self) -> bool:
         for e in self.jotio["effects"]:
-            if e["OTIO_SCHEMA"] in ["LinearTimeWarp.1", "TimeEffect.1"]:
+            if e["OTIO_SCHEMA"] == "LinearTimeWarp.1":
+                self.linear_timeremap_effect = e
                 return True
         return False
+
+    @property
+    def is_keyframed_timeremap(self) -> bool:
+        for e in self.jotio["effects"]:
+            if e["OTIO_SCHEMA"] == "TimeEffect.1":
+                self.keyframed_timeremap_effect = e
+                return True
+        return False
+
+    @property
+    def head_in(self) -> int:
+        tc = self.source.properties["Start TC"]
+        rt = otio.opentime.from_timecode(tc, self.source.fps)
+        return int(otio.opentime.to_frames(rt))
+
+    @property
+    def tail_out(self) -> int:
+        tc = self.source.properties["End TC"]
+        rt = otio.opentime.from_timecode(tc, self.source.fps)
+        return int(otio.opentime.to_frames(rt))
+
+    @property
+    def duration(self) -> int:
+        result = int(self.root.GetDuration())
+
+        if self.is_linear_timeremap:
+            time_scalar = float(self.linear_timeremap_effect["time_scalar"])
+            result *= time_scalar
+        if self.is_keyframed_timeremap:
+            # TODO: make sense out of the otio metadata
+            pass
+        return result
+
+    @property
+    def left_offset(self) -> int:
+        return self.root.GetLeftOffset()
+
+    @property
+    def src_in(self) -> int:
+        result = self.head_in + self.left_offset
+        return result
+
+    @property
+    def src_out(self) -> int:
+        result = self.src_in + self.duration
+        return result
+
     @property
     def jotio(self) -> dict:
         return self.__jotio
