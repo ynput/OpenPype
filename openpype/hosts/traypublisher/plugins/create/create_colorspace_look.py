@@ -14,7 +14,11 @@ from openpype.pipeline import (
     CreatedInstance,
     CreatorError
 )
-from openpype.pipeline import colorspace
+from openpype.pipeline import (
+    colorspace,
+    get_current_context,
+    get_current_host_name
+)
 from openpype.hosts.traypublisher.api.plugin import TrayPublishCreator
 
 
@@ -148,14 +152,14 @@ This creator publishes color space look file (LUT).
         ]
 
     def apply_settings(self, project_settings, system_settings):
-        host = self.create_context.host
-        host_name = host.name
-        project_name = host.get_current_project_name()
-        config_data = colorspace.get_imageio_config(
-            project_name, host_name,
-            project_settings=project_settings
-        )
+        context = get_current_context()
 
+        config_data = colorspace.get_imageio_config(
+            context["project_name"],
+            context["asset_name"],
+            context["task_name"],
+            get_current_host_name(),
+        )
         if not config_data:
             self.enabled = False
             return

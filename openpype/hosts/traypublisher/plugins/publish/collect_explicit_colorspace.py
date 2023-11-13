@@ -1,10 +1,11 @@
 import pyblish.api
-from openpype.pipeline import (
-    publish,
-    registered_host
-)
+from openpype.pipeline import publish
 from openpype.lib import EnumDef
-from openpype.pipeline import colorspace
+from openpype.pipeline import (
+    colorspace,
+    get_current_context,
+    get_current_host_name
+)
 
 
 class CollectColorspace(pyblish.api.InstancePlugin,
@@ -42,12 +43,13 @@ class CollectColorspace(pyblish.api.InstancePlugin,
 
     @classmethod
     def apply_settings(cls, project_settings):
-        host = registered_host()
-        host_name = host.name
-        project_name = host.get_current_project_name()
+        context = get_current_context()
+
         config_data = colorspace.get_imageio_config(
-            project_name, host_name,
-            project_settings=project_settings
+            context["project_name"],
+            context["asset_name"],
+            context["task_name"],
+            get_current_host_name(),
         )
 
         if config_data:
