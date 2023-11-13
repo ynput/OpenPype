@@ -63,11 +63,12 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
         add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
                     "source", "author", "fps"]
 
-        data_imprint = {"frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname,
+            "colorspaceInput": colorspace,
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -98,7 +99,7 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
             pre_node = nuke.createNode("Input")
             pre_node["name"].setValue("rgb")
 
-            for ef_name, ef_val in nodes_order.items():
+            for _, ef_val in nodes_order.items():
                 node = nuke.createNode(ef_val["class"])
                 for k, v in ef_val["node"].items():
                     if k in self.ignore_attr:
@@ -164,28 +165,26 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         # get corresponding node
-        GN = nuke.toNode(container['objectName'])
+        GN = container["node"]
 
         file = get_representation_path(representation).replace("\\", "/")
-        name = container['name']
         version_data = version_doc.get("data", {})
         vname = version_doc.get("name", None)
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
         workfile_first_frame = int(nuke.root()["first_frame"].getValue())
-        namespace = container['namespace']
         colorspace = version_data.get("colorspace", None)
-        object_name = "{}_{}".format(name, namespace)
 
         add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
                     "source", "author", "fps"]
 
-        data_imprint = {"representation": str(representation["_id"]),
-                        "frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "representation": str(representation["_id"]),
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname,
+            "colorspaceInput": colorspace,
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -217,7 +216,7 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
             pre_node = nuke.createNode("Input")
             pre_node["name"].setValue("rgb")
 
-            for ef_name, ef_val in nodes_order.items():
+            for _, ef_val in nodes_order.items():
                 node = nuke.createNode(ef_val["class"])
                 for k, v in ef_val["node"].items():
                     if k in self.ignore_attr:
@@ -250,11 +249,6 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
             # create output node
             output = nuke.createNode("Output")
             output.setInput(0, pre_node)
-
-        # # try to place it under Viewer1
-        # if not self.connect_active_viewer(GN):
-        #     nuke.delete(GN)
-        #     return
 
         # get all versions in list
         last_version_doc = get_last_version_by_subset_id(
@@ -365,6 +359,6 @@ class LoadEffectsInputProcess(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
         with viewer_update_and_undo_stop():
             nuke.delete(node)
