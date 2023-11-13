@@ -48,7 +48,7 @@ class CreateWorkfile(plugin.HoudiniCreatorBase, AutoCreator):
                 "variant": variant
             }
             if AYON_SERVER_ENABLED:
-                data["folderpath"] = asset_name
+                data["folderPath"] = asset_name
             else:
                 data["asset"] = asset_name
 
