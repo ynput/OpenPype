@@ -13,7 +13,7 @@ class ValidateInstanceEmpty(pyblish.api.InstancePlugin):
     optional = False
 
     def process(self, instance):
-        asset_group = instance.data["instance_group"]
+        asset_group = instance.data["instance_node"]
 
         if isinstance(asset_group, bpy.types.Collection):
             if not (asset_group.objects or asset_group.children):
