@@ -227,3 +227,17 @@ class CreateBestLengthTimeline(api.plugin.Creator):
         log.debug(f"{len(filtered_videotracks) = }")
 
         # get occurrences per MediapoolItem in all filtered Timelines/VideoTracks
+        occs = self.get_occurrences(filtered_videotracks)
+        log.debug(f"{occs = }")
+
+    def get_occurrences(self, video_tracks) -> dict[str : [api.TimelineItem]]:
+        occs = {}
+        for vt in video_tracks:
+            for c in vt.clips:
+                if c.color == self.ui_settings["cb_exclude_clipcolor"]["value"]:
+                    continue
+                if occs.get(c.source.id):
+                    occs[c.source.id].append(c)
+                    continue
+                occs.update({c.source.id: [c]})
+        return occs
