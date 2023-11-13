@@ -12,8 +12,8 @@ class PublishedFilesTycacheObject(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         tycache_attrs = instance.data["tyc_attrs"]
-        if "tycacheCreateObjectIfNotCreated" not in (
-            tycache_attrs["tycacheAttributes"]):
+        tycache_Attributes = tycache_attrs["tycacheAttributes"]
+        if "tycacheCreateObjectIfNotCreated" not in tycache_Attributes:
             self.log.debug("Attribute of 'Create Tycache Object' and "
                            "'Only if one does not already exists' "
                            "not being enabled. \n\n"
