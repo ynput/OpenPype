@@ -22,22 +22,21 @@ class CreateReview(plugin.MaxCreator):
     vp_texture = True
     anti_aliasing = None
 
-    @classmethod
-    def apply_settings(cls, project_settings):
+    def apply_settings(self, project_settings):
         settings = project_settings["max"]["CreateReview"]  # noqa
 
         # Take some defaults from settings
-        cls.review_width = settings.get("review_width", cls.review_width)
-        cls.review_height = settings.get("review_height", cls.review_height)
-        cls.percentSize = settings.get("percentSize", cls.percentSize)
-        cls.keep_images = settings.get("keep_images", cls.keep_images)
-        cls.image_format = settings.get("image_format", cls.image_format)
-        cls.visual_style = settings.get("visual_style", cls.visual_style)
-        cls.viewport_preset = settings.get(
-            "viewport_preset", cls.viewport_preset)
-        cls.anti_aliasing = settings.get(
-            "anti_aliasing", cls.anti_aliasing)
-        cls.vp_texture = settings.get("vp_texture", cls.vp_texture)
+        self.review_width = settings.get("review_width", self.review_width)
+        self.review_height = settings.get("review_height", self.review_height)
+        self.percentSize = settings.get("percentSize", self.percentSize)
+        self.keep_images = settings.get("keep_images", self.keep_images)
+        self.image_format = settings.get("image_format", self.image_format)
+        self.visual_style = settings.get("visual_style", self.visual_style)
+        self.viewport_preset = settings.get(
+            "viewport_preset", self.viewport_preset)
+        self.anti_aliasing = settings.get(
+            "anti_aliasing", self.anti_aliasing)
+        self.vp_texture = settings.get("vp_texture", self.vp_texture)
 
     def create(self, subset_name, instance_data, pre_create_data):
         # Transfer settings from pre create to instance

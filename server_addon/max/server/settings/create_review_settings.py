@@ -35,7 +35,7 @@ def visual_style_enum():
     ]
 
 
-def visual_preset_enum():
+def preview_preset_enum():
     """Return enumerator for viewport visual preset."""
     return [
         {"label": "Quality", "value": "Quality"},
@@ -70,8 +70,8 @@ class CreateReviewModel(BaseSettingsModel):
         title="Preference"
     )
     viewport_preset: str = Field(
-        enum_resolver=visual_preset_enum,
-        title="Pre-View Preset"
+        enum_resolver=preview_preset_enum ,
+        title="Preview Preset"
     )
     anti_aliasing: str = Field(
         enum_resolver=anti_aliasing_enum,
