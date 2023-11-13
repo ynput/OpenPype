@@ -52,13 +52,13 @@ class SetDefaultDisplayView(PreLaunchHook):
         default_view = ":".join([default_view, OCIO_ACTIVE_VIEWS])
 
         self.log.info(
-            "Setting OCIO_ACTIVE_DISPLAYS environment to : {}"
+            "Setting OCIO_ACTIVE_DISPLAYS environment to: {}"
             .format(default_display)
         )
         self.launch_context.env["OCIO_ACTIVE_DISPLAYS"] = default_display
 
         self.log.info(
-            "Setting OCIO_ACTIVE_VIEWS environment to config path: {}"
+            "Setting OCIO_ACTIVE_VIEWS environment to: {}"
             .format(default_view)
         )
         self.launch_context.env["OCIO_ACTIVE_VIEWS"] = default_view
