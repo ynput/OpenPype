@@ -31,6 +31,10 @@ class TimelineItem(object):
         return self.root.GetName()
 
     @property
+    def color(self) -> str:
+        return self.root.GetClipColor()
+
+    @property
     def video_track(self) -> api.VideoTrack:
         return self.__video_track
 
