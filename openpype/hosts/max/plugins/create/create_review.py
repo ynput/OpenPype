@@ -88,7 +88,7 @@ class CreateReview(plugin.MaxCreator):
                       default=self.review_height),
             NumberDef("percentSize",
                       label="Percent of Output",
-                      default=100,
+                      default=self.percentSize,
                       minimum=1,
                       decimals=0),
             BoolDef("keepImages",
