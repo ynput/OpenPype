@@ -175,14 +175,17 @@ def test_add_ordered_sublayer(tmp_path):
 
     layer = Sdf.Layer.CreateAnonymous()
 
-    def get_paths(layer):
+    def get_paths(layer, remove_format_args=True):
         paths = layer.subLayerPaths
         # Remove stored metadata in string
-        paths = [path.split(":SDF_FORMAT_ARGS:", 1)[0] for path in paths]
+        if remove_format_args:
+            paths = [path.split(":SDF_FORMAT_ARGS:", 1)[0] for path in paths]
         return paths
 
+    # The layer stack should have the higher orders earlier in the list
+    # because those state "stronger opinions" - as such the order needs to be
+    # reversed
     orders = [300, 500, 350, 600, 50, 150, 450]
-    orders_sorted = list(sorted(orders))
     for order in orders:
         usdlib.add_ordered_sublayer(layer,
                                     contribution_path=str(order),
@@ -190,8 +193,7 @@ def test_add_ordered_sublayer(tmp_path):
                                     order=order)
 
     paths = get_paths(layer)
-    assert paths == [str(i) for i in sorted(orders)]
-    assert len(paths) == len(orders)
+    assert paths == ["600", "500", "450", "350", "300", "150", "50"]
 
     # This should not add a sublayer but should replace by `layer_id`
     usdlib.add_ordered_sublayer(layer,
@@ -200,8 +202,7 @@ def test_add_ordered_sublayer(tmp_path):
                                 order=300)
 
     paths = get_paths(layer)
-    assert paths[orders_sorted.index(300)] == "300_v2"
-    assert len(paths) == len(orders)
+    assert paths == ["600", "500", "450", "350", "300_v2", "150", "50"]
 
     # When replacing a layer with a new 'id' the ordering is preserved from
     # before; the new order is not applied.
@@ -211,8 +212,7 @@ def test_add_ordered_sublayer(tmp_path):
                                 order=9999)
 
     paths = get_paths(layer)
-    assert paths[orders_sorted.index(500)] == "500_v2"
-    assert len(paths) == len(orders)
+    assert paths == ["600", "500_v2", "450", "350", "300_v2", "150", "50"]
 
     # When replacing a layer with a new 'id' the ordering is preserved from
     # before; the new order is not applied even when it is None
@@ -222,8 +222,7 @@ def test_add_ordered_sublayer(tmp_path):
                                 order=None)
 
     paths = get_paths(layer)
-    assert paths[orders_sorted.index(500)] == "500_v3"
-    assert len(paths) == len(orders)
+    assert paths == ["600", "500_v3", "450", "350", "300_v2", "150", "50"]
 
     # Adding new layer id should also work to insert the new layer
     usdlib.add_ordered_sublayer(layer,
@@ -232,17 +231,16 @@ def test_add_ordered_sublayer(tmp_path):
                                 order=75)
 
     paths = get_paths(layer)
-    assert paths[1] == "75"
-    assert len(paths) == len(orders) + 1
+    assert paths == ["600", "500_v3", "450", "350", "300_v2", "150", "75", "50"]  # noqa: E501
 
-    # Adding a layer with `order=None` should append at the end
+    # Adding a layer with `order=None` should append at the start as a
+    # strongest opinion
     usdlib.add_ordered_sublayer(layer,
                                 contribution_path=f"None",
                                 layer_id="None",
                                 order=None)
     paths = get_paths(layer)
-    assert paths[-1] == "None"
-    assert len(paths) == len(orders) + 2
+    assert paths == ["None", "600", "500_v3", "450", "350", "300_v2", "150", "75", "50"]  # noqa: E501
 
     # Adding a layer with `order=None` should also be replaceable
     usdlib.add_ordered_sublayer(layer,
@@ -250,8 +248,7 @@ def test_add_ordered_sublayer(tmp_path):
                                 layer_id="None",
                                 order=None)
     paths = get_paths(layer)
-    assert paths[-1] == "None_v2"
-    assert len(paths) == len(orders) + 2
+    assert paths == ["None_v2", "600", "500_v3", "450", "350", "300_v2", "150", "75", "50"]  # noqa: E501
 
     # Debug print generated file (pytest excludes it by default but will
     # show it if the -s flag is passed)

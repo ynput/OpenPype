@@ -281,6 +281,10 @@ def add_ordered_sublayer(layer, contribution_path, layer_id, order=None,
     There they will then just be unused args that we can parse later again
     to access our data.
 
+    A higher order will appear earlier in the subLayerPaths as a stronger
+    opinion. An unordered layer (`order=None`) will be stronger than any
+    ordered opinion and thus will be inserted at the start of the list.
+
     Args:
         layer (Sdf.Layer): Layer to add sublayers in.
         contribution_path (str): Path/URI to add.
@@ -295,6 +299,8 @@ def add_ordered_sublayer(layer, contribution_path, layer_id, order=None,
             in the future as intended.
 
     Returns:
+        str: The resulting contribution path (which maybe include the
+            sdf format args metadata if enabled)
 
     """
 
@@ -336,29 +342,33 @@ def add_ordered_sublayer(layer, contribution_path, layer_id, order=None,
                 f"-> {contribution_path}"
             )
             layer.subLayerPaths[index] = contribution_path
-            return
+            return contribution_path
 
     contribution_path = _format_path(contribution_path,
                                      order=order,
                                      layer_id=layer_id)
 
     # If an order is defined and other layers are ordered than place it before
-    # the first order where existing order is higher
+    # the first order where existing order is lower
     if order is not None:
         for index, existing_path in enumerate(layer.subLayerPaths):
             args = get_sdf_format_args(existing_path)
             existing_order = args.get("order")
-            if existing_order is not None and int(existing_order) > order:
+            if existing_order is not None and int(existing_order) < order:
                 log.debug(
                     f"Inserting new layer at {index}: {contribution_path}"
                 )
                 layer.subLayerPaths.insert(index, contribution_path)
                 return
+        # Weakest ordered opinion
+        layer.subLayerPaths.append(contribution_path)
+        return contribution_path
 
     # If no paths found with an order to put it next to
     # then put the sublayer at the end
     log.debug(f"Appending new layer: {contribution_path}")
-    layer.subLayerPaths.append(contribution_path)
+    layer.subLayerPaths.insert(0, contribution_path)
+    return contribution_path
 
 
 def add_variant_references_to_layer(
