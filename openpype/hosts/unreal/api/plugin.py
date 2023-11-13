@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import ast
+import json
 import collections
 import sys
 import six
@@ -110,9 +110,10 @@ class UnrealBaseCreator(Creator):
         for instance in self.collection_shared_data[
                 "unreal_cached_subsets"].get(self.identifier, []):
             # Unreal saves metadata as string, so we need to convert it back
-            instance['creator_attributes'] = ast.literal_eval(
+            # Not using ast.literal_eval since your can have issues with quotes/formatting
+            instance['creator_attributes'] = json.loads(
                 instance.get('creator_attributes', '{}'))
-            instance['publish_attributes'] = ast.literal_eval(
+            instance['publish_attributes'] = json.loads(
                 instance.get('publish_attributes', '{}'))
             created_instance = CreatedInstance.from_existing(instance, self)
             self._add_instance_to_context(created_instance)

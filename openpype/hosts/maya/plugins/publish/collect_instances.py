@@ -72,6 +72,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                     value = None
                 data[attr] = value
 
+            # Like Unreal, Maya saves some metadata (dict) as string, so we need to convert it back
+            # Not using ast.literal_eval since your can have issues with quotes/formatting
+            data['creator_attributes'] = json.loads(data.get('creator_attributes', '{}'))
+            data['publish_attributes'] = json.loads(data.get('publish_attributes', '{}'))
+
             # temporarily translation of `active` to `publish` till issue has
             # been resolved, https://github.com/pyblish/pyblish-base/issues/307
             if "active" in data:
