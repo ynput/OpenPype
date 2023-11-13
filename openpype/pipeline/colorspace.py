@@ -15,14 +15,10 @@ from openpype.lib import (
     run_openpype_process,
     Logger
 )
-from openpype.pipeline import (
-    Anatomy,
-    get_current_context
-)
+from openpype.pipeline import Anatomy
 from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
 
 from .template_data import get_template_data_with_names
-
 
 log = Logger.get_logger(__name__)
 
@@ -155,6 +151,7 @@ def get_colorspace_name_from_filepath(
     Returns:
         str: name of colorspace
     """
+    from .context_tools import get_current_context
     context = get_current_context()
     project_name = project_name or context["project_name"]
     asset_name = asset_name or context["asset_name"]
@@ -304,6 +301,7 @@ def get_imageio_file_rules_colorspace_from_filepath(
     Returns:
         str: name of colorspace
     """
+    from .context_tools import get_current_context
     context = get_current_context()
     asset_name = asset_name or context["asset_name"]
     task_name = task_name or context["task_name"]
