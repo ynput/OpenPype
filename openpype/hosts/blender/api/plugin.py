@@ -256,19 +256,16 @@ class BaseCreator(Creator):
         if not cached_subsets:
             return
 
+        # Process only instances that were created by this creator
         for instance_data in cached_subsets.get(self.identifier, []):
-            # Process only instances that were created by this creator
-            data = instance_data.to_dict()
-            creator_id = data.get('creator_identifier')
+            # Create instance object from existing data
+            instance = CreatedInstance.from_existing(
+                instance_data=instance_data.to_dict(),
+                creator=self
+            )
 
-            if creator_id == self.identifier:
-                # Create instance object from existing data
-                instance = CreatedInstance.from_existing(
-                    data, self
-                )
-
-                # Add instance to create context
-                self._add_instance_to_context(instance)
+            # Add instance to create context
+            self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
         """Override abstract method from BaseCreator.
