@@ -15,8 +15,13 @@ from openpype.lib import (
     run_openpype_process,
     Logger
 )
-from openpype.pipeline import Anatomy
+from openpype.pipeline import (
+    Anatomy,
+    get_current_context
+)
 from openpype.lib.transcoding import VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
+
+from .template_data import get_template_data_with_names
 
 
 log = Logger.get_logger(__name__)
@@ -121,8 +126,13 @@ def get_ocio_config_script_path():
 
 
 def get_colorspace_name_from_filepath(
-    filepath, host_name, project_name,
-    config_data=None, file_rules=None,
+    filepath,
+    project_name=None,
+    asset_name=None,
+    task_name=None,
+    host_name=None,
+    config_data=None,
+    file_rules=None,
     project_settings=None,
     validate=True
 ):
@@ -130,8 +140,10 @@ def get_colorspace_name_from_filepath(
 
     Args:
         filepath (str): path string, file rule pattern is tested on it
-        host_name (str): host name
-        project_name (str): project name
+        project_name (Optional[str]): project name. Defaults to None.
+        asset_name (Optional[str]): asset name. Defaults to None.
+        task_name (Optional[str]): task name. Defaults to None.
+        host_name (Optional[str]): host name. Defaults to None.
         config_data (Optional[dict]): config path and template in dict.
                                       Defaults to None.
         file_rules (Optional[dict]): file rule data from settings.
@@ -143,9 +155,19 @@ def get_colorspace_name_from_filepath(
     Returns:
         str: name of colorspace
     """
+    context = get_current_context()
+    project_name = project_name or context["project_name"]
+    asset_name = asset_name or context["asset_name"]
+    task_name = task_name or context["task_name"]
+    host_name = host_name or context["host_name"]
+
     project_settings, config_data, file_rules = _get_context_settings(
-        host_name, project_name,
-        config_data=config_data, file_rules=file_rules,
+        project_name,
+        asset_name,
+        task_name,
+        host_name,
+        config_data=config_data,
+        file_rules=file_rules,
         project_settings=project_settings
     )
 
@@ -199,16 +221,47 @@ def get_colorspace_from_filepath(*args, **kwargs):
 
 
 def _get_context_settings(
-    host_name, project_name,
-    config_data=None, file_rules=None,
+    project_name,
+    asset_name,
+    task_name,
+    host_name,
+    config_data=None,
+    file_rules=None,
     project_settings=None
 ):
+    """Get the context settings for a given project, asset, task, and host.
+
+    Args:
+        project_name (str): The name of the project.
+        asset_name (str): The name of the asset.
+        task_name (str): The name of the task.
+        host_name (str): The name of the host.
+        config_data (Optional[Dict]): The configuration data. Defaults to None.
+        file_rules (Optional[Dict]): The file rules. Defaults to None.
+        project_settings (Optional[Dict]): The project settings. Defaults to None.
+
+    Returns:
+        Tuple[Optional[Dict], Optional[Dict], Optional[Dict]]: A tuple
+            containing the project settings, configuration data,
+            and file rules.
+
+    Examples:
+        project_settings, config_data, file_rules = _get_context_settings(
+            "Project1", "Asset1", "Task1", "Host1"
+        )
+    """
+
     project_settings = project_settings or get_project_settings(
         project_name
     )
 
     config_data = config_data or get_imageio_config(
-        project_name, host_name, project_settings)
+        project_name,
+        asset_name,
+        task_name,
+        host_name,
+        project_settings=project_settings
+    )
 
     # in case host color management is not enabled
     if not config_data:
@@ -221,8 +274,13 @@ def _get_context_settings(
 
 
 def get_imageio_file_rules_colorspace_from_filepath(
-    filepath, host_name, project_name,
-    config_data=None, file_rules=None,
+    filepath,
+    host_name,
+    project_name,
+    asset_name=None,
+    task_name=None,
+    config_data=None,
+    file_rules=None,
     project_settings=None
 ):
     """Get colorspace name from filepath
@@ -233,6 +291,8 @@ def get_imageio_file_rules_colorspace_from_filepath(
         filepath (str): path string, file rule pattern is tested on it
         host_name (str): host name
         project_name (str): project name
+        asset_name (Optional[str]): asset name. Defaults to None.
+        task_name (Optional[str]): task name. Defaults to None.
         config_data (Optional[dict]): config path and template in dict.
                                       Defaults to None.
         file_rules (Optional[dict]): file rule data from settings.
@@ -242,9 +302,17 @@ def get_imageio_file_rules_colorspace_from_filepath(
     Returns:
         str: name of colorspace
     """
+    context = get_current_context()
+    asset_name = asset_name or context["asset_name"]
+    task_name = task_name or context["task_name"]
+
     project_settings, config_data, file_rules = _get_context_settings(
-        host_name, project_name,
-        config_data=config_data, file_rules=file_rules,
+        project_name,
+        asset_name,
+        task_name,
+        host_name,
+        config_data=config_data,
+        file_rules=file_rules,
         project_settings=project_settings
     )
 
@@ -747,9 +815,9 @@ def get_views_data_subprocess(config_path):
 
 def get_imageio_config(
     project_name,
+    asset_name,
+    task_name,
     host_name,
-    asset_name=None,
-    task_name=None,
     project_settings=None,
     anatomy=None,
     env=None,
@@ -762,9 +830,9 @@ def get_imageio_config(
 
     Args:
         project_name (str): project name
+        asset_name (str): asset name
+        task_name (str): task name
         host_name (str): host name
-        asset_name (Optional[str]): asset name. Defaults to None.
-        task_name (Optional[str]): task name. Defaults to None.
         project_settings (Optional[dict]): Project settings.
         anatomy (Optional[Anatomy]): Anatomy object.
         env (Optional[dict]): Environment variables.
@@ -773,18 +841,9 @@ def get_imageio_config(
     Returns:
         dict: config path data or empty dict
     """
-    from openpype.pipeline import get_current_context
-    from openpype.pipeline.template_data import get_template_data_with_names
-
-    context = get_current_context()
 
     project_settings = project_settings or get_project_settings(project_name)
     anatomy = anatomy or Anatomy(project_name)
-
-    if project_name == context["project_name"] and not asset_name:
-        asset_name = context["asset_name"]
-        if not task_name:
-            task_name = context["task_name"]
 
     if not anatomy_data:
         anatomy_data = get_template_data_with_names(

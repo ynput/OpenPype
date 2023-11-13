@@ -113,7 +113,12 @@ class TestPipelineColorspace(TestPipeline):
         # get config_data from hiero
         # where project level config is defined
         config_data = colorspace.get_imageio_config(
-            "test_project", "hiero", project_settings)
+            self.PROJECT,
+            self.ASSET,
+            self.TASK,
+            "hiero",
+            project_settings=project_settings
+        )
 
         assert os.path.exists(config_data["path"]), (
             f"Config file \'{config_data['path']}\' doesn't exist"
@@ -198,6 +203,9 @@ class TestPipelineColorspace(TestPipeline):
 
         nuke_colorspace = colorspace.get_colorspace_name_from_filepath(
             nuke_filepath,
+            self.PROJECT,
+            self.ASSET,
+            self.TASK,
             "nuke",
             "test_project",
             project_settings=project_settings
@@ -207,6 +215,9 @@ class TestPipelineColorspace(TestPipeline):
 
         hiero_colorspace = colorspace.get_colorspace_name_from_filepath(
             hiero_filepath,
+            self.PROJECT,
+            self.ASSET,
+            self.TASK,
             "hiero",
             "test_project",
             project_settings=project_settings
@@ -231,6 +242,9 @@ class TestPipelineColorspace(TestPipeline):
 
         nuke_colorspace = colorspace.get_colorspace_name_from_filepath(
             nuke_filepath,
+            self.PROJECT,
+            self.ASSET,
+            self.TASK,
             "nuke",
             "test_project",
             project_settings=project_settings
@@ -240,6 +254,9 @@ class TestPipelineColorspace(TestPipeline):
 
         hiero_colorspace = colorspace.get_colorspace_name_from_filepath(
             hiero_filepath,
+            self.PROJECT,
+            self.ASSET,
+            self.TASK,
             "hiero",
             "test_project",
             project_settings=project_settings

@@ -155,12 +155,22 @@ class TestPipelinePublishPlugins(TestPipeline):
         expected_colorspace_nuke = "Camera Rec.709"
 
         config_data_nuke = colorspace.get_imageio_config(
-            "test_project", "nuke", project_settings)
+            self.PROJECT,
+            self.ASSET,
+            self.TASK,
+            "nuke",
+            project_settings=project_settings
+        )
         file_rules_nuke = colorspace.get_imageio_file_rules(
             "test_project", "nuke", project_settings)
 
         config_data_hiero = colorspace.get_imageio_config(
-            "test_project", "hiero", project_settings)
+            self.PROJECT,
+            self.ASSET,
+            self.TASK,
+            "hiero",
+            project_settings=project_settings
+        )
         file_rules_hiero = colorspace.get_imageio_file_rules(
             "test_project", "hiero", project_settings)
 
