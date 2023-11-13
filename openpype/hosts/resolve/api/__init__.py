@@ -1,6 +1,16 @@
 """
 resolve api
 """
+# fmt: off
+
+from .wrappers import (
+    ProjectManager,
+    Project,
+    Timeline,
+    VideoTrack,
+    TimelineItem
+)
+
 from .utils import (
     get_resolve_module
 )
@@ -80,6 +90,13 @@ __all__ = [
     "maintained_selection",
     "remove_instance",
     "list_instances",
+
+    # wrappers
+    "ProjectManager",
+    "Project",
+    "Timeline",
+    "VideoTrack",
+    "TimelineItem",
 
     # utils
     "get_resolve_module",
