@@ -77,7 +77,8 @@ class ExtractROPs(pyblish.api.ContextPlugin):
 
         if instance is None:
             # The ROP node does not belong to an instance and was likely a
-            # dependency to another ROP node in an instance.
+            # dependency to another ROP node in an instance or it may have
+            # been a disabled instance.
             self.log.debug("Skipping representation for ROP node without "
                            "instance: %s", ropnode.path())
             return
