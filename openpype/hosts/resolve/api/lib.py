@@ -278,9 +278,9 @@ def create_timeline_item(
 
     # timing variables
     if (
-        timeline_in is not None or
-        source_start is not None or
-        source_end is not None
+        timeline_in is not None
+        or source_start is not None
+        or source_end is not None
     ):
         fps = float(timeline.GetSetting("timelineFrameRate"))
         duration = source_end - source_start
