@@ -207,7 +207,6 @@ class TestPipelineColorspace(TestPipeline):
             self.ASSET,
             self.TASK,
             "nuke",
-            "test_project",
             project_settings=project_settings
         )
         assert expected_nuke == nuke_colorspace, (
@@ -219,7 +218,6 @@ class TestPipelineColorspace(TestPipeline):
             self.ASSET,
             self.TASK,
             "hiero",
-            "test_project",
             project_settings=project_settings
         )
         assert expected_hiero == hiero_colorspace, (
@@ -246,7 +244,6 @@ class TestPipelineColorspace(TestPipeline):
             self.ASSET,
             self.TASK,
             "nuke",
-            "test_project",
             project_settings=project_settings
         )
         assert expected_nuke == nuke_colorspace, (
@@ -258,7 +255,6 @@ class TestPipelineColorspace(TestPipeline):
             self.ASSET,
             self.TASK,
             "hiero",
-            "test_project",
             project_settings=project_settings
         )
         assert expected_hiero == hiero_colorspace, (
