@@ -149,9 +149,13 @@ class CreateSaver(NewCreator):
 
         # get frame padding from anatomy templates
         anatomy = Anatomy()
-        frame_padding = int(
-            anatomy.templates["render"].get("frame_padding", 4)
-        )
+        render_anatomy_template = anatomy.templates.get("render")
+        if render_anatomy_template:
+            frame_padding = int(
+                render_anatomy_template.get("frame_padding", 4)
+            )
+        else:
+            frame_padding = int(anatomy.templates.get("frame_padding", 4))
 
         # Subset change detected
         workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
