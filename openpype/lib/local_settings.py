@@ -578,7 +578,7 @@ def is_admin_password_required(ignore_admin_skip=False):
     if not password:
         return False
 
-    if ignore_admin_skip:
+    if not ignore_admin_skip:
         local_settings = get_local_settings()
         is_admin = local_settings.get("general", {}).get("is_admin", False)
         if is_admin:
