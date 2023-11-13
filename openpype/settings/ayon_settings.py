@@ -20,7 +20,8 @@ import copy
 import time
 
 import six
-import ayon_api
+
+from openpype.client import get_ayon_server_api_connection
 
 
 def _convert_color(color_value):
@@ -288,6 +289,16 @@ def _convert_modules_system(
         # - ModulesManager passes only modules settings into initialization
         if key not in modules_settings:
             modules_settings[key] = value
+
+
+def is_dev_mode_enabled():
+    """Dev mode is enabled in AYON.
+
+    Returns:
+        bool: True if dev mode is enabled.
+    """
+
+    return os.getenv("AYON_USE_DEV") == "1"
 
 
 def convert_system_settings(ayon_settings, default_settings, addon_versions):
@@ -629,6 +640,16 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
             for item in point_cloud_attribute
         }
         ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
+    # --- Publish (START) ---
+    ayon_publish = ayon_max["publish"]
+    if "ValidateAttributes" in ayon_publish:
+        try:
+            attributes = json.loads(
+                ayon_publish["ValidateAttributes"]["attributes"]
+            )
+        except ValueError:
+            attributes = {}
+        ayon_publish["ValidateAttributes"]["attributes"] = attributes
 
     output["max"] = ayon_max
 
@@ -819,9 +840,43 @@ def _convert_nuke_project_settings(ayon_settings, output):
     # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
     _convert_host_imageio(ayon_nuke)
     ayon_imageio = ayon_nuke["imageio"]
-    for item in ayon_imageio["nodes"]["requiredNodes"]:
+
+    # workfile
+    imageio_workfile = ayon_imageio["workfile"]
+    workfile_keys_mapping = (
+        ("color_management", "colorManagement"),
+        ("native_ocio_config", "OCIO_config"),
+        ("working_space", "workingSpaceLUT"),
+        ("thumbnail_space", "monitorLut"),
+    )
+    for src, dst in workfile_keys_mapping:
+        if (
+            src in imageio_workfile
+            and dst not in imageio_workfile
+        ):
+            imageio_workfile[dst] = imageio_workfile.pop(src)
+
+    # regex inputs
+    if "regex_inputs" in ayon_imageio:
+        ayon_imageio["regexInputs"] = ayon_imageio.pop("regex_inputs")
+
+    # nodes
+    ayon_imageio_nodes = ayon_imageio["nodes"]
+    if "required_nodes" in ayon_imageio_nodes:
+        ayon_imageio_nodes["requiredNodes"] = (
+            ayon_imageio_nodes.pop("required_nodes"))
+    if "override_nodes" in ayon_imageio_nodes:
+        ayon_imageio_nodes["overrideNodes"] = (
+            ayon_imageio_nodes.pop("override_nodes"))
+
+    for item in ayon_imageio_nodes["requiredNodes"]:
+        if "nuke_node_class" in item:
+            item["nukeNodeClass"] = item.pop("nuke_node_class")
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
-    for item in ayon_imageio["nodes"]["overrideNodes"]:
+
+    for item in ayon_imageio_nodes["overrideNodes"]:
+        if "nuke_node_class" in item:
+            item["nukeNodeClass"] = item.pop("nuke_node_class")
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
 
     output["nuke"] = ayon_nuke
@@ -967,10 +1022,14 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
         item["family"] = item.pop("product_type")
 
     shot_add_tasks = ayon_editorial_simple["shot_add_tasks"]
+
+    # TODO: backward compatibility and remove in future
     if isinstance(shot_add_tasks, dict):
         shot_add_tasks = []
+
+    # aggregate shot_add_tasks items
     new_shot_add_tasks = {
-        item["name"]: item["task_type"]
+        item["name"]: {"type": item["task_type"]}
         for item in shot_add_tasks
     }
     ayon_editorial_simple["shot_add_tasks"] = new_shot_add_tasks
@@ -1164,19 +1223,19 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
     for profile in extract_oiio_transcode_profiles:
         new_outputs = {}
         name_counter = {}
-        for output in profile["outputs"]:
-            if "name" in output:
-                name = output.pop("name")
+        for profile_output in profile["outputs"]:
+            if "name" in profile_output:
+                name = profile_output.pop("name")
             else:
                 # Backwards compatibility for setting without 'name' in model
-                name = output["extension"]
+                name = profile_output["extension"]
                 if name in new_outputs:
                     name_counter[name] += 1
                     name = "{}_{}".format(name, name_counter[name])
                 else:
                     name_counter[name] = 0
 
-            new_outputs[name] = output
+            new_outputs[name] = profile_output
         profile["outputs"] = new_outputs
 
     # Extract Burnin plugin
@@ -1391,8 +1450,12 @@ class _AyonSettingsCache:
     @classmethod
     def _use_bundles(cls):
         if _AyonSettingsCache.use_bundles is None:
-            major, minor, _, _, _ = ayon_api.get_server_version_tuple()
-            _AyonSettingsCache.use_bundles = major == 0 and minor >= 3
+            con = get_ayon_server_api_connection()
+            major, minor, _, _, _ = con.get_server_version_tuple()
+            use_bundles = True
+            if (major, minor) < (0, 3):
+                use_bundles = False
+            _AyonSettingsCache.use_bundles = use_bundles
         return _AyonSettingsCache.use_bundles
 
     @classmethod
@@ -1400,9 +1463,18 @@ class _AyonSettingsCache:
         if _AyonSettingsCache.variant is None:
             from openpype.lib.openpype_version import is_staging_enabled
 
-            _AyonSettingsCache.variant = (
-                "staging" if is_staging_enabled() else "production"
-            )
+            variant = "production"
+            if is_dev_mode_enabled():
+                variant = cls._get_dev_mode_settings_variant()
+            elif is_staging_enabled():
+                variant = "staging"
+
+            # Cache variant
+            _AyonSettingsCache.variant = variant
+
+            # Set the variant to global ayon api connection
+            con = get_ayon_server_api_connection()
+            con.set_default_settings_variant(variant)
         return _AyonSettingsCache.variant
 
     @classmethod
@@ -1410,23 +1482,48 @@ class _AyonSettingsCache:
         return os.environ["AYON_BUNDLE_NAME"]
 
     @classmethod
+    def _get_dev_mode_settings_variant(cls):
+        """Develop mode settings variant.
+
+        Returns:
+            str: Name of settings variant.
+        """
+
+        con = get_ayon_server_api_connection()
+        bundles = con.get_bundles()
+        user = con.get_user()
+        username = user["name"]
+        for bundle in bundles["bundles"]:
+            if (
+                bundle.get("isDev")
+                and bundle.get("activeUser") == username
+            ):
+                return bundle["name"]
+        # Return fake variant - distribution logic will tell user that he
+        #   does not have set any dev bundle
+        return "dev"
+
+    @classmethod
     def get_value_by_project(cls, project_name):
         cache_item = _AyonSettingsCache.cache_by_project_name[project_name]
         if cache_item.is_outdated:
+            con = get_ayon_server_api_connection()
             if cls._use_bundles():
-                value = ayon_api.get_addons_settings(
+                value = con.get_addons_settings(
                     bundle_name=cls._get_bundle_name(),
-                    project_name=project_name
+                    project_name=project_name,
+                    variant=cls._get_variant()
                 )
             else:
-                value = ayon_api.get_addons_settings(project_name)
+                value = con.get_addons_settings(project_name)
             cache_item.update_value(value)
         return cache_item.get_value()
 
     @classmethod
     def _get_addon_versions_from_bundle(cls):
+        con = get_ayon_server_api_connection()
         expected_bundle = cls._get_bundle_name()
-        bundles = ayon_api.get_bundles()["bundles"]
+        bundles = con.get_bundles()["bundles"]
         bundle = next(
             (
                 bundle
@@ -1446,8 +1543,11 @@ class _AyonSettingsCache:
             if cls._use_bundles():
                 addons = cls._get_addon_versions_from_bundle()
             else:
-                settings_data = ayon_api.get_addons_settings(
-                    only_values=False, variant=cls._get_variant())
+                con = get_ayon_server_api_connection()
+                settings_data = con.get_addons_settings(
+                    only_values=False,
+                    variant=cls._get_variant()
+                )
                 addons = settings_data["versions"]
             cache_item.update_value(addons)
 

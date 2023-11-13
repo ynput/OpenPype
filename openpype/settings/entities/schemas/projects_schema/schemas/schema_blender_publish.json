@@ -81,6 +81,22 @@
         },
         {
             "type": "collapsible-wrap",
+            "label": "BlendScene",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateInstanceEmpty",
+                            "label": "Validate Instance is not Empty"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "collapsible-wrap",
             "label": "Render",
             "children": [
                 {
@@ -181,12 +197,12 @@
             "name": "template_publish_plugin",
             "template_data": [
                 {
-                    "key": "ExtractFBX",
-                    "label": "Extract FBX (model and rig)"
+                    "key": "ExtractModelABC",
+                    "label": "Extract ABC (model)"
                 },
                 {
-                    "key": "ExtractABC",
-                    "label": "Extract ABC (model and pointcache)"
+                    "key": "ExtractFBX",
+                    "label": "Extract FBX (model and rig)"
                 },
                 {
                     "key": "ExtractBlendAnimation",

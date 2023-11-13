@@ -341,7 +341,7 @@
                 "write"
             ]
         },
-        "ValidateCorrectAssetName": {
+        "ValidateCorrectAssetContext": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -374,7 +374,7 @@
             "optional": true,
             "active": true
         },
-        "ValidateScript": {
+        "ValidateScriptAttributes": {
             "enabled": true,
             "optional": true,
             "active": true

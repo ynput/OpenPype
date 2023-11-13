@@ -280,7 +280,11 @@ def get_current_comp():
 
 
 @contextlib.contextmanager
-def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
+def comp_lock_and_undo_chunk(
+    comp,
+    undo_queue_name="Script CMD",
+    keep_undo=True,
+):
     """Lock comp and open an undo chunk during the context"""
     try:
         comp.Lock()
@@ -288,4 +292,4 @@ def comp_lock_and_undo_chunk(comp, undo_queue_name="Script CMD"):
         yield
     finally:
         comp.Unlock()
-        comp.EndUndo()
+        comp.EndUndo(keep_undo)

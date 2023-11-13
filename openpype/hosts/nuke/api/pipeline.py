@@ -129,9 +129,6 @@ class NukeHost(
         register_event_callback("workio.open_file", check_inventory_versions)
         register_event_callback("taskChanged", change_context_label)
 
-        pyblish.api.register_callback(
-            "instanceToggled", on_pyblish_instance_toggled)
-
         _install_menu()
 
         # add script menu
@@ -402,25 +399,6 @@ def add_shortcuts_from_presets():
                 log.error(e)
 
 
-def on_pyblish_instance_toggled(instance, old_value, new_value):
-    """Toggle node passthrough states on instance toggles."""
-
-    log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
-        instance, old_value, new_value))
-
-    # Whether instances should be passthrough based on new value
-
-    with viewer_update_and_undo_stop():
-        n = instance[0]
-        try:
-            n["publish"].value()
-        except ValueError:
-            n = add_publish_knob(n)
-            log.info(" `Publish` knob was added to write node..")
-
-        n["publish"].setValue(new_value)
-
-
 def containerise(node,
                  name,
                  namespace,
@@ -478,8 +456,6 @@ def parse_container(node):
     """
     data = read_avalon_data(node)
 
-    # (TODO) Remove key validation when `ls` has re-implemented.
-    #
     # If not all required data return the empty container
     required = ["schema", "id", "name",
                 "namespace", "loader", "representation"]
@@ -487,7 +463,10 @@ def parse_container(node):
         return
 
     # Store the node's name
-    data["objectName"] = node["name"].value()
+    data.update({
+        "objectName": node.fullName(),
+        "node": node,
+    })
 
     return data
 

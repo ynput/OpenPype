@@ -279,7 +279,7 @@ arguments and it will create zip file that OpenPype can use.
 Building documentation
 ----------------------
 
-Top build API documentation, run `.\tools\make_docs(.ps1|.sh)`. It will create html documentation
+To build API documentation, run `.\tools\make_docs(.ps1|.sh)`. It will create html documentation
 from current sources in `.\docs\build`.
 
 **Note that it needs existing virtual environment.**

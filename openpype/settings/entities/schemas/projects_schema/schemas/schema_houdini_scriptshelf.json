@@ -5,66 +5,99 @@
     "is_group": true,
     "use_label_wrap": true,
     "object_type": {
-        "type": "dict",
-        "children": [
+        "type": "dict-conditional",
+        "enum_key": "options",
+        "enum_label": "Options",
+        "enum_children": [
             {
-                "type": "text",
-                "key": "shelf_set_name",
-                "label": "Shelf Set Name"
-            },
-            {
-                "type": "path",
-                "key": "shelf_set_source_path",
-                "label": "Shelf Set Path (optional)",
-                "multipath": false,
-                "multiplatform": true
-            },
-            {
-                "type": "list",
-                "key": "shelf_definition",
-                "label": "Shelves",
-                "use_label_wrap": true,
-                "object_type": {
-                    "type": "dict",
-                    "children": [
-                        {
-                            "type": "text",
-                            "key": "shelf_name",
-                            "label": "Shelf Name"
-                        },
-                        {
-                            "type": "list",
-                            "key": "tools_list",
-                            "label": "Tools",
-                            "use_label_wrap": true,
-                            "object_type": {
-                                "type": "dict",
-                                "children": [
-                                    {
-                                        "type": "text",
-                                        "key": "label",
-                                        "label": "Name"
-                                    },
-                                    {
-                                        "type": "path",
-                                        "key": "script",
-                                        "label": "Script"
-                                    },
-                                    {
-                                        "type": "path",
-                                        "key": "icon",
-                                        "label": "Icon"
-                                    },
-                                    {
-                                        "type": "text",
-                                        "key": "help",
-                                        "label": "Help"
-                                    }
-                                ]
+
+                "key": "add_shelf_file",
+                "label": "Add a .shelf file",
+                "children": [
+                    {
+                        "type": "dict",
+                        "key": "add_shelf_file",
+                        "label": "Add a .shelf file",
+                        "children": [
+                            {
+                                "type": "path",
+                                "key": "shelf_set_source_path",
+                                "label": "Shelf Set Path",
+                                "multipath": false,
+                                "multiplatform": true
                             }
-                        }
-                    ]
-                }
+                        ]
+                    }
+                ]
+            },
+            {
+                "key": "add_set_and_definitions",
+                "label": "Add Shelf Set Name and Shelves Definitions",
+                "children": [
+                    {
+                        "key": "add_set_and_definitions",
+                        "label": "Add Shelf Set Name and Shelves Definitions",
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "shelf_set_name",
+                                "label": "Shelf Set Name"
+                            },
+                            {
+                                "type": "list",
+                                "key": "shelf_definition",
+                                "label": "Shelves Definitions",
+                                "use_label_wrap": true,
+                                "object_type": {
+                                    "type": "dict",
+                                    "children": [
+                                        {
+                                            "type": "text",
+                                            "key": "shelf_name",
+                                            "label": "Shelf Name"
+                                        },
+                                        {
+                                            "type": "list",
+                                            "key": "tools_list",
+                                            "label": "Tools",
+                                            "use_label_wrap": true,
+                                            "object_type": {
+                                                "type": "dict",
+                                                "children": [
+                                                    {
+                                                        "type": "label",
+                                                        "label": "Name and Script Path are mandatory."
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "key": "label",
+                                                        "label": "Name"
+                                                    },
+                                                    {
+                                                        "type": "path",
+                                                        "key": "script",
+                                                        "label": "Script"
+                                                    },
+                                                    {
+                                                        "type": "path",
+                                                        "key": "icon",
+                                                        "label": "Icon"
+                                                    },
+                                                    {
+                                                        "type": "text",
+                                                        "key": "help",
+                                                        "label": "Help"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                ]
             }
         ]
     }

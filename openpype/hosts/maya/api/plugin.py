@@ -771,7 +771,8 @@ class ReferenceLoader(Loader):
             "ma": "mayaAscii",
             "mb": "mayaBinary",
             "abc": "Alembic",
-            "fbx": "FBX"
+            "fbx": "FBX",
+            "usd": "USD Import"
         }.get(representation["name"])
 
         assert file_type, "Unsupported representation: %s" % representation

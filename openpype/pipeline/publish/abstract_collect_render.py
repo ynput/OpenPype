@@ -11,7 +11,6 @@ import six
 
 import pyblish.api
 
-from openpype.pipeline import legacy_io
 from .publish_plugins import AbstractMetaContextPlugin
 
 
@@ -31,7 +30,7 @@ class RenderInstance(object):
     label = attr.ib()  # label to show in GUI
     subset = attr.ib()  # subset name
     task = attr.ib()  # task name
-    asset = attr.ib()  # asset name (AVALON_ASSET)
+    asset = attr.ib()  # asset name
     attachTo = attr.ib()  # subset name to attach render to
     setMembers = attr.ib()  # list of nodes/members producing render output
     publish = attr.ib()  # bool, True to publish instance
@@ -129,7 +128,6 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
         """Constructor."""
         super(AbstractCollectRender, self).__init__(*args, **kwargs)
         self._file_path = None
-        self._asset = legacy_io.Session["AVALON_ASSET"]
         self._context = None
 
     def process(self, context):
