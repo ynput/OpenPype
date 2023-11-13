@@ -279,7 +279,7 @@ def create_remote_publish_node(force=True):
     node.setParmTemplateGroup(template)
 
 
-def render_rop(ropnode):
+def render_rop(ropnode, **kwargs):
     """Render ROP node utility for Publishing.
 
     This renders a ROP node with the settings we want during Publishing.
@@ -1024,3 +1024,47 @@ def add_self_publish_button(node):
     template = node.parmTemplateGroup()
     template.insertBefore((0,), button_parm)
     node.setParmTemplateGroup(template)
+
+
+def get_sorted_rops(rop_nodes, include_dependencies=True):
+    """Sort ROPs by dependency order.
+
+    Given a list of ROP nodes return them in the order that they should
+    be rendered to adhere to the input dependencies in the node graph.
+
+    Arguments:
+        rop_nodes (List[hou.RopNode]): List of ROP nodes
+        include_dependencies (bool): When enabled input dependencies not in
+            `rop_nodes` list will be included in the result. Otherwise only
+            nodes from the input list will be returned in order.
+
+    Returns:
+        List[hou.RopNode]: The ROP node dependencies (including itself) in
+            dependency order, the last indices will be furthest down the graph.
+
+    """
+    # For each node we we find the highest index in input dependencies
+    # and sort by that, the highest index will be rendered last. A ROP node
+    # with 9 inputs upstream will itself be at index 10
+    input_rop_paths = set()
+    rop_path_to_sorted_index = {}
+    for rop in rop_nodes:
+        input_rop_paths.add(rop.path())
+        dependencies = {
+            dependency_rop.path(): index
+            for index, (dependency_rop, _frames)
+            in enumerate(rop.inputDependencies())
+        }
+        for dep_rop_path, dep_index in dependencies.items():
+            rop_path_to_sorted_index[dep_rop_path] = max(
+                rop_path_to_sorted_index.get(dep_rop_path, 0), dep_index
+            )
+
+    ordered_rops = []
+    for rop_path, _index in sorted(rop_path_to_sorted_index.items(),
+                                   key=lambda item: item[1]):
+        if not include_dependencies and rop_path not in input_rop_paths:
+            continue
+        ordered_rops.append(hou.node(rop_path))
+
+    return ordered_rops

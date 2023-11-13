@@ -16,7 +16,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.1
     label = "Collect Frames"
     families = ["vdbcache", "imagesequence", "ass",
-                "redshiftproxy", "review", "bgeo"]
+                "redshiftproxy", "review", "bgeo", "abc", "camera"]
 
     def process(self, instance):
 
@@ -34,28 +34,31 @@ class CollectFrames(pyblish.api.InstancePlugin):
             self.log.warning("Using current frame: {}".format(hou.frame()))
             output = output_parm.eval()
 
+        staging_dir, file_name = os.path.split(output)
         _, ext = lib.splitext(
-            output, allowed_multidot_extensions=[
+            file_name, allowed_multidot_extensions=[
                 ".ass.gz", ".bgeo.sc", ".bgeo.gz",
-                ".bgeo.lzma", ".bgeo.bz2"])
-        file_name = os.path.basename(output)
+                ".bgeo.lzma", ".bgeo.bz2", ".pic.gz"])
         result = file_name
 
-        # Get the filename pattern match from the output
-        # path, so we can compute all frames that would
-        # come out from rendering the ROP node if there
-        # is a frame pattern in the name
+        # Get the filename pattern match from the output path, so we can
+        # compute all frames that would come out from rendering the ROP node
+        # if there is a frame pattern in the name
         pattern = r"\w+\.(\d+)" + re.escape(ext)
         match = re.match(pattern, file_name)
-
         if match and start_frame is not None:
-
             # Check if frames are bigger than 1 (file collection)
             # override the result
             if end_frame - start_frame > 0:
                 result = self.create_file_list(
                     match, int(start_frame), int(end_frame)
                 )
+
+        # Store extension and staging dir for representation creation
+        # at extraction
+        instance.data["representation_name"] = ext.strip(".").split(".", 1)[0]
+        instance.data["representation_ext"] = ext.strip(".")
+        instance.data["stagingDir"] = staging_dir
 
         # todo: `frames` currently conflicts with "explicit frames" for a
         #       for a custom frame list. So this should be refactored.
