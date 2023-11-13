@@ -35,6 +35,11 @@ class TimelineItem(object):
         return self.root.GetClipColor()
 
     @property
+    def source(self) -> api.MediaPoolItem:
+        result = api.MediapoolItem(self.root.GetMediaPoolItem())
+        return result
+
+    @property
     def video_track(self) -> api.VideoTrack:
         return self.__video_track
 

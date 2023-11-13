@@ -8,7 +8,8 @@ from .wrappers import (
     Project,
     Timeline,
     VideoTrack,
-    TimelineItem
+    TimelineItem,
+    MediapoolItem
 )
 
 from .utils import (
@@ -97,6 +98,7 @@ __all__ = [
     "Timeline",
     "VideoTrack",
     "TimelineItem",
+    "MediapoolItem",
 
     # utils
     "get_resolve_module",
