@@ -2,7 +2,6 @@ import pyblish.api
 from pymxs import runtime as rt
 
 
-
 class PublishedFilesTycacheObject(pyblish.api.InstancePlugin):
     """Load Published Files for Created TyCache Object."""
 
@@ -13,7 +12,8 @@ class PublishedFilesTycacheObject(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         tycache_attrs = instance.data["tyc_attrs"]
-        if "tycacheCreateObjectIfNotCreated" not in tycache_attrs["tycacheAttributes"]:
+        if "tycacheCreateObjectIfNotCreated" not in (
+            tycache_attrs["tycacheAttributes"]):
             self.log.debug("Attribute of 'Create Tycache Object' and "
                            "'Only if one does not already exists' "
                            "not being enabled. \n\n"
@@ -28,7 +28,10 @@ class PublishedFilesTycacheObject(pyblish.api.InstancePlugin):
 
         if "$(tyFlowName)" in tycache_object_name:
             name = next(member.name for member in instance.data["members"])
-            tycache_object_name = tycache_object_name.replace("$(tyFlowName)", name)
+            tycache_object_name = tycache_object_name.replace(
+                "$(tyFlowName)", name)
             tycache_object_node = rt.GetNodeByName(tycache_object_name)
             if tycache_object_node:
-                tycache_object_node.filename = published_path.replace("\\", "/")
+                tycache_object_node.filename = (
+                    published_path.replace("\\", "/")
+                )
