@@ -28,7 +28,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
         "substancepainter",
         "aftereffects",
     }
-    launch_types = {LaunchTypes.local}
+    launch_types = {LaunchTypes.local, LaunchTypes.test}
 
     def execute(self):
         if not self.data.get("start_last_workfile"):

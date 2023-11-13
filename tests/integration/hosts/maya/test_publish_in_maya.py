@@ -32,7 +32,10 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         ("test_publish_in_maya", "", "")
     ]
 
-    APP_GROUP = "maya"
+    # By default run through mayapy. For interactive mode, change to "maya" or
+    # input `--app_group maya` in cli.
+    APP_GROUP = "mayapy"
+
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
 
@@ -59,9 +62,15 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
         matches = re.findall(error_regex, logging_output)
         assert not matches, matches[0][0]
 
+        matches = re.findall(error_regex, publish_finished)
+        assert not matches, matches[0][0]
+
         # Check for python errors.
         error_regex = r"// Error((.|\n)*)"
         matches = re.findall(error_regex, logging_output)
+        assert not matches, matches[0][0]
+
+        matches = re.findall(error_regex, publish_finished)
         assert not matches, matches[0][0]
 
     def test_db_asserts(self, dbcon, publish_finished):

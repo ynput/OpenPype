@@ -1,9 +1,18 @@
 import logging
 import sys
+import os
 
-from maya import cmds
+MAYA_STANDALONE = False
+try:
+    import maya.standalone
+    maya.standalone.initialize()
+    MAYA_STANDALONE = True
+    print("maya standalone initialized")
+except RuntimeError:
+    pass
 
-import pyblish.util
+import pyblish.util   # noqa: E402
+from maya import cmds   # noqa: E402
 
 
 def setup_pyblish_logging():
@@ -20,6 +29,13 @@ def setup_pyblish_logging():
 def _run_publish_test_deferred():
     try:
         setup_pyblish_logging()
+
+        if MAYA_STANDALONE:
+            print("Opening " + os.environ["AVALON_LAST_WORKFILE"])
+            cmds.file(
+                os.environ["AVALON_LAST_WORKFILE"], open=True, force=True
+            )
+
         pyblish.util.publish()
     finally:
         cmds.quit(force=True)

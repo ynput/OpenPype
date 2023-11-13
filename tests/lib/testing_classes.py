@@ -12,11 +12,13 @@ import requests
 import re
 import inspect
 import time
+import subprocess
 
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler, LocalFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
+from openpype.lib.applications import LaunchTypes
 
 
 class BaseTest:
@@ -305,9 +307,23 @@ class PublishTest(ModuleUnitTest):
         yield app_args
 
     @pytest.fixture(scope="module")
+    def start_last_workfile(self):
+        """Start last workfile or not."""
+        return True
+
+    @pytest.fixture(scope="module")
+    def stdout_path(self, download_test_data):
+        return os.path.join(download_test_data, "stdout.txt")
+
+    @pytest.fixture(scope="module")
+    def stderr_path(self, download_test_data):
+        return os.path.join(download_test_data, "stderr.txt")
+
+    @pytest.fixture(scope="module")
     def launched_app(self, dbcon, download_test_data, last_workfile_path,
                      startup_scripts, app_args, app_name, output_folder_url,
-                     setup_only):
+                     setup_only, start_last_workfile, stdout_path,
+                     stderr_path):
         """Launch host app"""
         if setup_only or self.SETUP_ONLY:
             print("Creating only setup for test, not launching app")
@@ -325,13 +341,18 @@ class PublishTest(ModuleUnitTest):
         os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
         from openpype.lib import ApplicationManager
 
+        stdout = open(stdout_path, "w")
+        stderr = open(stderr_path, "w")
         application_manager = ApplicationManager()
         data = {
             "last_workfile_path": last_workfile_path,
-            "start_last_workfile": True,
+            "start_last_workfile": start_last_workfile,
             "project_name": self.PROJECT,
             "asset_name": self.ASSET,
-            "task_name": self.TASK
+            "task_name": self.TASK,
+            "stdout": stdout,
+            "stderr": stderr,
+            "launch_type": LaunchTypes.test
         }
         if app_args:
             data["app_args"] = app_args
@@ -341,7 +362,7 @@ class PublishTest(ModuleUnitTest):
 
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data,
-                         timeout, setup_only):
+                         timeout, setup_only, stdout_path, stderr_path):
         """Dummy fixture waiting for publish to finish"""
         if setup_only or self.SETUP_ONLY:
             print("Creating only setup for test, not launching app")
@@ -359,7 +380,18 @@ class PublishTest(ModuleUnitTest):
 
         # some clean exit test possible?
         print("Publish finished")
-        yield True
+
+        if launched_app.returncode != 0:
+            stderr = None
+            with open(stderr_path, "r") as f:
+                stderr = f.read()
+            raise ValueError("Launched app errored:\n{}".format(stderr))
+
+        stdout = None
+        with open(stdout_path, "r") as f:
+            stdout = f.read()
+
+        yield stdout
 
     def test_folder_structure_same(self, dbcon, publish_finished,
                                    download_test_data, output_folder_url,

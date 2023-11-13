@@ -60,6 +60,8 @@ class LaunchTypes:
     remote = "remote"
     # Automated launch - application is launched with automated publishing
     automated = "automated"
+    # Testing launch - application is launched in a testing environment.
+    test = "test"
 
 
 def parse_environments(env_data, env_group=None, platform_name=None):
@@ -972,6 +974,9 @@ class ApplicationLaunchContext:
 
         self.env_group = env_group
 
+        stdout = data.pop("stdout", None)
+        stderr = data.pop("stderr", None)
+
         self.data = dict(data)
 
         launch_args = []
@@ -1013,8 +1018,15 @@ class ApplicationLaunchContext:
             self.kwargs["creationflags"] = flags
 
         if not sys.stdout:
-            self.kwargs["stdout"] = subprocess.DEVNULL
-            self.kwargs["stderr"] = subprocess.DEVNULL
+            if stdout is None:
+                stdout = subprocess.DEVNULL
+            if stderr is None:
+                stderr = subprocess.DEVNULL
+
+        if stdout is not None:
+            self.kwargs["stdout"] = stdout
+        if stderr is not None:
+            self.kwargs["stderr"] = stderr
 
         self.prelaunch_hooks = None
         self.postlaunch_hooks = None

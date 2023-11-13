@@ -13,7 +13,7 @@ class LaunchWithTerminal(PreLaunchHook):
     order = 1000
 
     platforms = {"darwin"}
-    launch_types = {LaunchTypes.local}
+    launch_types = {LaunchTypes.local, LaunchTypes.test}
 
     def execute(self):
         executable = str(self.launch_context.executable)

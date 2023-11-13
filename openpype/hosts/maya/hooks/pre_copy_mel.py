@@ -8,7 +8,7 @@ class PreCopyMel(PreLaunchHook):
     Hook `GlobalHostDataHook` must be executed before this hook.
     """
     app_groups = {"maya", "mayapy"}
-    launch_types = {LaunchTypes.local}
+    launch_types = {LaunchTypes.local, LaunchTypes.test}
 
     def execute(self):
         project_doc = self.data["project_doc"]

@@ -7,7 +7,7 @@ class MayaPreAutoLoadPlugins(PreLaunchHook):
     # Before AddLastWorkfileToLaunchArgs
     order = 9
     app_groups = {"maya"}
-    launch_types = {LaunchTypes.local}
+    launch_types = {LaunchTypes.local, LaunchTypes.test}
 
     def execute(self):
 
