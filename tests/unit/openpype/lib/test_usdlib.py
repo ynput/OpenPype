@@ -215,7 +215,7 @@ def test_add_variant_references_to_layer(tmp_path):
     print(layer.ExportToString())
 
 
-def test_add_ordered_sublayer(tmp_path):
+def test_add_ordered_sublayer():
     """Test addinng sublayers by order and uniqueness"""
     # TODO: The code doesn't error but the data should still be validated
 
