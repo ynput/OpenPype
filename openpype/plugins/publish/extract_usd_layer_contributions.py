@@ -3,6 +3,7 @@ import dataclasses
 import os
 
 import pyblish.api
+from pxr import Sdf
 
 from openpype.lib import (
     TextDef,
@@ -11,10 +12,6 @@ from openpype.lib import (
     UILabelDef,
     EnumDef
 )
-from openpype.pipeline import publish
-
-
-from pxr import Sdf
 from openpype.lib.usdlib import (
     set_variant_reference,
     setup_asset_layer,
@@ -24,6 +21,7 @@ from openpype.lib.usdlib import (
     get_representation_path_by_names,
     set_layer_defaults
 )
+from openpype.pipeline import publish
 
 
 # A contribution defines a contribution into a (department) layer which will
