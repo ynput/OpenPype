@@ -61,26 +61,20 @@ class PublishPuginsModel(BaseSettingsModel):
     ValidateCameraZeroKeyframe: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Validate Camera Zero Keyframe",
-        section="Validators"
+        section="General Validators"
     )
     ValidateFileSaved: ValidateFileSavedModel = Field(
         default_factory=ValidateFileSavedModel,
         title="Validate File Saved",
-        section="Validators"
     )
-    ValidateRenderCameraIsSet: ValidatePluginModel = Field(
+    ValidateInstanceEmpty: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
-        title="Validate Render Camera Is Set",
-        section="Validators"
-    )
-    ValidateDeadlinePublish: ValidatePluginModel = Field(
-        default_factory=ValidatePluginModel,
-        title="Validate Render Output for Deadline",
-        section="Validators"
+        title="Validate Instance is not Empty"
     )
     ValidateMeshHasUvs: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
-        title="Validate Mesh Has Uvs"
+        title="Validate Mesh Has Uvs",
+        section="Model Validators"
     )
     ValidateMeshNoNegativeScale: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
@@ -93,6 +87,15 @@ class PublishPuginsModel(BaseSettingsModel):
     ValidateNoColonsInName: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Validate No Colons In Name"
+    )
+    ValidateRenderCameraIsSet: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Validate Render Camera Is Set",
+        section="Render Validators"
+    )
+    ValidateDeadlinePublish: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Validate Render Output for Deadline",
     )
     ExtractBlend: ExtractBlendModel = Field(
         default_factory=ExtractBlendModel,
@@ -175,6 +178,11 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "active": True
     },
     "ValidateNoColonsInName": {
+        "enabled": True,
+        "optional": False,
+        "active": True
+    },
+    "ValidateInstanceEmpty": {
         "enabled": True,
         "optional": False,
         "active": True

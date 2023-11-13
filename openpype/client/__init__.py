@@ -1,6 +1,7 @@
 from .mongo import (
     OpenPypeMongoConnection,
 )
+from .server.utils import get_ayon_server_api_connection
 
 from .entities import (
     get_projects,
@@ -60,6 +61,8 @@ from .operations import (
 
 __all__ = (
     "OpenPypeMongoConnection",
+
+    "get_ayon_server_api_connection",
 
     "get_projects",
     "get_project",

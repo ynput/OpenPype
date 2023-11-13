@@ -23,6 +23,7 @@ class CreateReview(plugin.MaxCreator):
                     "percentSize",
                     "visualStyleMode",
                     "viewportPreset",
+                    "antialiasingQuality",
                     "vpTexture"]:
             if key in pre_create_data:
                 creator_attributes[key] = pre_create_data[key]
@@ -33,7 +34,7 @@ class CreateReview(plugin.MaxCreator):
             pre_create_data)
 
     def get_instance_attr_defs(self):
-        image_format_enum = ["exr", "jpg", "png"]
+        image_format_enum = ["exr", "jpg", "png", "tga"]
 
         visual_style_preset_enum = [
             "Realistic", "Shaded", "Facets",
@@ -45,6 +46,7 @@ class CreateReview(plugin.MaxCreator):
         preview_preset_enum = [
             "Quality", "Standard", "Performance",
             "DXMode", "Customize"]
+        anti_aliasing_enum = ["None", "2X", "4X", "8X"]
 
         return [
             NumberDef("review_width",
@@ -77,6 +79,10 @@ class CreateReview(plugin.MaxCreator):
                     preview_preset_enum,
                     default="Quality",
                     label="Pre-View Preset"),
+            EnumDef("antialiasingQuality",
+                    anti_aliasing_enum,
+                    default="None",
+                    label="Anti-aliasing Quality"),
             BoolDef("vpTexture",
                     label="Viewport Texture",
                     default=False)
