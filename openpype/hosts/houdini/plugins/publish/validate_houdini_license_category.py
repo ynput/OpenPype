@@ -7,13 +7,16 @@ import hou
 class ValidateHoudiniNotApprenticeLicense(pyblish.api.InstancePlugin):
     """Validate the Houdini instance runs a non Apprentice license.
 
-    When extracting USD files from an apprentice Houdini license,
-    the resulting files will get "scrambled" with a license protection
-    and get a special .usdnc suffix.
+    USD ROPs:
+        When extracting USD files from an apprentice Houdini license,
+        the resulting files will get "scrambled" with a license protection
+        and get a special .usdnc suffix.
 
-    This currently breaks the Subset/representation pipeline so we disallow
-    any publish with apprentice license.
+        This currently breaks the Subset/representation pipeline so we disallow
+        any publish with apprentice license.
 
+    Alembic ROPs:
+        Houdini Apprentice does not export Alembic.
     """
 
     order = pyblish.api.ValidatorOrder
