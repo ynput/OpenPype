@@ -6,6 +6,15 @@ import hou
 
 
 class ExtractROPs(pyblish.api.ContextPlugin):
+    """Extract all ROP nodes in order of dependency
+
+    All the active instances' ROP nodes will be sorted by their input
+    dependency networks. This way they will render dependencies first.
+
+    Note that dependencies that are not publish instances will *also* be
+    rendered. Each dependency is only ever triggered once.
+
+    """
 
     order = pyblish.api.ExtractorOrder
     label = "Extract ROPs"
@@ -27,6 +36,16 @@ class ExtractROPs(pyblish.api.ContextPlugin):
             if not instance.data.get("active", True):
                 continue
 
+            if instance.data.get("farm", False):
+                # TODO: Currently these will still render however if they
+                #   are an input dependency to another ROP instance node to
+                #   be rendered this publish session
+                self.log.debug(
+                    "Ignoring instance %s as it is marked "
+                    "for farm rendering...", instance
+                )
+                continue
+
             rop_path = instance.data["instance_node"]
             rop_path_to_instance[rop_path] = instance
             rop_nodes.append(hou.node(rop_path))
@@ -46,6 +65,7 @@ class ExtractROPs(pyblish.api.ContextPlugin):
                 raise RuntimeError(f"Failed to render instance: {instance}") from exc  # noqa: E501
 
     def render_rop(self, ropnode, instance):
+        """Render a single ROP node"""
         self.log.debug("Rendering %s", ropnode.path())
 
         # Render
