@@ -205,7 +205,7 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
         contribution = Contribution(
             instance=instance,
             layer_id=attr_values["contribution_layer"],
-            target_product=attr_values["contribution_asset_subset"],
+            target_product=attr_values["contribution_target_product"],
             apply_as_variant=attr_values["contribution_apply_as_variant"],
             variant_set_name=attr_values["contribution_variant_set_name"],
             variant_name=attr_values["contribution_variant"],
@@ -233,12 +233,15 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
         )
 
         # Asset/Shot contribution instance
-        self.get_or_create_instance(
+        target_instance = self.get_or_create_instance(
             subset=asset_subset,
             variant=asset_subset,
             source_instance=layer_instance,
             families=["usd", "usdAsset"],
         )
+        target_instance.data["contribution_target_product_init"] = attr_values[
+            "contribution_target_product_init"
+        ]
 
         self.log.info(
             f"Contributing {instance.data['subset']} to "
@@ -296,17 +299,26 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
 
         return [
             UISeparatorDef("usd_container_settings1"),
-            UILabelDef(label="<b>USD Container</b>"),
+            UILabelDef(label="<b>USD Contribution</b>"),
             BoolDef("contribution_enabled",
                     label="Enable",
                     default=True),
-            TextDef("contribution_asset_subset",
-                    label="USD Asset subset",
+            TextDef("contribution_target_product",
+                    label="Target subset",
                     default="usdAsset"),
+            EnumDef("contribution_target_product_init",
+                    label="Initialize as",
+                    tooltip=(
+                        "The target products USD file will be initialized "
+                        "based on this type if there's no existing USD of "
+                        "that product yet."
+                    ),
+                    items=["asset", "shot"],
+                    default="asset"),
 
             # Asset layer, e.g. model.usd, look.usd, rig.usd
             EnumDef("contribution_layer",
-                    label="Department layer",
+                    label="Add to department layer",
                     tooltip="The layer the contribution should be made to in "
                             "the usd asset.",
                     items=list(LAYER_ORDERS.keys()),
@@ -354,7 +366,7 @@ class ExtractUSDLayerContribution(publish.Extractor):
             path = get_instance_uri_path(contribution.instance)
             if contribution.apply_as_variant:
                 # Add contribution as variants to their layer subsets
-                self.log.debug("Adding variant")
+                self.log.debug(f"Adding variant: {contribution}")
                 prim_path = f"/{default_prim}"
                 variant_set_name = contribution.variant_set_name
                 variant_name = contribution.variant_name
@@ -373,7 +385,7 @@ class ExtractUSDLayerContribution(publish.Extractor):
 
             else:
                 # Sublayer source file
-                self.log.debug("Adding sublayer")
+                self.log.debug(f"Adding sublayer: {contribution}")
 
                 # This replaces existing versions of itself so that
                 # republishing does not continuously add more versions of the
@@ -427,7 +439,11 @@ class ExtractUSDAssetContribution(publish.Extractor):
 
             asset_layer = Sdf.Layer.OpenAsAnonymous(path)
         else:
-            asset_layer, payload_layer = self.init_layer(asset_name=asset)
+            # If not existing publish of this product yet then we initialize
+            # the layer as either a default asset or shot structure.
+            init_type = instance.data["contribution_target_product_init"]
+            asset_layer, payload_layer = self.init_layer(asset_name=asset,
+                                                         init_type=init_type)
 
         target_layer = payload_layer if payload_layer else asset_layer
 
@@ -480,14 +496,27 @@ class ExtractUSDAssetContribution(publish.Extractor):
             payload_layer.Export(payload_path, args={"format": "usda"})
             self.add_relative_file(instance, payload_path)
 
-    def init_layer(self, asset_name):
+    def init_layer(self, asset_name, init_type):
         """Initialize layer if no previous version exists"""
-        asset_layer = Sdf.Layer.CreateAnonymous()
-        created_layers = setup_asset_layer(asset_layer, asset_name,
-                                           force_add_payload=True,
-                                           set_payload_path=True)
-        payload_layer = created_layers[0].layer
-        return asset_layer, payload_layer
+
+        if init_type == "asset":
+            asset_layer = Sdf.Layer.CreateAnonymous()
+            created_layers = setup_asset_layer(asset_layer, asset_name,
+                                               force_add_payload=True,
+                                               set_payload_path=True)
+            payload_layer = created_layers[0].layer
+            return asset_layer, payload_layer
+
+        elif init_type == "shot":
+            shot_layer = Sdf.Layer.CreateAnonymous()
+            set_layer_defaults(shot_layer, default_prim=None)
+            return shot_layer, None
+
+        else:
+            raise ValueError(
+                "USD Target Product contribution can only initialize "
+                "as 'asset' or 'shot', got: '{}'".format(init_type)
+            )
 
     def add_relative_file(self, instance, source, staging_dir=None):
         """Add transfer for a relative path form staging to publish dir.
@@ -518,14 +547,3 @@ class ExtractUSDAssetContribution(publish.Extractor):
         transfers = instance.data.setdefault("transfers", [])
         self.log.debug(f"Adding relative file {source} -> {relative_path}")
         transfers.append((source, destination))
-
-
-class ExtractShotContribution(ExtractUSDAssetContribution):
-    """Shot contributions go into an empty layer as sublayers"""
-    families = ["usdShot"]
-
-    def init_layer(self, asset_name):
-        """Initialize layer if no previous version exists"""
-        layer = Sdf.Layer.CreateAnonymous()
-        set_layer_defaults(layer, default_prim=None)
-        return layer
