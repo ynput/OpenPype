@@ -28,7 +28,7 @@ class CollectWorkfile(InstancePlugin):
                 "representations": [
                     {
                         "name": ext.lstrip("."),
-                        "ext": ext,
+                        "ext": ext.lstrip("."),
                         "files": filepath.name,
                         "stagingDir": filepath.parent,
                     }
