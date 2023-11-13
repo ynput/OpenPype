@@ -159,8 +159,8 @@ class CreateBestLengthTimeline(api.plugin.Creator):
             return
 
         try:
-            ui_settings = self.process_widget_result(widget.result)
-            self.create_bestlength_timeline(ui_settings)
+            self.process_widget_result(widget.result)
+            self.create_bestlength_timeline(self.ui_settings)
         except Exception as err:
             log.exception(err, stack_info=True)
 
@@ -183,7 +183,8 @@ class CreateBestLengthTimeline(api.plugin.Creator):
         return widget
 
     def process_widget_result(self, r: dict):
-        r.update(
+        self.ui_settings = r.copy()
+        self.ui_settings.update(
             {
                 "regex_timeline_include": re.compile(r["le_timeline_regex"]["value"]),
                 "exclude_videotracks": [
@@ -193,7 +194,6 @@ class CreateBestLengthTimeline(api.plugin.Creator):
                 ],
             }
         )
-        return r
 
     def create_bestlength_timeline(self, settings):
         log.info(f"I'm doing the merge")
