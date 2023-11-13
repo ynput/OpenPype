@@ -1,5 +1,6 @@
 """Shared functionality for pipeline plugins for Blender."""
 
+import itertools
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -164,42 +165,30 @@ class BaseCreator(Creator):
             cache_legacy = {}
 
             avalon_instances = bpy.data.collections.get(AVALON_INSTANCES)
-            if avalon_instances:
-                for obj in bpy.data.collections.get(AVALON_INSTANCES).objects:
-                    avalon_prop = obj.get(AVALON_PROPERTY, {})
-                    if avalon_prop.get('id') == 'pyblish.avalon.instance':
-                        creator_id = avalon_prop.get('creator_identifier')
+            avalon_instance_objs = (
+                avalon_instances.objects if avalon_instances else []
+            )
 
-                        if creator_id:
-                            # Creator instance
-                            cache.setdefault(creator_id, []).append(
-                                avalon_prop
-                            )
-                        else:
-                            family = avalon_prop.get('family')
-                            if family:
-                                # Legacy creator instance
-                                cache_legacy.setdefault(family, []).append(
-                                    avalon_prop
-                                )
+            for obj_or_col in itertools.chain(
+                    avalon_instance_objs,
+                    bpy.data.collections
+            ):
+                avalon_prop = obj_or_col.get(AVALON_PROPERTY, {})
+                if not avalon_prop:
+                    continue
 
-            for col in bpy.data.collections:
-                avalon_prop = col.get(AVALON_PROPERTY, {})
-                if avalon_prop.get('id') == 'pyblish.avalon.instance':
-                    creator_id = avalon_prop.get('creator_identifier')
+                if avalon_prop.get('id') != 'pyblish.avalon.instance':
+                    continue
 
-                    if creator_id:
-                        # Creator instance
-                        cache.setdefault(creator_id, []).append(avalon_prop)
-                    else:
-                        family = avalon_prop.get('family')
-                        if family:
-                            cache_legacy.setdefault(family, [])
-                            if family:
-                                # Legacy creator instance
-                                cache_legacy.setdefault(family, []).append(
-                                    avalon_prop
-                                )
+                creator_id = avalon_prop.get('creator_identifier')
+                if creator_id:
+                    # Creator instance
+                    cache.setdefault(creator_id, []).append(avalon_prop)
+                else:
+                    family = avalon_prop.get('family')
+                    if family:
+                        # Legacy creator instance
+                        cache_legacy.setdefault(family, []).append(avalon_prop)
 
             shared_data["blender_cached_subsets"] = cache
             shared_data["blender_cached_legacy_subsets"] = cache_legacy
