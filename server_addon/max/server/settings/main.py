@@ -32,7 +32,7 @@ class MaxSettings(BaseSettingsModel):
         default_factory=RenderSettingsModel,
         title="Render Settings"
     )
-    PreviewAnimation: PreviewAnimationModel = Field(
+    CreateReview: PreviewAnimationModel = Field(
         default_factory=PreviewAnimationModel,
         title="Preview Animation"
     )
@@ -47,7 +47,7 @@ class MaxSettings(BaseSettingsModel):
 
 DEFAULT_VALUES = {
     "RenderSettings": DEFAULT_RENDER_SETTINGS,
-    "PreviewAnimation": DEFAULT_PREVIEW_ANIMATION_SETTINGS,
+    "CreateReview": DEFAULT_PREVIEW_ANIMATION_SETTINGS,
     "PointCloud": {
         "attribute": [
             {"name": "Age", "value": "age"},

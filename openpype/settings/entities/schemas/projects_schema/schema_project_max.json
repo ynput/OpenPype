@@ -68,8 +68,8 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "PreviewAnimation",
-            "label": "Preview Animation",
+            "key": "CreateReview",
+            "label": "Create Review",
             "children": [
                 {
                     "type": "number",

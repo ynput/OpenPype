@@ -16,7 +16,7 @@
         "image_format": "exr",
         "multipass": true
     },
-    "PreviewAnimation": {
+    "CreateReview": {
         "review_width": 1920,
         "review_height": 1080,
         "percentSize": 100,

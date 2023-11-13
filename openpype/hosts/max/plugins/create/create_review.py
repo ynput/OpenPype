@@ -24,7 +24,7 @@ class CreateReview(plugin.MaxCreator):
 
     @classmethod
     def apply_settings(cls, project_settings):
-        settings = project_settings["max"]["PreviewAnimation"]  # noqa
+        settings = project_settings["max"]["CreateReview"]  # noqa
 
         # Take some defaults from settings
         cls.review_width = settings.get("review_width", cls.review_width)
