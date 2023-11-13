@@ -5,19 +5,17 @@ from ayon_server.settings import BaseSettingsModel, task_types_enum
 
 class ClipNameTokenizerItem(BaseSettingsModel):
     _layout = "expanded"
-    # TODO was 'dict-modifiable', is list of dicts now, must be fixed in code
-    name: str = Field("#TODO", title="Tokenizer name")
+    name: str = Field("", title="Tokenizer name")
     regex: str = Field("", title="Tokenizer regex")
 
 
 class ShotAddTasksItem(BaseSettingsModel):
     _layout = "expanded"
-    # TODO was 'dict-modifiable', is list of dicts now, must be fixed in code
     name: str = Field('', title="Key")
-    task_type: list[str] = Field(
+    task_type: str = Field(
         title="Task type",
-        default_factory=list,
-        enum_resolver=task_types_enum)
+        enum_resolver=task_types_enum
+    )
 
 
 class ShotRenameSubmodel(BaseSettingsModel):
@@ -54,7 +52,7 @@ class TokenToParentConvertorItem(BaseSettingsModel):
     )
 
 
-class ShotHierchySubmodel(BaseSettingsModel):
+class ShotHierarchySubmodel(BaseSettingsModel):
     enabled: bool = True
     parents_path: str = Field(
         "",
@@ -102,9 +100,9 @@ class EditorialSimpleCreatorPlugin(BaseSettingsModel):
         title="Shot Rename",
         default_factory=ShotRenameSubmodel
     )
-    shot_hierarchy: ShotHierchySubmodel = Field(
+    shot_hierarchy: ShotHierarchySubmodel = Field(
         title="Shot Hierarchy",
-        default_factory=ShotHierchySubmodel
+        default_factory=ShotHierarchySubmodel
     )
     shot_add_tasks: list[ShotAddTasksItem] = Field(
         title="Add tasks to shot",

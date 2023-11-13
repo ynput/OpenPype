@@ -26,7 +26,7 @@ class CreateStaticMeshModel(BaseSettingsModel):
         default_factory=list,
         title="Default Products"
     )
-    static_mesh_prefixes: str = Field("S", title="Static Mesh Prefix")
+    static_mesh_prefix: str = Field("S", title="Static Mesh Prefix")
     collision_prefixes: list[str] = Field(
         default_factory=list,
         title="Collision Prefixes"
