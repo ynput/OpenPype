@@ -40,11 +40,7 @@ class WorkfileImageIOModel(BaseSettingsModel):
     enabled: bool = Field(False, title="Enabled")
     default_display: str = Field(title="Display")
     default_view: str = Field(title="View")
-    review_color_space: str = Field(
-        title="Review colorspace",
-        description=("Leave Review colorspace empty to use the"
-                     " default colorspace.")
-    )
+    review_color_space: str = Field(title="Review colorspace")
 
 
 class HoudiniImageIOModel(BaseSettingsModel):

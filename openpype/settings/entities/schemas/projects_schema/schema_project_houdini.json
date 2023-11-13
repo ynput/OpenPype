@@ -50,10 +50,6 @@
                             "type": "text",
                             "key": "review_color_space",
                             "label": "Review colorspace"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Leave Review colorspace empty to use the default colorspace."
                         }
                     ]
                 }
