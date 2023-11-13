@@ -202,25 +202,28 @@ class CreateBestLengthTimeline(api.plugin.Creator):
         # cp.log_info(log)
 
         # filter timelines on regex
-        filtered_timelines = [
+        filtered_timelines: list(api.Timeline) = [
             tl
             for tl in cp.timelines
             if settings["regex_timeline_include"].search(tl.name)
         ]
+        log.debug(f"{filtered_timelines = }")
+        log.debug(f"{len(filtered_timelines) = }")
 
         # rondtrip otio to get timewarp info
+        # also adds otio as json to VideoTrack
         for tl in filtered_timelines:
             tl.export_otio()
             tl.import_bestlength_otio()
-            # log.debug(f"{dir(tl.otio) = }")
-            # for i in tl.otio.each_child():
-            #     log.debug(f"{i = }")
 
-        filtered_videotracks = [
-            t
+        # filter videotracks on exclude_videotracks
+        filtered_videotracks: list(api.VideoTrack) = [
+            vt
             for tl in filtered_timelines
-            for t in tl.jotio["tracks"]["children"]
-            if t["kind"] == "Video" and t["name"] not in settings["exclude_videotracks"]
+            for vt in tl.video_tracks
+            if vt.name not in settings["exclude_videotracks"]
         ]
-        log.info(f"{filtered_timelines = }")
-        log.info(f"{filtered_videotracks = }")
+        log.debug(f"{filtered_videotracks = }")
+        log.debug(f"{len(filtered_videotracks) = }")
+
+        # get occurrences per MediapoolItem in all filtered Timelines/VideoTracks
