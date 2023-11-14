@@ -21,7 +21,7 @@ class CreateAnimation(plugin.BaseCreator):
             subset_name, instance_data, pre_create_data
         )
 
-        if pre_create_data.get("useSelection"):
+        if pre_create_data.get("use_selection"):
             selected = lib.get_selection()
             for obj in selected:
                 collection.objects.link(obj)

@@ -16,9 +16,7 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         self.log.debug(f"instance: {instance}")
 
-        datablock = bpy.data.collections.get(
-            instance.data.get("instance_node", {}).get("name", "")
-        )
+        datablock = instance.data["transientData"]["instance_node"]
 
         # get cameras
         cameras = [

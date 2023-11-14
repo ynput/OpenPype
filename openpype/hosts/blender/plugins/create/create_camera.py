@@ -2,7 +2,7 @@
 
 import bpy
 
-from openpype.pipeline import get_current_task_name, CreatedInstance
+from openpype.pipeline import CreatedInstance
 from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import (
     AVALON_INSTANCES,
@@ -19,43 +19,19 @@ class CreateCamera(plugin.BaseCreator):
     family = "camera"
     icon = "video-camera"
 
+    create_as_asset_group = True
+
+    @ops.execute_function_in_main_thread
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
         """Run the creator on Blender main thread."""
-        self._add_instance_to_context(
-            CreatedInstance(self.family, subset_name, instance_data, self)
-        )
 
-        mti = ops.MainThreadItem(
-            self._process, subset_name, instance_data, pre_create_data
-        )
-        ops.execute_in_main_thread(mti)
+        asset_group = super().create(subset_name,
+                                     instance_data,
+                                     pre_create_data)
 
-    def _process(
-        self, subset_name: str, instance_data: dict, pre_create_data: dict
-    ):
-        # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
-
-        # Create instance object
-        name = plugin.asset_name(instance_data["asset"], subset_name)
-
-        asset_group = bpy.data.objects.new(name=name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
-        instances.objects.link(asset_group)
-
-        asset_group[AVALON_PROPERTY] = instance_node = {
-            "name": asset_group.name,
-        }
-
-        self.set_instance_data(subset_name, instance_data, instance_node)
-        lib.imprint(asset_group, instance_data)
-
-        if pre_create_data.get("useSelection"):
+        if pre_create_data.get("use_selection"):
             bpy.context.view_layer.objects.active = asset_group
             selected = lib.get_selection()
             for obj in selected:
@@ -67,6 +43,7 @@ class CreateCamera(plugin.BaseCreator):
             camera = bpy.data.cameras.new(subset_name)
             camera_obj = bpy.data.objects.new(subset_name, camera)
 
+            instances = bpy.data.collections.get(AVALON_INSTANCES)
             instances.objects.link(camera_obj)
 
             camera_obj.select_set(True)

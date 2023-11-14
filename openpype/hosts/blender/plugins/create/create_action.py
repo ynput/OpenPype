@@ -2,11 +2,10 @@
 
 import bpy
 
-from openpype.hosts.blender.api.plugin import BaseCreator, asset_name
-from openpype.hosts.blender.api import lib
+from openpype.hosts.blender.api import lib, plugin
 
 
-class CreateAction(BaseCreator):
+class CreateAction(plugin.BaseCreator):
     """Action output for character rigs."""
 
     identifier = "io.openpype.creators.blender.action"
@@ -24,9 +23,9 @@ class CreateAction(BaseCreator):
         )
 
         # Get instance name
-        name = asset_name(instance_data["asset"], subset_name)
+        name = plugin.asset_name(instance_data["asset"], subset_name)
 
-        if pre_create_data.get("useSelection"):
+        if pre_create_data.get("use_selection"):
             for obj in lib.get_selection():
                 if (obj.animation_data is not None
                         and obj.animation_data.action is not None):

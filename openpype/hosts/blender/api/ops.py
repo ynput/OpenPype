@@ -31,6 +31,14 @@ PREVIEW_COLLECTIONS: Dict = dict()
 TIMER_INTERVAL: float = 0.01 if platform.system() == "Windows" else 0.1
 
 
+def execute_function_in_main_thread(f):
+    """Decorator to move a function call into main thread items"""
+    def wrapper(*args, **kwargs):
+        mti = MainThreadItem(f, *args, **kwargs)
+        execute_in_main_thread(mti)
+    return wrapper
+
+
 class BlenderApplication(QtWidgets.QApplication):
     _instance = None
     blender_windows = {}

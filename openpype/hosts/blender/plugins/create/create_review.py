@@ -21,11 +21,12 @@ class CreateReview(plugin.BaseCreator):
             subset_name, instance_data, pre_create_data
         )
 
-        if pre_create_data.get("useSelection"):
+        if pre_create_data.get("use_selection"):
             selected = lib.get_selection()
             for obj in selected:
                 collection.objects.link(obj)
         elif pre_create_data.get("asset_group"):
+            # TODO: What is the intended behavior for this?
             obj = (self.options or {}).get("asset_group")
             collection.objects.link(obj)
 

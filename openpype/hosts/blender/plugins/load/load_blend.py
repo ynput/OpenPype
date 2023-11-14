@@ -60,6 +60,7 @@ class BlendLoader(plugin.AssetLoader):
 
         for rig in rigs:
             creator_plugin = get_legacy_creator_by_name("CreateAnimation")
+            # TODO: Refactor legacy create usage to new style creators
             legacy_create(
                 creator_plugin,
                 name=rig.name.split(':')[-1] + "_animation",

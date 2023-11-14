@@ -20,7 +20,7 @@ class CreatePointcache(plugin.BaseCreator):
             subset_name, instance_data, pre_create_data
         )
 
-        if pre_create_data.get("useSelection"):
+        if pre_create_data.get("use_selection"):
             objects = lib.get_selection()
             for obj in objects:
                 collection.objects.link(obj)

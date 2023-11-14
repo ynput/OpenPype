@@ -138,7 +138,10 @@ class BlenderHost(HostBase, IWorkfileHost, IPublishHost):
         Returns:
             dict: Context data stored using 'update_context_data'.
         """
-        return bpy.context.scene.openpype_context
+        property = bpy.context.scene.get(AVALON_PROPERTY)
+        if property:
+            return property.to_dict()
+        return {}
 
     def update_context_data(self, data: dict, changes: dict):
         """Override abstract method from IPublishHost.
@@ -149,7 +152,7 @@ class BlenderHost(HostBase, IWorkfileHost, IPublishHost):
             changes (dict): Only data that has been changed. Each value has
                 tuple with '(<old>, <new>)' value.
         """
-        bpy.context.scene.openpype_context.update(data)
+        bpy.context.scene[AVALON_PROPERTY] = data
 
 
 def pype_excepthook_handler(*args):

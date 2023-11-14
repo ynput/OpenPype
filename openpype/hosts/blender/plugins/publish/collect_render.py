@@ -73,9 +73,8 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
     def process(self, instance):
         context = instance.context
 
-        render_data = bpy.data.collections[
-            instance.data["instance_node"]["name"]
-        ].get("render_data")
+        instance_node = instance.data["transientData"]["instance_node"]
+        render_data = instance_node.get("render_data")
 
         assert render_data, "No render data found."
 

@@ -3,8 +3,10 @@ import bpy
 from openpype.pipeline import CreatedInstance, AutoCreator
 from openpype.client import get_asset_by_name
 from openpype.hosts.blender.api.plugin import BaseCreator
-from openpype.hosts.blender.api.lib import imprint
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
+from openpype.hosts.blender.api.pipeline import (
+    AVALON_PROPERTY,
+    AVALON_CONTAINERS
+)
 
 
 class CreateWorkfile(BaseCreator, AutoCreator):
@@ -53,6 +55,8 @@ class CreateWorkfile(BaseCreator, AutoCreator):
             current_instance = CreatedInstance(
                 self.family, subset_name, data, self
             )
+            instance_node = bpy.data.collections.get(AVALON_CONTAINERS, {})
+            current_instance.transient_data["instance_node"] = instance_node
             self._add_instance_to_context(current_instance)
         elif (
             current_instance["asset"] != asset_name
@@ -73,28 +77,30 @@ class CreateWorkfile(BaseCreator, AutoCreator):
             )
 
     def collect_instances(self):
-        """Collect workfile instances."""
-        self.cache_subsets(self.collection_shared_data)
-        cached_subsets = self.collection_shared_data["blender_cached_subsets"]
-        for node in cached_subsets.get(self.identifier, []):
-            created_instance = CreatedInstance.from_existing(
-                self.read_instance_node(node), self
-            )
-            self._add_instance_to_context(created_instance)
 
-    def update_instances(self, update_list):
-        """Update workfile instances."""
-        for created_inst, _changes in update_list:
-            data = created_inst.data_to_store()
-            node = data.get("instance_node")
-            if not node:
-                task_name = self.create_context.get_current_task_name()
+        print("Collecting!")
+        instance_node = bpy.data.collections.get(AVALON_CONTAINERS)
+        if not instance_node:
+            return
+        print(instance_node)
+        property = instance_node.get(AVALON_PROPERTY)
+        if not property:
+            return
+        print(property)
 
-                bpy.context.scene[AVALON_PROPERTY] = node = {
-                    "name": f"workfile{task_name}"
-                }
+        # Create instance object from existing data
+        instance = CreatedInstance.from_existing(
+            instance_data=property.to_dict(),
+            creator=self
+        )
+        instance.transient_data["instance_node"] = instance_node
 
-                created_inst["instance_node"] = node
-                data = created_inst.data_to_store()
+        # Add instance to create context
+        self._add_instance_to_context(instance)
 
-            imprint(node, data)
+    def remove_instances(self, instances):
+        for instance in instances:
+            node = instance.transient_data["instance_node"]
+            del node[AVALON_PROPERTY]
+
+            self._remove_instance_from_context(instance)

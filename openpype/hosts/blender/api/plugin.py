@@ -12,6 +12,8 @@ from openpype.pipeline import (
     LoaderPlugin,
     get_current_task_name,
 )
+from openpype.lib import BoolDef
+
 from .pipeline import (
     AVALON_CONTAINERS,
     AVALON_INSTANCES,
@@ -149,6 +151,8 @@ class BaseCreator(Creator):
     """Base class for Blender Creator plug-ins."""
     defaults = ['Main']
 
+    create_as_asset_group = False
+
     @staticmethod
     def cache_subsets(shared_data):
         """Cache instances for Creators shared data.
@@ -190,12 +194,12 @@ class BaseCreator(Creator):
                 creator_id = avalon_prop.get('creator_identifier')
                 if creator_id:
                     # Creator instance
-                    cache.setdefault(creator_id, []).append(avalon_prop)
+                    cache.setdefault(creator_id, []).append(obj_or_col)
                 else:
                     family = avalon_prop.get('family')
                     if family:
                         # Legacy creator instance
-                        cache_legacy.setdefault(family, []).append(avalon_prop)
+                        cache_legacy.setdefault(family, []).append(obj_or_col)
 
             shared_data["blender_cached_subsets"] = cache
             shared_data["blender_cached_legacy_subsets"] = cache_legacy
@@ -220,27 +224,29 @@ class BaseCreator(Creator):
             instances = bpy.data.collections.new(name=AVALON_INSTANCES)
             bpy.context.scene.collection.children.link(instances)
 
-        # Create instance collection
-        collection = bpy.data.collections.new(
-            name=asset_name(instance_data["asset"], subset_name)
+        # Create asset group
+        name = asset_name(instance_data["asset"], subset_name)
+        if self.create_as_asset_group:
+            # Create instance as empty
+            instance_node = bpy.data.objects.new(name=name, object_data=None)
+            instance_node.empty_display_type = 'SINGLE_ARROW'
+            instances.objects.link(instance_node)
+        else:
+            # Create instance collection
+            instance_node = bpy.data.collections.new(name=name)
+            instances.children.link(instance_node)
+
+        self.set_instance_data(subset_name, instance_data)
+
+        instance = CreatedInstance(
+            self.family, subset_name, instance_data, self
         )
-        instances.children.link(collection)
+        instance.transient_data["instance_node"] = instance_node
+        self._add_instance_to_context(instance)
 
-        collection[AVALON_PROPERTY] = instance_node = {
-            "name": collection.name,
-        }
+        imprint(instance_node, instance_data)
 
-        self.set_instance_data(subset_name, instance_data, instance_node)
-
-        self._add_instance_to_context(
-            CreatedInstance(
-                self.family, subset_name, instance_data, self
-            )
-        )
-
-        imprint(collection, instance_data)
-
-        return collection
+        return instance_node
 
     def collect_instances(self):
         """Override abstract method from BaseCreator.
@@ -257,12 +263,14 @@ class BaseCreator(Creator):
             return
 
         # Process only instances that were created by this creator
-        for instance_data in cached_subsets.get(self.identifier, []):
+        for instance_node in cached_subsets.get(self.identifier, []):
+            property = instance_node.get(AVALON_PROPERTY)
             # Create instance object from existing data
             instance = CreatedInstance.from_existing(
-                instance_data=instance_data.to_dict(),
+                instance_data=property.to_dict(),
                 creator=self
             )
+            instance.transient_data["instance_node"] = instance_node
 
             # Add instance to create context
             self._add_instance_to_context(instance)
@@ -276,41 +284,32 @@ class BaseCreator(Creator):
                 and their changes, as a list of tuples."""
         for created_instance, _changes in update_list:
             data = created_instance.data_to_store()
-
-            imprint(data.get("instance_node", {}), data)
+            node = created_instance.transient_data["instance_node"]
+            if node:
+                imprint(node, data)
 
     def remove_instances(self, instances: List[CreatedInstance]):
-        """Override abstract method from BaseCreator.
-        Method called when instances are removed.
 
-        Args:
-            instance(List[CreatedInstance]): Instance objects to remove.
-        """
         for instance in instances:
-            outliner_entity = instance.data.get("instance_node", {}).get(
-                "datablock"
-            )
-            if not outliner_entity:
-                continue
+            node = instance.transient_data["instance_node"]
 
-            if isinstance(outliner_entity, bpy.types.Collection):
-                for children in outliner_entity.children_recursive:
+            if isinstance(node, bpy.types.Collection):
+                for children in node.children_recursive:
                     if isinstance(children, bpy.types.Collection):
                         bpy.data.collections.remove(children)
                     else:
                         bpy.data.objects.remove(children)
 
-                bpy.data.collections.remove(outliner_entity)
-            elif isinstance(outliner_entity, bpy.types.Object):
-                bpy.data.objects.remove(outliner_entity)
+                bpy.data.collections.remove(node)
+            elif isinstance(node, bpy.types.Object):
+                bpy.data.objects.remove(node)
 
             self._remove_instance_from_context(instance)
 
     def set_instance_data(
         self,
         subset_name: str,
-        instance_data: dict,
-        instance_node: bpy.types.ID,
+        instance_data: dict
     ):
         """Fill instance data with required items.
 
@@ -329,9 +328,15 @@ class BaseCreator(Creator):
                 "label": subset_name,
                 "task": get_current_task_name(),
                 "subset": subset_name,
-                "instance_node": instance_node,
             }
         )
+
+    def get_pre_create_attr_defs(self):
+        return [
+            BoolDef("use_selection",
+                    label="Use selection",
+                    default=True)
+        ]
 
 
 class Loader(LoaderPlugin):
