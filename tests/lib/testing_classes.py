@@ -13,10 +13,11 @@ import re
 import inspect
 import time
 
-from tests.lib.db_handler import DBHandler
-from tests.lib.file_handler import RemoteFileHandler, LocalFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
+
+from tests.lib.db_handler import DBHandler
+from tests.lib.file_handler import RemoteFileHandler, LocalFileHandler
 
 
 class BaseTest:

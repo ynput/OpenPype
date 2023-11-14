@@ -1,3 +1,5 @@
+import os
+
 import pyblish.api
 
 from openpype.pipeline import registered_host
@@ -12,6 +14,7 @@ from openpype.pipeline.create import (
 )
 
 import pytest
+from tests import TESTS_DIR
 from tests.unit.openpype.pipeline.create.lib import test_setup, DummyCreator
 from tests.lib.testing_classes import ModuleUnitTest
 
@@ -23,6 +26,10 @@ class TestCreateContext(ModuleUnitTest):
         cd to OpenPype repo root dir
         poetry run python ./start.py runtests <openpype_root>/tests/unit/openpype/pipeline/test_create_context_save.py
     """  # noqa: E501
+
+    TEST_FILES = [
+        (os.path.join(TESTS_DIR, "resources", "clean_db"), "", "")
+    ]
 
     @pytest.fixture
     def setup_dummy_host(self):
@@ -39,6 +46,7 @@ class TestCreateContext(ModuleUnitTest):
         DummyCreator.clear_cache()
 
     def test_save_instance_publish_attribute_changes(self,
+                                                     dbcon,
                                                      setup_dummy_host,
                                                      dummy_creator):
         """Test CreateContext instance publish attribute change saves.
@@ -112,6 +120,7 @@ class TestCreateContext(ModuleUnitTest):
         pyblish.api.deregister_plugin(Plugin)
 
     def test_create_and_remove_instances(self,
+                                         dbcon,
                                          setup_dummy_host,
                                          dummy_creator):
         """Test creation, removal and persistence of instances on resets"""

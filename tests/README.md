@@ -37,7 +37,20 @@ Run in IDE:
 If you prefer to run/debug single file directly in IDE of your choice, you might encounter issues with imports.
 It would manifest like `KeyError: 'OPENPYPE_DATABASE_NAME'`. That means you are importing module that depends on OP to be running, eg. all expected variables are set.
 
-In some cases your tests might be so localized, that you don't care about all env vars to be set properly.
+Clean DB:
+---------
+If your test depends on `avalon` or `openpype` DB you need to use `dbcon` fixture and your test class must contain:
+```
+    TEST_FILES = [
+        (os.path.join(TESTS_DIR, "resources", "clean_db"), "", "")
+    ]
+```
+This will provide clean DBs with single `test_asset` asset with `test_task`.
+This would require to have `mongorestore` on your path! See https://www.mongodb.com/docs/database-tools/installation
+
+
+In some cases your tests might be so localized, that you don't care about all env vars to be set properly, but any value
+is still required by the Openpype process (for historical reasons).
 In that case you might add this dummy configuration BEFORE any imports in your test file
 ```
 import os
@@ -46,7 +59,7 @@ os.environ["OPENPYPE_MONGO"] = "mongodb://localhost:27017"
 os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"
 os.environ["AVALON_DB"] = "avalon"
 os.environ["AVALON_TIMEOUT"] = "3000"
-os.environ["AVALON_ASSET"] = "Asset"
+os.environ["AVALON_ASSET"] = "test_asset"
 os.environ["AVALON_PROJECT"] = "test_project"
 ```
 (AVALON_ASSET and AVALON_PROJECT values should exist in your environment)
