@@ -23,7 +23,7 @@ class ExtractThumbnail(publish.Extractor):
     order = pyblish.api.ExtractorOrder + 0.011
     label = "Extract Thumbnail"
 
-    families = ["review"]
+    families = ["review", "render.frames_farm", "render.farm"]
     hosts = ["nuke"]
 
     # settings
@@ -34,8 +34,6 @@ class ExtractThumbnail(publish.Extractor):
     reposition_nodes = None
 
     def process(self, instance):
-        if instance.data.get("farm"):
-            return
 
         with napi.maintained_selection():
             self.log.debug("instance: {}".format(instance))
@@ -180,8 +178,6 @@ class ExtractThumbnail(publish.Extractor):
         file = fhead[:-1] + thumb_name + ".jpg"
         thumb_path = os.path.join(staging_dir, file).replace("\\", "/")
 
-        # add thumbnail to cleanup
-        instance.context.data["cleanupFullPaths"].append(thumb_path)
 
         # make sure only one thumbnail path is set
         # and it is existing file
@@ -203,6 +199,7 @@ class ExtractThumbnail(publish.Extractor):
             "stagingDir": staging_dir,
             "tags": ["thumbnail", "publish_on_farm", "delete"]
         }
+
         instance.data["representations"].append(repre)
 
         # Render frames
@@ -214,3 +211,9 @@ class ExtractThumbnail(publish.Extractor):
         # Clean up
         for node in temporary_nodes:
             nuke.delete(node)
+
+        if instance.data.get("farm"):
+            return
+
+        # add thumbnail to cleanup only if it is not on farm
+        instance.context.data["cleanupFullPaths"].append(thumb_path)
