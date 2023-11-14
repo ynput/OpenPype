@@ -318,7 +318,7 @@ class BaseCreator:
             # - those may be potential dangerous typos in settings
             if not hasattr(self, key):
                 self.log.debug((
-                    "Applying settings to unknown attribute '{}' on '{}."
+                    "Applying settings to unknown attribute '{}' on '{}'."
                 ).format(
                     key, cls_name
                 ))
