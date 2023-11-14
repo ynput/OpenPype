@@ -77,7 +77,15 @@ def product_item_from_entity(
     product_attribs = product_entity["attrib"]
     group = product_attribs.get("productGroup")
     product_type = product_entity["productType"]
-    product_type_item = product_type_items_by_name[product_type]
+    product_type_item = product_type_items_by_name.get(product_type)
+    # NOTE This is needed for cases when products were not created on server
+    #   using api functions. In that case product type item may not available
+    #   and we need to create a default.
+    if product_type_item is None:
+        product_type_item = create_default_product_type_item(product_type)
+        # Cache the item for future use
+        product_type_items_by_name[product_type] = product_type_item
+
     product_type_icon = product_type_item.icon
 
     product_icon = {
@@ -115,6 +123,15 @@ def product_type_item_from_data(product_type_data):
     }
     # TODO implement checked logic
     return ProductTypeItem(product_type_data["name"], icon, True)
+
+
+def create_default_product_type_item(product_type):
+    icon = {
+        "type": "awesome-font",
+        "name": "fa.folder",
+        "color": "#0091B2",
+    }
+    return ProductTypeItem(product_type, icon, True)
 
 
 class ProductsModel:
