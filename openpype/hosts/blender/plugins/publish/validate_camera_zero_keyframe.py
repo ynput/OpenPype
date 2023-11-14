@@ -7,11 +7,13 @@ import pyblish.api
 import openpype.hosts.blender.api.action
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
-    PublishValidationError
+    PublishValidationError,
+    OptionalPyblishPluginMixin
 )
 
 
-class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
+class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin,
+                                 OptionalPyblishPluginMixin):
     """Camera must have a keyframe at frame 0.
 
     Unreal shifts the first keyframe to frame 0. Forcing the camera to have
