@@ -230,6 +230,30 @@ class CreateBestLengthTimeline(api.plugin.Creator):
         occs = self.get_occurrences(filtered_videotracks)
         log.debug(f"{occs = }")
 
+        # sort occurrences and remove duplicates
+        sorted_occs = self.sort_occurrences(occs)
+        log.debug(f"{sorted_occs = }")
+
+        # get bestlength clips
+        blis = self.get_bestlength_clips(sorted_occs)
+
+        clips_to_create = []
+        for k, v in blis.items():
+            for i in v["best_ranges"]:
+                clips_to_create.append(
+                    {
+                        "mediaPoolItem": v["source"].root,
+                        "startFrame": i[0] - v["source"].head_in,
+                        "endFrame": i[1] - v["source"].head_in,
+                        "mediaType": 1,
+                        "trackIndex": 1,
+                    }
+                )
+
+        # create bestlength timeline
+        cp.mediapool.CreateEmptyTimeline("lel")
+        cp.mediapool.AppendToTimeline(clips_to_create)
+
     def get_occurrences(self, video_tracks) -> dict[str : [api.TimelineItem]]:
         occs = {}
         for vt in video_tracks:
@@ -237,7 +261,69 @@ class CreateBestLengthTimeline(api.plugin.Creator):
                 if c.color == self.ui_settings["cb_exclude_clipcolor"]["value"]:
                     continue
                 if occs.get(c.source.id):
-                    occs[c.source.id].append(c)
+                    occs[c.source.id]["occs"].append(c)
                     continue
-                occs.update({c.source.id: [c]})
+                occs.update({c.source.id: {"source": c.source, "occs": [c]}})
         return occs
+
+    def sort_occurrences(self, occs):
+        result = {}
+        for src_id, v in occs.items():
+            src_ranges = set()
+            for ti in v["occs"]:
+                _range = (min(ti.src_in, ti.src_out), max(ti.src_in, ti.src_out))
+                src_ranges.add(_range)  # this autoremoves dupes
+            result.update(
+                {
+                    src_id: {
+                        "source": v["source"],
+                        "occs": sorted(src_ranges, key=lambda k: k[0]),
+                    }
+                }
+            )
+        return result
+
+    def get_bestlength_clips(self, sorted_occs):
+        blis = {}
+        for k, v in sorted_occs.items():
+            blis[k] = {
+                "source": v["source"],
+                "best_ranges": self.find_best_ranges(v["occs"]),
+            }
+        log.info(f"best length clips = {blis}")
+        return blis
+
+    def find_best_ranges(self, ranges):
+        log.info(f"{ranges = }")
+
+        best_ranges = []
+        current_range = ranges[0]
+        for r in ranges[1:]:
+            # compare current in with last out, aka. soft gap between 2 ranges
+            if min(r) - max(current_range) <= int(
+                self.ui_settings["sb_gapsize"]["value"]
+            ):
+                # clip is in gapsize or inside previous clip...
+                current_range = r
+            else:
+                # hard gap right here. add current range to best_ranges and update current
+                best_ranges.append(list(current_range))
+                current_range = r
+        best_ranges.append(current_range)
+
+        # Find the best combination of ranges
+        def total_length(ranges):
+            return sum(len(r) for r in ranges)
+
+        best_combination = []
+        best_length = 0
+        for i in range(len(best_ranges)):
+            for j in range(i, len(best_ranges)):
+                combined_ranges = best_ranges[i : j + 1]
+                combined_length = total_length(combined_ranges)
+
+                if combined_length > best_length:
+                    best_combination = combined_ranges
+                    best_length = combined_length
+
+        return best_combination
