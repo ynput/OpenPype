@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import opentimelineio as otio
 import openpype.hosts.resolve.api as api
 
 
@@ -37,3 +38,9 @@ class MediapoolItem(object):
     @property
     def fps(self) -> float:
         return float(self.properties["FPS"])
+
+    @property
+    def head_in(self) -> int:
+        tc = self.properties["Start TC"]
+        rt = otio.opentime.from_timecode(tc, self.fps)
+        return int(otio.opentime.to_frames(rt))
