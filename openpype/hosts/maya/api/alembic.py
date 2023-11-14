@@ -1,63 +1,69 @@
 # The maya alembic export types
-_alembic_options = {
-    "startFrame": float,
-    "endFrame": float,
-    "frameRange": str,  # "start end"; overrides startFrame & endFrame
-    "eulerFilter": bool,
-    "frameRelativeSample": float,
-    "noNormals": bool,
-    "renderableOnly": bool,
-    "step": float,
-    "stripNamespaces": bool,
-    "verbose": bool,
-    "uvWrite": bool,
-    "wholeFrameGeo": bool,
-    "worldSpace": bool,
-    "writeVisibility": bool,
-    "writeColorSets": bool,
-    "writeFaceSets": bool,
-    "writeCreases": bool,  # Maya 2015 Ext1+
-    "writeUVSets": bool,   # Maya 2017+
-    "dataFormat": str,
-    "root": (list, tuple),
+ALEMBIC_ARGS = {
     "attr": (list, tuple),
     "attrPrefix": (list, tuple),
-    "userAttr": (list, tuple),
+    "autoSubd": bool,
+    "dataFormat": str,
+    "dontSkipUnwrittenFrames": bool,
+    "endFrame": float,
+    "eulerFilter": bool,
+    "frameRange": str,  # "start end"; overrides startFrame & endFrame
+    "frameRelativeSample": float,
     "melPerFrameCallback": str,
     "melPostJobCallback": str,
+    "noNormals": bool,
+    "preRoll": bool,
+    "preRollStartFrame": int,
     "pythonPerFrameCallback": str,
     "pythonPostJobCallback": str,
+    "renderableOnly": bool,
+    "root": (list, tuple),
     "selection": bool,
-    "preRoll": bool,
-    "preRollStartFrame": int
+    "startFrame": float,
+    "step": float,
+    "stripNamespaces": bool,
+    "userAttr": (list, tuple),
+    "userAttrPrefix": (list, tuple),
+    "uvWrite": bool,
+    "uvsOnly": bool,
+    "verbose": bool,
+    "wholeFrameGeo": bool,
+    "worldSpace": bool,
+    "writeColorSets": bool,
+    "writeCreases": bool,  # Maya 2015 Ext1+
+    "writeFaceSets": bool,
+    "writeUVSets": bool,   # Maya 2017+
+    "writeVisibility": bool,
 }
 
 
-def extract_alembic(file,
-                    startFrame=None,
-                    endFrame=None,
-                    frameRange="",
-                    eulerFilter=True,
-                    noNormals=False,
-                    preRoll=False,
-                    renderableOnly=False,
-                    selection=True,
-                    uvWrite=True,
-                    writeColorSets=False,
-                    writeFaceSets=False,
-                    wholeFrameGeo=False,
-                    worldSpace=False,
-                    writeVisibility=False,
-                    writeUVSets=False,
-                    writeCreases=False,
-                    dataFormat="ogawa",
-                    step=1.0,
-                    attr=None,
-                    attrPrefix=None,
-                    root=None,
-                    stripNamespaces=True,
-                    verbose=False,
-                    preRollStartFrame=0):
+def extract_alembic(
+    file,
+    attr=None,
+    attrPrefix=None,
+    dataFormat="ogawa",
+    endFrame=None,
+    eulerFilter=True,
+    frameRange="",
+    noNormals=False,
+    preRoll=False,
+    preRollStartFrame=0,
+    renderableOnly=False,
+    root=None,
+    selection=True,
+    startFrame=None,
+    step=1.0,
+    stripNamespaces=True,
+    uvWrite=True,
+    verbose=False,
+    wholeFrameGeo=False,
+    worldSpace=False,
+    writeColorSets=False,
+    writeCreases=False,
+    writeFaceSets=False,
+    writeUVSets=False,
+    writeVisibility=False
+):
     """Extract a single Alembic Cache.
 
     This extracts an Alembic cache using the `-selection` flag to minimize
@@ -181,8 +187,8 @@ def extract_alembic(file,
                                             animationEndTime=True)
 
         # Ensure valid types are converted to frame range
-        assert isinstance(startFrame, _alembic_options["startFrame"])
-        assert isinstance(endFrame, _alembic_options["endFrame"])
+        assert isinstance(startFrame, ALEMBIC_ARGS["startFrame"])
+        assert isinstance(endFrame, ALEMBIC_ARGS["endFrame"])
         frameRange = "{0} {1}".format(startFrame, endFrame)
     else:
         # Allow conversion from tuple for `frameRange`
@@ -198,7 +204,6 @@ def extract_alembic(file,
         "noNormals": noNormals,
         "preRoll": preRoll,
         "renderableOnly": renderableOnly,
-        "selection": selection,
         "uvWrite": uvWrite,
         "writeColorSets": writeColorSets,
         "writeFaceSets": writeFaceSets,
@@ -220,14 +225,14 @@ def extract_alembic(file,
     for key, value in options.copy().items():
 
         # Discard unknown options
-        if key not in _alembic_options:
+        if key not in ALEMBIC_ARGS:
             log.warning("extract_alembic() does not support option '%s'. "
                         "Flag will be ignored..", key)
             options.pop(key)
             continue
 
         # Validate value type
-        valid_types = _alembic_options[key]
+        valid_types = ALEMBIC_ARGS[key]
         if not isinstance(value, valid_types):
             raise TypeError("Alembic option unsupported type: "
                             "{0} (expected {1})".format(value, valid_types))
