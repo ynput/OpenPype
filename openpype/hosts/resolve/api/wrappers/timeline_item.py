@@ -116,7 +116,14 @@ class TimelineItem(object):
 
     @property
     def left_offset(self) -> int:
-        return self.root.GetLeftOffset()
+        result = self.root.GetLeftOffset()
+        if self.is_linear_timeremap:
+            time_scalar = float(self.linear_timeremap_effect["time_scalar"])
+            result *= time_scalar
+        if self.is_keyframed_timeremap:
+            # TODO: make sense out of the otio metadata
+            pass
+        return result
 
     @property
     def src_in(self) -> int:
