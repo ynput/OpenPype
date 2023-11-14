@@ -32,8 +32,9 @@ class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         selected = []
         for obj in instance:
-            obj.select_set(True)
-            selected.append(obj)
+            if isinstance(obj, bpy.types.Object):
+                obj.select_set(True)
+                selected.append(obj)
 
         context = plugin.create_blender_context(
             active=asset_group, selected=selected)
