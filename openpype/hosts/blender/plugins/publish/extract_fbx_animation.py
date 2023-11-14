@@ -33,8 +33,27 @@ class ExtractAnimationFBX(
 
         asset_group = instance.data["transientData"]["instance_node"]
 
-        armature = [
-            obj for obj in asset_group.children if obj.type == 'ARMATURE'][0]
+        # Get objects in this collection (but not in children collections)
+        # and for those objects include the children hierarchy
+        # TODO: Would it make more sense for the Collect Instance collector
+        #   to also always retrieve all the children?
+        objects = set(asset_group.objects)
+        for obj in list(objects):
+            objects.update(obj.children_recursive)
+
+        # Find all armatures among the objects, assume to find only one
+        armatures = [obj for obj in objects if obj.type == "ARMATURE"]
+        if not armatures:
+            raise RuntimeError(
+                f"Unable to find ARMATURE in collection: "
+                f"{asset_group.name}"
+            )
+        elif len(armatures) > 1:
+            self.log.warning(
+                "Found more than one ARMATURE, using "
+                f"only first of: {armatures}"
+            )
+        armature = armatures[0]
 
         object_action_pairs = []
         original_actions = []
@@ -43,9 +62,6 @@ class ExtractAnimationFBX(
         ending_frames = []
 
         # For each armature, we make a copy of the current action
-        curr_action = None
-        copy_action = None
-
         if armature.animation_data and armature.animation_data.action:
             curr_action = armature.animation_data.action
             copy_action = curr_action.copy()
@@ -55,7 +71,10 @@ class ExtractAnimationFBX(
             starting_frames.append(curr_frame_range[0])
             ending_frames.append(curr_frame_range[1])
         else:
-            self.log.info("Object has no animation.")
+            self.log.info(
+                f"Armature '{armature.name}' has no animation, "
+                f"skipping FBX animation extraction for {instance}."
+            )
             return
 
         asset_group_name = asset_group.name
