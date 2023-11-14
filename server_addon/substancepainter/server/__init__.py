@@ -6,7 +6,7 @@ from .version import __version__
 from .settings import SubstancePainterSettings, DEFAULT_SPAINTER_SETTINGS
 
 
-class MaxAddon(BaseServerAddon):
+class SubstancePainterAddon(BaseServerAddon):
     name = "substancepainter"
     title = "Substance Painter"
     version = __version__
