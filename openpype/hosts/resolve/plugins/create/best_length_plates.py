@@ -295,6 +295,7 @@ class CreateBestLengthTimeline(api.plugin.Creator):
 
     def find_best_ranges(self, ranges):
         log.info(f"{ranges = }")
+        ranges = [list(i) for i in ranges]
 
         best_ranges = []
         current_range = ranges[0]
