@@ -16,15 +16,16 @@ from maya import cmds
 
 class ValidateInstanceInContext(pyblish.api.InstancePlugin,
                                 OptionalPyblishPluginMixin):
-    """Validator to check if instance asset match context asset.
+    """Validator to check if instance asset match context asset and task.
 
     When working in per-shot style you always publish data in context of
-    current asset (shot). This validator checks if this is so. It is optional
-    so it can be disabled when needed.
+    current asset (shot) and task. This validator checks if this is so. It is
+    optional so it can be disabled when needed.
 
     Action on this validator will select invalid instances in Outliner.
     """
 
+    # Depends on CollectContextEntities
     order = ValidateContentsOrder
     label = "Instance in same Context"
     optional = True
@@ -69,6 +70,11 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin,
         cmds.setAttr(
             "{}.asset".format(instance_node),
             context_asset,
+            type="string"
+        )
+        cmds.setAttr(
+            "{}.task".format(instance_node),
+            instance.context.data["task"],
             type="string"
         )
 
