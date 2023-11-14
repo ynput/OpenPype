@@ -38,25 +38,42 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin,
         if not self.is_active(instance.data):
             return
 
+
+        message = (
+            "Instance '{}' publishes to a different {} than current context: "
+            "{}. Current context: {}"
+        )
+        description = (
+            "## Publishing to a different asset or task\n"
+            "There are publish instances present which are publishing into a "
+            "different asset or task than your current context.\n\n"
+            "Usually this is not what you want but there can be cases where "
+            "you might want to publish into another asset or shot. If that's "
+            "the case you can disable the validation on the instance to "
+            "ignore it."
+        )
+
+        # Validate asset context.
         asset = instance.data.get("asset")
         context_asset = self.get_context_asset(instance)
-        if asset != context_asset:
+        if asset != instance.context.data["assetEntity"]["name"]:
             raise PublishValidationError(
-                message=(
-                    "Instance '{}' publishes to different asset than current "
-                    "context: {}. Current context: {}".format(
-                        instance.name, asset, context_asset
-                    )
+                message=message.format(
+                    instance.name, "asset", asset, context_asset
                 ),
-                description=(
-                    "## Publishing to a different asset\n"
-                    "There are publish instances present which are publishing "
-                    "into a different asset than your current context.\n\n"
-                    "Usually this is not what you want but there can be cases "
-                    "where you might want to publish into another asset or "
-                    "shot. If that's the case you can disable the validation "
-                    "on the instance to ignore it."
-                )
+                description=description
+            )
+
+        # Validate task context.
+        if instance.context.data["task"] != instance.data["task"]:
+            raise PublishValidationError(
+                message=message.format(
+                    instance.name,
+                    "task",
+                    instance.data["task"],
+                    instance.context.data["task"]
+                ),
+                description=description
             )
 
     @classmethod
