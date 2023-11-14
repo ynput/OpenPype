@@ -8,6 +8,7 @@ from openpype.hosts.blender.api import plugin, lib
 class CreateBlendScene(plugin.BaseCreator):
     """Generic group of assets."""
 
+    identifier = "io.openpype.creators.blender.blendscene"
     name = "blendScene"
     label = "Blender Scene"
     family = "blendScene"
