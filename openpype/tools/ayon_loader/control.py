@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 import ayon_api
 
@@ -314,8 +315,15 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
                 containers = self._host.get_containers()
             else:
                 containers = self._host.ls()
-            repre_ids = {c.get("representation") for c in containers}
-            repre_ids.discard(None)
+            repre_ids = set()
+            for container in containers:
+                repre_id = container.get("representation")
+                try:
+                    uuid.UUID(repre_id)
+                    repre_ids.add(repre_id)
+                except ValueError:
+                    pass
+
             product_ids = self._products_model.get_product_ids_by_repre_ids(
                 project_name, repre_ids
             )
