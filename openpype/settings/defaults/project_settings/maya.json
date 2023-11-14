@@ -559,16 +559,13 @@
         "CreateAnimation": {
             "default_variants": [],
             "step": 1.0,
-            "abc_flags": [
+            "abc_boolean_args": [
                 "writeColorSets",
                 "visibleOnly",
                 "worldSpace",
-                "writeNormals",
-                "includeUserDefinedAttributes",
-                "attr",
-                "attrPrefix"
+                "writeNormals"
             ],
-            "abc_editable_flags": [
+            "abc_args_overrides": [
                 "step",
                 "includeParentHierarchy",
                 "writeNormals",
@@ -608,16 +605,13 @@
                 "Main"
             ],
             "step": 1.0,
-            "abc_flags": [
+            "abc_boolean_args": [
                 "writeColorSets",
                 "visibleOnly",
                 "worldSpace",
-                "writeNormals",
-                "includeUserDefinedAttributes",
-                "attr",
-                "attrPrefix"
+                "writeNormals"
             ],
-            "abc_editable_flags": [
+            "abc_args_overrides": [
                 "step",
                 "writeColorSets",
                 "writeFaceSets",

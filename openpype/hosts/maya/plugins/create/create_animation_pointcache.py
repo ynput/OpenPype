@@ -1,8 +1,7 @@
 from maya import cmds
 
-from pprint import pprint
-
 from openpype.hosts.maya.api import lib, plugin
+from openpype.hosts.maya.api.alembic import ALEMBIC_ARGS
 from openpype.lib import (
     BoolDef,
     TextDef,
@@ -35,129 +34,83 @@ def _get_animation_abc_attr_defs(cls):
     # List of arguments extracted from AbcExport -h
     # Them being here doesn't imply we support them or that we need them at this
     # point, it's a convininece list to populate the UI defaults.
-    alembic_attributes = [
-        "preRollStartFrame",
-        "dontSkipUnwrittenFrames",
-        "verbose",
-        "attr",
-        "autoSubd",
-        "attrPrefix",
-        "dataFormat",
-        "eulerFilter",
-        "frameRange",
-        "frameRelativeSample",
-        "noNormals",
-        "preRoll",
-        "renderableOnly",
-        "root",
-        "step",
-        "selection",
-        "stripNamespaces",
-        "userAttr",
-        "userAttrPrefix",
-        "uvWrite",
-        "uvsOnly",
-        "writeColorSets",
-        "writeFaceSets",
-        "wholeFrameGeo",
-        "worldSpace",
-        "writeVisibility",
-        "writeUVSets",
-        "melPerFrameCallback",
-        "melPostJobCallback",
-        "pythonPerFrameCallback",
-        "pythonPostJobCallback",
-    ]
 
     abc_defs = [UISeparatorDef(), UILabelDef("Alembic Options")]
 
-    alembic_editable_attributes = getattr(cls, "abc_editable_flags", None)
+    # The Arguments that can be modified by the Publisher
+    abc_args_overrides = getattr(cls, "abc_args_overrides", None)
 
-    if not alembic_editable_attributes:
-        print("No Almbic attributes found in settings.")
-        return None
+    # What we have set in the Settings as default.
+    abc_boolean_args = getattr(cls, "abc_boolean_args", [])
 
-    print("Processing editable Alembic attributes...")
+    # Default Flags set in Settings; unless they are editable.
+    abc_settings_boolean_arguments = [
+        arg
+        for arg in abc_boolean_args
+        if arg not in abc_args_overrides
+    ]
+    # We display them to the user
+    abc_defs.append(EnumDef(
+        "abcDefaultExportBooleanArguments",
+        abc_settings_boolean_arguments,
+        default=abc_settings_boolean_arguments,
+        multiselection=True,
+        label="Settings set Arguments",
+        disabled=True
+    ))
 
-    abc_boolean_defs = [
-        "writeColorSets",
-        "writeFaceSets",
-        "renderableOnly",
-        "visibleOnly",
-        "worldSpace",
-        "noNormals",
-        "includeUserDefinedAttributes",
-        "eulerFilter",
-        "preRoll",
-        "stripNamespaces",
-        "uvWrite",
-        "verbose",
-        "wholeFrameGeo",
-        "writeUVSets",
-        "writeVisibility",
+    abc_boolean_overrides = [
+        arg
+        for arg in abc_args_overrides
+        if arg in abc_boolean_args
     ]
 
-    abc_boolean_defaults = [
-        "uvWrite",
-        "worldSpace",
-        "writeVisibility",
-    ]
-
-    enabled_boolean_attributes = [
-        attrib for attrib in abc_boolean_defs if attrib in alembic_editable_attributes
-    ]
-
-    if enabled_boolean_attributes:
-        abc_defs.extend(
-            [
-                EnumDef(
-                    "abcExportFlags",
-                    enabled_boolean_attributes,
-                    default=abc_boolean_defaults,
-                    multiselection=True,
-                    label="Alembic Export Flags",
-                )
-            ]
-        )
+    if abc_boolean_overrides:
+        abc_defs.append(EnumDef(
+            "abcExportBooleanArguments",
+            abc_boolean_overrides,
+            multiselection=True,
+            label="Arguments Overrides"
+        ))
 
     abc_defs.append(
         TextDef(
             "attr",
-            label="Alembic Custom Attributes",
-            placeholder="attr1, attr2",
-            disabled=True if "attr" not in alembic_editable_attributes else False,
+            label="Custom Attributes",
+            placeholder="attr1, attr2, ...",
+            disabled=True if "attr" not in abc_args_overrides else False,
         )
     )
 
     abc_defs.append(
         TextDef(
             "attrPrefix",
-            label="Alembic Custom Attributes Prefix",
-            placeholder="prefix1, prefix2",
-            disabled=True if "attrPrefix" not in alembic_editable_attributes else False,
+            label="Custom Attributes Prefix",
+            placeholder="prefix1, prefix2, ...",
+            disabled=True if "attrPrefix" not in abc_args_overrides else False,
         )
     )
 
     abc_defs.append(
         EnumDef(
             "dataFormat",
-            label="Alembic Data Format",
+            label="Data Format",
             items=["ogawa", "HDF"],
-            disabled=True if "dataFormat" not in alembic_editable_attributes else False,
+            disabled=True if "dataFormat" not in abc_args_overrides else False,
         )
     )
 
     abc_defs.append(
         NumberDef(
             "preRollStartFrame",
-            label="Start frame for preroll (Alembic)",
+            label="Start frame for preroll",
             tooltip=(
                 "The frame to start scene evaluation at. This is used to set"
                 " the starting frame for time dependent translations and can"
                 " be used to evaluate run-up that isn't actually translated."
             ),
             disabled=True
-            if "preRollStartFrame" not in alembic_editable_attributes
+            if "preRollStartFrame" not in abc_args_overrides
             else False,
         )
     )
