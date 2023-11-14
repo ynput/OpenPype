@@ -98,8 +98,13 @@ class TimelineItem(object):
         return int(otio.opentime.to_frames(rt))
 
     @property
-    def duration(self) -> int:
+    def timeline_duration(self) -> int:
         result = int(self.root.GetDuration())
+        return result
+
+    @property
+    def real_source_duration(self) -> int:
+        result = self.timeline_duration
 
         if self.is_linear_timeremap:
             time_scalar = float(self.linear_timeremap_effect["time_scalar"])
@@ -120,7 +125,7 @@ class TimelineItem(object):
 
     @property
     def src_out(self) -> int:
-        result = self.src_in + self.duration
+        result = self.src_in + self.real_source_duration
         return result
 
     @property
