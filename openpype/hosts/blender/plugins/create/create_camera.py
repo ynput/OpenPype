@@ -2,12 +2,8 @@
 
 import bpy
 
-from openpype.pipeline import CreatedInstance
 from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import (
-    AVALON_INSTANCES,
-    AVALON_PROPERTY,
-)
+from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
 class CreateCamera(plugin.BaseCreator):

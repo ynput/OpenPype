@@ -2,13 +2,7 @@
 
 import bpy
 
-from openpype.pipeline import get_current_task_name, CreatedInstance
 from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import (
-    AVALON_INSTANCES,
-    AVALON_PROPERTY,
-)
-
 
 class CreateModel(plugin.BaseCreator):
     """Polygonal static geometry."""
