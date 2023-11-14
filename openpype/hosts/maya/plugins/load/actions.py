@@ -107,7 +107,8 @@ class ImportMayaLoader(openpype.hosts.maya.api.plugin.Loader):
         "rig",
         "camerarig",
         "staticMesh",
-        "workfile"
+        "workfile",
+        "shot"
     ]
 
     label = "Import"

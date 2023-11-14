@@ -70,7 +70,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         "resolve",
         "standalonepublisher",
         "flame",
-        "traypublisher"
+        "traypublisher",
+        "maya"
     ]
     optional = False
     create_task_status_profiles = []

@@ -262,7 +262,12 @@ class MayaCreatorBase(object):
         """
         for instance in instances:
             node = instance.data.get("instance_node")
+
             if node:
+                # Some nodes require to be remove from the sets before deleting
+                # the set, else the node will get deleted as well.
+                # For example timeSliderBookmark nodes.
+                cmds.sets(cmds.sets(node, query=True), remove=node)
                 cmds.delete(node)
 
             self._remove_instance_from_context(instance)

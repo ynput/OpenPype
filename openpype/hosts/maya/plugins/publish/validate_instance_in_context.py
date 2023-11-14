@@ -37,6 +37,9 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin,
         if not self.is_active(instance.data):
             return
 
+        if instance.data.get("family") == "shot":
+            return
+
         asset = instance.data.get("asset")
         context_asset = self.get_context_asset(instance)
         if asset != context_asset:
