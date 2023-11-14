@@ -9,7 +9,6 @@ class CreateRig(plugin.BaseCreator):
     """Artist-friendly rig with controls to direct motion."""
 
     identifier = "io.openpype.creators.blender.rig"
-    name = "rigMain"
     label = "Rig"
     family = "rig"
     icon = "wheelchair"

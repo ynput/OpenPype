@@ -9,7 +9,6 @@ class CreateBlendScene(plugin.BaseCreator):
     """Generic group of assets."""
 
     identifier = "io.openpype.creators.blender.blendscene"
-    name = "blendScene"
     label = "Blender Scene"
     family = "blendScene"
     icon = "cubes"

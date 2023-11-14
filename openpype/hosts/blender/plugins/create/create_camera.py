@@ -10,7 +10,6 @@ class CreateCamera(plugin.BaseCreator):
     """Polygonal static geometry."""
 
     identifier = "io.openpype.creators.blender.camera"
-    name = "cameraMain"
     label = "Camera"
     family = "camera"
     icon = "video-camera"
