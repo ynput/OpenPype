@@ -48,6 +48,7 @@ class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
+            names = ", ".join(obj.name for obj in invalid)
             raise PublishValidationError(
-                f"Camera must have a keyframe at frame 0: {invalid}"
+                f"Camera must have a keyframe at frame 0: {names}"
             )

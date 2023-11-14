@@ -37,6 +37,7 @@ class ValidateObjectIsInObjectMode(
 
         invalid = self.get_invalid(instance)
         if invalid:
+            names = ", ".join(obj.name for obj in invalid)
             raise PublishValidationError(
-                f"Object found in instance is not in Object Mode: {invalid}"
+                f"Object found in instance is not in Object Mode: {names}"
             )

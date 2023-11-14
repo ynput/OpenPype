@@ -48,7 +48,8 @@ class ValidateTransformZero(pyblish.api.InstancePlugin,
 
         invalid = self.get_invalid(instance)
         if invalid:
+            names = ", ".join(obj.name for obj in invalid)
             raise PublishValidationError(
-                "Object found in instance has not"
-                f" transform to zero: {invalid}"
+                "Objects found in instance which do not"
+                f" have transform set to zero: {names}"
             )

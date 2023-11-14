@@ -37,6 +37,7 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator,
 
         invalid = self.get_invalid(instance)
         if invalid:
+            names = ", ".join(obj.name for obj in invalid)
             raise PublishValidationError(
-                f"Meshes found in instance with negative scale: {invalid}"
+                f"Meshes found in instance with negative scale: {names}"
             )
