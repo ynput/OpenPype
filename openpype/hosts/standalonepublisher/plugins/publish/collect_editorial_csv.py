@@ -288,7 +288,7 @@ class CollectEditorialCSV(
             files = basename
 
         tags = deepcopy(repre_data["tags"])
-        # if slate in repre_data is true then remove one frame from start
+        # if slate in repre_data is True then remove one frame from start
         if repre_data["slate"]:
             tags.append("has_slate")
 
@@ -547,15 +547,20 @@ class CollectEditorialCSV(
 
         # get column value from row
         column_value = row_data.get(column_name)
+        # get column type
+        column_type = column_data["type"]
         # get column validation regex
         column_validation = column_data["validate"]
         # get column default value
-        column_default = column_data.get("default") or default_value
+        column_default = default_value or column_data["default"]
+
+        if column_type == "number" and column_default == 0:
+            column_default = None
 
         # check if column value is not empty
         if not column_value:
             # check if column has default value
-            if column_default:
+            if column_default != None:
                 # set column value to default value
                 column_value = column_default
 
@@ -607,91 +612,113 @@ def config_columns_data():
         return self.columns_config
     return {
         "Project": {
-            "default": None,
+            "type": "text",
+            "default": "",
             "required": False,
             "validate": "^(.*)$"
         },
         "Vendor": {
-            "default": None,
+            "type": "text",
+            "default": "",
             "required": False,
             "validate": "^(.*)$"
         },
         "Package": {
-            "default": None,
+            "type": "text",
+            "default": "",
             "required": False,
-            "validate": "([a-z]{3}_sub_\\d{6}_\\d{4})"
+            "validate": "^(.*)$"
         },
         "Filename": {
+            "type": "text",
             "default": "",
-            "required": True,
-            "validate": "^([a-z0-9#._\/]*)$"
+            "required": False,
+            "validate": "^(.*)$"
         },
         "Context": {
+            "type": "text",
             "default": "",
-            "required": True,
-            "validate": "^([a-zA-Z0-9_]*)$"
+            "required": False,
+            "validate": "^(.*)$"
         },
         "Task": {
+            "type": "text",
             "default": "",
-            "required": True,
-            "validate": "(lgt|comp|anim)"
+            "required": False,
+            "validate": "^(.*)$"
         },
         "Version": {
+            "type": "number",
             "default": 1,
             "required": True,
             "validate": "^(\\d{1,3})$"
         },
         "Color": {
-            "default": "ACES - ACEScg",
-            "required": True,
-            "validate": "^(ACES - ACES2065-1|ACES - ACEScg|Output - Rec.709)$"
+            "type": "text",
+            "default": "",
+            "required": False,
+            "validate": "^(.*)$"
         },
         "Notes": {
+            "type": "text",
             "default": "",
             "required": False,
             "validate": "^(.*)$"
         },
         "Intent": {
-            "default": "WIP",
+            "type": "text",
+            "default": "",
             "required": False,
-            "validate": "^(WIP|PF|PAF|FINAL)$"
+            "validate": "^(.*)$"
         },
         "Output": {
-            "default": "preview",
-            "required": True,
-            "validate": "(exr|preview|edit|review|nuke)"
+            "type": "text",
+            "default": "",
+            "required": False,
+            "validate": "^(.*)$"
         },
         "Family": {
-            "default": "render",
+            "type": "text",
+            "default": "",
             "required": False,
-            "validate": "(render|plate|workfile)"
+            "validate": "^(.*)$"
         },
         "Slate": {
+            "type": "bool",
             "default": True,
             "required": False,
-            "validate": "(True|False)"
+            "validate": "(true|false)"
         },
         "Tags": {
+            "type": "text",
+            "default": "",
             "required": False,
             "validate": "^(.*)$"
         },
         "Variant": {
-            "default": "Main",
+            "type": "text",
+            "default": "",
             "required": False,
             "validate": "^(.*)$"
         },
         "Start": {
+            "type": "number",
+            "default": 0,
             "required": False,
-            "validate": "^(\\d{1,8})$|.*|None"
+            "validate": "^(\\d{1,8})$|None"
         },
         "End": {
+            "type": "number",
+            "default": 0,
             "required": False,
-            "validate": "^(\\d{1,8})$|.*|None"
+            "validate": "^(\\d{1,8})$|None"
         },
         "Length": {
+            "type": "number",
+            "default": 0,
             "required": False,
-            "validate": "^(\\d{1,8})$|.*"
-        },
+            "validate": "^(\\d{1,8})$|None"
+        }
     }
 
 def config_representation_data():
