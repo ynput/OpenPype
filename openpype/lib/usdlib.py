@@ -541,7 +541,7 @@ def get_or_define_prim_spec(layer, prim_path, type_name):
 
 
 def variant_nested_prim_path(prim_path, variant_selections):
-    """Return the Sdf.Path path for a nested variant selection at prim path.
+    """Return the Sdf.Path for a nested variant selection at prim path.
 
     Examples:
     >>> prim_path = Sdf.Path("/asset")
@@ -587,7 +587,8 @@ def set_variant_reference(sdf_layer, prim_path, variant_selections, path,
             to prepended items, otherwise it will replace it.
 
     Returns:
-        S
+        Sdf.PrimSpec: The prim spec for the prim path at the given
+            variant selection.
 
     """
     prim_path = Sdf.Path(prim_path)
