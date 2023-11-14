@@ -91,7 +91,6 @@ class BlendLoader(plugin.AssetLoader):
                 members.append(data)
 
         container = self._get_asset_container(data_to.objects)
-        print(container)
         assert container, "No asset group found"
 
         container.name = group_name
@@ -104,8 +103,6 @@ class BlendLoader(plugin.AssetLoader):
         for obj in container.children_recursive:
             print(obj)
             bpy.context.scene.collection.objects.link(obj)
-
-        print("")
 
         # Remove the library from the blend file
         library = bpy.data.libraries.get(bpy.path.basename(libpath))

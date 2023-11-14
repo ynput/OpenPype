@@ -78,15 +78,13 @@ class CreateWorkfile(BaseCreator, AutoCreator):
 
     def collect_instances(self):
 
-        print("Collecting!")
         instance_node = bpy.data.collections.get(AVALON_CONTAINERS)
         if not instance_node:
             return
-        print(instance_node)
+
         property = instance_node.get(AVALON_PROPERTY)
         if not property:
             return
-        print(property)
 
         # Create instance object from existing data
         instance = CreatedInstance.from_existing(
