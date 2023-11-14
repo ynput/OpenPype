@@ -32,7 +32,7 @@ class ExtractAnimationABC(
         plugin.deselect_all()
 
         selected = []
-        asset_group = None
+        asset_group = instance.data["transientData"]["instance_node"]
 
         objects = []
         for obj in instance:

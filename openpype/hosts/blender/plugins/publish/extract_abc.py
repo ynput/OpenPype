@@ -28,18 +28,15 @@ class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         plugin.deselect_all()
 
-        selected = []
-        active = None
+        asset_group = instance.data["transientData"]["instance_node"]
 
+        selected = []
         for obj in instance:
             obj.select_set(True)
             selected.append(obj)
-            # Set as active the asset group
-            if obj.get(AVALON_PROPERTY):
-                active = obj
 
         context = plugin.create_blender_context(
-            active=active, selected=selected)
+            active=asset_group, selected=selected)
 
         with bpy.context.temp_override(**context):
             # We export the abc

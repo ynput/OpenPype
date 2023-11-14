@@ -29,12 +29,7 @@ class ExtractCameraABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         plugin.deselect_all()
 
-        asset_group = None
-        for obj in instance:
-            if obj.get(AVALON_PROPERTY):
-                asset_group = obj
-                break
-        assert asset_group, "No asset group found"
+        asset_group = instance.data["transientData"]["instance_node"]
 
         # Need to cast to list because children is a tuple
         selected = list(asset_group.children)

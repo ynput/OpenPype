@@ -29,14 +29,12 @@ class ExtractFBX(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         plugin.deselect_all()
 
-        selected = []
-        asset_group = None
+        asset_group = instance.data["transientData"]["instance_node"]
 
+        selected = []
         for obj in instance:
             obj.select_set(True)
             selected.append(obj)
-            if obj.get(AVALON_PROPERTY):
-                asset_group = obj
 
         context = plugin.create_blender_context(
             active=asset_group, selected=selected)

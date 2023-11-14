@@ -31,14 +31,7 @@ class ExtractAnimationFBX(
         # Perform extraction
         self.log.debug("Performing extraction..")
 
-        # The first collection object in the instance is taken, as there
-        # should be only one that contains the asset group.
-        collection = [
-            obj for obj in instance if type(obj) is bpy.types.Collection][0]
-
-        # Again, the first object in the collection is taken , as there
-        # should be only the asset group in the collection.
-        asset_group = collection.objects[0]
+        asset_group = instance.data["transientData"]["instance_node"]
 
         armature = [
             obj for obj in asset_group.children if obj.type == 'ARMATURE'][0]
