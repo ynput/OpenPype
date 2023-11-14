@@ -158,6 +158,7 @@ class TestCreateContext(ModuleUnitTest):
         assert len(instances) == 2
 
     def test_host_save_and_load_context_data(self,
+                                             dbcon,
                                              setup_dummy_host,
                                              dummy_creator):
         """Test context publish attributes data save changes and persistence"""
