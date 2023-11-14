@@ -74,13 +74,9 @@ class CreateWorkfile(BaseCreator, AutoCreator):
                 task_name, task_name, asset_doc, project_name, host_name
             )
 
-            current_instance.update(
-                {
-                    "asset": asset_name,
-                    "task": task_name,
-                    "subset": subset_name,
-                }
-            )
+            current_instance["asset"] = asset_name
+            current_instance["task"] = task_name
+            current_instance["subset"] = subset_name
 
     def collect_instances(self):
 
