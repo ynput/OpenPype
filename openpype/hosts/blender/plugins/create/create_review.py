@@ -15,7 +15,6 @@ class CreateReview(plugin.BaseCreator):
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
-        """Run the creator on Blender main thread."""
         # Run parent create method
         collection = super().create(
             subset_name, instance_data, pre_create_data
@@ -25,9 +24,5 @@ class CreateReview(plugin.BaseCreator):
             selected = lib.get_selection()
             for obj in selected:
                 collection.objects.link(obj)
-        elif pre_create_data.get("asset_group"):
-            # TODO: What is the intended behavior for this?
-            obj = (self.options or {}).get("asset_group")
-            collection.objects.link(obj)
 
         return collection
