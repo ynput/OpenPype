@@ -7,38 +7,28 @@ from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
-class CreateUSD(plugin.Creator):
+class CreateUSD(plugin.BaseCreator):
     """Create USD Export"""
 
+    identifier = "io.openpype.creators.blender.usd"
     name = "usdMain"
     label = "USD"
     family = "usd"
     icon = "gears"
 
-    def process(self):
-        """ Run the creator on Blender main thread"""
-        mti = ops.MainThreadItem(self._process)
-        ops.execute_in_main_thread(mti)
+    def create(
+        self, subset_name: str, instance_data: dict, pre_create_data: dict
+    ):
+        # Run parent create method
+        collection = super().create(
+            subset_name, instance_data, pre_create_data
+        )
 
-    def _process(self):
-        # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
-
-        # Create instance object
-        asset = self.data["asset"]
-        subset = self.data["subset"]
-        name = plugin.asset_name(asset, subset)
-        collection = bpy.data.collections.new(name=name)
-        instances.children.link(collection)
-        self.data['task'] = get_current_task_name()
-        lib.imprint(collection, self.data)
-
-        # Add selected objects to instance
-        if (self.options or {}).get("useSelection"):
-            for obj in lib.get_selection():
+        if pre_create_data.get("use_selection"):
+            objects = lib.get_selection()
+            for obj in objects:
                 collection.objects.link(obj)
+                if obj.type == 'EMPTY':
+                    objects.extend(obj.children)
 
         return collection
