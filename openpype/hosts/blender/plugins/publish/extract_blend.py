@@ -19,9 +19,6 @@ class ExtractBlend(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         # Define extract output file path
 
-        if not self.is_active(instance.data):
-            return
-
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.blend"
         filepath = os.path.join(stagingdir, filename)
