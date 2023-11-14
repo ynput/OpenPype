@@ -42,6 +42,7 @@ def imprint(node_name: str, data: dict) -> bool:
             rt.SetUserProp(node, k, f"{JSON_PREFIX}{json.dumps(v)}")
         else:
             rt.SetUserProp(node, k, v)
+            print(k)
 
     return True
 
@@ -358,8 +359,6 @@ def reset_colorspace():
         colorspace_mgr = rt.ColorPipelineMgr
         colorspace_mgr.Mode = rt.Name("OCIO_Custom")
         colorspace_mgr.OCIOConfigPath = ocio_config_path
-
-    colorspace_mgr.OCIOConfigPath = ocio_config_path
 
 
 def check_colorspace():
