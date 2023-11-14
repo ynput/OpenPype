@@ -3,8 +3,8 @@ import os
 from maya import cmds
 
 from openpype.pipeline import publish
+from openpype.hosts.maya.api.alembic import extract_alembic
 from openpype.hosts.maya.api.lib import (
-    extract_alembic,
     suspended_refresh,
     maintained_selection,
     iter_visible_nodes_in_range
@@ -44,6 +44,7 @@ class ExtractAlembic(publish.Extractor):
 
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
         attr_prefixes = [value for value in attr_prefixes if value.strip()]
+
 
         self.log.debug("Extracting pointcache..")
         dirname = self.staging_dir(instance)
