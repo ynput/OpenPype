@@ -189,6 +189,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
 
             instance_data["instance_node"] = instance_node.path()
             instance_data["instance_id"] = instance_node.path()
+            instance_data["families"] = self.get_publish_families()
             instance = CreatedInstance(
                 self.family,
                 subset_name,
@@ -237,6 +238,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             node_path = instance.path()
             node_data["instance_id"] = node_path
             node_data["instance_node"] = node_path
+            node_data["families"] = self.get_publish_families()
 
             created_instance = CreatedInstance.from_existing(
                 node_data, self
@@ -262,6 +264,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
         # from the node's path
         values.pop("instance_node", None)
         values.pop("instance_id", None)
+        values.pop("families", None)
         imprint(node, values, update=update)
 
     def remove_instances(self, instances):
@@ -302,6 +305,22 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             color = hou.Color((0.616, 0.871, 0.769))
         node.setUserData('nodeshape', shape)
         node.setColor(color)
+
+    def get_publish_families(self):
+        """Return families for the instances of this creator.
+
+        Allow a Creator to define multiple families so that a creator can
+        e.g. specify `usd` and `usdrop`.
+
+        There is no need to override this method if you only have the
+        primary family defined by the `family` property as that will always
+        be set.
+
+        Returns:
+            list: families for instances of this creator
+
+        """
+        return []
 
     def get_network_categories(self):
         """Return in which network view type this creator should show.

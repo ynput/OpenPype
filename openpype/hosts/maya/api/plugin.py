@@ -146,17 +146,38 @@ class MayaCreatorBase(object):
         """
         return []
 
+    def add_transient_instance_data(self, instance_data):
+        """Add data into the `instance.data` after the read of the node data
+
+        This can be overridden by subclasses to sneak in extra instance data
+        specific to the creator.
+        """
+        # Allow a Creator to define multiple families
+        publish_families = self.get_publish_families()
+        if publish_families:
+            families = instance_data.setdefault("families", [])
+            for family in self.get_publish_families():
+                if family not in families:
+                    families.append(family)
+
+    def remove_transient_instance_data(self, instance_data):
+        """Remove data `instance.data` before storing/imprinting to the node
+
+        This can be overridden by subclasses to remove extra instance data
+        added in `add_transient_instance_data` specific to the creator.
+        """
+        # Don't store `families` since it's up to the creator itself
+        # to define the initial publish families - not a stored attribute of
+        # `families`
+        instance_data.pop("families", None)
+
     def imprint_instance_node(self, node, data):
+        self.remove_transient_instance_data(data)
 
         # We never store the instance_node as value on the node since
         # it's the node name itself
         data.pop("instance_node", None)
         data.pop("instance_id", None)
-
-        # Don't store `families` since it's up to the creator itself
-        # to define the initial publish families - not a stored attribute of
-        # `families`
-        data.pop("families", None)
 
         # We store creator attributes at the root level and assume they
         # will not clash in names with `subset`, `task`, etc. and other
@@ -230,11 +251,6 @@ class MayaCreatorBase(object):
         node_data["instance_node"] = node
         node_data["instance_id"] = node
 
-        # If the creator plug-in specifies
-        families = self.get_publish_families()
-        if families:
-            node_data["families"] = families
-
         return node_data
 
     def _default_collect_instances(self):
@@ -242,6 +258,7 @@ class MayaCreatorBase(object):
         cached_subsets = self.collection_shared_data["maya_cached_subsets"]
         for node in cached_subsets.get(self.identifier, []):
             node_data = self.read_instance_node(node)
+            self.add_transient_instance_data(node_data)
 
             created_instance = CreatedInstance.from_existing(node_data, self)
             self._add_instance_to_context(created_instance)
@@ -279,17 +296,10 @@ class MayaCreator(NewCreator, MayaCreatorBase):
         if pre_create_data.get("use_selection"):
             members = cmds.ls(selection=True)
 
-        # Allow a Creator to define multiple families
-        publish_families = self.get_publish_families()
-        if publish_families:
-            families = instance_data.setdefault("families", [])
-            for family in self.get_publish_families():
-                if family not in families:
-                    families.append(family)
-
         with lib.undo_chunk():
             instance_node = cmds.sets(members, name=subset_name)
             instance_data["instance_node"] = instance_node
+            self.add_transient_instance_data(instance_data)
             instance = CreatedInstance(
                 self.family,
                 subset_name,

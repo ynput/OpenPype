@@ -2,91 +2,13 @@
 
 import contextlib
 import logging
+import json
 
-from qtpy import QtWidgets, QtCore, QtGui
-
-from openpype import style
-from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
-from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
-
-from pxr import Sdf
+import hou
+from pxr import Sdf, Vt
 
 
 log = logging.getLogger(__name__)
-
-
-class SelectAssetDialog(QtWidgets.QWidget):
-    """Frameless assets dialog to select asset with double click.
-
-    Args:
-        parm: Parameter where selected asset name is set.
-    """
-
-    def __init__(self, parm):
-        self.setWindowTitle("Pick Asset")
-        self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.Popup)
-
-        assets_widget = SingleSelectAssetsWidget(legacy_io, parent=self)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(assets_widget)
-
-        assets_widget.double_clicked.connect(self._set_parameter)
-        self._assets_widget = assets_widget
-        self._parm = parm
-
-    def _set_parameter(self):
-        name = self._assets_widget.get_selected_asset_name()
-        self._parm.set(name)
-        self.close()
-
-    def _on_show(self):
-        pos = QtGui.QCursor.pos()
-        # Select the current asset if there is any
-        select_id = None
-        name = self._parm.eval()
-        if name:
-            project_name = legacy_io.active_project()
-            db_asset = get_asset_by_name(project_name, name, fields=["_id"])
-            if db_asset:
-                select_id = db_asset["_id"]
-
-        # Set stylesheet
-        self.setStyleSheet(style.load_stylesheet())
-        # Refresh assets (is threaded)
-        self._assets_widget.refresh()
-        # Select asset - must be done after refresh
-        if select_id is not None:
-            self._assets_widget.select_asset(select_id)
-
-        # Show cursor (top right of window) near cursor
-        self.resize(250, 400)
-        self.move(self.mapFromGlobal(pos) - QtCore.QPoint(self.width(), 0))
-
-    def showEvent(self, event):
-        super(SelectAssetDialog, self).showEvent(event)
-        self._on_show()
-
-
-def pick_asset(node):
-    """Show a user interface to select an Asset in the project
-
-    When double clicking an asset it will set the Asset value in the
-    'asset' parameter.
-
-    """
-
-    parm = node.parm("asset_name")
-    if not parm:
-        log.error("Node has no 'asset' parameter: %s", node)
-        return
-
-    # Construct a frameless popup so it automatically
-    # closes when clicked outside of it.
-    global tool
-    tool = SelectAssetDialog(parm)
-    tool.show()
 
 
 def add_usd_output_processor(ropnode, processor):
@@ -199,11 +121,13 @@ def get_usd_rop_loppath(node):
             return node.parm("loppath").evalAsNode()
 
 
-def get_layer_save_path(layer):
+def get_layer_save_path(layer, expand_string=True):
     """Get custom HoudiniLayerInfo->HoudiniSavePath from SdfLayer.
 
     Args:
         layer (pxr.Sdf.Layer): The Layer to retrieve the save pah data from.
+        expand_string (bool): Whether to expand any houdini vars in the save
+            path before computing the absolute path.
 
     Returns:
         str or None: Path to save to when data exists.
@@ -216,6 +140,8 @@ def get_layer_save_path(layer):
     save_path = hou_layer_info.customData.get("HoudiniSavePath", None)
     if save_path:
         # Unfortunately this doesn't actually resolve the full absolute path
+        if expand_string:
+            save_path = hou.text.expandString(save_path)
         return layer.ComputeAbsolutePath(save_path)
 
 
@@ -261,7 +187,18 @@ def iter_layer_recursive(layer):
         yield layer
 
 
-def get_configured_save_layers(usd_rop):
+def get_configured_save_layers(usd_rop, strip_above_layer_break=True):
+    """Retrieve the layer save paths from a USD ROP.
+
+    Arguments:
+        usdrop (hou.RopNode): USD Rop Node
+        strip_above_layer_break (Optional[bool]): Whether to exclude any
+            layers that are above layer breaks. This defaults to True.
+
+    Returns:
+        List[Sdf.Layer]: The layers with configured save paths.
+
+    """
 
     lop_node = get_usd_rop_loppath(usd_rop)
     stage = lop_node.stage(apply_viewport_overrides=False)
@@ -272,10 +209,101 @@ def get_configured_save_layers(usd_rop):
 
     root_layer = stage.GetRootLayer()
 
+    if strip_above_layer_break:
+        layers_above_layer_break = set(lop_node.layersAboveLayerBreak())
+    else:
+        layers_above_layer_break = set()
+
     save_layers = []
     for layer in iter_layer_recursive(root_layer):
+        if (
+            strip_above_layer_break and
+            layer.identifier in layers_above_layer_break
+        ):
+            continue
+
         save_path = get_layer_save_path(layer)
         if save_path is not None:
             save_layers.append(layer)
 
     return save_layers
+
+
+def setup_lop_python_layer(layer, node, savepath=None,
+                           apply_file_format_args=True):
+    """Set up Sdf.Layer with HoudiniLayerInfo prim for metadata.
+
+    This is the same as `loputils.createPythonLayer` but can be run on top
+    of `pxr.Sdf.Layer` instances that are already created in a Python LOP node.
+    That's useful if your layer creation itself is built to be DCC agnostic,
+    then we just need to run this after per layer to make it explicitly
+    stored for houdini.
+
+    By default, Houdini doesn't apply the FileFormatArguments supplied to
+    the created layer; however it does support USD's file save suffix
+    of `:SDF_FORMAT_ARGS:` to supply them. With `apply_file_format_args` any
+    file format args set on the layer's creation will be added to the
+    save path through that.
+
+    Note: The `node.addHeldLayer` call will only work from a LOP python node
+        whenever `node.editableStage()` or `node.editableLayer()` was called.
+
+    Arguments:
+        layer (Sdf.Layer): An existing layer (most likely just created
+            in the current runtime)
+        node (hou.LopNode): The Python LOP node to attach the layer to so
+            it does not get garbage collected/mangled after the downstream.
+        savepath (Optional[str]): When provided the HoudiniSaveControl
+            will be set to Explicit with HoudiniSavePath to this path.
+        apply_file_format_args (Optional[bool]): When enabled any
+            FileFormatArgs defined for the layer on creation will be set
+            in the HoudiniSavePath so Houdini USD ROP will use them top.
+
+    Returns:
+        Sdf.PrimSpec: The Created HoudiniLayerInfo prim spec.
+
+    """
+    # Add a Houdini Layer Info prim where we can put the save path.
+    p = Sdf.CreatePrimInLayer(layer, '/HoudiniLayerInfo')
+    p.specifier = Sdf.SpecifierDef
+    p.typeName = 'HoudiniLayerInfo'
+    if savepath:
+        if apply_file_format_args:
+            args = layer.GetFileFormatArguments()
+            if args:
+                args = ":".join("{}={}".format(key, value)
+                                for key, value in args.items())
+                savepath = "{}:SDF_FORMAT_ARGS:{}".format(savepath, args)
+
+        p.customData['HoudiniSavePath'] = savepath
+        p.customData['HoudiniSaveControl'] = 'Explicit'
+    # Let everyone know what node created this layer.
+    p.customData['HoudiniCreatorNode'] = node.sessionId()
+    p.customData['HoudiniEditorNodes'] = Vt.IntArray([node.sessionId()])
+    node.addHeldLayer(layer.identifier)
+
+    return p
+
+
+@contextlib.contextmanager
+def remap_paths(rop_node, mapping):
+    """Enable the AyonRemapPaths output processor with provided `mapping`"""
+    from openpype.hosts.houdini.api.lib import parm_values
+
+    if not mapping:
+        # Do nothing
+        yield
+        return
+
+    # Houdini string parms need to escape backslashes due to the support
+    # of expressions - as such we do so on the json data
+    value = json.dumps(mapping).replace("\\", "\\\\")
+    with outputprocessors(
+        rop_node,
+        processors=["ayon_remap_paths"],
+        disable_all_others=True,
+    ):
+        with parm_values([
+            (rop_node.parm("ayon_remap_paths_remap_json"), value)
+        ]):
+            yield

@@ -4,6 +4,7 @@ from openpype.pipeline import PublishValidationError
 
 import hou
 
+
 class ValidateBypassed(pyblish.api.InstancePlugin):
     """Validate all primitives build hierarchy from attribute when enabled.
 
@@ -20,9 +21,10 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        if len(instance) == 0:
-            # Ignore instances without any nodes
-            # e.g. in memory bootstrap instances
+        if not instance.data.get("instance_node"):
+            self.log.debug(
+                "Skipping instance without instance node: {}".format(instance)
+            )
             return
 
         invalid = self.get_invalid(instance)

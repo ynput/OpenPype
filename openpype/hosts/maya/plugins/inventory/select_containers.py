@@ -17,6 +17,7 @@ class SelectInScene(InventoryAction):
         all_members = []
         for container in containers:
             members = get_container_members(container)
+            print(members)
             all_members.extend(members)
         cmds.select(all_members, replace=True, noExpand=True)
 
@@ -31,7 +32,8 @@ class HighlightBySceneSelection(InventoryAction):
 
     def process(self, containers):
 
-        selection = set(cmds.ls(selection=True, long=True, objectsOnly=True))
+        selection = set(cmds.ls(selection=True, long=True, objectsOnly=True,
+                                ufeObjects=True))
         host = registered_host()
 
         to_select = []

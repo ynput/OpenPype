@@ -14,7 +14,7 @@ class ValidateUSDOutputNode(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["usd"]
+    families = ["usdrop"]
     hosts = ["houdini"]
     label = "Validate Output Node (USD)"
 

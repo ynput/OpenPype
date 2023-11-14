@@ -4,10 +4,26 @@ import json
 import contextlib
 
 from maya import cmds
+import maya.api.OpenMaya as om
 
 import pyblish.api
 from openpype.pipeline import publish
 from openpype.hosts.maya.api.lib import maintained_selection
+
+
+def get_node_hash(node):
+    """Return integer MObjectHandle hash code.
+
+    Arguments:
+        node (str): Maya node path.
+
+    Returns:
+        int: MObjectHandle.hashCode()
+
+    """
+    sel = om.MSelectionList()
+    sel.add(node)
+    return om.MObjectHandle(sel.getDependNode(0)).hashCode()
 
 
 @contextlib.contextmanager
@@ -44,8 +60,6 @@ def usd_export_attributes(nodes, attrs=None, attr_prefixes=None, mapping=None):
     # todo: this might be better done with a custom export chaser
     #   see `chaser` argument for `mayaUSDExport`
 
-    import maya.api.OpenMaya as om
-
     if not attrs and not attr_prefixes:
         # context manager does nothing
         yield
@@ -61,16 +75,23 @@ def usd_export_attributes(nodes, attrs=None, attr_prefixes=None, mapping=None):
     usd_json_attr = "USD_UserExportedAttributesJson"
     strings = attrs + ["{}*".format(prefix) for prefix in attr_prefixes]
     context_state = {}
+
+    # Keep track of the processed nodes as a node might appear more than once
+    # e.g. when there are instances.
+    processed = set()
     for node in set(nodes):
         node_attrs = cmds.listAttr(node, st=strings)
         if not node_attrs:
             # Nothing to do for this node
             continue
 
+        hash_code = get_node_hash(node)
+        if hash_code in processed:
+            continue
+
         node_attr_data = {}
         for node_attr in set(node_attrs):
             node_attr_data[node_attr] = mapping.get(node_attr, {})
-
         if cmds.attributeQuery(usd_json_attr, node=node, exists=True):
             existing_node_attr_value = cmds.getAttr(
                 "{}.{}".format(node, usd_json_attr)
@@ -82,6 +103,7 @@ def usd_export_attributes(nodes, attrs=None, attr_prefixes=None, mapping=None):
                 existing_node_attr_data = json.loads(existing_node_attr_value)
                 node_attr_data.update(existing_node_attr_data)
 
+        processed.add(hash_code)
         context_state[node] = json.dumps(node_attr_data)
 
     sel = om.MSelectionList()
@@ -148,6 +170,8 @@ class ExtractMayaUsd(publish.Extractor):
             "exportRefsAsInstanceable": bool,
             "eulerFilter": bool,
             "renderableOnly": bool,
+            "convertMaterialsTo": str,
+            "shadingMode": (str, None),  # optional str
             "jobContext": (list, None)  # optional list
             # "worldspace": bool,
         }
@@ -170,6 +194,8 @@ class ExtractMayaUsd(publish.Extractor):
             "exportRefsAsInstanceable": False,
             "eulerFilter": True,
             "renderableOnly": False,
+            "shadingMode": "none",
+            "convertMaterialsTo": "none",
             "jobContext": None
             # "worldspace": False
         }

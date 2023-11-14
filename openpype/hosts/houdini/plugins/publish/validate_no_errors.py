@@ -35,6 +35,13 @@ class ValidateNoErrors(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
+        if not instance.data.get("instance_node"):
+            self.log.debug(
+                "Skipping 'Validate no errors' because instance "
+                "has no instance node: {}".format(instance)
+            )
+            return
+
         validate_nodes = []
 
         if len(instance) > 0:

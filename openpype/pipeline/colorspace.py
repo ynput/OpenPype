@@ -1096,7 +1096,8 @@ def set_colorspace_data_to_representation(
     # check if `file_ext` in lower case is in CachedData.allowed_exts
     if file_ext.lstrip(".").lower() not in CachedData.allowed_exts:
         log.debug(
-            "Extension '{}' is not in allowed extensions.".format(file_ext)
+            "Extension '{}' is not in allowed extensions to retrieve "
+            "colorspace data for, ignoring...".format(file_ext)
         )
         return
 

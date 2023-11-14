@@ -2,12 +2,16 @@
 import pyblish.api
 
 import openpype.hosts.houdini.api.usd as hou_usdlib
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import (
+    PublishValidationError,
+    publish
+)
 
 import hou
 
 
-class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin):
+class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin,
+                                      publish.OptionalPyblishPluginMixin):
     """Validate USD loaded paths have no backslashes.
 
     This is a crucial validation for HUSK USD rendering as Houdini's
@@ -21,12 +25,14 @@ class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["usdSetDress", "usdShade", "usd", "usdrender"]
+    families = ["usdrop", "usdrender"]
     hosts = ["houdini"]
     label = "USD Layer path backslashes"
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         rop = hou.node(instance.data.get("instance_node"))
         lop_path = hou_usdlib.get_usd_rop_loppath(rop)
