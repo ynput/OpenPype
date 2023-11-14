@@ -21,7 +21,7 @@ class ValidateMeshHasUvs(
     order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
-    label = "Mesh Has UV's"
+    label = "Mesh Has UVs"
     actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
     optional = True
 
