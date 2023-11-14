@@ -20,7 +20,7 @@ class SubstancePainterSettings(BaseSettingsModel):
     )
 
 
-DEFAULT_SPAINTER_SETTINGS =  {
+DEFAULT_SPAINTER_SETTINGS = {
     "imageio": DEFAULT_IMAGEIO_SETTINGS,
     "shelves": []
 }
