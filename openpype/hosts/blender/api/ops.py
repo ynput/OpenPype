@@ -261,7 +261,7 @@ class LaunchQtApp(bpy.types.Operator):
 
         if isinstance(self._window, ModuleType):
             self._window.show()
-            pull_to_front(self.window)
+            pull_to_front(self._window)
 
             # Pull window to the front
             window = None
@@ -278,7 +278,7 @@ class LaunchQtApp(bpy.types.Operator):
             on_top_flags = origin_flags | QtCore.Qt.WindowStaysOnTopHint
             self._window.setWindowFlags(on_top_flags)
             self._window.show()
-            pull_to_front(self.window)
+            pull_to_front(self._window)
 
             # if on_top_flags != origin_flags:
             #     self._window.setWindowFlags(origin_flags)
