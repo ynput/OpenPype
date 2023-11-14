@@ -325,8 +325,6 @@ class BaseCreator(Creator):
             {
                 "id": "pyblish.avalon.instance",
                 "creator_identifier": self.identifier,
-                "label": subset_name,
-                "task": get_current_task_name(),
                 "subset": subset_name,
             }
         )
