@@ -10,7 +10,13 @@ from openpype.hosts.blender.api.pipeline import (
 
 
 class CreateWorkfile(BaseCreator, AutoCreator):
-    """Workfile auto-creator."""
+    """Workfile auto-creator.
+
+    The workfile instance stores its data on the `AVALON_CONTAINERS` collection
+    as custom attributes, because unlike other instances it doesn't have an
+    instance node of its own.
+
+    """
     identifier = "io.openpype.creators.blender.workfile"
     label = "Workfile"
     family = "workfile"
