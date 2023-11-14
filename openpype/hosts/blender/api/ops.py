@@ -428,7 +428,6 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(SetResolution.bl_idname, text="Set Resolution")
         layout.separator()
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
-        # TODO (jasper): maybe add 'Reload Pipeline'
 
 
 def draw_avalon_menu(self, context):

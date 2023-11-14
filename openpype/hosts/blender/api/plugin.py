@@ -430,7 +430,7 @@ class AssetLoader(LoaderPlugin):
             namespace: Use pre-defined namespace
             options: Additional settings dictionary
         """
-        # TODO (jasper): make it possible to add the asset several times by
+        # TODO: make it possible to add the asset several times by
         # just re-using the collection
         filepath = self.filepath_from_context(context)
         assert Path(filepath).exists(), f"{filepath} doesn't exist."
