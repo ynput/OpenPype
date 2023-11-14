@@ -218,7 +218,7 @@ def convert_v4_project_to_v3(project):
             _convert_template_item(template)
             new_others_templates[name] = template
 
-        staging_templates = templates.pop("staging_dir", None)
+        staging_templates = templates.pop("staging", None)
         # Key 'staging_directories' is legacy key that changed
         #   to 'staging_dir'
         _legacy_staging_templates = templates.pop("staging_directories", None)
