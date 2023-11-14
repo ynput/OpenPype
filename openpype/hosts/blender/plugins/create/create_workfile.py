@@ -73,7 +73,6 @@ class CreateWorkfile(BaseCreator, AutoCreator):
             subset_name = self.get_subset_name(
                 task_name, task_name, asset_doc, project_name, host_name
             )
-
             current_instance["asset"] = asset_name
             current_instance["task"] = task_name
             current_instance["subset"] = subset_name
