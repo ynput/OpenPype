@@ -45,6 +45,11 @@ class CreateCompositeSequence(plugin.HoudiniCreator):
 
         instance_node.setParms(parms)
 
+        # Manually set f1 & f2 to $FSTART and $FEND respectively
+        # to match other Houdini nodes default.
+        instance_node.parm("f1").setExpression("$FSTART")
+        instance_node.parm("f2").setExpression("$FEND")
+
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
         self.lock_parameters(instance_node, to_lock)

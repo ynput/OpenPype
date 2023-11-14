@@ -7,7 +7,11 @@ from openpype.pipeline import (
     AYON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api import plugin
-from openpype.hosts.unreal.api import pipeline as unreal_pipeline
+from openpype.hosts.unreal.api.pipeline import (
+    AYON_ASSET_DIR,
+    create_container,
+    imprint,
+)
 import unreal  # noqa
 
 
@@ -19,6 +23,8 @@ class StaticMeshAlembicLoader(plugin.Loader):
     representations = ["abc"]
     icon = "cube"
     color = "orange"
+
+    root = AYON_ASSET_DIR
 
     @staticmethod
     def get_task(filename, asset_dir, asset_name, replace, default_conversion):
@@ -53,13 +59,39 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
         return task
 
+    def import_and_containerize(
+        self, filepath, asset_dir, asset_name, container_name,
+        default_conversion=False
+    ):
+        unreal.EditorAssetLibrary.make_directory(asset_dir)
+
+        task = self.get_task(
+            filepath, asset_dir, asset_name, False, default_conversion)
+
+        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+
+        # Create Asset Container
+        create_container(container=container_name, path=asset_dir)
+
+    def imprint(
+        self, asset, asset_dir, container_name, asset_name, representation
+    ):
+        data = {
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
+            "asset": asset,
+            "namespace": asset_dir,
+            "container_name": container_name,
+            "asset_name": asset_name,
+            "loader": str(self.__class__.__name__),
+            "representation": representation["_id"],
+            "parent": representation["parent"],
+            "family": representation["context"]["family"]
+        }
+        imprint(f"{asset_dir}/{container_name}", data)
+
     def load(self, context, name, namespace, options):
         """Load and containerise representation into Content Browser.
-
-        This is two step process. First, import FBX to temporary path and
-        then call `containerise()` on it - this moves all content to new
-        directory and then it will create AssetContainer there and imprint it
-        with metadata. This will mark this path as container.
 
         Args:
             context (dict): application context
@@ -68,15 +100,12 @@ class StaticMeshAlembicLoader(plugin.Loader):
                              This is not passed here, so namespace is set
                              by `containerise()` because only then we know
                              real path.
-            data (dict): Those would be data to be imprinted. This is not used
-                         now, data are imprinted by `containerise()`.
+            data (dict): Those would be data to be imprinted.
 
         Returns:
             list(str): list of container content
-
         """
         # Create directory for asset and Ayon container
-        root = "/Game/Ayon/Assets"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         asset_name = f"{asset}_{name}" if asset else f"{name}"
@@ -93,39 +122,22 @@ class StaticMeshAlembicLoader(plugin.Loader):
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, container_name = tools.create_unique_asset_name(
-            f"{root}/{asset}/{name_version}", suffix="")
+            f"{self.root}/{asset}/{name_version}", suffix="")
 
         container_name += suffix
 
         if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
-            unreal.EditorAssetLibrary.make_directory(asset_dir)
-
             path = self.filepath_from_context(context)
-            task = self.get_task(
-                path, asset_dir, asset_name, False, default_conversion)
 
-            unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
+            self.import_and_containerize(path, asset_dir, asset_name,
+                                         container_name, default_conversion)
 
-            # Create Asset Container
-            unreal_pipeline.create_container(
-                container=container_name, path=asset_dir)
-
-        data = {
-            "schema": "ayon:container-2.0",
-            "id": AYON_CONTAINER_ID,
-            "asset": asset,
-            "namespace": asset_dir,
-            "container_name": container_name,
-            "asset_name": asset_name,
-            "loader": str(self.__class__.__name__),
-            "representation": context["representation"]["_id"],
-            "parent": context["representation"]["parent"],
-            "family": context["representation"]["context"]["family"]
-        }
-        unreal_pipeline.imprint(f"{asset_dir}/{container_name}", data)
+        self.imprint(
+            asset, asset_dir, container_name, asset_name,
+            context["representation"])
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
-            asset_dir, recursive=True, include_folder=True
+            asset_dir, recursive=True, include_folder=False
         )
 
         for a in asset_content:
@@ -134,27 +146,36 @@ class StaticMeshAlembicLoader(plugin.Loader):
         return asset_content
 
     def update(self, container, representation):
-        name = container["asset_name"]
-        source_path = get_representation_path(representation)
-        destination_path = container["namespace"]
+        context = representation.get("context", {})
 
-        task = self.get_task(source_path, destination_path, name, True, False)
+        if not context:
+            raise RuntimeError("No context found in representation")
 
-        # do import fbx and replace existing data
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+        # Create directory for asset and Ayon container
+        asset = context.get('asset')
+        name = context.get('subset')
+        suffix = "_CON"
+        asset_name = f"{asset}_{name}" if asset else f"{name}"
+        version = context.get('version')
+        # Check if version is hero version and use different name
+        name_version = f"{name}_v{version:03d}" if version else f"{name}_hero"
+        tools = unreal.AssetToolsHelpers().get_asset_tools()
+        asset_dir, container_name = tools.create_unique_asset_name(
+            f"{self.root}/{asset}/{name_version}", suffix="")
 
-        container_path = "{}/{}".format(container["namespace"],
-                                        container["objectName"])
-        # update metadata
-        unreal_pipeline.imprint(
-            container_path,
-            {
-                "representation": str(representation["_id"]),
-                "parent": str(representation["parent"])
-            })
+        container_name += suffix
+
+        if not unreal.EditorAssetLibrary.does_directory_exist(asset_dir):
+            path = get_representation_path(representation)
+
+            self.import_and_containerize(path, asset_dir, asset_name,
+                                         container_name)
+
+        self.imprint(
+            asset, asset_dir, container_name, asset_name, representation)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
-            destination_path, recursive=True, include_folder=True
+            asset_dir, recursive=True, include_folder=False
         )
 
         for a in asset_content:
