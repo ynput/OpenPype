@@ -11,7 +11,7 @@ class CollectBlenderInstanceData(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder
     hosts = ["blender"]
-    families = ["model", "pointcache", "rig", "camera" "layout", "blendScene",
+    families = ["model", "pointcache", "rig", "camera", "layout", "blendScene",
                 "camera"]
     label = "Collect Instance"
 
