@@ -953,7 +953,13 @@ def publisher_show_and_publish(comment=None):
 def find_rop_inputs_chain(node):
     """Find rop inputs chain.
 
-    This function retrieves input nodes and their inputs recursively.
+    This function retrieves input nodes and their inputs recursively
+    in the correct execution order as if we were calling
+    rop.inputDependencies() method.
+
+    FYI, rop.inputDependencies() failed with
+    - HDA instance (because it has no inputDependencies)
+    - Karma instance (because it's a subnetwork, the method returns its )
 
     Arguments:
         node (hou.Node) The node at which the find function starts.
@@ -965,8 +971,8 @@ def find_rop_inputs_chain(node):
     all_input_nodes = []
     input_nodes = node.inputs()
     for input_node in input_nodes:
-        all_input_nodes.append(input_node.path())
         all_input_nodes += find_rop_inputs_chain(input_node)
+        all_input_nodes.append(input_node.path())
 
     return all_input_nodes
 
@@ -990,9 +996,7 @@ def self_publish():
         return
 
     current_node = hou.node(".")
-    inputs_paths = find_rop_inputs_chain(
-        current_node
-    )
+    inputs_paths = find_rop_inputs_chain(current_node)
     inputs_paths.append(current_node.path())
 
     host = registered_host()
