@@ -136,8 +136,8 @@ class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
         for asset in asset_group.children:
             metadata = asset.get(AVALON_PROPERTY)
             if not metadata:
-                # Avoid erroring directly if there's just invalid data
-                # inside the instance
+                # Avoid raising error directly if there's just invalid data
+                # inside the instance; better to log it to the artist
                 # TODO: This should actually be validated in a validator
                 self.log.warning(
                     f"Found content in layout that is not a loaded "
