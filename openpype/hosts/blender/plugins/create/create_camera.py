@@ -2,7 +2,7 @@
 
 import bpy
 
-from openpype.hosts.blender.api import plugin, lib, ops
+from openpype.hosts.blender.api import plugin, lib
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
@@ -17,7 +17,6 @@ class CreateCamera(plugin.BaseCreator):
 
     create_as_asset_group = True
 
-    @ops.execute_function_in_main_thread
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
@@ -27,13 +26,10 @@ class CreateCamera(plugin.BaseCreator):
                                      instance_data,
                                      pre_create_data)
 
+        bpy.context.view_layer.objects.active = asset_group
         if pre_create_data.get("use_selection"):
-            bpy.context.view_layer.objects.active = asset_group
-            selected = lib.get_selection()
-            for obj in selected:
-                obj.select_set(True)
-            selected.append(asset_group)
-            bpy.ops.object.parent_set(keep_transform=True)
+            for obj in lib.get_selection():
+                obj.parent = asset_group
         else:
             plugin.deselect_all()
             camera = bpy.data.cameras.new(subset_name)
@@ -42,9 +38,7 @@ class CreateCamera(plugin.BaseCreator):
             instances = bpy.data.collections.get(AVALON_INSTANCES)
             instances.objects.link(camera_obj)
 
-            camera_obj.select_set(True)
-            asset_group.select_set(True)
             bpy.context.view_layer.objects.active = asset_group
-            bpy.ops.object.parent_set(keep_transform=True)
+            camera_obj.parent = asset_group
 
         return asset_group
