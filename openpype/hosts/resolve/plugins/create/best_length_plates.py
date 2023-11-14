@@ -304,12 +304,14 @@ class CreateBestLengthTimeline(api.plugin.Creator):
                 self.ui_settings["sb_gapsize"]["value"]
             ):
                 # clip is in gapsize or inside previous clip...
-                current_range = r
+                current_range[1] = (
+                    max(r) if max(r) > current_range[1] else max(current_range)
+                )
             else:
                 # hard gap right here. add current range to best_ranges and update current
                 best_ranges.append(list(current_range))
                 current_range = r
-        best_ranges.append(current_range)
+        best_ranges.append(list(current_range))
 
         # Find the best combination of ranges
         def total_length(ranges):
