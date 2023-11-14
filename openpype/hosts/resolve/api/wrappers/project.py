@@ -31,7 +31,7 @@ class Project(object):
 
     @property
     def mediapool(self):
-        return self.current_project.GetMediaPool()
+        return self.root.GetMediaPool()
 
     @property
     def timelines(self) -> list(api.Timeline):
