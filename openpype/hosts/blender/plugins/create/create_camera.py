@@ -20,7 +20,6 @@ class CreateCamera(plugin.BaseCreator):
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
-        """Run the creator on Blender main thread."""
 
         asset_group = super().create(subset_name,
                                      instance_data,
