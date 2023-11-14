@@ -38,7 +38,6 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin,
         if not self.is_active(instance.data):
             return
 
-
         message = (
             "Instance '{}' publishes to a different {} than current context: "
             "{}. Current context: {}"
