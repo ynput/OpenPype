@@ -4,6 +4,7 @@ import bpy
 
 from openpype.hosts.blender.api import plugin, lib, ops
 
+
 class CreateModel(plugin.BaseCreator):
     """Polygonal static geometry."""
 

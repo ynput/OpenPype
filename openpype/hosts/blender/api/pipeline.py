@@ -10,7 +10,7 @@ from . import ops, properties
 
 import pyblish.api
 
-from openpype.host import(
+from openpype.host import (
     HostBase,
     IWorkfileHost,
     IPublishHost,
