@@ -15,7 +15,6 @@ class CreateAnimation(plugin.BaseCreator):
     def create(
         self, subset_name: str, instance_data: dict, pre_create_data: dict
     ):
-        """Run the creator on Blender main thread."""
         # Run parent create method
         collection = super().create(
             subset_name, instance_data, pre_create_data
@@ -26,7 +25,9 @@ class CreateAnimation(plugin.BaseCreator):
             for obj in selected:
                 collection.objects.link(obj)
         elif pre_create_data.get("asset_group"):
-            obj = (self.options or {}).get("asset_group")
+            # Use for Load Blend automated creation of animation instances
+            # upon loading rig files
+            obj = pre_create_data.get("asset_group")
             collection.objects.link(obj)
 
         return collection
