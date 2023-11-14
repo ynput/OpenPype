@@ -14,6 +14,7 @@ from openpype.host import (
     HostBase,
     IWorkfileHost,
     IPublishHost,
+    ILoadHost
 )
 from openpype.client import get_asset_by_name
 from openpype.pipeline import (
@@ -60,7 +61,7 @@ IS_HEADLESS = bpy.app.background
 log = Logger.get_logger(__name__)
 
 
-class BlenderHost(HostBase, IWorkfileHost, IPublishHost):
+class BlenderHost(HostBase, IWorkfileHost, IPublishHost, ILoadHost):
     name = "blender"
 
     def install(self):
@@ -68,7 +69,7 @@ class BlenderHost(HostBase, IWorkfileHost, IPublishHost):
         Install Blender host functionality."""
         install()
 
-    def ls(self) -> Iterator:
+    def get_containers(self) -> Iterator:
         """List containers from active Blender scene."""
         return ls()
 
