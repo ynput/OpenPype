@@ -1,4 +1,11 @@
+import os
+import logging
+
 from maya import cmds  # noqa
+
+from openpype.hosts.maya.api.lib import evaluation
+
+log = logging.getLogger(__name__)
 
 # The maya alembic export types
 ALEMBIC_ARGS = {
