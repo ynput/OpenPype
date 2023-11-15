@@ -47,8 +47,7 @@ class ValidateLoadedPlugin(OptionalPyblishPluginMixin,
             if not mapping:
                 return
 
-            match_families = {fam for fam in mapping["families"]
-                              if fam.strip()}
+            match_families = {fam.strip() for fam in mapping["families"]}
             has_match = "*" in match_families or match_families.intersection(
                 instance_families)
 
