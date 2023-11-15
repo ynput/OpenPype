@@ -1453,7 +1453,7 @@ class BasePublisherController(AbstractPublisherController):
         """
 
         if self._log is None:
-            self._log = logging.getLogget(self.__class__.__name__)
+            self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     @property
