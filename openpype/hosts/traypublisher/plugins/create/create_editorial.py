@@ -705,6 +705,8 @@ or updating already created. Publishing will create OTIO file.
             # parent time properties
             "trackStartFrame": track_start_frame,
             "timelineOffset": timeline_offset,
+            "isEditorial": True,
+
             # creator_attributes
             "creator_attributes": creator_attributes
         }
