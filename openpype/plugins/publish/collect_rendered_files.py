@@ -161,7 +161,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             anatomy.project_name
         ))
 
-        self.log.debug("anatomy: {}".format(anatomy.roots))
+        self.log.debug("Anatomy roots: {}".format(anatomy.roots))
         try:
             session_is_set = False
             for path in paths:
