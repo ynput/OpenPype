@@ -143,7 +143,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             custom_tags = repre.get("custom_tags")
             if "review" not in tags:
                 self.log.debug((
-                    "Repre: {} - Didn't found \"review\" in tags. Skipping"
+                    "Repre: {} - Didn't find \"review\" in tags. Skipping"
                 ).format(repre_name))
                 continue
 
