@@ -282,11 +282,26 @@ class BaseCreator(Creator):
         Args:
             update_list(List[UpdateData]): Changed instances
                 and their changes, as a list of tuples."""
-        for created_instance, _changes in update_list:
+        for created_instance, changes in update_list:
             data = created_instance.data_to_store()
             node = created_instance.transient_data["instance_node"]
-            if node:
-                imprint(node, data)
+            if not node:
+                # We can't update if we don't know the node
+                self.log.error(
+                    f"Unable to update instance {created_instance} "
+                    f"without instance node."
+                )
+                return
+
+            # Rename the instance node in the scene if subset or asset changed
+            if (
+                    "subset" in changes.changed_keys
+                    or "asset" in changes.changed_keys
+            ):
+                name = asset_name(asset=data["asset"], subset=data["subset"])
+                node.name = name
+
+            imprint(node, data)
 
     def remove_instances(self, instances: List[CreatedInstance]):
 
@@ -325,8 +340,6 @@ class BaseCreator(Creator):
             {
                 "id": "pyblish.avalon.instance",
                 "creator_identifier": self.identifier,
-                "label": subset_name,
-                "task": get_current_task_name(),
                 "subset": subset_name,
             }
         )

@@ -7,7 +7,6 @@ class CreatePointcache(plugin.BaseCreator):
     """Polygonal static geometry."""
 
     identifier = "io.openpype.creators.blender.pointcache"
-    name = "pointcacheMain"
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"

@@ -246,8 +246,24 @@ class LaunchQtApp(bpy.types.Operator):
 
         self.before_window_show()
 
+        def pull_to_front(window):
+            """Pull window forward to screen.
+
+            If Window is minimized this will un-minimize, then it can be raised
+            and activated to the front.
+            """
+            window.setWindowState(
+                (window.windowState() & ~QtCore.Qt.WindowMinimized) |
+                QtCore.Qt.WindowActive
+            )
+            window.raise_()
+            window.activateWindow()
+
         if isinstance(self._window, ModuleType):
             self._window.show()
+            pull_to_front(self._window)
+
+            # Pull window to the front
             window = None
             if hasattr(self._window, "window"):
                 window = self._window.window
@@ -262,6 +278,7 @@ class LaunchQtApp(bpy.types.Operator):
             on_top_flags = origin_flags | QtCore.Qt.WindowStaysOnTopHint
             self._window.setWindowFlags(on_top_flags)
             self._window.show()
+            pull_to_front(self._window)
 
             # if on_top_flags != origin_flags:
             #     self._window.setWindowFlags(origin_flags)

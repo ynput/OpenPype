@@ -128,13 +128,22 @@ class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
         json_data = []
         fbx_files = []
 
-        asset_group = bpy.data.objects[str(instance)]
+        asset_group = instance.data["transientData"]["instance_node"]
 
         fbx_count = 0
 
         project_name = instance.context.data["projectEntity"]["name"]
         for asset in asset_group.children:
             metadata = asset.get(AVALON_PROPERTY)
+            if not metadata:
+                # Avoid raising error directly if there's just invalid data
+                # inside the instance; better to log it to the artist
+                # TODO: This should actually be validated in a validator
+                self.log.warning(
+                    f"Found content in layout that is not a loaded "
+                    f"asset, skipping: {asset.name_full}"
+                )
+                continue
 
             version_id = metadata["parent"]
             family = metadata["family"]

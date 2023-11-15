@@ -4,7 +4,6 @@ import bpy
 
 from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
 class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
@@ -32,8 +31,9 @@ class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         selected = []
         for obj in instance:
-            obj.select_set(True)
-            selected.append(obj)
+            if isinstance(obj, bpy.types.Object):
+                obj.select_set(True)
+                selected.append(obj)
 
         context = plugin.create_blender_context(
             active=asset_group, selected=selected)

@@ -9,7 +9,6 @@ class CreateLayout(plugin.BaseCreator):
     """Layout output for character rigs."""
 
     identifier = "io.openpype.creators.blender.layout"
-    name = "layoutMain"
     label = "Layout"
     family = "layout"
     icon = "cubes"

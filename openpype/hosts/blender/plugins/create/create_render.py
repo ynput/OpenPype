@@ -9,7 +9,6 @@ class CreateRenderlayer(plugin.BaseCreator):
     """Single baked camera."""
 
     identifier = "io.openpype.creators.blender.render"
-    name = "renderingMain"
     label = "Render"
     family = "render"
     icon = "eye"

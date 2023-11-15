@@ -7,7 +7,6 @@ class CreateReview(plugin.BaseCreator):
     """Single baked camera."""
 
     identifier = "io.openpype.creators.blender.review"
-    name = "reviewDefault"
     label = "Review"
     family = "review"
     icon = "video-camera"

@@ -7,7 +7,6 @@ class CreateAnimation(plugin.BaseCreator):
     """Animation output for character rigs."""
 
     identifier = "io.openpype.creators.blender.animation"
-    name = "animationMain"
     label = "Animation"
     family = "animation"
     icon = "male"

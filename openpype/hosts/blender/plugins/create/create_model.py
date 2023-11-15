@@ -9,7 +9,6 @@ class CreateModel(plugin.BaseCreator):
     """Polygonal static geometry."""
 
     identifier = "io.openpype.creators.blender.model"
-    name = "modelMain"
     label = "Model"
     family = "model"
     icon = "cube"

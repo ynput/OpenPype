@@ -9,7 +9,6 @@ class CreateAction(plugin.BaseCreator):
     """Action output for character rigs."""
 
     identifier = "io.openpype.creators.blender.action"
-    name = "actionMain"
     label = "Action"
     family = "action"
     icon = "male"

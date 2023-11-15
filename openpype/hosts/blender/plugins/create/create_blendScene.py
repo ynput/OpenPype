@@ -5,10 +5,10 @@ import bpy
 from openpype.hosts.blender.api import plugin, lib
 
 
-class CreateBlendScene(plugin.Creator):
+class CreateBlendScene(plugin.BaseCreator):
     """Generic group of assets."""
 
-    name = "blendScene"
+    identifier = "io.openpype.creators.blender.blendscene"
     label = "Blender Scene"
     family = "blendScene"
     icon = "cubes"
