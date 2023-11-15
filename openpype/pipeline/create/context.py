@@ -2255,11 +2255,11 @@ class CreateContext:
                 if task_name:
                     task_names_by_asset_name[asset_name].add(task_name)
 
-        asset_names = [
+        asset_names = {
             asset_name
             for asset_name in task_names_by_asset_name.keys()
             if asset_name is not None
-        ]
+        }
         fields = {"name", "data.tasks"}
         if AYON_SERVER_ENABLED:
             fields |= {"data.parents"}
@@ -2270,10 +2270,12 @@ class CreateContext:
         ))
 
         task_names_by_asset_name = {}
+        asset_docs_by_name = collections.defaultdict(list)
         for asset_doc in asset_docs:
             asset_name = get_asset_name_identifier(asset_doc)
             tasks = asset_doc.get("data", {}).get("tasks") or {}
             task_names_by_asset_name[asset_name] = set(tasks.keys())
+            asset_docs_by_name[asset_doc["name"]].append(asset_doc)
 
         for instance in instances:
             if not instance.has_valid_asset or not instance.has_valid_task:
@@ -2281,6 +2283,11 @@ class CreateContext:
 
             if AYON_SERVER_ENABLED:
                 asset_name = instance["folderPath"]
+                if asset_name and "/" not in asset_name:
+                    asset_docs = asset_docs_by_name.get(asset_name)
+                    if len(asset_docs) == 1:
+                        asset_name = get_asset_name_identifier(asset_docs[0])
+                        instance["folderPath"] = asset_name
             else:
                 asset_name = instance["asset"]
 

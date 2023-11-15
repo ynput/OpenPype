@@ -712,6 +712,10 @@ or updating already created. Publishing will create OTIO file.
             "newAssetPublishing": True,
             "trackStartFrame": track_start_frame,
             "timelineOffset": timeline_offset,
+            "isEditorial": True,
+
+            # creator_attributes
+            "creator_attributes": creator_attributes
         }
         # update base instance data with context data
         # and also update creator attributes with context data
