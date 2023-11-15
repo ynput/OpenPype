@@ -39,8 +39,6 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
                          "tycacheChanMaterials", "tycacheChanCustomFloat"
                          "tycacheChanCustomVector", "tycacheChanCustomTM",
                          "tycacheChanPhysX", "tycacheMeshBackup",
-                         "tycacheCreateObject",
-                         "tycacheCreateObjectIfNotCreated",
                          "tycacheAdditionalCloth",
                          "tycacheAdditionalSkin",
                          "tycacheAdditionalSkinID",
