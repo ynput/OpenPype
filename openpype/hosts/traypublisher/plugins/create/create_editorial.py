@@ -727,8 +727,6 @@ or updating already created. Publishing will create OTIO file.
             })
 
             base_instance_data["asset"] = parent_asset_name
-
-
         # add creator attributes to shared instance data
         base_instance_data["creator_attributes"] = creator_attributes
         # add hierarchy shot metadata
