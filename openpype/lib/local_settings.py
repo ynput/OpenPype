@@ -36,6 +36,7 @@ from openpype.settings import (
 )
 
 from openpype.client.mongo import validate_mongo_connection
+from openpype.client import get_ayon_server_api_connection
 
 _PLACEHOLDER = object()
 
@@ -613,9 +614,8 @@ def get_openpype_username():
     """
 
     if AYON_SERVER_ENABLED:
-        import ayon_api
-
-        return ayon_api.get_user()["name"]
+        con = get_ayon_server_api_connection()
+        return con.get_user()["name"]
 
     username = os.environ.get("OPENPYPE_USERNAME")
     if not username:

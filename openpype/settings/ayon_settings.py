@@ -20,7 +20,8 @@ import copy
 import time
 
 import six
-import ayon_api
+
+from openpype.client import get_ayon_server_api_connection
 
 
 def _convert_color(color_value):
@@ -1456,7 +1457,8 @@ class _AyonSettingsCache:
     @classmethod
     def _use_bundles(cls):
         if _AyonSettingsCache.use_bundles is None:
-            major, minor, _, _, _ = ayon_api.get_server_version_tuple()
+            con = get_ayon_server_api_connection()
+            major, minor, _, _, _ = con.get_server_version_tuple()
             use_bundles = True
             if (major, minor) < (0, 3):
                 use_bundles = False
@@ -1473,7 +1475,13 @@ class _AyonSettingsCache:
                 variant = cls._get_dev_mode_settings_variant()
             elif is_staging_enabled():
                 variant = "staging"
+
+            # Cache variant
             _AyonSettingsCache.variant = variant
+
+            # Set the variant to global ayon api connection
+            con = get_ayon_server_api_connection()
+            con.set_default_settings_variant(variant)
         return _AyonSettingsCache.variant
 
     @classmethod
@@ -1488,8 +1496,9 @@ class _AyonSettingsCache:
             str: Name of settings variant.
         """
 
-        bundles = ayon_api.get_bundles()
-        user = ayon_api.get_user()
+        con = get_ayon_server_api_connection()
+        bundles = con.get_bundles()
+        user = con.get_user()
         username = user["name"]
         for bundle in bundles["bundles"]:
             if (
@@ -1505,20 +1514,23 @@ class _AyonSettingsCache:
     def get_value_by_project(cls, project_name):
         cache_item = _AyonSettingsCache.cache_by_project_name[project_name]
         if cache_item.is_outdated:
+            con = get_ayon_server_api_connection()
             if cls._use_bundles():
-                value = ayon_api.get_addons_settings(
+                value = con.get_addons_settings(
                     bundle_name=cls._get_bundle_name(),
-                    project_name=project_name
+                    project_name=project_name,
+                    variant=cls._get_variant()
                 )
             else:
-                value = ayon_api.get_addons_settings(project_name)
+                value = con.get_addons_settings(project_name)
             cache_item.update_value(value)
         return cache_item.get_value()
 
     @classmethod
     def _get_addon_versions_from_bundle(cls):
+        con = get_ayon_server_api_connection()
         expected_bundle = cls._get_bundle_name()
-        bundles = ayon_api.get_bundles()["bundles"]
+        bundles = con.get_bundles()["bundles"]
         bundle = next(
             (
                 bundle
@@ -1538,8 +1550,11 @@ class _AyonSettingsCache:
             if cls._use_bundles():
                 addons = cls._get_addon_versions_from_bundle()
             else:
-                settings_data = ayon_api.get_addons_settings(
-                    only_values=False, variant=cls._get_variant())
+                con = get_ayon_server_api_connection()
+                settings_data = con.get_addons_settings(
+                    only_values=False,
+                    variant=cls._get_variant()
+                )
                 addons = settings_data["versions"]
             cache_item.update_value(addons)
 

@@ -23,27 +23,36 @@ def play_preview_when_done(has_autoplay):
 
 
 @contextlib.contextmanager
-def viewport_camera(camera):
-    """Set viewport camera during context
+def viewport_layout_and_camera(camera, layout="layout_1"):
+    """Set viewport layout and camera during context
     ***For 3dsMax 2024+
     Args:
         camera (str): viewport camera
+        layout (str): layout to use in viewport, defaults to `layout_1`
+            Use None to not change viewport layout during context.
     """
-    original = rt.viewport.getCamera()
-    if not original:
+    original_camera = rt.viewport.getCamera()
+    original_layout = rt.viewport.getLayout()
+    if not original_camera:
         # if there is no original camera
         # use the current camera as original
-        original = rt.getNodeByName(camera)
+        original_camera = rt.getNodeByName(camera)
     review_camera = rt.getNodeByName(camera)
     try:
+        if layout is not None:
+            layout = rt.Name(layout)
+            if rt.viewport.getLayout() != layout:
+                rt.viewport.setLayout(layout)
         rt.viewport.setCamera(review_camera)
         yield
     finally:
-        rt.viewport.setCamera(original)
+        rt.viewport.setLayout(original_layout)
+        rt.viewport.setCamera(original_camera)
 
 
 @contextlib.contextmanager
 def viewport_preference_setting(general_viewport,
+                                nitrous_manager,
                                 nitrous_viewport,
                                 vp_button_mgr):
     """Function to set viewport setting during context
@@ -51,6 +60,7 @@ def viewport_preference_setting(general_viewport,
     Args:
         camera (str): Viewport camera for review render
         general_viewport (dict): General viewport setting
+        nitrous_manager (dict): Nitrous graphic manager
         nitrous_viewport (dict): Nitrous setting for
             preview animation
         vp_button_mgr (dict): Viewport button manager Setting
@@ -64,6 +74,9 @@ def viewport_preference_setting(general_viewport,
     vp_button_mgr_original = {
         key: getattr(rt.ViewportButtonMgr, key) for key in vp_button_mgr
     }
+    nitrous_manager_original = {
+        key: getattr(nitrousGraphicMgr, key) for key in nitrous_manager
+    }
     nitrous_viewport_original = {
         key: getattr(viewport_setting, key) for key in nitrous_viewport
     }
@@ -73,6 +86,8 @@ def viewport_preference_setting(general_viewport,
         rt.viewport.EnableSolidBackgroundColorMode(general_viewport["dspBkg"])
         for key, value in vp_button_mgr.items():
             setattr(rt.ViewportButtonMgr, key, value)
+        for key, value in nitrous_manager.items():
+            setattr(nitrousGraphicMgr, key, value)
         for key, value in nitrous_viewport.items():
             if nitrous_viewport[key] != nitrous_viewport_original[key]:
                 setattr(viewport_setting, key, value)
@@ -83,6 +98,8 @@ def viewport_preference_setting(general_viewport,
         rt.viewport.EnableSolidBackgroundColorMode(orig_vp_bkg)
         for key, value in vp_button_mgr_original.items():
             setattr(rt.ViewportButtonMgr, key, value)
+        for key, value in nitrous_manager_original.items():
+            setattr(nitrousGraphicMgr, key, value)
         for key, value in nitrous_viewport_original.items():
             setattr(viewport_setting, key, value)
 
@@ -149,24 +166,27 @@ def _render_preview_animation_max_2024(
 
 
 def _render_preview_animation_max_pre_2024(
-        filepath, startFrame, endFrame, percentSize, ext):
+        filepath, startFrame, endFrame,
+        width, height, percentSize, ext):
     """Render viewport animation by creating bitmaps
     ***For 3dsMax Version <2024
     Args:
         filepath (str): filepath without frame numbers and extension
         startFrame (int): start frame
         endFrame (int): end frame
+        width (int): render resolution width
+        height (int): render resolution height
         percentSize (float): render resolution multiplier by 100
             e.g. 100.0 is 1x, 50.0 is 0.5x, 150.0 is 1.5x
         ext (str): image extension
     Returns:
         list: Created filepaths
     """
+
     # get the screenshot
     percent = percentSize / 100.0
-    res_width = int(round(rt.renderWidth * percent))
-    res_height = int(round(rt.renderHeight * percent))
-    viewportRatio = float(res_width / res_height)
+    res_width = width * percent
+    res_height = height * percent
     frame_template = "{}.{{:04}}.{}".format(filepath, ext)
     frame_template.replace("\\", "/")
     files = []
@@ -178,23 +198,29 @@ def _render_preview_animation_max_pre_2024(
             res_width, res_height, filename=filepath
         )
         dib = rt.gw.getViewportDib()
-        dib_width = float(dib.width)
-        dib_height = float(dib.height)
-        renderRatio = float(dib_width / dib_height)
-        if viewportRatio <= renderRatio:
+        dib_width = rt.renderWidth
+        dib_height = rt.renderHeight
+        # aspect ratio
+        viewportRatio = dib_width / dib_height
+        renderRatio = float(res_width / res_height)
+        if viewportRatio < renderRatio:
             heightCrop = (dib_width / renderRatio)
             topEdge = int((dib_height - heightCrop) / 2.0)
             tempImage_bmp = rt.bitmap(dib_width, heightCrop)
             src_box_value = rt.Box2(0, topEdge, dib_width, heightCrop)
-        else:
+            rt.pasteBitmap(dib, tempImage_bmp, src_box_value, rt.Point2(0, 0))
+            rt.copy(tempImage_bmp, preview_res)
+            rt.close(tempImage_bmp)
+        elif viewportRatio > renderRatio:
             widthCrop = dib_height * renderRatio
             leftEdge = int((dib_width - widthCrop) / 2.0)
             tempImage_bmp = rt.bitmap(widthCrop, dib_height)
-            src_box_value = rt.Box2(0, leftEdge, dib_width, dib_height)
-        rt.pasteBitmap(dib, tempImage_bmp, src_box_value, rt.Point2(0, 0))
-        # copy the bitmap and close it
-        rt.copy(tempImage_bmp, preview_res)
-        rt.close(tempImage_bmp)
+            src_box_value = rt.Box2(leftEdge, 0, widthCrop, dib_height)
+            rt.pasteBitmap(dib, tempImage_bmp, src_box_value, rt.Point2(0, 0))
+            rt.copy(tempImage_bmp, preview_res)
+            rt.close(tempImage_bmp)
+        else:
+            rt.copy(dib, preview_res)
         rt.save(preview_res)
         rt.close(preview_res)
         rt.close(dib)
@@ -243,22 +269,25 @@ def render_preview_animation(
     if viewport_options is None:
         viewport_options = viewport_options_for_preview_animation()
     with play_preview_when_done(False):
-        with viewport_camera(camera):
-            with render_resolution(width, height):
-                if int(get_max_version()) < 2024:
-                    with viewport_preference_setting(
-                            viewport_options["general_viewport"],
-                            viewport_options["nitrous_viewport"],
-                            viewport_options["vp_btn_mgr"]
-                    ):
-                        return _render_preview_animation_max_pre_2024(
-                            filepath,
-                            start_frame,
-                            end_frame,
-                            percentSize,
-                            ext
-                        )
-                else:
+        with viewport_layout_and_camera(camera):
+            if int(get_max_version()) < 2024:
+                with viewport_preference_setting(
+                        viewport_options["general_viewport"],
+                        viewport_options["nitrous_manager"],
+                        viewport_options["nitrous_viewport"],
+                        viewport_options["vp_btn_mgr"]
+                ):
+                    return _render_preview_animation_max_pre_2024(
+                        filepath,
+                        start_frame,
+                        end_frame,
+                        width,
+                        height,
+                        percentSize,
+                        ext
+                    )
+            else:
+                with render_resolution(width, height):
                     return _render_preview_animation_max_2024(
                         filepath,
                         start_frame,
@@ -298,6 +327,9 @@ def viewport_options_for_preview_animation():
         viewport_options["general_viewport"] = {
             "dspBkg": True,
             "dspGrid": False
+        }
+        viewport_options["nitrous_manager"] = {
+            "AntialiasingQuality": "None"
         }
         viewport_options["nitrous_viewport"] = {
             "VisualStyleMode": "defaultshading",
