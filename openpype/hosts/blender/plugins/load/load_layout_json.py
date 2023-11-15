@@ -123,6 +123,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         #     raise ValueError("Creator plugin \"CreateCamera\" was "
         #                      "not found.")
 
+        # TODO: Refactor legacy create usage to new style creators
         # legacy_create(
         #     creator_plugin,
         #     name="camera",
