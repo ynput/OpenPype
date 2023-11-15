@@ -137,7 +137,7 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
 
         if thumb_repre_doc is None:
             self.log.debug(
-                "There is not representation with name \"thumbnail\""
+                "There is no representation with name \"thumbnail\""
             )
             return None
 
