@@ -25,7 +25,8 @@ from .ops import (
 )
 from .lib import imprint
 
-VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
+VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx",
+                    ".usd", ".usdc", ".usda"]
 
 
 def asset_name(

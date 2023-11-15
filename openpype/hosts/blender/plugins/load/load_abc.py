@@ -26,10 +26,11 @@ class CacheModelLoader(plugin.AssetLoader):
     Note:
         At least for now it only supports Alembic files.
     """
-    families = ["model", "pointcache", "animation"]
-    representations = ["abc"]
+    families = ["model", "pointcache", "animation", "usd"]
+    representations = ["abc", "usd"]
 
-    label = "Load Alembic"
+    # TODO: Should USD loader be a separate loader instead?
+    label = "Load Alembic/USD"
     icon = "code-fork"
     color = "orange"
 
@@ -53,10 +54,21 @@ class CacheModelLoader(plugin.AssetLoader):
         plugin.deselect_all()
 
         relative = bpy.context.preferences.filepaths.use_relative_paths
-        bpy.ops.wm.alembic_import(
-            filepath=libpath,
-            relative_path=relative
-        )
+
+        if any(libpath.lower().endswith(ext)
+               for ext in [".usd", ".usda", ".usdc"]):
+            # USD
+            bpy.ops.wm.usd_import(
+                filepath=libpath,
+                relative_path=relative
+            )
+
+        else:
+            # Alembic
+            bpy.ops.wm.alembic_import(
+                filepath=libpath,
+                relative_path=relative
+            )
 
         imported = lib.get_selection()
 
