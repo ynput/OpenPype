@@ -41,7 +41,7 @@ class ValidateDeadlinePublish(pyblish.api.InstancePlugin,
 
     @classmethod
     def repair(cls, instance):
-        container = bpy.data.collections[str(instance)]
+        container = instance.data["transientData"]["instance_node"]
         prepare_rendering(container)
         bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
         cls.log.debug("Reset the render output folder...")
