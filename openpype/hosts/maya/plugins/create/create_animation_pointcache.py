@@ -22,7 +22,6 @@ def _get_animation_attr_defs(cls):
             BoolDef("refresh", label="Refresh viewport during export"),
             BoolDef("includeParentHierarchy", label="Include Parent Hierarchy"),
             BoolDef("writeNormals", label="Write Normals"),
-            BoolDef("writeCreases", label="Write Creases"),
         ]
     )
 

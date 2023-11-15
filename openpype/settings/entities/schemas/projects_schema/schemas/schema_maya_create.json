@@ -155,11 +155,6 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "writeNormals",
-                    "label": "Write Normals"
-                },
-                {
-                    "type": "boolean",
                     "key": "refresh",
                     "label": "Refresh"
                 },
@@ -167,11 +162,6 @@
                     "type": "boolean",
                     "key": "stripNamespaces",
                     "label": "Strip Namespaces"
-                },
-                {
-                    "type": "boolean",
-                    "key": "writeCreases",
-                    "label": "Write Creases"
                 },
                 {
                     "type": "enum",
@@ -203,7 +193,7 @@
                     "type": "enum",
                     "key": "abc_args_overrides",
                     "multiselection": true,
-                    "label": "Alembic Arguments Overrides: Choose which arguments the user can modify.",
+                    "label": "Alembic Arguments Overrides:\nChoose which arguments\nthe user can modify.",
                     "enum_items": [
                         {"attr": "attr"},
                         {"attrPrefix": "attrPrefix"},
@@ -251,7 +241,7 @@
                 {
                     "type": "text",
                     "key": "attr",
-                    "label": "Attr"
+                    "label": "Attributes"
                 },
                 {
                     "type": "text",
@@ -276,26 +266,6 @@
                     "key": "preRollStartFrame",
                     "label": "Pre Roll Start Frame",
                     "minimum": 0
-                },
-                {
-                    "type": "boolean",
-                    "key": "write_color_sets",
-                    "label": "DEPRECATED! Write Color Sets"
-                },
-                {
-                    "type": "boolean",
-                    "key": "write_face_sets",
-                    "label": "DEPRECATED! Write Face Sets"
-                },
-                {
-                    "type": "boolean",
-                    "key": "include_parent_hierarchy",
-                    "label": "DEPRECATED! Include Parent Hierarchy"
-                },
-                {
-                    "type": "boolean",
-                    "key": "include_user_defined_attributes",
-                    "label": "DEPRECATED! Include User Defined Attributes"
                 }
             ]
         },
@@ -351,7 +321,7 @@
                     "type": "enum",
                     "key": "abc_boolean_args",
                     "multiselection": true,
-                    "label": "Alembic Arguments (passed to AbcExport)",
+                    "label": "Alembic Boolean Args",
                     "enum_items": [
                         {"autoSubd": "autoSubd"},
                         {"dontSkipUnwrittenFrames": "dontSkipUnwrittenFrames"},
@@ -377,7 +347,7 @@
                     "type": "enum",
                     "key": "abc_args_overrides",
                     "multiselection": true,
-                    "label": "Alembic Arguments Overrides: Choose which arguments the user can modify.",
+                    "label": "Alembic Arguments Overrides:\nChoose which arguments\nthe user can modify.",
                     "enum_items": [
                         {"attr": "attr"},
                         {"attrPrefix": "attrPrefix"},
@@ -447,11 +417,6 @@
                     "key": "priority",
                     "label": "Priority default",
                     "minimum": 0
-                },
-                {
-                    "type": "boolean",
-                    "key": "writeNormals",
-                    "label": "Write Normals default"
                 },
                 {
                     "type": "text",

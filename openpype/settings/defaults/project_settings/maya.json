@@ -576,18 +576,12 @@
             "includeParentHierarchy": false,
             "farm": false,
             "priority": 50,
-            "writeNormals": true,
             "attr": "",
             "attrPrefix": "",
             "dataFormat": "ogawa",
             "preRollStartFrame": 0,
             "refresh": false,
-            "stripNamespaces": false,
-            "writeCreases": false,
-            "write_color_sets": false,
-            "write_face_sets": false,
-            "include_parent_hierarchy": false,
-            "include_user_defined_attributes": false
+            "stripNamespaces": false
         },
         "CreateModel": {
             "enabled": true,
@@ -625,7 +619,6 @@
             "includeParentHierarchy": false,
             "farm": false,
             "priority": 50,
-            "writeNormals": true,
             "attr": "cbId",
             "attrPrefix": "",
             "dataFormat": "ogawa",
