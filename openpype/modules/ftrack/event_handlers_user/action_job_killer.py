@@ -29,7 +29,7 @@ class JobKiller(BaseAction):
         if not jobs:
             return {
                 "success": True,
-                "message": "Didn't found any running jobs"
+                "message": "Didn't find any running jobs"
             }
 
         # Collect user ids from jobs
