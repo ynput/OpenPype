@@ -119,7 +119,8 @@ def test_add_variant_references_to_layer(tmp_path):
         return [ref.assetPath for ref in references]
 
     prim_path = "/root"
-    layer = usdlib.add_variant_references_to_layer(variants=[
+    layer = usdlib.add_variant_references_to_layer(
+        variants=[
             ("main", "./main.usd"),
             ("twist", "./twist.usd"),
             ("tall", "./tall.usd"),
@@ -128,13 +129,14 @@ def test_add_variant_references_to_layer(tmp_path):
         variant_prim=prim_path
     )
     assert get_references(layer, prim_path, "model", "main") == ["./main.usd"]
-    assert get_references(layer, prim_path, "model", "twist") == ["./twist.usd"]
+    assert get_references(layer, prim_path, "model", "twist") == ["./twist.usd"]  # noqa: E501
     assert get_references(layer, prim_path, "model", "tall") == ["./tall.usd"]
 
     # Allow recalling with a layer provided to operate on that layer
     # instead; adding more variant definitions, keeping existing definitions
     # as well
-    layer = usdlib.add_variant_references_to_layer(variants=[
+    layer = usdlib.add_variant_references_to_layer(
+        variants=[
             ("main", "./look_main.usd"),
             ("twist", "./look_twist.usd"),
             ("tall", "./look_tall.usd"),
@@ -186,7 +188,8 @@ def test_add_variant_references_to_layer(tmp_path):
     assert get_references(layer, prim_path, "look", "short") == ["./look_short_v02.usd"]  # noqa: E501
 
     # Applying variants to another prim should not affect first prim
-    layer = usdlib.add_variant_references_to_layer(variants=[
+    layer = usdlib.add_variant_references_to_layer(
+        variants=[
             ("short", "./look_short.usd"),
         ],
         variantset="look",

@@ -35,7 +35,7 @@ class ShowInUsdview(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
 
         try:
-            import OpenGL  # noqa: F403
+            import OpenGL  # noqa
         except ImportError:
             self.log.error(
                 "usdview for maya requires to have `OpenGL` python library "
