@@ -1,3 +1,5 @@
+from maya import cmds  # noqa
+
 # The maya alembic export types
 ALEMBIC_ARGS = {
     "attr": (list, tuple),
