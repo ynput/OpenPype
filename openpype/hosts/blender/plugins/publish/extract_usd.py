@@ -3,18 +3,7 @@ import os
 import bpy
 
 from openpype.pipeline import publish
-from openpype.hosts.blender.api import plugin
-
-
-def get_all_parents(obj):
-    """Get all recursive parents of object"""
-    result = []
-    while True:
-        obj = obj.parent
-        if not obj:
-            break
-        result.append(obj)
-    return result
+from openpype.hosts.blender.api import plugin, lib
 
 
 class ExtractUSD(publish.Extractor):
@@ -48,28 +37,12 @@ class ExtractUSD(publish.Extractor):
                 obj.select_set(True)
                 selected.append(obj)
 
-        # The extraction does not work if the active object is a Collection
-        # so we need to pick an object instead; this should be the highest
-        # object in the hierarchy
-        included_objects = {obj.name_full for obj in instance}
-        num_parents_to_obj = {}
-        for obj in instance:
-            if isinstance(obj, bpy.types.Object):
-                parents = get_all_parents(obj)
-                # included parents
-                parents = [parent for parent in parents if
-                           parent.name_full in included_objects]
-                if not parents:
-                    root = obj
-                    break
-
-                num_parents_to_obj.setdefault(len(parents), obj)
-        else:
-            minimum_parent = min(num_parents_to_obj)
-            root = num_parents_to_obj[minimum_parent]
-
+        root = lib.get_highest_root(objects=instance[:])
         if not root:
-            raise RuntimeError("No root node found")
+            instance_node = instance.data["transientData"]["instance_node"]
+            raise publish.KnownPublishError(
+                f"No root object found in instance: {instance_node.name}"
+            )
         self.log.debug(f"Exporting using active root: {root.name}")
 
         context = plugin.create_blender_context(

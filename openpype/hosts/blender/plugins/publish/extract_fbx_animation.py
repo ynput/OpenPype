@@ -7,38 +7,8 @@ import bpy_extras.anim_utils
 
 from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.lib import get_highest_root, get_all_parents
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
-
-
-def get_all_parents(obj):
-    """Get all recursive parents of object"""
-    result = []
-    while True:
-        obj = obj.parent
-        if not obj:
-            break
-        result.append(obj)
-    return result
-
-
-def get_highest_root(objects):
-    # Get the highest object that is also in the collection
-    included_objects = {obj.name_full for obj in objects}
-    num_parents_to_obj = {}
-    for obj in objects:
-        if isinstance(obj, bpy.types.Object):
-            parents = get_all_parents(obj)
-            # included parents
-            parents = [parent for parent in parents if
-                       parent.name_full in included_objects]
-            if not parents:
-                # A node without parents must be a highest root
-                return obj
-
-            num_parents_to_obj.setdefault(len(parents), obj)
-
-    minimum_parent = min(num_parents_to_obj)
-    return num_parents_to_obj[minimum_parent]
 
 
 class ExtractAnimationFBX(
@@ -68,19 +38,24 @@ class ExtractAnimationFBX(
         # and for those objects include the children hierarchy
         # TODO: Would it make more sense for the Collect Instance collector
         #   to also always retrieve all the children?
-        objects = set(asset_group.objects)
 
         # From the direct children of the collection find the 'root' node
         # that we want to export - it is the 'highest' node in a hierarchy
-        root = get_highest_root(objects)
+        root = get_highest_root(asset_group.objects)
+        if not root:
+            raise publish.KnownPublishError(
+                f"No root object found in instance: {asset_group.name}"
+                f"No objects in asset group: {asset_group.name}"
+            )
 
+        objects = set(asset_group.objects)
         for obj in list(objects):
             objects.update(obj.children_recursive)
 
         # Find all armatures among the objects, assume to find only one
         armatures = [obj for obj in objects if obj.type == "ARMATURE"]
         if not armatures:
-            raise RuntimeError(
+            raise publish.KnownPublishError(
                 f"Unable to find ARMATURE in collection: "
                 f"{asset_group.name}"
             )

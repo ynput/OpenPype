@@ -365,3 +365,62 @@ def maintained_time():
         yield
     finally:
         bpy.context.scene.frame_current = current_time
+
+
+def get_all_parents(obj):
+    """Get all recursive parents of object.
+
+    Arguments:
+        obj (bpy.types.Object): Object to get all parents for.
+
+    Returns:
+        List[bpy.types.Object]: All parents of object
+
+    """
+    result = []
+    while True:
+        obj = obj.parent
+        if not obj:
+            break
+        result.append(obj)
+    return result
+
+
+def get_highest_root(objects):
+    """Get the highest object (the least parents) among the objects.
+
+    If multiple objects have the same amount of parents (or no parents) the
+    first object found in the input iterable will be returned.
+
+    Note that this will *not* return objects outside of the input list, as
+    such it will not return the root of node from a child node. It is purely
+    intended to find the highest object among a list of objects. To instead
+    get the root from one object use, e.g. `get_all_parents(obj)[-1]`
+
+    Arguments:
+        objects (List[bpy.types.Object]): Objects to find the highest root in.
+
+    Returns:
+        Optional[bpy.types.Object]: First highest root found or None if no
+            `bpy.types.Object` found in input list.
+
+    """
+    included_objects = {obj.name_full for obj in objects}
+    num_parents_to_obj = {}
+    for obj in objects:
+        if isinstance(obj, bpy.types.Object):
+            parents = get_all_parents(obj)
+            # included parents
+            parents = [parent for parent in parents if
+                       parent.name_full in included_objects]
+            if not parents:
+                # A node without parents must be a highest root
+                return obj
+
+            num_parents_to_obj.setdefault(len(parents), obj)
+
+    if not num_parents_to_obj:
+        return
+
+    minimum_parent = min(num_parents_to_obj)
+    return num_parents_to_obj[minimum_parent]
