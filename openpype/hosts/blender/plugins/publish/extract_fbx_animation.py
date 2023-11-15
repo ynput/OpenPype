@@ -7,7 +7,7 @@ import bpy_extras.anim_utils
 
 from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.lib import get_highest_root, get_all_parents
+from openpype.hosts.blender.api.lib import get_highest_root
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 

@@ -1,10 +1,6 @@
 """Create a USD Export."""
 
-import bpy
-
-from openpype.pipeline import get_current_task_name
-from openpype.hosts.blender.api import plugin, lib, ops
-from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
+from openpype.hosts.blender.api import plugin, lib
 
 
 class CreateUSD(plugin.BaseCreator):

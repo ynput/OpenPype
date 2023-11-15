@@ -143,7 +143,7 @@ class MayaUsdProxyReferenceUsd(load.LoaderPlugin):
                 continue
 
             prepended_items = prim_spec.referenceList.prependedItems
-            for index, reference in enumerate(prepended_items):
+            for index, _reference in enumerate(prepended_items):
                 # Override the matching reference identifier
                 # TODO: Make sure we only return the correct reference
                 yield prepended_items, index

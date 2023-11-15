@@ -17,6 +17,7 @@ class AyonURIOutputProcessor(OutputProcessor):
         self._ref_cache = dict()
         self._publish_context = None
         self.log = logging.getLogger(__name__)
+
     @staticmethod
     def name():
         return "ayon_uri_processor"

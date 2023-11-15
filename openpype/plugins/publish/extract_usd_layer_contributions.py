@@ -261,7 +261,31 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
                    for key, value in data.items()):
                 return instance
 
-    def get_or_create_instance(self, subset, variant, source_instance, families):
+    def get_or_create_instance(self,
+                               subset,
+                               variant,
+                               source_instance,
+                               families):
+        """Get or create the instance matching the subset/variant.
+
+        The source instance will be used to do additional matching, like
+        ensuring it's a subset for the same asset and task. If the instance
+        already exists in the `context` then the existing one is returned.
+
+        For each source instance this is called the sources will be appended
+        to a `instance.data["source_instances"]` list on the returned instance.
+
+        Arguments:
+            subset (str): Subset name
+            variant (str): Variant name
+            source_instance (pyblish.api.Instance): Source instance to
+                be related to for asset, task.
+            families (list): The families required to be set on the instance.
+
+        Returns:
+            pyblish.api.Instance: The resulting instance.
+
+        """
 
         # Potentially the instance already exists due to multiple instances
         # contributing to the same layer or asset - so we first check for

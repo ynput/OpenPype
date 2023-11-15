@@ -59,7 +59,7 @@ class ExtractUSD(publish.Extractor):
             export_hair=False,
             export_uvmaps=True,
             # TODO: add for new version of Blender (4+?)
-            #export_mesh_colors=True,
+            # export_mesh_colors=True,
             export_normals=True,
             export_materials=True,
             use_instancing=True

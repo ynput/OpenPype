@@ -121,7 +121,7 @@ def setup_asset_layer(
             "__class__",
             Sdf.SpecifierClass,
         )
-        _class_asset_prim = Sdf.PrimSpec(
+        Sdf.PrimSpec(
             class_prim,
             prim_name,
             Sdf.SpecifierClass,
@@ -209,12 +209,12 @@ def create_asset(
     layer = Layer(layer=sdf_layer, path=filepath)
 
     created_layers = setup_asset_layer(
-            layer=sdf_layer,
-            asset_name=asset_name,
-            reference_layers=reference_layers,
-            kind=kind,
-            define_class=define_class,
-            set_payload_path=True
+        layer=sdf_layer,
+        asset_name=asset_name,
+        reference_layers=reference_layers,
+        kind=kind,
+        define_class=define_class,
+        set_payload_path=True
     )
     for created_layer in created_layers:
         created_layer.anchor = layer
@@ -314,9 +314,9 @@ def add_ordered_sublayer(layer, contribution_path, layer_id, order=None,
         if add_sdf_arguments_metadata:
             parts = [
                 contribution_path,
-                 # Special separator for SDF Format Args used in USD
-                 "SDF_FORMAT_ARGS",
-                 "layer_id={}".format(layer_id)
+                # Special separator for SDF Format Args used in USD
+                "SDF_FORMAT_ARGS",
+                "layer_id={}".format(layer_id)
             ]
             if order is not None:
                 parts.append("order={}".format(order))

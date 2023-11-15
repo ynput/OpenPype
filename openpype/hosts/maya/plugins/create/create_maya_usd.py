@@ -215,7 +215,8 @@ class CreateMayaUsdContribution(CreateMayaUsd):
         )
 
     def get_pre_create_attr_defs(self):
-        defs = super(CreateMayaUsdContribution, self).get_pre_create_attr_defs()
+        defs = super(CreateMayaUsdContribution,
+                     self).get_pre_create_attr_defs()
         defs.extend([
             BoolDef("createTemplateHierarchy",
                     label="Create template hierarchy",
