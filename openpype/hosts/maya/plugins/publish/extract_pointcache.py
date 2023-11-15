@@ -37,14 +37,23 @@ class ExtractAlembic(publish.Extractor):
         start = float(instance.data.get("frameStartHandle", 1))
         end = float(instance.data.get("frameEndHandle", 1))
 
-        attrs = instance.data.get("attr", "").split(";")
-        attrs = [value for value in attrs if value.strip()]
-        attrs += instance.data.get("userDefinedAttributes", [])
-        attrs += ["cbId"]
+        # Collect Alembic Arguments
+        creator_attributes = instance.data.get("creator_attributes")
+        abc_flags = creator_attributes.get(
+            "abcDefaultExportBooleanArguments"
+        ) + creator_attributes.get(
+            "abcExportBooleanArguments"
+        )
 
-        attr_prefixes = instance.data.get("attrPrefix", "").split(";")
-        attr_prefixes = [value for value in attr_prefixes if value.strip()]
+        abc_attrs = [
+            attr.strip()
+            for attr in creator_attributes.get("attr", "").split(";")
+        ]
 
+        abc_attr_prefixes = [
+            attr_prefix.strip()
+            for attr_prefix in instance.data.get("attrPrefix", "").split(";")
+        ]
 
         self.log.debug("Extracting pointcache..")
         dirname = self.staging_dir(instance)
@@ -53,28 +62,46 @@ class ExtractAlembic(publish.Extractor):
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, filename)
 
-        options = {
-            "step": instance.data.get("step", 1.0),
-            "attr": attrs,
-            "attrPrefix": attr_prefixes,
-            "writeVisibility": True,
-            "writeCreases": True,
-            "writeColorSets": instance.data.get("writeColorSets", False),
-            "writeFaceSets": instance.data.get("writeFaceSets", False),
-            "uvWrite": True,
-            "selection": True,
-            "worldSpace": instance.data.get("worldSpace", True)
-        }
-
+        abc_root = None
         if not instance.data.get("includeParentHierarchy", True):
             # Set the root nodes if we don't want to include parents
             # The roots are to be considered the ones that are the actual
             # direct members of the set
-            options["root"] = roots
+            abc_root = roots
+
+        abc_writeUVSets = False
 
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.
-            options["writeUVSets"] = True
+            if "writeUVSets" in abc_flags:
+                abc_writeUVSets = True
+
+        extract_abc_args = {
+            "file": path,
+            "attr": abc_attrs,
+            "attrPrefix": abc_attr_prefixes,
+            "dataFormat": creator_attributes.get("dataFormat", "ogawa"),
+            "endFrame": end,
+            "eulerFilter": True if "eulerFilter" in abc_flags else False,
+            "noNormals": True if "noNormals" in abc_flags else False,
+            "preRoll": True if "preRoll" in abc_flags else False,
+            "preRollStartFrame": creator_attributes.get("preRollStartFrame", 0),
+            "renderableOnly": True if "renderableOnly" in abc_flags else False,
+            "root": abc_root,
+            "selection": True, # Should this stay like so?
+            "startFrame": start,
+            "step": creator_attributes.get("step", 1.0),
+            "stripNamespaces": True,
+            "uvWrite": True if "uvWrite" in abc_flags else False,
+            "verbose": True if "verbose" in abc_flags else False,
+            "wholeFrameGeo": True if "wholeFrameGeo" in abc_flags else False,
+            "worldSpace": True if "worldSpace" in abc_flags else False,
+            "writeColorSets": True if "writeColorSets" in abc_flags else False,
+            "writeCreases": True if "writeCreases" in abc_flags else False,
+            "writeFaceSets": True if "writeFaceSets" in abc_flags else False,
+            "writeUVSets": abc_writeUVSets,
+            "writeVisibility": True if "writeVisibility" in abc_flags else False,
+        }
 
         if instance.data.get("visibleOnly", False):
             # If we only want to include nodes that are visible in the frame
@@ -90,12 +117,7 @@ class ExtractAlembic(publish.Extractor):
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
-                extract_alembic(
-                    file=path,
-                    startFrame=start,
-                    endFrame=end,
-                    **options
-                )
+                extract_alembic(**extract_abc_args)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -119,21 +141,17 @@ class ExtractAlembic(publish.Extractor):
             return
 
         path = path.replace(".abc", "_proxy.abc")
+        extract_abc_args["file"] = path
         if not instance.data.get("includeParentHierarchy", True):
             # Set the root nodes if we don't want to include parents
             # The roots are to be considered the ones that are the actual
             # direct members of the set
-            options["root"] = instance.data["proxyRoots"]
+            extract_abc_args["root"] = instance.data["proxyRoots"]
 
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(instance.data["proxy"])
-                extract_alembic(
-                    file=path,
-                    startFrame=start,
-                    endFrame=end,
-                    **options
-                )
+                extract_alembic(**extract_abc_args)
 
         representation = {
             "name": "proxy",
