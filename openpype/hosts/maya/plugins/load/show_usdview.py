@@ -10,7 +10,15 @@ USDVIEW = os.path.join(USD_LOCATION, 'bin', 'usdview')
 
 
 class ShowInUsdview(load.LoaderPlugin):
-    """Open USD file in usdview"""
+    """Open USD file in usdview
+
+    This requires `OpenGL` python package to be available to Maya. For more
+    details also see the "Using Usdiew in Maya" section in maya documentation.
+
+    See Also:
+        https://help.autodesk.com/view/MAYAUL/2024/ENU/?guid=GUID-C452B331-7C4D-4B58-A1BA-D03775F266A8  # noqa
+
+    """
 
     label = "Show in usdview"
     representations = ["*"]
@@ -30,8 +38,10 @@ class ShowInUsdview(load.LoaderPlugin):
             import OpenGL  # noqa: F403
         except ImportError:
             self.log.error(
-                "usdview for mayapy requires to have `OpenGL` python library "
-                "available. Please make sure to install it."
+                "usdview for maya requires to have `OpenGL` python library "
+                "available. Please make sure to install it.\n"
+                "The `OpenGL` library can be installed for maya using:\n"
+                "mayapy -m pip install PyOpenGL==3.1.0"
             )
         filepath = self.filepath_from_context(context)
         filepath = os.path.normpath(filepath)
