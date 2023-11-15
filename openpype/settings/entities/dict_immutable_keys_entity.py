@@ -232,7 +232,7 @@ class DictImmutableKeysEntity(ItemEntity):
                 break
 
         if result_key is None:
-            raise ValueError("Didn't found child {}".format(child_obj))
+            raise ValueError("Didn't find child {}".format(child_obj))
 
         return "/".join([self.path, result_key])
 
