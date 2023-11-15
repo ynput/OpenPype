@@ -957,6 +957,8 @@ def find_rop_inputs_chain(node):
     in the correct execution order as if we were calling
     rop.inputDependencies() method.
 
+    This function works in different contexts not only ROPs.
+
     FYI, rop.inputDependencies() failed with
     - HDA instance (because it has no inputDependencies)
     - Karma instance (because it's a subnetwork, the method returns its )
@@ -965,7 +967,13 @@ def find_rop_inputs_chain(node):
         node (hou.Node) The node at which the find function starts.
 
     Returns:
-        list the paths of all input nodes.
+        list[hou.Node]: sorted list of all input nodes following
+            the dependency graph execution order.
+
+    TODO:
+        Take 'Fetch nodes' and 'Switch nodes' into consideration.
+        Better Filter as using lists for faster lookups.
+
     """
 
     all_input_nodes = []
@@ -976,7 +984,7 @@ def find_rop_inputs_chain(node):
         # It's a solution for cyclic dependencies
         nodes = [n for n in nodes if n not in all_input_nodes]
         all_input_nodes += nodes
-        all_input_nodes.append(input_node.path())
+        all_input_nodes.append(input_node)
 
     return all_input_nodes
 
@@ -1000,15 +1008,17 @@ def self_publish():
         return
 
     current_node = hou.node(".")
-    inputs_paths = find_rop_inputs_chain(current_node)
-    inputs_paths.append(current_node.path())
+    all_input_nodes = find_rop_inputs_chain(current_node)
+    all_input_nodes.append(current_node)
+
+    all_input_nodes = [n.path() for n in all_input_nodes]
 
     host = registered_host()
     context = CreateContext(host, reset=True)
 
     for instance in context.instances:
         node_path = instance.data.get("instance_node")
-        instance["active"] = node_path and node_path in inputs_paths
+        instance["active"] = node_path and node_path in all_input_nodes
 
     context.save_changes()
 
