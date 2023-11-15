@@ -387,7 +387,7 @@ class SyncToAvalonEvent(BaseEvent):
             if not data:
                 # TODO logging
                 self.log.warning(
-                    "Didn't found entity by key/value \"{}\" / \"{}\"".format(
+                    "Didn't find entity by key/value \"{}\" / \"{}\"".format(
                         key, value
                     )
                 )
