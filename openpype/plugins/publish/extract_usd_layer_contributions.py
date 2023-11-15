@@ -179,12 +179,6 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
     label = "Collect USD Layer Contributions (Asset/Shot)"
     families = ["usd"]
 
-    # TODO: Currently asset and shot contributions both behave as creating
-    #   an "asset" with payload to put the layers in; however, shot-based
-    #   contributions don't need the payload nor the asset structure. We should
-    #   separate it so both can behave independently but still share most of
-    #   the code for easy maintenance
-
     def process(self, instance):
 
         attr_values = self.get_attr_values_from_data(instance.data)
