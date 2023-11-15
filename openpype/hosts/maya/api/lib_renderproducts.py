@@ -101,6 +101,7 @@ class LayerMetadata(object):
     layerName = attr.ib()
     renderer = attr.ib()
     defaultExt = attr.ib()
+    orig_filePrefix = attr.ib()
     filePrefix = attr.ib()
     frameStep = attr.ib(default=1)
     padding = attr.ib(default=4)
@@ -398,6 +399,7 @@ class ARenderProducts:
             layerName=layer_name,
             renderer=self.renderer,
             defaultExt=self._get_attr("defaultRenderGlobals.imfPluginKey"),
+            orig_filePrefix = file_prefix,      #Hornet
             filePrefix=file_prefix,
             **kwargs
         )
@@ -1056,11 +1058,15 @@ class RenderProductsRedshift(ARenderProducts):
         # with Maya render tokens for generating file sequences. We validate to
         # a specific AOV fileprefix so we only need to account for one
         # replacement.
+
+        # Hornet: Remove hard coded prefix replacement
+        orig_file_prefix = self.layer_data.orig_filePrefix
+
         if not product.multipart and product.driver:
-            file_prefix = self._get_attr(product.driver + ".filePrefix")
-            self.layer_data.filePrefix = file_prefix.replace(
+            aov_prefix = self._get_attr(product.driver + ".filePrefix")
+            self.layer_data.filePrefix = aov_prefix.replace(
                 "<BeautyPath>/<BeautyFile>",
-                "<Scene>/<RenderLayer>/<RenderLayer>"
+                orig_file_prefix
             )
 
         return super(RenderProductsRedshift, self).get_files(product)
