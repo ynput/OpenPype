@@ -87,7 +87,7 @@ def get_folders_with_tasks(
             for folder. All possible folder fields are returned if 'None'
             is passed.
 
-    Yield:
+    Yields:
         Dict[str, Any]: Queried folder entities.
     """
 
