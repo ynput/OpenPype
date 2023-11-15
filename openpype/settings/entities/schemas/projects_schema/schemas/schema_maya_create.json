@@ -424,16 +424,6 @@
                 },
                 {
                     "type": "boolean",
-                    "key": "writeColorSets",
-                    "label": "Write Color Sets default"
-                },
-                {
-                    "type": "boolean",
-                    "key": "writeFaceSets",
-                    "label": "Write Face Sets default"
-                },
-                {
-                    "type": "boolean",
                     "key": "renderableOnly",
                     "label": "Renderable Only default"
                 },
@@ -446,11 +436,6 @@
                     "type": "boolean",
                     "key": "includeParentHierarchy",
                     "label": "Include Parent Hierarchy default"
-                },
-                {
-                    "type": "boolean",
-                    "key": "worldSpace",
-                    "label": "World Space default"
                 },
                 {
                     "type": "boolean",
@@ -467,11 +452,6 @@
                     "type": "boolean",
                     "key": "writeNormals",
                     "label": "Write Normals default"
-                },
-                {
-                    "type": "boolean",
-                    "key": "includeUserDefinedAttributes",
-                    "label": "Include User Defined Attributes default"
                 },
                 {
                     "type": "text",
@@ -497,11 +477,6 @@
                     ]
                 },
                 {
-                    "type": "boolean",
-                    "key": "noNormals",
-                    "label": "No Normals default"
-                },
-                {
                     "type": "number",
                     "key": "preRollStartFrame",
                     "label": "Pre Roll Start Frame default",
@@ -511,21 +486,6 @@
                     "type": "boolean",
                     "key": "refresh",
                     "label": "Refresh default"
-                },
-                {
-                    "type": "boolean",
-                    "key": "stripNamespaces",
-                    "label": "Strip Namespaces default"
-                },
-                {
-                    "type": "boolean",
-                    "key": "uvWrite",
-                    "label": "UV Write default"
-                },
-                {
-                    "type": "boolean",
-                    "key": "writeCreases",
-                    "label": "Write Creases default"
                 },
                 {
                     "type": "boolean",

@@ -30,54 +30,75 @@ def _get_animation_attr_defs(cls):
 
 
 def _get_animation_abc_attr_defs(cls):
-    """Get definitions relating to Alembic."""
-    # List of arguments extracted from AbcExport -h
-    # Them being here doesn't imply we support them or that we need them at this
-    # point, it's a convininece list to populate the UI defaults.
+    """Get definitions relating to Alembic.
 
+    Most of the Alembic Arguments are booleans, those are stored in a
+    `abc_boolean_args` attribute, the other ones are their own attriubte.
+
+    An admin can define in settings the default arguments, which are then not
+    modifiable by the person publishing, unless they are added to the Alembic
+    Overrides setting, which is mapped to `abc_args_overrides`.
+
+    We use a combination of the two above to only show a muiltiselection dropdown
+    for booleans, and disabling the non-boolean arguments on the interface.
+
+    There's also a new separator so it's clearer what belongs to common Animation
+    publishes versus what is Almebic specific.
+    """
+    abc_defs = None
     abc_defs = [UISeparatorDef(), UILabelDef("Alembic Options")]
 
     # The Arguments that can be modified by the Publisher
     abc_args_overrides = getattr(cls, "abc_args_overrides", None)
 
-    # What we have set in the Settings as default.
-    abc_boolean_args = getattr(cls, "abc_boolean_args", [])
+    # All the Boolean Arguments that Alembic Export accepts
+    abc_boolean_args = [
+        arg
+        for arg, arg_type in ALEMBIC_ARGS.items()
+        if arg_type is bool
+    ]
 
-    # Default Flags set in Settings; unless they are editable.
+    # What we have set in the Settings as defaults.
+    abc_settings_boolean_args = getattr(cls, "abc_boolean_args", [])
+
+    # Default Flags set in Settings; minus the overrideable ones.
     abc_settings_boolean_arguments = [
         arg
-        for arg in abc_boolean_args
+        for arg in abc_settings_boolean_args
         if arg not in abc_args_overrides
     ]
-    # We display them to the user
+
+    # We display them to the user, but disable it
     abc_defs.append(EnumDef(
         "abcDefaultExportBooleanArguments",
         abc_settings_boolean_arguments,
         default=abc_settings_boolean_arguments,
         multiselection=True,
-        label="Settings set Arguments",
-        disabled=True
+        label="Settings Defined Arguments",
+        disabled=False
     ))
 
+    # Only display Boolan flags that the Admin defined as overrideable
     abc_boolean_overrides = [
         arg
-        for arg in abc_args_overrides
-        if arg in abc_boolean_args
+        for arg in abc_boolean_args
+        if arg in abc_args_overrides
     ]
 
-    if abc_boolean_overrides:
-        abc_defs.append(EnumDef(
-            "abcExportBooleanArguments",
-            abc_boolean_overrides,
-            multiselection=True,
-            label="Arguments Overrides"
-        ))
+    abc_defs.append(EnumDef(
+        "abcExportBooleanArguments",
+        abc_boolean_overrides if abc_boolean_overrides else [""],
+        multiselection=True,
+        label="Arguments Overrides",
+        disabled=True if not abc_boolean_overrides else False
+    ))
 
     abc_defs.append(
         TextDef(
             "attr",
             label="Custom Attributes",
-            placeholder="attr1, attr2, ...",
+            default=getattr(cls, "attr", None),
+            placeholder="attr1; attr2; ...",
             disabled=True if "attr" not in abc_args_overrides else False,
         )
     )
@@ -86,7 +107,8 @@ def _get_animation_abc_attr_defs(cls):
         TextDef(
             "attrPrefix",
             label="Custom Attributes Prefix",
-            placeholder="prefix1, prefix2, ...",
+            default=getattr(cls, "attrPrefix", None),
+            placeholder="prefix1; prefix2; ...",
             disabled=True if "attrPrefix" not in abc_args_overrides else False,
         )
     )
@@ -95,6 +117,7 @@ def _get_animation_abc_attr_defs(cls):
         EnumDef(
             "dataFormat",
             label="Data Format",
+            default=getattr(cls, "dataFormat", None),
             items=["ogawa", "HDF"],
             disabled=True if "dataFormat" not in abc_args_overrides else False,
         )
@@ -104,6 +127,7 @@ def _get_animation_abc_attr_defs(cls):
         NumberDef(
             "preRollStartFrame",
             label="Start frame for preroll",
+            default=getattr(cls, "preRollStartFrame", None),
             tooltip=(
                 "The frame to start scene evaluation at. This is used to set"
                 " the starting frame for time dependent translations and can"
@@ -136,6 +160,9 @@ class CreateAnimation(plugin.MayaHiddenCreator):
     write_face_sets = False
     include_parent_hierarchy = False
     include_user_defined_attributes = False
+
+    def collect_instances(self):
+        pass
 
     def get_instance_attr_defs(self):
         super(CreateAnimation, self).get_instance_attr_defs()
