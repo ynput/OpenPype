@@ -7,7 +7,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractABC(publish.Extractor):
+class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract as ABC."""
 
     label = "Extract ABC"
@@ -15,6 +15,9 @@ class ExtractABC(publish.Extractor):
     families = ["pointcache"]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.abc"
@@ -25,18 +28,15 @@ class ExtractABC(publish.Extractor):
 
         plugin.deselect_all()
 
-        selected = []
-        active = None
+        asset_group = instance.data["transientData"]["instance_node"]
 
+        selected = []
         for obj in instance:
             obj.select_set(True)
             selected.append(obj)
-            # Set as active the asset group
-            if obj.get(AVALON_PROPERTY):
-                active = obj
 
         context = plugin.create_blender_context(
-            active=active, selected=selected)
+            active=asset_group, selected=selected)
 
         with bpy.context.temp_override(**context):
             # We export the abc
@@ -59,8 +59,8 @@ class ExtractABC(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, representation)
 
 
 class ExtractModelABC(ExtractABC):

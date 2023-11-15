@@ -31,6 +31,14 @@ PREVIEW_COLLECTIONS: Dict = dict()
 TIMER_INTERVAL: float = 0.01 if platform.system() == "Windows" else 0.1
 
 
+def execute_function_in_main_thread(f):
+    """Decorator to move a function call into main thread items"""
+    def wrapper(*args, **kwargs):
+        mti = MainThreadItem(f, *args, **kwargs)
+        execute_in_main_thread(mti)
+    return wrapper
+
+
 class BlenderApplication(QtWidgets.QApplication):
     _instance = None
     blender_windows = {}
@@ -275,6 +283,10 @@ class LaunchCreator(LaunchQtApp):
     def before_window_show(self):
         self._window.refresh()
 
+    def execute(self, context):
+        host_tools.show_publisher(tab="create")
+        return {"FINISHED"}
+
 
 class LaunchLoader(LaunchQtApp):
     """Launch Avalon Loader."""
@@ -299,7 +311,7 @@ class LaunchPublisher(LaunchQtApp):
     bl_label = "Publish..."
 
     def execute(self, context):
-        host_tools.show_publish()
+        host_tools.show_publisher(tab="publish")
         return {"FINISHED"}
 
 
@@ -416,7 +428,6 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(SetResolution.bl_idname, text="Set Resolution")
         layout.separator()
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
-        # TODO (jasper): maybe add 'Reload Pipeline'
 
 
 def draw_avalon_menu(self, context):

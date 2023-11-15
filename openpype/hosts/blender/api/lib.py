@@ -188,7 +188,7 @@ def imprint(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
             # Support values evaluated at imprint
             value = value()
 
-        if not isinstance(value, (int, float, bool, str, list)):
+        if not isinstance(value, (int, float, bool, str, list, dict)):
             raise TypeError(f"Unsupported type: {type(value)}")
 
         imprint_data[key] = value

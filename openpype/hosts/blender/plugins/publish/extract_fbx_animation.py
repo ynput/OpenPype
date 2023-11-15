@@ -10,7 +10,10 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractAnimationFBX(publish.Extractor):
+class ExtractAnimationFBX(
+        publish.Extractor,
+        publish.OptionalPyblishPluginMixin,
+):
     """Extract as animation."""
 
     label = "Extract FBX"
@@ -19,20 +22,16 @@ class ExtractAnimationFBX(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
 
         # Perform extraction
         self.log.debug("Performing extraction..")
 
-        # The first collection object in the instance is taken, as there
-        # should be only one that contains the asset group.
-        collection = [
-            obj for obj in instance if type(obj) is bpy.types.Collection][0]
-
-        # Again, the first object in the collection is taken , as there
-        # should be only the asset group in the collection.
-        asset_group = collection.objects[0]
+        asset_group = instance.data["transientData"]["instance_node"]
 
         armature = [
             obj for obj in asset_group.children if obj.type == 'ARMATURE'][0]
@@ -56,7 +55,7 @@ class ExtractAnimationFBX(publish.Extractor):
             starting_frames.append(curr_frame_range[0])
             ending_frames.append(curr_frame_range[1])
         else:
-            self.log.info("Object have no animation.")
+            self.log.info("Object has no animation.")
             return
 
         asset_group_name = asset_group.name
@@ -158,5 +157,5 @@ class ExtractAnimationFBX(publish.Extractor):
         instance.data["representations"].append(fbx_representation)
         instance.data["representations"].append(json_representation)
 
-        self.log.info("Extracted instance '{}' to: {}".format(
-                      instance.name, fbx_representation))
+        self.log.debug("Extracted instance '{}' to: {}".format(
+                       instance.name, fbx_representation))
