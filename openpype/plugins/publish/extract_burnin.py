@@ -450,7 +450,7 @@ class ExtractBurnin(publish.Extractor):
                 filling burnin strings. `temp_data` are for repre pre-process
                 preparation.
         """
-        self.log.debug("Prepring basic data for burnins")
+        self.log.debug("Preparing basic data for burnins")
         context = instance.context
 
         version = instance.data.get("version")
