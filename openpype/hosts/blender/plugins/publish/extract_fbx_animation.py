@@ -10,6 +10,37 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
+def get_all_parents(obj):
+    """Get all recursive parents of object"""
+    result = []
+    while True:
+        obj = obj.parent
+        if not obj:
+            break
+        result.append(obj)
+    return result
+
+
+def get_highest_root(objects):
+    # Get the highest object that is also in the collection
+    included_objects = {obj.name_full for obj in objects}
+    num_parents_to_obj = {}
+    for obj in objects:
+        if isinstance(obj, bpy.types.Object):
+            parents = get_all_parents(obj)
+            # included parents
+            parents = [parent for parent in parents if
+                       parent.name_full in included_objects]
+            if not parents:
+                # A node without parents must be a highest root
+                return obj
+
+            num_parents_to_obj.setdefault(len(parents), obj)
+
+    minimum_parent = min(num_parents_to_obj)
+    return num_parents_to_obj[minimum_parent]
+
+
 class ExtractAnimationFBX(
         publish.Extractor,
         publish.OptionalPyblishPluginMixin,
@@ -38,6 +69,11 @@ class ExtractAnimationFBX(
         # TODO: Would it make more sense for the Collect Instance collector
         #   to also always retrieve all the children?
         objects = set(asset_group.objects)
+
+        # From the direct children of the collection find the 'root' node
+        # that we want to export - it is the 'highest' node in a hierarchy
+        root = get_highest_root(objects)
+
         for obj in list(objects):
             objects.update(obj.children_recursive)
 
@@ -78,8 +114,13 @@ class ExtractAnimationFBX(
             return
 
         asset_group_name = asset_group.name
-        asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
+        asset_name = asset_group.get(AVALON_PROPERTY).get("asset_name")
+        if asset_name:
+            # Rename for the export; this data is only present when loaded
+            # from a JSON Layout (layout family)
+            asset_group.name = asset_name
 
+        # Remove : from the armature name for the export
         armature_name = armature.name
         original_name = armature_name.split(':')[1]
         armature.name = original_name
@@ -102,13 +143,13 @@ class ExtractAnimationFBX(
         for obj in bpy.data.objects:
             obj.select_set(False)
 
-        asset_group.select_set(True)
+        root.select_set(True)
         armature.select_set(True)
         fbx_filename = f"{instance.name}_{armature.name}.fbx"
         filepath = os.path.join(stagingdir, fbx_filename)
 
         override = plugin.create_blender_context(
-            active=asset_group, selected=[asset_group, armature])
+            active=root, selected=[root, armature])
         bpy.ops.export_scene.fbx(
             override,
             filepath=filepath,
@@ -122,7 +163,7 @@ class ExtractAnimationFBX(
         )
         armature.name = armature_name
         asset_group.name = asset_group_name
-        asset_group.select_set(False)
+        root.select_set(True)
         armature.select_set(False)
 
         # We delete the baked action and set the original one back
