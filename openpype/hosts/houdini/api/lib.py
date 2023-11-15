@@ -971,7 +971,11 @@ def find_rop_inputs_chain(node):
     all_input_nodes = []
     input_nodes = node.inputs()
     for input_node in input_nodes:
-        all_input_nodes += find_rop_inputs_chain(input_node)
+        nodes = find_rop_inputs_chain(input_node)
+        # Filter existed nodes while keeping the order
+        # It's a solution for cyclic dependencies
+        nodes = [n for n in nodes if n not in all_input_nodes]
+        all_input_nodes += nodes
         all_input_nodes.append(input_node.path())
 
     return all_input_nodes
