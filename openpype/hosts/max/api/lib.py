@@ -42,7 +42,6 @@ def imprint(node_name: str, data: dict) -> bool:
             rt.SetUserProp(node, k, f"{JSON_PREFIX}{json.dumps(v)}")
         else:
             rt.SetUserProp(node, k, v)
-            print(k)
 
     return True
 
