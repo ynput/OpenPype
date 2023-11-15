@@ -12,7 +12,6 @@ from openpype.modules import (
     ISettingsChangeListener
 )
 from openpype.settings import SaveWarningExc
-from openpype.settings.lib import get_system_settings
 from openpype.lib import Logger
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -124,18 +123,7 @@ class FtrackModule(
         # Add Python 2 modules
         python_paths = [
             # `python-ftrack-api`
-            os.path.join(python_2_vendor, "ftrack-python-api", "source"),
-            # `arrow`
-            os.path.join(python_2_vendor, "arrow"),
-            # `builtins` from `python-future`
-            # - `python-future` is strict Python 2 module that cause crashes
-            #   of Python 3 scripts executed through OpenPype
-            #   (burnin script etc.)
-            os.path.join(python_2_vendor, "builtins"),
-            # `backports.functools_lru_cache`
-            os.path.join(
-                python_2_vendor, "backports.functools_lru_cache"
-            )
+            os.path.join(python_2_vendor, "ftrack-python-api", "source")
         ]
 
         # Load PYTHONPATH from current launch context
@@ -293,17 +281,8 @@ class FtrackModule(
         if not project_name:
             return
 
-        old_attr_values = old_value.get("attributes", {})
-        new_attr_values = new_value.get("attributes", {})
-        if not new_attr_values or old_attr_values == new_attr_values:
-            # If no values or same as before, then just skip the update process
-            return
-
-        system_settings = get_system_settings()
-        protect_attrs = system_settings["general"].get("project", {}).get("protect_anatomy_attributes", False)
-        if protect_attrs:
-            self.log.warning(
-                "Anatomy attributes are protected/locked. The only way to modify them is through the project settings on Ftrack.")
+        new_attr_values = new_value.get("attributes")
+        if not new_attr_values:
             return
 
         import ftrack_api

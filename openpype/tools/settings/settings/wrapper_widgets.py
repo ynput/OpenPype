@@ -16,7 +16,6 @@ class WrapperWidget(QtWidgets.QWidget):
         self.id = uuid4()
         self.schema_data = schema_data
         self.input_fields = []
-        self._read_only = False
 
         self.create_ui()
 
@@ -42,11 +41,6 @@ class WrapperWidget(QtWidgets.QWidget):
             )
         )
 
-    def set_read_only(self, status):
-        self._read_only = status
-        for input_field in self.input_fields:
-            input_field.set_read_only(self._read_only)
-
 
 class FormWrapper(WrapperWidget):
     def create_ui(self):
@@ -59,7 +53,6 @@ class FormWrapper(WrapperWidget):
                 "FormWrapper can't have other wrappers as children."
             )
 
-        widget.set_read_only(self._read_only)
         self.input_fields.append(widget)
 
         label_widget = GridLabelWidget(label, widget)
@@ -113,7 +106,6 @@ class CollapsibleWrapper(WrapperWidget):
         return result
 
     def add_widget_to_layout(self, widget, label=None):
-        widget.set_read_only(self._read_only)
         self.input_fields.append(widget)
 
         row = self.content_layout.rowCount()

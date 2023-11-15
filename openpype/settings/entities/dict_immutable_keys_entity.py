@@ -198,8 +198,6 @@ class DictImmutableKeysEntity(ItemEntity):
         if self.is_dynamic_item:
             self.require_key = False
 
-        self.read_only = self.schema_data.get("read_only", False)
-
         # GUI attributes
         self.checkbox_key = self.schema_data.get("checkbox_key")
         self.highlight_content = self.schema_data.get(

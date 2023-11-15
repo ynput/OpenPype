@@ -85,9 +85,7 @@ class ExtractCameraAlembic(publish.Extractor):
                     transform = cmds.listRelatives(
                         member, parent=True, fullPath=True)
                     transform = transform[0] if transform else member
-
-                    if transform not in camera_root:
-                        job_str += ' -root {0}'.format(transform)
+                    job_str += ' -root {0}'.format(transform)
 
             job_str += ' -file "{0}"'.format(path)
 
@@ -96,7 +94,7 @@ class ExtractCameraAlembic(publish.Extractor):
                 "Attributes to bake must be specified as a list"
             )
             for attr in self.bake_attributes:
-                self.log.info("Adding {} attribute".format(attr))
+                self.log.debug("Adding {} attribute".format(attr))
                 job_str += " -attr {0}".format(attr)
 
             with lib.evaluation("off"):
@@ -114,5 +112,5 @@ class ExtractCameraAlembic(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '{0}' to: {1}".format(
+        self.log.debug("Extracted instance '{0}' to: {1}".format(
             instance.name, path))

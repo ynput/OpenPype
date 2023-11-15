@@ -4,7 +4,12 @@ from maya import cmds
 
 import pyblish.api
 
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.hosts.maya.api.lib import pairwise
+from openpype.hosts.maya.api.action import SelectInvalidAction
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
@@ -16,31 +21,33 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ["workfile"]
     label = "Plug-in Path Attributes"
+    actions = [SelectInvalidAction]
 
-    def get_invalid(self, instance):
+    # Attributes are defined in project settings
+    attribute = []
+
+    @classmethod
+    def get_invalid(cls, instance):
         invalid = list()
 
-        # get the project setting
-        validate_path = (
-            instance.context.data["project_settings"]["maya"]["publish"]
-        )
-        file_attr = validate_path["ValidatePluginPathAttributes"]["attribute"]
+        file_attr = cls.attribute
         if not file_attr:
             return invalid
 
-        # get the nodes and file attributes
-        for node, attr in file_attr.items():
-            # check the related nodes
-            targets = cmds.ls(type=node)
+        # Consider only valid node types to avoid "Unknown object type" warning
+        all_node_types = set(cmds.allNodeTypes())
+        node_types = [key for key in file_attr.keys() if key in all_node_types]
 
-            for target in targets:
-                # get the filepath
-                file_attr = "{}.{}".format(target, attr)
-                filepath = cmds.getAttr(file_attr)
+        for node, node_type in pairwise(cmds.ls(type=node_types,
+                                                showType=True)):
+            # get the filepath
+            file_attr = "{}.{}".format(node, file_attr[node_type])
+            filepath = cmds.getAttr(file_attr)
 
-                if filepath and not os.path.exists(filepath):
-                    self.log.error("File {0} not exists".format(filepath))  # noqa
-                    invalid.append(target)
+            if filepath and not os.path.exists(filepath):
+                cls.log.error("{} '{}' uses non-existing filepath: {}"
+                              .format(node_type, node, filepath))
+                invalid.append(node)
 
         return invalid
 
@@ -48,5 +55,16 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
         """Process all directories Set as Filenames in Non-Maya Nodes"""
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Non-existent Path "
-                               "found: {0}".format(invalid))
+            raise PublishValidationError(
+                title="Plug-in Path Attributes",
+                message="Non-existent filepath found on nodes: {}".format(
+                    ", ".join(invalid)
+                ),
+                description=(
+                    "## Plug-in nodes use invalid filepaths\n"
+                    "The workfile contains nodes from plug-ins that use "
+                    "filepaths which do not exist.\n\n"
+                    "Please make sure their filepaths are correct and the "
+                    "files exist on disk."
+                )
+            )

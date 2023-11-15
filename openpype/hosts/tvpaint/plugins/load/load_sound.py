@@ -60,9 +60,10 @@ class ImportSound(plugin.Loader):
         output_filepath = output_file.name.replace("\\", "/")
 
         # Prepare george script
+        path = self.filepath_from_context(context).replace("\\", "/")
         import_script = "\n".join(self.import_script_lines)
         george_script = import_script.format(
-            self.fname.replace("\\", "/"),
+            path,
             output_filepath
         )
         self.log.info("*** George script:\n{}\n***".format(george_script))

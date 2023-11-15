@@ -94,7 +94,6 @@ from .input_entities import (
     NumberEntity,
     BoolEntity,
     TextEntity,
-    PasswordEntity,
     PathInput,
     RawJsonEntity
 )
@@ -108,7 +107,8 @@ from .enum_entity import (
     TaskTypeEnumEntity,
     DeadlineUrlEnumEntity,
     AnatomyTemplatesEnumEntity,
-    ShotgridUrlEnumEntity
+    ShotgridUrlEnumEntity,
+    RoyalRenderRootEnumEntity
 )
 
 from .list_entity import ListEntity
@@ -158,7 +158,6 @@ __all__ = (
     "NumberEntity",
     "BoolEntity",
     "TextEntity",
-    "PasswordEntity",
     "PathInput",
     "RawJsonEntity",
 
@@ -172,6 +171,7 @@ __all__ = (
     "TaskTypeEnumEntity",
     "DeadlineUrlEnumEntity",
     "ShotgridUrlEnumEntity",
+    "RoyalRenderRootEnumEntity",
     "AnatomyTemplatesEnumEntity",
 
     "ListEntity",

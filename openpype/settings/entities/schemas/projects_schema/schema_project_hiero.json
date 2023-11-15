@@ -197,11 +197,6 @@
                                     "type": "text",
                                     "key": "shot",
                                     "label": "{shot}"
-                                },
-                                {
-                                    "type": "boolean",
-                                    "key": "symlink",
-                                    "label": "Publish using symlinks"
                                 }
                             ]
                         },

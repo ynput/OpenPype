@@ -2,57 +2,10 @@ import os
 import re
 import logging
 import platform
-import functools
-import warnings
 
 import clique
 
 log = logging.getLogger(__name__)
-
-
-class PathToolsDeprecatedWarning(DeprecationWarning):
-    pass
-
-
-def deprecated(new_destination):
-    """Mark functions as deprecated.
-
-    It will result in a warning being emitted when the function is used.
-    """
-
-    func = None
-    if callable(new_destination):
-        func = new_destination
-        new_destination = None
-
-    def _decorator(decorated_func):
-        if new_destination is None:
-            warning_message = (
-                " Please check content of deprecated function to figure out"
-                " possible replacement."
-            )
-        else:
-            warning_message = " Please replace your usage with '{}'.".format(
-                new_destination
-            )
-
-        @functools.wraps(decorated_func)
-        def wrapper(*args, **kwargs):
-            warnings.simplefilter("always", PathToolsDeprecatedWarning)
-            warnings.warn(
-                (
-                    "Call to deprecated function '{}'"
-                    "\nFunction was moved or removed.{}"
-                ).format(decorated_func.__name__, warning_message),
-                category=PathToolsDeprecatedWarning,
-                stacklevel=4
-            )
-            return decorated_func(*args, **kwargs)
-        return wrapper
-
-    if func is None:
-        return _decorator
-    return _decorator(func)
 
 
 def format_file_size(file_size, suffix=None):
@@ -109,41 +62,6 @@ def create_hard_link(src_path, dst_path):
     # Raises not implemented error if gets here
     raise NotImplementedError(
         "Implementation of hardlink for current environment is missing."
-    )
-
-
-def create_symlink(src_path, dst_path):
-    """Create symlink of file.
-    Args:
-        src_path(str): Full path to a file which is used as source for
-            symlink.
-        dst_path(str): Full path to a file where a link of source will be
-            added.
-    """
-    # Use `os.symlink` if is available
-    #   - should be for all platforms with newer python versions
-    if hasattr(os, "symlink"):
-        os.symlink(src_path, dst_path)
-        return
-
-    # Windows implementation of symlinks (
-    #  - for older versions of python
-    if platform.system().lower() == "windows":
-        import ctypes
-        from ctypes.wintypes import BOOL
-        CreateSymLink = ctypes.windll.kernel32.CreateSymbolicLinkW
-        CreateSymLink.argtypes = [
-            ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_void_p
-        ]
-        CreateSymLink.restype = BOOL
-
-        res = CreateSymLink(dst_path, src_path, None)
-        if res == 0:
-            raise ctypes.WinError()
-        return
-    # Raises not implemented error if gets here
-    raise NotImplementedError(
-        "Implementation of symlink for current environment is missing."
     )
 
 
@@ -304,99 +222,3 @@ def get_last_version_from_path(path_dir, filter):
         return filtred_files[-1]
 
     return None
-
-
-@deprecated("openpype.pipeline.project_folders.concatenate_splitted_paths")
-def concatenate_splitted_paths(split_paths, anatomy):
-    """
-    Deprecated:
-        Function will be removed after release version 3.16.*
-    """
-
-    from openpype.pipeline.project_folders import concatenate_splitted_paths
-
-    return concatenate_splitted_paths(split_paths, anatomy)
-
-
-@deprecated
-def get_format_data(anatomy):
-    """
-    Deprecated:
-        Function will be removed after release version 3.16.*
-    """
-
-    from openpype.pipeline.template_data import get_project_template_data
-
-    data = get_project_template_data(project_name=anatomy.project_name)
-    data["root"] = anatomy.roots
-    return data
-
-
-@deprecated("openpype.pipeline.project_folders.fill_paths")
-def fill_paths(path_list, anatomy):
-    """
-    Deprecated:
-        Function will be removed after release version 3.16.*
-    """
-
-    from openpype.pipeline.project_folders import fill_paths
-
-    return fill_paths(path_list, anatomy)
-
-
-@deprecated("openpype.pipeline.project_folders.create_project_folders")
-def create_project_folders(basic_paths, project_name):
-    """
-    Deprecated:
-        Function will be removed after release version 3.16.*
-    """
-
-    from openpype.pipeline.project_folders import create_project_folders
-
-    return create_project_folders(project_name, basic_paths)
-
-
-@deprecated("openpype.pipeline.project_folders.get_project_basic_paths")
-def get_project_basic_paths(project_name):
-    """
-    Deprecated:
-        Function will be removed after release version 3.16.*
-    """
-
-    from openpype.pipeline.project_folders import get_project_basic_paths
-
-    return get_project_basic_paths(project_name)
-
-
-@deprecated("openpype.pipeline.workfile.create_workdir_extra_folders")
-def create_workdir_extra_folders(
-    workdir, host_name, task_type, task_name, project_name,
-    project_settings=None
-):
-    """Create extra folders in work directory based on context.
-
-    Args:
-        workdir (str): Path to workdir where workfiles is stored.
-        host_name (str): Name of host implementation.
-        task_type (str): Type of task for which extra folders should be
-            created.
-        task_name (str): Name of task for which extra folders should be
-            created.
-        project_name (str): Name of project on which task is.
-        project_settings (dict): Prepared project settings. Are loaded if not
-            passed.
-
-    Deprecated:
-        Function will be removed after release version 3.16.*
-    """
-
-    from openpype.pipeline.project_folders import create_workdir_extra_folders
-
-    return create_workdir_extra_folders(
-        workdir,
-        host_name,
-        task_type,
-        task_name,
-        project_name,
-        project_settings
-    )

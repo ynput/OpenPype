@@ -2,11 +2,12 @@ import os
 
 import ftrack_api
 from openpype.settings import get_project_settings
-from openpype.lib import PostLaunchHook
+from openpype.lib.applications import PostLaunchHook, LaunchTypes
 
 
 class PostFtrackHook(PostLaunchHook):
     order = None
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         project_name = self.data.get("project_name")
@@ -125,21 +126,6 @@ class PostFtrackHook(PostLaunchHook):
         ent_path = "/".join(
             [ent["name"] for ent in entity["link"]]
         )
-
-        change_statuses_settings = project_settings["ftrack"]["user_handlers"][
-            "application_launch_statuses"
-        ]
-        ignored_statuses = [status.lower() for status in change_statuses_settings["ignored_statuses"]]  # noqa
-
-        if change_statuses_settings["enabled"] and actual_status in ignored_statuses:  # noqa
-            self.log.debug(
-                "Ftrack status is '{}' for {}. "
-                "No status change.".format(
-                    actual_status, ent_path
-                )
-            )
-            return
-
         while True:
             next_status_name = None
             for key, value in status_mapping.items():

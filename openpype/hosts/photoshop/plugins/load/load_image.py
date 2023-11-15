@@ -11,7 +11,7 @@ class ImageLoader(photoshop.PhotoshopLoader):
     Stores the imported asset in a container named after the asset.
     """
 
-    families = ["image", "render", "workfile"]
+    families = ["image", "render"]
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
@@ -22,7 +22,8 @@ class ImageLoader(photoshop.PhotoshopLoader):
             name
         )
         with photoshop.maintained_selection():
-            layer = self.import_layer(self.fname, layer_name, stub)
+            path = self.filepath_from_context(context)
+            layer = self.import_layer(path, layer_name, stub)
 
         self[:] = [layer]
         namespace = namespace or layer_name

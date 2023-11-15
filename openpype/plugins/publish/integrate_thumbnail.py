@@ -18,6 +18,7 @@ import collections
 import six
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_versions
 from openpype.client.operations import OperationsSession, new_thumbnail_doc
 from openpype.pipeline.publish import get_publish_instance_label
@@ -39,6 +40,12 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
+        if AYON_SERVER_ENABLED:
+            self.log.debug(
+                "AYON is enabled. Skipping v3 thumbnail integration"
+            )
+            return
+
         # Filter instances which can be used for integration
         filtered_instance_items = self._prepare_instances(context)
         if not filtered_instance_items:
@@ -69,14 +76,14 @@ class IntegrateThumbnails(pyblish.api.ContextPlugin):
 
         thumbnail_template = anatomy.templates["publish"]["thumbnail"]
         if not thumbnail_template:
-            self.log.info("Thumbnail template is not filled. Skipping.")
+            self.log.debug("Thumbnail template is not filled. Skipping.")
             return
 
         if (
             not thumbnail_root
             and thumbnail_root_format_key in thumbnail_template
         ):
-            self.log.warning(("{} is not set. Skipping.").format(env_key))
+            self.log.warning("{} is not set. Skipping.".format(env_key))
             return
 
         # Collect verion ids from all filtered instance

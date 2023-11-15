@@ -64,9 +64,6 @@ class CreateWriteImage(napi.NukeWriteCreator):
         )
 
     def create_instance_node(self, subset_name, instance_data):
-        linked_knobs_ = []
-        if "use_range_limit" in self.instance_attributes:
-            linked_knobs_ = ["channels", "___", "first", "last", "use_limit"]
 
         # add fpath_template
         write_data = {
@@ -81,7 +78,7 @@ class CreateWriteImage(napi.NukeWriteCreator):
             write_data,
             input=self.selected_node,
             prenodes=self.prenodes,
-            linked_knobs=linked_knobs_,
+            linked_knobs=self.get_linked_knobs(),
             **{
                 "frame": nuke.frame()
             }

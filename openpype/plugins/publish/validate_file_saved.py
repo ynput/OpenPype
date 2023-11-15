@@ -1,5 +1,7 @@
 import pyblish.api
 
+from openpype.pipeline.publish import PublishValidationError
+
 
 class ValidateCurrentSaveFile(pyblish.api.ContextPlugin):
     """File must be saved before publishing"""
@@ -12,4 +14,4 @@ class ValidateCurrentSaveFile(pyblish.api.ContextPlugin):
 
         current_file = context.data["currentFile"]
         if not current_file:
-            raise RuntimeError("File not saved")
+            raise PublishValidationError("File not saved")

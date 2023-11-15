@@ -12,6 +12,7 @@ from openpype.settings import get_current_project_settings
 from openpype.lib import Logger
 from openpype.pipeline import LoaderPlugin, LegacyCreator
 from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.load import get_representation_path_from_context
 from . import lib
 
 log = Logger.get_logger(__name__)
@@ -316,20 +317,6 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-def get_reference_node_parents(ref):
-    """Return all parent reference nodes of reference node
-
-    Args:
-        ref (str): reference node.
-
-    Returns:
-        list: The upstream parent reference nodes.
-
-    """
-    parents = []
-    return parents
-
-
 class SequenceLoader(LoaderPlugin):
     """A basic SequenceLoader for Resolve
 
@@ -393,7 +380,7 @@ class ClipLoader:
     active_bin = None
     data = dict()
 
-    def __init__(self, cls, context, **options):
+    def __init__(self, cls, context, path, **options):
         """ Initialize object
 
         Arguments:
@@ -406,6 +393,7 @@ class ClipLoader:
         self.__dict__.update(cls.__dict__)
         self.context = context
         self.active_project = lib.get_current_project()
+        self.fname = path
 
         # try to get value from options or evaluate key value for `handles`
         self.with_handles = options.get("handles") or bool(
@@ -467,7 +455,7 @@ class ClipLoader:
         self.data["track_name"] = "_".join([subset, representation])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
-        file = self.fname
+        file = get_representation_path_from_context(self.context)
         if not file:
             repr_id = repr["_id"]
             log.warning(
@@ -709,9 +697,6 @@ class PublishClip:
         # adding ui inputs if any
         self.ui_inputs = kwargs.get("ui_inputs", {})
 
-        project_settings = get_current_project_settings()
-        self.symlink = project_settings["hiero"]["create"]["CreateShotClip"]["symlink"]  # noqa
-
         # populate default data before we get other attributes
         self._populate_track_item_default_data()
 
@@ -766,8 +751,7 @@ class PublishClip:
             "_track_": self.track_name,
             "_clip_": self.ti_name,
             "_trackIndex_": self.track_index,
-            "_clipIndex_": self.ti_index,
-            "_symlink_": self.symlink
+            "_clipIndex_": self.ti_index
         }
 
     def _populate_attributes(self):
@@ -791,11 +775,6 @@ class PublishClip:
         self.hierarchy_data = self.ui_inputs.get(
             "hierarchyData", {}).get("value") or \
             self.track_item_default_data.copy()
-
-        ui_symlink = self.ui_inputs.get(
-            "hierarchyData", {}).get("value").get("symlink").get("value")
-        self.hierarchy_data["symlink"].update({"value": str(ui_symlink)})
-
         self.count_from = self.ui_inputs.get(
             "countFrom", {}).get("value") or self.count_from_default
         self.count_steps = self.ui_inputs.get(

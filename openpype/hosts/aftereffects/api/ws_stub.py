@@ -37,6 +37,9 @@ class AEItem(object):
     height = attr.ib(default=None)
     is_placeholder = attr.ib(default=False)
     uuid = attr.ib(default=False)
+    path = attr.ib(default=False)  # path to FootageItem to validate
+    # list of composition Footage is in
+    containing_comps = attr.ib(factory=list)
 
 
 class AfterEffectsServerStub():
@@ -296,27 +299,6 @@ class AfterEffectsServerStub():
                              item_name=item_name,
                              import_options=import_options)
             )
-        records = self._to_records(self._handle_return(res))
-        if records:
-            return records.pop()
-
-    def import_file_with_dialog(self, path, item_name):
-        """
-            Imports file through ImportFileWithDialog AE command.
-            Allow user to import photoshop file as image sequence.
-        Args:
-            path (string): absolute path for asset file
-            item_name (string): label for created FootageItem and Folder
-        """
-        res = self.websocketserver.call(
-            self.client.call('AfterEffects.import_file_with_dialog',
-                             path=path,
-                             item_name=item_name)
-            )
-
-        if not res:
-            return None
-
         records = self._to_records(self._handle_return(res))
         if records:
             return records.pop()
@@ -725,7 +707,10 @@ class AfterEffectsServerStub():
                           d.get("instance_id"),
                           d.get("width"),
                           d.get("height"),
-                          d.get("is_placeholder"))
+                          d.get("is_placeholder"),
+                          d.get("uuid"),
+                          d.get("path"),
+                          d.get("containing_comps"),)
 
             ret.append(item)
         return ret

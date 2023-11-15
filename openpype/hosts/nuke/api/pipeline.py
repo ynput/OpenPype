@@ -2,7 +2,7 @@ import nuke
 
 import os
 import importlib
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 import pyblish.api
 
@@ -20,10 +20,12 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     register_inventory_action_path,
     AVALON_CONTAINER_ID,
+    get_current_asset_name,
+    get_current_task_name,
 )
 from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
-from openpype.lib.applications import ApplicationManager
+
 from .command import viewer_update_and_undo_stop
 from .lib import (
     Context,
@@ -32,6 +34,7 @@ from .lib import (
     get_main_window,
     add_publish_knob,
     WorkfileSettings,
+    # TODO: remove this once workfile builder will be removed
     process_workfile_builder,
     start_workfile_template_builder,
     launch_workfiles_app,
@@ -153,11 +156,18 @@ def add_nuke_callbacks():
     """
     nuke_settings = get_current_project_settings()["nuke"]
     workfile_settings = WorkfileSettings()
+
     # Set context settings.
     nuke.addOnCreate(
         workfile_settings.set_context_settings, nodeClass="Root")
+
+    # adding favorites to file browser
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
+
+    # template builder callbacks
     nuke.addOnCreate(start_workfile_template_builder, nodeClass="Root")
+
+    # TODO: remove this callback once workfile builder will be removed
     nuke.addOnCreate(process_workfile_builder, nodeClass="Root")
 
     # fix ffmpeg settings on script
@@ -167,11 +177,12 @@ def add_nuke_callbacks():
     nuke.addOnScriptLoad(check_inventory_versions)
     nuke.addOnScriptSave(check_inventory_versions)
 
-    # # set apply all workfile settings on script load and save
+    # set apply all workfile settings on script load and save
     nuke.addOnScriptLoad(WorkfileSettings().set_context_settings)
 
+
     if nuke_settings["nuke-dirmap"]["enabled"]:
-        log.info("Added Nuke's dirmaping callback ...")
+        log.info("Added Nuke's dir-mapping callback ...")
         # Add dirmap for file paths.
         nuke.addFilenameFilter(dirmap_file_name_filter)
 
@@ -211,6 +222,13 @@ def _show_workfiles():
     host_tools.show_workfiles(parent=None, on_top=False)
 
 
+def get_context_label():
+    return "{0}, {1}".format(
+        get_current_asset_name(),
+        get_current_task_name()
+    )
+
+
 def _install_menu():
     """Install Avalon menu into Nuke's main menu bar."""
 
@@ -220,9 +238,7 @@ def _install_menu():
     menu = menubar.addMenu(MENU_LABEL)
 
     if not ASSIST:
-        label = "{0}, {1}".format(
-            os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
-        )
+        label = get_context_label()
         Context.context_label = label
         context_action = menu.addCommand(label)
         context_action.setEnabled(False)
@@ -333,62 +349,12 @@ def _install_menu():
     # adding shortcuts
     add_shortcuts_from_presets()
 
-    # adding rv
-    add_rv_from_presets()
 
-def add_rv_from_presets():
-    rv_settings = get_current_project_settings()["openrv"]['openrv_nuke_integration']
-    if not rv_settings['rvnuke_enabled']:
-        return
-
-    app_manager = ApplicationManager()
-    openrv_app = app_manager.find_latest_available_variant_for_group("openrv")
-    rv_exec_path = str(openrv_app.find_executable())
-    rv_root = os.path.dirname(os.path.dirname(rv_exec_path))
-    rv_nuke_path = os.path.join(rv_root, 'plugins', 'SupportFiles', 'rvnuke')
-    if os.path.exists(rv_nuke_path):
-        nuke.pluginAddPath(rv_nuke_path)
-        log.info("RV Nuke path added: {}".format(rv_nuke_path))
-    else:
-        log.warning("RV Nuke path not found: {}".format(rv_nuke_path))
-
-    if not rv_exec_path:
-        return
-    try:
-        import rvNuke
-        rv_pref_panel = rvNuke.RvPreferencesPanel()
-        rv_pref_panel.rvPrefs.prefs["rvExecPath"] = rv_exec_path
-        rv_pref_panel.rvPrefs.saveToDisk()
-    except ImportError:
-        log.warning("rvNuke not found")
-
-    nuke.addOnCreate(add_rv_shortcut, nodeClass="Root")
-    return
-
-
-def add_rv_shortcut():
-    rv_global_settings = get_current_project_settings()["openrv"]
-    rv_settings = rv_global_settings['openrv_nuke_integration']
-    if rv_settings['rvnuke_open_in_rv_shortcut']:
-        menubar = nuke.menu("Nuke")
-        menu_item = menubar.findItem("RV/View in RV")
-        if menu_item:
-            menu_item.setShortcut("Alt+v")
-            menu_item.setShortcut(rv_settings['rvnuke_open_in_rv_shortcut'])
-            log.info("Adding Shortcut `{}` to `{}`".format(
-                'Open in RV',
-                rv_settings['rvnuke_open_in_rv_shortcut']))
-        else:
-            log.warning("Cant't set up rv nuke plugin")
-    else:
-        log.info('RV Nuke Plugin not activated')
 def change_context_label():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(MENU_LABEL)
 
-    label = "{0}, {1}".format(
-        os.environ["AVALON_ASSET"], os.environ["AVALON_TASK"]
-    )
+    label = get_context_label()
 
     rm_item = [
         (i, item) for i, item in enumerate(menu.items())
@@ -577,10 +543,16 @@ def list_instances(creator_id=None):
 
     For SubsetManager
 
+    Args:
+        creator_id (Optional[str]): creator identifier
+
     Returns:
         (list) of dictionaries matching instances format
     """
-    listed_instances = []
+    instances_by_order = defaultdict(list)
+    subset_instances = []
+    instance_ids = set()
+
     for node in nuke.allNodes(recurseGroups=True):
 
         if node.Class() in ["Viewer", "Dot"]:
@@ -606,9 +578,60 @@ def list_instances(creator_id=None):
         if creator_id and instance_data["creator_identifier"] != creator_id:
             continue
 
-        listed_instances.append((node, instance_data))
+        instance_id = instance_data.get("instance_id")
+        if not instance_id:
+            pass
+        elif instance_id in instance_ids:
+            instance_data.pop("instance_id")
+        else:
+            instance_ids.add(instance_id)
 
-    return listed_instances
+        # node name could change, so update subset name data
+        _update_subset_name_data(instance_data, node)
+
+        if "render_order" not in node.knobs():
+            subset_instances.append((node, instance_data))
+            continue
+
+        order = int(node["render_order"].value())
+        instances_by_order[order].append((node, instance_data))
+
+    # Sort instances based on order attribute or subset name.
+    # TODO: remove in future Publisher enhanced with sorting
+    ordered_instances = []
+    for key in sorted(instances_by_order.keys()):
+        instances_by_subset = defaultdict(list)
+        for node, data_ in instances_by_order[key]:
+            instances_by_subset[data_["subset"]].append((node, data_))
+        for subkey in sorted(instances_by_subset.keys()):
+            ordered_instances.extend(instances_by_subset[subkey])
+
+    instances_by_subset = defaultdict(list)
+    for node, data_ in subset_instances:
+        instances_by_subset[data_["subset"]].append((node, data_))
+    for key in sorted(instances_by_subset.keys()):
+        ordered_instances.extend(instances_by_subset[key])
+
+    return ordered_instances
+
+
+def _update_subset_name_data(instance_data, node):
+    """Update subset name data in instance data.
+
+    Args:
+        instance_data (dict): instance creator data
+        node (nuke.Node): nuke node
+    """
+    # make sure node name is subset name
+    old_subset_name = instance_data["subset"]
+    old_variant = instance_data["variant"]
+    subset_name_root = old_subset_name.replace(old_variant, "")
+
+    new_subset_name = node.name()
+    new_variant = new_subset_name.replace(subset_name_root, "")
+
+    instance_data["subset"] = new_subset_name
+    instance_data["variant"] = new_variant
 
 
 def remove_instance(instance):

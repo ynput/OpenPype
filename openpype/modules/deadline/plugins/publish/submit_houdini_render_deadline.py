@@ -10,7 +10,6 @@ from openpype.pipeline import legacy_io
 from openpype.tests.lib import is_in_tests
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
 from openpype.lib import is_running_from_build
 
 
@@ -56,19 +55,8 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         filepath = context.data["currentFile"]
         filename = os.path.basename(filepath)
 
-        job_name = set_custom_deadline_name(
-            instance,
-            filename,
-            "deadline_job_name"
-        )
-        batch_name = set_custom_deadline_name(
-            instance,
-            filename,
-            "deadline_batch_name"
-        )
-
-        job_info.Name = job_name
-        job_info.BatchName = "Group: " + batch_name
+        job_info.Name = "{} - {}".format(filename, instance.name)
+        job_info.BatchName = filename
         job_info.Plugin = "Houdini"
         job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())
@@ -100,7 +88,6 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS",
-            "OPENPYPE_VERSION"
         ]
 
         # Add OpenPype version if we are running from build.
@@ -118,8 +105,8 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             if value:
                 job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
 
         for i, filepath in enumerate(instance.data["files"]):
             dirname = os.path.dirname(filepath)
@@ -154,4 +141,3 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Store output dir for unified publisher (filesequence)
         output_dir = os.path.dirname(instance.data["files"][0])
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"

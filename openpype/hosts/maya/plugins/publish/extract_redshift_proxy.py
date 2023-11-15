@@ -29,15 +29,21 @@ class ExtractRedshiftProxy(publish.Extractor):
         if not anim_on:
             # Remove animation information because it is not required for
             # non-animated subsets
-            instance.data.pop("proxyFrameStart", None)
-            instance.data.pop("proxyFrameEnd", None)
+            keys = ["frameStart",
+                    "frameEnd",
+                    "handleStart",
+                    "handleEnd",
+                    "frameStartHandle",
+                    "frameEndHandle"]
+            for key in keys:
+                instance.data.pop(key, None)
 
         else:
-            start_frame = instance.data["proxyFrameStart"]
-            end_frame = instance.data["proxyFrameEnd"]
+            start_frame = instance.data["frameStartHandle"]
+            end_frame = instance.data["frameEndHandle"]
             rs_options = "{}startFrame={};endFrame={};frameStep={};".format(
                 rs_options, start_frame,
-                end_frame, instance.data["proxyFrameStep"]
+                end_frame, instance.data["step"]
             )
 
             root, ext = os.path.splitext(file_path)
@@ -48,12 +54,12 @@ class ExtractRedshiftProxy(publish.Extractor):
                 for frame in range(
                     int(start_frame),
                     int(end_frame) + 1,
-                    int(instance.data["proxyFrameStep"]),
+                    int(instance.data["step"]),
             )]
         # vertex_colors = instance.data.get("vertexColors", False)
 
         # Write out rs file
-        self.log.info("Writing: '%s'" % file_path)
+        self.log.debug("Writing: '%s'" % file_path)
         with maintained_selection():
             cmds.select(instance.data["setMembers"], noExpand=True)
             cmds.file(file_path,
@@ -74,9 +80,7 @@ class ExtractRedshiftProxy(publish.Extractor):
             'files': repr_files,
             "stagingDir": staging_dir,
         }
-        if anim_on:
-            representation["frameStart"] = instance.data["proxyFrameStart"]
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s"
-                      % (instance.name, staging_dir))
+        self.log.debug("Extracted instance '%s' to: %s"
+                       % (instance.name, staging_dir))

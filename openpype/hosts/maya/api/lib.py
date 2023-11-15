@@ -25,23 +25,18 @@ from openpype.client import (
 )
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
     discover_loader_plugins,
     loaders_from_representation,
     get_representation_path,
     load_container,
-    registered_host,
+    registered_host
 )
-from openpype.pipeline.create import (
-    legacy_create,
-    get_legacy_creator_by_name,
-)
-from openpype.pipeline.context_tools import (
-    get_current_asset_name,
-    get_current_project_asset,
-    get_current_project_name,
-    get_current_task_name
-)
+from openpype.lib import NumberDef
+from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.pipeline.create import CreateContext
 from openpype.lib.profiles_filtering import filter_profiles
 
 
@@ -122,16 +117,14 @@ FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
 
-DISPLAY_LIGHTS_VALUES = [
-    "project_settings", "default", "all", "selected", "flat", "none"
-]
-DISPLAY_LIGHTS_LABELS = [
-    "Use Project Settings",
-    "Default Lighting",
-    "All Lights",
-    "Selected Lights",
-    "Flat Lighting",
-    "No Lights"
+
+DISPLAY_LIGHTS_ENUM = [
+    {"label": "Use Project Settings", "value": "project_settings"},
+    {"label": "Default Lighting", "value": "default"},
+    {"label": "All Lights", "value": "all"},
+    {"label": "Selected Lights", "value": "selected"},
+    {"label": "Flat Lighting", "value": "flat"},
+    {"label": "No Lights", "value": "none"}
 ]
 
 
@@ -343,8 +336,8 @@ def pairwise(iterable):
     return zip(a, a)
 
 
-def collect_animation_data(fps=False):
-    """Get the basic animation data
+def collect_animation_defs(fps=False):
+    """Get the basic animation attribute defintions for the publisher.
 
     Returns:
         OrderedDict
@@ -363,17 +356,42 @@ def collect_animation_data(fps=False):
     handle_end = frame_end_handle - frame_end
 
     # build attributes
-    data = OrderedDict()
-    data["frameStart"] = frame_start
-    data["frameEnd"] = frame_end
-    data["handleStart"] = handle_start
-    data["handleEnd"] = handle_end
-    data["step"] = 1.0
+    defs = [
+        NumberDef("frameStart",
+                  label="Frame Start",
+                  default=frame_start,
+                  decimals=0),
+        NumberDef("frameEnd",
+                  label="Frame End",
+                  default=frame_end,
+                  decimals=0),
+        NumberDef("handleStart",
+                  label="Handle Start",
+                  default=handle_start,
+                  decimals=0),
+        NumberDef("handleEnd",
+                  label="Handle End",
+                  default=handle_end,
+                  decimals=0),
+        NumberDef("step",
+                  label="Step size",
+                  tooltip="A smaller step size means more samples and larger "
+                          "output files.\n"
+                          "A 1.0 step size is a single sample every frame.\n"
+                          "A 0.5 step size is two samples per frame.\n"
+                          "A 0.2 step size is five samples per frame.",
+                  default=1.0,
+                  decimals=3),
+    ]
 
     if fps:
-        data["fps"] = mel.eval('currentTimeUnitToFPS()')
+        current_fps = mel.eval('currentTimeUnitToFPS()')
+        fps_def = NumberDef(
+            "fps", label="FPS", default=current_fps, decimals=5
+        )
+        defs.append(fps_def)
 
-    return data
+    return defs
 
 
 def imprint(node, data):
@@ -421,28 +439,11 @@ def imprint(node, data):
             add_type = {"attributeType": "enum", "enumName": ":".join(value)}
             set_type = {"keyable": False, "channelBox": True}
             value = 0  # enum default
-        elif isinstance(value, dict):
-            for key, group_list in value.items():
-                cmds.addAttr(
-                    node,
-                    longName=key,
-                    numberOfChildren=len(group_list),
-                    attributeType="compound"
-                )
-                for group in group_list:
-                    cmds.addAttr(
-                        node,
-                        longName=group,
-                        attributeType="bool",
-                        parent=key
-                    )
-                continue
         else:
             raise TypeError("Unsupported type: %r" % type(value))
 
-        if not isinstance(value, dict):
-            cmds.addAttr(node, longName=key, **add_type)
-            cmds.setAttr(node + "." + key, value, **set_type)
+        cmds.addAttr(node, longName=key, **add_type)
+        cmds.setAttr(node + "." + key, value, **set_type)
 
 
 def lsattr(attr, value=None):
@@ -476,10 +477,10 @@ def lsattrs(attrs):
         attrs (dict): Name and value pairs of expected matches
 
     Example:
-        >> # Return nodes with an `age` of five.
-        >> lsattr({"age": "five"})
-        >> # Return nodes with both `age` and `color` of five and blue.
-        >> lsattr({"age": "five", "color": "blue"})
+        >>> # Return nodes with an `age` of five.
+        >>> lsattrs({"age": "five"})
+        >>> # Return nodes with both `age` and `color` of five and blue.
+        >>> lsattrs({"age": "five", "color": "blue"})
 
     Return:
          list: matching nodes.
@@ -1409,8 +1410,8 @@ def generate_ids(nodes, asset_id=None):
 
     if asset_id is None:
         # Get the asset ID from the database for the asset of current context
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
         assert asset_doc, "No current asset found in Session"
         asset_id = asset_doc['_id']
@@ -1610,17 +1611,15 @@ def get_container_members(container):
 
 
 # region LOOKDEV
-def list_looks(asset_id):
+def list_looks(project_name, asset_id):
     """Return all look subsets for the given asset
 
     This assumes all look subsets start with "look*" in their names.
     """
-
     # # get all subsets with look leading in
     # the name associated with the asset
     # TODO this should probably look for family 'look' instead of checking
     #   subset name that can not start with family
-    project_name = legacy_io.active_project()
     subset_docs = get_subsets(project_name, asset_ids=[asset_id])
     return [
         subset_doc
@@ -1642,7 +1641,7 @@ def assign_look_by_version(nodes, version_id):
         None
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
 
     # Get representations of shader file and relationships
     look_representation = get_representation_by_name(
@@ -1708,7 +1707,7 @@ def assign_look(nodes, subset="lookDefault"):
         parts = pype_id.split(":", 1)
         grouped[parts[0]].append(node)
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     subset_docs = get_subsets(
         project_name, subset_names=[subset], asset_ids=grouped.keys()
     )
@@ -2222,6 +2221,35 @@ def set_scene_resolution(width, height, pixelAspect):
     cmds.setAttr("%s.pixelAspect" % control_node, pixelAspect)
 
 
+def get_fps_for_current_context():
+    """Get fps that should be set for current context.
+
+    Todos:
+        - Skip project value.
+        - Merge logic with 'get_frame_range' and 'reset_scene_resolution' ->
+            all the values in the functions can be collected at one place as
+            they have same requirements.
+
+    Returns:
+        Union[int, float]: FPS value.
+    """
+
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
+    asset_doc = get_asset_by_name(
+        project_name, asset_name, fields=["data.fps"]
+    ) or {}
+    fps = asset_doc.get("data", {}).get("fps")
+    if not fps:
+        project_doc = get_project(project_name, fields=["data.fps"]) or {}
+        fps = project_doc.get("data", {}).get("fps")
+
+        if not fps:
+            fps = 25
+
+    return convert_to_maya_fps(fps)
+
+
 def get_frame_range(include_animation_range=False):
     """Get the current assets frame range and handles.
 
@@ -2256,7 +2284,6 @@ def get_frame_range(include_animation_range=False):
         "handleStart": handle_start,
         "handleEnd": handle_end
     }
-
     if include_animation_range:
         # The animation range values are only included to define whether
         # the Maya time slider should include the handles or not.
@@ -2280,15 +2307,13 @@ def get_frame_range(include_animation_range=False):
             animation_start -= int(handle_start)
             animation_end += int(handle_end)
 
-        frame_range["frameStart"] = animation_start
-        frame_range["frameEnd"] = animation_end
         frame_range["animationStart"] = animation_start
         frame_range["animationEnd"] = animation_end
 
     return frame_range
 
 
-def reset_frame_range(playback=True, render=True, fps=True, instances=True):
+def reset_frame_range(playback=True, render=True, fps=True):
     """Set frame range to current asset
 
     Args:
@@ -2297,14 +2322,9 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
         render (bool, Optional): Whether to set the maya render frame range.
             Defaults to True.
         fps (bool, Optional): Whether to set scene FPS. Defaults to True.
-        instances (bool, Optional): Whether to update publishable instances.
-            Defaults to True.
     """
     if fps:
-        fps = convert_to_maya_fps(
-            float(legacy_io.Session.get("AVALON_FPS", 25))
-        )
-        set_scene_fps(fps)
+        set_scene_fps(get_fps_for_current_context())
 
     frame_range = get_frame_range(include_animation_range=True)
     if not frame_range:
@@ -2329,12 +2349,6 @@ def reset_frame_range(playback=True, render=True, fps=True, instances=True):
         cmds.setAttr("defaultRenderGlobals.startFrame", animation_start)
         cmds.setAttr("defaultRenderGlobals.endFrame", animation_end)
 
-    if instances:
-        project_name = get_current_project_name()
-        settings = get_project_settings(project_name)
-        if settings["maya"]["update_publishable_frame_range"]["enabled"]:
-            update_instances_frame_range()
-
 
 def reset_scene_resolution():
     """Apply the scene resolution  from the project definition
@@ -2346,7 +2360,7 @@ def reset_scene_resolution():
         None
     """
 
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     project_doc = get_project(project_name)
     project_data = project_doc["data"]
     asset_data = get_current_project_asset()["data"]
@@ -2379,19 +2393,9 @@ def set_context_settings():
         None
     """
 
-    # Todo (Wijnand): apply renderer and resolution of project
-    project_name = legacy_io.active_project()
-    project_doc = get_project(project_name)
-    project_data = project_doc["data"]
-    asset_doc = get_current_project_asset(fields=["data.fps"])
-    asset_data = asset_doc.get("data", {})
 
     # Set project fps
-    fps = convert_to_maya_fps(
-        asset_data.get("fps", project_data.get("fps", 25))
-    )
-    legacy_io.Session["AVALON_FPS"] = str(fps)
-    set_scene_fps(fps)
+    set_scene_fps(get_fps_for_current_context())
 
     reset_scene_resolution()
 
@@ -2411,9 +2415,7 @@ def validate_fps():
 
     """
 
-    expected_fps = convert_to_maya_fps(
-        get_current_project_asset(fields=["data.fps"])["data"]["fps"]
-    )
+    expected_fps = get_fps_for_current_context()
     current_fps = mel.eval('currentTimeUnitToFPS()')
 
     fps_match = current_fps == expected_fps
@@ -3167,63 +3169,31 @@ def remove_render_layer_observer():
         pass
 
 
-def iter_publish_instances():
-    """Iterate over publishable instances (their objectSets).
+def update_content_on_context_change():
     """
-    for node in cmds.ls(
-        "*.id",
-        long=True,
-        type="objectSet",
-        recursive=True,
-        objectsOnly=True
-    ):
-        if cmds.getAttr("{}.id".format(node)) != "pyblish.avalon.instance":
-            continue
-        yield node
-
-
-def update_instances_asset_name():
-    """Update 'asset' attribute of publishable instances (their objectSets)
-    that got one.
+    This will update scene content to match new asset on context change
     """
-
-    for instance in iter_publish_instances():
-        if not cmds.attributeQuery("asset", node=instance, exists=True):
-            continue
-        attr = "{}.asset".format(instance)
-        cmds.setAttr(attr, get_current_asset_name(), type="string")
-
-
-def update_instances_frame_range():
-    """Update 'frameStart', 'frameEnd', 'handleStart', 'handleEnd' and 'fps'
-    attributes of publishable instances (their objectSets) that got one.
-    """
-
-    attributes = ["frameStart", "frameEnd", "handleStart", "handleEnd", "fps"]
-
-    attrs_per_instance = {}
-    for instance in iter_publish_instances():
-        instance_attrs = [
-            attr for attr in attributes
-            if cmds.attributeQuery(attr, node=instance, exists=True)
-        ]
-
-        if instance_attrs:
-            attrs_per_instance[instance] = instance_attrs
-
-    if not attrs_per_instance:
-        # no instances with any frame related attributes
-        return
-
-    fields = ["data.{}".format(key) for key in attributes]
-    asset_doc = get_current_project_asset(fields=fields)
-    asset_data = asset_doc["data"]
-
-    for node, attrs in attrs_per_instance.items():
-        for attr in attrs:
-            plug = "{}.{}".format(node, attr)
-            value = asset_data[attr]
-            cmds.setAttr(plug, value)
+    scene_sets = cmds.listSets(allSets=True)
+    asset_doc = get_current_project_asset()
+    new_asset = asset_doc["name"]
+    new_data = asset_doc["data"]
+    for s in scene_sets:
+        try:
+            if cmds.getAttr("{}.id".format(s)) == "pyblish.avalon.instance":
+                attr = cmds.listAttr(s)
+                print(s)
+                if "asset" in attr:
+                    print("  - setting asset to: [ {} ]".format(new_asset))
+                    cmds.setAttr("{}.asset".format(s),
+                                 new_asset, type="string")
+                if "frameStart" in attr:
+                    cmds.setAttr("{}.frameStart".format(s),
+                                 new_data["frameStart"])
+                if "frameEnd" in attr:
+                    cmds.setAttr("{}.frameEnd".format(s),
+                                 new_data["frameEnd"],)
+        except ValueError:
+            pass
 
 
 def show_message(title, msg):
@@ -4146,12 +4116,10 @@ def create_rig_animation_instance(
     )
     assert roots, "No root nodes in rig, this is a bug."
 
-    asset = legacy_io.Session["AVALON_ASSET"]
-    dependency = str(context["representation"]["_id"])
-
     custom_subset = options.get("animationSubsetName")
     if custom_subset:
         formatting_data = {
+            # TODO remove 'asset_type' and replace 'asset_name' with 'asset'
             "asset_name": context['asset']['name'],
             "asset_type": context['asset']['type'],
             "subset": context['subset']['name'],
@@ -4169,14 +4137,17 @@ def create_rig_animation_instance(
     if log:
         log.info("Creating subset: {}".format(namespace))
 
+    # Fill creator identifier
+    creator_identifier = "io.openpype.creators.maya.animation"
+
+    host = registered_host()
+    create_context = CreateContext(host)
+
     # Create the animation instance
-    creator_plugin = get_legacy_creator_by_name("CreateAnimation")
     with maintained_selection():
         cmds.select([output, controls] + roots, noExpand=True)
-        legacy_create(
-            creator_plugin,
-            name=namespace,
-            asset=asset,
-            options={"useSelection": True},
-            data={"dependencies": dependency}
+        create_context.create(
+            creator_identifier=creator_identifier,
+            variant=namespace,
+            pre_create_data={"use_selection": True}
         )

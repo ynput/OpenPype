@@ -138,8 +138,7 @@
             "version-not-found": "#ffc671",
 
             "source-version": "#D3D8DE",
-            "source-version-outdated": "#ffc671",
-            "system-protected": "#FC6060"
+            "source-version-outdated": "#ffc671"
         }
     }
 }

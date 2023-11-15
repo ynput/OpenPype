@@ -28,10 +28,9 @@ class TestPipelineColorspace(TestPipeline):
         cd to OpenPype repo root dir
         poetry run python ./start.py runtests ../tests/unit/openpype/pipeline
     """
-
     TEST_FILES = [
         (
-            "1Lf-mFxev7xiwZCWfImlRcw7Fj8XgNQMh",
+            "1csqimz8bbNcNgxtEXklLz6GRv91D3KgA",
             "test_pipeline_colorspace.zip",
             ""
         )

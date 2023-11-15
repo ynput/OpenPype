@@ -76,7 +76,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             "JobInfo": {
                 "Plugin": "Houdini",
                 "Pool": "houdini",  # todo: remove hardcoded pool
-                "BatchName": "Group: " + batch_name,
+                "BatchName": batch_name,
                 "Comment": context.data.get("comment", ""),
                 "Priority": 50,
                 "Frames": "1-1",  # Always trigger a single frame
@@ -162,7 +162,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
         )
 
         # Submit
-        self.log.info("Submitting..")
+        self.log.debug("Submitting..")
         self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
         # E.g. http://192.168.0.1:8082/api/jobs

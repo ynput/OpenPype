@@ -1,0 +1,85 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:config-1.0",
+    "description": "A project configuration.",
+
+    "type": "object",
+
+    "additionalProperties": false,
+    "required": [
+        "tasks",
+        "apps"
+    ],
+
+    "properties": {
+        "schema": {
+            "description": "Schema identifier for payload",
+            "type": "string"
+        },
+        "template": {
+            "type": "object",
+            "additionalProperties": false,
+            "patternProperties": {
+                "^.*$": {
+                    "type": "string"
+                }
+            }
+        },
+        "tasks": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "icon": {"type": "string"},
+                    "group": {"type": "string"},
+                    "label": {"type": "string"}
+                },
+                "required": ["name"]
+            }
+        },
+        "apps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "icon": {"type": "string"},
+                    "group": {"type": "string"},
+                    "label": {"type": "string"}
+                },
+                "required": ["name"]
+            }
+        },
+        "families": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "icon": {"type": "string"},
+                    "label": {"type": "string"},
+                    "hideFilter": {"type": "boolean"}
+                },
+                "required": ["name"]
+            }
+        },
+        "groups": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "icon": {"type": "string"},
+                    "color": {"type": "string"},
+                    "order": {"type": ["integer", "number"]}
+                },
+                "required": ["name"]
+            }
+        },
+        "copy": {
+            "type": "object"
+        }
+    }
+}

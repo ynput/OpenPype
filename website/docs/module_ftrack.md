@@ -8,7 +8,7 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 
-Ftrack is currently the main project management option for OpenPype. This documentation assumes that you are familiar with Ftrack and its basic principles. If you're new to Ftrack, we recommend having a thorough look at [Ftrack Official Documentation](https://help.ftrack.com/en/).
+Ftrack is currently the main project management option for OpenPype. This documentation assumes that you are familiar with Ftrack and its basic principles. If you're new to Ftrack, we recommend having a thorough look at [Ftrack Official Documentation](http://ftrack.rtd.ftrack.com/en/stable/).
 
 ## Prepare Ftrack for OpenPype
 
@@ -172,24 +172,15 @@ This event updates entities on their changes Ftrack. When new entity is created 
 Deleting an entity by Ftrack's default is not processed for security reasons _(to delete entity use [Delete Asset/Subset action](manager_ftrack_actions.md#delete-asset-subset))_.
 :::
 
-### Prepare Project
-[More informations here](manager_ftrack_actions.md#prepare-project).
-
 ### Synchronize Hierarchical and Entity Attributes
 
 Auto-synchronization of hierarchical attributes from Ftrack entities.
 
 Related to [Synchronize to Avalon database](manager_ftrack.md#synchronization-to-avalon-database) event _(without it, it makes no sense to use this event)_. Hierarchical attributes must be synchronized with special way so we needed to split synchronization into 2 parts. There are [synchronization rules](manager_ftrack.md#synchronization-rules) for hierarchical attributes that must be met otherwise interface with messages about not meeting conditions is shown to user.
 
-### Clone Review Session
-On enabled: clone option is only available to a specific users.
-
 ### Update Hierarchy thumbnails
 
 Push thumbnails from version, up through multiple hierarchy levels
-
-### Run script on user assignments
-On enabled : runs a script each time a task is assigned to a specific user.
 
 ### Update status on task action
 
@@ -206,11 +197,6 @@ Is used to remove value from `Avalon/Mongo Id` Custom Attribute when entity is c
 ### Sync status from Task to Parent
 
 List of parent object types where this is triggered ("Shot", "Asset build", etc. Skipped if it is empty)
-
-### Sync status from Task to Version
-
-Changes status of task's latest asset versions on its status change.
-Set on the left the Version name, and on the right the Task names.
 
 ### Sync status from Version to Task
 
@@ -229,58 +215,6 @@ This is useful for example if first version publish doesn't contain any actual r
 ### Update status on next task
 Change status on next task by task types order when task status state changed to "Done". All tasks with the same Task mapping of next task status changes From → To. Some status can be ignored.
 
-### Action to transfer hierarchical attribute values
-Set the users who can transfer hierarchical attributes values.
-
-### Create daily review session
-On enabled: create review sessions based on settings (attribute it to a role, automate the daily review's creation everyday, set an hour and a template).
-If a review session already exists with the same name, then the process is skiped. If a review session for the current day does not exist, but yesterday's review exists and is empty then yesterday's is renamed, otherwise it creates a new review session.
-
-## User Actions/Events
-### Application - Status change on launch
-On enabled : Change the task status on launch.
-
-Settings :
-1. You can exclude the status change if the task has a specific one.
-2. Change task's status to left side if current task status is in list on right side.
-
-![Status Change On Launch](assets/ftrack/ftrack_userActionsEvents_StatusChangeOnLaunch.png)
-
-### Create/Update Avalon Attributes
-Set the users who can create or update Avalon attributes.
-
-### Prepare Project
-More informations [here](manager_ftrack_actions.md#prepare-project).
-Enable "Checked" to trigger the "Project Folder Structure"
-
-### Clean hierarchical custom attributes
-Set the users who can clean hierarchical custom attributes
-
-### Delete Asset/Subsets
-Set the users who can delete the assets and subsets
-
-### Delete old versions
-Set the users who can delete the old versions.
-
-### Delivery
-Set the users who can deliver.
-
-### Store Thumbnails to avalon
-Set the users who can store thumbnails to Avalon.
-
-### Job Killer
-Set the users who can job kill.
-
-### Sync to avalon (local) - For development
-Set the users who can synchronize to Avalon in local for development.
-
-### Fill workfile Custom attribute
-Fill workfile name into a custom attribute on tasks.
-Prerequirements are that the project is synchronized so it is possible to access project anatomy and project/asset documents. Tasks that are not synchronized are skipped too.
-
-### Seed Debug Project
-Set the users who can seed debug projects.
-
 ## Publish plugins
 
 ### Collect Ftrack Family
@@ -294,7 +228,7 @@ Profiles are used to select when to add Ftrack family to the instance. One or mu
 
 Eg. If I want review created and uploaded to Ftrack for render published from Maya , setting is:
 
-Host names: 'maya'
+Host names: 'Maya'
 Families: 'render'
 Add Ftrack Family: enabled
 

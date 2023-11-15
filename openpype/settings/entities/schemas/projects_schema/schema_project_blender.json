@@ -32,6 +32,16 @@
             ]
         },
         {
+            "key": "set_resolution_startup",
+            "type": "boolean",
+            "label": "Set Resolution on Startup"
+        },
+        {
+            "key": "set_frames_startup",
+            "type": "boolean",
+            "label": "Set Start/End Frames and FPS on Startup"
+        },
+        {
             "key": "imageio",
             "type": "dict",
             "label": "Color Management (OCIO managed)",

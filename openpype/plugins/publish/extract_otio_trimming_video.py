@@ -11,7 +11,7 @@ from copy import deepcopy
 import pyblish.api
 
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     run_subprocess,
 )
 from openpype.pipeline import publish
@@ -75,14 +75,12 @@ class ExtractOTIOTrimmingVideo(publish.Extractor):
             otio_range (opentime.TimeRange): range to trim to
 
         """
-        # get rendering app path
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
         # create path to destination
         output_path = self._get_ffmpeg_output(input_file_path)
 
         # start command list
-        command = [ffmpeg_path]
+        command = get_ffmpeg_tool_args("ffmpeg")
 
         video_path = input_file_path
         frame_start = otio_range.start_time.value

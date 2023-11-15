@@ -25,33 +25,6 @@ For [AWS Thinkbox Deadline](https://www.awsthinkbox.com/deadline) support you ne
 Multiple different DL webservice could be configured. First set them in point 4., then they could be configured per project in `project_settings/deadline/deadline_servers`.
 Only single webservice could be a target of publish though.
 
-You also can set the batch name you want in the settings:
-![Deadline Batch Name](assets/deadline_batch_name.png)
-
-### Available template keys
-Here's the keys you can use for your batch name
-
-<div class="row markdown">
-<div class="col col--5 markdown">
-
-
-| Context key | Description |
-| --- | --- |
-| `project[name]` | Project's full name |
-| `project[code]` | Project's code |
-| `asset` | Name of asset or shot |
-| `task[name]` | Name of task |
-| `task[type]` | Type of task |
-| `task[short]` | Short name of task type (eg. 'Modeling' > 'mdl') |
-| `version` | Version number |
-| `family` | Main family name |
-| `ext` | File extension |
-| `subversion` |  File name's subversion
-| `comment` |  |
-
-</div>
-<div class="col col--7 markdown">
-
 
 ## Configuration
 

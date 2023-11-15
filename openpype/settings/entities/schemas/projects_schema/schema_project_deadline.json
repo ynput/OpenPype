@@ -12,16 +12,6 @@
             "multiselect": true
         },
         {
-            "type": "text",
-            "key": "deadline_batch_name",
-            "label": "Batch name"
-        },
-        {
-            "type": "text",
-            "key": "deadline_job_name",
-            "label": "Job name"
-        },
-        {
             "type": "dict",
             "collapsible": true,
             "key": "publish",

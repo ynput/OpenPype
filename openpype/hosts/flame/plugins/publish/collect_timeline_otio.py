@@ -2,7 +2,6 @@ import pyblish.api
 
 import openpype.hosts.flame.api as opfapi
 from openpype.hosts.flame.otio import flame_export
-from openpype.pipeline import legacy_io
 from openpype.pipeline.create import get_subset_name
 
 
@@ -19,7 +18,7 @@ class CollecTimelineOTIO(pyblish.api.ContextPlugin):
 
         # main
         asset_doc = context.data["assetEntity"]
-        task_name = legacy_io.Session["AVALON_TASK"]
+        task_name = context.data["task"]
         project = opfapi.get_current_project()
         sequence = opfapi.get_current_sequence(opfapi.CTX.selection)
 

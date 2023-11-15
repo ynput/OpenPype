@@ -163,17 +163,6 @@ function main(websocket_url){
             });
     });
 
-    RPC.addRoute('AfterEffects.import_file_with_dialog', function (data) {
-        log.warn('Server called client route "import_file_with_dialog":', data);
-        var escapedPath = EscapeStringForJSX(data.path);
-        return runEvalScript("importFileWithDialog('" + escapedPath +"', " +
-                                         "'" + data.item_name + "')")
-            .then(function(result){
-                log.warn("importFileWithDialog: " + result);
-                return result;
-            });
-    });
-
     RPC.addRoute('AfterEffects.replace_item', function (data) {
         log.warn('Server called client route "replace_item":', data);
         var escapedPath = EscapeStringForJSX(data.path);

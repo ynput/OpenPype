@@ -196,11 +196,11 @@ More about [workfiles](artist_tools_workfiles).
 
 - **Open Workfile**
 
-  - You can [configure](project_settings/project_settings_nuke.md#create-first-workfile) Nuke to automatically open the last version, or create a file on startup. See **Studio Settings → Project → Global → Tools → Workfiles**
+  - You can [configure](project_settings/settings_project_nuke.md#create-first-workfile) Nuke to automatically open the last version, or create a file on startup. See **Studio Settings → Project → Global → Tools → Workfiles**
 
 - **Nuke Color Settings**
 
-  - [Color setting](project_settings/project_settings_nuke.md) for Nuke can be found in **Studio Settings → Project → Anatomy → Color Management and Output Formats → Nuke**
+  - [Color setting](project_settings/settings_project_nuke.md) for Nuke can be found in **Studio Settings → Project → Anatomy → Color Management and Output Formats → Nuke**
 :::
 
 ### Load plate

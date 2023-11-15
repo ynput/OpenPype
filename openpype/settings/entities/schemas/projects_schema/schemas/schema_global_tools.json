@@ -321,10 +321,6 @@
             "label": "Publish",
             "children": [
                 {
-                    "type": "label",
-                    "label": "<b>NOTE:</b> For backwards compatibility can be value empty and in that case are used values from <a href=\"settings://project_settings/global/publish/IntegrateAssetNew\"><b>IntegrateAssetNew</b></a>. This will change in future so please move all values here as soon as possible."
-                },
-                {
                     "type": "list",
                     "key": "template_name_profiles",
                     "label": "Template name profiles",
@@ -473,20 +469,6 @@
                             }
                         ]
                     }
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "symlink",
-                    "label": "Symlink",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "text",
-                            "key": "file_regex_pattern",
-                            "label": "File Regex Pattern"
-                        }
-                    ]
                 }
             ]
         }

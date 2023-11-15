@@ -10,7 +10,7 @@ import json
 import six
 
 from openpype.client import get_asset_by_name
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name, get_current_asset_name
 from openpype.pipeline.context_tools import get_current_project_asset
 
 import hou
@@ -22,9 +22,12 @@ log = logging.getLogger(__name__)
 JSON_PREFIX = "JSON:::"
 
 
-def get_asset_fps():
+def get_asset_fps(asset_doc=None):
     """Return current asset fps."""
-    return get_current_project_asset()["data"].get("fps")
+
+    if asset_doc is None:
+        asset_doc = get_current_project_asset(fields=["data.fps"])
+    return asset_doc["data"]["fps"]
 
 
 def set_id(node, unique_id, overwrite=False):
@@ -78,8 +81,8 @@ def generate_ids(nodes, asset_id=None):
     """
 
     if asset_id is None:
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        project_name = get_current_project_name()
+        asset_name = get_current_asset_name()
         # Get the asset ID from the database for the asset of current context
         asset_doc = get_asset_by_name(project_name, asset_name, fields=["_id"])
 
@@ -472,14 +475,19 @@ def maintained_selection():
 
 
 def reset_framerange():
-    """Set frame range to current asset"""
+    """Set frame range and FPS to current asset"""
 
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+    # Get asset data
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     # Get the asset ID from the database for the asset of current context
     asset_doc = get_asset_by_name(project_name, asset_name)
     asset_data = asset_doc["data"]
 
+    # Get FPS
+    fps = get_asset_fps(asset_doc)
+
+    # Get Start and End Frames
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
 
@@ -493,6 +501,9 @@ def reset_framerange():
     frame_start -= int(handle_start)
     frame_end += int(handle_end)
 
+    # Set frame range and FPS
+    print("Setting scene FPS to {}".format(int(fps)))
+    set_scene_fps(fps)
     hou.playbar.setFrameRange(frame_start, frame_end)
     hou.playbar.setPlaybackRange(frame_start, frame_end)
     hou.setFrame(frame_start)

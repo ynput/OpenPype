@@ -11,7 +11,6 @@ from openpype.lib import (
 from openpype.pipeline import legacy_io
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 
@@ -51,23 +50,12 @@ class AfterEffectsSubmitDeadline(
         dln_job_info = DeadlineJobInfo(Plugin="AfterEffects")
 
         context = self._instance.context
-        filename = os.path.basename(self._instance.data["source"])
 
-        job_name = set_custom_deadline_name(
-            self._instance,
-            filename,
-            "deadline_job_name"
-        )
-        batch_name = set_custom_deadline_name(
-            self._instance,
-            filename,
-            "deadline_batch_name"
-        )
-
+        batch_name = os.path.basename(self._instance.data["source"])
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
-        dln_job_info.Name = job_name
-        dln_job_info.BatchName = "Group: " + batch_name
+        dln_job_info.Name = self._instance.data["name"]
+        dln_job_info.BatchName = batch_name
         dln_job_info.Plugin = "AfterEffects"
         dln_job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())
@@ -118,8 +106,8 @@ class AfterEffectsSubmitDeadline(
             if value:
                 dln_job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        dln_job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        dln_job_info.add_render_job_env_var()
 
         return dln_job_info
 

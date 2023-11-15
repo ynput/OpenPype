@@ -106,10 +106,6 @@
       "name": "schema_djv"
     },
     {
-      "type": "schema",
-      "name": "schema_openrv"
-    },
-    {
       "type": "dict-modifiable",
       "key": "additional_apps",
       "label": "Additional",

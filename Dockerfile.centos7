@@ -32,12 +32,16 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
         wget \
         gcc \
         zlib-devel \
+        pcre-devel \
+        perl-core \
         bzip2 \
         bzip2-devel \
         readline-devel \
         sqlite sqlite-devel \
         openssl-devel \
         openssl-libs \
+        openssl11-devel \
+        openssl11-libs \
         tk-devel libffi-devel \
         patchelf \
         automake \
@@ -71,7 +75,12 @@ RUN echo 'export PATH="$HOME/.pyenv/bin:$PATH"'>> $HOME/.bashrc \
     && echo 'eval "$(pyenv init -)"' >> $HOME/.bashrc \
     && echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/.bashrc \
     && echo 'eval "$(pyenv init --path)"' >> $HOME/.bashrc
-RUN source $HOME/.bashrc && pyenv install ${OPENPYPE_PYTHON_VERSION}
+RUN source $HOME/.bashrc \
+    && export CPPFLAGS="-I/usr/include/openssl11" \
+    && export LDFLAGS="-L/usr/lib64/openssl11 -lssl -lcrypto" \
+    && export PATH=/usr/local/openssl/bin:$PATH \
+    && export LD_LIBRARY_PATH=/usr/local/openssl/lib:$LD_LIBRARY_PATH \
+    && pyenv install ${OPENPYPE_PYTHON_VERSION}
 
 COPY . /opt/openpype/
 RUN rm -rf /openpype/.poetry || echo "No Poetry installed yet."
@@ -93,12 +102,15 @@ RUN source $HOME/.bashrc \
 RUN source $HOME/.bashrc \
     && ./tools/fetch_thirdparty_libs.sh
 
+RUN echo 'export PYTHONPATH="/opt/openpype/vendor/python:$PYTHONPATH"'>> $HOME/.bashrc
 RUN source $HOME/.bashrc \
     && bash ./tools/build.sh
 
 RUN cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.9/lib \
-    && cp /usr/lib64/libssl* ./build/exe.linux-x86_64-3.9/lib \
-    && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /usr/lib64/openssl11/libssl* ./build/exe.linux-x86_64-3.9/lib \
+    && cp /usr/lib64/openssl11/libcrypto* ./build/exe.linux-x86_64-3.9/lib \
+    && ln -sr ./build/exe.linux-x86_64-3.9/lib/libssl.so ./build/exe.linux-x86_64-3.9/lib/libssl.1.1.so \
+    && ln -sr ./build/exe.linux-x86_64-3.9/lib/libcrypto.so ./build/exe.linux-x86_64-3.9/lib/libcrypto.1.1.so \
     && cp /root/.pyenv/versions/${OPENPYPE_PYTHON_VERSION}/lib/libpython* ./build/exe.linux-x86_64-3.9/lib \
     && cp /usr/lib64/libxcb* ./build/exe.linux-x86_64-3.9/vendor/python/PySide2/Qt/lib
 

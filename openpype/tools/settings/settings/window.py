@@ -11,14 +11,12 @@ from openpype.settings.lib import (
     opened_settings_ui,
     closed_settings_ui,
 )
-from openpype.settings import get_system_settings
 
 from .dialogs import SettingsUIOpenedElsewhere
 from .categories import (
     CategoryState,
     SystemWidget,
-    ProjectWidget,
-    EditMode
+    ProjectWidget
 )
 from .widgets import (
     ShadowWidget,
@@ -41,7 +39,7 @@ class SettingsController:
 
         self._opened_info = None
         self._last_opened_info = None
-        self._edit_mode = EditMode.ENABLE
+        self._edit_mode = None
 
     @property
     def user_role(self):
@@ -70,40 +68,36 @@ class SettingsController:
         self._opened_info = None
         self._edit_mode = None
 
-    def set_edit_mode(self, mode):
-        if self._edit_mode == mode:
+    def set_edit_mode(self, enabled):
+        if self._edit_mode is enabled:
             return
 
         opened_info = None
-        if mode == EditMode.ENABLE:
+        if enabled:
             opened_info = opened_settings_ui()
             self._last_opened_info = opened_info
 
         self._opened_info = opened_info
-
-        self._edit_mode = mode
+        self._edit_mode = enabled
 
         self.event_system.emit(
             "edit.mode.changed",
-            {"edit_mode": mode},
+            {"edit_mode": enabled},
             "controller"
         )
 
     def update_last_opened_info(self):
-        if self.edit_mode == EditMode.PROTECT:
-            return
-
         last_opened_info = get_last_opened_info()
-        mode = EditMode.DISABLE
+        enabled = False
         if (
             last_opened_info is None
             or self._opened_info == last_opened_info
         ):
-            mode = EditMode.ENABLE
+            enabled = True
 
         self._last_opened_info = last_opened_info
 
-        self.set_edit_mode(mode)
+        self.set_edit_mode(enabled)
 
 
 class MainWidget(QtWidgets.QWidget):
@@ -123,8 +117,6 @@ class MainWidget(QtWidgets.QWidget):
         self._main_reset = False
         self._controller = controller
 
-        self._protect_system_settings = False
-
         self._user_passed = False
         self._reset_on_show = reset_on_show
 
@@ -143,12 +135,6 @@ class MainWidget(QtWidgets.QWidget):
 
         studio_widget = SystemWidget(controller, header_tab_widget)
         project_widget = ProjectWidget(controller, header_tab_widget)
-
-        current_settings = get_system_settings()
-        production_version = current_settings.get('general').get("production_version")
-        if production_version != studio_widget._current_version:
-            self._protect_system_settings = True
-            self._controller.set_edit_mode(EditMode.PROTECT)
 
         tab_widgets = [
             studio_widget,
@@ -255,17 +241,17 @@ class MainWidget(QtWidgets.QWidget):
 
     def _check_on_reset(self):
         self._controller.update_last_opened_info()
-        if self._controller.edit_mode != EditMode.DISABLE:
+        if self._controller.edit_mode:
             return
 
-        # Someone else already has the settings
-        if self._controller.edit_mode != EditMode.PROTECT:
-            dialog = SettingsUIOpenedElsewhere(
-                self._controller.last_opened_info, self
-            )
-            dialog.exec_()
-            take_control = (dialog.result() == 1)
-            self._controller.set_edit_mode(take_control)
+        # if self._edit_mode is False:
+        #     return
+
+        dialog = SettingsUIOpenedElsewhere(
+            self._controller.last_opened_info, self
+        )
+        dialog.exec_()
+        self._controller.set_edit_mode(dialog.result() == 1)
 
     def _show_password_dialog(self):
         if self._password_dialog:
@@ -288,13 +274,13 @@ class MainWidget(QtWidgets.QWidget):
             return
 
         if not self._user_passed:
-            self._user_passed = not is_admin_password_required(ignore_admin_skip=True)
+            self._user_passed = not is_admin_password_required()
 
         self._on_state_change()
 
         if not self._user_passed:
             # Avoid doubled dialog
-            dialog = PasswordDialog(self, allow_remember=False)
+            dialog = PasswordDialog(self)
             dialog.setModal(True)
             dialog.finished.connect(self._on_password_dialog_close)
 
@@ -313,9 +299,6 @@ class MainWidget(QtWidgets.QWidget):
         self._main_reset = False
         self._check_on_reset()
 
-        # This is to show password dialog each time settings are opened
-        self._user_passed = False
-
     def _update_search_dialog(self, clear=False):
         if self._search_dialog.isVisible():
             entity = None
@@ -326,22 +309,11 @@ class MainWidget(QtWidgets.QWidget):
 
     def _edit_mode_changed(self, event):
         title = self.window_title
-        if event["edit_mode"] != EditMode.ENABLE:
+        if not event["edit_mode"]:
             title += " [View only]"
         self.setWindowTitle(title)
 
-    def is_protected(self, current_widget):
-        return (self._protect_system_settings and isinstance(current_widget, SystemWidget))
-
-    def _on_tab_changed(self, event):
-        current_widget = self._header_tab_widget.widget(event)
-        is_protected = self.is_protected(current_widget)
-        if is_protected:
-            self._controller.set_edit_mode(EditMode.PROTECT)
-        else:
-            self._controller.set_edit_mode(EditMode.ENABLE)
-            self._check_on_reset()
-        current_widget._update_labels_visibility()
+    def _on_tab_changed(self):
         self._update_search_dialog()
 
     def _on_search_path_clicked(self, path):

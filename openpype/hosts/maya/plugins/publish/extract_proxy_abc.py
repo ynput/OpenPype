@@ -32,7 +32,7 @@ class ExtractProxyAlembic(publish.Extractor):
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
         attr_prefixes = [value for value in attr_prefixes if value.strip()]
 
-        self.log.info("Extracting Proxy Alembic..")
+        self.log.debug("Extracting Proxy Alembic..")
         dirname = self.staging_dir(instance)
 
         filename = "{name}.abc".format(**instance.data)
@@ -82,7 +82,7 @@ class ExtractProxyAlembic(publish.Extractor):
 
         instance.context.data["cleanupFullPaths"].append(path)
 
-        self.log.info("Extracted {} to {}".format(instance, dirname))
+        self.log.debug("Extracted {} to {}".format(instance, dirname))
         # remove the bounding box
         bbox_master = cmds.ls("bbox_grp")
         cmds.delete(bbox_master)

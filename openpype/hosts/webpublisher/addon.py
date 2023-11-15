@@ -20,11 +20,10 @@ class WebpublisherAddon(OpenPypeModule, IHostAddon):
         Close Python process at the end.
         """
 
-        from openpype.pipeline.publish.lib import remote_publish
-        from .lib import get_webpublish_conn, publish_and_log
+        from .lib import get_webpublish_conn, publish_and_log, publish_in_test
 
         if is_test:
-            remote_publish(log, close_plugin_name)
+            publish_in_test(log, close_plugin_name)
             return
 
         dbcon = get_webpublish_conn()

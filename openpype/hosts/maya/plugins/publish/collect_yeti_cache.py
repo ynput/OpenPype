@@ -4,12 +4,23 @@ import pyblish.api
 
 from openpype.hosts.maya.api import lib
 
-SETTINGS = {"renderDensity",
-            "renderWidth",
-            "renderLength",
-            "increaseRenderBounds",
-            "imageSearchPath",
-            "cbId"}
+
+SETTINGS = {
+    # Preview
+    "displayOutput",
+    "colorR", "colorG", "colorB",
+    "viewportDensity",
+    "viewportWidth",
+    "viewportLength",
+    # Render attributes
+    "renderDensity",
+    "renderWidth",
+    "renderLength",
+    "increaseRenderBounds",
+    "imageSearchPath",
+    # Pipeline specific
+    "cbId"
+}
 
 
 class CollectYetiCache(pyblish.api.InstancePlugin):
@@ -39,10 +50,6 @@ class CollectYetiCache(pyblish.api.InstancePlugin):
         # Get yeti nodes and their transforms
         yeti_shapes = cmds.ls(instance, type="pgYetiMaya")
         for shape in yeti_shapes:
-            shape_data = {"transform": None,
-                          "name": shape,
-                          "cbId": lib.get_id(shape),
-                          "attrs": None}
 
             # Get specific node attributes
             attr_data = {}
@@ -58,9 +65,12 @@ class CollectYetiCache(pyblish.api.InstancePlugin):
             parent = cmds.listRelatives(shape, parent=True)[0]
             transform_data = {"name": parent, "cbId": lib.get_id(parent)}
 
-            # Store collected data
-            shape_data["attrs"] = attr_data
-            shape_data["transform"] = transform_data
+            shape_data = {
+                "transform": transform_data,
+                "name": shape,
+                "cbId": lib.get_id(shape),
+                "attrs": attr_data,
+            }
 
             settings["nodes"].append(shape_data)
 

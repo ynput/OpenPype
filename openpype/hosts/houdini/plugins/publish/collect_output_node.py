@@ -1,5 +1,7 @@
 import pyblish.api
 
+from openpype.pipeline.publish import KnownPublishError
+
 
 class CollectOutputSOPPath(pyblish.api.InstancePlugin):
     """Collect the out node's SOP/COP Path value."""
@@ -58,8 +60,8 @@ class CollectOutputSOPPath(pyblish.api.InstancePlugin):
         elif node_type == "Redshift_Proxy_Output":
             out_node = node.parm("RS_archive_sopPath").evalAsNode()
         else:
-            raise ValueError(
-                "ROP node type '%s' is" " not supported." % node_type
+            raise KnownPublishError(
+                "ROP node type '{}' is not supported.".format(node_type)
             )
 
         if not out_node:

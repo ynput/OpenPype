@@ -1,3 +1,5 @@
+import json
+import base64
 import os
 import errno
 import logging
@@ -14,6 +16,7 @@ from openpype.host import (
     HostBase,
     IWorkfileHost,
     ILoadHost,
+    IPublishHost,
     HostDirmap,
 )
 from openpype.tools.utils import host_tools
@@ -24,14 +27,15 @@ from openpype.lib import (
 )
 from openpype.pipeline import (
     legacy_io,
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
     register_loader_plugin_path,
     register_inventory_action_path,
-    register_builder_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
     deregister_inventory_action_path,
     deregister_creator_plugin_path,
-    deregister_builder_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
@@ -62,12 +66,11 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
-BUILDER_PATH = os.path.join(PLUGINS_DIR, "builder")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
 
 
-class MayaHost(HostBase, IWorkfileHost, ILoadHost):
+class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "maya"
 
     def __init__(self):
@@ -75,7 +78,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         self._op_events = {}
 
     def install(self):
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
         # process path mapping
         dirmap_processor = MayaDirmap("maya", project_name, project_settings)
@@ -89,7 +92,6 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
         register_inventory_action_path(INVENTORY_PATH)
-        register_builder_action_path(BUILDER_PATH)
         self.log.info(PUBLISH_PATH)
 
         self.log.info("Installing callbacks ... ")
@@ -153,6 +155,20 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost):
     def maintained_selection(self):
         with lib.maintained_selection():
             yield
+
+    def get_context_data(self):
+        data = cmds.fileInfo("OpenPypeContext", query=True)
+        if not data:
+            return {}
+
+        data = data[0]  # Maya seems to return a list
+        decoded = base64.b64decode(data).decode("utf-8")
+        return json.loads(decoded)
+
+    def update_context_data(self, data, changes):
+        json_str = json.dumps(data)
+        encoded = base64.b64encode(json_str.encode("utf-8"))
+        return cmds.fileInfo("OpenPypeContext", encoded)
 
     def _register_callbacks(self):
         for handler, event in self._op_events.copy().items():
@@ -307,7 +323,7 @@ def _remove_workfile_lock():
 def handle_workfile_locks():
     if lib.IS_HEADLESS:
         return False
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     return is_workfile_lock_enabled(MayaHost.name, project_name)
 
 
@@ -320,7 +336,6 @@ def uninstall():
     deregister_loader_plugin_path(LOAD_PATH)
     deregister_creator_plugin_path(CREATE_PATH)
     deregister_inventory_action_path(INVENTORY_PATH)
-    deregister_builder_action_path(BUILDER_PATH)
 
     menu.uninstall()
 
@@ -642,19 +657,7 @@ def on_task_changed():
 
     with lib.suspended_refresh():
         lib.set_context_settings()
-        lib.update_instances_frame_range()
-        lib.update_instances_asset_name()
-
-    msg = "  project: {}\n  asset: {}\n  task:{}".format(
-        legacy_io.active_project(),
-        legacy_io.Session["AVALON_ASSET"],
-        legacy_io.Session["AVALON_TASK"]
-    )
-
-    lib.show_message(
-        "Context was changed",
-        ("Context was changed to:\n{}".format(msg)),
-    )
+        lib.update_content_on_context_change()
 
 
 def before_workfile_open():
@@ -663,7 +666,7 @@ def before_workfile_open():
 
 
 def before_workfile_save(event):
-    project_name = legacy_io.active_project()
+    project_name = get_current_project_name()
     if handle_workfile_locks():
         _remove_workfile_lock()
     workdir_path = event["workdir_path"]

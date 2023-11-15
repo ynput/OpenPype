@@ -12,7 +12,9 @@ from openpype.pipeline import (
     legacy_io,
     OpenPypePyblishPluginMixin
 )
-from openpype.settings import get_project_settings
+from openpype.pipeline.publish.lib import (
+    replace_with_published_scene_path
+)
 from openpype.hosts.max.api.lib import (
     get_current_renderer,
     get_multipass_setting
@@ -20,7 +22,7 @@ from openpype.hosts.max.api.lib import (
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
-from openpype.modules.deadline.utils import set_custom_deadline_name
+from openpype.lib import is_running_from_build
 
 
 @attr.s
@@ -75,19 +77,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
-        job_name = set_custom_deadline_name(
-            instance,
-            src_filename,
-            "deadline_job_name"
-        )
-        batch_name = set_custom_deadline_name(
-            instance,
-            src_filename,
-            "deadline_batch_name"
-        )
-
-        job_info.Name = job_name
-        job_info.BatchName = "Group: " + batch_name
+        job_info.Name = "%s - %s" % (src_filename, instance.name)
+        job_info.BatchName = src_filename
         job_info.Plugin = instance.data["plugin"]
         job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
         job_info.EnableAutoTimeout = True
@@ -122,9 +113,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_VERSION",
             "IS_TEST"
         ]
+
+        # Add OpenPype version if we are running from build.
+        if is_running_from_build():
+            keys.append("OPENPYPE_VERSION")
+
         # Add mongo url if it's enabled
         if self._instance.context.data.get("deadlinePassMongoUrl"):
             keys.append("OPENPYPE_MONGO")
@@ -138,8 +133,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                 continue
             job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
         job_info.EnvironmentKeyValue["OPENPYPE_LOG_NO_COLORS"] = "1"
 
         # Add list of expected files to job
@@ -181,7 +176,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         first_file = next(self._iter_expected_files(files))
         output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"
 
         filename = os.path.basename(filepath)
 
@@ -191,20 +185,18 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         }
 
         self.log.debug("Submitting 3dsMax render..")
-        payload = self._use_published_name(payload_data)
+        project_settings = instance.context.data["project_settings"]
+        payload = self._use_published_name(payload_data, project_settings)
         job_info, plugin_info = payload
         self.submit(self.assemble_payload(job_info, plugin_info))
 
-    def _use_published_name(self, data):
+    def _use_published_name(self, data, project_settings):
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
         plugin_data = {}
-        project_setting = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
 
-        multipass = get_multipass_setting(project_setting)
+        multipass = get_multipass_setting(project_settings)
         if multipass:
             plugin_data["DisableMultipass"] = 0
         else:
@@ -245,7 +237,10 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if renderer == "Redshift_Renderer":
             plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
                 "separateAovFiles")
-
+        if instance.data["cameras"]:
+            plugin_info["Camera0"] = None
+            plugin_info["Camera"] = instance.data["cameras"][0]
+            plugin_info["Camera1"] = instance.data["cameras"][0]
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 
@@ -256,7 +251,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if instance.data["renderer"] == "Redshift_Renderer":
             self.log.debug("Using Redshift...published scene wont be used..")
             replace_in_path = False
-            return replace_in_path
+        return replace_with_published_scene_path(
+            instance, replace_in_path)
 
     @staticmethod
     def _iter_expected_files(exp):

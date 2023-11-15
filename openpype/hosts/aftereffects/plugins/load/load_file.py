@@ -17,8 +17,7 @@ class FileLoader(api.AfterEffectsLoader):
                 "render",
                 "prerender",
                 "review",
-                "audio",
-                "workfile"]
+                "audio"]
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
@@ -30,33 +29,27 @@ class FileLoader(api.AfterEffectsLoader):
 
         import_options = {}
 
-        file = self.fname
-        repr_cont = context["representation"]["context"]
+        path = self.filepath_from_context(context)
 
-        if not file:
+        if len(context["representation"]["files"]) > 1:
+            import_options['sequence'] = True
+
+        if not path:
             repr_id = context["representation"]["_id"]
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
-        if'.psd' in file:
-            comp = stub.import_file_with_dialog(self.fname, stub.LOADED_ICON + comp_name)
+        path = path.replace("\\", "/")
+        if '.psd' in path:
+            import_options['ImportAsType'] = 'ImportAsType.COMP'
 
-        else:
-            frame = repr_cont.get("frame")
-            if frame:
-                padding = len(frame)
-                file = file.replace(frame, "#" * padding)
-                import_options['sequence'] = True
-
-            comp = stub.import_file(self.fname, stub.LOADED_ICON + comp_name,
+        comp = stub.import_file(path, stub.LOADED_ICON + comp_name,
                                 import_options)
-
-        file = file.replace("\\", "/")
 
         if not comp:
             self.log.warning(
-                "Representation id `{}` is failing to load".format(file))
+                "Representation `{}` is failing to load".format(path))
             self.log.warning("Check host app for alert error.")
             return
 

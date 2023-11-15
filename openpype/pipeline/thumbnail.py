@@ -2,6 +2,8 @@ import os
 import copy
 import logging
 
+from openpype import AYON_SERVER_ENABLED
+from openpype.lib import Logger
 from openpype.client import get_project
 from . import legacy_io
 from .anatomy import Anatomy
@@ -10,13 +12,13 @@ from .plugin_discover import (
     register_plugin,
     register_plugin_path,
 )
-log = logging.getLogger(__name__)
 
 
 def get_thumbnail_binary(thumbnail_entity, thumbnail_type, dbcon=None):
     if not thumbnail_entity:
         return
 
+    log = Logger.get_logger(__name__)
     resolvers = discover_thumbnail_resolvers()
     resolvers = sorted(resolvers, key=lambda cls: cls.priority)
     if dbcon is None:
@@ -131,6 +133,62 @@ class BinaryThumbnail(ThumbnailResolver):
         return thumbnail_entity["data"].get("binary_data")
 
 
+class ServerThumbnailResolver(ThumbnailResolver):
+    _cache = None
+
+    @classmethod
+    def _get_cache(cls):
+        if cls._cache is None:
+            from openpype.client.server.thumbnails import AYONThumbnailCache
+
+            cls._cache = AYONThumbnailCache()
+        return cls._cache
+
+    def process(self, thumbnail_entity, thumbnail_type):
+        if not AYON_SERVER_ENABLED:
+            return None
+        data = thumbnail_entity["data"]
+        entity_type = data.get("entity_type")
+        entity_id = data.get("entity_id")
+        if not entity_type or not entity_id:
+            return None
+
+        import ayon_api
+
+        project_name = self.dbcon.active_project()
+        thumbnail_id = thumbnail_entity["_id"]
+
+        cache = self._get_cache()
+        filepath = cache.get_thumbnail_filepath(project_name, thumbnail_id)
+        if filepath:
+            with open(filepath, "rb") as stream:
+                return stream.read()
+
+        # This is new way how thumbnails can be received from server
+        #   - output is 'ThumbnailContent' object
+        if hasattr(ayon_api, "get_thumbnail_by_id"):
+            result = ayon_api.get_thumbnail_by_id(thumbnail_id)
+            if result.is_valid:
+                filepath = cache.store_thumbnail(
+                    project_name,
+                    thumbnail_id,
+                    result.content,
+                    result.content_type
+                )
+        else:
+            # Backwards compatibility for ayon api where 'get_thumbnail_by_id'
+            #   is not implemented and output is filepath
+            filepath = ayon_api.get_thumbnail(
+                project_name, entity_type, entity_id, thumbnail_id
+            )
+
+        if not filepath:
+            return None
+
+        with open(filepath, "rb") as stream:
+            return stream.read()
+
+
 # Thumbnail resolvers
 def discover_thumbnail_resolvers():
     return discover(ThumbnailResolver)
@@ -146,3 +204,4 @@ def register_thumbnail_resolver_path(path):
 
 register_thumbnail_resolver(TemplateResolver)
 register_thumbnail_resolver(BinaryThumbnail)
+register_thumbnail_resolver(ServerThumbnailResolver)

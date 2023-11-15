@@ -46,9 +46,9 @@ class ExtractUnrealSkeletalMeshFbx(publish.Extractor):
         # to format it into a string in a mel expression
         path = path.replace('\\', '/')
 
-        self.log.info("Extracting FBX to: {0}".format(path))
-        self.log.info("Members: {0}".format(to_extract))
-        self.log.info("Instance: {0}".format(instance[:]))
+        self.log.debug("Extracting FBX to: {0}".format(path))
+        self.log.debug("Members: {0}".format(to_extract))
+        self.log.debug("Instance: {0}".format(instance[:]))
 
         fbx_exporter.set_options_from_instance(instance)
 
@@ -70,7 +70,7 @@ class ExtractUnrealSkeletalMeshFbx(publish.Extractor):
             renamed_to_extract.append("|".join(node_path))
 
         with renamed(original_parent, parent_node):
-            self.log.info("Extracting: {}".format(renamed_to_extract, path))
+            self.log.debug("Extracting: {}".format(renamed_to_extract, path))
             fbx_exporter.export(renamed_to_extract, path)
 
         if "representations" not in instance.data:
@@ -84,4 +84,4 @@ class ExtractUnrealSkeletalMeshFbx(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extract FBX successful to: {0}".format(path))
+        self.log.debug("Extract FBX successful to: {0}".format(path))

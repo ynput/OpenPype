@@ -5,8 +5,6 @@ import getpass
 import requests
 import pyblish.api
 
-from openpype.modules.deadline.utils import set_custom_deadline_name
-
 
 class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit CelAction2D scene to Deadline
@@ -29,7 +27,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_job_delay = "00:00:08:00"
 
     def process(self, instance):
-        instance.data["toBeRenderedOn"] = "deadline"
+
         context = instance.context
 
         # get default deadline webservice url from deadline module
@@ -76,12 +74,6 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         render_path = os.path.normpath(render_path)
         script_name = os.path.basename(script_path)
 
-        batch_name = set_custom_deadline_name(
-            instance,
-            script_name,
-            "deadline_batch_name"
-        )
-
         for item in instance.context:
             if "workfile" in item.data["family"]:
                 msg = "Workfile (scene) must be published along"
@@ -101,11 +93,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
                     "Using published scene for render {}".format(script_path)
                 )
 
-        jobname = set_custom_deadline_name(
-            instance,
-            script_name,
-            "deadline_job_name"
-        )
+        jobname = "%s - %s" % (script_name, instance.name)
 
         output_filename_0 = self.preview_fname(render_path)
 
@@ -148,7 +136,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
                 "Plugin": "CelAction",
 
                 # Top-level group name
-                "BatchName": "Group: " + batch_name,
+                "BatchName": script_name,
 
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": self._deadline_user,
@@ -195,10 +183,10 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         }
 
         plugin = payload["JobInfo"]["Plugin"]
-        self.log.info("using render plugin : {}".format(plugin))
+        self.log.debug("using render plugin : {}".format(plugin))
 
-        self.log.info("Submitting..")
-        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
+        self.log.debug("Submitting..")
+        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
         # adding expectied files to instance.data
         self.expected_files(instance, render_path)

@@ -158,8 +158,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                         view,
                         display,
                         additional_command_args,
-                        self.log,
-                        input_args=["-i:ch=R,G,B"]
+                        self.log
                     )
 
                 # cleanup temporary transcoded files
@@ -321,7 +320,7 @@ class ExtractOIIOTranscode(publish.Extractor):
                                   logger=self.log)
 
         if not profile:
-            self.log.info((
+            self.log.debug((
               "Skipped instance. None of profiles in presets are for"
               " Host: \"{}\" | Families: \"{}\" | Task \"{}\""
               " | Task type \"{}\" | Subset \"{}\" "

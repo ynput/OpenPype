@@ -20,13 +20,9 @@ class ExtractGLB(publish.Extractor):
         filename = "{0}.glb".format(instance.name)
         path = os.path.join(staging_dir, filename)
 
-        self.log.info("Extracting GLB to: {}".format(path))
-
         cmds.loadPlugin("maya2glTF", quiet=True)
 
         nodes = instance[:]
-
-        self.log.info("Instance: {0}".format(nodes))
 
         start_frame = instance.data('frameStart') or \
                       int(cmds.playbackOptions(query=True,
@@ -48,6 +44,7 @@ class ExtractGLB(publish.Extractor):
             "vno": True    # visibleNodeOnly
         }
 
+        self.log.debug("Extracting GLB to: {}".format(path))
         with lib.maintained_selection():
             cmds.select(nodes, hi=True, noExpand=True)
             extract_gltf(staging_dir,
@@ -65,4 +62,4 @@ class ExtractGLB(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extract GLB successful to: {0}".format(path))
+        self.log.debug("Extract GLB successful to: {0}".format(path))

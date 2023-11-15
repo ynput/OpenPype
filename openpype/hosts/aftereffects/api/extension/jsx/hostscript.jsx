@@ -215,6 +215,8 @@ function _getItem(item, comps, folders, footages){
      * Refactor
      */
     var item_type = '';
+    var path = '';
+    var containing_comps = [];
     if (item instanceof FolderItem){
         item_type = 'folder';
         if (!folders){
@@ -222,9 +224,17 @@ function _getItem(item, comps, folders, footages){
         }
     }
     if (item instanceof FootageItem){
-        item_type = 'footage';
         if (!footages){
             return "{}";
+        }
+        item_type = 'footage';
+        if (item.file){
+            path = item.file.fsName;
+        }
+        if (item.usedIn){
+            for (j = 0; j < item.usedIn.length; ++j){
+                containing_comps.push(item.usedIn[j].id);
+            }
         }
     }
     if (item instanceof CompItem){
@@ -236,7 +246,9 @@ function _getItem(item, comps, folders, footages){
 
     var item = {"name": item.name,
                 "id": item.id,
-                "type": item_type};
+                "type": item_type,
+                "path": path,
+                "containing_comps": containing_comps};
     return JSON.stringify(item);
 }
 
@@ -308,119 +320,6 @@ function importFile(path, item_name, import_options){
 
     return JSON.stringify(ret);
 }
-
-
-function importFileWithDialog(path, item_name){
-    app.beginUndoGroup("Import");
-    importedCompArray = app.project.importFileWithDialog();
-
-    if (importedCompArray == undefined){
-        // User has canceled the action, so we stop the script here
-        // and return an empty value to avoid parse errors later
-        return ''
-    }
-
-    importedComp = importedCompArray[0]
-    if (importedComp.layers == undefined){
-        undoLastActions();
-        return _prepareError('Wrong file type imported (impossible to access layers composition).');
-    }
-
-    importedCompFilePath = getCompFilepath(importedComp);
-    if (extensionsAreDifferents(importedCompFilePath, path)){
-        undoLastActions();
-        return _prepareError('Wrong file selected (incorrect extension).');
-    }
-
-    if (versionsAreDifferents(importedCompFilePath, path)){
-        undoLastActions();
-        return _prepareError('Wrong file selected (incorrect asset / version).');
-    }
-
-    importedCompFolder = getImportedCompFolder(importedComp);
-
-    importedCompFolder.name = item_name;
-    importedComp.name = item_name
-
-    renameFolderItems(importedCompFolder);
-
-    ret = {"name": importedComp.name, "id": importedComp.id}
-    app.endUndoGroup();
-
-    return JSON.stringify(ret);
-}
-
-
-function getCompFilepath(compItem){
-    return String(compItem.layers[1].source.file)
-}
-
-
-function _extractInfosFromPath(filePath){
-    return filePath.match(/(.*)[\/\\](.*)[.](.*)[.](.*)/);
-}
-
-
-function getFileNameFromPath(filePath){
-    return _extractInfosFromPath(filePath)[2]
-}
-
-
-function getExtensionFromPath(filePath){
-    return _extractInfosFromPath(filePath)[4]
-}
-
-
-function versionsAreDifferents(sourceFilePath, targetFilePath){
-    return getFileNameFromPath(sourceFilePath) != getFileNameFromPath(targetFilePath);
-}
-
-
-function extensionsAreDifferents(sourceFilePath, targetFilePath){
-    return getExtensionFromPath(sourceFilePath) != getExtensionFromPath(targetFilePath)
-}
-
-
-function _exctractFirstPart(layerName){
-    return layerName.match(/.+?(?=[\/])/)[0];
-}
-
-
-function _startsWith(source, target) {
-    return source.lastIndexOf(target, 0) === 0;
-}
-
-
-function getImportedCompFolder(importedComp){
-    for (var index = 1; index <= app.project.numItems; index++) {
-        if(
-            (_startsWith(app.project.item(index).name, importedComp.name)) &&
-            (app.project.item(index) instanceof FolderItem)
-        ){
-            return app.project.item(index);
-        }
-    }
-}
-
-
-function renameFolderItems(folder){
-    for (var index = 1; index <= folder.items.length; index++) {
-        folderItem = folder.items[index];
-        folderItem.name = _exctractFirstPart(folderItem.name);
-    }
-
-}
-
-
-function undoLastActions(){
-    // We call the last undo command in Edit > Undo, which corresponds to
-    // our script actions and whose ID is 16
-    // This information has been found in AECC Menu IDs list, accessible at
-    // https://www.provideocoalition.com/after-effects-menu-command-ids/
-    app.endUndoGroup();
-    app.executeCommand(16);
-}
-
 
 function setLabelColor(comp_id, color_idx){
     /**

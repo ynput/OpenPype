@@ -41,6 +41,10 @@
       "name": "template_publish_plugin",
       "template_data": [
           {
+              "key": "ValidateReviewColorspace",
+              "label": "Validate Review Colorspace"
+          },
+          {
               "key": "ValidateContainers",
               "label": "ValidateContainers"
           }

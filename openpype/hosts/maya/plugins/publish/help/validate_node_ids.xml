@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+<error id="main">
+<title>Missing node ids</title>
+<description>## Nodes found with missing `cbId`
+
+Nodes were detected in your scene which are missing required `cbId`
+attributes for identification further in the pipeline.
+
+### How to repair?
+
+The node ids are auto-generated on scene save, and thus the easiest fix is to
+save your scene again.
+
+After that restart publishing with Reload button.
+</description>
+<detail>
+### Invalid nodes
+
+{nodes}
+
+
+### How could this happen?
+
+This often happens if you've generated new nodes but haven't saved your scene
+after creating the new nodes.
+</detail>
+</error>
+</root>

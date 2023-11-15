@@ -1,6 +1,9 @@
 import pyblish.api
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    PublishValidationError,
+    ValidateContentsOrder
+)
 
 
 class ValidateAnimationContent(pyblish.api.InstancePlugin):
@@ -47,4 +50,5 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Animation content is invalid. See log.")
+            raise PublishValidationError(
+                "Animation content is invalid. See log.")

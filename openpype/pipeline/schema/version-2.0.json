@@ -1,0 +1,92 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:version-2.0",
+    "description": "An individual version",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "schema",
+        "type",
+        "parent",
+        "name",
+        "data"
+    ],
+
+    "properties": {
+        "schema": {
+            "description": "The schema associated with this document",
+            "type": "string",
+            "enum": ["openpype:version-2.0"],
+            "example": "openpype:version-2.0"
+        },
+        "type": {
+            "description": "The type of document",
+            "type": "string",
+            "enum": ["version"],
+            "example": "version"
+        },
+        "parent": {
+            "description": "Unique identifier to parent document",
+            "example": "592c33475f8c1b064c4d1696"
+        },
+        "name": {
+            "description": "Number of version",
+            "type": "number",
+            "example": 12
+        },
+        "locations": {
+            "description": "Where on the planet this version can be found.",
+            "type": "array",
+            "items": {"type": "string"},
+            "example": ["data.avalon.com"]
+        },
+        "data": {
+            "description": "Document metadata",
+            "type": "object",
+            "required": ["families", "author", "source", "time"],
+            "properties": {
+                "time": {
+                    "description": "ISO formatted, file-system compatible time",
+                    "type": "string"
+                },
+                "timeFormat": {
+                    "description": "ISO format of time",
+                    "type": "string"
+                },
+                "author": {
+                    "description": "User logged on to the machine at time of publish",
+                    "type": "string"
+                },
+                "version": {
+                    "description": "Number of this version",
+                    "type": "number"
+                },
+                "path": {
+                    "description": "Unformatted path, e.g. '{root}/assets/Bruce/publish/lookdevDefault/v001",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "Original file from which this version was made.",
+                    "type": "string"
+                },
+                "families": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "One or more families associated with this version"
+                }
+            },
+            "example": {
+                "source" : "{root}/f02_prod/assets/BubbleWitch/work/modeling/marcus/maya/scenes/model_v001.ma",
+                "author" : "marcus",
+                "families" : [
+                    "avalon.model"
+                ],
+                "time" : "20170510T090203Z"
+            }
+        }
+    }
+}

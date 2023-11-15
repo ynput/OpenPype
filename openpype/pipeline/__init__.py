@@ -13,6 +13,7 @@ from .create import (
     BaseCreator,
     Creator,
     AutoCreator,
+    HiddenCreator,
     CreatedInstance,
     CreatorError,
 
@@ -88,23 +89,12 @@ from .context_tools import (
     deregister_host,
     get_process_id,
 
+    get_global_context,
     get_current_context,
     get_current_host_name,
     get_current_project_name,
     get_current_asset_name,
     get_current_task_name
-)
-from .action import (
-    BuilderAction,
-
-    discover_builder_plugins,
-    register_builder_action,
-    register_builder_action_path,
-    deregister_builder_action,
-    deregister_builder_action_path,
-
-    get_actions_by_name,
-    action_with_repre_context,
 )
 install = install_host
 uninstall = uninstall_host
@@ -125,6 +115,7 @@ __all__ = (
     "BaseCreator",
     "Creator",
     "AutoCreator",
+    "HiddenCreator",
     "CreatedInstance",
     "CreatorError",
 
@@ -198,23 +189,12 @@ __all__ = (
     "deregister_host",
     "get_process_id",
 
+    "get_global_context",
     "get_current_context",
     "get_current_host_name",
     "get_current_project_name",
     "get_current_asset_name",
     "get_current_task_name",
-
-    # --- Action ---
-    "BuilderAction",
-
-    "discover_builder_plugins",
-    "register_builder_action",
-    "register_builder_action_path",
-    "deregister_builder_action",
-    "deregister_builder_action_path",
-
-    "get_actions_by_name",
-    "action_with_repre_context",
 
     # Backwards compatible function names
     "install",

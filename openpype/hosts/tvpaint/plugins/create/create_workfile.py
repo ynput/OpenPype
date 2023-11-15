@@ -9,13 +9,12 @@ class TVPaintWorkfileCreator(TVPaintAutoCreator):
     label = "Workfile"
     icon = "fa.file-o"
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["tvpaint"]["create"]["create_workfile"]
         )
         self.default_variant = plugin_settings["default_variant"]
         self.default_variants = plugin_settings["default_variants"]
-        self.enabled = plugin_settings.get("enabled", True)
 
     def create(self):
         existing_instance = None
