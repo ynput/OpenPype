@@ -257,7 +257,7 @@ class NextTaskUpdate(BaseEvent):
             new_task_name = mapping.get(old_status_name)
             if not new_task_name:
                 self.log.debug(
-                    "Didn't found mapping for status \"{}\".".format(
+                    "Didn't find mapping for status \"{}\".".format(
                         task_status["name"]
                     )
                 )

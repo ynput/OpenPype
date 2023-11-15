@@ -61,7 +61,7 @@ class Delivery(BaseAction):
             return {
                 "success": False,
                 "message": (
-                    "Didn't found project \"{}\" in avalon."
+                    "Didn't find project \"{}\" in avalon."
                 ).format(project_name)
             }
 
