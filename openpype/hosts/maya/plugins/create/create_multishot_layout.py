@@ -158,7 +158,7 @@ class CreateMultishotLayout(plugin.MayaCreator):
             # Create layout instance by the layout creator
 
             instance_data = {
-                "asset": shot["name"],
+                "folderPath": shot["path"],
                 "variant": layout_creator.get_default_variant()
             }
             if layout_task:
