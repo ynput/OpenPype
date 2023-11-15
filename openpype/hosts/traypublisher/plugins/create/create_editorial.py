@@ -224,8 +224,10 @@ or updating already created. Publishing will create OTIO file.
                 i["family"] for i in self._creator_settings["family_presets"]
             ]
         }
-        # Create otio editorial instance
-        asset_name = instance_data["asset"]
+        if AYON_SERVER_ENABLED:
+            asset_name = instance_data["folderPath"]
+        else:
+            asset_name = instance_data["asset"]
 
         asset_doc = get_asset_by_name(self.project_name, asset_name)
 
