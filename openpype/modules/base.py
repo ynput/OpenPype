@@ -16,9 +16,9 @@ from abc import ABCMeta, abstractmethod
 
 import six
 import appdirs
-import ayon_api
 
 from openpype import AYON_SERVER_ENABLED
+from openpype.client import get_ayon_server_api_connection
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -319,8 +319,11 @@ def load_modules(force=False):
 
 
 def _get_ayon_bundle_data():
+    con = get_ayon_server_api_connection()
+    bundles = con.get_bundles()["bundles"]
+
     bundle_name = os.getenv("AYON_BUNDLE_NAME")
-    bundles = ayon_api.get_bundles()["bundles"]
+
     return next(
         (
             bundle
@@ -345,7 +348,8 @@ def _get_ayon_addons_information(bundle_info):
 
     output = []
     bundle_addons = bundle_info["addons"]
-    addons = ayon_api.get_addons_info()["addons"]
+    con = get_ayon_server_api_connection()
+    addons = con.get_addons_info()["addons"]
     for addon in addons:
         name = addon["name"]
         versions = addon.get("versions")

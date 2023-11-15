@@ -4,7 +4,7 @@ import logging
 
 from openpype import AYON_SERVER_ENABLED
 from openpype.lib import Logger
-from openpype.client import get_project
+from openpype.client import get_project, get_ayon_server_api_connection
 from . import legacy_io
 from .anatomy import Anatomy
 from .plugin_discover import (
@@ -153,8 +153,6 @@ class ServerThumbnailResolver(ThumbnailResolver):
         if not entity_type or not entity_id:
             return None
 
-        import ayon_api
-
         project_name = self.dbcon.active_project()
         thumbnail_id = thumbnail_entity["_id"]
 
@@ -169,7 +167,7 @@ class ServerThumbnailResolver(ThumbnailResolver):
         # NOTE Use 'get_server_api_connection' because public function
         #   'get_thumbnail_by_id' does not return output of 'ServerAPI'
         #   method.
-        con = ayon_api.get_server_api_connection()
+        con = get_ayon_server_api_connection()
         if hasattr(con, "get_thumbnail_by_id"):
             result = con.get_thumbnail_by_id(thumbnail_id)
             if result.is_valid:

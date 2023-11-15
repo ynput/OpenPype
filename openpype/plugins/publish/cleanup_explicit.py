@@ -58,21 +58,21 @@ class ExplicitCleanUp(pyblish.api.ContextPlugin):
         # Store failed paths with exception
         failed = []
         # Store removed filepaths for logging
-        succeded_files = set()
+        succeeded_files = set()
         # Remove file by file
         for filepath in filepaths:
             try:
                 os.remove(filepath)
-                succeded_files.add(filepath)
+                succeeded_files.add(filepath)
             except Exception as exc:
                 failed.append((filepath, exc))
 
-        if succeded_files:
+        if succeeded_files:
             self.log.info(
-                "Removed files:\n{}".format("\n".join(succeded_files))
+                "Removed files:\n{}".format("\n".join(sorted(succeeded_files)))
             )
 
-        # Delete folders with it's content
+        # Delete folders with its content
         succeeded = set()
         for dirpath in dirpaths:
             # Check if directory still exists
@@ -87,17 +87,21 @@ class ExplicitCleanUp(pyblish.api.ContextPlugin):
 
         if succeeded:
             self.log.info(
-                "Removed directories:\n{}".format("\n".join(succeeded))
+                "Removed directories:\n{}".format(
+                    "\n".join(sorted(succeeded))
+                )
             )
 
-        # Prepare lines for report of failed removements
+        # Prepare lines for report of failed removals
         lines = []
         for filepath, exc in failed:
             lines.append("{}: {}".format(filepath, str(exc)))
 
         if lines:
             self.log.warning(
-                "Failed to remove filepaths:\n{}".format("\n".join(lines))
+                "Failed to remove filepaths:\n{}".format(
+                    "\n".join(sorted(lines))
+                )
             )
 
     def _remove_empty_dirs(self, empty_dirpaths):
@@ -134,8 +138,8 @@ class ExplicitCleanUp(pyblish.api.ContextPlugin):
 
         if to_skip_dirpaths:
             self.log.debug(
-                "Skipped directories because contain files:\n{}".format(
-                    "\n".join(to_skip_dirpaths)
+                "Skipped directories because they contain files:\n{}".format(
+                    "\n".join(sorted(to_skip_dirpaths))
                 )
             )
 
@@ -147,6 +151,6 @@ class ExplicitCleanUp(pyblish.api.ContextPlugin):
         if to_delete_dirpaths:
             self.log.debug(
                 "Deleted empty directories:\n{}".format(
-                    "\n".join(to_delete_dirpaths)
+                    "\n".join(sorted(to_delete_dirpaths))
                 )
             )

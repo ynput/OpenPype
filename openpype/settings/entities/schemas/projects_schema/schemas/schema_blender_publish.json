@@ -81,6 +81,22 @@
         },
         {
             "type": "collapsible-wrap",
+            "label": "BlendScene",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateInstanceEmpty",
+                            "label": "Validate Instance is not Empty"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "collapsible-wrap",
             "label": "Render",
             "children": [
                 {
