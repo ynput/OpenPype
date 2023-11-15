@@ -192,7 +192,7 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
             return
 
         instance.data["subsetGroup"] = (
-                instance.data.get("subsetGroup") or "USD Layer"
+            instance.data.get("subsetGroup") or "USD Layer"
         )
 
         # Allow formatting in variant set name and variant name
