@@ -154,7 +154,8 @@ def test_add_variant_references_to_layer(tmp_path):
 
     # Allow with a layer provided to operate on that layer
     # instead; adding more variant names to an existing variant set
-    layer = usdlib.add_variant_references_to_layer(variants=[
+    layer = usdlib.add_variant_references_to_layer(
+        variants=[
             ("short", "./look_short.usd"),
         ],
         variantset="look",
@@ -171,7 +172,8 @@ def test_add_variant_references_to_layer(tmp_path):
     assert get_references(layer, prim_path, "look", "short") == ["./look_short.usd"]  # noqa: E501
 
     # Allow updating an existing variant with a new file
-    layer = usdlib.add_variant_references_to_layer(variants=[
+    layer = usdlib.add_variant_references_to_layer(
+        variants=[
             ("short", "./look_short_v02.usd"),
         ],
         variantset="look",
