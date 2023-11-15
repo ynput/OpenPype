@@ -270,7 +270,7 @@ class RootEntity(BaseItemEntity):
         for key, _child_entity in self.non_gui_children.items():
             if _child_entity is child_entity:
                 return key
-        raise ValueError("Didn't found child {}".format(child_entity))
+        raise ValueError("Didn't find child {}".format(child_entity))
 
     @property
     def value(self):

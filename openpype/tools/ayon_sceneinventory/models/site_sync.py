@@ -40,9 +40,9 @@ class SiteSyncModel:
             dict[str, str]: Path by provider name.
         """
 
-        site_sync = self._get_sync_server_module()
-        if site_sync is None:
+        if not self.is_sync_server_enabled():
             return {}
+        site_sync = self._get_sync_server_module()
         return site_sync.get_site_icons()
 
     def get_sites_information(self):

@@ -1,4 +1,3 @@
-import json
 from typing import Generator
 
 import bpy
@@ -50,6 +49,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         for group in asset_groups:
             instance = self.create_instance(context, group)
+            instance.data["instance_group"] = group
             members = []
             if isinstance(group, bpy.types.Collection):
                 members = list(group.objects)
@@ -65,6 +65,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             members.append(group)
             instance[:] = members
-            self.log.debug(json.dumps(instance.data, indent=4))
+            self.log.debug(instance.data)
             for obj in instance:
                 self.log.debug(obj)

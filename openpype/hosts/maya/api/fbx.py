@@ -156,7 +156,7 @@ class FBXExtractor:
         # Parse export options
         options = self.default_options
         options = self.parse_overrides(instance, options)
-        self.log.info("Export options: {0}".format(options))
+        self.log.debug("Export options: {0}".format(options))
 
         # Collect the start and end including handles
         start = instance.data.get("frameStartHandle") or \
@@ -186,7 +186,7 @@ class FBXExtractor:
             template = "FBXExport{0} {1}" if key == "UpAxis" else \
                 "FBXExport{0} -v {1}"  # noqa
             cmd = template.format(key, value)
-            self.log.info(cmd)
+            self.log.debug(cmd)
             mel.eval(cmd)
 
         # Never show the UI or generate a log

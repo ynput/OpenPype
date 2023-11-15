@@ -2283,7 +2283,7 @@ class CreateContext:
 
             if AYON_SERVER_ENABLED:
                 asset_name = instance["folderPath"]
-                if "/" not in asset_name:
+                if asset_name and "/" not in asset_name:
                     asset_docs = asset_docs_by_name.get(asset_name)
                     if len(asset_docs) == 1:
                         asset_name = get_asset_name_identifier(asset_docs[0])
