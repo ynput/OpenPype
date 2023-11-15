@@ -171,8 +171,6 @@ class ExtractBurnin(publish.Extractor):
             ).format(host_name, family, task_name, task_type, subset))
             return
 
-        self.log.debug("profile: {}".format(profile))
-
         # Pre-filter burnin definitions by instance families
         burnin_defs = self.filter_burnins_defs(profile, instance)
         if not burnin_defs:
