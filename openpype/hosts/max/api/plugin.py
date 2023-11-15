@@ -253,19 +253,19 @@ class MaxCreator(Creator, MaxCreatorBase):
                 for key in changes.changed_keys
             }
             subset = new_values.get("subset", "")
-            if subset:
-                if instance_node != subset:
-                    node = rt.getNodeByName(instance_node)
-                    new_subset_name = new_values["subset"]
-                    if rt.getNodeByName(new_subset_name):
-                        raise CreatorError(
-                            "The subset '{}' already exists.".format(
-                                new_subset_name))
-                    created_inst["instance_node"] = new_values["subset"]
-                    node.name = created_inst["instance_node"]
+            if subset and instance_node != subset:
+                node = rt.getNodeByName(instance_node)
+                new_subset_name = new_values["subset"]
+                if rt.getNodeByName(new_subset_name):
+                    raise CreatorError(
+                        "The subset '{}' already exists.".format(
+                            new_subset_name))
+                instance_node = new_subset_name
+                created_inst["instance_node"] = instance_node
+                node.name = instance_node
 
             imprint(
-                created_inst["instance_node"],
+                instance_node,
                 created_inst.data_to_store(),
             )
 
