@@ -188,7 +188,10 @@ def embedOptions():
                 link.setLabel('use frame range')
             group.addKnob(link)
     log.info("links made")
-
+    if group.knob('first').value() == 1:
+        group.knob('first').setValue(nuke.root().firstFrame())
+    if group.knob('last').value() == 1:
+        group.knob('last').setValue(nuke.root().lastFrame())
 
     endGroup = nuke.Tab_Knob('endoutput', None, nuke.TABENDGROUP)
     group.addKnob(endGroup)

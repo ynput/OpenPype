@@ -117,8 +117,8 @@ def build_request(knobValues,timestamp):
                     "Group": knobValues.get('deadlineGroup') or 'nuke',
                     "Plugin": 'Nuke',
                     "Frames": "{start}-{end}".format(
-                        start=int(knobValues['first']) or 1001,
-                        end=int(knobValues['last']) or 1001
+                        start=int(knobValues['first']) or nuke.root().firstFrame(),
+                        end=int(knobValues['last']) or nuke.root().lastFrame()
                     ),
                     # Optional, enable double-click to preview rendered
                     # frames from Deadline Monitor
