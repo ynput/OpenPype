@@ -1,0 +1,20 @@
+{
+    "imageio": {
+        "activate_host_color_management": true,
+        "remapping": {
+            "rules": []
+        },
+        "ocio_config": {
+            "override_global_config": false,
+            "filepath": []
+        },
+        "file_rules": {
+            "activate_host_rules": false,
+            "rules": {}
+        }
+    },
+        "openrv_nuke_integration": {
+            "rvnuke_enabled": false,
+            "rvnuke_open_in_rv_shortcut" : "Alt+v"
+    }
+}
