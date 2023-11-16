@@ -368,7 +368,7 @@ def collect_animation_data(fps=False):
     data["frameEnd"] = frame_end
     data["handleStart"] = handle_start
     data["handleEnd"] = handle_end
-    data["step"] = 1.0
+    data["step"] = 0.25     #Hornet
 
     if fps:
         data["fps"] = mel.eval('currentTimeUnitToFPS()')
