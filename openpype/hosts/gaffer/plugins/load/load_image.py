@@ -27,7 +27,8 @@ class GafferLoadImage(load.LoaderPlugin):
         node = GafferImage.ImageReader()
         node.setName(name)
 
-        path = self._convert_path(self.fname)
+        path = self.filepath_from_context(context)
+        path = self._convert_path(path)
         node["fileName"].setValue(path)
         script.addChild(node)
 

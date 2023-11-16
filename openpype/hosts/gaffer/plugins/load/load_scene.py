@@ -25,7 +25,7 @@ class GafferLoadScene(load.LoaderPlugin):
         node = GafferScene.SceneReader()
         node.setName(name)
 
-        path = self.fname.replace("\\", "/")
+        path = self.filepath_from_context(context).replace("\\", "/")
         node["fileName"].setValue(path)
         script.addChild(node)
 
