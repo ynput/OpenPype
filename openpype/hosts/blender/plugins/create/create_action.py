@@ -22,7 +22,7 @@ class CreateAction(plugin.BaseCreator):
         )
 
         # Get instance name
-        name = plugin.asset_name(instance_data["asset"], subset_name)
+        name = plugin.prepare_scene_name(instance_data["asset"], subset_name)
 
         if pre_create_data.get("use_selection"):
             for obj in lib.get_selection():
