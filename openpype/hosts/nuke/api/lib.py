@@ -121,7 +121,7 @@ def deprecated(new_destination):
 
 class Context:
     main_window = None
-    context_label = None
+    context_action_item = None
     project_name = os.getenv("AVALON_PROJECT")
     # Workfile related code
     workfiles_launched = False

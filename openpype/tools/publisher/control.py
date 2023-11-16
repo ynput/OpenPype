@@ -1457,7 +1457,7 @@ class BasePublisherController(AbstractPublisherController):
         """
 
         if self._log is None:
-            self._log = logging.getLogget(self.__class__.__name__)
+            self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     @property
@@ -1885,10 +1885,19 @@ class PublisherController(BasePublisherController):
         self._emit_event("plugins.refresh.finished")
 
     def _collect_creator_items(self):
-        return {
-            identifier: CreatorItem.from_creator(creator)
-            for identifier, creator in self._create_context.creators.items()
-        }
+        # TODO add crashed initialization of create plugins to report
+        output = {}
+        for identifier, creator in self._create_context.creators.items():
+            try:
+                output[identifier] = CreatorItem.from_creator(creator)
+            except Exception:
+                self.log.error(
+                    "Failed to create creator item for '%s'",
+                    identifier,
+                    exc_info=True
+                )
+
+        return output
 
     def _reset_instances(self):
         """Reset create instances."""

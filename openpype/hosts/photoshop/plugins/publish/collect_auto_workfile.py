@@ -52,7 +52,7 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
                     self.log.debug("Workfile instance disabled")
                     return
 
-        project_name = context.data["anatomyData"]["project"]["name"]
+        project_name = context.data["projectName"]
         proj_settings = context.data["project_settings"]
         auto_creator = proj_settings.get(
             "photoshop", {}).get(
@@ -67,7 +67,7 @@ class CollectAutoWorkfile(pyblish.api.ContextPlugin):
         variant = (context.data.get("variant") or
                    auto_creator["default_variant"])
 
-        task_name = context.data["anatomyData"]["task"]["name"]
+        task_name = context.data["task"]
         host_name = context.data["hostName"]
         asset_doc = context.data["assetEntity"]
 
