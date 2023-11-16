@@ -379,7 +379,7 @@
             "optional": true,
             "active": true
         },
-        "ExtractThumbnail": {
+        "ExtractThumbnailNuke": {
             "enabled": true,
             "use_rendered": true,
             "bake_viewer_process": true,

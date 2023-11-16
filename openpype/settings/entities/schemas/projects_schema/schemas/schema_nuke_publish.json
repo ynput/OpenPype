@@ -129,8 +129,8 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
-            "key": "ExtractThumbnail",
-            "label": "ExtractThumbnail",
+            "key": "ExtractThumbnailNuke",
+            "label": "ExtractThumbnailNuke",
             "is_group": true,
             "children": [
                 {
