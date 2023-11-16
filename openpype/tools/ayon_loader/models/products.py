@@ -79,8 +79,8 @@ def product_item_from_entity(
     product_type = product_entity["productType"]
     product_type_item = product_type_items_by_name.get(product_type)
     # NOTE This is needed for cases when products were not created on server
-    #   using api functions. In that case product type item may not available
-    #   and we need to create a default.
+    #   using api functions. In that case product type item may not be
+    #   available and we need to create a default.
     if product_type_item is None:
         product_type_item = create_default_product_type_item(product_type)
         # Cache the item for future use
