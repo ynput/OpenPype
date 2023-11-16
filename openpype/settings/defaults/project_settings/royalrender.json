@@ -1,4 +1,7 @@
 {
+    "rr_paths": [
+        "default"
+    ],
     "publish": {
         "CollectSequencesFromJob": {
             "review": true

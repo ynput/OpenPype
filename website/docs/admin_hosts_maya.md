@@ -113,7 +113,8 @@ This is useful to fix some specific renderer glitches and advanced hacking of Ma
 #### Namespace and Group Name
 Here you can create your own custom naming for the reference loader.
 
-The custom naming is split into two parts: namespace and group name. If you don't set the namespace or the group name, an error will occur.
+The custom naming is split into two parts: namespace and group name. If you don't set the namespace, an error will occur.
+Group name could be set empty, that way no wrapping group will be created for loaded item.
 Here's the different variables you can use:
 
 <div class="row markdown">

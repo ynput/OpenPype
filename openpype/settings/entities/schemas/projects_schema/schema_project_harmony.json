@@ -8,45 +8,13 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (OCIO managed)",
+            "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
-                }
-
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
-            "key": "load",
-            "label": "Loader plugins",
-            "children": [
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "ImageSequenceLoader",
-                    "label": "Load Image Sequence",
-                    "children": [
-                        {
-                            "type": "list",
-                            "key": "family",
-                            "label": "Families",
-                            "object_type": "text"
-                        },
-                        {
-                            "type": "list",
-                            "key": "representations",
-                            "label": "Representations",
-                            "object_type": "text"
-                        }
-                    ]
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
                 }
             ]
         },

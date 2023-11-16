@@ -18,8 +18,6 @@ def test_backward_compatibility(printer):
 
         from openpype.lib import get_ffprobe_streams
 
-        from openpype.hosts.fusion.lib import switch_item
-
         from openpype.lib import source_hash
         from openpype.lib import run_subprocess
 

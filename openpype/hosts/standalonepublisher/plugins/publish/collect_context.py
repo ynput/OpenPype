@@ -222,7 +222,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 "label": subset,
                 "name": subset,
                 "family": in_data["family"],
-                # "version": in_data.get("version", 1),
                 "frameStart": in_data.get("representations", [None])[0].get(
                     "frameStart", None
                 ),
@@ -232,6 +231,14 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 "families": instance_families
             }
         )
+        # Fill version only if 'use_next_available_version' is disabled
+        #   and version is filled in instance data
+        version = in_data.get("version")
+        use_next_available_version = in_data.get(
+            "use_next_available_version", True)
+        if not use_next_available_version and version is not None:
+            instance.data["version"] = version
+
         self.log.info("collected instance: {}".format(pformat(instance.data)))
         self.log.info("parsing data: {}".format(pformat(in_data)))
 

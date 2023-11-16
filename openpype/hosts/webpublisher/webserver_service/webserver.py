@@ -45,7 +45,7 @@ def run_webserver(executable, upload_dir, host=None, port=None):
 
     server_manager = webserver_module.create_new_server_manager(port, host)
     webserver_url = server_manager.url
-    # queue for remotepublishfromapp tasks
+    # queue for publishfromapp tasks
     studio_task_queue = collections.deque()
 
     resource = RestApiResource(server_manager,

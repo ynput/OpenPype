@@ -3,8 +3,8 @@ from openpype.client import (
     get_last_version_by_subset_id
 )
 from openpype.pipeline import (
-    legacy_io,
     get_representation_path,
+    get_current_project_name,
 )
 from openpype.lib.transcoding import (
     VIDEO_EXTENSIONS,
@@ -87,7 +87,8 @@ class LoadClip(phiero.SequenceLoader):
             })
 
         # load clip to timeline and get main variables
-        track_item = phiero.ClipLoader(self, context, **options).load()
+        path = self.filepath_from_context(context)
+        track_item = phiero.ClipLoader(self, context, path, **options).load()
         namespace = namespace or track_item.name()
         version = context['version']
         version_data = version.get("data", {})
@@ -147,7 +148,7 @@ class LoadClip(phiero.SequenceLoader):
         track_item = phiero.get_track_items(
             track_item_name=namespace).pop()
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         version_data = version_doc.get("data", {})
@@ -210,7 +211,7 @@ class LoadClip(phiero.SequenceLoader):
 
     @classmethod
     def set_item_color(cls, track_item, version_doc):
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         last_version_doc = get_last_version_by_subset_id(
             project_name, version_doc["parent"], fields=["_id"]
         )

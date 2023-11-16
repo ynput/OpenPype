@@ -273,7 +273,7 @@ class ActionModel(QtGui.QStandardItemModel):
         # Sort by order and name
         return sorted(
             compatible,
-            key=lambda action: (action.order, action.name)
+            key=lambda action: (action.order, lib.get_action_label(action))
         )
 
     def update_force_not_open_workfile_settings(self, is_checked, action_id):

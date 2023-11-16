@@ -69,6 +69,8 @@ class HoudiniLegacyConvertor(SubsetConvertorPlugin):
                         "creator_identifier": self.family_to_id[family],
                         "instance_node": subset.path()
                     }
+                    if family == "pointcache":
+                        data["families"] = ["abc"]
                     self.log.info("Converting {} to {}".format(
                         subset.path(), self.family_to_id[family]))
                     imprint(subset, data)

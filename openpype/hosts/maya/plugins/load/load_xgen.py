@@ -1,4 +1,5 @@
 import os
+import shutil
 
 import maya.cmds as cmds
 import xgenm
@@ -47,12 +48,11 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             return
 
         maya_filepath = self.prepare_root_value(
-            self.fname, context["project"]["name"]
+            file_url=self.filepath_from_context(context),
+            project_name=context["project"]["name"]
         )
 
         # Reference xgen. Xgen does not like being referenced in under a group.
-        new_nodes = []
-
         with maintained_selection():
             nodes = cmds.file(
                 maya_filepath,
@@ -116,8 +116,8 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     def update(self, container, representation):
         """Workflow for updating Xgen.
 
-        - Copy and potentially overwrite the workspace .xgen file.
         - Export changes to delta file.
+        - Copy and overwrite the workspace .xgen file.
         - Set collection attributes to not include delta files.
         - Update xgen maya file reference.
         - Apply the delta file changes.
@@ -130,6 +130,10 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         There is an implicit increment of the xgen and delta files, due to
         using the workfile basename.
         """
+        # Storing current description to try and maintain later.
+        current_description = (
+            xgenm.xgGlobal.DescriptionEditor.currentDescription()
+        )
 
         container_node = container["objectName"]
         members = get_container_members(container_node)
@@ -160,6 +164,7 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             data_path
         )
         data = {"xgProjectPath": project_path, "xgDataPath": data_path}
+        shutil.copy(new_xgen_file, xgen_file)
         write_xgen_file(data, xgen_file)
 
         attribute_data = {
@@ -171,3 +176,11 @@ class XgenLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             super().update(container, representation)
 
             xgenm.applyDelta(xgen_palette.replace("|", ""), xgd_file)
+
+        # Restore current selected description if it exists.
+        if cmds.objExists(current_description):
+            xgenm.xgGlobal.DescriptionEditor.setCurrentDescription(
+                current_description
+            )
+        # Full UI refresh.
+        xgenm.xgGlobal.DescriptionEditor.refresh("Full")

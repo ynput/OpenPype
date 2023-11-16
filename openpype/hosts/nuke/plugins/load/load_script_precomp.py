@@ -5,7 +5,7 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
+    get_current_project_name,
     load,
     get_representation_path,
 )
@@ -22,7 +22,7 @@ class LinkAsGroup(load.LoaderPlugin):
 
     families = ["workfile", "nukenodes"]
     representations = ["*"]
-    extension = {"nk"}
+    extensions = {"nk"}
 
     label = "Load Precomp"
     order = 0
@@ -43,10 +43,8 @@ class LinkAsGroup(load.LoaderPlugin):
         if namespace is None:
             namespace = context['asset']['name']
 
-        file = self.fname.replace("\\", "/")
-        self.log.info("file: {}\n".format(self.fname))
-
-        precomp_name = context["representation"]["context"]["subset"]
+        file = self.filepath_from_context(context).replace("\\", "/")
+        self.log.info("file: {}\n".format(file))
 
         self.log.info("versionData: {}\n".format(context["version"]["data"]))
 
@@ -62,7 +60,6 @@ class LinkAsGroup(load.LoaderPlugin):
         }
         for k in add_keys:
             data_imprint.update({k: context["version"]['data'][k]})
-        data_imprint.update({"objectName": precomp_name})
 
         # group context is set to precomp, so back up one level.
         nuke.endGroup()
@@ -70,10 +67,9 @@ class LinkAsGroup(load.LoaderPlugin):
         # P = nuke.nodes.LiveGroup("file {}".format(file))
         P = nuke.createNode(
             "Precomp",
-            "file {}".format(file))
-
-        # hide property panel
-        P.hideControlPanel()
+            "file {}".format(file),
+            inpanel=False
+        )
 
         # Set colorspace defined in version data
         colorspace = context["version"]["data"].get("colorspace", None)
@@ -119,12 +115,12 @@ class LinkAsGroup(load.LoaderPlugin):
         inputs:
 
         """
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
 
         root = get_representation_path(representation).replace("\\", "/")
 
         # Get start frame from version data
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
         last_version_doc = get_last_version_by_subset_id(
             project_name, version_doc["parent"], fields=["_id"]
@@ -160,6 +156,6 @@ class LinkAsGroup(load.LoaderPlugin):
         self.log.info("updated to version: {}".format(version_doc.get("name")))
 
     def remove(self, container):
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
         with viewer_update_and_undo_stop():
             nuke.delete(node)

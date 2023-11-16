@@ -1,58 +1,90 @@
 # -*- coding: utf-8 -*-
 """Creator for Unreal Static Meshes."""
 from openpype.hosts.maya.api import plugin, lib
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
 from maya import cmds  # noqa
 
 
-class CreateUnrealStaticMesh(plugin.Creator):
+class CreateUnrealStaticMesh(plugin.MayaCreator):
     """Unreal Static Meshes with collisions."""
-    name = "staticMeshMain"
+
+    identifier = "io.openpype.creators.maya.unrealstaticmesh"
     label = "Unreal - Static Mesh"
     family = "staticMesh"
     icon = "cube"
     dynamic_subset_keys = ["asset"]
 
-    def __init__(self, *args, **kwargs):
-        """Constructor."""
-        super(CreateUnrealStaticMesh, self).__init__(*args, **kwargs)
-        self._project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"])
+    # Defined in settings
+    collision_prefixes = []
 
-    @classmethod
+    def apply_settings(self, project_settings):
+        """Apply project settings to creator"""
+        settings = project_settings["maya"]["create"]["CreateUnrealStaticMesh"]
+        self.collision_prefixes = settings["collision_prefixes"]
+
     def get_dynamic_data(
-            cls, variant, task_name, asset_id, project_name, host_name
+        self, variant, task_name, asset_doc, project_name, host_name, instance
     ):
-        dynamic_data = super(CreateUnrealStaticMesh, cls).get_dynamic_data(
-            variant, task_name, asset_id, project_name, host_name
+        """
+        The default subset name templates for Unreal include {asset} and thus
+        we should pass that along as dynamic data.
+        """
+        dynamic_data = super(CreateUnrealStaticMesh, self).get_dynamic_data(
+            variant, task_name, asset_doc, project_name, host_name, instance
         )
-        dynamic_data["asset"] = legacy_io.Session.get("AVALON_ASSET")
+        dynamic_data["asset"] = asset_doc["name"]
         return dynamic_data
 
-    def process(self):
-        self.name = "{}_{}".format(self.family, self.name)
-        with lib.undo_chunk():
-            instance = super(CreateUnrealStaticMesh, self).process()
-            content = cmds.sets(instance, query=True)
+    def create(self, subset_name, instance_data, pre_create_data):
 
-            # empty set and process its former content
-            cmds.sets(content, rm=instance)
+        with lib.undo_chunk():
+            instance = super(CreateUnrealStaticMesh, self).create(
+                subset_name, instance_data, pre_create_data)
+            instance_node = instance.get("instance_node")
+
+            # We reorganize the geometry that was originally added into the
+            # set into either 'collision_SET' or 'geometry_SET' based on the
+            # collision_prefixes from project settings
+            members = cmds.sets(instance_node, query=True)
+            cmds.sets(clear=instance_node)
+
             geometry_set = cmds.sets(name="geometry_SET", empty=True)
             collisions_set = cmds.sets(name="collisions_SET", empty=True)
 
-            cmds.sets([geometry_set, collisions_set], forceElement=instance)
+            cmds.sets([geometry_set, collisions_set],
+                      forceElement=instance_node)
 
-            members = cmds.ls(content, long=True) or []
+            members = cmds.ls(members, long=True) or []
             children = cmds.listRelatives(members, allDescendents=True,
                                           fullPath=True) or []
-            children = cmds.ls(children, type="transform")
-            for node in children:
-                if cmds.listRelatives(node, type="shape"):
-                    if [
-                        n for n in self.collision_prefixes
-                        if node.startswith(n)
-                    ]:
-                        cmds.sets(node, forceElement=collisions_set)
-                    else:
-                        cmds.sets(node, forceElement=geometry_set)
+            transforms = cmds.ls(members + children, type="transform")
+            for transform in transforms:
+
+                if not cmds.listRelatives(transform,
+                                          type="shape",
+                                          noIntermediate=True):
+                    # Exclude all transforms that have no direct shapes
+                    continue
+
+                if self.has_collision_prefix(transform):
+                    cmds.sets(transform, forceElement=collisions_set)
+                else:
+                    cmds.sets(transform, forceElement=geometry_set)
+
+    def has_collision_prefix(self, node_path):
+        """Return whether node name of path matches collision prefix.
+
+        If the node name matches the collision prefix we add it to the
+        `collisions_SET` instead of the `geometry_SET`.
+
+        Args:
+            node_path (str): Maya node path.
+
+        Returns:
+            bool: Whether the node should be considered a collision mesh.
+
+        """
+        node_name = node_path.rsplit("|", 1)[-1]
+        for prefix in self.collision_prefixes:
+            if node_name.startswith(prefix):
+                return True
+        return False

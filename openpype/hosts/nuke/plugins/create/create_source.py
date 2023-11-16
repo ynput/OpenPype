@@ -32,7 +32,7 @@ class CreateSource(NukeCreator):
         read_node["tile_color"].setValue(
             int(self.node_color, 16))
         read_node["name"].setValue(node_name)
-        self.add_info_knob(read_node)
+
         return read_node
 
     def create(self, subset_name, instance_data, pre_create_data):

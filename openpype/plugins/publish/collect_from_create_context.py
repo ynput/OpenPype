@@ -16,7 +16,7 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.5
 
     def process(self, context):
-        create_context = context.data.pop("create_context", None)
+        create_context = context.data.get("create_context")
         if not create_context:
             host = registered_host()
             if isinstance(host, IPublishHost):

@@ -40,8 +40,6 @@ class CreateGizmo(NukeCreator):
 
             created_node["name"].setValue(node_name)
 
-            self.add_info_knob(created_node)
-
             return created_node
 
     def create(self, subset_name, instance_data, pre_create_data):

@@ -28,7 +28,6 @@ class RenderCreator(Creator):
     create_allow_context_change = True
 
     # Settings
-    default_variants = []
     mark_for_review = True
 
     def create(self, subset_name_from_ui, data, pre_create_data):
@@ -165,12 +164,16 @@ class RenderCreator(Creator):
                 api.get_stub().rename_item(comp_id,
                                            new_comp_name)
 
-    def apply_settings(self, project_settings, system_settings):
+    def apply_settings(self, project_settings):
         plugin_settings = (
             project_settings["aftereffects"]["create"]["RenderCreator"]
         )
 
         self.mark_for_review = plugin_settings["mark_for_review"]
+        self.default_variants = plugin_settings.get(
+            "default_variants",
+            plugin_settings.get("defaults") or []
+        )
 
     def get_detail_description(self):
         return """Creator for Render instances

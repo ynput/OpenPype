@@ -9,6 +9,7 @@ import collections
 from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.lib.attribute_definitions import UnknownDef
 from openpype.tools.attribute_defs import create_widget_for_attr_def
 from openpype.tools import resources
@@ -578,6 +579,10 @@ class AssetsField(BaseClickableFrame):
         """Change to asset names set with last `set_selected_items` call."""
         self.set_selected_items(self._origin_value)
 
+    def confirm_value(self):
+        self._origin_value = copy.deepcopy(self._selected_items)
+        self._has_value_changed = False
+
 
 class TasksComboboxProxy(QtCore.QSortFilterProxyModel):
     def __init__(self, *args, **kwargs):
@@ -784,6 +789,15 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         self._set_is_valid(is_valid)
 
+    def confirm_value(self, asset_names):
+        new_task_name = self._selected_items[0]
+        self._origin_value = [
+            (asset_name, new_task_name)
+            for asset_name in asset_names
+        ]
+        self._origin_selection = copy.deepcopy(self._selected_items)
+        self._has_value_changed = False
+
     def set_selected_items(self, asset_task_combinations=None):
         """Set items for selected instances.
 
@@ -917,6 +931,10 @@ class VariantInputWidget(PlaceholderLineEdit):
     def set_multiselection_text(self, text):
         """Change text of multiselection."""
         self._multiselection_text = text
+
+    def confirm_value(self):
+        self._origin_value = copy.deepcopy(self._current_value)
+        self._has_value_changed = False
 
     def _set_is_valid(self, valid):
         if valid == self._is_valid:
@@ -1109,6 +1127,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         btns_layout = QtWidgets.QHBoxLayout()
         btns_layout.setContentsMargins(0, 0, 0, 0)
         btns_layout.addStretch(1)
+        btns_layout.setSpacing(5)
         btns_layout.addWidget(submit_btn)
         btns_layout.addWidget(cancel_btn)
 
@@ -1116,10 +1135,16 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         main_layout.setHorizontalSpacing(INPUTS_LAYOUT_HSPACING)
         main_layout.setVerticalSpacing(INPUTS_LAYOUT_VSPACING)
         main_layout.addRow("Variant", variant_input)
-        main_layout.addRow("Asset", asset_value_widget)
+        main_layout.addRow(
+            "Folder" if AYON_SERVER_ENABLED else "Asset",
+            asset_value_widget)
         main_layout.addRow("Task", task_value_widget)
-        main_layout.addRow("Family", family_value_widget)
-        main_layout.addRow("Subset", subset_value_widget)
+        main_layout.addRow(
+            "Product type" if AYON_SERVER_ENABLED else "Family",
+            family_value_widget)
+        main_layout.addRow(
+            "Product name" if AYON_SERVER_ENABLED else "Subset",
+            subset_value_widget)
         main_layout.addRow(btns_layout)
 
         variant_input.value_changed.connect(self._on_variant_change)
@@ -1153,6 +1178,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         subset_names = set()
         invalid_tasks = False
+        asset_names = []
         for instance in self._current_instances:
             new_variant_value = instance.get("variant")
             new_asset_name = instance.get("asset")
@@ -1166,6 +1192,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if task_name is not None:
                 new_task_name = task_name
 
+            asset_names.append(new_asset_name)
             try:
                 new_subset_name = self._controller.get_subset_name(
                     instance.creator_identifier,
@@ -1202,6 +1229,15 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         self._set_btns_enabled(False)
         self._set_btns_visible(invalid_tasks)
+
+        if variant_value is not None:
+            self.variant_input.confirm_value()
+
+        if asset_name is not None:
+            self.asset_value_widget.confirm_value()
+
+        if task_name is not None:
+            self.task_value_widget.confirm_value(asset_names)
 
         self.instance_context_changed.emit()
 

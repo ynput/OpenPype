@@ -1,51 +1,68 @@
 import os
-from openpype.pipeline import (
-    load, get_representation_path
+
+from openpype.hosts.max.api import lib, maintained_selection
+from openpype.hosts.max.api.lib import (
+    unique_namespace,
+
 )
-from openpype.hosts.max.api.pipeline import containerise
-from openpype.hosts.max.api import lib
+from openpype.hosts.max.api.pipeline import (
+    containerise,
+    get_previous_loaded_object,
+    update_custom_attribute_data
+)
+from openpype.pipeline import get_representation_path, load
 
 
 class PointCloudLoader(load.LoaderPlugin):
-    """Point Cloud Loader"""
+    """Point Cloud Loader."""
 
     families = ["pointcloud"]
     representations = ["prt"]
     order = -8
     icon = "code-fork"
     color = "green"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         """load point cloud by tyCache"""
         from pymxs import runtime as rt
-
-        filepath = os.path.normpath(self.fname)
+        filepath = os.path.normpath(self.filepath_from_context(context))
         obj = rt.tyCache()
         obj.filename = filepath
 
-        prt_container = rt.getNodeByName(f"{obj.name}")
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+        obj.name = f"{namespace}:{obj.name}"
 
         return containerise(
-            name, [prt_container], context, loader=self.__class__.__name__)
+            name, [obj], context,
+            namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         """update the container"""
         from pymxs import runtime as rt
 
         path = get_representation_path(representation)
-        node = rt.getNodeByName(container["instance_node"])
-
-        prt_objects = self.get_container_children(node)
-        for prt_object in prt_objects:
-            prt_object.source = path
-
+        node = rt.GetNodeByName(container["instance_node"])
+        node_list = get_previous_loaded_object(node)
+        update_custom_attribute_data(
+            node, node_list)
+        with maintained_selection():
+            rt.Select(node_list)
+            for prt in rt.Selection:
+                prt.filename = path
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])
         })
+
+    def switch(self, container, representation):
+        self.update(container, representation)
 
     def remove(self, container):
         """remove the container"""
         from pymxs import runtime as rt
 
-        node = rt.getNodeByName(container["instance_node"])
-        rt.delete(node)
+        node = rt.GetNodeByName(container["instance_node"])
+        rt.Delete(node)

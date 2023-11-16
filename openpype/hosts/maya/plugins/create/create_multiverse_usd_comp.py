@@ -1,26 +1,48 @@
 from openpype.hosts.maya.api import plugin, lib
+from openpype.lib import (
+    BoolDef,
+    NumberDef,
+    EnumDef
+)
 
 
-class CreateMultiverseUsdComp(plugin.Creator):
+class CreateMultiverseUsdComp(plugin.MayaCreator):
     """Create Multiverse USD Composition"""
 
-    name = "mvUsdCompositionMain"
+    identifier = "io.openpype.creators.maya.mvusdcomposition"
     label = "Multiverse USD Composition"
     family = "mvUsdComposition"
     icon = "cubes"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateMultiverseUsdComp, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        # Add animation data first, since it maintains order.
-        self.data.update(lib.collect_animation_data(True))
+        defs = lib.collect_animation_defs(fps=True)
+        defs.extend([
+            EnumDef("fileFormat",
+                    label="File format",
+                    items=["usd", "usda"],
+                    default="usd"),
+            BoolDef("stripNamespaces",
+                    label="Strip Namespaces",
+                    default=False),
+            BoolDef("mergeTransformAndShape",
+                    label="Merge Transform and Shape",
+                    default=False),
+            BoolDef("flattenContent",
+                    label="Flatten Content",
+                    default=False),
+            BoolDef("writeAsCompoundLayers",
+                    label="Write As Compound Layers",
+                    default=False),
+            BoolDef("writePendingOverrides",
+                    label="Write Pending Overrides",
+                    default=False),
+            NumberDef("numTimeSamples",
+                      label="Num Time Samples",
+                      default=1),
+            NumberDef("timeSamplesSpan",
+                      label="Time Samples Span",
+                      default=0.0),
+        ])
 
-        # Order of `fileFormat` must match extract_multiverse_usd_comp.py
-        self.data["fileFormat"] = ["usda", "usd"]
-        self.data["stripNamespaces"] = False
-        self.data["mergeTransformAndShape"] = False
-        self.data["flattenContent"] = False
-        self.data["writeAsCompoundLayers"] = False
-        self.data["writePendingOverrides"] = False
-        self.data["numTimeSamples"] = 1
-        self.data["timeSamplesSpan"] = 0.0
+        return defs

@@ -53,8 +53,8 @@ class CollectAudio(pyblish.api.ContextPlugin):
         ):
             # Skip instances that already have audio filled
             if instance.data.get("audio"):
-                self.log.info(
-                    "Skipping Audio collecion. It is already collected"
+                self.log.debug(
+                    "Skipping Audio collection. It is already collected"
                 )
                 continue
             filtered_instances.append(instance)
@@ -70,7 +70,7 @@ class CollectAudio(pyblish.api.ContextPlugin):
             instances_by_asset_name[asset_name].append(instance)
 
         asset_names = set(instances_by_asset_name.keys())
-        self.log.info((
+        self.log.debug((
             "Searching for audio subset '{subset}' in assets {assets}"
         ).format(
             subset=self.audio_subset_name,
@@ -100,7 +100,7 @@ class CollectAudio(pyblish.api.ContextPlugin):
                     "offset": 0,
                     "filename": repre_path
                 }]
-                self.log.info("Audio Data added to instance ...")
+                self.log.debug("Audio Data added to instance ...")
 
     def query_representations(self, project_name, asset_names):
         """Query representations related to audio subsets for passed assets.

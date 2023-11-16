@@ -56,7 +56,7 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
                 }
                 continue
 
-            self.log.info("correct asset: {}".format(asset))
+            self.log.debug("correct asset: {}".format(asset))
 
         if assets_missing_name:
             wrong_names = {}

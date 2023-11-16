@@ -30,7 +30,7 @@ By clicking the icon  ```OpenPype Menu``` rolls out.
 
 Choose ```OpenPype Menu > Launcher``` to open the ```Launcher``` window.
 
-When opened you can **choose** the **project** to work in from the list. Then choose the particular **asset** you want to work on then choose **task** 
+When opened you can **choose** the **project** to work in from the list. Then choose the particular **asset** you want to work on then choose **task**
 and finally **run 3dsmax by its icon** in the tools.
 
 ![Menu OpenPype](assets/3dsmax_tray_OP.png)
@@ -65,13 +65,13 @@ If not any workfile present simply hit ```Save As``` and keep ```Subversion``` e
 
 ![Save As Dialog](assets/3dsmax_SavingFirstFile_OP.png)
 
-OpenPype correctly names it and add version to the workfile. This basically happens whenever user trigger ```Save As``` action. Resulting into incremental version numbers like 
+OpenPype correctly names it and add version to the workfile. This basically happens whenever user trigger ```Save As``` action. Resulting into incremental version numbers like
 
 ```workfileName_v001```
 
 ```workfileName_v002```
 
- etc. 
+ etc.
 
 Basically meaning user is free of guessing what is the correct naming and other necessities to keep everything in order and managed.
 
@@ -105,21 +105,41 @@ Before proceeding further please check [Glossary](artist_concepts.md) and [What 
 
 ### Intro
 
-Current OpenPype integration (ver 3.15.0) supports only ```PointCache``` and ```Camera``` families now.
+Current OpenPype integration (ver 3.15.0) supports only ```PointCache```,  ```Camera```, ```Geometry``` and ```Redshift Proxy``` families now.
 
 **Pointcache** family being basically any geometry outputted as Alembic cache (.abc) format
 
 **Camera** family being 3dsmax Camera object with/without animation outputted as native .max, FBX, Alembic format
 
-
+**Redshift Proxy** family being Redshift Proxy object with/without animation outputted as rs format(Redshift Proxy's very own format)
 ---
 
 :::note Work in progress
 This part of documentation is still work in progress.
 :::
 
+## Validators
+
+Current Openpype integration supports different validators such as Frame Range and Attributes.
+Some validators are mandatory while some are optional and user can choose to enable them in the setting.
+
+**Validate Frame Range**: Optional Validator for checking Frame Range
+
+**Validate Attributes**: Optional Validator for checking if object properties' attributes are valid
+    in MaxWrapper Class.
+:::note
+    Users can write the properties' attributes they want to check in dict format in the setting
+    before validation. The attributes are then to be converted into Maxscript and do a check.
+    E.g. ```renderers.current.separateAovFiles``` and ```renderers.current.PrimaryGIEngine```
+    User can put the attributes in the dict format below
+    ```
+    {
+        "renderer.current":{
+            "separateAovFiles" : True
+            "PrimaryGIEngine": "#RS_GIENGINE_BRUTE_FORCE"
+        }
+    }
+    ```
+    ![Validate Attribute Setting](assets/3dsmax_validate_attributes.png)
+:::
 ## ...to be added
-
-
-
-

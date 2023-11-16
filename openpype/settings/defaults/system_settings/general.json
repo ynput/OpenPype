@@ -15,6 +15,11 @@
         "darwin": [],
         "linux": []
     },
+    "local_openpype_path": {
+        "windows": "",
+        "darwin": "",
+        "linux": ""
+    },
     "production_version": "",
     "staging_version": "",
     "version_check_interval": 5

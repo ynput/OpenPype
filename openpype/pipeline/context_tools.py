@@ -11,16 +11,19 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype import AYON_SERVER_ENABLED
 from openpype.host import HostBase
 from openpype.client import (
     get_project,
     get_asset_by_id,
     get_asset_by_name,
     version_is_latest,
+    get_ayon_server_api_connection,
 )
 from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
+from openpype.tests.lib import is_in_tests
 
 from .publish.lib import filter_pyblish_plugins
 from .anatomy import Anatomy
@@ -35,7 +38,7 @@ from . import (
     register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
-    deregister_inventory_action_path,
+    deregister_inventory_action_path
 )
 
 
@@ -104,6 +107,10 @@ def install_host(host):
 
     _is_installed = True
 
+    # Make sure global AYON connection has set site id and version
+    if AYON_SERVER_ENABLED:
+        get_ayon_server_api_connection()
+
     legacy_io.install()
     modules_manager = _get_modules_manager()
 
@@ -141,6 +148,10 @@ def install_host(host):
         pyblish.api.register_target("remote")
     else:
         pyblish.api.register_target("local")
+
+    if is_in_tests():
+        print("Registering pyblish target: automated")
+        pyblish.api.register_target("automated")
 
     project_name = os.environ.get("AVALON_PROJECT")
     host_name = os.environ.get("AVALON_APP")
@@ -180,6 +191,11 @@ def install_openpype_plugins(project_name=None, host_name=None):
         host_name)
     for path in load_plugin_paths:
         register_loader_plugin_path(path)
+
+    inventory_action_paths = modules_manager.collect_inventory_action_paths(
+        host_name)
+    for path in inventory_action_paths:
+        register_inventory_action_path(path)
 
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
@@ -315,7 +331,7 @@ def get_current_host_name():
     """Current host name.
 
     Function is based on currently registered host integration or environment
-    variant 'AVALON_APP'.
+    variable 'AVALON_APP'.
 
     Returns:
         Union[str, None]: Name of host integration in current process or None.
@@ -328,6 +344,26 @@ def get_current_host_name():
 
 
 def get_global_context():
+    """Global context defined in environment variables.
+
+    Values here may not reflect current context of host integration. The
+    function can be used on startup before a host is registered.
+
+    Use 'get_current_context' to make sure you'll get current host integration
+    context info.
+
+    Example:
+        {
+            "project_name": "Commercial",
+            "asset_name": "Bunny",
+            "task_name": "Animation",
+        }
+
+    Returns:
+        dict[str, Union[str, None]]: Context defined with environment
+            variables.
+    """
+
     return {
         "project_name": os.environ.get("AVALON_PROJECT"),
         "asset_name": os.environ.get("AVALON_ASSET"),
@@ -444,6 +480,27 @@ def get_template_data_from_session(session=None, system_settings=None):
     asset_name = session["AVALON_ASSET"]
     task_name = session["AVALON_TASK"]
     host_name = session["AVALON_APP"]
+
+    return get_template_data_with_names(
+        project_name, asset_name, task_name, host_name, system_settings
+    )
+
+
+def get_current_context_template_data(system_settings=None):
+    """Prepare template data for current context.
+
+    Args:
+        system_settings (Optional[Dict[str, Any]]): Prepared system settings.
+
+    Returns:
+        Dict[str, Any] Template data for current context.
+    """
+
+    context = get_current_context()
+    project_name = context["project_name"]
+    asset_name = context["asset_name"]
+    task_name = context["task_name"]
+    host_name = get_current_host_name()
 
     return get_template_data_with_names(
         project_name, asset_name, task_name, host_name, system_settings

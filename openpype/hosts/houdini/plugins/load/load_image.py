@@ -55,7 +55,8 @@ class ImageLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
 
         # Format file name, Houdini only wants forward slashes
-        file_path = os.path.normpath(self.fname)
+        file_path = self.filepath_from_context(context)
+        file_path = os.path.normpath(file_path)
         file_path = file_path.replace("\\", "/")
         file_path = self._get_file_sequence(file_path)
 
@@ -118,7 +119,8 @@ class ImageLoader(load.LoaderPlugin):
         if not parent.children():
             parent.destroy()
 
-    def _get_file_sequence(self, root):
+    def _get_file_sequence(self, file_path):
+        root = os.path.dirname(file_path)
         files = sorted(os.listdir(root))
 
         first_fname = files[0]

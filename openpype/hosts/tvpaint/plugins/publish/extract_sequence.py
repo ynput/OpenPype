@@ -6,7 +6,10 @@ from PIL import Image
 
 import pyblish.api
 
-from openpype.pipeline.publish import KnownPublishError
+from openpype.pipeline.publish import (
+    KnownPublishError,
+    get_publish_instance_families,
+)
 from openpype.hosts.tvpaint.api.lib import (
     execute_george,
     execute_george_through_file,
@@ -63,7 +66,6 @@ class ExtractSequence(pyblish.api.Extractor):
             "ignoreLayersTransparency", False
         )
 
-        family_lowered = instance.data["family"].lower()
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
 
@@ -76,11 +78,9 @@ class ExtractSequence(pyblish.api.Extractor):
 
         # Frame start/end may be stored as float
         frame_start = int(instance.data["frameStart"])
-        frame_end = int(instance.data["frameEnd"])
 
         # Handles are not stored per instance but on Context
         handle_start = instance.context.data["handleStart"]
-        handle_end = instance.context.data["handleEnd"]
 
         scene_bg_color = instance.context.data["sceneBgColor"]
 
@@ -143,8 +143,9 @@ class ExtractSequence(pyblish.api.Extractor):
         )
 
         # Fill tags and new families from project settings
+        instance_families = get_publish_instance_families(instance)
         tags = []
-        if "review" in instance.data["families"]:
+        if "review" in instance_families:
             tags.append("review")
 
         # Sequence of one frame

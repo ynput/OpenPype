@@ -17,7 +17,8 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
     `CollectDeadlineServerFromInstance`.
     """
 
-    order = pyblish.api.CollectorOrder + 0.410
+    # Run before collect_deadline_server_instance.
+    order = pyblish.api.CollectorOrder + 0.0025
     label = "Default Deadline Webservice"
 
     pass_mongo_url = False
@@ -47,3 +48,6 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
                 context.data["defaultDeadline"] = deadline_webservice
                 self.log.debug("Overriding from project settings with {}".format(  # noqa: E501
                     deadline_webservice))
+
+        context.data["defaultDeadline"] = \
+            context.data["defaultDeadline"].strip().rstrip("/")

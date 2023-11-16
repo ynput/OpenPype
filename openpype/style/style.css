@@ -1427,6 +1427,10 @@ CreateNextPageOverlay {
     background: rgba(0, 0, 0, 127);
 }
 
+#OverlayFrameLabel {
+    font-size: 15pt;
+}
+
 #BreadcrumbsPathInput {
     padding: 2px;
     font-size: 9pt;

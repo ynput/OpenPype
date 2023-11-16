@@ -223,7 +223,7 @@ class LoaderWindow(QtWidgets.QDialog):
         lib.schedule(self._refresh, 50, channel="mongo")
 
     def on_assetschanged(self, *args):
-        self.echo("Fetching asset..")
+        self.echo("Fetching hierarchy..")
         lib.schedule(self._assetschanged, 50, channel="mongo")
 
     def on_subsetschanged(self, *args):

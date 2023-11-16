@@ -27,7 +27,7 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_job_delay = "00:00:08:00"
 
     def process(self, instance):
-        instance.data["toBeRenderedOn"] = "deadline"
+
         context = instance.context
 
         # get default deadline webservice url from deadline module
@@ -59,7 +59,6 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
             render_path).replace("\\", "/")
 
         instance.data["publishJobState"] = "Suspended"
-        instance.context.data['ftrackStatus'] = "Render"
 
         # adding 2d render specific family for version identification in Loader
         instance.data["families"] = ["render2d"]
@@ -184,10 +183,10 @@ class CelactionSubmitDeadline(pyblish.api.InstancePlugin):
         }
 
         plugin = payload["JobInfo"]["Plugin"]
-        self.log.info("using render plugin : {}".format(plugin))
+        self.log.debug("using render plugin : {}".format(plugin))
 
-        self.log.info("Submitting..")
-        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
+        self.log.debug("Submitting..")
+        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
         # adding expectied files to instance.data
         self.expected_files(instance, render_path)

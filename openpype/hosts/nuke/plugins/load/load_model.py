@@ -5,8 +5,8 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
     load,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import maintained_selection
@@ -24,7 +24,7 @@ class AlembicModelLoader(load.LoaderPlugin):
 
     families = ["model", "pointcache", "animation"]
     representations = ["*"]
-    extension = {"abc"}
+    extensions = {"abc"}
 
     label = "Load Alembic"
     icon = "cube"
@@ -46,16 +46,17 @@ class AlembicModelLoader(load.LoaderPlugin):
         # add additional metadata from the version to imprint to Avalon knob
         add_keys = ["source", "author", "fps"]
 
-        data_imprint = {"frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "objectName": object_name}
+        data_imprint = {
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = self.fname.replace("\\", "/")
+        file = self.filepath_from_context(context).replace("\\", "/")
 
         with maintained_selection():
             model_node = nuke.createNode(
@@ -64,9 +65,6 @@ class AlembicModelLoader(load.LoaderPlugin):
                     object_name, file),
                 inpanel=False
             )
-
-            # hide property panel
-            model_node.hideControlPanel()
 
             model_node.forceValidate()
 
@@ -115,11 +113,11 @@ class AlembicModelLoader(load.LoaderPlugin):
             None
         """
         # Get version from io
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
-        object_name = container['objectName']
+
         # get corresponding node
-        model_node = nuke.toNode(object_name)
+        model_node = container["node"]
 
         # get main variables
         version_data = version_doc.get("data", {})
@@ -132,11 +130,12 @@ class AlembicModelLoader(load.LoaderPlugin):
         # add additional metadata from the version to imprint to Avalon knob
         add_keys = ["source", "author", "fps"]
 
-        data_imprint = {"representation": str(representation["_id"]),
-                        "frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "objectName": object_name}
+        data_imprint = {
+            "representation": str(representation["_id"]),
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -145,7 +144,6 @@ class AlembicModelLoader(load.LoaderPlugin):
         file = get_representation_path(representation).replace("\\", "/")
 
         with maintained_selection():
-            model_node = nuke.toNode(object_name)
             model_node['selected'].setValue(True)
 
             # collect input output dependencies
@@ -166,8 +164,10 @@ class AlembicModelLoader(load.LoaderPlugin):
             ypos = model_node.ypos()
             nuke.nodeCopy("%clipboard%")
             nuke.delete(model_node)
+
+            # paste the node back and set the position
             nuke.nodePaste("%clipboard%")
-            model_node = nuke.toNode(object_name)
+            model_node = nuke.selectedNode()
             model_node.setXYpos(xpos, ypos)
 
             # link to original input nodes
@@ -190,7 +190,7 @@ class AlembicModelLoader(load.LoaderPlugin):
     def node_version_color(self, version, node):
         """ Coloring a node by correct color by actual version"""
 
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         last_version_doc = get_last_version_by_subset_id(
             project_name, version["parent"], fields=["_id"]
         )

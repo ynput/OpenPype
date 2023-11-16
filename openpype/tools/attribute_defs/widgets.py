@@ -19,6 +19,7 @@ from openpype.tools.utils import (
     CustomTextComboBox,
     FocusSpinBox,
     FocusDoubleSpinBox,
+    MultiSelectionComboBox,
 )
 from openpype.widgets.nice_checkbox import NiceCheckbox
 
@@ -250,6 +251,30 @@ class LabelAttrWidget(_BaseAttrDefWidget):
         self.main_layout.addWidget(input_widget, 0)
 
 
+class ClickableLineEdit(QtWidgets.QLineEdit):
+    clicked = QtCore.Signal()
+
+    def __init__(self, text, parent):
+        super(ClickableLineEdit, self).__init__(parent)
+        self.setText(text)
+        self.setReadOnly(True)
+
+        self._mouse_pressed = False
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(ClickableLineEdit, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+
+        super(ClickableLineEdit, self).mouseReleaseEvent(event)
+
+
 class NumberAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
         decimals = self.attr_def.decimals
@@ -269,20 +294,38 @@ class NumberAttrWidget(_BaseAttrDefWidget):
         input_widget.setButtonSymbols(
             QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons
         )
+        input_line_edit = input_widget.lineEdit()
+        input_widget.installEventFilter(self)
+
+        multisel_widget = ClickableLineEdit("< Multiselection >", self)
+        multisel_widget.setVisible(False)
 
         input_widget.valueChanged.connect(self._on_value_change)
+        multisel_widget.clicked.connect(self._on_multi_click)
 
         self._input_widget = input_widget
+        self._input_line_edit = input_line_edit
+        self._multisel_widget = multisel_widget
+        self._last_multivalue = None
+        self._multivalue = False
 
         self.main_layout.addWidget(input_widget, 0)
+        self.main_layout.addWidget(multisel_widget, 0)
 
-    def _on_value_change(self, new_value):
-        self.value_changed.emit(new_value, self.attr_def.id)
+    def eventFilter(self, obj, event):
+        if (
+            self._multivalue
+            and obj is self._input_widget
+            and event.type() == QtCore.QEvent.FocusOut
+        ):
+            self._set_multiselection_visible(True)
+        return False
 
     def current_value(self):
         return self._input_widget.value()
 
     def set_value(self, value, multivalue=False):
+        self._last_multivalue = None
         if multivalue:
             set_value = set(value)
             if None in set_value:
@@ -290,12 +333,46 @@ class NumberAttrWidget(_BaseAttrDefWidget):
                 set_value.add(self.attr_def.default)
 
             if len(set_value) > 1:
-                self._input_widget.setSpecialValueText("Multiselection")
+                self._last_multivalue = next(iter(set_value), None)
+                self._set_multiselection_visible(True)
+                self._multivalue = True
                 return
             value = tuple(set_value)[0]
 
+        self._multivalue = False
+        self._set_multiselection_visible(False)
+
         if self.current_value != value:
             self._input_widget.setValue(value)
+
+    def _on_value_change(self, new_value):
+        self._multivalue = False
+        self.value_changed.emit(new_value, self.attr_def.id)
+
+    def _on_multi_click(self):
+        self._set_multiselection_visible(False, True)
+
+    def _set_multiselection_visible(self, visible, change_focus=False):
+        self._input_widget.setVisible(not visible)
+        self._multisel_widget.setVisible(visible)
+        if visible:
+            return
+
+        # Change value once user clicked on the input field
+        if self._last_multivalue is None:
+            value = self.attr_def.default
+        else:
+            value = self._last_multivalue
+        self._input_widget.blockSignals(True)
+        self._input_widget.setValue(value)
+        self._input_widget.blockSignals(False)
+        if not change_focus:
+            return
+        # Change focus to input field and move cursor to the end
+        self._input_widget.setFocus(QtCore.Qt.MouseFocusReason)
+        self._input_line_edit.setCursorPosition(
+            len(self._input_line_edit.text())
+        )
 
 
 class TextAttrWidget(_BaseAttrDefWidget):
@@ -343,6 +420,7 @@ class TextAttrWidget(_BaseAttrDefWidget):
         return self._input_widget.text()
 
     def set_value(self, value, multivalue=False):
+        block_signals = False
         if multivalue:
             set_value = set(value)
             if None in set_value:
@@ -352,13 +430,18 @@ class TextAttrWidget(_BaseAttrDefWidget):
             if len(set_value) == 1:
                 value = tuple(set_value)[0]
             else:
+                block_signals = True
                 value = "< Multiselection >"
 
         if value != self.current_value():
+            if block_signals:
+                self._input_widget.blockSignals(True)
             if self.multiline:
                 self._input_widget.setPlainText(value)
             else:
                 self._input_widget.setText(value)
+            if block_signals:
+                self._input_widget.blockSignals(False)
 
 
 class BoolAttrWidget(_BaseAttrDefWidget):
@@ -391,7 +474,9 @@ class BoolAttrWidget(_BaseAttrDefWidget):
                 set_value.add(self.attr_def.default)
 
             if len(set_value) > 1:
+                self._input_widget.blockSignals(True)
                 self._input_widget.setCheckState(QtCore.Qt.PartiallyChecked)
+                self._input_widget.blockSignals(False)
                 return
             value = tuple(set_value)[0]
 
@@ -404,10 +489,19 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         self._multivalue = False
         super(EnumAttrWidget, self).__init__(*args, **kwargs)
 
+    @property
+    def multiselection(self):
+        return self.attr_def.multiselection
+
     def _ui_init(self):
-        input_widget = CustomTextComboBox(self)
-        combo_delegate = QtWidgets.QStyledItemDelegate(input_widget)
-        input_widget.setItemDelegate(combo_delegate)
+        if self.multiselection:
+            input_widget = MultiSelectionComboBox(self)
+
+        else:
+            input_widget = CustomTextComboBox(self)
+            combo_delegate = QtWidgets.QStyledItemDelegate(input_widget)
+            input_widget.setItemDelegate(combo_delegate)
+            self._combo_delegate = combo_delegate
 
         if self.attr_def.tooltip:
             input_widget.setToolTip(self.attr_def.tooltip)
@@ -419,9 +513,11 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         if idx >= 0:
             input_widget.setCurrentIndex(idx)
 
-        input_widget.currentIndexChanged.connect(self._on_value_change)
+        if self.multiselection:
+            input_widget.value_changed.connect(self._on_value_change)
+        else:
+            input_widget.currentIndexChanged.connect(self._on_value_change)
 
-        self._combo_delegate = combo_delegate
         self._input_widget = input_widget
 
         self.main_layout.addWidget(input_widget, 0)
@@ -434,17 +530,40 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         self.value_changed.emit(new_value, self.attr_def.id)
 
     def current_value(self):
+        if self.multiselection:
+            return self._input_widget.value()
         idx = self._input_widget.currentIndex()
         return self._input_widget.itemData(idx)
 
+    def _multiselection_multivalue_prep(self, values):
+        final = None
+        multivalue = False
+        for value in values:
+            value = set(value)
+            if final is None:
+                final = value
+            elif multivalue or final != value:
+                final |= value
+                multivalue = True
+        return list(final), multivalue
+
     def set_value(self, value, multivalue=False):
         if multivalue:
-            set_value = set(value)
-            if len(set_value) == 1:
-                multivalue = False
-                value = tuple(set_value)[0]
+            if self.multiselection:
+                value, multivalue = self._multiselection_multivalue_prep(
+                    value)
+            else:
+                set_value = set(value)
+                if len(set_value) == 1:
+                    multivalue = False
+                    value = tuple(set_value)[0]
 
-        if not multivalue:
+        if self.multiselection:
+            self._input_widget.blockSignals(True)
+            self._input_widget.set_value(value)
+            self._input_widget.blockSignals(False)
+
+        elif not multivalue:
             idx = self._input_widget.findData(value)
             cur_idx = self._input_widget.currentIndex()
             if idx != cur_idx and idx >= 0:

@@ -23,7 +23,7 @@ class NukeRenderLocal(publish.Extractor,
     order = pyblish.api.ExtractorOrder
     label = "Render Local"
     hosts = ["nuke"]
-    families = ["render.local", "prerender.local", "still.local"]
+    families = ["render.local", "prerender.local", "image.local"]
 
     def process(self, instance):
         child_nodes = (
@@ -119,7 +119,7 @@ class NukeRenderLocal(publish.Extractor,
 
         instance.data["representations"].append(repre)
 
-        self.log.info("Extracted instance '{0}' to: {1}".format(
+        self.log.debug("Extracted instance '{0}' to: {1}".format(
             instance.name,
             out_dir
         ))
@@ -136,14 +136,14 @@ class NukeRenderLocal(publish.Extractor,
             families.remove('prerender.local')
             families.insert(0, "prerender")
             instance.data["anatomyData"]["family"] = "prerender"
-        elif "still.local" in families:
+        elif "image.local" in families:
             instance.data['family'] = 'image'
-            families.remove('still.local')
+            families.remove('image.local')
             instance.data["anatomyData"]["family"] = "image"
         instance.data["families"] = families
 
         collections, remainder = clique.assemble(filenames)
-        self.log.info('collections: {}'.format(str(collections)))
+        self.log.debug('collections: {}'.format(str(collections)))
 
         if collections:
             collection = collections[0]

@@ -184,6 +184,11 @@ class ExtractOIIOTranscode(publish.Extractor):
                     if tag == "review":
                         added_review = True
 
+                # If there is only 1 file outputted then convert list to
+                # string, cause that'll indicate that its not a sequence.
+                if len(new_repre["files"]) == 1:
+                    new_repre["files"] = new_repre["files"][0]
+
                 new_representations.append(new_repre)
                 added_representations = True
 
@@ -315,13 +320,12 @@ class ExtractOIIOTranscode(publish.Extractor):
                                   logger=self.log)
 
         if not profile:
-            self.log.info((
+            self.log.debug((
               "Skipped instance. None of profiles in presets are for"
               " Host: \"{}\" | Families: \"{}\" | Task \"{}\""
               " | Task type \"{}\" | Subset \"{}\" "
             ).format(host_name, family, task_name, task_type, subset))
 
-        self.log.debug("profile: {}".format(profile))
         return profile
 
     def _repre_is_valid(self, repre):

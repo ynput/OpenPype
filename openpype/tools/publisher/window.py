@@ -15,6 +15,7 @@ from openpype.tools.utils import (
     MessageOverlayObject,
     PixmapLabel,
 )
+from openpype.tools.utils.lib import center_window
 
 from .constants import ResetKeySequence
 from .publish_report_viewer import PublishReportViewerWidget
@@ -66,8 +67,7 @@ class PublisherWindow(QtWidgets.QDialog):
             on_top_flag = QtCore.Qt.Dialog
 
         self.setWindowFlags(
-            self.windowFlags()
-            | QtCore.Qt.WindowTitleHint
+            QtCore.Qt.WindowTitleHint
             | QtCore.Qt.WindowMaximizeButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
             | QtCore.Qt.WindowCloseButtonHint
@@ -389,6 +389,45 @@ class PublisherWindow(QtWidgets.QDialog):
     def controller(self):
         return self._controller
 
+    def show_and_publish(self, comment=None):
+        """Show the window and start publishing.
+
+        The method will reset controller and start the publishing afterwards.
+
+        Todos:
+            Move validations from '_on_publish_clicked' and change of
+                'comment' value in controller to controller so it can be
+                simplified.
+
+        Args:
+            comment (Optional[str]): Comment to be set to publish.
+                If is set to 'None' a comment is not changed at all.
+        """
+
+        self._reset_on_show = False
+        self._reset_on_first_show = False
+
+        if comment is not None:
+            self.set_comment(comment)
+        self.make_sure_is_visible()
+        # Reset controller
+        self._controller.reset()
+        # Fake publish click to trigger save validation and propagate
+        #   comment to controller
+        self._on_publish_clicked()
+
+    def set_comment(self, comment):
+        """Change comment text.
+
+        Todos:
+            Be able to set the comment via controller.
+
+        Args:
+            comment (str): Comment text.
+        """
+
+        self._comment_input.setText(comment)
+
     def make_sure_is_visible(self):
         if self._window_is_visible:
             self.setWindowState(QtCore.Qt.WindowActive)
@@ -454,7 +493,11 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         save_match = event.matches(QtGui.QKeySequence.Save)
-        if save_match == QtGui.QKeySequence.ExactMatch:
+        # PySide2 and PySide6 support
+        if not isinstance(save_match, bool):
+            save_match = save_match == QtGui.QKeySequence.ExactMatch
+
+        if save_match:
             if not self._controller.publish_has_started:
                 self._save_changes(True)
             event.accept()
@@ -487,6 +530,7 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
         self.setStyleSheet(style.load_stylesheet())
+        center_window(self)
         self._reset_on_show = self._reset_on_first_show
 
     def _on_show_timer(self):
@@ -631,16 +675,7 @@ class PublisherWindow(QtWidgets.QDialog):
         if old_tab == "details":
             self._publish_details_widget.close_details_popup()
 
-        if new_tab in ("create", "publish"):
-            animate = True
-            if old_tab not in ("create", "publish"):
-                animate = False
-                self._content_stacked_layout.setCurrentWidget(
-                    self._overview_widget
-                )
-            self._overview_widget.set_state(new_tab, animate)
-
-        elif new_tab == "details":
+        if new_tab == "details":
             self._content_stacked_layout.setCurrentWidget(
                 self._publish_details_widget
             )
@@ -650,6 +685,21 @@ class PublisherWindow(QtWidgets.QDialog):
             self._content_stacked_layout.setCurrentWidget(
                 self._report_widget
             )
+
+        old_on_overview = old_tab in ("create", "publish")
+        if new_tab in ("create", "publish"):
+            self._content_stacked_layout.setCurrentWidget(
+                self._overview_widget
+            )
+            # Overview state is animated only when switching between
+            #   'create' and 'publish' tab
+            self._overview_widget.set_state(new_tab, old_on_overview)
+
+        elif old_on_overview:
+            # Make sure animation finished if previous tab was 'create'
+            #   or 'publish'. That is just for safety to avoid stuck animation
+            #   when user clicks too fast.
+            self._overview_widget.make_sure_animation_is_finished()
 
         is_create = new_tab == "create"
         if is_create:

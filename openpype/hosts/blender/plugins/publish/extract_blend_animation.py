@@ -5,7 +5,10 @@ import bpy
 from openpype.pipeline import publish
 
 
-class ExtractBlendAnimation(publish.Extractor):
+class ExtractBlendAnimation(
+        publish.Extractor,
+        publish.OptionalPyblishPluginMixin,
+):
     """Extract a blend file."""
 
     label = "Extract Blend"
@@ -14,6 +17,9 @@ class ExtractBlendAnimation(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
 
         stagingdir = self.staging_dir(instance)
@@ -21,7 +27,7 @@ class ExtractBlendAnimation(publish.Extractor):
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         data_blocks = set()
 
@@ -50,5 +56,5 @@ class ExtractBlendAnimation(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, representation)

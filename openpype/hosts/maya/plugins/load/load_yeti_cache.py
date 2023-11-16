@@ -15,6 +15,16 @@ from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.pipeline import containerise
 
 
+# Do not reset these values on update but only apply on first load
+# to preserve any potential local overrides
+SKIP_UPDATE_ATTRS = {
+    "displayOutput",
+    "viewportDensity",
+    "viewportWidth",
+    "viewportLength",
+}
+
+
 def set_attribute(node, attr, value):
     """Wrapper of set attribute which ignores None values"""
     if value is None:
@@ -60,15 +70,17 @@ class YetiCacheLoader(load.LoaderPlugin):
             cmds.loadPlugin("pgYetiMaya", quiet=True)
 
         # Create Yeti cache nodes according to settings
-        settings = self.read_settings(self.fname)
+        path = self.filepath_from_context(context)
+        settings = self.read_settings(path)
         nodes = []
         for node in settings["nodes"]:
             nodes.extend(self.create_node(namespace, node))
 
         group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
+        project_name = context["project"]["name"]
 
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(project_name)
         colors = settings['maya']['load']['colors']
 
         c = colors.get(family)
@@ -203,6 +215,8 @@ class YetiCacheLoader(load.LoaderPlugin):
                     yeti_node = yeti_nodes[0]
 
                     for attr, value in node_settings["attrs"].items():
+                        if attr in SKIP_UPDATE_ATTRS:
+                            continue
                         set_attribute(attr, value, yeti_node)
 
         cmds.setAttr("{}.representation".format(container_node),
@@ -309,7 +323,6 @@ class YetiCacheLoader(load.LoaderPlugin):
         # Update attributes with defaults
         attributes = node_settings["attrs"]
         attributes.update({
-            "viewportDensity": 0.1,
             "verbosity": 2,
             "fileMode": 1,
 
@@ -318,6 +331,9 @@ class YetiCacheLoader(load.LoaderPlugin):
             "visibleInReflections": True,
             "visibleInRefractions": True
         })
+
+        if "viewportDensity" not in attributes:
+            attributes["viewportDensity"] = 0.1
 
         # Apply attributes to pgYetiMaya node
         for attr, value in attributes.items():

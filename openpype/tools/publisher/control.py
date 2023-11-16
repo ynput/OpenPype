@@ -176,11 +176,10 @@ class PublishReportMaker:
         self._create_discover_result = None
         self._convert_discover_result = None
         self._publish_discover_result = None
-        self._plugin_data = []
-        self._plugin_data_with_plugin = []
 
-        self._stored_plugins = []
-        self._current_plugin_data = []
+        self._plugin_data_by_id = {}
+        self._current_plugin = None
+        self._current_plugin_data = {}
         self._all_instances_by_id = {}
         self._current_context = None
 
@@ -192,8 +191,9 @@ class PublishReportMaker:
             create_context.convertor_discover_result
         )
         self._publish_discover_result = create_context.publish_discover_result
-        self._plugin_data = []
-        self._plugin_data_with_plugin = []
+
+        self._plugin_data_by_id = {}
+        self._current_plugin = None
         self._current_plugin_data = {}
         self._all_instances_by_id = {}
         self._current_context = context
@@ -210,18 +210,11 @@ class PublishReportMaker:
         if self._current_plugin_data:
             self._current_plugin_data["passed"] = True
 
+        self._current_plugin = plugin
         self._current_plugin_data = self._add_plugin_data_item(plugin)
 
-    def _get_plugin_data_item(self, plugin):
-        store_item = None
-        for item in self._plugin_data_with_plugin:
-            if item["plugin"] is plugin:
-                store_item = item["data"]
-                break
-        return store_item
-
     def _add_plugin_data_item(self, plugin):
-        if plugin in self._stored_plugins:
+        if plugin.id in self._plugin_data_by_id:
             # A plugin would be processed more than once. What can cause it:
             #   - there is a bug in controller
             #   - plugin class is imported into multiple files
@@ -229,15 +222,9 @@ class PublishReportMaker:
             raise ValueError(
                 "Plugin '{}' is already stored".format(str(plugin)))
 
-        self._stored_plugins.append(plugin)
-
         plugin_data_item = self._create_plugin_data_item(plugin)
+        self._plugin_data_by_id[plugin.id] = plugin_data_item
 
-        self._plugin_data_with_plugin.append({
-            "plugin": plugin,
-            "data": plugin_data_item
-        })
-        self._plugin_data.append(plugin_data_item)
         return plugin_data_item
 
     def _create_plugin_data_item(self, plugin):
@@ -278,7 +265,7 @@ class PublishReportMaker:
         """Add result of single action."""
         plugin = result["plugin"]
 
-        store_item = self._get_plugin_data_item(plugin)
+        store_item = self._plugin_data_by_id.get(plugin.id)
         if store_item is None:
             store_item = self._add_plugin_data_item(plugin)
 
@@ -300,14 +287,24 @@ class PublishReportMaker:
                 instance, instance in self._current_context
             )
 
-        plugins_data = copy.deepcopy(self._plugin_data)
-        if plugins_data and not plugins_data[-1]["passed"]:
-            plugins_data[-1]["passed"] = True
+        plugins_data_by_id = copy.deepcopy(
+            self._plugin_data_by_id
+        )
+
+        # Ensure the current plug-in is marked as `passed` in the result
+        # so that it shows on reports for paused publishes
+        if self._current_plugin is not None:
+            current_plugin_data = plugins_data_by_id.get(
+                self._current_plugin.id
+            )
+            if current_plugin_data and not current_plugin_data["passed"]:
+                current_plugin_data["passed"] = True
 
         if publish_plugins:
             for plugin in publish_plugins:
-                if plugin not in self._stored_plugins:
-                    plugins_data.append(self._create_plugin_data_item(plugin))
+                if plugin.id not in plugins_data_by_id:
+                    plugins_data_by_id[plugin.id] = \
+                        self._create_plugin_data_item(plugin)
 
         reports = []
         if self._create_discover_result is not None:
@@ -328,7 +325,7 @@ class PublishReportMaker:
                 )
 
         return {
-            "plugins_data": plugins_data,
+            "plugins_data": list(plugins_data_by_id.values()),
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context),
             "crashed_file_paths": crashed_file_paths,
@@ -398,12 +395,22 @@ class PublishReportMaker:
         exception = result.get("error")
         if exception:
             fname, line_no, func, exc = exception.traceback
+
+            # Conversion of exception into string may crash
+            try:
+                msg = str(exception)
+            except BaseException:
+                msg = (
+                    "Publisher Controller: ERROR"
+                    " - Failed to get exception message"
+                )
+
             # Action result does not have 'is_validation_error'
             is_validation_error = result.get("is_validation_error", False)
             output.append({
                 "type": "error",
                 "is_validation_error": is_validation_error,
-                "msg": str(exception),
+                "msg": msg,
                 "filename": str(fname),
                 "lineno": str(line_no),
                 "func": str(func),
@@ -433,29 +440,29 @@ class PublishPluginsProxy:
 
     def __init__(self, plugins):
         plugins_by_id = {}
-        actions_by_id = {}
+        actions_by_plugin_id = {}
         action_ids_by_plugin_id = {}
         for plugin in plugins:
             plugin_id = plugin.id
             plugins_by_id[plugin_id] = plugin
 
             action_ids = []
+            actions_by_id = {}
             action_ids_by_plugin_id[plugin_id] = action_ids
+            actions_by_plugin_id[plugin_id] = actions_by_id
 
             actions = getattr(plugin, "actions", None) or []
             for action in actions:
                 action_id = action.id
-                if action_id in actions_by_id:
-                    continue
                 action_ids.append(action_id)
                 actions_by_id[action_id] = action
 
         self._plugins_by_id = plugins_by_id
-        self._actions_by_id = actions_by_id
+        self._actions_by_plugin_id = actions_by_plugin_id
         self._action_ids_by_plugin_id = action_ids_by_plugin_id
 
-    def get_action(self, action_id):
-        return self._actions_by_id[action_id]
+    def get_action(self, plugin_id, action_id):
+        return self._actions_by_plugin_id[plugin_id][action_id]
 
     def get_plugin(self, plugin_id):
         return self._plugins_by_id[plugin_id]
@@ -487,7 +494,9 @@ class PublishPluginsProxy:
         """
 
         return [
-            self._create_action_item(self._actions_by_id[action_id], plugin_id)
+            self._create_action_item(
+                self.get_action(plugin_id, action_id), plugin_id
+            )
             for action_id in self._action_ids_by_plugin_id[plugin_id]
         ]
 
@@ -2298,7 +2307,7 @@ class PublisherController(BasePublisherController):
     def run_action(self, plugin_id, action_id):
         # TODO handle result in UI
         plugin = self._publish_plugins_proxy.get_plugin(plugin_id)
-        action = self._publish_plugins_proxy.get_action(action_id)
+        action = self._publish_plugins_proxy.get_action(plugin_id, action_id)
 
         result = pyblish.plugin.process(
             plugin, self._publish_context, None, action.id

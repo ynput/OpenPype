@@ -10,9 +10,11 @@ import glob
 import platform
 import requests
 import re
+import inspect
+import time
 
 from tests.lib.db_handler import DBHandler
-from common.openpype_common.distribution.file_handler import RemoteFileHandler
+from tests.lib.file_handler import RemoteFileHandler, LocalFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
@@ -79,14 +81,25 @@ class ModuleUnitTest(BaseTest):
             for test_file in self.TEST_FILES:
                 file_id, file_name, md5 = test_file
 
-                f_name, ext = os.path.splitext(file_name)
+                current_dir = os.path.dirname(os.path.abspath(
+                    inspect.getfile(self.__class__)))
+                if os.path.exists(file_id):
+                    handler_class = LocalFileHandler
+                elif os.path.exists(os.path.join(current_dir, file_id)):
+                    file_id = os.path.join(current_dir, file_id)
+                    handler_class = LocalFileHandler
+                else:
+                    handler_class = RemoteFileHandler
 
-                RemoteFileHandler.download_file_from_google_drive(file_id,
-                                                                  str(tmpdir),
-                                                                  file_name)
+                handler_class.download_test_source_files(file_id, str(tmpdir),
+                                                         file_name)
+                ext = None
+                if "." in file_name:
+                    _, ext = os.path.splitext(file_name)
 
-                if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
-                    RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
+                if ext and ext.lstrip('.') in handler_class.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
+                    handler_class.unzip(os.path.join(tmpdir, file_name))
+
                 yield tmpdir
 
                 persist = (persist or self.PERSIST or
@@ -105,7 +118,7 @@ class ModuleUnitTest(BaseTest):
         yield path
 
     @pytest.fixture(scope="module")
-    def env_var(self, monkeypatch_session, download_test_data):
+    def env_var(self, monkeypatch_session, download_test_data, mongo_url):
         """Sets temporary env vars from json file."""
         env_url = os.path.join(download_test_data, "input",
                                "env_vars", "env_var.json")
@@ -129,6 +142,9 @@ class ModuleUnitTest(BaseTest):
             monkeypatch_session.setenv(key, str(value))
 
         #reset connection to openpype DB with new env var
+        if mongo_url:
+            monkeypatch_session.setenv("OPENPYPE_MONGO", mongo_url)
+
         import openpype.settings.lib as sett_lib
         sett_lib._SETTINGS_HANDLER = None
         sett_lib._LOCAL_SETTINGS_HANDLER = None
@@ -147,10 +163,9 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def db_setup(self, download_test_data, env_var, monkeypatch_session,
-                 request):
+                 request, mongo_url):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
-
         uri = os.environ.get("OPENPYPE_MONGO")
         db_handler = DBHandler(uri)
         db_handler.setup_from_dump(self.TEST_DB_NAME, backup_dir,
@@ -246,19 +261,22 @@ class PublishTest(ModuleUnitTest):
     SETUP_ONLY = False
 
     @pytest.fixture(scope="module")
-    def app_name(self, app_variant):
+    def app_name(self, app_variant, app_group):
         """Returns calculated value for ApplicationManager. Eg.(nuke/12-2)"""
         from openpype.lib import ApplicationManager
         app_variant = app_variant or self.APP_VARIANT
+        app_group = app_group or self.APP_GROUP
 
         application_manager = ApplicationManager()
         if not app_variant:
             variant = (
                 application_manager.find_latest_available_variant_for_group(
-                    self.APP_GROUP))
+                    app_group
+                )
+            )
             app_variant = variant.name
 
-        yield "{}/{}".format(self.APP_GROUP, app_variant)
+        yield "{}/{}".format(app_group, app_variant)
 
     @pytest.fixture(scope="module")
     def app_args(self, download_test_data):
@@ -329,7 +347,7 @@ class PublishTest(ModuleUnitTest):
             print("Creating only setup for test, not launching app")
             yield False
             return
-        import time
+
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
         timeout = float(timeout)
@@ -359,26 +377,42 @@ class PublishTest(ModuleUnitTest):
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")
 
-        print("Comparing published:'{}' : expected:'{}'".format(
-            published_dir_base, expected_dir_base))
-        published = set(f.replace(published_dir_base, '') for f in
-                        glob.glob(published_dir_base + "\\**", recursive=True)
-                        if f != published_dir_base and os.path.exists(f))
-        expected = set(f.replace(expected_dir_base, '') for f in
-                       glob.glob(expected_dir_base + "\\**", recursive=True)
-                       if f != expected_dir_base and os.path.exists(f))
+        print(
+            "Comparing published: '{}' | expected: '{}'".format(
+                published_dir_base, expected_dir_base
+            )
+        )
 
-        filtered_published = self._filter_files(published,
-                                                skip_compare_folders)
+        def get_files(dir_base):
+            result = set()
+
+            for f in glob.glob(dir_base + "\\**", recursive=True):
+                if os.path.isdir(f):
+                    continue
+
+                if f != dir_base and os.path.exists(f):
+                    result.add(f.replace(dir_base, ""))
+
+            return result
+
+        published = get_files(published_dir_base)
+        expected = get_files(expected_dir_base)
+
+        filtered_published = self._filter_files(
+            published, skip_compare_folders
+        )
 
         # filter out temp files also in expected
         # could be polluted by accident by copying 'output' to zip file
         filtered_expected = self._filter_files(expected, skip_compare_folders)
 
-        not_mtched = filtered_expected.symmetric_difference(filtered_published)
-        if not_mtched:
-            raise AssertionError("Missing {} files".format(
-                "\n".join(sorted(not_mtched))))
+        not_matched = filtered_expected.symmetric_difference(
+            filtered_published
+        )
+        if not_matched:
+            raise AssertionError(
+                "Missing {} files".format("\n".join(sorted(not_matched)))
+            )
 
     def _filter_files(self, source_files, skip_compare_folders):
         """Filter list of files according to regex pattern."""

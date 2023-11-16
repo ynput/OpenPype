@@ -1,15 +1,16 @@
 from openpype.client import get_project, get_asset_by_name
-from openpype.lib import (
+from openpype.lib.applications import (
     PreLaunchHook,
     EnvironmentPrepData,
     prepare_app_environments,
     prepare_context_environments
 )
-from openpype.pipeline import AvalonMongoDB, Anatomy
+from openpype.pipeline import Anatomy
 
 
 class GlobalHostDataHook(PreLaunchHook):
     order = -100
+    launch_types = set()
 
     def execute(self):
         """Prepare global objects to `data` that will be used for sure."""
@@ -26,7 +27,6 @@ class GlobalHostDataHook(PreLaunchHook):
 
             "app": app,
 
-            "dbcon": self.data["dbcon"],
             "project_doc": self.data["project_doc"],
             "asset_doc": self.data["asset_doc"],
 
@@ -61,13 +61,6 @@ class GlobalHostDataHook(PreLaunchHook):
         self.log.debug("Project name is set to \"{}\"".format(project_name))
         # Anatomy
         self.data["anatomy"] = Anatomy(project_name)
-
-        # Mongo connection
-        dbcon = AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-        dbcon.install()
-
-        self.data["dbcon"] = dbcon
 
         # Project document
         project_doc = get_project(project_name)

@@ -6,7 +6,10 @@ from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
 
 
-class ExtractAnimationABC(publish.Extractor):
+class ExtractAnimationABC(
+        publish.Extractor,
+        publish.OptionalPyblishPluginMixin,
+):
     """Extract as ABC."""
 
     label = "Extract Animation ABC"
@@ -15,20 +18,21 @@ class ExtractAnimationABC(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.abc"
         filepath = os.path.join(stagingdir, filename)
 
-        context = bpy.context
-
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         plugin.deselect_all()
 
         selected = []
-        asset_group = None
+        asset_group = instance.data["transientData"]["instance_node"]
 
         objects = []
         for obj in instance:
@@ -68,5 +72,5 @@ class ExtractAnimationABC(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, representation)

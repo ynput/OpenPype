@@ -19,7 +19,7 @@ import logging
 from pyblish.api import Instance as PyblishInstance
 
 from tests.lib.testing_classes import BaseTest
-from openpype.plugins.publish.validate_sequence_frames import (
+from openpype.hosts.unreal.plugins.publish.validate_sequence_frames import (
     ValidateSequenceFrames
 )
 
@@ -38,7 +38,13 @@ class TestValidateSequenceFrames(BaseTest):
             data = {
                 "frameStart": 1001,
                 "frameEnd": 1002,
-                "representations": []
+                "representations": [],
+                "assetEntity": {
+                    "data": {
+                        "clipIn": 1001,
+                        "clipOut": 1002,
+                    }
+                }
             }
         yield Instance
 
@@ -58,6 +64,7 @@ class TestValidateSequenceFrames(BaseTest):
         ]
         instance.data["representations"] = representations
         instance.data["frameEnd"] = 1001
+        instance.data["assetEntity"]["data"]["clipOut"] = 1001
 
         plugin.process(instance)
 
@@ -85,48 +92,10 @@ class TestValidateSequenceFrames(BaseTest):
         plugin.process(instance)
 
     @pytest.mark.parametrize("files",
-                             [["Main_beauty.1001.v001.exr",
-                               "Main_beauty.1002.v001.exr"]])
-    def test_validate_sequence_frames_wrong_name(self, instance,
-                                                 plugin, files):
-        # tests for names with number inside, caused clique failure before
-        representations = [
-            {
-                "ext": "exr",
-                "files": files,
-            }
-        ]
-        instance.data["representations"] = representations
-
-        with pytest.raises(AssertionError) as excinfo:
-            plugin.process(instance)
-        assert ("Must detect single collection" in
-                str(excinfo.value))
-
-    @pytest.mark.parametrize("files",
-                             [["Main_beauty.v001.1001.ass.gz",
-                               "Main_beauty.v001.1002.ass.gz"]])
-    def test_validate_sequence_frames_possible_wrong_name(
-            self, instance, plugin, files):
-        # currently pattern fails on extensions with dots
-        representations = [
-            {
-                "files": files,
-            }
-        ]
-        instance.data["representations"] = representations
-
-        with pytest.raises(AssertionError) as excinfo:
-            plugin.process(instance)
-        assert ("Must not have remainder" in
-                str(excinfo.value))
-
-    @pytest.mark.parametrize("files",
                              [["Main_beauty.v001.1001.ass.gz",
                                "Main_beauty.v001.1002.ass.gz"]])
     def test_validate_sequence_frames__correct_ext(
             self, instance, plugin, files):
-        # currently pattern fails on extensions with dots
         representations = [
             {
                 "ext": "ass.gz",
@@ -147,6 +116,7 @@ class TestValidateSequenceFrames(BaseTest):
         ]
         instance.data["representations"] = representations
         instance.data["frameEnd"] = 1003
+        instance.data["assetEntity"]["data"]["clipOut"] = 1003
 
         plugin.process(instance)
 
@@ -160,6 +130,7 @@ class TestValidateSequenceFrames(BaseTest):
         ]
         instance.data["representations"] = representations
         instance.data["frameEnd"] = 1003
+        instance.data["assetEntity"]["data"]["clipOut"] = 1003
 
         with pytest.raises(ValueError) as excinfo:
             plugin.process(instance)
@@ -175,6 +146,7 @@ class TestValidateSequenceFrames(BaseTest):
         ]
         instance.data["representations"] = representations
         instance.data["frameEnd"] = 1003
+        instance.data["assetEntity"]["data"]["clipOut"] = 1003
 
         with pytest.raises(AssertionError) as excinfo:
             plugin.process(instance)
@@ -195,6 +167,7 @@ class TestValidateSequenceFrames(BaseTest):
         instance.data["slate"] = True
         instance.data["representations"] = representations
         instance.data["frameEnd"] = 1003
+        instance.data["assetEntity"]["data"]["clipOut"] = 1003
 
         plugin.process(instance)
 

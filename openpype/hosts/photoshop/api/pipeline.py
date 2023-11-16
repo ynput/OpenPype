@@ -6,11 +6,8 @@ import pyblish.api
 
 from openpype.lib import register_event_callback, Logger
 from openpype.pipeline import (
-    legacy_io,
     register_loader_plugin_path,
     register_creator_plugin_path,
-    deregister_loader_plugin_path,
-    deregister_creator_plugin_path,
     AVALON_CONTAINER_ID,
 )
 
@@ -23,6 +20,7 @@ from openpype.host import (
 
 from openpype.pipeline.load import any_outdated_containers
 from openpype.hosts.photoshop import PHOTOSHOP_HOST_DIR
+from openpype.tools.utils import get_openpype_qt_app
 
 from . import lib
 
@@ -50,11 +48,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
-        log.info(PUBLISH_PATH)
-
-        pyblish.api.register_callback(
-            "instanceToggled", on_pyblish_instance_toggled
-        )
 
         register_event_callback("application.launched", on_application_launch)
 
@@ -111,14 +104,6 @@ class PhotoshopHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         item["id"] = "publish_context"
         _get_stub().imprint(item["id"], item)
 
-    def get_context_title(self):
-        """Returns title for Creator window"""
-
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        return "{}/{}/{}".format(project_name, asset_name, task_name)
-
     def list_instances(self):
         """List all created instances to publish from current workfile.
 
@@ -174,10 +159,7 @@ def check_inventory():
         return
 
     # Warn about outdated containers.
-    _app = QtWidgets.QApplication.instance()
-    if not _app:
-        print("Starting new QApplication..")
-        _app = QtWidgets.QApplication([])
+    _app = get_openpype_qt_app()
 
     message_box = QtWidgets.QMessageBox()
     message_box.setIcon(QtWidgets.QMessageBox.Warning)
@@ -188,11 +170,6 @@ def check_inventory():
 
 def on_application_launch():
     check_inventory()
-
-
-def on_pyblish_instance_toggled(instance, old_value, new_value):
-    """Toggle layer visibility on instance toggles."""
-    instance[0].Visible = new_value
 
 
 def ls():

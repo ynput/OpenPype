@@ -60,8 +60,9 @@ class FusionAddon(OpenPypeModule, IHostAddon):
             return []
         return [os.path.join(FUSION_HOST_DIR, "hooks")]
 
-    def add_implementation_envs(self, env, _app):
+    def add_implementation_envs(self, env, app):
         # Set default values if are not already set via settings
+
         defaults = {"OPENPYPE_LOG_NO_COLORS": "Yes"}
         for key, value in defaults.items():
             if not env.get(key):

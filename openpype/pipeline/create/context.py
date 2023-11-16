@@ -758,7 +758,7 @@ class PublishAttributes:
             yield name
 
     def mark_as_stored(self):
-        self._origin_data = copy.deepcopy(self._data)
+        self._origin_data = copy.deepcopy(self.data_to_store())
 
     def data_to_store(self):
         """Convert attribute values to "data to store"."""
@@ -912,6 +912,12 @@ class CreatedInstance:
 
         # Create a copy of passed data to avoid changing them on the fly
         data = copy.deepcopy(data or {})
+
+        # Pop dictionary values that will be converted to objects to be able
+        #   catch changes
+        orig_creator_attributes = data.pop("creator_attributes", None) or {}
+        orig_publish_attributes = data.pop("publish_attributes", None) or {}
+
         # Store original value of passed data
         self._orig_data = copy.deepcopy(data)
 
@@ -919,10 +925,6 @@ class CreatedInstance:
         data.pop("family", None)
         data.pop("subset", None)
 
-        # Pop dictionary values that will be converted to objects to be able
-        #   catch changes
-        orig_creator_attributes = data.pop("creator_attributes", None) or {}
-        orig_publish_attributes = data.pop("publish_attributes", None) or {}
 
         # QUESTION Does it make sense to have data stored as ordered dict?
         self._data = collections.OrderedDict()
@@ -1039,7 +1041,10 @@ class CreatedInstance:
 
     @property
     def origin_data(self):
-        return copy.deepcopy(self._orig_data)
+        output = copy.deepcopy(self._orig_data)
+        output["creator_attributes"] = self.creator_attributes.origin_data
+        output["publish_attributes"] = self.publish_attributes.origin_data
+        return output
 
     @property
     def creator_identifier(self):
@@ -1095,7 +1100,7 @@ class CreatedInstance:
     def changes(self):
         """Calculate and return changes."""
 
-        return TrackChangesItem(self._orig_data, self.data_to_store())
+        return TrackChangesItem(self.origin_data, self.data_to_store())
 
     def mark_as_stored(self):
         """Should be called when instance data are stored.
@@ -1122,10 +1127,10 @@ class CreatedInstance:
 
     @property
     def creator_attribute_defs(self):
-        """Attribute defintions defined by creator plugin.
+        """Attribute definitions defined by creator plugin.
 
         Returns:
-              List[AbstractAttrDef]: Attribute defitions.
+              List[AbstractAttrDef]: Attribute definitions.
         """
 
         return self.creator_attributes.attr_defs
@@ -1165,8 +1170,8 @@ class CreatedInstance:
         Args:
             instance_data (Dict[str, Any]): Data in a structure ready for
                 'CreatedInstance' object.
-            creator (Creator): Creator plugin which is creating the instance
-                of for which the instance belong.
+            creator (BaseCreator): Creator plugin which is creating the
+                instance of for which the instance belong.
         """
 
         instance_data = copy.deepcopy(instance_data)
@@ -1211,7 +1216,7 @@ class CreatedInstance:
         publish_attributes = self.publish_attributes.serialize_attributes()
         return {
             "data": self.data_to_store(),
-            "orig_data": copy.deepcopy(self._orig_data),
+            "orig_data": self.origin_data,
             "creator_attr_defs": creator_attr_defs,
             "publish_attributes": publish_attributes,
             "creator_label": self._creator_label,
@@ -1251,7 +1256,7 @@ class CreatedInstance:
             creator_identifier=creator_identifier,
             creator_label=creator_label,
             group_label=group_label,
-            creator_attributes=creator_attr_defs
+            creator_attr_defs=creator_attr_defs
         )
         obj._orig_data = serialized_data["orig_data"]
         obj.publish_attributes.deserialize_attributes(publish_attributes)
@@ -1440,6 +1445,19 @@ class CreateContext:
     def publish_attributes(self):
         """Access to global publish attributes."""
         return self._publish_attributes
+
+    def get_instance_by_id(self, instance_id):
+        """Receive instance by id.
+
+        Args:
+            instance_id (str): Instance id.
+
+        Returns:
+            Union[CreatedInstance, None]: Instance or None if instance with
+                given id is not available.
+        """
+
+        return self._instances_by_id.get(instance_id)
 
     def get_sorted_creators(self, identifiers=None):
         """Sorted creators by 'order' attribute.
@@ -1761,7 +1779,7 @@ class CreateContext:
         self.creator_discover_result = report
         for creator_class in report.plugins:
             if inspect.isabstract(creator_class):
-                self.log.info(
+                self.log.debug(
                     "Skipping abstract Creator {}".format(str(creator_class))
                 )
                 continue
@@ -1791,6 +1809,7 @@ class CreateContext:
                 self,
                 self.headless
             )
+
             if not creator.enabled:
                 disabled_creators[creator_identifier] = creator
                 continue
@@ -1966,7 +1985,11 @@ class CreateContext:
         if pre_create_data is None:
             pre_create_data = {}
 
-        precreate_attr_defs = creator.get_pre_create_attr_defs() or []
+        precreate_attr_defs = []
+        # Hidden creators do not have or need the pre-create attributes.
+        if isinstance(creator, Creator):
+            precreate_attr_defs = creator.get_pre_create_attr_defs()
+
         # Create default values of precreate data
         _pre_create_data = get_default_values(precreate_attr_defs)
         # Update passed precreate data to default values
@@ -2108,7 +2131,7 @@ class CreateContext:
 
     def reset_instances(self):
         """Reload instances"""
-        self._instances_by_id = {}
+        self._instances_by_id = collections.OrderedDict()
 
         # Collect instances
         error_message = "Collection of instances for creator {} failed. {}"
@@ -2313,6 +2336,10 @@ class CreateContext:
                         identifier, label, exc_info, add_traceback
                     )
                 )
+            else:
+                for update_data in update_list:
+                    instance = update_data.instance
+                    instance.mark_as_stored()
 
         if failed_info:
             raise CreatorsSaveFailed(failed_info)

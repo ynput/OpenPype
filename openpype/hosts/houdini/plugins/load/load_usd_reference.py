@@ -26,7 +26,8 @@ class USDReferenceLoader(load.LoaderPlugin):
         import hou
 
         # Format file name, Houdini only wants forward slashes
-        file_path = os.path.normpath(self.fname)
+        file_path = self.filepath_from_context(context)
+        file_path = os.path.normpath(file_path)
         file_path = file_path.replace("\\", "/")
 
         # Get the root node

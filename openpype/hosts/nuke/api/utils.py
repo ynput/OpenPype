@@ -2,7 +2,7 @@ import os
 import nuke
 
 from openpype import resources
-from .lib import maintained_selection
+from qtpy import QtWidgets
 
 
 def set_context_favorites(favorites=None):
@@ -55,6 +55,7 @@ def bake_gizmos_recursively(in_group=None):
     Arguments:
         is_group (nuke.Node)[optonal]: group node or all nodes
     """
+    from .lib import maintained_selection
     if in_group is None:
         in_group = nuke.Root()
     # preserve selection after all is done
@@ -129,3 +130,11 @@ def get_colorspace_list(colorspace_knob):
         reduced_clrs.append(clrs)
 
     return reduced_clrs
+
+
+def is_headless():
+    """
+    Returns:
+        bool: headless
+    """
+    return QtWidgets.QApplication.instance() is None

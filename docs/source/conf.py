@@ -17,18 +17,29 @@
 
 import os
 import sys
-pype_root = os.path.abspath('../..')
-sys.path.insert(0, pype_root)
+import revitron_sphinx_theme
+
+openpype_root = os.path.abspath('../..')
+sys.path.insert(0, openpype_root)
+# app = QApplication([])
+
+"""
 repos = os.listdir(os.path.abspath("../../repos"))
-repos = [os.path.join(pype_root, "repos", repo) for repo in repos]
+repos = [os.path.join(openpype_root, "repos", repo) for repo in repos]
 for repo in repos:
     sys.path.append(repo)
+"""
+
+todo_include_todos = True
+autodoc_mock_imports = ["maya", "pymel", "nuke", "nukestudio", "nukescripts",
+                        "hiero", "bpy", "fusion", "houdini", "hou", "unreal",
+                        "__builtin__", "resolve", "pysync", "DaVinciResolveScript"]
 
 # -- Project information -----------------------------------------------------
 
-project = 'pype'
-copyright = '2019, Orbi Tools'
-author = 'Orbi Tools'
+project = 'OpenPype'
+copyright = '2023 Ynput'
+author = 'Ynput'
 
 # The short X.Y version
 version = ''
@@ -52,10 +63,40 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
-    'recommonmark'
+    'revitron_sphinx_theme',
+    'autoapi.extension',
+    'myst_parser'
 ]
+
+##############################
+# Autoapi settings
+##############################
+
+autoapi_dirs = ['../../openpype', '../../igniter']
+
+# bypass modules with a lot of python2 content for now
+autoapi_ignore = [
+    "*vendor*",
+    "*schemas*",
+    "*startup/*",
+    "*/website*",
+    "*openpype/hooks*",
+    "*openpype/style*",
+    "openpype/tests*",
+    # to many levels of relative import:
+    "*/modules/sync_server/*"
+]
+autoapi_keep_files = True
+autoapi_options = [
+    'members',
+    'undoc-members',
+    'show-inheritance',
+    'show-module-summary'
+]
+autoapi_add_toctree_entry = True
+autoapi_template_dir = '_templates/autoapi'
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -64,7 +105,7 @@ templates_path = ['_templates']
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
@@ -74,12 +115,15 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "English"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = [
+    "openpype.hosts.resolve.*",
+    "openpype.tools.*"
+    ]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'friendly'
@@ -97,15 +141,22 @@ autosummary_generate = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'revitron_sphinx_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 html_theme_options = {
-    'collapse_navigation': False
+    'collapse_navigation': True,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    'includehidden': True,
+    'titles_only': False,
+    'github_url': '',
 }
+html_logo = '_static/AYON_tight_G.svg'
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -153,8 +204,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'pype.tex', 'pype Documentation',
-     'OrbiTools', 'manual'),
+    (master_doc, 'openpype.tex', 'OpenPype Documentation',
+     'Ynput', 'manual'),
 ]
 
 
@@ -163,7 +214,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pype', 'pype Documentation',
+    (master_doc, 'openpype', 'OpenPype Documentation',
      [author], 1)
 ]
 
@@ -174,8 +225,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'pype', 'pype Documentation',
-     author, 'pype', 'One line description of project.',
+    (master_doc, 'OpenPype', 'OpenPype Documentation',
+     author, 'OpenPype', 'Pipeline for studios',
      'Miscellaneous'),
 ]
 
@@ -207,7 +258,4 @@ intersphinx_mapping = {
     'https://docs.python.org/3/': None
 }
 
-# -- Options for todo extension ----------------------------------------------
-
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
+myst_gfm_only = True

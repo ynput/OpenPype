@@ -61,9 +61,7 @@ class ValidateXgen(pyblish.api.InstancePlugin):
         # We need a namespace else there will be a naming conflict when
         # extracting because of stripping namespaces and parenting to world.
         node_names = [instance.data["xgmPalette"]]
-        for _, connections in instance.data["xgenConnections"].items():
-            node_names.append(connections["transform"].split(".")[0])
-
+        node_names.extend(instance.data["xgenConnections"])
         non_namespaced_nodes = [n for n in node_names if ":" not in n]
         if non_namespaced_nodes:
             raise PublishValidationError(

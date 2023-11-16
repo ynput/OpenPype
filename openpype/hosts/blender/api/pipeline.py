@@ -10,10 +10,18 @@ from . import ops
 
 import pyblish.api
 
+from openpype.host import (
+    HostBase,
+    IWorkfileHost,
+    IPublishHost,
+    ILoadHost
+)
 from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     schema,
     legacy_io,
+    get_current_project_name,
+    get_current_asset_name,
     register_loader_plugin_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
@@ -27,6 +35,14 @@ from openpype.lib import (
 )
 import openpype.hosts.blender
 from openpype.settings import get_project_settings
+from .workio import (
+    open_file,
+    save_file,
+    current_file,
+    has_unsaved_changes,
+    file_extensions,
+    work_root,
+)
 
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
@@ -45,6 +61,101 @@ IS_HEADLESS = bpy.app.background
 log = Logger.get_logger(__name__)
 
 
+class BlenderHost(HostBase, IWorkfileHost, IPublishHost, ILoadHost):
+    name = "blender"
+
+    def install(self):
+        """Override install method from HostBase.
+        Install Blender host functionality."""
+        install()
+
+    def get_containers(self) -> Iterator:
+        """List containers from active Blender scene."""
+        return ls()
+
+    def get_workfile_extensions(self) -> List[str]:
+        """Override get_workfile_extensions method from IWorkfileHost.
+        Get workfile possible extensions.
+
+        Returns:
+            List[str]: Workfile extensions.
+        """
+        return file_extensions()
+
+    def save_workfile(self, dst_path: str = None):
+        """Override save_workfile method from IWorkfileHost.
+        Save currently opened workfile.
+
+        Args:
+            dst_path (str): Where the current scene should be saved. Or use
+                current path if `None` is passed.
+        """
+        save_file(dst_path if dst_path else bpy.data.filepath)
+
+    def open_workfile(self, filepath: str):
+        """Override open_workfile method from IWorkfileHost.
+        Open workfile at specified filepath in the host.
+
+        Args:
+            filepath (str): Path to workfile.
+        """
+        open_file(filepath)
+
+    def get_current_workfile(self) -> str:
+        """Override get_current_workfile method from IWorkfileHost.
+        Retrieve currently opened workfile path.
+
+        Returns:
+            str: Path to currently opened workfile.
+        """
+        return current_file()
+
+    def workfile_has_unsaved_changes(self) -> bool:
+        """Override wokfile_has_unsaved_changes method from IWorkfileHost.
+        Returns True if opened workfile has no unsaved changes.
+
+        Returns:
+            bool: True if scene is saved and False if it has unsaved
+                modifications.
+        """
+        return has_unsaved_changes()
+
+    def work_root(self, session) -> str:
+        """Override work_root method from IWorkfileHost.
+        Modify workdir per host.
+
+        Args:
+            session (dict): Session context data.
+
+        Returns:
+            str: Path to new workdir.
+        """
+        return work_root(session)
+
+    def get_context_data(self) -> dict:
+        """Override abstract method from IPublishHost.
+        Get global data related to creation-publishing from workfile.
+
+        Returns:
+            dict: Context data stored using 'update_context_data'.
+        """
+        property = bpy.context.scene.get(AVALON_PROPERTY)
+        if property:
+            return property.to_dict()
+        return {}
+
+    def update_context_data(self, data: dict, changes: dict):
+        """Override abstract method from IPublishHost.
+        Store global context data to workfile.
+
+        Args:
+            data (dict): New data as are.
+            changes (dict): Only data that has been changed. Each value has
+                tuple with '(<old>, <new>)' value.
+        """
+        bpy.context.scene[AVALON_PROPERTY] = data
+
+
 def pype_excepthook_handler(*args):
     traceback.print_exception(*args)
 
@@ -60,6 +171,7 @@ def install():
     register_creator_plugin_path(str(CREATE_PATH))
 
     lib.append_user_scripts()
+    lib.set_app_templates_path()
 
     register_event_callback("new", on_new)
     register_event_callback("open", on_open)
@@ -110,22 +222,21 @@ def message_window(title, message):
     _process_app_events()
 
 
-def set_start_end_frames():
-    project_name = legacy_io.active_project()
-    asset_name = legacy_io.Session["AVALON_ASSET"]
+def get_asset_data():
+    project_name = get_current_project_name()
+    asset_name = get_current_asset_name()
     asset_doc = get_asset_by_name(project_name, asset_name)
 
+    return asset_doc.get("data")
+
+
+def set_frame_range(data):
     scene = bpy.context.scene
 
     # Default scene settings
     frameStart = scene.frame_start
     frameEnd = scene.frame_end
     fps = scene.render.fps / scene.render.fps_base
-    resolution_x = scene.render.resolution_x
-    resolution_y = scene.render.resolution_y
-
-    # Check if settings are set
-    data = asset_doc.get("data")
 
     if not data:
         return
@@ -136,26 +247,47 @@ def set_start_end_frames():
         frameEnd = data.get("frameEnd")
     if data.get("fps"):
         fps = data.get("fps")
-    if data.get("resolutionWidth"):
-        resolution_x = data.get("resolutionWidth")
-    if data.get("resolutionHeight"):
-        resolution_y = data.get("resolutionHeight")
 
     scene.frame_start = frameStart
     scene.frame_end = frameEnd
     scene.render.fps = round(fps)
     scene.render.fps_base = round(fps) / fps
+
+
+def set_resolution(data):
+    scene = bpy.context.scene
+
+    # Default scene settings
+    resolution_x = scene.render.resolution_x
+    resolution_y = scene.render.resolution_y
+
+    if not data:
+        return
+
+    if data.get("resolutionWidth"):
+        resolution_x = data.get("resolutionWidth")
+    if data.get("resolutionHeight"):
+        resolution_y = data.get("resolutionHeight")
+
     scene.render.resolution_x = resolution_x
     scene.render.resolution_y = resolution_y
 
 
 def on_new():
-    set_start_end_frames()
-
     project = os.environ.get("AVALON_PROJECT")
-    settings = get_project_settings(project)
+    settings = get_project_settings(project).get("blender")
 
-    unit_scale_settings = settings.get("blender").get("unit_scale_settings")
+    set_resolution_startup = settings.get("set_resolution_startup")
+    set_frames_startup = settings.get("set_frames_startup")
+
+    data = get_asset_data()
+
+    if set_resolution_startup:
+        set_resolution(data)
+    if set_frames_startup:
+        set_frame_range(data)
+
+    unit_scale_settings = settings.get("unit_scale_settings")
     unit_scale_enabled = unit_scale_settings.get("enabled")
     if unit_scale_enabled:
         unit_scale = unit_scale_settings.get("base_file_unit_scale")
@@ -163,12 +295,20 @@ def on_new():
 
 
 def on_open():
-    set_start_end_frames()
-
     project = os.environ.get("AVALON_PROJECT")
-    settings = get_project_settings(project)
+    settings = get_project_settings(project).get("blender")
 
-    unit_scale_settings = settings.get("blender").get("unit_scale_settings")
+    set_resolution_startup = settings.get("set_resolution_startup")
+    set_frames_startup = settings.get("set_frames_startup")
+
+    data = get_asset_data()
+
+    if set_resolution_startup:
+        set_resolution(data)
+    if set_frames_startup:
+        set_frame_range(data)
+
+    unit_scale_settings = settings.get("unit_scale_settings")
     unit_scale_enabled = unit_scale_settings.get("enabled")
     apply_on_opening = unit_scale_settings.get("apply_on_opening")
     if unit_scale_enabled and apply_on_opening:
@@ -427,36 +567,6 @@ def ls() -> Iterator:
 
     for container in lib.lsattr("id", AVALON_CONTAINER_ID):
         yield parse_container(container)
-
-
-def update_hierarchy(containers):
-    """Hierarchical container support
-
-    This is the function to support Scene Inventory to draw hierarchical
-    view for containers.
-
-    We need both parent and children to visualize the graph.
-
-    """
-
-    all_containers = set(ls())  # lookup set
-
-    for container in containers:
-        # Find parent
-        # FIXME (jasperge): re-evaluate this. How would it be possible
-        # to 'nest' assets?  Collections can have several parents, for
-        # now assume it has only 1 parent
-        parent = [
-            coll for coll in bpy.data.collections if container in coll.children
-        ]
-        for node in parent:
-            if node in all_containers:
-                container["parent"] = node
-                break
-
-        log.debug("Container: %s", container)
-
-        yield container
 
 
 def publish():

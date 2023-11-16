@@ -12,13 +12,13 @@ class SelectInvalidAction(pyblish.api.Action):
     icon = "search"
 
     def process(self, context, plugin):
-        errored_instances = get_errored_instances_from_context(context)
-        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+        errored_instances = get_errored_instances_from_context(context,
+                                                               plugin=plugin)
 
         # Get the invalid nodes for the plug-ins
         self.log.info("Finding invalid nodes...")
         invalid = list()
-        for instance in instances:
+        for instance in errored_instances:
             invalid_nodes = plugin.get_invalid(instance)
             if invalid_nodes:
                 if isinstance(invalid_nodes, (list, tuple)):

@@ -20,7 +20,7 @@ class SaveCurrentWorkfile(pyblish.api.ContextPlugin):
         if context.data["currentFile"] != current:
             raise KnownPublishError("Workfile has changed during publishing!")
 
-        if host.has_unsaved_changes():
+        if host.workfile_has_unsaved_changes():
             self.log.info("Saving current file: {}".format(current))
             host.save_workfile()
         else:

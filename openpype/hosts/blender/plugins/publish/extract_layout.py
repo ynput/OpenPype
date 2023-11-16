@@ -11,7 +11,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractLayout(publish.Extractor):
+class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract a layout."""
 
     label = "Extract Layout"
@@ -45,7 +45,7 @@ class ExtractLayout(publish.Extractor):
                 starting_frames.append(curr_frame_range[0])
                 ending_frames.append(curr_frame_range[1])
             else:
-                self.log.info("Object have no animation.")
+                self.log.info("Object has no animation.")
                 continue
 
             asset_group_name = asset.name
@@ -113,11 +113,14 @@ class ExtractLayout(publish.Extractor):
         return None, n
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -125,13 +128,22 @@ class ExtractLayout(publish.Extractor):
         json_data = []
         fbx_files = []
 
-        asset_group = bpy.data.objects[str(instance)]
+        asset_group = instance.data["transientData"]["instance_node"]
 
         fbx_count = 0
 
         project_name = instance.context.data["projectEntity"]["name"]
         for asset in asset_group.children:
             metadata = asset.get(AVALON_PROPERTY)
+            if not metadata:
+                # Avoid raising error directly if there's just invalid data
+                # inside the instance; better to log it to the artist
+                # TODO: This should actually be validated in a validator
+                self.log.warning(
+                    f"Found content in layout that is not a loaded "
+                    f"asset, skipping: {asset.name_full}"
+                )
+                continue
 
             version_id = metadata["parent"]
             family = metadata["family"]
@@ -245,5 +257,5 @@ class ExtractLayout(publish.Extractor):
             }
             instance.data["representations"].append(fbx_representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, json_representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, json_representation)

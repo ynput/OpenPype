@@ -1,13 +1,16 @@
 import os
 import logging
+from functools import partial
 
 from qtpy import QtWidgets, QtGui
 
 import maya.utils
 import maya.cmds as cmds
 
-from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
+from openpype.pipeline import (
+    get_current_asset_name,
+    get_current_task_name
+)
 from openpype.pipeline.workfile import BuildWorkfile
 from openpype.tools.utils import host_tools
 from openpype.hosts.maya.api import lib, lib_rendersettings
@@ -35,29 +38,32 @@ def _get_menu(menu_name=None):
     return widgets.get(menu_name)
 
 
-def install():
+def get_context_label():
+    return "{}, {}".format(
+        get_current_asset_name(),
+        get_current_task_name()
+    )
+
+
+def install(project_settings):
     if cmds.about(batch=True):
         log.info("Skipping openpype.menu initialization in batch mode..")
         return
 
-    def deferred():
+    def add_menu():
         pyblish_icon = host_tools.get_pyblish_icon()
         parent_widget = get_main_window()
         cmds.menu(
             MENU_NAME,
-            label=legacy_io.Session["AVALON_LABEL"],
+            label=os.environ.get("AVALON_LABEL") or "OpenPype",
             tearOff=True,
             parent="MayaWindow"
         )
 
         # Create context menu
-        context_label = "{}, {}".format(
-            legacy_io.Session["AVALON_ASSET"],
-            legacy_io.Session["AVALON_TASK"]
-        )
         cmds.menuItem(
             "currentContext",
-            label=context_label,
+            label=get_context_label(),
             parent=MENU_NAME,
             enable=False
         )
@@ -66,10 +72,12 @@ def install():
 
         cmds.menuItem(divider=True)
 
-        # Create default items
         cmds.menuItem(
             "Create...",
-            command=lambda *args: host_tools.show_creator(parent=parent_widget)
+            command=lambda *args: host_tools.show_publisher(
+                parent=parent_widget,
+                tab="create"
+            )
         )
 
         cmds.menuItem(
@@ -82,8 +90,9 @@ def install():
 
         cmds.menuItem(
             "Publish...",
-            command=lambda *args: host_tools.show_publish(
-                parent=parent_widget
+            command=lambda *args: host_tools.show_publisher(
+                parent=parent_widget,
+                tab="publish"
             ),
             image=pyblish_icon
         )
@@ -181,7 +190,7 @@ def install():
 
         cmds.setParent(MENU_NAME, menu=True)
 
-    def add_scripts_menu():
+    def add_scripts_menu(project_settings):
         try:
             import scriptsmenu.launchformaya as launchformaya
         except ImportError:
@@ -191,8 +200,6 @@ def install():
             )
             return
 
-        # load configuration of custom menu
-        project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
         config = project_settings["maya"]["scriptsmenu"]["definition"]
         _menu = project_settings["maya"]["scriptsmenu"]["name"]
 
@@ -214,8 +221,9 @@ def install():
     # so that it only gets called after Maya UI has initialized too.
     # This is crucial with Maya 2020+ which initializes without UI
     # first as a QCoreApplication
-    maya.utils.executeDeferred(deferred)
-    cmds.evalDeferred(add_scripts_menu, lowestPriority=True)
+    maya.utils.executeDeferred(add_menu)
+    cmds.evalDeferred(partial(add_scripts_menu, project_settings),
+                      lowestPriority=True)
 
 
 def uninstall():
@@ -249,8 +257,5 @@ def update_menu_task_label():
         log.warning("Can't find menuItem: {}".format(object_name))
         return
 
-    label = "{}, {}".format(
-        legacy_io.Session["AVALON_ASSET"],
-        legacy_io.Session["AVALON_TASK"]
-    )
+    label = get_context_label()
     cmds.menuItem(object_name, edit=True, label=label)

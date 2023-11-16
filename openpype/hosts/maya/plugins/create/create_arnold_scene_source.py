@@ -2,17 +2,21 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import (
+    NumberDef,
+    BoolDef
+)
 
-from maya import cmds
 
-
-class CreateArnoldSceneSource(plugin.Creator):
+class CreateArnoldSceneSource(plugin.MayaCreator):
     """Arnold Scene Source"""
 
-    name = "ass"
+    identifier = "io.openpype.creators.maya.ass"
     label = "Arnold Scene Source"
     family = "ass"
     icon = "cube"
+    settings_name = "CreateAss"
+
     expandProcedurals = False
     motionBlur = True
     motionBlurKeys = 2
@@ -28,39 +32,71 @@ class CreateArnoldSceneSource(plugin.Creator):
     maskColor_manager = False
     maskOperator = False
 
-    def __init__(self, *args, **kwargs):
-        super(CreateArnoldSceneSource, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        # Add animation data
-        self.data.update(lib.collect_animation_data())
+        defs = lib.collect_animation_defs()
 
-        self.data["expandProcedurals"] = self.expandProcedurals
-        self.data["motionBlur"] = self.motionBlur
-        self.data["motionBlurKeys"] = self.motionBlurKeys
-        self.data["motionBlurLength"] = self.motionBlurLength
+        defs.extend([
+            BoolDef("expandProcedural",
+                    label="Expand Procedural",
+                    default=self.expandProcedurals),
+            BoolDef("motionBlur",
+                    label="Motion Blur",
+                    default=self.motionBlur),
+            NumberDef("motionBlurKeys",
+                      label="Motion Blur Keys",
+                      decimals=0,
+                      default=self.motionBlurKeys),
+            NumberDef("motionBlurLength",
+                      label="Motion Blur Length",
+                      decimals=3,
+                      default=self.motionBlurLength),
 
-        # Masks
-        self.data["maskOptions"] = self.maskOptions
-        self.data["maskCamera"] = self.maskCamera
-        self.data["maskLight"] = self.maskLight
-        self.data["maskShape"] = self.maskShape
-        self.data["maskShader"] = self.maskShader
-        self.data["maskOverride"] = self.maskOverride
-        self.data["maskDriver"] = self.maskDriver
-        self.data["maskFilter"] = self.maskFilter
-        self.data["maskColor_manager"] = self.maskColor_manager
-        self.data["maskOperator"] = self.maskOperator
+            # Masks
+            BoolDef("maskOptions",
+                    label="Export Options",
+                    default=self.maskOptions),
+            BoolDef("maskCamera",
+                    label="Export Cameras",
+                    default=self.maskCamera),
+            BoolDef("maskLight",
+                    label="Export Lights",
+                    default=self.maskLight),
+            BoolDef("maskShape",
+                    label="Export Shapes",
+                    default=self.maskShape),
+            BoolDef("maskShader",
+                    label="Export Shaders",
+                    default=self.maskShader),
+            BoolDef("maskOverride",
+                    label="Export Override Nodes",
+                    default=self.maskOverride),
+            BoolDef("maskDriver",
+                    label="Export Drivers",
+                    default=self.maskDriver),
+            BoolDef("maskFilter",
+                    label="Export Filters",
+                    default=self.maskFilter),
+            BoolDef("maskOperator",
+                    label="Export Operators",
+                    default=self.maskOperator),
+            BoolDef("maskColor_manager",
+                    label="Export Color Managers",
+                    default=self.maskColor_manager),
+        ])
 
-    def process(self):
-        instance = super(CreateArnoldSceneSource, self).process()
+        return defs
 
-        nodes = []
+    def create(self, subset_name, instance_data, pre_create_data):
 
-        if (self.options or {}).get("useSelection"):
-            nodes = cmds.ls(selection=True)
+        from maya import cmds
 
-        cmds.sets(nodes, rm=instance)
+        instance = super(CreateArnoldSceneSource, self).create(
+            subset_name, instance_data, pre_create_data
+        )
 
-        assContent = cmds.sets(name=instance + "_content_SET")
-        assProxy = cmds.sets(name=instance + "_proxy_SET", empty=True)
-        cmds.sets([assContent, assProxy], forceElement=instance)
+        instance_node = instance.get("instance_node")
+
+        content = cmds.sets(name=instance_node + "_content_SET", empty=True)
+        proxy = cmds.sets(name=instance_node + "_proxy_SET", empty=True)
+        cmds.sets([content, proxy], forceElement=instance_node)
