@@ -75,7 +75,7 @@ class HostToolsHelper:
             def destroy():
                 self._workfiles_tool = None
 
-            workfiles_window.destroyed.connect(destroy)
+            self._workfiles_tool.destroyed.connect(destroy)
 
         return self._workfiles_tool
 
