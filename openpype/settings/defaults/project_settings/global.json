@@ -70,6 +70,12 @@
         },
         "ExtractThumbnail": {
             "enabled": true,
+            "oiiotool_defaults": {
+                "type": "colorspace",
+                "colorspace": "matte_paint",
+                "view": "sRGB",
+                "display": "default"
+            },
             "ffmpeg_args": {
                 "input": [
                     "-apply_trc gamma22"
