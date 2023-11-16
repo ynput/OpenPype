@@ -645,7 +645,7 @@ That will create video file, pass it to another extractor creating burnins in it
 and finally uploading this video to ftrack with your model (or other type) published
 version. All parts of this process - like what burnins, what type of video file,
 settings for Maya playblast - can be customized by your TDs. For more information
-about customizing review process refer to [admin section](project_settings/settings_project_global.md/#publish-plugins).
+about customizing review process refer to [admin section](project_settings/project_settings_global.md#publish-plugins).
 
 If you don't move `modelMain` into `reviewMain`, review will be generated but it will
 be published as separate entity.

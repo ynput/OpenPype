@@ -100,6 +100,7 @@ wheel = "*"
 enlighten = "*"  # cool terminal progress bars
 toml = "^0.10.2" # for parsing pyproject.toml
 pre-commit = "*"
+virtualenv = "^20.24.6"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
@@ -109,6 +110,9 @@ pre-commit = "*"
 name = "openpype"
 url = "https://distribute.openpype.io/wheels/"
 secondary = true
+
+[tool.poetry.group.dev.dependencies]
+commitizen = "^3.12.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
