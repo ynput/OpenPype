@@ -1,3 +1,4 @@
+
 import sys
 import os
 import nuke
@@ -13,7 +14,7 @@ if sys.version_info[0] >= 3:
     unicode = str
 
 
-class ExtractThumbnail(publish.Extractor):
+class ExtractThumbnailNuke(publish.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -21,10 +22,10 @@ class ExtractThumbnail(publish.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder + 0.011
-    label = "Extract Thumbnail"
+    label = "Extract Thumbnail Nuke"
 
     families = ["review"]
-    hosts = ["nuke"]
+    hosts = []
 
     # settings
     use_rendered = False
@@ -180,8 +181,6 @@ class ExtractThumbnail(publish.Extractor):
         file = fhead[:-1] + thumb_name + ".jpg"
         thumb_path = os.path.join(staging_dir, file).replace("\\", "/")
 
-        # add thumbnail to cleanup
-        instance.context.data["cleanupFullPaths"].append(thumb_path)
 
         # make sure only one thumbnail path is set
         # and it is existing file
@@ -201,9 +200,15 @@ class ExtractThumbnail(publish.Extractor):
             "outputName": thumb_name,
             'files': file,
             "stagingDir": staging_dir,
-            "tags": ["thumbnail", "publish_on_farm", "delete"]
+            "tags": ["thumbnail", "delete"]
         }
         instance.data["representations"].append(repre)
+
+        if instance.data.get("farm"):
+            repre["tags"].append("publish_on_farm")
+        else:
+            # remove thumbnail only if not publishing on farm
+            instance.context.data["cleanupFullPaths"].append(thumb_path)
 
         # Render frames
         nuke.execute(write_node.name(), mid_frame, mid_frame)
