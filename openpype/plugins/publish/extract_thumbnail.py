@@ -3,16 +3,19 @@ import os
 import subprocess
 import tempfile
 from pprint import pformat
+
 import pyblish.api
 from openpype.lib import (
     get_ffmpeg_tool_args,
+    get_ffprobe_data,
     is_oiio_supported,
 
     run_subprocess,
     path_to_subprocess_arg,
 )
-from openpype.lib.transcoding import convert_colorspace
-
+from openpype.lib.transcoding import (
+    VIDEO_EXTENSIONS,
+    convert_colorspace)
 
 class ExtractThumbnail(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
@@ -26,6 +29,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     hosts = ["shell", "nuke", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
+    duration_split = 0.5
     oiiotool_defaults = None
     ffmpeg_args = None
 
@@ -89,18 +93,34 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         oiio_supported = is_oiio_supported()
         for repre in filtered_repres:
             repre_files = repre["files"]
+            src_staging = os.path.normpath(repre["stagingDir"])
             if not isinstance(repre_files, (list, tuple)):
-                # TODO: convert video file to one frame image via ffmpeg
-                input_file = repre_files
+                # convert any video file to frame so oiio doesn't need to
+                # read video file (it is slow) and also we are having control
+                # over which frame is used for thumbnail
+                repre_extension = os.path.splitext(repre_files)[1]
+                if repre_extension in VIDEO_EXTENSIONS:
+                    video_file_path = os.path.join(
+                        src_staging, repre_files
+                    )
+                    file_path = self._convert_video_to_frame(
+                        video_file_path,
+                        dst_staging
+                    )
+                    if file_path:
+                        src_staging, input_file = os.path.split(file_path)
+                else:
+                    # if it is not video file then just use first file
+                    input_file = repre_files
             else:
                 repre_files_thumb = copy(repre_files)
                 # exclude first frame if slate in representation tags
                 if "slate-frame" in repre.get("tags", []):
                     repre_files_thumb = repre_files_thumb[1:]
-                file_index = int(float(len(repre_files_thumb)) * 0.5)
+                file_index = int(
+                    float(len(repre_files_thumb)) * self.duration_split)
                 input_file = repre_files[file_index]
 
-            src_staging = os.path.normpath(repre["stagingDir"])
             full_input_path = os.path.join(src_staging, input_file)
             self.log.debug("input {}".format(full_input_path))
 
@@ -340,3 +360,39 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 exc_info=True
             )
             return False
+
+    def _convert_video_to_frame(self, video_file_path, output_dir):
+        """Convert video file to one frame image via ffmpeg"""
+        # create output file path
+        base_name = os.path.basename(video_file_path)
+        filename = os.path.splitext(base_name)[0]
+        output_thumb_file_path = os.path.join(output_dir, "{}.png".format(filename))
+
+        # Set video input attributes
+        max_int = str(2147483647)
+        video_data = get_ffprobe_data(video_file_path, logger=self.log)
+        duration = float(video_data["format"]["duration"])
+
+        # create ffmpeg command
+        cmd = get_ffmpeg_tool_args(
+            "ffmpeg",
+            "-y",
+            "-ss", str(duration * self.duration_split),
+            "-i", video_file_path,
+            "-analyzeduration", max_int,
+            "-probesize", max_int,
+            "-vframes", "1",
+            output_thumb_file_path
+        )
+        try:
+            # run subprocess
+            self.log.debug("Executing: {}".format(" ".join(cmd)))
+            run_subprocess(cmd, logger=self.log)
+            self.log.debug("Thumbnail created: {}".format(output_thumb_file_path))
+            return output_thumb_file_path
+        except RuntimeError as error:
+            self.log.warning(
+                "Failed intermediate thumb source using ffmpeg: {}".format(
+                    error)
+            )
+            return None
