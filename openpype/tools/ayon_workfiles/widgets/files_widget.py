@@ -69,7 +69,7 @@ class FilesWidget(QtWidgets.QWidget):
         main_layout.addWidget(btns_widget, 0)
 
         controller.register_event_callback(
-            "workarea.selection.changed",
+            "selection.workarea.changed",
             self._on_workarea_path_changed
         )
         controller.register_event_callback(

@@ -188,7 +188,7 @@ def imprint(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
             # Support values evaluated at imprint
             value = value()
 
-        if not isinstance(value, (int, float, bool, str, list)):
+        if not isinstance(value, (int, float, bool, str, list, dict)):
             raise TypeError(f"Unsupported type: {type(value)}")
 
         imprint_data[key] = value
@@ -278,9 +278,11 @@ def get_selected_collections():
         list: A list of `bpy.types.Collection` objects that are currently
         selected in the outliner.
     """
+    window = bpy.context.window or bpy.context.window_manager.windows[0]
+
     try:
         area = next(
-            area for area in bpy.context.window.screen.areas
+            area for area in window.screen.areas
             if area.type == 'OUTLINER')
         region = next(
             region for region in area.regions
@@ -290,10 +292,10 @@ def get_selected_collections():
                            "must be in the main Blender window.") from e
 
     with bpy.context.temp_override(
-        window=bpy.context.window,
+        window=window,
         area=area,
         region=region,
-        screen=bpy.context.window.screen
+        screen=window.screen
     ):
         ids = bpy.context.selected_ids
 
