@@ -28,7 +28,7 @@ from .lib import imprint
 VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
 
-def asset_name(
+def prepare_scene_name(
     asset: str, subset: str, namespace: Optional[str] = None
 ) -> str:
     """Return a consistent name for an asset."""
@@ -225,7 +225,7 @@ class BaseCreator(Creator):
             bpy.context.scene.collection.children.link(instances)
 
         # Create asset group
-        name = asset_name(instance_data["asset"], subset_name)
+        name = prepare_scene_name(instance_data["asset"], subset_name)
         if self.create_as_asset_group:
             # Create instance as empty
             instance_node = bpy.data.objects.new(name=name, object_data=None)
@@ -298,7 +298,7 @@ class BaseCreator(Creator):
                     "subset" in changes.changed_keys
                     or "asset" in changes.changed_keys
             ):
-                name = asset_name(asset=data["asset"], subset=data["subset"])
+                name = prepare_scene_name(asset=data["asset"], subset=data["subset"])
                 node.name = name
 
             imprint(node, data)
@@ -454,7 +454,7 @@ class AssetLoader(LoaderPlugin):
             asset, subset
         )
         namespace = namespace or f"{asset}_{unique_number}"
-        name = name or asset_name(
+        name = name or prepare_scene_name(
             asset, subset, unique_number
         )
 
@@ -483,7 +483,7 @@ class AssetLoader(LoaderPlugin):
 
         # asset = context["asset"]["name"]
         # subset = context["subset"]["name"]
-        # instance_name = asset_name(asset, subset, unique_number) + '_CON'
+        # instance_name = prepare_scene_name(asset, subset, unique_number) + '_CON'
 
         # return self._get_instance_collection(instance_name, nodes)
 
