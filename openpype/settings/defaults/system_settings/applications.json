@@ -1589,6 +1589,33 @@
             }
         }
     },
+    "gaffer": {
+        "enabled": true,
+        "label": "Gaffer",
+        "icon": "{}/app_icons/gaffer.png",
+        "host_name": "gaffer",
+        "environment": {},
+        "variants": {
+            "1-2-0-0-a1": {
+                "executables": {
+                    "windows": [
+                        "C:\\gaffer-1.2.0.0a1-windows\\bin\\gaffer.cmd"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "1-2-0-0-a1": "1.2.0.0-a1"
+            }
+        }
+    },
     "djvview": {
         "enabled": true,
         "label": "DJV View",
