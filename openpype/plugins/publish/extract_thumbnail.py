@@ -1,7 +1,8 @@
+import copy
 import os
 import subprocess
 import tempfile
-
+from pprint import pformat
 import pyblish.api
 from openpype.lib import (
     get_ffmpeg_tool_args,
@@ -22,10 +23,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         "imagesequence", "render", "render2d", "prerender",
         "source", "clip", "take", "online", "image"
     ]
-    hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
+    hosts = ["shell", "nuke", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
-    # presentable attribute
+    oiiotool_defaults = None
     ffmpeg_args = None
 
     def process(self, instance):
@@ -61,7 +62,13 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             self.log.debug("Skipping crypto passes.")
             return
 
-        filtered_repres = self._get_filtered_repres(instance)
+        # first check for any explicitly marked representations for thumbnail
+        explicit_repres = self._get_explicit_repres_for_thumbnail(instance)
+        if explicit_repres:
+            filtered_repres = explicit_repres
+        else:
+            filtered_repres = self._get_filtered_repres(instance)
+
         if not filtered_repres:
             self.log.info(
                 "Instance doesn't have representations that can be used "
@@ -83,14 +90,20 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         for repre in filtered_repres:
             repre_files = repre["files"]
             if not isinstance(repre_files, (list, tuple)):
+                # TODO: convert video file to one frame image via ffmpeg
                 input_file = repre_files
             else:
-                file_index = int(float(len(repre_files)) * 0.5)
+                repre_files_thumb = copy(repre_files)
+                # exclude first frame if slate in representation tags
+                if "slate-frame" in repre.get("tags", []):
+                    repre_files_thumb = repre_files_thumb[1:]
+                file_index = int(float(len(repre_files_thumb)) * 0.5)
                 input_file = repre_files[file_index]
 
             src_staging = os.path.normpath(repre["stagingDir"])
             full_input_path = os.path.join(src_staging, input_file)
             self.log.debug("input {}".format(full_input_path))
+
             filename = os.path.splitext(input_file)[0]
             jpeg_file = filename + "_thumb.jpg"
             full_output_path = os.path.join(dst_staging, jpeg_file)
@@ -129,13 +142,26 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             if not thumbnail_created:
                 continue
 
+            if len(explicit_repres) > 1:
+                repre_name = "thumbnail_{}".format(repre["outputName"])
+            else:
+                repre_name = "thumbnail"
+
+            # add thumbnail path to instance data for integrator
+            instance_thumb_path = instance.data.get("thumbnailPath")
+            if (
+                not instance_thumb_path
+                or not os.path.isfile(instance_thumb_path)
+            ):
+                instance.data["thumbnailPath"] = full_output_path
+
             new_repre = {
-                "name": "thumbnail",
+                "name": repre_name,
                 "ext": "jpg",
                 "files": jpeg_file,
                 "stagingDir": dst_staging,
                 "thumbnail": True,
-                "tags": ["thumbnail"]
+                "tags": ["thumbnail", "delete"]
             }
 
             # adding representation
@@ -143,8 +169,13 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 "Adding thumbnail representation: {}".format(new_repre)
             )
             instance.data["representations"].append(new_repre)
-            # There is no need to create more then one thumbnail
-            break
+
+            if explicit_repres:
+                # this key will then align assetVersion ftrack thumbnail sync
+                new_repre["outputName"] = repre["outputName"]
+            else:
+                # There is no need to create more then one thumbnail
+                break
 
         if not thumbnail_created:
             self.log.warning("Thumbnail has not been created.")
@@ -163,12 +194,42 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 return True
         return False
 
+    def _get_explicit_repres_for_thumbnail(self, instance):
+        src_repres = instance.data.get("representations") or []
+        # This is mainly for Nuke where we have multiple representations for
+        #   one instance. We want to use only one representation for thumbnail
+        # first check if any of the representations have
+        # `need-thumbnail` in tags and add them to filtered_repres
+        need_thumb_repres = [
+            repre for repre in src_repres
+            if "need_thumbnail" in repre.get("tags", [])
+            if "publish_on_farm" not in repre.get("tags", [])
+        ]
+        if not need_thumb_repres:
+            return []
+
+        self.log.info(
+            "Instance has representation with tag `need_thumbnail`. "
+            "Using only this representations for thumbnail creation. "
+        )
+        self.log.debug(
+            "Representations: {}".format(pformat(need_thumb_repres))
+        )
+        return need_thumb_repres
+
     def _get_filtered_repres(self, instance):
         filtered_repres = []
         src_repres = instance.data.get("representations") or []
+
         for repre in src_repres:
             self.log.debug(repre)
             tags = repre.get("tags") or []
+
+            if "publish_on_farm" in tags:
+                # only process representations with are going
+                # to be published locally
+                continue
+
             valid = "review" in tags or "thumb-nuke" in tags
             if not valid:
                 continue
@@ -205,14 +266,30 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         """
         self.log.info("Extracting thumbnail {}".format(dst_path))
 
+        oiio_default_type = None
+        oiio_default_display = None
+        oiio_default_view = None
+        oiio_default_colorspace = None
+        self.log.debug(
+            self.oiiotool_defaults
+        )
+        self.log.debug(self.ffmpeg_args)
+        if self.oiiotool_defaults:
+            oiio_default_type = self.oiiotool_defaults["type"]
+            if "colorspace" in oiio_default_type:
+                oiio_default_colorspace = self.oiiotool_defaults["colorspace"]
+            else:
+                oiio_default_display = self.oiiotool_defaults["display"]
+                oiio_default_view = self.oiiotool_defaults["view"]
         try:
             convert_colorspace(
                 src_path,
                 dst_path,
                 colorspace_data["config"]["path"],
                 colorspace_data["colorspace"],
-                display=colorspace_data.get("display"),
-                view=colorspace_data.get("view"),
+                display=colorspace_data.get("display") or oiio_default_display,
+                view=colorspace_data.get("view") or oiio_default_view,
+                target_colorspace=oiio_default_colorspace,
                 additional_input_args=["-i:ch=R,G,B"],
                 logger=self.log,
             )
