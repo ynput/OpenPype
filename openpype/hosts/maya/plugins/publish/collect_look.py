@@ -367,7 +367,11 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.log.debug("Found the following sets:\n{}".format(look_sets))
             # Get the entire node chain of the look sets
             # history = cmds.listHistory(look_sets, allConnections=True)
-            history = cmds.listHistory(materials, allConnections=True)
+            # if materials list is empty, listHistory() will crash with
+            # RuntimeError
+            history = []
+            if materials:
+                history = cmds.listHistory(materials, allConnections=True)
 
             # Since we retrieved history only of the connected materials
             # connected to the look sets above we now add direct history
