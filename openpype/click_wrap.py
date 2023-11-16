@@ -272,7 +272,9 @@ def convert_to_click(obj_to_convert):
         command_obj, parent_obj = item
         if not isinstance(command_obj, Command):
             raise TypeError(
-                "Invalid type '{}' expected 'Command'".format(type(command_obj))
+                "Invalid type '{}' expected 'Command'".format(
+                    type(command_obj)
+                )
             )
 
         if isinstance(command_obj, Group):
@@ -298,7 +300,9 @@ def convert_to_click(obj_to_convert):
             elif option_name == "argument":
                 click.argument(*args, **kwargs)(click_obj)
             else:
-                raise ValueError("Invalid option name '{}'".format(option_name))
+                raise ValueError(
+                    "Invalid option name '{}'".format(option_name)
+                )
 
         if top_obj is None:
             top_obj = click_obj

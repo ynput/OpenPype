@@ -488,7 +488,7 @@ class FtrackModule(
         return cred.get("username"), cred.get("api_key")
 
     def cli(self, click_group):
-        click_group.add_command(main.to_click_obj())
+        click_group.add_command(cli_main.to_click_obj())
 
 
 def _check_ftrack_url(url):
