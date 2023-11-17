@@ -60,9 +60,9 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
         variant = (context.data.get("variant") or
                    auto_creator["default_variant"])
 
-        project_name = context.data["anatomyData"]["project"]["name"]
+        project_name = context.data["projectName"]
         proj_settings = context.data["project_settings"]
-        task_name = context.data["anatomyData"]["task"]["name"]
+        task_name = context.data["task"]
         host_name = context.data["hostName"]
         asset_doc = context.data["assetEntity"]
         asset_name = asset_doc["name"]

@@ -27,6 +27,12 @@ class CollectSequenceFrameData(
         if not self.is_active(instance.data):
             return
 
+        # editorial would fail since they might not be in database yet
+        is_editorial = instance.data.get("isEditorial")
+        if is_editorial:
+            self.log.debug("Instance is Editorial. Skipping.")
+            return
+
         frame_data = self.get_frame_data_from_repre_sequence(instance)
 
         if not frame_data:

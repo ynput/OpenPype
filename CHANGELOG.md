@@ -1,6 +1,386 @@
 # Changelog
 
 
+## [3.17.6](https://github.com/ynput/OpenPype/tree/3.17.6)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.17.5...3.17.6)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Testing: Validate Maya Logs <a href="https://github.com/ynput/OpenPype/pull/5775">#5775</a></summary>
+
+This PR adds testing of the logs within Maya such as Python and Pyblish errors.The reason why we need to touch so many files outside of Maya is because of the pyblish errors below;
+```
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "collect_otio_frame_ranges" (No module named 'opentimelineio')
+# Error: pyblish.plugin : Skipped: "collect_otio_frame_ranges" (No module named 'opentimelineio') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "collect_otio_review" (No module named 'opentimelineio')
+# Error: pyblish.plugin : Skipped: "collect_otio_review" (No module named 'opentimelineio') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "collect_otio_subset_resources" (No module named 'opentimelineio')
+# Error: pyblish.plugin : Skipped: "collect_otio_subset_resources" (No module named 'opentimelineio') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "extract_otio_audio_tracks" (No module named 'opentimelineio')
+# Error: pyblish.plugin : Skipped: "extract_otio_audio_tracks" (No module named 'opentimelineio') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "extract_otio_file" (No module named 'opentimelineio')
+# Error: pyblish.plugin : Skipped: "extract_otio_file" (No module named 'opentimelineio') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "extract_otio_review" (No module named 'opentimelineio')
+# Error: pyblish.plugin : Skipped: "extract_otio_review" (No module named 'opentimelineio') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "extract_otio_trimming_video" (No module named 'opentimelineio')
+# Error: pyblish.plugin : Skipped: "extract_otio_trimming_video" (No module named 'opentimelineio') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "submit_blender_deadline" (No module named 'bpy')
+# Error: pyblish.plugin : Skipped: "submit_blender_deadline" (No module named 'bpy') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "submit_houdini_remote_publish" (No module named 'hou')
+# Error: pyblish.plugin : Skipped: "submit_houdini_remote_publish" (No module named 'hou') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "submit_houdini_render_deadline" (No module named 'hou')
+# Error: pyblish.plugin : Skipped: "submit_houdini_render_deadline" (No module named 'hou') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "submit_max_deadline" (No module named 'pymxs')
+# Error: pyblish.plugin : Skipped: "submit_max_deadline" (No module named 'pymxs') #
+pyblish (ERROR) (line: 1371) pyblish.plugin:
+Skipped: "submit_nuke_deadline" (No module named 'nuke')
+# Error: pyblish.plugin : Skipped: "submit_nuke_deadline" (No module named 'nuke') #
+```
+We also needed to `stdout` and `stderr` from the launched application to capture the output.Split from #5644.Dependent on #5734
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Render Settings cleanup remove global `RENDER_ATTRS` <a href="https://github.com/ynput/OpenPype/pull/5801">#5801</a></summary>
+
+Remove global `lib.RENDER_ATTRS` and implement a `RenderSettings.get_padding_attr(renderer)` method instead.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Testing: Ingest expected files and input workfile <a href="https://github.com/ynput/OpenPype/pull/5840">#5840</a></summary>
+
+This ingests the Maya workfile from the Drive storage. Have changed the format to MayaAscii so its easier to see what changes are happening in a PR. This meant changing the expected files and database entries as well.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Create plugin auto-apply settings <a href="https://github.com/ynput/OpenPype/pull/5908">#5908</a></summary>
+
+Create plugins can auto-apply settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Resolve: Add save current file button + "Save" shortcut when menu is active <a href="https://github.com/ynput/OpenPype/pull/5691">#5691</a></summary>
+
+Adds a "Save current file" to the OpenPype menu.Also adds a "Save" shortcut key sequence (CTRL+S on Windows) to the button, so that clicking CTRL+S when the menu is active will save the current workfile. However this of course does not work if the menu does not receive the key press event (e.g. when Resolve UI is active instead)Resolves #5684
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Reference USD file as maya native geometry <a href="https://github.com/ynput/OpenPype/pull/5781">#5781</a></summary>
+
+Add MayaUsdReferenceLoader to reference USD as Maya native geometry using `mayaUSDImport` file translator.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Bug fix on wrong aspect ratio and viewport not being maximized during context in review family <a href="https://github.com/ynput/OpenPype/pull/5839">#5839</a></summary>
+
+This PR will fix the bug on wrong aspect ratio and viewport not being maximized when creating preview animationBesides, the support of tga image format and the options for AA quality are implemented in this PR
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Incorporate blender "Collections" into Publish/Load <a href="https://github.com/ynput/OpenPype/pull/5841">#5841</a></summary>
+
+Allow `blendScene` family to include collections.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Allows user preset the setting of preview animation in OP/AYON Setting <a href="https://github.com/ynput/OpenPype/pull/5859">#5859</a></summary>
+
+Allows user preset the setting of preview animation in OP/AYON Setting for review family.
+- [x] Openpype
+- [x] AYON
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Center publisher window on first show <a href="https://github.com/ynput/OpenPype/pull/5877">#5877</a></summary>
+
+Move publisher window to center of a screen on first show.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Instance context changes confirm works <a href="https://github.com/ynput/OpenPype/pull/5881">#5881</a></summary>
+
+Confirmation of context changes in publisher on existing instances does not cause glitches.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON workfiles tools: Revisit workfiles tool <a href="https://github.com/ynput/OpenPype/pull/5897">#5897</a></summary>
+
+Revisited workfiles tool for AYON mode to reuse common models and widgets.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: updated colorspace settings <a href="https://github.com/ynput/OpenPype/pull/5906">#5906</a></summary>
+
+Updating nuke colorspace settings into more convenient way with usage of ocio config roles rather then particular colorspace names. This way we should not have troubles to switch between linear Rec709 or ACES configs without any additional settings changes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Refactor to new publisher <a href="https://github.com/ynput/OpenPype/pull/5910">#5910</a></summary>
+
+Refactor Blender integration to use the new publisher
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Enhancement: Some publish logs cosmetics <a href="https://github.com/ynput/OpenPype/pull/5917">#5917</a></summary>
+
+General logging message tweaks:
+- Sort some lists of folder/filenames so they appear sorted in the logs
+- Fix some grammar / typos
+- In some cases provide slightly more information in a log
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Better name of 'asset_name' function <a href="https://github.com/ynput/OpenPype/pull/5927">#5927</a></summary>
+
+Renamed function `asset_name` to `prepare_scene_name`.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Bug fix the fbx animation export errored out when the skeletonAnim set is empty <a href="https://github.com/ynput/OpenPype/pull/5875">#5875</a></summary>
+
+Resolve this bug discordIf the skeletonAnim SET is empty and fbx animation collect, the fbx animation extractor would skip the fbx extraction
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: fix few typos in houdini's and Maya's Ayon settings <a href="https://github.com/ynput/OpenPype/pull/5882">#5882</a></summary>
+
+Fixing few typos
+- [x] Maya unreal static mesh
+- [x] Houdini static mesh
+- [x] Houdini collect asset handles
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: Ayon Deadline env vars + error message on no executable found <a href="https://github.com/ynput/OpenPype/pull/5815">#5815</a></summary>
+
+Fix some Ayon x Deadline issues as came up in this topic:
+- missing Environment Variables issue explained here for `deadlinePlugin.RunProcess` for the AYON _extract environments_ call.
+- wrong error formatting described here with a `;` between each character like this: `Ayon executable was not found in the semicolon separated list "C;:;/;P;r;o;g;r;a;m; ;F;i;l;e;s;/;Y;n;p;u;t;/;A;Y;O;N; ;1;.;0;.;0;-;b;e;t;a;.;5;/;a;y;o;n;_;c;o;n;s;o;l;e;.;e;x;e". The path to the render executable can be configured from the Plugin Configuration in the Deadline Monitor.`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Fix bundles access in settings <a href="https://github.com/ynput/OpenPype/pull/5856">#5856</a></summary>
+
+Fixed access to bundles data in settings to define correct develop variant.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON 3dsMax settings: 'ValidateAttributes' settings converte only if available <a href="https://github.com/ynput/OpenPype/pull/5878">#5878</a></summary>
+
+Convert `ValidateAttributes` settings only if are available in AYON settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Fix TrayPublisher editorial settings <a href="https://github.com/ynput/OpenPype/pull/5880">#5880</a></summary>
+
+Fixing Traypublisher settings for adding task in simple editorial.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>TrayPublisher: editorial frame range check not needed <a href="https://github.com/ynput/OpenPype/pull/5884">#5884</a></summary>
+
+Validator for frame ranges is not needed during editorial publishing since entity data are not yet in database.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Update houdini license validator <a href="https://github.com/ynput/OpenPype/pull/5886">#5886</a></summary>
+
+As reported in this community commentHoudini USD publishing is only restricted in Houdini apprentice.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix blend extraction and packed images <a href="https://github.com/ynput/OpenPype/pull/5888">#5888</a></summary>
+
+Fixed a with blend extractor and packed images.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Initialize connection with all information <a href="https://github.com/ynput/OpenPype/pull/5890">#5890</a></summary>
+
+Create global AYON api connection with all informations all the time.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Scene inventory tool without site sync <a href="https://github.com/ynput/OpenPype/pull/5896">#5896</a></summary>
+
+Skip 'get_site_icons' if site sync addon is disabled.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publish report tool: Fix PySide6 <a href="https://github.com/ynput/OpenPype/pull/5898">#5898</a></summary>
+
+Use constants from classes instead of objects.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>fusion: removing hardcoded template name for saver <a href="https://github.com/ynput/OpenPype/pull/5907">#5907</a></summary>
+
+Fusion is not hardcoded for `render` anatomy template only anymore. This was blocking AYON deployment.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.17.5](https://github.com/ynput/OpenPype/tree/3.17.5)
 
 
