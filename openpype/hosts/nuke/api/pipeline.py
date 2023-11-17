@@ -236,9 +236,13 @@ def _install_menu():
 
     if not ASSIST:
         label = get_context_label()
-        Context.context_label = label
-        context_action = menu.addCommand(label)
-        context_action.setEnabled(False)
+        context_action_item = menu.addCommand("Context")
+        context_action_item.setEnabled(False)
+
+        Context.context_action_item = context_action_item
+
+        context_action = context_action_item.action()
+        context_action.setText(label)
 
         # add separator after context label
         menu.addSeparator()
@@ -348,26 +352,21 @@ def _install_menu():
 
 
 def change_context_label():
-    menubar = nuke.menu("Nuke")
-    menu = menubar.findItem(MENU_LABEL)
+    if ASSIST:
+        return
 
-    label = get_context_label()
+    context_action_item = Context.context_action_item
+    if context_action_item is None:
+        return
+    context_action = context_action_item.action()
 
-    rm_item = [
-        (i, item) for i, item in enumerate(menu.items())
-        if Context.context_label in item.name()
-    ][0]
+    old_label = context_action.text()
+    new_label = get_context_label()
 
-    menu.removeItem(rm_item[1].name())
-
-    context_action = menu.addCommand(
-        label,
-        index=(rm_item[0])
-    )
-    context_action.setEnabled(False)
+    context_action.setText(new_label)
 
     log.info("Task label changed from `{}` to `{}`".format(
-        Context.context_label, label))
+        old_label, new_label))
 
 
 def add_shortcuts_from_presets():
