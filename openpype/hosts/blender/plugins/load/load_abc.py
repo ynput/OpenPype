@@ -137,9 +137,9 @@ class CacheModelLoader(plugin.AssetLoader):
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        asset_name = plugin.asset_name(asset, subset)
+        asset_name = plugin.prepare_scene_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
+        group_name = plugin.prepare_scene_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
         containers = bpy.data.collections.get(AVALON_CONTAINERS)
