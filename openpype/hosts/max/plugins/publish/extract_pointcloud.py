@@ -133,16 +133,20 @@ class ExtractPointCloud(publish.Extractor):
         opt_list = []
         for member in members:
             obj = member.baseobject
-        # TODO: to see if it can be used maxscript instead
             anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
                 sub_anim = rt.GetSubAnim(obj, anim_name)
-                boolean = rt.IsProperty(sub_anim, "Export_Particles")
-                if boolean:
-                        event_name = sub_anim.Name
-                        opt = f"${member.Name}.{event_name}.export_particles"
-                        opt_list.append(opt)
+                # Isolate only the events
+                if not rt.isKindOf(sub_anim, rt.tyEvent):
+                    continue
 
+                # Look through all the nodes in the events
+                node_names = rt.GetSubAnimNames(sub_anim)
+                for node_name in node_names:
+                    node_sub_anim = rt.GetSubAnim(sub_anim, node_name)
+                    if rt.hasProperty(node_sub_anim, "exportMode"):
+                        opt = f"${member.Name}.{sub_anim.Name}.{node_name}"
+                        opt_list.append(opt)
         return opt_list
 
     @staticmethod

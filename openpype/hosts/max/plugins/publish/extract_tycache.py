@@ -38,11 +38,12 @@ class ExtractTyCache(publish.Extractor):
         path = os.path.join(stagingdir, filename)
         filenames = self.get_files(instance, start, end)
         additional_attributes = instance.data.get("tyc_attrs", {})
-
+        export_mode = instance.data.get("exportMode", 2)
         with maintained_selection():
             job_args = self.get_export_particles_job_args(
                 instance.data["members"],
                 start, end, path,
+                export_mode,
                 additional_attributes)
             for job in job_args:
                 rt.Execute(job)
@@ -94,7 +95,8 @@ class ExtractTyCache(publish.Extractor):
         return filenames
 
     def get_export_particles_job_args(self, members, start, end,
-                                      filepath, additional_attributes):
+                                      filepath, export_mode,
+                                      additional_attributes):
         """Sets up all job arguments for attributes.
 
         Those attributes are to be exported in MAX Script.
@@ -104,6 +106,7 @@ class ExtractTyCache(publish.Extractor):
             start (int): Start frame.
             end (int): End frame.
             filepath (str): Output path of the TyCache file.
+            export_mode (int): Export Mode for the TyCache Output.
             additional_attributes (dict): channel attributes data
                 which needed to be exported
 
@@ -112,7 +115,7 @@ class ExtractTyCache(publish.Extractor):
 
         """
         settings = {
-            "exportMode": 2,
+            "exportMode": export_mode,
             "frameStart": start,
             "frameEnd": end,
             "tyCacheFilename": filepath.replace("\\", "/")
@@ -144,14 +147,18 @@ class ExtractTyCache(publish.Extractor):
         opt_list = []
         for member in members:
             obj = member.baseobject
-            # TODO: see if it can use maxscript instead
             anim_names = rt.GetSubAnimNames(obj)
             for anim_name in anim_names:
                 sub_anim = rt.GetSubAnim(obj, anim_name)
-                boolean = rt.IsProperty(sub_anim, "Export_Particles")
-                if boolean:
-                    event_name = sub_anim.Name
-                    opt = f"${member.Name}.{event_name}.export_particles"
-                    opt_list.append(opt)
+                # Isolate only the events
+                if not rt.isKindOf(sub_anim, rt.tyEvent):
+                    continue
 
+                # Look through all the nodes in the events
+                node_names = rt.GetSubAnimNames(sub_anim)
+                for node_name in node_names:
+                    node_sub_anim = rt.GetSubAnim(sub_anim, node_name)
+                    if rt.hasProperty(node_sub_anim, "exportMode"):
+                        opt = f"${member.Name}.{sub_anim.Name}.{node_name}"
+                        opt_list.append(opt)
         return opt_list

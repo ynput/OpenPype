@@ -14,9 +14,22 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
     families = ["tycache"]
 
     def process(self, instance):
+
         attr_values = self.get_attr_values_from_data(instance.data)
+        export_mode = attr_values.get("exportMode")
+        instance.data["exportMode"] = 2 if export_mode =="TyCache" else 6
+        self.log.debug("{}".format(instance.data["exportMode"]))
         attributes = {}
         for attr_key in attr_values.get("tycacheAttributes", []):
+            if export_mode == "TyCache(Splines)" and \
+                attr_key not in ["tycacheSplines",
+                                 "tycacheSplinesAdditionalSplines",
+                                 "tycacheAdditionalSplinePaths",
+                                 "tycacheSplinesFilterID"]:
+                self.log.warning(
+                    f"{attr_key} wont be exported along with {export_mode}")
+                continue
+
             attributes[attr_key] = True
 
         for key in ["tycacheLayer", "tycacheObjectName"]:
@@ -46,20 +59,29 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
                          "tycacheAdditionalSkinID",
                          "tycacheAdditionalSkinIDValue",
                          "tycacheAdditionalTerrain",
-                         "tycacheAdditionalVDB",
-                         "tycacheAdditionalSplinePaths",
+                         "tycacheAdditionalVDB"
                          "tycacheAdditionalGeo",
                          "tycacheAdditionalGeoActivateModifiers",
                          "tycacheSplines",
-                         "tycacheSplinesAdditionalSplines"
+                          "tycacheSplinesAdditionalSplines",
+                          "tycacheAdditionalSplinePaths",
+                          "tycacheSplinesFilterID"
                          ]
+
         tyc_default_attrs = ["tycacheChanGroups", "tycacheChanPos",
                              "tycacheChanRot", "tycacheChanScale",
                              "tycacheChanVel", "tycacheChanShape",
                              "tycacheChanMatID", "tycacheChanMapping",
                              "tycacheChanMaterials",
                              "tycacheCreateObjectIfNotCreated"]
+
+        tycache_export_mode_enum = ["TyCache", "TyCache(Splines)"]
+
         return [
+            EnumDef("exportMode",
+                    tycache_export_mode_enum,
+                    default="tycache",
+                    label="TyCache Export Mode"),
             EnumDef("tycacheAttributes",
                     tyc_attr_enum,
                     default=tyc_default_attrs,
