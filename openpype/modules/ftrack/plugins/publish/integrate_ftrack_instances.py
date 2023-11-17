@@ -63,6 +63,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     additional_metadata_keys = []
 
     def process(self, instance):
+        # QUESTION: should this be operating even for `farm` target?
         self.log.debug("instance {}".format(instance))
 
         instance_repres = instance.data.get("representations")
@@ -128,6 +129,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         other_representations = []
         has_movie_review = False
         for repre in instance_repres:
+            if "publish_on_farm" in repre.get("tags", []):
+                continue
             self.log.debug("Representation {}".format(repre))
             repre_tags = repre.get("tags") or []
             if repre.get("thumbnail") or "thumbnail" in repre_tags:
@@ -149,11 +152,19 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # also check if any outputName keys are in thumbnail_representations
         synced_multiple_output_names = []
         for review_repre in review_representations:
-            output_name = review_repre.get("outputName")
-            if not output_name:
+            review_output_name = review_repre.get("outputName")
+            if not review_output_name:
                 continue
             for thumb_repre in thumbnail_representations:
-                if output_name == thumb_repre.get("outputName"):
+                thumb_output_name = thumb_repre.get("outputName")
+                if not thumb_output_name:
+                    continue
+                if (
+                    thumb_output_name == review_output_name
+                    # output name can be added also as tags during intermediate
+                    # files creation
+                    or thumb_output_name in review_repre.get("tags", [])
+                ):
                     synced_multiple_output_names.append(
                         thumb_repre["outputName"])
         self.log.debug("Multiple output names: {}".format(
@@ -232,12 +243,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             # Create copy of base comp item and append it
             review_item = copy.deepcopy(base_component_item)
-            output_name = repre.get("outputName")
 
             # get first or synchronize thumbnail item
             sync_thumbnail_item = self._get_matching_thumbnail_item(
+                repre,
                 thumbnail_data_items,
-                output_name,
                 multiple_synced_thumbnails
             )
             self.log.debug("Synced thumbnail item: {}".format(
@@ -301,6 +311,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             if index > 0:
                 asset_name = review_item["asset_data"]["name"]
+                self.log.debug(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+                self.log.debug("Asset name: {}".format(asset_name))
+                self.log.debug("Synced thumbnail item: {}".format(
+                    pformat(sync_thumbnail_item)
+                ))
                 # perhaps it might happen that no thumbnail for
                 # current iteration is found in thumbnails list
                 # QUESTION: should this be consider as bug in code?
@@ -308,7 +323,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 #       should not be included
                 if (
                     sync_thumbnail_item
-                    and sync_thumbnail_item["item"]["asset_data"]["name"] != asset_name
+                    and sync_thumbnail_item["item"]["asset_data"]["name"] != asset_name  # noqa
                 ):
                     new_thumbnail_component = copy.deepcopy(
                         sync_thumbnail_item["item"]
@@ -373,7 +388,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         instance.data["ftrackComponentsList"] = component_list
 
     def _get_matching_thumbnail_item(
-        self, thumbnail_data_items, output_name, multiple_synced_thumbnails
+        self,
+        review_representation,
+        thumbnail_data_items,
+        are_multiple_synced_thumbnails
     ):
         """Return matching thumbnail item from list of thumbnail items.
 
@@ -383,28 +401,54 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         data item, it can sync with that item.
 
         Args:
+            review_representation (dict): Review representation
             thumbnail_data_items (list): List of thumbnail data items
-            output_name (str): Output name of representation
-            multiple_synced_thumbnails (bool): If there are multiple synced
+            are_multiple_synced_thumbnails (bool): If there are multiple synced
                 thumbnails
 
         Returns:
             dict: Thumbnail data item or empty dict
         """
+        output_name = review_representation.get("outputName")
+        tags = review_representation.get("tags", [])
         matching_thumbnail_item = {}
         for thumb_item in thumbnail_data_items:
             if (
-                multiple_synced_thumbnails
-                and thumb_item["sync_key"] == output_name
+                are_multiple_synced_thumbnails
+                and (
+                    thumb_item["sync_key"] == output_name
+                    # intermediate files can have preset name in tags
+                    # this is usually aligned with `outputName` distributed
+                    # during thumbnail creation in `need_thumbnail` tagging
+                    # workflow
+                    or thumb_item["sync_key"] in tags
+                )
             ):
                 # return only synchronized thumbnail if multiple
                 matching_thumbnail_item = thumb_item
                 break
-            elif not multiple_synced_thumbnails:
+            elif not are_multiple_synced_thumbnails:
                 # return any first found thumbnail since we need thumbnail
                 # but dont care which one
                 matching_thumbnail_item = thumb_item
                 break
+
+        if not matching_thumbnail_item:
+            # WARNING: this can only happen if multiple thumbnails
+            # workflow is broken, since it found multiple matching outputName
+            # in representation but they do not align with any thumbnail item
+            self.log.warning(
+                "No matching thumbnail item found for output name "
+                "'{}'".format(output_name)
+            )
+            if not thumbnail_data_items:
+                self.log.warning(
+                    "No thumbnail data items found"
+                )
+                return {}
+            # as fallback return first thumbnail item
+            return thumbnail_data_items[0]
+
 
         return matching_thumbnail_item
 
