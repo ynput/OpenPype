@@ -72,7 +72,7 @@
             "enabled": true,
             "oiiotool_defaults": {
                 "type": "colorspace",
-                "colorspace": "matte_paint",
+                "colorspace": "color_picking",
                 "view": "sRGB",
                 "display": "default"
             },
