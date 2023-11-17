@@ -36,7 +36,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # run main process
-        self.main_process(instance)
+        self._main_process(instance)
 
         # Make sure cleanup happens to representations which are having both
         # tags `delete` and `need_thumbnail`
@@ -51,7 +51,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 )
                 instance.data["representations"].remove(repre)
 
-    def main_process(self, instance):
+    def _main_process(self, instance):
         subset_name = instance.data["subset"]
         instance_repres = instance.data.get("representations")
         if not instance_repres:
@@ -116,12 +116,14 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 # convert any video file to frame so oiio doesn't need to
                 # read video file (it is slow) and also we are having control
                 # over which frame is used for thumbnail
+                # this will also work with ffmpeg fallback conversion in case
+                # oiio is not supported
                 repre_extension = os.path.splitext(repre_files)[1]
                 if repre_extension in VIDEO_EXTENSIONS:
                     video_file_path = os.path.join(
                         src_staging, repre_files
                     )
-                    file_path = self._convert_video_to_frame(
+                    file_path = self._create_frame_from_video(
                         video_file_path,
                         dst_staging
                     )
@@ -156,7 +158,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 )
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
-                thumbnail_created = self.create_thumbnail_oiio(
+                thumbnail_created = self._create_thumbnail_oiio(
                     full_input_path,
                     full_output_path,
                     colorspace_data
@@ -172,7 +174,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                         " can't be read by OIIO."
                     )
 
-                thumbnail_created = self.create_thumbnail_ffmpeg(
+                thumbnail_created = self._create_thumbnail_ffmpeg(
                     full_input_path, full_output_path
                 )
 
@@ -220,6 +222,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             else:
                 self.log.debug(
                     "Adding thumbnail representation: {}".format(new_repre)
+                )
                 # There is no need to create more then one thumbnail
                 break
 
@@ -289,7 +292,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             filtered_repres.append(repre)
         return filtered_repres
 
-    def create_thumbnail_oiio(
+    def _create_thumbnail_oiio(
         self,
         src_path,
         dst_path,
@@ -348,9 +351,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
         return dst_path
 
-    def create_thumbnail_ffmpeg(self, src_path, dst_path):
+    def _create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
-        # TODO: add middle frame for video files
         ffmpeg_path_args = get_ffmpeg_tool_args("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
 
@@ -387,7 +389,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             )
             return False
 
-    def _convert_video_to_frame(self, video_file_path, output_dir):
+    def _create_frame_from_video(self, video_file_path, output_dir):
         """Convert video file to one frame image via ffmpeg"""
         # create output file path
         base_name = os.path.basename(video_file_path)
