@@ -2020,8 +2020,14 @@ class CreateContext:
             project_name,
             self.host_name
         )
+        asset_name = get_asset_name_identifier(asset_doc)
+        if AYON_SERVER_ENABLED:
+            asset_name_key = "folderPath"
+        else:
+            asset_name_key = "asset"
+
         instance_data = {
-            "asset": asset_doc["name"],
+            asset_name_key: asset_name,
             "task": task_name,
             "family": creator.family,
             "variant": variant
