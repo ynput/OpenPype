@@ -89,8 +89,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Make sure cleanup happens and pop representations with "delete" tag.
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
-            if "delete" in tags and "thumbnail" not in tags:
-                instance.data["representations"].remove(repre)
+            if "delete" not in tags:
+                continue
+
+            if "thumbnail" in tags:
+                continue
+
+            if "need_thumbnail" in tags:
+                continue
+
+            self.log.debug(
+                    "Removing representation: {}".format(repre)
+                )
+            instance.data["representations"].remove(repre)
 
     def _get_outputs_for_instance(self, instance):
         host_name = instance.context.data["hostName"]
@@ -329,6 +340,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # Remove "delete" tag from new repre if there is
             if "delete" in new_repre["tags"]:
                 new_repre["tags"].remove("delete")
+
+            if "need_thumbnail" in new_repre["tags"]:
+                new_repre["tags"].remove("need_thumbnail")
 
             # Add additional tags from output definition to representation
             for tag in output_def["tags"]:

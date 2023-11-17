@@ -89,8 +89,8 @@ class ExtractBurnin(publish.Extractor):
 
         self.main_process(instance)
 
-        # Remove any representations tagged for deletion.
-        # QUESTION Is possible to have representation with "delete" tag?
+        # Remove only representation tagged with both
+        # tags `delete`` and `burnin`
         for repre in tuple(instance.data["representations"]):
             if all(x in repre.get("tags", []) for x in ['delete', 'burnin']):
                 self.log.debug("Removing representation: {}".format(repre))
