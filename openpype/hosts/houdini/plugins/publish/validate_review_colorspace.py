@@ -16,7 +16,7 @@ import hou
 
 
 class SetReviewColorSpaceAction(RepairAction):
-    label = "Set Review Color Space"
+    label = "Set Default Review Color Space"
     icon = "mdi.monitor"
 
 
@@ -68,10 +68,10 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
         color_settings = get_houdini_color_settings()
         # skip if houdini color settings are disabled
         if color_settings["enabled"]:
-            view_space = color_settings["review_color_space"]
+            review_color_space = color_settings["review_color_space"]
             # skip if review color space setting is empty.
-            if view_space and \
-                    rop_node.evalParm("ociocolorspace") != view_space:
+            if review_color_space and \
+                    rop_node.evalParm("ociocolorspace") != review_color_space:
 
                 raise PublishValidationError(
                     "Invalid value: Colorspace name doesn't match studio "
@@ -81,7 +81,7 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
 
     @classmethod
     def repair(cls, instance):
-        """Set Default View Space Action.
+        """Set Default Review Space Action.
 
         It sets ociocolorspace parameter.
 

@@ -33,20 +33,15 @@ class SetDefaultDisplayView(PreLaunchHook):
             )
             return
 
-        # This is a way to get values specified by admins if they already
-        # added 'OCIO_ACTIVE_DISPLAYS', 'OCIO_ACTIVE_VIEWS' manually
-        # using Ayon global env vars or Ayon app env vars
-        # or Ayon houdini tool
-        OCIO_ACTIVE_DISPLAYS = self.launch_context.env.get(
-            "OCIO_ACTIVE_DISPLAYS", ""
-        )
-        OCIO_ACTIVE_VIEWS = self.launch_context.env.get(
-            "OCIO_ACTIVE_VIEWS", ""
-        )
+        # 'OCIO_ACTIVE_DISPLAYS', 'OCIO_ACTIVE_VIEWS' are checked
+        # as Admins can add them in Ayon env vars or Ayon tools.
 
-        # default_display and default_view
         default_display = houdini_color_settings["default_display"]
         if default_display:
+            # get 'OCIO_ACTIVE_DISPLAYS' value if exists.
+            OCIO_ACTIVE_DISPLAYS = self.launch_context.env.get(
+                "OCIO_ACTIVE_DISPLAYS", ""
+            )
             default_display = ":".join(
                 key for key in [default_display, OCIO_ACTIVE_DISPLAYS] if key
             )
@@ -58,6 +53,10 @@ class SetDefaultDisplayView(PreLaunchHook):
 
         default_view = houdini_color_settings["default_view"]
         if default_view:
+            # get 'OCIO_ACTIVE_VIEWS' value if exists.
+            OCIO_ACTIVE_VIEWS = self.launch_context.env.get(
+                "OCIO_ACTIVE_VIEWS", ""
+            )
             default_view = ":".join(
                 key for key in [default_view, OCIO_ACTIVE_VIEWS] if key
             )

@@ -880,23 +880,23 @@ def set_review_color_space(opengl_node, log=None):
             " 'OpenColorIO'".format(opengl_node.path())
         )
 
-    # Get view space for ociocolorspace parm.
+    # Get review color space
     color_settings = get_houdini_color_settings()
-    view_space = color_settings["review_color_space"] if color_settings["enabled"] else ""  # noqa
+    review_color_space = color_settings["review_color_space"] if color_settings["enabled"] else ""  # noqa
 
     # fall to default review color space if the setting is empty.
-    if not view_space:
+    if not review_color_space:
         from openpype.hosts.houdini.api.colorspace import get_default_display_view_colorspace  # noqa
-        view_space = get_default_display_view_colorspace()
+        review_color_space = get_default_display_view_colorspace()
 
     opengl_node.setParms(
-        {"ociocolorspace": view_space}
+        {"ociocolorspace": review_color_space}
     )
 
     self.log.debug(
         "'OCIO Colorspace' parm on '{}' has been set to "
         "the view color space '{}'"
-        .format(opengl_node, view_space)
+        .format(opengl_node, review_color_space)
     )
 
 

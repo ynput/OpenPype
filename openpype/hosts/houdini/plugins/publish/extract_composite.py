@@ -46,11 +46,14 @@ class ExtractComposite(publish.Extractor,
             "frameEnd": instance.data["frameEndHandle"],
         }
 
-        # inject colorspace data
-        # It's always scene_linear (Houdini's default)
-        self.set_representation_colorspace(
-            representation, instance.context,
-            colorspace="scene_linear"
-        )
+        if ext == "exr":
+            # Inject colorspace with 'scene_linear' as that's the
+            # default Houdini working colorspace and all extracted
+            # OpenEXR images should be in that colorspace.
+            # https://www.sidefx.com/docs/houdini/render/linear.html#image-formats
+            self.set_representation_colorspace(
+                representation, instance.context,
+                colorspace="scene_linear"
+            )
 
         instance.data["representations"].append(representation)
