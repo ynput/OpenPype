@@ -503,17 +503,6 @@ class ProjectsCombobox(QtWidgets.QWidget):
         self._projects_model.set_current_context_project(project_name)
         self._projects_proxy_model.invalidateFilter()
 
-    def _update_select_item_visiblity(self, **kwargs):
-        if not self._select_item_visible:
-            return
-        if "project_name" not in kwargs:
-            project_name = self.get_selected_project_name()
-        else:
-            project_name = kwargs.get("project_name")
-
-        # Hide the item if a project is selected
-        self._projects_model.set_selected_project(project_name)
-
     def set_select_item_visible(self, visible):
         self._select_item_visible = visible
         self._projects_model.set_select_item_visible(visible)
@@ -533,6 +522,17 @@ class ProjectsCombobox(QtWidgets.QWidget):
 
     def set_library_filter_enabled(self, enabled):
         return self._projects_proxy_model.set_library_filter_enabled(enabled)
+
+    def _update_select_item_visiblity(self, **kwargs):
+        if not self._select_item_visible:
+            return
+        if "project_name" not in kwargs:
+            project_name = self.get_selected_project_name()
+        else:
+            project_name = kwargs.get("project_name")
+
+        # Hide the item if a project is selected
+        self._projects_model.set_selected_project(project_name)
 
     def _on_current_index_changed(self, idx):
         if not self._listen_selection_change:

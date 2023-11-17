@@ -22,9 +22,9 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
                 self.log.debug("Auto image instance found, won't create new")
                 return
 
-        project_name = context.data["anatomyData"]["project"]["name"]
+        project_name = context.data["projectName"]
         proj_settings = context.data["project_settings"]
-        task_name = context.data["anatomyData"]["task"]["name"]
+        task_name = context.data["task"]
         host_name = context.data["hostName"]
         asset_doc = context.data["assetEntity"]
         asset_name = asset_doc["name"]
