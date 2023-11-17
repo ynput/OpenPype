@@ -29,11 +29,29 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     hosts = ["shell", "nuke", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
+    publishing_thumbnail = False
     duration_split = 0.5
     oiiotool_defaults = None
     ffmpeg_args = None
 
     def process(self, instance):
+        # run main process
+        self.main_process(instance)
+
+        # Make sure cleanup happens to representations which are having both
+        # tags `delete` and `need_thumbnail`
+        for repre in tuple(instance.data["representations"]):
+            tags = repre.get("tags") or []
+            if (
+                "delete" in tags
+                and "need_thumbnail" in tags
+            ):
+                self.log.debug(
+                    "Removing representation: {}".format(repre)
+                )
+                instance.data["representations"].remove(repre)
+
+    def main_process(self, instance):
         subset_name = instance.data["subset"]
         instance_repres = instance.data.get("representations")
         if not instance_repres:
@@ -175,25 +193,33 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             ):
                 instance.data["thumbnailPath"] = full_output_path
 
+            new_repre_tags = ["thumbnail"]
+            # for workflows which needs to have thumbnails published as
+            # separate representations `delete` tag should not be added
+            if not self.publishing_thumbnail:
+                new_repre_tags.append("delete")
+
             new_repre = {
                 "name": repre_name,
                 "ext": "jpg",
                 "files": jpeg_file,
                 "stagingDir": dst_staging,
                 "thumbnail": True,
-                "tags": ["thumbnail", "delete"]
+                "tags": new_repre_tags
             }
 
             # adding representation
-            self.log.debug(
-                "Adding thumbnail representation: {}".format(new_repre)
-            )
             instance.data["representations"].append(new_repre)
 
             if explicit_repres:
                 # this key will then align assetVersion ftrack thumbnail sync
                 new_repre["outputName"] = repre["outputName"]
+                self.log.debug(
+                    "Adding explicit thumbnail representation: {}".format(
+                        new_repre))
             else:
+                self.log.debug(
+                    "Adding thumbnail representation: {}".format(new_repre)
                 # There is no need to create more then one thumbnail
                 break
 
@@ -324,7 +350,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
-
+        # TODO: add middle frame for video files
         ffmpeg_path_args = get_ffmpeg_tool_args("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
 
