@@ -203,6 +203,20 @@
                     "label": "Enabled"
                 },
                 {
+                    "type": "boolean",
+                    "key": "publishing_thumbnail",
+                    "label": "Publish Thumbnail as representation"
+                },
+                {
+                    "key": "duration_split",
+                    "label": "Duration split ratio",
+                    "type": "number",
+                    "decimal": 1,
+                    "default": 0.5,
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                {
                     "type": "dict",
                     "collapsible": true,
                     "key": "oiiotool_defaults",

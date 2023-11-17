@@ -70,6 +70,8 @@
         },
         "ExtractThumbnail": {
             "enabled": true,
+            "publishing_thumbnail": false,
+            "duration_split": 0.5,
             "oiiotool_defaults": {
                 "type": "colorspace",
                 "colorspace": "color_picking",
