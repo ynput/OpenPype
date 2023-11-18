@@ -210,7 +210,9 @@ class CreateBtn(PublishIconBtn):
     def __init__(self, parent=None):
         icon_path = get_icon_path("create")
         super(CreateBtn, self).__init__(icon_path, "Create", parent)
-        self.setToolTip("Create new subset/s")
+        self.setToolTip("Create new {}/s".format(
+            "product" if AYON_SERVER_ENABLED else "subset"
+        ))
         self.setLayoutDirection(QtCore.Qt.RightToLeft)
 
 
@@ -655,7 +657,11 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._proxy_model.set_filter_empty(invalid)
         if invalid:
             self._set_is_valid(False)
-            self.set_text("< One or more subsets require Task selected >")
+            self.set_text(
+                "< One or more {} require Task selected >".format(
+                    "products" if AYON_SERVER_ENABLED else "subsets"
+                )
+            )
         else:
             self.set_text(None)
 
