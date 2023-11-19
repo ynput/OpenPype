@@ -28,6 +28,7 @@ def offset_scene(offset):
     # Exit early for easier stacking of context managers.
     if offset is None:
         yield
+        return
 
     nodes = cmds.ls(type="animCurve")
     nodes += cmds.ls(type="imagePlane")
@@ -48,6 +49,7 @@ def maintain_timeline(frame_start, frame_end, handle_start, handle_end):
     # Exit early for easier stacking of context managers.
     if None in [frame_start, frame_end, handle_start, handle_end]:
         yield
+        return
 
     data = {
         "minTime": None,
