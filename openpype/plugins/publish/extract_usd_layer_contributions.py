@@ -324,16 +324,34 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
             UILabelDef(label="<b>USD Contribution</b>"),
             BoolDef("contribution_enabled",
                     label="Enable",
+                    tooltip=(
+                        "When enabled this publish instance will be added "
+                        "into a department layer into a target product, "
+                        "usually an asset or shot.\n"
+                        "When disabled this publish instance will not be "
+                        "added into another USD file and remain as is.\n"
+                        "In both cases the USD data itself is free to have "
+                        "references and sublayers of its own."
+                    ),
                     default=True),
             TextDef("contribution_target_product",
-                    label="Target subset",
+                    label="Target product",
+                    tooltip=(
+                        "The target product the contribution should be added "
+                        "to. Usually this is the asset or shot product.\nThe "
+                        "department layer will be added to this product, and "
+                        "the contribution itself will be added to the "
+                        "department layer."
+                    ),
                     default="usdAsset"),
             EnumDef("contribution_target_product_init",
                     label="Initialize as",
                     tooltip=(
-                        "The target products USD file will be initialized "
+                        "The target product's USD file will be initialized "
                         "based on this type if there's no existing USD of "
-                        "that product yet."
+                        "that product yet.\nIf there's already an existing "
+                        "product with the name of the 'target product' this "
+                        "setting will do nothing."
                     ),
                     items=["asset", "shot"],
                     default="asset"),
@@ -341,12 +359,24 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
             # Asset layer, e.g. model.usd, look.usd, rig.usd
             EnumDef("contribution_layer",
                     label="Add to department layer",
-                    tooltip="The layer the contribution should be made to in "
-                            "the usd asset.",
+                    tooltip=(
+                        "The layer the contribution should be made to in the "
+                        "target product.\nThe layers have their own "
+                        "predefined ordering.\nA higher order (further down "
+                        "the list) will contribute as a stronger opinion."
+                    ),
                     items=list(LAYER_ORDERS.keys()),
                     default="model"),
             BoolDef("contribution_apply_as_variant",
                     label="Add as variant",
+                    tooltip=(
+                        "When enabled the contribution to the department "
+                        "layer will be added as a variant where the variant "
+                        "on the default root prim will be added as a "
+                        "reference.\nWhen disabled the contribution will be "
+                        "appended to as a sublayer to the department layer "
+                        "instead."
+                    ),
                     default=True),
             TextDef("contribution_variant_set_name",
                     label="Variant Set Name",
@@ -356,6 +386,14 @@ class CollectUSDLayerContributions(pyblish.api.InstancePlugin,
                     default="{variant}"),
             BoolDef("contribution_variant_is_default",
                     label="Set as default variant selection",
+                    tooltip=(
+                        "Whether to set this instance's variant name as the "
+                        "default selected variant name for the variant set.\n"
+                        "It is always expected to be enabled for only one "
+                        "variant name in the variant set.\n"
+                        "The behavior is unpredictable if multiple instances "
+                        "for the same variant set have this enabled."
+                    ),
                     default=False),
             UISeparatorDef("usd_container_settings3"),
         ]
