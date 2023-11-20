@@ -275,17 +275,18 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             "pixelAspect": lib.get_attr_in_layer(
                 "defaultResolution.pixelAspect", layer=layer_name
             ),
-
+            "priority": instance.data.get("priority"),
+            "machineLimit": instance.data.get("machineLimit", 0),
             # todo: Following are likely not needed due to collecting from the
             #       instance itself if they are attribute definitions
-            "tileRendering": instance.data.get("tileRendering") or False,  # noqa: E501
-            "tilesX": instance.data.get("tilesX") or 2,
-            "tilesY": instance.data.get("tilesY") or 2,
+            "tileRendering": instance.data.get("tileRendering", False),  # noqa: E501
+            "tilesX": instance.data.get("tilesX", 2),
+            "tilesY": instance.data.get("tilesY", 2),
             "convertToScanline": instance.data.get(
-                "convertToScanline") or False,
+                "convertToScanline", False),
             "useReferencedAovs": instance.data.get(
                 "useReferencedAovs") or instance.data.get(
-                    "vrayUseReferencedAovs") or False,
+                    "vrayUseReferencedAovs", False),
             "aovSeparator": layer_render_products.layer_data.aov_separator,  # noqa: E501
             "renderSetupIncludeLights": instance.data.get(
                 "renderSetupIncludeLights"

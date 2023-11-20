@@ -423,6 +423,8 @@ def imprint(node, data):
             # Support values evaluated at imprint
             value = value()
 
+        add_type = {}
+        set_type = {}
         if isinstance(value, bool):
             add_type = {"attributeType": "bool"}
             set_type = {"keyable": False, "channelBox": True}
@@ -439,11 +441,33 @@ def imprint(node, data):
             add_type = {"attributeType": "enum", "enumName": ":".join(value)}
             set_type = {"keyable": False, "channelBox": True}
             value = 0  # enum default
+        elif isinstance(value, dict):
+            set_type = {"keyable": False, "channelBox": True}
+            for item_key, group_list in value.items():
+                cmds.addAttr(
+                    node,
+                    longName=item_key,
+                    numberOfChildren=len(group_list),
+                    attributeType="compound"
+                )
+                for group in group_list:
+                    cmds.addAttr(
+                        node,
+                        longName=group,
+                        attributeType="bool",
+                        parent=item_key
+                    )
+                    cmds.setAttr(
+                        node + "." + group,
+                        False,
+                        **set_type,
+                    )
         else:
             raise TypeError("Unsupported type: %r" % type(value))
 
-        cmds.addAttr(node, longName=key, **add_type)
-        cmds.setAttr(node + "." + key, value, **set_type)
+        if not isinstance(value, dict):
+            cmds.addAttr(node, longName=key, **add_type)
+            cmds.setAttr(node + "." + key, value, **set_type)
 
 
 def lsattr(attr, value=None):
@@ -3169,31 +3193,63 @@ def remove_render_layer_observer():
         pass
 
 
-def update_content_on_context_change():
+def iter_publish_instances():
+    """Iterate over publishable instances (their objectSets).
     """
-    This will update scene content to match new asset on context change
+    for node in cmds.ls(
+        "*.id",
+        long=True,
+        type="objectSet",
+        recursive=True,
+        objectsOnly=True
+    ):
+        if cmds.getAttr("{}.id".format(node)) != "pyblish.avalon.instance":
+            continue
+        yield node
+
+
+def update_instances_asset_name():
+    """Update 'asset' attribute of publishable instances (their objectSets)
+    that got one.
     """
-    scene_sets = cmds.listSets(allSets=True)
-    asset_doc = get_current_project_asset()
-    new_asset = asset_doc["name"]
-    new_data = asset_doc["data"]
-    for s in scene_sets:
-        try:
-            if cmds.getAttr("{}.id".format(s)) == "pyblish.avalon.instance":
-                attr = cmds.listAttr(s)
-                print(s)
-                if "asset" in attr:
-                    print("  - setting asset to: [ {} ]".format(new_asset))
-                    cmds.setAttr("{}.asset".format(s),
-                                 new_asset, type="string")
-                if "frameStart" in attr:
-                    cmds.setAttr("{}.frameStart".format(s),
-                                 new_data["frameStart"])
-                if "frameEnd" in attr:
-                    cmds.setAttr("{}.frameEnd".format(s),
-                                 new_data["frameEnd"],)
-        except ValueError:
-            pass
+
+    for instance in iter_publish_instances():
+        if not cmds.attributeQuery("asset", node=instance, exists=True):
+            continue
+        attr = "{}.asset".format(instance)
+        cmds.setAttr(attr, get_current_asset_name(), type="string")
+
+
+def update_instances_frame_range():
+    """Update 'frameStart', 'frameEnd', 'handleStart', 'handleEnd' and 'fps'
+    attributes of publishable instances (their objectSets) that got one.
+    """
+
+    attributes = ["frameStart", "frameEnd", "handleStart", "handleEnd", "fps"]
+
+    attrs_per_instance = {}
+    for instance in iter_publish_instances():
+        instance_attrs = [
+            attr for attr in attributes
+            if cmds.attributeQuery(attr, node=instance, exists=True)
+        ]
+
+        if instance_attrs:
+            attrs_per_instance[instance] = instance_attrs
+
+    if not attrs_per_instance:
+        # no instances with any frame related attributes
+        return
+
+    fields = ["data.{}".format(key) for key in attributes]
+    asset_doc = get_current_project_asset(fields=fields)
+    asset_data = asset_doc["data"]
+
+    for node, attrs in attrs_per_instance.items():
+        for attr in attrs:
+            plug = "{}.{}".format(node, attr)
+            value = asset_data[attr]
+            cmds.setAttr(plug, value)
 
 
 def show_message(title, msg):

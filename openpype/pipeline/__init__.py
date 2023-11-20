@@ -25,7 +25,7 @@ from .create import (
     register_creator_plugin,
     deregister_creator_plugin,
     register_creator_plugin_path,
-    deregister_creator_plugin_path,
+    deregister_creator_plugin_path
 )
 
 from .load import (
@@ -48,7 +48,7 @@ from .load import (
     loaders_from_representation,
     get_representation_path,
     get_representation_context,
-    get_repres_contexts,
+    get_repres_contexts
 )
 
 from .publish import (
@@ -56,7 +56,7 @@ from .publish import (
     PublishXmlValidationError,
     KnownPublishError,
     OpenPypePyblishPluginMixin,
-    OptionalPyblishPluginMixin,
+    OptionalPyblishPluginMixin
 )
 
 from .actions import (
@@ -72,7 +72,7 @@ from .actions import (
     register_inventory_action,
     register_inventory_action_path,
     deregister_inventory_action,
-    deregister_inventory_action_path,
+    deregister_inventory_action_path
 )
 
 from .context_tools import (
@@ -96,6 +96,20 @@ from .context_tools import (
     get_current_asset_name,
     get_current_task_name
 )
+
+from .action import (
+    BuilderAction,
+
+    discover_builder_plugins,
+    register_builder_action,
+    register_builder_action_path,
+    deregister_builder_action,
+    deregister_builder_action_path,
+
+    get_actions_by_name,
+    action_with_repre_context
+)
+
 install = install_host
 uninstall = uninstall_host
 
@@ -195,6 +209,18 @@ __all__ = (
     "get_current_project_name",
     "get_current_asset_name",
     "get_current_task_name",
+
+    # --- Action ---
+    "BuilderAction",
+
+    "discover_builder_plugins",
+    "register_builder_action",
+    "register_builder_action_path",
+    "deregister_builder_action",
+    "deregister_builder_action_path",
+
+    "get_actions_by_name",
+    "action_with_repre_context",
 
     # Backwards compatible function names
     "install",

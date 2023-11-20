@@ -85,6 +85,13 @@ def is_staging_enabled():
     return os.environ.get("OPENPYPE_USE_STAGING") == "1"
 
 
+def is_running_locally():
+    pype_executable = os.environ["OPENPYPE_EXECUTABLE"]
+    executable_filename = os.path.basename(pype_executable)
+    # On development, Openpype is launched by Python
+    return "python" in executable_filename.lower()
+
+
 def is_running_staging():
     """Currently used OpenPype is staging version.
 

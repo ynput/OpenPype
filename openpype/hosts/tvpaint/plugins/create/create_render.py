@@ -147,6 +147,7 @@ class CreateRenderlayer(TVPaintCreator):
         self.default_variants = plugin_settings["default_variants"]
         self.default_pass_name = plugin_settings["default_pass_name"]
         self.mark_for_review = plugin_settings["mark_for_review"]
+        self.enabled = plugin_settings.get("enabled", True)
 
     def get_dynamic_data(
         self, variant, task_name, asset_doc, project_name, host_name, instance

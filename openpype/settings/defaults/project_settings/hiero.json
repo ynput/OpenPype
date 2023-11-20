@@ -41,6 +41,7 @@
             "sequence": "sq01",
             "track": "{_track_}",
             "shot": "sh###",
+            "symlink": false,
             "vSyncOn": false,
             "workfileFrameStart": 1001,
             "handleStart": 10,

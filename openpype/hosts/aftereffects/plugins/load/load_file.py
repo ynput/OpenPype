@@ -17,7 +17,8 @@ class FileLoader(api.AfterEffectsLoader):
                 "render",
                 "prerender",
                 "review",
-                "audio"]
+                "audio",
+                "workfile"]
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
@@ -30,6 +31,7 @@ class FileLoader(api.AfterEffectsLoader):
         import_options = {}
 
         path = self.filepath_from_context(context)
+        repr_cont = context["representation"]["context"]
 
         if len(context["representation"]["files"]) > 1:
             import_options['sequence'] = True
@@ -41,16 +43,28 @@ class FileLoader(api.AfterEffectsLoader):
             return
 
         path = path.replace("\\", "/")
+
+        frame = None
         if '.psd' in path:
             import_options['ImportAsType'] = 'ImportAsType.COMP'
+            comp = stub.import_file_with_dialog(path, stub.LOADED_ICON + comp_name)
+        else:
+            frame = repr_cont.get("frame")
+            if frame:
+                import_options['sequence'] = True
 
-        comp = stub.import_file(path, stub.LOADED_ICON + comp_name,
-                                import_options)
+            comp = stub.import_file(path, stub.LOADED_ICON + comp_name,
+                                    import_options)
 
         if not comp:
+            if frame:
+                padding = len(frame)
+                path = path.replace(frame, "#" * padding)
+
             self.log.warning(
                 "Representation `{}` is failing to load".format(path))
             self.log.warning("Check host app for alert error.")
+
             return
 
         self[:] = [comp]

@@ -108,9 +108,16 @@ class ExtractSequence(pyblish.api.Extractor):
             "Files will be rendered to folder: {}".format(output_dir)
         )
 
-        if instance.data["family"] == "review":
+        export_type = instance.data["creator_attributes"].get("export_type", "project")
+        is_review = instance.data["family"] == "review"
+        is_playblast = instance.data["creator_identifier"] == "render.playblast"
+        publish_sequence_with_transparency = (
+                instance.data["creator_identifier"] == "publish.sequence" and not ignore_layers_transparency
+        )
+
+        if is_review or is_playblast or publish_sequence_with_transparency:
             result = self.render_review(
-                output_dir, mark_in, mark_out, scene_bg_color
+                output_dir, export_type, mark_in, mark_out, scene_bg_color
             )
         else:
             # Render output
@@ -143,6 +150,8 @@ class ExtractSequence(pyblish.api.Extractor):
         tags = []
         if "review" in instance.data["families"]:
             tags.append("review")
+        else:
+            tags.append("sequence")
 
         # Sequence of one frame
         single_file = len(repre_files) == 1
@@ -201,7 +210,7 @@ class ExtractSequence(pyblish.api.Extractor):
         return repre_filenames
 
     def render_review(
-        self, output_dir, mark_in, mark_out, scene_bg_color
+        self, output_dir, export_type, mark_in, mark_out, scene_bg_color
     ):
         """ Export images from TVPaint using `tv_savesequence` command.
 
@@ -233,8 +242,8 @@ class ExtractSequence(pyblish.api.Extractor):
             "export_path = \"{}\"".format(
                 first_frame_filepath.replace("\\", "/")
             ),
-            "tv_savesequence '\"'export_path'\"' {} {}".format(
-                mark_in, mark_out
+            "tv_projectsavesequence '\"'export_path'\"' \"{}\" {} {}".format(
+                export_type, mark_in, mark_out
             )
         ]
         if scene_bg_color:

@@ -30,8 +30,8 @@ class EndpointEntity(ItemEntity):
         super(EndpointEntity, self).__init__(*args, **kwargs)
 
         if (
-            not (self.group_item is not None or self.is_group)
-            and not (self.is_dynamic_item or self.is_in_dynamic_item)
+                not (self.group_item is not None or self.is_group)
+                and not (self.is_dynamic_item or self.is_in_dynamic_item)
         ):
             self.is_group = True
 
@@ -114,6 +114,7 @@ class EndpointEntity(ItemEntity):
 
 class InputEntity(EndpointEntity):
     """Endpoint entity without children."""
+
     def __init__(self, *args, **kwargs):
         super(InputEntity, self).__init__(*args, **kwargs)
         self._value_is_modified = False
@@ -135,9 +136,9 @@ class InputEntity(EndpointEntity):
     def schema_validations(self):
         # Input entity must have file parent.
         if (
-            not self.is_dynamic_schema_node
-            and not self.is_in_dynamic_schema_node
-            and self.file_item is None
+                not self.is_dynamic_schema_node
+                and not self.is_in_dynamic_schema_node
+                and self.file_item is None
         ):
             raise EntitySchemaError(self, "Missing parent file entity.")
 
@@ -179,23 +180,23 @@ class InputEntity(EndpointEntity):
         if self._override_state is OverrideState.PROJECT:
             # Only value change
             if (
-                self._has_project_override
-                and self._project_override_value is not NOT_SET
+                    self._has_project_override
+                    and self._project_override_value is not NOT_SET
             ):
                 value_is_modified = (
-                    self._current_value != self._project_override_value
+                        self._current_value != self._project_override_value
                 )
 
         if (
-            self._override_state is OverrideState.STUDIO
-            or value_is_modified is None
+                self._override_state is OverrideState.STUDIO
+                or value_is_modified is None
         ):
             if (
-                self._has_studio_override
-                and self._studio_override_value is not NOT_SET
+                    self._has_studio_override
+                    and self._studio_override_value is not NOT_SET
             ):
                 value_is_modified = (
-                    self._current_value != self._studio_override_value
+                        self._current_value != self._studio_override_value
                 )
 
         if value_is_modified is None:
@@ -233,9 +234,9 @@ class InputEntity(EndpointEntity):
                 return True
 
             if (
-                not self._has_project_override
-                and not self._has_studio_override
-                and not self.has_default_value
+                    not self._has_project_override
+                    and not self._has_studio_override
+                    and not self.has_default_value
             ):
                 return True
         return False
@@ -252,26 +253,26 @@ class InputEntity(EndpointEntity):
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
             if state > OverrideState.DEFAULTS:
                 if (
-                    not self.has_default_value
-                    and not ignore_missing_defaults
+                        not self.has_default_value
+                        and not ignore_missing_defaults
                 ):
                     raise DefaultsNotDefined(self)
 
             elif state > OverrideState.STUDIO:
                 if (
-                    not self.had_studio_override
-                    and not ignore_missing_defaults
+                        not self.had_studio_override
+                        and not ignore_missing_defaults
                 ):
                     raise StudioDefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
             self._has_studio_override = (
-                self._studio_override_value is not NOT_SET
+                    self._studio_override_value is not NOT_SET
             )
 
         elif state is OverrideState.PROJECT:
             self._has_project_override = (
-                self._project_override_value is not NOT_SET
+                    self._project_override_value is not NOT_SET
             )
             self._has_studio_override = self.had_studio_override
 
@@ -378,10 +379,10 @@ class NumberEntity(InputEntity):
 
         value_on_not_set = self.schema_data.get("default", 0)
         if self.decimal:
-            valid_value_types = (float, )
+            valid_value_types = (float,)
             value_on_not_set = float(value_on_not_set)
         else:
-            valid_value_types = (int, )
+            valid_value_types = (int,)
             value_on_not_set = int(value_on_not_set)
         self.valid_value_types = valid_value_types
         self.value_on_not_set = value_on_not_set
@@ -430,7 +431,7 @@ class BoolEntity(InputEntity):
     schema_types = ["boolean"]
 
     def _item_initialization(self):
-        self.valid_value_types = (bool, )
+        self.valid_value_types = (bool,)
         value_on_not_set = self.convert_to_valid_type(
             self.schema_data.get("default", True)
         )
@@ -441,7 +442,7 @@ class TextEntity(InputEntity):
     schema_types = ["text"]
 
     def _item_initialization(self):
-        self.valid_value_types = (STRING_TYPE, )
+        self.valid_value_types = (STRING_TYPE,)
         self.value_on_not_set = self.convert_to_valid_type(
             self.schema_data.get("default", "")
         )
@@ -451,7 +452,7 @@ class TextEntity(InputEntity):
         self.placeholder_text = self.schema_data.get("placeholder")
         self.value_hints = self.schema_data.get("value_hints") or []
         self.minimum_lines_count = (
-            self.schema_data.get("minimum_lines_count") or 0)
+                self.schema_data.get("minimum_lines_count") or 0)
 
     def schema_validations(self):
         if self.multiline and self.value_hints:
@@ -469,11 +470,15 @@ class TextEntity(InputEntity):
         return NOT_SET
 
 
+class PasswordEntity(TextEntity):
+    schema_types = ["password"]
+
+
 class PathInput(InputEntity):
     schema_types = ["path-input"]
 
     def _item_initialization(self):
-        self.valid_value_types = (STRING_TYPE, )
+        self.valid_value_types = (STRING_TYPE,)
         self.value_on_not_set = ""
 
         # GUI attributes
@@ -499,10 +504,10 @@ class RawJsonEntity(InputEntity):
         store_as_string = self.schema_data.get("store_as_string", False)
         is_list = self.schema_data.get("is_list", False)
         if is_list:
-            valid_value_types = (list, )
+            valid_value_types = (list,)
             value_on_not_set = []
         else:
-            valid_value_types = (dict, )
+            valid_value_types = (dict,)
             value_on_not_set = {}
 
         self.store_as_string = store_as_string
@@ -554,14 +559,14 @@ class RawJsonEntity(InputEntity):
 
     def _metadata_for_current_state(self):
         if (
-            self._override_state is OverrideState.PROJECT
-            and self._project_override_value is not NOT_SET
+                self._override_state is OverrideState.PROJECT
+                and self._project_override_value is not NOT_SET
         ):
             return self.project_override_metadata
 
         if (
-            self._override_state >= OverrideState.STUDIO
-            and self._studio_override_value is not NOT_SET
+                self._override_state >= OverrideState.STUDIO
+                and self._studio_override_value is not NOT_SET
         ):
             return self.studio_override_metadata
 

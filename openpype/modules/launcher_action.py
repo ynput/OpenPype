@@ -3,6 +3,8 @@ from openpype.modules import (
     ITrayAction,
 )
 
+from openpype.widgets import PasswordDialog
+from openpype.lib import is_admin_password_required
 
 class LauncherAction(OpenPypeModule, ITrayAction):
     label = "Launcher"
@@ -42,6 +44,14 @@ class LauncherAction(OpenPypeModule, ITrayAction):
         self.show_launcher()
 
     def show_launcher(self):
+        password_required = is_admin_password_required(ignore_admin_skip=True)
+        if password_required:
+            dialog = PasswordDialog(allow_remember=False)
+            dialog.setModal(True)
+            dialog.exec_()
+            if not dialog.result():
+                return
+
         if self.window:
             self.window.show()
             self.window.raise_()

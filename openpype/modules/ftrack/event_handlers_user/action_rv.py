@@ -1,7 +1,10 @@
 import os
+import sys
 import subprocess
 import traceback
 import json
+import getpass
+from collections import defaultdict
 
 import ftrack_api
 
@@ -19,11 +22,11 @@ from openpype.pipeline import (
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
-class RVAction(BaseAction):
+class RVActionView(BaseAction):
     """ Launch RV action """
-    identifier = "rv.launch.action"
-    label = "rv"
-    description = "rv Launcher"
+    identifier = "openrv.launch.action"
+    label = "Open with RV"
+    description = "OpenRV Launcher"
     icon = statics_icon("ftrack", "action_icons", "RV.png")
 
     type = 'Application'
@@ -54,7 +57,16 @@ class RVAction(BaseAction):
 
     def discover(self, session, entities, event):
         """Return available actions based on *event*. """
-        return True
+        data = event['data']
+        selection = data.get('selection', [])
+        print(selection[0]["entityType"])
+        if selection[0]["entityType"] != "list":
+            return {'items': [{
+                'label': self.label,
+                'description': self.description,
+                'actionIdentifier': self.identifier
+            }]
+            }
 
     def preregister(self):
         if self.rv_path is None:
@@ -157,14 +169,10 @@ class RVAction(BaseAction):
 
         # Sort by version
         for parent_name, entities in components.items():
-            version_mapping = {}
+            version_mapping = defaultdict(list)
             for entity in entities:
-                try:
-                    version_mapping[entity["version"]["version"]].append(
-                        entity
-                    )
-                except KeyError:
-                    version_mapping[entity["version"]["version"]] = [entity]
+                entity_version = entity["version"]["version"]
+                version_mapping[entity_version].append(entity)
 
             # Sort same versions by date.
             for version, entities in version_mapping.items():
@@ -248,10 +256,20 @@ class RVAction(BaseAction):
             args.extend(["-fps", str(fps)])
 
         args.extend(paths)
-
+        # CORE EDIT SET UP THE PATHS
+        # TODO (Critical) This should not be as hardcoded as it is now
+        self.log.info("setting up env vars")
+        os.environ["RV_HOME"] = os.path.normpath(self.rv_home)
+        sys.path.append(os.path.join(self.rv_home, "lib"))
+        sys.path.append(self.rv_home)
         self.log.info("Running rv: {}".format(args))
-
-        subprocess.Popen(args)
+        self.home = os.path.normpath(
+            os.path.join("c:/Users", getpass.getuser())
+        )
+        os.environ["HOME"] = self.home
+        env = os.environ.copy()
+        env['PYTHONPATH'] = ''
+        subprocess.Popen(args, env=env)
 
         return True
 
@@ -328,4 +346,4 @@ class RVAction(BaseAction):
 def register(session):
     """Register hooks."""
 
-    RVAction(session).register()
+    RVActionView(session).register()

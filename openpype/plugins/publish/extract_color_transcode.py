@@ -158,7 +158,8 @@ class ExtractOIIOTranscode(publish.Extractor):
                         view,
                         display,
                         additional_command_args,
-                        self.log
+                        self.log,
+                        input_args=["-i:ch=R,G,B"]
                     )
 
                 # cleanup temporary transcoded files

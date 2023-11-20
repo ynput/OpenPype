@@ -45,6 +45,7 @@ from openpype.hosts.maya.api.lib import get_attr_in_layer
 
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.modules.deadline.utils import set_custom_deadline_name
 from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 from openpype.pipeline.farm.tools import iter_expected_files
@@ -152,11 +153,22 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         src_filepath = context.data["currentFile"]
         src_filename = os.path.basename(src_filepath)
 
-        if is_in_tests():
-            src_filename += datetime.now().strftime("%d%m%Y%H%M%S")
+        job_name = set_custom_deadline_name(
+            instance,
+            src_filename,
+            "deadline_job_name"
+        )
+        batch_name = set_custom_deadline_name(
+            instance,
+            src_filename,
+            "deadline_batch_name"
+        )
 
-        job_info.Name = "%s - %s" % (src_filename, instance.name)
-        job_info.BatchName = src_filename
+        if is_in_tests():
+            batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
+
+        job_info.Name = job_name
+        job_info.BatchName = "Group: " + batch_name
         job_info.Plugin = instance.data.get("mayaRenderPlugin", "MayaBatch")
         job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
 

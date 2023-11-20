@@ -10,6 +10,7 @@ from openpype.tests.lib import is_in_tests
 from openpype.lib import is_running_from_build
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
+from openpype.modules.deadline.utils import set_custom_deadline_name
 
 import pyblish.api
 
@@ -73,15 +74,22 @@ class MayaSubmitRemotePublishDeadline(
         scene = instance.context.data["currentFile"]
         scenename = os.path.basename(scene)
 
-        job_name = "{scene} [PUBLISH]".format(scene=scenename)
-        batch_name = "{code} - {scene}".format(code=project_name,
-                                               scene=scenename)
+        job_name = set_custom_deadline_name(
+            instance,
+            scenename,
+            "deadline_job_name"
+        )
+        batch_name = set_custom_deadline_name(
+            instance,
+            scenename,
+            "deadline_batch_name"
+        )
 
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
 
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
-        job_info.BatchName = batch_name
+        job_info.BatchName = "Group: " + batch_name,
         job_info.Name = job_name
         job_info.UserName = context.data.get("user")
         job_info.Comment = context.data.get("comment", "")
