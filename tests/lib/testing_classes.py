@@ -10,9 +10,11 @@ import glob
 import platform
 import requests
 import re
+import inspect
+import time
 
 from tests.lib.db_handler import DBHandler
-from tests.lib.file_handler import RemoteFileHandler
+from tests.lib.file_handler import RemoteFileHandler, LocalFileHandler
 from openpype.modules import ModulesManager
 from openpype.settings import get_project_settings
 
@@ -79,14 +81,25 @@ class ModuleUnitTest(BaseTest):
             for test_file in self.TEST_FILES:
                 file_id, file_name, md5 = test_file
 
-                f_name, ext = os.path.splitext(file_name)
+                current_dir = os.path.dirname(os.path.abspath(
+                    inspect.getfile(self.__class__)))
+                if os.path.exists(file_id):
+                    handler_class = LocalFileHandler
+                elif os.path.exists(os.path.join(current_dir, file_id)):
+                    file_id = os.path.join(current_dir, file_id)
+                    handler_class = LocalFileHandler
+                else:
+                    handler_class = RemoteFileHandler
 
-                RemoteFileHandler.download_file_from_google_drive(file_id,
-                                                                  str(tmpdir),
-                                                                  file_name)
+                handler_class.download_test_source_files(file_id, str(tmpdir),
+                                                         file_name)
+                ext = None
+                if "." in file_name:
+                    _, ext = os.path.splitext(file_name)
 
-                if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
-                    RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
+                if ext and ext.lstrip('.') in handler_class.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
+                    handler_class.unzip(os.path.join(tmpdir, file_name))
+
                 yield tmpdir
 
                 persist = (persist or self.PERSIST or
@@ -334,7 +347,7 @@ class PublishTest(ModuleUnitTest):
             print("Creating only setup for test, not launching app")
             yield False
             return
-        import time
+
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
         timeout = float(timeout)
@@ -364,26 +377,42 @@ class PublishTest(ModuleUnitTest):
         expected_dir_base = os.path.join(download_test_data,
                                          "expected")
 
-        print("Comparing published:'{}' : expected:'{}'".format(
-            published_dir_base, expected_dir_base))
-        published = set(f.replace(published_dir_base, '') for f in
-                        glob.glob(published_dir_base + "\\**", recursive=True)
-                        if f != published_dir_base and os.path.exists(f))
-        expected = set(f.replace(expected_dir_base, '') for f in
-                       glob.glob(expected_dir_base + "\\**", recursive=True)
-                       if f != expected_dir_base and os.path.exists(f))
+        print(
+            "Comparing published: '{}' | expected: '{}'".format(
+                published_dir_base, expected_dir_base
+            )
+        )
 
-        filtered_published = self._filter_files(published,
-                                                skip_compare_folders)
+        def get_files(dir_base):
+            result = set()
+
+            for f in glob.glob(dir_base + "\\**", recursive=True):
+                if os.path.isdir(f):
+                    continue
+
+                if f != dir_base and os.path.exists(f):
+                    result.add(f.replace(dir_base, ""))
+
+            return result
+
+        published = get_files(published_dir_base)
+        expected = get_files(expected_dir_base)
+
+        filtered_published = self._filter_files(
+            published, skip_compare_folders
+        )
 
         # filter out temp files also in expected
         # could be polluted by accident by copying 'output' to zip file
         filtered_expected = self._filter_files(expected, skip_compare_folders)
 
-        not_mtched = filtered_expected.symmetric_difference(filtered_published)
-        if not_mtched:
-            raise AssertionError("Missing {} files".format(
-                "\n".join(sorted(not_mtched))))
+        not_matched = filtered_expected.symmetric_difference(
+            filtered_published
+        )
+        if not_matched:
+            raise AssertionError(
+                "Missing {} files".format("\n".join(sorted(not_matched)))
+            )
 
     def _filter_files(self, source_files, skip_compare_folders):
         """Filter list of files according to regex pattern."""

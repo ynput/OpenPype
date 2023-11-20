@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Class for handling Render Settings."""
-from maya import cmds  # noqa
-import maya.mel as mel
 import six
 import sys
 
@@ -35,6 +33,14 @@ class RenderSettings(object):
     def get_image_prefix_attr(cls, renderer):
         return cls._image_prefix_nodes[renderer]
 
+    @staticmethod
+    def get_padding_attr(renderer):
+        """Return attribute for renderer that defines frame padding amount"""
+        if renderer == "vray":
+            return "vraySettings.fileNamePadding"
+        else:
+            return "defaultRenderGlobals.extensionPadding"
+
     def __init__(self, project_settings=None):
         if not project_settings:
             project_settings = get_project_settings(
@@ -63,6 +69,10 @@ class RenderSettings(object):
 
     def set_default_renderer_settings(self, renderer=None):
         """Set basic settings based on renderer."""
+        # Not all hosts can import this module.
+        from maya import cmds
+        import maya.mel as mel
+
         if not renderer:
             renderer = cmds.getAttr(
                 'defaultRenderGlobals.currentRenderer').lower()

@@ -33,9 +33,9 @@ class BasicValidateModel(BaseSettingsModel):
 
 
 class PublishPluginsModel(BaseSettingsModel):
-    CollectRopFrameRange: CollectRopFrameRangeModel = Field(
-        default_factory=CollectRopFrameRangeModel,
-        title="Collect Rop Frame Range.",
+    CollectAssetHandles: CollectAssetHandlesModel = Field(
+        default_factory=CollectAssetHandlesModel,
+        title="Collect Asset Handles.",
         section="Collectors"
     )
     ValidateContainers: BasicValidateModel = Field(
@@ -60,7 +60,7 @@ class PublishPluginsModel(BaseSettingsModel):
 
 
 DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
-    "CollectRopFrameRange": {
+    "CollectAssetHandles": {
         "use_asset_handles": True
     },
     "ValidateContainers": {
