@@ -208,20 +208,51 @@
                     "label": "Publish Thumbnail as representation"
                 },
                 {
-                    "type": "number",
-                    "key": "target_width",
-                    "label": "Target width",
-                    "decimal": 0,
-                    "minimum": 0,
-                    "maximum": 99999
-                },
-                {
-                    "type": "number",
-                    "key": "target_height",
-                    "label": "Target height",
-                    "decimal": 0,
-                    "minimum": 0,
-                    "maximum": 99999
+                    "type": "dict-conditional",
+                    "use_label_wrap": false,
+                    "collapsible": false,
+                    "key": "target_size",
+                    "label": "Target size",
+                    "enum_key": "type",
+                    "enum_label": "Type",
+                    "enum_children": [
+                        {
+                            "key": "source",
+                            "label": "Image source",
+                            "children": [
+                                {
+                                    "type": "label",
+                                    "label": "Image size will be inherited from source image."
+                                }
+                            ]
+                        },
+                        {
+                            "key": "resize",
+                            "label": "Resize",
+                            "children": [
+                                {
+                                    "type": "label",
+                                    "label": "Image will be resized to specified size."
+                                },
+                                {
+                                    "type": "number",
+                                    "key": "width",
+                                    "label": "Width",
+                                    "decimal": 0,
+                                    "minimum": 0,
+                                    "maximum": 99999
+                                },
+                                {
+                                    "type": "number",
+                                    "key": "height",
+                                    "label": "Height",
+                                    "decimal": 0,
+                                    "minimum": 0,
+                                    "maximum": 99999
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                     "key": "duration_split",

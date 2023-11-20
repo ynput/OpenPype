@@ -30,8 +30,11 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     enabled = False
 
     publishing_thumbnail = False
-    target_width = 1920
-    target_hight = 1080
+    target_size = {
+        "type": "resize",
+        "width": 1920,
+        "height": 1080
+    }
     duration_split = 0.5
     oiiotool_defaults = None
     ffmpeg_args = None
