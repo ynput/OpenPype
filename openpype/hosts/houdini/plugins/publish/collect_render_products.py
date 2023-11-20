@@ -7,40 +7,6 @@ import pxr.UsdRender
 import pyblish.api
 
 
-def get_var_changed(variable=None):
-    """Return changed variables and operators that use it.
-
-    Note: `varchange` hscript states that it forces a recook of the nodes
-          that use Variables. That was tested in Houdini
-          18.0.391.
-
-    Args:
-        variable (str, Optional): A specific variable to query the operators
-            for. When None is provided it will return all variables that have
-            had recent changes and require a recook. Defaults to None.
-
-    Returns:
-        dict: Variable that changed with the operators that use it.
-
-    """
-    cmd = "varchange -V"
-    if variable:
-        cmd += " {0}".format(variable)
-    output, _ = hou.hscript(cmd)
-
-    changed = {}
-    for line in output.split("Variable: "):
-        if not line.strip():
-            continue
-
-        split = line.split()
-        var = split[0]
-        operators = split[1:]
-        changed[var] = operators
-
-    return changed
-
-
 class CollectRenderProducts(pyblish.api.InstancePlugin):
     """Collect USD Render Products.
 
@@ -65,25 +31,6 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
             )
 
         rop_node = hou.node(rop_path)
-
-        # Workaround Houdini 18.0.391 bug where $HIPNAME doesn't automatically
-        # update after scene save.
-        if hou.applicationVersion() == (18, 0, 391):
-            self.log.debug(
-                "Checking for recook to workaround " "$HIPNAME refresh bug..."
-            )
-            changed = get_var_changed("HIPNAME").get("HIPNAME")
-            if changed:
-                self.log.debug("Recooking for $HIPNAME refresh bug...")
-                for operator in changed:
-                    hou.node(operator).cook(force=True)
-
-                # Make sure to recook any 'cache' nodes in the history chain
-                chain = [node]
-                chain.extend(node.inputAncestors())
-                for input_node in chain:
-                    if input_node.type().name() == "cache":
-                        input_node.cook(force=True)
 
         stage = node.stage()
 
