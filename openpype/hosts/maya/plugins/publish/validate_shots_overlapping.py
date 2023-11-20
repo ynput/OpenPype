@@ -7,13 +7,13 @@ from openpype.pipeline.publish import (
 )
 
 
-class ValidateOverlappingShots(
+class ValidateShotsOverlapping(
     pyblish.api.InstancePlugin, OptionalPyblishPluginMixin
 ):
     """Ensure shots are not overlapping."""
 
     order = ValidateContentsOrder
-    label = "Overlapping shots"
+    label = "Shots Overlapping"
     hosts = ["maya"]
     families = ["shot"]
     optional = True
