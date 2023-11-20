@@ -5,12 +5,12 @@ import tempfile
 import pyblish.api
 from openpype.lib import (
     get_ffmpeg_tool_args,
-    get_oiio_tool_args,
     is_oiio_supported,
 
     run_subprocess,
     path_to_subprocess_arg,
 )
+from openpype.lib.transcoding import convert_colorspace
 
 
 class ExtractThumbnail(pyblish.api.InstancePlugin):
@@ -25,7 +25,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
-    # presetable attribute
+    # presentable attribute
     ffmpeg_args = None
 
     def process(self, instance):
@@ -94,17 +94,26 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             filename = os.path.splitext(input_file)[0]
             jpeg_file = filename + "_thumb.jpg"
             full_output_path = os.path.join(dst_staging, jpeg_file)
+            colorspace_data = repre.get("colorspaceData")
 
-            if oiio_supported:
-                self.log.debug("Trying to convert with OIIO")
+            # only use OIIO if it is supported and representation has
+            # colorspace data
+            if oiio_supported and colorspace_data:
+                self.log.debug(
+                    "Trying to convert with OIIO "
+                    "with colorspace data: {}".format(colorspace_data)
+                )
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
                 thumbnail_created = self.create_thumbnail_oiio(
-                    full_input_path, full_output_path
+                    full_input_path,
+                    full_output_path,
+                    colorspace_data
                 )
 
             # Try to use FFMPEG if OIIO is not supported or for cases when
-            #    oiiotool isn't available
+            #   oiiotool isn't available or representation is not having
+            #   colorspace data
             if not thumbnail_created:
                 if oiio_supported:
                     self.log.debug(
@@ -138,7 +147,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             break
 
         if not thumbnail_created:
-            self.log.warning("Thumbanil has not been created.")
+            self.log.warning("Thumbnail has not been created.")
 
     def _is_review_instance(self, instance):
         # TODO: We should probably handle "not creating" of thumbnail
@@ -173,23 +182,48 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             filtered_repres.append(repre)
         return filtered_repres
 
-    def create_thumbnail_oiio(self, src_path, dst_path):
-        self.log.debug("Extracting thumbnail with OIIO: {}".format(dst_path))
-        oiio_cmd = get_oiio_tool_args(
-            "oiiotool",
-            "-a", src_path,
-            "-o", dst_path
-        )
-        self.log.debug("running: {}".format(" ".join(oiio_cmd)))
+    def create_thumbnail_oiio(
+        self,
+        src_path,
+        dst_path,
+        colorspace_data,
+    ):
+        """Create thumbnail using OIIO tool oiiotool
+
+        Args:
+            src_path (str): path to source file
+            dst_path (str): path to destination file
+            colorspace_data (dict): colorspace data from representation
+                keys:
+                    colorspace (str)
+                    config (dict)
+                    display (Optional[str])
+                    view (Optional[str])
+
+        Returns:
+            str: path to created thumbnail
+        """
+        self.log.info("Extracting thumbnail {}".format(dst_path))
+
         try:
-            run_subprocess(oiio_cmd, logger=self.log)
-            return True
+            convert_colorspace(
+                src_path,
+                dst_path,
+                colorspace_data["config"]["path"],
+                colorspace_data["colorspace"],
+                display=colorspace_data.get("display"),
+                view=colorspace_data.get("view"),
+                additional_input_args=["-i:ch=R,G,B"],
+                logger=self.log,
+            )
         except Exception:
             self.log.warning(
                 "Failed to create thumbnail using oiiotool",
                 exc_info=True
             )
             return False
+
+        return dst_path
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
