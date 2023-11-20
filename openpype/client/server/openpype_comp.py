@@ -1,4 +1,7 @@
 import collections
+import json
+
+import six
 from ayon_api.graphql import GraphQlQuery, FIELD_VALUE, fields_to_dict
 
 from .constants import DEFAULT_FOLDER_FIELDS
@@ -84,12 +87,12 @@ def get_folders_with_tasks(
             for folder. All possible folder fields are returned if 'None'
             is passed.
 
-    Returns:
-        List[Dict[str, Any]]: Queried folder entities.
+    Yields:
+        Dict[str, Any]: Queried folder entities.
     """
 
     if not project_name:
-        return []
+        return
 
     filters = {
         "projectName": project_name
@@ -97,25 +100,25 @@ def get_folders_with_tasks(
     if folder_ids is not None:
         folder_ids = set(folder_ids)
         if not folder_ids:
-            return []
+            return
         filters["folderIds"] = list(folder_ids)
 
     if folder_paths is not None:
         folder_paths = set(folder_paths)
         if not folder_paths:
-            return []
+            return
         filters["folderPaths"] = list(folder_paths)
 
     if folder_names is not None:
         folder_names = set(folder_names)
         if not folder_names:
-            return []
+            return
         filters["folderNames"] = list(folder_names)
 
     if parent_ids is not None:
         parent_ids = set(parent_ids)
         if not parent_ids:
-            return []
+            return
         if None in parent_ids:
             # Replace 'None' with '"root"' which is used during GraphQl
             #   query for parent ids filter for folders without folder
@@ -147,10 +150,10 @@ def get_folders_with_tasks(
 
     parsed_data = query.query(con)
     folders = parsed_data["project"]["folders"]
-    if active is None:
-        return folders
-    return [
-        folder
-        for folder in folders
-        if folder["active"] is active
-    ]
+    for folder in folders:
+        if active is not None and folder["active"] is not active:
+            continue
+        folder_data = folder.get("data")
+        if isinstance(folder_data, six.string_types):
+            folder["data"] = json.loads(folder_data)
+        yield folder
