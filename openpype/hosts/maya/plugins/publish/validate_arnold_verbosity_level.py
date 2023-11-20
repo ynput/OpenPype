@@ -22,8 +22,9 @@ class ValidateArnoldVerbosityLevel(pyblish.api.InstancePlugin,
         if not self.is_active(instance.data):
             return
         if instance.data["renderer"] != "arnold":
-            self.log.debug("The renderer for deadline submission is not Arnold."
-                           " Skipping Validate Arnold Verbosity Level.")
+            self.log.debug(
+                "The renderer for deadline submission is not Arnold.\n\n"
+                " Skipping Validate Arnold Verbosity Level.")
             return
         current_verbosity_level = cmds.getAttr(
             "defaultArnoldRenderOptions.log_verbosity")
