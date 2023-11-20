@@ -2,7 +2,7 @@ import re
 import os
 
 import hou
-import pxr.UsdRender
+from pxr import UsdRender
 
 import pyblish.api
 
@@ -34,31 +34,51 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
 
         stage = node.stage()
 
+        # Initialize to empty for the case where render settings could
+        # not be retrieved as intended
+        files = instance.data.setdefault("files", [])
+
         # Houdini docs state about the `rendersettings` parm:
         #  If this is blank, the node looks for default render settings
         #  on the root prim. If the root prim has no render settings,
         #  the node will use default settings.
         # TODO: Allow empty value to fallback to defaults
         render_settings_prim_path = rop_node.evalParm("rendersettings")
-        render_settings_prim = stage.GetPrimAtPath(render_settings_prim_path)
-        if not render_settings_prim:
-            self.log.error(
-                "RenderSettings prim '%s' not found for USD Render ROP '%s'",
-                render_settings_prim_path, rop_path
+        if render_settings_prim_path:
+            render_settings_prim = stage.GetPrimAtPath(
+                render_settings_prim_path
             )
-            return
+            if not render_settings_prim:
+                self.log.error(
+                    "RenderSettings prim '%s' not found for "
+                    "USD Render ROP '%s'", render_settings_prim_path, rop_path
+                )
+                return
+            render_settings = UsdRender.Settings(render_settings_prim)
+        else:
+            # Use stage default render settings
+            render_settings = UsdRender.Settings.GetStageRenderSettings(stage)
+            if not render_settings.GetPrim():
 
-        render_settings = pxr.UsdRender.Settings(render_settings_prim)
-        products = render_settings.GetProductsRel().GetTargets()
-        if not products:
+                self.log.error(
+                    "No default render settings found for USD Render ROP '%s'."
+                    " It is recommended to explicitly specify the Render "
+                    "Settings on the `rendersettings` parm of the USD Render "
+                    "ROP.",
+                    rop_path
+                )
+                return
+        product_paths = render_settings.GetProductsRel().GetTargets()
+        if not product_paths:
             self.log.warning(
                 "RenderSettings prim '%s' do not have any render products "
                 "for USD Render ROP '%s'",
                 render_settings_prim_path, rop_path
             )
 
-        filenames = []
-        for product in products:
+        for product_path in product_paths:
+            prim = stage.GetPrimAtPath(product_path)
+            product = UsdRender.Product(prim)
 
             # We force taking it from any random time sample as opposed to
             # "default" that the USD Api falls back to since that won't return
@@ -95,10 +115,7 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
                 "with frame number: %s" % name
             )
 
-            filenames.append(filename)
+            files.append(filename)
 
             # TODO: Report the product's prim path?
             self.log.info("Collected %s name: %s" % (product, filename))
-
-        # Filenames for Deadline
-        instance.data["files"] = filenames
