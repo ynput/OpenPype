@@ -208,6 +208,22 @@
                     "label": "Publish Thumbnail as representation"
                 },
                 {
+                    "type": "number",
+                    "key": "target_width",
+                    "label": "Target width",
+                    "decimal": 0,
+                    "minimum": 0,
+                    "maximum": 99999
+                },
+                {
+                    "type": "number",
+                    "key": "target_height",
+                    "label": "Target height",
+                    "decimal": 0,
+                    "minimum": 0,
+                    "maximum": 99999
+                },
+                {
                     "key": "duration_split",
                     "label": "Duration split ratio",
                     "type": "number",

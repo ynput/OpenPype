@@ -72,6 +72,8 @@
             "enabled": true,
             "publishing_thumbnail": false,
             "duration_split": 0.5,
+            "target_width": 1920,
+            "target_height": 1080,
             "oiiotool_defaults": {
                 "type": "colorspace",
                 "colorspace": "color_picking",
