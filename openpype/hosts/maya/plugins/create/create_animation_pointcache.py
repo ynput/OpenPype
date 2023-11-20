@@ -1,7 +1,6 @@
 from maya import cmds
 
 from openpype.hosts.maya.api import lib, plugin
-from openpype.hosts.maya.api.alembic import ALEMBIC_ARGS
 from openpype.lib import (
     BoolDef,
     TextDef,
@@ -10,17 +9,25 @@ from openpype.lib import (
     UISeparatorDef,
     UILabelDef,
 )
+from openpype.pipeline import CreatedInstance
 
 
 def _get_animation_attr_defs(cls):
-    """Get Animation generic ddefinitions."""
+    """Get Animation generic definitions.
+
+    The line is blurry between what's "Animation" generic and "Alembic" is
+    blurry, but the rule of thumb is that whatever "AlembicExport -h" accepts
+    is "Alembic" and the other ones are "Animation".
+    """
     defs = lib.collect_animation_defs()
     defs.extend(
         [
             BoolDef("farm", label="Submit to Farm"),
             NumberDef("priority", label="Farm job Priority", default=50),
             BoolDef("refresh", label="Refresh viewport during export"),
-            BoolDef("includeParentHierarchy", label="Include Parent Hierarchy"),
+            BoolDef(
+                "includeParentHierarchy", label="Include Parent Hierarchy"
+            ),
             BoolDef("writeNormals", label="Write Normals"),
         ]
     )
@@ -28,69 +35,89 @@ def _get_animation_attr_defs(cls):
     return defs
 
 
-def _get_animation_abc_attr_defs(cls):
-    """Get definitions relating to Alembic.
+def _get_alembic_boolean_arguments(cls):
+    """Get two lists with the Alembic flags.
 
-    Most of the Alembic Arguments are booleans, those are stored in a
-    `abc_boolean_args` attribute, the other ones are their own attriubte.
-
-    An admin can define in settings the default arguments, which are then not
-    modifiable by the person publishing, unless they are added to the Alembic
-    Overrides setting, which is mapped to `abc_args_overrides`.
-
-    We use a combination of the two above to only show a muiltiselection dropdown
-    for booleans, and disabling the non-boolean arguments on the interface.
-
-    There's also a new separator so it's clearer what belongs to common Animation
-    publishes versus what is Almebic specific.
+    Alembic flags are treted as booleans, so here we get all the possible
+    options, and work out a list with all the ones that can be toggled and the
+    list of defaults (un-toggleable.)
     """
-    abc_defs = None
-    abc_defs = [UISeparatorDef(), UILabelDef("Alembic Options")]
 
     # The Arguments that can be modified by the Publisher
-    abc_args_overrides = getattr(cls, "abc_args_overrides", None)
-
-    # All the Boolean Arguments that Alembic Export accepts
-    abc_boolean_args = [
-        arg
-        for arg, arg_type in ALEMBIC_ARGS.items()
-        if arg_type is bool
-    ]
+    abc_args_overrides = getattr(cls, "abc_args_overrides", [])
 
     # What we have set in the Settings as defaults.
     abc_settings_boolean_args = getattr(cls, "abc_boolean_args", [])
 
-    # Default Flags set in Settings; minus the overrideable ones.
-    abc_settings_boolean_arguments = [
+    abc_defaults = [
         arg
         for arg in abc_settings_boolean_args
         if arg not in abc_args_overrides
     ]
 
-    # We display them to the user, but disable it
-    abc_defs.append(EnumDef(
-        "abcDefaultExportBooleanArguments",
-        abc_settings_boolean_arguments,
-        default=abc_settings_boolean_arguments,
-        multiselection=True,
-        label="Settings Defined Arguments",
-        disabled=False
-    ))
-
-    # Only display Boolan flags that the Admin defined as overrideable
-    abc_boolean_overrides = [
-        arg
-        for arg in abc_boolean_args
-        if arg in abc_args_overrides
+    abc_overrideable = [
+        arg for arg in abc_settings_boolean_args if arg in abc_args_overrides
     ]
 
-    abc_defs.append(EnumDef(
-        "abcExportBooleanArguments",
-        abc_boolean_overrides if abc_boolean_overrides else [""],
-        multiselection=True,
-        label="Arguments Overrides",
-        disabled=True if not abc_boolean_overrides else False
-    ))
+    return abc_defaults, abc_overrideable
+
+
+def _get_animation_abc_attr_defs(cls):
+    """Get definitions relating to Alembic.
+
+    An admin can define in settings the default arguments, which are then not
+    modifiable by the person publishing, unless they are added to the Alembic
+    Overrides setting, which is mapped to `abc_args_overrides`.
+
+    Most of the Alembic Arguments are flags, treated as booleans, and there are
+    two possible lists: the defaults (from settings) and the the toggleable by
+    the user, these two define an EnumDef respectively.
+
+    We use a combination of the two above to only show a muiltiselection
+    dropdown for booleans, and disabling the non-boolean arguments on the
+    interface.
+
+    There's also a new separator so it's clearer what belongs to common
+    Animation publishes versus what is Almebic specific, the line is blurry,
+    but the rule of thumb is that whatever "AlembicExport -h" accepts is
+    "Alembic" and the other ones are "Animation".
+    """
+    abc_defs = None
+    abc_defs = [
+        UISeparatorDef("sep_alembic_options"),
+        UILabelDef("Alembic Options"),
+    ]
+
+    # The Arguments that can be modified by the Publisher
+    abc_args_overrides = getattr(cls, "abc_args_overrides", None)
+
+    (
+        abc_boolean_defaults,
+        abc_boolean_overrides,
+    ) = _get_alembic_boolean_arguments(cls)
+
+    # We display them to the user, but disable it
+    abc_defs.append(
+        EnumDef(
+            "abcDefaultExportBooleanArguments",
+            abc_boolean_defaults,
+            default=abc_boolean_defaults,
+            multiselection=True,
+            label="Settings Defined Arguments",
+            disabled=True,
+        )
+    )
+
+    # Only display Boolan flags that the Admin defined as overrideable
+    abc_defs.append(
+        EnumDef(
+            "abcExportBooleanArguments",
+            abc_boolean_overrides if abc_boolean_overrides else [""],
+            multiselection=True,
+            label="Arguments Overrides",
+            disabled=True if not abc_boolean_overrides else False,
+        )
+    )
 
     abc_defs.append(
         TextDef(
@@ -141,6 +168,46 @@ def _get_animation_abc_attr_defs(cls):
     return abc_defs
 
 
+def _ensure_defaults(cls, instance_data):
+    """Ensure we get default values when an attribute is not overrideable.
+
+    In instances where an attribute used to be modifiable, and then was locked
+    again, we want to make sure that we pass the default (what's on the
+    settings) instead of any value that might have been stored in the scene
+    when the attribute was modifiable.
+    """
+    abc_args_overrides = getattr(cls, "abc_args_overrides", [])
+    creator_attr = instance_data["creator_attributes"]
+    attr_default = getattr(cls, "attr", "")
+
+    if "attr" not in abc_args_overrides:
+        creator_attr["attr"] = attr_default
+
+    if "attrPrefix" not in abc_args_overrides:
+        creator_attr["attrPrefix"] = getattr(cls, "attrPrefix", "")
+
+    if "dataFormat" not in abc_args_overrides:
+        creator_attr["dataFormat"] = getattr(cls, "dataFormat", "")
+
+    if "preRollStartFrame" not in abc_args_overrides:
+        creator_attr["preRollStartFrame"] = getattr(
+            cls, "preRollStartFrame", ""
+        )
+
+    (
+        abc_boolean_defaults,
+        abc_boolean_overrides,
+    ) = _get_alembic_boolean_arguments(cls)
+
+    creator_attr["abcDefaultExportBooleanArguments"] = abc_boolean_defaults
+
+    for idx, arg in enumerate(creator_attr["abcExportBooleanArguments"]):
+        if arg not in abc_boolean_overrides:
+            del creator_attr["abcExportBooleanArguments"][idx]
+
+    return instance_data
+
+
 class CreateAnimation(plugin.MayaHiddenCreator):
     """Animation output for character rigs
 
@@ -161,26 +228,18 @@ class CreateAnimation(plugin.MayaHiddenCreator):
     include_user_defined_attributes = False
 
     def collect_instances(self):
-        pass
+        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        for node in cached_subsets.get(self.identifier, []):
+            node_data = self.read_instance_node(node)
+            _ensure_defaults(self, node_data)
+
+            created_instance = CreatedInstance.from_existing(node_data, self)
+            self._add_instance_to_context(created_instance)
 
     def get_instance_attr_defs(self):
         super(CreateAnimation, self).get_instance_attr_defs()
-        # adding project settings, since MayaHiddenCreator does not
-        # handle this for us (yet?)
-        settings = (
-            getattr(self, "project_settings", {})
-            .get("maya", {})
-            .get("create", {})
-            .get("CreateAnimation")
-        )
-
-        for key, value in settings.items():
-            setattr(self, key, value)
-
         defs = _get_animation_attr_defs(self)
-
         abc_defs = _get_animation_abc_attr_defs(self)
-
         if abc_defs:
             defs.extend(abc_defs)
 
@@ -198,14 +257,19 @@ class CreatePointCache(plugin.MayaCreator):
     write_face_sets = False
     include_user_defined_attributes = False
 
+    def collect_instances(self):
+        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        for node in cached_subsets.get(self.identifier, []):
+            node_data = self.read_instance_node(node)
+            _ensure_defaults(self, node_data)
+
+            created_instance = CreatedInstance.from_existing(node_data, self)
+            self._add_instance_to_context(created_instance)
+
     def get_instance_attr_defs(self):
         super(CreatePointCache, self).get_instance_attr_defs()
-        # defs = self.get_instance_attr_defs()
-        print(self.instance_attr_defs)
         defs = _get_animation_attr_defs(self)
-
         abc_defs = _get_animation_abc_attr_defs(self)
-
         if abc_defs:
             defs.extend(abc_defs)
 
