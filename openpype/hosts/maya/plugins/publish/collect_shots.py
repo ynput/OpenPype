@@ -38,7 +38,7 @@ class CollectShotData(pyblish.api.InstancePlugin):
     def process(self, instance):
         node = cmds.sets(instance.data["instance_node"], query=True)[0]
         frame_start = cmds.getAttr(node + ".timeRangeStart")
-        frame_end = cmds.getAttr(node + ".timeRangeStop") - 1
+        frame_end = cmds.getAttr(node + ".timeRangeStop")
         asset_entity = instance.context.data["assetEntity"]
         project_entity = instance.context.data["projectEntity"]
         width_key = "resolutionWidth"
