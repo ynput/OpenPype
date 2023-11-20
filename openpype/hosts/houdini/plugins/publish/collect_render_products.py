@@ -42,7 +42,8 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
         #  If this is blank, the node looks for default render settings
         #  on the root prim. If the root prim has no render settings,
         #  the node will use default settings.
-        # TODO: Allow empty value to fallback to defaults
+        # Also see:
+        #  https://github.com/sideeffects/HoudiniUsdBridge/blob/cab7aae818fc582db2890d640b8468f7fbf4865c/src/houdini/lib/H_USD/HUSD/XUSD_RenderSettings.C#L1005-L1033  # noqa
         render_settings_prim_path = rop_node.evalParm("rendersettings")
         if render_settings_prim_path:
             render_settings_prim = stage.GetPrimAtPath(
