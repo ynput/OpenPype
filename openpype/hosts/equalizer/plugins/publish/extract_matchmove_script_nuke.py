@@ -99,49 +99,37 @@ class ExtractMatchmoveScriptNuke(publish.Extractor,
 
         yup = 1
 
-        script = f'''
-#! nuke4.8 -nx
+        script = f'''#! nuke4.8 -nx
 version 4.8200
-
-# write root properties
 Root {{
-    inputs 0
-    name 3DE_Export_Root
-    frame {frame0}
-    last_frame {last_frame}
-    format "{width} {height} 0 0 {width} {height} 1 {width}_{height}"
+ inputs 0
+ name 3DE_Export_Root
+ frame {frame0}
+ last_frame {last_frame}
+ format "{int(width)} {int(height)} 0 0 {int(width)} {int(height)} 1 {int(width)}_{int(height)}"
 }}
-
-# Create Locator Group
 Group {{
-    inputs 0
-    name Locators
-    xpos 0
-    ypos 0
+ inputs 0
+ name Locators
+ xpos 0
+ ypos 0
 }}
-
 Constant {{
-    inputs 0
-    color {{1 0 0 1}}
-    format "{width} {height} 0 0 {width} {height} 1 {width}_{height}"
-    xpos 0
-    ypos -442
+ inputs 0
+ color {{1 0 0 1}}
+ format "{int(width)} {int(height)} 0 0 {int(width)} {int(height)} 1 {int(width)}_{int(height)}"
+ xpos 0
+ ypos -442
 }}
-
-# Create reference geometry node
 Sphere {{
-    rows 9
-    columns 9
-    radius 2
-    xpos 0
-    ypos -346
+ rows 9
+ columns 9
+ radius 2
+ xpos 0
+ ypos -346
 }}
-
-# assign a variable name to it - needed for pushing it on the top of the
-stack later
 set LOCATORREFNODE [stack 0]
-        '''
-
+'''
         # Create the locators
         point_list = tde4.getPointList(point_group)
         pos = 0
@@ -166,30 +154,26 @@ push $LOCATORREFNODE
 
             script += f'''
 TransformGeo {{
-    inputs 3
-    translate {{{p3d[0]:.15f} {p3d[1]:.15f} {p3d[2]:.15f}}}
-    name {name}
-    xpos {pos}
-    pos += 100
-    ypos -250
+ inputs 3
+ translate {{{p3d[0]:.15f} {p3d[1]:.15f} {p3d[2]:.15f}}}
+ name {name}
+ xpos {pos}
+ ypos -250
 }}
 '''
             pos += 100
 
         # Merge all the geometry to one geo node using the last
         # "number of point" stack entries
-        script += f'''
-MergeGeo {{
-    inputs {tde4.getNoPoints(point_group)}
-    xpos 0
-    ypos -154
+        script += f'''MergeGeo {{
+ inputs {tde4.getNoPoints(point_group)}
+ xpos 0
+ ypos -154
 }}
-
 Output {{
-    xpos 0
-    ypos -60
+ xpos 0
+ ypos -60
 }}
-# finish locator group
 end_group
 set LOCATOR [stack 0]
 '''
@@ -210,27 +194,25 @@ set LOCATOR [stack 0]
 
             script += f'''
 Group {{
-    inputs 0
-    name {pointgroup_name}
-    xpos {group_xpos}
-    groupxpos += 130
-    ypos -154
+ inputs 0
+ name {pointgroup_name}
+ xpos {group_xpos}
+ groupxpos 130
+ ypos -154
 }}
-
 Constant {{
-    inputs 0
-    color {{0 1 0 1}}
-    format "{width} {height} 0 0 {width} {height} 1 {width}_{height}"
-    xpos 0
-    ypos -442
+ inputs 0
+ color {{0 1 0 1}}
+ format "{int(width)} {int(height)} 0 0 {int(width)} {int(height)} 1 {int(width)}_{int(height)}"
+ xpos 0
+ ypos -442
 }}
-
 Sphere {{
-    rows 9
-    columns 9
-    radius 2
-    xpos 0
-    ypos -346
+ rows 9
+ columns 9
+ radius 2
+ xpos 0
+ ypos -346
 }}
 
 set OBJECTREF_{pointgroup_name} [stack 0]
@@ -271,12 +253,12 @@ Axis {{
 
             scl = tde4.getPGroupScale3D(pg)
             script += f'''
-translate {{{xtrans}}} {ytrans}}} {ztrans}}} }}
-rotate {{{xrot}}} {yrot}}} {zrot}}} }}
+translate {{{xtrans} {ytrans} {ztrans}}}
+rotate {{{xrot} {yrot} {zrot}}}
 scaling {{{scl:.15f} {scl:.15f} {scl:.15f}}}
-    name Axis{pointgroup_name}
-    xpos 110
-    ypos -366
+ name Axis{pointgroup_name}
+ xpos 110
+ ypos -366
 }}
 set Axis{pointgroup_name} [stack 0]
 '''
@@ -295,12 +277,12 @@ set Axis{pointgroup_name} [stack 0]
 push 0
 push $Axis{pointgroup_name}
 push $OBJECTREF_{pointgroup_name}
-"TransformGeo {{
-    inputs 3
-    translate {{{p3d[0]:.15f} {p3d[1]:.15f} {p3d[2]:.15f}}}
-    name {pname}
-    xpos {xpos}
-    ypos -250
+TransformGeo {{
+ inputs 3
+ translate {{{p3d[0]:.15f} {p3d[1]:.15f} {p3d[2]:.15f}}}
+ name {pname}
+ xpos {xpos}
+ ypos -250
 }}
 '''
                 xpos += 100
@@ -308,13 +290,13 @@ push $OBJECTREF_{pointgroup_name}
 
             script += f'''
 MergeGeo {{
-    inputs {point_count}
-    xpos 0
-    ypos -154
+ inputs {point_count}
+ xpos 0
+ ypos -154
 }}
 Output {{
-    xpos 0
-    ypos -60
+ xpos 0
+ ypos -60
 }}
 end_group
 set GROUP_{pointgroup_name} [stack 0]
@@ -328,10 +310,10 @@ set GROUP_{pointgroup_name} [stack 0]
 
         script += f'''
 Scene {{
-    inputs {ins}
-    name Scene3DE
-    xpos 0
-    ypos 100
+ inputs {ins}
+ name Scene3DE
+ xpos 0
+ ypos 100
 }}
 '''
         scene_trs = tde4.getScenePosition3D()
@@ -342,16 +324,16 @@ Scene {{
 
         script += f'''
 TransformGeo {{
-    inputs {ins}
-    rot_order ZXY
+ inputs {ins}
+ rot_order ZXY
 
-    translate {{ {scene_trs[0]:.15f} {scene_trs[1]:.15f} {scene_trs[2]:.15f} }}
-    rotate {{ {r3d[0]:.15f} {r3d[1]:.15f} {r3d[2]:.15f} }}
-    scaling {{ {scl:.15f} {scl:.15f} {scl:.15f} }}"
+ translate {{ {scene_trs[0]:.15f} {scene_trs[1]:.15f} {scene_trs[2]:.15f} }}
+ rotate {{ {r3d[0]:.15f} {r3d[1]:.15f} {r3d[2]:.15f} }}
+ scaling {{ {scl:.15f} {scl:.15f} {scl:.15f} }}
 
-    name SceneNodeTrans
-    xpos 0
-    ypos 250
+ name SceneNodeTrans
+ xpos 0
+ ypos 250
 }}
 set SCENE3D [stack 0]
 '''
@@ -363,15 +345,15 @@ set SCENE3D [stack 0]
             script += f'''
 push 0
 Axis {{
-    inputs 0
-    rot_order ZXY
+ inputs 0
+ rot_order ZXY
 
-    translate {{ {scene_trs[0]:.15f} {scene_trs[1]:.15f} {scene_trs[2]:.15f} }}
-    rotate {{ {scene_rot[0]:.15f} {scene_rot[1]:.15f} {scene_rot[2]:.15f} }}
-    scaling {{ {scl:.15f} {scl:.15f} {scl:.15f} }}"
-    name Axis{pointgroup_name}
-    xpos {posx}
-    ypos 100
+ translate {{{scene_trs[0]:.15f} {scene_trs[1]:.15f} {scene_trs[2]:.15f}}}
+ rotate {{{scene_rot[0]:.15f} {scene_rot[1]:.15f} {scene_rot[2]:.15f}}}
+ scaling {{{scl:.15f} {scl:.15f} {scl:.15f}}}
+ name Axis{pointgroup_name}
+ xpos {posx}
+ ypos 100
 }}
 '''
             no_frames = tde4.getCameraNoFrames(cam1)
@@ -388,8 +370,8 @@ Axis {{
             [xa, xb, ya, yb] = tde4.getCameraFOV(cam1)
 
             script += "Camera {\n"
-            script += "    rot_order ZXY\n"
-            script += "    translate {{curve i "
+            script += " rot_order ZXY\n"
+            script += " translate {{curve i "
             frame = 1
             while frame <= no_frames:
                 p3d = tde4.getPGroupPosition3D(point_group, cam1, frame)
@@ -411,7 +393,7 @@ Axis {{
                 p3d = convert_zup(p3d, yup)
                 script += "x%d %.15f" % (frame + frame0, p3d[2])
                 frame += 1
-            script += "} }\n"
+            script += "}}\n"
 
             script += "rotate {{curve i "
             frame = 1
@@ -460,14 +442,14 @@ Axis {{
             script += " }}\n"
 
             script += f'''
-    haperture {filmback_width * 10:.15f}
-    vaperture {filmback_height * 10:.15f}
-    win_translate {{ {lco_x:.15f} {lco_y:.15f} }}
+ haperture {filmback_width * 10:.15f}
+ vaperture {filmback_height * 10:.15f}
+ win_translate {{{lco_x:.15f} {lco_y:.15f}}}
 
-    win_scale {{1 1}}
-    name {camera_name}1
-    xpos {posx}
-    ypos 200
+ win_scale {{1 1}}
+ name {camera_name}1
+ xpos {posx}
+ ypos 200
 }}
 
 push $SCENE3D
@@ -476,23 +458,21 @@ push $SCENE3D
             if xa == 0 and xb == 1.0 and ya == 0 and yb == 1:
                 script += "push 0\n"
             else:
-                script += f'''
-Crop {{
-    inputs 0
-    box {{ {xa * img_width} {ya * img_height} {xb * img_width} {yb * img_height} }}
-    reformat true
-    crop false
-    name Crop1
-    xpos 0
-    ypos 200
+                script += f'''Crop {{
+ inputs 0
+ box {{ {xa * img_width} {ya * img_height} {xb * img_width} {yb * img_height} }}
+ reformat true
+ crop false
+ name Crop1
+ xpos 0
+ ypos 200
 }}
 '''
-            script += f'''
-ScanlineRender {{
-    inputs 3
-    name render3DE({camera_name})
-    xpos {posx}
-    ypos 300
+            script += f'''ScanlineRender {{
+ inputs 3
+ name render3DE({camera_name})
+ xpos {posx}
+ ypos 300
 }}
 '''
             posx += 175
