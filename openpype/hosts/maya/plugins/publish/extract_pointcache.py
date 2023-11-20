@@ -55,7 +55,7 @@ class ExtractAlembic(publish.Extractor):
             for attr_prefix in instance.data.get("attrPrefix", "").split(";")
         ]
 
-        self.log.debug("Extracting pointcache..")
+        self.log.debug("Extracting pointcache...")
         dirname = self.staging_dir(instance)
 
         parent_dir = self.staging_dir(instance)
@@ -117,6 +117,7 @@ class ExtractAlembic(publish.Extractor):
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
+                self.log.debug("Running `extract_alembic` with the arguments: {}".format(extract_abc_args))
                 extract_alembic(**extract_abc_args)
 
         if "representations" not in instance.data:
