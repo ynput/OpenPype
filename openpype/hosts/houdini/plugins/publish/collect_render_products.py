@@ -42,7 +42,12 @@ def get_var_changed(variable=None):
 
 
 class CollectRenderProducts(pyblish.api.InstancePlugin):
-    """Collect USD Render Products."""
+    """Collect USD Render Products.
+
+    This collects the Render Products from the USD Render ROP's defined
+    render settings.
+
+    """
 
     label = "Collect Render Products"
     order = pyblish.api.CollectorOrder + 0.4
@@ -52,12 +57,14 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         node = instance.data.get("output_node")
+        rop_path = instance.data["instance_node"]
         if not node:
-            rop_path = instance.data["instance_node"].path()
             raise RuntimeError(
                 "No output node found. Make sure to connect an "
                 "input to the USD ROP: %s" % rop_path
             )
+
+        rop_node = hou.node(rop_path)
 
         # Workaround Houdini 18.0.391 bug where $HIPNAME doesn't automatically
         # update after scene save.
@@ -79,15 +86,26 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
                         input_node.cook(force=True)
 
         stage = node.stage()
+        render_settings_prim_path = rop_node.evalParm("rendersettings")
+        render_settings_prim = stage.GetPrimAtPath(render_settings_prim_path)
+        if not render_settings_prim:
+            self.log.error(
+                "RenderSettings prim '%s' not found for USD Render ROP '%s'",
+                render_settings_prim_path, rop_path
+            )
+            return
+
+        render_settings = pxr.UsdRender.Settings(render_settings_prim)
+        products = render_settings.GetProductsRel().GetTargets()
+        if not products:
+            self.log.warning(
+                "RenderSettings prim '%s' do not have any render products "
+                "for USD Render ROP '%s'",
+                render_settings_prim_path, rop_path
+            )
 
         filenames = []
-        for prim in stage.Traverse():
-
-            if not prim.IsA(pxr.UsdRender.Product):
-                continue
-
-            # Get Render Product Name
-            product = pxr.UsdRender.Product(prim)
+        for product in products:
 
             # We force taking it from any random time sample as opposed to
             # "default" that the USD Api falls back to since that won't return
@@ -126,8 +144,8 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
 
             filenames.append(filename)
 
-            prim_path = str(prim.GetPath())
-            self.log.info("Collected %s name: %s" % (prim_path, filename))
+            # TODO: Report the product's prim path?
+            self.log.info("Collected %s name: %s" % (product, filename))
 
         # Filenames for Deadline
         instance.data["files"] = filenames
