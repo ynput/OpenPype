@@ -81,11 +81,11 @@ class NestedCacheItem:
     """Helper for cached items stored in nested structure.
 
     Example:
-        >>> cache = NestedCacheItem(levels=2)
+        >>> cache = NestedCacheItem(levels=2, default_factory=lambda: 0)
         >>> cache["a"]["b"].is_valid
         False
         >>> cache["a"]["b"].get_data()
-        None
+        0
         >>> cache["a"]["b"] = 1
         >>> cache["a"]["b"].is_valid
         True
@@ -167,8 +167,51 @@ class NestedCacheItem:
 
         return self[key]
 
+    def cached_count(self):
+        """Amount of cached items.
+
+        Returns:
+            int: Amount of cached items.
+        """
+
+        return len(self._data_by_key)
+
+    def clear_key(self, key):
+        """Clear cached item by key.
+
+        Args:
+            key (str): Key of the cache item.
+        """
+
+        self._data_by_key.pop(key, None)
+
+    def clear_invalid(self):
+        """Clear all invalid cache items.
+
+        Note:
+            To clear all cache items use 'reset'.
+        """
+
+        changed = {}
+        children_are_nested = self._levels > 1
+        for key, cache in tuple(self._data_by_key.items()):
+            if children_are_nested:
+                output = cache.clear_invalid()
+                if output:
+                    changed[key] = output
+                if not cache.cached_count():
+                    self._data_by_key.pop(key)
+            elif not cache.is_valid:
+                changed[key] = cache.get_data()
+                self._data_by_key.pop(key)
+        return changed
+
     def reset(self):
-        """Reset cache."""
+        """Reset cache.
+
+        Note:
+            To clear only invalid cache items use 'clear_invalid'.
+        """
 
         self._data_by_key = {}
 
