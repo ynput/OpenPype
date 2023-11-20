@@ -348,6 +348,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 view=colorspace_data.get("view") or oiio_default_view,
                 target_colorspace=oiio_default_colorspace,
                 additional_input_args=["-i:ch=R,G,B"],
+                additional_command_args=self._get_resolution_arg("oiiotool"),
                 logger=self.log,
             )
         except Exception:
@@ -361,6 +362,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     def _create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
+        resolution_arg = self._get_resolution_arg("ffmpeg")
         ffmpeg_path_args = get_ffmpeg_tool_args("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
 
@@ -382,6 +384,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         jpeg_items.extend(ffmpeg_args.get("output") or [])
         # we just want one frame from movie files
         jpeg_items.extend(["-vframes", "1"])
+
+        if resolution_arg:
+            jpeg_items.extend(resolution_arg)
+
         # output file
         jpeg_items.append(path_to_subprocess_arg(dst_path))
         subprocess_command = " ".join(jpeg_items)
@@ -409,16 +415,25 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         video_data = get_ffprobe_data(video_file_path, logger=self.log)
         duration = float(video_data["format"]["duration"])
 
-        # create ffmpeg command
-        cmd = get_ffmpeg_tool_args(
-            "ffmpeg",
+        resolution_arg = self._get_resolution_arg("ffmpeg")
+        cmd_args = [
             "-y",
             "-ss", str(duration * self.duration_split),
             "-i", video_file_path,
             "-analyzeduration", max_int,
             "-probesize", max_int,
-            "-vframes", "1",
-            output_thumb_file_path
+            "-vframes", "1"
+        ]
+        if resolution_arg:
+            cmd_args.extend(resolution_arg)
+
+        # add output file path
+        cmd_args.append(output_thumb_file_path)
+
+        # create ffmpeg command
+        cmd = get_ffmpeg_tool_args(
+            "ffmpeg",
+            *cmd_args
         )
         try:
             # run subprocess
@@ -432,3 +447,16 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                     error)
             )
             return None
+
+    def _get_resolution_arg(self, application):
+        # get settings
+        if self.target_size.get("type") == "source":
+            return
+
+        width = self.target_size["width"]
+        height = self.target_size["height"]
+        # form arg string per application
+        if application == "ffmpeg":
+            return ["-vf", "scale={0}:{1}".format(width, height)]
+        elif application == "oiiotool":
+            return ["-resize", "{0}x{1}".format(width, height)]
