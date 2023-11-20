@@ -14,8 +14,6 @@ class CreateUSDRender(plugin.HoudiniCreator):
     def create(self, subset_name, instance_data, pre_create_data):
         import hou  # noqa
 
-        instance_data["parent"] = hou.node("/stage")
-
         # Remove the active, we are checking the bypass flag of the nodes
         instance_data.pop("active", None)
         instance_data.update({"node_type": "usdrender"})
@@ -26,8 +24,6 @@ class CreateUSDRender(plugin.HoudiniCreator):
             pre_create_data)  # type: CreatedInstance
 
         instance_node = hou.node(instance.get("instance_node"))
-
-
         parms = {
             # Render frame range
             "trange": 1
