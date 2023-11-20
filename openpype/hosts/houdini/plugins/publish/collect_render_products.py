@@ -117,5 +117,6 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
 
             files.append(filename)
 
-            # TODO: Report the product's prim path?
-            self.log.info("Collected %s name: %s" % (product, filename))
+            self.log.info(
+                "Collected '%s' name: %s", str(prim.GetPath()), filename
+            )
