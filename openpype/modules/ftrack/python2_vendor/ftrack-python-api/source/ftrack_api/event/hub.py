@@ -856,7 +856,7 @@ class EventHub(object):
         packet_identifier = packet_identifier.rstrip('+')
         data = str(packet_identifier)
         if args:
-            data += '+{1}'.format(self._encode(args))
+            data += '+{0}'.format(self._encode(args))
 
         self._send_packet(self._code_name_mapping['acknowledge'], data=data)
 

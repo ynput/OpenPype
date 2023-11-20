@@ -2016,9 +2016,9 @@ class WorkfileSettings(object):
                     nv.setInput(i, n)
 
                 # set copied knobs
-                for k, v in copy_knobs.items():
-                    print(k, v)
-                    nv[k].setValue(v)
+                for k, value in copy_knobs.items():
+                    print(k, value)
+                    nv[k].setValue(value)
 
                 # set viewerProcess
                 nv["viewerProcess"].setValue(str(viewer_dict["viewerProcess"]))

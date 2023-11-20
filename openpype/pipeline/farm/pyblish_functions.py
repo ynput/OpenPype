@@ -114,6 +114,8 @@ def get_time_data_from_instance_or_context(instance):
              instance.context.data.get("frameEnd")),
         fps=(instance.data.get("fps") or
              instance.context.data.get("fps")),
+        step=(instance.data.get("step") or
+             instance.context.data.get("step", 1)),
         handle_start=(instance.data.get("handleStart") or
                       instance.context.data.get("handleStart")),  # noqa: E501
         handle_end=(instance.data.get("handleEnd") or

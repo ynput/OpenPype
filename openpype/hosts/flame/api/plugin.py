@@ -704,7 +704,7 @@ class ClipLoader(LoaderPlugin):
     _mapping = None
     _host_settings = None
 
-    def apply_settings(cls, project_settings, system_settings):
+    def apply_settings(self, project_settings, system_settings):
 
         plugin_type_settings = (
             project_settings
@@ -715,7 +715,7 @@ class ClipLoader(LoaderPlugin):
         if not plugin_type_settings:
             return
 
-        plugin_name = cls.__name__
+        plugin_name = self.__name__
 
         plugin_settings = None
         # Look for plugin settings in host specific settings
@@ -733,7 +733,7 @@ class ClipLoader(LoaderPlugin):
                 continue
             else:
                 print("  - setting `{}`: `{}`".format(option, value))
-            setattr(cls, option, value)
+            setattr(self, option, value)
 
     def get_colorspace(self, context):
         """Get colorspace name

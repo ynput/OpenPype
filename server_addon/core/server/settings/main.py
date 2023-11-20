@@ -8,7 +8,7 @@ from ayon_server.settings import (
 )
 from ayon_server.exceptions import BadRequestException
 
-from .publish_plugins import PublishPuginsModel, DEFAULT_PUBLISH_VALUES
+from .publish_plugins import PublishPluginsModel, DEFAULT_PUBLISH_VALUES
 from .tools import GlobalToolsModel, DEFAULT_TOOLS_VALUES
 
 
@@ -109,8 +109,8 @@ class CoreSettings(BaseSettingsModel):
         default_factory=CoreImageIOBaseModel,
         title="Color Management (ImageIO)"
     )
-    publish: PublishPuginsModel = Field(
-        default_factory=PublishPuginsModel,
+    publish: PublishPluginsModel = Field(
+        default_factory=PublishPluginsModel,
         title="Publish plugins"
     )
     project_plugins: MultiplatformPathListModel = Field(

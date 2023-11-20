@@ -11,11 +11,11 @@ from .create_plugins import (
     DEFAULT_CREATE_SETTINGS
 )
 from .loader_plugins import (
-    LoaderPuginsModel,
+    LoaderPluginsModel,
     DEFAULT_LOADER_PLUGINS_SETTINGS
 )
 from .publish_plugins import (
-    PublishPuginsModel,
+    PublishPluginsModel,
     DEFAULT_PUBLISH_PLUGIN_SETTINGS
 )
 from .scriptsmenu import (
@@ -37,12 +37,12 @@ class HieroSettings(BaseSettingsModel):
         default_factory=CreatorPluginsSettings,
         title="Creator Plugins",
     )
-    load: LoaderPuginsModel = Field(
-        default_factory=LoaderPuginsModel,
+    load: LoaderPluginsModel = Field(
+        default_factory=LoaderPluginsModel,
         title="Loader plugins"
     )
-    publish: PublishPuginsModel = Field(
-        default_factory=PublishPuginsModel,
+    publish: PublishPluginsModel = Field(
+        default_factory=PublishPluginsModel,
         title="Publish plugins"
     )
     scriptsmenu: ScriptsmenuSettings = Field(

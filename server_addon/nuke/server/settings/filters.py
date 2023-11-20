@@ -14,6 +14,6 @@ class PublishGUIFiltersModel(BaseSettingsModel):
     value: list[PublishGUIFilterItemModel] = Field(default_factory=list)
 
     @validator("value")
-    def validate_unique_outputs(cls, value):
+    def validate_unique_outputs(self, value):
         ensure_unique_names(value)
         return value

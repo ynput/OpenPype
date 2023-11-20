@@ -187,8 +187,7 @@ def show(root=None, debug=False, parent=None, items=None):
             defaults to False
         parent (QtCore.QObject, optional): When provided parent the interface
             to this QObject.
-        items (list) of dictionaries - for injection of items for standalone
-                testing
+        items (list) of dictionaries - for injection of items for standalone testing
 
     """
 

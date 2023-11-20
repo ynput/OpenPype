@@ -129,9 +129,9 @@ class RVActionReview(BaseAction):
                 # Sort by version
                 for parent_name, entities in components.items():
                     version_mapping = defaultdict(list)
-                    for entity in entities:
-                        entity_version = entity["version"]["version"]
-                        version_mapping[entity_version].append(entity)
+                    for comp_entity in entities:
+                        entity_version = comp_entity["version"]["version"]
+                        version_mapping[entity_version].append(comp_entity)
 
                     # Sort same versions by date.
                     for version, entities in version_mapping.items():
@@ -152,17 +152,17 @@ class RVActionReview(BaseAction):
                 loadables = ["exr"]
                 for parent_name, entities in components.items():
                     data = []
-                    for entity in entities:
-                        entity_filetype = entity["file_type"][1:]
+                    for comp_entity in entities:
+                        entity_filetype = comp_entity["file_type"][1:]
                         if entity_filetype in loadables:
                             data.append(
                                 {
                                     "label": label.format(
-                                        entity["version"]["asset"]["name"],
-                                        str(entity["version"]["version"]).zfill(3),  # noqa
-                                        entity["file_type"][1:]
+                                        comp_entity["version"]["asset"]["name"],
+                                        str(comp_entity["version"]["version"]).zfill(3),  # noqa
+                                        comp_entity["file_type"][1:]
                                     ),
-                                    "value": entity["id"]
+                                    "value": comp_entity["id"]
                                 }
                             )
 
