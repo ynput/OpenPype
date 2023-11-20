@@ -18,7 +18,8 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.491
 
     def process(self, context):
-        asset_name = context.data["asset"]
+        asset = context.data["asset"]
+        asset_name = asset
         if AYON_SERVER_ENABLED:
             asset_name = asset_name.split("/")[-1]
 
@@ -29,7 +30,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         # adding otio timeline to context
         otio_timeline = hiero_export.create_otio_timeline()
 
-        # get workfile thumnail paths
+        # get workfile thumbnail paths
         tmp_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
         thumbnail_name = "workfile_thumbnail.png"
         thumbnail_path = os.path.join(tmp_staging, thumbnail_name)
@@ -51,8 +52,8 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         }
 
         # get workfile paths
-        curent_file = project.path()
-        staging_dir, base_name = os.path.split(curent_file)
+        current_file = project.path()
+        staging_dir, base_name = os.path.split(current_file)
 
         # creating workfile representation
         workfile_representation = {
@@ -63,10 +64,12 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         }
         family = "workfile"
         instance_data = {
+            "label": "{} - {}Main".format(
+                asset, family),
             "name": "{}_{}".format(asset_name, family),
             "asset": context.data["asset"],
             # TODO use 'get_subset_name'
-            "subset": "{}{}".format(asset_name, family.capitalize()),
+            "subset": "{}{}Main".format(asset_name, family.capitalize()),
             "item": project,
             "family": family,
             "families": [],
@@ -81,7 +84,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             "activeProject": project,
             "activeTimeline": active_timeline,
             "otioTimeline": otio_timeline,
-            "currentFile": curent_file,
+            "currentFile": current_file,
             "colorspace": self.get_colorspace(project),
             "fps": fps
         }

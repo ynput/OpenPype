@@ -31,7 +31,7 @@ def load_stylesheet():
 class CreatorWidget(QtWidgets.QDialog):
 
     # output items
-    items = dict()
+    items = {}
 
     def __init__(self, name, info, ui_inputs, parent=None):
         super(CreatorWidget, self).__init__(parent)
@@ -642,8 +642,8 @@ class PublishClip:
     Returns:
         hiero.core.TrackItem: hiero track item object with pype tag
     """
-    vertical_clip_match = dict()
-    tag_data = dict()
+    vertical_clip_match = {}
+    tag_data = {}
     types = {
         "shot": "shot",
         "folder": "folder",
@@ -705,9 +705,10 @@ class PublishClip:
         self._create_parents()
 
     def convert(self):
-
         # solve track item data and add them to tag data
-        self._convert_to_tag_data()
+        tag_hierarchy_data = self._convert_to_tag_data()
+
+        self.tag_data.update(tag_hierarchy_data)
 
         # if track name is in review track name and also if driving track name
         # is not in review track name: skip tag creation
@@ -721,16 +722,23 @@ class PublishClip:
         if self.rename:
             # rename track item
             self.track_item.setName(new_name)
-            self.tag_data["asset"] = new_name
+            self.tag_data["asset_name"] = new_name
         else:
-            self.tag_data["asset"] = self.ti_name
+            self.tag_data["asset_name"] = self.ti_name
             self.tag_data["hierarchyData"]["shot"] = self.ti_name
 
+        # AYON unique identifier
+        folder_path = "/{}/{}".format(
+            tag_hierarchy_data["hierarchy"],
+            self.tag_data["asset_name"]
+        )
+        self.tag_data["folderPath"] = folder_path
         if self.tag_data["heroTrack"] and self.review_layer:
             self.tag_data.update({"reviewTrack": self.review_layer})
         else:
             self.tag_data.update({"reviewTrack": None})
 
+        # TODO: remove debug print
         log.debug("___ self.tag_data: {}".format(
             pformat(self.tag_data)
         ))
@@ -889,7 +897,7 @@ class PublishClip:
                     tag_hierarchy_data = hero_data
 
         # add data to return data dict
-        self.tag_data.update(tag_hierarchy_data)
+        return tag_hierarchy_data
 
     def _solve_tag_hierarchy_data(self, hierarchy_formatting_data):
         """ Solve tag data from hierarchy data and templates. """
