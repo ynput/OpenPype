@@ -9,7 +9,7 @@ from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
 
 
-class ExtractPlayblast(publish.Extractor):
+class ExtractPlayblast(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """
     Extract viewport playblast.
 
@@ -24,7 +24,8 @@ class ExtractPlayblast(publish.Extractor):
     order = pyblish.api.ExtractorOrder + 0.01
 
     def process(self, instance):
-        self.log.debug("Extracting capture..")
+        if not self.is_active(instance.data):
+            return
 
         # get scene fps
         fps = instance.data.get("fps")

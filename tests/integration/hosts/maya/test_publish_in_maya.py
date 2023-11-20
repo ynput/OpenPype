@@ -29,7 +29,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     PERSIST = False
 
     TEST_FILES = [
-        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
+        ("test_publish_in_maya", "", "")
     ]
 
     APP_GROUP = "maya"
@@ -96,7 +96,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "workfileTest_task",
-                           "context.ext": "mb"}
+                           "context.ext": "ma"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))

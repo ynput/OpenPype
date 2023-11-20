@@ -5,7 +5,7 @@ import bpy
 from openpype.pipeline import publish
 
 
-class ExtractBlend(publish.Extractor):
+class ExtractBlend(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract a blend file."""
 
     label = "Extract Blend"
@@ -14,6 +14,9 @@ class ExtractBlend(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
 
         stagingdir = self.staging_dir(instance)
@@ -25,14 +28,16 @@ class ExtractBlend(publish.Extractor):
 
         data_blocks = set()
 
-        for obj in instance:
-            data_blocks.add(obj)
+        for data in instance:
+            data_blocks.add(data)
             # Pack used images in the blend files.
-            if obj.type != 'MESH':
+            if not (
+                isinstance(data, bpy.types.Object) and data.type == 'MESH'
+            ):
                 continue
-            for material_slot in obj.material_slots:
+            for material_slot in data.material_slots:
                 mat = material_slot.material
-                if not(mat and mat.use_nodes):
+                if not (mat and mat.use_nodes):
                     continue
                 tree = mat.node_tree
                 if tree.type != 'SHADER':
@@ -58,5 +63,5 @@ class ExtractBlend(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, representation)
