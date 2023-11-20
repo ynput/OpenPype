@@ -47,6 +47,9 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # tags `delete` and `need_thumbnail`
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
+            # skip representations which are going to be published on farm
+            if "publish_on_farm" in tags:
+                continue
             if (
                 "delete" in tags
                 and "need_thumbnail" in tags
