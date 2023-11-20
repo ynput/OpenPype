@@ -172,7 +172,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
 
-        tde4.setTimerCallbackFunction("EqualizerHost._timer", 100)
+        tde4.setTimerCallbackFunction("EqualizerHost._timer", 500)
 
     @staticmethod
     def _timer():
