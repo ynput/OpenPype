@@ -21,7 +21,7 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
         errors = []
         invalid_object = self.get_tyflow_object(instance)
         if invalid_object:
-           errors.append(f"Non tyFlow object found: {invalid_object}")
+            errors.append(f"Non tyFlow object found: {invalid_object}")
 
         invalid_operator = self.get_tyflow_operator(instance)
         if invalid_operator:
