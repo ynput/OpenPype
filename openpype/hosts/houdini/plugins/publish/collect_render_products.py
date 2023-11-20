@@ -86,6 +86,12 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
                         input_node.cook(force=True)
 
         stage = node.stage()
+
+        # Houdini docs state about the `rendersettings` parm:
+        #  If this is blank, the node looks for default render settings
+        #  on the root prim. If the root prim has no render settings,
+        #  the node will use default settings.
+        # TODO: Allow empty value to fallback to defaults
         render_settings_prim_path = rop_node.evalParm("rendersettings")
         render_settings_prim = stage.GetPrimAtPath(render_settings_prim_path)
         if not render_settings_prim:
