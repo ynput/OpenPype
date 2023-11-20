@@ -58,7 +58,7 @@ class CollectNewInstances(pyblish.api.InstancePlugin):
             )
             members_hierarchy = list(set(members + children + parents))
 
-            instance[:] = members_hierarchy
+            instance.extend(members_hierarchy)
 
         elif instance.data["family"] not in self.valid_empty_families:
             self.log.warning("Empty instance: \"%s\" " % objset)

@@ -5,6 +5,7 @@ from maya import cmds, mel
 import pyblish.api
 
 from openpype.client import get_asset_by_id
+from openpype.hosts.maya.api.lib import lsattr, get_highest_in_hierarchy
 
 
 def get_parents(project_name, asset_entity, parents=[]):
@@ -67,10 +68,11 @@ class CollectShotData(pyblish.api.InstancePlugin):
                 # Disabling task fetching in collect_anatomy_instance_data
                 "task": None,
                 # For extract_maya_scene_raw.
-                "exportAll": True
+                "exactSetMembersOnly": False
             }
         )
 
+        # Set hierarchy parents.
         instance.data["parents"] = []
         context_parents = instance.context.data.get("parents")
         if context_parents is None:
@@ -96,8 +98,8 @@ class CollectShotData(pyblish.api.InstancePlugin):
             json.dumps(instance.data["parents"], indent=4, sort_keys=True)
         )
 
+        # Set frame ranges.
         attributes = instance.data["creator_attributes"]
-
         if attributes["use_start_frame"]:
             instance.data["frameOffset"] = (
                 attributes["start_frame"] - frame_start
@@ -122,6 +124,15 @@ class CollectShotsData(pyblish.api.ContextPlugin):
     families = ["shot"]
 
     def process(self, context):
+        # Collect everything from the scene to export, except shot instances.
+        nodes_to_export = get_highest_in_hierarchy(cmds.ls(dagObjects=True))
+        for node in lsattr("id", "pyblish.avalon.instance"):
+            if cmds.getAttr(node + ".family") == "shot":
+                continue
+
+            nodes_to_export.append(node)
+
+        # Collect playback range to each shot instance.
         time_ranges = [
             cmds.playbackOptions(minTime=True, query=True) - 1,
             cmds.playbackOptions(maxTime=True, query=True)
@@ -132,5 +143,6 @@ class CollectShotsData(pyblish.api.ContextPlugin):
                 continue
 
             time_ranges.extend(instance.data["range"])
+            instance.extend(nodes_to_export)
 
         context.data["shotsTimeRanges"] = time_ranges

@@ -184,12 +184,10 @@ class ExtractMayaSceneRaw(publish.Extractor):
             ]
             self.log.debug("Updating timeline to {}.".format(frame_range))
 
-        export_all = instance.data.get("exportAll", False)
         kwargs = {
             "force": True,
             "typ": "mayaAscii" if self.scene_type == "ma" else "mayaBinary",
-            "exportSelected": not export_all,
-            "exportAll": export_all,
+            "exportSelected": True,
             "preserveReferences": True,
             "constructionHistory": True,
             "shader": True,
