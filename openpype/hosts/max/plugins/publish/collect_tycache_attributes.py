@@ -17,7 +17,7 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
 
         attr_values = self.get_attr_values_from_data(instance.data)
         export_mode = attr_values.get("exportMode")
-        instance.data["exportMode"] = 2 if export_mode =="TyCache" else 6
+        instance.data["exportMode"] = 2 if export_mode == "TyCache" else 6
         self.log.debug("{}".format(instance.data["exportMode"]))
         attributes = {}
         for attr_key in attr_values.get("tycacheAttributes", []):
@@ -63,9 +63,9 @@ class CollectTyCacheData(pyblish.api.InstancePlugin,
                          "tycacheAdditionalGeo",
                          "tycacheAdditionalGeoActivateModifiers",
                          "tycacheSplines",
-                          "tycacheSplinesAdditionalSplines",
-                          "tycacheAdditionalSplinePaths",
-                          "tycacheSplinesFilterID"
+                         "tycacheSplinesAdditionalSplines",
+                         "tycacheAdditionalSplinePaths",
+                         "tycacheSplinesFilterID"
                          ]
 
         tyc_default_attrs = ["tycacheChanGroups", "tycacheChanPos",
