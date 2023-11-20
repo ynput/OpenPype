@@ -216,8 +216,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             "_ instance.data: {}".format(pformat(instance.data)))
 
     def _get_asset_data(self, data):
-        folder_path = (
-            data.pop("folderPath") if data.get("folderPath") else None)
+        folder_path = data.pop("folderPath", None)
 
         if data.get("asset_name"):
             asset_name = data["asset_name"]
