@@ -65,6 +65,28 @@ def create_interactive(creator_identifier, **kwargs):
             creator_identifier)
         )
 
+    if hasattr(creator, "create_interactive"):
+        creator.create_interactive(kwargs)
+    else:
+        default_create_interactive(creator, kwargs)
+
+
+def get_subset_name_current_context(creator, variant):
+    context = creator.create_context
+    return creator.get_subset_name(
+        variant=variant,
+        task_name=context.get_current_task_name(),
+        asset_doc=get_asset_by_name(
+            project_name=context.get_current_project_name(),
+            asset_name=context.get_current_asset_name()
+        ),
+        project_name=context.get_current_project_name(),
+        host_name=context.host_name
+    )
+
+
+def prompt_variant(creator):
+    """GUI Prompt to enter a variant name"""
     # TODO Use Qt instead
     result, variant = hou.ui.readInput(
         "Define variant name",
@@ -76,17 +98,27 @@ def create_interactive(creator_identifier, **kwargs):
     )
 
     if result == 1:
-        # User interrupted
-        return
+        raise RuntimeError("User cancelled creation.")
 
     variant = variant.strip()
     if not variant:
         raise RuntimeError("Empty variant value entered.")
+    return variant
 
-    # TODO: Once more elaborate unique create behavior should exist per Creator
-    #   instead of per network editor area then we should move this from here
-    #   to a method on the Creators for which this could be the default
-    #   implementation.
+
+def default_create_interactive(creator, kwargs):
+    """A default implementation for interactive creation.
+
+    This default implementation will try to create a NULL node in the current
+    network that will be set as the target for the publish instance so that
+    in the active network editor pane there's a standin NULL that represents
+    whatever the publish node in `/out` intends to
+    """
+    variant = prompt_variant(creator)
+
+    creator_identifier = creator.identifier
+    context = creator.create_context
+
     pane = stateutils.activePane(kwargs)
     if isinstance(pane, hou.NetworkEditor):
         pwd = pane.pwd()

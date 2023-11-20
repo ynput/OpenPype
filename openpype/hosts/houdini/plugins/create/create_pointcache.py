@@ -13,8 +13,22 @@ class CreatePointCache(plugin.HoudiniCreator):
     icon = "gears"
 
     def create(self, subset_name, instance_data, pre_create_data):
+
+        # Allow creating the
+        node_type = "alembic"
+        parent = pre_create_data.get("parent")
+        if parent:
+            parent_node = hou.node(parent)
+            if parent_node.childTypeCategory() == hou.sopNodeTypeCategory():
+                node_type = "rop_alembic"
+            elif parent_node.childTypeCategory() != hou.ropNodeTypeCategory():
+                raise ValueError(
+                    "Unable to create pointcache instance under parent: "
+                    "{}".format(parent)
+                )
+
         instance_data.pop("active", None)
-        instance_data.update({"node_type": "alembic"})
+        instance_data.update({"node_type": node_type})
 
         instance = super(CreatePointCache, self).create(
             subset_name,
@@ -105,3 +119,28 @@ class CreatePointCache(plugin.HoudiniCreator):
         else:
             return min(outputs,
                        key=lambda node: node.evalParm('outputidx'))
+
+    def create_interactive(self, kwargs):
+        # Allow to create a USD render rop directly in LOP networks natively
+        import stateutils
+        from openpype.hosts.houdini.api.creator_node_shelves import (
+            prompt_variant
+        )
+
+        context = self.create_context
+        pane = stateutils.activePane(kwargs)
+        if isinstance(pane, hou.NetworkEditor):
+            pwd = pane.pwd()
+            if pwd.childTypeCategory() == hou.sopNodeTypeCategory():
+                # Allow to create the ROP node parented under this
+                variant = prompt_variant(creator=self)
+                context.create(
+                    creator_identifier=self.identifier,
+                    variant=variant,
+                    pre_create_data={"use_selection": False,
+                                     "parent": pwd.path()}
+                )
+                return
+
+        # Fall back to default behavior
+        return super(CreatePointCache, self).create_interactive(kwargs)

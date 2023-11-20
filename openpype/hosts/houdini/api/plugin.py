@@ -319,6 +319,13 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
         """
         return [hou.ropNodeTypeCategory()]
 
+    def create_interactive(self, kwargs):
+        """The behavior for an interactive creation from TAB menu."""
+        from openpype.hosts.houdini.api.creator_node_shelves import (
+            default_create_interactive
+        )
+        return default_create_interactive(creator=self, kwargs=kwargs)
+
     def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
