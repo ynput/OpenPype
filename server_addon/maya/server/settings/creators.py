@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import Field
 
 from ayon_server.settings import BaseSettingsModel
@@ -56,16 +58,106 @@ class BasicExportMeshModel(BaseSettingsModel):
     )
 
 
+def alembic_booleans_enum():
+    return [
+        "autoSubd",
+        "dontSkipUnwritten",
+        "eulerFilter",
+        "noNormals",
+        "preRoll",
+        "renderableOnly",
+        "selection",
+        "stripNamespaces",
+        "uvWrite",
+        "uvsOnly",
+        "verbose",
+        "wholeFrameGeo",
+        "worldSpace",
+        "writeColorSets",
+        "writeCreases",
+        "writeFaceSets",
+        "writeUVSets",
+        "writeVisibility",
+    ]
+
+def alembic_arguments_enum():
+    return [
+        "attr",
+        "attrPrefix",
+        "autoSubd",
+        "dataFormat",
+        "dontSkipUnwrittenFrames",
+        "endFrame",
+        "eulerFilter",
+        "frameRange",
+        "frameRelativeSample",
+        "melPerFrameCallback",
+        "melPostJobCallback",
+        "noNormals",
+        "preRoll",
+        "preRollStartFrame",
+        "pythonPerFrameCallback",
+        "pythonPostJobCallback",
+        "renderableOnly",
+        "root",
+        "selection",
+        "startFrame",
+        "step",
+        "stripNamespaces",
+        "userAttr",
+        "userAttrPrefix",
+        "uvWrite",
+        "uvsOnly",
+        "verbose",
+        "wholeFrameGeo",
+        "worldSpace",
+        "writeColorSets",
+        "writeCreases",
+        "writeFaceSets",
+        "writeUVSets",
+        "writeVisibility",
+    ]
+
+AlembicDataFormat = Literal["ogawa", "hdf5"]
+
+def alembic_data_formats():
+    return [
+        "ogawa",
+        "hdf5"
+    ]
+
 class CreateAnimationModel(BaseSettingsModel):
     write_color_sets: bool = Field(title="Write Color Sets")
     write_face_sets: bool = Field(title="Write Face Sets")
     include_parent_hierarchy: bool = Field(
         title="Include Parent Hierarchy")
-    include_user_defined_attributes: bool = Field(
-        title="Include User Defined Attributes")
     default_variants: list[str] = Field(
         default_factory=list,
         title="Default Products"
+    )
+    priority: int = Field(
+        title="Farm Job Priority")
+    pre_roll_start_frame: int = Field(title="Pre Roll Start Frame")
+    refresh: bool = Field(
+        title="Refresh")
+    step: int = Field(title="Step")
+    farm: bool = Field(
+        title="Submit to the Farm")
+    attr: str = Field(title="Attributes")
+    attr_prefix: str = Field(title="Attributes Prefix")
+    data_format: AlembicDataFormat = Field(
+        enum_resolver=alembic_data_formats,
+        title="Data Format",
+    )
+    abc_boolean_args: list[str] = Field(
+        default_factory=list,
+        enum_resolver=alembic_booleans_enum,
+        title="Alembic Boolean Args",
+    )
+    abc_args_overrides: list[str] = Field(
+        default_factory=list,
+        enum_resolver=alembic_arguments_enum,
+        title="Alembic Arguments Overrides",
     )
 
 
@@ -73,12 +165,33 @@ class CreatePointCacheModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     write_color_sets: bool = Field(title="Write Color Sets")
     write_face_sets: bool = Field(title="Write Face Sets")
-    include_user_defined_attributes: bool = Field(
-        title="Include User Defined Attributes"
-    )
     default_variants: list[str] = Field(
         default_factory=list,
         title="Default Products"
+    )
+    priority: int = Field(
+        title="Farm Job Priority")
+    pre_roll_start_frame: int = Field(title="Pre Roll Start Frame")
+    refresh: bool = Field(
+        title="Refresh")
+    step: int = Field(title="Step")
+    farm: bool = Field(
+        title="Submit to the Farm")
+    attr: str = Field(title="Attributes")
+    attr_prefix: str = Field(title="Attributes Prefix")
+    data_format: AlembicDataFormat = Field(
+        enum_resolver=alembic_data_formats,
+        title="Data Format",
+    )
+    abc_boolean_args: list[str] = Field(
+        default_factory=list,
+        enum_resolver=alembic_booleans_enum,
+        title="Alembic Boolean Args",
+    )
+    abc_args_overrides: list[str] = Field(
+        default_factory=list,
+        enum_resolver=alembic_arguments_enum,
+        title="Alembic Arguments Overrides",
     )
 
 
@@ -276,10 +389,31 @@ DEFAULT_CREATORS_SETTINGS = {
         "write_color_sets": False,
         "write_face_sets": False,
         "include_parent_hierarchy": False,
-        "include_user_defined_attributes": False,
         "default_variants": [
             "Main"
-        ]
+        ],
+        "step": 1.0,
+        "abc_boolean_args": [
+            "writeColorSets",
+            "visibleOnly",
+            "worldSpace",
+            "writeNormals"
+        ],
+        "abc_args_overrides": [
+            "step",
+            "includeParentHierarchy",
+            "writeNormals",
+            "includeUserDefinedAttributes",
+            "attr",
+            "attrPrefix"
+        ],
+        "farm": False,
+        "priority": 50,
+        "attr": "",
+        "attr_prefix": "",
+        "data_format": "ogawa",
+        "pre_roll_start_frame": 0,
+        "refresh": False,
     },
     "CreateModel": {
         "enabled": True,
@@ -295,10 +429,33 @@ DEFAULT_CREATORS_SETTINGS = {
         "enabled": True,
         "write_color_sets": False,
         "write_face_sets": False,
-        "include_user_defined_attributes": False,
         "default_variants": [
             "Main"
-        ]
+        ],
+        "step": 1.0,
+        "abc_boolean_args": [
+            "selection",
+            "uvWrite",
+            "writeCreases",
+            "writeVisibility"
+        ],
+        "abc_args_overrides": [
+            "attr",
+            "attrPrefix",
+            "step",
+            "writeColorSets",
+            "writeFaceSets",
+            "renderableOnly",
+            "worldSpace"
+        ],
+        "include_parent_hierarchy": False,
+        "farm": False,
+        "priority": 50,
+        "attr": "cbId",
+        "attr_prefix": "",
+        "data_format": "ogawa",
+        "pre_roll_start_frame": 0,
+        "refresh": False
     },
     "CreateProxyAlembic": {
         "enabled": True,
