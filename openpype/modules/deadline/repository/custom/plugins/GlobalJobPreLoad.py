@@ -495,7 +495,10 @@ def inject_ayon_environment(deadlinePlugin):
             "AYON_BUNDLE_NAME": ayon_bundle_name,
         }
         for env, val in environment.items():
+            # Add the env var for the Render Plugin that is about to render
             deadlinePlugin.SetEnvironmentVariable(env, val)
+            # Add the env var for current calls to `DeadlinePlugin.RunProcess`
+            deadlinePlugin.SetProcessEnvironmentVariable(env, val)
 
         args_str = subprocess.list2cmdline(args)
         print(">>> Executing: {} {}".format(exe, args_str))

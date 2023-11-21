@@ -16,10 +16,12 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         self.log.debug(f"instance: {instance}")
 
+        datablock = instance.data["transientData"]["instance_node"]
+
         # get cameras
         cameras = [
             obj
-            for obj in instance
+            for obj in datablock.all_objects
             if isinstance(obj, bpy.types.Object) and obj.type == "CAMERA"
         ]
 
