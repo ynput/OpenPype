@@ -234,9 +234,16 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     def _get_filtered_repres(self, instance):
         filtered_repres = []
         src_repres = instance.data.get("representations") or []
+
         for repre in src_repres:
             self.log.debug(repre)
             tags = repre.get("tags") or []
+
+            if "publish_on_farm" in tags:
+                # only process representations with are going
+                # to be published locally
+                continue
+
             valid = "review" in tags or "thumb-nuke" in tags
             if not valid:
                 continue
