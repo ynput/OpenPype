@@ -1,8 +1,6 @@
 import os
 import json
 import copy
-from pprint import pformat
-
 import pyblish.api
 
 from openpype.pipeline.publish import get_publish_repre_path
@@ -170,7 +168,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         self.log.debug("Multiple output names: {}".format(
             synced_multiple_output_names
         ))
-        multiple_synced_thumbnails = len(thumbnail_representations) > 1
+        multiple_synced_thumbnails = len(synced_multiple_output_names) > 1
 
         # Components data
         component_list = []
@@ -178,10 +176,17 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         # Create thumbnail components
         for repre in thumbnail_representations:
-            repre_path = get_publish_repre_path(instance, repre, False)
+            # get repre path from representation
+            # and return published_path if available
+            # the path is validated and if it does not exists it returns None
+            repre_path = get_publish_repre_path(
+                instance,
+                repre,
+                only_published=False
+            )
             if not repre_path:
                 self.log.warning(
-                    "Published path is not set and source was removed."
+                    "Published path is not set or source was removed."
                 )
                 continue
 
@@ -203,15 +208,15 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 "component_location_name": ftrack_server_location_name
             })
 
-            # add thumbnail to items data for future synchronization
-            current_item = {
+            # add thumbnail data to items for future synchronization
+            current_item_data = {
                 "sync_key": repre.get("outputName"),
                 "representation": repre,
                 "item": thumbnail_item
             }
             # Create copy of item before setting location
             if "delete" not in repre.get("tags", []):
-                src_comp = self._create_src_components(
+                src_comp = self._create_src_component(
                     instance,
                     repre,
                     copy.deepcopy(thumbnail_item),
@@ -219,11 +224,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 )
                 component_list.append(src_comp)
 
-                current_item["src_component"] = src_comp
+                current_item_data["src_component"] = src_comp
 
             # Add item to component list
-            component_list.append(thumbnail_item)
-            thumbnail_data_items.append(current_item)
+            thumbnail_data_items.append(current_item_data)
 
         # Create review components
         # Change asset name of each new component for review
@@ -245,14 +249,18 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             review_item = copy.deepcopy(base_component_item)
 
             # get first or synchronize thumbnail item
-            sync_thumbnail_item = self._get_matching_thumbnail_item(
+            sync_thumbnail_item = None
+            sync_thumbnail_item_src = None
+            sync_thumbnail_data = self._get_matching_thumbnail_item(
                 repre,
                 thumbnail_data_items,
                 multiple_synced_thumbnails
             )
-            self.log.debug("Synced thumbnail item: {}".format(
-                pformat(sync_thumbnail_item)
-            ))
+            if sync_thumbnail_data:
+                sync_thumbnail_item = sync_thumbnail_data.get("item")
+                sync_thumbnail_item_src = sync_thumbnail_data.get(
+                    "src_component")
+
             """
             Renaming asset name only to those components which are explicitly
             allowed in settings. Usually clients wanted to keep first component
@@ -263,19 +271,25 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             """
             extended_asset_name = self._make_extended_component_name(
                 base_component_item, repre, index)
+
             if multiple_reviewable and extended_asset_name:
                 review_item["asset_data"]["name"] = extended_asset_name
                 # rename also thumbnail
                 if sync_thumbnail_item:
-                    sync_thumbnail_item["item"]["asset_data"]["name"] = (
+                    sync_thumbnail_item["asset_data"]["name"] = (
                         extended_asset_name
                     )
                 # rename also src_thumbnail
-                if sync_thumbnail_item.get("src_component"):
-                    thumb_src_component = sync_thumbnail_item["src_component"]
-                    thumb_src_component["asset_data"]["name"] = (
+                if sync_thumbnail_item_src:
+                    sync_thumbnail_item_src["asset_data"]["name"] = (
                         extended_asset_name
                     )
+
+            # adding thumbnail component to component list
+            if sync_thumbnail_item:
+                component_list.append(copy.deepcopy(sync_thumbnail_item))
+            if sync_thumbnail_item_src:
+                component_list.append(copy.deepcopy(sync_thumbnail_item_src))
 
             # add metadata to review component
             if self._is_repre_video(repre):
@@ -301,38 +315,13 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             # Create copy of item before setting location
             if "delete" not in repre.get("tags", []):
-                src_comp = self._create_src_components(
+                src_comp = self._create_src_component(
                     instance,
                     repre,
                     copy.deepcopy(review_item),
                     unmanaged_location_name
                 )
                 component_list.append(src_comp)
-
-            if index > 0:
-                asset_name = review_item["asset_data"]["name"]
-                self.log.debug(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-                self.log.debug("Asset name: {}".format(asset_name))
-                self.log.debug("Synced thumbnail item: {}".format(
-                    pformat(sync_thumbnail_item)
-                ))
-                # perhaps it might happen that no thumbnail for
-                # current iteration is found in thumbnails list
-                # QUESTION: should this be consider as bug in code?
-                # NOTE: this was inherited from original code, but perhaps it
-                #       should not be included
-                if (
-                    sync_thumbnail_item
-                    and sync_thumbnail_item["item"]["asset_data"]["name"] != asset_name  # noqa
-                ):
-                    new_thumbnail_component = copy.deepcopy(
-                        sync_thumbnail_item["item"]
-                    )
-                    new_thumbnail_component["asset_data"]["name"] = asset_name
-                    new_thumbnail_component["component_location_name"] = (
-                        ftrack_server_location_name
-                    )
-                    component_list.append(new_thumbnail_component)
 
             # Add item to component list
             component_list.append(review_item)
@@ -449,10 +438,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # as fallback return first thumbnail item
             return thumbnail_data_items[0]
 
-
         return matching_thumbnail_item
 
-    def _make_extended_component_name(self, component_item, repre, iteration_index):
+    def _make_extended_component_name(
+            self, component_item, repre, iteration_index):
         """ Returns the extended component name
 
         Name is based on the asset name and representation name.
@@ -466,7 +455,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             str: The extended component name.
 
         """
-         # reset extended if no need for extended asset name
+        # reset extended if no need for extended asset name
         if self.keep_first_subset_name_for_review and iteration_index == 0:
             return
 
@@ -476,7 +465,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             (asset_name, repre["name"])
         )
 
-    def _create_src_components(
+    def _create_src_component(
             self, instance, repre, component_item, location):
         """Create src component for thumbnail.
 
@@ -607,9 +596,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             stream_width = tmp_width
             stream_height = tmp_height
 
-            self.log.debug("FPS from stream is {} and duration is {}".format(
-                input_framerate, stream_duration
-            ))
             frame_out = float(stream_duration) * stream_fps
             break
 
