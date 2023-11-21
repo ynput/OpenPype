@@ -133,6 +133,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         cls.group = settings.get("group", cls.group)
         cls.strict_error_checking = settings.get("strict_error_checking",
                                                  cls.strict_error_checking)
+        cls.jobInfo = settings.get("jobInfo", cls.jobInfo)
+        cls.pluginInfo = settings.get("pluginInfo", cls.pluginInfo)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
@@ -281,10 +283,6 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         )
 
         plugin_payload = attr.asdict(plugin_info)
-
-        if instance.data["renderer"] == "arnold":
-            plugin_payload["ArnoldVerbose"] = cmds.getAttr(
-                "defaultArnoldRenderOptions.log_verbosity")
 
         # Patching with pluginInfo from settings
         for key, value in self.pluginInfo.items():
