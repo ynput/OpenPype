@@ -428,10 +428,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # as fallback return first thumbnail item
             return thumbnail_data_items[0]
 
-
         return matching_thumbnail_item
 
-    def _make_extended_component_name(self, component_item, repre, iteration_index):
+    def _make_extended_component_name(
+            self, component_item, repre, iteration_index):
         """ Returns the extended component name
 
         Name is based on the asset name and representation name.
@@ -445,7 +445,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             str: The extended component name.
 
         """
-         # reset extended if no need for extended asset name
+        # reset extended if no need for extended asset name
         if self.keep_first_subset_name_for_review and iteration_index == 0:
             return
 
