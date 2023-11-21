@@ -317,6 +317,7 @@ def folder_fields_v3_to_v4(fields, con):
             data_key = ".".join(field_parts)
             if data_key == "label":
                 output.add("name")
+                output.add("label")
 
             elif data_key in ("icon", "color"):
                 continue
@@ -382,6 +383,9 @@ def convert_v4_folder_to_v3(folder, project_name):
     if "name" in folder:
         output["name"] = folder["name"]
         output_data["label"] = folder["name"]
+
+    if "label" in folder:
+        output_data["label"] = folder["label"]
 
     if "folderType" in folder:
         output_data["entityType"] = folder["folderType"]
