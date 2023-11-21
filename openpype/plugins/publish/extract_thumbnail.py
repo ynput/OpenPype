@@ -226,7 +226,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 display=colorspace_data.get("display") or oiio_default_display,
                 view=colorspace_data.get("view") or oiio_default_view,
                 target_colorspace=oiio_default_colorspace,
-                additional_input_args=["-i:ch=R,G,B"],
                 logger=self.log,
             )
         except Exception:
