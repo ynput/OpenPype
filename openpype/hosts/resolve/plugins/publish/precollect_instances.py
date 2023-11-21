@@ -79,7 +79,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "handleEnd": handle_end,
                 "newAssetPublishing": True,
                 "families": ["clip"],
-                "isEditorial": True
             })
 
             # otio clip data
