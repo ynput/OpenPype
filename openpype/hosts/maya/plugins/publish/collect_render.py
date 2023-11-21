@@ -278,12 +278,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             ),
             "priority": instance.data.get("priority"),
             "machineLimit": instance.data.get("machineLimit", 0),
-            "limits": self._get_checked_limit_groups(
-                instance.data.get("limits", []), context.data["system_settings"]["modules"]["deadline"]
-                # TODO: check correct syntax
-                # self.get_render_attribute("limits", layer=layer_name)
-                # lib.get_attr_in_layer("limits", layer=layer_name)
-            ),
+            "limits": instance.data.get("limits", []),
             # todo: Following are likely not needed due to collecting from the
             #       instance itself if they are attribute definitions
             "tileRendering": instance.data.get("tileRendering", False),  # noqa: E501

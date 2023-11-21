@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Create ``Render`` instance in Maya."""
 
-# from openpype.settings import (
-#     get_system_settings
-# )
+from openpype.settings import (
+    get_system_settings
+)
 from openpype.hosts.maya.api import (
     lib_rendersettings,
     plugin
@@ -12,8 +12,9 @@ from openpype.pipeline import CreatorError
 from openpype.lib import (
     BoolDef,
     NumberDef,
-    # EnumDef
+    EnumDef
 )
+from openpype.pipeline.context_tools import _get_modules_manager
 
 
 class CreateRenderlayer(plugin.RenderlayerCreator):
@@ -59,24 +60,16 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
 
     def get_instance_attr_defs(self):
         """Create instance settings."""
+        modules_system_settings = get_system_settings()["modules"]
+        deadline_enabled = modules_system_settings["deadline"]["enabled"]
+        deadline_url = modules_system_settings["deadline"]["deadline_urls"].get("default")
 
-        # modules_system_settings = get_system_settings()["modules"]
-        # deadline_enabled = modules_system_settings["deadline"]["enabled"]
-        #
-        # limit_groups = []
-        # default_machine_limit = 0
-        # if deadline_enabled:
-        #     default_machine_limit = \
-        #         self.project_settings.get("deadline").get("publish").get(
-        #             "MayaSubmitDeadline").get("jobInfo").get("machineLimit", 0)
-        #
-        #     requested_arguments = {"NamesOnly": True}
-        #     limit_groups = self.deadline_module.get_deadline_data(
-        #         deadline_url,
-        #         "limitgroups",
-        #         log=self.log,
-        #         **requested_arguments
-        #     )
+        default_machine_limit = self._get_default_machine_limit(
+            deadline_enabled
+        )
+        limit_groups = self._get_limit_groups(
+            deadline_enabled, deadline_url
+        )
 
         return [
             BoolDef("review",
@@ -98,15 +91,15 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
                     tooltip="Override existing rendered frames "
                             "(if they exist).",
                     default=True),
-
-            # NumberDef("machineLimit",
-            #           label="Machine Limit",
-            #           default=default_machine_limit,
-            #           minimum=0,
-            #           decimals=0),
-            # EnumDef("limits",
-            #         label="Limit Groups",
-            #         items=limit_groups),
+            NumberDef("machineLimit",
+                      label="Machine Limit",
+                      default=default_machine_limit,
+                      minimum=0,
+                      decimals=0),
+            EnumDef("limits",
+                    label="Limit Groups",
+                    items=limit_groups,
+                    multiselection=True),
 
             # TODO: Should these move to submit_maya_deadline plugin?
             # Tile rendering
@@ -139,3 +132,29 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
                     default=self.render_settings.get("enable_all_lights",
                                                      False))
         ]
+
+    def _get_default_machine_limit(self, deadline_enabled):
+        default_machine_limit = 0
+
+        if deadline_enabled:
+            default_machine_limit = \
+                self.project_settings.get("deadline").get("publish").get(
+                    "MayaSubmitDeadline").get("jobInfo").get("machineLimit", 0)
+
+        return default_machine_limit
+
+    def _get_limit_groups(self, deadline_enabled, deadline_url):
+        manager = _get_modules_manager()
+        deadline_module = manager.modules_by_name["deadline"]
+
+        limit_groups = []
+        if deadline_enabled:
+            requested_arguments = {"NamesOnly": True}
+            limit_groups = deadline_module.get_deadline_data(
+                deadline_url,
+                "limitgroups",
+                log=self.log,
+                **requested_arguments
+            )
+
+        return limit_groups
