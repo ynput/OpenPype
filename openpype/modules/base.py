@@ -919,7 +919,7 @@ class ModulesManager:
         for modules_item in module_classes:
             is_openpype_module = issubclass(modules_item, OpenPypeModule)
             settings = (
-                system_settings if is_openpype_module else ayon_settings
+                modules_settings if is_openpype_module else ayon_settings
             )
             name = modules_item.__name__
             try:
