@@ -68,6 +68,10 @@ IGNORED_FILENAMES_IN_AYON = {
     "slack",
     "kitsu",
 }
+IGNORED_HOSTS_IN_AYON = {
+    "flame",
+    "harmony",
+}
 
 
 # Inherit from `object` for Python 2 hosts
@@ -536,6 +540,11 @@ def _load_modules():
     addons_dir = os.path.join(os.path.dirname(current_dir), "addons")
     module_dirs.append(addons_dir)
 
+    ignored_host_names = set(IGNORED_HOSTS_IN_AYON)
+    ignored_current_dir_filenames = set(IGNORED_DEFAULT_FILENAMES)
+    if AYON_SERVER_ENABLED:
+        ignored_current_dir_filenames |= IGNORED_FILENAMES_IN_AYON
+
     processed_paths = set()
     for dirpath in frozenset(module_dirs):
         # Skip already processed paths
@@ -551,9 +560,6 @@ def _load_modules():
 
         is_in_current_dir = dirpath == current_dir
         is_in_host_dir = dirpath == hosts_dir
-        ignored_current_dir_filenames = set(IGNORED_DEFAULT_FILENAMES)
-        if AYON_SERVER_ENABLED:
-            ignored_current_dir_filenames |= IGNORED_FILENAMES_IN_AYON
 
         for filename in os.listdir(dirpath):
             # Ignore filenames
@@ -563,6 +569,12 @@ def _load_modules():
             if (
                 is_in_current_dir
                 and filename in ignored_current_dir_filenames
+            ):
+                continue
+
+            if (
+                is_in_host_dir
+                and filename in ignored_host_names
             ):
                 continue
 
