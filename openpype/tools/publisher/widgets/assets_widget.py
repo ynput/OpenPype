@@ -130,7 +130,9 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
                 has_children = bool(assets_by_parent_id.get(child_id))
                 icon = get_asset_icon(child, has_children)
 
-                item = QtGui.QStandardItem(name)
+                child_data = child.get("data") or {}
+                label = child_data.get("label") or name
+                item = QtGui.QStandardItem(label)
                 item.setFlags(
                     QtCore.Qt.ItemIsEnabled
                     | QtCore.Qt.ItemIsSelectable

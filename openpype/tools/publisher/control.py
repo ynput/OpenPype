@@ -71,7 +71,8 @@ class AssetDocsCache:
         "_id": True,
         "name": True,
         "data.visualParent": True,
-        "data.tasks": True
+        "data.tasks": True,
+        "data.label": True,
     }
 
     def __init__(self, controller):
