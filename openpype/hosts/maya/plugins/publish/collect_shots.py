@@ -5,7 +5,7 @@ from maya import cmds, mel
 import pyblish.api
 
 from openpype.client import get_asset_by_id
-from openpype.hosts.maya.api.lib import lsattr, get_highest_in_hierarchy
+from openpype.hosts.maya.api.lib import lsattr
 
 
 def get_parents(project_name, asset_entity, parents=[]):
