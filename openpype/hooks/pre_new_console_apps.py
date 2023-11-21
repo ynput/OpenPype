@@ -28,8 +28,8 @@ class LaunchNewConsoleApps(PreLaunchHook):
             "creationflags": subprocess.CREATE_NEW_CONSOLE
         })
 
-        if self.launch_context.kwargs["stdout"] == subprocess.DEVNULL:
+        if "stdout" not in self.launch_context.kwargs:
             self.launch_context.kwargs["stdout"] = None
 
-        if self.launch_context.kwargs["stderr"] == subprocess.DEVNULL:
+        if "stderr"not in self.launch_context.kwargs:
             self.launch_context.kwargs["stderr"] = None
