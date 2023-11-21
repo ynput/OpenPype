@@ -125,7 +125,7 @@ class CollectShotsData(pyblish.api.ContextPlugin):
 
     def process(self, context):
         # Collect everything from the scene to export, except shot instances.
-        nodes_to_export = get_highest_in_hierarchy(cmds.ls(dagObjects=True))
+        nodes_to_export = cmds.ls(assemblies=True)
         for node in lsattr("id", "pyblish.avalon.instance"):
             if cmds.getAttr(node + ".family") == "shot":
                 continue
