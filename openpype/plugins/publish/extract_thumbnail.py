@@ -29,6 +29,26 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     ffmpeg_args = None
 
     def process(self, instance):
+        # run main process
+        self._main_process(instance)
+
+        # Make sure cleanup happens to representations which are having both
+        # tags `delete` and `need_thumbnail`
+        for repre in tuple(instance.data["representations"]):
+            tags = repre.get("tags") or []
+            # skip representations which are going to be published on farm
+            if "publish_on_farm" in tags:
+                continue
+            if (
+                "delete" in tags
+                and "need_thumbnail" in tags
+            ):
+                self.log.debug(
+                    "Removing representation: {}".format(repre)
+                )
+                instance.data["representations"].remove(repre)
+
+    def _main_process(self, instance):
         subset_name = instance.data["subset"]
         instance_repres = instance.data.get("representations")
         if not instance_repres:
@@ -61,7 +81,13 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             self.log.debug("Skipping crypto passes.")
             return
 
-        filtered_repres = self._get_filtered_repres(instance)
+        # first check for any explicitly marked representations for thumbnail
+        explicit_repres = self._get_explicit_repres_for_thumbnail(instance)
+        if explicit_repres:
+            filtered_repres = explicit_repres
+        else:
+            filtered_repres = self._get_filtered_repres(instance)
+
         if not filtered_repres:
             self.log.info(
                 "Instance doesn't have representations that can be used "
@@ -120,8 +146,21 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             if not thumbnail_created:
                 continue
 
+            if len(explicit_repres) > 1:
+                repre_name = "thumbnail_{}".format(repre["outputName"])
+            else:
+                repre_name = "thumbnail"
+
+            # add thumbnail path to instance data for integrator
+            instance_thumb_path = instance.data.get("thumbnailPath")
+            if (
+                not instance_thumb_path
+                or not os.path.isfile(instance_thumb_path)
+            ):
+                instance.data["thumbnailPath"] = full_output_path
+
             new_repre = {
-                "name": "thumbnail",
+                "name": repre_name,
                 "ext": "jpg",
                 "files": jpeg_file,
                 "stagingDir": dst_staging,
@@ -130,15 +169,23 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             }
 
             # adding representation
-            self.log.debug(
-                "Adding thumbnail representation: {}".format(new_repre)
-            )
             instance.data["representations"].append(new_repre)
-            # There is no need to create more then one thumbnail
-            break
+
+            if explicit_repres:
+                # this key will then align assetVersion ftrack thumbnail sync
+                new_repre["outputName"] = repre["outputName"]
+                self.log.debug(
+                    "Adding explicit thumbnail representation: {}".format(
+                        new_repre))
+            else:
+                self.log.debug(
+                    "Adding thumbnail representation: {}".format(new_repre)
+                )
+                # There is no need to create more then one thumbnail
+                break
 
         if not thumbnail_created:
-            self.log.warning("Thumbanil has not been created.")
+            self.log.warning("Thumbnail has not been created.")
 
     def _is_review_instance(self, instance):
         # TODO: We should probably handle "not creating" of thumbnail
@@ -153,6 +200,29 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             if repre["name"] == "thumbnail":
                 return True
         return False
+
+    def _get_explicit_repres_for_thumbnail(self, instance):
+        src_repres = instance.data.get("representations") or []
+        # This is mainly for Nuke where we have multiple representations for
+        #   one instance. We want to use only one representation for thumbnail
+        # first check if any of the representations have
+        # `need-thumbnail` in tags and add them to filtered_repres
+        need_thumb_repres = [
+            repre for repre in src_repres
+            if "need_thumbnail" in repre.get("tags", [])
+            if "publish_on_farm" not in repre.get("tags", [])
+        ]
+        if not need_thumb_repres:
+            return []
+
+        self.log.info(
+            "Instance has representation with tag `need_thumbnail`. "
+            "Using only this representations for thumbnail creation. "
+        )
+        self.log.debug(
+            "Representations: {}".format(pformat(need_thumb_repres))
+        )
+        return need_thumb_repres
 
     def _get_filtered_repres(self, instance):
         filtered_repres = []
