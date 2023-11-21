@@ -57,7 +57,7 @@ class CreateShot(plugin.MayaCreator):
     def create(self, subset_name, instance_data, pre_create_data):
         # Timeline selection can limit the instances created.
         start_frame, end_frame = cmds.timeControl(
-            mel.eval('$tmpVar=$gPlayBackSlider'), query=True, rangeArray=True
+            mel.eval('$gPlayBackSlider=$gPlayBackSlider'), query=True, rangeArray=True
         )
         nodes = []
         if pre_create_data.get("use_selection"):
