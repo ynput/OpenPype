@@ -235,7 +235,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             )
             return False
 
-        return dst_path
+        return True
 
     def create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
