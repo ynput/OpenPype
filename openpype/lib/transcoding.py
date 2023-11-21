@@ -536,7 +536,7 @@ def convert_for_ffmpeg(
     input_frame_end=None,
     logger=None
 ):
-    """Contert source file to format supported in ffmpeg.
+    """Convert source file to format supported in ffmpeg.
 
     Currently can convert only exrs.
 
@@ -613,7 +613,7 @@ def convert_for_ffmpeg(
             continue
 
         # Remove attributes that have string value longer than allowed length
-        #   for ffmpeg or when contain unallowed symbols
+        #   for ffmpeg or when contain prohibited symbols
         erase_reason = "Missing reason"
         erase_attribute = False
         if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -656,6 +656,15 @@ def convert_for_ffmpeg(
 
 
 def get_oiio_input_and_channel_args(oiio_input_info):
+    """Get input and channel arguments for oiiotool.
+
+    Args:
+        oiio_input_info (dict): Information about input from oiio tool.
+            Should be output of function `get_oiio_info_for_input`.
+
+    Returns:
+        tuple[str, str]: Tuple of input and channel arguments.
+    """
     channel_names = oiio_input_info["channelnames"]
     review_channels = get_convert_rgb_channels(channel_names)
 
@@ -667,7 +676,7 @@ def get_oiio_input_and_channel_args(oiio_input_info):
     red, green, blue, alpha = review_channels
     input_channels = [red, green, blue]
 
-    # TODO find subimage inder where rgba is available for multipart exrs
+    # TODO find subimage where rgba is available for multipart exrs
     channels_arg = "R={},G={},B={}".format(red, green, blue)
     if alpha is not None:
         channels_arg += ",A={}".format(alpha)
@@ -685,6 +694,7 @@ def get_oiio_input_and_channel_args(oiio_input_info):
         input_arg += ":ch={}".format(input_channels_str)
 
     return input_arg, channels_arg
+
 
 def convert_input_paths_for_ffmpeg(
     input_paths,
@@ -704,7 +714,7 @@ def convert_input_paths_for_ffmpeg(
 
     Args:
         input_paths (str): Paths that should be converted. It is expected that
-            contains single file or image sequence of samy type.
+            contains single file or image sequence of same type.
         output_dir (str): Path to directory where output will be rendered.
             Must not be same as input's directory.
         logger (logging.Logger): Logger used for logging.
@@ -761,7 +771,7 @@ def convert_input_paths_for_ffmpeg(
                 continue
 
             # Remove attributes that have string value longer than allowed
-            #   length for ffmpeg or when containing unallowed symbols
+            #   length for ffmpeg or when containing prohibited symbols
             erase_reason = "Missing reason"
             erase_attribute = False
             if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -1008,9 +1018,7 @@ def _ffmpeg_h264_codec_args(stream_data, source_ffmpeg_cmd):
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
-    output.extend(["-intra"])
-    output.extend(["-g", "1"])
-
+    output.extend(["-intra", "-g", "1"])
     return output
 
 
