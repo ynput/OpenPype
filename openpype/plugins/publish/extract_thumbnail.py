@@ -22,10 +22,17 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         "imagesequence", "render", "render2d", "prerender",
         "source", "clip", "take", "online", "image"
     ]
-    hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
+    hosts = [
+        "shell",
+        "fusion",
+        "resolve",
+        "traypublisher",
+        "substancepainter",
+        "nuke",
+    ]
     enabled = False
 
-    # presetable attribute
+    # presentable attribute
     ffmpeg_args = None
 
     def process(self, instance):
@@ -220,7 +227,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             "Using only this representations for thumbnail creation. "
         )
         self.log.debug(
-            "Representations: {}".format(pformat(need_thumb_repres))
+            "Representations: {}".format(need_thumb_repres)
         )
         return need_thumb_repres
 
