@@ -159,11 +159,6 @@
                     "label": "Refresh"
                 },
                 {
-                    "type": "boolean",
-                    "key": "stripNamespaces",
-                    "label": "Strip Namespaces"
-                },
-                {
                     "type": "enum",
                     "key": "abc_boolean_args",
                     "multiselection": true,
