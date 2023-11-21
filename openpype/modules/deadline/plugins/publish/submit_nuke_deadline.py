@@ -370,10 +370,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
 
-        for _path in os.environ:
-            if _path.lower().startswith('openpype_'):
-                environment[_path] = os.environ[_path]
-
         # to recognize render jobs
         if AYON_SERVER_ENABLED:
             environment["AYON_BUNDLE_NAME"] = os.environ["AYON_BUNDLE_NAME"]
