@@ -54,7 +54,6 @@ from openpype.hosts.maya.api.lib_renderproducts import (
     UnsupportedRendererException
 )
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.context_tools import _get_modules_manager
 
 
 class CollectMayaRender(pyblish.api.InstancePlugin):
@@ -342,28 +341,3 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         return lib.get_attr_in_layer(
             "defaultRenderGlobals.{}".format(attr), layer=layer
         )
-
-    def _get_checked_limit_groups(self, limits, deadline_settings):
-        checked_limits = []
-
-        if not limits:
-            return checked_limits
-
-        if not deadline_settings["enabled"]:
-            return checked_limits
-
-        manager = _get_modules_manager()
-        deadline_module = manager.modules_by_name["deadline"]
-
-        requested_arguments = {"NamesOnly": True}
-        limit_groups = deadline_module.get_deadline_data(
-            deadline_settings['deadline_urls']["default"],
-            "limitgroups",
-            log=self.log,
-            **requested_arguments
-        )
-        for group, value in zip(limit_groups, limits):
-            if value is True:
-                checked_limits.append(group)
-
-        return checked_limits
