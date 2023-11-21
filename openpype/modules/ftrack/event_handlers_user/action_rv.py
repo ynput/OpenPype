@@ -36,18 +36,24 @@ class RVActionView(BaseAction):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # TODO (Critical) This should not be as hardcoded as it is now
         # QUESTION load RV application data from AppplicationManager?
         rv_path = None
 
+        rv_path = "PATH_TO_BIN/bin/rv.exe"
+        self.rv_home = "PATH_TO+RV_HOME"
+        os.environ["RV_HOME"] = os.path.normpath(self.rv_home)
+        sys.path.append(os.path.join(self.rv_home, "lib"))
+
         # RV_HOME should be set if properly installed
-        if os.environ.get('RV_HOME'):
-            rv_path = os.path.join(
-                os.environ.get('RV_HOME'),
-                'bin',
-                'rv'
-            )
-            if not os.path.exists(rv_path):
-                rv_path = None
+        # if os.environ.get('RV_HOME'):
+        #     rv_path = os.path.join(
+        #         os.environ.get('RV_HOME'),
+        #         'bin',
+        #         'rv'
+        #     )
+        #     if not os.path.exists(rv_path):
+        #         rv_path = None
 
         if not rv_path:
             self.log.info("RV path was not found.")

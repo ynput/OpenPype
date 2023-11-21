@@ -112,10 +112,10 @@ class ExtractThumbnailFromSource(pyblish.api.InstancePlugin):
                     thumbnail_source, full_output_path
                 )
             except Exception as e:
-                self.log.debug((
+                self.log.debug(
                     "Converting with OIIO failed "
                     "with the following error {}".format(e)
-                ))
+                )
 
         # Try to use FFMPEG if OIIO is not supported or for cases when
         #    oiiotool isn't available

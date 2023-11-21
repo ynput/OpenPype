@@ -11,9 +11,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.context_tools import (
     get_current_task_name,
-    get_current_asset_name,
-    get_current_context,
-    get_global_context
+    get_current_asset_name
 )
 from openpype.pipeline.workfile import get_last_workfile_with_version
 from openpype.pipeline.template_data import get_template_data_with_names

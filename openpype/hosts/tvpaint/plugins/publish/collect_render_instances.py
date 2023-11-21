@@ -114,15 +114,12 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
     @staticmethod
     def _get_ignore_transparency_option(instance):
         ignore_transparency = instance.data["creator_attributes"].get(
-            "ignore_layers_transparency", None
-        )
+            "ignore_layers_transparency", None)
 
         if not ignore_transparency:
             keep_transparency = instance.data["creator_attributes"].get(
-                "keep_layers_transparency", None
-            )
+                "keep_layers_transparency", None)
             return not keep_transparency
-
         else:
             return ignore_transparency
 
@@ -134,9 +131,7 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
         ignore_transparency = self._get_ignore_transparency_option(instance)
         if ignore_transparency:
             instance.data["ignoreLayersTransparency"] = (
-                ignore_transparency
-            )
+                ignore_transparency)
         else:
             instance.data["ignoreLayersTransparency"] = (
-                self.ignore_render_pass_transparency
-            )
+                self.ignore_render_pass_transparency)

@@ -1192,7 +1192,7 @@ def convert_colorspace(
     if all([target_colorspace, view, display]):
         raise ValueError("Colorspace and both screen and display"
                          " cannot be set together."
-                         "Choose colorspace or screen and display")
+                         " Choose colorspace or screen and display")
     if not target_colorspace and not all([view, display]):
         raise ValueError("Both screen and display must be set.")
 

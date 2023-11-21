@@ -253,7 +253,7 @@ class HarmonySubmitDeadline(
 
     def get_job_info(self):
         job_info = DeadlineJobInfo("Harmony")
-        job_info.Plugin = "HarmonyOpenPype"
+        job_info.Plugin = "Harmony"
         job_info.Frames = "{}-{}".format(
             self._instance.data["frameStartHandle"],
             self._instance.data["frameEndHandle"]

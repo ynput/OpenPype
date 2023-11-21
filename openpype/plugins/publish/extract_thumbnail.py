@@ -191,13 +191,13 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         return filtered_repres
 
     def create_thumbnail_oiio(
-            self,
-            src_path,
-            dst_path,
-            config_path,
-            source_colorspace,
-            display,
-            view
+        self,
+        src_path,
+        dst_path,
+        config_path,
+        source_colorspace,
+        display,
+        view
     ):
         self.log.info("Extracting thumbnail {}".format(dst_path))
 

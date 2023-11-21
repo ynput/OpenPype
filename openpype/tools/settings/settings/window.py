@@ -257,7 +257,7 @@ class MainWidget(QtWidgets.QWidget):
         if self._controller.edit_mode != EditMode.DISABLE:
             return
 
-            # Someone else already has the settings
+        # Someone else already has the settings
         if self._controller.edit_mode != EditMode.PROTECT:
             dialog = SettingsUIOpenedElsewhere(
                 self._controller.last_opened_info, self

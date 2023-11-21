@@ -136,8 +136,7 @@ class PostFtrackHook(PostLaunchHook):
             self.log.debug(
                 "Ftrack status is '{}' for {}. "
                 "No status change.".format(
-                    actual_status, ent_path
-                )
+                    actual_status, ent_path)
             )
             return
 

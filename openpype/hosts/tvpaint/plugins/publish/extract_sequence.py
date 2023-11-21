@@ -246,6 +246,7 @@ class ExtractSequence(pyblish.api.Extractor):
                 export_type, mark_in, mark_out
             )
         ]
+
         if scene_bg_color:
             # Change bg color back to previous scene bg color
             _scene_bg_color = copy.deepcopy(scene_bg_color)
