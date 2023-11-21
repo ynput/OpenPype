@@ -6,6 +6,7 @@ import pyblish.api
 
 from openpype.client import get_asset_by_id
 from openpype.hosts.maya.api.lib import lsattr
+from openpype.hosts.maya.api.pipeline import AVALON_CONTAINERS
 
 
 def get_parents(project_name, asset_entity, parents=[]):
@@ -131,6 +132,9 @@ class CollectShotsData(pyblish.api.ContextPlugin):
                 continue
 
             nodes_to_export.append(node)
+
+        nodes_to_export.extend(lsattr("id", "pyblish.avalon.container"))
+        nodes_to_export.extend(cmds.ls(AVALON_CONTAINERS, type="objectSet"))
 
         # Collect playback range to each shot instance.
         time_ranges = [
