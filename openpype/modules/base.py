@@ -806,6 +806,8 @@ class ModulesManager:
 
     # Helper attributes for report
     _report_total_key = "Total"
+    _system_settings = None
+    _ayon_settings = None
 
     def __init__(self, system_settings=None, ayon_settings=None):
         self.log = logging.getLogger(self.__class__.__name__)
@@ -864,7 +866,11 @@ class ModulesManager:
 
         import openpype_modules
 
-        self.log.debug("*** Pype modules initialization.")
+        self.log.debug("*** {} initialization.".format(
+            "AYON addons"
+            if AYON_SERVER_ENABLED
+            else "OpenPype modules"
+        ))
         # Prepare settings for modules
         system_settings = self._system_settings
         if system_settings is None:
