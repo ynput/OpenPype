@@ -441,33 +441,11 @@ def imprint(node, data):
             add_type = {"attributeType": "enum", "enumName": ":".join(value)}
             set_type = {"keyable": False, "channelBox": True}
             value = 0  # enum default
-        elif isinstance(value, dict):
-            set_type = {"keyable": False, "channelBox": True}
-            for item_key, group_list in value.items():
-                cmds.addAttr(
-                    node,
-                    longName=item_key,
-                    numberOfChildren=len(group_list),
-                    attributeType="compound"
-                )
-                for group in group_list:
-                    cmds.addAttr(
-                        node,
-                        longName=group,
-                        attributeType="bool",
-                        parent=item_key
-                    )
-                    cmds.setAttr(
-                        node + "." + group,
-                        False,
-                        **set_type,
-                    )
         else:
             raise TypeError("Unsupported type: %r" % type(value))
 
-        if not isinstance(value, dict):
-            cmds.addAttr(node, longName=key, **add_type)
-            cmds.setAttr(node + "." + key, value, **set_type)
+        cmds.addAttr(node, longName=key, **add_type)
+        cmds.setAttr(node + "." + key, value, **set_type)
 
 
 def lsattr(attr, value=None):
