@@ -166,7 +166,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         self.log.debug("Multiple output names: {}".format(
             synced_multiple_output_names
         ))
-        multiple_synced_thumbnails = len(thumbnail_representations) > 1
+        multiple_synced_thumbnails = len(synced_multiple_output_names) > 1
 
         # Components data
         component_list = []
