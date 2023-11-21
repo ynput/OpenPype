@@ -31,7 +31,7 @@ def offset_scene(offset):
         yield
         return
 
-    nodes = cmds.ls(type=("animCurve", "imagePlane", "timeSliderBookmark")
+    nodes = cmds.ls(type=("animCurve", "imagePlane", "timeSliderBookmark"))
     changed_nodes = []
     try:
         for node in nodes:
