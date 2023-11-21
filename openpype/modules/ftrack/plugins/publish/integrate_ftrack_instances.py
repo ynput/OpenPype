@@ -174,10 +174,17 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         # Create thumbnail components
         for repre in thumbnail_representations:
-            repre_path = get_publish_repre_path(instance, repre, False)
+            # get repre path from representation
+            # and return published_path if available
+            # the path is validated and if it does not exists it returns None
+            repre_path = get_publish_repre_path(
+                instance,
+                repre,
+                only_published=False
+            )
             if not repre_path:
                 self.log.warning(
-                    "Published path is not set and source was removed."
+                    "Published path is not set or source was removed."
                 )
                 continue
 
@@ -199,15 +206,15 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 "component_location_name": ftrack_server_location_name
             })
 
-            # add thumbnail to items data for future synchronization
-            current_item = {
+            # add thumbnail data to items for future synchronization
+            current_item_data = {
                 "sync_key": repre.get("outputName"),
                 "representation": repre,
                 "item": thumbnail_item
             }
             # Create copy of item before setting location
             if "delete" not in repre.get("tags", []):
-                src_comp = self._create_src_components(
+                src_comp = self._create_src_component(
                     instance,
                     repre,
                     copy.deepcopy(thumbnail_item),
@@ -215,10 +222,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 )
                 component_list.append(src_comp)
 
-                current_item["src_component"] = src_comp
+                current_item_data["src_component"] = src_comp
 
             # Add item to component list
-            thumbnail_data_items.append(current_item)
+            thumbnail_data_items.append(current_item_data)
 
         # Create review components
         # Change asset name of each new component for review
@@ -249,7 +256,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             )
             if sync_thumbnail_data:
                 sync_thumbnail_item = sync_thumbnail_data.get("item")
-                sync_thumbnail_item_src = sync_thumbnail_data.get("src_component")
+                sync_thumbnail_item_src = sync_thumbnail_data.get(
+                    "src_component")
 
             """
             Renaming asset name only to those components which are explicitly
@@ -305,7 +313,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             # Create copy of item before setting location
             if "delete" not in repre.get("tags", []):
-                src_comp = self._create_src_components(
+                src_comp = self._create_src_component(
                     instance,
                     repre,
                     copy.deepcopy(review_item),
@@ -455,7 +463,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             (asset_name, repre["name"])
         )
 
-    def _create_src_components(
+    def _create_src_component(
             self, instance, repre, component_item, location):
         """Create src component for thumbnail.
 
