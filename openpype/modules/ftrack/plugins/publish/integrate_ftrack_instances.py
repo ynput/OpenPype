@@ -126,6 +126,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         other_representations = []
         has_movie_review = False
         for repre in instance_repres:
+            if "publish_on_farm" in repre.get("tags", []):
+                continue
             self.log.debug("Representation {}".format(repre))
             repre_tags = repre.get("tags") or []
             if repre.get("thumbnail") or "thumbnail" in repre_tags:
