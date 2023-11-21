@@ -126,19 +126,25 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         other_representations = []
         has_movie_review = False
         for repre in instance_repres:
-            if "publish_on_farm" in repre.get("tags", []):
-                continue
-            self.log.debug("Representation {}".format(repre))
             repre_tags = repre.get("tags") or []
+            # exclude representations with are going to be published on farm
+            if "publish_on_farm" in repre_tags:
+                continue
+
+            self.log.debug("Representation {}".format(repre))
+
+            # include only thumbnail representations
             if repre.get("thumbnail") or "thumbnail" in repre_tags:
                 thumbnail_representations.append(repre)
 
+            # include only review representations
             elif "ftrackreview" in repre_tags:
                 review_representations.append(repre)
                 if self._is_repre_video(repre):
                     has_movie_review = True
 
             else:
+                # include all other representations
                 other_representations.append(repre)
 
         # Prepare ftrack locations
