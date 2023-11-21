@@ -470,17 +470,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         # we need to avoid adding them to expected files since those would be
         # duplicated into metadata.json file
         representations = instance.data.get("representations", [])
-        if representations:
-            # check if file is not in representations with publish_on_farm tag
-            for repre in representations:
-                # is file in representations files?
-                if file not in repre.get("files", []):
-                    continue
-                # is publish_on_farm tag set to False?
-                if "publish_on_farm" in repre.get("tags", []):
-                    self.log.debug(
-                        "Skipping expected file: {}".format(path))
-                    return
+        # check if file is not in representations with publish_on_farm tag
+        for repre in representations:
+            # Skip if 'publish_on_farm' not available
+            if "publish_on_farm" not in repre.get("tags", []):
+                continue
+            # is file in representations files?
+            if file in repre.get("files", []):
+                self.log.debug(
+                    "Skipping expected file: {}".format(path))
+                return
 
         if "#" in file:
             pparts = file.split("#")
