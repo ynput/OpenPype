@@ -1016,15 +1016,11 @@ class ApplicationLaunchContext:
             self.kwargs["creationflags"] = flags
 
         if not sys.stdout:
-            if stdout is None:
-                stdout = subprocess.DEVNULL
-            if stderr is None:
-                stderr = subprocess.DEVNULL
+            stdout = subprocess.DEVNULL
+            stderr = subprocess.DEVNULL
 
-        if stdout is not None:
-            self.kwargs["stdout"] = stdout
-        if stderr is not None:
-            self.kwargs["stderr"] = stderr
+        self.kwargs["stdout"] = stdout
+        self.kwargs["stderr"] = stderr
 
         self.prelaunch_hooks = None
         self.postlaunch_hooks = None
