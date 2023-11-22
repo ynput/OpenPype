@@ -4,11 +4,11 @@ from pathlib import Path
 import bpy
 
 from openpype.pipeline import (
+    legacy_create,
     get_representation_path,
     AVALON_CONTAINER_ID,
-    registered_host
 )
-from openpype.pipeline.create import CreateContext
+from openpype.pipeline.create import get_legacy_creator_by_name
 from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.lib import imprint
 from openpype.hosts.blender.api.pipeline import (
@@ -20,7 +20,7 @@ from openpype.hosts.blender.api.pipeline import (
 class BlendLoader(plugin.AssetLoader):
     """Load assets from a .blend file."""
 
-    families = ["model", "rig", "layout", "camera"]
+    families = ["model", "rig", "layout", "camera", "blendScene"]
     representations = ["blend"]
 
     label = "Append Blend"
@@ -32,7 +32,7 @@ class BlendLoader(plugin.AssetLoader):
         empties = [obj for obj in objects if obj.type == 'EMPTY']
 
         for empty in empties:
-            if empty.get(AVALON_PROPERTY) and empty.parent is None:
+            if empty.get(AVALON_PROPERTY):
                 return empty
 
         return None
@@ -57,21 +57,19 @@ class BlendLoader(plugin.AssetLoader):
                 obj.get(AVALON_PROPERTY).get('family') == 'rig'
             )
         ]
-        if not rigs:
-            return
-
-        # Create animation instances for each rig
-        creator_identifier = "io.openpype.creators.blender.animation"
-        host = registered_host()
-        create_context = CreateContext(host)
 
         for rig in rigs:
-            create_context.create(
-                creator_identifier=creator_identifier,
-                variant=rig.name.split(':')[-1],
-                pre_create_data={
-                    "use_selection": False,
+            creator_plugin = get_legacy_creator_by_name("CreateAnimation")
+            legacy_create(
+                creator_plugin,
+                name=rig.name.split(':')[-1] + "_animation",
+                asset=asset,
+                options={
+                    "useSelection": False,
                     "asset_group": rig
+                },
+                data={
+                    "dependencies": representation
                 }
             )
 
@@ -102,7 +100,6 @@ class BlendLoader(plugin.AssetLoader):
 
         # Link all the container children to the collection
         for obj in container.children_recursive:
-            print(obj)
             bpy.context.scene.collection.objects.link(obj)
 
         # Remove the library from the blend file
@@ -133,9 +130,9 @@ class BlendLoader(plugin.AssetLoader):
 
         representation = str(context["representation"]["_id"])
 
-        asset_name = plugin.prepare_scene_name(asset, subset)
+        asset_name = plugin.asset_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.prepare_scene_name(asset, subset, unique_number)
+        group_name = plugin.asset_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
@@ -247,7 +244,7 @@ class BlendLoader(plugin.AssetLoader):
         for parent in parent_containers:
             parent.get(AVALON_PROPERTY)["members"] = list(filter(
                 lambda i: i not in members,
-                parent.get(AVALON_PROPERTY).get("members", [])))
+                parent.get(AVALON_PROPERTY)["members"]))
 
         for attr in attrs:
             for data in getattr(bpy.data, attr):

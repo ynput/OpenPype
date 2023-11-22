@@ -16,7 +16,6 @@ import bpy
 import bpy.utils.previews
 
 from openpype import style
-from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import get_current_asset_name, get_current_task_name
 from openpype.tools.utils import host_tools
 
@@ -29,14 +28,6 @@ PREVIEW_COLLECTIONS: Dict = dict()
 # down Blender. At least on macOS I the interface of Blender gets very laggy if
 # you make it smaller.
 TIMER_INTERVAL: float = 0.01 if platform.system() == "Windows" else 0.1
-
-
-def execute_function_in_main_thread(f):
-    """Decorator to move a function call into main thread items"""
-    def wrapper(*args, **kwargs):
-        mti = MainThreadItem(f, *args, **kwargs)
-        execute_in_main_thread(mti)
-    return wrapper
 
 
 class BlenderApplication(QtWidgets.QApplication):
@@ -246,24 +237,8 @@ class LaunchQtApp(bpy.types.Operator):
 
         self.before_window_show()
 
-        def pull_to_front(window):
-            """Pull window forward to screen.
-
-            If Window is minimized this will un-minimize, then it can be raised
-            and activated to the front.
-            """
-            window.setWindowState(
-                (window.windowState() & ~QtCore.Qt.WindowMinimized) |
-                QtCore.Qt.WindowActive
-            )
-            window.raise_()
-            window.activateWindow()
-
         if isinstance(self._window, ModuleType):
             self._window.show()
-            pull_to_front(self._window)
-
-            # Pull window to the front
             window = None
             if hasattr(self._window, "window"):
                 window = self._window.window
@@ -278,7 +253,6 @@ class LaunchQtApp(bpy.types.Operator):
             on_top_flags = origin_flags | QtCore.Qt.WindowStaysOnTopHint
             self._window.setWindowFlags(on_top_flags)
             self._window.show()
-            pull_to_front(self._window)
 
             # if on_top_flags != origin_flags:
             #     self._window.setWindowFlags(origin_flags)
@@ -300,10 +274,6 @@ class LaunchCreator(LaunchQtApp):
     def before_window_show(self):
         self._window.refresh()
 
-    def execute(self, context):
-        host_tools.show_publisher(tab="create")
-        return {"FINISHED"}
-
 
 class LaunchLoader(LaunchQtApp):
     """Launch Avalon Loader."""
@@ -313,8 +283,6 @@ class LaunchLoader(LaunchQtApp):
     _tool_name = "loader"
 
     def before_window_show(self):
-        if AYON_SERVER_ENABLED:
-            return
         self._window.set_context(
             {"asset": get_current_asset_name()},
             refresh=True
@@ -328,7 +296,7 @@ class LaunchPublisher(LaunchQtApp):
     bl_label = "Publish..."
 
     def execute(self, context):
-        host_tools.show_publisher(tab="publish")
+        host_tools.show_publish()
         return {"FINISHED"}
 
 
@@ -340,8 +308,6 @@ class LaunchManager(LaunchQtApp):
     _tool_name = "sceneinventory"
 
     def before_window_show(self):
-        if AYON_SERVER_ENABLED:
-            return
         self._window.refresh()
 
 
@@ -353,8 +319,6 @@ class LaunchLibrary(LaunchQtApp):
     _tool_name = "libraryloader"
 
     def before_window_show(self):
-        if AYON_SERVER_ENABLED:
-            return
         self._window.refresh()
 
 
@@ -367,16 +331,13 @@ class LaunchWorkFiles(LaunchQtApp):
 
     def execute(self, context):
         result = super().execute(context)
-        if not AYON_SERVER_ENABLED:
-            self._window.set_context({
-                "asset": get_current_asset_name(),
-                "task": get_current_task_name()
-            })
+        self._window.set_context({
+            "asset": get_current_asset_name(),
+            "task": get_current_task_name()
+        })
         return result
 
     def before_window_show(self):
-        if AYON_SERVER_ENABLED:
-            return
         self._window.root = str(Path(
             os.environ.get("AVALON_WORKDIR", ""),
             os.environ.get("AVALON_SCENEDIR", ""),
@@ -445,6 +406,7 @@ class TOPBAR_MT_avalon(bpy.types.Menu):
         layout.operator(SetResolution.bl_idname, text="Set Resolution")
         layout.separator()
         layout.operator(LaunchWorkFiles.bl_idname, text="Work Files...")
+        # TODO (jasper): maybe add 'Reload Pipeline'
 
 
 def draw_avalon_menu(self, context):

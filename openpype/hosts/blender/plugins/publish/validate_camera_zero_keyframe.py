@@ -5,15 +5,10 @@ import bpy
 import pyblish.api
 
 import openpype.hosts.blender.api.action
-from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    PublishValidationError,
-    OptionalPyblishPluginMixin
-)
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
-class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin,
-                                 OptionalPyblishPluginMixin):
+class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin):
     """Camera must have a keyframe at frame 0.
 
     Unreal shifts the first keyframe to frame 0. Forcing the camera to have
@@ -45,12 +40,8 @@ class ValidateCameraZeroKeyframe(pyblish.api.InstancePlugin,
         return invalid
 
     def process(self, instance):
-        if not self.is_active(instance.data):
-            return
-
         invalid = self.get_invalid(instance)
         if invalid:
-            names = ", ".join(obj.name for obj in invalid)
-            raise PublishValidationError(
-                f"Camera must have a keyframe at frame 0: {names}"
+            raise RuntimeError(
+                f"Camera must have a keyframe at frame 0: {invalid}"
             )

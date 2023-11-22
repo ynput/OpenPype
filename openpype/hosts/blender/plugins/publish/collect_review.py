@@ -16,12 +16,10 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         self.log.debug(f"instance: {instance}")
 
-        datablock = instance.data["transientData"]["instance_node"]
-
         # get cameras
         cameras = [
             obj
-            for obj in datablock.all_objects
+            for obj in instance
             if isinstance(obj, bpy.types.Object) and obj.type == "CAMERA"
         ]
 
@@ -33,12 +31,11 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         focal_length = cameras[0].data.lens
 
-        # get isolate objects list from meshes instance members.
-        types = {"MESH", "GPENCIL"}
+        # get isolate objects list from meshes instance members .
         isolate_objects = [
             obj
             for obj in instance
-            if isinstance(obj, bpy.types.Object) and obj.type in types
+            if isinstance(obj, bpy.types.Object) and obj.type == "MESH"
         ]
 
         if not instance.data.get("remove"):

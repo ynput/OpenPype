@@ -2,29 +2,30 @@
 
 import bpy
 
-from openpype.hosts.blender.api import lib, plugin
+from openpype.pipeline import get_current_task_name
+import openpype.hosts.blender.api.plugin
+from openpype.hosts.blender.api import lib
 
 
-class CreateAction(plugin.BaseCreator):
-    """Action output for character rigs."""
+class CreateAction(openpype.hosts.blender.api.plugin.Creator):
+    """Action output for character rigs"""
 
-    identifier = "io.openpype.creators.blender.action"
+    name = "actionMain"
     label = "Action"
     family = "action"
     icon = "male"
 
-    def create(
-        self, subset_name: str, instance_data: dict, pre_create_data: dict
-    ):
-        # Run parent create method
-        collection = super().create(
-            subset_name, instance_data, pre_create_data
-        )
+    def process(self):
 
-        # Get instance name
-        name = plugin.prepare_scene_name(instance_data["asset"], subset_name)
+        asset = self.data["asset"]
+        subset = self.data["subset"]
+        name = openpype.hosts.blender.api.plugin.asset_name(asset, subset)
+        collection = bpy.data.collections.new(name=name)
+        bpy.context.scene.collection.children.link(collection)
+        self.data['task'] = get_current_task_name()
+        lib.imprint(collection, self.data)
 
-        if pre_create_data.get("use_selection"):
+        if (self.options or {}).get("useSelection"):
             for obj in lib.get_selection():
                 if (obj.animation_data is not None
                         and obj.animation_data.action is not None):

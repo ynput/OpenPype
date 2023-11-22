@@ -148,14 +148,13 @@ def applied_view(window, camera, isolate=None, options=None):
 
     area.ui_type = "VIEW_3D"
 
-    types = {"MESH", "GPENCIL"}
-    objects = [obj for obj in window.scene.objects if obj.type in types]
+    meshes = [obj for obj in window.scene.objects if obj.type == "MESH"]
 
     if camera == "AUTO":
         space.region_3d.view_perspective = "ORTHO"
-        isolate_objects(window, isolate or objects)
+        isolate_objects(window, isolate or meshes)
     else:
-        isolate_objects(window, isolate or objects)
+        isolate_objects(window, isolate or meshes)
         space.camera = window.scene.objects.get(camera)
         space.region_3d.view_perspective = "CAMERA"
 

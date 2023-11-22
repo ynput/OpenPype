@@ -5,15 +5,10 @@ import bpy
 import pyblish.api
 
 import openpype.hosts.blender.api.action
-from openpype.pipeline.publish import (
-    ValidateContentsOrder,
-    OptionalPyblishPluginMixin,
-    PublishValidationError
-)
+from openpype.pipeline.publish import ValidateContentsOrder
 
 
-class ValidateNoColonsInName(pyblish.api.InstancePlugin,
-                             OptionalPyblishPluginMixin):
+class ValidateNoColonsInName(pyblish.api.InstancePlugin):
     """There cannot be colons in names
 
     Object or bone names cannot include colons. Other software do not
@@ -41,12 +36,8 @@ class ValidateNoColonsInName(pyblish.api.InstancePlugin,
         return invalid
 
     def process(self, instance):
-        if not self.is_active(instance.data):
-            return
-
         invalid = self.get_invalid(instance)
         if invalid:
-            names = ", ".join(obj.name for obj in invalid)
-            raise PublishValidationError(
-                f"Objects found with colon in name: {names}"
+            raise RuntimeError(
+                f"Objects found with colon in name: {invalid}"
             )

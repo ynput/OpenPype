@@ -1,25 +1,31 @@
 """Create a pointcache asset."""
 
-from openpype.hosts.blender.api import plugin, lib
+import bpy
+
+from openpype.pipeline import get_current_task_name
+import openpype.hosts.blender.api.plugin
+from openpype.hosts.blender.api import lib
 
 
-class CreatePointcache(plugin.BaseCreator):
-    """Polygonal static geometry."""
+class CreatePointcache(openpype.hosts.blender.api.plugin.Creator):
+    """Polygonal static geometry"""
 
-    identifier = "io.openpype.creators.blender.pointcache"
+    name = "pointcacheMain"
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
 
-    def create(
-        self, subset_name: str, instance_data: dict, pre_create_data: dict
-    ):
-        # Run parent create method
-        collection = super().create(
-            subset_name, instance_data, pre_create_data
-        )
+    def process(self):
 
-        if pre_create_data.get("use_selection"):
+        asset = self.data["asset"]
+        subset = self.data["subset"]
+        name = openpype.hosts.blender.api.plugin.asset_name(asset, subset)
+        collection = bpy.data.collections.new(name=name)
+        bpy.context.scene.collection.children.link(collection)
+        self.data['task'] = get_current_task_name()
+        lib.imprint(collection, self.data)
+
+        if (self.options or {}).get("useSelection"):
             objects = lib.get_selection()
             for obj in objects:
                 collection.objects.link(obj)

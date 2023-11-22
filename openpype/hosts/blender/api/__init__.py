@@ -10,7 +10,6 @@ from .pipeline import (
     ls,
     publish,
     containerise,
-    BlenderHost,
 )
 
 from .plugin import (
@@ -39,8 +38,6 @@ from .lib import (
 
 from .capture import capture
 
-from .render_lib import prepare_rendering
-
 
 __all__ = [
     "install",
@@ -48,7 +45,6 @@ __all__ = [
     "ls",
     "publish",
     "containerise",
-    "BlenderHost",
 
     "Creator",
     "Loader",
@@ -70,5 +66,4 @@ __all__ = [
     "get_selection",
     "capture",
     # "unique_name",
-    "prepare_rendering",
 ]
