@@ -180,7 +180,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
             if explicit_repres:
                 # this key will then align assetVersion ftrack thumbnail sync
-                new_repre["outputName"] = repre["outputName"]
+                new_repre["outputName"] = (
+                    repre.get("outputName") or repre["name"])
                 self.log.debug(
                     "Adding explicit thumbnail representation: {}".format(
                         new_repre))
