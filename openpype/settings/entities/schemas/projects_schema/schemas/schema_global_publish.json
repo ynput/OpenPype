@@ -205,7 +205,7 @@
                 {
                     "type": "boolean",
                     "key": "integrate_thumbnail",
-                    "label": "Integrate Thumbnail as representation"
+                    "label": "Integrate thumbnail as representation"
                 },
                 {
                     "type": "dict-conditional",
