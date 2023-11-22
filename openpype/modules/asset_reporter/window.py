@@ -205,7 +205,7 @@ class AssetReporterWindow(QtWidgets.QDialog):
         self.table.setColumnCount(3)
         self.table.setColumnWidth(0, 400)
         self.table.setColumnWidth(1, 300)
-        self.table.setHorizontalHeaderLabels(["Used in", "Product", "Version"])
+        self.table.setHorizontalHeaderLabels(["Subset", "Used in", "Version"])
 
         # self.text_area = QtWidgets.QTextEdit(self)
         self.copy_button = QtWidgets.QPushButton('Copy to Clipboard', self)
@@ -392,7 +392,7 @@ class AssetReporterWindow(QtWidgets.QDialog):
         """Write CSV file with results."""
         with open(file_name, "w", newline="") as csvfile:
             writer = csv.writer(csvfile, delimiter=";")
-            writer.writerow(["Used in", "Product", "Version"])
+            writer.writerow(["Subset", "Used in", "Version"])
             for key, value in self._result.items():
                 writer.writerow([key, "", ""])
                 for source in value:
