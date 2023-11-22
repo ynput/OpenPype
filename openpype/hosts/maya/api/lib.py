@@ -174,6 +174,15 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
+def regenerate_uv_tile_preview():
+    texture_files = cmds.ls(type="file")
+    if not texture_files:
+        return
+    for texture_file in texture_files:
+        cmds.ogs(regenerateUVTilePreview=texture_file)
+    cmds.ogs(reloadTextures=True)
+
+
 def get_namespace(node):
     """Return namespace of given node"""
     node_name = node.rsplit("|", 1)[-1]

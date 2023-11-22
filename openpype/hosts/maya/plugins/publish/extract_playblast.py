@@ -43,7 +43,6 @@ class ExtractPlayblast(publish.Extractor):
                     json.dumps(preset, indent=4, sort_keys=True)
                 )
             )
-
         path = capture.capture(log=self.log, **preset)
         self.log.debug("playblast path  {}".format(path))
 
@@ -125,6 +124,7 @@ class ExtractPlayblast(publish.Extractor):
         preset["overwrite"] = True
 
         cmds.refresh(force=True)
+        lib.regenerate_uv_tile_preview()
 
         refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
         cmds.currentTime(refreshFrameInt - 1, edit=True)
@@ -164,7 +164,8 @@ class ExtractPlayblast(publish.Extractor):
             "wireframeOnShaded",
             "xray",
             "jointXray",
-            "backfaceCulling"
+            "backfaceCulling",
+            "textures"
         ]
         viewport_defaults = {}
         for key in keys:
@@ -180,6 +181,7 @@ class ExtractPlayblast(publish.Extractor):
             capture_preset["Viewport Options"]["override_viewport_options"]
         )
 
+        self.log.debug("{}".format(instance.data["panel"]))
         # Force viewer to False in call to capture because we have our own
         # viewer opening call to allow a signal to trigger between
         # playblast and viewer
