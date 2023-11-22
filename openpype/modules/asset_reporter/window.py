@@ -251,14 +251,17 @@ class AssetReporterWindow(QtWidgets.QDialog):
             # item.setBackground(QColor(32, 32, 32))
             self.table.setItem(row, 0, item)
             for source in value:
-                self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(source["name"]))
-                self.table.setItem(row, 2, QtWidgets.QTableWidgetItem(str(source["version"])))
+                self.table.setItem(
+                    row, 1, QtWidgets.QTableWidgetItem(source["name"]))
+                self.table.setItem(
+                    row, 2, QtWidgets.QTableWidgetItem(
+                        str(source["version"])))
                 row += 1
 
             # generate clipboard content
-            content.append(f"{key}")
+            content.append(key)
             content.extend(
-                f"\t{source['name']} (v{source['version']})" for source in value
+                f"\t{source['name']} (v{source['version']})" for source in value  # noqa: E501
             )
         self.set_content("\n".join(content))
 
@@ -307,8 +310,8 @@ class AssetReporterWindow(QtWidgets.QDialog):
         doc = next(result)
         # print(doc)
         return {
-            "name": f'{"/".join(doc["parents"][0]["data"]["parents"])}/{doc["parents"][0]["name"]}/{doc["name"]}',
-            "family": doc["data"].get("family") or doc["data"].get("families")[0]
+            "name": f'{"/".join(doc["parents"][0]["data"]["parents"])}/{doc["parents"][0]["name"]}/{doc["name"]}',  # noqa: E501
+            "family": doc["data"].get("family") or doc["data"].get("families")[0]  # noqa: E501
         }
 
     def process(self):
