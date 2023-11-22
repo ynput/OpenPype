@@ -1,17 +1,22 @@
-import appdirs
-import qtawesome
+"""Tool for generating asset usage report.
+
+This tool is used to generate asset usage report for a project.
+It is using links between published version to find out where
+the asset is used.
+
+"""
+
 import csv
-import tempfile
-from qtpy import QtCore, QtWidgets
-from qtpy.QtGui import QClipboard, QColor
 import time
 
-from openpype import (
-    resources,
-    style
-)
-from openpype.client import OpenPypeMongoConnection
+import appdirs
+import qtawesome
 from pymongo.collection import Collection
+from qtpy import QtCore, QtWidgets
+from qtpy.QtGui import QClipboard, QColor
+
+from openpype import style
+from openpype.client import OpenPypeMongoConnection
 from openpype.lib import JSONSettingRegistry
 from openpype.tools.utils import PlaceholderLineEdit, get_openpype_qt_app
 from openpype.tools.utils.constants import PROJECT_NAME_ROLE
@@ -20,6 +25,8 @@ from openpype.tools.utils.models import ProjectModel, ProjectSortFilterProxy
 
 class AssetReporterRegistry(JSONSettingRegistry):
     """Class handling OpenPype general settings registry.
+
+    This is used to store last selected project.
 
     Attributes:
         vendor (str): Name used for path construction.
@@ -36,6 +43,10 @@ class AssetReporterRegistry(JSONSettingRegistry):
 
 
 class OverlayWidget(QtWidgets.QFrame):
+    """Overlay widget for choosing project.
+
+    This code is taken from the Tray Publisher tool.
+    """
     project_selected = QtCore.Signal(str)
 
     def __init__(self, publisher_window):
@@ -116,7 +127,7 @@ class OverlayWidget(QtWidgets.QFrame):
 
         setting_registry = AssetReporterRegistry()
         try:
-            project_name = setting_registry.get_item("project_name")
+            project_name = str(setting_registry.get_item("project_name"))
         except ValueError:
             project_name = None
 
@@ -166,9 +177,8 @@ class OverlayWidget(QtWidgets.QFrame):
 
 
 class AssetReporterWindow(QtWidgets.QDialog):
-    default_width = 1300
+    default_width = 1000
     default_height = 800
-    footer_border = 8
     _content = None
 
     def __init__(self, parent=None, controller=None, reset_on_show=None):
@@ -217,7 +227,13 @@ class AssetReporterWindow(QtWidgets.QDialog):
         overlay_widget.project_selected.connect(self._on_project_select)
         self._overlay_widget = overlay_widget
 
-    def _on_project_select(self, project_name):
+    def _on_project_select(self, project_name: str):
+        """Generate table when project is selected.
+
+        This will generate the table and fill it with data.
+        Source data are held in memory in `_result` attribute that
+        is used to transform them into clipboard or csv file.
+        """
         self._project_name = project_name
         self.process()
         if not self._result:
@@ -231,14 +247,15 @@ class AssetReporterWindow(QtWidgets.QDialog):
         content = []
         for key, value in self._result.items():
             item = QtWidgets.QTableWidgetItem(key)
-            item.setBackground(QColor(32, 32, 32))
+            # this doesn't work as it is probably overriden by stylesheet?
+            # item.setBackground(QColor(32, 32, 32))
             self.table.setItem(row, 0, item)
             for source in value:
                 self.table.setItem(row, 1, QtWidgets.QTableWidgetItem(source["name"]))
                 self.table.setItem(row, 2, QtWidgets.QTableWidgetItem(str(source["version"])))
-                print(f' - {source["version"]}')
                 row += 1
 
+            # generate clipboard content
             content.append(f"{key}")
             content.extend(
                 f"\t{source['name']} (v{source['version']})" for source in value
@@ -295,9 +312,20 @@ class AssetReporterWindow(QtWidgets.QDialog):
         }
 
     def process(self):
+        """Generate asset usage report data.
+
+        This is the main method of the tool. It is using MongoDB
+        aggregation pipeline to find all published versions that
+        are used as input for other published versions. Then it
+        generates a map of assets and their usage.
+
+        """
         start = time.perf_counter()
         project = self._project_name
 
+        # get all versions of published workfiles that has non-empty
+        # inputLinks and connect it with their respective documents
+        # using ID.
         pipeline = [
             {
                 "$match": {
@@ -323,6 +351,9 @@ class AssetReporterWindow(QtWidgets.QDialog):
         result = db[project].aggregate(pipeline)
 
         asset_map = []
+        # this is creating the map - for every workfile and its linked
+        # documents, create a dictionary with "source" and "refs" keys
+        # and resolve the subset name and version from the document
         for doc in result:
             source = {
                 "source": self._get_subset(doc["parent"], db[project]),
@@ -338,11 +369,9 @@ class AssetReporterWindow(QtWidgets.QDialog):
             source["refs"] = refs
             asset_map.append(source)
 
-        # for ref in asset_map:
-        #    print(ref)
-
         grouped = {}
 
+        # this will group the assets by subset name and version
         for asset in asset_map:
             for ref in asset["refs"]:
                 key = f'{ref["subset"]["name"]} (v{ref["version"]})'
@@ -356,7 +385,8 @@ class AssetReporterWindow(QtWidgets.QDialog):
 
         print(f"Finished in {end - start:0.4f} seconds", 2)
 
-    def _write_csv(self, file_name):
+    def _write_csv(self, file_name: str) -> None:
+        """Write CSV file with results."""
         with open(file_name, "w", newline="") as csvfile:
             writer = csv.writer(csvfile, delimiter=";")
             writer.writerow(["Subset", "Used in", "Version"])
@@ -364,7 +394,6 @@ class AssetReporterWindow(QtWidgets.QDialog):
                 writer.writerow([key, "", ""])
                 for source in value:
                     writer.writerow(["", source["name"], source["version"]])
-
 
 
 def main():

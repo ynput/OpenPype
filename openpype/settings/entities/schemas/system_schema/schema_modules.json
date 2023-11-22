@@ -359,7 +359,7 @@
         {
             "type": "dict",
             "key": "asset_reporter",
-            "label": "Asset Usage Report",
+            "label": "Asset Usage Reporter",
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [

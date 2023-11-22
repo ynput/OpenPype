@@ -6,18 +6,15 @@ from openpype.lib import run_detached_process, get_openpype_execute_args
 
 
 class AssetReporterAction(OpenPypeModule, ITrayAction):
+
     label = "Asset Usage Report"
     name = "asset_reporter"
-    admin_action = True
+
+    def tray_init(self):
+        pass
 
     def initialize(self, modules_settings):
         self.enabled = not AYON_SERVER_ENABLED
-
-    def tray_init(self):
-        ...
-
-    def tray_exit(self):
-        ...
 
     def on_action_trigger(self):
         args = get_openpype_execute_args()
