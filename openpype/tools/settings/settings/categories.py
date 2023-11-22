@@ -764,7 +764,6 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def add_children_gui(self):
         for child_obj in self.entity.children:
             item = self.create_ui_for_entity(self, child_obj, self)
-            item.set_read_only(self._read_only)
             self.input_fields.append(item)
 
         # Add spacer to stretch children guis
@@ -930,6 +929,14 @@ class SystemWidget(SettingsCategoryWidget):
         else:
             if not self.entity.is_in_studio_state():
                 self.reset()
+
+    def add_children_gui(self):
+        super(SystemWidget, self).add_children_gui()
+
+        # The Read Only logic is currently only relevante for
+        # System Settings (not for Project)
+        for input_field in self.input_fields:
+            input_field.set_read_only(self._read_only)
 
 
 class ProjectWidget(SettingsCategoryWidget):
