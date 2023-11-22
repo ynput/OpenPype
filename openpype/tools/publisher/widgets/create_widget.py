@@ -816,8 +816,13 @@ class CreateWidget(QtWidgets.QWidget):
 
         # Where to define these data?
         # - what data show be stored?
+        if AYON_SERVER_ENABLED:
+            asset_key = "folderPath"
+        else:
+            asset_key = "asset"
+
         instance_data = {
-            "asset": asset_name,
+            asset_key: asset_name,
             "task": task_name,
             "variant": variant,
             "family": family

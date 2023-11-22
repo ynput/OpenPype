@@ -59,14 +59,6 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
 
         self._add_empty_item()
 
-    def _clear_items(self):
-        self._remove_missing_context_item()
-        self._remove_empty_item()
-        if self._items_by_id:
-            root = self.invisibleRootItem()
-            root.removeRows(0, root.rowCount())
-            self._items_by_id = {}
-
     def set_published_mode(self, published_mode):
         if self._published_mode == published_mode:
             return
@@ -88,6 +80,18 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
         if item is None:
             return QtCore.QModelIndex()
         return self.indexFromItem(item)
+
+    def refresh(self):
+        if self._published_mode:
+            self._fill_items()
+
+    def _clear_items(self):
+        self._remove_missing_context_item()
+        self._remove_empty_item()
+        if self._items_by_id:
+            root = self.invisibleRootItem()
+            root.removeRows(0, root.rowCount())
+            self._items_by_id = {}
 
     def _get_missing_context_item(self):
         if self._missing_context_item is None:
@@ -149,7 +153,6 @@ class PublishedFilesModel(QtGui.QStandardItemModel):
 
     def _on_folder_changed(self, event):
         self._last_folder_id = event["folder_id"]
-        self._last_task_id = None
         if self._context_select_mode:
             return
 
@@ -356,14 +359,13 @@ class PublishedFilesWidget(QtWidgets.QWidget):
             self.save_as_requested.emit()
 
     def _on_expected_selection_change(self, event):
-        if (
-            event["representation_id_selected"]
-            or not event["folder_selected"]
-            or (event["task_name"] and not event["task_selected"])
-        ):
+        repre_info = event["representation"]
+        if not repre_info["current"]:
             return
 
-        representation_id = event["representation_id"]
+        self._model.refresh()
+
+        representation_id = repre_info["id"]
         selected_repre_id = self.get_selected_repre_id()
         if (
             representation_id is not None
@@ -376,5 +378,5 @@ class PublishedFilesWidget(QtWidgets.QWidget):
                 self._view.setCurrentIndex(proxy_index)
 
         self._controller.expected_representation_selected(
-            event["folder_id"], event["task_name"], representation_id
+            event["folder"]["id"], event["task"]["name"], representation_id
         )
