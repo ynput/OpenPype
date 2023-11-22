@@ -41,6 +41,7 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
                 for pattern in self.skip_timelines_check)):
             self.log.info("Skipping for {} task".format(instance.data["task"]))
 
+        asset_doc = instance.data["assetEntity"]
         asset_data = asset_doc["data"]
         frame_start = asset_data["frameStart"]
         frame_end = asset_data["frameEnd"]
