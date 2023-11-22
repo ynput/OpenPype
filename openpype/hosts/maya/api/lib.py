@@ -175,11 +175,15 @@ def maintained_selection():
 
 
 def regenerate_uv_tile_preview():
+    """Regenerate UV Tile Preview during playblast
+    """
+    original_texture_loading = cmds.ogs(query=True, reloadTextures=True)
     texture_files = cmds.ls(type="file")
     if not texture_files:
         return
     for texture_file in texture_files:
-        cmds.ogs(regenerateUVTilePreview=texture_file)
+        if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
+            cmds.ogs(regenerateUVTilePreview=texture_file)
     cmds.ogs(reloadTextures=True)
 
 

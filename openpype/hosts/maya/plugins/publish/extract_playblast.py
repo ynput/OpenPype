@@ -43,6 +43,8 @@ class ExtractPlayblast(publish.Extractor):
                     json.dumps(preset, indent=4, sort_keys=True)
                 )
             )
+        if "textures" in preset["viewport_options"]:
+            lib.regenerate_uv_tile_preview()
         path = capture.capture(log=self.log, **preset)
         self.log.debug("playblast path  {}".format(path))
 
@@ -124,7 +126,6 @@ class ExtractPlayblast(publish.Extractor):
         preset["overwrite"] = True
 
         cmds.refresh(force=True)
-        lib.regenerate_uv_tile_preview()
 
         refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
         cmds.currentTime(refreshFrameInt - 1, edit=True)
