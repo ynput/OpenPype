@@ -177,7 +177,6 @@ def maintained_selection():
 def reload_textures():
     """Reload textures during playblast
     """
-    original_texture_loading = cmds.ogs(query=True, reloadTextures=True)
     texture_files = cmds.ls(type="file")
     if not texture_files:
         return
