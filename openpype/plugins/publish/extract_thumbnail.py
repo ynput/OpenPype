@@ -1,3 +1,4 @@
+import copy
 import os
 import subprocess
 import tempfile
@@ -5,13 +6,14 @@ import tempfile
 import pyblish.api
 from openpype.lib import (
     get_ffmpeg_tool_args,
+    get_ffprobe_data,
     get_oiio_tool_args,
     is_oiio_supported,
 
     run_subprocess,
     path_to_subprocess_arg,
 )
-
+from openpype.lib.transcoding import VIDEO_EXTENSIONS
 
 class ExtractThumbnail(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
@@ -25,7 +27,13 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
-    # presetable attribute
+    publishing_thumbnail = False
+    target_size = {
+        "type": "resize",
+        "width": 1920,
+        "height": 1080
+    }
+    duration_split = 0.5
     ffmpeg_args = None
 
     def process(self, instance):
@@ -82,15 +90,39 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         oiio_supported = is_oiio_supported()
         for repre in filtered_repres:
             repre_files = repre["files"]
+            src_staging = os.path.normpath(repre["stagingDir"])
             if not isinstance(repre_files, (list, tuple)):
-                input_file = repre_files
+                # convert any video file to frame so oiio doesn't need to
+                # read video file (it is slow) and also we are having control
+                # over which frame is used for thumbnail
+                # this will also work with ffmpeg fallback conversion in case
+                # oiio is not supported
+                repre_extension = os.path.splitext(repre_files)[1]
+                if repre_extension in VIDEO_EXTENSIONS:
+                    video_file_path = os.path.join(
+                        src_staging, repre_files
+                    )
+                    file_path = self._create_frame_from_video(
+                        video_file_path,
+                        dst_staging
+                    )
+                    if file_path:
+                        src_staging, input_file = os.path.split(file_path)
+                else:
+                    # if it is not video file then just use first file
+                    input_file = repre_files
             else:
-                file_index = int(float(len(repre_files)) * 0.5)
+                repre_files_thumb = copy(repre_files)
+                # exclude first frame if slate in representation tags
+                if "slate-frame" in repre.get("tags", []):
+                    repre_files_thumb = repre_files_thumb[1:]
+                file_index = int(
+                    float(len(repre_files_thumb)) * self.duration_split)
                 input_file = repre_files[file_index]
 
-            src_staging = os.path.normpath(repre["stagingDir"])
             full_input_path = os.path.join(src_staging, input_file)
             self.log.debug("input {}".format(full_input_path))
+
             filename = os.path.splitext(input_file)[0]
             jpeg_file = filename + "_thumb.jpg"
             full_output_path = os.path.join(dst_staging, jpeg_file)
@@ -99,7 +131,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 self.log.debug("Trying to convert with OIIO")
                 # If the input can read by OIIO then use OIIO method for
                 # conversion otherwise use ffmpeg
-                thumbnail_created = self.create_thumbnail_oiio(
+                thumbnail_created = self._create_thumbnail_oiio(
                     full_input_path, full_output_path
                 )
 
@@ -112,7 +144,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                         " can't be read by OIIO."
                     )
 
-                thumbnail_created = self.create_thumbnail_ffmpeg(
+                thumbnail_created = self._create_thumbnail_ffmpeg(
                     full_input_path, full_output_path
                 )
 
@@ -120,13 +152,19 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             if not thumbnail_created:
                 continue
 
+            new_repre_tags = ["thumbnail"]
+            # for workflows which needs to have thumbnails published as
+            # separate representations `delete` tag should not be added
+            if not self.publishing_thumbnail:
+                new_repre_tags.append("delete")
+
             new_repre = {
                 "name": "thumbnail",
                 "ext": "jpg",
                 "files": jpeg_file,
                 "stagingDir": dst_staging,
                 "thumbnail": True,
-                "tags": ["thumbnail"]
+                "tags": new_repre_tags
             }
 
             # adding representation
@@ -173,7 +211,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             filtered_repres.append(repre)
         return filtered_repres
 
-    def create_thumbnail_oiio(self, src_path, dst_path):
+    def _create_thumbnail_oiio(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with OIIO: {}".format(dst_path))
         oiio_cmd = get_oiio_tool_args(
             "oiiotool",
@@ -191,9 +229,9 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             )
             return False
 
-    def create_thumbnail_ffmpeg(self, src_path, dst_path):
+    def _create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
-
+        resolution_arg = self._get_resolution_arg("ffmpeg")
         ffmpeg_path_args = get_ffmpeg_tool_args("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
 
@@ -215,6 +253,10 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         jpeg_items.extend(ffmpeg_args.get("output") or [])
         # we just want one frame from movie files
         jpeg_items.extend(["-vframes", "1"])
+
+        if resolution_arg:
+            jpeg_items.extend(resolution_arg)
+
         # output file
         jpeg_items.append(path_to_subprocess_arg(dst_path))
         subprocess_command = " ".join(jpeg_items)
@@ -229,3 +271,61 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 exc_info=True
             )
             return False
+
+    def _create_frame_from_video(self, video_file_path, output_dir):
+        """Convert video file to one frame image via ffmpeg"""
+        # create output file path
+        base_name = os.path.basename(video_file_path)
+        filename = os.path.splitext(base_name)[0]
+        output_thumb_file_path = os.path.join(output_dir, "{}.png".format(filename))
+
+        # Set video input attributes
+        max_int = str(2147483647)
+        video_data = get_ffprobe_data(video_file_path, logger=self.log)
+        duration = float(video_data["format"]["duration"])
+
+        resolution_arg = self._get_resolution_arg("ffmpeg")
+        cmd_args = [
+            "-y",
+            "-ss", str(duration * self.duration_split),
+            "-i", video_file_path,
+            "-analyzeduration", max_int,
+            "-probesize", max_int,
+            "-vframes", "1"
+        ]
+        if resolution_arg:
+            cmd_args.extend(resolution_arg)
+
+        # add output file path
+        cmd_args.append(output_thumb_file_path)
+
+        # create ffmpeg command
+        cmd = get_ffmpeg_tool_args(
+            "ffmpeg",
+            *cmd_args
+        )
+        try:
+            # run subprocess
+            self.log.debug("Executing: {}".format(" ".join(cmd)))
+            run_subprocess(cmd, logger=self.log)
+            self.log.debug("Thumbnail created: {}".format(output_thumb_file_path))
+            return output_thumb_file_path
+        except RuntimeError as error:
+            self.log.warning(
+                "Failed intermediate thumb source using ffmpeg: {}".format(
+                    error)
+            )
+            return None
+
+    def _get_resolution_arg(self, application):
+        # get settings
+        if self.target_size.get("type") == "source":
+            return
+
+        width = self.target_size["width"]
+        height = self.target_size["height"]
+        # form arg string per application
+        if application == "ffmpeg":
+            return ["-vf", "scale={0}:{1}".format(width, height)]
+        elif application == "oiiotool":
+            return ["-resize", "{0}x{1}".format(width, height)]
