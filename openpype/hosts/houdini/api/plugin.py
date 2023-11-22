@@ -182,8 +182,9 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             if node_type is None:
                 node_type = "geometry"
 
+            parent_path = pre_create_data.get("parent", "/out")
             instance_node = self.create_instance_node(
-                subset_name, "/out", node_type)
+                subset_name, parent_path, node_type)
 
             self.customize_node_look(instance_node)
 

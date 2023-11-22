@@ -28,8 +28,6 @@ class CreateUSDRender(plugin.HoudiniCreator):
                     "{}".format(parent)
                 )
 
-        instance_data["parent"] = hou.node("/stage")
-
         # Remove the active, we are checking the bypass flag of the nodes
         instance_data.pop("active", None)
         instance_data.update({"node_type": node_type})
