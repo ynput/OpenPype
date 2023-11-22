@@ -164,6 +164,8 @@ class ApplicationsSettings(BaseSettingsModel):
         default_factory=AppGroupWithPython, title="Adobe After Effects")
     celaction: AppGroup = Field(
         default_factory=AppGroupWithPython, title="Celaction 2D")
+    substancepainter: AppGroup = Field(
+        default_factory=AppGroupWithPython, title="Substance Painter")
     unreal: AppGroup = Field(
         default_factory=AppGroupWithPython, title="Unreal Editor")
     additional_apps: list[AdditionalAppGroup] = Field(

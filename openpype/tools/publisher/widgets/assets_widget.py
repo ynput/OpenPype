@@ -11,7 +11,8 @@ from openpype.tools.utils import (
 from openpype.tools.utils.assets_widget import (
     SingleSelectAssetsWidget,
     ASSET_ID_ROLE,
-    ASSET_NAME_ROLE
+    ASSET_NAME_ROLE,
+    ASSET_PATH_ROLE,
 )
 
 
@@ -30,6 +31,15 @@ class CreateWidgetAssetsWidget(SingleSelectAssetsWidget):
         self._enabled = None
 
         self._last_filter_height = None
+
+    def get_selected_asset_name(self):
+        if AYON_SERVER_ENABLED:
+            selection_model = self._view.selectionModel()
+            indexes = selection_model.selectedRows()
+            for index in indexes:
+                return index.data(ASSET_PATH_ROLE)
+            return None
+        return super(CreateWidgetAssetsWidget, self).get_selected_asset_name()
 
     def _check_header_height(self):
         """Catch header height changes.
@@ -100,21 +110,24 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
         self._controller = controller
 
         self._items_by_name = {}
+        self._items_by_path = {}
         self._items_by_asset_id = {}
 
     def reset(self):
         self.clear()
 
         self._items_by_name = {}
+        self._items_by_path = {}
         self._items_by_asset_id = {}
         assets_by_parent_id = self._controller.get_asset_hierarchy()
 
         items_by_name = {}
+        items_by_path = {}
         items_by_asset_id = {}
         _queue = collections.deque()
-        _queue.append((self.invisibleRootItem(), None))
+        _queue.append((self.invisibleRootItem(), None, None))
         while _queue:
-            parent_item, parent_id = _queue.popleft()
+            parent_item, parent_id, parent_path = _queue.popleft()
             children = assets_by_parent_id.get(parent_id)
             if not children:
                 continue
@@ -127,6 +140,11 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
             for name in sorted(children_by_name.keys()):
                 child = children_by_name[name]
                 child_id = child["_id"]
+                if parent_path:
+                    child_path = "{}/{}".format(parent_path, name)
+                else:
+                    child_path = "/{}".format(name)
+
                 has_children = bool(assets_by_parent_id.get(child_id))
                 icon = get_asset_icon(child, has_children)
 
@@ -138,15 +156,18 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
                 item.setData(icon, QtCore.Qt.DecorationRole)
                 item.setData(child_id, ASSET_ID_ROLE)
                 item.setData(name, ASSET_NAME_ROLE)
+                item.setData(child_path, ASSET_PATH_ROLE)
 
                 items_by_name[name] = item
+                items_by_path[child_path] = item
                 items_by_asset_id[child_id] = item
                 items.append(item)
-                _queue.append((item, child_id))
+                _queue.append((item, child_id, child_path))
 
             parent_item.appendRows(items)
 
         self._items_by_name = items_by_name
+        self._items_by_path = items_by_path
         self._items_by_asset_id = items_by_asset_id
 
     def get_index_by_asset_id(self, asset_id):
@@ -156,12 +177,20 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
         return QtCore.QModelIndex()
 
     def get_index_by_asset_name(self, asset_name):
-        item = self._items_by_name.get(asset_name)
+        item = None
+        if AYON_SERVER_ENABLED:
+            item = self._items_by_path.get(asset_name)
+
+        if item is None:
+            item = self._items_by_name.get(asset_name)
+
         if item is None:
             return QtCore.QModelIndex()
         return item.index()
 
     def name_is_valid(self, item_name):
+        if AYON_SERVER_ENABLED and item_name in self._items_by_path:
+            return True
         return item_name in self._items_by_name
 
 
@@ -296,7 +325,10 @@ class AssetsDialog(QtWidgets.QDialog):
         index = self._asset_view.currentIndex()
         asset_name = None
         if index.isValid():
-            asset_name = index.data(ASSET_NAME_ROLE)
+            if AYON_SERVER_ENABLED:
+                asset_name = index.data(ASSET_PATH_ROLE)
+            else:
+                asset_name = index.data(ASSET_NAME_ROLE)
         self._selected_asset = asset_name
         self.done(1)
 
