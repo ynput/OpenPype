@@ -1,3 +1,4 @@
+import os
 import numbers
 from qtpy import QtWidgets, QtCore, QtGui
 
@@ -8,6 +9,11 @@ from .products_model import (
     VERSION_NAME_EDIT_ROLE,
     VERSION_ID_ROLE,
     PRODUCT_IN_SCENE_ROLE,
+    ACTIVE_SITE_ICON_ROLE,
+    REMOTE_SITE_ICON_ROLE,
+    REPRESENTATIONS_COUNT_ROLE,
+    SYNC_ACTIVE_SITE_AVAILABILITY,
+    SYNC_REMOTE_SITE_AVAILABILITY
 )
 
 
@@ -189,3 +195,53 @@ class LoadedInSceneDelegate(QtWidgets.QStyledItemDelegate):
         value = index.data(PRODUCT_IN_SCENE_ROLE)
         color = self._colors.get(value, self._default_color)
         option.palette.setBrush(QtGui.QPalette.Text, color)
+
+
+class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
+    """
+        Prints icons and downloaded representation ration for both sides.
+    """
+
+    def __init__(self, parent=None):
+        super(AvailabilityDelegate, self).__init__(parent)
+
+    def paint(self, painter, option, index):
+        super(AvailabilityDelegate, self).paint(painter, option, index)
+        option = QtWidgets.QStyleOptionViewItem(option)
+        option.showDecorationSelected = True
+
+        active_icon = index.data(ACTIVE_SITE_ICON_ROLE)
+        remote_icon = index.data(REMOTE_SITE_ICON_ROLE)
+
+        availability_active = f"{index.data(SYNC_ACTIVE_SITE_AVAILABILITY)}/{index.data(REPRESENTATIONS_COUNT_ROLE)}"  # noqa
+        availability_remote = f"{index.data(SYNC_REMOTE_SITE_AVAILABILITY)}/{index.data(REPRESENTATIONS_COUNT_ROLE)}"  # noqa
+
+        if availability_active is None or availability_remote is None:  # group lines
+            return
+
+        idx = 0
+        height = width = 24
+        for value, icon_def in [(availability_active, active_icon),
+                                (availability_remote, remote_icon)]:
+            icon = QtGui.QIcon(icon_def["path"])
+            if not icon:
+                continue
+
+            pixmap = icon.pixmap(icon.actualSize(QtCore.QSize(height, width)))
+            padding = 10 + (70 * idx)
+            point = QtCore.QPoint(option.rect.x() + padding,
+                                  option.rect.y() +
+                                  (option.rect.height() - pixmap.height()) / 2)
+            painter.drawPixmap(point, pixmap)
+
+            text_rect = option.rect.translated(padding + width + 10, 0)
+            painter.drawText(
+                text_rect,
+                option.displayAlignment,
+                str(value)
+            )
+
+            idx += 1
+
+    def displayText(self, value, locale):
+        pass

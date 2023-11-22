@@ -19,7 +19,11 @@ from .products_model import (
     VERSION_ID_ROLE,
     VERSION_THUMBNAIL_ID_ROLE,
 )
-from .products_delegates import VersionDelegate, LoadedInSceneDelegate
+from .products_delegates import (
+    VersionDelegate,
+    LoadedInSceneDelegate,
+    AvailabilityDelegate
+)
 from .actions_utils import show_actions_menu
 
 
@@ -134,6 +138,10 @@ class ProductsWidget(QtWidgets.QWidget):
         in_scene_delegate = LoadedInSceneDelegate()
         products_view.setItemDelegateForColumn(
             products_model.in_scene_col, in_scene_delegate)
+
+        avail_delegate = AvailabilityDelegate()
+        products_view.setItemDelegateForColumn(
+            products_model.availability_col, avail_delegate)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
