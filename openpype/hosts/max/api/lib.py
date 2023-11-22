@@ -365,8 +365,6 @@ def reset_colorspace():
         colorspace_mgr.Mode = rt.Name("OCIO_Custom")
         colorspace_mgr.OCIOConfigPath = ocio_config_path
 
-    colorspace_mgr.OCIOConfigPath = ocio_config_path
-
 
 def check_colorspace():
     parent = get_main_window()

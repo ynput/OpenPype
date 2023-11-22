@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import copy
 import collections
 
@@ -193,6 +194,12 @@ class BaseCreator:
     # QUESTION make this required?
     host_name = None
 
+    # Settings auto-apply helpers
+    # Root key in project settings (mandatory for auto-apply to work)
+    settings_category = None
+    # Name of plugin in create settings > class name is used if not set
+    settings_name = None
+
     def __init__(
         self, project_settings, system_settings, create_context, headless=False
     ):
@@ -233,14 +240,90 @@ class BaseCreator:
                 " need to keep system settings."
             ).format(self.__class__.__name__))
 
+    @staticmethod
+    def _get_settings_values(project_settings, category_name, plugin_name):
+        """Helper method to get settings values.
+
+        Args:
+            project_settings (dict[str, Any]): Project settings.
+            category_name (str): Category of settings.
+            plugin_name (str): Name of settings.
+
+        Returns:
+            Union[dict[str, Any], None]: Settings values or None.
+        """
+
+        settings = project_settings.get(category_name)
+        if not settings:
+            return None
+
+        create_settings = settings.get("create")
+        if not create_settings:
+            return None
+
+        return create_settings.get(plugin_name)
+
     def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings.
+
+        Default implementation tries to auto-apply settings values if are
+            in expected hierarchy.
+
+        Data hierarchy to auto-apply settings:
+            ├─ {self.settings_category}                 - Root key in settings
+            │ └─ "create"                               - Hardcoded key
+            │   └─ {self.settings_name} | {class name}  - Name of plugin
+            │     ├─ ... attribute values...            - Attribute/value pair
+
+        It is mandatory to define 'settings_category' attribute. Attribute
+        'settings_name' is optional and class name is used if is not defined.
+
+        Example data:
+            ProjectSettings {
+                "maya": {                    # self.settings_category
+                    "create": {              # Hardcoded key
+                        "CreateAnimation": { # self.settings_name / class name
+                            "enabled": True, # --- Attributes to set ---
+                            "optional": True,#
+                            "active": True,  #
+                            "fps": 25,       # -------------------------
+                        },
+                        ...
+                    },
+                    ...
+                },
+                ...
+            }
 
         Args:
             project_settings (dict[str, Any]): Project settings.
         """
 
-        pass
+        settings_category = self.settings_category
+        if not settings_category:
+            return
+
+        cls_name = self.__class__.__name__
+        settings_name = self.settings_name or cls_name
+
+        settings = self._get_settings_values(
+            project_settings, settings_category, settings_name
+        )
+        if settings is None:
+            self.log.debug("No settings found for {}".format(cls_name))
+            return
+
+        for key, value in settings.items():
+            # Log out attributes that are not defined on plugin object
+            # - those may be potential dangerous typos in settings
+            if not hasattr(self, key):
+                self.log.debug((
+                    "Applying settings to unknown attribute '{}' on '{}'."
+                ).format(
+                    key, cls_name
+                ))
+            setattr(self, key, value)
+
 
     @property
     def identifier(self):

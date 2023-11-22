@@ -8,15 +8,16 @@ import itertools
 import hashlib
 import tarfile
 import zipfile
-
+from abc import ABCMeta, abstractmethod
+import six
+import shutil
 import requests
 
 USER_AGENT = "AYON-launcher"
 
 
-class RemoteFileHandler:
-    """Download file from url, might be GDrive shareable link"""
-
+@six.add_metaclass(ABCMeta)
+class BaseFileHandler:
     IMPLEMENTED_ZIP_FORMATS = {
         "zip", "tar", "tgz", "tar.gz", "tar.xz", "tar.bz2"
     }
@@ -32,6 +33,7 @@ class RemoteFileHandler:
     @staticmethod
     def check_md5(fpath, md5, **kwargs):
         return md5 == RemoteFileHandler.calculate_md5(fpath, **kwargs)
+
 
     @staticmethod
     def calculate_sha256(fpath):
@@ -68,6 +70,75 @@ class RemoteFileHandler:
             return RemoteFileHandler.check_md5(fpath, hash_value)
         if hash_type == "sha256":
             return RemoteFileHandler.check_sha256(fpath, hash_value)
+
+    @staticmethod
+    def unzip(path, destination_path=None):
+        if not destination_path:
+            destination_path = os.path.dirname(path)
+
+        _, archive_type = os.path.splitext(path)
+        archive_type = archive_type.lstrip(".")
+
+        if archive_type in ["zip"]:
+            print(f"Unzipping {path}->{destination_path}")
+            zip_file = zipfile.ZipFile(path)
+            zip_file.extractall(destination_path)
+            zip_file.close()
+
+        elif archive_type in [
+            "tar", "tgz", "tar.gz", "tar.xz", "tar.bz2"
+        ]:
+            print(f"Unzipping {path}->{destination_path}")
+            if archive_type == "tar":
+                tar_type = "r:"
+            elif archive_type.endswith("xz"):
+                tar_type = "r:xz"
+            elif archive_type.endswith("gz"):
+                tar_type = "r:gz"
+            elif archive_type.endswith("bz2"):
+                tar_type = "r:bz2"
+            else:
+                tar_type = "r:*"
+            try:
+                tar_file = tarfile.open(path, tar_type)
+            except tarfile.ReadError:
+                raise SystemExit("corrupted archive")
+            tar_file.extractall(destination_path)
+            tar_file.close()
+
+    @staticmethod
+    @abstractmethod
+    def download_test_source_files(file_id, root, filename=None):
+        """Download a test source files and place it in root.
+        Args:
+            file_id (str): id of file to be downloaded
+            root (str): Directory to place downloaded file in
+            filename (str, optional): Name to save the file under.
+                If None, use the id of the file.
+        """
+        raise NotImplementedError
+
+
+class LocalFileHandler(BaseFileHandler):
+
+    @staticmethod
+    def download_test_source_files(source_path, tmp_dir, filename=None):
+        tmp_dir = os.path.expanduser(tmp_dir)
+        if os.path.isdir(source_path):
+            shutil.copytree(source_path, tmp_dir, dirs_exist_ok=True)
+        else:
+            file_name = os.path.basename(source_path)
+            shutil.copy(source_path,
+                        os.path.join(tmp_dir, file_name))
+
+
+class RemoteFileHandler(BaseFileHandler):
+    """Download file from url, might be GDrive shareable link"""
+
+    @staticmethod
+    def download_test_source_files(file_id, tmp_dir, filename=None):
+        RemoteFileHandler.download_file_from_google_drive(file_id, tmp_dir,
+                                                          filename)
 
     @staticmethod
     def download_url(
@@ -124,7 +195,7 @@ class RemoteFileHandler:
 
     @staticmethod
     def download_file_from_google_drive(
-        file_id, root, filename=None
+        file_id, tmp_dir, filename=None
     ):
         """Download a Google Drive file from  and place it in root.
         Args:
@@ -137,12 +208,12 @@ class RemoteFileHandler:
 
         url = "https://docs.google.com/uc?export=download"
 
-        root = os.path.expanduser(root)
+        tmp_dir = os.path.expanduser(tmp_dir)
         if not filename:
             filename = file_id
-        fpath = os.path.join(root, filename)
+        fpath = os.path.join(tmp_dir, filename)
 
-        os.makedirs(root, exist_ok=True)
+        os.makedirs(tmp_dir, exist_ok=True)
 
         if os.path.isfile(fpath) and RemoteFileHandler.check_integrity(fpath):
             print(f"Using downloaded and verified file: {fpath}")
@@ -174,41 +245,6 @@ class RemoteFileHandler:
                 itertools.chain((first_chunk, ),
                                 response_content_generator), fpath)
             response.close()
-
-    @staticmethod
-    def unzip(path, destination_path=None):
-        if not destination_path:
-            destination_path = os.path.dirname(path)
-
-        _, archive_type = os.path.splitext(path)
-        archive_type = archive_type.lstrip(".")
-
-        if archive_type in ["zip"]:
-            print(f"Unzipping {path}->{destination_path}")
-            zip_file = zipfile.ZipFile(path)
-            zip_file.extractall(destination_path)
-            zip_file.close()
-
-        elif archive_type in [
-            "tar", "tgz", "tar.gz", "tar.xz", "tar.bz2"
-        ]:
-            print(f"Unzipping {path}->{destination_path}")
-            if archive_type == "tar":
-                tar_type = "r:"
-            elif archive_type.endswith("xz"):
-                tar_type = "r:xz"
-            elif archive_type.endswith("gz"):
-                tar_type = "r:gz"
-            elif archive_type.endswith("bz2"):
-                tar_type = "r:bz2"
-            else:
-                tar_type = "r:*"
-            try:
-                tar_file = tarfile.open(path, tar_type)
-            except tarfile.ReadError:
-                raise SystemExit("corrupted archive")
-            tar_file.extractall(destination_path)
-            tar_file.close()
 
     @staticmethod
     def _urlretrieve(url, filename, chunk_size=None, headers=None):
