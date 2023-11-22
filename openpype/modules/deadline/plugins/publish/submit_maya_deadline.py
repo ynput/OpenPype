@@ -97,6 +97,7 @@ class VRayPluginInfo(object):
 @attr.s
 class ArnoldPluginInfo(object):
     ArnoldFile = attr.ib(default=None)
+    ArnoldVerbose = attr.ib(default=2)
 
 
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
@@ -132,6 +133,8 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         cls.group = settings.get("group", cls.group)
         cls.strict_error_checking = settings.get("strict_error_checking",
                                                  cls.strict_error_checking)
+        cls.jobInfo = settings.get("jobInfo", cls.jobInfo)
+        cls.pluginInfo = settings.get("pluginInfo", cls.pluginInfo)
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
@@ -648,7 +651,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         return job_info, attr.asdict(plugin_info)
 
     def _get_arnold_render_payload(self, data):
-
+        from maya import cmds
         # Job Info
         job_info = copy.deepcopy(self.job_info)
         job_info.Name = self._job_info_label("Render")
@@ -658,9 +661,12 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # Plugin Info
         ass_file, _ = os.path.splitext(data["output_filename_0"])
         ass_filepath = ass_file + ".ass"
+        current_verbosity_level = cmds.getAttr(
+            "defaultArnoldRenderOptions.log_verbosity")
 
         plugin_info = ArnoldPluginInfo(
-            ArnoldFile=ass_filepath
+            ArnoldFile=ass_filepath,
+            ArnoldVerbose=current_verbosity_level
         )
 
         return job_info, attr.asdict(plugin_info)
