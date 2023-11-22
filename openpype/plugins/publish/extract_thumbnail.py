@@ -206,25 +206,40 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         """
         self.log.info("Extracting thumbnail {}".format(dst_path))
 
+        repre_display = colorspace_data.get("display")
+        repre_view = colorspace_data.get("view")
         oiio_default_type = None
         oiio_default_display = None
         oiio_default_view = None
         oiio_default_colorspace = None
-        if self.oiiotool_defaults:
+        # first look into representation colorspaceData, perhaps it has
+        #   display and view
+        if not all([repre_display, repre_view]):
+            self.log.info(
+                "Using Display & View from "
+                "representation: '{} ({})'".format(
+                    repre_view,
+                    repre_display
+                )
+            )
+        # if representation doesn't have display and view then use
+        #   oiiotool_defaults
+        elif self.oiiotool_defaults:
             oiio_default_type = self.oiiotool_defaults["type"]
             if "colorspace" in oiio_default_type:
                 oiio_default_colorspace = self.oiiotool_defaults["colorspace"]
             else:
                 oiio_default_display = self.oiiotool_defaults["display"]
                 oiio_default_view = self.oiiotool_defaults["view"]
+
         try:
             convert_colorspace(
                 src_path,
                 dst_path,
                 colorspace_data["config"]["path"],
                 colorspace_data["colorspace"],
-                display=colorspace_data.get("display") or oiio_default_display,
-                view=colorspace_data.get("view") or oiio_default_view,
+                display=repre_display or oiio_default_display,
+                view=repre_view or oiio_default_view,
                 target_colorspace=oiio_default_colorspace,
                 logger=self.log,
             )
