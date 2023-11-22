@@ -70,6 +70,13 @@
         },
         "ExtractThumbnail": {
             "enabled": true,
+            "integrate_thumbnail": false,
+            "duration_split": 0.5,
+            "target_size": {
+                "type": "resize",
+                "width": 1920,
+                "height": 1080
+            },
             "ffmpeg_args": {
                 "input": [
                     "-apply_trc gamma22"
