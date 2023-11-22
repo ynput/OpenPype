@@ -8,6 +8,13 @@ from openpype.lib.attribute_definitions import (
 )
 
 
+class SiteSyncItem:
+
+    def __init__(self, ):
+        self.active_progress = "XXX"
+        self.remote_progress = "YYY"
+
+
 class ProductTypeItem:
     """Item representing product type.
 
@@ -137,7 +144,7 @@ class VersionItem:
         handles,
         step,
         comment,
-        source
+        source,
     ):
         self.version_id = version_id
         self.product_id = product_id
@@ -216,6 +223,8 @@ class RepreItem:
         representation_icon,
         product_name,
         folder_label,
+        active_site_progress,
+        remote_site_progress,
     ):
         self.representation_id = representation_id
         self.representation_name = representation_name
@@ -223,12 +232,17 @@ class RepreItem:
         self.product_name = product_name
         self.folder_label = folder_label
 
+        self.active_site_progress = active_site_progress
+        self.remote_site_progress = remote_site_progress
+
     def to_data(self):
         return {
             "representation_id": self.representation_id,
             "representation_name": self.representation_name,
             "representation_icon": self.representation_icon,
             "product_name": self.product_name,
+            "folder_label": self.folder_label,
+            "active_site_progress": self.active_site_progress,
             "folder_label": self.folder_label,
         }
 

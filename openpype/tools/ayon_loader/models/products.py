@@ -637,7 +637,7 @@ class ProductsModel:
         failed = False
         try:
             self._refresh_representation_items(project_name, version_ids)
-        except Exception:
+        except Exception as exp:
             # TODO add more information about failed refresh
             failed = True
 
@@ -674,6 +674,10 @@ class ProductsModel:
             "name": "fa.file-o",
             "color": get_default_entity_icon_color(),
         }
+        representation_ids = [repre["id"] for repre in representations]
+        representations_sync_status = self._controller.get_representations_sync_status(
+            project_name, representation_ids
+        )
         repre_items_by_version_id = collections.defaultdict(dict)
         for representation in representations:
             version_id = representation["versionId"]
@@ -684,12 +688,16 @@ class ProductsModel:
             if product_item is None:
                 continue
             repre_id = representation["id"]
+            local_progress = representations_sync_status[repre_id][0]
+            remote_progress = representations_sync_status[repre_id][1]
             repre_item = RepreItem(
                 repre_id,
                 representation["name"],
                 repre_icon,
                 product_item.product_name,
                 product_item.folder_label,
+                local_progress,
+                remote_progress
             )
             repre_items_by_version_id[version_id][repre_id] = repre_item
 
