@@ -174,8 +174,8 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
-def regenerate_uv_tile_preview():
-    """Regenerate UV Tile Preview during playblast
+def reload_textures():
+    """Reload textures during playblast
     """
     original_texture_loading = cmds.ogs(query=True, reloadTextures=True)
     texture_files = cmds.ls(type="file")

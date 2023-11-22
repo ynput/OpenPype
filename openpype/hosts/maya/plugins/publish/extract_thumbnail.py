@@ -153,7 +153,7 @@ class ExtractThumbnail(publish.Extractor):
                     )
                 )
         if "textures" in preset["viewport_options"]:
-            lib.regenerate_uv_tile_preview()
+            lib.reload_textures()
         path = capture.capture(**preset)
         playblast = self._fix_playblast_output_path(path)
 

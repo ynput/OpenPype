@@ -44,7 +44,7 @@ class ExtractPlayblast(publish.Extractor):
                 )
             )
         if "textures" in preset["viewport_options"]:
-            lib.regenerate_uv_tile_preview()
+            lib.reload_textures()
         path = capture.capture(log=self.log, **preset)
         self.log.debug("playblast path  {}".format(path))
 
