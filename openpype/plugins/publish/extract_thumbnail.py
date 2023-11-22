@@ -27,7 +27,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
-    publishing_thumbnail = False
+    integrate_thumbnail = False
     target_size = {
         "type": "resize",
         "width": 1920,
@@ -155,7 +155,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             new_repre_tags = ["thumbnail"]
             # for workflows which needs to have thumbnails published as
             # separate representations `delete` tag should not be added
-            if not self.publishing_thumbnail:
+            if not self.integrate_thumbnail:
                 new_repre_tags.append("delete")
 
             new_repre = {
@@ -320,7 +320,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     def _get_resolution_arg(self, application):
         # get settings
         if self.target_size.get("type") == "source":
-            return
+            return []
 
         width = self.target_size["width"]
         height = self.target_size["height"]
@@ -329,3 +329,5 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             return ["-vf", "scale={0}:{1}".format(width, height)]
         elif application == "oiiotool":
             return ["-resize", "{0}x{1}".format(width, height)]
+
+        return []
