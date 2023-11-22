@@ -189,7 +189,7 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
 
         environment = RREnvList({
             "AVALON_PROJECT": anatomy_data["project"]["name"],
-            "AVALON_ASSET": anatomy_data["asset"],
+            "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": anatomy_data["task"]["name"],
             "OPENPYPE_USERNAME": anatomy_data["user"]
         })

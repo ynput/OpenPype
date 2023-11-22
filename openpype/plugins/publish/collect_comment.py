@@ -103,10 +103,10 @@ class CollectComment(
 
             instance.data["comment"] = instance_comment
             if instance_comment:
-                msg_end = " has comment set to: \"{}\"".format(
+                msg_end = "has comment set to: \"{}\"".format(
                     instance_comment)
             else:
-                msg_end = " does not have set comment"
+                msg_end = "does not have set comment"
             self.log.debug("Instance {} {}".format(instance_label, msg_end))
 
     def cleanup_comment(self, comment):

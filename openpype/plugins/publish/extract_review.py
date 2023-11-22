@@ -68,7 +68,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     ]
 
     # Supported extensions
-    image_exts = ["exr", "jpg", "jpeg", "png", "dpx"]
+    image_exts = ["exr", "jpg", "jpeg", "png", "dpx", "tga"]
     video_exts = ["mov", "mp4"]
     supported_exts = image_exts + video_exts
 
@@ -143,7 +143,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             custom_tags = repre.get("custom_tags")
             if "review" not in tags:
                 self.log.debug((
-                    "Repre: {} - Didn't found \"review\" in tags. Skipping"
+                    "Repre: {} - Didn't find \"review\" in tags. Skipping"
                 ).format(repre_name))
                 continue
 

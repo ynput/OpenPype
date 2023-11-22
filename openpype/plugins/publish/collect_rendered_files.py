@@ -54,6 +54,8 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
         staging_dir = data_object.get("stagingDir")
         if staging_dir:
             data_object["stagingDir"] = anatomy.fill_root(staging_dir)
+            self.log.debug("Filling stagingDir with root to: %s",
+                           data_object["stagingDir"])
 
     def _process_path(self, data, anatomy):
         """Process data of a single JSON publish metadata file.
@@ -108,7 +110,6 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             instance = self._context.create_instance(
                 instance_data.get("subset")
             )
-            self.log.debug("Filling stagingDir...")
 
             self._fill_staging_dir(instance_data, anatomy)
             instance.data.update(instance_data)
@@ -161,7 +162,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             anatomy.project_name
         ))
 
-        self.log.debug("anatomy: {}".format(anatomy.roots))
+        self.log.debug("Anatomy roots: {}".format(anatomy.roots))
         try:
             session_is_set = False
             for path in paths:

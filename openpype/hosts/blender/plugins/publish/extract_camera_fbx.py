@@ -6,7 +6,7 @@ from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
 
 
-class ExtractCamera(publish.Extractor):
+class ExtractCamera(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract as the camera as FBX."""
 
     label = "Extract Camera (FBX)"
@@ -15,9 +15,15 @@ class ExtractCamera(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.fbx"
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        instance_name = f"{asset_name}_{subset}"
+        filename = f"{instance_name}.fbx"
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
@@ -73,5 +79,5 @@ class ExtractCamera(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, representation)
