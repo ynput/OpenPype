@@ -15,7 +15,7 @@ from openpype.tools.ayon_utils.models import (
 )
 
 from .abstract import BackendLoaderController, FrontendLoaderController
-from .models import SelectionModel, ProductsModel, LoaderActionsModel
+from .models import SelectionModel, ProductsModel, LoaderActionsModel, SiteSyncModel
 
 
 class ExpectedSelection:
@@ -108,6 +108,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         self._products_model = ProductsModel(self)
         self._loader_actions_model = LoaderActionsModel(self)
         self._thumbnails_model = ThumbnailsModel()
+        self._sitesync_model = SiteSyncModel(self)
 
     @property
     def log(self):
@@ -143,8 +144,10 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         self._loader_actions_model.reset()
         self._projects_model.reset()
         self._thumbnails_model.reset()
+        self._sitesync_model.reset()
 
         self._projects_model.refresh()
+        self._sitesync_model.refresh()
 
         if not project_name and not folder_ids:
             context = self.get_current_context()
@@ -335,6 +338,27 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
             )
             self._loaded_products_cache.update_data(product_ids)
         return self._loaded_products_cache.get_data()
+
+    def is_sync_server_enabled(self, project_name):
+        return self._sitesync_model.is_site_sync_enabled(project_name)
+
+    def get_active_site_icon_def(self, project_name):
+        return self._sitesync_model.get_active_site_icon_def(project_name)
+
+    def get_remote_site_icon_def(self, project_name):
+        return self._sitesync_model.get_remote_site_icon_def(project_name)
+
+    def get_representations_count(self, project_name, version_ids):
+        return len(self.get_representation_items(project_name,
+                                                 version_ids))
+
+    def get_version_availability(self, project_name, version_ids):
+        return self._sitesync_model.get_version_availability(project_name,
+                                                             version_ids)
+
+    def get_representations_sync_status(self, project_name, representation_ids):
+        return self._sitesync_model.get_representations_sync_state(project_name,
+                                                                   representation_ids)
 
     def is_loaded_products_supported(self):
         return self._host is not None
