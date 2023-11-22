@@ -37,12 +37,10 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
     singleton_node_name = "renderingMain"
 
     render_settings = {}
-    # project_settings = {}
 
     @classmethod
     def apply_settings(cls, project_settings):
         cls.render_settings = project_settings["maya"]["RenderSettings"]
-        # cls.project_settings = project_settings
 
     def create(self, subset_name, instance_data, pre_create_data):
         # Only allow a single render instance to exist
