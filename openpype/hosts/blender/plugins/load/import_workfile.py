@@ -7,7 +7,7 @@ def append_workfile(context, fname, do_import):
     asset = context['asset']['name']
     subset = context['subset']['name']
 
-    group_name = plugin.asset_name(asset, subset)
+    group_name = plugin.prepare_scene_name(asset, subset)
 
     # We need to preserve the original names of the scenes, otherwise,
     # if there are duplicate names in the current workfile, the imported
@@ -52,7 +52,8 @@ class AppendBlendLoader(plugin.AssetLoader):
     color = "#775555"
 
     def load(self, context, name=None, namespace=None, data=None):
-        append_workfile(context, self.fname, False)
+        path = self.filepath_from_context(context)
+        append_workfile(context, path, False)
 
         # We do not containerize imported content, it remains unmanaged
         return
@@ -76,7 +77,8 @@ class ImportBlendLoader(plugin.AssetLoader):
     color = "#775555"
 
     def load(self, context, name=None, namespace=None, data=None):
-        append_workfile(context, self.fname, True)
+        path = self.filepath_from_context(context)
+        append_workfile(context, path, True)
 
         # We do not containerize imported content, it remains unmanaged
         return

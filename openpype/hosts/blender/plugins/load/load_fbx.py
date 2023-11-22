@@ -130,13 +130,13 @@ class FbxModelLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-        libpath = self.fname
+        libpath = self.filepath_from_context(context)
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        asset_name = plugin.asset_name(asset, subset)
+        asset_name = plugin.prepare_scene_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
+        group_name = plugin.prepare_scene_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)

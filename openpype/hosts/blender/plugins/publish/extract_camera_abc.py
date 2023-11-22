@@ -4,14 +4,16 @@ import bpy
 
 from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
-    """Extract as ABC."""
+class ExtractCameraABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
+    """Extract camera as ABC."""
 
-    label = "Extract ABC"
+    label = "Extract Camera (ABC)"
     hosts = ["blender"]
-    families = ["pointcache"]
+    families = ["camera"]
+    optional = True
 
     def process(self, instance):
         if not self.is_active(instance.data):
@@ -32,21 +34,22 @@ class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         asset_group = instance.data["transientData"]["instance_node"]
 
-        selected = []
-        for obj in instance:
-            if isinstance(obj, bpy.types.Object):
-                obj.select_set(True)
-                selected.append(obj)
+        # Need to cast to list because children is a tuple
+        selected = list(asset_group.children)
+        active = selected[0]
+
+        for obj in selected:
+            obj.select_set(True)
 
         context = plugin.create_blender_context(
-            active=asset_group, selected=selected)
+            active=active, selected=selected)
 
         with bpy.context.temp_override(**context):
             # We export the abc
             bpy.ops.wm.alembic_export(
                 filepath=filepath,
                 selected=True,
-                flatten=False
+                flatten=True
             )
 
         plugin.deselect_all()
@@ -64,12 +67,3 @@ class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         self.log.debug("Extracted instance '%s' to: %s",
                        instance.name, representation)
-
-
-class ExtractModelABC(ExtractABC):
-    """Extract model as ABC."""
-
-    label = "Extract Model ABC"
-    hosts = ["blender"]
-    families = ["model"]
-    optional = True
