@@ -174,7 +174,7 @@ class EqualizerHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         heartbeat_interval = os.getenv("AYON_TDE4_HEARTBEAT_INTERVAL") or 500
         tde4.setTimerCallbackFunction(
-            "EqualizerHost._timer", heartbeat_interval)
+            "EqualizerHost._timer", int(heartbeat_interval))
 
     @staticmethod
     def _timer():
