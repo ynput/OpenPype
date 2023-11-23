@@ -28,8 +28,8 @@ packages = [
 openpype = 'start:boot'
 
 [tool.poetry.dependencies]
-python = ">=3.9.1,<3.10"
-aiohttp = "^3.7"
+python = ">=3.9.13,<3.10"
+aiohttp = "^3.9.0"
 aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }
 appdirs = { git = "https://github.com/ActiveState/appdirs.git", branch = "master" }
@@ -69,7 +69,7 @@ slack-sdk = "^3.6.0"
 requests = "^2.25.1"
 pysftp = "^0.2.9"
 dropbox = "^11.20.0"
-aiohttp-middlewares = "^2.0.0"
+aiohttp-middlewares = { git = "https://github.com/playpauseandstop/aiohttp-middlewares.git", branch = "main" }
 Unidecode = "1.2.0"
 cryptography = "39.0.0"
 
