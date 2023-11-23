@@ -222,8 +222,14 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
 
     def get_representations_action_items(
             self, project_name, representation_ids):
-        return self._loader_actions_model.get_representations_action_items(
+        action_items = self._loader_actions_model.get_representations_action_items(
             project_name, representation_ids)
+
+        action_items.extend(self._sitesync_model.get_sitesync_action_items(
+            project_name, representation_ids)
+        )
+
+        return action_items
 
     def trigger_action_item(
         self,
@@ -233,6 +239,14 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         version_ids,
         representation_ids
     ):
+        if self._sitesync_model.is_sitesync_action(identifier):
+            self._sitesync_model.trigger_action_item(
+                identifier,
+                project_name,
+                representation_ids
+            )
+            return
+
         self._loader_actions_model.trigger_action_item(
             identifier,
             options,
