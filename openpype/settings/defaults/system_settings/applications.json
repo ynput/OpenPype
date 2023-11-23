@@ -1620,6 +1620,7 @@
         "label": "3DEqualizer",
         "icon": "{}/app_icons/3de4.png",
         "host_name": "equalizer",
+        "heartbeat_interval": 500,
         "environment": {},
         "variants": {
             "7-1v2": {

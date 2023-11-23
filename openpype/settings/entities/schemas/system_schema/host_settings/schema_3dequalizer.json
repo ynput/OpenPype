@@ -13,6 +13,10 @@
         {
             "type": "schema_template",
             "name": "template_host_unchangables"
+        }, {
+            "type": "number",
+            "key": "heartbeat_interval",
+            "label": "Qt Heartbeat Interval (ms)"
         },
         {
             "key": "environment",

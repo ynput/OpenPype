@@ -7,8 +7,10 @@ EQUALIZER_HOST_DIR = os.path.dirname(os.path.abspath(__file__))
 class EqualizerAddon(OpenPypeModule, IHostAddon):
     name = "equalizer"
     host_name = "equalizer"
+    heartbeat = 500
 
     def initialize(self, module_settings):
+        self.heartbeat = module_settings.get("heartbeat_interval", 500)
         self.enabled = True
 
     def add_implementation_envs(self, env, _app):
@@ -25,6 +27,7 @@ class EqualizerAddon(OpenPypeModule, IHostAddon):
                 startup_path)
 
         env["PYTHON_CUSTOM_SCRIPTS_3DE4"] = startup_path
+        env["AYON_TDE4_HEARTBEAT_INTERVAL"] = str(self.heartbeat)
 
     def get_launch_hook_paths(self, app):
         if app.host_name != self.host_name:
