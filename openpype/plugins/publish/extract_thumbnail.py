@@ -214,7 +214,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         oiio_default_colorspace = None
         # first look into representation colorspaceData, perhaps it has
         #   display and view
-        if not all([repre_display, repre_view]):
+        if all([repre_display, repre_view]):
             self.log.info(
                 "Using Display & View from "
                 "representation: '{} ({})'".format(
