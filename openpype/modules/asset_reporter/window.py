@@ -372,7 +372,8 @@ class AssetReporterWindow(QtWidgets.QDialog):
                         version = "hero"
                 finally:
                     refs.append({
-                        "subset": self._get_subset(linked["parent"], db[project]),
+                        "subset": self._get_subset(
+                            linked["parent"], db[project]),
                         "version": version
                     })
 
