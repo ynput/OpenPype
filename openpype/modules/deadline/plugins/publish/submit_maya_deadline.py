@@ -97,7 +97,6 @@ class VRayPluginInfo(object):
 @attr.s
 class ArnoldPluginInfo(object):
     ArnoldFile = attr.ib(default=None)
-    ArnoldVerbose = attr.ib(default=2)
 
 
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
@@ -661,12 +660,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # Plugin Info
         ass_file, _ = os.path.splitext(data["output_filename_0"])
         ass_filepath = ass_file + ".ass"
-        current_verbosity_level = cmds.getAttr(
-            "defaultArnoldRenderOptions.log_verbosity")
 
         plugin_info = ArnoldPluginInfo(
-            ArnoldFile=ass_filepath,
-            ArnoldVerbose=current_verbosity_level
+            ArnoldFile=ass_filepath
         )
 
         return job_info, attr.asdict(plugin_info)
