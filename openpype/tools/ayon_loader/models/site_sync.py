@@ -6,15 +6,7 @@ class SiteSyncModel:
         self._controller = controller
 
         manager = ModulesManager()
-        self._sync_module = manager.modules_by_name.get("sitesync")
-
-    @property
-    def sync_module(self):
-        if not self._sync_module:
-            manager = ModulesManager()
-            self._sync_module = manager.modules_by_name.get("sync_server")
-
-        return self._sync_module
+        self._sitesync_addon = manager.modules_by_name.get("sync_server")
 
     def reset(self):
         pass
@@ -23,32 +15,36 @@ class SiteSyncModel:
         pass
 
     def is_site_sync_enabled(self, project_name):
-        return project_name in self.sync_module.get_enabled_projects()
+        return self._sitesync_addon.is_project_enabled(project_name,
+                                                       single=True)
 
+    # TODO cache
     def get_site_icons(self):
-        return self.sync_module.get_site_icons()
+        return self._sitesync_addon.get_site_icons()
 
+    # TODO cache
     def get_active_site(self, project_name):
         if not project_name:
             return
-        return self.sync_module.get_active_site(project_name)
+        return self._sitesync_addon.get_active_site(project_name)
 
+    # TODO cache
     def get_remote_site(self, project_name):
         if not project_name:
             return
-        return self.sync_module.get_remote_site(project_name)
+        return self._sitesync_addon.get_remote_site(project_name)
 
     def get_active_site_icon_def(self, project_name):
         if not project_name:
             return
-        provider = self.sync_module.get_provider_for_site(project_name,
+        provider = self._sitesync_addon.get_provider_for_site(project_name,
             self.get_active_site(project_name))
         return self.get_site_icons().get(provider)
 
     def get_remote_site_icon_def(self, project_name):
         if not project_name:
             return
-        provider = self.sync_module.get_provider_for_site(project_name,
+        provider = self._sitesync_addon.get_provider_for_site(project_name,
             self.get_remote_site(project_name))
         return self.get_site_icons().get(provider)
 
@@ -67,7 +63,7 @@ class SiteSyncModel:
                 for version_id in version_ids
             }
 
-        version_avail = self.sync_module.get_version_availability(
+        version_avail = self._sitesync_addon.get_version_availability(
             project_name,
             version_ids,
             self.get_active_site(project_name),
@@ -80,7 +76,7 @@ class SiteSyncModel:
         Returns:
             dict[str, tuple[float, float]]
         """
-        return self.sync_module.get_representations_sync_state(
+        return self._sitesync_addon.get_representations_sync_state(
             project_name,
             representation_ids,
             self.get_active_site(project_name),
