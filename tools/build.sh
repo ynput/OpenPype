@@ -196,6 +196,8 @@ if [ "$disable_submodule_update" == 1 ]; then
     echo -e "${BIGreen}>>>${RST} Fixing libs ..."
     mv "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/dependencies/cx_Freeze" "$openpype_root/build/OpenPype $openpype_version.app/Contents/MacOS/lib/"  || { echo -e "${BIRed}!!!>${RST} ${BIYellow}Can't move cx_Freeze libs${RST}"; return 1; }
 
+    # force hide icon from Dock
+    defaults write "$openpype_root/build/OpenPype $openpype_version.app/Contents/Info" LSUIElement 1
 
     # fix code signing issue
     echo -e "${BIGreen}>>>${RST} Fixing code signatures ...\c"

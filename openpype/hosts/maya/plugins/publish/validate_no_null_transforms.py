@@ -5,7 +5,15 @@ import openpype.hosts.maya.api.action
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
+
+
+def _as_report_list(values, prefix="- ", suffix="\n"):
+    """Return list as bullet point list for a report"""
+    if not values:
+        return ""
+    return prefix + (suffix + prefix).join(values)
 
 
 def has_shape_children(node):
@@ -64,7 +72,12 @@ class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
         """Process all the transform nodes in the instance """
         invalid = self.get_invalid(instance)
         if invalid:
-            raise ValueError("Empty transforms found: {0}".format(invalid))
+            raise PublishValidationError(
+                "Empty transforms found without shapes:\n\n{0}".format(
+                    _as_report_list(sorted(invalid))
+                ),
+                title="Empty transforms"
+            )
 
     @classmethod
     def repair(cls, instance):

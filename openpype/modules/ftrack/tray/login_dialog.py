@@ -1,5 +1,3 @@
-import os
-
 import requests
 from qtpy import QtCore, QtGui, QtWidgets
 

@@ -8,16 +8,13 @@
         {
             "key": "imageio",
             "type": "dict",
-            "label": "Color Management (ImageIO)",
+            "label": "Color Management (remapped to OCIO)",
+            "collapsible": true,
             "is_group": true,
             "children": [
                 {
-                    "type": "schema",
-                    "name": "schema_imageio_config"
-                },
-                {
-                    "type": "schema",
-                    "name": "schema_imageio_file_rules"
+                    "type": "template",
+                    "name": "template_host_color_management_remapped"
                 },
                 {
                     "key": "project",
@@ -48,9 +45,13 @@
                     ]
                 },
                 {
+                    "type": "label",
+                    "label": "Profile names mapping settings is deprecated use <a href=\"settings://project_settings/flame/imageio/remapping\"><b>./imagio/remapping</b></a> instead"
+                },
+                {
                     "key": "profilesMapping",
                     "type": "dict",
-                    "label": "Profile names mapping",
+                    "label": "Profile names mapping [deprecated]",
                     "collapsible": true,
                     "children": [
                         {
@@ -362,7 +363,7 @@
                                     },
                                     {
                                         "key": "colorspace_out",
-                                        "label": "Output color (imageio)",
+                                        "label": "Output color",
                                         "type": "text",
                                         "default": "linear"
                                     },

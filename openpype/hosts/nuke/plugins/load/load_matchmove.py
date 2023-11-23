@@ -9,7 +9,7 @@ class MatchmoveLoader(load.LoaderPlugin):
 
     families = ["matchmove"]
     representations = ["*"]
-    extension = {"py"}
+    extensions = {"py"}
 
     defaults = ["Camera", "Object"]
 
@@ -18,8 +18,9 @@ class MatchmoveLoader(load.LoaderPlugin):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        if self.fname.lower().endswith(".py"):
-            exec(open(self.fname).read())
+        path = self.filepath_from_context(context)
+        if path.lower().endswith(".py"):
+            exec(open(path).read())
 
         else:
             msg = "Unsupported script type"

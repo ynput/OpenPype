@@ -30,11 +30,11 @@ class ValidateFilenameHasExtension(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        path = instance.data["path"]
+        path = instance.data["expectedFiles"][0]
         fname, ext = os.path.splitext(path)
 
         if not ext:
-            tool = instance[0]
+            tool = instance.data["tool"]
             cls.log.error("%s has no extension specified" % tool.Name)
             return [tool]
 

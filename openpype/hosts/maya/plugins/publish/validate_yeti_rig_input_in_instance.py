@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
@@ -19,7 +22,7 @@ class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Yeti Rig has invalid input meshes")
+            raise PublishValidationError("Yeti Rig has invalid input meshes")
 
     @classmethod
     def get_invalid(cls, instance):
@@ -34,8 +37,8 @@ class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
 
         # Allow publish without input meshes.
         if not shapes:
-            cls.log.info("Found no input meshes for %s, skipping ..."
-                         % instance)
+            cls.log.debug("Found no input meshes for %s, skipping ..."
+                          % instance)
             return []
 
         # check if input node is part of groomRig instance

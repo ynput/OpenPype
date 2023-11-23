@@ -11,16 +11,20 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype import AYON_SERVER_ENABLED
 from openpype.host import HostBase
 from openpype.client import (
     get_project,
     get_asset_by_id,
     get_asset_by_name,
     version_is_latest,
+    get_asset_name_identifier,
+    get_ayon_server_api_connection,
 )
 from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
 from openpype.settings import get_project_settings
+from openpype.tests.lib import is_in_tests
 
 from .publish.lib import filter_pyblish_plugins
 from .anatomy import Anatomy
@@ -35,12 +39,13 @@ from . import (
     register_inventory_action_path,
     register_creator_plugin_path,
     deregister_loader_plugin_path,
+    deregister_inventory_action_path
 )
 
 
 _is_installed = False
 _process_id = None
-_registered_root = {"_": ""}
+_registered_root = {"_": {}}
 _registered_host = {"_": None}
 # Keep modules manager (and it's modules) in memory
 # - that gives option to register modules' callbacks
@@ -54,6 +59,7 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 # Global plugin paths
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def _get_modules_manager():
@@ -80,15 +86,22 @@ def register_root(path):
 
 
 def registered_root():
-    """Return currently registered root"""
-    root = _registered_root["_"]
-    if root:
-        return root
+    """Return registered roots from current project anatomy.
 
-    root = legacy_io.Session.get("AVALON_PROJECTS")
-    if root:
-        return os.path.normpath(root)
-    return ""
+    Consider this does return roots only for current project and current
+        platforms, only if host was installer using 'install_host'.
+
+    Deprecated:
+        Please use project 'Anatomy' to get roots. This function is still used
+            at current core functions of load logic, but that will change
+            in future and this function will be removed eventually. Using this
+            function at new places can cause problems in the future.
+
+    Returns:
+        dict[str, str]: Root paths.
+    """
+
+    return _registered_root["_"]
 
 
 def install_host(host):
@@ -101,6 +114,10 @@ def install_host(host):
     global _is_installed
 
     _is_installed = True
+
+    # Make sure global AYON connection has set site id and version
+    if AYON_SERVER_ENABLED:
+        get_ayon_server_api_connection()
 
     legacy_io.install()
     modules_manager = _get_modules_manager()
@@ -140,6 +157,10 @@ def install_host(host):
     else:
         pyblish.api.register_target("local")
 
+    if is_in_tests():
+        print("Registering pyblish target: automated")
+        pyblish.api.register_target("automated")
+
     project_name = os.environ.get("AVALON_PROJECT")
     host_name = os.environ.get("AVALON_APP")
 
@@ -158,6 +179,7 @@ def install_openpype_plugins(project_name=None, host_name=None):
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     pyblish.api.register_discovery_filter(filter_pyblish_plugins)
     register_loader_plugin_path(LOAD_PATH)
+    register_inventory_action_path(INVENTORY_PATH)
 
     if host_name is None:
         host_name = os.environ.get("AVALON_APP")
@@ -177,6 +199,11 @@ def install_openpype_plugins(project_name=None, host_name=None):
         host_name)
     for path in load_plugin_paths:
         register_loader_plugin_path(path)
+
+    inventory_action_paths = modules_manager.collect_inventory_action_paths(
+        host_name)
+    for path in inventory_action_paths:
+        register_inventory_action_path(path)
 
     if project_name is None:
         project_name = os.environ.get("AVALON_PROJECT")
@@ -223,6 +250,7 @@ def uninstall_host():
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     pyblish.api.deregister_discovery_filter(filter_pyblish_plugins)
     deregister_loader_plugin_path(LOAD_PATH)
+    deregister_inventory_action_path(INVENTORY_PATH)
     log.info("Global plug-ins unregistred")
 
     deregister_host()
@@ -311,7 +339,7 @@ def get_current_host_name():
     """Current host name.
 
     Function is based on currently registered host integration or environment
-    variant 'AVALON_APP'.
+    variable 'AVALON_APP'.
 
     Returns:
         Union[str, None]: Name of host integration in current process or None.
@@ -324,6 +352,26 @@ def get_current_host_name():
 
 
 def get_global_context():
+    """Global context defined in environment variables.
+
+    Values here may not reflect current context of host integration. The
+    function can be used on startup before a host is registered.
+
+    Use 'get_current_context' to make sure you'll get current host integration
+    context info.
+
+    Example:
+        {
+            "project_name": "Commercial",
+            "asset_name": "Bunny",
+            "task_name": "Animation",
+        }
+
+    Returns:
+        dict[str, Union[str, None]]: Context defined with environment
+            variables.
+    """
+
     return {
         "project_name": os.environ.get("AVALON_PROJECT"),
         "asset_name": os.environ.get("AVALON_ASSET"),
@@ -446,6 +494,27 @@ def get_template_data_from_session(session=None, system_settings=None):
     )
 
 
+def get_current_context_template_data(system_settings=None):
+    """Prepare template data for current context.
+
+    Args:
+        system_settings (Optional[Dict[str, Any]]): Prepared system settings.
+
+    Returns:
+        Dict[str, Any] Template data for current context.
+    """
+
+    context = get_current_context()
+    project_name = context["project_name"]
+    asset_name = context["asset_name"]
+    task_name = context["task_name"]
+    host_name = get_current_host_name()
+
+    return get_template_data_with_names(
+        project_name, asset_name, task_name, host_name, system_settings
+    )
+
+
 def get_workdir_from_session(session=None, template_key=None):
     """Template data for template fill from session keys.
 
@@ -531,14 +600,12 @@ def compute_session_changes(
         Dict[str, str]: Changes in the Session dictionary.
     """
 
-    changes = {}
-
     # Get asset document and asset
     if not asset_doc:
         task_name = None
         asset_name = None
     else:
-        asset_name = asset_doc["name"]
+        asset_name = get_asset_name_identifier(asset_doc)
 
     # Detect any changes compared session
     mapping = {

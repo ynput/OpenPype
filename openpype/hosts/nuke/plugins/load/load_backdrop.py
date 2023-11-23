@@ -6,8 +6,8 @@ from openpype.client import (
     get_last_version_by_subset_id,
 )
 from openpype.pipeline import (
-    legacy_io,
     load,
+    get_current_project_name,
     get_representation_path,
 )
 from openpype.hosts.nuke.api.lib import (
@@ -27,7 +27,7 @@ class LoadBackdropNodes(load.LoaderPlugin):
 
     families = ["workfile", "nukenodes"]
     representations = ["*"]
-    extension = {"nk"}
+    extensions = {"nk"}
 
     label = "Import Nuke Nodes"
     order = 0
@@ -64,15 +64,14 @@ class LoadBackdropNodes(load.LoaderPlugin):
 
         data_imprint = {
             "version": vname,
-            "colorspaceInput": colorspace,
-            "objectName": object_name
+            "colorspaceInput": colorspace
         }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
 
         # getting file path
-        file = self.fname.replace("\\", "/")
+        file = self.filepath_from_context(context).replace("\\", "/")
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -190,11 +189,11 @@ class LoadBackdropNodes(load.LoaderPlugin):
 
         # get main variables
         # Get version from io
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         # get corresponding node
-        GN = nuke.toNode(container['objectName'])
+        GN = container["node"]
 
         file = get_representation_path(representation).replace("\\", "/")
 
@@ -207,10 +206,11 @@ class LoadBackdropNodes(load.LoaderPlugin):
 
         add_keys = ["source", "author", "fps"]
 
-        data_imprint = {"representation": str(representation["_id"]),
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "representation": str(representation["_id"]),
+            "version": vname,
+            "colorspaceInput": colorspace,
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -252,6 +252,6 @@ class LoadBackdropNodes(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
         with viewer_update_and_undo_stop():
             nuke.delete(node)

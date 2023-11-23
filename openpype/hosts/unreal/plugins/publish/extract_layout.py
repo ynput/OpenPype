@@ -8,7 +8,7 @@ from unreal import EditorLevelLibrary as ell
 from unreal import EditorAssetLibrary as eal
 
 from openpype.client import get_representation_by_name
-from openpype.pipeline import legacy_io, publish
+from openpype.pipeline import publish
 
 
 class ExtractLayout(publish.Extractor):
@@ -32,7 +32,7 @@ class ExtractLayout(publish.Extractor):
             "Wrong level loaded"
 
         json_data = []
-        project_name = legacy_io.active_project()
+        project_name = instance.context.data["projectName"]
 
         for member in instance[:]:
             actor = ell.get_actor_reference(member)
@@ -48,7 +48,7 @@ class ExtractLayout(publish.Extractor):
                 # Search the reference to the Asset Container for the object
                 path = unreal.Paths.get_path(mesh.get_path_name())
                 filter = unreal.ARFilter(
-                    class_names=["AssetContainer"], package_paths=[path])
+                    class_names=["AyonAssetContainer"], package_paths=[path])
                 ar = unreal.AssetRegistryHelpers.get_asset_registry()
                 try:
                     asset_container = ar.get_assets(filter)[0].get_asset()

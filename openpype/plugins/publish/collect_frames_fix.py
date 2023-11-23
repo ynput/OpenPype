@@ -26,55 +26,72 @@ class CollectFramesFixDef(
     targets = ["local"]
     hosts = ["nuke"]
     families = ["render", "prerender"]
-    enabled = True
+
+    rewrite_version_enable = False
 
     def process(self, instance):
         attribute_values = self.get_attr_values_from_data(instance.data)
         frames_to_fix = attribute_values.get("frames_to_fix")
+
         rewrite_version = attribute_values.get("rewrite_version")
 
-        if frames_to_fix:
-            instance.data["frames_to_fix"] = frames_to_fix
+        if not frames_to_fix:
+            return
 
-            subset_name = instance.data["subset"]
-            asset_name = instance.data["asset"]
+        instance.data["frames_to_fix"] = frames_to_fix
 
-            project_entity = instance.data["projectEntity"]
-            project_name = project_entity["name"]
+        subset_name = instance.data["subset"]
+        asset_name = instance.data["asset"]
 
-            version = get_last_version_by_subset_name(project_name,
-                                                      subset_name,
-                                                      asset_name=asset_name)
-            if not version:
-                self.log.warning("No last version found, "
-                                 "re-render not possible")
-                return
+        project_entity = instance.data["projectEntity"]
+        project_name = project_entity["name"]
 
-            representations = get_representations(project_name,
-                                                  version_ids=[version["_id"]])
-            published_files = []
-            for repre in representations:
-                if repre["context"]["family"] not in self.families:
-                    continue
+        version = get_last_version_by_subset_name(
+            project_name,
+            subset_name,
+            asset_name=asset_name
+        )
+        if not version:
+            self.log.warning(
+                "No last version found, re-render not possible"
+            )
+            return
 
-                for file_info in repre.get("files"):
-                    published_files.append(file_info["path"])
+        representations = get_representations(
+            project_name, version_ids=[version["_id"]]
+        )
+        published_files = []
+        for repre in representations:
+            if repre["context"]["family"] not in self.families:
+                continue
 
-            instance.data["last_version_published_files"] = published_files
-            self.log.debug("last_version_published_files::{}".format(
-                instance.data["last_version_published_files"]))
+            for file_info in repre.get("files"):
+                published_files.append(file_info["path"])
 
-            if rewrite_version:
-                instance.data["version"] = version["name"]
-                # limits triggering version validator
-                instance.data.pop("latestVersion")
+        instance.data["last_version_published_files"] = published_files
+        self.log.debug("last_version_published_files::{}".format(
+            instance.data["last_version_published_files"]))
+
+        if self.rewrite_version_enable and rewrite_version:
+            instance.data["version"] = version["name"]
+            # limits triggering version validator
+            instance.data.pop("latestVersion")
 
     @classmethod
     def get_attribute_defs(cls):
-        return [
+        attributes = [
             TextDef("frames_to_fix", label="Frames to fix",
                     placeholder="5,10-15",
-                    regex="[0-9,-]+"),
-            BoolDef("rewrite_version", label="Rewrite latest version",
-                    default=False),
+                    regex="[0-9,-]+")
         ]
+
+        if cls.rewrite_version_enable:
+            attributes.append(
+                BoolDef(
+                    "rewrite_version",
+                    label="Rewrite latest version",
+                    default=False
+                )
+            )
+
+        return attributes

@@ -1,6 +1,7 @@
 import os
 import datetime
 import copy
+import platform
 from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype.client import (
@@ -14,7 +15,12 @@ from openpype.client.operations import (
 )
 from openpype import style
 from openpype import resources
-from openpype.pipeline import Anatomy
+from openpype.pipeline import (
+    Anatomy,
+    get_current_project_name,
+    get_current_asset_name,
+    get_current_task_name,
+)
 from openpype.pipeline import legacy_io
 from openpype.tools.utils.assets_widget import SingleSelectAssetsWidget
 from openpype.tools.utils.tasks_widget import TasksWidget
@@ -94,6 +100,19 @@ class SidePanelWidget(QtWidgets.QWidget):
         self._on_note_change()
         self.save_clicked.emit()
 
+    def get_user_name(self, file):
+        """Get user name from file path"""
+        # Only run on Unix because pwd module is not available on Windows.
+        # NOTE: we tried adding "win32security" module but it was not working
+        # on all hosts so we decided to just support Linux until migration
+        # to Ayon
+        if platform.system().lower() == "windows":
+            return None
+        import pwd
+
+        filestat = os.stat(file)
+        return pwd.getpwuid(filestat.st_uid).pw_name
+
     def set_context(self, asset_id, task_name, filepath, workfile_doc):
         # Check if asset, task and file are selected
         # NOTE workfile document is not requirement
@@ -134,8 +153,14 @@ class SidePanelWidget(QtWidgets.QWidget):
             "<b>Created:</b>",
             creation_time.strftime(datetime_format),
             "<b>Modified:</b>",
-            modification_time.strftime(datetime_format)
+            modification_time.strftime(datetime_format),
         )
+        username = self.get_user_name(filepath)
+        if username:
+            lines += (
+                "<b>User:</b>",
+                username,
+            )
         self._details_input.appendHtml("<br>".join(lines))
 
     def get_workfile_data(self):
@@ -265,8 +290,8 @@ class Window(QtWidgets.QWidget):
 
         if use_context is None or use_context is True:
             context = {
-                "asset": legacy_io.Session["AVALON_ASSET"],
-                "task": legacy_io.Session["AVALON_TASK"]
+                "asset": get_current_asset_name(),
+                "task": get_current_task_name()
             }
             self.set_context(context)
 
@@ -276,7 +301,7 @@ class Window(QtWidgets.QWidget):
 
     @property
     def project_name(self):
-        return legacy_io.Session["AVALON_PROJECT"]
+        return get_current_project_name()
 
     def showEvent(self, event):
         super(Window, self).showEvent(event)
@@ -305,7 +330,7 @@ class Window(QtWidgets.QWidget):
         workfile_doc = None
         if asset_id and task_name and filepath:
             filename = os.path.split(filepath)[1]
-            project_name = legacy_io.active_project()
+            project_name = self.project_name
             workfile_doc = get_workfile_info(
                 project_name, asset_id, task_name, filename
             )
@@ -336,7 +361,7 @@ class Window(QtWidgets.QWidget):
         if not update_data:
             return
 
-        project_name = legacy_io.active_project()
+        project_name = self.project_name
 
         session = OperationsSession()
         session.update_entity(
@@ -353,7 +378,7 @@ class Window(QtWidgets.QWidget):
             return
 
         filename = os.path.split(filepath)[1]
-        project_name = legacy_io.active_project()
+        project_name = self.project_name
         return get_workfile_info(
             project_name, asset_id, task_name, filename
         )
@@ -365,7 +390,7 @@ class Window(QtWidgets.QWidget):
 
         workdir, filename = os.path.split(filepath)
 
-        project_name = legacy_io.active_project()
+        project_name = self.project_name
         asset_id = self.assets_widget.get_selected_asset_id()
         task_name = self.tasks_widget.get_selected_task_name()
 

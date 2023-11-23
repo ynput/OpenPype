@@ -1,4 +1,4 @@
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class MayaPreOpenWorkfilePostInitialization(PreLaunchHook):
@@ -6,7 +6,8 @@ class MayaPreOpenWorkfilePostInitialization(PreLaunchHook):
 
     # Before AddLastWorkfileToLaunchArgs.
     order = 9
-    app_groups = ["maya"]
+    app_groups = {"maya"}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
 

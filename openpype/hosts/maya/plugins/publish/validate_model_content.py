@@ -3,7 +3,10 @@ from maya import cmds
 import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    PublishValidationError
+)
 
 
 class ValidateModelContent(pyblish.api.InstancePlugin):
@@ -28,7 +31,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
         content_instance = instance.data.get("setMembers", None)
         if not content_instance:
             cls.log.error("Instance has no nodes!")
-            return True
+            return [instance.data["name"]]
 
         # All children will be included in the extracted export so we also
         # validate *all* descendents of the set members and we skip any
@@ -60,15 +63,10 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
             return True
 
         # Top group
-        assemblies = cmds.ls(content_instance, assemblies=True, long=True)
-        if len(assemblies) != 1 and cls.validate_top_group:
+        top_parents = set([x.split("|")[1] for x in content_instance])
+        if cls.validate_top_group and len(top_parents) != 1:
             cls.log.error("Must have exactly one top group")
-            return assemblies
-        if len(assemblies) == 0:
-            cls.log.warning("No top group found. "
-                            "(Are there objects in the instance?"
-                            " Or is it parented in another group?)")
-            return assemblies or True
+            return top_parents
 
         def _is_visible(node):
             """Return whether node is visible"""
@@ -79,11 +77,11 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
                                   visibility=True)
 
         # The roots must be visible (the assemblies)
-        for assembly in assemblies:
-            if not _is_visible(assembly):
-                cls.log.error("Invisible assembly (root node) is not "
-                              "allowed: {0}".format(assembly))
-                invalid.add(assembly)
+        for parent in top_parents:
+            if not _is_visible(parent):
+                cls.log.error("Invisible parent (root node) is not "
+                              "allowed: {0}".format(parent))
+                invalid.add(parent)
 
         # Ensure at least one shape is visible
         if not any(_is_visible(shape) for shape in shapes):
@@ -97,4 +95,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("Model content is invalid. See log.")
+            raise PublishValidationError(
+                title="Model content is invalid",
+                message="See log for more details"
+            )

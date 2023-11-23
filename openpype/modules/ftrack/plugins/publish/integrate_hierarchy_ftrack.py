@@ -63,7 +63,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
     """
 
     order = pyblish.api.IntegratorOrder - 0.04
-    label = 'Integrate Hierarchy To Ftrack'
+    label = "Integrate Hierarchy To Ftrack"
     families = ["shot"]
     hosts = [
         "hiero",
@@ -94,14 +94,13 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 "Project \"{}\" was not found on ftrack.".format(project_name)
             )
 
-        self.context = context
         self.session = session
         self.ft_project = project
         self.task_types = self.get_all_task_types(project)
         self.task_statuses = self.get_task_statuses(project)
 
         # import ftrack hierarchy
-        self.import_to_ftrack(project_name, hierarchy_context)
+        self.import_to_ftrack(context, project_name, hierarchy_context)
 
     def query_ftrack_entitites(self, session, ft_project):
         project_id = ft_project["id"]
@@ -227,7 +226,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         return output
 
-    def import_to_ftrack(self, project_name, hierarchy_context):
+    def import_to_ftrack(self, context, project_name, hierarchy_context):
         # Prequery hiearchical custom attributes
         hier_attrs = get_pype_attr(self.session)[1]
         hier_attr_by_key = {
@@ -258,7 +257,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             self.session, matching_entities, hier_attrs)
 
         # Get ftrack api module (as they are different per python version)
-        ftrack_api = self.context.data["ftrackPythonModule"]
+        ftrack_api = context.data["ftrackPythonModule"]
 
         # Use queue of hierarchy items to process
         import_queue = collections.deque()
@@ -292,7 +291,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             # CUSTOM ATTRIBUTES
             custom_attributes = entity_data.get('custom_attributes', {})
             instances = []
-            for instance in self.context:
+            for instance in context:
                 instance_asset_name = instance.data.get("asset")
                 if (
                     instance_asset_name
@@ -369,6 +368,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 if task_name:
                     instances_by_task_name[task_name.lower()].append(instance)
 
+            ftrack_status_by_task_id = context.data["ftrackStatusByTaskId"]
             tasks = entity_data.get('tasks', [])
             existing_tasks = []
             tasks_to_create = []
@@ -378,7 +378,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     existing_tasks.append(task_name_low)
 
                     for instance in instances_by_task_name[task_name_low]:
-                        instance["ftrackTask"] = child
+                        instance.data["ftrackTask"] = child
 
             for task_name in tasks:
                 task_type = tasks[task_name]["type"]
@@ -389,11 +389,11 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
             for task_name, task_type in tasks_to_create:
                 task_entity = self.create_task(
-                    name=task_name,
-                    task_type=task_type,
-                    parent=entity
+                    task_name,
+                    task_type,
+                    entity,
+                    ftrack_status_by_task_id
                 )
-
                 for instance in instances_by_task_name[task_name.lower()]:
                     instance.data["ftrackTask"] = task_entity
 
@@ -481,7 +481,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             for status in task_workflow_statuses
         }
 
-    def create_task(self, name, task_type, parent):
+    def create_task(self, name, task_type, parent, ftrack_status_by_task_id):
         filter_data = {
             "task_names": name,
             "task_types": task_type
@@ -491,12 +491,14 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             filter_data
         )
         status_id = None
+        status_name = None
         if profile:
             status_name = profile["status_name"]
             status_name_low = status_name.lower()
             for _status_id, status in self.task_statuses.items():
                 if status["name"].lower() == status_name_low:
                     status_id = _status_id
+                    status_name = status["name"]
                     break
 
             if status_id is None:
@@ -523,6 +525,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             self.session._configure_locations()
             six.reraise(tp, value, tb)
 
+        if status_id is not None:
+            ftrack_status_by_task_id[task["id"]] = None
         return task
 
     def _get_active_assets(self, context):

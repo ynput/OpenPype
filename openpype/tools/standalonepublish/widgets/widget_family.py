@@ -10,6 +10,7 @@ from openpype.client import (
 )
 from openpype.settings import get_project_settings
 from openpype.pipeline import LegacyCreator
+from openpype.pipeline.version_start import get_versioning_start
 from openpype.pipeline.create import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     TaskNotSetError,
@@ -128,7 +129,8 @@ class FamilyWidget(QtWidgets.QWidget):
             'family_preset_key': key,
             'family': family,
             'subset': self.input_result.text(),
-            'version': self.version_spinbox.value()
+            'version': self.version_spinbox.value(),
+            'use_next_available_version': self.version_checkbox.isChecked(),
         }
         return data
 
@@ -298,7 +300,15 @@ class FamilyWidget(QtWidgets.QWidget):
         project_name = self.dbcon.active_project()
         asset_name = self.asset_name
         subset_name = self.input_result.text()
-        version = 1
+        plugin = self.list_families.currentItem().data(PluginRole)
+        family = plugin.family.rsplit(".", 1)[-1]
+        version = get_versioning_start(
+            project_name,
+            "standalonepublisher",
+            task_name=self.dbcon.Session["AVALON_TASK"],
+            family=family,
+            subset=subset_name
+        )
 
         asset_doc = None
         subset_doc = None

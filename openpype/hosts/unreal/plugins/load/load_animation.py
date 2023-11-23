@@ -11,7 +11,7 @@ from unreal import MovieSceneSkeletalAnimationSection
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     get_representation_path,
-    AVALON_CONTAINER_ID
+    AYON_CONTAINER_ID
 )
 from openpype.hosts.unreal.api import plugin
 from openpype.hosts.unreal.api import pipeline as unreal_pipeline
@@ -26,7 +26,7 @@ class AnimationFBXLoader(plugin.Loader):
     icon = "cube"
     color = "orange"
 
-    def _process(self, asset_dir, asset_name, instance_name):
+    def _process(self, path, asset_dir, asset_name, instance_name):
         automated = False
         actor = None
 
@@ -55,7 +55,7 @@ class AnimationFBXLoader(plugin.Loader):
 
         asset_doc = get_current_project_asset(fields=["data.fps"])
 
-        task.set_editor_property('filename', self.fname)
+        task.set_editor_property('filename', path)
         task.set_editor_property('destination_path', asset_dir)
         task.set_editor_property('destination_name', asset_name)
         task.set_editor_property('replace_existing', False)
@@ -139,9 +139,9 @@ class AnimationFBXLoader(plugin.Loader):
         Returns:
             list(str): list of container content
         """
-        # Create directory for asset and avalon container
+        # Create directory for asset and Ayon container
         hierarchy = context.get('asset').get('data').get('parents')
-        root = "/Game/OpenPype"
+        root = "/Game/Ayon"
         asset = context.get('asset').get('name')
         suffix = "_CON"
         asset_name = f"{asset}_{name}" if asset else f"{name}"
@@ -156,7 +156,7 @@ class AnimationFBXLoader(plugin.Loader):
             package_paths=[f"{root}/{hierarchy[0]}"],
             recursive_paths=False)
         levels = ar.get_assets(_filter)
-        master_level = levels[0].get_editor_property('object_path')
+        master_level = levels[0].get_asset().get_path_name()
 
         hierarchy_dir = root
         for h in hierarchy:
@@ -168,7 +168,7 @@ class AnimationFBXLoader(plugin.Loader):
             package_paths=[f"{hierarchy_dir}/"],
             recursive_paths=True)
         levels = ar.get_assets(_filter)
-        level = levels[0].get_editor_property('object_path')
+        level = levels[0].get_asset().get_path_name()
 
         unreal.EditorLevelLibrary.save_all_dirty_levels()
         unreal.EditorLevelLibrary.load_level(level)
@@ -177,14 +177,15 @@ class AnimationFBXLoader(plugin.Loader):
 
         EditorAssetLibrary.make_directory(asset_dir)
 
-        libpath = self.fname.replace("fbx", "json")
+        path = self.filepath_from_context(context)
+        libpath = path.replace(".fbx", ".json")
 
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
         instance_name = data.get("instance_name")
 
-        animation = self._process(asset_dir, asset_name, instance_name)
+        animation = self._process(path, asset_dir, asset_name, instance_name)
 
         asset_content = EditorAssetLibrary.list_assets(
             hierarchy_dir, recursive=True, include_folder=False)
@@ -223,8 +224,8 @@ class AnimationFBXLoader(plugin.Loader):
             container=container_name, path=asset_dir)
 
         data = {
-            "schema": "openpype:container-2.0",
-            "id": AVALON_CONTAINER_ID,
+            "schema": "ayon:container-2.0",
+            "id": AYON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,
             "container_name": container_name,

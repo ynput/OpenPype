@@ -7,7 +7,7 @@ from openpype.hosts.unreal.api.plugin import (
 class CreateLayout(UnrealActorCreator):
     """Layout output for character rigs."""
 
-    identifier = "io.openpype.creators.unreal.layout"
+    identifier = "io.ayon.creators.unreal.layout"
     label = "Layout"
     family = "layout"
     icon = "cubes"

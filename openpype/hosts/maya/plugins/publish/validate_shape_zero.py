@@ -7,6 +7,7 @@ from openpype.hosts.maya.api import lib
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     RepairAction,
+    PublishValidationError
 )
 
 
@@ -67,5 +68,30 @@ class ValidateShapeZero(pyblish.api.Validator):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise ValueError("Shapes found with non-zero component tweaks: "
-                             "{0}".format(invalid))
+            raise PublishValidationError(
+                title="Shape Component Tweaks",
+                message="Shapes found with non-zero component tweaks: '{}'"
+                        "".format(", ".join(invalid)),
+                description=(
+                    "## Shapes found with component tweaks\n"
+                    "Shapes were detected that have component tweaks on their "
+                    "components. Please remove the component tweaks to "
+                    "continue.\n\n"
+                    "### Repair\n"
+                    "The repair action will try to *freeze* the component "
+                    "tweaks into the shapes, which is usually the correct fix "
+                    "if the mesh has no construction history (= has its "
+                    "history deleted)."),
+                detail=(
+                    "Maya allows to store component tweaks within shape nodes "
+                    "which are applied between its `inMesh` and `outMesh` "
+                    "connections resulting in the output of a shape node "
+                    "differing from the input. We usually want to avoid this "
+                    "for published meshes (in particular for Maya scenes) as "
+                    "it can have unintended results when using these meshes "
+                    "as intermediate meshes since it applies positional "
+                    "differences without being visible edits in the node "
+                    "graph.\n\n"
+                    "These tweaks are traditionally stored in the `.pnts` "
+                    "attribute of shapes.")
+            )

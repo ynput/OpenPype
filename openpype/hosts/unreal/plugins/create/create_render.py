@@ -22,7 +22,7 @@ from openpype.lib import (
 class CreateRender(UnrealAssetCreator):
     """Create instance for sequence for rendering"""
 
-    identifier = "io.openpype.creators.unreal.render"
+    identifier = "io.ayon.creators.unreal.render"
     label = "Render"
     family = "render"
     icon = "eye"
@@ -50,7 +50,7 @@ class CreateRender(UnrealAssetCreator):
         # If the option to create a new level sequence is selected,
         # create a new level sequence and a master level.
 
-        root = f"/Game/OpenPype/Sequences"
+        root = f"/Game/Ayon/Sequences"
 
         # Create a new folder for the sequence in root
         sequence_dir_name = create_folder(root, subset_name)
@@ -142,9 +142,9 @@ class CreateRender(UnrealAssetCreator):
                 # "/Game/OpenPype/" and then we split the path by "/".
                 sel_path = selected_asset_path
                 asset_name = sel_path.replace(
-                    "/Game/OpenPype/", "").split("/")[0]
+                    "/Game/Ayon/", "").split("/")[0]
 
-                search_path = f"/Game/OpenPype/{asset_name}"
+                search_path = f"/Game/Ayon/{asset_name}"
             else:
                 search_path = Path(selected_asset_path).parent.as_posix()
 

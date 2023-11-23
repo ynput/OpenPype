@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Base class for Pype Modules."""
+"""Base class for AYON addons."""
+import copy
 import os
 import sys
 import json
@@ -10,10 +11,15 @@ import platform
 import threading
 import collections
 import traceback
+
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
-import six
 
+import six
+import appdirs
+
+from openpype import AYON_SERVER_ENABLED
+from openpype.client import get_ayon_server_api_connection
 from openpype.settings import (
     get_system_settings,
     SYSTEM_SETTINGS_KEY,
@@ -24,13 +30,17 @@ from openpype.settings import (
 
 from openpype.settings.lib import (
     get_studio_system_settings_overrides,
-    load_json_file
+    load_json_file,
+)
+from openpype.settings.ayon_settings import (
+    is_dev_mode_enabled,
+    get_ayon_settings,
 )
 
 from openpype.lib import (
     Logger,
     import_filepath,
-    import_module_from_dirpath
+    import_module_from_dirpath,
 )
 
 from .interfaces import (
@@ -41,11 +51,11 @@ from .interfaces import (
     ITrayService
 )
 
-# Files that will be always ignored on modules import
+# Files that will be always ignored on addons import
 IGNORED_FILENAMES = (
     "__pycache__",
 )
-# Files ignored on modules import from "./openpype/modules"
+# Files ignored on addons import from "./openpype/modules"
 IGNORED_DEFAULT_FILENAMES = (
     "__init__.py",
     "base.py",
@@ -53,6 +63,19 @@ IGNORED_DEFAULT_FILENAMES = (
     "example_addons",
     "default_modules",
 )
+# Addons that won't be loaded in AYON mode from "./openpype/modules"
+# - the same addons are ignored in "./server_addon/create_ayon_addons.py"
+IGNORED_FILENAMES_IN_AYON = {
+    "ftrack",
+    "shotgrid",
+    "sync_server",
+    "slack",
+    "kitsu",
+}
+IGNORED_HOSTS_IN_AYON = {
+    "flame",
+    "harmony",
+}
 
 
 # Inherit from `object` for Python 2 hosts
@@ -91,7 +114,7 @@ class _ModuleClass(object):
         if attr_name in self.__attributes__:
             self.log.warning(
                 "Duplicated name \"{}\" in {}. Overriding.".format(
-                    self.name, attr_name
+                    attr_name, self.name
                 )
             )
         self.__attributes__[attr_name] = value
@@ -186,7 +209,11 @@ def get_dynamic_modules_dirs():
     Returns:
         list: Paths loaded from studio overrides.
     """
+
     output = []
+    if AYON_SERVER_ENABLED:
+        return output
+
     value = get_studio_system_settings_overrides()
     for key in ("modules", "addon_paths", platform.system().lower()):
         if key not in value:
@@ -299,6 +326,195 @@ def load_modules(force=False):
             time.sleep(0.1)
 
 
+def _get_ayon_bundle_data():
+    con = get_ayon_server_api_connection()
+    bundles = con.get_bundles()["bundles"]
+
+    bundle_name = os.getenv("AYON_BUNDLE_NAME")
+
+    return next(
+        (
+            bundle
+            for bundle in bundles
+            if bundle["name"] == bundle_name
+        ),
+        None
+    )
+
+
+def _get_ayon_addons_information(bundle_info):
+    """Receive information about addons to use from server.
+
+    Todos:
+        Actually ask server for the information.
+        Allow project name as optional argument to be able to query information
+            about used addons for specific project.
+
+    Returns:
+        List[Dict[str, Any]]: List of addon information to use.
+    """
+
+    output = []
+    bundle_addons = bundle_info["addons"]
+    con = get_ayon_server_api_connection()
+    addons = con.get_addons_info()["addons"]
+    for addon in addons:
+        name = addon["name"]
+        versions = addon.get("versions")
+        addon_version = bundle_addons.get(name)
+        if addon_version is None or not versions:
+            continue
+        version = versions.get(addon_version)
+        if version:
+            version = copy.deepcopy(version)
+            version["name"] = name
+            version["version"] = addon_version
+            output.append(version)
+    return output
+
+
+def _load_ayon_addons(openpype_modules, modules_key, log):
+    """Load AYON addons based on information from server.
+
+    This function should not trigger downloading of any addons but only use
+    what is already available on the machine (at least in first stages of
+    development).
+
+    Args:
+        openpype_modules (_ModuleClass): Module object where modules are
+            stored.
+        log (logging.Logger): Logger object.
+
+    Returns:
+        List[str]: List of v3 addons to skip to load because v4 alternative is
+            imported.
+    """
+
+    v3_addons_to_skip = []
+
+    bundle_info = _get_ayon_bundle_data()
+    addons_info = _get_ayon_addons_information(bundle_info)
+    if not addons_info:
+        return v3_addons_to_skip
+
+    addons_dir = os.environ.get("AYON_ADDONS_DIR")
+    if not addons_dir:
+        addons_dir = os.path.join(
+            appdirs.user_data_dir("AYON", "Ynput"),
+            "addons"
+        )
+
+    dev_mode_enabled = is_dev_mode_enabled()
+    dev_addons_info = {}
+    if dev_mode_enabled:
+        # Get dev addons info only when dev mode is enabled
+        dev_addons_info = bundle_info.get("addonDevelopment", dev_addons_info)
+
+    addons_dir_exists = os.path.exists(addons_dir)
+    if not addons_dir_exists:
+        log.warning("Addons directory does not exists. Path \"{}\"".format(
+            addons_dir
+        ))
+
+    for addon_info in addons_info:
+        addon_name = addon_info["name"]
+        addon_version = addon_info["version"]
+
+        # OpenPype addon does not have any addon object
+        if addon_name == "openpype":
+            continue
+
+        dev_addon_info = dev_addons_info.get(addon_name, {})
+        use_dev_path = dev_addon_info.get("enabled", False)
+
+        addon_dir = None
+        if use_dev_path:
+            addon_dir = dev_addon_info["path"]
+            if not addon_dir or not os.path.exists(addon_dir):
+                log.warning((
+                    "Dev addon {} {} path does not exists. Path \"{}\""
+                ).format(addon_name, addon_version, addon_dir))
+                continue
+
+        elif addons_dir_exists:
+            folder_name = "{}_{}".format(addon_name, addon_version)
+            addon_dir = os.path.join(addons_dir, folder_name)
+            if not os.path.exists(addon_dir):
+                log.debug((
+                    "No localized client code found for addon {} {}."
+                ).format(addon_name, addon_version))
+                continue
+
+        if not addon_dir:
+            continue
+
+        sys.path.insert(0, addon_dir)
+        imported_modules = []
+        for name in os.listdir(addon_dir):
+            # Ignore of files is implemented to be able to run code from code
+            #   where usually is more files than just the addon
+            # Ignore start and setup scripts
+            if name in ("setup.py", "start.py", "__pycache__"):
+                continue
+
+            path = os.path.join(addon_dir, name)
+            basename, ext = os.path.splitext(name)
+            # Ignore folders/files with dot in name
+            #   - dot names cannot be imported in Python
+            if "." in basename:
+                continue
+            is_dir = os.path.isdir(path)
+            is_py_file = ext.lower() == ".py"
+            if not is_py_file and not is_dir:
+                continue
+
+            try:
+                mod = __import__(basename, fromlist=("",))
+                for attr_name in dir(mod):
+                    attr = getattr(mod, attr_name)
+                    if (
+                        inspect.isclass(attr)
+                        and issubclass(attr, AYONAddon)
+                    ):
+                        imported_modules.append(mod)
+                        break
+
+            except BaseException:
+                log.warning(
+                    "Failed to import \"{}\"".format(basename),
+                    exc_info=True
+                )
+
+        if not imported_modules:
+            log.warning("Addon {} {} has no content to import".format(
+                addon_name, addon_version
+            ))
+            continue
+
+        if len(imported_modules) > 1:
+            log.warning((
+                "Skipping addon '{}'."
+                " Multiple modules were found ({}) in dir {}."
+            ).format(
+                addon_name,
+                ", ".join([m.__name__ for m in imported_modules]),
+                addon_dir,
+            ))
+            continue
+
+        mod = imported_modules[0]
+        addon_alias = getattr(mod, "V3_ALIAS", None)
+        if not addon_alias:
+            addon_alias = addon_name
+        v3_addons_to_skip.append(addon_alias)
+        new_import_str = "{}.{}".format(modules_key, addon_alias)
+
+        sys.modules[new_import_str] = mod
+        setattr(openpype_modules, addon_alias, mod)
+
+    return v3_addons_to_skip
+
+
 def _load_modules():
     # Key under which will be modules imported in `sys.modules`
     modules_key = "openpype_modules"
@@ -308,9 +524,16 @@ def _load_modules():
 
     log = Logger.get_logger("ModulesLoader")
 
+    ignore_addon_names = []
+    if AYON_SERVER_ENABLED:
+        ignore_addon_names = _load_ayon_addons(
+            openpype_modules, modules_key, log
+        )
+
     # Look for OpenPype modules in paths defined with `get_module_dirs`
     #   - dynamically imported OpenPype modules and addons
     module_dirs = get_module_dirs()
+
     # Add current directory at first place
     #   - has small differences in import logic
     current_dir = os.path.abspath(os.path.dirname(__file__))
@@ -318,8 +541,16 @@ def _load_modules():
     module_dirs.insert(0, hosts_dir)
     module_dirs.insert(0, current_dir)
 
+    addons_dir = os.path.join(os.path.dirname(current_dir), "addons")
+    module_dirs.append(addons_dir)
+
+    ignored_host_names = set(IGNORED_HOSTS_IN_AYON)
+    ignored_current_dir_filenames = set(IGNORED_DEFAULT_FILENAMES)
+    if AYON_SERVER_ENABLED:
+        ignored_current_dir_filenames |= IGNORED_FILENAMES_IN_AYON
+
     processed_paths = set()
-    for dirpath in module_dirs:
+    for dirpath in frozenset(module_dirs):
         # Skip already processed paths
         if dirpath in processed_paths:
             continue
@@ -333,6 +564,7 @@ def _load_modules():
 
         is_in_current_dir = dirpath == current_dir
         is_in_host_dir = dirpath == hosts_dir
+
         for filename in os.listdir(dirpath):
             # Ignore filenames
             if filename in IGNORED_FILENAMES:
@@ -340,12 +572,21 @@ def _load_modules():
 
             if (
                 is_in_current_dir
-                and filename in IGNORED_DEFAULT_FILENAMES
+                and filename in ignored_current_dir_filenames
+            ):
+                continue
+
+            if (
+                is_in_host_dir
+                and filename in ignored_host_names
             ):
                 continue
 
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
+
+            if basename in ignore_addon_names:
+                continue
 
             # Validations
             if os.path.isdir(fullpath):
@@ -408,25 +649,21 @@ def _load_modules():
 
 
 @six.add_metaclass(ABCMeta)
-class OpenPypeModule:
-    """Base class of pype module.
+class AYONAddon(object):
+    """Base class of AYON addon.
 
     Attributes:
-        id (UUID): Module's id.
-        enabled (bool): Is module enabled.
-        name (str): Module name.
-        manager (ModulesManager): Manager that created the module.
+        id (UUID): Addon object id.
+        enabled (bool): Is addon enabled.
+        name (str): Addon name.
+
+    Args:
+        manager (ModulesManager): Manager object who discovered addon.
+        settings (dict[str, Any]): AYON settings.
     """
 
-    # Disable by default
-    enabled = False
+    enabled = True
     _id = None
-
-    @property
-    @abstractmethod
-    def name(self):
-        """Module's name."""
-        pass
 
     def __init__(self, manager, settings):
         self.manager = manager
@@ -437,22 +674,45 @@ class OpenPypeModule:
 
     @property
     def id(self):
+        """Random id of addon object.
+
+        Returns:
+            str: Object id.
+        """
+
         if self._id is None:
             self._id = uuid4()
         return self._id
 
+    @property
     @abstractmethod
-    def initialize(self, module_settings):
-        """Initialization of module attributes.
+    def name(self):
+        """Addon name.
 
-        It is not recommended to override __init__ that's why specific method
-        was implemented.
+        Returns:
+            str: Addon name.
         """
 
         pass
 
-    def connect_with_modules(self, enabled_modules):
-        """Connect with other enabled modules."""
+    def initialize(self, settings):
+        """Initialization of module attributes.
+
+        It is not recommended to override __init__ that's why specific method
+        was implemented.
+
+        Args:
+            settings (dict[str, Any]): Settings.
+        """
+
+        pass
+
+    def connect_with_modules(self, enabled_addons):
+        """Connect with other enabled addons.
+
+        Args:
+            enabled_addons (list[AYONAddon]): Addons that are enabled.
+        """
 
         pass
 
@@ -460,6 +720,9 @@ class OpenPypeModule:
         """Get global environments values of module.
 
         Environment variables that can be get only from system settings.
+
+        Returns:
+            dict[str, str]: Environment variables.
         """
 
         return {}
@@ -472,7 +735,7 @@ class OpenPypeModule:
 
         Args:
             application (Application): Application that is launched.
-            env (dict): Current environment variables.
+            env (dict[str, str]): Current environment variables.
         """
 
         pass
@@ -488,7 +751,8 @@ class OpenPypeModule:
         to receive from 'host' object.
 
         Args:
-            host (ModuleType): Access to installed/registered host object.
+            host (Union[ModuleType, HostBase]): Access to installed/registered
+                host object.
             host_name (str): Name of host.
             project_name (str): Project name which is main part of host
                 context.
@@ -502,47 +766,66 @@ class OpenPypeModule:
         The best practise is to create click group for whole module which is
         used to separate commands.
 
-        class MyPlugin(OpenPypeModule):
-            ...
-            def cli(self, module_click_group):
-                module_click_group.add_command(cli_main)
+        Example:
+            class MyPlugin(AYONAddon):
+                ...
+                def cli(self, module_click_group):
+                    module_click_group.add_command(cli_main)
 
 
-        @click.group(<module name>, help="<Any help shown in cmd>")
-        def cli_main():
-            pass
+            @click.group(<module name>, help="<Any help shown in cmd>")
+            def cli_main():
+                pass
 
-        @cli_main.command()
-        def mycommand():
-            print("my_command")
+            @cli_main.command()
+            def mycommand():
+                print("my_command")
+
+        Args:
+            module_click_group (click.Group): Group to which can be added
+                commands.
         """
 
         pass
+
+
+class OpenPypeModule(AYONAddon):
+    """Base class of OpenPype module.
+
+    Instead of 'AYONAddon' are passed in module settings.
+
+    Args:
+        manager (ModulesManager): Manager object who discovered addon.
+        settings (dict[str, Any]): OpenPype settings.
+    """
+
+    # Disable by default
+    enabled = False
 
 
 class OpenPypeAddOn(OpenPypeModule):
     # Enable Addon by default
     enabled = True
 
-    def initialize(self, module_settings):
-        """Initialization is not be required for most of addons."""
-        pass
-
 
 class ModulesManager:
     """Manager of Pype modules helps to load and prepare them to work.
 
     Args:
-        modules_settings(dict): To be able create module manager with specified
-            data. For settings changes callbacks and testing purposes.
+        system_settings (Optional[dict[str, Any]]): OpenPype system settings.
+        ayon_settings (Optional[dict[str, Any]]): AYON studio settings.
     """
+
     # Helper attributes for report
     _report_total_key = "Total"
+    _system_settings = None
+    _ayon_settings = None
 
-    def __init__(self, _system_settings=None):
+    def __init__(self, system_settings=None, ayon_settings=None):
         self.log = logging.getLogger(self.__class__.__name__)
 
-        self._system_settings = _system_settings
+        self._system_settings = system_settings
+        self._ayon_settings = ayon_settings
 
         self.modules = []
         self.modules_by_id = {}
@@ -564,8 +847,9 @@ class ModulesManager:
             default (Any): Default output if module is not available.
 
         Returns:
-            Union[OpenPypeModule, None]: Module found by name or None.
+            Union[AYONAddon, None]: Module found by name or None.
         """
+
         return self.modules_by_name.get(module_name, default)
 
     def get_enabled_module(self, module_name, default=None):
@@ -579,7 +863,7 @@ class ModulesManager:
                 not enabled.
 
         Returns:
-            Union[OpenPypeModule, None]: Enabled module found by name or None.
+            Union[AYONAddon, None]: Enabled module found by name or None.
         """
 
         module = self.get(module_name)
@@ -594,11 +878,20 @@ class ModulesManager:
 
         import openpype_modules
 
-        self.log.debug("*** Pype modules initialization.")
+        self.log.debug("*** {} initialization.".format(
+            "AYON addons"
+            if AYON_SERVER_ENABLED
+            else "OpenPype modules"
+        ))
         # Prepare settings for modules
-        system_settings = getattr(self, "_system_settings", None)
+        system_settings = self._system_settings
         if system_settings is None:
             system_settings = get_system_settings()
+
+        ayon_settings = self._ayon_settings
+        if AYON_SERVER_ENABLED and ayon_settings is None:
+            ayon_settings = get_ayon_settings()
+
         modules_settings = system_settings["modules"]
 
         report = {}
@@ -611,12 +904,13 @@ class ModulesManager:
             for name in dir(module):
                 modules_item = getattr(module, name, None)
                 # Filter globals that are not classes which inherit from
-                #   OpenPypeModule
+                #   AYONAddon
                 if (
                     not inspect.isclass(modules_item)
+                    or modules_item is AYONAddon
                     or modules_item is OpenPypeModule
                     or modules_item is OpenPypeAddOn
-                    or not issubclass(modules_item, OpenPypeModule)
+                    or not issubclass(modules_item, AYONAddon)
                 ):
                     continue
 
@@ -641,10 +935,14 @@ class ModulesManager:
                 module_classes.append(modules_item)
 
         for modules_item in module_classes:
+            is_openpype_module = issubclass(modules_item, OpenPypeModule)
+            settings = (
+                modules_settings if is_openpype_module else ayon_settings
+            )
+            name = modules_item.__name__
             try:
-                name = modules_item.__name__
                 # Try initialize module
-                module = modules_item(self, modules_settings)
+                module = modules_item(self, settings)
                 # Store initialized object
                 self.modules.append(module)
                 self.modules_by_id[module.id] = module
@@ -699,8 +997,9 @@ class ModulesManager:
         """Enabled modules initialized by the manager.
 
         Returns:
-            list: Initialized and enabled modules.
+            list[AYONAddon]: Initialized and enabled modules.
         """
+
         return [
             module
             for module in self.modules
@@ -736,15 +1035,16 @@ class ModulesManager:
         Unknown keys are logged out.
 
         Returns:
-            dict: Output is dictionary with keys "publish", "create", "load"
-                and "actions" each containing list of paths.
+            dict: Output is dictionary with keys "publish", "create", "load",
+                "actions" and "inventory" each containing list of paths.
         """
         # Output structure
         output = {
             "publish": [],
             "create": [],
             "load": [],
-            "actions": []
+            "actions": [],
+            "inventory": []
         }
         unknown_keys_by_module = {}
         for module in self.get_enabled_modules():
@@ -794,7 +1094,18 @@ class ModulesManager:
                 continue
 
             method = getattr(module, method_name)
-            paths = method(*args, **kwargs)
+            try:
+                paths = method(*args, **kwargs)
+            except Exception:
+                self.log.warning(
+                    (
+                        "Failed to get plugin paths from module"
+                        " '{}' using '{}'."
+                    ).format(module.__class__.__name__, method_name),
+                    exc_info=True
+                )
+                continue
+
             if paths:
                 # Convert to list if value is not list
                 if not isinstance(paths, (list, tuple, set)):
@@ -849,6 +1160,21 @@ class ModulesManager:
             host_name
         )
 
+    def collect_inventory_action_paths(self, host_name):
+        """Helper to collect load plugin paths from modules.
+
+        Args:
+            host_name (str): For which host are load plugins meant.
+
+        Returns:
+            list: List of pyblish plugin paths.
+        """
+
+        return self._collect_plugin_paths(
+            "get_inventory_action_paths",
+            host_name
+        )
+
     def get_host_module(self, host_name):
         """Find host module by host name.
 
@@ -856,7 +1182,7 @@ class ModulesManager:
             host_name (str): Host name for which is found host module.
 
         Returns:
-            OpenPypeModule: Found host module by name.
+            AYONAddon: Found host module by name.
             None: There was not found module inheriting IHostAddon which has
                 host name set to passed 'host_name'.
         """
@@ -877,12 +1203,11 @@ class ModulesManager:
                 inheriting 'IHostAddon'.
         """
 
-        host_names = {
+        return {
             module.host_name
             for module in self.get_enabled_modules()
             if isinstance(module, IHostAddon)
         }
-        return host_names
 
     def print_report(self):
         """Print out report of time spent on modules initialization parts.
@@ -1038,6 +1363,10 @@ class TrayModulesManager(ModulesManager):
         callback can be defined with `doubleclick_callback` attribute.
 
         Missing feature how to define default callback.
+
+        Args:
+            addon (AYONAddon): Addon object.
+            callback (FunctionType): Function callback.
         """
         callback_name = "_".join([module.name, callback.__name__])
         if callback_name not in self.doubleclick_callbacks:
@@ -1058,11 +1387,17 @@ class TrayModulesManager(ModulesManager):
         self.tray_menu(tray_menu)
 
     def get_enabled_tray_modules(self):
-        output = []
-        for module in self.modules:
-            if module.enabled and isinstance(module, ITrayModule):
-                output.append(module)
-        return output
+        """Enabled tray modules.
+
+        Returns:
+            list[AYONAddon]: Enabled addons that inherit from tray interface.
+        """
+
+        return [
+            module
+            for module in self.modules
+            if module.enabled and isinstance(module, ITrayModule)
+        ]
 
     def restart_tray(self):
         if self.tray_manager:

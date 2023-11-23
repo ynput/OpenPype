@@ -2,11 +2,12 @@ import os
 
 import ftrack_api
 from openpype.settings import get_project_settings
-from openpype.lib import PostLaunchHook
+from openpype.lib.applications import PostLaunchHook, LaunchTypes
 
 
 class PostFtrackHook(PostLaunchHook):
     order = None
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         project_name = self.data.get("project_name")

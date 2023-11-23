@@ -37,6 +37,7 @@ Temporary Items
 ###########
 /build
 /dist/
+/server_addon/packages/*
 
 /vendor/bin/*
 /vendor/python/*
@@ -112,3 +113,9 @@ tools/run_eventserver.*
 tools/dev_*
 
 .github_changelog_generator
+
+
+# Addons
+########
+/openpype/addons/*
+!/openpype/addons/README.md

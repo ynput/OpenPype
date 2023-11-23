@@ -51,7 +51,7 @@ def start_rendering():
     # instances = pipeline.ls_inst()
     instances = [
         a for a in assets
-        if a.get_class().get_name() == "OpenPypePublishInstance"]
+        if a.get_class().get_name() == "AyonPublishInstance"]
 
     inst_data = []
 
@@ -64,8 +64,9 @@ def start_rendering():
         project = os.environ.get("AVALON_PROJECT")
         anatomy = Anatomy(project)
         root = anatomy.roots['renders']
-    except Exception:
-        raise Exception("Could not find render root in anatomy settings.")
+    except Exception as e:
+        raise Exception(
+            "Could not find render root in anatomy settings.") from e
 
     render_dir = f"{root}/{project}"
 
@@ -121,7 +122,7 @@ def start_rendering():
             job = queue.allocate_new_job(unreal.MoviePipelineExecutorJob)
             job.sequence = unreal.SoftObjectPath(i["master_sequence"])
             job.map = unreal.SoftObjectPath(i["master_level"])
-            job.author = "OpenPype"
+            job.author = "Ayon"
 
             # If we have a saved configuration, copy it to the job.
             if config:
@@ -129,7 +130,7 @@ def start_rendering():
 
             # User data could be used to pass data to the job, that can be
             # read in the job's OnJobFinished callback. We could,
-            # for instance, pass the AvalonPublishInstance's path to the job.
+            # for instance, pass the AyonPublishInstance's path to the job.
             # job.user_data = ""
 
             output_dir = render_setting.get('output')

@@ -3,6 +3,10 @@ import pyblish.api
 from maya import cmds
 
 import openpype.hosts.maya.api.action
+from openpype.pipeline.publish import (
+    PublishValidationError
+)
+
 
 
 class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
@@ -19,7 +23,7 @@ class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("'%s' is invalid VRay Proxy for "
+            raise PublishValidationError("'%s' is invalid VRay Proxy for "
                                "export!" % instance.name)
 
     @classmethod

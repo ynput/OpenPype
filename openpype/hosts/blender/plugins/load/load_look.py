@@ -92,18 +92,18 @@ class BlendLookLoader(plugin.AssetLoader):
             options: Additional settings dictionary
         """
 
-        libpath = self.fname
+        libpath = self.filepath_from_context(context)
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        lib_container = plugin.asset_name(
+        lib_container = plugin.prepare_scene_name(
             asset, subset
         )
         unique_number = plugin.get_unique_number(
             asset, subset
         )
         namespace = namespace or f"{asset}_{unique_number}"
-        container_name = plugin.asset_name(
+        container_name = plugin.prepare_scene_name(
             asset, subset, unique_number
         )
 

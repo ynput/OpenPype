@@ -84,6 +84,13 @@ class ProjectProxyFilter(QtCore.QSortFilterProxyModel):
         super(ProjectProxyFilter, self).__init__(*args, **kwargs)
         self._filter_default = False
 
+    def lessThan(self, left, right):
+        if left.data(PROJECT_NAME_ROLE) is None:
+            return True
+        if right.data(PROJECT_NAME_ROLE) is None:
+            return False
+        return super(ProjectProxyFilter, self).lessThan(left, right)
+
     def set_filter_default(self, enabled=True):
         """Set if filtering of default item is enabled."""
         if enabled == self._filter_default:

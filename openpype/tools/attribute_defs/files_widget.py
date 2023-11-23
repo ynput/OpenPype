@@ -198,29 +198,33 @@ class DropEmpty(QtWidgets.QWidget):
 
     def paintEvent(self, event):
         super(DropEmpty, self).paintEvent(event)
-        painter = QtGui.QPainter(self)
+
         pen = QtGui.QPen()
-        pen.setWidth(1)
         pen.setBrush(QtCore.Qt.darkGray)
         pen.setStyle(QtCore.Qt.DashLine)
-        painter.setPen(pen)
-        content_margins = self.layout().contentsMargins()
+        pen.setWidth(1)
 
-        left_m = content_margins.left()
-        top_m = content_margins.top()
-        rect = QtCore.QRect(
+        content_margins = self.layout().contentsMargins()
+        rect = self.rect()
+        left_m = content_margins.left() + pen.width()
+        top_m = content_margins.top() + pen.width()
+        new_rect = QtCore.QRect(
             left_m,
             top_m,
             (
-                self.rect().width()
+                rect.width()
                 - (left_m + content_margins.right() + pen.width())
             ),
             (
-                self.rect().height()
+                rect.height()
                 - (top_m + content_margins.bottom() + pen.width())
             )
         )
-        painter.drawRect(rect)
+
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setPen(pen)
+        painter.drawRect(new_rect)
 
 
 class FilesModel(QtGui.QStandardItemModel):

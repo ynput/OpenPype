@@ -2,33 +2,35 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import BoolDef
 
 
-class CreateCamera(plugin.Creator):
+class CreateCamera(plugin.MayaCreator):
     """Single baked camera"""
 
-    name = "cameraMain"
+    identifier = "io.openpype.creators.maya.camera"
     label = "Camera"
     family = "camera"
     icon = "video-camera"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateCamera, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        # get basic animation data : start / end / handles / steps
-        animation_data = lib.collect_animation_data()
-        for key, value in animation_data.items():
-            self.data[key] = value
+        defs = lib.collect_animation_defs()
 
-        # Bake to world space by default, when this is False it will also
-        # include the parent hierarchy in the baked results
-        self.data['bakeToWorldSpace'] = True
+        defs.extend([
+            BoolDef("bakeToWorldSpace",
+                    label="Bake to World-Space",
+                    tooltip="Bake to World-Space",
+                    default=True),
+        ])
+
+        return defs
 
 
-class CreateCameraRig(plugin.Creator):
+class CreateCameraRig(plugin.MayaCreator):
     """Complex hierarchy with camera."""
 
-    name = "camerarigMain"
+    identifier = "io.openpype.creators.maya.camerarig"
     label = "Camera Rig"
     family = "camerarig"
     icon = "video-camera"

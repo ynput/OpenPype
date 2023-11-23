@@ -1,6 +1,6 @@
 from pyblish import api
-from openpype.client import get_assets
-from openpype.pipeline import legacy_io
+
+from openpype.client import get_assets, get_asset_name_identifier
 
 
 class CollectAssetBuilds(api.ContextPlugin):
@@ -18,12 +18,15 @@ class CollectAssetBuilds(api.ContextPlugin):
     hosts = ["hiero"]
 
     def process(self, context):
-        project_name = legacy_io.active_project()
+        project_name = context.data["projectName"]
         asset_builds = {}
-        for asset in get_assets(project_name):
-            if asset["data"]["entityType"] == "AssetBuild":
-                self.log.debug("Found \"{}\" in database.".format(asset))
-                asset_builds[asset["name"]] = asset
+        for asset_doc in get_assets(project_name):
+            if asset_doc["data"].get("entityType") != "AssetBuild":
+                continue
+
+            asset_name = get_asset_name_identifier(asset_doc)
+            self.log.debug("Found \"{}\" in database.".format(asset_doc))
+            asset_builds[asset_name] = asset_doc
 
         for instance in context:
             if instance.data["family"] != "clip":
@@ -51,9 +54,7 @@ class CollectAssetBuilds(api.ContextPlugin):
             # Collect asset builds.
             data = {"assetbuilds": []}
             for name in asset_names:
-                data["assetbuilds"].append(
-                    asset_builds[name]
-                )
+                data["assetbuilds"].append(asset_builds[name])
             self.log.debug(
                 "Found asset builds: {}".format(data["assetbuilds"])
             )

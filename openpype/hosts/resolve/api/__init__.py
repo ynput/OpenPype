@@ -6,13 +6,10 @@ from .utils import (
 )
 
 from .pipeline import (
-    install,
-    uninstall,
+    ResolveHost,
     ls,
     containerise,
     update_container,
-    publish,
-    launch_workfiles_app,
     maintained_selection,
     remove_instance,
     list_instances
@@ -24,6 +21,8 @@ from .lib import (
     get_project_manager,
     get_current_project,
     get_current_timeline,
+    get_any_timeline,
+    get_new_timeline,
     create_bin,
     get_media_pool_item,
     create_media_pool_item,
@@ -74,14 +73,10 @@ __all__ = [
     "bmdvf",
 
     # pipeline
-    "install",
-    "uninstall",
+    "ResolveHost",
     "ls",
     "containerise",
     "update_container",
-    "reload_pipeline",
-    "publish",
-    "launch_workfiles_app",
     "maintained_selection",
     "remove_instance",
     "list_instances",
@@ -95,6 +90,8 @@ __all__ = [
     "get_project_manager",
     "get_current_project",
     "get_current_timeline",
+    "get_any_timeline",
+    "get_new_timeline",
     "create_bin",
     "get_media_pool_item",
     "create_media_pool_item",

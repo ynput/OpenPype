@@ -5,6 +5,8 @@ import clique
 import subprocess
 import openpype.lib
 from qtpy import QtWidgets, QtCore
+
+from openpype.lib import get_ffprobe_data
 from . import DropEmpty, ComponentsList, ComponentItem
 
 
@@ -269,26 +271,8 @@ class DropDataFrame(QtWidgets.QFrame):
         self._process_data(data)
 
     def load_data_with_probe(self, filepath):
-        ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
-        args = [
-            "\"{}\"".format(ffprobe_path),
-            '-v', 'quiet',
-            '-print_format json',
-            '-show_format',
-            '-show_streams',
-            '"{}"'.format(filepath)
-        ]
-        ffprobe_p = subprocess.Popen(
-            ' '.join(args),
-            stdout=subprocess.PIPE,
-            shell=True
-        )
-        ffprobe_output = ffprobe_p.communicate()[0]
-        if ffprobe_p.returncode != 0:
-            raise RuntimeError(
-                'Failed on ffprobe: check if ffprobe path is set in PATH env'
-            )
-        return json.loads(ffprobe_output)['streams'][0]
+        ffprobe_data = get_ffprobe_data(filepath)
+        return ffprobe_data["streams"][0]
 
     def get_file_data(self, data):
         filepath = data['files'][0]

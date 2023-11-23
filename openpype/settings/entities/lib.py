@@ -323,7 +323,10 @@ class SchemasHub:
         filled_template = self._fill_template(
             schema_data, template_def
         )
-        return filled_template
+        new_template_def = []
+        for item in filled_template:
+            new_template_def.extend(self.resolve_schema_data(item))
+        return new_template_def
 
     def create_schema_object(self, schema_data, *args, **kwargs):
         """Create entity for passed schema data.

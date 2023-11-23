@@ -8,14 +8,15 @@ import numbers
 import six
 import time
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.settings.lib import (
     get_local_settings,
 )
 from openpype.settings.constants import (
     DEFAULT_PROJECT_KEY
 )
-
-from openpype.client import get_project
+from openpype.client import get_project, get_ayon_server_api_connection
+from openpype.lib import Logger, get_local_site_id
 from openpype.lib.path_templates import (
     TemplateUnsolved,
     TemplateResult,
@@ -23,7 +24,6 @@ from openpype.lib.path_templates import (
     TemplatesDict,
     FormatObject,
 )
-from openpype.lib.log import Logger
 from openpype.modules import ModulesManager
 
 log = Logger.get_logger(__name__)
@@ -474,6 +474,14 @@ class Anatomy(BaseAnatomy):
         Returns:
             Union[Dict[str, str], None]): Local root overrides.
         """
+
+        if AYON_SERVER_ENABLED:
+            if not project_name:
+                return
+            con = get_ayon_server_api_connection()
+            return con.get_project_roots_for_site(
+                project_name, get_local_site_id()
+            )
 
         if local_settings is None:
             local_settings = get_local_settings()

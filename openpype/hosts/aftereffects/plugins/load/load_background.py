@@ -1,17 +1,15 @@
 import re
 
 from openpype.pipeline import get_representation_path
-from openpype.hosts.aftereffects.api import (
-    AfterEffectsLoader,
-    containerise
-)
+from openpype.hosts.aftereffects import api
+
 from openpype.hosts.aftereffects.api.lib import (
     get_background_layers,
     get_unique_layer_name,
 )
 
 
-class BackgroundLoader(AfterEffectsLoader):
+class BackgroundLoader(api.AfterEffectsLoader):
     """
         Load images from Background family
         Creates for each background separate folder with all imported images
@@ -21,6 +19,7 @@ class BackgroundLoader(AfterEffectsLoader):
         For each load container is created and stored in project (.aep)
         metadata
     """
+    label = "Load JSON Background"
     families = ["background"]
     representations = ["json"]
 
@@ -34,9 +33,10 @@ class BackgroundLoader(AfterEffectsLoader):
             existing_items,
             "{}_{}".format(context["asset"]["name"], name))
 
-        layers = get_background_layers(self.fname)
+        path = self.filepath_from_context(context)
+        layers = get_background_layers(path)
         if not layers:
-            raise ValueError("No layers found in {}".format(self.fname))
+            raise ValueError("No layers found in {}".format(path))
 
         comp = stub.import_background(None, stub.LOADED_ICON + comp_name,
                                       layers)
@@ -48,7 +48,7 @@ class BackgroundLoader(AfterEffectsLoader):
         self[:] = [comp]
         namespace = namespace or comp_name
 
-        return containerise(
+        return api.containerise(
             name,
             namespace,
             comp,

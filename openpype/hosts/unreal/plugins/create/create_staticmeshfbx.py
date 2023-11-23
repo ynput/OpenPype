@@ -7,7 +7,7 @@ from openpype.hosts.unreal.api.plugin import (
 class CreateStaticMeshFBX(UnrealAssetCreator):
     """Create Static Meshes as FBX geometry."""
 
-    identifier = "io.openpype.creators.unreal.staticmeshfbx"
+    identifier = "io.ayon.creators.unreal.staticmeshfbx"
     label = "Static Mesh (FBX)"
     family = "unrealStaticMesh"
     icon = "cube"

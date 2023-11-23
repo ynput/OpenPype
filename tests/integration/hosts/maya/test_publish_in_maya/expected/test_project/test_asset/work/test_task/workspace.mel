@@ -1,0 +1,12 @@
+//Maya 2019 Project Definition
+
+workspace -fr "shaders" "renderData/shaders";
+workspace -fr "images" "renders";
+workspace -fr "mayaAscii" "";
+workspace -fr "particles" "particles";
+workspace -fr "mayaBinary" "";
+workspace -fr "scene" "";
+workspace -fr "alembicCache" "cache/alembic";
+workspace -fr "renderData" "renderData";
+workspace -fr "sourceImages" "sourceimages";
+workspace -fr "fileCache" "cache/nCache";

@@ -7,8 +7,8 @@ from openpype.style import get_objected_colors
 from openpype.lib import (
     run_subprocess,
     is_oiio_supported,
-    get_oiio_tools_path,
-    get_ffmpeg_tool_path,
+    get_oiio_tool_args,
+    get_ffmpeg_tool_args,
 )
 from openpype.lib.transcoding import (
     IMAGE_EXTENSIONS,
@@ -22,6 +22,7 @@ from openpype.tools.utils import (
 from openpype.tools.publisher.control import CardMessageTypes
 
 from .icons import get_image
+from .screenshot_widget import capture_to_file
 
 
 class ThumbnailPainterWidget(QtWidgets.QWidget):
@@ -75,6 +76,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
 
         painter = QtGui.QPainter()
         painter.begin(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.drawPixmap(0, 0, self._cached_pix)
         painter.end()
 
@@ -183,6 +185,18 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
             backgrounded_images.append(new_pix)
         return backgrounded_images
 
+    def _paint_dash_line(self, painter, rect):
+        pen = QtGui.QPen()
+        pen.setWidth(1)
+        pen.setBrush(QtCore.Qt.darkGray)
+        pen.setStyle(QtCore.Qt.DashLine)
+
+        new_rect = rect.adjusted(1, 1, -1, -1)
+        painter.setPen(pen)
+        painter.setBrush(QtCore.Qt.transparent)
+        # painter.drawRect(rect)
+        painter.drawRect(new_rect)
+
     def _cache_pix(self):
         rect = self.rect()
         rect_width = rect.width()
@@ -264,13 +278,7 @@ class ThumbnailPainterWidget(QtWidgets.QWidget):
 
         # Draw drop enabled dashes
         if used_default_pix:
-            pen = QtGui.QPen()
-            pen.setWidth(1)
-            pen.setBrush(QtCore.Qt.darkGray)
-            pen.setStyle(QtCore.Qt.DashLine)
-            final_painter.setPen(pen)
-            final_painter.setBrush(QtCore.Qt.transparent)
-            final_painter.drawRect(rect)
+            self._paint_dash_line(final_painter, rect)
 
         final_painter.end()
 
@@ -299,20 +307,43 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         thumbnail_painter = ThumbnailPainterWidget(self)
 
+        icon_color = get_objected_colors("bg-view-selection").get_qcolor()
+        icon_color.setAlpha(255)
+
         buttons_widget = QtWidgets.QWidget(self)
         buttons_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        icon_color = get_objected_colors("bg-view-selection").get_qcolor()
-        icon_color.setAlpha(255)
         clear_image = get_image("clear_thumbnail")
         clear_pix = paint_image_with_color(clear_image, icon_color)
-
         clear_button = PixmapButton(clear_pix, buttons_widget)
         clear_button.setObjectName("ThumbnailPixmapHoverButton")
+        clear_button.setToolTip("Clear thumbnail")
+
+        take_screenshot_image = get_image("take_screenshot")
+        take_screenshot_pix = paint_image_with_color(
+            take_screenshot_image, icon_color)
+        take_screenshot_btn = PixmapButton(
+            take_screenshot_pix, buttons_widget)
+        take_screenshot_btn.setObjectName("ThumbnailPixmapHoverButton")
+        take_screenshot_btn.setToolTip("Take screenshot")
+
+        paste_image = get_image("paste")
+        paste_pix = paint_image_with_color(paste_image, icon_color)
+        paste_btn = PixmapButton(paste_pix, buttons_widget)
+        paste_btn.setObjectName("ThumbnailPixmapHoverButton")
+        paste_btn.setToolTip("Paste from clipboard")
+
+        browse_image = get_image("browse")
+        browse_pix = paint_image_with_color(browse_image, icon_color)
+        browse_btn = PixmapButton(browse_pix, buttons_widget)
+        browse_btn.setObjectName("ThumbnailPixmapHoverButton")
+        browse_btn.setToolTip("Browse...")
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
-        buttons_layout.setContentsMargins(3, 3, 3, 3)
-        buttons_layout.addStretch(1)
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.addWidget(take_screenshot_btn, 0)
+        buttons_layout.addWidget(paste_btn, 0)
+        buttons_layout.addWidget(browse_btn, 0)
         buttons_layout.addWidget(clear_button, 0)
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -320,6 +351,9 @@ class ThumbnailWidget(QtWidgets.QWidget):
         layout.addWidget(thumbnail_painter)
 
         clear_button.clicked.connect(self._on_clear_clicked)
+        take_screenshot_btn.clicked.connect(self._on_take_screenshot)
+        paste_btn.clicked.connect(self._on_paste_from_clipboard)
+        browse_btn.clicked.connect(self._on_browse_clicked)
 
         self._controller = controller
         self._output_dir = controller.get_thumbnail_temp_dir_path()
@@ -331,9 +365,16 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._adapted_to_size = True
         self._last_width = None
         self._last_height = None
+        self._hide_on_finish = False
 
         self._buttons_widget = buttons_widget
         self._thumbnail_painter = thumbnail_painter
+        self._clear_button = clear_button
+        self._take_screenshot_btn = take_screenshot_btn
+        self._paste_btn = paste_btn
+        self._browse_btn = browse_btn
+
+        clear_button.setEnabled(False)
 
     @property
     def width_ratio(self):
@@ -423,13 +464,75 @@ class ThumbnailWidget(QtWidgets.QWidget):
 
         self._thumbnail_painter.clear_cache()
 
+    def _set_current_thumbails(self, thumbnail_paths):
+        self._thumbnail_painter.set_current_thumbnails(thumbnail_paths)
+        self._update_buttons_position()
+
     def set_current_thumbnails(self, thumbnail_paths=None):
         self._thumbnail_painter.set_current_thumbnails(thumbnail_paths)
         self._update_buttons_position()
+        self._clear_button.setEnabled(self._thumbnail_painter.has_pixes)
 
     def _on_clear_clicked(self):
         self.set_current_thumbnails()
         self.thumbnail_cleared.emit()
+        self._clear_button.setEnabled(False)
+
+    def _on_take_screenshot(self):
+        window = self.window()
+        state = window.windowState()
+        window.setWindowState(QtCore.Qt.WindowMinimized)
+        output_path = os.path.join(
+            self._output_dir, uuid.uuid4().hex + ".png")
+        if capture_to_file(output_path):
+            self.thumbnail_created.emit(output_path)
+        # restore original window state
+        window.setWindowState(state)
+
+    def _on_paste_from_clipboard(self):
+        """Set thumbnail from a pixmap image in the system clipboard"""
+
+        clipboard = QtWidgets.QApplication.clipboard()
+        pixmap = clipboard.pixmap()
+        if pixmap.isNull():
+            return
+
+        # Save as temporary file
+        output_path = os.path.join(
+            self._output_dir, uuid.uuid4().hex + ".png")
+
+        output_dir = os.path.dirname(output_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        if pixmap.save(output_path):
+            self.thumbnail_created.emit(output_path)
+
+    def _on_browse_clicked(self):
+        ext_filter = "Source (*{0})".format(
+            " *".join(self._review_extensions)
+        )
+        filepath, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self, "Choose thumbnail", os.path.expanduser("~"), ext_filter
+        )
+        if not filepath:
+            return
+        valid_path = False
+        ext = os.path.splitext(filepath)[-1].lower()
+        if ext in self._review_extensions:
+            valid_path = True
+
+        output = None
+        if valid_path:
+            output = export_thumbnail(filepath, self._output_dir)
+
+        if output:
+            self.thumbnail_created.emit(output)
+        else:
+            self._controller.emit_card_message(
+                "Couldn't convert the source for thumbnail",
+                CardMessageTypes.error
+            )
 
     def _adapt_to_size(self):
         if not self._adapted_to_size:
@@ -445,13 +548,25 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self._thumbnail_painter.clear_cache()
 
     def _update_buttons_position(self):
-        self._buttons_widget.setVisible(self._thumbnail_painter.has_pixes)
         size = self.size()
+        my_width = size.width()
         my_height = size.height()
-        height = self._buttons_widget.sizeHint().height()
+        buttons_sh = self._buttons_widget.sizeHint()
+        buttons_height = buttons_sh.height()
+        buttons_width = buttons_sh.width()
+        pos_x = my_width - (buttons_width + 3)
+        pos_y = my_height - (buttons_height + 3)
+        if pos_x < 0:
+            pos_x = 0
+            buttons_width = my_width
+        if pos_y < 0:
+            pos_y = 0
+            buttons_height = my_height
         self._buttons_widget.setGeometry(
-            0, my_height - height,
-            size.width(), height
+            pos_x,
+            pos_y,
+            buttons_width,
+            buttons_height
         )
 
     def resizeEvent(self, event):
@@ -474,12 +589,12 @@ def _convert_thumbnail_oiio(src_path, dst_path):
     if not is_oiio_supported():
         return None
 
-    oiio_cmd = [
-        get_oiio_tools_path(),
+    oiio_cmd = get_oiio_tool_args(
+        "oiiotool",
         "-i", src_path,
         "--subimage", "0",
         "-o", dst_path
-    ]
+    )
     try:
         _run_silent_subprocess(oiio_cmd)
     except Exception:
@@ -488,12 +603,12 @@ def _convert_thumbnail_oiio(src_path, dst_path):
 
 
 def _convert_thumbnail_ffmpeg(src_path, dst_path):
-    ffmpeg_cmd = [
-        get_ffmpeg_tool_path(),
+    ffmpeg_cmd = get_ffmpeg_tool_args(
+        "ffmpeg",
         "-y",
         "-i", src_path,
         dst_path
-    ]
+    )
     try:
         _run_silent_subprocess(ffmpeg_cmd)
     except Exception:

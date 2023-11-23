@@ -4,7 +4,7 @@ indent: 4, maxerr: 50 */
 
 
 var csInterface = new CSInterface();
-    
+
 log.warn("script start");
 
 WSRPC.DEBUG = false;
@@ -14,7 +14,7 @@ WSRPC.TRACE = false;
 async function startUp(url){
     promis = runEvalScript("getEnv('" + url + "')");
 
-    var res = await promis; 
+    var res = await promis;
     log.warn("res: " + res);
 
     promis = runEvalScript("getEnv('OPENPYPE_DEBUG')");
@@ -56,7 +56,7 @@ function get_extension_version(){
 }
 
 function main(websocket_url){
-    // creates connection to 'websocket_url', registers routes      
+    // creates connection to 'websocket_url', registers routes
     var default_url = 'ws://localhost:8099/ws/';
 
     if  (websocket_url == ''){
@@ -66,7 +66,7 @@ function main(websocket_url){
 
     RPC.connect();
 
-    log.warn("connected"); 
+    log.warn("connected");
 
     RPC.addRoute('AfterEffects.open', function (data) {
         log.warn('Server called client route "open":', data);
@@ -88,7 +88,7 @@ function main(websocket_url){
     });
 
     RPC.addRoute('AfterEffects.get_active_document_name', function (data) {
-        log.warn('Server called client route ' + 
+        log.warn('Server called client route ' +
             '"get_active_document_name":', data);
         return runEvalScript("getActiveDocumentName()")
             .then(function(result){
@@ -98,11 +98,22 @@ function main(websocket_url){
     });
 
     RPC.addRoute('AfterEffects.get_active_document_full_name', function (data){
-        log.warn('Server called client route ' + 
+        log.warn('Server called client route ' +
             '"get_active_document_full_name":', data);
         return runEvalScript("getActiveDocumentFullName()")
             .then(function(result){
                 log.warn("get_active_document_full_name: " + result);
+                return result;
+            });
+    });
+
+    RPC.addRoute('AfterEffects.add_item', function (data) {
+        log.warn('Server called client route "add_item":', data);
+        var escapedName = EscapeStringForJSX(data.name);
+        return runEvalScript("addItem('" + escapedName +"', " +
+                                     "'" + data.item_type + "')")
+            .then(function(result){
+                log.warn("get_items: " + result);
                 return result;
             });
     });
@@ -118,7 +129,16 @@ function main(websocket_url){
             });
     });
 
-    
+    RPC.addRoute('AfterEffects.select_items', function (data) {
+        log.warn('Server called client route "select_items":', data);
+        return runEvalScript("selectItems("  + JSON.stringify(data.items) + ")")
+            .then(function(result){
+                log.warn("select_items: " + result);
+                return result;
+            });
+    });
+
+
     RPC.addRoute('AfterEffects.get_selected_items', function (data) {
         log.warn('Server called client route "get_selected_items":', data);
         return runEvalScript("getSelectedItems(" + data.comps + "," +
@@ -194,23 +214,25 @@ function main(websocket_url){
             });
     });
 
-    RPC.addRoute('AfterEffects.get_work_area', function (data) {
-        log.warn('Server called client route "get_work_area":', data);
-        return runEvalScript("getWorkArea(" + data.item_id + ")")
+    RPC.addRoute('AfterEffects.get_comp_properties', function (data) {
+        log.warn('Server called client route "get_comp_properties":', data);
+        return runEvalScript("getCompProperties(" + data.item_id + ")")
             .then(function(result){
-                log.warn("getWorkArea: " + result);
+                log.warn("get_comp_properties: " + result);
                 return result;
             });
     });
 
-    RPC.addRoute('AfterEffects.set_work_area', function (data) {
+    RPC.addRoute('AfterEffects.set_comp_properties', function (data) {
         log.warn('Server called client route "set_work_area":', data);
-        return runEvalScript("setWorkArea(" + data.item_id + ',' +
+        return runEvalScript("setCompProperties(" + data.item_id + ',' +
                                               data.start + ',' +
                                               data.duration + ',' +
-                                              data.frame_rate + ")")
+                                              data.frame_rate + ',' +
+                                              data.width + ',' +
+                                              data.height + ")")
             .then(function(result){
-                log.warn("getWorkArea: " + result);
+                log.warn("set_comp_properties: " + result);
                 return result;
             });
     });
@@ -255,7 +277,7 @@ function main(websocket_url){
 
     RPC.addRoute('AfterEffects.import_background', function (data) {
         log.warn('Server called client route "import_background":', data);
-        return runEvalScript("importBackground(" + data.comp_id + ", " + 
+        return runEvalScript("importBackground(" + data.comp_id + ", " +
                                                "'" + data.comp_name + "', " +
                                                JSON.stringify(data.files) + ")")
             .then(function(result){
@@ -266,7 +288,7 @@ function main(websocket_url){
 
     RPC.addRoute('AfterEffects.reload_background', function (data) {
         log.warn('Server called client route "reload_background":', data);
-        return runEvalScript("reloadBackground(" + data.comp_id + ", " + 
+        return runEvalScript("reloadBackground(" + data.comp_id + ", " +
                                                "'" + data.comp_name + "', " +
                                                JSON.stringify(data.files) + ")")
             .then(function(result){
@@ -278,13 +300,23 @@ function main(websocket_url){
    RPC.addRoute('AfterEffects.add_item_as_layer', function (data) {
        log.warn('Server called client route "add_item_as_layer":', data);
        return runEvalScript("addItemAsLayerToComp(" + data.comp_id + ", " +
-                                                  data.item_id + "," +
+                                                      data.item_id + "," +
                                                   " null )")
            .then(function(result){
                log.warn("addItemAsLayerToComp: " + result);
                return result;
            });
    });
+
+   RPC.addRoute('AfterEffects.add_item_instead_placeholder', function (data) {
+    log.warn('Server called client route "add_item_instead_placeholder":', data);
+    return runEvalScript("addItemInstead(" + data.placeholder_item_id + ", " +
+                                             data.item_id + ")")
+        .then(function(result){
+            log.warn("add_item_instead_placeholder: " + result);
+            return result;
+        });
+});
 
    RPC.addRoute('AfterEffects.render', function (data) {
     log.warn('Server called client route "render":', data);
@@ -310,9 +342,33 @@ function main(websocket_url){
             });
     });
 
+    RPC.addRoute('AfterEffects.add_placeholder', function (data) {
+        log.warn('Server called client route "add_placeholder":', data);
+        var escapedName = EscapeStringForJSX(data.name);
+        return runEvalScript("addPlaceholder('" + escapedName +"',"+
+                                              data.width + ',' +
+                                              data.height + ',' +
+                                              data.fps + ',' +
+                                              data.duration + ")")
+            .then(function(result){
+                log.warn("add_placeholder: " + result);
+                return result;
+            });
+    });
+
      RPC.addRoute('AfterEffects.close', function (data) {
         log.warn('Server called client route "close":', data);
         return runEvalScript("close()");
+    });
+
+    RPC.addRoute('AfterEffects.print_msg', function (data) {
+        log.warn('Server called client route "print_msg":', data);
+        var escaped_msg = EscapeStringForJSX(data.msg);
+        return runEvalScript("printMsg('" + escaped_msg +"')")
+            .then(function(result){
+                log.warn("print_msg: " + result);
+                return result;
+            });
     });
 }
 
@@ -323,17 +379,17 @@ startUp("WEBSOCKET_URL");
     'use strict';
 
     var csInterface = new CSInterface();
-    
-    
+
+
     function init() {
-                
+
         themeManager.init();
-                
+
         $("#btn_test").click(function () {
             csInterface.evalScript('sayHello()');
         });
     }
-        
+
     init();
 
 }());

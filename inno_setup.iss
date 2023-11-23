@@ -14,10 +14,10 @@ AppId={{B9E9DF6A-5BDA-42DD-9F35-C09D564C4D93}
 AppName={#MyAppName}
 AppVersion={#AppVer}
 AppVerName={#MyAppName} version {#AppVer}
-AppPublisher=Orbi Tools s.r.o
-AppPublisherURL=http://pype.club
-AppSupportURL=http://pype.club
-AppUpdatesURL=http://pype.club
+AppPublisher=Ynput s.r.o
+AppPublisherURL=https://ynput.io
+AppSupportURL=https://ynput.io
+AppUpdatesURL=https://ynput.io
 DefaultDirName={autopf}\{#MyAppName}\{#AppVer}
 UsePreviousAppDir=no
 DisableProgramGroupPage=yes
@@ -36,7 +36,7 @@ WizardStyle=modern
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [InstallDelete]
 ; clean everything in previous installation folder
@@ -53,4 +53,3 @@ Name: "{autodesktop}\{#MyAppName} {#AppVer}"; Filename: "{app}\openpype_gui.exe"
 
 [Run]
 Filename: "{app}\openpype_gui.exe"; Description: "{cm:LaunchProgram,OpenPype}"; Flags: nowait postinstall skipifsilent
-

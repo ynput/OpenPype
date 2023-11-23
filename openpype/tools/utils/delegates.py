@@ -24,8 +24,11 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
     lock = False
 
     def __init__(self, dbcon, *args, **kwargs):
-        self.dbcon = dbcon
+        self._dbcon = dbcon
         super(VersionDelegate, self).__init__(*args, **kwargs)
+
+    def get_project_name(self):
+        return self._dbcon.active_project()
 
     def displayText(self, value, locale):
         if isinstance(value, HeroVersionType):
@@ -120,13 +123,17 @@ class VersionDelegate(QtWidgets.QStyledItemDelegate):
                 "Version is not integer"
             )
 
-        project_name = self.dbcon.active_project()
+        project_name = self.get_project_name()
         # Add all available versions to the editor
         parent_id = item["version_document"]["parent"]
-        version_docs = list(sorted(
-            get_versions(project_name, subset_ids=[parent_id]),
-            key=lambda item: item["name"]
-        ))
+        version_docs = [
+            version_doc
+            for version_doc in sorted(
+                get_versions(project_name, subset_ids=[parent_id]),
+                key=lambda item: item["name"]
+            )
+            if version_doc["data"].get("active", True)
+        ]
 
         hero_versions = list(
             get_hero_versions(

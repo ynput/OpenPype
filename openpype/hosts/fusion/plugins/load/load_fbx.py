@@ -1,4 +1,3 @@
-
 from openpype.pipeline import (
     load,
     get_representation_path,
@@ -6,7 +5,7 @@ from openpype.pipeline import (
 from openpype.hosts.fusion.api import (
     imprint_container,
     get_current_comp,
-    comp_lock_and_undo_chunk
+    comp_lock_and_undo_chunk,
 )
 
 
@@ -15,7 +14,21 @@ class FusionLoadFBXMesh(load.LoaderPlugin):
 
     families = ["*"]
     representations = ["*"]
-    extensions = {"fbx"}
+    extensions = {
+        "3ds",
+        "amc",
+        "aoa",
+        "asf",
+        "bvh",
+        "c3d",
+        "dae",
+        "dxf",
+        "fbx",
+        "htr",
+        "mcd",
+        "obj",
+        "trc",
+    }
 
     label = "Load FBX mesh"
     order = -10
@@ -27,23 +40,24 @@ class FusionLoadFBXMesh(load.LoaderPlugin):
     def load(self, context, name, namespace, data):
         # Fallback to asset name when namespace is None
         if namespace is None:
-            namespace = context['asset']['name']
+            namespace = context["asset"]["name"]
 
         # Create the Loader with the filename path set
         comp = get_current_comp()
         with comp_lock_and_undo_chunk(comp, "Create tool"):
-
-            path = self.fname
+            path = self.filepath_from_context(context)
 
             args = (-32768, -32768)
             tool = comp.AddTool(self.tool_type, *args)
             tool["ImportFile"] = path
 
-            imprint_container(tool,
-                              name=name,
-                              namespace=namespace,
-                              context=context,
-                              loader=self.__class__.__name__)
+            imprint_container(
+                tool,
+                name=name,
+                namespace=namespace,
+                context=context,
+                loader=self.__class__.__name__,
+            )
 
     def switch(self, container, representation):
         self.update(container, representation)

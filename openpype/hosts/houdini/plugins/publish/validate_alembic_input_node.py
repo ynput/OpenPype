@@ -14,7 +14,7 @@ class ValidateAlembicInputNode(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["pointcache"]
+    families = ["abc"]
     hosts = ["houdini"]
     label = "Validate Input Node (Abc)"
 

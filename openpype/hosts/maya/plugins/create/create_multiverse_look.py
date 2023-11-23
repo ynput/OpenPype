@@ -1,15 +1,27 @@
 from openpype.hosts.maya.api import plugin
+from openpype.lib import (
+    BoolDef,
+    EnumDef
+)
 
 
-class CreateMultiverseLook(plugin.Creator):
+class CreateMultiverseLook(plugin.MayaCreator):
     """Create Multiverse Look"""
 
-    name = "mvLook"
+    identifier = "io.openpype.creators.maya.mvlook"
     label = "Multiverse Look"
     family = "mvLook"
     icon = "cubes"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateMultiverseLook, self).__init__(*args, **kwargs)
-        self.data["fileFormat"] = ["usda", "usd"]
-        self.data["publishMipMap"] = True
+    def get_instance_attr_defs(self):
+
+        return [
+            EnumDef("fileFormat",
+                    label="File Format",
+                    tooltip="USD export file format",
+                    items=["usda", "usd"],
+                    default="usda"),
+            BoolDef("publishMipMap",
+                    label="Publish MipMap",
+                    default=True),
+        ]

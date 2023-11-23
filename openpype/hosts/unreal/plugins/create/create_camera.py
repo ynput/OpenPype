@@ -11,7 +11,7 @@ from openpype.hosts.unreal.api.plugin import (
 class CreateCamera(UnrealAssetCreator):
     """Create Camera."""
 
-    identifier = "io.openpype.creators.unreal.camera"
+    identifier = "io.ayon.creators.unreal.camera"
     label = "Camera"
     family = "camera"
     icon = "fa.camera"

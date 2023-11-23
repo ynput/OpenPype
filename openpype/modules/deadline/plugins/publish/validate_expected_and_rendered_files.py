@@ -20,8 +20,19 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
     allow_user_override = True
 
     def process(self, instance):
-        self.instance = instance
-        frame_list = self._get_frame_list(instance.data["render_job_id"])
+        """Process all the nodes in the instance"""
+
+        # get dependency jobs ids for retrieving frame list
+        dependent_job_ids = self._get_dependent_job_ids(instance)
+
+        if not dependent_job_ids:
+            self.log.warning("No dependent jobs found for instance: {}"
+                             "".format(instance))
+            return
+
+        # get list of frames from dependent jobs
+        frame_list = self._get_dependent_jobs_frames(
+            instance, dependent_job_ids)
 
         for repre in instance.data["representations"]:
             expected_files = self._get_expected_files(repre)
@@ -59,7 +70,10 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
                     # Update the representation expected files
                     self.log.info("Update range from actual job range "
                                   "to frame list: {}".format(frame_list))
-                    repre["files"] = sorted(job_expected_files)
+                    # single item files must be string not list
+                    repre["files"] = (sorted(job_expected_files)
+                                      if len(job_expected_files) > 1 else
+                                      list(job_expected_files)[0])
 
                     # Update the expected files
                     expected_files = job_expected_files
@@ -78,26 +92,45 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
                     )
                 )
 
-    def _get_frame_list(self, original_job_id):
+    def _get_dependent_job_ids(self, instance):
+        """Returns list of dependent job ids from instance metadata.json
+
+        Args:
+            instance (pyblish.api.Instance): pyblish instance
+
+        Returns:
+            (list): list of dependent job ids
+
+        """
+        dependent_job_ids = []
+
+        # job_id collected from metadata.json
+        original_job_id = instance.data["render_job_id"]
+
+        dependent_job_ids_env = os.environ.get("RENDER_JOB_IDS")
+        if dependent_job_ids_env:
+            dependent_job_ids = dependent_job_ids_env.split(',')
+        elif original_job_id:
+            dependent_job_ids = [original_job_id]
+
+        return dependent_job_ids
+
+    def _get_dependent_jobs_frames(self, instance, dependent_job_ids):
         """Returns list of frame ranges from all render job.
 
         Render job might be re-submitted so job_id in metadata.json could be
         invalid. GlobalJobPreload injects current job id to RENDER_JOB_IDS.
 
         Args:
-            original_job_id (str)
+            instance (pyblish.api.Instance): pyblish instance
+            dependent_job_ids (list): list of dependent job ids
         Returns:
             (list)
         """
         all_frame_lists = []
-        render_job_ids = os.environ.get("RENDER_JOB_IDS")
-        if render_job_ids:
-            render_job_ids = render_job_ids.split(',')
-        else:  # fallback
-            render_job_ids = [original_job_id]
 
-        for job_id in render_job_ids:
-            job_info = self._get_job_info(job_id)
+        for job_id in dependent_job_ids:
+            job_info = self._get_job_info(instance, job_id)
             frame_list = job_info["Props"].get("Frames")
             if frame_list:
                 all_frame_lists.extend(frame_list.split(','))
@@ -152,18 +185,25 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
 
         return file_name_template, frame_placeholder
 
-    def _get_job_info(self, job_id):
+    def _get_job_info(self, instance, job_id):
         """Calls DL for actual job info for 'job_id'
 
         Might be different than job info saved in metadata.json if user
         manually changes job pre/during rendering.
 
+        Args:
+            instance (pyblish.api.Instance): pyblish instance
+            job_id (str): Deadline job id
+
+        Returns:
+            (dict): Job info from Deadline
+
         """
         # get default deadline webservice url from deadline module
-        deadline_url = self.instance.context.data["defaultDeadline"]
+        deadline_url = instance.context.data["defaultDeadline"]
         # if custom one is set in instance, use that
-        if self.instance.data.get("deadlineUrl"):
-            deadline_url = self.instance.data.get("deadlineUrl")
+        if instance.data.get("deadlineUrl"):
+            deadline_url = instance.data.get("deadlineUrl")
         assert deadline_url, "Requires Deadline Webservice URL"
 
         url = "{}/api/jobs?JobID={}".format(deadline_url, job_id)

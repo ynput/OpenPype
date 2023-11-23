@@ -33,39 +33,41 @@ The Instances are categorized into ‘families’ based on what type of data the
 Following family definitions and requirements are OpenPype defaults and what we consider good industry practice, but most of the requirements can be easily altered to suit the studio or project needs.
 Here's a list of supported families
 
-| Family                  | Comment                                          | Example Subsets           |
-| ----------------------- | ------------------------------------------------ | ------------------------- |
-| [Model](#model)         | Cleaned geo without materials                    | main, proxy, broken       |
-| [Look](#look)           | Package of shaders, assignments and textures     | main, wet, dirty          |
-| [Rig](#rig)             | Characters or props with animation controls      | main, deform, sim         |
-| [Assembly](#assembly)   | A complex model made from multiple other models. | main, deform, sim         |
-| [Layout](#layout)       | Simple representation of the environment         | main,                     |
-| [Setdress](#setdress)   | Environment containing only referenced assets    | main,                     |
-| [Camera](#camera)       | May contain trackers or proxy geo                | main, tracked, anim       |
-| [Animation](#animation) | Animation exported from a rig.                   | characterA, vehicleB      |
-| [Cache](#cache)         | Arbitrary animated geometry or fx cache          | rest, ROM , pose01        |
-| MayaAscii               | Maya publishes that don't fit other categories   |                           |
-| [Render](#render)       | Rendered frames from CG or Comp                  |                           |
-| RenderSetup             | Scene render settings, AOVs and layers           |                           |
-| Plate                   | Ingested, transcode, conformed footage           | raw, graded, imageplane   |
-| Write                   | Nuke write nodes for rendering                   |                           |
-| Image                   | Any non-plate image to be used by artists        | Reference, ConceptArt     |
-| LayeredImage            | Software agnostic layered image with metadata    | Reference, ConceptArt     |
-| Review                  | Reviewable video or image.                       |                           |
-| Matchmove               | Matchmoved camera, potentially with geometry     | main                      |
-| Workfile                | Backup of the workfile with all its content      | uses the task name        |
-| Nukenodes               | Any collection of nuke nodes                     | maskSetup, usefulBackdrop |
-| Yeticache               | Cached out yeti fur setup                        |                           |
-| YetiRig                 | Yeti groom ready to be applied to geometry cache | main, destroyed           |
-| VrayProxy               | Vray proxy geometry for rendering                |                           |
-| VrayScene               | Vray full scene export                           |                           |
-| ArnodldStandin          | All arnold .ass archives for rendering           | main, wet, dirty          |
-| LUT                     |                                                  |                           |
-| Nukenodes               |                                                  |                           |
-| Gizmo                   |                                                  |                           |
-| Nukenodes               |                                                  |                           |
-| Harmony.template        |                                                  |                           |
-| Harmony.palette        |                                                  |                           |
+| Family                  | Comment                                               | Example Subsets           |
+|-------------------------|-------------------------------------------------------| ------------------------- |
+| [Model](#model)         | Cleaned geo without materials                         | main, proxy, broken       |
+| [Look](#look)           | Package of shaders, assignments and textures          | main, wet, dirty          |
+| [Rig](#rig)             | Characters or props with animation controls           | main, deform, sim         |
+| [Assembly](#assembly)   | A complex model made from multiple other models.      | main, deform, sim         |
+| [Layout](#layout)       | Simple representation of the environment              | main,                     |
+| [Setdress](#setdress)   | Environment containing only referenced assets         | main,                     |
+| [Camera](#camera)       | May contain trackers or proxy geo, only single camera | main, tracked, anim       |
+|                         | expected.                                             |                           |
+| [Animation](#animation) | Animation exported from a rig.                        | characterA, vehicleB      |
+| [Cache](#cache)         | Arbitrary animated geometry or fx cache               | rest, ROM , pose01        |
+| MayaAscii               | Maya publishes that don't fit other categories        |                           |
+| [Render](#render)       | Rendered frames from CG or Comp                       |                           |
+| RenderSetup             | Scene render settings, AOVs and layers                |                           |
+| Plate                   | Ingested, transcode, conformed footage                | raw, graded, imageplane   |
+| Write                   | Nuke write nodes for rendering                        |                           |
+| Image                   | Any non-plate image to be used by artists             | Reference, ConceptArt     |
+| LayeredImage            | Software agnostic layered image with metadata         | Reference, ConceptArt     |
+| Review                  | Reviewable video or image.                            |                           |
+| Matchmove               | Matchmoved camera, potentially with geometry, allows  | main                      |
+|                         | multiple cameras even with planes.                    |                           |
+| Workfile                | Backup of the workfile with all its content           | uses the task name        |
+| Nukenodes               | Any collection of nuke nodes                          | maskSetup, usefulBackdrop |
+| Yeticache               | Cached out yeti fur setup                             |                           |
+| YetiRig                 | Yeti groom ready to be applied to geometry cache      | main, destroyed           |
+| VrayProxy               | Vray proxy geometry for rendering                     |                           |
+| VrayScene               | Vray full scene export                                |                           |
+| ArnodldStandin          | All arnold .ass archives for rendering                | main, wet, dirty          |
+| LUT                     |                                                       |                           |
+| Nukenodes               |                                                       |                           |
+| Gizmo                   |                                                       |                           |
+| Nukenodes               |                                                       |                           |
+| Harmony.template        |                                                       |                           |
+| Harmony.palette         |                                                       |                           |
 
 
 
@@ -161,7 +163,7 @@ Example Representations:
 ### Animation
 
 Published result of an animation created with a rig. Animation can be extracted
-as animation curves, cached out geometry or even fully animated rig with all the controllers.  
+as animation curves, cached out geometry or even fully animated rig with all the controllers.
 Animation cache is usually defined by a rigger in the rig file of a character or
 by FX TD in the effects rig, to ensure consistency of outputs.
 

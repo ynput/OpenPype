@@ -56,17 +56,20 @@ class CreateWriteRender(napi.NukeWriteCreator):
             actual_format = nuke.root().knob('format').value()
             width, height = (actual_format.width(), actual_format.height())
 
+        self.log.debug(">>>>>>> : {}".format(self.instance_attributes))
+        self.log.debug(">>>>>>> : {}".format(self.get_linked_knobs()))
+
         created_node = napi.create_write_node(
             subset_name,
             write_data,
             input=self.selected_node,
             prenodes=self.prenodes,
+            linked_knobs=self.get_linked_knobs(),
             **{
                 "width": width,
                 "height": height
             }
         )
-        self.add_info_knob(created_node)
 
         self.integrate_links(created_node, outputs=False)
 

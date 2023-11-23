@@ -46,3 +46,10 @@ class CollectInputRepresentationsToVersions(pyblish.api.ContextPlugin):
                 version_id = representation_id_to_version_id.get(repre_id)
                 if version_id:
                     input_versions.append(version_id)
+                else:
+                    self.log.debug(
+                        "Representation id {} skipped because its version is "
+                        "not found in current project. Likely it is loaded "
+                        "from a library project or uses a deleted "
+                        "representation or version.".format(repre_id)
+                    )

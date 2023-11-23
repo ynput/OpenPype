@@ -5,6 +5,7 @@ import pyblish.api
 from openpype.pipeline.publish import (
     ValidateContentsOrder,
     RepairAction,
+    PublishValidationError
 )
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.lib import undo_chunk
@@ -51,22 +52,30 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError('{} failed, see log '
-                               'information'.format(self.label))
+            raise PublishValidationError(
+                '{} failed, see log information'.format(self.label)
+            )
 
     @classmethod
     def get_invalid(cls, instance):
 
-        controllers_sets = [i for i in instance if i == "controls_SET"]
-        controls = cmds.sets(controllers_sets, query=True)
-        assert controls, "Must have 'controls_SET' in rig instance"
+        controls_set = cls.get_node(instance)
+        if not controls_set:
+            cls.log.error(
+                "Must have 'controls_SET' in rig instance"
+            )
+            return [instance.data["instance_node"]]
+
+        controls = cmds.sets(controls_set, query=True)
 
         # Ensure all controls are within the top group
         lookup = set(instance[:])
-        assert all(control in lookup for control in cmds.ls(controls,
-                                                            long=True)), (
-            "All controls must be inside the rig's group."
-        )
+        if not all(control in lookup for control in cmds.ls(controls,
+                                                            long=True)):
+            cls.log.error(
+                "All controls must be inside the rig's group."
+            )
+            return [controls_set]
 
         # Validate all controls
         has_connections = list()
@@ -180,9 +189,17 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
 
+        controls_set = cls.get_node(instance)
+        if not controls_set:
+            cls.log.error(
+                "Unable to repair because no 'controls_SET' found in rig "
+                "instance: {}".format(instance)
+            )
+            return
+
         # Use a single undo chunk
         with undo_chunk():
-            controls = cmds.sets("controls_SET", query=True)
+            controls = cmds.sets(controls_set, query=True)
             for control in controls:
 
                 # Lock visibility
@@ -211,3 +228,64 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
                         default = cls.CONTROLLER_DEFAULTS[attr]
                         cls.log.info("Setting %s to %s" % (plug, default))
                         cmds.setAttr(plug, default)
+
+    @classmethod
+    def get_node(cls, instance):
+        """Get target object nodes from controls_SET
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of object nodes from controls_SET
+        """
+        return instance.data["rig_sets"].get("controls_SET")
+
+
+class ValidateSkeletonRigControllers(ValidateRigControllers):
+    """Validate rig controller for skeletonAnim_SET
+
+    Controls must have the transformation attributes on their default
+    values of translate zero, rotate zero and scale one when they are
+    unlocked attributes.
+
+    Unlocked keyable attributes may not have any incoming connections. If
+    these connections are required for the rig then lock the attributes.
+
+    The visibility attribute must be locked.
+
+    Note that `repair` will:
+        - Lock all visibility attributes
+        - Reset all default values for translate, rotate, scale
+        - Break all incoming connections to keyable attributes
+
+    """
+    order = ValidateContentsOrder + 0.05
+    label = "Skeleton Rig Controllers"
+    hosts = ["maya"]
+    families = ["rig.fbx"]
+
+    # Default controller values
+    CONTROLLER_DEFAULTS = {
+        "translateX": 0,
+        "translateY": 0,
+        "translateZ": 0,
+        "rotateX": 0,
+        "rotateY": 0,
+        "rotateZ": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "scaleZ": 1
+    }
+
+    @classmethod
+    def get_node(cls, instance):
+        """Get target object nodes from skeletonMesh_SET
+
+        Args:
+            instance (str): instance
+
+        Returns:
+            list: list of object nodes from skeletonMesh_SET
+        """
+        return instance.data["rig_sets"].get("skeletonMesh_SET")

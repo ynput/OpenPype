@@ -18,15 +18,15 @@ class SelectInvalidAction(pyblish.api.Action):
     icon = "search"  # Icon from Awesome Icon
 
     def process(self, context, plugin):
-        errored_instances = get_errored_instances_from_context(context)
-
-        # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+        errored_instances = get_errored_instances_from_context(
+            context,
+            plugin=plugin,
+        )
 
         # Get the invalid nodes for the plug-ins
         self.log.info("Finding invalid nodes..")
         invalid = list()
-        for instance in instances:
+        for instance in errored_instances:
             invalid_nodes = plugin.get_invalid(instance)
             if invalid_nodes:
                 if isinstance(invalid_nodes, (list, tuple)):
@@ -53,6 +53,7 @@ class SelectInvalidAction(pyblish.api.Action):
         names = set()
         for tool in invalid:
             flow.Select(tool, True)
+            comp.SetActiveTool(tool)
             names.add(tool.Name)
         self.log.info(
             "Selecting invalid tools: %s" % ", ".join(sorted(names))

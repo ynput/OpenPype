@@ -94,6 +94,9 @@ def get_asset_template_data(asset_doc, project_name):
 
     return {
         "asset": asset_doc["name"],
+        "folder": {
+            "name": asset_doc["name"]
+        },
         "hierarchy": hierarchy,
         "parent": parent_name
     }
@@ -128,7 +131,7 @@ def get_task_template_data(project_doc, asset_doc, task_name):
     Args:
         project_doc (Dict[str, Any]): Queried project document.
         asset_doc (Dict[str, Any]): Queried asset document.
-        tas_name (str): Name of task for which data should be returned.
+        task_name (str): Name of task for which data should be returned.
 
     Returns:
         Dict[str, Dict[str, str]]: Template data

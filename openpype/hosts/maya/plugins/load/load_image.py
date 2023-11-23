@@ -4,7 +4,8 @@ import copy
 from openpype.lib import EnumDef
 from openpype.pipeline import (
     load,
-    get_representation_context
+    get_representation_context,
+    get_current_host_name,
 )
 from openpype.pipeline.load.utils import get_representation_path_from_context
 from openpype.pipeline.colorspace import (
@@ -266,13 +267,18 @@ class FileNodeLoader(load.LoaderPlugin):
 
         # Assume colorspace from filepath based on project settings
         project_name = context["project"]["name"]
-        host_name = os.environ.get("AVALON_APP")
+        host_name = get_current_host_name()
         project_settings = get_project_settings(project_name)
 
         config_data = get_imageio_config(
             project_name, host_name,
             project_settings=project_settings
         )
+
+        # ignore if host imageio is not enabled
+        if not config_data:
+            return
+
         file_rules = get_imageio_file_rules(
             project_name, host_name,
             project_settings=project_settings

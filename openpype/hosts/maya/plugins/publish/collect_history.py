@@ -18,7 +18,6 @@ class CollectMayaHistory(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     label = "Maya History"
     families = ["rig"]
-    verbose = False
 
     def process(self, instance):
 

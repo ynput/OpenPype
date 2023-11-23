@@ -51,11 +51,9 @@ class ExtractXgen(publish.Extractor):
         with delete_after() as delete_bin:
             duplicate_nodes = []
             # Collect nodes to export.
-            for _, connections in instance.data["xgenConnections"].items():
-                transform_name = connections["transform"].split(".")[0]
-
+            for node in instance.data["xgenConnections"]:
                 # Duplicate_transform subd patch geometry.
-                duplicate_transform = cmds.duplicate(transform_name)[0]
+                duplicate_transform = cmds.duplicate(node)[0]
                 delete_bin.append(duplicate_transform)
 
                 # Discard the children.
@@ -79,7 +77,7 @@ class ExtractXgen(publish.Extractor):
             xgenm.exportPalette(
                 instance.data["xgmPalette"].replace("|", ""), temp_xgen_path
             )
-            self.log.info("Extracted to {}".format(temp_xgen_path))
+            self.log.debug("Extracted to {}".format(temp_xgen_path))
 
             # Import xgen onto the duplicate.
             with maintained_selection():
@@ -87,6 +85,18 @@ class ExtractXgen(publish.Extractor):
                 palette = xgenm.importPalette(temp_xgen_path, [])
 
             delete_bin.append(palette)
+
+            # Copy shading assignments.
+            nodes = (
+                instance.data["xgmDescriptions"] +
+                instance.data["xgmSubdPatches"]
+            )
+            for node in nodes:
+                target_node = node.split(":")[-1]
+                shading_engine = cmds.listConnections(
+                    node, type="shadingEngine"
+                )[0]
+                cmds.sets(target_node, edit=True, forceElement=shading_engine)
 
             # Export duplicated palettes.
             xgenm.exportPalette(palette, xgen_path)
@@ -108,7 +118,7 @@ class ExtractXgen(publish.Extractor):
                         expressions=True
                     )
 
-            self.log.info("Extracted to {}".format(maya_filepath))
+            self.log.debug("Extracted to {}".format(maya_filepath))
 
         if os.path.exists(temp_xgen_path):
             os.remove(temp_xgen_path)

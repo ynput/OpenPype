@@ -7,8 +7,7 @@ from qtpy.QtGui import QPixmap
 
 import hiero.ui
 
-from openpype.pipeline import legacy_io
-from openpype.hosts.hiero import api as phiero
+from openpype import AYON_SERVER_ENABLED
 from openpype.hosts.hiero.api.otio import hiero_export
 
 
@@ -19,17 +18,19 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.491
 
     def process(self, context):
+        asset = context.data["asset"]
+        asset_name = asset
+        if AYON_SERVER_ENABLED:
+            asset_name = asset_name.split("/")[-1]
 
-        asset = legacy_io.Session["AVALON_ASSET"]
-        subset = "workfile"
-        project = phiero.get_current_project()
         active_timeline = hiero.ui.activeSequence()
+        project = active_timeline.project()
         fps = active_timeline.framerate().toFloat()
 
         # adding otio timeline to context
         otio_timeline = hiero_export.create_otio_timeline()
 
-        # get workfile thumnail paths
+        # get workfile thumbnail paths
         tmp_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
         thumbnail_name = "workfile_thumbnail.png"
         thumbnail_path = os.path.join(tmp_staging, thumbnail_name)
@@ -51,8 +52,8 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         }
 
         # get workfile paths
-        curent_file = project.path()
-        staging_dir, base_name = os.path.split(curent_file)
+        current_file = project.path()
+        staging_dir, base_name = os.path.split(current_file)
 
         # creating workfile representation
         workfile_representation = {
@@ -61,13 +62,16 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             'files': base_name,
             "stagingDir": staging_dir,
         }
-
+        family = "workfile"
         instance_data = {
-            "name": "{}_{}".format(asset, subset),
-            "asset": asset,
-            "subset": "{}{}".format(asset, subset.capitalize()),
+            "label": "{} - {}Main".format(
+                asset, family),
+            "name": "{}_{}".format(asset_name, family),
+            "asset": context.data["asset"],
+            # TODO use 'get_subset_name'
+            "subset": "{}{}Main".format(asset_name, family.capitalize()),
             "item": project,
-            "family": "workfile",
+            "family": family,
             "families": [],
             "representations": [workfile_representation, thumb_representation]
         }
@@ -80,7 +84,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             "activeProject": project,
             "activeTimeline": active_timeline,
             "otioTimeline": otio_timeline,
-            "currentFile": curent_file,
+            "currentFile": current_file,
             "colorspace": self.get_colorspace(project),
             "fps": fps
         }

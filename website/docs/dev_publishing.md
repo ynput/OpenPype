@@ -506,6 +506,67 @@ or the scene file was copy pasted from different context.
 #### *Known errors*
 When there is a known error that can't be fixed by the user (e.g. can't connect to deadline service, etc.) `KnownPublishError` should be raised. The only difference is that its message is shown in UI to the artist otherwise a neutral message without context is shown.
 
+### Plugins
+Plugin is a single processing unit that can work with publish context and instances.
+
+#### Plugin types
+There are 2 types of plugins - `InstancePlugin` and `ContextPlugin`.  Be aware that inheritance of plugin from `InstancePlugin` or `ContextPlugin` actually does not affect if plugin is instance or context plugin, that is affected by argument name in `process` method.
+
+```python
+import pyblish.api
+
+
+# Context plugin
+class MyContextPlugin(pyblish.api.ContextPlugin):
+    def process(self, context):
+        ...
+
+# Instance plugin
+class MyInstancePlugin(pyblish.api.InstancePlugin):
+    def process(self, instance):
+        ...
+
+# Still an instance plugin
+class MyOtherInstancePlugin(pyblish.api.ContextPlugin):
+    def process(self, instance):
+        ...
+```
+
+#### Plugin filtering
+By pyblish logic, plugins have predefined filtering class attributes `hosts`, `targets` and `families`. Filter by `hosts` and `targets` are filters that are applied for current publishing process. Both filters are registered in `pyblish` module, `hosts` filtering may not match OpenPype host name (e.g. farm publishing uses `shell` in pyblish). Filter `families` works only on instance plugins and is dynamic during publish process by changing families of an instance.
+
+All filters are list of a strings `families = ["image"]`. Empty list is invalid filter and plugin will be skipped, to allow plugin for all values use a start `families = ["*"]`. For more detailed filtering options check [pyblish documentation](https://api.pyblish.com/pluginsystem).
+
+Each plugin must have order, there are 4 order milestones - Collect, Validate, Extract, Integration. Any plugin below collection order won't be processed. for more details check [pyblish documentation](https://api.pyblish.com/ordering).
+
+#### Plugin settings
+Pyblish plugins may have settings. There are 2 ways how settings are applied, first is automated, and it's logic is based on function `filter_pyblish_plugins` in `./openpype/pipeline/publish/lib.py`, second is explicit by implementing class method `apply_settings` on a plugin.
+
+
+Automated logic is expecting specific structure of project settings `project_settings[{category}]["plugins"]["publish"][{plugin class name}]`. The category is a key in root of project settings. There are currently 3 ways how the category key is received.
+1. Use `settings_category` class attribute value from plugin. If `settings_category` is not `None` there is not any fallback to other way.
+2. Use currently registered pyblish host. This will be probably deprecated soon.
+3. Use 3rd folder name from a plugin filepath. From path `./maya/plugins/publish/collect_render.py` is used `maya` as the key.
+
+For any other use-case is recommended to use explicit approach by implementing `apply_settings` method. Must use `@classmethod` decorator and expect arguments for project settings and system settings. We're planning to support single argument with only project settings.
+```python
+import pyblish.api
+
+
+class MyPlugin(pyblish.api.InstancePlugin):
+    profiles = []
+
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        cls.profiles = (
+            project_settings
+            ["addon"]
+            ["plugins"]
+            ["publish"]
+            ["vfx_profiles"]
+        )
+```
+
 ### Plugin extension
 Publish plugins can be extended by additional logic when inheriting from `OpenPypePyblishPluginMixin` which can be used as mixin (additional inheritance of class). Publish plugins that inherit from this mixin can define attributes that will be shown in **CreatedInstance**. One of the most important usages is to be able turn on/off optional plugins.
 

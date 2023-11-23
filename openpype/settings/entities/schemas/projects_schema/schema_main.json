@@ -124,6 +124,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_substancepainter"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_harmony"
                 },
                 {

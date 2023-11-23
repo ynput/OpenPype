@@ -11,11 +11,10 @@ from copy import deepcopy
 import pyblish.api
 
 from openpype.lib import (
-    get_ffmpeg_tool_path,
+    get_ffmpeg_tool_args,
     run_subprocess,
 )
 from openpype.pipeline import publish
-from openpype.pipeline.editorial import frames_to_seconds
 
 
 class ExtractOTIOTrimmingVideo(publish.Extractor):
@@ -75,14 +74,14 @@ class ExtractOTIOTrimmingVideo(publish.Extractor):
             otio_range (opentime.TimeRange): range to trim to
 
         """
-        # get rendering app path
-        ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
+        # Not all hosts can import this module.
+        from openpype.pipeline.editorial import frames_to_seconds
 
         # create path to destination
         output_path = self._get_ffmpeg_output(input_file_path)
 
         # start command list
-        command = [ffmpeg_path]
+        command = get_ffmpeg_tool_args("ffmpeg")
 
         video_path = input_file_path
         frame_start = otio_range.start_time.value

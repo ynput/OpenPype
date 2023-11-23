@@ -116,7 +116,12 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         self.instance = instance
 
-        instance_label = html_escape(instance.label)
+        instance_label = instance.label
+        if instance_label is None:
+            # Do not cause UI crash if label is 'None'
+            instance_label = "No label"
+
+        instance_label = html_escape(instance_label)
 
         subset_name_label = QtWidgets.QLabel(instance_label, self)
         subset_name_label.setObjectName("ListViewSubsetName")

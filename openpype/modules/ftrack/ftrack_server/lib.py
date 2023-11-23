@@ -196,7 +196,7 @@ class ProcessEventHub(SocketBaseEventHub):
             {"pype_data.is_processed": False}
         ).sort(
             [("pype_data.stored", pymongo.ASCENDING)]
-        )
+        ).limit(100)
 
         found = False
         for event_data in not_processed_events:

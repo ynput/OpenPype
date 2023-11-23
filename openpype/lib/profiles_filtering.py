@@ -167,7 +167,7 @@ def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
         for item in key_values.items()
     ])
 
-    logger.info(
+    logger.debug(
         "Looking for matching profile for: {}".format(log_parts)
     )
 
@@ -209,19 +209,19 @@ def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
             matching_profiles.append((profile, profile_scores))
 
     if not matching_profiles:
-        logger.info(
+        logger.debug(
             "None of profiles match your setup. {}".format(log_parts)
         )
         return None
 
     if len(matching_profiles) > 1:
-        logger.info(
+        logger.debug(
             "More than one profile match your setup. {}".format(log_parts)
         )
 
     profile = _profile_exclusion(matching_profiles, logger)
     if profile:
-        logger.info(
+        logger.debug(
             "Profile selected: {}".format(profile)
         )
     return profile

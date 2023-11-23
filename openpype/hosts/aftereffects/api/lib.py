@@ -1,67 +1,15 @@
 import os
-import sys
 import re
 import json
 import contextlib
-import traceback
 import logging
-from functools import partial
 
-from qtpy import QtWidgets
-
-from openpype.pipeline import install_host
-from openpype.modules import ModulesManager
-
-from openpype.tools.utils import host_tools
-from openpype.tests.lib import is_in_tests
-from .launch_logic import ProcessLauncher, get_stub
+from openpype.pipeline.context_tools import get_current_context
+from openpype.client import get_asset_by_name
+from .ws_stub import get_stub
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
-def safe_excepthook(*args):
-    traceback.print_exception(*args)
-
-
-def main(*subprocess_args):
-    sys.excepthook = safe_excepthook
-
-    from openpype.hosts.aftereffects.api import AfterEffectsHost
-
-    host = AfterEffectsHost()
-    install_host(host)
-
-    os.environ["OPENPYPE_LOG_NO_COLORS"] = "False"
-    app = QtWidgets.QApplication([])
-    app.setQuitOnLastWindowClosed(False)
-
-    launcher = ProcessLauncher(subprocess_args)
-    launcher.start()
-
-    if os.environ.get("HEADLESS_PUBLISH"):
-        manager = ModulesManager()
-        webpublisher_addon = manager["webpublisher"]
-
-        launcher.execute_in_main_thread(
-            partial(
-                webpublisher_addon.headless_publish,
-                log,
-                "CloseAE",
-                is_in_tests()
-            )
-        )
-
-    elif os.environ.get("AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH", True):
-        save = False
-        if os.getenv("WORKFILES_SAVE_AS"):
-            save = True
-
-        launcher.execute_in_main_thread(
-            lambda: host_tools.show_tool_by_name("workfiles", save=save)
-        )
-
-    sys.exit(app.exec_())
 
 
 @contextlib.contextmanager
@@ -145,13 +93,13 @@ def get_asset_settings(asset_doc):
 
     """
     asset_data = asset_doc["data"]
-    fps = asset_data.get("fps")
-    frame_start = asset_data.get("frameStart")
-    frame_end = asset_data.get("frameEnd")
-    handle_start = asset_data.get("handleStart")
-    handle_end = asset_data.get("handleEnd")
-    resolution_width = asset_data.get("resolutionWidth")
-    resolution_height = asset_data.get("resolutionHeight")
+    fps = asset_data.get("fps", 0)
+    frame_start = asset_data.get("frameStart", 0)
+    frame_end = asset_data.get("frameEnd", 0)
+    handle_start = asset_data.get("handleStart", 0)
+    handle_end = asset_data.get("handleEnd", 0)
+    resolution_width = asset_data.get("resolutionWidth", 0)
+    resolution_height = asset_data.get("resolutionHeight", 0)
     duration = (frame_end - frame_start + 1) + handle_start + handle_end
 
     return {
@@ -164,3 +112,49 @@ def get_asset_settings(asset_doc):
         "resolutionHeight": resolution_height,
         "duration": duration
     }
+
+
+def set_settings(frames, resolution, comp_ids=None, print_msg=True):
+    """Sets number of frames and resolution to selected comps.
+
+    Args:
+        frames (bool): True if set frame info
+        resolution (bool): True if set resolution
+        comp_ids (list): specific composition ids, if empty
+            it tries to look for currently selected
+        print_msg (bool): True throw JS alert with msg
+    """
+    frame_start = frames_duration = fps = width = height = None
+    current_context = get_current_context()
+
+    asset_doc = get_asset_by_name(current_context["project_name"],
+                                  current_context["asset_name"])
+    settings = get_asset_settings(asset_doc)
+
+    msg = ''
+    if frames:
+        frame_start = settings["frameStart"] - settings["handleStart"]
+        frames_duration = settings["duration"]
+        fps = settings["fps"]
+        msg += f"frame start:{frame_start}, duration:{frames_duration}, "\
+               f"fps:{fps}"
+    if resolution:
+        width = settings["resolutionWidth"]
+        height = settings["resolutionHeight"]
+        msg += f"width:{width} and height:{height}"
+
+    stub = get_stub()
+    if not comp_ids:
+        comps = stub.get_selected_items(True, False, False)
+        comp_ids = [comp.id for comp in comps]
+    if not comp_ids:
+        stub.print_msg("Select at least one composition to apply settings.")
+        return
+
+    for comp_id in comp_ids:
+        msg = f"Setting for comp {comp_id} " + msg
+        log.debug(msg)
+        stub.set_comp_properties(comp_id, frame_start, frames_duration,
+                                 fps, width, height)
+        if print_msg:
+            stub.print_msg(msg)
