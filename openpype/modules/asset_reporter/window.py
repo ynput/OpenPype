@@ -362,13 +362,20 @@ class AssetReporterWindow(QtWidgets.QDialog):
                 "source": self._get_subset(doc["parent"], db[project]),
             }
             source["source"].update({"version": doc["name"]})
-            refs = [
-                {
-                    "subset": self._get_subset(linked["parent"], db[project]),
-                    "version": linked.get("name")
-                }
-                for linked in doc["linked_docs"]
-            ]
+            refs = []
+            version = '<unknown>'
+            for linked in doc["linked_docs"]:
+                try:
+                    version = f'v{linked["name"]}'
+                except KeyError:
+                    if linked["type"] == "hero_version":
+                        version = "hero"
+                finally:
+                    refs.append({
+                        "subset": self._get_subset(linked["parent"], db[project]),
+                        "version": version
+                    })
+
             source["refs"] = refs
             asset_map.append(source)
 
@@ -377,7 +384,7 @@ class AssetReporterWindow(QtWidgets.QDialog):
         # this will group the assets by subset name and version
         for asset in asset_map:
             for ref in asset["refs"]:
-                key = f'{ref["subset"]["name"]} (v{ref["version"]})'
+                key = f'{ref["subset"]["name"]} ({ref["version"]})'
                 if key in grouped:
                     grouped[key].append(asset["source"])
                 else:
