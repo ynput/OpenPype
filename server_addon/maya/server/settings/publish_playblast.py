@@ -108,6 +108,7 @@ class ViewportOptionsSetting(BaseSettingsModel):
         True, title="Enable Anti-Aliasing", section="Anti-Aliasing"
     )
     multiSample: int = Field(8, title="Anti Aliasing Samples")
+    reloadTextures: bool = Field(False, title="Reload Textures")
     useDefaultMaterial: bool = Field(False, title="Use Default Material")
     wireframeOnShaded: bool = Field(False, title="Wireframe On Shaded")
     xray: bool = Field(False, title="X-Ray")
@@ -302,6 +303,7 @@ DEFAULT_PLAYBLAST_SETTING = {
             "twoSidedLighting": True,
             "lineAAEnable": True,
             "multiSample": 8,
+            "reloadTextures": False,
             "useDefaultMaterial": False,
             "wireframeOnShaded": False,
             "xray": False,

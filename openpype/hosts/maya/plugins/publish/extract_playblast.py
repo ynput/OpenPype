@@ -44,7 +44,7 @@ class ExtractPlayblast(publish.Extractor):
                 )
             )
         if "textures" in preset["viewport_options"]:
-            lib.reload_textures()
+            lib.reload_textures(preset)
         path = capture.capture(log=self.log, **preset)
         self.log.debug("playblast path  {}".format(path))
 
@@ -182,7 +182,6 @@ class ExtractPlayblast(publish.Extractor):
             capture_preset["Viewport Options"]["override_viewport_options"]
         )
 
-        self.log.debug("{}".format(instance.data["panel"]))
         # Force viewer to False in call to capture because we have our own
         # viewer opening call to allow a signal to trigger between
         # playblast and viewer

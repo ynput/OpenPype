@@ -152,10 +152,10 @@ class ExtractThumbnail(publish.Extractor):
                         json.dumps(preset, indent=4, sort_keys=True)
                     )
                 )
-        if "textures" in preset["viewport_options"]:
-            lib.reload_textures()
-        path = capture.capture(**preset)
-        playblast = self._fix_playblast_output_path(path)
+            if "textures" in preset["viewport_options"]:
+                lib.reload_textures(preset)
+            path = capture.capture(**preset)
+            playblast = self._fix_playblast_output_path(path)
 
         _, thumbnail = os.path.split(playblast)
 

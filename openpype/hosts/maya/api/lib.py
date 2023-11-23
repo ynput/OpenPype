@@ -174,9 +174,13 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
-def reload_textures():
+def reload_textures(preset):
     """Reload textures during playblast
     """
+    if not preset["viewport_options"]["reloadTextures"]:
+        self.log.debug("Reload Textures during playblasting is disabled.")
+        return
+
     texture_files = cmds.ls(type="file")
     if not texture_files:
         return
