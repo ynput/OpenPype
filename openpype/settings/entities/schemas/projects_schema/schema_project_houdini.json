@@ -39,12 +39,12 @@
                         {
                             "type": "text",
                             "key": "default_display",
-                            "label": "Display"
+                            "label": "Default active displays"
                         },
                         {
                             "type": "text",
                             "key": "default_view",
-                            "label": "View"
+                            "label": "Default active views"
                         },
                         {
                             "type": "text",

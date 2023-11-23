@@ -44,8 +44,8 @@ class WorkfileImageIOModel(BaseSettingsModel):
     always set to the 'scene_linear' role."""
 
     enabled: bool = Field(False, title="Enabled")
-    default_display: str = Field(title="Display")
-    default_view: str = Field(title="View")
+    default_display: str = Field(title="Default active displays")
+    default_view: str = Field(title="Default active views")
     review_color_space: str = Field(title="Review colorspace")
 
 
