@@ -44,9 +44,22 @@ class WorkfileImageIOModel(BaseSettingsModel):
     always set to the 'scene_linear' role."""
 
     enabled: bool = Field(False, title="Enabled")
-    default_display: str = Field(title="Default active displays")
-    default_view: str = Field(title="Default active views")
-    review_color_space: str = Field(title="Review colorspace")
+    default_display: str = Field(
+        title="Default active displays",
+        description="It behaves like the 'OCIO_ACTIVE_DISPLAYS' env var,"
+                    " Colon-separated list of displays, e.g ACES:P3"
+    )
+    default_view: str = Field(
+        title="Default active views",
+        description="It behaves like the 'OCIO_ACTIVE_VIEWS' env var,"
+                    " Colon-separated list of views, e.g sRGB:DCDM"
+    )
+    review_color_space: str = Field(
+        title="Review colorspace",
+        description="It exposes OCIO Colorspace parameter in opengl nodes."
+                    "if left empty, Ayon will figure out the default "
+                    "colorspace using your default display and default view."
+    )
 
 
 class HoudiniImageIOModel(BaseSettingsModel):
