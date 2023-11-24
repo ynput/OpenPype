@@ -75,6 +75,7 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
+        job_info.Comment = instance.data.get("comment")
 
         if self.group != "none" and self.group:
             job_info.Group = self.group
@@ -89,7 +90,6 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                 machine_list_key = "Blacklist"
             render_globals[machine_list_key] = machine_list
 
-        job_info.Comment = context.data.get("comment")
         job_info.ChunkSize = attr_values.get("chunkSize", self.chunk_size)
         job_info.Priority = attr_values.get("priority", self.priority)
         job_info.JobDelay = attr_values.get("job_delay", self.job_delay)
