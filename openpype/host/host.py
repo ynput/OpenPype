@@ -170,7 +170,7 @@ class HostBase(object):
         if project_name:
             items.append(project_name)
             if asset_name:
-                items.append(asset_name)
+                items.append(asset_name.lstrip("/"))
                 if task_name:
                     items.append(task_name)
         if items:

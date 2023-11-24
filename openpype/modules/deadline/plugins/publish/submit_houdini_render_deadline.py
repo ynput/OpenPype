@@ -1,9 +1,8 @@
-import hou
-
 import os
 import attr
 import getpass
 from datetime import datetime
+
 import pyblish.api
 
 from openpype.pipeline import legacy_io
@@ -65,9 +64,11 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             job_info.BatchName += datetime.now().strftime("%d%m%Y%H%M%S")
 
         # Deadline requires integers in frame range
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
         frames = "{start}-{end}x{step}".format(
-            start=int(instance.data["frameStart"]),
-            end=int(instance.data["frameEnd"]),
+            start=int(start),
+            end=int(end),
             step=int(instance.data["byFrameStep"]),
         )
         job_info.Frames = frames
@@ -88,7 +89,6 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS",
-            "OPENPYPE_VERSION"
         ]
 
         # Add OpenPype version if we are running from build.
@@ -106,8 +106,8 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
             if value:
                 job_info.EnvironmentKeyValue[key] = value
 
-        # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue["OPENPYPE_RENDER_JOB"] = "1"
+        # to recognize render jobs
+        job_info.add_render_job_env_var()
 
         for i, filepath in enumerate(instance.data["files"]):
             dirname = os.path.dirname(filepath)
@@ -118,6 +118,8 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         return job_info
 
     def get_plugin_info(self):
+        # Not all hosts can import this module.
+        import hou
 
         instance = self._instance
         context = instance.context
@@ -142,4 +144,3 @@ class HoudiniSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         # Store output dir for unified publisher (filesequence)
         output_dir = os.path.dirname(instance.data["files"][0])
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"

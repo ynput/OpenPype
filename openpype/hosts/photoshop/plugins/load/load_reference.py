@@ -23,7 +23,8 @@ class ReferenceLoader(photoshop.PhotoshopLoader):
             stub.get_layers(), context["asset"]["name"], name
         )
         with photoshop.maintained_selection():
-            layer = self.import_layer(self.fname, layer_name, stub)
+            path = self.filepath_from_context(context)
+            layer = self.import_layer(path, layer_name, stub)
 
         self[:] = [layer]
         namespace = namespace or layer_name

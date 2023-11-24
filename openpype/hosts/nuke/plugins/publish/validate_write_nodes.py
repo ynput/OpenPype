@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import pyblish.api
 from openpype.pipeline.publish import get_errored_instances_from_context
 from openpype.hosts.nuke.api.lib import (
@@ -37,7 +39,7 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
 
             set_node_knobs_from_settings(write_node, correct_data["knobs"])
 
-            self.log.info("Node attributes were fixed")
+            self.log.debug("Node attributes were fixed")
 
 
 class ValidateNukeWriteNode(
@@ -80,18 +82,14 @@ class ValidateNukeWriteNode(
         correct_data = get_write_node_template_attr(write_group_node)
 
         check = []
-        self.log.debug("__ write_node: {}".format(
-            write_node
-        ))
-        self.log.debug("__ correct_data: {}".format(
-            correct_data
-        ))
+
+        # Collect key values of same type in a list.
+        values_by_name = defaultdict(list)
+        for knob_data in correct_data["knobs"]:
+            values_by_name[knob_data["name"]].append(knob_data["value"])
 
         for knob_data in correct_data["knobs"]:
             knob_type = knob_data["type"]
-            self.log.debug("__ knob_type: {}".format(
-                knob_type
-            ))
 
             if (
                 knob_type == "__legacy__"
@@ -105,34 +103,34 @@ class ValidateNukeWriteNode(
                 )
 
             key = knob_data["name"]
-            value = knob_data["value"]
+            values = values_by_name[key]
             node_value = write_node[key].value()
 
             # fix type differences
-            if type(node_value) in (int, float):
-                try:
-                    if isinstance(value, list):
-                        value = color_gui_to_int(value)
-                    else:
-                        value = float(value)
-                        node_value = float(node_value)
-                except ValueError:
-                    value = str(value)
-            else:
-                value = str(value)
-                node_value = str(node_value)
+            fixed_values = []
+            for value in values:
+                if type(node_value) in (int, float):
+                    try:
 
-            self.log.debug("__ key: {} | value: {}".format(
-                key, value
-            ))
+                        if isinstance(value, list):
+                            value = color_gui_to_int(value)
+                        else:
+                            value = float(value)
+                            node_value = float(node_value)
+                    except ValueError:
+                        value = str(value)
+                else:
+                    value = str(value)
+                    node_value = str(node_value)
+
+                fixed_values.append(value)
+
             if (
-                node_value != value
+                node_value not in fixed_values
                 and key != "file"
                 and key != "tile_color"
             ):
                 check.append([key, value, write_node[key].value()])
-
-        self.log.info(check)
 
         if check:
             self._make_error(check)

@@ -32,7 +32,7 @@
                     "children": [
                         {
                             "type": "list",
-                            "key": "defaults",
+                            "key": "default_variants",
                             "label": "Default Variants",
                             "object_type": "text",
                             "docstring": "Fill default variant(s) (like 'Main' or 'Default') used in subset name creation."
@@ -105,6 +105,17 @@
                             "key": "skip_timelines_check",
                             "object_type": "text",
                             "label": "Skip Timeline Check  for Tasks"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "docstring": "Check if loaded container in scene are latest versions.",
+                            "key": "ValidateContainers",
+                            "label": "ValidateContainers"
                         }
                     ]
                 }

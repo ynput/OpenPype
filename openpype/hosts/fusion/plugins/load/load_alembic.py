@@ -32,7 +32,7 @@ class FusionLoadAlembicMesh(load.LoaderPlugin):
         comp = get_current_comp()
         with comp_lock_and_undo_chunk(comp, "Create tool"):
 
-            path = self.fname
+            path = self.filepath_from_context(context)
 
             args = (-32768, -32768)
             tool = comp.AddTool(self.tool_type, *args)

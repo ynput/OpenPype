@@ -4,9 +4,17 @@ import pyblish.api
 from openpype.pipeline.publish import (
     RepairAction,
     ValidateContentsOrder,
+    PublishValidationError
 )
 
 import openpype.hosts.maya.api.action
+
+
+def _as_report_list(values, prefix="- ", suffix="\n"):
+    """Return list as bullet point list for a report"""
+    if not values:
+        return ""
+    return prefix + (suffix + prefix).join(values)
 
 
 def get_namespace(node_name):
@@ -36,7 +44,12 @@ class ValidateNoNamespace(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Namespaces found: {0}".format(invalid))
+            raise PublishValidationError(
+                "Namespaces found:\n\n{0}".format(
+                    _as_report_list(sorted(invalid))
+                ),
+                title="Namespaces in model"
+            )
 
     @classmethod
     def repair(cls, instance):

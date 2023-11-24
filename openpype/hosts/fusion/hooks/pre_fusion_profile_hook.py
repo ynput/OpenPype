@@ -2,11 +2,15 @@ import os
 import shutil
 import platform
 from pathlib import Path
-from openpype.lib import PreLaunchHook, ApplicationLaunchFailed
 from openpype.hosts.fusion import (
     FUSION_HOST_DIR,
     FUSION_VERSIONS_DICT,
     get_fusion_version,
+)
+from openpype.lib.applications import (
+    PreLaunchHook,
+    LaunchTypes,
+    ApplicationLaunchFailed,
 )
 
 
@@ -21,8 +25,9 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
     Master.prefs is defined in openpype/hosts/fusion/deploy/fusion_shared.prefs
     """
 
-    app_groups = ["fusion"]
+    app_groups = {"fusion"}
     order = 2
+    launch_types = {LaunchTypes.local}
 
     def get_fusion_profile_name(self, profile_version) -> str:
         # Returns 'Default', unless FUSION16_PROFILE is set

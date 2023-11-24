@@ -13,7 +13,6 @@ about it's progress.
 
 import os
 import re
-import platform
 import collections
 import copy
 from abc import ABCMeta, abstractmethod
@@ -29,8 +28,7 @@ from openpype.settings import (
     get_project_settings,
     get_system_settings,
 )
-from openpype.host import IWorkfileHost
-from openpype.host import HostBase
+from openpype.host import IWorkfileHost, HostBase
 from openpype.lib import (
     Logger,
     StringTemplate,
@@ -38,7 +36,7 @@ from openpype.lib import (
     attribute_definitions,
 )
 from openpype.lib.attribute_definitions import get_attributes_keys
-from openpype.pipeline import legacy_io, Anatomy
+from openpype.pipeline import Anatomy
 from openpype.pipeline.load import (
     get_loaders_by_name,
     get_contexts_for_repre_docs,
@@ -126,15 +124,30 @@ class AbstractTemplateBuilder(object):
 
     @property
     def project_name(self):
-        return legacy_io.active_project()
+        if isinstance(self._host, HostBase):
+            return self._host.get_current_project_name()
+        return os.getenv("AVALON_PROJECT")
 
     @property
     def current_asset_name(self):
-        return legacy_io.Session["AVALON_ASSET"]
+        if isinstance(self._host, HostBase):
+            return self._host.get_current_asset_name()
+        return os.getenv("AVALON_ASSET")
 
     @property
     def current_task_name(self):
-        return legacy_io.Session["AVALON_TASK"]
+        if isinstance(self._host, HostBase):
+            return self._host.get_current_task_name()
+        return os.getenv("AVALON_TASK")
+
+    def get_current_context(self):
+        if isinstance(self._host, HostBase):
+            return self._host.get_current_context()
+        return {
+            "project_name": self.project_name,
+            "asset_name": self.current_asset_name,
+            "task_name": self.current_task_name
+        }
 
     @property
     def system_settings(self):
@@ -764,9 +777,7 @@ class AbstractTemplateBuilder(object):
                 "with host '{}'"
             ).format(task_name, task_type, host_name))
 
-        current_platform = platform.system().lower()
-        # backward compatibility for single platform version
-        path = profile["path"].get(current_platform) or profile["path"]
+        path = profile["path"]
 
         # switch to remove placeholders after they are used
         keep_placeholder = profile.get("keep_placeholder")
@@ -793,9 +804,8 @@ class AbstractTemplateBuilder(object):
         fill_data["root"] = anatomy.roots
         fill_data["project"] = {
             "name": project_name,
-            "code": anatomy["attributes"]["code"]
+            "code": anatomy.project_code,
         }
-
 
         result = StringTemplate.format_template(path, fill_data)
         if result.solved:
@@ -1462,8 +1472,15 @@ class PlaceholderLoadMixin(object):
             context_filters=context_filters
         ))
 
+    def _before_placeholder_load(self, placeholder):
+        """Can be overridden. It's called before placeholder representations
+        are loaded.
+        """
+
+        pass
+
     def _before_repre_load(self, placeholder, representation):
-        """Can be overriden. Is called before representation is loaded."""
+        """Can be overridden. It's called before representation is loaded."""
 
         pass
 
@@ -1496,7 +1513,7 @@ class PlaceholderLoadMixin(object):
         return output
 
     def populate_load_placeholder(self, placeholder, ignore_repre_ids=None):
-        """Load placeholder is goind to load matching representations.
+        """Load placeholder is going to load matching representations.
 
         Note:
             Ignore repre ids is to avoid loading the same representation again
@@ -1518,7 +1535,7 @@ class PlaceholderLoadMixin(object):
 
         # TODO check loader existence
         loader_name = placeholder.data["loader"]
-        loader_args = placeholder.data["loader_args"]
+        loader_args = self.parse_loader_args(placeholder.data["loader_args"])
 
         placeholder_representations = self._get_representations(placeholder)
 
@@ -1540,6 +1557,11 @@ class PlaceholderLoadMixin(object):
             self.project_name, filtered_representations
         )
         loaders_by_name = self.builder.get_loaders_by_name()
+        self._before_placeholder_load(
+            placeholder
+        )
+
+        failed = False
         for repre_load_context in repre_load_contexts.values():
             representation = repre_load_context["representation"]
             repre_context = representation["context"]
@@ -1552,24 +1574,24 @@ class PlaceholderLoadMixin(object):
                     repre_context["subset"],
                     repre_context["asset"],
                     loader_name,
-                    loader_args
+                    placeholder.data["loader_args"],
                 )
             )
             try:
                 container = load_with_repre_context(
                     loaders_by_name[loader_name],
                     repre_load_context,
-                    options=self.parse_loader_args(loader_args)
+                    options=loader_args
                 )
 
             except Exception:
-                failed = True
                 self.load_failed(placeholder, representation)
-
+                failed = True
             else:
-                failed = False
                 self.load_succeed(placeholder, container)
-            self.post_placeholder_process(placeholder, failed)
+
+        # Run post placeholder process after load of all representations
+        self.post_placeholder_process(placeholder, failed)
 
         if failed:
             self.log.debug(
@@ -1589,10 +1611,7 @@ class PlaceholderLoadMixin(object):
             placeholder.load_succeed(container)
 
     def post_placeholder_process(self, placeholder, failed):
-        """Cleanup placeholder after load of single representation.
-
-        Can be called multiple times during placeholder item populating and is
-        called even if loading failed.
+        """Cleanup placeholder after load of its corresponding representations.
 
         Args:
             placeholder (PlaceholderItem): Item which was just used to load
@@ -1602,7 +1621,7 @@ class PlaceholderLoadMixin(object):
 
         pass
 
-    def delete_placeholder(self, placeholder, failed):
+    def delete_placeholder(self, placeholder):
         """Called when all item population is done."""
         self.log.debug("Clean up of placeholder is not implemented.")
 
@@ -1708,9 +1727,10 @@ class PlaceholderCreateMixin(object):
         creator_plugin = self.builder.get_creators_by_name()[creator_name]
 
         # create subset name
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        asset_name = legacy_io.Session["AVALON_ASSET"]
+        context = self._builder.get_current_context()
+        project_name = context["project_name"]
+        asset_name = context["asset_name"]
+        task_name = context["task_name"]
 
         if legacy_create:
             asset_doc = get_asset_by_name(
@@ -1770,6 +1790,17 @@ class PlaceholderCreateMixin(object):
 
         self.post_placeholder_process(placeholder, failed)
 
+        if failed:
+            self.log.debug(
+                "Placeholder cleanup skipped due to failed placeholder "
+                "population."
+            )
+            return
+
+        if not placeholder.data.get("keep_placeholder", True):
+            self.delete_placeholder(placeholder)
+
+
     def create_failed(self, placeholder, creator_data):
         if hasattr(placeholder, "create_failed"):
             placeholder.create_failed(creator_data)
@@ -1779,18 +1810,18 @@ class PlaceholderCreateMixin(object):
             placeholder.create_succeed(creator_instance)
 
     def post_placeholder_process(self, placeholder, failed):
-        """Cleanup placeholder after load of single representation.
-
-        Can be called multiple times during placeholder item populating and is
-        called even if loading failed.
+        """Cleanup placeholder after load of its corresponding representations.
 
         Args:
             placeholder (PlaceholderItem): Item which was just used to load
                 representation.
             failed (bool): Loading of representation failed.
         """
-
         pass
+
+    def delete_placeholder(self, placeholder):
+        """Called when all item population is done."""
+        self.log.debug("Clean up of placeholder is not implemented.")
 
     def _before_instance_create(self, placeholder):
         """Can be overriden. Is called before instance is created."""

@@ -132,3 +132,25 @@ switch versions between different hda types.
 
 When you load hda, it will install its type in your hip file and add published version as its definition file. When
 you  switch version via Scene Manager, it will add its definition and set it as preferred.
+
+## Publishing and loading BGEO caches
+
+There is a simple support for publishing and loading **BGEO** files in all supported compression variants.
+
+### Creating BGEO instances
+
+Select your SOP node to be exported as BGEO. If your selection is in the object level, OpenPype will try to find if there is an `output` node inside, the one with the lowest index will be used:
+
+![BGEO output node](assets/houdini_bgeo_output_node.png)
+
+Then you can open Publisher, in Create you select **BGEO PointCache**:
+
+![BGEO Publisher](assets/houdini_bgeo-publisher.png)
+
+You can select compression type and if the current selection should be connected to ROPs SOP path parameter. Publishing will produce sequence of files based on your timeline settings.
+
+### Loading BGEO
+
+Select your published BGEO subsets in Loader, right click and load them in:
+
+![BGEO Publisher](assets/houdini_bgeo-loading.png)

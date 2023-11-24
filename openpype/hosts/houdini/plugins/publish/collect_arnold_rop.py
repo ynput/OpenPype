@@ -20,7 +20,9 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
     """
 
     label = "Arnold ROP Render Products"
-    order = pyblish.api.CollectorOrder + 0.4
+    # This specific order value is used so that
+    # this plugin runs after CollectFrames
+    order = pyblish.api.CollectorOrder + 0.11
     hosts = ["houdini"]
     families = ["arnold_rop"]
 
@@ -50,7 +52,7 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
         num_aovs = rop.evalParm("ar_aovs")
         for index in range(1, num_aovs + 1):
             # Skip disabled AOVs
-            if not rop.evalParm("ar_enable_aovP{}".format(index)):
+            if not rop.evalParm("ar_enable_aov{}".format(index)):
                 continue
 
             if rop.evalParm("ar_aov_exr_enable_layer_name{}".format(index)):
@@ -126,8 +128,9 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
             return path
 
         expected_files = []
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
+
         for i in range(int(start), (int(end) + 1)):
             expected_files.append(
                 os.path.join(dir, (file % i)).replace("\\", "/"))

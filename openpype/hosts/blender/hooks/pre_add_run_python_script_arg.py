@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from openpype.lib import PreLaunchHook
+from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class AddPythonScriptToLaunchArgs(PreLaunchHook):
@@ -8,9 +8,8 @@ class AddPythonScriptToLaunchArgs(PreLaunchHook):
 
     # Append after file argument
     order = 15
-    app_groups = [
-        "blender",
-    ]
+    app_groups = {"blender"}
+    launch_types = {LaunchTypes.local}
 
     def execute(self):
         if not self.launch_context.data.get("python_scripts"):

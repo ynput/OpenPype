@@ -114,7 +114,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         # Clone the instance
         image_instance = context.create_instance(image_subset)
         image_instance[:] = instance[:]
-        image_instance.data.update(copy.deepcopy(instance.data))
+        image_instance.data.update(copy.deepcopy(dict(instance.data)))
         image_instance.data["name"] = image_subset
         image_instance.data["label"] = image_subset
         image_instance.data["subset"] = image_subset

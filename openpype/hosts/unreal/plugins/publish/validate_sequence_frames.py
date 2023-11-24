@@ -1,6 +1,9 @@
 import clique
+import os
+import re
 
 import pyblish.api
+from openpype.pipeline.publish import PublishValidationError
 
 
 class ValidateSequenceFrames(pyblish.api.InstancePlugin):
@@ -21,22 +24,56 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
         representations = instance.data.get("representations")
         for repr in representations:
             data = instance.data.get("assetEntity", {}).get("data", {})
-            patterns = [clique.PATTERNS["frames"]]
+            repr_files = repr["files"]
+            if isinstance(repr_files, str):
+                continue
+
+            ext = repr.get("ext")
+            if not ext:
+                _, ext = os.path.splitext(repr_files[0])
+            elif not ext.startswith("."):
+                ext = ".{}".format(ext)
+            pattern = r"\D?(?P<index>(?P<padding>0*)\d+){}$".format(
+                re.escape(ext))
+            patterns = [pattern]
+
             collections, remainder = clique.assemble(
                 repr["files"], minimum_items=1, patterns=patterns)
 
-            assert not remainder, "Must not have remainder"
-            assert len(collections) == 1, "Must detect single collection"
+            if remainder:
+                raise PublishValidationError(
+                    "Some files have been found outside a sequence. "
+                    f"Invalid files: {remainder}")
+            if not collections:
+                raise PublishValidationError(
+                    "We have been unable to find a sequence in the "
+                    "files. Please ensure the files are named "
+                    "appropriately. "
+                    f"Files: {repr_files}")
+            if len(collections) > 1:
+                raise PublishValidationError(
+                    "Multiple collections detected. There should be a single "
+                    "collection per representation. "
+                    f"Collections identified: {collections}")
+
             collection = collections[0]
             frames = list(collection.indexes)
+
+            if instance.data.get("slate"):
+                # Slate is not part of the frame range
+                frames = frames[1:]
 
             current_range = (frames[0], frames[-1])
             required_range = (data["clipIn"],
                               data["clipOut"])
 
             if current_range != required_range:
-                raise ValueError(f"Invalid frame range: {current_range} - "
-                                 f"expected: {required_range}")
+                raise PublishValidationError(
+                    f"Invalid frame range: {current_range} - "
+                    f"expected: {required_range}")
 
             missing = collection.holes().indexes
-            assert not missing, "Missing frames: %s" % (missing,)
+            if missing:
+                raise PublishValidationError(
+                    "Missing frames have been detected. "
+                    f"Missing frames: {missing}")

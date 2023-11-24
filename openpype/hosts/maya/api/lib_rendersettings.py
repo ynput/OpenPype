@@ -1,18 +1,12 @@
 # -*- coding: utf-8 -*-
 """Class for handling Render Settings."""
-from maya import cmds  # noqa
-import maya.mel as mel
 import six
 import sys
 
 from openpype.lib import Logger
-from openpype.settings import (
-    get_project_settings,
-    get_current_project_settings
-)
+from openpype.settings import get_project_settings
 
-from openpype.pipeline import legacy_io
-from openpype.pipeline import CreatorError
+from openpype.pipeline import CreatorError, get_current_project_name
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.hosts.maya.api.lib import reset_frame_range
 
@@ -27,21 +21,6 @@ class RenderSettings(object):
         'mayahardware2': 'defaultRenderGlobals.imageFilePrefix'
     }
 
-    _image_prefixes = {
-        'vray': get_current_project_settings()["maya"]["RenderSettings"]["vray_renderer"]["image_prefix"], # noqa
-        'arnold': get_current_project_settings()["maya"]["RenderSettings"]["arnold_renderer"]["image_prefix"],  # noqa
-        'renderman': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["image_prefix"], # noqa
-        'redshift': get_current_project_settings()["maya"]["RenderSettings"]["redshift_renderer"]["image_prefix"]  # noqa
-    }
-
-    # Renderman only
-    _image_dir = {
-        'renderman': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["image_dir"], # noqa
-        'cryptomatte': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["cryptomatte_dir"], # noqa
-        'imageDisplay': get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["imageDisplay_dir"], # noqa
-        "watermark": get_current_project_settings()["maya"]["RenderSettings"]["renderman_renderer"]["watermark_dir"] # noqa
-    }
-
     _aov_chars = {
         "dot": ".",
         "dash": "-",
@@ -54,15 +33,46 @@ class RenderSettings(object):
     def get_image_prefix_attr(cls, renderer):
         return cls._image_prefix_nodes[renderer]
 
+    @staticmethod
+    def get_padding_attr(renderer):
+        """Return attribute for renderer that defines frame padding amount"""
+        if renderer == "vray":
+            return "vraySettings.fileNamePadding"
+        else:
+            return "defaultRenderGlobals.extensionPadding"
+
     def __init__(self, project_settings=None):
-        self._project_settings = project_settings
-        if not self._project_settings:
-            self._project_settings = get_project_settings(
-                legacy_io.Session["AVALON_PROJECT"]
+        if not project_settings:
+            project_settings = get_project_settings(
+                get_current_project_name()
             )
+        render_settings = project_settings["maya"]["RenderSettings"]
+        image_prefixes = {
+            "vray": render_settings["vray_renderer"]["image_prefix"],
+            "arnold": render_settings["arnold_renderer"]["image_prefix"],
+            "renderman": render_settings["renderman_renderer"]["image_prefix"],
+            "redshift": render_settings["redshift_renderer"]["image_prefix"]
+        }
+
+        # TODO probably should be stored to more explicit attribute
+        # Renderman only
+        renderman_settings = render_settings["renderman_renderer"]
+        _image_dir = {
+            "renderman": renderman_settings["image_dir"],
+            "cryptomatte": renderman_settings["cryptomatte_dir"],
+            "imageDisplay": renderman_settings["imageDisplay_dir"],
+            "watermark": renderman_settings["watermark_dir"]
+        }
+        self._image_prefixes = image_prefixes
+        self._image_dir = _image_dir
+        self._project_settings = project_settings
 
     def set_default_renderer_settings(self, renderer=None):
         """Set basic settings based on renderer."""
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         if not renderer:
             renderer = cmds.getAttr(
                 'defaultRenderGlobals.currentRenderer').lower()
@@ -116,6 +126,10 @@ class RenderSettings(object):
         """Sets settings for Arnold."""
         from mtoa.core import createOptions  # noqa
         from mtoa.aovs import AOVInterface  # noqa
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         createOptions()
         render_settings = self._project_settings["maya"]["RenderSettings"]
         arnold_render_presets = render_settings["arnold_renderer"] # noqa
@@ -162,6 +176,10 @@ class RenderSettings(object):
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         render_settings = self._project_settings["maya"]["RenderSettings"]
         redshift_render_presets = render_settings["redshift_renderer"]
 
@@ -177,12 +195,7 @@ class RenderSettings(object):
         # list all the aovs
         all_rs_aovs = cmds.ls(type='RedshiftAOV')
         for rs_aov in redshift_aovs:
-            rs_layername = rs_aov
-            if " " in rs_aov:
-                rs_renderlayer = rs_aov.replace(" ", "")
-                rs_layername = "rsAov_{}".format(rs_renderlayer)
-            else:
-                rs_layername = "rsAov_{}".format(rs_aov)
+            rs_layername = "rsAov_{}".format(rs_aov.replace(" ", ""))
             if rs_layername in all_rs_aovs:
                 continue
             cmds.rsCreateAov(type=rs_aov)
@@ -219,6 +232,10 @@ class RenderSettings(object):
 
     def _set_renderman_settings(self, width, height, aov_separator):
         """Sets settings for Renderman"""
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         rman_render_presets = (
             self._project_settings
             ["maya"]
@@ -280,6 +297,11 @@ class RenderSettings(object):
     def _set_vray_settings(self, aov_separator, width, height):
         # type: (str, int, int) -> None
         """Sets important settings for Vray."""
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
+
         settings = cmds.ls(type="VRaySettingsNode")
         node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
         render_settings = self._project_settings["maya"]["RenderSettings"]
@@ -317,7 +339,7 @@ class RenderSettings(object):
             separators = [cmds.menuItem(i, query=True, label=True) for i in items]  # noqa: E501
             try:
                 sep_idx = separators.index(aov_separator)
-            except ValueError as e:
+            except ValueError:
                 six.reraise(
                     CreatorError,
                     CreatorError(
@@ -352,6 +374,10 @@ class RenderSettings(object):
 
     @staticmethod
     def _set_global_output_settings():
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         # enable animation
         cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
         cmds.setAttr("defaultRenderGlobals.animation", 1)
@@ -359,6 +385,10 @@ class RenderSettings(object):
         cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
 
     def _additional_attribs_setter(self, additional_attribs):
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         for item in additional_attribs:
             attribute, value = item
             attribute = str(attribute)  # ensure str conversion from settings

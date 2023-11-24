@@ -244,8 +244,14 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
         return self.get_load_plugin_options(options)
 
     def post_placeholder_process(self, placeholder, failed):
-        """Hide placeholder, add them to placeholder set
+        """Cleanup placeholder after load of its corresponding representations.
+
+        Args:
+            placeholder (PlaceholderItem): Item which was just used to load
+                representation.
+            failed (bool): Loading of representation failed.
         """
+        # Hide placeholder and add them to placeholder set
         node = placeholder.scene_identifier
 
         cmds.sets(node, addElement=PLACEHOLDER_SET)
@@ -272,7 +278,12 @@ class MayaPlaceholderLoadPlugin(PlaceholderPlugin, PlaceholderLoadMixin):
             return
 
         roots = cmds.sets(container, q=True)
-        ref_node = get_reference_node(roots)
+        ref_node = None
+        try:
+            ref_node = get_reference_node(roots)
+        except AssertionError as e:
+            self.log.info(e.args[0])
+
         nodes_to_parent = []
         for root in roots:
             if ref_node:

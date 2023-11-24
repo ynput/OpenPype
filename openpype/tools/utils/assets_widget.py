@@ -5,6 +5,7 @@ import qtpy
 from qtpy import QtWidgets, QtCore, QtGui
 import qtawesome
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_project,
     get_assets,
@@ -35,6 +36,7 @@ ASSET_ID_ROLE = QtCore.Qt.UserRole + 1
 ASSET_NAME_ROLE = QtCore.Qt.UserRole + 2
 ASSET_LABEL_ROLE = QtCore.Qt.UserRole + 3
 ASSET_UNDERLINE_COLORS_ROLE = QtCore.Qt.UserRole + 4
+ASSET_PATH_ROLE = QtCore.Qt.UserRole + 5
 
 
 class AssetsView(TreeViewSpinner, DeselectableTreeView):
@@ -607,7 +609,8 @@ class AssetsWidget(QtWidgets.QWidget):
         refresh_btn.setToolTip("Refresh items")
 
         filter_input = PlaceholderLineEdit(header_widget)
-        filter_input.setPlaceholderText("Filter assets..")
+        filter_input.setPlaceholderText("Filter {}..".format(
+            "folders" if AYON_SERVER_ENABLED else "assets"))
 
         # Header
         header_layout = QtWidgets.QHBoxLayout(header_widget)

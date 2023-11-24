@@ -2,7 +2,7 @@ import os
 from pymxs import runtime as rt
 from openpype.lib import Logger
 from openpype.settings import get_project_settings
-from openpype.pipeline import legacy_io
+from openpype.pipeline import get_current_project_name
 from openpype.pipeline.context_tools import get_current_project_asset
 
 from openpype.hosts.max.api.lib import (
@@ -31,19 +31,16 @@ class RenderSettings(object):
         self._project_settings = project_settings
         if not self._project_settings:
             self._project_settings = get_project_settings(
-                legacy_io.Session["AVALON_PROJECT"]
+                get_current_project_name()
             )
 
     def set_render_camera(self, selection):
         for sel in selection:
             # to avoid Attribute Error from pymxs wrapper
-            found = False
             if rt.classOf(sel) in rt.Camera.classes:
-                found = True
                 rt.viewport.setCamera(sel)
-                break
-            if not found:
-                raise RuntimeError("Camera not found")
+                return
+        raise RuntimeError("Active Camera not found")
 
     def render_output(self, container):
         folder = rt.maxFilePath
@@ -113,7 +110,8 @@ class RenderSettings(object):
         # for setting up renderable camera
         arv = rt.MAXToAOps.ArnoldRenderView()
         render_camera = rt.viewport.GetCamera()
-        arv.setOption("Camera", str(render_camera))
+        if render_camera:
+            arv.setOption("Camera", str(render_camera))
 
         # TODO: add AOVs and extension
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa

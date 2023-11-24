@@ -1,10 +1,7 @@
 import contextlib
 
 import openpype.pipeline.load as load
-from openpype.pipeline.load import (
-    get_representation_context,
-    get_representation_path_from_context,
-)
+from openpype.pipeline.load import get_representation_context
 from openpype.hosts.fusion.api import (
     imprint_container,
     get_current_comp,
@@ -157,14 +154,14 @@ class FusionLoadSequence(load.LoaderPlugin):
             namespace = context["asset"]["name"]
 
         # Use the first file for now
-        path = get_representation_path_from_context(context)
+        path = self.filepath_from_context(context)
 
         # Create the Loader with the filename path set
         comp = get_current_comp()
         with comp_lock_and_undo_chunk(comp, "Create Loader"):
             args = (-32768, -32768)
             tool = comp.AddTool("Loader", *args)
-            tool["Clip"] = path
+            tool["Clip"] = comp.ReverseMapPath(path)
 
             # Set global in point to start frame (if in version.data)
             start = self._get_start(context["version"], tool)
@@ -228,7 +225,7 @@ class FusionLoadSequence(load.LoaderPlugin):
         comp = tool.Comp()
 
         context = get_representation_context(representation)
-        path = get_representation_path_from_context(context)
+        path = self.filepath_from_context(context)
 
         # Get start frame from version data
         start = self._get_start(context["version"], tool)
@@ -247,7 +244,7 @@ class FusionLoadSequence(load.LoaderPlugin):
                         "TimeCodeOffset",
                     ),
                 ):
-                    tool["Clip"] = path
+                    tool["Clip"] = comp.ReverseMapPath(path)
 
             # Set the global in to the start frame of the sequence
             global_in_changed = loader_shift(tool, start, relative=False)

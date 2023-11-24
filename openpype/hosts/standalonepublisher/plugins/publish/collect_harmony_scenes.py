@@ -60,6 +60,9 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             # updating hierarchy data
             anatomy_data_new.update({
                 "asset": asset_data["name"],
+                "folder": {
+                    "name": asset_data["name"],
+                },
                 "task": {
                     "name": task,
                     "type": task_type,

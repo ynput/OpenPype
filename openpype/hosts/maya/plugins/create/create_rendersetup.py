@@ -1,55 +1,31 @@
-from openpype.hosts.maya.api import (
-    lib,
-    plugin
-)
-from maya import cmds
+from openpype.hosts.maya.api import plugin
+from openpype.pipeline import CreatorError
 
 
-class CreateRenderSetup(plugin.Creator):
+class CreateRenderSetup(plugin.MayaCreator):
     """Create rendersetup template json data"""
 
-    name = "rendersetup"
+    identifier = "io.openpype.creators.maya.rendersetup"
     label = "Render Setup Preset"
     family = "rendersetup"
     icon = "tablet"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateRenderSetup, self).__init__(*args, **kwargs)
+    def get_pre_create_attr_defs(self):
+        # Do not show the "use_selection" setting from parent class
+        return []
 
-        # here we can pre-create renderSetup layers, possibly utlizing
-        # settings for it.
+    def create(self, subset_name, instance_data, pre_create_data):
 
-        #  _____
-        # /   __\__
-        # |  /   __\__
-        # |  |  /     \
-        # |  |  |     |
-        # \__|  |     |
-        #    \__|     |
-        #       \_____/
+        existing_instance = None
+        for instance in self.create_context.instances:
+            if instance.family == self.family:
+                existing_instance = instance
+                break
 
-        # from pype.api import get_project_settings
-        # import maya.app.renderSetup.model.renderSetup as renderSetup
-        # settings = get_project_settings(os.environ['AVALON_PROJECT'])
-        # layer = settings['maya']['create']['renderSetup']["layer"]
+        if existing_instance:
+            raise CreatorError("A RenderSetup instance already exists - only "
+                               "one can be configured.")
 
-        # rs = renderSetup.instance()
-        # rs.createRenderLayer(layer)
-
-        self.options = {"useSelection": False}  # Force no content
-
-    def process(self):
-        exists = cmds.ls(self.name)
-        assert len(exists) <= 1, (
-            "More than one renderglobal exists, this is a bug"
-        )
-
-        if exists:
-            return cmds.warning("%s already exists." % exists[0])
-
-        with lib.undo_chunk():
-            instance = super(CreateRenderSetup, self).process()
-
-        self.data["renderSetup"] = "42"
-        null = cmds.sets(name="null_SET", empty=True)
-        cmds.sets([null], forceElement=instance)
+        super(CreateRenderSetup, self).create(subset_name,
+                                              instance_data,
+                                              pre_create_data)

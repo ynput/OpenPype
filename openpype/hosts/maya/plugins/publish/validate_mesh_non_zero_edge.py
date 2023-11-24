@@ -3,10 +3,15 @@ from maya import cmds
 import pyblish.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api import lib
-from openpype.pipeline.publish import ValidateMeshOrder
+from openpype.pipeline.publish import (
+    ValidateMeshOrder,
+    OptionalPyblishPluginMixin,
+    PublishValidationError
+)
 
 
-class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
+class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin,
+                                    OptionalPyblishPluginMixin):
     """Validate meshes don't have edges with a zero length.
 
     Based on Maya's polyCleanup 'Edges with zero length'.
@@ -65,7 +70,14 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all meshes"""
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Meshes found with zero "
-                               "edge length: {0}".format(invalid))
+            label = "Meshes found with zero edge length"
+            raise PublishValidationError(
+                message="{}: {}".format(label, invalid),
+                title=label,
+                description="{}:\n- ".format(label) + "\n- ".join(invalid)
+            )

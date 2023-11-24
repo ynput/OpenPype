@@ -213,7 +213,7 @@
                                     },
                                     {
                                         "type": "number",
-                                        "key": "y",
+                                        "key": "z",
                                         "default": 1,
                                         "decimal": 4,
                                         "maximum": 99999999
@@ -238,29 +238,75 @@
                                 "object_types": [
                                     {
                                         "type": "number",
-                                        "key": "x",
+                                        "key": "r",
                                         "default": 1,
                                         "decimal": 4,
                                         "maximum": 99999999
                                     },
                                     {
                                         "type": "number",
-                                        "key": "x",
+                                        "key": "g",
                                         "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "b",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "a",
+                                        "default": 1,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "key": "box",
+                        "label": "Box",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "name",
+                                "label": "Name"
+                            },
+                            {
+                                "type": "list-strict",
+                                "key": "value",
+                                "label": "Value",
+                                "object_types": [
+                                    {
+                                        "type": "number",
+                                        "key": "x",
+                                        "default": 0,
                                         "decimal": 4,
                                         "maximum": 99999999
                                     },
                                     {
                                         "type": "number",
                                         "key": "y",
-                                        "default": 1,
+                                        "default": 0,
                                         "decimal": 4,
                                         "maximum": 99999999
                                     },
                                     {
                                         "type": "number",
-                                        "key": "y",
-                                        "default": 1,
+                                        "key": "r",
+                                        "default": 1920,
+                                        "decimal": 4,
+                                        "maximum": 99999999
+                                    },
+                                    {
+                                        "type": "number",
+                                        "key": "t",
+                                        "default": 1080,
                                         "decimal": 4,
                                         "maximum": 99999999
                                     }

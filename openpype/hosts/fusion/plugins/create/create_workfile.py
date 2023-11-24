@@ -1,11 +1,11 @@
 from openpype.hosts.fusion.api import (
     get_current_comp
 )
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     AutoCreator,
     CreatedInstance,
-    legacy_io,
 )
 
 
@@ -64,10 +64,17 @@ class FusionWorkfileCreator(AutoCreator):
                 existing_instance = instance
                 break
 
-        project_name = legacy_io.Session["AVALON_PROJECT"]
-        asset_name = legacy_io.Session["AVALON_ASSET"]
-        task_name = legacy_io.Session["AVALON_TASK"]
-        host_name = legacy_io.Session["AVALON_APP"]
+        project_name = self.create_context.get_current_project_name()
+        asset_name = self.create_context.get_current_asset_name()
+        task_name = self.create_context.get_current_task_name()
+        host_name = self.create_context.host_name
+
+        if existing_instance is None:
+            existing_instance_asset = None
+        elif AYON_SERVER_ENABLED:
+            existing_instance_asset = existing_instance["folderPath"]
+        else:
+            existing_instance_asset = existing_instance["asset"]
 
         if existing_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)
@@ -76,10 +83,13 @@ class FusionWorkfileCreator(AutoCreator):
                 project_name, host_name
             )
             data = {
-                "asset": asset_name,
                 "task": task_name,
                 "variant": self.default_variant
             }
+            if AYON_SERVER_ENABLED:
+                data["folderPath"] = asset_name
+            else:
+                data["asset"] = asset_name
             data.update(self.get_dynamic_data(
                 self.default_variant, task_name, asset_doc,
                 project_name, host_name, None
@@ -92,7 +102,7 @@ class FusionWorkfileCreator(AutoCreator):
             self._add_instance_to_context(new_instance)
 
         elif (
-            existing_instance["asset"] != asset_name
+            existing_instance_asset != asset_name
             or existing_instance["task"] != task_name
         ):
             asset_doc = get_asset_by_name(project_name, asset_name)
@@ -100,6 +110,9 @@ class FusionWorkfileCreator(AutoCreator):
                 self.default_variant, task_name, asset_doc,
                 project_name, host_name
             )
-            existing_instance["asset"] = asset_name
+            if AYON_SERVER_ENABLED:
+                existing_instance["folderPath"] = asset_name
+            else:
+                existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
             existing_instance["subset"] = subset_name

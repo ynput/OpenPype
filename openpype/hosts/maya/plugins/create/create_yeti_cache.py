@@ -1,30 +1,39 @@
-from collections import OrderedDict
-
 from openpype.hosts.maya.api import (
     lib,
     plugin
 )
+from openpype.lib import NumberDef
 
 
-class CreateYetiCache(plugin.Creator):
+class CreateYetiCache(plugin.MayaCreator):
     """Output for procedural plugin nodes of Yeti """
 
-    name = "yetiDefault"
+    identifier = "io.openpype.creators.maya.yeticache"
     label = "Yeti Cache"
     family = "yeticache"
     icon = "pagelines"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateYetiCache, self).__init__(*args, **kwargs)
+    def get_instance_attr_defs(self):
 
-        self.data["preroll"] = 0
+        defs = [
+            NumberDef("preroll",
+                      label="Preroll",
+                      minimum=0,
+                      default=0,
+                      decimals=0)
+        ]
 
         # Add animation data without step and handles
-        anim_data = lib.collect_animation_data()
-        anim_data.pop("step")
-        anim_data.pop("handleStart")
-        anim_data.pop("handleEnd")
-        self.data.update(anim_data)
+        defs.extend(lib.collect_animation_defs())
+        remove = {"step", "handleStart", "handleEnd"}
+        defs = [attr_def for attr_def in defs if attr_def.key not in remove]
 
-        # Add samples
-        self.data["samples"] = 3
+        # Add samples after frame range
+        defs.append(
+            NumberDef("samples",
+                      label="Samples",
+                      default=3,
+                      decimals=0)
+        )
+
+        return defs

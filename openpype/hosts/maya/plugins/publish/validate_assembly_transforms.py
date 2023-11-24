@@ -1,9 +1,8 @@
 import pyblish.api
-
 from maya import cmds
 
 import openpype.hosts.maya.api.action
-from openpype.pipeline.publish import RepairAction
+from openpype.pipeline.publish import PublishValidationError, RepairAction
 
 
 class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
@@ -38,8 +37,9 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found {} invalid transforms of assembly "
-                               "items".format(len(invalid)))
+            raise PublishValidationError(
+                ("Found {} invalid transforms of assembly "
+                 "items").format(len(invalid)))
 
     @classmethod
     def get_invalid(cls, instance):
@@ -90,6 +90,7 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
         """
 
         from qtpy import QtWidgets
+
         from openpype.hosts.maya.api import lib
 
         # Store namespace in variable, cosmetics thingy

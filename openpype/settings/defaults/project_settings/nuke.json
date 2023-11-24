@@ -19,20 +19,16 @@
             "rules": {}
         },
         "viewer": {
-            "viewerProcess": "sRGB"
+            "viewerProcess": "sRGB (default)"
         },
         "baking": {
-            "viewerProcess": "rec709"
+            "viewerProcess": "rec709 (default)"
         },
         "workfile": {
-            "colorManagement": "Nuke",
+            "colorManagement": "OCIO",
             "OCIO_config": "nuke-default",
-            "workingSpaceLUT": "linear",
-            "monitorLut": "sRGB",
-            "int8Lut": "sRGB",
-            "int16Lut": "sRGB",
-            "logLut": "Cineon",
-            "floatLut": "linear"
+            "workingSpaceLUT": "scene_linear",
+            "monitorLut": "sRGB (default)"
         },
         "nodes": {
             "requiredNodes": [
@@ -80,7 +76,7 @@
                         {
                             "type": "text",
                             "name": "colorspace",
-                            "value": "linear"
+                            "value": "scene_linear"
                         },
                         {
                             "type": "bool",
@@ -133,7 +129,7 @@
                         {
                             "type": "text",
                             "name": "colorspace",
-                            "value": "linear"
+                            "value": "scene_linear"
                         },
                         {
                             "type": "bool",
@@ -181,7 +177,7 @@
                         {
                             "type": "text",
                             "name": "colorspace",
-                            "value": "sRGB"
+                            "value": "texture_paint"
                         },
                         {
                             "type": "bool",
@@ -197,7 +193,7 @@
             "inputs": [
                 {
                     "regex": "(beauty).*(?=.exr)",
-                    "colorspace": "linear"
+                    "colorspace": "scene_linear"
                 }
             ]
         }
@@ -345,7 +341,7 @@
                 "write"
             ]
         },
-        "ValidateCorrectAssetName": {
+        "ValidateCorrectAssetContext": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -378,7 +374,7 @@
             "optional": true,
             "active": true
         },
-        "ValidateScript": {
+        "ValidateScriptAttributes": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -465,34 +461,60 @@
                     "viewer_process_override": "",
                     "bake_viewer_process": true,
                     "bake_viewer_input_process": true,
-                    "reformat_node_add": false,
-                    "reformat_node_config": [
-                        {
-                            "type": "text",
-                            "name": "type",
-                            "value": "to format"
-                        },
-                        {
-                            "type": "text",
-                            "name": "format",
-                            "value": "HD_1080"
-                        },
-                        {
-                            "type": "text",
-                            "name": "filter",
-                            "value": "Lanczos6"
-                        },
-                        {
-                            "type": "bool",
-                            "name": "black_outside",
-                            "value": true
-                        },
-                        {
-                            "type": "bool",
-                            "name": "pbb",
-                            "value": false
-                        }
-                    ],
+                    "reformat_nodes_config": {
+                        "enabled": false,
+                        "reposition_nodes": [
+                            {
+                                "node_class": "Reformat",
+                                "knobs": [
+                                    {
+                                        "type": "text",
+                                        "name": "type",
+                                        "value": "to format"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "name": "format",
+                                        "value": "HD_1080"
+                                    },
+                                    {
+                                        "type": "text",
+                                        "name": "filter",
+                                        "value": "Lanczos6"
+                                    },
+                                    {
+                                        "type": "bool",
+                                        "name": "black_outside",
+                                        "value": true
+                                    },
+                                    {
+                                        "type": "bool",
+                                        "name": "pbb",
+                                        "value": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "extension": "mov",
+                    "add_custom_tags": []
+                }
+            }
+        },
+        "ExtractReviewIntermediates": {
+            "enabled": true,
+            "viewer_lut_raw": false,
+            "outputs": {
+                "baking": {
+                    "filter": {
+                        "task_types": [],
+                        "families": [],
+                        "subsets": []
+                    },
+                    "read_raw": false,
+                    "viewer_process_override": "",
+                    "bake_viewer_process": true,
+                    "bake_viewer_input_process": true,
                     "reformat_nodes_config": {
                         "enabled": false,
                         "reposition_nodes": [

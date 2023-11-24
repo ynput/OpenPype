@@ -12,9 +12,9 @@ import maya.cmds as cmds
 from openpype.client import get_representation_by_name
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
-    legacy_io,
     load,
-    get_representation_path
+    get_current_project_name,
+    get_representation_path,
 )
 from openpype.hosts.maya.api.lib import (
     maintained_selection,
@@ -53,7 +53,9 @@ class VRayProxyLoader(load.LoaderPlugin):
             family = "vrayproxy"
 
         #  get all representations for this version
-        self.fname = self._get_abc(context["version"]["_id"]) or self.fname
+        filename = self._get_abc(context["version"]["_id"])
+        if not filename:
+            filename = self.filepath_from_context(context)
 
         asset_name = context['asset']["name"]
         namespace = namespace or unique_namespace(
@@ -69,14 +71,15 @@ class VRayProxyLoader(load.LoaderPlugin):
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
                 nodes, group_node = self.create_vray_proxy(
-                    name, filename=self.fname)
+                    name, filename=filename)
 
         self[:] = nodes
         if not nodes:
             return
 
         # colour the group node
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        project_name = context["project"]["name"]
+        settings = get_project_settings(project_name)
         colors = settings['maya']['load']['colors']
         c = colors.get(family)
         if c is not None:
@@ -185,12 +188,12 @@ class VRayProxyLoader(load.LoaderPlugin):
         """
         self.log.debug(
             "Looking for abc in published representations of this version.")
-        project_name = legacy_io.active_project()
+        project_name = get_current_project_name()
         abc_rep = get_representation_by_name(project_name, "abc", version_id)
         if abc_rep:
             self.log.debug("Found, we'll link alembic to vray proxy.")
             file_name = get_representation_path(abc_rep)
-            self.log.debug("File: {}".format(self.fname))
+            self.log.debug("File: {}".format(file_name))
             return file_name
 
         return ""

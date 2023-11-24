@@ -53,6 +53,8 @@ def update_mode_context(mode):
 
 def get_geometry_at_frame(sop_node, frame, force=True):
     """Return geometry at frame but force a cooked value."""
+    if not hasattr(sop_node, "geometry"):
+        return
     with update_mode_context(hou.updateMode.AutoUpdate):
         sop_node.cook(force=force, frame_range=(frame, frame))
         return sop_node.geometryAtFrame(frame)

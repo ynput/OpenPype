@@ -4,6 +4,8 @@ from .utils import (
     LoadError,
     IncompatibleLoaderError,
     InvalidRepresentationContext,
+    LoaderSwitchNotImplementedError,
+    LoaderNotFoundError,
 
     get_repres_contexts,
     get_contexts_for_repre_docs,
@@ -30,6 +32,7 @@ from .utils import (
 
     loaders_from_repre_context,
     loaders_from_representation,
+    filter_repre_contexts_by_loader,
 
     any_outdated_containers,
     get_outdated_containers,
@@ -55,6 +58,8 @@ __all__ = (
     "LoadError",
     "IncompatibleLoaderError",
     "InvalidRepresentationContext",
+    "LoaderSwitchNotImplementedError",
+    "LoaderNotFoundError",
 
     "get_repres_contexts",
     "get_contexts_for_repre_docs",
@@ -81,6 +86,7 @@ __all__ = (
 
     "loaders_from_repre_context",
     "loaders_from_representation",
+    "filter_repre_contexts_by_loader",
 
     "any_outdated_containers",
     "get_outdated_containers",

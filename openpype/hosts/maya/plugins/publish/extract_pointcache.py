@@ -45,7 +45,7 @@ class ExtractAlembic(publish.Extractor):
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
         attr_prefixes = [value for value in attr_prefixes if value.strip()]
 
-        self.log.info("Extracting pointcache..")
+        self.log.debug("Extracting pointcache..")
         dirname = self.staging_dir(instance)
 
         parent_dir = self.staging_dir(instance)
@@ -86,7 +86,6 @@ class ExtractAlembic(publish.Extractor):
                                                      end=end))
 
         suspend = not instance.data.get("refresh", False)
-        self.log.info(nodes)
         with suspended_refresh(suspend=suspend):
             with maintained_selection():
                 cmds.select(nodes, noExpand=True)
@@ -108,13 +107,14 @@ class ExtractAlembic(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        instance.context.data["cleanupFullPaths"].append(path)
+        if not instance.data.get("stagingDir_persistent", False):
+            instance.context.data["cleanupFullPaths"].append(path)
 
-        self.log.info("Extracted {} to {}".format(instance, dirname))
+        self.log.debug("Extracted {} to {}".format(instance, dirname))
 
         # Extract proxy.
         if not instance.data.get("proxy"):
-            self.log.info("No proxy nodes found. Skipping proxy extraction.")
+            self.log.debug("No proxy nodes found. Skipping proxy extraction.")
             return
 
         path = path.replace(".abc", "_proxy.abc")

@@ -573,56 +573,6 @@ void FAR PASCAL PI_Close( PIFilter* iFilter )
 }
 
 
-/**************************************************************************************/
-// we have something to do !
-
-int FAR PASCAL PI_Parameters( PIFilter* iFilter, char* iArg )
-{
-    if( !iArg )
-    {
-
-        // If the requester is not open, we open it.
-        if( Data.mReq == 0)
-        {
-            // Create empty requester because menu items are defined with
-            //  `define_menu` callback
-            DWORD  req = TVOpenFilterReqEx(
-                    iFilter,
-                    185,
-                    20,
-                    NULL,
-                    NULL,
-                    PIRF_STANDARD_REQ | PIRF_COLLAPSABLE_REQ,
-                    FILTERREQ_NO_TBAR
-            );
-            if( req == 0 )
-            {
-                TVWarning( iFilter, TXT_REQUESTER_ERROR );
-                return  0;
-            }
-
-
-            Data.mReq = req;
-            // This is a very simple requester, so we create it's content right here instead
-            // of waiting for the PICBREQ_OPEN message...
-            // Not recommended for more complex requesters. (see the other examples)
-
-            // Sets the title of the requester.
-            TVSetReqTitle( iFilter, Data.mReq, TXT_REQUESTER );
-            // Request to listen to ticks
-            TVGrabTicks(iFilter, req, PITICKS_FLAG_ON);
-        }
-        else
-        {
-            // If it is already open, we just put it on front of all other requesters.
-            TVReqToFront( iFilter, Data.mReq );
-        }
-    }
-
-    return  1;
-}
-
-
 int newMenuItemsProcess(PIFilter* iFilter) {
     // Menu items defined with `define_menu` should be propagated.
 
@@ -702,6 +652,62 @@ int newMenuItemsProcess(PIFilter* iFilter) {
 
     return 1;
 }
+
+/**************************************************************************************/
+// we have something to do !
+
+int FAR PASCAL PI_Parameters( PIFilter* iFilter, char* iArg )
+{
+    if( !iArg )
+    {
+
+        // If the requester is not open, we open it.
+        if( Data.mReq == 0)
+        {
+            // Create empty requester because menu items are defined with
+            //  `define_menu` callback
+            DWORD  req = TVOpenFilterReqEx(
+                    iFilter,
+                    185,
+                    20,
+                    NULL,
+                    NULL,
+                    PIRF_STANDARD_REQ | PIRF_COLLAPSABLE_REQ,
+                    FILTERREQ_NO_TBAR
+            );
+            if( req == 0 )
+            {
+                TVWarning( iFilter, TXT_REQUESTER_ERROR );
+                return  0;
+            }
+
+            Data.mReq = req;
+
+            // This is a very simple requester, so we create it's content right here instead
+            // of waiting for the PICBREQ_OPEN message...
+            // Not recommended for more complex requesters. (see the other examples)
+
+            // Sets the title of the requester.
+            TVSetReqTitle( iFilter, Data.mReq, TXT_REQUESTER );
+            // Request to listen to ticks
+            TVGrabTicks(iFilter, req, PITICKS_FLAG_ON);
+
+            if ( Data.firstParams == true ) {
+                Data.firstParams = false;
+            } else {
+                newMenuItemsProcess(iFilter);
+            }
+        }
+        else
+        {
+            // If it is already open, we just put it on front of all other requesters.
+            TVReqToFront( iFilter, Data.mReq );
+        }
+    }
+
+    return  1;
+}
+
 /**************************************************************************************/
 // something happened that needs our attention.
 // Global variable where current button up data are stored
