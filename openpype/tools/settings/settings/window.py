@@ -90,22 +90,17 @@ class SettingsController:
         )
 
     def update_last_opened_info(self):
-        print("1")
         if self.edit_mode == EditMode.PROTECT:
             return
 
-        print("2")
         last_opened_info = get_last_opened_info()
         mode = EditMode.DISABLE
-        print("3")
         if (
             last_opened_info is None
             or self._opened_info == last_opened_info
         ):
-            print("enabled")
             mode = EditMode.ENABLE
 
-        print("4")
         self._last_opened_info = last_opened_info
 
         self.set_edit_mode(mode)
