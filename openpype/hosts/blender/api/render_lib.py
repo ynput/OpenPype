@@ -191,7 +191,7 @@ def set_node_tree(output_path, name, aov_sep, ext, multilayer):
 
         output.file_slots.new(filepath)
 
-        filename = output_path / filepath.lstrip("/")
+        filename = str(output_path / filepath.lstrip("/"))
 
         aov_file_products.append((render_pass.name, filename))
 
