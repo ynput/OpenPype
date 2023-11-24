@@ -12,6 +12,27 @@ from .publish_plugins import PublishPuginsModel, DEFAULT_PUBLISH_VALUES
 from .tools import GlobalToolsModel, DEFAULT_TOOLS_VALUES
 
 
+class DiskMappingItemModel(BaseSettingsModel):
+    _layout = "expanded"
+    source: str = Field("", title="Source")
+    destination: str = Field("", title="Destination")
+
+
+class DiskMappingModel(BaseSettingsModel):
+    windows: list[DiskMappingItemModel] = Field(
+        title="Windows",
+        default_factory=list,
+    )
+    linux: list[DiskMappingItemModel] = Field(
+        title="Linux",
+        default_factory=list,
+    )
+    darwin: list[DiskMappingItemModel] = Field(
+        title="MacOS",
+        default_factory=list,
+    )
+
+
 class ImageIOFileRuleModel(BaseSettingsModel):
     name: str = Field("", title="Rule name")
     pattern: str = Field("", title="Regex pattern")
@@ -96,6 +117,10 @@ class CoreSettings(BaseSettingsModel):
         title="Global environment variables",
         widget="textarea",
         scope=["studio"],
+    )
+    disk_mapping: DiskMappingModel = Field(
+        default_factory=DiskMappingModel,
+        title="Disk mapping",
     )
     tools: GlobalToolsModel = Field(
         default_factory=GlobalToolsModel,

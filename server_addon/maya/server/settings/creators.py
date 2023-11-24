@@ -1,6 +1,7 @@
 from pydantic import Field
 
 from ayon_server.settings import BaseSettingsModel
+from ayon_server.settings import task_types_enum
 
 
 class CreateLookModel(BaseSettingsModel):
@@ -26,7 +27,7 @@ class CreateUnrealStaticMeshModel(BaseSettingsModel):
         default_factory=list,
         title="Default Products"
     )
-    static_mesh_prefixes: str = Field("S", title="Static Mesh Prefix")
+    static_mesh_prefix: str = Field("S", title="Static Mesh Prefix")
     collision_prefixes: list[str] = Field(
         default_factory=list,
         title="Collision Prefixes"
@@ -118,6 +119,16 @@ class CreateVrayProxyModel(BaseSettingsModel):
     alembic: bool = Field(title="Alembic")
     default_variants: list[str] = Field(
         default_factory=list, title="Default Products")
+
+
+class CreateMultishotLayout(BasicCreatorModel):
+    shotParent: str = Field(title="Shot Parent Folder")
+    groupLoadedAssets: bool = Field(title="Group Loaded Assets")
+    task_type: list[str] = Field(
+        title="Task types",
+        enum_resolver=task_types_enum
+    )
+    task_name: str = Field(title="Task name (regex)")
 
 
 class CreatorsModel(BaseSettingsModel):

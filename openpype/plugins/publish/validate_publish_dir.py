@@ -47,15 +47,16 @@ class ValidatePublishDir(pyblish.api.InstancePlugin):
         # original_dirname must be convertable to rootless path
         # in other case it is path inside of root folder for the project
         success, _ = anatomy.find_root_template_from_path(original_dirname)
-
-        formatting_data = {
-            "original_dirname": original_dirname,
-        }
-        msg = "Path '{}' not in project folder.".format(original_dirname) + \
-              " Please publish from inside of project folder."
         if not success:
-            raise PublishXmlValidationError(self, msg, key="not_in_dir",
-                                            formatting_data=formatting_data)
+            raise PublishXmlValidationError(
+                plugin=self,
+                message=(
+                    "Path '{}' not in project folder. Please publish from "
+                    "inside of project folder.".format(original_dirname)
+                ),
+                key="not_in_dir",
+                formatting_data={"original_dirname": original_dirname}
+            )
 
     def _get_template_name_from_instance(self, instance):
         """Find template which will be used during integration."""

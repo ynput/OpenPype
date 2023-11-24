@@ -5,8 +5,6 @@ This is resolving index of server lists stored in `deadlineServers` instance
 attribute or using default server if that attribute doesn't exists.
 
 """
-from maya import cmds
-
 import pyblish.api
 from openpype.pipeline.publish import KnownPublishError
 
@@ -24,7 +22,7 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
         instance.data["deadlineUrl"] = self._collect_deadline_url(instance)
         instance.data["deadlineUrl"] = \
             instance.data["deadlineUrl"].strip().rstrip("/")
-        self.log.info(
+        self.log.debug(
             "Using {} for submission.".format(instance.data["deadlineUrl"]))
 
     def _collect_deadline_url(self, render_instance):
@@ -44,7 +42,8 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
             str: Selected Deadline Webservice URL.
 
         """
-
+        # Not all hosts can import this module.
+        from maya import cmds
         deadline_settings = (
             render_instance.context.data
             ["system_settings"]

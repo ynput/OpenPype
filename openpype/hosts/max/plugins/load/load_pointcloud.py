@@ -2,11 +2,12 @@ import os
 
 from openpype.hosts.max.api import lib, maintained_selection
 from openpype.hosts.max.api.lib import (
-    unique_namespace, get_namespace
+    unique_namespace,
+
 )
 from openpype.hosts.max.api.pipeline import (
     containerise,
-    import_custom_attribute_data,
+    get_previous_loaded_object,
     update_custom_attribute_data
 )
 from openpype.pipeline import get_representation_path, load
@@ -25,7 +26,6 @@ class PointCloudLoader(load.LoaderPlugin):
     def load(self, context, name=None, namespace=None, data=None):
         """load point cloud by tyCache"""
         from pymxs import runtime as rt
-
         filepath = os.path.normpath(self.filepath_from_context(context))
         obj = rt.tyCache()
         obj.filename = filepath
@@ -34,14 +34,10 @@ class PointCloudLoader(load.LoaderPlugin):
             name + "_",
             suffix="_",
         )
-        prt_container = rt.Container(
-            name=f"{namespace}:{name}_{self.postfix}")
-        import_custom_attribute_data(prt_container, [obj])
-        obj.Parent = prt_container
         obj.name = f"{namespace}:{obj.name}"
 
         return containerise(
-            name, [prt_container], context,
+            name, [obj], context,
             namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
@@ -50,14 +46,12 @@ class PointCloudLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
-        namespace, name = get_namespace(container["instance_node"])
-        sub_node_name = f"{namespace}:{name}_{self.postfix}"
-        inst_container = rt.getNodeByName(sub_node_name)
+        node_list = get_previous_loaded_object(node)
         update_custom_attribute_data(
-            inst_container, inst_container.Children)
+            node, node_list)
         with maintained_selection():
-            rt.Select(node.Children)
-            for prt in inst_container.Children:
+            rt.Select(node_list)
+            for prt in rt.Selection:
                 prt.filename = path
         lib.imprint(container["instance_node"], {
             "representation": str(representation["_id"])

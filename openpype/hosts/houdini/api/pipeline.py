@@ -3,7 +3,6 @@
 import os
 import sys
 import logging
-import contextlib
 
 import hou  # noqa
 
@@ -14,6 +13,7 @@ import pyblish.api
 from openpype.pipeline import (
     register_creator_plugin_path,
     register_loader_plugin_path,
+    register_inventory_action_path,
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
@@ -55,6 +55,7 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
+        register_inventory_action_path(INVENTORY_PATH)
 
         log.info("Installing callbacks ... ")
         # register_event_callback("init", on_init)
@@ -63,10 +64,6 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_event_callback("save", on_save)
         register_event_callback("open", on_open)
         register_event_callback("new", on_new)
-
-        pyblish.api.register_callback(
-            "instanceToggled", on_pyblish_instance_toggled
-        )
 
         self._has_been_setup = True
         # add houdini vendor packages
@@ -298,9 +295,34 @@ def on_save():
 
     log.info("Running callback on save..")
 
+    # update houdini vars
+    lib.update_houdini_vars_context_dialog()
+
     nodes = lib.get_id_required_nodes()
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
+
+
+def _show_outdated_content_popup():
+    # Get main window
+    parent = lib.get_main_window()
+    if parent is None:
+        log.info("Skipping outdated content pop-up "
+                 "because Houdini window can't be found.")
+    else:
+        from openpype.widgets import popup
+
+        # Show outdated pop-up
+        def _on_show_inventory():
+            from openpype.tools.utils import host_tools
+            host_tools.show_scene_inventory(parent=parent)
+
+        dialog = popup.Popup(parent=parent)
+        dialog.setWindowTitle("Houdini scene has outdated content")
+        dialog.setMessage("There are outdated containers in "
+                          "your Houdini scene.")
+        dialog.on_clicked.connect(_on_show_inventory)
+        dialog.show()
 
 
 def on_open():
@@ -311,33 +333,26 @@ def on_open():
 
     log.info("Running callback on open..")
 
+    # update houdini vars
+    lib.update_houdini_vars_context_dialog()
+
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
     lib.validate_fps()
 
     if any_outdated_containers():
-        from openpype.widgets import popup
-
-        log.warning("Scene has outdated content.")
-
-        # Get main window
         parent = lib.get_main_window()
         if parent is None:
-            log.info("Skipping outdated content pop-up "
-                     "because Houdini window can't be found.")
+            # When opening Houdini with last workfile on launch the UI hasn't
+            # initialized yet completely when the `on_open` callback triggers.
+            # We defer the dialog popup to wait for the UI to become available.
+            # We assume it will open because `hou.isUIAvailable()` returns True
+            import hdefereval
+            hdefereval.executeDeferred(_show_outdated_content_popup)
         else:
+            _show_outdated_content_popup()
 
-            # Show outdated pop-up
-            def _on_show_inventory():
-                from openpype.tools.utils import host_tools
-                host_tools.show_scene_inventory(parent=parent)
-
-            dialog = popup.Popup(parent=parent)
-            dialog.setWindowTitle("Houdini scene has outdated content")
-            dialog.setMessage("There are outdated containers in "
-                              "your Houdini scene.")
-            dialog.on_clicked.connect(_on_show_inventory)
-            dialog.show()
+        log.warning("Scene has outdated content.")
 
 
 def on_new():
@@ -385,54 +400,4 @@ def _set_context_settings():
     """
 
     lib.reset_framerange()
-
-
-def on_pyblish_instance_toggled(instance, new_value, old_value):
-    """Toggle saver tool passthrough states on instance toggles."""
-    @contextlib.contextmanager
-    def main_take(no_update=True):
-        """Enter root take during context"""
-        original_take = hou.takes.currentTake()
-        original_update_mode = hou.updateModeSetting()
-        root = hou.takes.rootTake()
-        has_changed = False
-        try:
-            if original_take != root:
-                has_changed = True
-                if no_update:
-                    hou.setUpdateMode(hou.updateMode.Manual)
-                hou.takes.setCurrentTake(root)
-                yield
-        finally:
-            if has_changed:
-                if no_update:
-                    hou.setUpdateMode(original_update_mode)
-                hou.takes.setCurrentTake(original_take)
-
-    if not instance.data.get("_allowToggleBypass", True):
-        return
-
-    nodes = instance[:]
-    if not nodes:
-        return
-
-    # Assume instance node is first node
-    instance_node = nodes[0]
-
-    if not hasattr(instance_node, "isBypassed"):
-        # Likely not a node that can actually be bypassed
-        log.debug("Can't bypass node: %s", instance_node.path())
-        return
-
-    if instance_node.isBypassed() != (not old_value):
-        print("%s old bypass state didn't match old instance state, "
-              "updating anyway.." % instance_node.path())
-
-    try:
-        # Go into the main take, because when in another take changing
-        # the bypass state of a note cannot be done due to it being locked
-        # by default.
-        with main_take(no_update=True):
-            instance_node.bypass(not new_value)
-    except hou.PermissionError as exc:
-        log.warning("%s - %s", instance_node.path(), exc)
+    lib.update_houdini_vars_context()

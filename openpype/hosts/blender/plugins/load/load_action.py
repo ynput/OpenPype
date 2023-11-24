@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 import bpy
 from openpype.pipeline import get_representation_path
-import openpype.hosts.blender.api.plugin
+from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import (
     containerise_existing,
     AVALON_PROPERTY,
@@ -16,7 +16,7 @@ from openpype.hosts.blender.api.pipeline import (
 logger = logging.getLogger("openpype").getChild("blender").getChild("load_action")
 
 
-class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
+class BlendActionLoader(plugin.AssetLoader):
     """Load action from a .blend file.
 
     Warning:
@@ -46,8 +46,8 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
         libpath = self.filepath_from_context(context)
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = openpype.hosts.blender.api.plugin.asset_name(asset, subset)
-        container_name = openpype.hosts.blender.api.plugin.asset_name(
+        lib_container = plugin.prepare_scene_name(asset, subset)
+        container_name = plugin.prepare_scene_name(
             asset, subset, namespace
         )
 
@@ -152,7 +152,7 @@ class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):
         assert libpath.is_file(), (
             f"The file doesn't exist: {libpath}"
         )
-        assert extension in openpype.hosts.blender.api.plugin.VALID_EXTENSIONS, (
+        assert extension in plugin.VALID_EXTENSIONS, (
             f"Unsupported file: {libpath}"
         )
 

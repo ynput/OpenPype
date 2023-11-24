@@ -51,10 +51,8 @@ class ExtractAlembic(publish.Extractor):
     families = ["pointcache"]
 
     def process(self, instance):
-        start = float(instance.data.get("frameStartHandle", 1))
-        end = float(instance.data.get("frameEndHandle", 1))
-
-        container = instance.data["instance_node"]
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
 
         self.log.debug("Extracting pointcache ...")
 

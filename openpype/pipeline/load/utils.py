@@ -318,7 +318,8 @@ def load_with_repre_context(
 
     # Backwards compatibility: Originally the loader's __init__ required the
     # representation context to set `fname` attribute to the filename to load
-    loader.fname = get_representation_path_from_context(repre_context)
+    # Deprecated - to be removed in OpenPype 3.16.6 or 3.17.0.
+    loader._fname = get_representation_path_from_context(repre_context)
 
     return loader.load(repre_context, name, namespace, options)
 
@@ -785,6 +786,24 @@ def loaders_from_repre_context(loaders, repre_context):
     return [
         loader
         for loader in loaders
+        if is_compatible_loader(loader, repre_context)
+    ]
+
+
+def filter_repre_contexts_by_loader(repre_contexts, loader):
+    """Filter representation contexts for loader.
+
+    Args:
+        repre_contexts (list[dict[str, Ant]]): Representation context.
+        loader (LoaderPlugin): Loader plugin to filter contexts for.
+
+    Returns:
+        list[dict[str, Any]]: Filtered representation contexts.
+    """
+
+    return [
+        repre_context
+        for repre_context in repre_contexts
         if is_compatible_loader(loader, repre_context)
     ]
 

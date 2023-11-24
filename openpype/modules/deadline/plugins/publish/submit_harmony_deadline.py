@@ -369,7 +369,7 @@ class HarmonySubmitDeadline(
         # rendering, we need to unzip it.
         published_scene = Path(
             self.from_published_scene(False))
-        self.log.info(f"Processing {published_scene.as_posix()}")
+        self.log.debug(f"Processing {published_scene.as_posix()}")
         xstage_path = self._unzip_scene_file(published_scene)
         render_path = xstage_path.parent / "renders"
 

@@ -20,7 +20,7 @@ class ValidateAssemblyName(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-        cls.log.info("Checking name of {}".format(instance.name))
+        cls.log.debug("Checking name of {}".format(instance.name))
 
         content_instance = instance.data.get("setMembers", None)
         if not content_instance:

@@ -115,9 +115,7 @@ class ToolGroupModel(BaseSettingsModel):
     name: str = Field("", title="Name")
     label: str = Field("", title="Label")
     environment: str = Field("{}", title="Environments", widget="textarea")
-    variants: list[ToolVariantModel] = Field(
-        default_factory=ToolVariantModel
-    )
+    variants: list[ToolVariantModel] = Field(default_factory=list)
 
     @validator("environment")
     def validate_json(cls, value):
@@ -166,6 +164,8 @@ class ApplicationsSettings(BaseSettingsModel):
         default_factory=AppGroupWithPython, title="Adobe After Effects")
     celaction: AppGroup = Field(
         default_factory=AppGroupWithPython, title="Celaction 2D")
+    substancepainter: AppGroup = Field(
+        default_factory=AppGroupWithPython, title="Substance Painter")
     unreal: AppGroup = Field(
         default_factory=AppGroupWithPython, title="Unreal Editor")
     additional_apps: list[AdditionalAppGroup] = Field(

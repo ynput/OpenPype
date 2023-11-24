@@ -105,7 +105,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
                     "family": cmds.getAttr("{}.family".format(s)),
                 }
             )
-            self.log.info(" -> attach render to: {}".format(s))
+            self.log.debug(" -> attach render to: {}".format(s))
 
         layer_name = layer.name()
 
@@ -137,10 +137,10 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         has_cameras = any(product.camera for product in render_products)
         assert has_cameras, "No render cameras found."
 
-        self.log.info("multipart: {}".format(
+        self.log.debug("multipart: {}".format(
             multipart))
         assert expected_files, "no file names were generated, this is a bug"
-        self.log.info(
+        self.log.debug(
             "expected files: {}".format(
                 json.dumps(expected_files, indent=4, sort_keys=True)
             )
@@ -157,10 +157,10 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
 
         # append full path
         aov_dict = {}
-        default_render_folder = context.data.get("project_settings")\
-            .get("maya")\
-            .get("RenderSettings")\
-            .get("default_render_image_folder") or ""
+        image_directory = os.path.join(
+            cmds.workspace(query=True, rootDirectory=True),
+            cmds.workspace(fileRuleEntry="images")
+        )
         # replace relative paths with absolute. Render products are
         # returned as list of dictionaries.
         publish_meta_path = None
@@ -168,14 +168,13 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
             full_paths = []
             aov_first_key = list(aov.keys())[0]
             for file in aov[aov_first_key]:
-                full_path = os.path.join(workspace, default_render_folder,
-                                         file)
+                full_path = os.path.join(image_directory, file)
                 full_path = full_path.replace("\\", "/")
                 full_paths.append(full_path)
                 publish_meta_path = os.path.dirname(full_path)
             aov_dict[aov_first_key] = full_paths
         full_exp_files = [aov_dict]
-        self.log.info(full_exp_files)
+        self.log.debug(full_exp_files)
 
         if publish_meta_path is None:
             raise KnownPublishError("Unable to detect any expected output "
@@ -227,7 +226,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         if platform.system().lower() in ["linux", "darwin"]:
             common_publish_meta_path = "/" + common_publish_meta_path
 
-        self.log.info(
+        self.log.debug(
             "Publish meta path: {}".format(common_publish_meta_path))
 
         # Get layer specific settings, might be overrides
@@ -300,7 +299,7 @@ class CollectMayaRender(pyblish.api.InstancePlugin):
         )
         if rr_settings["enabled"]:
             data["rrPathName"] = instance.data.get("rrPathName")
-            self.log.info(data["rrPathName"])
+            self.log.debug(data["rrPathName"])
 
         if self.sync_workfile_version:
             data["version"] = context.data["version"]

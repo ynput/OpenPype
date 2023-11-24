@@ -36,6 +36,7 @@ from openpype.settings import (
 )
 
 from openpype.client.mongo import validate_mongo_connection
+from openpype.client import get_ayon_server_api_connection
 
 _PLACEHOLDER = object()
 
@@ -494,10 +495,18 @@ class OpenPypeSettingsRegistry(JSONSettingRegistry):
     """
 
     def __init__(self, name=None):
-        self.vendor = "pypeclub"
-        self.product = "openpype"
+        if AYON_SERVER_ENABLED:
+            vendor = "Ynput"
+            product = "AYON"
+            default_name = "AYON_settings"
+        else:
+            vendor = "pypeclub"
+            product = "openpype"
+            default_name = "openpype_settings"
+        self.vendor = vendor
+        self.product = product
         if not name:
-            name = "openpype_settings"
+            name = default_name
         path = appdirs.user_data_dir(self.product, self.vendor)
         super(OpenPypeSettingsRegistry, self).__init__(name, path)
 
@@ -603,6 +612,11 @@ def get_openpype_username():
     settings and last option is to use `getpass.getuser()` which returns
     machine username.
     """
+
+    if AYON_SERVER_ENABLED:
+        con = get_ayon_server_api_connection()
+        return con.get_user()["name"]
+
     username = os.environ.get("OPENPYPE_USERNAME")
     if not username:
         local_settings = get_local_settings()

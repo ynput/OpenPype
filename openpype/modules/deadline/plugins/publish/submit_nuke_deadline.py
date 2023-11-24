@@ -7,8 +7,6 @@ from datetime import datetime
 import requests
 import pyblish.api
 
-import nuke
-
 from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io
 from openpype.pipeline.publish import (
@@ -48,6 +46,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}
+    workfile_dependency = True
 
     @classmethod
     def get_attribute_defs(cls):
@@ -83,6 +82,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 "suspend_publish",
                 default=False,
                 label="Suspend publish"
+            ),
+            BoolDef(
+                "workfile_dependency",
+                default=True,
+                label="Workfile Dependency"
             )
         ]
 
@@ -243,7 +247,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
         # resolve any limit groups
         limit_groups = self.get_limit_groups()
-        self.log.info("Limit groups: `{}`".format(limit_groups))
+        self.log.debug("Limit groups: `{}`".format(limit_groups))
 
         payload = {
             "JobInfo": {
@@ -312,6 +316,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             # Mandatory for Deadline, may be empty
             "AuxFiles": []
         }
+
+        # Add workfile dependency.
+        workfile_dependency = instance.data["attributeValues"].get(
+            "workfile_dependency", self.workfile_dependency
+        )
+        if workfile_dependency:
+            payload["JobInfo"].update({"AssetDependency0": script_path})
 
         # TODO: rewrite for baking with sequences
         if baking_submission:
@@ -386,10 +397,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         })
 
         plugin = payload["JobInfo"]["Plugin"]
-        self.log.info("using render plugin : {}".format(plugin))
+        self.log.debug("using render plugin : {}".format(plugin))
 
-        self.log.info("Submitting..")
-        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
+        self.log.debug("Submitting..")
+        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
         # adding expectied files to instance.data
         self.expected_files(
@@ -485,6 +496,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         Returning:
             list: captured groups list
         """
+        # Not all hosts can import this module.
+        import nuke
+
         captured_groups = []
         for lg_name, list_node_class in self.limit_groups.items():
             for node_class in list_node_class:

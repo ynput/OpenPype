@@ -19,9 +19,8 @@ class ExtractCameraFbx(publish.Extractor, OptionalPyblishPluginMixin):
     def process(self, instance):
         if not self.is_active(instance.data):
             return
-        container = instance.data["instance_node"]
 
-        self.log.info("Extracting Camera ...")
+        self.log.debug("Extracting Camera ...")
         stagingdir = self.staging_dir(instance)
         filename = "{name}.fbx".format(**instance.data)
 

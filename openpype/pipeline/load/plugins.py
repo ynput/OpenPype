@@ -234,6 +234,19 @@ class LoaderPlugin(list):
         """
         return cls.options or []
 
+    @property
+    def fname(self):
+        """Backwards compatibility with deprecation warning"""
+
+        self.log.warning((
+            "DEPRECATION WARNING: Source - Loader plugin {}."
+            " The 'fname' property on the Loader plugin will be removed in"
+            " future versions of OpenPype. Planned version to drop the support"
+            " is 3.16.6 or 3.17.0."
+        ).format(self.__class__.__name__))
+        if hasattr(self, "_fname"):
+            return self._fname
+
 
 class SubsetLoaderPlugin(LoaderPlugin):
     """Load subset into host application

@@ -10,7 +10,7 @@ from openpype.hosts.max.api.lib import (
 from openpype.hosts.max.api.lib import maintained_selection
 from openpype.hosts.max.api.pipeline import (
     containerise,
-    import_custom_attribute_data,
+    get_previous_loaded_object,
     update_custom_attribute_data
 )
 from openpype.pipeline import get_representation_path, load
@@ -24,7 +24,6 @@ class ObjLoader(load.LoaderPlugin):
     order = -9
     icon = "code-fork"
     color = "white"
-    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         from pymxs import runtime as rt
@@ -39,15 +38,12 @@ class ObjLoader(load.LoaderPlugin):
             suffix="_",
         )
         # create "missing" container for obj import
-        container = rt.Container(name=f"{namespace}:{name}_{self.postfix}")
         selections = rt.GetCurrentSelection()
-        import_custom_attribute_data(container, selections)
         # get current selection
         for selection in selections:
-            selection.Parent = container
             selection.name = f"{namespace}:{selection.name}"
         return containerise(
-            name, [container], context,
+            name, selections, context,
             namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
@@ -56,26 +52,26 @@ class ObjLoader(load.LoaderPlugin):
         path = get_representation_path(representation)
         node_name = container["instance_node"]
         node = rt.getNodeByName(node_name)
-        namespace, name = get_namespace(node_name)
-        sub_node_name = f"{namespace}:{name}_{self.postfix}"
-        inst_container = rt.getNodeByName(sub_node_name)
-        rt.Select(inst_container.Children)
-        transform_data = object_transform_set(inst_container.Children)
-        for prev_obj in rt.selection:
+        namespace, _ = get_namespace(node_name)
+        node_list = get_previous_loaded_object(node)
+        rt.Select(node_list)
+        previous_objects = rt.GetCurrentSelection()
+        transform_data = object_transform_set(previous_objects)
+        for prev_obj in previous_objects:
             if rt.isValidNode(prev_obj):
                 rt.Delete(prev_obj)
 
         rt.Execute(f'importFile @"{path}" #noPrompt using:ObjImp')
         # get current selection
         selections = rt.GetCurrentSelection()
-        update_custom_attribute_data(inst_container, selections)
         for selection in selections:
-            selection.Parent = inst_container
             selection.name = f"{namespace}:{selection.name}"
-            selection.pos = transform_data[
-                f"{selection.name}.transform"]
-            selection.scale = transform_data[
-                f"{selection.name}.scale"]
+            selection_transform = f"{selection.name}.transform"
+            if selection_transform in transform_data.keys():
+                selection.pos = transform_data[selection_transform] or 0
+                selection.scale = transform_data[
+                    f"{selection.name}.scale"] or 0
+        update_custom_attribute_data(node, selections)
         with maintained_selection():
             rt.Select(node)
 

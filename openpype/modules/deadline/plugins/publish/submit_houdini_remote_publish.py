@@ -3,7 +3,6 @@ import json
 from datetime import datetime
 
 import requests
-import hou
 
 import pyblish.api
 
@@ -31,6 +30,8 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
     targets = ["deadline"]
 
     def process(self, context):
+        # Not all hosts can import this module.
+        import hou
 
         # Ensure no errors so far
         assert all(
@@ -162,7 +163,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
         )
 
         # Submit
-        self.log.info("Submitting..")
+        self.log.debug("Submitting..")
         self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
         # E.g. http://192.168.0.1:8082/api/jobs

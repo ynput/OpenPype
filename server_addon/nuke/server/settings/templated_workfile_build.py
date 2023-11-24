@@ -28,6 +28,7 @@ class TemplatedWorkfileProfileModel(BaseSettingsModel):
 
 
 class TemplatedWorkfileBuildModel(BaseSettingsModel):
+    """Settings for templated workfile builder."""
     profiles: list[TemplatedWorkfileProfileModel] = Field(
         default_factory=list
     )

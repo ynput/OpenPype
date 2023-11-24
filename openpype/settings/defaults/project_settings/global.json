@@ -546,6 +546,17 @@
                     "task_types": [],
                     "task_names": [],
                     "template_name": "online"
+                },
+                {
+                    "families": [
+                        "tycache"
+                    ],
+                    "hosts": [
+                        "max"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "tycache"
                 }
             ],
             "hero_template_name_profiles": [

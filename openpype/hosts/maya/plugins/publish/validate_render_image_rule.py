@@ -1,4 +1,7 @@
+import os
+
 import pyblish.api
+
 from maya import cmds
 
 from openpype.pipeline.publish import (
@@ -22,8 +25,12 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        required_images_rule = self.get_default_render_image_folder(instance)
-        current_images_rule = cmds.workspace(fileRuleEntry="images")
+        required_images_rule = os.path.normpath(
+            self.get_default_render_image_folder(instance)
+        )
+        current_images_rule = os.path.normpath(
+            cmds.workspace(fileRuleEntry="images")
+        )
 
         if current_images_rule != required_images_rule:
             raise PublishValidationError(
@@ -42,8 +49,17 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
             cmds.workspace(fileRule=("images", required_images_rule))
             cmds.workspace(saveWorkspace=True)
 
-    @staticmethod
-    def get_default_render_image_folder(instance):
+    @classmethod
+    def get_default_render_image_folder(cls, instance):
+        staging_dir = instance.data.get("stagingDir")
+        if staging_dir:
+            cls.log.debug(
+                "Staging dir found: \"{}\". Ignoring setting from "
+                "`project_settings/maya/RenderSettings/"
+                "default_render_image_folder`.".format(staging_dir)
+            )
+            return staging_dir
+
         return instance.context.data.get('project_settings')\
             .get('maya') \
             .get('RenderSettings') \
