@@ -85,3 +85,11 @@ def pytest_runtest_makereport(item, call):
     # be "setup", "call", "teardown"
 
     setattr(item, "rep_" + rep.when, rep)
+
+    # In the event of module scoped fixtures, also mark failure in module.
+    module = item
+    while module is not None and not isinstance(module, pytest.Module):
+        module = module.parent
+    if module is not None:
+        if rep.when == 'call' and (rep.failed or rep.skipped):
+            setattr(module, "module_test_failure", True)
