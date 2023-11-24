@@ -2,7 +2,6 @@
 """Creator plugin for creating pointcache bgeo files."""
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance, CreatorError
-from openpype.lib import EnumDef
 import hou
 from openpype.lib import EnumDef, BoolDef
 
