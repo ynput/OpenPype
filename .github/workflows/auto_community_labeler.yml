@@ -25,3 +25,15 @@ jobs:
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: community contribution
+
+  debug_labeler:
+    runs-on: ubuntu-latest
+    steps:
+      - name: get_author_association
+        env:
+          AUTHOR_ASSOCIATION: ${{ github.event.issue.author_association }}
+        run: echo "$AUTHOR_ASSOCIATION"
+      - name: check_condition
+        env:
+          CONDITION: ${{ github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER' }}
+        run: echo "$CONDITION"
