@@ -69,9 +69,7 @@ def get_attributes(dictionary, attr, node=None):
     else:
         val = dictionary.get(attr, [])
 
-    if not isinstance(val, list):
-        return [val]
-    return val
+    return val if isinstance(val, list) else [val]
 
 
 def get_look_attrs(node):
@@ -106,7 +104,7 @@ def get_look_attrs(node):
 
 
 def node_uses_image_sequence(node, node_path):
-    # type: (str) -> bool
+    # type: (str, str) -> bool
     """Return whether file node uses an image sequence or single image.
 
     Determine if a node uses an image sequence or just a single image,
@@ -114,6 +112,7 @@ def node_uses_image_sequence(node, node_path):
 
     Args:
         node (str): Name of the Maya node
+        node_path (str): The file path of the node
 
     Returns:
         bool: True if node uses an image sequence
@@ -247,7 +246,7 @@ def get_file_node_files(node):
 
     # For sequences get all files and filter to only existing files
     result = []
-    for index, path in enumerate(paths):
+    for path in paths:
         if node_uses_image_sequence(node, path):
             glob_pattern = seq_to_glob(path)
             result.extend(glob.glob(glob_pattern))
@@ -358,6 +357,11 @@ class CollectLook(pyblish.api.InstancePlugin):
                 for attr in shader_attrs:
                     if cmds.attributeQuery(attr, node=look, exists=True):
                         existing_attrs.append("{}.{}".format(look, attr))
+
+            print("-"*100)
+            print("existing_attrs: {}".format(existing_attrs))
+            print("-"*100)
+
             materials = cmds.listConnections(existing_attrs,
                                              source=True,
                                              destination=False) or []
@@ -377,13 +381,24 @@ class CollectLook(pyblish.api.InstancePlugin):
             # connected to the look sets above we now add direct history
             # for some of the look sets directly
             # handling render attribute sets
-            render_set_types = [
-                "VRayDisplacement",
-                "VRayLightMesh",
-                "VRayObjectProperties",
-                "RedshiftObjectId",
-                "RedshiftMeshParameters",
-            ]
+
+            # this needs to be done like this now, because Maya
+            # (at least 2024) crashes with Warning when render set type
+            # isn't available. cmds.ls() will return empty list
+            render_set_types = []
+            if cmds.pluginInfo("vrayformaya", query=True, loaded=True):
+                render_set_types += [
+                    "VRayDisplacement",
+                    "VRayLightMesh",
+                    "VRayObjectProperties",
+                ]
+
+            if cmds.pluginInfo("redshift4maya", query=True, loaded=True):
+                render_set_types += [
+                    "RedshiftObjectId",
+                    "RedshiftMeshParameters",
+                ]
+
             render_sets = cmds.ls(look_sets, type=render_set_types)
             if render_sets:
                 history.extend(
