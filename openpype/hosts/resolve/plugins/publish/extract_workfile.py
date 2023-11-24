@@ -26,6 +26,7 @@ class ExtractWorkfile(publish.Extractor):
 
         resolve_workfile_ext = ".drp"
         drp_file_name = name + resolve_workfile_ext
+
         drp_file_path = os.path.normpath(
             os.path.join(staging_dir, drp_file_name))
 

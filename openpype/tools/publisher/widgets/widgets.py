@@ -540,6 +540,7 @@ class AssetsField(BaseClickableFrame):
         Does not change selected items (assets).
         """
         self._name_input.setText(text)
+        self._name_input.end(False)
 
     def set_selected_items(self, asset_names=None):
         """Set asset names for selection of instances.
@@ -1187,7 +1188,10 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         asset_names = []
         for instance in self._current_instances:
             new_variant_value = instance.get("variant")
-            new_asset_name = instance.get("asset")
+            if AYON_SERVER_ENABLED:
+                new_asset_name = instance.get("folderPath")
+            else:
+                new_asset_name = instance.get("asset")
             new_task_name = instance.get("task")
             if variant_value is not None:
                 new_variant_value = variant_value
@@ -1219,7 +1223,11 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
                 instance["variant"] = variant_value
 
             if asset_name is not None:
-                instance["asset"] = asset_name
+                if AYON_SERVER_ENABLED:
+                    instance["folderPath"] = asset_name
+                else:
+                    instance["asset"] = asset_name
+
                 instance.set_asset_invalid(False)
 
             if task_name is not None:
@@ -1317,7 +1325,10 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
             variants.add(instance.get("variant") or self.unknown_value)
             families.add(instance.get("family") or self.unknown_value)
-            asset_name = instance.get("asset") or self.unknown_value
+            if AYON_SERVER_ENABLED:
+                asset_name = instance.get("folderPath") or self.unknown_value
+            else:
+                asset_name = instance.get("asset") or self.unknown_value
             task_name = instance.get("task") or ""
             asset_names.add(asset_name)
             asset_task_combinations.append((asset_name, task_name))

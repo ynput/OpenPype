@@ -12,6 +12,7 @@ from abc import ABCMeta, abstractmethod
 import six
 
 from openpype import AYON_SERVER_ENABLED, PACKAGE_DIR
+from openpype.client import get_asset_name_identifier
 from openpype.settings import (
     get_system_settings,
     get_project_settings,
@@ -1728,7 +1729,9 @@ def prepare_context_environments(data, env_group=None, modules_manager=None):
         "AVALON_APP_NAME": app.full_name
     }
     if asset_doc:
-        context_env["AVALON_ASSET"] = asset_doc["name"]
+        asset_name = get_asset_name_identifier(asset_doc)
+        context_env["AVALON_ASSET"] = asset_name
+
         if task_name:
             context_env["AVALON_TASK"] = task_name
 

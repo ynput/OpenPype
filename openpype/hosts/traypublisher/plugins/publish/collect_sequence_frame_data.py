@@ -28,9 +28,9 @@ class CollectSequenceFrameData(
             return
 
         # editorial would fail since they might not be in database yet
-        is_editorial = instance.data.get("isEditorial")
-        if is_editorial:
-            self.log.debug("Instance is Editorial. Skipping.")
+        new_asset_publishing = instance.data.get("newAssetPublishing")
+        if new_asset_publishing:
+            self.log.debug("Instance is creating new asset. Skipping.")
             return
 
         frame_data = self.get_frame_data_from_repre_sequence(instance)

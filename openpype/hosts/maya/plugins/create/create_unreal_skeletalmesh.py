@@ -51,7 +51,7 @@ class CreateUnrealSkeletalMesh(plugin.MayaCreator):
             # We reorganize the geometry that was originally added into the
             # set into either 'joints_SET' or 'geometry_SET' based on the
             # joint_hints from project settings
-            members = cmds.sets(instance_node, query=True)
+            members = cmds.sets(instance_node, query=True) or []
             cmds.sets(clear=instance_node)
 
             geometry_set = cmds.sets(name="geometry_SET", empty=True)
