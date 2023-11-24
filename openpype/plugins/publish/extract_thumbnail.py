@@ -9,11 +9,14 @@ from openpype.lib import (
     get_ffprobe_data,
     get_oiio_tool_args,
     is_oiio_supported,
+    get_rescaled_command_arguments,
 
-    run_subprocess,
     path_to_subprocess_arg,
+    run_subprocess,
 )
+
 from openpype.lib.transcoding import VIDEO_EXTENSIONS
+
 
 class ExtractThumbnail(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
@@ -322,12 +325,20 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         if self.target_size.get("type") == "source":
             return []
 
-        width = self.target_size["width"]
-        height = self.target_size["height"]
-        # form arg string per application
-        if application == "ffmpeg":
-            return ["-vf", "scale={0}:{1}".format(width, height)]
-        elif application == "oiiotool":
-            return ["-resize", "{0}x{1}".format(width, height)]
+        target_width = self.target_size["width"]
+        target_height = self.target_size["height"]
+        target_par = self.target_size.get("par", 1.0)
 
-        return []
+        # form arg string per application
+        return get_rescaled_command_arguments(
+            application,
+            str(input_path),
+            input_width,
+            input_height,
+            input_par,
+            target_width,
+            target_height,
+            target_par,
+            bg_color,
+            log=self.log
+        )

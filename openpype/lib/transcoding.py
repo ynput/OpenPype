@@ -1226,3 +1226,205 @@ def split_cmd_args(in_args):
             continue
         splitted_args.extend(arg.split(" "))
     return splitted_args
+
+
+def get_rescaled_command_arguments(
+        app,
+        input_path,
+        input_width,
+        input_height,
+        input_par,
+        target_width,
+        target_height,
+        target_par,
+        bg_color=None,
+        log=None
+):
+    """Get command arguments for rescaling input to target size.
+
+    Args:
+        app (str): Application for which command should be created.
+            Currently supported are "ffmpeg" and "oiiotool".
+        input_path (str): Path to input file.
+        input_width (int): Width of input.
+        input_height (int): Height of input.
+        input_par (float): Pixel aspect ratio of input.
+        target_width (int): Width of target.
+        target_height (int): Height of target.
+        target_par (float): Pixel aspect ratio of target.
+        bg_color (list[float]): List of float values for background color.
+            Should be in range 0.0 - 1.0.
+        log (logging.Logger): Logger used for logging.
+
+    Returns:
+        list[str]: List of command arguments.
+    """
+    command_args = []
+    # recalculating input and target width
+    input_width = int(input_width * input_par)
+    target_width = int(target_width * target_par)
+
+    # calculate aspect ratios
+    target_aspect = float(target_width) / target_height
+    input_aspect = float(input_width) / input_height
+
+    # calculate scale size
+    scale_size = float(input_width) / target_width
+    if input_aspect < target_aspect:
+        scale_size = float(input_height) / target_height
+
+    # calculate rescaled width and height
+    rescaled_width = int(input_width / scale_size)
+    rescaled_height = int(input_height / scale_size)
+
+    # calculate width and height shift
+    rescaled_width_shift = int((target_width - rescaled_width) / 2)
+    rescaled_height_shift = int((target_height - rescaled_height) / 2)
+
+    if app == "ffmpeg":
+        # create scale command
+        scale = "scale={0}:{1}".format(input_width, input_height)
+        pad = "pad={0}:{1}:({2}-iw)/2:({3}-ih)/2".format(
+            target_width,
+            target_height,
+            target_width,
+            target_height
+        )
+        if input_width > target_width or input_height > target_height:
+            scale = "scale={0}:{1}".format(rescaled_width, rescaled_height)
+            pad = "pad={0}:{1}:{2}:{3}".format(
+                target_width,
+                target_height,
+                rescaled_width_shift,
+                rescaled_height_shift
+            )
+
+        if bg_color:
+            color = convert_color_float_to_hex(bg_color)
+            pad += ":{0}".format(color)
+        command_args.extend(["-vf", "{0},{1}".format(scale, pad)])
+
+    elif app == "oiiotool":
+        input_info = get_oiio_info_for_input(input_path, logger=log)
+        # Collect channels to export
+        _, channels_arg = get_oiio_input_and_channel_args(
+            input_info, alpha_default=1.0)
+
+        command_args.extend([
+            # Tell oiiotool which channels should be put to top stack
+            #   (and output)
+            "--ch", channels_arg,
+            # Use first subimage
+            "--subimage", "0"
+        ])
+
+        if input_par != 1.0:
+            command_args.extend(["--pixelaspect", "1"])
+
+        width_shift = int((target_width - input_width) / 2)
+        height_shift = int((target_height - input_height) / 2)
+
+        # default resample is not scaling source image
+        resample = [
+            "--resize",
+            "{0}x{1}".format(input_width, input_height),
+            "--origin",
+            "+{0}+{1}".format(width_shift, height_shift),
+        ]
+        # scaled source image to target size
+        if input_width > target_width or input_height > target_height:
+            # form resample command
+            resample = [
+                "--resize:filter=lanczos3",
+                "{0}x{1}".format(rescaled_width, rescaled_height),
+                "--origin",
+                "+{0}+{1}".format(rescaled_width_shift, rescaled_height_shift),
+            ]
+        command_args.extend(resample)
+
+        fullsize = [
+            "--fullsize",
+            "{0}x{1}".format(target_width, target_height)
+        ]
+        if bg_color:
+            color_str = ",".join([str(c) for c in bg_color])
+
+            fullsize.extend([
+                "--pattern",
+                "constant:color={0}".format(color_str),
+                "{0}x{1}".format(target_width, target_height),
+                "4",  # 4 channels
+                "--over"
+            ])
+        command_args.extend(fullsize)
+
+    else:
+        raise ValueError("app should be either \"ffmpeg\" or \"oiiotool\"")
+
+    return command_args
+
+
+def convert_color_float_to_hex(color_value):
+    """Get color mapping for ffmpeg.
+    Args:
+        color_value (list[float]): List of float values
+    Returns:
+        str: String with color values in hex format.
+    """
+    red, green, blue, alpha = color_value
+
+    # clamp values to max 1.0 and convert 255 range
+    red = int(min(red, 1.0) * 255)
+    green = int(min(green, 1.0) * 255)
+    blue = int(min(blue, 1.0) * 255)
+    alpha = min(alpha, 1.0)
+
+    print("red: {0}, green: {1}, blue: {2}, alpha: {3}".format(
+        red, green, blue, alpha)
+    )
+    # convert to 0-255 range
+    return "{0:0>2X}{1:0>2X}{2:0>2X}@{3}".format(
+        red, green, blue, alpha
+    )
+
+
+def get_oiio_input_and_channel_args(oiio_input_info, alpha_default=None):
+    """Get input and channel arguments for oiiotool.
+    Args:
+        oiio_input_info (dict): Information about input from oiio tool.
+            Should be output of function `get_oiio_info_for_input`.
+        alpha_default (float, optional): Default value for alpha channel.
+    Returns:
+        tuple[str, str]: Tuple of input and channel arguments.
+    """
+    channel_names = oiio_input_info["channelnames"]
+    review_channels = get_convert_rgb_channels(channel_names)
+
+    if review_channels is None:
+        raise ValueError(
+            "Couldn't find channels that can be used for conversion."
+        )
+
+    red, green, blue, alpha = review_channels
+    input_channels = [red, green, blue]
+
+    channels_arg = "R={0},G={1},B={2}".format(red, green, blue)
+    if alpha is not None:
+        channels_arg += ",A={}".format(alpha)
+        input_channels.append(alpha)
+    elif alpha_default:
+        channels_arg += ",A={}".format(float(alpha_default))
+        input_channels.append("A")
+
+    input_channels_str = ",".join(input_channels)
+
+    subimages = oiio_input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
+        # Tell oiiotool which channels should be loaded
+        # - other channels are not loaded to memory so helps to avoid memory
+        #       leak issues
+        # - this option is crashing if used on multipart exrs
+        input_arg += ":ch={}".format(input_channels_str)
+
+    return input_arg, channels_arg
