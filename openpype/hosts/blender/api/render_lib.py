@@ -59,7 +59,7 @@ def get_render_product(output_path, name, aov_sep):
         instance (pyblish.api.Instance): The instance to publish.
         ext (str): The image format to render.
     """
-    filepath = output_path / name.relative_to(name.anchor)
+    filepath = output_path / name.lstrip("/")
     render_product = f"{filepath}{aov_sep}beauty.####"
     render_product = render_product.replace("\\", "/")
 
@@ -191,8 +191,7 @@ def set_node_tree(output_path, name, aov_sep, ext, multilayer):
 
         output.file_slots.new(filepath)
 
-        filepath = Path(filepath)
-        filename = output_path / filepath.relative_to(filepath.anchor)
+        filename = output_path / filepath.lstrip("/")
 
         aov_file_products.append((render_pass.name, filename))
 
@@ -235,7 +234,7 @@ def prepare_rendering(asset_group):
 
     output_path = Path.joinpath(dirpath, render_folder, file_name)
 
-    render_product = get_render_product(output_path, Path(name), aov_sep)
+    render_product = get_render_product(output_path, name, aov_sep)
     aov_file_product = set_node_tree(
         output_path, name, aov_sep, ext, multilayer)
 
