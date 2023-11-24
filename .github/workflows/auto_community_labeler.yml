@@ -31,9 +31,9 @@ jobs:
     steps:
       - name: get_author_association
         env:
-          AUTHOR_ASSOCIATION: ${{ github.event.issue.author_association }}
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
         run: echo "$AUTHOR_ASSOCIATION"
       - name: check_condition
         env:
-          CONDITION: ${{ github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER' }}
+          CONDITION: ${{ github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER' }}
         run: echo "$CONDITION"
