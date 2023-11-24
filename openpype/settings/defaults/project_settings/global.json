@@ -71,6 +71,12 @@
         "ExtractThumbnail": {
             "enabled": true,
             "integrate_thumbnail": false,
+            "background_color": [
+                0,
+                0,
+                0,
+                255
+            ],
             "duration_split": 0.5,
             "target_size": {
                 "type": "resize",

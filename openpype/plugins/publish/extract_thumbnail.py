@@ -36,6 +36,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         "width": 1920,
         "height": 1080
     }
+    background_color = None
     duration_split = 0.5
     ffmpeg_args = None
 
@@ -287,7 +288,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         video_data = get_ffprobe_data(video_file_path, logger=self.log)
         duration = float(video_data["format"]["duration"])
 
-        resolution_arg = self._get_resolution_arg("ffmpeg")
         cmd_args = [
             "-y",
             "-ss", str(duration * self.duration_split),
@@ -296,6 +296,12 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             "-probesize", max_int,
             "-vframes", "1"
         ]
+
+        # get resolution arg
+        resolution_arg = self._get_resolution_arg(
+            "ffmpeg",
+            video_file_path,
+        )
         if resolution_arg:
             cmd_args.extend(resolution_arg)
 
@@ -320,25 +326,24 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             )
             return None
 
-    def _get_resolution_arg(self, application):
+    def _get_resolution_arg(
+        self,
+        application,
+        input_path,
+    ):
         # get settings
         if self.target_size.get("type") == "source":
             return []
 
         target_width = self.target_size["width"]
         target_height = self.target_size["height"]
-        target_par = self.target_size.get("par", 1.0)
 
         # form arg string per application
         return get_rescaled_command_arguments(
             application,
-            str(input_path),
-            input_width,
-            input_height,
-            input_par,
+            input_path,
             target_width,
             target_height,
-            target_par,
-            bg_color,
+            bg_color=self.background_color,
             log=self.log
         )

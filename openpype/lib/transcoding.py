@@ -1229,37 +1229,45 @@ def split_cmd_args(in_args):
 
 
 def get_rescaled_command_arguments(
-        app,
+        application,
         input_path,
-        input_width,
-        input_height,
-        input_par,
         target_width,
         target_height,
-        target_par,
+        target_par=None,
         bg_color=None,
         log=None
 ):
     """Get command arguments for rescaling input to target size.
 
     Args:
-        app (str): Application for which command should be created.
+        application (str): Application for which command should be created.
             Currently supported are "ffmpeg" and "oiiotool".
         input_path (str): Path to input file.
-        input_width (int): Width of input.
-        input_height (int): Height of input.
-        input_par (float): Pixel aspect ratio of input.
         target_width (int): Width of target.
         target_height (int): Height of target.
-        target_par (float): Pixel aspect ratio of target.
-        bg_color (list[float]): List of float values for background color.
-            Should be in range 0.0 - 1.0.
-        log (logging.Logger): Logger used for logging.
+        target_par (Optional[float]): Pixel aspect ratio of target.
+        bg_color (Optional[list[int]]): List of 8bit int values for
+            background color. Should be in range 0 - 255.
+        log (Optional[logging.Logger]): Logger used for logging.
 
     Returns:
         list[str]: List of command arguments.
     """
     command_args = []
+    target_par = target_par or 1.0
+    input_par = 1.0
+
+    # ffmpeg command
+    input_file_metadata = get_ffprobe_data(input_path, logger=log)
+    input_width = int(input_file_metadata["streams"][0]["width"])
+    input_height = int(input_file_metadata["streams"][0]["height"])
+    stream_input_par = input_file_metadata["streams"][0].get(
+        "sample_aspect_ratio")
+    if stream_input_par:
+        input_par = (
+            float(stream_input_par.split(":")[0])
+            / float(stream_input_par.split(":")[1])
+    )
     # recalculating input and target width
     input_width = int(input_width * input_par)
     target_width = int(target_width * target_par)
@@ -1281,7 +1289,7 @@ def get_rescaled_command_arguments(
     rescaled_width_shift = int((target_width - rescaled_width) / 2)
     rescaled_height_shift = int((target_height - rescaled_height) / 2)
 
-    if app == "ffmpeg":
+    if application == "ffmpeg":
         # create scale command
         scale = "scale={0}:{1}".format(input_width, input_height)
         pad = "pad={0}:{1}:({2}-iw)/2:({3}-ih)/2".format(
@@ -1300,11 +1308,11 @@ def get_rescaled_command_arguments(
             )
 
         if bg_color:
-            color = convert_color_float_to_hex(bg_color)
+            color = convert_color_values(application, bg_color)
             pad += ":{0}".format(color)
         command_args.extend(["-vf", "{0},{1}".format(scale, pad)])
 
-    elif app == "oiiotool":
+    elif application == "oiiotool":
         input_info = get_oiio_info_for_input(input_path, logger=log)
         # Collect channels to export
         _, channels_arg = get_oiio_input_and_channel_args(
@@ -1347,11 +1355,11 @@ def get_rescaled_command_arguments(
             "{0}x{1}".format(target_width, target_height)
         ]
         if bg_color:
-            color_str = ",".join([str(c) for c in bg_color])
+            color = convert_color_values(application, bg_color)
 
             fullsize.extend([
                 "--pattern",
-                "constant:color={0}".format(color_str),
+                "constant:color={0}".format(color),
                 "{0}x{1}".format(target_width, target_height),
                 "4",  # 4 channels
                 "--over"
@@ -1359,33 +1367,41 @@ def get_rescaled_command_arguments(
         command_args.extend(fullsize)
 
     else:
-        raise ValueError("app should be either \"ffmpeg\" or \"oiiotool\"")
+        raise ValueError(
+            "\"application\" input argument should "
+            "be either \"ffmpeg\" or \"oiiotool\""
+        )
 
     return command_args
 
 
-def convert_color_float_to_hex(color_value):
-    """Get color mapping for ffmpeg.
+def convert_color_values(application, color_value):
+    """Get color mapping for ffmpeg and oiiotool.
     Args:
-        color_value (list[float]): List of float values
+        application (str): Application for which command should be created.
+        color_value (list[int]): List of 8bit int values for RGBA.
     Returns:
-        str: String with color values in hex format.
+        str: ffmpeg returns hex string, oiiotool is string with floats.
     """
     red, green, blue, alpha = color_value
 
-    # clamp values to max 1.0 and convert 255 range
-    red = int(min(red, 1.0) * 255)
-    green = int(min(green, 1.0) * 255)
-    blue = int(min(blue, 1.0) * 255)
-    alpha = min(alpha, 1.0)
+    if application == "ffmpeg":
+        return "{0:0>2X}{1:0>2X}{2:0>2X}@{3}".format(
+            red, green, blue, (alpha / 255.0)
+        )
+    elif application == "oiiotool":
+        red = float(red / 255)
+        green = float(green / 255)
+        blue = float(blue / 255)
+        alpha = float(alpha / 255)
 
-    print("red: {0}, green: {1}, blue: {2}, alpha: {3}".format(
-        red, green, blue, alpha)
-    )
-    # convert to 0-255 range
-    return "{0:0>2X}{1:0>2X}{2:0>2X}@{3}".format(
-        red, green, blue, alpha
-    )
+        return "{0:.2f},{1:.2f},{2:.2f},{3:.2f}".format(
+            red, green, blue, alpha)
+    else:
+        raise ValueError(
+            "\"application\" input argument should "
+            "be either \"ffmpeg\" or \"oiiotool\""
+        )
 
 
 def get_oiio_input_and_channel_args(oiio_input_info, alpha_default=None):
