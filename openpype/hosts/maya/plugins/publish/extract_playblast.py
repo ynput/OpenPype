@@ -45,7 +45,7 @@ class ExtractPlayblast(publish.Extractor):
             )
         if (
             preset["viewport_options"].get("reloadTextures")
-            and "textures" in preset["viewport_options"]
+            and preset["viewport_options"].get("textures")
         ):
             lib.reload_textures()
         path = capture.capture(log=self.log, **preset)
