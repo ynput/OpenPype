@@ -107,7 +107,8 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10,
-            "group": "none"
+            "group": "none",
+            "job_delay": "00:00:00:00"
         },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,

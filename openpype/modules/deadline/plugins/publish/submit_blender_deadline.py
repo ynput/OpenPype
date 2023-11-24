@@ -40,6 +40,7 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
     jobInfo = {}
     pluginInfo = {}
     group = None
+    job_delay = "00:00:00:00"
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="Blender")
@@ -91,6 +92,7 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         job_info.Comment = context.data.get("comment")
         job_info.ChunkSize = attr_values.get("chunkSize", self.chunk_size)
         job_info.Priority = attr_values.get("priority", self.priority)
+        job_info.JobDelay = attr_values.get("job_delay", self.job_delay)
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
@@ -212,6 +214,10 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
             TextDef("group",
                     default=cls.group,
                     label="Group Name"),
+
+            TextDef("job_delay",
+                    default=cls.job_delay,
+                    label="Job Delay"),
         ])
 
         return defs

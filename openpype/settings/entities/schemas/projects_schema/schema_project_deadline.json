@@ -581,6 +581,11 @@
                             "type": "text",
                             "key": "group",
                             "label": "Group Name"
+                        },
+                        {
+                            "type": "text",
+                            "key": "job_delay",
+                            "label": "Delay job (timecode dd:hh:mm:ss)"
                         }
                     ]
                 },

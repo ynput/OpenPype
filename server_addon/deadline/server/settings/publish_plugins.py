@@ -237,6 +237,7 @@ class BlenderSubmitDeadlineModel(BaseSettingsModel):
     priority: int = Field(title="Priority")
     chunk_size: int = Field(title="Frame per Task")
     group: str = Field("", title="Group Name")
+    job_delay: str = Field("", title="Delay job (timecode dd:hh:mm:ss)")
 
 
 class AOVFilterSubmodel(BaseSettingsModel):
@@ -424,7 +425,8 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "use_published": True,
         "priority": 50,
         "chunk_size": 10,
-        "group": "none"
+        "group": "none",
+        "job_delay": "00:00:00:00"
     },
     "ProcessSubmittedJobOnFarm": {
         "enabled": True,
