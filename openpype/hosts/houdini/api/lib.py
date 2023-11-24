@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import os
+import errno
 import re
 import uuid
 import logging
@@ -9,9 +10,22 @@ import json
 
 import six
 
-from openpype.client import get_asset_by_name
-from openpype.pipeline import get_current_project_name, get_current_asset_name
+from openpype.lib import StringTemplate
+from openpype.client import get_project, get_asset_by_name
+from openpype.settings import get_current_project_settings
+from openpype.pipeline import (
+    Anatomy,
+    get_current_project_name,
+    get_current_asset_name,
+    registered_host,
+    get_current_context,
+    get_current_host_name,
+)
+from openpype.pipeline.create import CreateContext
+from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.widgets import popup
+from openpype.tools.utils.host_tools import get_tool_by_name
 
 import hou
 
@@ -161,8 +175,6 @@ def validate_fps():
     current_fps = hou.fps()  # returns float
 
     if current_fps != fps:
-
-        from openpype.widgets import popup
 
         # Find main window
         parent = hou.ui.mainQtWindow()
@@ -323,52 +335,61 @@ def imprint(node, data, update=False):
         return
 
     current_parms = {p.name(): p for p in node.spareParms()}
-    update_parms = []
-    templates = []
+    update_parm_templates = []
+    new_parm_templates = []
 
     for key, value in data.items():
         if value is None:
             continue
 
-        parm = get_template_from_value(key, value)
+        parm_template = get_template_from_value(key, value)
 
         if key in current_parms:
-            if node.evalParm(key) == data[key]:
+            if node.evalParm(key) == value:
                 continue
             if not update:
                 log.debug(f"{key} already exists on {node}")
             else:
                 log.debug(f"replacing {key}")
-                update_parms.append(parm)
+                update_parm_templates.append(parm_template)
             continue
 
-        templates.append(parm)
+        new_parm_templates.append(parm_template)
 
-    parm_group = node.parmTemplateGroup()
-    parm_folder = parm_group.findFolder("Extra")
-
-    # if folder doesn't exist yet, create one and append to it,
-    # else append to existing one
-    if not parm_folder:
-        parm_folder = hou.FolderParmTemplate("folder", "Extra")
-        parm_folder.setParmTemplates(templates)
-        parm_group.append(parm_folder)
-    else:
-        for template in templates:
-            parm_group.appendToFolder(parm_folder, template)
-            # this is needed because the pointer to folder
-            # is for some reason lost every call to `appendToFolder()`
-            parm_folder = parm_group.findFolder("Extra")
-
-    node.setParmTemplateGroup(parm_group)
-
-    # TODO: Updating is done here, by calling probably deprecated functions.
-    #       This needs to be addressed in the future.
-    if not update_parms:
+    if not new_parm_templates and not update_parm_templates:
         return
 
-    for parm in update_parms:
-        node.replaceSpareParmTuple(parm.name(), parm)
+    parm_group = node.parmTemplateGroup()
+
+    # Add new parm templates
+    if new_parm_templates:
+        parm_folder = parm_group.findFolder("Extra")
+
+        # if folder doesn't exist yet, create one and append to it,
+        # else append to existing one
+        if not parm_folder:
+            parm_folder = hou.FolderParmTemplate("folder", "Extra")
+            parm_folder.setParmTemplates(new_parm_templates)
+            parm_group.append(parm_folder)
+        else:
+            # Add to parm template folder instance then replace with updated
+            # one in parm template group
+            for template in new_parm_templates:
+                parm_folder.addParmTemplate(template)
+            parm_group.replace(parm_folder.name(), parm_folder)
+
+    # Update existing parm templates
+    for parm_template in update_parm_templates:
+        parm_group.replace(parm_template.name(), parm_template)
+
+        # When replacing a parm with a parm of the same name it preserves its
+        # value if before the replacement the parm was not at the default,
+        # because it has a value override set. Since we're trying to update the
+        # parm by using the new value as `default` we enforce the parm is at
+        # default state
+        node.parm(parm_template.name()).revertToDefaults()
+
+    node.setParmTemplateGroup(parm_group)
 
 
 def lsattr(attr, value=None, root="/"):
@@ -550,29 +571,56 @@ def get_template_from_value(key, value):
     return parm
 
 
-def get_frame_data(node):
-    """Get the frame data: start frame, end frame and steps.
+def get_frame_data(node, log=None):
+    """Get the frame data: `frameStartHandle`, `frameEndHandle`
+    and `byFrameStep`.
+
+    This function uses Houdini node's `trange`, `t1, `t2` and `t3`
+    parameters as the source of truth for the full inclusive frame
+    range to render, as such these are considered as the frame
+    range including the handles.
+
+    The non-inclusive frame start and frame end without handles
+    can be computed by subtracting the handles from the inclusive
+    frame range.
 
     Args:
-        node(hou.Node)
+        node (hou.Node): ROP node to retrieve frame range from,
+            the frame range is assumed to be the frame range
+            *including* the start and end handles.
 
     Returns:
-        dict: frame data for star, end and steps.
+        dict: frame data for `frameStartHandle`, `frameEndHandle`
+            and `byFrameStep`.
 
     """
+
+    if log is None:
+        log = self.log
+
     data = {}
 
     if node.parm("trange") is None:
-
+        log.debug(
+            "Node has no 'trange' parameter: {}".format(node.path())
+        )
         return data
 
     if node.evalParm("trange") == 0:
-        self.log.debug("trange is 0")
-        return data
+        data["frameStartHandle"] = hou.intFrame()
+        data["frameEndHandle"] = hou.intFrame()
+        data["byFrameStep"] = 1.0
 
-    data["frameStart"] = node.evalParm("f1")
-    data["frameEnd"] = node.evalParm("f2")
-    data["steps"] = node.evalParm("f3")
+        log.info(
+            "Node '{}' has 'Render current frame' set.\n"
+            "Asset Handles are ignored.\n"
+            "frameStart and frameEnd are set to the "
+            "current frame.".format(node.path())
+        )
+    else:
+        data["frameStartHandle"] = int(node.evalParm("f1"))
+        data["frameEndHandle"] = int(node.evalParm("f2"))
+        data["byFrameStep"] = node.evalParm("f3")
 
     return data
 
@@ -749,3 +797,232 @@ def get_camera_from_container(container):
 
     assert len(cameras) == 1, "Camera instance must have only one camera"
     return cameras[0]
+
+
+def get_current_context_template_data_with_asset_data():
+    """
+    TODOs:
+        Support both 'assetData' and 'folderData' in future.
+    """
+
+    context = get_current_context()
+    project_name = context["project_name"]
+    asset_name = context["asset_name"]
+    task_name = context["task_name"]
+    host_name = get_current_host_name()
+
+    anatomy = Anatomy(project_name)
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
+
+    # get context specific vars
+    asset_data = asset_doc["data"]
+
+    # compute `frameStartHandle` and `frameEndHandle`
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart")
+    handle_end = asset_data.get("handleEnd")
+    if frame_start is not None and handle_start is not None:
+        asset_data["frameStartHandle"] = frame_start - handle_start
+
+    if frame_end is not None and handle_end is not None:
+        asset_data["frameEndHandle"] = frame_end + handle_end
+
+    template_data = get_template_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+    template_data["root"] = anatomy.roots
+    template_data["assetData"] = asset_data
+
+    return template_data
+
+
+def get_context_var_changes():
+    """get context var changes."""
+
+    houdini_vars_to_update = {}
+
+    project_settings = get_current_project_settings()
+    houdini_vars_settings = \
+        project_settings["houdini"]["general"]["update_houdini_var_context"]
+
+    if not houdini_vars_settings["enabled"]:
+        return houdini_vars_to_update
+
+    houdini_vars = houdini_vars_settings["houdini_vars"]
+
+    # No vars specified - nothing to do
+    if not houdini_vars:
+        return houdini_vars_to_update
+
+    # Get Template data
+    template_data = get_current_context_template_data_with_asset_data()
+
+    # Set Houdini Vars
+    for item in houdini_vars:
+        # For consistency reasons we always force all vars to be uppercase
+        # Also remove any leading, and trailing whitespaces.
+        var = item["var"].strip().upper()
+
+        # get and resolve template in value
+        item_value = StringTemplate.format_template(
+            item["value"],
+            template_data
+        )
+
+        if var == "JOB" and item_value == "":
+            # sync $JOB to $HIP if $JOB is empty
+            item_value = os.environ["HIP"]
+
+        if item["is_directory"]:
+            item_value = item_value.replace("\\", "/")
+
+        current_value = hou.hscript("echo -n `${}`".format(var))[0]
+
+        if current_value != item_value:
+            houdini_vars_to_update[var] = (
+                current_value, item_value, item["is_directory"]
+            )
+
+    return houdini_vars_to_update
+
+
+def update_houdini_vars_context():
+    """Update asset context variables"""
+
+    for var, (_old, new, is_directory) in get_context_var_changes().items():
+        if is_directory:
+            try:
+                os.makedirs(new)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    print(
+                        "Failed to create ${} dir. Maybe due to "
+                        "insufficient permissions.".format(var)
+                    )
+
+        hou.hscript("set {}={}".format(var, new))
+        os.environ[var] = new
+        print("Updated ${} to {}".format(var, new))
+
+
+def update_houdini_vars_context_dialog():
+    """Show pop-up to update asset context variables"""
+    update_vars = get_context_var_changes()
+    if not update_vars:
+        # Nothing to change
+        print("Nothing to change, Houdini vars are already up to date.")
+        return
+
+    message = "\n".join(
+        "${}: {} -> {}".format(var, old or "None", new or "None")
+        for var, (old, new, _is_directory) in update_vars.items()
+    )
+
+    # TODO: Use better UI!
+    parent = hou.ui.mainQtWindow()
+    dialog = popup.Popup(parent=parent)
+    dialog.setModal(True)
+    dialog.setWindowTitle("Houdini scene has outdated asset variables")
+    dialog.setMessage(message)
+    dialog.setButtonText("Fix")
+
+    # on_show is the Fix button clicked callback
+    dialog.on_clicked.connect(update_houdini_vars_context)
+
+    dialog.show()
+
+
+def publisher_show_and_publish(comment=None):
+    """Open publisher window and trigger publishing action.
+
+    Args:
+        comment (Optional[str]): Comment to set in publisher window.
+    """
+
+    main_window = get_main_window()
+    publisher_window = get_tool_by_name(
+        tool_name="publisher",
+        parent=main_window,
+    )
+    publisher_window.show_and_publish(comment)
+
+
+def find_rop_input_dependencies(input_tuple):
+    """Self publish from ROP nodes.
+
+    Arguments:
+        tuple (hou.RopNode.inputDependencies) which can be a nested tuples
+        represents the input dependencies of the ROP node, consisting of ROPs,
+        and the frames that need to be be rendered prior to rendering the ROP.
+
+    Returns:
+        list of the RopNode.path() that can be found inside
+        the input tuple.
+    """
+
+    out_list = []
+    if isinstance(input_tuple[0], hou.RopNode):
+        return input_tuple[0].path()
+
+    if isinstance(input_tuple[0], tuple):
+        for item in input_tuple:
+            out_list.append(find_rop_input_dependencies(item))
+
+    return out_list
+
+
+def self_publish():
+    """Self publish from ROP nodes.
+
+    Firstly, it gets the node and its dependencies.
+    Then, it deactivates all other ROPs
+    And finaly, it triggers the publishing action.
+    """
+
+    result, comment = hou.ui.readInput(
+        "Add Publish Comment",
+        buttons=("Publish", "Cancel"),
+        title="Publish comment",
+        close_choice=1
+    )
+
+    if result:
+        return
+
+    current_node = hou.node(".")
+    inputs_paths = find_rop_input_dependencies(
+        current_node.inputDependencies()
+    )
+    inputs_paths.append(current_node.path())
+
+    host = registered_host()
+    context = CreateContext(host, reset=True)
+
+    for instance in context.instances:
+        node_path = instance.data.get("instance_node")
+        instance["active"] = node_path and node_path in inputs_paths
+
+    context.save_changes()
+
+    publisher_show_and_publish(comment)
+
+
+def add_self_publish_button(node):
+    """Adds a self publish button to the rop node."""
+
+    label = os.environ.get("AVALON_LABEL") or "AYON"
+
+    button_parm = hou.ButtonParmTemplate(
+        "ayon_self_publish",
+        "{} Publish".format(label),
+        script_callback="from openpype.hosts.houdini.api.lib import "
+                        "self_publish; self_publish()",
+        script_callback_language=hou.scriptLanguage.Python,
+        join_with_next=True
+    )
+
+    template = node.parmTemplateGroup()
+    template.insertBefore((0,), button_parm)
+    node.setParmTemplateGroup(template)

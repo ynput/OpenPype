@@ -43,13 +43,21 @@ def get_folder_template_data(folder):
     }
 
 
-def get_task_template_data(task):
+def get_task_template_data(project_entity, task):
     if not task:
         return {}
+    short_name = None
+    task_type_name = task["taskType"]
+    for task_type_info in project_entity["taskTypes"]:
+        if task_type_info["name"] == task_type_name:
+            short_name = task_type_info["shortName"]
+            break
+
     return {
         "task": {
             "name": task["name"],
-            "type": task["taskType"]
+            "type": task_type_name,
+            "short": short_name,
         }
     }
 
@@ -140,17 +148,22 @@ class WorkareaModel:
     def _get_folder_data(self, folder_id):
         fill_data = self._fill_data_by_folder_id.get(folder_id)
         if fill_data is None:
-            folder = self._controller.get_folder_entity(folder_id)
+            folder = self._controller.get_folder_entity(
+                self.project_name, folder_id
+            )
             fill_data = get_folder_template_data(folder)
             self._fill_data_by_folder_id[folder_id] = fill_data
         return copy.deepcopy(fill_data)
 
-    def _get_task_data(self, folder_id, task_id):
+    def _get_task_data(self, project_entity, folder_id, task_id):
         task_data = self._task_data_by_folder_id.setdefault(folder_id, {})
         if task_id not in task_data:
-            task = self._controller.get_task_entity(task_id)
+            task = self._controller.get_task_entity(
+                self.project_name, task_id
+            )
             if task:
-                task_data[task_id] = get_task_template_data(task)
+                task_data[task_id] = get_task_template_data(
+                    project_entity, task)
         return copy.deepcopy(task_data[task_id])
 
     def _prepare_fill_data(self, folder_id, task_id):
@@ -158,8 +171,10 @@ class WorkareaModel:
             return {}
 
         base_data = self._get_base_data()
+        project_name = base_data["project"]["name"]
         folder_data = self._get_folder_data(folder_id)
-        task_data = self._get_task_data(folder_id, task_id)
+        project_entity = self._controller.get_project_entity(project_name)
+        task_data = self._get_task_data(project_entity, folder_id, task_id)
 
         base_data.update(folder_data)
         base_data.update(task_data)
@@ -282,9 +297,13 @@ class WorkareaModel:
         folder = None
         task = None
         if folder_id:
-            folder = self._controller.get_folder_entity(folder_id)
+            folder = self._controller.get_folder_entity(
+                self.project_name, folder_id
+            )
         if task_id:
-            task = self._controller.get_task_entity(task_id)
+            task = self._controller.get_task_entity(
+                self.project_name, task_id
+            )
 
         if not folder or not task:
             return {
@@ -481,8 +500,11 @@ class WorkfileEntitiesModel:
         )
         if not workfile_info:
             self._cache[identifier] = self._create_workfile_info_entity(
-                task_id, rootless_path, note)
+                task_id, rootless_path, note or "")
             self._items.pop(identifier, None)
+            return
+
+        if note is None:
             return
 
         new_workfile_info = copy.deepcopy(workfile_info)

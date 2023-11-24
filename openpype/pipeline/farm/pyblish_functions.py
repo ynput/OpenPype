@@ -107,17 +107,18 @@ def get_time_data_from_instance_or_context(instance):
         TimeData: dataclass holding time information.
 
     """
+    context = instance.context
     return TimeData(
-        start=(instance.data.get("frameStart") or
-               instance.context.data.get("frameStart")),
-        end=(instance.data.get("frameEnd") or
-             instance.context.data.get("frameEnd")),
-        fps=(instance.data.get("fps") or
-             instance.context.data.get("fps")),
-        handle_start=(instance.data.get("handleStart") or
-                      instance.context.data.get("handleStart")),  # noqa: E501
-        handle_end=(instance.data.get("handleEnd") or
-                    instance.context.data.get("handleEnd"))
+        start=instance.data.get("frameStart", context.data.get("frameStart")),
+        end=instance.data.get("frameEnd", context.data.get("frameEnd")),
+        fps=instance.data.get("fps", context.data.get("fps")),
+        step=instance.data.get("byFrameStep", instance.data.get("step", 1)),
+        handle_start=instance.data.get(
+            "handleStart", context.data.get("handleStart")
+        ),
+        handle_end=instance.data.get(
+            "handleEnd", context.data.get("handleEnd")
+        )
     )
 
 

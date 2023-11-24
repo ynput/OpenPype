@@ -7,7 +7,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractCameraABC(publish.Extractor):
+class ExtractCameraABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract camera as ABC."""
 
     label = "Extract Camera (ABC)"
@@ -16,22 +16,23 @@ class ExtractCameraABC(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.abc"
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        instance_name = f"{asset_name}_{subset}"
+        filename = f"{instance_name}.abc"
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         plugin.deselect_all()
 
-        asset_group = None
-        for obj in instance:
-            if obj.get(AVALON_PROPERTY):
-                asset_group = obj
-                break
-        assert asset_group, "No asset group found"
+        asset_group = instance.data["transientData"]["instance_node"]
 
         # Need to cast to list because children is a tuple
         selected = list(asset_group.children)
@@ -64,5 +65,5 @@ class ExtractCameraABC(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, representation)

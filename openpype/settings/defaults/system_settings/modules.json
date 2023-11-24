@@ -210,5 +210,8 @@
             "darwin": "",
             "linux": ""
         }
+    },
+    "asset_reporter": {
+        "enabled": false
     }
 }

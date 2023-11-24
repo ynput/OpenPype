@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Maya look extractor."""
+import sys
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 import contextlib
@@ -176,6 +177,24 @@ class MakeRSTexBin(TextureProcessor):
             source
         ]
 
+        # if color management is enabled we pass color space information
+        if color_management["enabled"]:
+            config_path = color_management["config"]
+            if not os.path.exists(config_path):
+                raise RuntimeError("OCIO config not found at: "
+                                   "{}".format(config_path))
+
+            if not os.getenv("OCIO"):
+                self.log.debug(
+                    "OCIO environment variable not set."
+                    "Setting it with OCIO config from Maya."
+                )
+                os.environ["OCIO"] = config_path
+
+            self.log.debug("converting colorspace {0} to redshift render "
+                           "colorspace".format(colorspace))
+            subprocess_args.extend(["-cs", colorspace])
+
         hash_args = ["rstex"]
         texture_hash = source_hash(source, *hash_args)
 
@@ -186,11 +205,11 @@ class MakeRSTexBin(TextureProcessor):
 
         self.log.debug(" ".join(subprocess_args))
         try:
-            run_subprocess(subprocess_args)
+            run_subprocess(subprocess_args, logger=self.log)
         except Exception:
             self.log.error("Texture .rstexbin conversion failed",
                            exc_info=True)
-            raise
+            six.reraise(*sys.exc_info())
 
         return TextureResult(
             path=destination,
@@ -472,7 +491,7 @@ class ExtractLook(publish.Extractor):
             "rstex": MakeRSTexBin
         }.items():
             if instance.data.get(key, False):
-                processor = Processor()
+                processor = Processor(log=self.log)
                 processor.apply_settings(context.data["system_settings"],
                                          context.data["project_settings"])
                 processors.append(processor)

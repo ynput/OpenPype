@@ -62,10 +62,18 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 "effect",
                 "staticMesh",
                 "skeletalMesh",
-                "xgen"
+                "xgen",
+                "yeticacheUE",
+                "tycache"
                 ]
 
     def process(self, instance):
+        # editorial would fail since they might not be in database yet
+        new_asset_publishing = instance.data.get("newAssetPublishing")
+        if new_asset_publishing:
+            self.log.debug("Instance is creating new asset. Skipping.")
+            return
+
         anatomy = instance.context.data["anatomy"]
 
         template_data = copy.deepcopy(instance.data["anatomyData"])

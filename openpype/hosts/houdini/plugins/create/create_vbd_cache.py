@@ -46,6 +46,7 @@ class CreateVDBCache(plugin.HoudiniCreator):
     def get_network_categories(self):
         return [
             hou.ropNodeTypeCategory(),
+            hou.objNodeTypeCategory(),
             hou.sopNodeTypeCategory()
         ]
 

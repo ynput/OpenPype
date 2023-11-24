@@ -3,7 +3,6 @@
 import os
 import sys
 import logging
-import contextlib
 
 import hou  # noqa
 
@@ -65,10 +64,6 @@ class HoudiniHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_event_callback("save", on_save)
         register_event_callback("open", on_open)
         register_event_callback("new", on_new)
-
-        pyblish.api.register_callback(
-            "instanceToggled", on_pyblish_instance_toggled
-        )
 
         self._has_been_setup = True
         # add houdini vendor packages
@@ -300,6 +295,9 @@ def on_save():
 
     log.info("Running callback on save..")
 
+    # update houdini vars
+    lib.update_houdini_vars_context_dialog()
+
     nodes = lib.get_id_required_nodes()
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
@@ -334,6 +332,9 @@ def on_open():
         return
 
     log.info("Running callback on open..")
+
+    # update houdini vars
+    lib.update_houdini_vars_context_dialog()
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
@@ -399,54 +400,4 @@ def _set_context_settings():
     """
 
     lib.reset_framerange()
-
-
-def on_pyblish_instance_toggled(instance, new_value, old_value):
-    """Toggle saver tool passthrough states on instance toggles."""
-    @contextlib.contextmanager
-    def main_take(no_update=True):
-        """Enter root take during context"""
-        original_take = hou.takes.currentTake()
-        original_update_mode = hou.updateModeSetting()
-        root = hou.takes.rootTake()
-        has_changed = False
-        try:
-            if original_take != root:
-                has_changed = True
-                if no_update:
-                    hou.setUpdateMode(hou.updateMode.Manual)
-                hou.takes.setCurrentTake(root)
-                yield
-        finally:
-            if has_changed:
-                if no_update:
-                    hou.setUpdateMode(original_update_mode)
-                hou.takes.setCurrentTake(original_take)
-
-    if not instance.data.get("_allowToggleBypass", True):
-        return
-
-    nodes = instance[:]
-    if not nodes:
-        return
-
-    # Assume instance node is first node
-    instance_node = nodes[0]
-
-    if not hasattr(instance_node, "isBypassed"):
-        # Likely not a node that can actually be bypassed
-        log.debug("Can't bypass node: %s", instance_node.path())
-        return
-
-    if instance_node.isBypassed() != (not old_value):
-        print("%s old bypass state didn't match old instance state, "
-              "updating anyway.." % instance_node.path())
-
-    try:
-        # Go into the main take, because when in another take changing
-        # the bypass state of a note cannot be done due to it being locked
-        # by default.
-        with main_take(no_update=True):
-            instance_node.bypass(not new_value)
-    except hou.PermissionError as exc:
-        log.warning("%s - %s", instance_node.path(), exc)
+    lib.update_houdini_vars_context()

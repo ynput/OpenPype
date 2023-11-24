@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import maya.cmds as cmds
 
-from openpype.client import get_assets
+from openpype.client import get_assets, get_asset_name_identifier
 from openpype.pipeline import (
     remove_container,
     registered_host,
@@ -128,7 +128,8 @@ def create_items_from_nodes(nodes):
 
     project_name = get_current_project_name()
     asset_ids = set(id_hashes.keys())
-    asset_docs = get_assets(project_name, asset_ids, fields=["name"])
+    fields = {"_id", "name", "data.parents"}
+    asset_docs = get_assets(project_name, asset_ids, fields=fields)
     asset_docs_by_id = {
         str(asset_doc["_id"]): asset_doc
         for asset_doc in asset_docs
@@ -156,8 +157,9 @@ def create_items_from_nodes(nodes):
             namespace = get_namespace_from_node(node)
             namespaces.add(namespace)
 
+        label = get_asset_name_identifier(asset_doc)
         asset_view_items.append({
-            "label": asset_doc["name"],
+            "label": label,
             "asset": asset_doc,
             "looks": looks,
             "namespaces": namespaces

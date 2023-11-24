@@ -42,7 +42,7 @@ class ExtractVDBCache(publish.Extractor):
             "ext": "vdb",
             "files": output,
             "stagingDir": staging_dir,
-            "frameStart": instance.data["frameStart"],
-            "frameEnd": instance.data["frameEnd"],
+            "frameStart": instance.data["frameStartHandle"],
+            "frameEnd": instance.data["frameEndHandle"],
         }
         instance.data["representations"].append(representation)

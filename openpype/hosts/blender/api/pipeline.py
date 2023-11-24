@@ -10,6 +10,12 @@ from . import ops
 
 import pyblish.api
 
+from openpype.host import (
+    HostBase,
+    IWorkfileHost,
+    IPublishHost,
+    ILoadHost
+)
 from openpype.client import get_asset_by_name
 from openpype.pipeline import (
     schema,
@@ -29,6 +35,14 @@ from openpype.lib import (
 )
 import openpype.hosts.blender
 from openpype.settings import get_project_settings
+from .workio import (
+    open_file,
+    save_file,
+    current_file,
+    has_unsaved_changes,
+    file_extensions,
+    work_root,
+)
 
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
@@ -45,6 +59,101 @@ AVALON_PROPERTY = 'avalon'
 IS_HEADLESS = bpy.app.background
 
 log = Logger.get_logger(__name__)
+
+
+class BlenderHost(HostBase, IWorkfileHost, IPublishHost, ILoadHost):
+    name = "blender"
+
+    def install(self):
+        """Override install method from HostBase.
+        Install Blender host functionality."""
+        install()
+
+    def get_containers(self) -> Iterator:
+        """List containers from active Blender scene."""
+        return ls()
+
+    def get_workfile_extensions(self) -> List[str]:
+        """Override get_workfile_extensions method from IWorkfileHost.
+        Get workfile possible extensions.
+
+        Returns:
+            List[str]: Workfile extensions.
+        """
+        return file_extensions()
+
+    def save_workfile(self, dst_path: str = None):
+        """Override save_workfile method from IWorkfileHost.
+        Save currently opened workfile.
+
+        Args:
+            dst_path (str): Where the current scene should be saved. Or use
+                current path if `None` is passed.
+        """
+        save_file(dst_path if dst_path else bpy.data.filepath)
+
+    def open_workfile(self, filepath: str):
+        """Override open_workfile method from IWorkfileHost.
+        Open workfile at specified filepath in the host.
+
+        Args:
+            filepath (str): Path to workfile.
+        """
+        open_file(filepath)
+
+    def get_current_workfile(self) -> str:
+        """Override get_current_workfile method from IWorkfileHost.
+        Retrieve currently opened workfile path.
+
+        Returns:
+            str: Path to currently opened workfile.
+        """
+        return current_file()
+
+    def workfile_has_unsaved_changes(self) -> bool:
+        """Override wokfile_has_unsaved_changes method from IWorkfileHost.
+        Returns True if opened workfile has no unsaved changes.
+
+        Returns:
+            bool: True if scene is saved and False if it has unsaved
+                modifications.
+        """
+        return has_unsaved_changes()
+
+    def work_root(self, session) -> str:
+        """Override work_root method from IWorkfileHost.
+        Modify workdir per host.
+
+        Args:
+            session (dict): Session context data.
+
+        Returns:
+            str: Path to new workdir.
+        """
+        return work_root(session)
+
+    def get_context_data(self) -> dict:
+        """Override abstract method from IPublishHost.
+        Get global data related to creation-publishing from workfile.
+
+        Returns:
+            dict: Context data stored using 'update_context_data'.
+        """
+        property = bpy.context.scene.get(AVALON_PROPERTY)
+        if property:
+            return property.to_dict()
+        return {}
+
+    def update_context_data(self, data: dict, changes: dict):
+        """Override abstract method from IPublishHost.
+        Store global context data to workfile.
+
+        Args:
+            data (dict): New data as are.
+            changes (dict): Only data that has been changed. Each value has
+                tuple with '(<old>, <new>)' value.
+        """
+        bpy.context.scene[AVALON_PROPERTY] = data
 
 
 def pype_excepthook_handler(*args):
@@ -458,36 +567,6 @@ def ls() -> Iterator:
 
     for container in lib.lsattr("id", AVALON_CONTAINER_ID):
         yield parse_container(container)
-
-
-def update_hierarchy(containers):
-    """Hierarchical container support
-
-    This is the function to support Scene Inventory to draw hierarchical
-    view for containers.
-
-    We need both parent and children to visualize the graph.
-
-    """
-
-    all_containers = set(ls())  # lookup set
-
-    for container in containers:
-        # Find parent
-        # FIXME (jasperge): re-evaluate this. How would it be possible
-        # to 'nest' assets?  Collections can have several parents, for
-        # now assume it has only 1 parent
-        parent = [
-            coll for coll in bpy.data.collections if container in coll.children
-        ]
-        for node in parent:
-            if node in all_containers:
-                container["parent"] = node
-                break
-
-        log.debug("Container: %s", container)
-
-        yield container
 
 
 def publish():

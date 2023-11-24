@@ -1,0 +1,61 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "openpype:session-4.0",
+    "description": "The Avalon environment",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "AVALON_PROJECT"
+    ],
+
+    "properties": {
+        "AVALON_PROJECT": {
+            "description": "Name of project",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "Hulk"
+        },
+        "AVALON_ASSET": {
+            "description": "Name of asset",
+            "type": "string",
+            "pattern": "^[\\/\\w]*$",
+            "example": "Bruce"
+        },
+        "AVALON_TASK": {
+            "description": "Name of task",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "modeling"
+        },
+        "AVALON_APP": {
+            "description": "Name of host",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "maya"
+        },
+        "AVALON_DB": {
+            "description": "Name of database",
+            "type": "string",
+            "pattern": "^\\w*$",
+            "example": "avalon",
+            "default": "avalon"
+        },
+        "AVALON_LABEL": {
+            "description": "Nice name of Avalon, used in e.g. graphical user interfaces",
+            "type": "string",
+            "example": "MyLabel",
+            "default": "Avalon"
+        },
+        "AVALON_TIMEOUT": {
+            "description": "Wherever there is a need for a timeout, this is the default value.",
+            "type": "string",
+            "pattern": "^[0-9]*$",
+            "default": "1000",
+            "example": "1000"
+        }
+    }
+}

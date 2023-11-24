@@ -443,10 +443,24 @@ class AbstractWorkfilesBackend(AbstractWorkfilesCommon):
         pass
 
     @abstractmethod
-    def get_folder_entity(self, folder_id):
+    def get_project_entity(self, project_name):
+        """Get project entity by name.
+
+        Args:
+            project_name (str): Project name.
+
+        Returns:
+            dict[str, Any]: Project entity data.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_folder_entity(self, project_name, folder_id):
         """Get folder entity by id.
 
         Args:
+            project_name (str): Project name.
             folder_id (str): Folder id.
 
         Returns:
@@ -456,10 +470,11 @@ class AbstractWorkfilesBackend(AbstractWorkfilesCommon):
         pass
 
     @abstractmethod
-    def get_task_entity(self, task_id):
+    def get_task_entity(self, project_name, task_id):
         """Get task entity by id.
 
         Args:
+            project_name (str): Project name.
             task_id (str): Task id.
 
         Returns:
@@ -564,12 +579,10 @@ class AbstractWorkfilesFrontend(AbstractWorkfilesCommon):
         pass
 
     @abstractmethod
-    def set_selected_task(self, folder_id, task_id, task_name):
+    def set_selected_task(self, task_id, task_name):
         """Change selected task.
 
         Args:
-            folder_id (Union[str, None]): Folder id or None if no folder
-                is selected.
             task_id (Union[str, None]): Task id or None if no task
                 is selected.
             task_name (Union[str, None]): Task name or None if no task
@@ -701,21 +714,27 @@ class AbstractWorkfilesFrontend(AbstractWorkfilesCommon):
         pass
 
     @abstractmethod
-    def expected_representation_selected(self, representation_id):
+    def expected_representation_selected(
+        self, folder_id, task_name, representation_id
+    ):
         """Expected representation was selected in UI.
 
         Args:
+            folder_id (str): Folder id under which representation is.
+            task_name (str): Task name under which representation is.
             representation_id (str): Representation id which was selected.
         """
 
         pass
 
     @abstractmethod
-    def expected_workfile_selected(self, workfile_path):
+    def expected_workfile_selected(self, folder_id, task_name, workfile_name):
         """Expected workfile was selected in UI.
 
         Args:
-            workfile_path (str): Workfile path which was selected.
+            folder_id (str): Folder id under which workfile is.
+            task_name (str): Task name under which workfile is.
+            workfile_name (str): Workfile filename which was selected.
         """
 
         pass
@@ -728,7 +747,7 @@ class AbstractWorkfilesFrontend(AbstractWorkfilesCommon):
 
     # Model functions
     @abstractmethod
-    def get_folder_items(self, sender):
+    def get_folder_items(self, project_name, sender):
         """Folder items to visualize project hierarchy.
 
         This function may trigger events 'folders.refresh.started' and
@@ -736,6 +755,7 @@ class AbstractWorkfilesFrontend(AbstractWorkfilesCommon):
         That may help to avoid re-refresh of folder items in UI elements.
 
         Args:
+            project_name (str): Project name for which are folders requested.
             sender (str): Who requested folder items.
 
         Returns:
@@ -746,7 +766,7 @@ class AbstractWorkfilesFrontend(AbstractWorkfilesCommon):
         pass
 
     @abstractmethod
-    def get_task_items(self, folder_id, sender):
+    def get_task_items(self, project_name, folder_id, sender):
         """Task items.
 
         This function may trigger events 'tasks.refresh.started' and
@@ -754,6 +774,7 @@ class AbstractWorkfilesFrontend(AbstractWorkfilesCommon):
         That may help to avoid re-refresh of task items in UI elements.
 
         Args:
+            project_name (str): Project name for which are tasks requested.
             folder_id (str): Folder ID for which are tasks requested.
             sender (str): Who requested folder items.
 
@@ -882,32 +903,37 @@ class AbstractWorkfilesFrontend(AbstractWorkfilesCommon):
         At this moment the only information which can be saved about
             workfile is 'note'.
 
+        When 'note' is 'None' it is only validated if workfile info exists,
+            and if not then creates one with empty note.
+
         Args:
             folder_id (str): Folder id.
             task_id (str): Task id.
             filepath (str): Workfile path.
-            note (str): Note.
+            note (Union[str, None]): Note.
         """
 
         pass
 
     # General commands
     @abstractmethod
-    def refresh(self):
-        """Refresh everything, models, ui etc.
+    def reset(self):
+        """Reset everything, models, ui etc.
 
-        Triggers 'controller.refresh.started' event at the beginning and
-        'controller.refresh.finished' at the end.
+        Triggers 'controller.reset.started' event at the beginning and
+        'controller.reset.finished' at the end.
         """
 
         pass
 
     # Controller actions
     @abstractmethod
-    def open_workfile(self, filepath):
-        """Open a workfile.
+    def open_workfile(self, folder_id, task_id, filepath):
+        """Open a workfile for context.
 
         Args:
+            folder_id (str): Folder id.
+            task_id (str): Task id.
             filepath (str): Workfile path.
         """
 
