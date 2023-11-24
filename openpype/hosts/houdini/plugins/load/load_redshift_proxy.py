@@ -5,7 +5,6 @@ from openpype.pipeline import (
 )
 from openpype.hosts.houdini.api import pipeline
 
-import clique
 import hou
 
 
@@ -42,7 +41,8 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         # Enable by default
         container.setParms({
             "RS_objprop_proxy_enable": True,
-            "RS_objprop_proxy_file": self.format_path(self.fname)
+            "RS_objprop_proxy_file": self.format_path(
+                self.fname, context["representation"])
         })
 
         # Remove the file node, it only loads static meshes
@@ -76,7 +76,8 @@ class RedshiftProxyLoader(load.LoaderPlugin):
 
         node = container["node"]
         node.setParms({
-            "RS_objprop_proxy_file": self.format_path(file_path)
+            "RS_objprop_proxy_file": self.format_path(
+                file_path, representation)
         })
 
         # Update attribute
@@ -87,45 +88,24 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         node = container["node"]
         node.destroy()
 
-    def format_path(self, path):
-        """Format using $F{padding} token if sequence, otherwise just path."""
+    @staticmethod
+    def format_path(path, representation):
+        """Format file path correctly for single redshift proxy
+        or redshift proxy sequence."""
+        import re
+        if not os.path.exists(path):
+            raise RuntimeError("Path does not exist: %s" % path)
 
-        # Find all frames in the folder
-        ext = ".rs"
-        folder = os.path.dirname(path)
-        frames = [f for f in os.listdir(folder) if f.endswith(ext)]
-
-        # Get the collection of frames to detect frame padding
-        patterns = [clique.PATTERNS["frames"]]
-        collections, remainder = clique.assemble(frames,
-                                                 minimum_items=1,
-                                                 patterns=patterns)
-        self.log.debug("Detected collections: {}".format(collections))
-        self.log.debug("Detected remainder: {}".format(remainder))
-
-        if not collections and remainder:
-            if len(remainder) != 1:
-                raise ValueError("Frames not correctly detected "
-                                 "in: {}".format(remainder))
-
-            # A single frame without frame range detected
-            return os.path.normpath(path).replace("\\", "/")
-
-        # Frames detected with a valid "frame" number pattern
-        # Then we don't want to have any remainder files found
-        assert len(collections) == 1 and not remainder
-        collection = collections[0]
-
-        num_frames = len(collection.indexes)
-        if num_frames == 1:
-            # Return the input path without dynamic $F variable
-            result = path
+        is_sequence = bool(representation["context"].get("frame"))
+        # The path is either a single file or sequence in a folder.
+        if not is_sequence:
+            filename = path
         else:
-            # More than a single frame detected - use $F{padding}
-            fname = "{}$F{}{}".format(collection.head,
-                                      collection.padding,
-                                      collection.tail)
-            result = os.path.join(folder, fname)
+            filename = re.sub(r"(.*)\.(\d+)\.(rs.*)", "\\1.$F4.\\3", path)
 
-        # Format file name, Houdini only wants forward slashes
-        return os.path.normpath(result).replace("\\", "/")
+            filename = os.path.join(path, filename)
+
+        filename = os.path.normpath(filename)
+        filename = filename.replace("\\", "/")
+
+        return filename
