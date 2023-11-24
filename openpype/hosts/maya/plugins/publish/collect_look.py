@@ -358,10 +358,6 @@ class CollectLook(pyblish.api.InstancePlugin):
                     if cmds.attributeQuery(attr, node=look, exists=True):
                         existing_attrs.append("{}.{}".format(look, attr))
 
-            print("-"*100)
-            print("existing_attrs: {}".format(existing_attrs))
-            print("-"*100)
-
             materials = cmds.listConnections(existing_attrs,
                                              source=True,
                                              destination=False) or []
