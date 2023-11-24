@@ -10,8 +10,6 @@ software.
 TODO: This can be refactored even better, split to multiple methods, etc.
 
 """
-
-from math import pi
 from pathlib import Path
 from unittest.mock import patch
 
