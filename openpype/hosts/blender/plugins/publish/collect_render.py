@@ -15,7 +15,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.01
     hosts = ["blender"]
-    families = ["render.farm"]
+    families = ["render", "render.farm"]
     label = "Collect Render Layers"
     sync_workfile_version = False
 
@@ -101,6 +101,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         expected_files = expected_beauty | expected_aovs
 
         instance.data.update({
+            "family": "render.farm",
             "frameStart": frame_start,
             "frameEnd": frame_end,
             "frameStartHandle": frame_handle_start,
