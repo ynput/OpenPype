@@ -217,11 +217,17 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     def _create_thumbnail_oiio(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with OIIO: {}".format(dst_path))
+        resolution_arg = self._get_resolution_arg("oiiotool", src_path)
         oiio_cmd = get_oiio_tool_args(
-            "oiiotool",
-            "-a", src_path,
-            "-o", dst_path
+            "oiiotool", path_to_subprocess_arg(src_path)
         )
+        if resolution_arg:
+            oiio_cmd.extend(resolution_arg)
+
+        oiio_cmd.extend([
+            "-o", path_to_subprocess_arg(dst_path)
+        ])
+
         self.log.debug("running: {}".format(" ".join(oiio_cmd)))
         try:
             run_subprocess(oiio_cmd, logger=self.log)
@@ -235,7 +241,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
 
     def _create_thumbnail_ffmpeg(self, src_path, dst_path):
         self.log.debug("Extracting thumbnail with FFMPEG: {}".format(dst_path))
-        resolution_arg = self._get_resolution_arg("ffmpeg")
+        resolution_arg = self._get_resolution_arg("ffmpeg", src_path)
         ffmpeg_path_args = get_ffmpeg_tool_args("ffmpeg")
         ffmpeg_args = self.ffmpeg_args or {}
 
@@ -296,14 +302,6 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             "-probesize", max_int,
             "-vframes", "1"
         ]
-
-        # get resolution arg
-        resolution_arg = self._get_resolution_arg(
-            "ffmpeg",
-            video_file_path,
-        )
-        if resolution_arg:
-            cmd_args.extend(resolution_arg)
 
         # add output file path
         cmd_args.append(output_thumb_file_path)
