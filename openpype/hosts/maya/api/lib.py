@@ -174,19 +174,14 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
-def reload_textures(preset):
+def reload_textures():
     """Reload textures during playblast
     """
-    if not preset["viewport_options"]["reloadTextures"]:
-        self.log.debug("Reload Textures during playblasting is disabled.")
-        return
-
     texture_files = cmds.ls(type="file")
-    if not texture_files:
-        return
-    for texture_file in texture_files:
-        if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
-            cmds.ogs(regenerateUVTilePreview=texture_file)
+    if texture_files:
+        for texture_file in texture_files:
+            if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
+                cmds.ogs(regenerateUVTilePreview=texture_file)
     cmds.ogs(reloadTextures=True)
 
 
