@@ -10,7 +10,7 @@ class CreateRenderlayer(plugin.BaseCreator):
 
     identifier = "io.openpype.creators.blender.render"
     label = "Render"
-    family = "render.farm"
+    family = "render"
     icon = "eye"
 
     def create(

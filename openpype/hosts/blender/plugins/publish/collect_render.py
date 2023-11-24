@@ -11,12 +11,12 @@ import pyblish.api
 
 
 class CollectBlenderRender(pyblish.api.InstancePlugin):
-    """Gather all publishable render layers from renderSetup."""
+    """Gather all publishable render instances."""
 
     order = pyblish.api.CollectorOrder + 0.01
     hosts = ["blender"]
-    families = ["render", "render.farm"]
-    label = "Collect Render Layers"
+    families = ["render"]
+    label = "Collect Render"
     sync_workfile_version = False
 
     @staticmethod
@@ -78,8 +78,6 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
 
         assert render_data, "No render data found."
 
-        self.log.debug(f"render_data: {dict(render_data)}")
-
         render_product = render_data.get("render_product")
         aov_file_product = render_data.get("aov_file_product")
         ext = render_data.get("image_format")
@@ -101,7 +99,7 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
         expected_files = expected_beauty | expected_aovs
 
         instance.data.update({
-            "family": "render.farm",
+            "families": ["render", "render.farm"],
             "frameStart": frame_start,
             "frameEnd": frame_end,
             "frameStartHandle": frame_handle_start,
@@ -120,5 +118,3 @@ class CollectBlenderRender(pyblish.api.InstancePlugin):
             "colorspaceView": "ACES 1.0 SDR-video",
             "renderProducts": colorspace.ARenderProduct(),
         })
-
-        self.log.debug(f"data: {instance.data}")

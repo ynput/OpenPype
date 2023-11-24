@@ -32,7 +32,7 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                             OpenPypePyblishPluginMixin):
     label = "Submit Render to Deadline"
     hosts = ["blender"]
-    families = ["render.farm"]
+    families = ["render"]
 
     use_published = True
     priority = 50
