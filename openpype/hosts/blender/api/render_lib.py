@@ -191,6 +191,7 @@ def set_node_tree(output_path, name, aov_sep, ext, multilayer):
 
         output.file_slots.new(filepath)
 
+        filepath = Path(filepath)
         filename = output_path / filepath.relative_to(filepath.anchor)
 
         aov_file_products.append((render_pass.name, filename))
@@ -213,12 +214,12 @@ def imprint_render_settings(node, data):
 
 
 def prepare_rendering(asset_group):
-    name = Path(asset_group.name)
+    name = asset_group.name
 
     filepath = Path(bpy.data.filepath)
     assert filepath, "Workfile not saved. Please save the file first."
 
-    file_path = filepath.parent
+    dirpath = filepath.parent
     file_name = Path(filepath.name).stem
 
     project = get_current_project_name()
@@ -232,11 +233,11 @@ def prepare_rendering(asset_group):
     set_render_format(ext, multilayer)
     aov_list, custom_passes = set_render_passes(settings)
 
-    output_path = Path.joinpath(file_path, render_folder, file_name)
+    output_path = Path.joinpath(dirpath, render_folder, file_name)
 
-    render_product = get_render_product(output_path, name, aov_sep)
+    render_product = get_render_product(output_path, Path(name), aov_sep)
     aov_file_product = set_node_tree(
-        output_path, str(name), aov_sep, ext, multilayer)
+        output_path, name, aov_sep, ext, multilayer)
 
     bpy.context.scene.render.filepath = render_product
 
