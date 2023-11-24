@@ -1150,7 +1150,8 @@ def convert_colorspace(
     view=None,
     display=None,
     additional_command_args=None,
-    logger=None
+    logger=None,
+    input_args=None
 ):
     """Convert source file from one color space to another.
 
@@ -1172,6 +1173,7 @@ def convert_colorspace(
         additional_command_args (list): arguments for oiiotool (like binary
             depth for .dpx)
         logger (logging.Logger): Logger used for logging.
+        input_args (list): input arguments for oiiotool
     Raises:
         ValueError: if misconfigured
     """
@@ -1180,6 +1182,7 @@ def convert_colorspace(
 
     oiio_cmd = get_oiio_tool_args(
         "oiiotool",
+        *input_args,
         input_path,
         # Don't add any additional attributes
         "--nosoftwareattrib",
@@ -1189,7 +1192,7 @@ def convert_colorspace(
     if all([target_colorspace, view, display]):
         raise ValueError("Colorspace and both screen and display"
                          " cannot be set together."
-                         "Choose colorspace or screen and display")
+                         " Choose colorspace or screen and display")
     if not target_colorspace and not all([view, display]):
         raise ValueError("Both screen and display must be set.")
 

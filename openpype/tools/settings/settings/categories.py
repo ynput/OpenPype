@@ -23,10 +23,12 @@ from openpype.settings.entities import (
     BoolEntity,
     BaseEnumEntity,
     TextEntity,
+    PasswordEntity,
     PathInput,
     RawJsonEntity,
     ColorEntity,
-
+)
+from openpype.settings.entities.exceptions import (
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
     SchemaError
@@ -67,6 +69,7 @@ from .item_widgets import (
     BoolWidget,
     DictImmutableKeysWidget,
     TextWidget,
+    PasswordWidget,
     OpenPypeVersionText,
     NumberWidget,
     RawJsonWidget,
@@ -75,6 +78,12 @@ from .item_widgets import (
     PathInputWidget
 )
 from .color_widget import ColorWidget
+
+
+class EditMode(Enum):
+    ENABLE = 1
+    DISABLE = 2
+    PROTECT = 3
 
 
 class CategoryState(Enum):
@@ -113,6 +122,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     outdated_version_label_text = (
         "Your settings are loaded from an older version."
     )
+    protected_settings_label_text = (
+        "Current version is different from the production version."
+        " You cannot save the System settings."
+    )
     source_version_tooltip = "Using settings of current OpenPype version"
     source_version_tooltip_outdated = (
         "Please check that all settings are still correct (blue colour\n"
@@ -130,9 +143,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         )
 
         self.entity = None
-        self._edit_mode = None
+        self._edit_mode = EditMode.ENABLE
         self._last_saved_info = None
         self._reset_crashed = False
+        self._read_only = False
 
         self._state = CategoryState.Idle
 
@@ -167,6 +181,11 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         elif isinstance(entity, OpenPypeVersionInput):
             return OpenPypeVersionText(*args)
+
+        elif isinstance(entity, PasswordEntity):
+            # Order of this elif (before the TextEntity one) because
+            # PasswordEntity inherit from TextEntity
+            return PasswordWidget(*args)
 
         elif isinstance(entity, TextEntity):
             return TextWidget(*args)
@@ -206,18 +225,30 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def _edit_mode_changed(self, event):
         self.set_edit_mode(event["edit_mode"])
 
-    def set_edit_mode(self, enabled):
-        if enabled is self._edit_mode:
+    def set_read_only(self, status):
+        self._read_only = status
+        for input_field in self.input_fields:
+            input_field.set_read_only(self._read_only)
+
+    def set_edit_mode(self, mode):
+        if mode == self._edit_mode:
             return
 
-        was_false = self._edit_mode is False
-        self._edit_mode = enabled
+        was_disabled = (self._edit_mode == EditMode.DISABLE)
+        self._edit_mode = mode
 
-        self.save_btn.setEnabled(enabled and not self._reset_crashed)
-        if enabled:
+        self.save_btn.setEnabled(mode == EditMode.ENABLE and not self._reset_crashed)
+
+        self.set_read_only((mode != EditMode.ENABLE))
+
+        if mode == EditMode.DISABLE:
             tooltip = (
                 "Someone else has opened settings UI."
                 "\nTry hit refresh to check if settings are already available."
+            )
+        elif mode == EditMode.PROTECT:
+            tooltip = (
+                "System settings can only be saved with the OpenPype production version."
             )
         else:
             tooltip = "Save settings"
@@ -225,7 +256,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.save_btn.setToolTip(tooltip)
 
         # Reset when last saved information has changed
-        if was_false and not self._check_last_saved_info():
+        if was_disabled and not self._check_last_saved_info():
             self.reset()
 
     @property
@@ -313,6 +344,13 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         require_restart_label.setAlignment(labels_alignment)
         require_restart_label.setVisible(False)
 
+        protected_settings_label = QtWidgets.QLabel(
+            self.protected_settings_label_text, footer_widget
+        )
+        protected_settings_label.setAlignment(labels_alignment)
+        protected_settings_label.setVisible(False)
+        protected_settings_label.setObjectName("SettingsSystemProtected")
+
         # Label showing source version of loaded settings
         source_version_label = QtWidgets.QLabel("", footer_widget)
         source_version_label.setObjectName("SourceVersionLabel")
@@ -329,6 +367,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         footer_layout.addWidget(empty_label, 1)
         footer_layout.addWidget(outdated_version_label, 1)
         footer_layout.addWidget(require_restart_label, 1)
+        footer_layout.addWidget(protected_settings_label, 1)
         footer_layout.addWidget(source_version_label, 0)
         footer_layout.addWidget(save_btn, 0)
 
@@ -353,6 +392,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         self._require_restart_label = require_restart_label
         self._outdated_version_label = outdated_version_label
+        self._protected_settings_label = protected_settings_label
         self._empty_label = empty_label
 
         self._is_loaded_version_outdated = False
@@ -713,7 +753,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def _on_reset_success(self):
         self._reset_crashed = False
         if not self.save_btn.isEnabled():
-            self.save_btn.setEnabled(self._edit_mode)
+            self.save_btn.setEnabled(self._edit_mode == EditMode.ENABLE)
 
         if self.breadcrumbs_model is not None:
             path = self.breadcrumbs_bar.path()
@@ -796,17 +836,20 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
     def _update_labels_visibility(self):
         visible_label = None
-        labels = {
+        labels = [
             self._empty_label,
             self._outdated_version_label,
             self._require_restart_label,
-        }
+            self._protected_settings_label
+        ]
         if self.is_modifying_defaults or self.entity is None:
             require_restart = False
         else:
             require_restart = self.entity.require_restart
 
-        if require_restart:
+        if self._edit_mode == EditMode.PROTECT:
+            visible_label = self._protected_settings_label
+        elif require_restart:
             visible_label = self._require_restart_label
         elif self._is_loaded_version_outdated:
             visible_label = self._outdated_version_label
@@ -886,6 +929,14 @@ class SystemWidget(SettingsCategoryWidget):
         else:
             if not self.entity.is_in_studio_state():
                 self.reset()
+
+    def add_children_gui(self):
+        super(SystemWidget, self).add_children_gui()
+
+        # The Read Only logic is currently only relevante for
+        # System Settings (not for Project)
+        for input_field in self.input_fields:
+            input_field.set_read_only(self._read_only)
 
 
 class ProjectWidget(SettingsCategoryWidget):

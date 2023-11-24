@@ -896,6 +896,11 @@ class PreLaunchHook(LaunchHook):
     launched.
     """
 
+    @abstractmethod
+    def execute(self, *args, **kwargs):
+        """Abstract execute method where logic of hook is."""
+        pass
+
 
 class PostLaunchHook(LaunchHook):
     """Abstract class of postlaunch hook.
@@ -905,6 +910,11 @@ class PostLaunchHook(LaunchHook):
     Nothing will happen if any exception will happen during processing. And
     processing of other postlaunch hooks won't stop either.
     """
+
+    @abstractmethod
+    def execute(self, *args, **kwargs):
+        """Abstract execute method where logic of hook is."""
+        pass
 
 
 class ApplicationLaunchContext:

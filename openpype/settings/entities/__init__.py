@@ -94,6 +94,7 @@ from .input_entities import (
     NumberEntity,
     BoolEntity,
     TextEntity,
+    PasswordEntity,
     PathInput,
     RawJsonEntity
 )
@@ -158,6 +159,7 @@ __all__ = (
     "NumberEntity",
     "BoolEntity",
     "TextEntity",
+    "PasswordEntity",
     "PathInput",
     "RawJsonEntity",
 

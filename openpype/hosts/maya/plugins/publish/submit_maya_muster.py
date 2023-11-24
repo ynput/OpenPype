@@ -375,10 +375,6 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "project": project_name or scene,
                     "shot": asset_name or scene,
                     "camera": instance.data.get("cameras")[0],
-                    "dependMode": 0,
-                    "packetSize": 4,
-                    "packetType": 1,
-                    "priority": 1,
                     "maximumInstances": 0,
                     "assignedInstances": 0,
                     "attributes": {

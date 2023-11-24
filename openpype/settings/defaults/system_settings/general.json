@@ -9,6 +9,9 @@
         "linux": [],
         "darwin": []
     },
+    "project": {
+        "protect_anatomy_attributes": false
+    },
     "local_env_white_list": [],
     "openpype_path": {
         "windows": [],

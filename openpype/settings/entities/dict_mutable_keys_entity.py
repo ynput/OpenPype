@@ -136,12 +136,12 @@ class DictMutableKeysEntity(EndpointEntity):
             self._has_project_override = True
         self.on_change()
 
-    def _add_key(self, key, _ingore_key_validation=False):
+    def _add_key(self, key, _ignore_key_validation=False):
         if key in self.children_by_key:
             self.pop(key)
 
         if (
-            not _ingore_key_validation
+            not _ignore_key_validation
             and not self.store_as_list
             and not KEY_REGEX.match(key)
         ):
@@ -419,7 +419,7 @@ class DictMutableKeysEntity(EndpointEntity):
                     child_entity = self._add_key(new_key)
                 else:
                     child_entity = self._add_key(
-                        _key, _ingore_key_validation=True
+                        _key, _ignore_key_validation=True
                     )
                     self.change_key(_key, new_key)
                     _key = new_key

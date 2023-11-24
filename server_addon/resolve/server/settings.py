@@ -70,7 +70,7 @@ class CreateShotClipModels(BaseSettingsModel):
     )
 
 
-class CreatorPuginsModel(BaseSettingsModel):
+class CreatorPluginsModel(BaseSettingsModel):
     CreateShotClip: CreateShotClipModels = Field(
         default_factory=CreateShotClipModels,
         title="Create Shot Clip"
@@ -85,8 +85,8 @@ class ResolveSettings(BaseSettingsModel):
         default_factory=ResolveImageIOModel,
         title="Color Management (ImageIO)"
     )
-    create: CreatorPuginsModel = Field(
-        default_factory=CreatorPuginsModel,
+    create: CreatorPluginsModel = Field(
+        default_factory=CreatorPluginsModel,
         title="Creator plugins",
     )
 

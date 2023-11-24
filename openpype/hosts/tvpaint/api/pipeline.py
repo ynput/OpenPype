@@ -7,7 +7,7 @@ import requests
 
 import pyblish.api
 
-from openpype.client import get_project, get_asset_by_name
+from openpype.client import get_asset_by_name
 from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 from openpype.hosts.tvpaint import TVPAINT_ROOT_DIR
 from openpype.settings import get_current_project_settings
@@ -164,7 +164,15 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return session["AVALON_WORKDIR"]
 
     def get_current_workfile(self):
-        return execute_george("tv_GetProjectName")
+        # tvPaint return a '\' character when no scene is currently
+        # opened instead of a None value, which causes interferences
+        # in OpenPype's core code.
+        # So we check the returned value and send None if this
+        # character is retrieved.
+        current_workfile = execute_george("tv_GetProjectName")
+        if current_workfile == '\\':
+            current_workfile = None
+        return current_workfile
 
     def workfile_has_unsaved_changes(self):
         return None

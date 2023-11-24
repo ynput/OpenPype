@@ -1,5 +1,6 @@
 import os
 import json
+import getpass
 from datetime import datetime
 
 import requests
@@ -65,7 +66,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
         batch_name = "{code} - {scene}".format(code=code, scene=scenename)
         if is_in_tests():
             batch_name += datetime.now().strftime("%d%m%Y%H%M%S")
-        deadline_user = "roy"  # todo: get deadline user dynamically
+        deadline_user = context.data.get("deadlineUser", getpass.getuser())
 
         # Get only major.minor version of Houdini, ignore patch version
         version = hou.applicationVersionString()
@@ -76,7 +77,7 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             "JobInfo": {
                 "Plugin": "Houdini",
                 "Pool": "houdini",  # todo: remove hardcoded pool
-                "BatchName": batch_name,
+                "BatchName": "Group: " + batch_name,
                 "Comment": context.data.get("comment", ""),
                 "Priority": 50,
                 "Frames": "1-1",  # Always trigger a single frame

@@ -469,6 +469,20 @@
                             }
                         ]
                     }
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "symlink",
+                    "label": "Symlink",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "file_regex_pattern",
+                            "label": "File Regex Pattern"
+                        }
+                    ]
                 }
             ]
         }

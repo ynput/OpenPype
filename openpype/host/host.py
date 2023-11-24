@@ -179,7 +179,7 @@ class HostBase(object):
 
     @contextlib.contextmanager
     def maintained_selection(self):
-        """Some functionlity will happen but selection should stay same.
+        """Some functionality will happen but selection should stay same.
 
         This is DCC specific. Some may not allow to implement this ability
         that is reason why default implementation is empty context manager.

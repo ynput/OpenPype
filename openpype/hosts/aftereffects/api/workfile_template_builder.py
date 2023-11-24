@@ -101,7 +101,7 @@ class AEPlaceholderPlugin(PlaceholderPlugin):
         return None, None
 
     def _collect_scene_placeholders(self):
-        """" Cache placeholder data to shared data.
+        """ Cache placeholder data to shared data.
         Returns:
             (list) of dicts
         """

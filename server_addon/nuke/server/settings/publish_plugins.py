@@ -66,7 +66,7 @@ class CollectInstanceDataModel(BaseSettingsModel):
     sync_workfile_version_on_product_types: list[str] = Field(
         default_factory=list,
         enum_resolver=nuke_product_types_enum,
-        title="Sync workfile versions for familes"
+        title="Sync workfile versions for families"
     )
 
 
@@ -122,7 +122,7 @@ class BakingStreamFilterModel(BaseSettingsModel):
     product_types: list[str] = Field(
         default_factory=list,
         enum_resolver=nuke_render_publish_types_enum,
-        title="Sync workfile versions for familes"
+        title="Sync workfile versions for families"
     )
     product_names: list[str] = Field(
         default_factory=list, title="Product names")
@@ -218,7 +218,7 @@ class IncrementScriptVersionModel(BaseSettingsModel):
     active: bool = Field(title="Active")
 
 
-class PublishPuginsModel(BaseSettingsModel):
+class PublishPluginsModel(BaseSettingsModel):
     CollectInstanceData: CollectInstanceDataModel = Field(
         title="Collect Instance Version",
         default_factory=CollectInstanceDataModel,

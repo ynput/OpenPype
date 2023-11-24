@@ -1,6 +1,6 @@
 import os
 from openpype import AYON_SERVER_ENABLED
-from openpype.lib.openpype_version import is_running_staging
+from openpype.lib.openpype_version import is_running_staging, is_running_locally
 
 RESOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -54,9 +54,22 @@ def get_openpype_staging_icon_filepath():
     return get_resource("icons", filename)
 
 
+def get_openpype_dev_staging_icon_filepath():
+    return get_resource("icons", "openpype_icon_dev_staging.png")
+
+
+def get_openpype_dev_icon_filepath():
+    return get_resource("icons", "openpype_icon_dev.png")
+
+
 def get_openpype_icon_filepath(staging=None):
     if staging is None:
         staging = is_running_staging()
+
+    if is_running_locally():
+        if staging:
+            return get_openpype_dev_staging_icon_filepath()
+        return get_openpype_dev_icon_filepath()
 
     if staging:
         return get_openpype_staging_icon_filepath()

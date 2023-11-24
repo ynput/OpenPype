@@ -199,6 +199,24 @@
         },
         {
             "type": "dict",
+            "collapsible": true,
+            "key": "update_publishable_frame_range",
+            "label": "Update publishable instances on Reset Frame Range",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "label",
+                    "label": "If enabled, the frame range and the handles of all the publishable instances will be updated when using the 'Reset Frame Range' functionality"
+                },
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
             "key": "include_handles",
             "collapsible": true,
             "label": "Include/Exclude Handles in default playback & render range",

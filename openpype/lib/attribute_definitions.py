@@ -81,8 +81,8 @@ class AbstractAttrDefMeta(ABCMeta):
     Each object of `AbstractAttrDef` mus have defined 'key' attribute.
     """
 
-    def __call__(self, *args, **kwargs):
-        obj = super(AbstractAttrDefMeta, self).__call__(*args, **kwargs)
+    def __call__(cls, *args, **kwargs):
+        obj = super(AbstractAttrDefMeta, cls).__call__(*args, **kwargs)
         init_class = getattr(obj, "__init__class__", None)
         if init_class is not AbstractAttrDef:
             raise TypeError("{} super was not called in __init__.".format(
@@ -276,7 +276,7 @@ class HiddenDef(AbstractAttrDef):
     def __init__(self, key, default=None, **kwargs):
         kwargs["default"] = default
         kwargs["hidden"] = True
-        super(UnknownDef, self).__init__(key, **kwargs)
+        super(HiddenDef, self).__init__(key, **kwargs)
 
     def convert_value(self, value):
         return value

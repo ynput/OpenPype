@@ -133,8 +133,7 @@ class ExtractCameraMayaScene(publish.Extractor):
         # get cameras
         members = cmds.ls(instance.data['setMembers'], leaf=True, shapes=True,
                           long=True, dag=True)
-        cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
-                          dag=True, type="camera")
+        cameras = cmds.ls(members, type="camera")
 
         # validate required settings
         assert isinstance(step, float), "Step must be a float value"
@@ -163,9 +162,6 @@ class ExtractCameraMayaScene(publish.Extractor):
                                                dag=True,
                                                shapes=True,
                                                long=True)
-
-                        members = members + baked_camera_shapes
-                        members.remove(camera)
                     else:
                         baked_camera_shapes = cmds.ls(cameras,
                                                       type="camera",
@@ -187,7 +183,7 @@ class ExtractCameraMayaScene(publish.Extractor):
                         cmds.setAttr(plug, value)
 
                     self.log.debug("Performing extraction..")
-                    cmds.select(cmds.ls(members, dag=True,
+                    cmds.select(cmds.ls(baked, dag=True,
                                         shapes=True, long=True), noExpand=True)
                     cmds.file(path,
                               force=True,

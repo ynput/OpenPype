@@ -102,7 +102,14 @@ class CreateShotClip(phiero.Creator):
                     "label": "{shot}",
                     "target": "tag",
                     "toolTip": "Name of shot. `#` is converted to paded number. \nAlso could be used with usable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
-                    "order": 4}
+                    "order": 4},
+                "symlink": {
+                    "value": False,
+                    "type": "QCheckBox",
+                    "label": "Publish using symlink",
+                    "target": "tag",
+                    "toolTip": "Publish symlinks, don't copy files",
+                    "order": 5}
             }
         },
         "verticalSync": {
