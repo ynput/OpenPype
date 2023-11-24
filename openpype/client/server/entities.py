@@ -182,6 +182,19 @@ def get_asset_by_name(project_name, asset_name, fields=None):
     return None
 
 
+def _folders_query(project_name, con, fields, **kwargs):
+    if fields is None or "tasks" in fields:
+        folders = get_folders_with_tasks(
+            con, project_name, fields=fields, **kwargs
+        )
+
+    else:
+        folders = con.get_folders(project_name, fields=fields, **kwargs)
+
+    for folder in folders:
+        yield folder
+
+
 def get_assets(
     project_name,
     asset_ids=None,
@@ -201,20 +214,39 @@ def get_assets(
     fields = folder_fields_v3_to_v4(fields, con)
     kwargs = dict(
         folder_ids=asset_ids,
-        folder_names=asset_names,
         parent_ids=parent_ids,
         active=active,
-        fields=fields
     )
+    if not asset_names:
+        for folder in _folders_query(project_name, con, fields, **kwargs):
+            yield convert_v4_folder_to_v3(folder, project_name)
+        return
 
-    if fields is None or "tasks" in fields:
-        folders = get_folders_with_tasks(con, project_name, **kwargs)
+    new_asset_names = set()
+    folder_paths = set()
+    for name in asset_names:
+        if "/" in name:
+            folder_paths.add(name)
+        else:
+            new_asset_names.add(name)
 
-    else:
-        folders = con.get_folders(project_name, **kwargs)
+    yielded_ids = set()
+    if folder_paths:
+        for folder in _folders_query(
+            project_name, con, fields, folder_paths=folder_paths, **kwargs
+        ):
+            yielded_ids.add(folder["id"])
+            yield convert_v4_folder_to_v3(folder, project_name)
 
-    for folder in folders:
-        yield convert_v4_folder_to_v3(folder, project_name)
+    if not new_asset_names:
+        return
+
+    for folder in _folders_query(
+        project_name, con, fields, folder_names=new_asset_names, **kwargs
+    ):
+        if folder["id"] not in yielded_ids:
+            yielded_ids.add(folder["id"])
+            yield convert_v4_folder_to_v3(folder, project_name)
 
 
 def get_archived_assets(

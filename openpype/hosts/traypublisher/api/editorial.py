@@ -53,11 +53,11 @@ class ShotMetadataSolver:
         try:
             # format to new shot name
             return shot_rename_template.format(**data)
-        except KeyError as _E:
+        except KeyError as _error:
             raise CreatorError((
                 "Make sure all keys in settings are correct:: \n\n"
                 f"From template string {shot_rename_template} > "
-                f"`{_E}` has no equivalent in \n"
+                f"`{_error}` has no equivalent in \n"
                 f"{list(data.keys())} input formatting keys!"
             ))
 
@@ -100,7 +100,7 @@ class ShotMetadataSolver:
                     "at your project settings..."
                 ))
 
-            #  QUESTION:how to refactory `match[-1]` to some better way?
+            #  QUESTION:how to refactor `match[-1]` to some better way?
             output_data[token_key] = match[-1]
 
         return output_data
@@ -130,10 +130,10 @@ class ShotMetadataSolver:
                 parent_token["name"]: parent_token["value"].format(**data)
                 for parent_token in hierarchy_parents
             }
-        except KeyError as _E:
+        except KeyError as _error:
             raise CreatorError((
                 "Make sure all keys in settings are correct : \n"
-                f"`{_E}` has no equivalent in \n{list(data.keys())}"
+                f"`{_error}` has no equivalent in \n{list(data.keys())}"
             ))
 
         _parent_tokens_type = {
@@ -147,10 +147,10 @@ class ShotMetadataSolver:
             try:
                 parent_name = _parent.format(
                     **_parent_tokens_formatting_data)
-            except KeyError as _E:
+            except KeyError as _error:
                 raise CreatorError((
                     "Make sure all keys in settings are correct : \n\n"
-                    f"`{_E}` from template string "
+                    f"`{_error}` from template string "
                     f"{shot_hierarchy['parents_path']}, "
                     f" has no equivalent in \n"
                     f"{list(_parent_tokens_formatting_data.keys())} parents"
@@ -319,8 +319,16 @@ class ShotMetadataSolver:
             tasks = self._generate_tasks_from_settings(
                 project_doc)
 
+        # generate hierarchy path from parents
+        hierarchy_path = self._create_hierarchy_path(parents)
+        if hierarchy_path:
+            folder_path = f"/{hierarchy_path}/{shot_name}"
+        else:
+            folder_path = f"/{shot_name}"
+
         return shot_name, {
-            "hierarchy": self._create_hierarchy_path(parents),
+            "hierarchy": hierarchy_path,
+            "folderPath": folder_path,
             "parents": parents,
             "tasks": tasks
         }

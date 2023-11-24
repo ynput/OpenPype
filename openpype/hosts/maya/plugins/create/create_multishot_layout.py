@@ -45,10 +45,14 @@ class CreateMultishotLayout(plugin.MayaCreator):
                  above is done.
         """
 
-        current_folder = get_folder_by_name(
-            project_name=get_current_project_name(),
-            folder_name=get_current_asset_name(),
-        )
+        project_name = get_current_project_name()
+        folder_path = get_current_asset_name()
+        if "/" in folder_path:
+            current_folder = get_folder_by_path(project_name, folder_path)
+        else:
+            current_folder = get_folder_by_name(
+                project_name, folder_name=folder_path
+            )
 
         current_path_parts = current_folder["path"].split("/")
 
@@ -154,7 +158,7 @@ class CreateMultishotLayout(plugin.MayaCreator):
             # Create layout instance by the layout creator
 
             instance_data = {
-                "asset": shot["name"],
+                "folderPath": shot["path"],
                 "variant": layout_creator.get_default_variant()
             }
             if layout_task:
