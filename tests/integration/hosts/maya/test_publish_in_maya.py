@@ -49,7 +49,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     ):
         """Testing Pyblish and Python logs within Maya."""
 
-        # We should have some output from publish_finished.
+        # We should have some output from finished publish.
         assert publish_finished, "No output of publish found."
 
         # All maya output via MAYA_CMD_FILE_OUTPUT env var during test run
