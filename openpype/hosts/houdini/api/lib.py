@@ -152,7 +152,9 @@ def get_output_parameter(node):
             return node.parm("ar_ass_file")
     elif node_type == "Redshift_Proxy_Output":
         return node.parm("RS_archive_file")
-
+    elif node_type == "ifd":
+        if node.evalParm("soho_outputmode"):
+            return node.parm("soho_diskfile")
     raise TypeError("Node type '%s' not supported" % node_type)
 
 

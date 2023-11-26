@@ -218,11 +218,7 @@ class ModuleUnitTest(BaseTest):
         yield mongo_client[self.TEST_OPENPYPE_NAME]["settings"]
 
     def is_test_failed(self, request):
-        # if request.node doesn't have rep_call, something failed
-        try:
-            return request.node.rep_call.failed
-        except AttributeError:
-            return True
+        return getattr(request.node, "module_test_failure", False)
 
 
 class PublishTest(ModuleUnitTest):
