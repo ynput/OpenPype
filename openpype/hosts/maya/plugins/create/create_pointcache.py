@@ -41,7 +41,7 @@ class CreatePointCache(plugin.Creator):
 
         # Default to not send to farm.
         self.data["farm"] = False
-        self.data["priority"] = 50
+        self.data["priority"] = 85      #Hornet
 
     def process(self):
         instance = super(CreatePointCache, self).process()

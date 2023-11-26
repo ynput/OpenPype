@@ -130,8 +130,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         if is_in_tests():
             src_filename += datetime.now().strftime("%d%m%Y%H%M%S")
 
-        job_info.Name = "%s - %s" % (src_filename, instance.name)
-        job_info.BatchName = src_filename
+        project_code = context.data['projectEntity']['data']['code']
+        job_info.Name = "%s_%s - %s" % (project_code, src_filename, instance.name)
+        job_info.BatchName ="%s_%s" % (project_code, src_filename)
         job_info.Plugin = instance.data.get("mayaRenderPlugin", "MayaBatch")
         job_info.UserName = context.data.get("deadlineUser", getpass.getuser())
 
