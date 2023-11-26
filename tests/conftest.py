@@ -39,6 +39,11 @@ def pytest_addoption(parser):
         help="Provide url of the Mongo database."
     )
 
+    parser.addoption(
+        "--dump_databases", action="store_true", default=None,
+        help="Dump databases to data folder."
+    )
+
 
 @pytest.fixture(scope="module")
 def test_data_folder(request):
@@ -73,6 +78,11 @@ def setup_only(request):
 @pytest.fixture(scope="module")
 def mongo_url(request):
     return request.config.getoption("--mongo_url")
+
+
+@pytest.fixture(scope="module")
+def dump_databases(request):
+    return request.config.getoption("--dump_databases")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

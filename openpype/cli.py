@@ -296,12 +296,16 @@ def run(script):
 @click.option("--mongo_url",
               help="MongoDB for testing.",
               default=None)
+@click.option("--dump_databases",
+              help="Dump all databases to data folder.",
+              is_flag=True,
+              default=False)
 def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
-             timeout, setup_only, mongo_url, app_group):
+             timeout, setup_only, mongo_url, app_group, dump_databases):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
                              persist, app_variant, timeout, setup_only,
-                             mongo_url, app_group)
+                             mongo_url, app_group, dump_databases)
 
 
 @main.command(help="DEPRECATED - run sync server")

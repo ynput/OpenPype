@@ -214,7 +214,7 @@ class PypeCommands:
 
     def run_tests(self, folder, mark, pyargs,
                   test_data_folder, persist, app_variant, timeout, setup_only,
-                  mongo_url, app_group):
+                  mongo_url, app_group, dump_databases):
         """
             Runs tests from 'folder'
 
@@ -274,6 +274,9 @@ class PypeCommands:
 
         if mongo_url:
             args.extend(["--mongo_url", mongo_url])
+
+        if dump_databases:
+            args.extend(["--dump_databases"])
 
         print("run_tests args: {}".format(args))
         import pytest
