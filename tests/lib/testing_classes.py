@@ -343,9 +343,6 @@ class PublishTest(ModuleUnitTest):
         app_process = application_manager.launch(app_name, **data)
         yield app_process
 
-        stdout.close()
-        stderr.close()
-
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data,
                          timeout, setup_only):
