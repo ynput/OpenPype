@@ -50,8 +50,7 @@ class ExtractRedshiftProxy(publish.Extractor):
             # Padding is taken from number of digits of the end_frame.
             # Not sure where Redshift is taking it.
             repr_files = [
-                "{}.{}{}".format(
-                    os.path.basename(root), str(frame).rjust(4, "0"), ext) # noqa: E501
+                "{}.{}{}".format(os.path.basename(root), str(frame).rjust(4, "0"), ext) # noqa: E501
                 for frame in range(
                     int(start_frame),
                     int(end_frame) + 1,
