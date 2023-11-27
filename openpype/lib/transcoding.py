@@ -1395,7 +1395,7 @@ def convert_color_values(application, color_value):
         blue = float(blue / 255)
         alpha = float(alpha / 255)
 
-        return "{0:.2f},{1:.2f},{2:.2f},{3:.2f}".format(
+        return "{0:.3f},{1:.3f},{2:.3f},{3:.3f}".format(
             red, green, blue, alpha)
     else:
         raise ValueError(
