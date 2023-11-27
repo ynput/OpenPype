@@ -157,6 +157,7 @@ class ExtractThumbnail(publish.Extractor):
                 and preset["viewport_options"].get("textures")
             ):
                 lib.reload_textures()
+            preset.pop("reloadTextures")  # not supported by `capture`
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
 
