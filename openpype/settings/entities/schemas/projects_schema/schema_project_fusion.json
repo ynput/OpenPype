@@ -100,6 +100,16 @@
                             "label": "Validate Saver Resolution"
                         }
                     ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateInstanceFrameRange",
+                            "label": "Validate Frame Range"
+                        }
+                    ]
                 }
             ]
         }

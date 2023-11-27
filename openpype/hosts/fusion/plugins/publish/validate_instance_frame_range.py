@@ -1,15 +1,20 @@
 import pyblish.api
 
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin
+)
 
-
-class ValidateInstanceFrameRange(pyblish.api.InstancePlugin):
+class ValidateInstanceFrameRange(pyblish.api.InstancePlugin,
+                                 OptionalPyblishPluginMixin):
     """Validate instance frame range is within comp's global render range."""
 
     order = pyblish.api.ValidatorOrder
-    label = "Validate Filename Has Extension"
+    label = "Validate Frame Range"
     families = ["render"]
     hosts = ["fusion"]
+
+    optional = True
 
     def process(self, instance):
 
