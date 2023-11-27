@@ -760,8 +760,6 @@ def _applied_viewport_options(options, panel):
         # Try to set as much as possible of the state by setting them one by
         # one. This way we can also report the failing key values explicitly.
         for key, value in options.items():
-            if key == "reloadTextures":
-                continue
             try:
                 cmds.modelEditor(panel, edit=True, **{key: value})
             except TypeError:
