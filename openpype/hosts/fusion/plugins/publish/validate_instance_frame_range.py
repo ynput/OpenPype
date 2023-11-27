@@ -5,6 +5,7 @@ from openpype.pipeline import (
     OptionalPyblishPluginMixin
 )
 
+
 class ValidateInstanceFrameRange(pyblish.api.InstancePlugin,
                                  OptionalPyblishPluginMixin):
     """Validate instance frame range is within comp's global render range."""
