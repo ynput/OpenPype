@@ -13,33 +13,37 @@ RENDER_LAYER_IMAGE_OUTPUT = 'Image'
 def register():
     bpy.app.handlers.save_pre.append(set_render_nodes_output_path)
     bpy.types.Scene.output_path = bpy.props.StringProperty('/tmp/')
+    bpy.types.Scene.render_layer_path = bpy.props.StringProperty('/tmp/')
 
 
 def unregister():
     bpy.app.handlers.save_pre.remove(set_render_nodes_output_path)
     del bpy.types.Scene.output_path
+    del bpy.types.Scene.render_layer_path
 
 
-def initialize_default_values():
-    bpy.context.scene.render.filepath = bpy.context.scene.output_path
-
-
-def memorize_output_path():
+def retrieve_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--render-layer-path", help="Default render layer output path for render")
     parser.add_argument("--output-path", help="Default output path for render")
     args = parser.parse_args(
         sys.argv[sys.argv.index("--") + 1 :]
     )
 
-    bpy.context.scene.output_path = args.output_path
+    bpy.context.scene.render_layer_path = args.render_layer_path
+    bpy.context.scene.output_path = args.output_path.format(
+        render_layer_name='_temp'
+    )
 
 
 def set_render_nodes_output_path(blender_file_path):
+    bpy.context.scene.render.filepath = bpy.context.scene.output_path
     version = _extract_version_number_from_filepath(blender_file_path)
+    bpy.context.scene.render.filepath
     for render_node in [node for node in bpy.context.scene.node_tree.nodes if node.type == RENDER_LAYERS]:
         render_layer_name = render_node.layer
         output_node = render_node.outputs[RENDER_LAYER_IMAGE_OUTPUT].links[0].to_node
-        output_node.base_path = bpy.context.scene.output_path.format(
+        output_node.base_path = bpy.context.scene.render_layer_path.format(
             render_layer_name=render_layer_name,
             version = version
         ) + '_'
@@ -58,6 +62,5 @@ def set_cycles_engine():
 
 
 register()
-initialize_default_values()
-memorize_output_path()
+retrieve_args()
 set_cycles_engine()
