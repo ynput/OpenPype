@@ -1591,3 +1591,18 @@ def get_ayon_system_settings(default_values):
     return convert_system_settings(
         ayon_settings, default_values, addon_versions
     )
+
+
+def get_ayon_settings(project_name=None):
+    """AYON studio settings.
+
+    Raw AYON settings values.
+
+    Args:
+        project_name (Optional[str]): Project name.
+
+    Returns:
+        dict[str, Any]: AYON settings.
+    """
+
+    return _AyonSettingsCache.get_value_by_project(project_name)

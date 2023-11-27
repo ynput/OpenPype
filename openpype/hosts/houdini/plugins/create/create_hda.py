@@ -17,13 +17,13 @@ class CreateHDA(plugin.HoudiniCreator):
     icon = "gears"
     maintain_selection = False
 
-    def _check_existing(self, subset_name):
+    def _check_existing(self, asset_name, subset_name):
         # type: (str) -> bool
         """Check if existing subset name versions already exists."""
         # Get all subsets of the current asset
         project_name = self.project_name
         asset_doc = get_asset_by_name(
-            project_name, self.data["asset"], fields=["_id"]
+            project_name, asset_name, fields=["_id"]
         )
         subset_docs = get_subsets(
             project_name, asset_ids=[asset_doc["_id"]], fields=["name"]
@@ -35,7 +35,8 @@ class CreateHDA(plugin.HoudiniCreator):
         return subset_name.lower() in existing_subset_names_low
 
     def create_instance_node(
-            self, node_name, parent, node_type="geometry"):
+        self, asset_name, node_name, parent, node_type="geometry"
+    ):
 
         parent_node = hou.node("/obj")
         if self.selected_nodes:
@@ -61,7 +62,7 @@ class CreateHDA(plugin.HoudiniCreator):
                 hda_file_name="$HIP/{}.hda".format(node_name)
             )
             hda_node.layoutChildren()
-        elif self._check_existing(node_name):
+        elif self._check_existing(asset_name, node_name):
             raise plugin.OpenPypeCreatorError(
                 ("subset {} is already published with different HDA"
                  "definition.").format(node_name))

@@ -402,12 +402,12 @@ class ActionsModel:
         )
 
     def _prepare_session(self, project_name, folder_id, task_id):
-        folder_name = None
+        folder_path = None
         if folder_id:
             folder = self._controller.get_folder_entity(
                 project_name, folder_id)
             if folder:
-                folder_name = folder["name"]
+                folder_path = folder["path"]
 
         task_name = None
         if task_id:
@@ -417,7 +417,7 @@ class ActionsModel:
 
         return {
             "AVALON_PROJECT": project_name,
-            "AVALON_ASSET": folder_name,
+            "AVALON_ASSET": folder_path,
             "AVALON_TASK": task_name,
         }
 

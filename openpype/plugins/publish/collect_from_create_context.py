@@ -4,6 +4,7 @@
 import os
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.host import IPublishHost
 from openpype.pipeline import legacy_io, registered_host
 from openpype.pipeline.create import CreateContext
@@ -38,6 +39,8 @@ class CollectFromCreateContext(pyblish.api.ContextPlugin):
 
         for created_instance in create_context.instances:
             instance_data = created_instance.data_to_store()
+            if AYON_SERVER_ENABLED:
+                instance_data["asset"] = instance_data.pop("folderPath")
             if instance_data["active"]:
                 thumbnail_path = thumbnail_paths_by_instance_id.get(
                     created_instance.id

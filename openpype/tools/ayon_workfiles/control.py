@@ -473,7 +473,7 @@ class BaseWorkfileController(
         current_file = self.get_current_workfile()
         folder_id = None
         if folder_name:
-            folder = ayon_api.get_folder_by_name(project_name, folder_name)
+            folder = ayon_api.get_folder_by_path(project_name, folder_name)
             if folder:
                 folder_id = folder["id"]
 
