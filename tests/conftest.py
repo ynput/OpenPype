@@ -40,7 +40,7 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
-        "--dump_databases", action="store_true", default=None,
+        "--dump_databases", action="store", default=None,
         help="Dump databases to data folder."
     )
 

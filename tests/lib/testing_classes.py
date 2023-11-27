@@ -183,8 +183,12 @@ class ModuleUnitTest(BaseTest):
         if dump_databases:
             print("Dumping databases to {}".format(download_test_data))
             output_dir = os.path.join(download_test_data, "output", "dumps")
-            db_handler.backup_to_dump(self.TEST_DB_NAME, output_dir)
-            db_handler.backup_to_dump(self.TEST_OPENPYPE_NAME, output_dir)
+            db_handler.backup_to_dump(
+                self.TEST_DB_NAME, output_dir, format=dump_databases
+            )
+            db_handler.backup_to_dump(
+                self.TEST_OPENPYPE_NAME, output_dir, format=dump_databases
+            )
 
         persist = persist or self.PERSIST or self.is_test_failed(request)
         if not persist:
