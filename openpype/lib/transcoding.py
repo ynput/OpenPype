@@ -1259,10 +1259,10 @@ def get_rescaled_command_arguments(
 
     # ffmpeg command
     input_file_metadata = get_ffprobe_data(input_path, logger=log)
-    input_width = int(input_file_metadata["streams"][0]["width"])
-    input_height = int(input_file_metadata["streams"][0]["height"])
-    stream_input_par = input_file_metadata["streams"][0].get(
-        "sample_aspect_ratio")
+    stream = input_file_metadata["streams"][0]
+    input_width = int(stream["width"])
+    input_height = int(stream["height"])
+    stream_input_par = stream[0].get("sample_aspect_ratio")
     if stream_input_par:
         input_par = (
             float(stream_input_par.split(":")[0])
