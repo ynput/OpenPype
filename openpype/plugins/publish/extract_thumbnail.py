@@ -25,7 +25,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
     enabled = False
 
-    # presentable attribute
+    # attribute presets from settings
     oiiotool_defaults = None
     ffmpeg_args = None
 
