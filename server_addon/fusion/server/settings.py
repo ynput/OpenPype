@@ -48,6 +48,25 @@ class CreatPluginsModel(BaseSettingsModel):
     )
 
 
+class BasicValidateModel(BaseSettingsModel):
+    enabled: bool = Field(title="Enabled")
+    optional: bool = Field(title="Optional")
+    active: bool = Field(title="Active")
+
+
+class PublishPluginsModel(BaseSettingsModel):
+    ValidateSaverResolution: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Saver Resolution",
+        section="Validators")
+    ValidateInstanceFrameRange: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Frame Range")
+    ValidateBackgroundDepth: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Background Depth 32 bit")
+
+
 class FusionSettings(BaseSettingsModel):
     imageio: FusionImageIOModel = Field(
         default_factory=FusionImageIOModel,
@@ -60,6 +79,10 @@ class FusionSettings(BaseSettingsModel):
     create: CreatPluginsModel = Field(
         default_factory=CreatPluginsModel,
         title="Creator plugins"
+    )
+    publish: PublishPluginsModel = Field(
+        default_factory=PublishPluginsModel,
+        title="Publish Plugins",
     )
 
 
@@ -90,6 +113,23 @@ DEFAULT_VALUES = {
                 "reviewable",
                 "farm_rendering"
             ]
+        }
+    },
+    "publish": {
+        "ValidateSaverResolution": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateInstanceFrameRange": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateBackgroundDepth": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     }
 }
