@@ -1,5 +1,4 @@
 import os
-import tempfile
 
 from openpype.hosts.blender.hooks import pre_add_run_python_script_arg
 from openpype.lib import PreLaunchHook
@@ -14,20 +13,20 @@ class InstallDeadlineAddon(PreLaunchHook):
     app_groups = [
         "blender",
     ]
-    script_file_name = 'set_output_path.py'
+    script_file_name = 'set_deadline_scene_properties.py'
 
     def get_formatted_format_path(self):
         data = self.launch_context.data
-        current_os = data['env']['OS']
+        target_os = "linux"
 
-        retrieved_work_dir = self._get_correct_work_dir(data, current_os)
+        print(data)
+
+        retrieved_work_dir = self._get_correct_work_dir(data, target_os)
         if not retrieved_work_dir:
-            self.log.warning(f"Can't find correct work directory for os {current_os}. Can't set default output path.")
-            return self.get_temporary_file_path()
+            self.log.warning(f"Can't find correct work directory for os {target_os}. Can't set default output path.")
+            return '/tmp/'
 
         sequence_name, shot_name = data['asset_name'].split('_')
-        version = 'v001'
-        render_layer = 'renderLayer'
         try:
             return os.path.join(
                 retrieved_work_dir,
@@ -37,9 +36,10 @@ class InstallDeadlineAddon(PreLaunchHook):
                 data['asset_name'],
                 'publish',
                 'render',
-                render_layer,
-                version,
-                '_'.join([data['project_name'], shot_name, version])
+                f'render{data["task_name"]}Main',
+                '{render_layer_name}',
+                '{version}',
+                '_'.join([data['project_name'], shot_name, '{render_layer_name}', '{version}'])
             )
         except IndexError as err:
             self.log.warning("Value is missing from launch_context data. Can't set default output path.")
@@ -56,8 +56,6 @@ class InstallDeadlineAddon(PreLaunchHook):
 
         return retrieved_work_dir
 
-    def get_temporary_file_path(self):
-        return os.path.join(tempfile.gettempdir(), '####')
 
     def execute(self):
         hooks_folder_path = os.path.dirname(os.path.realpath(__file__))
