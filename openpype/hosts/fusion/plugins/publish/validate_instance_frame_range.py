@@ -17,6 +17,8 @@ class ValidateInstanceFrameRange(pyblish.api.InstancePlugin,
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
 
         context = instance.context
         global_start = context.data["compFrameStart"]
