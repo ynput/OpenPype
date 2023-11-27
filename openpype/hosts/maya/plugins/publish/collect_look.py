@@ -45,11 +45,23 @@ FILE_NODES = {
     "PxrTexture": "filename"
 }
 
+RENDER_SET_TYPES = [
+    "VRayDisplacement",
+    "VRayLightMesh",
+    "VRayObjectProperties",
+    "RedshiftObjectId",
+    "RedshiftMeshParameters",
+]
+
 # Keep only node types that actually exist
 all_node_types = set(cmds.allNodeTypes())
 for node_type in list(FILE_NODES.keys()):
     if node_type not in all_node_types:
         FILE_NODES.pop(node_type)
+
+for node_type in RENDER_SET_TYPES:
+    if node_type not in all_node_types:
+        RENDER_SET_TYPES.remove(node_type)
 del all_node_types
 
 # Cache pixar dependency node types so we can perform a type lookup against it
@@ -369,43 +381,30 @@ class CollectLook(pyblish.api.InstancePlugin):
             # history = cmds.listHistory(look_sets, allConnections=True)
             # if materials list is empty, listHistory() will crash with
             # RuntimeError
-            history = []
+            history = set()
             if materials:
-                history = cmds.listHistory(materials, allConnections=True)
+                history = set(
+                    cmds.listHistory(materials, allConnections=True))
 
             # Since we retrieved history only of the connected materials
             # connected to the look sets above we now add direct history
             # for some of the look sets directly
             # handling render attribute sets
 
-            # this needs to be done like this now, because Maya
-            # (at least 2024) crashes with Warning when render set type
+            # Maya (at least 2024) crashes with Warning when render set type
             # isn't available. cmds.ls() will return empty list
-            render_set_types = []
-            if cmds.pluginInfo("vrayformaya", query=True, loaded=True):
-                render_set_types += [
-                    "VRayDisplacement",
-                    "VRayLightMesh",
-                    "VRayObjectProperties",
-                ]
-
-            if cmds.pluginInfo("redshift4maya", query=True, loaded=True):
-                render_set_types += [
-                    "RedshiftObjectId",
-                    "RedshiftMeshParameters",
-                ]
-
-            render_sets = cmds.ls(look_sets, type=render_set_types)
-            if render_sets:
-                history.extend(
-                    cmds.listHistory(render_sets,
-                                     future=False,
-                                     pruneDagObjects=True)
-                    or []
-                )
+            if RENDER_SET_TYPES:
+                render_sets = cmds.ls(look_sets, type=RENDER_SET_TYPES)
+                if render_sets:
+                    history.update(
+                        cmds.listHistory(render_sets,
+                                         future=False,
+                                         pruneDagObjects=True)
+                        or []
+                    )
 
             # Ensure unique entries only
-            history = list(set(history))
+            history = list(history)
 
             files = cmds.ls(history,
                             # It's important only node types are passed that

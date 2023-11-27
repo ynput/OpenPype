@@ -107,7 +107,6 @@ class InventoryAction(object):
         return get_representation_path_from_context(context)
 
 
-
 # Launcher action
 def discover_launcher_actions():
     return discover(LauncherAction)
