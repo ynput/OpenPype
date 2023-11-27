@@ -117,19 +117,19 @@ DEFAULT_VALUES = {
     },
     "publish": {
         "ValidateSaverResolution": {
-            "enabled": true,
-            "optional": true,
-            "active": true
+            "enabled": True,
+            "optional": True,
+            "active": True
         },
         "ValidateInstanceFrameRange": {
-            "enabled": true,
-            "optional": true,
-            "active": true
+            "enabled": True,
+            "optional": True,
+            "active": True
         },
         "ValidateBackgroundDepth": {
-            "enabled": true,
-            "optional": true,
-            "active": true
+            "enabled": True,
+            "optional": True,
+            "active": True
         }
     }
 }
