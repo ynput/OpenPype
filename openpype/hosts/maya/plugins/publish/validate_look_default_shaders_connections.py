@@ -46,8 +46,9 @@ class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
         # Process as usual
         invalid = list()
         if int(cmds.about(version=True)) >= 2024:
-            self.log.debug("IntialShadingGroup no longer connected to the default shader"
-                           " in Maya 2024. Skipping Look Default Shader Connections..")
+            self.log.debug("IntialShadingGroup no longer "
+                           "connected to the default shader in Maya 2024"
+                           "Skipping Look Default Shader Connections..")
             return
         for plug, input_node in self.DEFAULTS:
             inputs = cmds.listConnections(plug,
