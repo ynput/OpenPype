@@ -1092,6 +1092,32 @@
                 }
             ]
         },
+        "substancepainter": {
+            "enabled": true,
+            "label": "Substance Painter",
+            "icon": "{}/app_icons/substancepainter.png",
+            "host_name": "substancepainter",
+            "environment": "{}",
+            "variants": [
+                {
+                    "name": "8-2-0",
+                    "label": "8.2",
+                    "executables": {
+                        "windows": [
+                            "C:\\Program Files\\Adobe\\Adobe Substance 3D Painter\\Adobe Substance 3D Painter.exe"
+                        ],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "arguments": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "environment": "{}"
+                }
+            ]
+        },
         "unreal": {
             "enabled": true,
             "label": "Unreal Editor",

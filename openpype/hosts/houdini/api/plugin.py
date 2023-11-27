@@ -6,6 +6,8 @@ from abc import (
 )
 import six
 import hou
+
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import (
     CreatorError,
     LegacyCreator,
@@ -142,12 +144,13 @@ class HoudiniCreatorBase(object):
 
     @staticmethod
     def create_instance_node(
-            node_name, parent,
-            node_type="geometry"):
+        asset_name, node_name, parent, node_type="geometry"
+    ):
         # type: (str, str, str) -> hou.Node
         """Create node representing instance.
 
         Arguments:
+            asset_name (str): Asset name.
             node_name (str): Name of the new node.
             parent (str): Name of the parent node.
             node_type (str, optional): Type of the node.
@@ -182,8 +185,13 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             if node_type is None:
                 node_type = "geometry"
 
+            if AYON_SERVER_ENABLED:
+                asset_name = instance_data["folderPath"]
+            else:
+                asset_name = instance_data["asset"]
+
             instance_node = self.create_instance_node(
-                subset_name, "/out", node_type)
+                asset_name, subset_name, "/out", node_type)
 
             self.customize_node_look(instance_node)
 

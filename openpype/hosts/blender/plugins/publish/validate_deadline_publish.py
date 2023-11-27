@@ -36,12 +36,12 @@ class ValidateDeadlinePublish(pyblish.api.InstancePlugin,
                 "Render output folder "
                 "doesn't match the blender scene name! "
                 "Use Repair action to "
-                "fix the folder file path.."
+                "fix the folder file path."
             )
 
     @classmethod
     def repair(cls, instance):
-        container = bpy.data.collections[str(instance)]
+        container = instance.data["transientData"]["instance_node"]
         prepare_rendering(container)
         bpy.ops.wm.save_as_mainfile(filepath=bpy.data.filepath)
         cls.log.debug("Reset the render output folder...")

@@ -1,10 +1,11 @@
 import re
 import uuid
+import copy
+
 import qargparse
 from qtpy import QtWidgets, QtCore
 
 from openpype.settings import get_current_project_settings
-from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
@@ -18,7 +19,7 @@ from .menu import load_stylesheet
 class CreatorWidget(QtWidgets.QDialog):
 
     # output items
-    items = dict()
+    items = {}
 
     def __init__(self, name, info, ui_inputs, parent=None):
         super(CreatorWidget, self).__init__(parent)
@@ -100,7 +101,7 @@ class CreatorWidget(QtWidgets.QDialog):
         self.close()
 
     def value(self, data, new_data=None):
-        new_data = new_data or dict()
+        new_data = new_data or {}
         for k, v in data.items():
             new_data[k] = {
                 "target": None,
@@ -289,7 +290,7 @@ class Spacer(QtWidgets.QWidget):
 class ClipLoader:
 
     active_bin = None
-    data = dict()
+    data = {}
 
     def __init__(self, loader_obj, context, **options):
         """ Initialize object
@@ -386,8 +387,8 @@ class ClipLoader:
         joint `data` key with asset.data dict into the representation
 
         """
-        asset_name = self.context["representation"]["context"]["asset"]
-        self.data["assetData"] = get_current_project_asset(asset_name)["data"]
+
+        self.data["assetData"] = copy.deepcopy(self.context["asset"]["data"])
 
     def load(self, files):
         """Load clip into timeline
@@ -587,8 +588,8 @@ class PublishClip:
     Returns:
         hiero.core.TrackItem: hiero track item object with openpype tag
     """
-    vertical_clip_match = dict()
-    tag_data = dict()
+    vertical_clip_match = {}
+    tag_data = {}
     types = {
         "shot": "shot",
         "folder": "folder",
@@ -664,15 +665,23 @@ class PublishClip:
         new_name = self.tag_data.pop("newClipName")
 
         if self.rename:
-            self.tag_data["asset"] = new_name
+            self.tag_data["asset_name"] = new_name
         else:
-            self.tag_data["asset"] = self.ti_name
+            self.tag_data["asset_name"] = self.ti_name
 
+        # AYON unique identifier
+        folder_path = "/{}/{}".format(
+            self.tag_data["hierarchy"],
+            self.tag_data["asset_name"]
+        )
+        self.tag_data["folder_path"] = folder_path
+
+        # create new name for track item
         if not lib.pype_marker_workflow:
             # create compound clip workflow
             lib.create_compound_clip(
                 self.timeline_item_data,
-                self.tag_data["asset"],
+                self.tag_data["asset_name"],
                 self.mp_folder
             )
 
@@ -764,7 +773,7 @@ class PublishClip:
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
 
-        hierarchy_formatting_data = dict()
+        hierarchy_formatting_data = {}
         _data = self.timeline_item_default_data.copy()
         if self.ui_inputs:
             # adding tag metadata from ui
@@ -853,8 +862,7 @@ class PublishClip:
             "parents": self.parents,
             "hierarchyData": hierarchy_formatting_data,
             "subset": self.subset,
-            "family": self.subset_family,
-            "families": ["clip"]
+            "family": self.subset_family
         }
 
     def _convert_to_entity(self, key):

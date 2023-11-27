@@ -66,7 +66,7 @@ class TransferHierarchicalValues(ServerAction):
                 "items": [{
                     "type": "label",
                     "value": (
-                        "Didn't found custom attributes"
+                        "Didn't find custom attributes"
                         " that can be transferred."
                     )
                 }]
