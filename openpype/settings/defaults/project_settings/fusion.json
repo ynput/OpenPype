@@ -38,6 +38,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ValidateBackgroundDepth": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     }
 }

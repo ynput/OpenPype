@@ -110,6 +110,16 @@
                             "label": "Validate Frame Range"
                         }
                     ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateBackgroundDepth",
+                            "label": "Validate Background Depth 32 bit"
+                        }
+                    ]
                 }
             ]
         }
