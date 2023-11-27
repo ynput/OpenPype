@@ -32,7 +32,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     ]
     enabled = False
 
-    # presentable attribute
+    # attribute presets from settings
     ffmpeg_args = None
 
     def process(self, instance):
