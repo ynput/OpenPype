@@ -677,7 +677,7 @@ class ProductsModel:
         representation_ids = [repre["id"] for repre in representations]
         representations_sync_status = (
             self._controller.get_representations_sync_status(
-                project_name,representation_ids)
+                project_name, representation_ids)
         )
         repre_items_by_version_id = collections.defaultdict(dict)
         for representation in representations:
