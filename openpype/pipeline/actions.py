@@ -7,6 +7,8 @@ from openpype.pipeline.plugin_discover import (
     deregister_plugin_path
 )
 
+from .load.utils import get_representation_path_from_context
+
 
 class LauncherAction(object):
     """A custom action available"""
@@ -99,6 +101,10 @@ class InventoryAction(object):
 
         """
         return True
+
+    @classmethod
+    def filepath_from_context(cls, context):
+        return get_representation_path_from_context(context)
 
 
 # Launcher action

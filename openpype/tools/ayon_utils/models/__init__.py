@@ -12,6 +12,8 @@ from .hierarchy import (
     HierarchyModel,
     HIERARCHY_MODEL_SENDER,
 )
+from .thumbnails import ThumbnailsModel
+from .selection import HierarchyExpectedSelection
 
 
 __all__ = (
@@ -26,4 +28,8 @@ __all__ = (
     "TaskItem",
     "HierarchyModel",
     "HIERARCHY_MODEL_SENDER",
+
+    "ThumbnailsModel",
+
+    "HierarchyExpectedSelection",
 )

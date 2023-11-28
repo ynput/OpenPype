@@ -76,8 +76,8 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                 return
 
             collections, remainder = clique.assemble(repre["files"])
-            self.log.info("collections: {}".format(str(collections)))
-            self.log.info("remainder: {}".format(str(remainder)))
+            self.log.debug("collections: {}".format(str(collections)))
+            self.log.debug("remainder: {}".format(str(remainder)))
 
             collection = collections[0]
 
@@ -103,15 +103,15 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             coll_start = min(collection.indexes)
             coll_end = max(collection.indexes)
 
-            self.log.info("frame_length: {}".format(frame_length))
-            self.log.info("collected_frames_len: {}".format(
+            self.log.debug("frame_length: {}".format(frame_length))
+            self.log.debug("collected_frames_len: {}".format(
                 collected_frames_len))
-            self.log.info("f_start_h-f_end_h: {}-{}".format(
+            self.log.debug("f_start_h-f_end_h: {}-{}".format(
                 f_start_h, f_end_h))
-            self.log.info(
+            self.log.debug(
                 "coll_start-coll_end: {}-{}".format(coll_start, coll_end))
 
-            self.log.info(
+            self.log.debug(
                 "len(collection.indexes): {}".format(collected_frames_len)
             )
 

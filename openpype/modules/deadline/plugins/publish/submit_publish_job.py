@@ -96,7 +96,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     targets = ["local"]
 
     hosts = ["fusion", "max", "maya", "nuke", "houdini",
-             "celaction", "aftereffects", "harmony"]
+             "celaction", "aftereffects", "harmony", "blender"]
 
     families = ["render.farm", "render.frames_farm",
                 "prerender.farm", "prerender.frames_farm",
@@ -107,6 +107,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "redshift_rop"]
 
     aov_filter = {"maya": [r".*([Bb]eauty).*"],
+                  "blender": [r".*([Bb]eauty).*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"],
@@ -707,6 +708,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         """
 
         project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
         if not version:
             version = get_last_version_by_subset_name(
                 project_name,
@@ -718,7 +720,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             else:
                 version = get_versioning_start(
                     project_name,
-                    template_data["app"],
+                    host_name,
                     task_name=template_data["task"]["name"],
                     task_type=template_data["task"]["type"],
                     family="render",

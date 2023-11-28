@@ -85,7 +85,7 @@ class AyonDeadlinePlugin(DeadlinePlugin):
         }
 
         for env, val in environment.items():
-            self.SetProcessEnvironmentVariable(env, val)
+            self.SetEnvironmentVariable(env, val)
 
         exe_list = self.GetConfigEntry("AyonExecutable")
         # clean '\ ' for MacOS pasting
@@ -96,16 +96,16 @@ class AyonDeadlinePlugin(DeadlinePlugin):
         for path in exe_list.split(";"):
             if path.startswith("~"):
                 path = os.path.expanduser(path)
-                expanded_paths.append(path)
+            expanded_paths.append(path)
         exe = FileUtils.SearchFileList(";".join(expanded_paths))
 
         if exe == "":
             self.FailRender(
-                "Ayon executable was not found " +
-                "in the semicolon separated list " +
-                "\"" + ";".join(exe_list) + "\". " +
-                "The path to the render executable can be configured " +
-                "from the Plugin Configuration in the Deadline Monitor.")
+                "Ayon executable was not found in the semicolon separated "
+                "list: \"{}\". The path to the render executable can be "
+                "configured from the Plugin Configuration in the Deadline "
+                "Monitor.".format(exe_list)
+            )
         return exe
 
     def RenderArgument(self):

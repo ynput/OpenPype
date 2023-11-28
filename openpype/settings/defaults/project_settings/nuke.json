@@ -19,16 +19,16 @@
             "rules": {}
         },
         "viewer": {
-            "viewerProcess": "sRGB"
+            "viewerProcess": "sRGB (default)"
         },
         "baking": {
-            "viewerProcess": "rec709"
+            "viewerProcess": "rec709 (default)"
         },
         "workfile": {
-            "colorManagement": "Nuke",
+            "colorManagement": "OCIO",
             "OCIO_config": "nuke-default",
-            "workingSpaceLUT": "linear",
-            "monitorLut": "sRGB"
+            "workingSpaceLUT": "scene_linear",
+            "monitorLut": "sRGB (default)"
         },
         "nodes": {
             "requiredNodes": [
@@ -76,7 +76,7 @@
                         {
                             "type": "text",
                             "name": "colorspace",
-                            "value": "linear"
+                            "value": "scene_linear"
                         },
                         {
                             "type": "bool",
@@ -129,7 +129,7 @@
                         {
                             "type": "text",
                             "name": "colorspace",
-                            "value": "linear"
+                            "value": "scene_linear"
                         },
                         {
                             "type": "bool",
@@ -177,7 +177,7 @@
                         {
                             "type": "text",
                             "name": "colorspace",
-                            "value": "sRGB"
+                            "value": "texture_paint"
                         },
                         {
                             "type": "bool",
@@ -193,7 +193,7 @@
             "inputs": [
                 {
                     "regex": "(beauty).*(?=.exr)",
-                    "colorspace": "linear"
+                    "colorspace": "scene_linear"
                 }
             ]
         }
@@ -341,7 +341,7 @@
                 "write"
             ]
         },
-        "ValidateCorrectAssetName": {
+        "ValidateCorrectAssetContext": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -374,7 +374,7 @@
             "optional": true,
             "active": true
         },
-        "ValidateScript": {
+        "ValidateScriptAttributes": {
             "enabled": true,
             "optional": true,
             "active": true

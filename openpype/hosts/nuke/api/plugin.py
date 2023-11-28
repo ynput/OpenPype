@@ -39,7 +39,6 @@ from .lib import (
     get_view_process_node,
     get_viewer_config_from_string,
     deprecated,
-    get_head_filename_without_hashes,
     get_filenames_without_hash
 )
 from .pipeline import (
@@ -538,6 +537,7 @@ class NukeLoader(LoaderPlugin):
             node.addKnob(knob)
 
     def clear_members(self, parent_node):
+        parent_class = parent_node.Class()
         members = self.get_members(parent_node)
 
         dependent_nodes = None
@@ -550,6 +550,8 @@ class NukeLoader(LoaderPlugin):
             break
 
         for member in members:
+            if member.Class() == parent_class:
+                continue
             self.log.info("removing node: `{}".format(member.name()))
             nuke.delete(member)
 
@@ -816,19 +818,20 @@ class ExporterReviewMov(ExporterReview):
 
         self.log.info("File info was set...")
 
-        self.file = self.fhead + self.name + ".{}".format(self.ext)
-        if ".{}".format(self.ext) not in VIDEO_EXTENSIONS:
-            # filename would be with frame hashes if
-            # the file extension is not in video format
-            filename = get_head_filename_without_hashes(
-                self.path_in, self.name)
-            self.file = filename
-            # make sure the filename are in
-            # correct image output format
-            if ".{}".format(self.ext) not in self.file:
-                filename_no_ext, _ = os.path.splitext(filename)
-                self.file = "{}.{}".format(filename_no_ext, self.ext)
-
+        if ".{}".format(self.ext) in VIDEO_EXTENSIONS:
+            self.file = "{}{}.{}".format(
+                self.fhead, self.name, self.ext)
+        else:
+            # Output is image (or image sequence)
+            # When the file is an image it's possible it
+            # has extra information after the `fhead` that
+            # we want to preserve, e.g. like frame numbers
+            # or frames hashes like `####`
+            filename_no_ext = os.path.splitext(
+                os.path.basename(self.path_in))[0]
+            after_head = filename_no_ext[len(self.fhead):]
+            self.file = "{}{}.{}.{}".format(
+                self.fhead, self.name, after_head, self.ext)
         self.path = os.path.join(
             self.staging_dir, self.file).replace("\\", "/")
 
