@@ -1,7 +1,7 @@
-import os
 import numbers
 from qtpy import QtWidgets, QtCore, QtGui
 
+from openpype.tools.ayon_utils.widgets import get_qt_icon
 from openpype.tools.utils.lib import format_version
 
 from .products_model import (
@@ -223,7 +223,7 @@ class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
         height = width = 24
         for value, icon_def in [(availability_active, active_icon),
                                 (availability_remote, remote_icon)]:
-            icon = QtGui.QIcon(icon_def["path"])
+            icon = get_qt_icon(icon_def)
             if not icon:
                 continue
 
