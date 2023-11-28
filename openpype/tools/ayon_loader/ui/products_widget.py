@@ -22,7 +22,7 @@ from .products_model import (
 from .products_delegates import (
     VersionDelegate,
     LoadedInSceneDelegate,
-    AvailabilityDelegate
+    SiteSyncDelegate
 )
 from .actions_utils import show_actions_menu
 
@@ -139,7 +139,7 @@ class ProductsWidget(QtWidgets.QWidget):
         products_view.setItemDelegateForColumn(
             products_model.in_scene_col, in_scene_delegate)
 
-        avail_delegate = AvailabilityDelegate()
+        avail_delegate = SiteSyncDelegate()
         products_view.setItemDelegateForColumn(
             products_model.availability_col, avail_delegate)
 

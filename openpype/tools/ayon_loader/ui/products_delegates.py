@@ -197,16 +197,13 @@ class LoadedInSceneDelegate(QtWidgets.QStyledItemDelegate):
         option.palette.setBrush(QtGui.QPalette.Text, color)
 
 
-class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
+class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
     """
         Prints icons and downloaded representation ration for both sides.
     """
 
-    def __init__(self, parent=None):
-        super(AvailabilityDelegate, self).__init__(parent)
-
     def paint(self, painter, option, index):
-        super(AvailabilityDelegate, self).paint(painter, option, index)
+        super(SiteSyncDelegate, self).paint(painter, option, index)
         option = QtWidgets.QStyleOptionViewItem(option)
         option.showDecorationSelected = True
 
