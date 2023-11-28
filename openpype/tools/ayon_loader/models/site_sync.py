@@ -117,14 +117,14 @@ class SiteSyncModel:
 
         for identifier, repre_ids in repre_ids_per_identifier.items():
             if identifier == DOWNLOAD_IDENTIFIER:
-                action_items.append(self._create_download_action_item(project_name,
-                                                                      repre_ids))
+                action_items.append(self._create_download_action_item(
+                    project_name,repre_ids))
             if identifier == UPLOAD_IDENTIFIER:
-                action_items.append(self._create_upload_action_item(project_name,
-                                                                    repre_ids))
+                action_items.append(self._create_upload_action_item(
+                    project_name, repre_ids))
             if identifier == REMOVE_IDENTIFIER:
-                action_items.append(self._create_delete_action_item(project_name,
-                                                                    repre_ids))
+                action_items.append(self._create_delete_action_item(
+                    project_name, repre_ids))
 
         return action_items
 
