@@ -367,12 +367,14 @@ class ProductsModel(QtGui.QStandardItemModel):
         self._last_project_name = project_name
         self._last_folder_ids = folder_ids
 
-        active_site_icon = self._controller.get_active_site_icon_def(
+        active_site_icon_def = self._controller.get_active_site_icon_def(
             project_name
         )
-        remote_site_icon = self._controller.get_remote_site_icon_def(
+        remote_site_icon_def = self._controller.get_remote_site_icon_def(
             project_name
         )
+        active_site_icon = get_qt_icon(active_site_icon_def)
+        remote_site_icon = get_qt_icon(remote_site_icon_def)
 
         product_items = self._controller.get_product_items(
             project_name,
