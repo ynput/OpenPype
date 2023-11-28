@@ -690,8 +690,8 @@ class ProductsModel:
             if product_item is None:
                 continue
             repre_id = representation["id"]
-            local_progress = representations_sync_status[repre_id][0]
-            remote_progress = representations_sync_status[repre_id][1]
+            sync_status = representations_sync_status[repre_id]
+            local_progress, remote_progress = sync_status
             repre_item = RepreItem(
                 repre_id,
                 representation["name"],
