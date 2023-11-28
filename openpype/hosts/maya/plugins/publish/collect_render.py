@@ -51,7 +51,7 @@ import pyblish.api
 
 from openpype.lib import get_formatted_current_time
 from openpype.pipeline import legacy_io
-from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
+import openpype.hosts.maya.api.lib_renderproducts as lib_renderproducts  # noqa: E501
 from openpype.hosts.maya.api import lib
 
 
@@ -159,7 +159,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # collect all frames we are expecting to be rendered
             # return all expected files for all cameras and aovs in given
             # frame range
-            layer_render_products = get_layer_render_products(layer_name)
+            layer_render_products = lib_renderproducts.get(layer_name)
             render_products = layer_render_products.layer_data.products
             assert render_products, "no render products generated"
             exp_files = []
@@ -266,7 +266,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             self.log.info(
                 "Publish meta path: {}".format(common_publish_meta_path))
 
-            self.log.info(full_exp_files)
+            #self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
             colorspace_data = lib.get_color_management_preferences()
@@ -319,7 +319,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "useReferencedAovs": render_instance.data.get(
                     "useReferencedAovs") or render_instance.data.get(
                         "vrayUseReferencedAovs") or False,
-                "aovSeparator": layer_render_products.layer_data.aov_separator,  # noqa: E501
+                "aovSeparator": context.data.get("aov_separator", "."),     #Hornet
                 "renderSetupIncludeLights": render_instance.data.get(
                     "renderSetupIncludeLights"
                 ),

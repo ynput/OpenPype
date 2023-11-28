@@ -111,6 +111,7 @@ class MayaSubmitRemotePublishDeadline(pyblish.api.InstancePlugin):
         # Add OpenPype version if we are running from build.
         if is_running_from_build():
             keys.append("OPENPYPE_VERSION")
+            keys.append("OPENPYPE_CONSOLE") # updated for find the right version the render triggered.
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)

@@ -1,3 +1,7 @@
 # -*- coding: utf-8 -*-
 """Package declaring Pype version."""
-__version__ = "3.15.8-nightly.1-h0033"
+<<<<<<< HEAD
+__version__ = "3.15.8-nightly.1-h0034"
+=======
+__version__ = "3.15.8-nightly.1-h0032"
+>>>>>>> dev
