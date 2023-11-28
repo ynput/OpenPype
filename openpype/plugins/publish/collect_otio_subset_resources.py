@@ -197,7 +197,7 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
                             otio.opentime.RationalTime(trimmed_duration,
                                                        timeline_fps),
                             media_fps
-                    )
+                        )
                     self.log.debug(
                         "source_in_frames_with_media_fps: {}".format(
                             source_in_frames_with_media_fps))
