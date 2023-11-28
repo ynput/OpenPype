@@ -25,9 +25,6 @@ class SiteSyncModel:
     def reset(self):
         pass
 
-    def refresh(self):
-        pass
-
     def is_site_sync_enabled(self, project_name):
         return self._sitesync_addon.is_project_enabled(project_name,
                                                        single=True)

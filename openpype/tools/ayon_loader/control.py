@@ -152,7 +152,6 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         self._sitesync_model.reset()
 
         self._projects_model.refresh()
-        self._sitesync_model.refresh()
 
         if not project_name and not folder_ids:
             context = self.get_current_context()
