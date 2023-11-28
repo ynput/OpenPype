@@ -439,10 +439,10 @@ class ClipLoader:
         source_with_handles = True
         # make sure all frame data is available
         if (
-            frame_start is None or
-            frame_end is None or
-            handle_start == 0 or
-            handle_end == 0
+            frame_start is None
+            or frame_end is None
+            or handle_start == 0
+            or handle_end == 0
         ):
             # if not then rather assume that source has no handles
             source_with_handles = False
