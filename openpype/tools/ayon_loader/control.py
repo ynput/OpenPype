@@ -226,9 +226,10 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
 
     def get_representations_action_items(
             self, project_name, representation_ids):
-        action_items = (self._loader_actions_model.
-                get_representations_action_items(project_name,
-                                                 representation_ids))
+        action_items = (
+            self._loader_actions_model.get_representations_action_items(
+                project_name, representation_ids)
+        )
 
         action_items.extend(self._sitesync_model.get_sitesync_action_items(
             project_name, representation_ids)
