@@ -39,6 +39,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
+from openpype.pipeline.workfile import workfile_template_builder
 from openpype.pipeline.workfile.lock_workfile import (
     create_workfile_lock,
     remove_workfile_lock,
@@ -49,7 +50,10 @@ from openpype.hosts.maya import MAYA_ROOT_DIR
 from openpype.hosts.maya.lib import create_workspace_mel
 
 from . import menu, lib
-from .workfile_template_builder import MayaPlaceholderLoadPlugin
+from .workfile_template_builder import (
+    MayaPlaceholderLoadPlugin,
+    build_workfile_template
+)
 from .workio import (
     open_file,
     save_file,
@@ -591,11 +595,17 @@ def _update_render_layer_observers():
     lib.add_render_layer_change_observer()
 
 
+def _autobuild_first_workfile():
+    if workfile_template_builder.should_build_first_workfile():
+        build_workfile_template()
+
+
 def on_open():
     """On scene open let's assume the containers have changed."""
 
     from openpype.widgets import popup
 
+    utils.executeDeferred(_autobuild_first_workfile)
     utils.executeDeferred(_update_render_layer_observers)
 
     # Validate FPS after update_task_from_path to
@@ -632,6 +642,7 @@ def on_new():
     """Set project resolution and fps when create a new file"""
     log.info("Running callback on new..")
     with lib.suspended_refresh():
+        utils.executeDeferred(_autobuild_first_workfile)
         lib.set_context_settings()
 
     utils.executeDeferred(_update_render_layer_observers)
