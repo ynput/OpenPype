@@ -410,56 +410,38 @@ class ClipLoader:
         source_out = int(_clip_property("End"))
         source_duration = int(_clip_property("Frames"))
 
-        # get version data frame data from db
-        version_data = self.data["versionData"]
-        frame_start = version_data.get("frameStart")
-        frame_end = version_data.get("frameEnd")
-
-        if self.with_handles:
-            handle_start = version_data.get("handleStart") or 0
-            handle_end = version_data.get("handleEnd") or 0
-        else:
+        if not self.with_handles:
+            # Load file without the handles of the source media
+            # We remove the handles from the source in and source out
+            # so that the handles are excluded in the timeline
             handle_start = 0
             handle_end = 0
 
-        """
-        There are cases where representation could be published without
-        handles if the "Extract review output tags" is set to "no_handles".
-        This would result in a shorter source duration compared to the
-        db frame-range. In such cases, we need to assume that the source
-        has no handles.
+            # get version data frame data from db
+            version_data = self.data["versionData"]
+            frame_start = version_data.get("frameStart")
+            frame_end = version_data.get("frameEnd")
 
-        To address this, we should compare the duration of the source
-        frame with the db frame-range. The duration of the db frame-range
-        should be calculated from the version data. If, for any reason,
-        the frame data is missing in the version data, we should again
-        assume that the source has no handles.
-        """
-        # check if source duration is shorter than db frame duration
-        source_with_handles = True
-        # make sure all frame data is available
-        if (
-            frame_start is None
-            or frame_end is None
-            or handle_start == 0
-            or handle_end == 0
-        ):
-            # if not then rather assume that source has no handles
-            source_with_handles = False
-        else:
-            # calculate db frame duration
-            db_frame_duration = (
-                # include handles
-                int(handle_start) + int(handle_end) +
-                # include frame duration
-                (int(frame_end) - int(frame_start) + 1)
-            )
-
-            # compare source duration with db frame duration
-            # and assume that source has no handles if source duration
-            # is shorter than db frame duration
-            if source_duration < db_frame_duration:
-                source_with_handles = False
+            # The version data usually stored the frame range + handles of the
+            # media however certain representations may be shorter because they
+            # exclude those handles intentionally. Unfortunately the
+            # representation does not store that in the database currently;
+            # so we should compensate for those cases. If the media is shorter
+            # than the frame range specified in the database we assume it is
+            # without handles and thus we do not need to remove the handles
+            # from source and out
+            if frame_start is not None and frame_end is not None:
+                # Version has frame range data, so we can compare media length
+                handle_start = version_data.get("handleStart", 0)
+                handle_end = version_data.get("handleEnd", 0)
+                frame_start_handle = frame_start - handle_start
+                frame_end_handle = frame_start + handle_end
+                database_frame_duration = int(
+                    frame_end_handle - frame_start_handle + 1
+                )
+                if source_duration >= database_frame_duration:
+                    source_in += handle_start
+                    source_out -= handle_end
 
         # get timeline in
         timeline_start = self.active_timeline.GetStartFrame()
@@ -470,15 +452,6 @@ class ClipLoader:
             # set timeline start frame + original clip in frame
             timeline_in = int(
                 timeline_start + self.data["assetData"]["clipIn"])
-
-        # only exclude handles if source has no handles or
-        # if user wants to load without handles
-        if (
-            not self.with_handles  # set by user
-            or not source_with_handles  # result of source duration check
-        ):
-            source_in += handle_start
-            source_out -= handle_end
 
         # make track item from source in bin as item
         timeline_item = lib.create_timeline_item(
