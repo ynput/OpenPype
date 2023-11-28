@@ -16,6 +16,7 @@ import re
 import collections
 import copy
 from abc import ABCMeta, abstractmethod
+import logging
 
 import six
 
@@ -59,6 +60,9 @@ from openpype.pipeline.context_tools import (
     get_current_task_name,
     get_current_host_name
 )
+
+
+log = logging.getLogger(__name__)
 
 
 class TemplateNotFound(Exception):
@@ -603,8 +607,8 @@ class AbstractTemplateBuilder(object):
                 host's template file.
         """
         last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
-        self.log.info("__ last_workfile_path: {}".format(last_workfile_path))
-        if os.path.exists(last_workfile_path):
+        workfile_exists = is_workfile_exists()
+        if workfile_exists:
             # ignore in case workfile existence
             self.log.info("Workfile already exists, skipping creation.")
             return False
@@ -2016,3 +2020,12 @@ def should_build_first_workfile(
         return False
 
     return True
+
+
+def is_workfile_exists():
+    last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+    log.info("__ last_workfile_path: {}".format(last_workfile_path))
+
+    if last_workfile_path and os.path.exists(last_workfile_path):
+        return True
+    return False

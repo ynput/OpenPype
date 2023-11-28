@@ -596,7 +596,10 @@ def _update_render_layer_observers():
 
 
 def _autobuild_first_workfile():
-    if workfile_template_builder.should_build_first_workfile():
+    if (
+        workfile_template_builder.should_build_first_workfile()
+        and not workfile_template_builder.is_workfile_exists()
+    ):
         build_workfile_template()
 
 
