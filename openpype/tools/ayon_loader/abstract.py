@@ -243,7 +243,7 @@ class RepreItem:
             "product_name": self.product_name,
             "folder_label": self.folder_label,
             "active_site_progress": self.active_site_progress,
-            "folder_label": self.folder_label,
+            "remote_site_progress": self.remote_site_progress,
         }
 
     @classmethod
