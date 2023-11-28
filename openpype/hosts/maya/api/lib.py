@@ -2309,6 +2309,8 @@ def get_frame_range(include_animation_range=False):
             animation_start -= int(handle_start)
             animation_end += int(handle_end)
 
+        frame_range["frameStart"] = animation_start
+        frame_range["frameEnd"] = animation_end
         frame_range["animationStart"] = animation_start
         frame_range["animationEnd"] = animation_end
 
