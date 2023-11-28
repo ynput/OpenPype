@@ -3,10 +3,17 @@ from typing import List
 import bpy
 
 import pyblish.api
+from openpype.pipeline.publish import (
+    OptionalPyblishPluginMixin,
+    PublishValidationError
+)
 import openpype.hosts.blender.api.action
 
 
-class ValidateObjectIsInObjectMode(pyblish.api.InstancePlugin):
+class ValidateObjectIsInObjectMode(
+        pyblish.api.InstancePlugin,
+        OptionalPyblishPluginMixin,
+):
     """Validate that the objects in the instance are in Object Mode."""
 
     order = pyblish.api.ValidatorOrder - 0.01
@@ -25,8 +32,12 @@ class ValidateObjectIsInObjectMode(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
-                f"Object found in instance is not in Object Mode: {invalid}"
+            names = ", ".join(obj.name for obj in invalid)
+            raise PublishValidationError(
+                f"Object found in instance is not in Object Mode: {names}"
             )

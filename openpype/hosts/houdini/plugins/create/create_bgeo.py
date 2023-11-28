@@ -2,8 +2,8 @@
 """Creator plugin for creating pointcache bgeo files."""
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance, CreatorError
-from openpype.lib import EnumDef
 import hou
+from openpype.lib import EnumDef, BoolDef
 
 
 class CreateBGEO(plugin.HoudiniCreator):
@@ -18,6 +18,9 @@ class CreateBGEO(plugin.HoudiniCreator):
         instance_data.pop("active", None)
 
         instance_data.update({"node_type": "geometry"})
+        creator_attributes = instance_data.setdefault(
+            "creator_attributes", dict())
+        creator_attributes["farm"] = pre_create_data["farm"]
 
         instance = super(CreateBGEO, self).create(
             subset_name,
@@ -58,6 +61,13 @@ class CreateBGEO(plugin.HoudiniCreator):
 
         instance_node.setParms(parms)
 
+    def get_instance_attr_defs(self):
+        return [
+            BoolDef("farm",
+                    label="Submitting to Farm",
+                    default=False)
+        ]
+
     def get_pre_create_attr_defs(self):
         attrs = super().get_pre_create_attr_defs()
         bgeo_enum = [
@@ -89,7 +99,7 @@ class CreateBGEO(plugin.HoudiniCreator):
 
         return attrs + [
             EnumDef("bgeo_type", bgeo_enum, label="BGEO Options"),
-        ]
+        ] + self.get_instance_attr_defs()
 
     def get_network_categories(self):
         return [

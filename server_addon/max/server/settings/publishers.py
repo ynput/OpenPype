@@ -27,6 +27,26 @@ class ValidateAttributesModel(BaseSettingsModel):
         return value
 
 
+class FamilyMappingItemModel(BaseSettingsModel):
+    product_types: list[str] = Field(
+        default_factory=list,
+        title="Product Types"
+    )
+    plugins: list[str] = Field(
+        default_factory=list,
+        title="Plugins"
+    )
+
+
+class ValidateLoadedPluginModel(BaseSettingsModel):
+    enabled: bool = Field(title="Enabled")
+    optional: bool = Field(title="Optional")
+    family_plugins_mapping: list[FamilyMappingItemModel] = Field(
+        default_factory=list,
+        title="Family Plugins Mapping"
+    )
+
+
 class BasicValidateModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
@@ -44,6 +64,10 @@ class PublishersModel(BaseSettingsModel):
         title="Validate Attributes"
     )
 
+    ValidateLoadedPlugin: ValidateLoadedPluginModel = Field(
+        default_factory=ValidateLoadedPluginModel,
+        title="Validate Loaded Plugin"
+    )
 
 DEFAULT_PUBLISH_SETTINGS = {
     "ValidateFrameRange": {
@@ -55,4 +79,9 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": False,
         "attributes": "{}"
     },
+    "ValidateLoadedPlugin": {
+        "enabled": False,
+        "optional": True,
+        "family_plugins_mapping": []
+    }
 }
