@@ -187,16 +187,20 @@ class CollectOtioSubsetResources(pyblish.api.InstancePlugin):
                 ):
                     # convert timecode to media fps frames
                     source_in_frames_with_media_fps = otio.opentime.to_frames(
-                        otio.opentime.RationalTime(a_frame_start_h, timeline_fps),
+                        otio.opentime.RationalTime(
+                            a_frame_start_h, timeline_fps),
                         media_fps
                     )
                     # convert timecode to media fps frames
-                    source_duration_frames_with_media_fps = otio.opentime.to_frames(
-                        otio.opentime.RationalTime(trimmed_duration, timeline_fps),
+                    source_duration_frames_with_media_fps = \
+                        otio.opentime.to_frames(
+                            otio.opentime.RationalTime(
+                                trimmed_duration, timeline_fps),
                         media_fps
                     )
-                    self.log.debug("source_in_frames_with_media_fps: {}".format(
-                        source_in_frames_with_media_fps))
+                    self.log.debug(
+                        "source_in_frames_with_media_fps: {}".format(
+                            source_in_frames_with_media_fps))
                     trimmed_media_range_h = range_from_frames(
                         source_in_frames_with_media_fps,
                         source_duration_frames_with_media_fps,
