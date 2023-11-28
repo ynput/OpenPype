@@ -58,8 +58,10 @@ class SiteSyncModel:
     def get_remote_site_icon_def(self, project_name):
         if not project_name:
             return
-        provider = self._sitesync_addon.get_provider_for_site(project_name,
-            self.get_remote_site(project_name))
+        provider = self._sitesync_addon.get_provider_for_site(
+            project_name,
+            self.get_remote_site(project_name)
+        )
         return self.get_site_icons().get(provider)
 
     def get_version_availability(self, project_name, version_ids):
@@ -130,20 +132,24 @@ class SiteSyncModel:
         return action_items
 
     def _create_download_action_item(self, project_name, representation_ids):
-        return self._create_action_item(project_name,
-                                        representation_ids,
-                                        DOWNLOAD_IDENTIFIER,
-                                        "Download",
-                                        "Mark representation for download locally",
-                                        "download")
+        return self._create_action_item(
+            project_name,
+            representation_ids,
+            DOWNLOAD_IDENTIFIER,
+            "Download",
+            "Mark representation for download locally",
+            "download"
+        )
 
     def _create_upload_action_item(self, project_name, representation_ids):
-        return self._create_action_item(project_name,
-                                        representation_ids,
-                                        UPLOAD_IDENTIFIER,
-                                        "Upload",
-                                        "Mark representation for upload remotely",
-                                        "upload")
+        return self._create_action_item(
+            project_name,
+            representation_ids,
+            UPLOAD_IDENTIFIER,
+            "Upload",
+            "Mark representation for upload remotely",
+            "upload"
+        )
 
     def _create_delete_action_item(self, project_name, representation_ids):
         return self._create_action_item(project_name,

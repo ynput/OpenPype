@@ -637,7 +637,7 @@ class ProductsModel:
         failed = False
         try:
             self._refresh_representation_items(project_name, version_ids)
-        except Exception as exp:
+        except Exception:
             # TODO add more information about failed refresh
             failed = True
 
@@ -675,8 +675,10 @@ class ProductsModel:
             "color": get_default_entity_icon_color(),
         }
         representation_ids = [repre["id"] for repre in representations]
-        representations_sync_status = self._controller.get_representations_sync_status(
-            project_name, representation_ids
+        representations_sync_status = (
+            self._controller.get_representations_sync_status(project_name,
+                                                             representation_ids
+            )
         )
         repre_items_by_version_id = collections.defaultdict(dict)
         for representation in representations:

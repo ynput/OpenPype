@@ -15,7 +15,12 @@ from openpype.tools.ayon_utils.models import (
 )
 
 from .abstract import BackendLoaderController, FrontendLoaderController
-from .models import SelectionModel, ProductsModel, LoaderActionsModel, SiteSyncModel
+from .models import (
+    SelectionModel,
+    ProductsModel,
+    LoaderActionsModel,
+    SiteSyncModel
+)
 
 
 class ExpectedSelection:
@@ -222,8 +227,9 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
 
     def get_representations_action_items(
             self, project_name, representation_ids):
-        action_items = self._loader_actions_model.get_representations_action_items(
-            project_name, representation_ids)
+        action_items = (self._loader_actions_model.
+                get_representations_action_items(project_name,
+                                                 representation_ids))
 
         action_items.extend(self._sitesync_model.get_sitesync_action_items(
             project_name, representation_ids)
@@ -370,9 +376,11 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         return self._sitesync_model.get_version_availability(project_name,
                                                              version_ids)
 
-    def get_representations_sync_status(self, project_name, representation_ids):
-        return self._sitesync_model.get_representations_sync_state(project_name,
-                                                                   representation_ids)
+    def get_representations_sync_status(self, project_name,
+                                        representation_ids):
+        return (self._sitesync_model.
+                get_representations_sync_state(project_name,
+                                               representation_ids))
 
     def is_loaded_products_supported(self):
         return self._host is not None
