@@ -14,6 +14,7 @@ from openpype.pipeline import (
 )
 from openpype.lib import BoolDef
 from .lib import imprint, read, lsattr
+from uuid import uuid4
 
 
 class OpenPypeCreatorError(CreatorError):
@@ -116,15 +117,27 @@ class HoudiniCreatorBase(object):
         if shared_data.get("houdini_cached_subsets") is None:
             cache = dict()
             cache_legacy = dict()
+            instance_id_list = []
 
             for node in lsattr("id", "pyblish.avalon.instance"):
 
                 creator_identifier_parm = node.parm("creator_identifier")
+                instance_id_parm = node.parm("instance_id")
                 if creator_identifier_parm:
                     # creator instance
                     creator_id = creator_identifier_parm.eval()
+                    instance_id = instance_id_parm.eval()
+                    # Regenerating instance in case of identical values between nodes
+                    if instance_id in instance_id_list or node.path() != node.parm("instance_node").eval():
+                        new_data = {
+                            "instance_node": node.path(),
+                            "instance_id": str(uuid4()),
+                            "subset": node.name()
+                        }
+                        # Refreshing node values
+                        imprint(hou.node(node.path()), new_data, update=True)
                     cache.setdefault(creator_id, []).append(node)
-
+                    instance_id_list.append(instance_id)
                 else:
                     # legacy instance
                     family_parm = node.parm("family")
