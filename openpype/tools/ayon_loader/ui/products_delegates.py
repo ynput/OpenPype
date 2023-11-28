@@ -213,10 +213,16 @@ class AvailabilityDelegate(QtWidgets.QStyledItemDelegate):
         active_icon = index.data(ACTIVE_SITE_ICON_ROLE)
         remote_icon = index.data(REMOTE_SITE_ICON_ROLE)
 
-        availability_active = f"{index.data(SYNC_ACTIVE_SITE_AVAILABILITY)}/{index.data(REPRESENTATIONS_COUNT_ROLE)}"  # noqa
-        availability_remote = f"{index.data(SYNC_REMOTE_SITE_AVAILABILITY)}/{index.data(REPRESENTATIONS_COUNT_ROLE)}"  # noqa
+        availability_active = "{}/{}".format(
+            index.data(SYNC_ACTIVE_SITE_AVAILABILITY),
+            index.data(REPRESENTATIONS_COUNT_ROLE)
+        )
+        availability_remote = "{}/{}".format(
+            index.data(SYNC_REMOTE_SITE_AVAILABILITY),
+            index.data(REPRESENTATIONS_COUNT_ROLE)
+        )
 
-        if availability_active is None or availability_remote is None:  # group lines
+        if availability_active is None or availability_remote is None:
             return
 
         idx = 0
