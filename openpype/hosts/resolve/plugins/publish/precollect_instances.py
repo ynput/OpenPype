@@ -12,6 +12,7 @@ from openpype.hosts.resolve.api.lib import (
     get_otio_clip_instance_data,
     create_otio_time_range_from_timeline_item_data
 )
+from openpype import AYON_SERVER_ENABLED
 
 
 class PrecollectInstances(pyblish.api.ContextPlugin):
@@ -70,7 +71,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 if k not in ("id", "applieswhole", "label")
             })
 
-            asset = tag_data["asset"]
+            if AYON_SERVER_ENABLED:
+                asset = tag_data["folder_path"]
+            else:
+                asset = tag_data["asset_name"]
+
             subset = tag_data["subset"]
 
             data.update({
@@ -78,12 +83,12 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "label": "{} {}".format(asset, subset),
                 "asset": asset,
                 "item": timeline_item,
-                "families": ["clip"],
                 "publish": get_publish_attribute(timeline_item),
                 "fps": context.data["fps"],
                 "handleStart": handle_start,
                 "handleEnd": handle_end,
-                "newAssetPublishing": True
+                "newAssetPublishing": True,
+                "families": ["clip"],
             })
 
             # otio clip data

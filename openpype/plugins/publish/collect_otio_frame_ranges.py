@@ -5,15 +5,9 @@ Requires:
     masterLayer -> instance data attribute
     otioClipRange -> instance data attribute
 """
-# import os
-import opentimelineio as otio
-import pyblish.api
 from pprint import pformat
-from openpype.pipeline.editorial import (
-    get_media_range_with_retimes,
-    otio_range_to_frame_range,
-    otio_range_with_handles
-)
+
+import pyblish.api
 
 
 class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
@@ -27,6 +21,14 @@ class CollectOtioFrameRanges(pyblish.api.InstancePlugin):
     hosts = ["resolve", "hiero", "flame", "traypublisher"]
 
     def process(self, instance):
+        # Not all hosts can import these modules.
+        import opentimelineio as otio
+        from openpype.pipeline.editorial import (
+            get_media_range_with_retimes,
+            otio_range_to_frame_range,
+            otio_range_with_handles
+        )
+
         # get basic variables
         otio_clip = instance.data["otioClip"]
         workfile_start = instance.data["workfileFrameStart"]

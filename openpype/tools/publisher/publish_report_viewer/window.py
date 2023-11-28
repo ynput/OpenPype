@@ -329,7 +329,9 @@ class LoadedFilesView(QtWidgets.QTreeView):
     def __init__(self, *args, **kwargs):
         super(LoadedFilesView, self).__init__(*args, **kwargs)
         self.setEditTriggers(
-            self.EditKeyPressed | self.SelectedClicked | self.DoubleClicked
+            QtWidgets.QAbstractItemView.EditKeyPressed
+            | QtWidgets.QAbstractItemView.SelectedClicked
+            | QtWidgets.QAbstractItemView.DoubleClicked
         )
         self.setIndentation(0)
         self.setAlternatingRowColors(True)
@@ -366,7 +368,7 @@ class LoadedFilesView(QtWidgets.QTreeView):
 
     def _on_rows_inserted(self):
         header = self.header()
-        header.resizeSections(header.ResizeToContents)
+        header.resizeSections(QtWidgets.QHeaderView.ResizeToContents)
         self._update_remove_btn()
 
     def resizeEvent(self, event):
@@ -377,7 +379,7 @@ class LoadedFilesView(QtWidgets.QTreeView):
         super(LoadedFilesView, self).showEvent(event)
         self._model.refresh()
         header = self.header()
-        header.resizeSections(header.ResizeToContents)
+        header.resizeSections(QtWidgets.QHeaderView.ResizeToContents)
         self._update_remove_btn()
 
     def _on_selection_change(self):

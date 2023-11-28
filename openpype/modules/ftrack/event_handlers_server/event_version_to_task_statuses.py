@@ -1,3 +1,4 @@
+from openpype.client import get_project
 from openpype_modules.ftrack.lib import BaseEvent
 
 
@@ -50,6 +51,10 @@ class VersionToTaskStatus(BaseEvent):
         project_name = self.get_project_name_from_event(
             session, event, project_id
         )
+        if get_project(project_name) is None:
+            self.log.debug("Project not found in OpenPype. Skipping")
+            return
+
         # Load settings
         project_settings = self.get_project_settings_from_event(
             event, project_name

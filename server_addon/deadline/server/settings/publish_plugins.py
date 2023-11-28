@@ -248,6 +248,17 @@ class AOVFilterSubmodel(BaseSettingsModel):
     )
 
 
+class ProcessCacheJobFarmModel(BaseSettingsModel):
+    """Process submitted job on farm."""
+
+    enabled: bool = Field(title="Enabled")
+    deadline_department: str = Field(title="Department")
+    deadline_pool: str = Field(title="Pool")
+    deadline_group: str = Field(title="Group")
+    deadline_chunk_size: int = Field(title="Chunk Size")
+    deadline_priority: int = Field(title="Priority")
+
+
 class ProcessSubmittedJobOnFarmModel(BaseSettingsModel):
     """Process submitted job on farm."""
 
@@ -267,7 +278,7 @@ class ProcessSubmittedJobOnFarmModel(BaseSettingsModel):
         title="Reviewable products filter",
     )
 
-    @validator("aov_filter", "skip_integration_repre_list")
+    @validator("aov_filter")
     def validate_unique_names(cls, value):
         ensure_unique_names(value)
         return value
@@ -311,6 +322,9 @@ class PublishPluginsModel(BaseSettingsModel):
     BlenderSubmitDeadline: BlenderSubmitDeadlineModel = Field(
         default_factory=BlenderSubmitDeadlineModel,
         title="Blender Submit Deadline")
+    ProcessSubmittedCacheJobOnFarm: ProcessCacheJobFarmModel = Field(
+        default_factory=ProcessCacheJobFarmModel,
+        title="Process submitted cache Job on farm.")
     ProcessSubmittedJobOnFarm: ProcessSubmittedJobOnFarmModel = Field(
         default_factory=ProcessSubmittedJobOnFarmModel,
         title="Process submitted job on farm.")
@@ -425,6 +439,14 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "priority": 50,
         "chunk_size": 10,
         "group": "none"
+    },
+    "ProcessSubmittedCacheJobOnFarm": {
+        "enabled": True,
+        "deadline_department": "",
+        "deadline_pool": "",
+        "deadline_group": "",
+        "deadline_chunk_size": 1,
+        "deadline_priority": 50
     },
     "ProcessSubmittedJobOnFarm": {
         "enabled": True,

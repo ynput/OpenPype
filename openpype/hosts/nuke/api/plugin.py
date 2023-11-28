@@ -537,6 +537,7 @@ class NukeLoader(LoaderPlugin):
             node.addKnob(knob)
 
     def clear_members(self, parent_node):
+        parent_class = parent_node.Class()
         members = self.get_members(parent_node)
 
         dependent_nodes = None
@@ -549,6 +550,8 @@ class NukeLoader(LoaderPlugin):
             break
 
         for member in members:
+            if member.Class() == parent_class:
+                continue
             self.log.info("removing node: `{}".format(member.name()))
             nuke.delete(member)
 

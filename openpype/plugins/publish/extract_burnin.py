@@ -171,8 +171,6 @@ class ExtractBurnin(publish.Extractor):
             ).format(host_name, family, task_name, task_type, subset))
             return
 
-        self.log.debug("profile: {}".format(profile))
-
         # Pre-filter burnin definitions by instance families
         burnin_defs = self.filter_burnins_defs(profile, instance)
         if not burnin_defs:
@@ -450,7 +448,7 @@ class ExtractBurnin(publish.Extractor):
                 filling burnin strings. `temp_data` are for repre pre-process
                 preparation.
         """
-        self.log.debug("Prepring basic data for burnins")
+        self.log.debug("Preparing basic data for burnins")
         context = instance.context
 
         version = instance.data.get("version")

@@ -10,6 +10,7 @@ from .interfaces import (
 )
 
 from .base import (
+    AYONAddon,
     OpenPypeModule,
     OpenPypeAddOn,
 
@@ -35,6 +36,7 @@ __all__ = (
     "ISettingsChangeListener",
     "IHostAddon",
 
+    "AYONAddon",
     "OpenPypeModule",
     "OpenPypeAddOn",
 

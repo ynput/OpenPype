@@ -14,9 +14,12 @@ class ExtractRedshiftProxy(publish.Extractor):
     label = "Extract Redshift Proxy"
     families = ["redshiftproxy"]
     hosts = ["houdini"]
+    targets = ["local", "remote"]
 
     def process(self, instance):
-
+        if instance.data.get("farm"):
+            self.log.debug("Should be processed on farm, skipping.")
+            return
         ropnode = hou.node(instance.data.get("instance_node"))
 
         # Get the filename from the filename parameter
@@ -44,8 +47,8 @@ class ExtractRedshiftProxy(publish.Extractor):
         }
 
         # A single frame may also be rendered without start/end frame.
-        if "frameStart" in instance.data and "frameEnd" in instance.data:
-            representation["frameStart"] = instance.data["frameStart"]
-            representation["frameEnd"] = instance.data["frameEnd"]
+        if "frameStartHandle" in instance.data and "frameEndHandle" in instance.data:  # noqa
+            representation["frameStart"] = instance.data["frameStartHandle"]
+            representation["frameEnd"] = instance.data["frameEndHandle"]
 
         instance.data["representations"].append(representation)

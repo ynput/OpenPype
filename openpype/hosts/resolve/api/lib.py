@@ -301,7 +301,7 @@ def create_timeline_item(
             clip_data["startFrame"] = source_start
         if source_end is not None:
             clip_data["endFrame"] = source_end
-        if timecode_in is not None:
+        if timeline_in is not None:
             clip_data["recordFrame"] = timeline_in
 
         # add to timeline

@@ -2,6 +2,7 @@ import json
 
 from maya import cmds
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.hosts.maya.api import (
     lib,
     plugin
@@ -43,7 +44,11 @@ class CreateReview(plugin.MayaCreator):
             members = cmds.ls(selection=True)
 
         project_name = self.project_name
-        asset_doc = get_asset_by_name(project_name, instance_data["asset"])
+        if AYON_SERVER_ENABLED:
+            asset_name = instance_data["folderPath"]
+        else:
+            asset_name = instance_data["asset"]
+        asset_doc = get_asset_by_name(project_name, asset_name)
         task_name = instance_data["task"]
         preset = lib.get_capture_preset(
             task_name,
