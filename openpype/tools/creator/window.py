@@ -214,7 +214,7 @@ class CreatorWindow(QtWidgets.QDialog):
         asset_name = self._asset_name_input.text()
 
         # Early exit if no asset name
-        if not asset_name.strip():
+        if not asset_name:
             self._build_menu()
             self.echo("Asset name is required ..")
             self._set_valid_state(False)

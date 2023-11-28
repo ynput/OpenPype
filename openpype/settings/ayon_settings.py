@@ -940,6 +940,23 @@ def _convert_photoshop_project_settings(ayon_settings, output):
     output["photoshop"] = ayon_photoshop
 
 
+def _convert_substancepainter_project_settings(ayon_settings, output):
+    if "substancepainter" not in ayon_settings:
+        return
+
+    ayon_substance_painter = ayon_settings["substancepainter"]
+    _convert_host_imageio(ayon_substance_painter)
+    if "shelves" in ayon_substance_painter:
+        shelves_items = ayon_substance_painter["shelves"]
+        new_shelves_items = {
+            item["name"]: item["value"]
+            for item in shelves_items
+        }
+        ayon_substance_painter["shelves"] = new_shelves_items
+
+    output["substancepainter"] = ayon_substance_painter
+
+
 def _convert_tvpaint_project_settings(ayon_settings, output):
     if "tvpaint" not in ayon_settings:
         return
@@ -1398,6 +1415,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_nuke_project_settings(ayon_settings, output)
     _convert_hiero_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)
+    _convert_substancepainter_project_settings(ayon_settings, output)
     _convert_tvpaint_project_settings(ayon_settings, output)
     _convert_traypublisher_project_settings(ayon_settings, output)
     _convert_webpublisher_project_settings(ayon_settings, output)
@@ -1573,3 +1591,18 @@ def get_ayon_system_settings(default_values):
     return convert_system_settings(
         ayon_settings, default_values, addon_versions
     )
+
+
+def get_ayon_settings(project_name=None):
+    """AYON studio settings.
+
+    Raw AYON settings values.
+
+    Args:
+        project_name (Optional[str]): Project name.
+
+    Returns:
+        dict[str, Any]: AYON settings.
+    """
+
+    return _AyonSettingsCache.get_value_by_project(project_name)

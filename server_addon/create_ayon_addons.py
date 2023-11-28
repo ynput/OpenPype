@@ -33,6 +33,20 @@ IGNORE_FILE_PATTERNS: List[Pattern] = [
     }
 ]
 
+IGNORED_HOSTS = [
+    "flame",
+    "harmony",
+]
+
+IGNORED_MODULES = [
+    "ftrack",
+    "shotgrid",
+    "sync_server",
+    "example_addons",
+    "slack",
+    "kitsu",
+]
+
 
 class ZipFileLongPaths(zipfile.ZipFile):
     """Allows longer paths in zip files.
@@ -202,16 +216,6 @@ def create_openpype_package(
         str(pyproject_path),
         (private_dir / pyproject_path.name)
     )
-
-    ignored_hosts = []
-    ignored_modules = [
-        "ftrack",
-        "shotgrid",
-        "sync_server",
-        "example_addons",
-        "slack",
-        "kitsu",
-    ]
     # Subdirs that won't be added to output zip file
     ignored_subpaths = [
         ["addons"],
@@ -219,11 +223,11 @@ def create_openpype_package(
     ]
     ignored_subpaths.extend(
         ["hosts", host_name]
-        for host_name in ignored_hosts
+        for host_name in IGNORED_HOSTS
     )
     ignored_subpaths.extend(
         ["modules", module_name]
-        for module_name in ignored_modules
+        for module_name in IGNORED_MODULES
     )
 
     # Zip client
@@ -297,11 +301,15 @@ def main(
 
     # Make sure output dir is created
     output_dir.mkdir(parents=True, exist_ok=True)
+    ignored_addons = set(IGNORED_HOSTS) | set(IGNORED_MODULES)
     for addon_dir in current_dir.iterdir():
         if not addon_dir.is_dir():
             continue
 
         if addons and addon_dir.name not in addons:
+            continue
+
+        if addon_dir.name in ignored_addons:
             continue
 
         server_dir = addon_dir / "server"

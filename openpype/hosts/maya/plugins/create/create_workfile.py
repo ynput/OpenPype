@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating workfiles."""
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import CreatedInstance, AutoCreator
-from openpype.client import get_asset_by_name
+from openpype.client import get_asset_by_name, get_asset_name_identifier
 from openpype.hosts.maya.api import plugin
 from maya import cmds
 
@@ -30,15 +31,26 @@ class CreateWorkfile(plugin.MayaCreatorBase, AutoCreator):
         host_name = self.create_context.host_name
 
         if current_instance is None:
+            current_instance_asset = None
+        elif AYON_SERVER_ENABLED:
+            current_instance_asset = current_instance["folderPath"]
+        else:
+            current_instance_asset = current_instance["asset"]
+
+        if current_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
                 variant, task_name, asset_doc, project_name, host_name
             )
             data = {
-                "asset": asset_name,
                 "task": task_name,
                 "variant": variant
             }
+            if AYON_SERVER_ENABLED:
+                data["folderPath"] = asset_name
+            else:
+                data["asset"] = asset_name
+
             data.update(
                 self.get_dynamic_data(
                     variant, task_name, asset_doc,
@@ -50,15 +62,20 @@ class CreateWorkfile(plugin.MayaCreatorBase, AutoCreator):
             )
             self._add_instance_to_context(current_instance)
         elif (
-                current_instance["asset"] != asset_name
-                or current_instance["task"] != task_name
+            current_instance_asset != asset_name
+            or current_instance["task"] != task_name
         ):
             # Update instance context if is not the same
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
                 variant, task_name, asset_doc, project_name, host_name
             )
-            current_instance["asset"] = asset_name
+            asset_name = get_asset_name_identifier(asset_doc)
+
+            if AYON_SERVER_ENABLED:
+                current_instance["folderPath"] = asset_name
+            else:
+                current_instance["asset"] = asset_name
             current_instance["task"] = task_name
             current_instance["subset"] = subset_name
 
