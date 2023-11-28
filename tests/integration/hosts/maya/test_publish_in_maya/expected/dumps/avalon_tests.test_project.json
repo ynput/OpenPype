@@ -1,0 +1,711 @@
+[{
+	"_id": {
+		"$oid": "60df31bcbe2b48bd3695c055"
+	},
+	"type": "project",
+	"name": "test_project",
+	"data": {
+		"code": "test_project",
+		"library_project": false,
+		"clipIn": 1,
+		"clipOut": 1,
+		"fps": 25.0,
+		"frameEnd": 1001,
+		"frameStart": 1001,
+		"handleEnd": 0,
+		"handleStart": 0,
+		"pixelAspect": 1.0,
+		"resolutionHeight": 1080,
+		"resolutionWidth": 1920,
+		"tools_env": []
+	},
+	"schema": "openpype:project-3.0",
+	"config": {
+		"apps": [
+			{
+				"name": "maya/2020"
+			},
+			{
+				"name": "nuke/12-2"
+			},
+			{
+				"name": "nukex/12-2"
+			},
+			{
+				"name": "hiero/12-2"
+			},
+			{
+				"name": "resolve/stable"
+			},
+			{
+				"name": "houdini/18-5"
+			},
+			{
+				"name": "blender/2-91"
+			},
+			{
+				"name": "harmony/20"
+			},
+			{
+				"name": "photoshop/2020"
+			},
+			{
+				"name": "aftereffects/2021"
+			},
+			{
+				"name": "unreal/4-26"
+			}
+		],
+		"imageio": {
+			"hiero": {
+				"workfile": {
+					"ocioConfigName": "nuke-default",
+					"ocioconfigpath": {
+						"windows": [],
+						"darwin": [],
+						"linux": []
+					},
+					"workingSpace": "linear",
+					"sixteenBitLut": "sRGB",
+					"eightBitLut": "sRGB",
+					"floatLut": "linear",
+					"logLut": "Cineon",
+					"viewerLut": "sRGB",
+					"thumbnailLut": "sRGB"
+				},
+				"regexInputs": {
+					"inputs": [
+						{
+							"regex": "[^-a-zA-Z0-9](plateRef).*(?=mp4)",
+							"colorspace": "sRGB"
+						}
+					]
+				},
+				"__overriden_keys__": [
+					"workfile",
+					"regexInputs"
+				]
+			},
+			"nuke": {
+				"viewer": {
+					"viewerProcess": "sRGB"
+				},
+				"workfile": {
+					"colorManagement": "Nuke",
+					"OCIO_config": "nuke-default",
+					"customOCIOConfigPath": {
+						"windows": [],
+						"darwin": [],
+						"linux": []
+					},
+					"workingSpaceLUT": "linear",
+					"monitorLut": "sRGB",
+					"int8Lut": "sRGB",
+					"int16Lut": "sRGB",
+					"logLut": "Cineon",
+					"floatLut": "linear"
+				},
+				"nodes": {
+					"requiredNodes": [
+						{
+							"plugins": [
+								"CreateWriteRender"
+							],
+							"nukeNodeClass": "Write",
+							"knobs": [
+								{
+									"name": "file_type",
+									"value": "exr"
+								},
+								{
+									"name": "datatype",
+									"value": "16 bit half"
+								},
+								{
+									"name": "compression",
+									"value": "Zip (1 scanline)"
+								},
+								{
+									"name": "autocrop",
+									"value": "True"
+								},
+								{
+									"name": "tile_color",
+									"value": "0xff0000ff"
+								},
+								{
+									"name": "channels",
+									"value": "rgb"
+								},
+								{
+									"name": "colorspace",
+									"value": "linear"
+								},
+								{
+									"name": "create_directories",
+									"value": "True"
+								}
+							]
+						},
+						{
+							"plugins": [
+								"CreateWritePrerender"
+							],
+							"nukeNodeClass": "Write",
+							"knobs": [
+								{
+									"name": "file_type",
+									"value": "exr"
+								},
+								{
+									"name": "datatype",
+									"value": "16 bit half"
+								},
+								{
+									"name": "compression",
+									"value": "Zip (1 scanline)"
+								},
+								{
+									"name": "autocrop",
+									"value": "False"
+								},
+								{
+									"name": "tile_color",
+									"value": "0xadab1dff"
+								},
+								{
+									"name": "channels",
+									"value": "rgb"
+								},
+								{
+									"name": "colorspace",
+									"value": "linear"
+								},
+								{
+									"name": "create_directories",
+									"value": "True"
+								}
+							]
+						}
+					],
+					"customNodes": [],
+					"overrideNodes": []
+				},
+				"regexInputs": {
+					"inputs": [
+						{
+							"regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]",
+							"colorspace": "linear"
+						}
+					]
+				},
+				"__overriden_keys__": [
+					"viewer",
+					"workfile",
+					"nodes",
+					"regexInputs"
+				]
+			}
+		},
+		"roots": {
+			"work": {
+				"windows": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output",
+				"darwin": "/Volumes/path",
+				"linux": "/mnt/share/projects"
+			}
+		},
+		"tasks": {
+			"Generic": {
+				"short_name": "gener"
+			},
+			"Art": {
+				"short_name": "art"
+			},
+			"Modeling": {
+				"short_name": "mdl"
+			},
+			"Texture": {
+				"short_name": "tex"
+			},
+			"Lookdev": {
+				"short_name": "look"
+			},
+			"Rigging": {
+				"short_name": "rig"
+			},
+			"Edit": {
+				"short_name": "edit"
+			},
+			"Layout": {
+				"short_name": "lay"
+			},
+			"Setdress": {
+				"short_name": "dress"
+			},
+			"Animation": {
+				"short_name": "anim"
+			},
+			"FX": {
+				"short_name": "fx"
+			},
+			"Lighting": {
+				"short_name": "lgt"
+			},
+			"Paint": {
+				"short_name": "paint"
+			},
+			"Compositing": {
+				"short_name": "comp"
+			}
+		},
+		"templates": {
+			"defaults": {
+				"version_padding": 3,
+				"version": "v{version:0>{@version_padding}}",
+				"frame_padding": 4,
+				"frame": "{frame:0>{@frame_padding}}"
+			},
+			"work": {
+				"folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task}",
+				"file": "{project[code]}_{asset}_{task}_{@version}<_{comment}>.{ext}",
+				"path": "{@folder}/{@file}"
+			},
+			"render": {
+				"folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+				"file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+				"path": "{@folder}/{@file}"
+			},
+			"publish": {
+				"folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+				"file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+				"path": "{@folder}/{@file}",
+				"thumbnail": "{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}"
+			},
+			"hero": {
+				"folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero",
+				"file": "{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}",
+				"path": "{@folder}/{@file}"
+			},
+			"delivery": {
+				"test_delivery": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}/{project[code]}_{asset}_{subset}_{@version}<_{output}><.{frame}>.{ext}"
+			},
+			"others": {}
+		}
+	}
+},
+{
+	"_id": {
+		"$oid": "60df31e2be2b48bd3695c056"
+	},
+	"name": "test_asset",
+	"type": "asset",
+	"schema": "openpype:asset-3.0",
+	"data": {
+		"parents": [],
+		"visualParent": null,
+		"tasks": {
+			"test_task": {
+				"type": "Generic"
+			}
+		},
+		"fps": 25.0,
+		"resolutionWidth": 1920,
+		"resolutionHeight": 1080,
+		"pixelAspect": 1.0,
+		"frameStart": 1001,
+		"handleStart": 0,
+		"frameEnd": 1001,
+		"clipOut": 1,
+		"clipIn": 1,
+		"tools_env": [],
+		"handleEnd": 0
+	},
+	"parent": {
+		"$oid": "60df31bcbe2b48bd3695c055"
+	}
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec7a"
+	},
+	"schema": "openpype:subset-3.0",
+	"type": "subset",
+	"name": "modelMain",
+	"data": {
+		"families": [
+			"model"
+		],
+		"family": "model"
+	},
+	"parent": {
+		"$oid": "60df31e2be2b48bd3695c056"
+	}
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec7c"
+	},
+	"schema": "openpype:version-3.0",
+	"type": "version",
+	"name": 1,
+	"parent": {
+		"$oid": "656459b80454c53c668dec7a"
+	},
+	"data": {
+		"families": [
+			"model"
+		],
+		"time": "20231127T085624Z",
+		"author": "tokejepsen",
+		"source": "{root[work]}/test_project/test_asset/work/test_task/test_project_test_asset_test_task_v001.ma",
+		"comment": "",
+		"machine": "DESKTOP-969549J",
+		"fps": 25.0,
+		"frameStart": 1001.0,
+		"frameEnd": 1001.0,
+		"inputLinks": [
+			{
+				"type": "generative",
+				"id": {
+					"$oid": "656459b80454c53c668dec85"
+				},
+				"linkedBy": "publish"
+			}
+		]
+	}
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec7d"
+	},
+	"schema": "openpype:representation-2.0",
+	"type": "representation",
+	"parent": {
+		"$oid": "656459b80454c53c668dec7c"
+	},
+	"name": "ma",
+	"data": {
+		"path": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output\\test_project\\test_asset\\publish\\model\\modelMain\\v001\\test_project_test_asset_modelMain_v001.ma",
+		"template": "{root[work]}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{ext}"
+	},
+	"context": {
+		"root": {
+			"work": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output"
+		},
+		"project": {
+			"name": "test_project",
+			"code": "test_project"
+		},
+		"hierarchy": "",
+		"asset": "test_asset",
+		"family": "model",
+		"subset": "modelMain",
+		"version": 1,
+		"ext": "ma",
+		"task": {
+			"name": "test_task",
+			"type": "Generic",
+			"short": "gener"
+		},
+		"representation": "ma",
+		"username": "tokejepsen",
+		"user": "tokejepsen"
+	},
+	"files": [
+		{
+			"_id": {
+				"$oid": "656459b80454c53c668dec7f"
+			},
+			"path": "{root[work]}/test_project/test_asset/publish/model/modelMain/v001/test_project_test_asset_modelMain_v001.ma",
+			"size": 52085,
+			"hash": "test_project_test_asset_modelMain_v001,ma|1701075384,4640148|52085",
+			"sites": [
+				{
+					"name": "studio",
+					"created_dt": {
+						"$date": "2023-11-27T08:56:24.512Z"
+					}
+				}
+			]
+		}
+	]
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec7e"
+	},
+	"schema": "openpype:representation-2.0",
+	"type": "representation",
+	"parent": {
+		"$oid": "656459b80454c53c668dec7c"
+	},
+	"name": "abc",
+	"data": {
+		"path": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output\\test_project\\test_asset\\publish\\model\\modelMain\\v001\\test_project_test_asset_modelMain_v001.abc",
+		"template": "{root[work]}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{ext}"
+	},
+	"context": {
+		"root": {
+			"work": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output"
+		},
+		"project": {
+			"name": "test_project",
+			"code": "test_project"
+		},
+		"hierarchy": "",
+		"asset": "test_asset",
+		"family": "model",
+		"subset": "modelMain",
+		"version": 1,
+		"ext": "abc",
+		"task": {
+			"name": "test_task",
+			"type": "Generic",
+			"short": "gener"
+		},
+		"representation": "abc",
+		"username": "tokejepsen",
+		"user": "tokejepsen"
+	},
+	"files": [
+		{
+			"_id": {
+				"$oid": "656459b80454c53c668dec81"
+			},
+			"path": "{root[work]}/test_project/test_asset/publish/model/modelMain/v001/test_project_test_asset_modelMain_v001.abc",
+			"size": 24658,
+			"hash": "test_project_test_asset_modelMain_v001,abc|1701075384,4827487|24658",
+			"sites": [
+				{
+					"name": "studio",
+					"created_dt": {
+						"$date": "2023-11-27T08:56:24.512Z"
+					}
+				}
+			]
+		}
+	]
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec83"
+	},
+	"schema": "openpype:subset-3.0",
+	"type": "subset",
+	"name": "workfileTest_task",
+	"data": {
+		"families": [
+			"workfile"
+		],
+		"family": "workfile"
+	},
+	"parent": {
+		"$oid": "60df31e2be2b48bd3695c056"
+	}
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec85"
+	},
+	"schema": "openpype:version-3.0",
+	"type": "version",
+	"name": 1,
+	"parent": {
+		"$oid": "656459b80454c53c668dec83"
+	},
+	"data": {
+		"families": [
+			"workfile"
+		],
+		"time": "20231127T085624Z",
+		"author": "tokejepsen",
+		"source": "{root[work]}/test_project/test_asset/work/test_task/test_project_test_asset_test_task_v001.ma",
+		"comment": "",
+		"machine": "DESKTOP-969549J",
+		"fps": 25.0,
+		"frameStart": 1001,
+		"frameEnd": 1001,
+		"handleEnd": 0,
+		"handleStart": 0
+	}
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec86"
+	},
+	"schema": "openpype:representation-2.0",
+	"type": "representation",
+	"parent": {
+		"$oid": "656459b80454c53c668dec85"
+	},
+	"name": "ma",
+	"data": {
+		"path": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output\\test_project\\test_asset\\publish\\workfile\\workfileTest_task\\v001\\test_project_test_asset_workfileTest_task_v001.ma",
+		"template": "{root[work]}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{ext}"
+	},
+	"context": {
+		"root": {
+			"work": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output"
+		},
+		"project": {
+			"name": "test_project",
+			"code": "test_project"
+		},
+		"hierarchy": "",
+		"asset": "test_asset",
+		"family": "workfile",
+		"subset": "workfileTest_task",
+		"version": 1,
+		"ext": "ma",
+		"task": {
+			"name": "test_task",
+			"type": "Generic",
+			"short": "gener"
+		},
+		"representation": "ma",
+		"username": "tokejepsen",
+		"user": "tokejepsen"
+	},
+	"files": [
+		{
+			"_id": {
+				"$oid": "656459b80454c53c668dec87"
+			},
+			"path": "{root[work]}/test_project/test_asset/publish/workfile/workfileTest_task/v001/test_project_test_asset_workfileTest_task_v001.ma",
+			"size": 71702,
+			"hash": "test_project_test_asset_workfileTest_task_v001,ma|1701075372,0841753|71702",
+			"sites": [
+				{
+					"name": "studio",
+					"created_dt": {
+						"$date": "2023-11-27T08:56:24.528Z"
+					}
+				}
+			]
+		}
+	]
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec89"
+	},
+	"schema": "openpype:hero_version-1.0",
+	"type": "hero_version",
+	"version_id": {
+		"$oid": "656459b80454c53c668dec7c"
+	},
+	"parent": {
+		"$oid": "656459b80454c53c668dec7a"
+	},
+	"data": {}
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec8c"
+	},
+	"schema": "openpype:representation-2.0",
+	"type": "representation",
+	"parent": {
+		"$oid": "656459b80454c53c668dec89"
+	},
+	"name": "ma",
+	"data": {
+		"path": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output/test_project//test_asset/publish/model/modelMain/hero/test_project_test_asset_modelMain_hero.ma",
+		"template": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero/{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}"
+	},
+	"context": {
+		"root": {
+			"work": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output"
+		},
+		"project": {
+			"name": "test_project",
+			"code": "test_project"
+		},
+		"hierarchy": "",
+		"asset": "test_asset",
+		"family": "model",
+		"subset": "modelMain",
+		"ext": "ma",
+		"task": {
+			"name": "test_task",
+			"type": "Generic",
+			"short": "gener"
+		},
+		"representation": "ma",
+		"username": "tokejepsen",
+		"user": "tokejepsen"
+	},
+	"files": [
+		{
+			"_id": {
+				"$oid": "656459b80454c53c668dec7f"
+			},
+			"path": "{root[work]}/test_project//test_asset/publish/model/modelMain/hero/test_project_test_asset_modelMain_hero.ma",
+			"size": 52085,
+			"hash": "test_project_test_asset_modelMain_hero,ma|1701075384,4640148|52085",
+			"sites": [
+				{
+					"name": "studio",
+					"created_dt": {
+						"$date": "2023-11-27T08:56:24.512Z"
+					}
+				}
+			]
+		}
+	]
+},
+{
+	"_id": {
+		"$oid": "656459b80454c53c668dec8f"
+	},
+	"schema": "openpype:representation-2.0",
+	"type": "representation",
+	"parent": {
+		"$oid": "656459b80454c53c668dec89"
+	},
+	"name": "abc",
+	"data": {
+		"path": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output/test_project//test_asset/publish/model/modelMain/hero/test_project_test_asset_modelMain_hero.abc",
+		"template": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero/{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}"
+	},
+	"context": {
+		"root": {
+			"work": "C:\\Users\\TOKEJE~1\\AppData\\Local\\Temp\\tmpkf8io2z2\\output"
+		},
+		"project": {
+			"name": "test_project",
+			"code": "test_project"
+		},
+		"hierarchy": "",
+		"asset": "test_asset",
+		"family": "model",
+		"subset": "modelMain",
+		"ext": "abc",
+		"task": {
+			"name": "test_task",
+			"type": "Generic",
+			"short": "gener"
+		},
+		"representation": "abc",
+		"username": "tokejepsen",
+		"user": "tokejepsen"
+	},
+	"files": [
+		{
+			"_id": {
+				"$oid": "656459b80454c53c668dec81"
+			},
+			"path": "{root[work]}/test_project//test_asset/publish/model/modelMain/hero/test_project_test_asset_modelMain_hero.abc",
+			"size": 24658,
+			"hash": "test_project_test_asset_modelMain_hero,abc|1701075384,4827487|24658",
+			"sites": [
+				{
+					"name": "studio",
+					"created_dt": {
+						"$date": "2023-11-27T08:56:24.512Z"
+					}
+				}
+			]
+		}
+	]
+}]

@@ -386,6 +386,10 @@ class PublishTest(ModuleUnitTest):
                 if os.path.isdir(f):
                     continue
 
+                # Explicitly skip expected database json dumps.
+                if "expected" in f and "dumps" in f and f.endswith(".json"):
+                    continue
+
                 if f != dir_base and os.path.exists(f):
                     result.add(f.replace(dir_base, ""))
 
