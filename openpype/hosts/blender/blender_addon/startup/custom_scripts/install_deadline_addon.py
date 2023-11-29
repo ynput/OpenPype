@@ -1,6 +1,7 @@
 import sys
 import os
 import bpy
+import argparse
 import addon_utils
 import logging
 import subprocess
@@ -49,7 +50,25 @@ def _get_python_addon_file(path):
 
 
 def _is_already_installed(deadline_addon_name):
-    return deadline_addon_name in bpy.context.preferences.addons
+    blender_addons_folder_path = get_addons_folder_path()
+    try:
+        return next(
+            iter(
+                deadline_addon_name in file \
+                for file in os.listdir(blender_addons_folder_path)
+            )
+        )
+    except StopIteration:
+        return False
+
+
+def get_addons_folder_path():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--blender-addons-folder", help="Blender installed addons folder path")
+    args, _ = parser.parse_known_args(
+        sys.argv[sys.argv.index("--") + 1 :]
+    )
+    return args.blender_addons_folder
 
 
 def get_deadline_command():

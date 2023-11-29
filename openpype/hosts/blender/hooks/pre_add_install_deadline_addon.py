@@ -18,7 +18,14 @@ class InstallDeadlineAddon(PreLaunchHook):
     def execute(self):
         hooks_folder_path = os.path.dirname(os.path.realpath(__file__))
         custom_script_folder = os.path.join(os.path.dirname(hooks_folder_path), "blender_addon/startup/custom_scripts")
-
+        blender_addons_folder = os.path.join(os.path.dirname(hooks_folder_path), "blender_addon/addons")
+        self.log.warning(blender_addons_folder)
         self.launch_context.data.setdefault("python_scripts", []).append(
             os.path.join(custom_script_folder, self.script_file_name)
+        )
+        self.launch_context.data.setdefault("script_args", []).extend(
+            [
+                '--blender-addons-folder',
+                blender_addons_folder
+            ]
         )
