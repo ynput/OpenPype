@@ -92,6 +92,7 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         job_info.ChunkSize = attr_values.get("chunkSize", self.chunk_size)
         job_info.Priority = attr_values.get("priority", self.priority)
+        job_info.ScheduledType = "Once"
         job_info.JobDelay = attr_values.get("job_delay", self.job_delay)
 
         # Add options from RenderGlobals
