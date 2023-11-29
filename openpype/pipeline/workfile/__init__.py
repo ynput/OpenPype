@@ -15,13 +15,6 @@ from .path_resolving import (
 
 from .build_workfile import BuildWorkfile
 
-from .workfile_template_builder import (
-    get_last_workfile_path,
-    is_last_workfile_exists,
-    should_build_first_workfile
-)
-
-
 __all__ = (
     "get_workfile_template_key_from_context",
     "get_workfile_template_key",
@@ -36,9 +29,5 @@ __all__ = (
 
     "create_workdir_extra_folders",
 
-    "BuildWorkfile",
-
-    "get_last_workfile_path",
-    "is_last_workfile_exists",
-    "should_build_first_workfile"
+    "BuildWorkfile"
 )

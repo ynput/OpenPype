@@ -39,7 +39,7 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
-from openpype.pipeline.workfile import (
+from openpype.pipeline.workfile.workfile_template_builder import (
     is_last_workfile_exists,
     should_build_first_workfile
 )
