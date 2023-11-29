@@ -217,7 +217,10 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
             TextDef("job_delay",
                     default=cls.job_delay,
-                    label="Job Delay"),
+                    label="Job Delay",
+                    placeholder="dd:hh:mm:ss",
+                    tooltip="Delay the job by the specified amount of time. "
+                            "Timecode: dd:hh:mm:ss."),
         ])
 
         return defs
