@@ -7,7 +7,7 @@ class ValidateInstanceFrameRange(pyblish.api.InstancePlugin):
     """Validate instance frame range is within comp's global render range."""
 
     order = pyblish.api.ValidatorOrder
-    label = "Validate Filename Has Extension"
+    label = "Validate Frame Range"
     families = ["render"]
     hosts = ["fusion"]
 
