@@ -57,6 +57,14 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
             start_with_handle = comp_start
             end_with_handle = comp_end
 
+        if frame_range_source == "custom_range":
+            start = int(instance.data["custom_frameStart"])
+            end = int(instance.data["custom_frameEnd"])
+            handle_start = int(instance.data["custom_handleStart"])
+            handle_end = int(instance.data["custom_handleEnd"])
+            start_with_handle = start - handle_start
+            end_with_handle = end + handle_end
+
         # Include start and end render frame in label
         subset = instance.data["subset"]
         label = (

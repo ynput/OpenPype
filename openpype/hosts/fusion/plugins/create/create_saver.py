@@ -9,6 +9,8 @@ from openpype.hosts.fusion.api import (
 from openpype.lib import (
     BoolDef,
     EnumDef,
+    UILabelDef,
+    NumberDef
 )
 from openpype.pipeline import (
     legacy_io,
@@ -198,10 +200,68 @@ class CreateSaver(NewCreator):
 
     def get_pre_create_attr_defs(self):
         """Settings for create page"""
+
+        # Define custom frame range defaults based on current comp
+        # timeline settings (if a comp is currently open)
+        comp = get_current_comp()
+        if comp is not None:
+            attrs = comp.GetAttrs()
+            frame_defaults = {
+                "frameStart": int(attrs["COMPN_GlobalStart"]),
+                "frameEnd": int(attrs["COMPN_GlobalEnd"]),
+                "handleStart": int(
+                    attrs["COMPN_RenderStart"] - attrs["COMPN_GlobalStart"]
+                ),
+                "handleEnd": int(
+                    attrs["COMPN_GlobalEnd"] - attrs["COMPN_RenderEnd"]
+                ),
+            }
+        else:
+            frame_defaults = {
+                "frameStart": 1001,
+                "frameEnd": 1100,
+                "handleStart": 0,
+                "handleEnd": 0
+            }
+
         attr_defs = [
             self._get_render_target_enum(),
             self._get_reviewable_bool(),
-            self._get_frame_range_enum()
+            self._get_frame_range_enum(),
+            UILabelDef(
+                label="<br><b>Custom Frame Range</b>"
+            ),
+            UILabelDef(
+                label="<i>only used with 'Custom frame range' source</i>"
+            ),
+            NumberDef(
+                "custom_frameStart",
+                label="Frame Start",
+                default=frame_defaults["frameStart"],
+                minimum=0,
+                decimals=0
+            ),
+            NumberDef(
+                "custom_frameEnd",
+                label="Frame End",
+                default=frame_defaults["frameEnd"],
+                minimum=0,
+                decimals=0
+            ),
+            NumberDef(
+                "custom_handleStart",
+                label="Handle Start",
+                default=frame_defaults["handleStart"],
+                minimum=0,
+                decimals=0
+            ),
+            NumberDef(
+                "custom_handleEnd",
+                label="Handle End",
+                default=frame_defaults["handleEnd"],
+                minimum=0,
+                decimals=0
+            )
         ]
         return attr_defs
 
@@ -236,7 +296,8 @@ class CreateSaver(NewCreator):
         frame_range_options = {
             "asset_db": "Current asset context",
             "render_range": "From render in/out",
-            "comp_range": "From composition timeline"
+            "comp_range": "From composition timeline",
+            "custom_range": "Custom frame range"
         }
 
         return EnumDef(
