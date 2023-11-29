@@ -224,9 +224,8 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
 
         idx = 0
         height = width = 24
-        for value, icon_def in [(availability_active, active_icon),
+        for value, icon in [(availability_active, active_icon),
                                 (availability_remote, remote_icon)]:
-            icon = get_qt_icon(icon_def)
             if not icon:
                 continue
 
