@@ -39,7 +39,10 @@ from openpype.pipeline import (
     AVALON_CONTAINER_ID,
 )
 from openpype.pipeline.load import any_outdated_containers
-from openpype.pipeline.workfile import workfile_template_builder
+from openpype.pipeline.workfile import (
+    is_last_workfile_exists,
+    should_build_first_workfile
+)
 from openpype.pipeline.workfile.lock_workfile import (
     create_workfile_lock,
     remove_workfile_lock,
@@ -596,10 +599,7 @@ def _update_render_layer_observers():
 
 
 def _autobuild_first_workfile():
-    if (
-        workfile_template_builder.should_build_first_workfile()
-        and not workfile_template_builder.is_workfile_exists()
-    ):
+    if not is_last_workfile_exists() and should_build_first_workfile():
         build_workfile_template()
 
 

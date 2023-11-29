@@ -62,9 +62,6 @@ from openpype.pipeline.context_tools import (
 )
 
 
-log = logging.getLogger(__name__)
-
-
 class TemplateNotFound(Exception):
     """Exception raised when template does not exist."""
     pass
@@ -606,9 +603,9 @@ class AbstractTemplateBuilder(object):
             template_path (str): Fullpath for current task and
                 host's template file.
         """
-        last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
-        workfile_exists = is_workfile_exists()
-        if workfile_exists:
+        last_workfile_path = get_last_workfile_path()
+        self.log.info("__ last_workfile_path: {}".format(last_workfile_path))
+        if is_last_workfile_exists():
             # ignore in case workfile existence
             self.log.info("Workfile already exists, skipping creation.")
             return False
@@ -2022,10 +2019,14 @@ def should_build_first_workfile(
     return True
 
 
-def is_workfile_exists():
-    last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
-    log.info("__ last_workfile_path: {}".format(last_workfile_path))
+def get_last_workfile_path():
+    return os.environ.get("AVALON_LAST_WORKFILE")
+
+
+def is_last_workfile_exists():
+    last_workfile_path = get_last_workfile_path()
 
     if last_workfile_path and os.path.exists(last_workfile_path):
         return True
+
     return False
