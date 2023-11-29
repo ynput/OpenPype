@@ -92,8 +92,10 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
                 continue
 
             # Find thumbnail path on instance
-            thumbnail_path = self._get_instance_thumbnail_path(
-                published_repres)
+            thumbnail_source = instance.data.get("thumbnailSource")
+            thumbnail_path = (thumbnail_source or
+                              self._get_instance_thumbnail_path(
+                                  published_repres))
             if thumbnail_path:
                 self.log.debug((
                     "Found thumbnail path for instance \"{}\"."
