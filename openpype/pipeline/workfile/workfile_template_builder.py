@@ -16,7 +16,6 @@ import re
 import collections
 import copy
 from abc import ABCMeta, abstractmethod
-import logging
 
 import six
 
