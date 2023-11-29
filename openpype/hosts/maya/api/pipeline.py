@@ -645,9 +645,9 @@ def on_new():
     """Set project resolution and fps when create a new file"""
     log.info("Running callback on new..")
     with lib.suspended_refresh():
-        utils.executeDeferred(_autobuild_first_workfile)
         lib.set_context_settings()
 
+    utils.executeDeferred(_autobuild_first_workfile)
     utils.executeDeferred(_update_render_layer_observers)
     _remove_workfile_lock()
 
