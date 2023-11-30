@@ -317,7 +317,7 @@ class PublishTest(ModuleUnitTest):
     def launched_app(self, dbcon, download_test_data, last_workfile_path,
                      startup_scripts, app_args, app_name, output_folder_url,
                      setup_only, start_last_workfile, stdout_path,
-                     stderr_path):
+                     stderr_path, keep_app_open):
         """Launch host app"""
         if setup_only or self.SETUP_ONLY:
             print("Creating only setup for test, not launching app")
@@ -331,6 +331,9 @@ class PublishTest(ModuleUnitTest):
             "schema"
         )
         os.environ["AVALON_SCHEMA"] = schema_path
+
+        if keep_app_open:
+            os.environ["KEEP_APP_OPEN"] = "1"
 
         os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
         from openpype.lib import ApplicationManager
@@ -358,7 +361,8 @@ class PublishTest(ModuleUnitTest):
 
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data,
-                         timeout, setup_only, stdout_path, stderr_path):
+                         timeout, setup_only, stdout_path, stderr_path,
+                         keep_app_open):
         """Dummy fixture waiting for publish to finish"""
         if setup_only or self.SETUP_ONLY:
             print("Creating only setup for test, not launching app")
@@ -368,7 +372,17 @@ class PublishTest(ModuleUnitTest):
         time_start = time.time()
         timeout = timeout or self.TIMEOUT
         timeout = float(timeout)
+
+        if keep_app_open:
+            timeout = 100000
+
+        new_lines = []
         while launched_app.poll() is None:
+            with open(stdout_path, "r") as f:
+                for line in f.readlines():
+                    if line not in new_lines:
+                        new_lines.append(line)
+                        print(line.strip())
             time.sleep(0.5)
             if time.time() - time_start > timeout:
                 launched_app.terminate()

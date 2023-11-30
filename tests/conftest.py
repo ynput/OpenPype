@@ -39,6 +39,11 @@ def pytest_addoption(parser):
         help="Provide url of the Mongo database."
     )
 
+    parser.addoption(
+        "--keep_app_open", action="store_true", default=False,
+        help="Keeps the launched app open for interaction."
+    )
+
 
 @pytest.fixture(scope="module")
 def test_data_folder(request):
@@ -73,6 +78,11 @@ def setup_only(request):
 @pytest.fixture(scope="module")
 def mongo_url(request):
     return request.config.getoption("--mongo_url")
+
+
+@pytest.fixture(scope="module")
+def keep_app_open(request):
+    return request.config.getoption("--keep_app_open")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

@@ -214,7 +214,7 @@ class PypeCommands:
 
     def run_tests(self, folder, mark, pyargs,
                   test_data_folder, persist, app_variant, timeout, setup_only,
-                  mongo_url, app_group):
+                  mongo_url, app_group, keep_app_open):
         """
             Runs tests from 'folder'
 
@@ -274,6 +274,11 @@ class PypeCommands:
 
         if mongo_url:
             args.extend(["--mongo_url", mongo_url])
+
+        if keep_app_open:
+            # -s flag will output stdout instead of pytest holding it back and
+            # making a report at the end.
+            args.extend(["--keep_app_open", "-s"])
 
         print("run_tests args: {}".format(args))
         import pytest

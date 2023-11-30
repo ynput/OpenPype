@@ -296,12 +296,16 @@ def run(script):
 @click.option("--mongo_url",
               help="MongoDB for testing.",
               default=None)
+@click.option("--keep_app_open",
+              help="Keep launched application open for interaction.",
+              is_flag=True,
+              default=False)
 def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
-             timeout, setup_only, mongo_url, app_group):
+             timeout, setup_only, mongo_url, app_group, keep_app_open):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
                              persist, app_variant, timeout, setup_only,
-                             mongo_url, app_group)
+                             mongo_url, app_group, keep_app_open)
 
 
 @main.command(help="DEPRECATED - run sync server")

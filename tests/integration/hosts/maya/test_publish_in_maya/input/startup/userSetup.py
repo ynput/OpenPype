@@ -37,8 +37,10 @@ def _run_publish_test_deferred():
             )
 
         pyblish.util.publish()
+        print("Publish finished.")
     finally:
-        cmds.quit(force=True)
+        if not bool(os.environ.get("KEEP_APP_OPEN", False)):
+            cmds.quit(force=True)
 
 
 cmds.evalDeferred("_run_publish_test_deferred()", lowestPriority=True)

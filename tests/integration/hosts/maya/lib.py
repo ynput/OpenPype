@@ -82,8 +82,13 @@ class MayaHostFixtures(HostFixtures):
         yield []
 
     @pytest.fixture(scope="module")
-    def app_args(self, download_test_data, app_group):
+    def app_args(self, download_test_data, app_group, keep_app_open):
         args = []
+
+        if keep_app_open and self.running_in_mayapy(app_group):
+            # Inspect interactively after running script; forces a prompt even
+            # if stdin does not appear to be a terminal.
+            args.append("-i")
 
         if self.running_in_mayapy(app_group):
             # MayaPy can only be passed a python script, so Maya scene opening
