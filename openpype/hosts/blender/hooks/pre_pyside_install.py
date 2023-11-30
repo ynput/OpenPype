@@ -86,7 +86,6 @@ class InstallPySideToBlender(PreLaunchHook):
 
         # Change PYTHONPATH to contain blender's packages as first
         python_paths = [
-            python_lib,
             os.path.join(python_lib, "site-packages"),
         ]
         python_path = self.launch_context.env.get("PYTHONPATH") or ""
