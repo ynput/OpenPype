@@ -24,12 +24,19 @@ def _default_repre_status():
     return 0.0, 0.0
 
 class SiteSyncModel:
+    lifetime = 60  # In seconds (minute by default)
     status_lifetime = 20
 
     def __init__(self, controller):
         self._controller = controller
 
         self._site_sync_enabled_cache = NestedCacheItem(
+            levels=1, lifetime=self.lifetime
+        )
+        self._active_site_cache = NestedCacheItem(
+            levels=1, lifetime=self.lifetime
+        )
+        self._remote_site_cache = NestedCacheItem(
             levels=1, lifetime=self.lifetime
         )
         self._version_availability_cache = NestedCacheItem(
@@ -47,6 +54,8 @@ class SiteSyncModel:
 
     def reset(self):
         self._site_sync_enabled_cache.reset()
+        self._active_site_cache.reset()
+        self._remote_site_cache.reset()
         self._version_availability_cache.reset()
         self._repre_status_cache.reset()
 
@@ -80,17 +89,41 @@ class SiteSyncModel:
     def get_site_icons(self):
         return self._sitesync_addon.get_site_icons()
 
-    # TODO cache
     def get_active_site(self, project_name):
-        if not project_name:
-            return
-        return self._sitesync_addon.get_active_site(project_name)
+        """Active site name for a project.
 
-    # TODO cache
+        Args:
+            project_name (str): Project name.
+
+        Returns:
+            Union[str, None]: Remote site name.
+        """
+
+        cache = self._active_site_cache[project_name]
+        if not cache.is_valid:
+            site_name = None
+            if project_name and self._is_site_sync_addon_enabled():
+                site_name = self._sitesync_addon.get_active_site(project_name)
+            cache.update_data(site_name)
+        return cache.get_data()
+
     def get_remote_site(self, project_name):
-        if not project_name:
-            return
-        return self._sitesync_addon.get_remote_site(project_name)
+        """Remote site name for a project.
+
+        Args:
+            project_name (str): Project name.
+
+        Returns:
+            Union[str, None]: Remote site name.
+        """
+
+        cache = self._active_site_cache[project_name]
+        if not cache.is_valid:
+            site_name = None
+            if project_name and self._is_site_sync_addon_enabled():
+                site_name = self._sitesync_addon.get_remote_site(project_name)
+            cache.update_data(site_name)
+        return cache.get_data()
 
     def get_active_site_icon_def(self, project_name):
         if not project_name:
