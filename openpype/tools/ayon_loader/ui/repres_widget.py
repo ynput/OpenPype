@@ -32,6 +32,8 @@ class RepresentationsModel(QtGui.QStandardItemModel):
     column_labels = [label for label, _ in colums_info]
     column_widths = [width for _, width in colums_info]
     folder_column = column_labels.index("Product name")
+    active_site_column = column_labels.index("Active site")
+    remote_site_column = column_labels.index("Remote site")
 
     def __init__(self, controller):
         super(RepresentationsModel, self).__init__()
@@ -72,7 +74,6 @@ class RepresentationsModel(QtGui.QStandardItemModel):
 
         col = index.column()
         if col != 0:
-
             if role == QtCore.Qt.DecorationRole:
                 if col == 3:
                     role = ACTIVE_SITE_ICON_ROLE
@@ -287,6 +288,9 @@ class RepresentationsWidget(QtWidgets.QWidget):
         self._repre_model = repre_model
         self._repre_proxy_model = repre_proxy_model
 
+        self._set_site_sync_visibility(
+            self._controller.is_site_sync_enabled()
+        )
         self._set_multiple_folders_selected(False)
 
     def refresh(self):
@@ -297,6 +301,20 @@ class RepresentationsWidget(QtWidgets.QWidget):
 
     def _on_project_change(self, event):
         self._selected_project_name = event["project_name"]
+        site_sync_enabled = self._controller.is_site_sync_enabled(
+            self._selected_project_name
+        )
+        self._set_site_sync_visibility(site_sync_enabled)
+
+    def _set_site_sync_visibility(self, site_sync_enabled):
+        self._repre_view.setColumnHidden(
+            self._repre_model.active_site_column,
+            not site_sync_enabled
+        )
+        self._repre_view.setColumnHidden(
+            self._repre_model.remote_site_column,
+            not site_sync_enabled
+        )
 
     def _set_multiple_folders_selected(self, selected_multiple_folders):
         if selected_multiple_folders == self._selected_multiple_folders:
