@@ -18,18 +18,26 @@ class InstallDeadlineAddon(PreLaunchHook):
 
     def get_formatted_outputs_paths(self):
         data = self.launch_context.data
-        target_os = "linux"
 
-        retrieved_work_dir = self._get_correct_work_dir(data, target_os)
-        if not retrieved_work_dir:
+        # This value is hardcoded because the farm's workers are based on Linux.
+        # In the future there should be a way to get this info somewhere.
+        target_os = "linux"
+        current_os = data['env']['OS']
+
+        target_work_dir = self._get_correct_work_dir(data, target_os)
+        current_work_dir = self._get_correct_work_dir(data, current_os)
+        if not target_work_dir:
             self.log.warning(f"Can't find correct work directory for os {target_os}. Can't set default output path.")
+            return '/tmp/'
+
+        if not current_work_dir:
+            self.log.warning(f"Can't find correct work directory for os {current_work_dir}. Can't set default output path.")
             return '/tmp/'
 
         sequence_name, shot_name = data['asset_name'].split('_')
 
         try:
             base_output_path = os.path.join(
-                    retrieved_work_dir,
                     data['project_name'],
                     'Shots',
                     sequence_name,
@@ -39,10 +47,10 @@ class InstallDeadlineAddon(PreLaunchHook):
                     f'render{data["task_name"]}Main'
                 )
             render_layer_path = self._generate_path_with_version(
-                base_output_path, data['project_name'], shot_name
+                target_work_dir, base_output_path, data['project_name'], shot_name
             )
             output_path = self._generate_path_without_version(
-                base_output_path, data['project_name'], shot_name
+                current_work_dir, base_output_path, data['project_name'], shot_name
             )
             return render_layer_path, output_path
 
@@ -63,16 +71,18 @@ class InstallDeadlineAddon(PreLaunchHook):
         return retrieved_work_dir
 
 
-    def _generate_path_with_version(self, base_path, project_name, shot_name):
+    def _generate_path_with_version(self, work_dir, base_path, project_name, shot_name):
         return os.path.join(
+            work_dir,
             base_path,
             '{render_layer_name}',
             '{version}',
             '_'.join([project_name, shot_name, '{render_layer_name}', '{version}'])
         )
 
-    def _generate_path_without_version(self, base_path, project_name, shot_name):
+    def _generate_path_without_version(self, work_dir, base_path, project_name, shot_name):
         return os.path.join(
+            work_dir,
             base_path,
             '{render_layer_name}',
             '_'.join([project_name, shot_name, '{render_layer_name}'])
