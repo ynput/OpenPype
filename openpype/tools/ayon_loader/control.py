@@ -202,6 +202,13 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
             project_name, version_ids, sender
         )
 
+    def get_versions_representation_count(
+        self, project_name, version_ids, sender=None
+    ):
+        return self._products_model.get_versions_repre_count(
+            project_name, version_ids, sender
+        )
+
     def get_folder_thumbnail_ids(self, project_name, folder_ids):
         return self._thumbnails_model.get_folder_thumbnail_ids(
             project_name, folder_ids)
@@ -367,10 +374,6 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
 
     def get_remote_site_icon_def(self, project_name):
         return self._sitesync_model.get_remote_site_icon_def(project_name)
-
-    def get_representations_count(self, project_name, version_ids):
-        return len(self.get_representation_items(project_name,
-                                                 version_ids))
 
     def get_version_sync_availability(self, project_name, version_ids):
         return self._sitesync_model.get_version_sync_availability(

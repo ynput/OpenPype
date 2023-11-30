@@ -309,11 +309,9 @@ class ProductsModel(QtGui.QStandardItemModel):
         model_item.setData(
             version_item.thumbnail_id, VERSION_THUMBNAIL_ID_ROLE)
         project_name = self._last_project_name
-        repre_count = 0
-        if self._controller.is_sync_server_enabled(project_name):
-            repre_count = self._controller.get_representations_count(
-                project_name, [version_item.version_id]
-            )
+        repre_count = self._controller.get_versions_representation_count(
+            project_name, [version_item.version_id]
+        )[version_item.version_id]
 
         active, remote = self._controller.get_version_sync_availability(
             project_name, [version_item.version_id]
