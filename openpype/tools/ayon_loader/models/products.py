@@ -353,7 +353,6 @@ class ProductsModel:
 
         return output
 
-
     def change_products_group(self, project_name, product_ids, group_name):
         """Change group name for passed product ids.
 

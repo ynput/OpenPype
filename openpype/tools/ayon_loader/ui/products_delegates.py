@@ -12,7 +12,7 @@ from .products_model import (
     REMOTE_SITE_ICON_ROLE,
     REPRESENTATIONS_COUNT_ROLE,
     SYNC_ACTIVE_SITE_AVAILABILITY,
-    SYNC_REMOTE_SITE_AVAILABILITY
+    SYNC_REMOTE_SITE_AVAILABILITY,
 )
 
 
@@ -197,9 +197,7 @@ class LoadedInSceneDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
-    """
-        Prints icons and downloaded representation ration for both sides.
-    """
+    """Paints icons and downloaded representation ration for both sites."""
 
     def paint(self, painter, option, index):
         super(SiteSyncDelegate, self).paint(painter, option, index)

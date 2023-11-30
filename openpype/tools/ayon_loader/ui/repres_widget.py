@@ -195,9 +195,9 @@ class RepresentationsModel(QtGui.QStandardItemModel):
 
             new_group_items = []
             for repre_item in repre_name_items:
-                is_new_item, item = self._get_repre_item(repre_item,
-                                                         active_site_icon,
-                                                         remote_site_icon)
+                is_new_item, item = self._get_repre_item(
+                    repre_item, active_site_icon, remote_site_icon
+                )
                 item_parent = item.parent()
                 if item_parent is None:
                     item_parent = root_item

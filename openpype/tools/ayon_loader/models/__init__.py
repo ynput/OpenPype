@@ -8,5 +8,5 @@ __all__ = (
     "SelectionModel",
     "ProductsModel",
     "LoaderActionsModel",
-    "SiteSyncModel"
+    "SiteSyncModel",
 )
