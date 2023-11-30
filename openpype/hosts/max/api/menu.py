@@ -56,12 +56,12 @@ class OpenPypeMenu(object):
         """Create AYON menu.
 
         Args:
-            name (str, Optional): Openpype/AYON menu name.
+            name (str, Optional): AYON menu name.
             before (str, Optional): Name of the 3dsmax main menu item to
-                add Openpype/AYON menu before.
+                add AYON menu before.
 
         Returns:
-            QtWidgets.QAction: Openpype/AYON menu action.
+            QtWidgets.QAction: AYON menu action.
 
         """
         if self.menu is not None:
