@@ -29,6 +29,9 @@ class SiteSyncModel:
     def __init__(self, controller):
         self._controller = controller
 
+        self._site_sync_enabled_cache = NestedCacheItem(
+            levels=1, lifetime=self.lifetime
+        )
         self._version_availability_cache = NestedCacheItem(
             levels=2,
             default_factory=_default_version_availability,
@@ -43,13 +46,36 @@ class SiteSyncModel:
         self._sitesync_addon = manager.modules_by_name.get("sync_server")
 
     def reset(self):
+        self._site_sync_enabled_cache.reset()
         self._version_availability_cache.reset()
         self._repre_status_cache.reset()
 
-    def is_site_sync_enabled(self, project_name):
-        return self._sitesync_addon.is_project_enabled(project_name,
-                                                       single=True)
+    def is_site_sync_enabled(self, project_name=None):
+        """Site sync is enabled for a project.
 
+        Returns false if site sync addon is not available or enabled
+            or project has disabled it.
+
+        Args:
+            project_name (Union[str, None]): Project name. If project name
+                is 'None', True is returned if site sync addon
+                is available and enabled.
+
+        Returns:
+            bool: Site sync is enabled.
+        """
+
+        if not self._is_site_sync_addon_enabled():
+            return False
+        cache = self._site_sync_enabled_cache[project_name]
+        if not cache.is_valid:
+            enabled = True
+            if project_name:
+                enabled = self._sitesync_addon.is_project_enabled(
+                    project_name, single=True
+                )
+            cache.update_data(enabled)
+        return cache.get_data()
     # TODO cache
     def get_site_icons(self):
         return self._sitesync_addon.get_site_icons()
@@ -187,6 +213,16 @@ class SiteSyncModel:
                     project_name, repre_ids))
 
         return action_items
+
+    def _is_site_sync_addon_enabled(self):
+        """
+        Returns:
+            bool: Site sync addon is enabled.
+        """
+
+        if self._sitesync_addon is None:
+            return False
+        return self._sitesync_addon.enabled
 
     def _refresh_version_availability(self, project_name, version_ids):
         if not project_name or not version_ids:
