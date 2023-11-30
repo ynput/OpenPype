@@ -122,7 +122,7 @@ class SiteSyncModel:
             Union[str, None]: Remote site name.
         """
 
-        cache = self._active_site_cache[project_name]
+        cache = self._remote_site_cache[project_name]
         if not cache.is_valid:
             site_name = None
             if project_name and self._is_site_sync_addon_enabled():
