@@ -33,6 +33,7 @@ from openpype.client import (
     get_last_versions
 )
 from openpype.pipeline.version_start import get_versioning_start
+from openpype.pipeline.latest_version import get_lastest_version_number
 
 
 class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
@@ -241,6 +242,15 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 latest_version = instance.data["latestVersion"]
                 if latest_version is not None:
                     version_number = int(latest_version) + 1
+
+            if version_number is None:
+                version_number = get_lastest_version_number(
+                    instance,
+                    task_name
+                )
+
+                if version_number is not None:
+                    version_number = int(version_number) + 1
 
             # If version is not specified for instance or context
             if version_number is None:
