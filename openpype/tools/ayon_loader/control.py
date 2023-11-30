@@ -113,7 +113,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         self._products_model = ProductsModel(self)
         self._loader_actions_model = LoaderActionsModel(self)
         self._thumbnails_model = ThumbnailsModel()
-        self._sitesync_model = SiteSyncModel(self)
+        self._site_sync_model = SiteSyncModel(self)
 
     @property
     def log(self):
@@ -149,7 +149,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         self._loader_actions_model.reset()
         self._projects_model.reset()
         self._thumbnails_model.reset()
-        self._sitesync_model.reset()
+        self._site_sync_model.reset()
 
         self._projects_model.refresh()
 
@@ -240,7 +240,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
                 project_name, representation_ids)
         )
 
-        action_items.extend(self._sitesync_model.get_site_sync_action_items(
+        action_items.extend(self._site_sync_model.get_site_sync_action_items(
             project_name, representation_ids)
         )
 
@@ -254,8 +254,8 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         version_ids,
         representation_ids
     ):
-        if self._sitesync_model.is_site_sync_action(identifier):
-            self._sitesync_model.trigger_action_item(
+        if self._site_sync_model.is_site_sync_action(identifier):
+            self._site_sync_model.trigger_action_item(
                 identifier,
                 project_name,
                 representation_ids
@@ -369,23 +369,23 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         return self._loaded_products_cache.get_data()
 
     def is_site_sync_enabled(self, project_name=None):
-        return self._sitesync_model.is_site_sync_enabled(project_name)
+        return self._site_sync_model.is_site_sync_enabled(project_name)
 
     def get_active_site_icon_def(self, project_name):
-        return self._sitesync_model.get_active_site_icon_def(project_name)
+        return self._site_sync_model.get_active_site_icon_def(project_name)
 
     def get_remote_site_icon_def(self, project_name):
-        return self._sitesync_model.get_remote_site_icon_def(project_name)
+        return self._site_sync_model.get_remote_site_icon_def(project_name)
 
     def get_version_sync_availability(self, project_name, version_ids):
-        return self._sitesync_model.get_version_sync_availability(
+        return self._site_sync_model.get_version_sync_availability(
             project_name, version_ids
         )
 
     def get_representations_sync_status(
         self, project_name, representation_ids
     ):
-        return self._sitesync_model.get_representations_sync_status(
+        return self._site_sync_model.get_representations_sync_status(
             project_name, representation_ids
         )
 
