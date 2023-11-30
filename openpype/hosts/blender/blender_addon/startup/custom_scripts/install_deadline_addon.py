@@ -50,15 +50,15 @@ def _get_python_addon_file(path):
 
 
 def _is_already_installed(deadline_addon_name):
-    blender_addons_folder_path = get_addons_folder_path()
     try:
+        blender_addons_folder_path = get_addons_folder_path()
         return next(
             iter(
                 deadline_addon_name in file \
                 for file in os.listdir(blender_addons_folder_path)
             )
         )
-    except StopIteration:
+    except FileNotFoundError or StopIteration:
         return False
 
 
