@@ -725,7 +725,7 @@ class ProductsModel:
                 representation["name"],
                 repre_icon,
                 product_item.product_name,
-                product_item.folder_label
+                product_item.folder_label,
             )
             repre_items_by_version_id[version_id][repre_id] = repre_item
 
