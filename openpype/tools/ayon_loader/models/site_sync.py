@@ -20,7 +20,12 @@ def _default_version_availability():
     return 0, 0
 
 
+def _default_repre_status():
+    return 0.0, 0.0
+
 class SiteSyncModel:
+    status_lifetime = 20
+
     def __init__(self, controller):
         self._controller = controller
 
@@ -29,11 +34,17 @@ class SiteSyncModel:
             default_factory=_default_version_availability,
             lifetime=self.status_lifetime
         )
+        self._repre_status_cache = NestedCacheItem(
+            levels=2,
+            default_factory=_default_repre_status,
+            lifetime=self.status_lifetime
+        )
         manager = ModulesManager()
         self._sitesync_addon = manager.modules_by_name.get("sync_server")
 
     def reset(self):
         self._version_availability_cache.reset()
+        self._repre_status_cache.reset()
 
     def is_site_sync_enabled(self, project_name):
         return self._sitesync_addon.is_project_enabled(project_name,
@@ -107,17 +118,43 @@ class SiteSyncModel:
                 output[version_id] = version_cache.get_data()
         return output
 
-    def get_representations_sync_state(self, project_name, representation_ids):
+    def get_representations_sync_status(
+        self, project_name, representation_ids
+    ):
         """
+
+        Args:
+            project_name (str): Project name.
+            representation_ids (Iterable[str]): Representation ids.
+
         Returns:
             dict[str, tuple[float, float]]
         """
-        return self._sitesync_addon.get_representations_sync_state(
-            project_name,
-            representation_ids,
-            self.get_active_site(project_name),
-            self.get_remote_site(project_name),
-        )
+
+        if not self.is_site_sync_enabled(project_name):
+            return {
+                repre_id: _default_repre_status()
+                for repre_id in representation_ids
+            }
+
+        output = {}
+        project_cache = self._repre_status_cache[project_name]
+        invalid_ids = set()
+        for repre_id in representation_ids:
+            repre_cache = project_cache[repre_id]
+            if repre_cache.is_valid:
+                output[repre_id] = repre_cache.get_data()
+            else:
+                invalid_ids.add(repre_id)
+
+        if invalid_ids:
+            self._refresh_representations_sync_status(
+                project_name, invalid_ids
+            )
+            for repre_id in invalid_ids:
+                repre_cache = project_cache[repre_id]
+                output[repre_id] = repre_cache.get_data()
+        return output
 
     def get_sitesync_action_items(self, project_name, representation_ids):
         if not self.is_site_sync_enabled(project_name):
@@ -167,6 +204,24 @@ class SiteSyncModel:
             if status is None:
                 status = _default_version_availability()
             project_cache[version_id].update_data(status)
+
+    def _refresh_representations_sync_status(
+        self, project_name, representation_ids
+    ):
+        if not project_name or not representation_ids:
+            return
+        project_cache = self._repre_status_cache[project_name]
+        status_by_repre_id = self._sitesync_addon.get_representations_sync_status(
+            project_name,
+            representation_ids,
+            self.get_active_site(project_name),
+            self.get_remote_site(project_name),
+        )
+        for repre_id in representation_ids:
+            status = status_by_repre_id.get(repre_id)
+            if status is None:
+                status = _default_repre_status()
+            project_cache[repre_id].update_data(status)
 
     def _create_download_action_item(self, project_name, representation_ids):
         return self._create_action_item(
