@@ -409,11 +409,13 @@ class SiteSyncModel:
         if not project_name or not representation_ids:
             return
         project_cache = self._repre_status_cache[project_name]
-        status_by_repre_id = self._sitesync_addon.get_representations_sync_status(
-            project_name,
-            representation_ids,
-            self.get_active_site(project_name),
-            self.get_remote_site(project_name),
+        status_by_repre_id = (
+            self._sitesync_addon.get_representations_sync_state(
+                project_name,
+                representation_ids,
+                self.get_active_site(project_name),
+                self.get_remote_site(project_name),
+            )
         )
         for repre_id in representation_ids:
             status = status_by_repre_id.get(repre_id)
