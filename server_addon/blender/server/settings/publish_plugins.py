@@ -128,7 +128,7 @@ class PublishPuginsModel(BaseSettingsModel):
     )
     ExtractLayout: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
-        title="Extract Layout"
+        title="Extract Layout (JSON)"
     )
     ExtractThumbnail: ExtractPlayblastModel = Field(
         default_factory=ExtractPlayblastModel,
