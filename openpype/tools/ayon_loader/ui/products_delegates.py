@@ -224,8 +224,8 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
         idx = 0
         height = width = 24
         for value, icon in (
-            (availability_active, active_icon),
-            (availability_remote, remote_icon),
+            (str(availability_active), active_icon),
+            (str(availability_remote), remote_icon),
         ):
             if not icon:
                 continue
@@ -241,7 +241,7 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
             painter.drawText(
                 text_rect,
                 option.displayAlignment,
-                str(value)
+                value
             )
 
             idx += 1
