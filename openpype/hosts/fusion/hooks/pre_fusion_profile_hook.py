@@ -164,9 +164,11 @@ class FusionCopyPrefsPrelaunch(PreLaunchHook):
         master_prefs_variable = f"FUSION{profile_version}_MasterPrefs"
 
         if AYON_SERVER_ENABLED:
-            master_prefs = Path(FUSION_HOST_DIR, "deploy_ayon", "fusion_shared.prefs")
+            master_prefs = Path(
+                FUSION_HOST_DIR, "deploy_ayon", "fusion_shared.prefs")
         else:
-            master_prefs = Path(FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
+            master_prefs = Path(
+                FUSION_HOST_DIR, "deploy", "fusion_shared.prefs")
 
         self.log.info(f"Setting {master_prefs_variable}: {master_prefs}")
         self.launch_context.env[master_prefs_variable] = str(master_prefs)
