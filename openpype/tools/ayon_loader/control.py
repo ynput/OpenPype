@@ -368,7 +368,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
             self._loaded_products_cache.update_data(product_ids)
         return self._loaded_products_cache.get_data()
 
-    def is_sync_server_enabled(self, project_name=None):
+    def is_site_sync_enabled(self, project_name=None):
         return self._sitesync_model.is_site_sync_enabled(project_name)
 
     def get_active_site_icon_def(self, project_name):

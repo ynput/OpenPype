@@ -308,14 +308,17 @@ class ProductsModel(QtGui.QStandardItemModel):
         model_item.setData(version_item.step, VERSION_STEP_ROLE)
         model_item.setData(
             version_item.thumbnail_id, VERSION_THUMBNAIL_ID_ROLE)
-        project_name = self._last_project_name
-        repre_count = self._controller.get_versions_representation_count(
-            project_name, [version_item.version_id]
-        )[version_item.version_id]
 
+        # TODO call site sync methods for all versions at once
+        project_name = self._last_project_name
+        version_id = version_item.version_id
+        repre_count = self._controller.get_versions_representation_count(
+            project_name, [version_id]
+        )[version_id]
         active, remote = self._controller.get_version_sync_availability(
-            project_name, [version_item.version_id]
-        )[version_item.version_id]
+            project_name, [version_id]
+        )[version_id]
+
         model_item.setData(repre_count, REPRESENTATIONS_COUNT_ROLE)
         model_item.setData(active, SYNC_ACTIVE_SITE_AVAILABILITY)
         model_item.setData(remote, SYNC_REMOTE_SITE_AVAILABILITY)
