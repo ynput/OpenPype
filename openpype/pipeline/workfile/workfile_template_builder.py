@@ -1408,7 +1408,8 @@ class PlaceholderLoadMixin(object):
                     default=options.get("asset"),
                     placeholder="regex filtering by asset name",
                     tooltip=(
-                        "Filtering assets by matching field regex to asset's name"
+                        "Filtering assets by matching"
+                        " field regex to asset's name"
                     )
                 ),
                 attribute_definitions.TextDef(
@@ -1417,7 +1418,8 @@ class PlaceholderLoadMixin(object):
                     default=options.get("subset"),
                     placeholder="regex filtering by subset name",
                     tooltip=(
-                        "Filtering assets by matching field regex to subset's name"
+                        "Filtering assets by matching"
+                        " field regex to subset's name"
                     )
                 ),
                 attribute_definitions.TextDef(
