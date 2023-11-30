@@ -1501,7 +1501,8 @@ class PlaceholderLoadMixin(object):
             folders_field.set_filter("pathEx", folder_path_regex_var)
 
         query.set_variable_value("projectName", project_name)
-        query.set_variable_value("folderPathRegex", folder_regex)
+        if folder_regex:
+            query.set_variable_value("folderPathRegex", folder_regex)
 
         api = get_ayon_server_api_connection()
         for parsed_data in query.continuous_query(api):
@@ -1521,7 +1522,10 @@ class PlaceholderLoadMixin(object):
         current_asset_doc = self.builder.current_asset_doc
 
         folder_path_regex = placeholder.data["folder_path"]
-        product_name_regex = re.compile(placeholder.data["product_name"])
+        product_name_regex_value = placeholder.data["product_name"]
+        product_name_regex = None
+        if product_name_regex_value:
+            product_name_regex = re.compile(product_name_regex_value)
         product_type = placeholder.data["family"]
 
         builder_type = placeholder.data["builder_type"]
@@ -1547,7 +1551,10 @@ class PlaceholderLoadMixin(object):
         ))
         filtered_product_ids = set()
         for product in products:
-            if product_name_regex.match(product["name"]):
+            if (
+                product_name_regex is None
+                or product_name_regex.match(product["name"])
+            ):
                 filtered_product_ids.add(product["id"])
 
         if not filtered_product_ids:
