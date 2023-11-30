@@ -1,4 +1,5 @@
 import os
+from openpype import AYON_SERVER_ENABLED
 from openpype.lib.applications import (
     PreLaunchHook,
     LaunchTypes,
@@ -64,5 +65,9 @@ class FusionPrelaunch(PreLaunchHook):
 
         self.launch_context.env[py3_var] = py3_dir
 
-        self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
-        self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
+        if AYON_SERVER_ENABLED:
+            self.log.info(f"Setting AYON_FUSION: {FUSION_HOST_DIR}")
+            self.launch_context.env["AYON_FUSION"] = FUSION_HOST_DIR
+        else:
+            self.log.info(f"Setting OPENPYPE_FUSION: {FUSION_HOST_DIR}")
+            self.launch_context.env["OPENPYPE_FUSION"] = FUSION_HOST_DIR
