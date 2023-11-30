@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""3dsmax menu definition of OpenPype/AYON."""
+"""3dsmax menu definition of AYON."""
 import os
 from qtpy import QtWidgets, QtCore
 from pymxs import runtime as rt
