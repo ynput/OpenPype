@@ -220,7 +220,7 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
             return
 
         idx = 0
-        height = width = 24
+        icon_size = QtCore.QSize(24, 24)
         for value, icon in (
             (str(availability_active), active_icon),
             (str(availability_remote), remote_icon),
@@ -228,14 +228,19 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
             if not icon:
                 continue
 
-            pixmap = icon.pixmap(icon.actualSize(QtCore.QSize(height, width)))
+            pixmap = icon.pixmap(icon.actualSize(icon_size))
             padding = 10 + (70 * idx)
-            point = QtCore.QPoint(option.rect.x() + padding,
-                                  option.rect.y() +
-                                  (option.rect.height() - pixmap.height()) / 2)
+            point = QtCore.QPoint(
+                option.rect.x() + padding,
+                option.rect.y() + (
+                    (option.rect.height() - pixmap.height()) * 0.5
+                )
+            )
             painter.drawPixmap(point, pixmap)
 
-            text_rect = option.rect.translated(padding + width + 10, 0)
+            text_rect = option.rect.translated(
+                padding + icon_size.width() + 10, 0
+            )
             painter.drawText(
                 text_rect,
                 option.displayAlignment,
