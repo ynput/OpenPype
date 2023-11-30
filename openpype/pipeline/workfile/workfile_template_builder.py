@@ -1561,7 +1561,8 @@ class PlaceholderLoadMixin(object):
             return []
 
         version_ids = set(
-            get_last_versions(
+            version["id"]
+            for version in get_last_versions(
                 project_name, filtered_product_ids, fields={"id"}
             ).values()
         )
