@@ -85,6 +85,11 @@ class ExtractOIIOTranscode(publish.Extractor):
         repres = instance.data["representations"]
         for idx, repre in enumerate(list(repres)):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
+
+            if "review" not in repre.get('tags', []):
+                self.log.warning("No review in tags. Skipping.")
+                continue
+
             if not self._repre_is_valid(repre):
                 continue
 
