@@ -14,6 +14,10 @@ REPRESENTATION_ID_ROLE = QtCore.Qt.UserRole + 2
 PRODUCT_NAME_ROLE = QtCore.Qt.UserRole + 3
 FOLDER_LABEL_ROLE = QtCore.Qt.UserRole + 4
 GROUP_TYPE_ROLE = QtCore.Qt.UserRole + 5
+ACTIVE_SITE_ICON_ROLE = QtCore.Qt.UserRole + 6
+REMOTE_SITE_ICON_ROLE = QtCore.Qt.UserRole + 7
+SYNC_ACTIVE_SITE_PROGRESS = QtCore.Qt.UserRole + 8
+SYNC_REMOTE_SITE_PROGRESS = QtCore.Qt.UserRole + 9
 
 
 class RepresentationsModel(QtGui.QStandardItemModel):
@@ -22,8 +26,8 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         ("Name", 120),
         ("Product name", 125),
         ("Folder", 125),
-        # ("Active site", 85),
-        # ("Remote site", 85)
+        ("Active site", 85),
+        ("Remote site", 85)
     ]
     column_labels = [label for label, _ in colums_info]
     column_widths = [width for _, width in colums_info]
@@ -59,7 +63,7 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         repre_items = self._controller.get_representation_items(
             self._selected_project_name, self._selected_version_ids
         )
-        self._fill_items(repre_items)
+        self._fill_items(repre_items, self._selected_project_name)
         self.refreshed.emit()
 
     def data(self, index, role=None):
@@ -68,14 +72,25 @@ class RepresentationsModel(QtGui.QStandardItemModel):
 
         col = index.column()
         if col != 0:
+
             if role == QtCore.Qt.DecorationRole:
-                return None
+                if col == 3:
+                    role = ACTIVE_SITE_ICON_ROLE
+                elif col == 4:
+                    role = REMOTE_SITE_ICON_ROLE
+                else:
+                    return None
 
             if role == QtCore.Qt.DisplayRole:
                 if col == 1:
                     role = PRODUCT_NAME_ROLE
                 elif col == 2:
                     role = FOLDER_LABEL_ROLE
+                elif col == 3:
+                    role = SYNC_ACTIVE_SITE_PROGRESS
+                elif col == 4:
+                    role = SYNC_REMOTE_SITE_PROGRESS
+
             index = self.index(index.row(), 0, index.parent())
         return super(RepresentationsModel, self).data(index, role)
 
@@ -89,7 +104,7 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         root_item = self.invisibleRootItem()
         root_item.removeRows(0, root_item.rowCount())
 
-    def _get_repre_item(self, repre_item):
+    def _get_repre_item(self, repre_item, active_site_icon, remote_site_icon):
         repre_id = repre_item.representation_id
         repre_name = repre_item.representation_name
         repre_icon = repre_item.representation_icon
@@ -109,6 +124,12 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         item.setData(repre_id, REPRESENTATION_ID_ROLE)
         item.setData(repre_item.product_name, PRODUCT_NAME_ROLE)
         item.setData(repre_item.folder_label, FOLDER_LABEL_ROLE)
+        item.setData(active_site_icon, ACTIVE_SITE_ICON_ROLE)
+        item.setData(remote_site_icon, REMOTE_SITE_ICON_ROLE)
+        item.setData(repre_item.active_site_progress,
+                     SYNC_ACTIVE_SITE_PROGRESS)
+        item.setData(repre_item.remote_site_progress,
+                     SYNC_REMOTE_SITE_PROGRESS)
         return is_new_item, item
 
     def _get_group_icon(self):
@@ -134,7 +155,16 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         self._groups_items_by_name[repre_name] = item
         return True, item
 
-    def _fill_items(self, repre_items):
+    def _fill_items(self, repre_items, project_name):
+        active_site_icon_def = self._controller.get_active_site_icon_def(
+            project_name
+        )
+        remote_site_icon_def = self._controller.get_remote_site_icon_def(
+            project_name
+        )
+        active_site_icon = get_qt_icon(active_site_icon_def)
+        remote_site_icon = get_qt_icon(remote_site_icon_def)
+
         items_to_remove = set(self._items_by_id.keys())
         repre_items_by_name = collections.defaultdict(list)
         for repre_item in repre_items:
@@ -164,7 +194,9 @@ class RepresentationsModel(QtGui.QStandardItemModel):
 
             new_group_items = []
             for repre_item in repre_name_items:
-                is_new_item, item = self._get_repre_item(repre_item)
+                is_new_item, item = self._get_repre_item(repre_item,
+                                                         active_site_icon,
+                                                         remote_site_icon)
                 item_parent = item.parent()
                 if item_parent is None:
                     item_parent = root_item

@@ -697,8 +697,8 @@ class ProductsModel:
                 repre_icon,
                 product_item.product_name,
                 product_item.folder_label,
-                local_progress,
-                remote_progress
+                "{}%".format(int(local_progress * 100)),
+                "{}%".format(int(remote_progress * 100))
             )
             repre_items_by_version_id[version_id][repre_id] = repre_item
 
