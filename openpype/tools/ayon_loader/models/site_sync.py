@@ -391,7 +391,7 @@ class SiteSyncModel:
             return
         project_cache = self._version_availability_cache[project_name]
 
-        avail_by_id = self._sitesync_addon.get_version_sync_availability(
+        avail_by_id = self._sitesync_addon.get_version_availability(
             project_name,
             version_ids,
             self.get_active_site(project_name),
