@@ -225,7 +225,7 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
             (availability_remote, remote_icon),
         ):
             if icon:
-                items_to_draw.append((icon, value))
+                items_to_draw.append((value, icon))
 
         if not items_to_draw:
             return
@@ -258,7 +258,7 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
 
             icon_offset = icon_size.width() + (padding * 2)
             text_rect = QtCore.QRect(item_rect)
-            text_rect.setLeft(icon_offset)
+            text_rect.setLeft(text_rect.left() + icon_offset)
             if text_rect.width() < 1:
                 continue
 
