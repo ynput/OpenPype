@@ -72,6 +72,7 @@ dropbox = "^11.20.0"
 aiohttp-middlewares = { git = "https://github.com/playpauseandstop/aiohttp-middlewares.git", branch = "main" }
 Unidecode = "1.2.0"
 cryptography = "39.0.0"
+opentimelineio = "^0.15.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^6.0"
