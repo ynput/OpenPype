@@ -372,9 +372,10 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         return len(self.get_representation_items(project_name,
                                                  version_ids))
 
-    def get_version_availability(self, project_name, version_ids):
-        return self._sitesync_model.get_version_availability(project_name,
-                                                             version_ids)
+    def get_version_sync_availability(self, project_name, version_ids):
+        return self._sitesync_model.get_version_sync_availability(
+            project_name, version_ids
+        )
 
     def get_representations_sync_status(self, project_name,
                                         representation_ids):

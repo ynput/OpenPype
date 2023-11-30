@@ -7,6 +7,7 @@ from openpype.tools.ayon_loader.abstract import ActionItem
 from openpype.modules import ModulesManager
 
 from openpype.modules.sync_server.utils import SiteAlreadyPresentError
+from openpype.tools.ayon_utils.models import NestedCacheItem
 
 DOWNLOAD_IDENTIFIER = "sitesync.download"
 UPLOAD_IDENTIFIER = "sitesync.upload"
@@ -15,15 +16,24 @@ REMOVE_IDENTIFIER = "sitesync.remove"
 log = Logger.get_logger(__name__)
 
 
+def _default_version_availability():
+    return 0, 0
+
+
 class SiteSyncModel:
     def __init__(self, controller):
         self._controller = controller
 
+        self._version_availability_cache = NestedCacheItem(
+            levels=2,
+            default_factory=_default_version_availability,
+            lifetime=self.status_lifetime
+        )
         manager = ModulesManager()
         self._sitesync_addon = manager.modules_by_name.get("sync_server")
 
     def reset(self):
-        pass
+        self._version_availability_cache.reset()
 
     def is_site_sync_enabled(self, project_name):
         return self._sitesync_addon.is_project_enabled(project_name,
@@ -61,28 +71,41 @@ class SiteSyncModel:
         )
         return self.get_site_icons().get(provider)
 
-    def get_version_availability(self, project_name, version_ids):
-        """ Returns how many representations are available on sites.
+    def get_version_sync_availability(self, project_name, version_ids):
+        """Returns how many representations are available on sites.
 
         Returned value `{version_id: (4, 6)}` denotes that locally are
-        available 4 and remotely 6 representation.
-        (Available means they were synced to site OK).
+            available 4 and remotely 6 representation.
+        NOTE: Available means they were synced to site.
+
         Returns:
             dict[str, tuple[int, int]]
         """
+
         if not self.is_site_sync_enabled(project_name):
             return {
-                version_id: (0, 0)
+                version_id: _default_version_availability()
                 for version_id in version_ids
             }
 
-        version_avail = self._sitesync_addon.get_version_availability(
-            project_name,
-            version_ids,
-            self.get_active_site(project_name),
-            self.get_remote_site(project_name),
-        )
-        return version_avail
+        output = {}
+        project_cache = self._version_availability_cache[project_name]
+        invalid_ids = set()
+        for version_id in version_ids:
+            repre_cache = project_cache[version_id]
+            if repre_cache.is_valid:
+                output[version_id] = repre_cache.get_data()
+            else:
+                invalid_ids.add(version_id)
+
+        if invalid_ids:
+            self._refresh_version_availability(
+                project_name, invalid_ids
+            )
+            for version_id in invalid_ids:
+                version_cache = project_cache[version_id]
+                output[version_id] = version_cache.get_data()
+        return output
 
     def get_representations_sync_state(self, project_name, representation_ids):
         """
@@ -127,6 +150,23 @@ class SiteSyncModel:
                     project_name, repre_ids))
 
         return action_items
+
+    def _refresh_version_availability(self, project_name, version_ids):
+        if not project_name or not version_ids:
+            return
+        project_cache = self._version_availability_cache[project_name]
+
+        avail_by_id = self._sitesync_addon.get_version_sync_availability(
+            project_name,
+            version_ids,
+            self.get_active_site(project_name),
+            self.get_remote_site(project_name),
+        )
+        for version_id in version_ids:
+            status = avail_by_id.get(version_id)
+            if status is None:
+                status = _default_version_availability()
+            project_cache[version_id].update_data(status)
 
     def _create_download_action_item(self, project_name, representation_ids):
         return self._create_action_item(
