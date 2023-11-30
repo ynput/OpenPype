@@ -28,14 +28,14 @@ class ScriptsmenuSettings(BaseSettingsModel):
 
 
 DEFAULT_SCRIPTSMENU_SETTINGS = {
-    "name": "OpenPype Tools",
+    "name": "Custom Tools",
     "definition": [
         {
             "type": "action",
             "sourcetype": "python",
-            "title": "OpenPype Docs",
-            "command": "import webbrowser;webbrowser.open(url='https://openpype.io/docs/artist_hosts_hiero')",
-            "tooltip": "Open the OpenPype Hiero user doc page"
+            "title": "Ayon Hiero Docs",
+            "command": "import webbrowser;webbrowser.open(url='https://ayon.ynput.io/docs/addon_hiero_artist')",  # noqa
+            "tooltip": "Open the Ayon Hiero user doc page"
         }
     ]
 }
