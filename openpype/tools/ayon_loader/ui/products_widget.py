@@ -141,7 +141,7 @@ class ProductsWidget(QtWidgets.QWidget):
 
         avail_delegate = SiteSyncDelegate()
         products_view.setItemDelegateForColumn(
-            products_model.availability_col, avail_delegate)
+            products_model.site_sync_avail_col, avail_delegate)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

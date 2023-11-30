@@ -73,7 +73,7 @@ class ProductsModel(QtGui.QStandardItemModel):
     published_time_col = column_labels.index("Time")
     folders_label_col = column_labels.index("Folder")
     in_scene_col = column_labels.index("In scene")
-    availability_col = column_labels.index("Availability")
+    site_sync_avail_col = column_labels.index("Availability")
 
     def __init__(self, controller):
         super(ProductsModel, self).__init__()
