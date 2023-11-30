@@ -1,7 +1,6 @@
 import numbers
 from qtpy import QtWidgets, QtCore, QtGui
 
-from openpype.tools.ayon_utils.widgets import get_qt_icon
 from openpype.tools.utils.lib import format_version
 
 from .products_model import (
@@ -224,8 +223,10 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
 
         idx = 0
         height = width = 24
-        for value, icon in [(availability_active, active_icon),
-                            (availability_remote, remote_icon)]:
+        for value, icon in (
+            (availability_active, active_icon),
+            (availability_remote, remote_icon),
+        ):
             if not icon:
                 continue
 
