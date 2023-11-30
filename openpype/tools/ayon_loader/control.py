@@ -211,11 +211,13 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
 
     def get_folder_thumbnail_ids(self, project_name, folder_ids):
         return self._thumbnails_model.get_folder_thumbnail_ids(
-            project_name, folder_ids)
+            project_name, folder_ids
+        )
 
     def get_version_thumbnail_ids(self, project_name, version_ids):
         return self._thumbnails_model.get_version_thumbnail_ids(
-            project_name, version_ids)
+            project_name, version_ids
+        )
 
     def get_thumbnail_path(self, project_name, thumbnail_id):
         return self._thumbnails_model.get_thumbnail_path(
@@ -238,7 +240,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
                 project_name, representation_ids)
         )
 
-        action_items.extend(self._sitesync_model.get_sitesync_action_items(
+        action_items.extend(self._sitesync_model.get_site_sync_action_items(
             project_name, representation_ids)
         )
 
@@ -252,7 +254,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         version_ids,
         representation_ids
     ):
-        if self._sitesync_model.is_sitesync_action(identifier):
+        if self._sitesync_model.is_site_sync_action(identifier):
             self._sitesync_model.trigger_action_item(
                 identifier,
                 project_name,
@@ -366,7 +368,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
             self._loaded_products_cache.update_data(product_ids)
         return self._loaded_products_cache.get_data()
 
-    def is_sync_server_enabled(self, project_name):
+    def is_sync_server_enabled(self, project_name=None):
         return self._sitesync_model.is_site_sync_enabled(project_name)
 
     def get_active_site_icon_def(self, project_name):
