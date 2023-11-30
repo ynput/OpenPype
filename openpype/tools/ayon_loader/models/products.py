@@ -710,11 +710,6 @@ class ProductsModel:
             "name": "fa.file-o",
             "color": get_default_entity_icon_color(),
         }
-        representation_ids = [repre["id"] for repre in representations]
-        representations_sync_status = (
-            self._controller.get_representations_sync_status(
-                project_name, representation_ids)
-        )
         repre_items_by_version_id = collections.defaultdict(dict)
         for representation in representations:
             version_id = representation["versionId"]
@@ -725,16 +720,12 @@ class ProductsModel:
             if product_item is None:
                 continue
             repre_id = representation["id"]
-            sync_status = representations_sync_status[repre_id]
-            local_progress, remote_progress = sync_status
             repre_item = RepreItem(
                 repre_id,
                 representation["name"],
                 repre_icon,
                 product_item.product_name,
-                product_item.folder_label,
-                "{}%".format(int(local_progress * 100)),
-                "{}%".format(int(remote_progress * 100))
+                product_item.folder_label
             )
             repre_items_by_version_id[version_id][repre_id] = repre_item
 

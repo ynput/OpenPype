@@ -215,18 +215,13 @@ class RepreItem:
         representation_name,
         representation_icon,
         product_name,
-        folder_label,
-        active_site_progress,
-        remote_site_progress,
+        folder_label
     ):
         self.representation_id = representation_id
         self.representation_name = representation_name
         self.representation_icon = representation_icon
         self.product_name = product_name
         self.folder_label = folder_label
-
-        self.active_site_progress = active_site_progress
-        self.remote_site_progress = remote_site_progress
 
     def to_data(self):
         return {
@@ -235,8 +230,6 @@ class RepreItem:
             "representation_icon": self.representation_icon,
             "product_name": self.product_name,
             "folder_label": self.folder_label,
-            "active_site_progress": self.active_site_progress,
-            "remote_site_progress": self.remote_site_progress,
         }
 
     @classmethod

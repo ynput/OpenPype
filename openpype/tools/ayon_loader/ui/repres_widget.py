@@ -105,7 +105,13 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         root_item = self.invisibleRootItem()
         root_item.removeRows(0, root_item.rowCount())
 
-    def _get_repre_item(self, repre_item, active_site_icon, remote_site_icon):
+    def _get_repre_item(
+        self,
+        repre_item,
+        active_site_icon,
+        remote_site_icon,
+        repres_sync_status
+    ):
         repre_id = repre_item.representation_id
         repre_name = repre_item.representation_name
         repre_icon = repre_item.representation_icon
@@ -118,6 +124,12 @@ class RepresentationsModel(QtGui.QStandardItemModel):
             item.setColumnCount(self.columnCount())
             item.setEditable(False)
 
+        sync_status = repres_sync_status[repre_id]
+        active_progress, remote_progress = sync_status
+
+        active_site_progress = "{}%".format(int(active_progress * 100))
+        remote_site_progress = "{}%".format(int(remote_progress * 100))
+
         icon = get_qt_icon(repre_icon)
         item.setData(repre_name, QtCore.Qt.DisplayRole)
         item.setData(icon, QtCore.Qt.DecorationRole)
@@ -127,10 +139,8 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         item.setData(repre_item.folder_label, FOLDER_LABEL_ROLE)
         item.setData(active_site_icon, ACTIVE_SITE_ICON_ROLE)
         item.setData(remote_site_icon, REMOTE_SITE_ICON_ROLE)
-        item.setData(repre_item.active_site_progress,
-                     SYNC_ACTIVE_SITE_PROGRESS)
-        item.setData(repre_item.remote_site_progress,
-                     SYNC_REMOTE_SITE_PROGRESS)
+        item.setData(active_site_progress, SYNC_ACTIVE_SITE_PROGRESS)
+        item.setData(remote_site_progress, SYNC_REMOTE_SITE_PROGRESS)
         return is_new_item, item
 
     def _get_group_icon(self):
@@ -168,10 +178,16 @@ class RepresentationsModel(QtGui.QStandardItemModel):
 
         items_to_remove = set(self._items_by_id.keys())
         repre_items_by_name = collections.defaultdict(list)
+        repre_ids = set()
         for repre_item in repre_items:
+            repre_ids.add(repre_item.representation_id)
             items_to_remove.discard(repre_item.representation_id)
             repre_name = repre_item.representation_name
             repre_items_by_name[repre_name].append(repre_item)
+
+        repres_sync_status = self._controller.get_representations_sync_status(
+            project_name, repre_ids
+        )
 
         root_item = self.invisibleRootItem()
         for repre_id in items_to_remove:
@@ -196,7 +212,10 @@ class RepresentationsModel(QtGui.QStandardItemModel):
             new_group_items = []
             for repre_item in repre_name_items:
                 is_new_item, item = self._get_repre_item(
-                    repre_item, active_site_icon, remote_site_icon
+                    repre_item,
+                    active_site_icon,
+                    remote_site_icon,
+                    repres_sync_status
                 )
                 item_parent = item.parent()
                 if item_parent is None:
