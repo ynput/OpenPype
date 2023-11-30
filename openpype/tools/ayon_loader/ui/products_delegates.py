@@ -219,14 +219,14 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
         if availability_active is None or availability_remote is None:
             return
 
-        items_to_draw = []
-        for value, icon in (
-            (availability_active, active_icon),
-            (availability_remote, remote_icon),
-        ):
-            if icon:
-                items_to_draw.append((value, icon))
-
+        items_to_draw = [
+            (value, icon)
+            for value, icon in (
+                (availability_active, active_icon),
+                (availability_remote, remote_icon),
+            )
+            if icon
+        ]
         if not items_to_draw:
             return
 
@@ -238,8 +238,7 @@ class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
         if item_width < 1:
             item_width = 0
 
-        for idx, item in enumerate(items_to_draw):
-            value, icon = item
+        for value, icon in items_to_draw:
             item_rect = QtCore.QRect(
                 pos_x,
                 option.rect.y(),
