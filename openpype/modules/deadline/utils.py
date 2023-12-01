@@ -12,10 +12,12 @@ class SafeDict(dict):
 def set_custom_deadline_name(instance, filename, setting):
     context = instance.context
     basename, ext = os.path.splitext(filename)
-    subversion = basename.split("_")[-1]
     version = "v" + str(instance.data.get("version")).zfill(3)
-
-    if subversion == version:
+    subversion = basename.split("_")[-1]
+    if re.match(r'^v[0-9]+$', subversion):
+        # If the last part of the filename is the version,
+        # this means there is no subversion (a.k.a comment).
+        # Lets clear the variable
         subversion = ""
 
     anatomy_data = context.data.get("anatomyData")
@@ -49,7 +51,7 @@ def set_custom_deadline_name(instance, filename, setting):
     except Exception as e:
         raise KeyError(
             "OpenPype Studio Settings (Deadline section): Syntax issue(s) "
-            "in \"Job Name\" or \"Batch Name\" for the current project. "
+            "in \"Job Name\" or \"Batch Name\" for the current project.\n"
             "Error: {}".format(e)
         )
 

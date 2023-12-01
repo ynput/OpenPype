@@ -1953,13 +1953,23 @@ class SyncToAvalonEvent(BaseEvent):
                     self.hier_cust_attrs_changes[key].append(ftrack_id)
                     continue
 
-                if key not in ent_cust_attrs:
+                # This is because "status" is not in custom attributes,
+                # but it's a "properties" present in every project,
+                # so this will not skip the key
+                if key != "status" and key not in ent_cust_attrs:
                     continue
 
                 value = values["new"]
-                new_value = self.convert_value_by_cust_attr_conf(
-                    value, ent_cust_attrs[key]
-                )
+                # Rename the key because the "status" in ftrack
+                # is called "active" in avalon and is a boolean
+                if key == "status":
+                    key = "active"
+                    new_value = True if value == "active" else False
+                    ent_path = "Project"
+                else:
+                    new_value = self.convert_value_by_cust_attr_conf(
+                        value, ent_cust_attrs[key]
+                    )
 
                 if entType == "show" and key == "applications":
                     # Store apps to project't config

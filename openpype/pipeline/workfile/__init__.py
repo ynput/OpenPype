@@ -15,7 +15,6 @@ from .path_resolving import (
 
 from .build_workfile import BuildWorkfile
 
-
 __all__ = (
     "get_workfile_template_key_from_context",
     "get_workfile_template_key",
@@ -30,5 +29,5 @@ __all__ = (
 
     "create_workdir_extra_folders",
 
-    "BuildWorkfile",
+    "BuildWorkfile"
 )

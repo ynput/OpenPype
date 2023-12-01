@@ -41,8 +41,8 @@ class ValidatePluginPathAttributes(pyblish.api.InstancePlugin):
         for node, node_type in pairwise(cmds.ls(type=node_types,
                                                 showType=True)):
             # get the filepath
-            file_attr = "{}.{}".format(node, file_attr[node_type])
-            filepath = cmds.getAttr(file_attr)
+            file_attr_str = "{}.{}".format(node, file_attr[node_type])
+            filepath = cmds.getAttr(file_attr_str)
 
             if filepath and not os.path.exists(filepath):
                 cls.log.error("{} '{}' uses non-existing filepath: {}"

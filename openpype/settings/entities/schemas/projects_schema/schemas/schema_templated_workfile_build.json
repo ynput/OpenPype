@@ -40,6 +40,12 @@
                         "label": "Create first version",
                         "type": "boolean",
                         "default": true
+                    },
+                    {
+                        "key": "autobuild_first_version",
+                        "label": "Autobuild first version",
+                        "type": "boolean",
+                        "default": true
                     }
                 ]
             }
