@@ -29,7 +29,8 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     PERSIST = False
 
     TEST_FILES = [
-        ("test_publish_in_maya", "", "")
+        ("test_publish_in_maya", "", ""),
+        ("shared", "", "")
     ]
 
     APP_GROUP = "maya"

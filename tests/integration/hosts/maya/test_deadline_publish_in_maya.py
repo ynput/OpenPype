@@ -24,7 +24,8 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
     PERSIST = True
 
     TEST_FILES = [
-        ("test_deadline_publish_in_maya", "", "")
+        ("test_deadline_publish_in_maya", "", ""),
+        ("shared", "", "")
     ]
 
     APP_GROUP = "maya"
