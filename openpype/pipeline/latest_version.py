@@ -1,15 +1,16 @@
 import logging
 
-from openpype.modules import ModulesManager
+from openpype.pipeline.context_tools import _get_modules_manager as get_modules_manager
 
 
 log = logging.getLogger(__name__)
 
 
-def get_lastest_version_number(instance, task_name):
-    """Get the lastest version of the instance on ftrack.
+def get_latest_version_number(instance, task_name):
+    """Get the latest version of the instance on ftrack.
     Args:
         instance (dict): The instance whose version is to be retrieved.
+        task_name (str): Name of the instance's task.
     """
     subset = instance.data["subset"]
     asset_ftrack_id = instance.data["assetEntity"]["data"].get("ftrackId")
@@ -21,7 +22,7 @@ def get_lastest_version_number(instance, task_name):
         return
 
     # Check if ftrack module is enabled
-    modules_manager = ModulesManager()
+    modules_manager = get_modules_manager()
     ftrack_module = modules_manager.modules_by_name.get("ftrack")
     if not ftrack_module or not ftrack_module.enabled:
         return
