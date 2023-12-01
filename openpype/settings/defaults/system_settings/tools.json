@@ -1,90 +1,403 @@
 {
     "tool_groups": {
+        "htoa": {
+            "environment": {
+                "HOUDINI_PATH": [
+                    "{STUDIO_SW}/APP/HTOA/{HTOA_VERSION}/HOUDINI{HOUDINI_VERSION}/WINDOWS/htoa-6.1.3.3_rdb15014_houdini-{HTOA_VERSION}",
+                    "{HOUDINI_PATH}"
+                ],
+                "PATH": {
+                    "windows": [
+                        "{STUDIO_SW}/APP/HTOA/{HTOA_VERSION}/HOUDINI{HOUDINI_VERSION}/WINDOWS/htoa-6.1.3.3_rdb15014_houdini-{HTOA_VERSION}/scripts/bin",
+                        "{PATH}"
+                    ]
+                }
+            },
+            "variants": {
+                "5-4-2-7": {
+                    "host_names": [
+                        "houdini"
+                    ],
+                    "app_variants": [],
+                    "environment": {
+                        "HTOA_VERSION": "5.4.2.7"
+                    }
+                }
+            }
+        },
         "mtoa": {
             "environment": {
-                "MTOA": "{STUDIO_SOFTWARE}/arnold/mtoa_{MAYA_VERSION}_{MTOA_VERSION}",
-                "MAYA_RENDER_DESC_PATH": "{MTOA}",
-                "MAYA_MODULE_PATH": "{MTOA}",
-                "ARNOLD_PLUGIN_PATH": "{MTOA}/shaders",
-                "MTOA_EXTENSIONS_PATH": {
-                    "darwin": "{MTOA}/extensions",
-                    "linux": "{MTOA}/extensions",
-                    "windows": "{MTOA}/extensions"
+                "MTOA": {
+                    "darwin": "{STUDIO_SW}/APP/MTOA/{MTOA_VERSION}/MAYA{MAYA_VERSION}/MAC",
+                    "linux": "{STUDIO_SW}/APP/MTOA/{MTOA_VERSION}/MAYA{MAYA_VERSION}/LINUX",
+                    "windows": "{STUDIO_SW}/APP/MTOA/{MTOA_VERSION}/MAYA{MAYA_VERSION}/WINDOWS"
                 },
-                "MTOA_EXTENSIONS": {
-                    "darwin": "{MTOA}/extensions",
-                    "linux": "{MTOA}/extensions",
-                    "windows": "{MTOA}/extensions"
-                },
+                "MAYA_MODULE_PATH": [
+                    "{STUDIO_SW}/APP/MTOA",
+                    "{MAYA_MODULE_PATH}"
+                ],
                 "DYLD_LIBRARY_PATH": {
                     "darwin": "{MTOA}/bin"
                 },
                 "PATH": {
-                    "windows": "{PATH};{MTOA}/bin"
-                }
+                    "windows": [
+                        "{MTOA}/bin",
+                        "{PATH}"
+                    ]
+                },
+                "XBMLANGPATH": [
+                    "{MTOA}/icons",
+                    "{XBMLANGPATH}"
+                ],
+                "MAYA_RENDER_DESC_PATH": [
+                    "{MTOA}",
+                    "{MAYA_RENDER_DESC_PATH}"
+                ],
+                "MTOA_STARTUP_LOG_VERBOSITY": "3"
             },
             "variants": {
-                "3-2": {
-                    "host_names": [],
-                    "app_variants": [],
-                    "environment": {
-                        "MTOA_VERSION": "3.2"
-                    }
-                },
-                "3-1": {
-                    "host_names": [],
-                    "app_variants": [],
-                    "environment": {
-                        "MTOA_VERSION": "3.1"
-                    }
-                },
-                "__dynamic_keys_labels__": {
-                    "3-2": "3.2",
-                    "3-1": "3.1"
-                }
-            }
-        },
-        "vray": {
-            "environment": {},
-            "variants": {}
-        },
-        "yeti": {
-            "environment": {},
-            "variants": {}
-        },
-        "renderman": {
-            "environment": {},
-            "variants": {
-                "24-3-maya": {
+                "5-3-1-0": {
                     "host_names": [
                         "maya"
                     ],
-                    "app_variants": [
-                        "maya/2022"
-                    ],
+                    "app_variants": [],
                     "environment": {
-                        "RFMTREE": {
-                            "windows": "C:\\Program Files\\Pixar\\RenderManForMaya-24.3",
-                            "darwin": "/Applications/Pixar/RenderManForMaya-24.3",
-                            "linux": "/opt/pixar/RenderManForMaya-24.3"
-                        },
-                        "RMANTREE": {
-                            "windows": "C:\\Program Files\\Pixar\\RenderManProServer-24.3",
-                            "darwin": "/Applications/Pixar/RenderManProServer-24.3",
-                            "linux": "/opt/pixar/RenderManProServer-24.3"
-                        }
+                        "MTOA_VERSION": "5.3.1.0"
                     }
                 },
-                "__dynamic_keys_labels__": {
-                    "24-3-maya": "24.3 RFM"
+                "5-3-4-1": {
+                    "host_names": [
+                        "maya"
+                    ],
+                    "app_variants": [],
+                    "environment": {
+                        "MTOA_VERSION": "5.3.1.0"
+                    }
+                }
+            }
+        },
+        "rendermanMaya": {
+            "environment": {
+                "RFMTREE": {
+                    "darwin": "{STUDIO_SW}/APP/RENDERMAN/{RM_VERSION}/MAC/MAYA",
+                    "linux": "{STUDIO_SW}/APP/RENDERMAN/{RM_VERSION}/LINUX/MAYA",
+                    "windows": "{STUDIO_SW}/APP/RENDERMAN/{RM_VERSION}/WINDOWS/MAYA"
+                },
+                "RMANTREE": {
+                    "darwin": "{STUDIO_SW}/APP/RENDERMAN/{RM_VERSION}/MAC/RenderManProServer-{RM_VERSION}",
+                    "linux": "{STUDIO_SW}/APP/RENDERMAN/{RM_VERSION}/LINUX/RenderManProServer-{RM_VERSION}",
+                    "windows": "{STUDIO_SW}/APP/RENDERMAN/{RM_VERSION}/WINDOWS/RenderManProServer-{RM_VERSION}"
+                },
+                "MAYA_MODULE_PATH": [
+                    "{STUDIO_SW}/APP/RENDERMAN",
+                    "{MAYA_MODULE_PATH}"
+                ],
+                "PIXAR_LICENSE_FILE": "{STUDIO_SW}/APP/RENDERMAN/pixar.license",
+                "RFM_DO_NOT_CREATE_MODULE_FILE": "1"
+            },
+            "variants": {
+                "24-3": {
+                    "host_names": [
+                        "maya"
+                    ],
+                    "app_variants": [],
+                    "environment": {
+                        "RM_VERSION": "24.3"
+                    }
+                }
+            }
+        },
+        "yetiMaya": {
+            "environment": {
+                "YETI_HOME": {
+                    "darwin": "{STUDIO_SW}/APP/YETI/{YETI_VERSION}/MAYA{MAYA_VERSION}/MAC",
+                    "linux": "{STUDIO_SW}/APP/YETI/{YETI_VERSION}/MAYA{MAYA_VERSION}/LINUX",
+                    "windows": "{STUDIO_SW}/APP/YETI/{YETI_VERSION}/MAYA{MAYA_VERSION}/WINDOWS"
+                },
+                "YETI_TMP": {
+                    "windows": "C:/temp",
+                    "darwin": "/tmp",
+                    "linux": "/tmp"
+                },
+                "peregrinel_LICENSE": "",
+                "MAYA_MODULE_PATH": [
+                    "{STUDIO_SW}/APP/YETI",
+                    "{MAYA_MODULE_PATH}"
+                ]
+            },
+            "variants": {
+                "4-2-11": {
+                    "host_names": [
+                        "maya"
+                    ],
+                    "app_variants": [],
+                    "environment": {
+                        "YETI_VERSION": "4.2.11"
+                    }
+                }
+            }
+        },
+        "redshiftMaya": {
+            "environment": {
+                "REDSHIFT_COREDATAPATH": {
+                    "darwin": "{STUDIO_SW}/APP/REDSHIFT/{REDSHIFT_VERSION}/MAC",
+                    "linux": "{STUDIO_SW}/APP/REDSHIFT/{REDSHIFT_VERSION}/LINUX",
+                    "windows": "{STUDIO_SW}/APP/REDSHIFT/{REDSHIFT_VERSION}/WINDOWS"
+                },
+                "REDSHIFT_ABORTONLICENSEFAIL": "0",
+                "MAYA_MODULE_PATH": [
+                    "{STUDIO_SW}/APP/REDSHIFT",
+                    "{MAYA_MODULE_PATH}"
+                ],
+                "MAYA_PLUG_IN_PATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/Plugins/Maya/{MAYA_VERSION}/nt-x86-64",
+                        "{MAYA_PLUG_IN_PATH}"
+                    ],
+                    "linux": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/{MAYA_VERSION}",
+                        "{MAYA_PLUG_IN_PATH}"
+                    ],
+                    "darwin": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/{MAYA_VERSION}",
+                        "{MAYA_PLUG_IN_PATH}"
+                    ]
+                },
+                "MAYA_SCRIPT_PATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/Plugins/Maya/Common/scripts",
+                        "{MAYA_SCRIPT_PATH}"
+                    ],
+                    "linux": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/common/scripts",
+                        "{MAYA_SCRIPT_PATH}"
+                    ],
+                    "darwin": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/common/scripts",
+                        "{MAYA_SCRIPT_PATH}"
+                    ]
+                },
+                "REDSHIFT_PROCEDURALSPATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/Procedurals",
+                        "{REDSHIFT_PROCEDURALSPATH}"
+                    ],
+                    "linux": [
+                        "{REDSHIFT_COREDATAPATH}/procedurals",
+                        "{REDSHIFT_PROCEDURALSPATH}"
+                    ],
+                    "darwin": [
+                        "{REDSHIFT_COREDATAPATH}/procedurals",
+                        "{REDSHIFT_PROCEDURALSPATH}"
+                    ]
+                },
+                "REDSHIFT_MAYAEXTENSIONSPATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/Plugins/Maya/{MAYA_VERSION}/nt-x86-64/extensions",
+                        "{REDSHIFT_MAYAEXTENSIONSPATH}"
+                    ],
+                    "linux": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/{MAYA_VERSION}/extensions",
+                        "{REDSHIFT_MAYAEXTENSIONSPATH}"
+                    ],
+                    "darwin": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/{MAYA_VERSION}/extensions",
+                        "{REDSHIFT_MAYAEXTENSIONSPATH}"
+                    ]
+                },
+                "XBMLANGPATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/Plugins/Maya/Common/icons",
+                        "{XBMLANGPATH}"
+                    ],
+                    "linux": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/common/icons",
+                        "{XBMLANGPATH}"
+                    ],
+                    "darwin": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/common/icons",
+                        "{XBMLANGPATH}"
+                    ]
+                },
+                "MAYA_RENDER_DESC_PATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/Plugins/Maya/Common/rendererDesc",
+                        "{MAYA_RENDER_DESC_PATH}"
+                    ],
+                    "linux": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/common/rendererDesc",
+                        "{MAYA_RENDER_DESC_PATH}"
+                    ],
+                    "darwin": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/common/rendererDesc",
+                        "{MAYA_RENDER_DESC_PATH}"
+                    ]
+                },
+                "MAYA_CUSTOM_TEMPLATE_PATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/Plugins/Maya/Common/scripts/NETemplates",
+                        "{MAYA_CUSTOM_TEMPLATE_PATH}"
+                    ],
+                    "linux": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/common/scripts/NETemplates",
+                        "{MAYA_CUSTOM_TEMPLATE_PATH}"
+                    ],
+                    "darwin": [
+                        "{REDSHIFT_COREDATAPATH}/redshift4maya/common/scripts/NETemplates",
+                        "{MAYA_CUSTOM_TEMPLATE_PATH}"
+                    ]
+                },
+                "PATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/bin",
+                        "{PATH}"
+                    ]
+                }
+            },
+            "variants": {
+                "3-5-19": {
+                    "host_names": [
+                        "maya"
+                    ],
+                    "app_variants": [],
+                    "environment": {
+                        "REDSHIFT_VERSION": "3.5.19"
+                    }
+                }
+            }
+        },
+        "redshift3dsmax": {
+            "environment": {
+                "REDSHIFT_COREDATAPATH": {
+                    "darwin": "{STUDIO_SW}/APP/REDSHIFT/{REDSHIFT_VERSION}/MAC",
+                    "linux": "{STUDIO_SW}/APP/REDSHIFT/{REDSHIFT_VERSION}/LINUX",
+                    "windows": "{STUDIO_SW}/APP/REDSHIFT/{REDSHIFT_VERSION}/WINDOWS"
+                },
+                "REDSHIFT_ABORTONLICENSEFAIL": "0",
+                "REDSHIFT_PROCEDURALSPATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/Procedurals",
+                        "{REDSHIFT_PROCEDURALSPATH}"
+                    ],
+                    "linux": [
+                        "{REDSHIFT_COREDATAPATH}/procedurals",
+                        "{REDSHIFT_PROCEDURALSPATH}"
+                    ],
+                    "darwin": [
+                        "{REDSHIFT_COREDATAPATH}/procedurals",
+                        "{REDSHIFT_PROCEDURALSPATH}"
+                    ]
+                },
+                "PATH": {
+                    "windows": [
+                        "{REDSHIFT_COREDATAPATH}/bin",
+                        "{PATH}"
+                    ]
+                }
+            },
+            "variants": {
+                "3-5-19": {
+                    "host_names": [
+                        "max"
+                    ],
+                    "app_variants": [],
+                    "environment": {
+                        "REDSHIFT_VERSION": "3.5.19"
+                    }
+                }
+            }
+        },
+        "mGear": {
+            "environment": {
+                "MGEAR_ROOT": "{STUDIO_SW}/APP/MGEAR/{MGEAR_VERSION}/MAYA{MAYA_VERSION}/windows/x64",
+                "MAYA_MODULE_PATH": [
+                    "{STUDIO_SW}/APP/MGEAR/{MGEAR_VERSION}/release",
+                    "{MAYA_MODULE_PATH}"
+                ]
+            },
+            "variants": {
+                "4-0-7": {
+                    "host_names": [
+                        "maya"
+                    ],
+                    "app_variants": [],
+                    "environment": {
+                        "MGEAR_VERSION": "4.0.7"
+                    }
+                }
+            }
+        },
+        "vrayMaya": {
+            "environment": {
+                "MAYA_MODULE_PATH": {
+                    "windows": [
+                        "{STUDIO_SW}/APP/VRAY/{VRAY_VERSION}/MAYA{MAYA_VERSION}/WINDOWS/maya_root/modules",
+                        "{MAYA_MODULE_PATH}"
+                    ],
+                    "linux": [
+                        "{STUDIO_SW}/APP/VRAY/{VRAY_VERSION}/MAYA{MAYA_VERSION}/LINUX/maya_root/modules",
+                        "{MAYA_MODULE_PATH}"
+                    ],
+                    "darwin": [
+                        "{STUDIO_SW}/APP/VRAY/{VRAY_VERSION}/MAYA{MAYA_VERSION}/MAC/maya_root/modules",
+                        "{MAYA_MODULE_PATH}"
+                    ]
+                },
+                "VRAY_AUTH_CLIENT_FILE_PATH": "{STUDIO_SW}/APP/VRAY"
+            },
+            "variants": {
+                "6-10-01": {
+                    "host_names": [
+                        "maya"
+                    ],
+                    "app_variants": [],
+                    "environment": {
+                        "VRAY_VERSION": "6.10.01"
+                    }
+                }
+            }
+        },
+        "vraynuke": {
+            "environment": {
+                "VRAY_FOR_NUKE_13_0_PLUGINS": {
+                    "windows": "{STUDIO_SW}/APP/VRAYNUKE/{VRAYNUKE_VERSION}/NUKE{NUKE_VRAY_VERSION}/WINDOWS/nuke_vray/plugins/vray"
+                },
+                "NUKE_PATH": {
+                    "windows": [
+                        "{STUDIO_SW}/APP/VRAYNUKE/{VRAYNUKE_VERSION}/NUKE{NUKE_VRAY_VERSION}/WINDOWS/nuke_root",
+                        "{NUKE_PATH}"
+                    ]
+                },
+                "PATH": {
+                    "windows": [
+                        "{STUDIO_SW}/APP/VRAYNUKE/{VRAYNUKE_VERSION}/NUKE{NUKE_VRAY_VERSION}/WINDOWS/nuke_vray",
+                        "{PATH}"
+                    ]
+                },
+                "VRAY_AUTH_CLIENT_FILE_PATH": "{STUDIO_SW}/APP/VRAY"
+            },
+            "variants": {
+                "5-20-00": {
+                    "host_names": [
+                        "nuke"
+                    ],
+                    "app_variants": [],
+                    "environment": {
+                        "VRAYNUKE_VERSION": "5.20.00"
+                    }
                 }
             }
         },
         "__dynamic_keys_labels__": {
-            "mtoa": "Autodesk Arnold",
-            "vray": "Chaos Group Vray",
-            "yeti": "Peregrine Labs Yeti",
-            "renderman": "Pixar Renderman"
+            "htoa": "Arnold for Houdini (example)",
+            "mtoa": "Arnold for Maya (example)",
+            "rendermanMaya": "Renderman for Maya (example)",
+            "yetiMaya": "Yeti for Maya (example)",
+            "redshiftMaya": "Redshift for Maya (example)",
+            "redshift3dsmax": "Redshift for 3dsmax (example)",
+            "mGear": "mGear for Maya (example)",
+            "vrayMaya": "Vray for Maya (example)",
+            "vraynuke": "Vray for Nuke (example)"
         }
     }
 }

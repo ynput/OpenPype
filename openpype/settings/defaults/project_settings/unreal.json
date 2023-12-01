@@ -10,11 +10,11 @@
             "rules": {}
         }
     },
-    "level_sequences_for_layouts": false,
+    "level_sequences_for_layouts": true,
     "delete_unmatched_assets": false,
     "render_config_path": "",
     "preroll_frames": 0,
-    "render_format": "png",
+    "render_format": "exr",
     "project_setup": {
         "dev_mode": false
     }
