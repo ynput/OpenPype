@@ -469,7 +469,7 @@ class DeadlinePublishTest(PublishTest):
         while not valid_date_finished:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
-                raise ValueError("Timeout for DL finish reached")
+                raise ValueError("Timeout for Deadline finish reached")
 
             response = requests.get(url, timeout=10)
             if not response.ok:
@@ -478,6 +478,28 @@ class DeadlinePublishTest(PublishTest):
 
             if not response.json():
                 raise ValueError("Couldn't find {}".format(deadline_job_id))
+
+            # Get errors from job and its dependents.
+            errors = []
+            resp_error = requests.get(
+                "{}/api/jobreports?JobID={}&Data=allerrorcontents".format(
+                    deadline_url, deadline_job_id
+                ),
+                timeout=10
+            )
+            errors.extend(resp_error.json())
+            for dependency in response.json()[0]["Props"]["Dep"]:
+                resp_error = requests.get(
+                    "{}/api/jobreports?JobID={}&Data=allerrorcontents".format(
+                        deadline_url, dependency["JobID"]
+                    ),
+                    timeout=10
+                )
+                errors.extend(resp_error.json())
+
+            msg = "Errors in Deadline:\n"
+            msg += "\n".join(errors)
+            assert not errors, msg
 
             # '0001-...' returned until job is finished
             valid_date_finished = response.json()[0]["DateComp"][:4] != "0001"
