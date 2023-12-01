@@ -41,9 +41,12 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
                             ["deadline"]
                             ["deadline_servers"])
         if deadline_servers:
-            deadline_server_name = deadline_servers[0]
-            deadline_webservice = deadline_module.deadline_urls.get(
-                deadline_server_name)
+            # This is wrong but either the Ayon settings schema is wrong or
+            # this logic needs to change
+            deadline_webservice = deadline_servers[0]
+            # deadline_server_name = deadline_servers[0]
+            # deadline_webservice = deadline_module.deadline_urls.get(
+            #     deadline_server_name)
             if deadline_webservice:
                 context.data["defaultDeadline"] = deadline_webservice
                 self.log.debug("Overriding from project settings with {}".format(  # noqa: E501
