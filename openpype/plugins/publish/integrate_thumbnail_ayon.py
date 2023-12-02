@@ -157,8 +157,8 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
     ):
         from openpype.client.server.operations import create_thumbnail
 
-        op_session = OperationsSession()
-
+        # Make sure each entity id has defined only one thumbnail id
+        thumbnail_info_by_entity_id = {}
         for instance_item in filtered_instance_items:
             instance, thumbnail_path, version_id = instance_item
             instance_label = self._get_instance_label(instance)
@@ -172,12 +172,10 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
             thumbnail_id = create_thumbnail(project_name, thumbnail_path)
 
             # Set thumbnail id for version
-            op_session.update_entity(
-                project_name,
-                version_doc["type"],
-                version_doc["_id"],
-                {"data.thumbnail_id": thumbnail_id}
-            )
+            thumbnail_info_by_entity_id[version_id] = {
+                "thumbnail_id": thumbnail_id,
+                "entity_type": version_doc["type"],
+            }
             if version_doc["type"] == "hero_version":
                 version_name = "Hero"
             else:
@@ -187,16 +185,23 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
             ))
 
             asset_entity = instance.data["assetEntity"]
-            op_session.update_entity(
-                project_name,
-                asset_entity["type"],
-                asset_entity["_id"],
-                {"data.thumbnail_id": thumbnail_id}
-            )
+            thumbnail_info_by_entity_id[asset_entity["_id"]] = {
+                "thumbnail_id": thumbnail_id,
+                "entity_type": "asset",
+            }
             self.log.debug("Setting thumbnail for asset \"{}\" <{}>".format(
                 asset_entity["name"], version_id
             ))
 
+        op_session = OperationsSession()
+        for entity_id, thumbnail_info in thumbnail_info_by_entity_id.items():
+            thumbnail_id = thumbnail_info["thumbnail_id"]
+            op_session.update_entity(
+                project_name,
+                thumbnail_info["entity_type"],
+                entity_id,
+                {"data.thumbnail_id": thumbnail_id}
+            )
         op_session.commit()
 
     def _get_instance_label(self, instance):
