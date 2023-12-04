@@ -10,7 +10,7 @@ class CustomBuilderTemplate(BaseSettingsModel):
         title="Task types",
     )
 
-    template_path: MultiplatformPathModel = Field(
+    path: MultiplatformPathModel = Field(
         default_factory=MultiplatformPathModel,
         title="Template path"
     )
