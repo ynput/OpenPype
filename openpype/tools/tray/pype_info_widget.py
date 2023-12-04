@@ -443,16 +443,19 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
             info_values = {
                 "executable": executable_args[-1],
                 "server_url": os.environ["AYON_SERVER_URL"],
+                "bundle_name": os.environ["AYON_BUNDLE_NAME"],
                 "username": username
             }
             key_label_mapping = {
                 "executable": "AYON Executable:",
                 "server_url": "AYON Server:",
+                "bundle_name": "AYON Bundle:",
                 "username": "AYON Username:"
             }
             # Prepare keys order
             keys_order = [
                 "server_url",
+                "bundle_name",
                 "username",
                 "executable",
             ]
