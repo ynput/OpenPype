@@ -1,5 +1,4 @@
 import os
-from openpype import AYON_SERVER_ENABLED
 from openpype.lib.applications import (
     PreLaunchHook,
     LaunchTypes,
