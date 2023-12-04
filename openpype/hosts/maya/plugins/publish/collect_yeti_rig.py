@@ -132,8 +132,8 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                 node, listNodes=True, type="texture")
             texture_filenames = [
                 cmds.pgYetiGraph(
-                node, node=texture_node,
-                param="file_name", getParamValue=True)
+                    node, node=texture_node,
+                    param="file_name", getParamValue=True)
                 for texture_node in texture_nodes
             ]
             self.log.debug("Found %i texture(s)" % len(texture_filenames))
