@@ -1,31 +1,18 @@
 from pydantic import Field
-from pathlib import Path
 
-from ayon_server.settings import BaseSettingsModel
-
-
-class PathsTemplate(BaseSettingsModel):
-    windows: Path = Field(
-        '',
-        title="Windows"
-    )
-    darwin: Path = Field(
-        '',
-        title="MacOS"
-    )
-    linux: Path = Field(
-        '',
-        title="Linux"
-    )
+from ayon_server.settings import BaseSettingsModel, MultiplatformPathModel
 
 
 class CustomBuilderTemplate(BaseSettingsModel):
+    _layout = "expanded"
     task_types: list[str] = Field(
         default_factory=list,
         title="Task types",
     )
-    template_path: PathsTemplate = Field(
-        default_factory=PathsTemplate
+
+    template_path: MultiplatformPathModel = Field(
+        default_factory=MultiplatformPathModel,
+        title="Template path"
     )
 
 
@@ -37,5 +24,6 @@ class WorkfileBuilderPlugin(BaseSettingsModel):
     )
 
     custom_templates: list[CustomBuilderTemplate] = Field(
-        default_factory=CustomBuilderTemplate
+        default_factory=CustomBuilderTemplate,
+        title="Template profiles"
     )
