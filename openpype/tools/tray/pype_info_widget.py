@@ -219,7 +219,9 @@ class PypeInfoWidget(QtWidgets.QWidget):
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
-        self.setWindowTitle("OpenPype info")
+        self.setWindowTitle(
+            "{} info".format("AYON" if AYON_SERVER_ENABLED else "OpenPype")
+        )
 
         scroll_area = QtWidgets.QScrollArea(self)
         info_widget = PypeInfoSubWidget(scroll_area)
