@@ -2,7 +2,7 @@
 """Submitting render job to RoyalRender."""
 import os
 
-from maya.OpenMaya import MGlobal
+from maya.OpenMaya import MGlobal  # noqa: F401
 
 from openpype.modules.royalrender import lib
 from openpype.pipeline.farm.tools import iter_expected_files
@@ -38,5 +38,6 @@ class CreateMayaRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
         job = self.get_job(instance, self.scene_path, first_file_path,
                            layer_name)
         job = self.update_job_with_host_specific(instance, job)
+        job = self.inject_environment(instance, job)
 
         instance.data["rrJobs"].append(job)
