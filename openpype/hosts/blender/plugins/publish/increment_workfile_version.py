@@ -14,7 +14,7 @@ class IncrementWorkfileVersion(
     optional = True
     hosts = ["blender"]
     families = ["animation", "model", "rig", "action", "layout", "blendScene",
-                "pointcache", "render"]
+                "pointcache", "render.farm"]
 
     def process(self, context):
         if not self.is_active(context.data):
