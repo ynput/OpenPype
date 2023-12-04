@@ -32,7 +32,7 @@
 		</Lifecycle>
         <UI>
           <Type>Panel</Type>
-          <Menu>OpenPype</Menu>
+          <Menu>AYON</Menu>
           <Geometry>
             <Size>
               <Width>300</Width>
