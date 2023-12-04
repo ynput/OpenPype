@@ -114,7 +114,7 @@ def _get_versions(
     queried_versions = con.get_versions(
         project_name,
         version_ids=version_ids,
-        subset_ids=subset_ids,
+        product_ids=subset_ids,
         versions=versions,
         hero=hero,
         standard=standard,
