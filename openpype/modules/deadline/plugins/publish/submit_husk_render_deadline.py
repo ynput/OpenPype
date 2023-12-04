@@ -73,16 +73,6 @@ class HuskSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         job_info.ChunkSize = instance.data.get("chunkSize", 10)
         job_info.Comment = context.data.get("comment")
 
-        # keys = [
-        #     "FTRACK_API_KEY",
-        #     "FTRACK_API_USER",
-        #     "FTRACK_SERVER",
-        #     "OPENPYPE_SG_USER",
-
-        #     "OPENPYPE_DEV",
-        #     "OPENPYPE_LOG_NO_COLORS",
-        # ]
-
         keys = [
             "FTRACK_API_KEY",
             "FTRACK_API_USER",

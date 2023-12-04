@@ -31,7 +31,6 @@ class CollectHuskROPProducts(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         rop = hou.node(instance.data.get("instance_node"))
-        instance.data["files2"] = ['file1', 'file2', 'file3']
         
         self.log.debug("Instance data: %s" % instance.data)
 
