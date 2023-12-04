@@ -123,13 +123,13 @@ def _get_versions(
         fields=fields
     )
 
-    versions = []
+    version_entities = []
     hero_versions = []
     for version in queried_versions:
         if version["version"] < 0:
             hero_versions.append(version)
         else:
-            versions.append(convert_v4_version_to_v3(version))
+            version_entities.append(convert_v4_version_to_v3(version))
 
     if hero_versions:
         subset_ids = set()
@@ -159,9 +159,9 @@ def _get_versions(
                     break
             conv_hero = convert_v4_version_to_v3(hero_version)
             conv_hero["version_id"] = version_id
-            versions.append(conv_hero)
+            version_entities.append(conv_hero)
 
-    return versions
+    return version_entities
 
 
 def get_asset_by_id(project_name, asset_id, fields=None):
