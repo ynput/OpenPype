@@ -10,7 +10,7 @@
             Composition =
             {
                 Execute = _Lua [=[
-                    local scriptPath = app:MapPath("DEPLOY:MenuScripts/menu.py")
+                    local scriptPath = app:MapPath("OpenPype:../MenuScripts/menu.py")
                     if bmd.fileexists(scriptPath) == false then
                         print("[OpenPype Error] Can't run file: " .. scriptPath)
                     else
@@ -31,7 +31,7 @@
             Composition =
             {
                 Execute = _Lua [=[
-                    local scriptPath = app:MapPath("DEPLOY:MenuScripts/install_pyside2.py")
+                    local scriptPath = app:MapPath("OpenPype:../MenuScripts/install_pyside2.py")
                     if bmd.fileexists(scriptPath) == false then
                         print("[OpenPype Error] Can't run file: " .. scriptPath)
                     else
