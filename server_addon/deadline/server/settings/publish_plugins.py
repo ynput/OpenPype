@@ -237,6 +237,7 @@ class BlenderSubmitDeadlineModel(BaseSettingsModel):
     priority: int = Field(title="Priority")
     chunk_size: int = Field(title="Frame per Task")
     group: str = Field("", title="Group Name")
+    job_delay: str = Field("", title="Delay job (timecode dd:hh:mm:ss)")
 
 
 class AOVFilterSubmodel(BaseSettingsModel):
@@ -246,6 +247,17 @@ class AOVFilterSubmodel(BaseSettingsModel):
         default_factory=list,
         title="AOV regex"
     )
+
+
+class ProcessCacheJobFarmModel(BaseSettingsModel):
+    """Process submitted job on farm."""
+
+    enabled: bool = Field(title="Enabled")
+    deadline_department: str = Field(title="Department")
+    deadline_pool: str = Field(title="Pool")
+    deadline_group: str = Field(title="Group")
+    deadline_chunk_size: int = Field(title="Chunk Size")
+    deadline_priority: int = Field(title="Priority")
 
 
 class ProcessSubmittedJobOnFarmModel(BaseSettingsModel):
@@ -311,6 +323,9 @@ class PublishPluginsModel(BaseSettingsModel):
     BlenderSubmitDeadline: BlenderSubmitDeadlineModel = Field(
         default_factory=BlenderSubmitDeadlineModel,
         title="Blender Submit Deadline")
+    ProcessSubmittedCacheJobOnFarm: ProcessCacheJobFarmModel = Field(
+        default_factory=ProcessCacheJobFarmModel,
+        title="Process submitted cache Job on farm.")
     ProcessSubmittedJobOnFarm: ProcessSubmittedJobOnFarmModel = Field(
         default_factory=ProcessSubmittedJobOnFarmModel,
         title="Process submitted job on farm.")
@@ -424,7 +439,16 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "use_published": True,
         "priority": 50,
         "chunk_size": 10,
-        "group": "none"
+        "group": "none",
+        "job_delay": "00:00:00:00"
+    },
+    "ProcessSubmittedCacheJobOnFarm": {
+        "enabled": True,
+        "deadline_department": "",
+        "deadline_pool": "",
+        "deadline_group": "",
+        "deadline_chunk_size": 1,
+        "deadline_priority": 50
     },
     "ProcessSubmittedJobOnFarm": {
         "enabled": True,

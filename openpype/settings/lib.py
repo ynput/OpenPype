@@ -172,7 +172,7 @@ def save_studio_settings(data):
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
-    modules_manager = ModulesManager(_system_settings=new_data)
+    modules_manager = ModulesManager(new_data)
 
     warnings = []
     for module in modules_manager.get_enabled_modules():

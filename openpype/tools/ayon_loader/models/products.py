@@ -77,7 +77,15 @@ def product_item_from_entity(
     product_attribs = product_entity["attrib"]
     group = product_attribs.get("productGroup")
     product_type = product_entity["productType"]
-    product_type_item = product_type_items_by_name[product_type]
+    product_type_item = product_type_items_by_name.get(product_type)
+    # NOTE This is needed for cases when products were not created on server
+    #   using api functions. In that case product type item may not be
+    #   available and we need to create a default.
+    if product_type_item is None:
+        product_type_item = create_default_product_type_item(product_type)
+        # Cache the item for future use
+        product_type_items_by_name[product_type] = product_type_item
+
     product_type_icon = product_type_item.icon
 
     product_icon = {
@@ -115,6 +123,15 @@ def product_type_item_from_data(product_type_data):
     }
     # TODO implement checked logic
     return ProductTypeItem(product_type_data["name"], icon, True)
+
+
+def create_default_product_type_item(product_type):
+    icon = {
+        "type": "awesome-font",
+        "name": "fa.folder",
+        "color": "#0091B2",
+    }
+    return ProductTypeItem(product_type, icon, True)
 
 
 class ProductsModel:
@@ -297,6 +314,42 @@ class ProductsModel:
         for version_id in invalid_version_ids:
             version_cache = project_cache[version_id]
             output.extend(version_cache.get_data().values())
+
+        return output
+
+    def get_versions_repre_count(self, project_name, version_ids, sender):
+        """Get representation count for passed version ids.
+
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+            sender (Union[str, None]): Who triggered the method.
+
+        Returns:
+            dict[str, int]: Number of representations by version id.
+        """
+
+        output = {}
+        if not any((project_name, version_ids)):
+            return output
+
+        invalid_version_ids = set()
+        project_cache = self._repre_items_cache[project_name]
+        for version_id in version_ids:
+            version_cache = project_cache[version_id]
+            if version_cache.is_valid:
+                output[version_id] = len(version_cache.get_data())
+            else:
+                invalid_version_ids.add(version_id)
+
+        if invalid_version_ids:
+            self.refresh_representation_items(
+                project_name, invalid_version_ids, sender
+            )
+
+        for version_id in invalid_version_ids:
+            version_cache = project_cache[version_id]
+            output[version_id] = len(version_cache.get_data())
 
         return output
 

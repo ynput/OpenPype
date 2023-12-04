@@ -90,6 +90,9 @@ class CollectReview(pyblish.api.InstancePlugin,
                 "dspBkg": attr_values.get("dspBkg"),
                 "dspGrid": attr_values.get("dspGrid")
             }
+            nitrous_manager = {
+                "AntialiasingQuality": creator_attrs["antialiasingQuality"],
+            }
             nitrous_viewport = {
                 "VisualStyleMode": creator_attrs["visualStyleMode"],
                 "ViewportPreset": creator_attrs["viewportPreset"],
@@ -97,6 +100,7 @@ class CollectReview(pyblish.api.InstancePlugin,
             }
             preview_data = {
                 "general_viewport": general_viewport,
+                "nitrous_manager": nitrous_manager,
                 "nitrous_viewport": nitrous_viewport,
                 "vp_btn_mgr": {"EnableButtons": False}
             }

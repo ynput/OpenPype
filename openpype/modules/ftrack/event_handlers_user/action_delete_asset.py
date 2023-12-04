@@ -169,7 +169,7 @@ class DeleteAssetSubset(BaseAction):
             return {
                 "success": True,
                 "message": (
-                    "Didn't found entities in avalon."
+                    "Didn't find entities in avalon."
                     " You can use Ftrack's Delete button for the selection."
                 )
             }
