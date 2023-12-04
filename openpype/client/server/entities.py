@@ -80,8 +80,8 @@ def _get_subsets(
 
     for subset in con.get_products(
         project_name,
-        subset_ids,
-        subset_names,
+        product_ids=subset_ids,
+        product_names=subset_names,
         folder_ids=folder_ids,
         names_by_folder_ids=names_by_folder_ids,
         active=active,
@@ -113,12 +113,12 @@ def _get_versions(
 
     queried_versions = con.get_versions(
         project_name,
-        version_ids,
-        subset_ids,
-        versions,
-        hero,
-        standard,
-        latest,
+        version_ids=version_ids,
+        subset_ids=subset_ids,
+        versions=versions,
+        hero=hero,
+        standard=standard,
+        latest=latest,
         active=active,
         fields=fields
     )
@@ -539,11 +539,11 @@ def get_representations(
 
     representations = con.get_representations(
         project_name,
-        representation_ids,
-        representation_names,
-        version_ids,
-        names_by_version_ids,
-        active,
+        representation_ids=representation_ids,
+        representation_names=representation_names,
+        version_ids=version_ids,
+        names_by_version_ids=names_by_version_ids,
+        active=active,
         fields=fields
     )
     for representation in representations:
