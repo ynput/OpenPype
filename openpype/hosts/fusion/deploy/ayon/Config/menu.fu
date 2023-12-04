@@ -10,7 +10,7 @@
             Composition =
             {
                 Execute = _Lua [=[
-                    local scriptPath = app:MapPath("AYON:../MenuScripts/menu.py")
+                    local scriptPath = app:MapPath("AYON:../MenuScripts/launch_menu.py")
                     if bmd.fileexists(scriptPath) == false then
                         print("[AYON Error] Can't run file: " .. scriptPath)
                     else

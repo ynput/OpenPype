@@ -10,7 +10,7 @@
             Composition =
             {
                 Execute = _Lua [=[
-                    local scriptPath = app:MapPath("OpenPype:../MenuScripts/menu.py")
+                    local scriptPath = app:MapPath("OpenPype:../MenuScripts/launch_menu.py")
                     if bmd.fileexists(scriptPath) == false then
                         print("[OpenPype Error] Can't run file: " .. scriptPath)
                     else

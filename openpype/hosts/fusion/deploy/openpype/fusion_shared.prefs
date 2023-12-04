@@ -5,7 +5,7 @@ Global = {
     Map = {
       ["OpenPype:"] = "$(OPENPYPE_FUSION)/deploy/openpype",
       ["Config:"] = "UserPaths:Config;OpenPype:Config",
-      ["Scripts:"] = "UserPaths:Scripts;Reactor:System/Scripts;OpenPype:../Script",
+      ["Scripts:"] = "UserPaths:Scripts;Reactor:System/Scripts",
     },
   },
   Script = {

@@ -5,7 +5,7 @@ Global = {
     Map = {
       ["AYON:"] = "$(OPENPYPE_FUSION)/deploy/ayon",
       ["Config:"] = "UserPaths:Config;AYON:Config",
-      ["Scripts:"] = "UserPaths:Scripts;Reactor:System/Scripts;AYON:../Script",
+      ["Scripts:"] = "UserPaths:Scripts;Reactor:System/Scripts",
     },
   },
   Script = {
