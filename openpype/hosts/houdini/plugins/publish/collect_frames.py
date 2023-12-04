@@ -17,11 +17,15 @@ class CollectFrames(pyblish.api.InstancePlugin):
     label = "Collect Frames"
     families = ["vdbcache", "imagesequence", "ass",
 <<<<<<< HEAD
+<<<<<<< HEAD
                 "mantraifd", "redshiftproxy", "review",
                 "bgeo"]
 =======
                 "redshiftproxy", "review", "bgeo", "husk_rop"]
 >>>>>>> 35c1bc1cfa (draft husk submission)
+=======
+                "redshiftproxy", "review", "bgeo"]
+>>>>>>> 272695d57f (cleanup for husk)
 
     def process(self, instance):
 
@@ -42,7 +46,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
         _, ext = lib.splitext(
             output, allowed_multidot_extensions=[
                 ".ass.gz", ".bgeo.sc", ".bgeo.gz",
-                ".bgeo.lzma", ".bgeo.bz2", ".exr"])
+                ".bgeo.lzma", ".bgeo.bz2"])
         file_name = os.path.basename(output)
         result = file_name
 
