@@ -3,7 +3,8 @@ Locked = true,
 Global = {
   Paths = {
     Map = {
-      ["OpenPype:"] = "$(OPENPYPE_FUSION)/deploy",
+      ["DEPLOY:"] = "$(OPENPYPE_FUSION)/deploy",
+      ["OpenPype:"] = "$(OPENPYPE_FUSION)/deploy/openpype",
       ["Config:"] = "UserPaths:Config;OpenPype:Config",
       ["Scripts:"] = "UserPaths:Scripts;Reactor:System/Scripts",
     },

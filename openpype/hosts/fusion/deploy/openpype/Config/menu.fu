@@ -1,18 +1,18 @@
 {
     Action
     {
-        ID = "AYON_Menu",
-        Category = "AYON",
-        Name = "AYON Menu",
+        ID = "OpenPype_Menu",
+        Category = "OpenPype",
+        Name = "OpenPype Menu",
 
         Targets =
         {
             Composition =
             {
                 Execute = _Lua [=[
-                    local scriptPath = app:MapPath("AYON:MenuScripts/menu.py")
+                    local scriptPath = app:MapPath("DEPLOY:MenuScripts/menu.py")
                     if bmd.fileexists(scriptPath) == false then
-                        print("[AYON Error] Can't run file: " .. scriptPath)
+                        print("[OpenPype Error] Can't run file: " .. scriptPath)
                     else
                         target:RunScript(scriptPath)
                     end
@@ -22,8 +22,8 @@
     },
     Action
     {
-        ID = "AYON_Install_PySide2",
-        Category = "AYON",
+        ID = "OpenPype_Install_PySide2",
+        Category = "OpenPype",
         Name = "Install PySide2",
 
         Targets =
@@ -31,9 +31,9 @@
             Composition =
             {
                 Execute = _Lua [=[
-                    local scriptPath = app:MapPath("AYON:MenuScripts/install_pyside2.py")
+                    local scriptPath = app:MapPath("DEPLOY:MenuScripts/install_pyside2.py")
                     if bmd.fileexists(scriptPath) == false then
-                        print("[AYON Error] Can't run file: " .. scriptPath)
+                        print("[OpenPype Error] Can't run file: " .. scriptPath)
                     else
                         target:RunScript(scriptPath)
                     end
@@ -47,12 +47,12 @@
 
         Before "Help"
         {
-            Sub "AYON"
+            Sub "OpenPype"
             {
-                "AYON_Menu{}",
+                "OpenPype_Menu{}",
                 "_",
                 Sub "Admin" {
-                    "AYON_Install_PySide2{}"
+                    "OpenPype_Install_PySide2{}"
                 }
             }
         },
