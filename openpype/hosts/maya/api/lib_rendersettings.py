@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """Class for handling Render Settings."""
-from maya import cmds  # noqa
-import maya.mel as mel
 import six
 import sys
 
@@ -35,6 +33,14 @@ class RenderSettings(object):
     def get_image_prefix_attr(cls, renderer):
         return cls._image_prefix_nodes[renderer]
 
+    @staticmethod
+    def get_padding_attr(renderer):
+        """Return attribute for renderer that defines frame padding amount"""
+        if renderer == "vray":
+            return "vraySettings.fileNamePadding"
+        else:
+            return "defaultRenderGlobals.extensionPadding"
+
     def __init__(self, project_settings=None):
         if not project_settings:
             project_settings = get_project_settings(
@@ -63,6 +69,10 @@ class RenderSettings(object):
 
     def set_default_renderer_settings(self, renderer=None):
         """Set basic settings based on renderer."""
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         if not renderer:
             renderer = cmds.getAttr(
                 'defaultRenderGlobals.currentRenderer').lower()
@@ -116,6 +126,10 @@ class RenderSettings(object):
         """Sets settings for Arnold."""
         from mtoa.core import createOptions  # noqa
         from mtoa.aovs import AOVInterface  # noqa
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         createOptions()
         render_settings = self._project_settings["maya"]["RenderSettings"]
         arnold_render_presets = render_settings["arnold_renderer"] # noqa
@@ -162,6 +176,10 @@ class RenderSettings(object):
 
     def _set_redshift_settings(self, width, height):
         """Sets settings for Redshift."""
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         render_settings = self._project_settings["maya"]["RenderSettings"]
         redshift_render_presets = render_settings["redshift_renderer"]
 
@@ -214,6 +232,10 @@ class RenderSettings(object):
 
     def _set_renderman_settings(self, width, height, aov_separator):
         """Sets settings for Renderman"""
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         rman_render_presets = (
             self._project_settings
             ["maya"]
@@ -275,6 +297,11 @@ class RenderSettings(object):
     def _set_vray_settings(self, aov_separator, width, height):
         # type: (str, int, int) -> None
         """Sets important settings for Vray."""
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
+
         settings = cmds.ls(type="VRaySettingsNode")
         node = settings[0] if settings else cmds.createNode("VRaySettingsNode")
         render_settings = self._project_settings["maya"]["RenderSettings"]
@@ -347,6 +374,10 @@ class RenderSettings(object):
 
     @staticmethod
     def _set_global_output_settings():
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         # enable animation
         cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
         cmds.setAttr("defaultRenderGlobals.animation", 1)
@@ -354,6 +385,10 @@ class RenderSettings(object):
         cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
 
     def _additional_attribs_setter(self, additional_attribs):
+        # Not all hosts can import this module.
+        from maya import cmds  # noqa: F401
+        import maya.mel as mel  # noqa: F401
+
         for item in additional_attribs:
             attribute, value = item
             attribute = str(attribute)  # ensure str conversion from settings

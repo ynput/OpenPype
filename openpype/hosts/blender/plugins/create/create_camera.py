@@ -2,62 +2,41 @@
 
 import bpy
 
-from openpype.pipeline import get_current_task_name
-from openpype.hosts.blender.api import plugin, lib, ops
+from openpype.hosts.blender.api import plugin, lib
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
-class CreateCamera(plugin.Creator):
-    """Polygonal static geometry"""
+class CreateCamera(plugin.BaseCreator):
+    """Polygonal static geometry."""
 
-    name = "cameraMain"
+    identifier = "io.openpype.creators.blender.camera"
     label = "Camera"
     family = "camera"
     icon = "video-camera"
 
-    def process(self):
-        """ Run the creator on Blender main thread"""
-        mti = ops.MainThreadItem(self._process)
-        ops.execute_in_main_thread(mti)
+    create_as_asset_group = True
 
-    def _process(self):
-        # Get Instance Container or create it if it does not exist
-        instances = bpy.data.collections.get(AVALON_INSTANCES)
-        if not instances:
-            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
-            bpy.context.scene.collection.children.link(instances)
+    def create(
+        self, subset_name: str, instance_data: dict, pre_create_data: dict
+    ):
 
-        # Create instance object
-        asset = self.data["asset"]
-        subset = self.data["subset"]
-        name = plugin.asset_name(asset, subset)
+        asset_group = super().create(subset_name,
+                                     instance_data,
+                                     pre_create_data)
 
-        asset_group = bpy.data.objects.new(name=name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
-        instances.objects.link(asset_group)
-        self.data['task'] = get_current_task_name()
-        print(f"self.data: {self.data}")
-        lib.imprint(asset_group, self.data)
-
-        if (self.options or {}).get("useSelection"):
-            bpy.context.view_layer.objects.active = asset_group
-            selected = lib.get_selection()
-            for obj in selected:
-                if obj.parent in selected:
-                    obj.select_set(False)
-                    continue
-            selected.append(asset_group)
-            bpy.ops.object.parent_set(keep_transform=True)
+        bpy.context.view_layer.objects.active = asset_group
+        if pre_create_data.get("use_selection"):
+            for obj in lib.get_selection():
+                obj.parent = asset_group
         else:
             plugin.deselect_all()
-            camera = bpy.data.cameras.new(subset)
-            camera_obj = bpy.data.objects.new(subset, camera)
+            camera = bpy.data.cameras.new(subset_name)
+            camera_obj = bpy.data.objects.new(subset_name, camera)
 
+            instances = bpy.data.collections.get(AVALON_INSTANCES)
             instances.objects.link(camera_obj)
 
-            camera_obj.select_set(True)
-            asset_group.select_set(True)
             bpy.context.view_layer.objects.active = asset_group
-            bpy.ops.object.parent_set(keep_transform=True)
+            camera_obj.parent = asset_group
 
         return asset_group

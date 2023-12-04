@@ -13,6 +13,7 @@ from collections import OrderedDict
 import nuke
 from qtpy import QtCore, QtWidgets
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_project,
     get_asset_by_name,
@@ -40,7 +41,6 @@ from openpype.settings import (
 from openpype.modules import ModulesManager
 from openpype.pipeline.template_data import get_template_data_with_names
 from openpype.pipeline import (
-    get_current_project_name,
     discover_legacy_creator_plugins,
     Anatomy,
     get_current_host_name,
@@ -121,7 +121,7 @@ def deprecated(new_destination):
 
 class Context:
     main_window = None
-    context_label = None
+    context_action_item = None
     project_name = os.getenv("AVALON_PROJECT")
     # Workfile related code
     workfiles_launched = False
@@ -1099,26 +1099,6 @@ def check_subsetname_exists(nodes, subset_name):
                 False)
 
 
-def get_render_path(node):
-    ''' Generate Render path from presets regarding avalon knob data
-    '''
-    avalon_knob_data = read_avalon_data(node)
-
-    nuke_imageio_writes = get_imageio_node_setting(
-        node_class=avalon_knob_data["families"],
-        plugin_name=avalon_knob_data["creator"],
-        subset=avalon_knob_data["subset"]
-    )
-
-    data = {
-        "avalon": avalon_knob_data,
-        "nuke_imageio_writes": nuke_imageio_writes
-    }
-
-    anatomy_filled = format_anatomy(data)
-    return anatomy_filled["render"]["path"].replace("\\", "/")
-
-
 def format_anatomy(data):
     ''' Helping function for formatting of anatomy paths
 
@@ -1128,7 +1108,9 @@ def format_anatomy(data):
     Return:
         path (str)
     '''
-    anatomy = Anatomy()
+
+    project_name = get_current_project_name()
+    anatomy = Anatomy(project_name)
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
     padding = None
@@ -1146,8 +1128,10 @@ def format_anatomy(data):
         file = script_name()
         data["version"] = get_version_from_path(file)
 
-    project_name = anatomy.project_name
-    asset_name = data["asset"]
+    if AYON_SERVER_ENABLED:
+        asset_name = data["folderPath"]
+    else:
+        asset_name = data["asset"]
     task_name = data["task"]
     host_name = get_current_host_name()
     context_data = get_template_data_with_names(

@@ -298,6 +298,7 @@ class NumberAttrWidget(_BaseAttrDefWidget):
         input_widget.installEventFilter(self)
 
         multisel_widget = ClickableLineEdit("< Multiselection >", self)
+        multisel_widget.setVisible(False)
 
         input_widget.valueChanged.connect(self._on_value_change)
         multisel_widget.clicked.connect(self._on_multi_click)
@@ -607,7 +608,7 @@ class UnknownAttrWidget(_BaseAttrDefWidget):
 class HiddenAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
         self.setVisible(False)
-        self._value = None
+        self._value = self.attr_def.default
         self._multivalue = False
 
     def setVisible(self, visible):

@@ -21,7 +21,7 @@ class ValidateResolutionSetting(pyblish.api.InstancePlugin,
         if not self.is_active(instance.data):
             return
         width, height = self.get_db_resolution(instance)
-        current_width = rt.renderwidth
+        current_width = rt.renderWidth
         current_height = rt.renderHeight
         if current_width != width and current_height != height:
             raise PublishValidationError("Resolution Setting "
