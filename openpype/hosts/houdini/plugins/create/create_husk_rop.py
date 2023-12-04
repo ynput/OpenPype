@@ -63,7 +63,7 @@ class CreateHuskROP(plugin.HoudiniCreator):
         instance_node.setParms(parms)
 
         # Lock some Avalon attributes
-        to_lock = ["family", "husk"]
+        to_lock = ["family", "husk_rop"]
         self.lock_parameters(instance_node, to_lock)
 
     def get_pre_create_attr_defs(self):

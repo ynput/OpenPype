@@ -21,6 +21,7 @@ class IncrementCurrentFile(pyblish.api.ContextPlugin):
                 "redshift_rop",
                 "arnold_rop",
                 "mantra_rop",
+                "husk_rop",
                 "karma_rop",
                 "usdrender",
                 "publish.hou"]

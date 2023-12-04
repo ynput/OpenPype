@@ -13,8 +13,8 @@ from openpype.hosts.houdini.api import (
 )
 
 
-class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
-    """Collect Mantra Render Products
+class CollectHuskROPProducts(pyblish.api.InstancePlugin):
+    """Collect Husk Products
 
     Collects the instance.data["files"] for the render products.
 
@@ -23,10 +23,10 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
 
     """
 
-    label = "Mantra ROP Render Products"
+    label = "Husk ROP Products"
     order = pyblish.api.CollectorOrder + 0.4
     hosts = ["houdini"]
-    families = ["mantra_rop"]
+    families = ["husk_rop", "imagesequence"]
 
     def process(self, instance):
 
@@ -39,7 +39,7 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
             instance.data["chunkSize"] = chunk_size
             self.log.debug("Chunk Size: %s" % chunk_size)
 
-            default_prefix = evalParmNoFrame(rop, "vm_picture")
+            default_prefix = evalParmNoFrame(rop, "output")
             render_products = []
 
             # Default beauty AOV
@@ -53,24 +53,24 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
                                                        beauty_product)
             }
 
-            aov_numbers = rop.evalParm("vm_numaux")
-            if aov_numbers > 0:
-                # get the filenames of the AOVs
-                for i in range(1, aov_numbers + 1):
-                    var = rop.evalParm("vm_variable_plane%d" % i)
-                    if var:
-                        aov_name = "vm_filename_plane%d" % i
-                        aov_boolean = "vm_usefile_plane%d" % i
-                        aov_enabled = rop.evalParm(aov_boolean)
-                        has_aov_path = rop.evalParm(aov_name)
-                        if has_aov_path and aov_enabled == 1:
-                            aov_prefix = evalParmNoFrame(rop, aov_name)
-                            aov_product = self.get_render_product_name(
-                                prefix=aov_prefix, suffix=None
-                            )
-                            render_products.append(aov_product)
+            # aov_numbers = rop.evalParm("vm_numaux")
+            # if aov_numbers > 0:
+            #     # get the filenames of the AOVs
+            #     for i in range(1, aov_numbers + 1):
+            #         var = rop.evalParm("vm_variable_plane%d" % i)
+            #         if var:
+            #             aov_name = "vm_filename_plane%d" % i
+            #             aov_boolean = "vm_usefile_plane%d" % i
+            #             aov_enabled = rop.evalParm(aov_boolean)
+            #             has_aov_path = rop.evalParm(aov_name)
+            #             if has_aov_path and aov_enabled == 1:
+            #                 aov_prefix = evalParmNoFrame(rop, aov_name)
+            #                 aov_product = self.get_render_product_name(
+            #                     prefix=aov_prefix, suffix=None
+            #                 )
+            #                 render_products.append(aov_product)
 
-                            files_by_aov[var] = self.generate_expected_files(instance, aov_product)     # noqa
+            #                 files_by_aov[var] = self.generate_expected_files(instance, aov_product)     # noqa
 
         for product in render_products:
             self.log.debug("Found render product: %s" % product)

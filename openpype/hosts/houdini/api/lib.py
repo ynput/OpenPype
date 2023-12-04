@@ -141,6 +141,8 @@ def get_output_parameter(node):
     node_type = node.type().name()
     if node_type == "geometry":
         return node.parm("sopoutput")
+    elif node_type == "husk::1.1":
+        return node.parm("output")
     elif node_type == "alembic":
         return node.parm("filename")
     elif node_type == "comp":
