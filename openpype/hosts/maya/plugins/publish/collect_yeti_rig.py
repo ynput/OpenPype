@@ -130,12 +130,12 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             # List all related textures
             texture_nodes = cmds.pgYetiGraph(
                 node, listNodes=True, type="texture")
-            texture_filenames = [cmds.pgYetiGraph(node,
-                                                  node=texture_node,
-                                                  param="file_name",
-                                                  getParamValue=True)
-                                                  for texture_node
-                                                  in texture_nodes]
+            texture_filenames = [
+                cmds.pgYetiGraph(
+                node, node=texture_node,
+                param="file_name", getParamValue=True)
+                for texture_node in texture_nodes
+            ]
             self.log.debug("Found %i texture(s)" % len(texture_filenames))
 
         # Get all reference nodes
