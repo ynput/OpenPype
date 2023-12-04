@@ -70,7 +70,9 @@ class ExtractMayaSceneRaw(publish.Extractor):
                       force=True,
                       typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
                       exportSelected=True,
-                      preserveReferences=True,
+                      preserveReferences=instance.data.get(
+                          "creator_attributes", {}
+                      ).get("preserve_references", True),
                       constructionHistory=True,
                       shader=True,
                       constraints=True,
