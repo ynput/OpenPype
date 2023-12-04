@@ -134,7 +134,8 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                                                   node=texture_node,
                                                   param="file_name",
                                                   getParamValue=True)
-                                    for texture_node in texture_nodes]
+                                                  for texture_node
+                                                  in texture_nodes]
             self.log.debug("Found %i texture(s)" % len(texture_filenames))
 
         # Get all reference nodes
