@@ -114,49 +114,6 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "editorial_csv_ingest",
-                    "label": "Editorial CSV Ingest",
-                    "use_label_wrap": true,
-                    "collapsible_key": true,
-                    "children": [
-                        {
-                            "key": "csv_ingest",
-                            "label": "Editorial CSV Ingest",
-                            "type": "list",
-                            "highlight_content": true,
-                            "tooltip": "Add or remove the columns that should be present in the CSV file.",
-                            "object_type": {
-                                "type": "dict",
-                                "children": [
-                                    {
-                                        "type": "text",
-                                        "key": "name",
-                                        "label": "Column Header",
-                                        "tooltip": "The name of the column as in the CSV."
-                                    },
-                                    {
-                                        "type": "text",
-                                        "key": "value",
-                                        "label": "Open Pype entity",
-                                        "tooltip": "The entity this column's items match to in OpenPype."
-                                    },
-                                    {
-                                        "type": "enum",
-                                        "key": "required",
-                                        "label": "Is it required?",
-                                        "enum_items": [
-                                            {"Required": "Required"},
-                                            {"Optional": "Optional"}
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
                     "key": "editorial_simple",
                     "label": "Editorial simple creator",
                     "use_label_wrap": true,
@@ -377,6 +334,136 @@
                             "collapsible_key": true,
                             "collapsed": false,
                             "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "IngestCSV",
+                    "label": "CSV Ingest Creator",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "csv_delimiter",
+                            "label": "CSV column delimiter"
+                        },
+                        {
+                            "type": "text",
+                            "key": "tags_delimiter",
+                            "label": "Representation Tags column delimiter"
+                        },
+                        {
+                            "type": "list",
+                            "key": "default_tags",
+                            "object_type": "text",
+                            "label": "Default representation tags"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "collapsible": true,
+                            "key": "columns_config",
+                            "label": "CSV columns config",
+                            "collapsible_key": true,
+                            "object_type": {
+                                "type": "dict-conditional",
+                                "enum_key": "type",
+                                "enum_label": "Type",
+                                "enum_children": [
+                                    {
+                                        "key": "text",
+                                        "label": "Text",
+                                        "children": [
+                                            {
+                                                "type": "text",
+                                                "key": "default",
+                                                "label": "Default value",
+                                                "default": ""
+                                            },
+                                            {
+                                                "type": "boolean",
+                                                "key": "required",
+                                                "label": "Required column",
+                                                "default": false
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "validate",
+                                                "label": "Validating regex",
+                                                "default": "^(.*)$"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "key": "number",
+                                        "label": "Number",
+                                        "children": [
+                                            {
+                                                "type": "number",
+                                                "key": "default",
+                                                "label": "Default value",
+                                                "default": 0,
+                                                "minimum": 0,
+                                                "maximum": 100000
+                                            },
+                                            {
+                                                "type": "boolean",
+                                                "key": "required",
+                                                "label": "Required column",
+                                                "default": false
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "validate",
+                                                "label": "Validating regex",
+                                                "default": "^(\\d{1,3})$"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "key": "bool",
+                                        "label": "Boolean",
+                                        "children": [
+                                            {
+                                                "type": "boolean",
+                                                "key": "default",
+                                                "label": "Default value",
+                                                "default": false
+                                            },
+                                            {
+                                                "type": "boolean",
+                                                "key": "required",
+                                                "label": "Required column",
+                                                "default": false
+                                            },
+                                            {
+                                                "type": "text",
+                                                "key": "validate",
+                                                "label": "Validating regex",
+                                                "default": "(true|false)"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "collapsible": true,
+                            "key": "representation_config",
+                            "label": "Representation (Output) config)",
+                            "collapsible_key": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "list",
+                                        "key": "extensions",
+                                        "object_type": "text",
+                                        "label": "Extensions (with dot)[.ext]"
+                                    }
+                                ]
+                            }
                         }
                     ]
                 }
