@@ -269,9 +269,11 @@ def transfer_image_planes(source_cameras, target_cameras,
                                                 type="imagePlane") or []
 
             # Split of the parent path they are attached - we want
-            # the image plane node name.
+            # the image plane node name if attached to a camera.
             # TODO: Does this still mean the image plane name is unique?
-            image_planes = [x.split("->", 1)[1] for x in image_planes]
+            image_planes = [
+                x.split("->", 1)[1] for x in image_planes if "->" in x
+            ]
 
             if not image_planes:
                 continue
