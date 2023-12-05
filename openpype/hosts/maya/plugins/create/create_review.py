@@ -84,10 +84,10 @@ class CreateReview(plugin.MayaCreator):
 
             if "Viewport Options" in preset:
                 mapping.update({
-                    "imagePlane":preset["Viewport Options"]["imagePlane"]})
+                    "imagePlane": preset["Viewport Options"]["imagePlane"]})
             elif "ViewportOptions" in preset:
                 mapping.update({
-                    "imagePlane":preset["ViewportOptions"]["imagePlane"]})
+                    "imagePlane": preset["ViewportOptions"]["imagePlane"]})
 
             for key, value in mapping.items():
                 creator_attribute_defs_by_key[key].default = value
