@@ -79,9 +79,16 @@ class CreateReview(plugin.MayaCreator):
                 "review_width": preset["Resolution"]["width"],
                 "review_height": preset["Resolution"]["height"],
                 "isolate": preset["Generic"]["isolate_view"],
-                "imagePlane": preset["Viewport Options"]["imagePlane"],
                 "panZoom": preset["Generic"]["pan_zoom"]
             }
+
+            if "Viewport Options" in preset:
+                mapping.update({
+                    "imagePlane":preset["Viewport Options"]["imagePlane"]})
+            elif "ViewportOptions" in preset:
+                mapping.update({
+                    "imagePlane":preset["ViewportOptions"]["imagePlane"]})
+
             for key, value in mapping.items():
                 creator_attribute_defs_by_key[key].default = value
 
