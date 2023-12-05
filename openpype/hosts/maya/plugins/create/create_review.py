@@ -79,7 +79,7 @@ class CreateReview(plugin.MayaCreator):
                 "review_width": preset["Resolution"]["width"],
                 "review_height": preset["Resolution"]["height"],
                 "isolate": preset["Generic"]["isolate_view"],
-                "imagePlane": preset["Viewport Options"]["imagePlane"],
+                "imagePlane": preset["ViewportOptions"]["imagePlane"],
                 "panZoom": preset["Generic"]["pan_zoom"]
             }
             for key, value in mapping.items():
