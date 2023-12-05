@@ -588,6 +588,7 @@ def prompt_new_file_with_mesh(mesh_filepath):
         # the file
         while not file_dialog.selectedFiles():
             app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents, 1000)
+            continue
         print(f"Selected: {file_dialog.selectedFiles()}")
 
         # Set it again now we know the path is refreshed - without this
