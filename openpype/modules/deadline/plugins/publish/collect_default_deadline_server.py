@@ -32,22 +32,29 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
 
         # get default deadline webservice url from deadline module
         self.log.debug(deadline_module.deadline_urls)
-        context.data["defaultDeadline"] = deadline_module.deadline_urls["default"]  # noqa: E501
+        default_deadline_webservice = deadline_module.deadline_urls["default"]
 
         context.data["deadlinePassMongoUrl"] = self.pass_mongo_url
 
         deadline_servers = (context.data
                             ["project_settings"]
                             ["deadline"]
-                            ["deadline_servers"])
-        if deadline_servers:
+                            .get("deadline_servers"))
+        if deadline_servers:  # legacy OP
             deadline_server_name = deadline_servers[0]
+        else:
+            #new Ayon
+            deadline_server_name = (context.data
+                                    ["project_settings"]
+                                    ["deadline"]
+                                    .get("deadline_server"))
+
+        deadline_webservice = None
+        if deadline_server_name:
             deadline_webservice = deadline_module.deadline_urls.get(
                 deadline_server_name)
-            if deadline_webservice:
-                context.data["defaultDeadline"] = deadline_webservice
-                self.log.debug("Overriding from project settings with {}".format(  # noqa: E501
-                    deadline_webservice))
 
-        context.data["defaultDeadline"] = \
-            context.data["defaultDeadline"].strip().rstrip("/")
+        deadline_webservice = (deadline_webservice or
+                               default_deadline_webservice)
+
+        context.data["defaultDeadline"] = deadline_webservice.strip().rstrip("/")  #noqa
