@@ -458,7 +458,7 @@
                     }
                 }
             },
-            "representation_config": {
+            "representations_config": {
                 "tags_delimiter": ";",
                 "default_tags": [
                     "review"

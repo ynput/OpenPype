@@ -445,7 +445,7 @@
                             ]
                         },
                         {
-                            "key": "representation_config",
+                            "key": "representations_config",
                             "label": "Representations configuration",
                             "type": "dict",
                             "collapsible": true,
