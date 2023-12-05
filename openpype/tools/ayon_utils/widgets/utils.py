@@ -35,6 +35,12 @@ class RefreshThread(QtCore.QThread):
         return self._result
 
     def _on_finish_callback(self):
+        """Trigger custom signal with thread id.
+
+        Listening for 'finished' signal we make sure that execution of thread
+            finished and QThread object can be safely deleted.
+        """
+
         self.refresh_finished.emit(self.id)
 
 
