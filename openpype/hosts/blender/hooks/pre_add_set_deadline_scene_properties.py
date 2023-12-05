@@ -44,7 +44,6 @@ class InstallDeadlineAddon(PreLaunchHook):
                     data['asset_name'],
                     'publish',
                     'render',
-                    f'render{data["task_name"]}Main'
                 )
             render_layer_path = self._generate_path_with_version(
                 target_work_dir, base_output_path, data['project_name'], shot_name
@@ -75,8 +74,8 @@ class InstallDeadlineAddon(PreLaunchHook):
         return os.path.join(
             work_dir,
             base_path,
-            '{render_layer_name}',
             '{version}',
+            '{render_layer_name}',
             '_'.join([project_name, shot_name, '{render_layer_name}', '{version}'])
         )
 
