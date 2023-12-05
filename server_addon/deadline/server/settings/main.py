@@ -14,15 +14,35 @@ class ServerListSubmodel(BaseSettingsModel):
     value: str = Field(title="Value")
 
 
+async def defined_deadline_ws_name_enum_resolver(
+    addon: "BaseServerAddon",
+    settings_variant: str = "production",
+    project_name: str | None = None,
+) -> list[str]:
+    """Provides list of names of configured Deadline webservice urls."""
+    if addon is None:
+        return []
+
+    settings =  await addon.get_studio_settings(variant=settings_variant)
+
+    ws_urls = []
+    for deadline_url_item in settings.deadline_urls:
+        ws_urls.append(deadline_url_item.name)
+
+    return ws_urls
+
+
 class DeadlineSettings(BaseSettingsModel):
     deadline_urls: list[ServerListSubmodel] = Field(
         default_factory=list,
         title="System Deadline Webservice URLs",
         scope=["studio"],
     )
-    deadline_servers: list[str] = Field(
-        title="Project deadline servers",
+    deadline_server: str = Field(
+        title="Project deadline server",
         section="---",
+        scope=["project"],
+        enum_resolver=defined_deadline_ws_name_enum_resolver
     )
     publish: PublishPluginsModel = Field(
         default_factory=PublishPluginsModel,
@@ -42,7 +62,6 @@ DEFAULT_VALUES = {
             "value": "http://127.0.0.1:8082"
         }
     ],
-    # TODO: this needs to be dynamic from "deadline_urls"
-    "deadline_servers": [],
+    "deadline_server": "default",
     "publish": DEFAULT_DEADLINE_PLUGINS_SETTINGS
 }
