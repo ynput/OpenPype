@@ -424,7 +424,7 @@
                         "type": "bool",
                         "default": true,
                         "required": false,
-                        "validate": "(true|false)"
+                        "validate": "(True|False)"
                     },
                     "Tags": {
                         "type": "text",
