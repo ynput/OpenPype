@@ -314,7 +314,7 @@
                     "type": "bool",
                     "default": true,
                     "required": false,
-                    "validate": "(true|false)"
+                    "validate": "([Tt]rue|[Ff]alse)"
                 },
                 "Tags": {
                     "type": "text",

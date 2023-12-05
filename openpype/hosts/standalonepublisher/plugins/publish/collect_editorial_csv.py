@@ -552,22 +552,27 @@ class CollectEditorialCSV(
         if column_type == "number" and column_default == 0:
             column_default = None
 
-        # check if column value is not empty
-        if not column_value:
-            # check if column has default value
-            if column_default != None:
-                # set column value to default value
-                column_value = column_default
+        # check if column value is not empty string
+        if column_value == "":
+            # set default value if column value is empty string
+            column_value = column_default
+
+        # set column value to correct type following column type
+        if column_type == "number" and column_value != None:
+            column_value = int(column_value)
+        elif column_type == "bool":
+            column_value = column_value in ["true", "True"]
 
         # check if column value matches validation regex
         if (
             column_value != None and
-            not re.match(column_validation, column_value)
+            not re.match(str(column_validation), str(column_value))
         ):
             raise ValueError(
                 f"Column '{column_name}' value '{column_value}' "
                 f"does not match validation regex '{column_validation}' \n"
-                f"Row data: {row_data}"
+                f"Row data: {row_data} \n"
+                f"Column data: {column_data}"
             )
 
         return column_value
