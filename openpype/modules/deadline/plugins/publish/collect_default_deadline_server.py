@@ -42,8 +42,7 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
                             .get("deadline_servers"))
         if deadline_servers:  # legacy OP
             deadline_server_name = deadline_servers[0]
-        else:
-            #new Ayon
+        else:  #new Ayon
             deadline_server_name = (context.data
                                     ["project_settings"]
                                     ["deadline"]
@@ -57,4 +56,4 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
         deadline_webservice = (deadline_webservice or
                                default_deadline_webservice)
 
-        context.data["defaultDeadline"] = deadline_webservice.strip().rstrip("/")  #noqa
+        context.data["defaultDeadline"] = deadline_webservice.strip().rstrip("/")  # noqa

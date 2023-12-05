@@ -23,7 +23,7 @@ async def defined_deadline_ws_name_enum_resolver(
     if addon is None:
         return []
 
-    settings =  await addon.get_studio_settings(variant=settings_variant)
+    settings = await addon.get_studio_settings(variant=settings_variant)
 
     ws_urls = []
     for deadline_url_item in settings.deadline_urls:
