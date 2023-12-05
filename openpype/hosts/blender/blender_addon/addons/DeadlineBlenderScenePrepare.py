@@ -1,27 +1,10 @@
-#
-#Copyright 2017-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-#This program is free software: you can redistribute it and/or modify
-#it under the terms of the GNU General Public License as published by
-#the Free Software Foundation, either version 2 of the License, or
-#(at your option) any later version.
-#
-#This program is distributed in the hope that it will be useful,
-#but WITHOUT ANY WARRANTY; without even the implied warranty of
-#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#GNU General Public License for more details.
-#
-#You should have received a copy of the GNU General Public License
-#along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from __future__ import print_function
-
 import os
-import subprocess
-import sys
 import tempfile
-import logging
 import functools
+import logging
+import re
+from enum import Enum
+
 
 import bpy
 from bpy.app.handlers import persistent
@@ -34,8 +17,18 @@ bl_info = {
     "version": (1, 0),
     "blender": (2, 80, 0),
     "category": "Render",
-    "location": "Render > Prepare scene for Deadline",
+    "location": "View 3D > UI",
 }
+
+
+class PathsParts(Enum):
+    WINDOWS = "\\\\prod9.prs.vfx.int\\fs209\\Projets\\2023"
+    LINUX = "/prod/project/"
+
+
+class NodesNames(Enum):
+    RENDER_LAYERS = 'R_LAYERS'
+    OUTPUT_FILE = 'OUTPUT_FILE'
 
 
 RENDER_PROPERTIES_SELECTORS = [
@@ -149,24 +142,22 @@ class PrepareTemporaryFile(bpy.types.Operator):
     bl_description = "Create temporary blender file and set properties"
 
     def execute(self, context):
-        bpy.context.window_manager.scene_filepath = bpy.data.filepath
-        temporary_scene_file_path = os.path.join(
-            tempfile.gettempdir(),
-            bpy.path.basename(bpy.context.blend_data.filepath)
-        )
-        if os.path.isfile(temporary_scene_file_path):
-            os.remove(temporary_scene_file_path)
-
-        for render_property in bpy.context.window_manager.render_bool_properties:
-            set_attribute(render_property.path, render_property.value)
-
-        for render_property in bpy.context.window_manager.render_list_properties:
-            set_attribute(render_property.path, render_property.items)
-
-
-        bpy.ops.wm.save_as_mainfile(filepath=temporary_scene_file_path)
+        set_scene_render_properties()
+        save_as_temporary_scene()
+        convert_windows_path_to_linux()
+        set_engine('CYCLES')
+        set_global_output_path()
+        set_render_nodes_output_path()
 
         return {'FINISHED'}
+
+
+def set_scene_render_properties():
+    for render_property in bpy.context.window_manager.render_bool_properties:
+        set_attribute(render_property.path, render_property.value)
+
+    for render_property in bpy.context.window_manager.render_list_properties:
+        set_attribute(render_property.path, render_property.items)
 
 
 def set_attribute(path, value):
@@ -182,6 +173,68 @@ def set_attribute(path, value):
         return functools.reduce(_getattr, [obj] + attr.split('.'))
 
     rsetattr(bpy.context.scene, path, value)
+
+
+def save_as_temporary_scene():
+    bpy.context.window_manager.scene_filepath = bpy.data.filepath
+    temporary_scene_file_path = os.path.join(
+        tempfile.gettempdir(),
+        bpy.path.basename(bpy.context.blend_data.filepath)
+    )
+    if os.path.isfile(temporary_scene_file_path):
+        os.remove(temporary_scene_file_path)
+
+    bpy.ops.wm.save_as_mainfile(filepath=temporary_scene_file_path)
+
+
+def convert_windows_path_to_linux():
+    for cache_file in bpy.data.cache_files:
+        cache_file.filepath = bpy.path.abspath(
+            cache_file.filepath.replace(
+                PathsParts.WINDOWS.value,
+                PathsParts.LINUX.value
+            )
+        )
+
+
+def set_engine(engine):
+    bpy.context.scene.render.engine = engine
+
+
+def set_global_output_path():
+    bpy.context.scene.render.filepath = bpy.context.scene.output_path
+
+
+def set_render_nodes_output_path():
+    version = _extract_version_number_from_filepath(bpy.data.filepath)
+    for output_node in [node for node in bpy.context.scene.node_tree.nodes if node.type == NodesNames.OUTPUT_FILE.value]:
+        render_node = _browse_render_nodes(output_node.inputs)
+        render_layer_name = render_node.layer
+        output_node.base_path = bpy.context.scene.render_layer_path.format(
+            render_layer_name=render_layer_name,
+            version = version
+        ) + '_'
+        logging.info(f"Output node {output_node.name} path has been set to '{output_node.base_path}'.")
+
+
+def _browse_render_nodes(nodes_inputs):
+    node_links = list()
+    for nodes_input in nodes_inputs:
+        node_links.extend(nodes_input.links)
+
+    for node_link in node_links:
+        target_node = node_link.from_node
+        if target_node.type == NodesNames.RENDER_LAYERS.value:
+            return target_node
+        else:
+            target_node = _browse_render_nodes(target_node.inputs)
+            if target_node: return target_node
+
+
+def _extract_version_number_from_filepath(filepath):
+    version_regex = r'[^a-zA-Z\d](v\d{3})[^a-zA-Z\d]'
+    results = re.search(version_regex, filepath)
+    return results.groups()[-1]
 
 
 class LoadPreviousScene(bpy.types.Operator):
