@@ -125,36 +125,23 @@ def set_start_end_frames():
 
     scene = bpy.context.scene
 
-    # Default scene settings
-    frameStart = scene.frame_start
-    frameEnd = scene.frame_end
-    fps = scene.render.fps / scene.render.fps_base
-    resolution_x = scene.render.resolution_x
-    resolution_y = scene.render.resolution_y
-
     # Check if settings are set
     data = asset_doc.get("data")
 
     if not data:
         return
 
-    if data.get("frameStart"):
-        frameStart = data.get("frameStart")
-    if data.get("frameEnd"):
-        frameEnd = data.get("frameEnd")
-    if data.get("fps"):
-        fps = data.get("fps")
-    if data.get("resolutionWidth"):
-        resolution_x = data.get("resolutionWidth")
-    if data.get("resolutionHeight"):
-        resolution_y = data.get("resolutionHeight")
-
-    scene.frame_start = frameStart
-    scene.frame_end = frameEnd
+    fps = data.get("fps", scene.render.fps / scene.render.fps_base)
     scene.render.fps = round(fps)
-    scene.render.fps_base = round(fps) / fps
-    scene.render.resolution_x = resolution_x
-    scene.render.resolution_y = resolution_y
+    scene.render.fps_base = scene.render.fps / fps
+    scene.frame_start = data.get("frameStart", scene.frame_start)
+    scene.frame_end = data.get("frameEnd", scene.frame_end) + 1
+    scene.render.resolution_x = data.get(
+        "resolutionWidth", scene.render.resolution_x
+    )
+    scene.render.resolution_y = data.get(
+        "resolutionHeight", scene.render.resolution_y
+    )
 
 
 def set_use_file_compression():
