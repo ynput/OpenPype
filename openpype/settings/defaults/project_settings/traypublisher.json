@@ -345,147 +345,151 @@
             ]
         },
         "IngestCSV": {
-            "csv_delimiter": ",",
-            "tags_delimiter": ";",
-            "default_tags": [
-                "review"
-            ],
             "columns_config": {
-                "Project": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Vendor": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Package": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Filename": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Context": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Task": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Version": {
-                    "type": "number",
-                    "default": 1,
-                    "required": true,
-                    "validate": "^(\\d{1,3})$"
-                },
-                "Color": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Notes": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Intent": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Output": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Family": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Slate": {
-                    "type": "bool",
-                    "default": true,
-                    "required": false,
-                    "validate": "(true|false)"
-                },
-                "Tags": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Variant": {
-                    "type": "text",
-                    "default": "",
-                    "required": false,
-                    "validate": "^(.*)$"
-                },
-                "Start": {
-                    "type": "number",
-                    "default": 0,
-                    "required": false,
-                    "validate": "^(\\d{1,8})$|None"
-                },
-                "End": {
-                    "type": "number",
-                    "default": 0,
-                    "required": false,
-                    "validate": "^(\\d{1,8})$|None"
-                },
-                "Length": {
-                    "type": "number",
-                    "default": 0,
-                    "required": false,
-                    "validate": "^(\\d{1,8})$|None"
+                "csv_delimiter": ",",
+                "columns": {
+                    "Project": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Vendor": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Package": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Filename": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Context": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Task": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Version": {
+                        "type": "number",
+                        "default": 1,
+                        "required": true,
+                        "validate": "^(\\d{1,3})$"
+                    },
+                    "Color": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Notes": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Intent": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Output": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Family": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Slate": {
+                        "type": "bool",
+                        "default": true,
+                        "required": false,
+                        "validate": "(true|false)"
+                    },
+                    "Tags": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Variant": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^(.*)$"
+                    },
+                    "Start": {
+                        "type": "number",
+                        "default": 0,
+                        "required": false,
+                        "validate": "^(\\d{1,8})$|None"
+                    },
+                    "End": {
+                        "type": "number",
+                        "default": 0,
+                        "required": false,
+                        "validate": "^(\\d{1,8})$|None"
+                    },
+                    "Length": {
+                        "type": "number",
+                        "default": 0,
+                        "required": false,
+                        "validate": "^(\\d{1,8})$|None"
+                    }
                 }
             },
             "representation_config": {
-                "preview": {
-                    "extensions": [
-                        ".mp4",
-                        ".mov"
-                    ]
-                },
-                "exr": {
-                    "extensions": [
-                        ".exr"
-                    ]
-                },
-                "edit": {
-                    "extensions": [
-                        ".mov"
-                    ]
-                },
-                "review": {
-                    "extensions": [
-                        ".mov"
-                    ]
-                },
-                "nuke": {
-                    "extensions": [
-                        ".nk"
-                    ]
+                "tags_delimiter": ";",
+                "default_tags": [
+                    "review"
+                ],
+                "representations": {
+                    "preview": {
+                        "extensions": [
+                            ".mp4",
+                            ".mov"
+                        ]
+                    },
+                    "exr": {
+                        "extensions": [
+                            ".exr"
+                        ]
+                    },
+                    "edit": {
+                        "extensions": [
+                            ".mov"
+                        ]
+                    },
+                    "review": {
+                        "extensions": [
+                            ".mov"
+                        ]
+                    },
+                    "nuke": {
+                        "extensions": [
+                            ".nk"
+                        ]
+                    }
                 }
             }
         }
