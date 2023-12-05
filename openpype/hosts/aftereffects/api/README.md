@@ -18,7 +18,7 @@ ExManCmd /install {path to addon}/api/extension.zxp
 OR
 download [Anastasiy’s Extension Manager](https://install.anastasiy.com/)
 
-`{pat to addon}` will be most likely in your AppData (on Windows, in your user data folder in Linux and MacOS.)
+`{path to addon}` will be most likely in your AppData (on Windows, in your user data folder in Linux and MacOS.)
 
 ### Server
 
