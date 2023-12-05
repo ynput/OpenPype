@@ -100,13 +100,13 @@ class ModuleUnitTest(BaseTest):
                 if ext and ext.lstrip('.') in handler_class.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
                     handler_class.unzip(os.path.join(tmpdir, file_name))
 
-                yield tmpdir
+            yield tmpdir
 
-                persist = (persist or self.PERSIST or
-                           self.is_test_failed(request))
-                if not persist:
-                    print("Removing {}".format(tmpdir))
-                    shutil.rmtree(tmpdir)
+            persist = (persist or self.PERSIST or
+                       self.is_test_failed(request))
+            if not persist:
+                print("Removing {}".format(tmpdir))
+                shutil.rmtree(tmpdir)
 
     @pytest.fixture(scope="module")
     def output_folder_url(self, download_test_data):
