@@ -5,7 +5,7 @@ import csv
 from pprint import pformat
 import pyblish.api
 from openpype.lib.transcoding import (
-    VIDEO_EXTENSIONS
+    VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
 )
 from openpype.client import get_asset_by_name
 from openpype.pipeline.create import get_subset_name
@@ -13,10 +13,6 @@ from openpype.pipeline import (
     publish
 )
 import clique
-
-ACCEPTED_EXTENSIONS = {
-    ".nk"
-}
 
 
 class CollectEditorialCSV(
@@ -229,7 +225,7 @@ class CollectEditorialCSV(
         _, extension = os.path.splitext(filepath)
 
         # validate filepath is having correct extension based on output
-        config_repre_data = config_representation_data()
+        config_repre_data = self.config_representation_data()
         output = repre_data["output"]
         if output not in config_repre_data:
             raise KeyError(
@@ -242,8 +238,7 @@ class CollectEditorialCSV(
                 f"output '{validate_extensions}'."
             )
 
-        seq_extension_check = ACCEPTED_EXTENSIONS.union(VIDEO_EXTENSIONS)
-        is_sequence = (extension not in seq_extension_check)
+        is_sequence = (extension in IMAGE_EXTENSIONS)
         # convert ### string in file name to %03d
         # this is for correct frame range validation
         # example: file.###.exr -> file.%03d.exr
@@ -333,7 +328,7 @@ class CollectEditorialCSV(
         self.log.debug(f"__ package_folder: `{package_folder}`")
 
         # make sure csv file contains columns from following list
-        column_config = config_columns_data()
+        column_config = self.config_columns_data()
         required_columns = [
             name for name, value in column_config.items()
             if value["required"]
@@ -607,137 +602,137 @@ class CollectEditorialCSV(
             "stagingDir_persistent": True,
         })
 
-def config_columns_data():
-    if self.columns_config:
-        return self.columns_config
-    return {
-        "Project": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Vendor": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Package": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Filename": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Context": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Task": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Version": {
-            "type": "number",
-            "default": 1,
-            "required": True,
-            "validate": "^(\\d{1,3})$"
-        },
-        "Color": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Notes": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Intent": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Output": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Family": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Slate": {
-            "type": "bool",
-            "default": True,
-            "required": False,
-            "validate": "(true|false)"
-        },
-        "Tags": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Variant": {
-            "type": "text",
-            "default": "",
-            "required": False,
-            "validate": "^(.*)$"
-        },
-        "Start": {
-            "type": "number",
-            "default": 0,
-            "required": False,
-            "validate": "^(\\d{1,8})$|None"
-        },
-        "End": {
-            "type": "number",
-            "default": 0,
-            "required": False,
-            "validate": "^(\\d{1,8})$|None"
-        },
-        "Length": {
-            "type": "number",
-            "default": 0,
-            "required": False,
-            "validate": "^(\\d{1,8})$|None"
+    def config_columns_data(self):
+        if self.columns_config:
+            return self.columns_config
+        return {
+            "Project": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Vendor": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Package": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Filename": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Context": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Task": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Version": {
+                "type": "number",
+                "default": 1,
+                "required": True,
+                "validate": "^(\\d{1,3})$"
+            },
+            "Color": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Notes": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Intent": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Output": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Family": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Slate": {
+                "type": "bool",
+                "default": True,
+                "required": False,
+                "validate": "(true|false)"
+            },
+            "Tags": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Variant": {
+                "type": "text",
+                "default": "",
+                "required": False,
+                "validate": "^(.*)$"
+            },
+            "Start": {
+                "type": "number",
+                "default": 0,
+                "required": False,
+                "validate": "^(\\d{1,8})$|None"
+            },
+            "End": {
+                "type": "number",
+                "default": 0,
+                "required": False,
+                "validate": "^(\\d{1,8})$|None"
+            },
+            "Length": {
+                "type": "number",
+                "default": 0,
+                "required": False,
+                "validate": "^(\\d{1,8})$|None"
+            }
         }
-    }
 
-def config_representation_data():
-    if self.representation_config:
-        return self.representation_config
-    return {
-        "preview": {
-            "extensions": [".mp4", ".mov"]
-        },
-        "exr": {
-            "extensions": [".exr"]
-        },
-        "edit": {
-            "extensions": [".mov"]
-        },
-        "review": {
-            "extensions": [".mov"]
-        },
-        "nuke": {
-            "extensions": [".nk"]
+    def config_representation_data(self):
+        if self.representation_config:
+            return self.representation_config
+        return {
+            "preview": {
+                "extensions": [".mp4", ".mov"]
+            },
+            "exr": {
+                "extensions": [".exr"]
+            },
+            "edit": {
+                "extensions": [".mov"]
+            },
+            "review": {
+                "extensions": [".mov"]
+            },
+            "nuke": {
+                "extensions": [".nk"]
+            }
         }
-    }
