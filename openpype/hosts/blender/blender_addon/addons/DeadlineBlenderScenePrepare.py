@@ -251,7 +251,7 @@ class LoadPreviousScene(bpy.types.Operator):
 
 class ExecutionOrder(bpy.types.Macro):
     bl_idname = "deadline.execute_macro"
-    bl_label = "Execution order"
+    bl_label = "Prepare scene and render with Deadline"
 
 
 def register():
