@@ -202,6 +202,15 @@ class GraphQlQuery:
 
         self._variables[key]["value"] = value
 
+    def get_variable_keys(self):
+        """Get all variable keys.
+
+        Returns:
+            set[str]: Variable keys.
+        """
+
+        return set(self._variables.keys())
+
     def get_variables_values(self):
         """Calculate variable values used that should be used in query.
 

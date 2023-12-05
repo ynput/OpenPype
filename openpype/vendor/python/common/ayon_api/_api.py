@@ -374,7 +374,7 @@ def get_default_settings_variant():
     """
 
     con = get_server_api_connection()
-    return con.get_client_version()
+    return con.get_default_settings_variant()
 
 
 def set_default_settings_variant(variant):
