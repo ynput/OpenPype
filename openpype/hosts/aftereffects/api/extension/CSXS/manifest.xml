@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="8.0" ExtensionBundleId="com.openpype.AE.panel" ExtensionBundleVersion="1.0.27"
-		ExtensionBundleName="com.openpype.AE.panel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest Version="8.0" ExtensionBundleId="io.ynput.AE.panel" ExtensionBundleVersion="1.1.0"
+		ExtensionBundleName="io.ynput.AE.panel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<ExtensionList>
-		<Extension Id="com.openpype.AE.panel" Version="1.0" />
+		<Extension Id="io.ynput.AE.panel" Version="1.0" />
 	</ExtensionList>
 	<ExecutionEnvironment>
 		<HostList>
@@ -38,7 +38,7 @@
 		</RequiredRuntimeList>
 	</ExecutionEnvironment>
 	<DispatchInfoList>
-		<Extension Id="com.openpype.AE.panel">
+		<Extension Id="io.ynput.AE.panel">
 			<DispatchInfo >
 				<Resources>
 				<MainPath>./index.html</MainPath>
@@ -49,7 +49,7 @@
 				</Lifecycle>
 				<UI>
 					<Type>Panel</Type>
-					<Menu>OpenPype</Menu>
+					<Menu>AYON</Menu>
 					<Geometry>
 						<Size>
 							<Height>200</Height>
@@ -66,7 +66,7 @@
 
 					</Geometry>
 					<Icons>
-						<Icon Type="Normal">./icons/iconNormal.png</Icon>
+						<Icon Type="Normal">./icons/ayon_logo.png</Icon>
 						<Icon Type="RollOver">./icons/iconRollover.png</Icon>
 						<Icon Type="Disabled">./icons/iconDisabled.png</Icon>
 						<Icon Type="DarkNormal">./icons/iconDarkNormal.png</Icon>

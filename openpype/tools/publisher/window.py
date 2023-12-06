@@ -9,6 +9,7 @@ from openpype import (
     resources,
     style
 )
+from openpype import AYON_SERVER_ENABLED
 from openpype.tools.utils import (
     ErrorMessageBox,
     PlaceholderLineEdit,
@@ -53,7 +54,9 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self.setObjectName("PublishWindow")
 
-        self.setWindowTitle("OpenPype publisher")
+        self.setWindowTitle("{} publisher".format(
+            "AYON" if AYON_SERVER_ENABLED else "OpenPype"
+        ))
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)

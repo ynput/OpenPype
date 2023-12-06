@@ -16,7 +16,11 @@ except ImportError:
 import requests
 import unidecode
 
-from .constants import SERVER_TIMEOUT_ENV_KEY
+from .constants import (
+    SERVER_TIMEOUT_ENV_KEY,
+    DEFAULT_VARIANT_ENV_KEY,
+    SITE_ID_ENV_KEY,
+)
 from .exceptions import UrlError
 
 REMOVED_VALUE = object()
@@ -44,6 +48,26 @@ def get_default_timeout():
     except (ValueError, TypeError):
         pass
     return 10.0
+
+
+def get_default_settings_variant():
+    """Default settings variant.
+
+    Returns:
+        str: Settings variant from environment variable or 'production'.
+    """
+
+    return os.environ.get(DEFAULT_VARIANT_ENV_KEY) or "production"
+
+
+def get_default_site_id():
+    """Site id used for server connection.
+
+    Returns:
+        Union[str, None]: Site id from environment variable or None.
+    """
+
+    return os.environ.get(SITE_ID_ENV_KEY)
 
 
 class ThumbnailContent:
