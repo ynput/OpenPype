@@ -24,6 +24,12 @@ def _install_openpype_menu():
         return script_window._qtWidget()
 
     definition.append(
+        "/OpenPype/Create...",
+        {"command": lambda menu: host_tools.show_publisher(
+            parent=get_main_window(menu),
+            tab="create")}
+    )
+    definition.append(
         "/OpenPype/Load...",
         {"command": lambda menu: host_tools.show_loader(
             parent=get_main_window(menu),
@@ -32,7 +38,8 @@ def _install_openpype_menu():
     definition.append(
         "/OpenPype/Publish...",
         {"command": lambda menu: host_tools.show_publisher(
-            parent=get_main_window(menu))}
+            parent=get_main_window(menu),
+            tab="publish")}
     )
     definition.append(
         "/OpenPype/Manage...",
