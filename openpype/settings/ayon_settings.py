@@ -1261,6 +1261,24 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
                 output_def["height"] = output_def.pop("output_height")
 
         profile["outputs"] = new_outputs
+    # ExtractThumbnail plugin
+    ayon_extract_thumbnail = ayon_publish["ExtractThumbnail"]
+    # fix display and view at oiio defaults
+    ayon_default_oiio = copy.deepcopy(ayon_extract_thumbnail["oiiotool_defaults"])
+    display_and_view = ayon_default_oiio.pop("display_and_view")
+    ayon_default_oiio["display"] = display_and_view["display"]
+    ayon_default_oiio["view"] = display_and_view["view"]
+    ayon_extract_thumbnail["oiiotool_defaults"] = ayon_default_oiio
+    # fix target size
+    ayon_default_resize = copy.deepcopy(ayon_extract_thumbnail["target_size"])
+    resize = ayon_default_resize.pop("resize")
+    ayon_default_resize["width"] = resize["width"]
+    ayon_default_resize["height"] = resize["height"]
+    ayon_extract_thumbnail["target_size"] = ayon_default_resize
+    # fix background color
+    ayon_extract_thumbnail["background_color"] = _convert_color(
+        ayon_extract_thumbnail["background_color"]
+    )
 
     # ExtractOIIOTranscode plugin
     extract_oiio_transcode = ayon_publish["ExtractOIIOTranscode"]
