@@ -185,8 +185,7 @@ class PypeCommands:
                 task,
                 app,
                 env_group=env_group,
-                launch_type=LaunchTypes.farm_render,
-                env={}
+                launch_type=LaunchTypes.farm_render
             )
         else:
             env = os.environ.copy()
