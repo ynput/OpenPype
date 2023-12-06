@@ -135,7 +135,7 @@ def set_start_end_frames():
     scene.render.fps = round(fps)
     scene.render.fps_base = scene.render.fps / fps
     scene.frame_start = data.get("frameStart", scene.frame_start)
-    scene.frame_end = data.get("frameEnd", scene.frame_end) + 1
+    scene.frame_end = data.get("frameEnd", scene.frame_end)
     scene.render.resolution_x = data.get(
         "resolutionWidth", scene.render.resolution_x
     )
