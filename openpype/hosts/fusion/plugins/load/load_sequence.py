@@ -161,7 +161,7 @@ class FusionLoadSequence(load.LoaderPlugin):
         with comp_lock_and_undo_chunk(comp, "Create Loader"):
             args = (-32768, -32768)
             tool = comp.AddTool("Loader", *args)
-            tool["Clip"] = path
+            tool["Clip"] = comp.ReverseMapPath(path)
 
             # Set global in point to start frame (if in version.data)
             start = self._get_start(context["version"], tool)
@@ -244,7 +244,7 @@ class FusionLoadSequence(load.LoaderPlugin):
                         "TimeCodeOffset",
                     ),
                 ):
-                    tool["Clip"] = path
+                    tool["Clip"] = comp.ReverseMapPath(path)
 
             # Set the global in to the start frame of the sequence
             global_in_changed = loader_shift(tool, start, relative=False)

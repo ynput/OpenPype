@@ -1,5 +1,6 @@
 import pyblish.api
 
+from openpype.client import get_asset_name_identifier
 from openpype.hosts.photoshop import api as photoshop
 from openpype.pipeline.create import get_subset_name
 
@@ -22,12 +23,12 @@ class CollectAutoImage(pyblish.api.ContextPlugin):
                 self.log.debug("Auto image instance found, won't create new")
                 return
 
-        project_name = context.data["anatomyData"]["project"]["name"]
+        project_name = context.data["projectName"]
         proj_settings = context.data["project_settings"]
-        task_name = context.data["anatomyData"]["task"]["name"]
+        task_name = context.data["task"]
         host_name = context.data["hostName"]
         asset_doc = context.data["assetEntity"]
-        asset_name = asset_doc["name"]
+        asset_name = get_asset_name_identifier(asset_doc)
 
         auto_creator = proj_settings.get(
             "photoshop", {}).get(

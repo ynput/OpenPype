@@ -27,6 +27,12 @@ class CollectSequenceFrameData(
         if not self.is_active(instance.data):
             return
 
+        # editorial would fail since they might not be in database yet
+        new_asset_publishing = instance.data.get("newAssetPublishing")
+        if new_asset_publishing:
+            self.log.debug("Instance is creating new asset. Skipping.")
+            return
+
         frame_data = self.get_frame_data_from_repre_sequence(instance)
 
         if not frame_data:

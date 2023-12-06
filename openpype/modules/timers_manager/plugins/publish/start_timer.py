@@ -6,8 +6,6 @@ Requires:
 
 import pyblish.api
 
-from openpype.pipeline import legacy_io
-
 
 class StartTimer(pyblish.api.ContextPlugin):
     label = "Start Timer"
@@ -25,9 +23,9 @@ class StartTimer(pyblish.api.ContextPlugin):
             self.log.debug("Publish is not affecting running timers.")
             return
 
-        project_name = legacy_io.active_project()
-        asset_name = legacy_io.Session.get("AVALON_ASSET")
-        task_name = legacy_io.Session.get("AVALON_TASK")
+        project_name = context.data["projectName"]
+        asset_name = context.data.get("asset")
+        task_name = context.data.get("task")
         if not project_name or not asset_name or not task_name:
             self.log.info((
                 "Current context does not contain all"

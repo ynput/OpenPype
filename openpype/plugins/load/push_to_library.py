@@ -1,6 +1,6 @@
 import os
 
-from openpype import PACKAGE_DIR
+from openpype import PACKAGE_DIR, AYON_SERVER_ENABLED
 from openpype.lib import get_openpype_execute_args, run_detached_process
 from openpype.pipeline import load
 from openpype.pipeline.load import LoadError
@@ -32,12 +32,22 @@ class PushToLibraryProject(load.SubsetLoaderPlugin):
             raise LoadError("Please select only one item")
 
         context = tuple(filtered_contexts)[0]
-        push_tool_script_path = os.path.join(
-            PACKAGE_DIR,
-            "tools",
-            "push_to_project",
-            "app.py"
-        )
+
+        if AYON_SERVER_ENABLED:
+            push_tool_script_path = os.path.join(
+                PACKAGE_DIR,
+                "tools",
+                "ayon_push_to_project",
+                "main.py"
+            )
+        else:
+            push_tool_script_path = os.path.join(
+                PACKAGE_DIR,
+                "tools",
+                "push_to_project",
+                "app.py"
+            )
+
         project_doc = context["project"]
         version_doc = context["version"]
         project_name = project_doc["name"]

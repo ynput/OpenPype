@@ -66,7 +66,7 @@ class SidePanelWidget(QtWidgets.QWidget):
         btn_note_save.clicked.connect(self._on_save_click)
 
         controller.register_event_callback(
-            "workarea.selection.changed", self._on_selection_change
+            "selection.workarea.changed", self._on_selection_change
         )
 
         self._details_input = details_input

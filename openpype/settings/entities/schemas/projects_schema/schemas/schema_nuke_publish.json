@@ -61,7 +61,7 @@
             "name": "template_publish_plugin",
             "template_data": [
                 {
-                    "key": "ValidateCorrectAssetName",
+                    "key": "ValidateCorrectAssetContext",
                     "label": "Validate Correct Asset Name"
                 }
             ]
@@ -113,8 +113,8 @@
                     "label": "Validate Gizmo (Group)"
                 },
                 {
-                    "key": "ValidateScript",
-                    "label": "Validate script settings"
+                    "key": "ValidateScriptAttributes",
+                    "label": "Validate workfile attributes"
                 }
             ]
         },
