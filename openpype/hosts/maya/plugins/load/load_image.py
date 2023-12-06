@@ -286,7 +286,7 @@ class FileNodeLoader(load.LoaderPlugin):
 
         path = get_representation_path_from_context(context)
         colorspace = get_imageio_colorspace_from_filepath(
-            path=path,
+            filepath=path,
             host_name=host_name,
             project_name=project_name,
             config_data=config_data,
