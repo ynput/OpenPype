@@ -23,7 +23,6 @@ class GafferLoadReference(load.LoaderPlugin):
 
         script = get_root()
 
-        # Import gaffer sccene
         path = self.filepath_from_context(context).replace("\\", "/")
 
         reference = Gaffer.Reference()
