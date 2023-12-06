@@ -298,7 +298,7 @@ def create_timeline_item(
         if source_end:
             clip_data["endFrame"] = source_end
         if timecode_in:
-            clip_data["recordFrame"] = timecode_in
+            clip_data["recordFrame"] = timeline_in
 
         # add to timeline
         media_pool.AppendToTimeline([clip_data])

@@ -1158,6 +1158,32 @@
                 }
             ]
         },
+        "wrap": {
+            "enabled": true,
+            "label": "Wrap",
+            "icon": "{}/app_icons/wrap.png",
+            "host_name": "wrap",
+            "environment": "{\n    \n}",
+            "variants": [
+                {
+                    "name": "2023",
+                    "use_python_2": false,
+                    "executables": {
+                        "windows": [
+                            "c:\\Program Files\\Faceform\\Wrap 2023.10.2\\Wrap.exe"
+                        ],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "arguments": {
+                        "windows": [],
+                        "darwin": [],
+                        "linux": []
+                    },
+                    "environment": "{\n   \n}"
+                }
+            ]
+        },
         "additional_apps": []
     }
 }

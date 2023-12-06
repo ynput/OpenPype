@@ -536,7 +536,7 @@ def convert_for_ffmpeg(
     input_frame_end=None,
     logger=None
 ):
-    """Contert source file to format supported in ffmpeg.
+    """Convert source file to format supported in ffmpeg.
 
     Currently can convert only exrs.
 
@@ -592,29 +592,7 @@ def convert_for_ffmpeg(
         oiio_cmd.extend(["--compression", compression])
 
     # Collect channels to export
-    channel_names = input_info["channelnames"]
-    review_channels = get_convert_rgb_channels(channel_names)
-    if review_channels is None:
-        raise ValueError(
-            "Couldn't find channels that can be used for conversion."
-        )
-
-    red, green, blue, alpha = review_channels
-    input_channels = [red, green, blue]
-    channels_arg = "R={},G={},B={}".format(red, green, blue)
-    if alpha is not None:
-        channels_arg += ",A={}".format(alpha)
-        input_channels.append(alpha)
-    input_channels_str = ",".join(input_channels)
-
-    subimages = input_info.get("subimages")
-    input_arg = "-i"
-    if subimages is None or subimages == 1:
-        # Tell oiiotool which channels should be loaded
-        # - other channels are not loaded to memory so helps to avoid memory
-        #       leak issues
-        # - this option is crashing if used on multipart/subimages exrs
-        input_arg += ":ch={}".format(input_channels_str)
+    input_arg, channels_arg = get_oiio_input_and_channel_args(input_info)
 
     oiio_cmd.extend([
         input_arg, first_input_path,
@@ -635,7 +613,7 @@ def convert_for_ffmpeg(
             continue
 
         # Remove attributes that have string value longer than allowed length
-        #   for ffmpeg or when contain unallowed symbols
+        #   for ffmpeg or when contain prohibited symbols
         erase_reason = "Missing reason"
         erase_attribute = False
         if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -677,6 +655,47 @@ def convert_for_ffmpeg(
     run_subprocess(oiio_cmd, logger=logger)
 
 
+def get_oiio_input_and_channel_args(oiio_input_info):
+    """Get input and channel arguments for oiiotool.
+
+    Args:
+        oiio_input_info (dict): Information about input from oiio tool.
+            Should be output of function `get_oiio_info_for_input`.
+
+    Returns:
+        tuple[str, str]: Tuple of input and channel arguments.
+    """
+    channel_names = oiio_input_info["channelnames"]
+    review_channels = get_convert_rgb_channels(channel_names)
+
+    if review_channels is None:
+        raise ValueError(
+            "Couldn't find channels that can be used for conversion."
+        )
+
+    red, green, blue, alpha = review_channels
+    input_channels = [red, green, blue]
+
+    # TODO find subimage where rgba is available for multipart exrs
+    channels_arg = "R={},G={},B={}".format(red, green, blue)
+    if alpha is not None:
+        channels_arg += ",A={}".format(alpha)
+        input_channels.append(alpha)
+
+    input_channels_str = ",".join(input_channels)
+
+    subimages = oiio_input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
+        # Tell oiiotool which channels should be loaded
+        # - other channels are not loaded to memory so helps to avoid memory
+        #       leak issues
+        # - this option is crashing if used on multipart exrs
+        input_arg += ":ch={}".format(input_channels_str)
+
+    return input_arg, channels_arg
+
+
 def convert_input_paths_for_ffmpeg(
     input_paths,
     output_dir,
@@ -695,7 +714,7 @@ def convert_input_paths_for_ffmpeg(
 
     Args:
         input_paths (str): Paths that should be converted. It is expected that
-            contains single file or image sequence of samy type.
+            contains single file or image sequence of same type.
         output_dir (str): Path to directory where output will be rendered.
             Must not be same as input's directory.
         logger (logging.Logger): Logger used for logging.
@@ -709,6 +728,7 @@ def convert_input_paths_for_ffmpeg(
 
     first_input_path = input_paths[0]
     ext = os.path.splitext(first_input_path)[1].lower()
+
     if ext != ".exr":
         raise ValueError((
             "Function 'convert_for_ffmpeg' currently support only"
@@ -724,30 +744,7 @@ def convert_input_paths_for_ffmpeg(
         compression = "none"
 
     # Collect channels to export
-    channel_names = input_info["channelnames"]
-    review_channels = get_convert_rgb_channels(channel_names)
-    if review_channels is None:
-        raise ValueError(
-            "Couldn't find channels that can be used for conversion."
-        )
-
-    red, green, blue, alpha = review_channels
-    input_channels = [red, green, blue]
-    # TODO find subimage inder where rgba is available for multipart exrs
-    channels_arg = "R={},G={},B={}".format(red, green, blue)
-    if alpha is not None:
-        channels_arg += ",A={}".format(alpha)
-        input_channels.append(alpha)
-    input_channels_str = ",".join(input_channels)
-
-    subimages = input_info.get("subimages")
-    input_arg = "-i"
-    if subimages is None or subimages == 1:
-        # Tell oiiotool which channels should be loaded
-        # - other channels are not loaded to memory so helps to avoid memory
-        #       leak issues
-        # - this option is crashing if used on multipart exrs
-        input_arg += ":ch={}".format(input_channels_str)
+    input_arg, channels_arg = get_oiio_input_and_channel_args(input_info)
 
     for input_path in input_paths:
         # Prepare subprocess arguments
@@ -774,7 +771,7 @@ def convert_input_paths_for_ffmpeg(
                 continue
 
             # Remove attributes that have string value longer than allowed
-            #   length for ffmpeg or when containing unallowed symbols
+            #   length for ffmpeg or when containing prohibited symbols
             erase_reason = "Missing reason"
             erase_attribute = False
             if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -1021,9 +1018,7 @@ def _ffmpeg_h264_codec_args(stream_data, source_ffmpeg_cmd):
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
-    output.extend(["-intra"])
-    output.extend(["-g", "1"])
-
+    output.extend(["-intra", "-g", "1"])
     return output
 
 
@@ -1149,8 +1144,9 @@ def convert_colorspace(
     target_colorspace=None,
     view=None,
     display=None,
+    additional_input_args=None,
     additional_command_args=None,
-    logger=None
+    logger=None,
 ):
     """Convert source file from one color space to another.
 
@@ -1169,6 +1165,8 @@ def convert_colorspace(
         view (str): name for viewer space (ocio valid)
             both 'view' and 'display' must be filled (if 'target_colorspace')
         display (str): name for display-referred reference space (ocio valid)
+            both 'view' and 'display' must be filled (if 'target_colorspace')
+        additional_input_args (list): arguments for input file
         additional_command_args (list): arguments for oiiotool (like binary
             depth for .dpx)
         logger (logging.Logger): Logger used for logging.
@@ -1178,13 +1176,30 @@ def convert_colorspace(
     if logger is None:
         logger = logging.getLogger(__name__)
 
+    input_info = get_oiio_info_for_input(input_path, logger=logger)
+
+    # Collect channels to export
+    input_arg, channels_arg = get_oiio_input_and_channel_args(input_info)
+
+    if additional_input_args:
+        input_arg = "{} {}".format(input_arg, " ".join(additional_input_args))
+
+    # Prepare subprocess arguments
     oiio_cmd = get_oiio_tool_args(
         "oiiotool",
-        input_path,
         # Don't add any additional attributes
         "--nosoftwareattrib",
         "--colorconfig", config_path
     )
+
+    oiio_cmd.extend([
+        input_arg, input_path,
+        # Tell oiiotool which channels should be put to top stack
+        #   (and output)
+        "--ch", channels_arg,
+        # Use first subimage
+        "--subimage", "0"
+    ])
 
     if all([target_colorspace, view, display]):
         raise ValueError("Colorspace and both screen and display"

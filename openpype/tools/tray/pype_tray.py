@@ -632,6 +632,14 @@ class TrayManager:
             self.exit()
 
         elif result.restart or result.token_changed:
+            # Remove environment variables from current connection
+            # - keep develop, staging, headless values
+            for key in {
+                "AYON_SERVER_URL",
+                "AYON_API_KEY",
+                "AYON_BUNDLE_NAME",
+            }:
+                os.environ.pop(key, None)
             self.restart()
 
     def _on_restart_action(self):
