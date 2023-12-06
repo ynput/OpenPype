@@ -655,47 +655,6 @@ def convert_for_ffmpeg(
     run_subprocess(oiio_cmd, logger=logger)
 
 
-def get_oiio_input_and_channel_args(oiio_input_info):
-    """Get input and channel arguments for oiiotool.
-
-    Args:
-        oiio_input_info (dict): Information about input from oiio tool.
-            Should be output of function `get_oiio_info_for_input`.
-
-    Returns:
-        tuple[str, str]: Tuple of input and channel arguments.
-    """
-    channel_names = oiio_input_info["channelnames"]
-    review_channels = get_convert_rgb_channels(channel_names)
-
-    if review_channels is None:
-        raise ValueError(
-            "Couldn't find channels that can be used for conversion."
-        )
-
-    red, green, blue, alpha = review_channels
-    input_channels = [red, green, blue]
-
-    # TODO find subimage where rgba is available for multipart exrs
-    channels_arg = "R={},G={},B={}".format(red, green, blue)
-    if alpha is not None:
-        channels_arg += ",A={}".format(alpha)
-        input_channels.append(alpha)
-
-    input_channels_str = ",".join(input_channels)
-
-    subimages = oiio_input_info.get("subimages")
-    input_arg = "-i"
-    if subimages is None or subimages == 1:
-        # Tell oiiotool which channels should be loaded
-        # - other channels are not loaded to memory so helps to avoid memory
-        #       leak issues
-        # - this option is crashing if used on multipart exrs
-        input_arg += ":ch={}".format(input_channels_str)
-
-    return input_arg, channels_arg
-
-
 def convert_input_paths_for_ffmpeg(
     input_paths,
     output_dir,
