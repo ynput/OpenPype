@@ -51,7 +51,7 @@ class GafferLoadAlembicCamera(load.LoaderPlugin):
         Gaffer.PlugAlgo.promote(reader["fileName"])
 
         # Set the filename
-        path = self.fname.replace("\\", "/")
+        path = self.filepath_from_context(context).replace("\\", "/")
         box["fileName"].setValue(path)
 
         # Layout the nodes within the box

@@ -11,8 +11,8 @@ import GafferScene
 class GafferLoadScene(load.LoaderPlugin):
     """Load Scene"""
 
-    families = ["pointcache", "model"]
-    representations = ["abc"]
+    families = ["pointcache", "model", "usd"]
+    representations = ["abc", "usd"]
 
     label = "Load scene"
     order = -10
@@ -25,7 +25,7 @@ class GafferLoadScene(load.LoaderPlugin):
         node = GafferScene.SceneReader()
         node.setName(name)
 
-        path = self.fname.replace("\\", "/")
+        path = self.filepath_from_context(context).replace("\\", "/")
         node["fileName"].setValue(path)
         script.addChild(node)
 
