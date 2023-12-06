@@ -1,36 +1,19 @@
-import json
-
 from openpype.hosts.gaffer.api import (
     get_root,
 )
-from openpype.hosts.gaffer.api.pipeline import imprint, JSON_PREFIX
 from openpype.hosts.gaffer.api.lib import make_box
 
 from openpype.pipeline import (
     Creator as NewCreator,
     CreatedInstance,
 )
+from openpype.hosts.gaffer.api.plugin import CreatorImprintReadMixin
 
 import Gaffer
 
 
-def read(node):
-    """Read all 'user' custom data on the node"""
-    if "user" not in node:
-        # No user attributes
-        return {}
-
-    user = node["user"]
-    for key in user:
-        print(key, type(key), dir(key))
-
-    return {
-        plug.getName(): plug.getValue() for plug in user
-    }
-
-
-class CreateGafferScene(NewCreator):
-    identifier = "io.openpype.creators.gaffer."
+class CreateGafferScene(NewCreator, CreatorImprintReadMixin):
+    identifier = "io.openpype.creators.gaffer.gafferscene"
     label = "Gaffer Scene"
     family = "gafferScene"
     default_variants = ["Main"]
@@ -104,38 +87,3 @@ class CreateGafferScene(NewCreator):
 
             # Remove the collected CreatedInstance to remove from UI directly
             self._remove_instance_from_context(instance)
-
-    def _read(self, node):
-        all_user_data = read(node)
-
-        # Consider only data with the special attribute prefix
-        # and strip off the prefix as for the resulting data
-        prefix_len = len(self.attr_prefix)
-        openpype_data = {}
-        for key, value in all_user_data.items():
-            if not key.startswith(self.attr_prefix):
-                continue
-
-            if isinstance(value, str) and value.startswith(JSON_PREFIX):
-                value = value[len(JSON_PREFIX):]  # strip off JSON prefix
-                value = json.loads(value)
-
-            key = key[prefix_len:]      # strip off prefix
-            openpype_data[key] = value
-
-        return openpype_data
-
-    def _imprint(self, node, data):
-
-        # TODO: Use node path as uniques
-        # Instance id is the node's unique path so we don't need to imprint
-        # as data
-        # data.pop("instance_id", None)
-
-        # Prefix all keys
-        openpype_data = {}
-        for key, value in data.items():
-            key = f"{self.attr_prefix}{key}"
-            openpype_data[key] = value
-
-        imprint(node, openpype_data.items())
