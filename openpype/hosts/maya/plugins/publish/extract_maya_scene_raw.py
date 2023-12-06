@@ -10,7 +10,7 @@ from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 from openpype.lib import BoolDef
 
 
-class ExtractMayaSceneRaw(publish.Extractor):
+class ExtractMayaSceneRaw(publish.Extractor, OpenPypePyblishPluginMixin):
     """Extract as Maya Scene (raw).
 
     This will preserve all references, construction history, etc.
