@@ -119,7 +119,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                     # if it is not video file then just use first file
                     input_file = repre_files
             else:
-                repre_files_thumb = copy(repre_files)
+                repre_files_thumb = copy.deepcopy(repre_files)
                 # exclude first frame if slate in representation tags
                 if "slate-frame" in repre.get("tags", []):
                     repre_files_thumb = repre_files_thumb[1:]
