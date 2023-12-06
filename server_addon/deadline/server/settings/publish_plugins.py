@@ -3,12 +3,6 @@ from pydantic import Field, validator
 from ayon_server.settings import BaseSettingsModel, ensure_unique_names
 
 
-class CollectDefaultDeadlineServerModel(BaseSettingsModel):
-    """Settings for event handlers running in ftrack service."""
-
-    pass_mongo_url: bool = Field(title="Pass Mongo url to job")
-
-
 class CollectDeadlinePoolsModel(BaseSettingsModel):
     """Settings Deadline default pools."""
 
@@ -286,12 +280,6 @@ class ProcessSubmittedJobOnFarmModel(BaseSettingsModel):
 
 
 class PublishPluginsModel(BaseSettingsModel):
-    CollectDefaultDeadlineServer: CollectDefaultDeadlineServerModel = Field(
-        default_factory=CollectDefaultDeadlineServerModel,
-        title="Default Deadline Webservice")
-    CollectDefaultDeadlineServer: CollectDefaultDeadlineServerModel = Field(
-        default_factory=CollectDefaultDeadlineServerModel,
-        title="Default Deadline Webservice")
     CollectDeadlinePools: CollectDeadlinePoolsModel = Field(
         default_factory=CollectDeadlinePoolsModel,
         title="Default Pools")
@@ -332,9 +320,6 @@ class PublishPluginsModel(BaseSettingsModel):
 
 
 DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
-    "CollectDefaultDeadlineServer": {
-        "pass_mongo_url": True
-    },
     "CollectDeadlinePools": {
         "primary_pool": "",
         "secondary_pool": ""
