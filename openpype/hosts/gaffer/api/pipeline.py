@@ -2,6 +2,7 @@
 """Pipeline tools for OpenPype Gaffer integration."""
 import os
 import sys
+import json
 import logging
 
 import Gaffer  # noqa
@@ -27,6 +28,8 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 self = sys.modules[__name__]
 self.root = None
+
+JSON_PREFIX = "JSON:::"
 
 
 def set_root(root):
@@ -182,13 +185,30 @@ def imprint(node, data, section="OpenPype"):
 
     for key, value in data:
         if key in node["user"]:
-            node["user"][key].SetValue(value)
+            # Set existing attriute
+            node["user"][key].setValue(value)
+            continue
 
-        else:
-            # Generate plug with value as default value
+        # Dict to JSON
+        if isinstance(value, dict):
+            value = json.dumps(value)
+            value = f"{JSON_PREFIX}{value}"
+
+        # Generate new plug with value as default value
+        if isinstance(value, str):
             plug = Gaffer.StringPlug(key, defaultValue=value, flags=FLAGS)
+        elif isinstance(value, bool):
+            plug = Gaffer.BoolPlug(key, defaultValue=value, flags=FLAGS)
+        elif isinstance(value, float):
+            plug = Gaffer.FloatPlug(key, defaultValue=value, flags=FLAGS)
+        elif isinstance(value, int):
+            plug = Gaffer.IntPlug(key, defaultValue=value, flags=FLAGS)
+        else:
+            raise TypeError(
+                f"Unsupported value type: {type(value)} -> {value}"
+            )
 
-            if section:
-                Gaffer.Metadata.registerValue(plug, "layout:section", section)
+        if section:
+            Gaffer.Metadata.registerValue(plug, "layout:section", section)
 
-            node["user"].addChild(plug)
+        node["user"].addChild(plug)
