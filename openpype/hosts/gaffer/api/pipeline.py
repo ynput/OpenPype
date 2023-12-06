@@ -129,6 +129,7 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             container = {
                 key: user[key].getValue() for key in required
             }
+            container["objectName"] = node.fullName()
             container["_node"] = node
 
             yield container
