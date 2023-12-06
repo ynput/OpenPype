@@ -36,11 +36,20 @@ class EntityHub(object):
     """
 
     def __init__(
-        self, project_name, connection=None, allow_data_changes=False
+        self, project_name, connection=None, allow_data_changes=None
     ):
         if not connection:
             connection = get_server_api_connection()
+        major, minor, patch, _, _ = connection.server_version_tuple
+        path_start_with_slash = True
+        if (major, minor) < (0, 6):
+            path_start_with_slash = False
+
+        if allow_data_changes is None:
+            allow_data_changes = connection.graphql_allows_data_in_query
+
         self._connection = connection
+        self._path_start_with_slash = path_start_with_slash
 
         self._project_name = project_name
         self._entities_by_id = {}
@@ -64,6 +73,18 @@ class EntityHub(object):
         """
 
         return self._allow_data_changes
+
+    @property
+    def path_start_with_slash(self):
+        """Folder path should start with slash.
+
+        This changed in 0.6.x server version.
+
+        Returns:
+            bool: Path starts with slash.
+        """
+
+        return self._path_start_with_slash
 
     @property
     def project_name(self):
@@ -2419,10 +2440,13 @@ class FolderEntity(BaseEntity):
 
         if self._path is None:
             parent = self.parent
-            path = self.name
             if parent.entity_type == "folder":
                 parent_path = parent.path
-                path = "/".join([parent_path, path])
+                path = "/".join([parent_path, self.name])
+            elif self._entity_hub.path_start_with_slash:
+                path = "/{}".format(self.name)
+            else:
+                path = self.name
             self._path = path
         return self._path
 
@@ -2525,7 +2549,10 @@ class FolderEntity(BaseEntity):
         if self.thumbnail_id is not UNKNOWN_VALUE:
             output["thumbnailId"] = self.thumbnail_id
 
-        if self._entity_hub.allow_data_changes:
+        if (
+            self._entity_hub.allow_data_changes
+            and self._data is not UNKNOWN_VALUE
+        ):
             output["data"] = self._data
         return output
 

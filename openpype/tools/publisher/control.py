@@ -2517,7 +2517,7 @@ class PublisherController(BasePublisherController):
                 else:
                     msg = (
                         "Something went wrong. Send report"
-                        " to your supervisor or OpenPype."
+                        " to your supervisor or Ynput team."
                     )
                 self.publish_error_msg = msg
                 self.publish_has_crashed = True

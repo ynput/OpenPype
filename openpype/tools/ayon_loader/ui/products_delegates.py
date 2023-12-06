@@ -8,6 +8,11 @@ from .products_model import (
     VERSION_NAME_EDIT_ROLE,
     VERSION_ID_ROLE,
     PRODUCT_IN_SCENE_ROLE,
+    ACTIVE_SITE_ICON_ROLE,
+    REMOTE_SITE_ICON_ROLE,
+    REPRESENTATIONS_COUNT_ROLE,
+    SYNC_ACTIVE_SITE_AVAILABILITY,
+    SYNC_REMOTE_SITE_AVAILABILITY,
 )
 
 
@@ -189,3 +194,78 @@ class LoadedInSceneDelegate(QtWidgets.QStyledItemDelegate):
         value = index.data(PRODUCT_IN_SCENE_ROLE)
         color = self._colors.get(value, self._default_color)
         option.palette.setBrush(QtGui.QPalette.Text, color)
+
+
+class SiteSyncDelegate(QtWidgets.QStyledItemDelegate):
+    """Paints icons and downloaded representation ration for both sites."""
+
+    def paint(self, painter, option, index):
+        super(SiteSyncDelegate, self).paint(painter, option, index)
+        option = QtWidgets.QStyleOptionViewItem(option)
+        option.showDecorationSelected = True
+
+        active_icon = index.data(ACTIVE_SITE_ICON_ROLE)
+        remote_icon = index.data(REMOTE_SITE_ICON_ROLE)
+
+        availability_active = "{}/{}".format(
+            index.data(SYNC_ACTIVE_SITE_AVAILABILITY),
+            index.data(REPRESENTATIONS_COUNT_ROLE)
+        )
+        availability_remote = "{}/{}".format(
+            index.data(SYNC_REMOTE_SITE_AVAILABILITY),
+            index.data(REPRESENTATIONS_COUNT_ROLE)
+        )
+
+        if availability_active is None or availability_remote is None:
+            return
+
+        items_to_draw = [
+            (value, icon)
+            for value, icon in (
+                (availability_active, active_icon),
+                (availability_remote, remote_icon),
+            )
+            if icon
+        ]
+        if not items_to_draw:
+            return
+
+        icon_size = QtCore.QSize(24, 24)
+        padding = 10
+        pos_x = option.rect.x()
+
+        item_width = int(option.rect.width() / len(items_to_draw))
+        if item_width < 1:
+            item_width = 0
+
+        for value, icon in items_to_draw:
+            item_rect = QtCore.QRect(
+                pos_x,
+                option.rect.y(),
+                item_width,
+                option.rect.height()
+            )
+            # Prepare pos_x for next item
+            pos_x = item_rect.x() + item_rect.width()
+
+            pixmap = icon.pixmap(icon.actualSize(icon_size))
+            point = QtCore.QPoint(
+                item_rect.x() + padding,
+                item_rect.y() + ((item_rect.height() - pixmap.height()) * 0.5)
+            )
+            painter.drawPixmap(point, pixmap)
+
+            icon_offset = icon_size.width() + (padding * 2)
+            text_rect = QtCore.QRect(item_rect)
+            text_rect.setLeft(text_rect.left() + icon_offset)
+            if text_rect.width() < 1:
+                continue
+
+            painter.drawText(
+                text_rect,
+                option.displayAlignment,
+                value
+            )
+
+    def displayText(self, value, locale):
+        pass

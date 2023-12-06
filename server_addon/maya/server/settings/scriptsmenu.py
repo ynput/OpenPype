@@ -26,7 +26,7 @@ class ScriptsmenuModel(BaseSettingsModel):
 
 
 DEFAULT_SCRIPTSMENU_SETTINGS = {
-    "name": "OpenPype Tools",
+    "name": "Custom Tools",
     "definition": [
         {
             "type": "action",
