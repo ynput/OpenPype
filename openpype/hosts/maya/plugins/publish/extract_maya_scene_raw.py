@@ -6,6 +6,8 @@ from maya import cmds
 
 from openpype.hosts.maya.api.lib import maintained_selection
 from openpype.pipeline import AVALON_CONTAINER_ID, publish
+from openpype.pipeline.publish import OpenPypePyblishPluginMixin
+from openpype.lib import BoolDef
 
 
 class ExtractMayaSceneRaw(publish.Extractor):
@@ -22,6 +24,16 @@ class ExtractMayaSceneRaw(publish.Extractor):
                 "layout",
                 "camerarig"]
     scene_type = "ma"
+
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            BoolDef(
+                "preserve_references",
+                label="Preserve References",
+                default=True
+            )
+        ]
 
     def process(self, instance):
         """Plugin entry point."""
@@ -64,15 +76,18 @@ class ExtractMayaSceneRaw(publish.Extractor):
 
         # Perform extraction
         self.log.debug("Performing extraction ...")
+        attribute_values = self.get_attr_values_from_data(
+            instance.data
+        )
         with maintained_selection():
             cmds.select(selection, noExpand=True)
             cmds.file(path,
                       force=True,
                       typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
                       exportSelected=True,
-                      preserveReferences=instance.data.get(
-                          "creator_attributes", {}
-                      ).get("preserve_references", True),
+                      preserveReferences=attribute_values[
+                          "preserve_references"
+                      ],
                       constructionHistory=True,
                       shader=True,
                       constraints=True,
