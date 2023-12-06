@@ -1,6 +1,11 @@
 import collections
 
-from openpype.client import get_assets, get_subsets, get_last_versions
+from openpype.client import (
+    get_assets,
+    get_subsets,
+    get_last_versions,
+    get_asset_name_identifier,
+)
 
 
 def get_last_versions_for_instances(
@@ -52,10 +57,10 @@ def get_last_versions_for_instances(
     asset_docs = get_assets(
         project_name,
         asset_names=subset_names_by_asset_name.keys(),
-        fields=["name", "_id"]
+        fields=["name", "_id", "data.parents"]
     )
     asset_names_by_id = {
-        asset_doc["_id"]: asset_doc["name"]
+        asset_doc["_id"]: get_asset_name_identifier(asset_doc)
         for asset_doc in asset_docs
     }
     if not asset_names_by_id:

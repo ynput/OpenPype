@@ -572,6 +572,27 @@ def _convert_maya_project_settings(ayon_settings, output):
         for item in viewport_options["pluginObjects"]
     }
 
+    ayon_playblast_settings = ayon_publish["ExtractPlayblast"]["profiles"]
+    if ayon_playblast_settings:
+        for setting in ayon_playblast_settings:
+            capture_preset = setting["capture_preset"]
+            display_options = capture_preset["DisplayOptions"]
+            for key in ("background", "backgroundBottom", "backgroundTop"):
+                display_options[key] = _convert_color(display_options[key])
+
+            for src_key, dst_key in (
+                ("DisplayOptions", "Display Options"),
+                ("ViewportOptions", "Viewport Options"),
+                ("CameraOptions", "Camera Options"),
+            ):
+                capture_preset[dst_key] = capture_preset.pop(src_key)
+
+            viewport_options = capture_preset["Viewport Options"]
+            viewport_options["pluginObjects"] = {
+                item["name"]: item["value"]
+                for item in viewport_options["pluginObjects"]
+            }
+
     # Extract Camera Alembic bake attributes
     try:
         bake_attributes = json.loads(
@@ -650,6 +671,13 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
         except ValueError:
             attributes = {}
         ayon_publish["ValidateAttributes"]["attributes"] = attributes
+
+    if "ValidateLoadedPlugin" in ayon_publish:
+        loaded_plugin = (
+            ayon_publish["ValidateLoadedPlugin"]["family_plugins_mapping"]
+        )
+        for item in loaded_plugin:
+            item["families"] = item.pop("product_types")
 
     output["max"] = ayon_max
 
@@ -931,6 +959,23 @@ def _convert_photoshop_project_settings(ayon_settings, output):
         collect_review["publish"] = collect_review.pop("active")
 
     output["photoshop"] = ayon_photoshop
+
+
+def _convert_substancepainter_project_settings(ayon_settings, output):
+    if "substancepainter" not in ayon_settings:
+        return
+
+    ayon_substance_painter = ayon_settings["substancepainter"]
+    _convert_host_imageio(ayon_substance_painter)
+    if "shelves" in ayon_substance_painter:
+        shelves_items = ayon_substance_painter["shelves"]
+        new_shelves_items = {
+            item["name"]: item["value"]
+            for item in shelves_items
+        }
+        ayon_substance_painter["shelves"] = new_shelves_items
+
+    output["substancepainter"] = ayon_substance_painter
 
 
 def _convert_tvpaint_project_settings(ayon_settings, output):
@@ -1391,6 +1436,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_nuke_project_settings(ayon_settings, output)
     _convert_hiero_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)
+    _convert_substancepainter_project_settings(ayon_settings, output)
     _convert_tvpaint_project_settings(ayon_settings, output)
     _convert_traypublisher_project_settings(ayon_settings, output)
     _convert_webpublisher_project_settings(ayon_settings, output)
@@ -1566,3 +1612,18 @@ def get_ayon_system_settings(default_values):
     return convert_system_settings(
         ayon_settings, default_values, addon_versions
     )
+
+
+def get_ayon_settings(project_name=None):
+    """AYON studio settings.
+
+    Raw AYON settings values.
+
+    Args:
+        project_name (Optional[str]): Project name.
+
+    Returns:
+        dict[str, Any]: AYON settings.
+    """
+
+    return _AyonSettingsCache.get_value_by_project(project_name)

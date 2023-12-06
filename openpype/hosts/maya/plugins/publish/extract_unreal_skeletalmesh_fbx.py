@@ -62,6 +62,10 @@ class ExtractUnrealSkeletalMeshFbx(publish.Extractor):
         original_parent = to_extract[0].split("|")[1]
 
         parent_node = instance.data.get("asset")
+        # this needs to be done for AYON
+        # WARNING: since AYON supports duplicity of asset names,
+        #          this needs to be refactored throughout the pipeline.
+        parent_node = parent_node.split("/")[-1]
 
         renamed_to_extract = []
         for node in to_extract:

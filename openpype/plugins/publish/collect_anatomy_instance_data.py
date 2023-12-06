@@ -30,7 +30,8 @@ import pyblish.api
 from openpype.client import (
     get_assets,
     get_subsets,
-    get_last_versions
+    get_last_versions,
+    get_asset_name_identifier,
 )
 from openpype.pipeline.version_start import get_versioning_start
 
@@ -60,6 +61,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Querying asset documents for instances.")
 
         context_asset_doc = context.data.get("assetEntity")
+        context_asset_name = None
+        if context_asset_doc:
+            context_asset_name = get_asset_name_identifier(context_asset_doc)
 
         instances_with_missing_asset_doc = collections.defaultdict(list)
         for instance in context:
@@ -68,15 +72,15 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
             # There is possibility that assetEntity on instance is already set
             # which can happen in standalone publisher
-            if (
-                instance_asset_doc
-                and instance_asset_doc["name"] == _asset_name
-            ):
-                continue
+            if instance_asset_doc:
+                instance_asset_name = get_asset_name_identifier(
+                    instance_asset_doc)
+                if instance_asset_name == _asset_name:
+                    continue
 
             # Check if asset name is the same as what is in context
             # - they may be different, e.g. in NukeStudio
-            if context_asset_doc and context_asset_doc["name"] == _asset_name:
+            if context_asset_name and context_asset_name == _asset_name:
                 instance.data["assetEntity"] = context_asset_doc
 
             else:
@@ -93,7 +97,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
         asset_docs = get_assets(project_name, asset_names=asset_names)
         asset_docs_by_name = {
-            asset_doc["name"]: asset_doc
+            get_asset_name_identifier(asset_doc): asset_doc
             for asset_doc in asset_docs
         }
 
@@ -183,35 +187,29 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Storing anatomy data to instance data.")
 
         project_doc = context.data["projectEntity"]
-        context_asset_doc = context.data.get("assetEntity")
-
         project_task_types = project_doc["config"]["tasks"]
 
         for instance in context:
+            asset_doc = instance.data.get("assetEntity")
             anatomy_updates = {
-                "asset": instance.data["asset"],
-                "folder": {
-                    "name": instance.data["asset"],
-                },
                 "family": instance.data["family"],
                 "subset": instance.data["subset"],
             }
-
-            # Hierarchy
-            asset_doc = instance.data.get("assetEntity")
-            if (
-                asset_doc
-                and (
-                    not context_asset_doc
-                    or asset_doc["_id"] != context_asset_doc["_id"]
-                )
-            ):
+            if asset_doc:
                 parents = asset_doc["data"].get("parents") or list()
                 parent_name = project_doc["name"]
                 if parents:
                     parent_name = parents[-1]
-                anatomy_updates["hierarchy"] = "/".join(parents)
-                anatomy_updates["parent"] = parent_name
+
+                hierarchy = "/".join(parents)
+                anatomy_updates.update({
+                    "asset": asset_doc["name"],
+                    "hierarchy": hierarchy,
+                    "parent": parent_name,
+                    "folder": {
+                        "name": asset_doc["name"],
+                    },
+                })
 
             # Task
             task_type = None
