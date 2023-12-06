@@ -14,6 +14,10 @@ REPRESENTATION_ID_ROLE = QtCore.Qt.UserRole + 2
 PRODUCT_NAME_ROLE = QtCore.Qt.UserRole + 3
 FOLDER_LABEL_ROLE = QtCore.Qt.UserRole + 4
 GROUP_TYPE_ROLE = QtCore.Qt.UserRole + 5
+ACTIVE_SITE_ICON_ROLE = QtCore.Qt.UserRole + 6
+REMOTE_SITE_ICON_ROLE = QtCore.Qt.UserRole + 7
+SYNC_ACTIVE_SITE_PROGRESS = QtCore.Qt.UserRole + 8
+SYNC_REMOTE_SITE_PROGRESS = QtCore.Qt.UserRole + 9
 
 
 class RepresentationsModel(QtGui.QStandardItemModel):
@@ -22,12 +26,14 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         ("Name", 120),
         ("Product name", 125),
         ("Folder", 125),
-        # ("Active site", 85),
-        # ("Remote site", 85)
+        ("Active site", 85),
+        ("Remote site", 85)
     ]
     column_labels = [label for label, _ in colums_info]
     column_widths = [width for _, width in colums_info]
     folder_column = column_labels.index("Product name")
+    active_site_column = column_labels.index("Active site")
+    remote_site_column = column_labels.index("Remote site")
 
     def __init__(self, controller):
         super(RepresentationsModel, self).__init__()
@@ -59,7 +65,7 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         repre_items = self._controller.get_representation_items(
             self._selected_project_name, self._selected_version_ids
         )
-        self._fill_items(repre_items)
+        self._fill_items(repre_items, self._selected_project_name)
         self.refreshed.emit()
 
     def data(self, index, role=None):
@@ -69,13 +75,23 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         col = index.column()
         if col != 0:
             if role == QtCore.Qt.DecorationRole:
-                return None
+                if col == 3:
+                    role = ACTIVE_SITE_ICON_ROLE
+                elif col == 4:
+                    role = REMOTE_SITE_ICON_ROLE
+                else:
+                    return None
 
             if role == QtCore.Qt.DisplayRole:
                 if col == 1:
                     role = PRODUCT_NAME_ROLE
                 elif col == 2:
                     role = FOLDER_LABEL_ROLE
+                elif col == 3:
+                    role = SYNC_ACTIVE_SITE_PROGRESS
+                elif col == 4:
+                    role = SYNC_REMOTE_SITE_PROGRESS
+
             index = self.index(index.row(), 0, index.parent())
         return super(RepresentationsModel, self).data(index, role)
 
@@ -89,7 +105,13 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         root_item = self.invisibleRootItem()
         root_item.removeRows(0, root_item.rowCount())
 
-    def _get_repre_item(self, repre_item):
+    def _get_repre_item(
+        self,
+        repre_item,
+        active_site_icon,
+        remote_site_icon,
+        repres_sync_status
+    ):
         repre_id = repre_item.representation_id
         repre_name = repre_item.representation_name
         repre_icon = repre_item.representation_icon
@@ -102,6 +124,12 @@ class RepresentationsModel(QtGui.QStandardItemModel):
             item.setColumnCount(self.columnCount())
             item.setEditable(False)
 
+        sync_status = repres_sync_status[repre_id]
+        active_progress, remote_progress = sync_status
+
+        active_site_progress = "{}%".format(int(active_progress * 100))
+        remote_site_progress = "{}%".format(int(remote_progress * 100))
+
         icon = get_qt_icon(repre_icon)
         item.setData(repre_name, QtCore.Qt.DisplayRole)
         item.setData(icon, QtCore.Qt.DecorationRole)
@@ -109,6 +137,10 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         item.setData(repre_id, REPRESENTATION_ID_ROLE)
         item.setData(repre_item.product_name, PRODUCT_NAME_ROLE)
         item.setData(repre_item.folder_label, FOLDER_LABEL_ROLE)
+        item.setData(active_site_icon, ACTIVE_SITE_ICON_ROLE)
+        item.setData(remote_site_icon, REMOTE_SITE_ICON_ROLE)
+        item.setData(active_site_progress, SYNC_ACTIVE_SITE_PROGRESS)
+        item.setData(remote_site_progress, SYNC_REMOTE_SITE_PROGRESS)
         return is_new_item, item
 
     def _get_group_icon(self):
@@ -134,13 +166,28 @@ class RepresentationsModel(QtGui.QStandardItemModel):
         self._groups_items_by_name[repre_name] = item
         return True, item
 
-    def _fill_items(self, repre_items):
+    def _fill_items(self, repre_items, project_name):
+        active_site_icon_def = self._controller.get_active_site_icon_def(
+            project_name
+        )
+        remote_site_icon_def = self._controller.get_remote_site_icon_def(
+            project_name
+        )
+        active_site_icon = get_qt_icon(active_site_icon_def)
+        remote_site_icon = get_qt_icon(remote_site_icon_def)
+
         items_to_remove = set(self._items_by_id.keys())
         repre_items_by_name = collections.defaultdict(list)
+        repre_ids = set()
         for repre_item in repre_items:
+            repre_ids.add(repre_item.representation_id)
             items_to_remove.discard(repre_item.representation_id)
             repre_name = repre_item.representation_name
             repre_items_by_name[repre_name].append(repre_item)
+
+        repres_sync_status = self._controller.get_representations_sync_status(
+            project_name, repre_ids
+        )
 
         root_item = self.invisibleRootItem()
         for repre_id in items_to_remove:
@@ -164,7 +211,12 @@ class RepresentationsModel(QtGui.QStandardItemModel):
 
             new_group_items = []
             for repre_item in repre_name_items:
-                is_new_item, item = self._get_repre_item(repre_item)
+                is_new_item, item = self._get_repre_item(
+                    repre_item,
+                    active_site_icon,
+                    remote_site_icon,
+                    repres_sync_status
+                )
                 item_parent = item.parent()
                 if item_parent is None:
                     item_parent = root_item
@@ -255,6 +307,9 @@ class RepresentationsWidget(QtWidgets.QWidget):
         self._repre_model = repre_model
         self._repre_proxy_model = repre_proxy_model
 
+        self._set_site_sync_visibility(
+            self._controller.is_site_sync_enabled()
+        )
         self._set_multiple_folders_selected(False)
 
     def refresh(self):
@@ -265,6 +320,20 @@ class RepresentationsWidget(QtWidgets.QWidget):
 
     def _on_project_change(self, event):
         self._selected_project_name = event["project_name"]
+        site_sync_enabled = self._controller.is_site_sync_enabled(
+            self._selected_project_name
+        )
+        self._set_site_sync_visibility(site_sync_enabled)
+
+    def _set_site_sync_visibility(self, site_sync_enabled):
+        self._repre_view.setColumnHidden(
+            self._repre_model.active_site_column,
+            not site_sync_enabled
+        )
+        self._repre_view.setColumnHidden(
+            self._repre_model.remote_site_column,
+            not site_sync_enabled
+        )
 
     def _set_multiple_folders_selected(self, selected_multiple_folders):
         if selected_multiple_folders == self._selected_multiple_folders:
