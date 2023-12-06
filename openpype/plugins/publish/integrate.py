@@ -137,7 +137,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "mvUsd",
                 "mvUsdComposition",
                 "mvUsdOverride",
-                "simpleUnrealTexture",
                 "online",
                 "uasset",
                 "blendScene",
