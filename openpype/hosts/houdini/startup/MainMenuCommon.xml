@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mainMenu>
     <menuBar>
-        <subMenu id="ayon_menu">
+        <subMenu id="openpype_menu">
             <labelExpression><![CDATA[
 import os
 return os.environ.get("AVALON_LABEL") or "AYON"

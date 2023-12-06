@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""AYON startup script."""
+"""OpenPype startup script."""
 from openpype.pipeline import install_host
 from openpype.hosts.houdini.api import HoudiniHost
-import os
+from openpype import AYON_SERVER_ENABLED
 
 
 def main():
     print("Installing {} ...".format(
-        os.environ.get("AVALON_LABEL") or "AYON"))
+        "AYON" if AYON_SERVER_ENABLED else "OpenPype"))
     install_host(HoudiniHost())
 
 
