@@ -346,7 +346,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         # create output file path
         base_name = os.path.basename(video_file_path)
         filename = os.path.splitext(base_name)[0]
-        output_thumb_file_path = os.path.join(output_dir, "{}.png".format(filename))
+        output_thumb_file_path = os.path.join(
+            output_dir, "{}.png".format(filename))
 
         # Set video input attributes
         max_int = str(2147483647)
@@ -374,7 +375,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             # run subprocess
             self.log.debug("Executing: {}".format(" ".join(cmd)))
             run_subprocess(cmd, logger=self.log)
-            self.log.debug("Thumbnail created: {}".format(output_thumb_file_path))
+            self.log.debug(
+                "Thumbnail created: {}".format(output_thumb_file_path))
             return output_thumb_file_path
         except RuntimeError as error:
             self.log.warning(

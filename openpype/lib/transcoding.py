@@ -1241,7 +1241,7 @@ def get_rescaled_command_arguments(
         input_par = (
             float(stream_input_par.split(":")[0])
             / float(stream_input_par.split(":")[1])
-    )
+        )
     # recalculating input and target width
     input_width = int(input_width * input_par)
     target_width = int(target_width * target_par)
