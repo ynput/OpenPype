@@ -7,7 +7,7 @@ from openpype import AYON_SERVER_ENABLED
 
 def main():
     print("Installing {} ...".format(
-       "AYON" if AYON_SERVER_ENABLED else "OpenPype"))
+        "AYON" if AYON_SERVER_ENABLED else "OpenPype"))
     install_host(HoudiniHost())
 
 
