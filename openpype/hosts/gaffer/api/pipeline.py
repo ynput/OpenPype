@@ -190,20 +190,46 @@ def imprint_container(node,
     imprint(node, data)
 
 
-def imprint(node, data, section="OpenPype"):
+def imprint(node: Gaffer.Node,
+            data: dict,
+            section: str = "OpenPype"):
+    """Store and persist data on a node as `user` data.
+
+    Args:
+        node (Gaffer.Node): The node to store the data on.
+            This can also be the workfile's root script node.
+        data (dict): The key, values to store.
+            Any `dict` values will be treated as JSON data and stored as
+            string with `JSON:::` as a prefix to the value.
+        section (str): Used to register the plug into a subsection in
+            the user data allowing them to group data together.
+
+    Returns:
+
+    """
 
     FLAGS = Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic
 
     for key, value in data:
-        if key in node["user"]:
-            # Set existing attriute
-            node["user"][key].setValue(value)
-            continue
-
         # Dict to JSON
         if isinstance(value, dict):
             value = json.dumps(value)
             value = f"{JSON_PREFIX}{value}"
+
+        if key in node["user"]:
+            # Set existing attribute
+            try:
+                node["user"][key].setValue(value)
+                continue
+            except Exception:
+                # If an exception occurs then we'll just replace the key
+                # with a new plug (likely types have changed)
+                log.warning("Unable to set %s attribute %s to value %s (%s). "
+                            "Likely there is a value type mismatch. "
+                            "Plug will be replaced.",
+                            node.getName(), key, value, type(value),
+                            exc_info=sys.exc_info())
+                pass
 
         # Generate new plug with value as default value
         if isinstance(value, str):
@@ -222,4 +248,4 @@ def imprint(node, data, section="OpenPype"):
         if section:
             Gaffer.Metadata.registerValue(plug, "layout:section", section)
 
-        node["user"].addChild(plug)
+        node["user"][key] = plug
