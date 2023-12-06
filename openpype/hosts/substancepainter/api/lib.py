@@ -583,21 +583,7 @@ def prompt_new_file_with_mesh(mesh_filepath):
         file_dialog.setDirectory(os.path.dirname(mesh_filepath))
         url = QtCore.QUrl.fromLocalFile(os.path.basename(mesh_filepath))
         file_dialog.selectUrl(url)
-
-        # Give the explorer window time to refresh to the folder and select
-        # the file
-        while not file_dialog.selectedFiles():
-            app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents, 1000)
-            continue
-        print(f"Selected: {file_dialog.selectedFiles()}")
-
-        # Set it again now we know the path is refreshed - without this
-        # accepting the dialog will often not trigger the correct filepath
-        file_dialog.setDirectory(os.path.dirname(mesh_filepath))
-        url = QtCore.QUrl.fromLocalFile(os.path.basename(mesh_filepath))
-        file_dialog.selectUrl(url)
-
-        file_dialog.done(file_dialog.Accepted)
+        file_dialog.close()
         app.processEvents(QtCore.QEventLoop.AllEvents)
 
     def _setup_prompt():
@@ -630,6 +616,8 @@ def prompt_new_file_with_mesh(mesh_filepath):
         if not mesh_filename_label.text():
             dialog.close()
             raise RuntimeError(f"Failed to set mesh path: {mesh_filepath}")
+        else:
+            dialog.done(dialog.Accepted)
 
     new_action = _get_new_project_action()
     if not new_action:
