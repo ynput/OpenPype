@@ -43,6 +43,8 @@ def get_root():
 class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     name = "gaffer"
 
+    _context_plug = "openpype_context"
+
     def __init__(self):
         super(GafferHost, self).__init__()
         self._has_been_setup = False
@@ -134,15 +136,23 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
             yield container
 
-    @staticmethod
-    def create_context_node():
-        pass
-
     def update_context_data(self, data, changes):
-        pass
+        """Store context data as single JSON blob in script's user data"""
+        script = get_root()
+        data_str = json.dumps(data)
+
+        # Always override the full plug - even if it already exists
+        script["user"][self._context_plug] = Gaffer.StringPlug(
+            defaultValue=data_str,
+            flags=Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic
+        )
 
     def get_context_data(self):
-        pass
+        script = get_root()
+        if "user" in script and self._context_plug in script["user"]:
+            data_str = script["user"][self._context_plug].getValue()
+            return json.loads(data_str)
+        return {}
 
 
 def imprint_container(node,
