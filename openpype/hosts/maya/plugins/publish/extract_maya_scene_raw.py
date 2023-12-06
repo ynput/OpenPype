@@ -31,6 +31,12 @@ class ExtractMayaSceneRaw(publish.Extractor, OpenPypePyblishPluginMixin):
             BoolDef(
                 "preserve_references",
                 label="Preserve References",
+                tooltip=(
+                    "When enabled references will still be references "
+                    "in the published file.\nWhen disabled the references "
+                    "are imported into the published file generating a "
+                    "file without references."
+                ),
                 default=True
             )
         ]
