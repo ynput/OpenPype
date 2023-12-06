@@ -1261,10 +1261,12 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
                 output_def["height"] = output_def.pop("output_height")
 
         profile["outputs"] = new_outputs
+
     # ExtractThumbnail plugin
     ayon_extract_thumbnail = ayon_publish["ExtractThumbnail"]
     # fix display and view at oiio defaults
-    ayon_default_oiio = copy.deepcopy(ayon_extract_thumbnail["oiiotool_defaults"])
+    ayon_default_oiio = copy.deepcopy(
+        ayon_extract_thumbnail["oiiotool_defaults"])
     display_and_view = ayon_default_oiio.pop("display_and_view")
     ayon_default_oiio["display"] = display_and_view["display"]
     ayon_default_oiio["view"] = display_and_view["view"]

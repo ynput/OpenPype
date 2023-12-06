@@ -111,6 +111,7 @@ class ResizeItemModel(BaseSettingsModel):
         le=100000,
     )
 
+
 _resize_types_enum = [
     {"value": "source", "label": "Image source"},
     {"value": "resize", "label": "Resize"},
@@ -133,10 +134,12 @@ class ResizeModel(BaseSettingsModel):
         title="Resize"
     )
 
+
 _thumbnail_oiio_transcoding_type = [
-        {"value": "colorspace", "label": "Use Colorspace"},
-        {"value": "display_and_view", "label": "Use Display&View"}
-    ]
+    {"value": "colorspace", "label": "Use Colorspace"},
+    {"value": "display_and_view", "label": "Use Display&View"}
+]
+
 
 class DisplayAndViewModel(BaseSettingsModel):
     _layout = "expanded"
@@ -148,6 +151,7 @@ class DisplayAndViewModel(BaseSettingsModel):
         "sRGB",
         title="View"
     )
+
 
 class ExtractThumbnailOIIODefaultsModel(BaseSettingsModel):
     type: str = Field(
@@ -166,7 +170,6 @@ class ExtractThumbnailOIIODefaultsModel(BaseSettingsModel):
         default_factory=DisplayAndViewModel,
         title="Display&View"
     )
-
 
 
 class ExtractThumbnailModel(BaseSettingsModel):
@@ -843,8 +846,8 @@ DEFAULT_PUBLISH_VALUES = {
         },
         "duration_split": 0.5,
         "oiiotool_defaults": {
-                "type": "colorspace",
-                "colorspace": "color_picking"
+            "type": "colorspace",
+            "colorspace": "color_picking"
         },
         "ffmpeg_args": {
             "input": [
