@@ -15,7 +15,12 @@ from openpype.tools.ayon_utils.models import (
 )
 
 from .abstract import BackendLoaderController, FrontendLoaderController
-from .models import SelectionModel, ProductsModel, LoaderActionsModel
+from .models import (
+    SelectionModel,
+    ProductsModel,
+    LoaderActionsModel,
+    SiteSyncModel
+)
 
 
 class ExpectedSelection:
@@ -108,6 +113,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         self._products_model = ProductsModel(self)
         self._loader_actions_model = LoaderActionsModel(self)
         self._thumbnails_model = ThumbnailsModel()
+        self._site_sync_model = SiteSyncModel(self)
 
     @property
     def log(self):
@@ -143,6 +149,7 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         self._loader_actions_model.reset()
         self._projects_model.reset()
         self._thumbnails_model.reset()
+        self._site_sync_model.reset()
 
         self._projects_model.refresh()
 
@@ -195,13 +202,22 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
             project_name, version_ids, sender
         )
 
+    def get_versions_representation_count(
+        self, project_name, version_ids, sender=None
+    ):
+        return self._products_model.get_versions_repre_count(
+            project_name, version_ids, sender
+        )
+
     def get_folder_thumbnail_ids(self, project_name, folder_ids):
         return self._thumbnails_model.get_folder_thumbnail_ids(
-            project_name, folder_ids)
+            project_name, folder_ids
+        )
 
     def get_version_thumbnail_ids(self, project_name, version_ids):
         return self._thumbnails_model.get_version_thumbnail_ids(
-            project_name, version_ids)
+            project_name, version_ids
+        )
 
     def get_thumbnail_path(self, project_name, thumbnail_id):
         return self._thumbnails_model.get_thumbnail_path(
@@ -219,8 +235,16 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
 
     def get_representations_action_items(
             self, project_name, representation_ids):
-        return self._loader_actions_model.get_representations_action_items(
+        action_items = (
+            self._loader_actions_model.get_representations_action_items(
+                project_name, representation_ids)
+        )
+
+        action_items.extend(self._site_sync_model.get_site_sync_action_items(
             project_name, representation_ids)
+        )
+
+        return action_items
 
     def trigger_action_item(
         self,
@@ -230,6 +254,14 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
         version_ids,
         representation_ids
     ):
+        if self._site_sync_model.is_site_sync_action(identifier):
+            self._site_sync_model.trigger_action_item(
+                identifier,
+                project_name,
+                representation_ids
+            )
+            return
+
         self._loader_actions_model.trigger_action_item(
             identifier,
             options,
@@ -335,6 +367,27 @@ class LoaderController(BackendLoaderController, FrontendLoaderController):
             )
             self._loaded_products_cache.update_data(product_ids)
         return self._loaded_products_cache.get_data()
+
+    def is_site_sync_enabled(self, project_name=None):
+        return self._site_sync_model.is_site_sync_enabled(project_name)
+
+    def get_active_site_icon_def(self, project_name):
+        return self._site_sync_model.get_active_site_icon_def(project_name)
+
+    def get_remote_site_icon_def(self, project_name):
+        return self._site_sync_model.get_remote_site_icon_def(project_name)
+
+    def get_version_sync_availability(self, project_name, version_ids):
+        return self._site_sync_model.get_version_sync_availability(
+            project_name, version_ids
+        )
+
+    def get_representations_sync_status(
+        self, project_name, representation_ids
+    ):
+        return self._site_sync_model.get_representations_sync_status(
+            project_name, representation_ids
+        )
 
     def is_loaded_products_supported(self):
         return self._host is not None

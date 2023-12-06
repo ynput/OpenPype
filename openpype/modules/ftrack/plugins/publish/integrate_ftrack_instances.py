@@ -230,6 +230,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         # Create review components
         # Change asset name of each new component for review
         multiple_reviewable = len(review_representations) > 1
+        extended_asset_name = None
         for index, repre in enumerate(review_representations):
             if not self._is_repre_video(repre) and has_movie_review:
                 self.log.debug("Movie repre has priority "

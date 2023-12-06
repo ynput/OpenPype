@@ -236,6 +236,7 @@ createNode polyDisc -n "polyDisc1";
 	rename -uid "9ED8A7BD-4FFD-6107-4322-35ACD1D3AC42";
 createNode aiOptions -s -n "defaultArnoldRenderOptions";
 	rename -uid "31A81965-48A6-B90D-503D-2FA162B7C982";
+	setAttr ".skip_license_check" yes;
 createNode aiAOVFilter -s -n "defaultArnoldFilter";
 	rename -uid "77A2BCB1-4613-905E-080E-B997FD5E1C6F";
 	setAttr ".ai_translator" -type "string" "gaussian";
