@@ -322,22 +322,9 @@
                 "animation",
                 "setdress",
                 "layout",
-                "mayaScene",
-                "simpleUnrealTexture"
+                "mayaScene"
             ],
-            "template_name_profiles": [
-                {
-                    "families": [
-                        "simpleUnrealTexture"
-                    ],
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "task_types": [],
-                    "task_names": [],
-                    "template_name": "simpleUnrealTextureHero"
-                }
-            ]
+            "template_name_profiles": []
         },
         "CleanUp": {
             "paterns": [],
@@ -521,17 +508,6 @@
                 },
                 {
                     "families": [
-                        "simpleUnrealTexture"
-                    ],
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "task_types": [],
-                    "task_names": [],
-                    "template_name": "simpleUnrealTexture"
-                },
-                {
-                    "families": [
                         "staticMesh",
                         "skeletalMesh"
                     ],
@@ -565,19 +541,7 @@
                     "template_name": "tycache"
                 }
             ],
-            "hero_template_name_profiles": [
-                {
-                    "families": [
-                        "simpleUnrealTexture"
-                    ],
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "task_types": [],
-                    "task_names": [],
-                    "template_name": "simpleUnrealTextureHero"
-                }
-            ],
+            "hero_template_name_profiles": [],
             "custom_staging_dir_profiles": []
         }
     },
