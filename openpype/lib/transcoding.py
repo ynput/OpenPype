@@ -1262,7 +1262,7 @@ def get_rescaled_command_arguments(
     stream = input_file_metadata["streams"][0]
     input_width = int(stream["width"])
     input_height = int(stream["height"])
-    stream_input_par = stream[0].get("sample_aspect_ratio")
+    stream_input_par = stream.get("sample_aspect_ratio")
     if stream_input_par:
         input_par = (
             float(stream_input_par.split(":")[0])
