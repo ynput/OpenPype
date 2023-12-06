@@ -30,10 +30,6 @@ class CreateSaver(NewCreator):
     instance_attributes = [
         "reviewable"
     ]
-    default_variants = [
-        "Main",
-        "Mask"
-    ]
 
     # TODO: This should be renamed together with Nuke so it is aligned
     temp_rendering_path_template = (
@@ -73,8 +69,6 @@ class CreateSaver(NewCreator):
             # TODO Is this needed?
             saver[file_format]["SaveAlpha"] = 1
 
-        self._imprint(saver, instance_data)
-
         # Register the CreatedInstance
         instance = CreatedInstance(
             family=self.family,
@@ -82,6 +76,8 @@ class CreateSaver(NewCreator):
             data=instance_data,
             creator=self,
         )
+        data = instance.data_to_store()
+        self._imprint(saver, data)
 
         # Insert the transient data
         instance.transient_data["tool"] = saver
@@ -127,6 +123,9 @@ class CreateSaver(NewCreator):
     def _imprint(self, tool, data):
         # Save all data in a "openpype.{key}" = value data
 
+        # Instance id is the tool's name so we don't need to imprint as data
+        data.pop("instance_id", None)
+
         active = data.pop("active", None)
         if active is not None:
             # Use active value to set the passthrough state
@@ -150,9 +149,7 @@ class CreateSaver(NewCreator):
 
         # get frame padding from anatomy templates
         anatomy = Anatomy()
-        frame_padding = int(
-            anatomy.templates["render"].get("frame_padding", 4)
-        )
+        frame_padding = anatomy.templates["frame_padding"]
 
         # Subset change detected
         workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
@@ -166,7 +163,8 @@ class CreateSaver(NewCreator):
         filepath = self.temp_rendering_path_template.format(
             **formatting_data)
 
-        tool["Clip"] = os.path.normpath(filepath)
+        comp = get_current_comp()
+        tool["Clip"] = comp.ReverseMapPath(os.path.normpath(filepath))
 
         # Rename tool
         if tool.Name != subset:
@@ -191,6 +189,10 @@ class CreateSaver(NewCreator):
         attrs = tool.GetAttrs()
         passthrough = attrs["TOOLB_PassThrough"]
         data["active"] = not passthrough
+
+        # Override publisher's UUID generation because tool names are
+        # already unique in Fusion in a comp
+        data["instance_id"] = tool.Name
 
         return data
 
@@ -250,11 +252,7 @@ class CreateSaver(NewCreator):
             label="Review",
         )
 
-    def apply_settings(
-        self,
-        project_settings,
-        system_settings
-    ):
+    def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings

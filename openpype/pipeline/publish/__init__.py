@@ -40,6 +40,7 @@ from .lib import (
     apply_plugin_settings_automatically,
     get_plugin_settings,
     get_publish_instance_label,
+    get_publish_instance_families,
 )
 
 from .abstract_expected_files import ExpectedFiles
@@ -87,6 +88,7 @@ __all__ = (
     "apply_plugin_settings_automatically",
     "get_plugin_settings",
     "get_publish_instance_label",
+    "get_publish_instance_families",
 
     "ExpectedFiles",
 

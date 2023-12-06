@@ -280,13 +280,14 @@ class BatchPublishEndpoint(WebpublishApiEndpoint):
 
         for key, value in add_args.items():
             # Skip key values where value is None
-            if value is not None:
-                args.append("--{}".format(key))
-                # Extend list into arguments (targets can be a list)
-                if isinstance(value, (tuple, list)):
-                    args.extend(value)
-                else:
-                    args.append(value)
+            if value is None:
+                continue
+            arg_key = "--{}".format(key)
+            if not isinstance(value, (tuple, list)):
+                value = [value]
+
+            for item in value:
+                args += [arg_key, item]
 
         log.info("args:: {}".format(args))
         if add_to_queue:

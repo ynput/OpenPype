@@ -15,6 +15,11 @@ def pytest_addoption(parser):
     )
 
     parser.addoption(
+        "--app_group", action="store", default=None,
+        help="Keep empty to use default application or explicit"
+    )
+
+    parser.addoption(
         "--app_variant", action="store", default=None,
         help="Keep empty to locate latest installed variant or explicit"
     )
@@ -29,6 +34,11 @@ def pytest_addoption(parser):
         help="True - only setup test, do not run any tests"
     )
 
+    parser.addoption(
+        "--mongo_url", action="store", default=None,
+        help="Provide url of the Mongo database."
+    )
+
 
 @pytest.fixture(scope="module")
 def test_data_folder(request):
@@ -38,6 +48,11 @@ def test_data_folder(request):
 @pytest.fixture(scope="module")
 def persist(request):
     return request.config.getoption("--persist")
+
+
+@pytest.fixture(scope="module")
+def app_group(request):
+    return request.config.getoption("--app_group")
 
 
 @pytest.fixture(scope="module")
@@ -55,6 +70,11 @@ def setup_only(request):
     return request.config.getoption("--setup_only")
 
 
+@pytest.fixture(scope="module")
+def mongo_url(request):
+    return request.config.getoption("--mongo_url")
+
+
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     # execute all other hooks to obtain the report object
@@ -65,3 +85,11 @@ def pytest_runtest_makereport(item, call):
     # be "setup", "call", "teardown"
 
     setattr(item, "rep_" + rep.when, rep)
+
+    # In the event of module scoped fixtures, also mark failure in module.
+    module = item
+    while module is not None and not isinstance(module, pytest.Module):
+        module = module.parent
+    if module is not None:
+        if rep.when == 'call' and (rep.failed or rep.skipped):
+            module.module_test_failure = True

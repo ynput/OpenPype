@@ -7,6 +7,8 @@ from openpype.pipeline.plugin_discover import (
     deregister_plugin_path
 )
 
+from .load.utils import get_representation_path_from_context
+
 
 class LauncherAction(object):
     """A custom action available"""
@@ -20,7 +22,13 @@ class LauncherAction(object):
     log.propagate = True
 
     def is_compatible(self, session):
-        """Return whether the class is compatible with the Session."""
+        """Return whether the class is compatible with the Session.
+
+        Args:
+            session (dict[str, Union[str, None]]): Session data with
+                AVALON_PROJECT, AVALON_ASSET and AVALON_TASK.
+        """
+
         return True
 
     def process(self, session, **kwargs):
@@ -93,6 +101,10 @@ class InventoryAction(object):
 
         """
         return True
+
+    @classmethod
+    def filepath_from_context(cls, context):
+        return get_representation_path_from_context(context)
 
 
 # Launcher action

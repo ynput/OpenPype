@@ -16,7 +16,9 @@ class ExtractVDBCache(publish.Extractor):
     hosts = ["houdini"]
 
     def process(self, instance):
-
+        if instance.data.get("farm"):
+            self.log.debug("Should be processed on farm, skipping.")
+            return
         ropnode = hou.node(instance.data["instance_node"])
 
         # Get the filename from the filename parameter
@@ -40,7 +42,7 @@ class ExtractVDBCache(publish.Extractor):
             "ext": "vdb",
             "files": output,
             "stagingDir": staging_dir,
-            "frameStart": instance.data["frameStart"],
-            "frameEnd": instance.data["frameEnd"],
+            "frameStart": instance.data["frameStartHandle"],
+            "frameEnd": instance.data["frameEndHandle"],
         }
         instance.data["representations"].append(representation)

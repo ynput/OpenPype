@@ -170,7 +170,8 @@ class SubstanceHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         parent = substance_painter.ui.get_main_window()
 
-        menu = QtWidgets.QMenu("OpenPype")
+        tab_menu_label = os.environ.get("AVALON_LABEL") or "AYON"
+        menu = QtWidgets.QMenu(tab_menu_label)
 
         action = menu.addAction("Create...")
         action.triggered.connect(

@@ -124,6 +124,24 @@ class LimitGroupsSubmodel(BaseSettingsModel):
     )
 
 
+def fusion_deadline_plugin_enum():
+    """Return a list of value/label dicts for the enumerator.
+
+    Returning a list of dicts is used to allow for a custom label to be
+    displayed in the UI.
+    """
+    return [
+        {
+            "value": "Fusion",
+            "label": "Fusion"
+        },
+        {
+            "value": "FusionCmd",
+            "label": "FusionCmd"
+        }
+    ]
+
+
 class FusionSubmitDeadlineModel(BaseSettingsModel):
     enabled: bool = Field(True, title="Enabled")
     optional: bool = Field(False, title="Optional")
@@ -132,6 +150,9 @@ class FusionSubmitDeadlineModel(BaseSettingsModel):
     chunk_size: int = Field(10, title="Frame per Task")
     concurrent_tasks: int = Field(1, title="Number of concurrent tasks")
     group: str = Field("", title="Group Name")
+    plugin: str = Field("Fusion",
+                        enum_resolver=fusion_deadline_plugin_enum,
+                        title="Deadline Plugin")
 
 
 class NukeSubmitDeadlineModel(BaseSettingsModel):
@@ -208,6 +229,17 @@ class CelactionSubmitDeadlineModel(BaseSettingsModel):
     )
 
 
+class BlenderSubmitDeadlineModel(BaseSettingsModel):
+    enabled: bool = Field(True)
+    optional: bool = Field(title="Optional")
+    active: bool = Field(title="Active")
+    use_published: bool = Field(title="Use Published scene")
+    priority: int = Field(title="Priority")
+    chunk_size: int = Field(title="Frame per Task")
+    group: str = Field("", title="Group Name")
+    job_delay: str = Field("", title="Delay job (timecode dd:hh:mm:ss)")
+
+
 class AOVFilterSubmodel(BaseSettingsModel):
     _layout = "expanded"
     name: str = Field(title="Host")
@@ -215,6 +247,17 @@ class AOVFilterSubmodel(BaseSettingsModel):
         default_factory=list,
         title="AOV regex"
     )
+
+
+class ProcessCacheJobFarmModel(BaseSettingsModel):
+    """Process submitted job on farm."""
+
+    enabled: bool = Field(title="Enabled")
+    deadline_department: str = Field(title="Department")
+    deadline_pool: str = Field(title="Pool")
+    deadline_group: str = Field(title="Group")
+    deadline_chunk_size: int = Field(title="Chunk Size")
+    deadline_priority: int = Field(title="Priority")
 
 
 class ProcessSubmittedJobOnFarmModel(BaseSettingsModel):
@@ -236,7 +279,7 @@ class ProcessSubmittedJobOnFarmModel(BaseSettingsModel):
         title="Reviewable products filter",
     )
 
-    @validator("aov_filter", "skip_integration_repre_list")
+    @validator("aov_filter")
     def validate_unique_names(cls, value):
         ensure_unique_names(value)
         return value
@@ -276,8 +319,13 @@ class PublishPluginsModel(BaseSettingsModel):
         title="After Effects to deadline")
     CelactionSubmitDeadline: CelactionSubmitDeadlineModel = Field(
         default_factory=CelactionSubmitDeadlineModel,
-        title="Celaction Submit Deadline"
-    )
+        title="Celaction Submit Deadline")
+    BlenderSubmitDeadline: BlenderSubmitDeadlineModel = Field(
+        default_factory=BlenderSubmitDeadlineModel,
+        title="Blender Submit Deadline")
+    ProcessSubmittedCacheJobOnFarm: ProcessCacheJobFarmModel = Field(
+        default_factory=ProcessCacheJobFarmModel,
+        title="Process submitted cache Job on farm.")
     ProcessSubmittedJobOnFarm: ProcessSubmittedJobOnFarmModel = Field(
         default_factory=ProcessSubmittedJobOnFarmModel,
         title="Process submitted job on farm.")
@@ -384,6 +432,24 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "deadline_chunk_size": 10,
         "deadline_job_delay": "00:00:00:00"
     },
+    "BlenderSubmitDeadline": {
+        "enabled": True,
+        "optional": False,
+        "active": True,
+        "use_published": True,
+        "priority": 50,
+        "chunk_size": 10,
+        "group": "none",
+        "job_delay": "00:00:00:00"
+    },
+    "ProcessSubmittedCacheJobOnFarm": {
+        "enabled": True,
+        "deadline_department": "",
+        "deadline_pool": "",
+        "deadline_group": "",
+        "deadline_chunk_size": 1,
+        "deadline_priority": 50
+    },
     "ProcessSubmittedJobOnFarm": {
         "enabled": True,
         "deadline_department": "",
@@ -396,6 +462,12 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "aov_filter": [
             {
                 "name": "maya",
+                "value": [
+                    ".*([Bb]eauty).*"
+                ]
+            },
+            {
+                "name": "blender",
                 "value": [
                     ".*([Bb]eauty).*"
                 ]

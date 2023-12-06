@@ -12,10 +12,12 @@ from abc import ABCMeta, abstractmethod
 import six
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_assets,
     get_asset_by_id,
     get_subsets,
+    get_asset_name_identifier,
 )
 from openpype.lib.events import EventSystem
 from openpype.lib.attribute_definitions import (
@@ -73,6 +75,8 @@ class AssetDocsCache:
         "data.visualParent": True,
         "data.tasks": True
     }
+    if AYON_SERVER_ENABLED:
+        projection["data.parents"] = True
 
     def __init__(self, controller):
         self._controller = controller
@@ -105,7 +109,7 @@ class AssetDocsCache:
             elif "tasks" not in asset_doc["data"]:
                 asset_doc["data"]["tasks"] = {}
 
-            asset_name = asset_doc["name"]
+            asset_name = get_asset_name_identifier(asset_doc)
             asset_tasks = asset_doc["data"]["tasks"]
             task_names_by_asset_name[asset_name] = list(asset_tasks.keys())
             asset_docs_by_name[asset_name] = asset_doc
@@ -176,11 +180,10 @@ class PublishReportMaker:
         self._create_discover_result = None
         self._convert_discover_result = None
         self._publish_discover_result = None
-        self._plugin_data = []
-        self._plugin_data_with_plugin = []
 
-        self._stored_plugins = []
-        self._current_plugin_data = []
+        self._plugin_data_by_id = {}
+        self._current_plugin = None
+        self._current_plugin_data = {}
         self._all_instances_by_id = {}
         self._current_context = None
 
@@ -192,8 +195,9 @@ class PublishReportMaker:
             create_context.convertor_discover_result
         )
         self._publish_discover_result = create_context.publish_discover_result
-        self._plugin_data = []
-        self._plugin_data_with_plugin = []
+
+        self._plugin_data_by_id = {}
+        self._current_plugin = None
         self._current_plugin_data = {}
         self._all_instances_by_id = {}
         self._current_context = context
@@ -210,18 +214,11 @@ class PublishReportMaker:
         if self._current_plugin_data:
             self._current_plugin_data["passed"] = True
 
+        self._current_plugin = plugin
         self._current_plugin_data = self._add_plugin_data_item(plugin)
 
-    def _get_plugin_data_item(self, plugin):
-        store_item = None
-        for item in self._plugin_data_with_plugin:
-            if item["plugin"] is plugin:
-                store_item = item["data"]
-                break
-        return store_item
-
     def _add_plugin_data_item(self, plugin):
-        if plugin in self._stored_plugins:
+        if plugin.id in self._plugin_data_by_id:
             # A plugin would be processed more than once. What can cause it:
             #   - there is a bug in controller
             #   - plugin class is imported into multiple files
@@ -229,15 +226,9 @@ class PublishReportMaker:
             raise ValueError(
                 "Plugin '{}' is already stored".format(str(plugin)))
 
-        self._stored_plugins.append(plugin)
-
         plugin_data_item = self._create_plugin_data_item(plugin)
+        self._plugin_data_by_id[plugin.id] = plugin_data_item
 
-        self._plugin_data_with_plugin.append({
-            "plugin": plugin,
-            "data": plugin_data_item
-        })
-        self._plugin_data.append(plugin_data_item)
         return plugin_data_item
 
     def _create_plugin_data_item(self, plugin):
@@ -278,7 +269,7 @@ class PublishReportMaker:
         """Add result of single action."""
         plugin = result["plugin"]
 
-        store_item = self._get_plugin_data_item(plugin)
+        store_item = self._plugin_data_by_id.get(plugin.id)
         if store_item is None:
             store_item = self._add_plugin_data_item(plugin)
 
@@ -300,14 +291,24 @@ class PublishReportMaker:
                 instance, instance in self._current_context
             )
 
-        plugins_data = copy.deepcopy(self._plugin_data)
-        if plugins_data and not plugins_data[-1]["passed"]:
-            plugins_data[-1]["passed"] = True
+        plugins_data_by_id = copy.deepcopy(
+            self._plugin_data_by_id
+        )
+
+        # Ensure the current plug-in is marked as `passed` in the result
+        # so that it shows on reports for paused publishes
+        if self._current_plugin is not None:
+            current_plugin_data = plugins_data_by_id.get(
+                self._current_plugin.id
+            )
+            if current_plugin_data and not current_plugin_data["passed"]:
+                current_plugin_data["passed"] = True
 
         if publish_plugins:
             for plugin in publish_plugins:
-                if plugin not in self._stored_plugins:
-                    plugins_data.append(self._create_plugin_data_item(plugin))
+                if plugin.id not in plugins_data_by_id:
+                    plugins_data_by_id[plugin.id] = \
+                        self._create_plugin_data_item(plugin)
 
         reports = []
         if self._create_discover_result is not None:
@@ -328,7 +329,7 @@ class PublishReportMaker:
                 )
 
         return {
-            "plugins_data": plugins_data,
+            "plugins_data": list(plugins_data_by_id.values()),
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context),
             "crashed_file_paths": crashed_file_paths,
@@ -1456,7 +1457,7 @@ class BasePublisherController(AbstractPublisherController):
         """
 
         if self._log is None:
-            self._log = logging.getLogget(self.__class__.__name__)
+            self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     @property
@@ -1884,10 +1885,19 @@ class PublisherController(BasePublisherController):
         self._emit_event("plugins.refresh.finished")
 
     def _collect_creator_items(self):
-        return {
-            identifier: CreatorItem.from_creator(creator)
-            for identifier, creator in self._create_context.creators.items()
-        }
+        # TODO add crashed initialization of create plugins to report
+        output = {}
+        for identifier, creator in self._create_context.creators.items():
+            try:
+                output[identifier] = CreatorItem.from_creator(creator)
+            except Exception:
+                self.log.error(
+                    "Failed to create creator item for '%s'",
+                    identifier,
+                    exc_info=True
+                )
+
+        return output
 
     def _reset_instances(self):
         """Reset create instances."""
@@ -2507,7 +2517,7 @@ class PublisherController(BasePublisherController):
                 else:
                     msg = (
                         "Something went wrong. Send report"
-                        " to your supervisor or OpenPype."
+                        " to your supervisor or Ynput team."
                     )
                 self.publish_error_msg = msg
                 self.publish_has_crashed = True

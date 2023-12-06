@@ -8,6 +8,11 @@ from ayon_api import slugify_string
 from ayon_api.entity_hub import EntityHub
 
 from openpype import AYON_SERVER_ENABLED
+from openpype.client import get_assets, get_asset_name_identifier
+from openpype.pipeline.template_data import (
+    get_asset_template_data,
+    get_task_template_data,
+)
 
 
 def _default_json_parse(value):
@@ -27,13 +32,51 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
 
         hierarchy_context = context.data.get("hierarchyContext")
         if not hierarchy_context:
-            self.log.info("Skipping")
+            self.log.debug("Skipping ExtractHierarchyToAYON")
             return
 
         project_name = context.data["projectName"]
+        self._create_hierarchy(context, project_name)
+        self._fill_instance_entities(context, project_name)
+
+    def _fill_instance_entities(self, context, project_name):
+        instances_by_asset_name = collections.defaultdict(list)
+        for instance in context:
+            if instance.data.get("publish") is False:
+                continue
+
+            instance_entity = instance.data.get("assetEntity")
+            if instance_entity:
+                continue
+
+            # Skip if instance asset does not match
+            instance_asset_name = instance.data.get("asset")
+            instances_by_asset_name[instance_asset_name].append(instance)
+
+        project_doc = context.data["projectEntity"]
+        asset_docs = get_assets(
+            project_name, asset_names=instances_by_asset_name.keys()
+        )
+        asset_docs_by_name = {
+            get_asset_name_identifier(asset_doc): asset_doc
+            for asset_doc in asset_docs
+        }
+        for asset_name, instances in instances_by_asset_name.items():
+            asset_doc = asset_docs_by_name[asset_name]
+            asset_data = get_asset_template_data(asset_doc, project_name)
+            for instance in instances:
+                task_name = instance.data.get("task")
+                template_data = get_task_template_data(
+                    project_doc, asset_doc, task_name)
+                template_data.update(copy.deepcopy(asset_data))
+
+                instance.data["anatomyData"].update(template_data)
+                instance.data["assetEntity"] = asset_doc
+
+    def _create_hierarchy(self, context, project_name):
         hierarchy_context = self._filter_hierarchy(context)
         if not hierarchy_context:
-            self.log.info("All folders were filtered out")
+            self.log.debug("All folders were filtered out")
             return
 
         self.log.debug("Hierarchy_context: {}".format(
@@ -148,15 +191,15 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
         """
 
         # filter only the active publishing instances
-        active_folder_names = set()
+        active_folder_paths = set()
         for instance in context:
             if instance.data.get("publish") is not False:
-                active_folder_names.add(instance.data.get("asset"))
+                active_folder_paths.add(instance.data.get("asset"))
 
-        active_folder_names.discard(None)
+        active_folder_paths.discard(None)
 
-        self.log.debug("Active folder names: {}".format(active_folder_names))
-        if not active_folder_names:
+        self.log.debug("Active folder paths: {}".format(active_folder_paths))
+        if not active_folder_paths:
             return None
 
         project_item = None
@@ -187,12 +230,13 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
             if not children_context:
                 continue
 
-            for asset_name, asset_info in children_context.items():
+            for asset, asset_info in children_context.items():
                 if (
-                    asset_name not in active_folder_names
+                    asset not in active_folder_paths
                     and not asset_info.get("childs")
                 ):
                     continue
+                asset_name = asset.split("/")[-1]
                 item_id = uuid.uuid4().hex
                 new_item = copy.deepcopy(asset_info)
                 new_item["name"] = asset_name
@@ -209,7 +253,7 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
                 items_by_id[item_id] = new_item
                 parent_id_by_item_id[item_id] = parent_id
 
-                if asset_name in active_folder_names:
+                if asset in active_folder_paths:
                     valid_ids.add(item_id)
                 hierarchy_queue.append((item_id, new_children_context))
 

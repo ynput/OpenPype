@@ -315,6 +315,92 @@ def parse_oiio_xml_output(xml_string, logger=None):
     return output
 
 
+def get_review_info_by_layer_name(channel_names):
+    """Get channels info grouped by layer name.
+
+    Finds all layers in channel names and returns list of dictionaries with
+    information about channels in layer.
+    Example output (not real world example):
+        [
+            {
+                "name": "Main",
+                "review_channels": {
+                    "R": "Main.red",
+                    "G": "Main.green",
+                    "B": "Main.blue",
+                    "A": None,
+                }
+            },
+            {
+                "name": "Composed",
+                "review_channels": {
+                    "R": "Composed.R",
+                    "G": "Composed.G",
+                    "B": "Composed.B",
+                    "A": "Composed.A",
+                }
+            },
+            ...
+        ]
+
+    Args:
+        channel_names (list[str]): List of channel names.
+
+    Returns:
+        list[dict]: List of channels information.
+    """
+
+    layer_names_order = []
+    rgba_by_layer_name = collections.defaultdict(dict)
+    channels_by_layer_name = collections.defaultdict(dict)
+
+    for channel_name in channel_names:
+        layer_name = ""
+        last_part = channel_name
+        if "." in channel_name:
+            layer_name, last_part = channel_name.rsplit(".", 1)
+
+        channels_by_layer_name[layer_name][channel_name] = last_part
+        if last_part.lower() not in {
+            "r", "red",
+            "g", "green",
+            "b", "blue",
+            "a", "alpha"
+        }:
+            continue
+
+        if layer_name not in layer_names_order:
+            layer_names_order.append(layer_name)
+        # R, G, B or A
+        channel = last_part[0].upper()
+        rgba_by_layer_name[layer_name][channel] = channel_name
+
+    # Put empty layer to the beginning of the list
+    # - if input has R, G, B, A channels they should be used for review
+    if "" in layer_names_order:
+        layer_names_order.remove("")
+        layer_names_order.insert(0, "")
+
+    output = []
+    for layer_name in layer_names_order:
+        rgba_layer_info = rgba_by_layer_name[layer_name]
+        red = rgba_layer_info.get("R")
+        green = rgba_layer_info.get("G")
+        blue = rgba_layer_info.get("B")
+        if not red or not green or not blue:
+            continue
+        output.append({
+            "name": layer_name,
+            "review_channels": {
+                "R": red,
+                "G": green,
+                "B": blue,
+                "A": rgba_layer_info.get("A"),
+            }
+        })
+    return output
+
+
 def get_convert_rgb_channels(channel_names):
     """Get first available RGB(A) group from channels info.
 
@@ -323,7 +409,7 @@ def get_convert_rgb_channels(channel_names):
     # Ideal situation
     channels_info: [
         "R", "G", "B", "A"
-    }
+    ]
     ```
     Result will be `("R", "G", "B", "A")`
 
@@ -331,50 +417,60 @@ def get_convert_rgb_channels(channel_names):
     # Not ideal situation
     channels_info: [
         "beauty.red",
-        "beuaty.green",
+        "beauty.green",
         "beauty.blue",
         "depth.Z"
     ]
     ```
     Result will be `("beauty.red", "beauty.green", "beauty.blue", None)`
 
+    Args:
+        channel_names (list[str]): List of channel names.
+
     Returns:
-        NoneType: There is not channel combination that matches RGB
-            combination.
-        tuple: Tuple of 4 channel names defying channel names for R, G, B, A
-            where A can be None.
+        Union[NoneType, tuple[str, str, str, Union[str, None]]]: Tuple of
+            4 channel names defying channel names for R, G, B, A or None
+            if there is not any layer with RGB combination.
     """
-    rgb_by_main_name = collections.defaultdict(dict)
-    main_name_order = [""]
-    for channel_name in channel_names:
-        name_parts = channel_name.split(".")
-        rgb_part = name_parts.pop(-1).lower()
-        main_name = ".".join(name_parts)
-        if rgb_part in ("r", "red"):
-            rgb_by_main_name[main_name]["R"] = channel_name
-        elif rgb_part in ("g", "green"):
-            rgb_by_main_name[main_name]["G"] = channel_name
-        elif rgb_part in ("b", "blue"):
-            rgb_by_main_name[main_name]["B"] = channel_name
-        elif rgb_part in ("a", "alpha"):
-            rgb_by_main_name[main_name]["A"] = channel_name
-        else:
-            continue
-        if main_name not in main_name_order:
-            main_name_order.append(main_name)
 
-    output = None
-    for main_name in main_name_order:
-        colors = rgb_by_main_name.get(main_name) or {}
-        red = colors.get("R")
-        green = colors.get("G")
-        blue = colors.get("B")
-        alpha = colors.get("A")
-        if red is not None and green is not None and blue is not None:
-            output = (red, green, blue, alpha)
-            break
+    channels_info = get_review_info_by_layer_name(channel_names)
+    for item in channels_info:
+        review_channels = item["review_channels"]
+        return (
+            review_channels["R"],
+            review_channels["G"],
+            review_channels["B"],
+            review_channels["A"]
+        )
+    return None
 
-    return output
+
+def get_review_layer_name(src_filepath):
+    """Find layer name that could be used for review.
+
+    Args:
+        src_filepath (str): Path to input file.
+
+    Returns:
+        Union[str, None]: Layer name of None.
+    """
+
+    ext = os.path.splitext(src_filepath)[-1].lower()
+    if ext != ".exr":
+        return None
+
+    # Load info about file from oiio tool
+    input_info = get_oiio_info_for_input(src_filepath)
+    if not input_info:
+        return None
+
+    channel_names = input_info["channelnames"]
+    channels_info = get_review_info_by_layer_name(channel_names)
+    for item in channels_info:
+        # Layer name can be '', when review channels are 'R', 'G', 'B'
+        #   without layer
+        return item["name"] or None
+    return None
 
 
 def should_convert_for_ffmpeg(src_filepath):
@@ -395,7 +491,7 @@ def should_convert_for_ffmpeg(src_filepath):
     if not is_oiio_supported():
         return None
 
-    # Load info about info from oiio tool
+    # Load info about file from oiio tool
     input_info = get_oiio_info_for_input(src_filepath)
     if not input_info:
         return None
@@ -440,7 +536,7 @@ def convert_for_ffmpeg(
     input_frame_end=None,
     logger=None
 ):
-    """Contert source file to format supported in ffmpeg.
+    """Convert source file to format supported in ffmpeg.
 
     Currently can convert only exrs.
 
@@ -496,29 +592,7 @@ def convert_for_ffmpeg(
         oiio_cmd.extend(["--compression", compression])
 
     # Collect channels to export
-    channel_names = input_info["channelnames"]
-    review_channels = get_convert_rgb_channels(channel_names)
-    if review_channels is None:
-        raise ValueError(
-            "Couldn't find channels that can be used for conversion."
-        )
-
-    red, green, blue, alpha = review_channels
-    input_channels = [red, green, blue]
-    channels_arg = "R={},G={},B={}".format(red, green, blue)
-    if alpha is not None:
-        channels_arg += ",A={}".format(alpha)
-        input_channels.append(alpha)
-    input_channels_str = ",".join(input_channels)
-
-    subimages = input_info.get("subimages")
-    input_arg = "-i"
-    if subimages is None or subimages == 1:
-        # Tell oiiotool which channels should be loaded
-        # - other channels are not loaded to memory so helps to avoid memory
-        #       leak issues
-        # - this option is crashing if used on multipart/subimages exrs
-        input_arg += ":ch={}".format(input_channels_str)
+    input_arg, channels_arg = get_oiio_input_and_channel_args(input_info)
 
     oiio_cmd.extend([
         input_arg, first_input_path,
@@ -539,7 +613,7 @@ def convert_for_ffmpeg(
             continue
 
         # Remove attributes that have string value longer than allowed length
-        #   for ffmpeg or when contain unallowed symbols
+        #   for ffmpeg or when contain prohibited symbols
         erase_reason = "Missing reason"
         erase_attribute = False
         if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -581,6 +655,47 @@ def convert_for_ffmpeg(
     run_subprocess(oiio_cmd, logger=logger)
 
 
+def get_oiio_input_and_channel_args(oiio_input_info):
+    """Get input and channel arguments for oiiotool.
+
+    Args:
+        oiio_input_info (dict): Information about input from oiio tool.
+            Should be output of function `get_oiio_info_for_input`.
+
+    Returns:
+        tuple[str, str]: Tuple of input and channel arguments.
+    """
+    channel_names = oiio_input_info["channelnames"]
+    review_channels = get_convert_rgb_channels(channel_names)
+
+    if review_channels is None:
+        raise ValueError(
+            "Couldn't find channels that can be used for conversion."
+        )
+
+    red, green, blue, alpha = review_channels
+    input_channels = [red, green, blue]
+
+    # TODO find subimage where rgba is available for multipart exrs
+    channels_arg = "R={},G={},B={}".format(red, green, blue)
+    if alpha is not None:
+        channels_arg += ",A={}".format(alpha)
+        input_channels.append(alpha)
+
+    input_channels_str = ",".join(input_channels)
+
+    subimages = oiio_input_info.get("subimages")
+    input_arg = "-i"
+    if subimages is None or subimages == 1:
+        # Tell oiiotool which channels should be loaded
+        # - other channels are not loaded to memory so helps to avoid memory
+        #       leak issues
+        # - this option is crashing if used on multipart exrs
+        input_arg += ":ch={}".format(input_channels_str)
+
+    return input_arg, channels_arg
+
+
 def convert_input_paths_for_ffmpeg(
     input_paths,
     output_dir,
@@ -599,7 +714,7 @@ def convert_input_paths_for_ffmpeg(
 
     Args:
         input_paths (str): Paths that should be converted. It is expected that
-            contains single file or image sequence of samy type.
+            contains single file or image sequence of same type.
         output_dir (str): Path to directory where output will be rendered.
             Must not be same as input's directory.
         logger (logging.Logger): Logger used for logging.
@@ -613,6 +728,7 @@ def convert_input_paths_for_ffmpeg(
 
     first_input_path = input_paths[0]
     ext = os.path.splitext(first_input_path)[1].lower()
+
     if ext != ".exr":
         raise ValueError((
             "Function 'convert_for_ffmpeg' currently support only"
@@ -628,30 +744,7 @@ def convert_input_paths_for_ffmpeg(
         compression = "none"
 
     # Collect channels to export
-    channel_names = input_info["channelnames"]
-    review_channels = get_convert_rgb_channels(channel_names)
-    if review_channels is None:
-        raise ValueError(
-            "Couldn't find channels that can be used for conversion."
-        )
-
-    red, green, blue, alpha = review_channels
-    input_channels = [red, green, blue]
-    # TODO find subimage inder where rgba is available for multipart exrs
-    channels_arg = "R={},G={},B={}".format(red, green, blue)
-    if alpha is not None:
-        channels_arg += ",A={}".format(alpha)
-        input_channels.append(alpha)
-    input_channels_str = ",".join(input_channels)
-
-    subimages = input_info.get("subimages")
-    input_arg = "-i"
-    if subimages is None or subimages == 1:
-        # Tell oiiotool which channels should be loaded
-        # - other channels are not loaded to memory so helps to avoid memory
-        #       leak issues
-        # - this option is crashing if used on multipart exrs
-        input_arg += ":ch={}".format(input_channels_str)
+    input_arg, channels_arg = get_oiio_input_and_channel_args(input_info)
 
     for input_path in input_paths:
         # Prepare subprocess arguments
@@ -678,7 +771,7 @@ def convert_input_paths_for_ffmpeg(
                 continue
 
             # Remove attributes that have string value longer than allowed
-            #   length for ffmpeg or when containing unallowed symbols
+            #   length for ffmpeg or when containing prohibited symbols
             erase_reason = "Missing reason"
             erase_attribute = False
             if len(attr_value) > MAX_FFMPEG_STRING_LEN:
@@ -724,7 +817,7 @@ def get_ffprobe_data(path_to_file, logger=None):
     """
     if not logger:
         logger = logging.getLogger(__name__)
-    logger.info(
+    logger.debug(
         "Getting information about input \"{}\".".format(path_to_file)
     )
     ffprobe_args = get_ffmpeg_tool_args("ffprobe")
@@ -925,9 +1018,7 @@ def _ffmpeg_h264_codec_args(stream_data, source_ffmpeg_cmd):
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
-    output.extend(["-intra"])
-    output.extend(["-g", "1"])
-
+    output.extend(["-intra", "-g", "1"])
     return output
 
 
@@ -1054,7 +1145,7 @@ def convert_colorspace(
     view=None,
     display=None,
     additional_command_args=None,
-    logger=None
+    logger=None,
 ):
     """Convert source file from one color space to another.
 
@@ -1073,6 +1164,7 @@ def convert_colorspace(
         view (str): name for viewer space (ocio valid)
             both 'view' and 'display' must be filled (if 'target_colorspace')
         display (str): name for display-referred reference space (ocio valid)
+            both 'view' and 'display' must be filled (if 'target_colorspace')
         additional_command_args (list): arguments for oiiotool (like binary
             depth for .dpx)
         logger (logging.Logger): Logger used for logging.
@@ -1082,13 +1174,27 @@ def convert_colorspace(
     if logger is None:
         logger = logging.getLogger(__name__)
 
+    input_info = get_oiio_info_for_input(input_path, logger=logger)
+
+    # Collect channels to export
+    input_arg, channels_arg = get_oiio_input_and_channel_args(input_info)
+
+    # Prepare subprocess arguments
     oiio_cmd = get_oiio_tool_args(
         "oiiotool",
-        input_path,
         # Don't add any additional attributes
         "--nosoftwareattrib",
         "--colorconfig", config_path
     )
+
+    oiio_cmd.extend([
+        input_arg, input_path,
+        # Tell oiiotool which channels should be put to top stack
+        #   (and output)
+        "--ch", channels_arg,
+        # Use first subimage
+        "--subimage", "0"
+    ])
 
     if all([target_colorspace, view, display]):
         raise ValueError("Colorspace and both screen and display"

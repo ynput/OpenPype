@@ -1,7 +1,15 @@
 import os
 
 from openpype.hosts.max.api import lib, maintained_selection
-from openpype.hosts.max.api.pipeline import containerise
+from openpype.hosts.max.api.lib import (
+    unique_namespace,
+
+)
+from openpype.hosts.max.api.pipeline import (
+    containerise,
+    get_previous_loaded_object,
+    update_custom_attribute_data
+)
 from openpype.pipeline import get_representation_path, load
 
 
@@ -13,19 +21,24 @@ class PointCloudLoader(load.LoaderPlugin):
     order = -8
     icon = "code-fork"
     color = "green"
+    postfix = "param"
 
     def load(self, context, name=None, namespace=None, data=None):
         """load point cloud by tyCache"""
         from pymxs import runtime as rt
-
         filepath = os.path.normpath(self.filepath_from_context(context))
         obj = rt.tyCache()
         obj.filename = filepath
 
-        prt_container = rt.GetNodeByName(obj.name)
+        namespace = unique_namespace(
+            name + "_",
+            suffix="_",
+        )
+        obj.name = f"{namespace}:{obj.name}"
 
         return containerise(
-            name, [prt_container], context, loader=self.__class__.__name__)
+            name, [obj], context,
+            namespace, loader=self.__class__.__name__)
 
     def update(self, container, representation):
         """update the container"""
@@ -33,15 +46,16 @@ class PointCloudLoader(load.LoaderPlugin):
 
         path = get_representation_path(representation)
         node = rt.GetNodeByName(container["instance_node"])
+        node_list = get_previous_loaded_object(node)
+        update_custom_attribute_data(
+            node, node_list)
         with maintained_selection():
-            rt.Select(node.Children)
+            rt.Select(node_list)
             for prt in rt.Selection:
-                prt_object = rt.GetNodeByName(prt.name)
-                prt_object.filename = path
-
-            lib.imprint(container["instance_node"], {
-                "representation": str(representation["_id"])
-            })
+                prt.filename = path
+        lib.imprint(container["instance_node"], {
+            "representation": str(representation["_id"])
+        })
 
     def switch(self, container, representation):
         self.update(container, representation)

@@ -6,6 +6,7 @@ from openpype.client import (
     get_subsets,
     get_last_versions,
     get_representations,
+    get_asset_name_identifier,
 )
 from openpype.pipeline.load import get_representation_path_with_anatomy
 
@@ -53,8 +54,8 @@ class CollectAudio(pyblish.api.ContextPlugin):
         ):
             # Skip instances that already have audio filled
             if instance.data.get("audio"):
-                self.log.info(
-                    "Skipping Audio collecion. It is already collected"
+                self.log.debug(
+                    "Skipping Audio collection. It is already collected"
                 )
                 continue
             filtered_instances.append(instance)
@@ -70,7 +71,7 @@ class CollectAudio(pyblish.api.ContextPlugin):
             instances_by_asset_name[asset_name].append(instance)
 
         asset_names = set(instances_by_asset_name.keys())
-        self.log.info((
+        self.log.debug((
             "Searching for audio subset '{subset}' in assets {assets}"
         ).format(
             subset=self.audio_subset_name,
@@ -100,7 +101,7 @@ class CollectAudio(pyblish.api.ContextPlugin):
                     "offset": 0,
                     "filename": repre_path
                 }]
-                self.log.info("Audio Data added to instance ...")
+                self.log.debug("Audio Data added to instance ...")
 
     def query_representations(self, project_name, asset_names):
         """Query representations related to audio subsets for passed assets.
@@ -121,12 +122,13 @@ class CollectAudio(pyblish.api.ContextPlugin):
         asset_docs = get_assets(
             project_name,
             asset_names=asset_names,
-            fields=["_id", "name"]
+            fields=["_id", "name", "data.parents"]
         )
 
-        asset_id_by_name = {}
-        for asset_doc in asset_docs:
-            asset_id_by_name[asset_doc["name"]] = asset_doc["_id"]
+        asset_id_by_name = {
+            get_asset_name_identifier(asset_doc): asset_doc["_id"]
+            for asset_doc in asset_docs
+        }
         asset_ids = set(asset_id_by_name.values())
 
         # Query subsets with name define by 'audio_subset_name' attr

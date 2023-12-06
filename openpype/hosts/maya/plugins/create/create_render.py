@@ -34,7 +34,7 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
     render_settings = {}
 
     @classmethod
-    def apply_settings(cls, project_settings, system_settings):
+    def apply_settings(cls, project_settings):
         cls.render_settings = project_settings["maya"]["RenderSettings"]
 
     def create(self, subset_name, instance_data, pre_create_data):

@@ -282,6 +282,9 @@ def run(script):
               "--app_variant",
               help="Provide specific app variant for test, empty for latest",
               default=None)
+@click.option("--app_group",
+              help="Provide specific app group for test, empty for default",
+              default=None)
 @click.option("-t",
               "--timeout",
               help="Provide specific timeout value for test case",
@@ -290,11 +293,15 @@ def run(script):
               "--setup_only",
               help="Only create dbs, do not run tests",
               default=None)
+@click.option("--mongo_url",
+              help="MongoDB for testing.",
+              default=None)
 def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
-             timeout, setup_only):
+             timeout, setup_only, mongo_url, app_group):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
-                             persist, app_variant, timeout, setup_only)
+                             persist, app_variant, timeout, setup_only,
+                             mongo_url, app_group)
 
 
 @main.command(help="DEPRECATED - run sync server")

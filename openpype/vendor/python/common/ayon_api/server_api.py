@@ -2,21 +2,35 @@ import os
 import re
 import io
 import json
+import time
 import logging
 import collections
 import platform
 import copy
 import uuid
 from contextlib import contextmanager
+
+import six
+
 try:
     from http import HTTPStatus
 except ImportError:
     HTTPStatus = None
 
 import requests
-from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
+try:
+    # This should be used if 'requests' have it available
+    from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
+except ImportError:
+    # Older versions of 'requests' don't have custom exception for json
+    #   decode error
+    try:
+        from simplejson import JSONDecodeError as RequestsJSONDecodeError
+    except ImportError:
+        from json import JSONDecodeError as RequestsJSONDecodeError
 
 from .constants import (
+    SERVER_RETRIES_ENV_KEY,
     DEFAULT_PRODUCT_TYPE_FIELDS,
     DEFAULT_PROJECT_FIELDS,
     DEFAULT_FOLDER_FIELDS,
@@ -27,8 +41,8 @@ from .constants import (
     REPRESENTATION_FILES_FIELDS,
     DEFAULT_WORKFILE_INFO_FIELDS,
     DEFAULT_EVENT_FIELDS,
+    DEFAULT_USER_FIELDS,
 )
-from .thumbnails import ThumbnailCache
 from .graphql import GraphQlQuery, INTROSPECTION_QUERY
 from .graphql_queries import (
     project_graphql_query,
@@ -43,6 +57,7 @@ from .graphql_queries import (
     representations_parents_qraphql_query,
     workfiles_info_graphql_query,
     events_graphql_query,
+    users_graphql_query,
 )
 from .exceptions import (
     FailedOperations,
@@ -61,8 +76,13 @@ from .utils import (
     failed_json_default,
     TransferProgress,
     create_dependency_package_basename,
+    ThumbnailContent,
+    get_default_timeout,
+    get_default_settings_variant,
+    get_default_site_id,
 )
 
+_PLACEHOLDER = object()
 PatternType = type(re.compile(""))
 JSONDecodeError = getattr(json, "JSONDecodeError", ValueError)
 # This should be collected from server schema
@@ -116,6 +136,8 @@ class RestApiResponse(object):
 
     @property
     def text(self):
+        if self._response is None:
+            return self.detail
         return self._response.text
 
     @property
@@ -124,6 +146,8 @@ class RestApiResponse(object):
 
     @property
     def headers(self):
+        if self._response is None:
+            return {}
         return self._response.headers
 
     @property
@@ -137,6 +161,8 @@ class RestApiResponse(object):
 
     @property
     def content(self):
+        if self._response is None:
+            return b""
         return self._response.content
 
     @property
@@ -155,6 +181,11 @@ class RestApiResponse(object):
         return self.status
 
     def raise_for_status(self, message=None):
+        if self._response is None:
+            if self._data and self._data.get("detail"):
+                raise ServerError(self._data["detail"])
+            raise ValueError("Response is not available.")
+
         try:
             self._response.raise_for_status()
         except requests.exceptions.HTTPError as exc:
@@ -319,6 +350,8 @@ class ServerAPI(object):
         default_settings_variant (Optional[Literal["production", "staging"]]):
             Settings variant used by default if a method for settings won't
             get any (by default is 'production').
+        sender (Optional[str]): Sender of requests. Used in server logs and
+            propagated into events.
         ssl_verify (Union[bool, str, None]): Verify SSL certificate
             Looks for env variable value 'AYON_CA_FILE' by default. If not
             available then 'True' is used.
@@ -326,18 +359,28 @@ class ServerAPI(object):
             variable value 'AYON_CERT_FILE' by default.
         create_session (Optional[bool]): Create session for connection if
             token is available. Default is True.
+        timeout (Optional[float]): Timeout for requests.
+        max_retries (Optional[int]): Number of retries for requests.
     """
+    _default_max_retries = 3
+    # 1 MB chunk by default
+    # TODO find out if these are reasonable default value
+    default_download_chunk_size = 1024 * 1024
+    default_upload_chunk_size = 1024 * 1024
 
     def __init__(
         self,
         base_url,
         token=None,
-        site_id=None,
+        site_id=_PLACEHOLDER,
         client_version=None,
         default_settings_variant=None,
+        sender=None,
         ssl_verify=None,
         cert=None,
         create_session=True,
+        timeout=None,
+        max_retries=None,
     ):
         if not base_url:
             raise ValueError("Invalid server URL {}".format(str(base_url)))
@@ -348,12 +391,23 @@ class ServerAPI(object):
         self._graphql_url = "{}/graphql".format(base_url)
         self._log = None
         self._access_token = token
+        # Allow to have 'site_id' to 'None'
+        if site_id is _PLACEHOLDER:
+            site_id = get_default_site_id()
         self._site_id = site_id
         self._client_version = client_version
         self._default_settings_variant = (
             default_settings_variant
-            or "production"
+            or get_default_settings_variant()
         )
+        self._sender = sender
+
+        self._timeout = None
+        self._max_retries = None
+
+        # Set timeout and max retries based on passed values
+        self.set_timeout(timeout)
+        self.set_max_retries(max_retries)
 
         if ssl_verify is None:
             # Custom AYON env variable for CA file or 'True'
@@ -374,6 +428,8 @@ class ServerAPI(object):
         self._server_version = None
         self._server_version_tuple = None
 
+        self._graphql_allows_data_in_query = None
+
         self._session = None
 
         self._base_functions_mapping = {
@@ -390,7 +446,6 @@ class ServerAPI(object):
         self._entity_type_attributes_cache = {}
 
         self._as_user_stack = _AsUserStack()
-        self._thumbnail_cache = ThumbnailCache(True)
 
         # Create session
         if self._access_token and create_session:
@@ -459,6 +514,80 @@ class ServerAPI(object):
 
     ssl_verify = property(get_ssl_verify, set_ssl_verify)
     cert = property(get_cert, set_cert)
+
+    @classmethod
+    def get_default_timeout(cls):
+        """Default value for requests timeout.
+
+        Utils function 'get_default_timeout' is used by default.
+
+        Returns:
+            float: Timeout value in seconds.
+        """
+
+        return get_default_timeout()
+
+    @classmethod
+    def get_default_max_retries(cls):
+        """Default value for requests max retries.
+
+        First looks for environment variable SERVER_RETRIES_ENV_KEY, which
+        can affect max retries value. If not available then use class
+        attribute '_default_max_retries'.
+
+        Returns:
+            int: Max retries value.
+        """
+
+        try:
+            return int(os.environ.get(SERVER_RETRIES_ENV_KEY))
+        except (ValueError, TypeError):
+            pass
+
+        return cls._default_max_retries
+
+    def get_timeout(self):
+        """Current value for requests timeout.
+
+        Returns:
+            float: Timeout value in seconds.
+        """
+
+        return self._timeout
+
+    def set_timeout(self, timeout):
+        """Change timeout value for requests.
+
+        Args:
+            timeout (Union[float, None]): Timeout value in seconds.
+        """
+
+        if timeout is None:
+            timeout = self.get_default_timeout()
+        self._timeout = float(timeout)
+
+    def get_max_retries(self):
+        """Current value for requests max retries.
+
+        Returns:
+            int: Max retries value.
+        """
+
+        return self._max_retries
+
+    def set_max_retries(self, max_retries):
+        """Change max retries value for requests.
+
+        Args:
+            max_retries (Union[int, None]): Max retries value.
+        """
+
+        if max_retries is None:
+            max_retries = self.get_default_max_retries()
+        self._max_retries = int(max_retries)
+
+    timeout = property(get_timeout, set_timeout)
+    max_retries = property(get_max_retries, set_max_retries)
 
     @property
     def access_token(self):
@@ -545,19 +674,39 @@ class ServerAPI(object):
                 as default variant.
 
         Args:
-            variant (Literal['production', 'staging']): Settings variant name.
+            variant (str): Settings variant name. It is possible to use
+                'production', 'staging' or name of dev bundle.
         """
 
-        if variant not in ("production", "staging"):
-            raise ValueError((
-                "Invalid variant name {}. Expected 'production' or 'staging'"
-            ).format(variant))
         self._default_settings_variant = variant
 
     default_settings_variant = property(
         get_default_settings_variant,
         set_default_settings_variant
     )
+
+    def get_sender(self):
+        """Sender used to send requests.
+
+        Returns:
+            Union[str, None]: Sender name or None.
+        """
+
+        return self._sender
+
+    def set_sender(self, sender):
+        """Change sender used for requests.
+
+        Args:
+            sender (Union[str, None]): Sender name or None.
+        """
+
+        if sender == self._sender:
+            return
+        self._sender = sender
+        self._update_session_headers()
+
+    sender = property(get_sender, set_sender)
 
     def get_default_service_username(self):
         """Default username used for callbacks when used with service API key.
@@ -742,6 +891,7 @@ class ServerAPI(object):
             ("X-as-user", self._as_user_stack.username),
             ("x-ayon-version", self._client_version),
             ("x-ayon-site-id", self._site_id),
+            ("x-sender", self._sender),
         ):
             if value is not None:
                 self._session.headers[key] = value
@@ -797,13 +947,33 @@ class ServerAPI(object):
                 int(re_match.group("major")),
                 int(re_match.group("minor")),
                 int(re_match.group("patch")),
-                re_match.group("prerelease"),
-                re_match.group("buildmetadata")
+                re_match.group("prerelease") or "",
+                re_match.group("buildmetadata") or "",
             )
         return self._server_version_tuple
 
     server_version = property(get_server_version)
     server_version_tuple = property(get_server_version_tuple)
+
+    @property
+    def graphql_allows_data_in_query(self):
+        """GraphlQl query can support 'data' field.
+
+        This applies only to project hierarchy entities 'project', 'folder',
+        'task', 'product', 'version' and 'representation'. Others like 'user'
+        still require to use rest api to access 'data'.
+
+        Returns:
+            bool: True if server supports 'data' field in GraphQl query.
+        """
+
+        if self._graphql_allows_data_in_query is None:
+            major, minor, patch, _, _ = self.server_version_tuple
+            graphql_allows_data_in_query = True
+            if (major, minor, patch) < (0, 5, 5):
+                graphql_allows_data_in_query = False
+            self._graphql_allows_data_in_query = graphql_allows_data_in_query
+        return self._graphql_allows_data_in_query
 
     def _get_user_info(self):
         if self._access_token is None:
@@ -826,10 +996,44 @@ class ServerAPI(object):
         self._access_token_is_service = None
         return None
 
-    def get_users(self):
-        # TODO how to find out if user have permission?
-        users = self.get("users")
-        return users.data
+    def get_users(self, usernames=None, fields=None):
+        """Get Users.
+
+        Args:
+            usernames (Optional[Iterable[str]]): Filter by usernames.
+            fields (Optional[Iterable[str]]): fields to be queried
+                for users.
+
+        Returns:
+            Generator[dict[str, Any]]: Queried users.
+        """
+
+        filters = {}
+        if usernames is not None:
+            usernames = set(usernames)
+            if not usernames:
+                return
+            filters["userNames"] = list(usernames)
+
+        if not fields:
+            fields = self.get_default_fields_for_type("user")
+
+        query = users_graphql_query(set(fields))
+        for attr, filter_value in filters.items():
+            query.set_variable_value(attr, filter_value)
+
+        # Backwards compatibility for server 0.3.x
+        #   - will be removed in future releases
+        major, minor, _, _, _ = self.server_version_tuple
+        access_groups_field = "accessGroups"
+        if major == 0 and minor <= 3:
+            access_groups_field = "roles"
+
+        for parsed_data in query.continuous_query(self):
+            for user in parsed_data["users"]:
+                user[access_groups_field] = json.loads(
+                    user[access_groups_field])
+                yield user
 
     def get_user(self, username=None):
         output = None
@@ -858,6 +1062,9 @@ class ServerAPI(object):
 
         if self._client_version is not None:
             headers["x-ayon-version"] = self._client_version
+
+        if self._sender is not None:
+            headers["x-sender"] = self._sender
 
         if self._access_token:
             if self._access_token_is_service:
@@ -900,18 +1107,24 @@ class ServerAPI(object):
 
         self.validate_server_availability()
 
-        response = self.post(
-            "auth/login",
-            name=username,
-            password=password
-        )
-        if response.status_code != 200:
-            _detail = response.data.get("detail")
-            details = ""
-            if _detail:
-                details = " {}".format(_detail)
+        self._token_validation_started = True
 
-            raise AuthenticationError("Login failed {}".format(details))
+        try:
+            response = self.post(
+                "auth/login",
+                name=username,
+                password=password
+            )
+            if response.status_code != 200:
+                _detail = response.data.get("detail")
+                details = ""
+                if _detail:
+                    details = " {}".format(_detail)
+
+                raise AuthenticationError("Login failed {}".format(details))
+
+        finally:
+            self._token_validation_started = False
 
         self._access_token = response["token"]
 
@@ -931,6 +1144,10 @@ class ServerAPI(object):
         logout_from_server(self._base_url, self._access_token)
 
     def _do_rest_request(self, function, url, **kwargs):
+        kwargs.setdefault("timeout", self.timeout)
+        max_retries = kwargs.get("max_retries", self.max_retries)
+        if max_retries < 1:
+            max_retries = 1
         if self._session is None:
             # Validate token if was not yet validated
             #    - ignore validation if we're in middle of
@@ -950,38 +1167,64 @@ class ServerAPI(object):
         elif isinstance(function, RequestType):
             function = self._session_functions_mapping[function]
 
-        try:
-            response = function(url, **kwargs)
+        response = None
+        new_response = None
+        for retry_idx in reversed(range(max_retries)):
+            try:
+                response = function(url, **kwargs)
+                break
 
-        except ConnectionRefusedError:
-            new_response = RestApiResponse(
-                None,
-                {"detail": "Unable to connect the server. Connection refused"}
-            )
-        except requests.exceptions.ConnectionError:
-            new_response = RestApiResponse(
-                None,
-                {"detail": "Unable to connect the server. Connection error"}
-            )
-        else:
-            content_type = response.headers.get("Content-Type")
-            if content_type == "application/json":
-                try:
-                    new_response = RestApiResponse(response)
-                except JSONDecodeError:
-                    new_response = RestApiResponse(
-                        None,
-                        {
-                            "detail": "The response is not a JSON: {}".format(
-                                response.text)
-                        }
+            except ConnectionRefusedError:
+                if retry_idx == 0:
+                    self.log.warning(
+                        "Connection error happened.", exc_info=True
                     )
 
-            elif content_type in ("image/jpeg", "image/png"):
-                new_response = RestApiResponse(response)
+                # Server may be restarting
+                new_response = RestApiResponse(
+                    None,
+                    {"detail": "Unable to connect the server. Connection refused"}
+                )
 
-            else:
+            except requests.exceptions.Timeout:
+                # Connection timed out
+                new_response = RestApiResponse(
+                    None,
+                    {"detail": "Connection timed out."}
+                )
+
+            except requests.exceptions.ConnectionError:
+                # Log warning only on last attempt
+                if retry_idx == 0:
+                    self.log.warning(
+                        "Connection error happened.", exc_info=True
+                    )
+
+                new_response = RestApiResponse(
+                    None,
+                    {"detail": "Unable to connect the server. Connection error"}
+                )
+
+            time.sleep(0.1)
+
+        if new_response is not None:
+            return new_response
+
+        content_type = response.headers.get("Content-Type")
+        if content_type == "application/json":
+            try:
                 new_response = RestApiResponse(response)
+            except JSONDecodeError:
+                new_response = RestApiResponse(
+                    None,
+                    {
+                        "detail": "The response is not a JSON: {}".format(
+                            response.text)
+                    }
+                )
+
+        else:
+            new_response = RestApiResponse(response)
 
         self.log.debug("Response {}".format(str(new_response)))
         return new_response
@@ -1075,6 +1318,9 @@ class ServerAPI(object):
         states=None,
         users=None,
         include_logs=None,
+        has_children=None,
+        newer_than=None,
+        older_than=None,
         fields=None
     ):
         """Get events from server with filtering options.
@@ -1090,6 +1336,12 @@ class ServerAPI(object):
             users (Optional[Iterable[str]]): Filtering by users
                 who created/triggered an event.
             include_logs (Optional[bool]): Query also log events.
+            has_children (Optional[bool]): Event is with/without children
+                events. If 'None' then all events are returned, default.
+            newer_than (Optional[str]): Return only events newer than given
+                iso datetime string.
+            older_than (Optional[str]): Return only events older than given
+                iso datetime string.
             fields (Optional[Iterable[str]]): Fields that should be received
                 for each event.
 
@@ -1126,8 +1378,17 @@ class ServerAPI(object):
             include_logs = False
         filters["includeLogsFilter"] = include_logs
 
+        if has_children is not None:
+            filters["hasChildrenFilter"] = has_children
+
+        if newer_than is not None:
+            filters["newerThanFilter"] = newer_than
+
+        if older_than is not None:
+            filters["olderThanFilter"] = older_than
+
         if not fields:
-            fields = DEFAULT_EVENT_FIELDS
+            fields = self.get_default_fields_for_type("event")
 
         query = events_graphql_query(set(fields))
         for attr, filter_value in filters.items():
@@ -1145,7 +1406,9 @@ class ServerAPI(object):
         status=None,
         description=None,
         summary=None,
-        payload=None
+        payload=None,
+        progress=None,
+        retries=None
     ):
         kwargs = {
             key: value
@@ -1156,9 +1419,27 @@ class ServerAPI(object):
                 ("description", description),
                 ("summary", summary),
                 ("payload", payload),
+                ("progress", progress),
+                ("retries", retries),
             )
             if value is not None
         }
+        # 'progress' and 'retries' are available since 0.5.x server version
+        major, minor, _, _, _ = self.server_version_tuple
+        if (major, minor) < (0, 5):
+            args = []
+            if progress is not None:
+                args.append("progress")
+            if retries is not None:
+                args.append("retries")
+            fields = ", ".join("'{}'".format(f) for f in args)
+            ending = "s" if len(args) > 1 else ""
+            raise ValueError((
+                 "Your server version '{}' does not support update"
+                 " of {} field{} on event. The fields are supported since"
+                 " server version '0.5'."
+            ).format(self.get_server_version(), fields, ending))
+
         response = self.patch(
             "events/{}".format(event_id),
             **kwargs
@@ -1228,7 +1509,9 @@ class ServerAPI(object):
         target_topic,
         sender,
         description=None,
-        sequential=None
+        sequential=None,
+        events_filter=None,
+        max_retries=None,
     ):
         """Enroll job based on events.
 
@@ -1270,6 +1553,12 @@ class ServerAPI(object):
                 in target event.
             sequential (Optional[bool]): The source topic must be processed
                 in sequence.
+            events_filter (Optional[dict[str, Any]]): Filtering conditions
+                to filter the source event. For more technical specifications
+                look to server backed 'ayon_server.sqlfilter.Filter'.
+                TODO: Add example of filters.
+            max_retries (Optional[int]): How many times can be event retried.
+                Default value is based on server (3 at the time of this PR).
 
         Returns:
             Union[None, dict[str, Any]]: None if there is no event matching
@@ -1281,10 +1570,14 @@ class ServerAPI(object):
             "targetTopic": target_topic,
             "sender": sender,
         }
+        if max_retries is not None:
+            kwargs["maxRetries"] = max_retries
         if sequential is not None:
             kwargs["sequential"] = sequential
         if description is not None:
             kwargs["description"] = description
+        if events_filter is not None:
+            kwargs["filter"] = events_filter
         response = self.post("enroll", **kwargs)
         if response.status_code == 204:
             return None
@@ -1325,6 +1618,10 @@ class ServerAPI(object):
         download happens in thread and other thread want to catch changes over
         time.
 
+        Todos:
+            Use retries and timeout.
+            Return RestApiResponse.
+
         Args:
             endpoint (str): Endpoint or URL to file that should be downloaded.
             filepath (str): Path where file will be downloaded.
@@ -1335,8 +1632,7 @@ class ServerAPI(object):
         """
 
         if not chunk_size:
-            # 1 MB chunk by default
-            chunk_size = 1024 * 1024
+            chunk_size = self.default_download_chunk_size
 
         if endpoint.startswith(self._base_url):
             url = endpoint
@@ -1363,33 +1659,93 @@ class ServerAPI(object):
             progress.set_transfer_done()
         return progress
 
-    def _upload_file(self, url, filepath, progress, request_type=None):
+    @staticmethod
+    def _upload_chunks_iter(file_stream, progress, chunk_size):
+        """Generator that yields chunks of file.
+
+        Args:
+            file_stream (io.BinaryIO): Byte stream.
+            progress (TransferProgress): Object to track upload progress.
+            chunk_size (int): Size of chunks that are uploaded at once.
+
+        Yields:
+            bytes: Chunk of file.
+        """
+
+        # Get size of file
+        file_stream.seek(0, io.SEEK_END)
+        size = file_stream.tell()
+        file_stream.seek(0)
+        # Set content size to progress object
+        progress.set_content_size(size)
+
+        while True:
+            chunk = file_stream.read(chunk_size)
+            if not chunk:
+                break
+            progress.add_transferred_chunk(len(chunk))
+            yield chunk
+
+    def _upload_file(
+        self,
+        url,
+        filepath,
+        progress,
+        request_type=None,
+        chunk_size=None,
+        **kwargs
+    ):
+        """
+
+        Args:
+            url (str): Url where file will be uploaded.
+            filepath (str): Source filepath.
+            progress (TransferProgress): Object that gives ability to track
+                progress.
+            request_type (Optional[RequestType]): Type of request that will
+                be used. Default is PUT.
+            chunk_size (Optional[int]): Size of chunks that are uploaded
+                at once.
+            **kwargs (Any): Additional arguments that will be passed
+                to request function.
+
+        Returns:
+            RestApiResponse: Server response.
+        """
+
         if request_type is None:
             request_type = RequestTypes.put
-        kwargs = {}
+
         if self._session is None:
-            kwargs["headers"] = self.get_headers()
+            headers = kwargs.setdefault("headers", {})
+            for key, value in self.get_headers().items():
+                if key not in headers:
+                    headers[key] = value
             post_func = self._base_functions_mapping[request_type]
         else:
             post_func = self._session_functions_mapping[request_type]
 
+        if not chunk_size:
+            chunk_size = self.default_upload_chunk_size
+
         with open(filepath, "rb") as stream:
-            stream.seek(0, io.SEEK_END)
-            size = stream.tell()
-            stream.seek(0)
-            progress.set_content_size(size)
-            response = post_func(url, data=stream, **kwargs)
+            response = post_func(
+                url,
+                data=self._upload_chunks_iter(stream, progress, chunk_size),
+                **kwargs
+            )
+
         response.raise_for_status()
-        progress.set_transferred_size(size)
         return response
 
     def upload_file(
-        self, endpoint, filepath, progress=None, request_type=None
+        self, endpoint, filepath, progress=None, request_type=None, **kwargs
     ):
         """Upload file to server.
 
         Todos:
-            Uploading with more detailed progress.
+            Use retries and timeout.
+            Return RestApiResponse.
 
         Args:
             endpoint (str): Endpoint or url where file will be uploaded.
@@ -1398,6 +1754,8 @@ class ServerAPI(object):
                 to track upload progress.
             request_type (Optional[RequestType]): Type of request that will
                 be used to upload file.
+            **kwargs (Any): Additional arguments that will be passed
+                to request function.
 
         Returns:
             requests.Response: Response object.
@@ -1419,7 +1777,9 @@ class ServerAPI(object):
         progress.set_started()
 
         try:
-            return self._upload_file(url, filepath, progress, request_type)
+            return self._upload_file(
+                url, filepath, progress, request_type, **kwargs
+            )
 
         except Exception as exc:
             progress.set_failed(str(exc))
@@ -1612,6 +1972,19 @@ class ServerAPI(object):
 
         return copy.deepcopy(attributes)
 
+    def get_attributes_fields_for_type(self, entity_type):
+        """Prepare attribute fields for entity type.
+
+        Returns:
+            set[str]: Attributes fields for entity type.
+        """
+
+        attributes = self.get_attributes_for_type(entity_type)
+        return {
+            "attrib.{}".format(attr)
+            for attr in attributes
+        }
+
     def get_default_fields_for_type(self, entity_type):
         """Default fields for entity type.
 
@@ -1624,51 +1997,68 @@ class ServerAPI(object):
             set[str]: Fields that should be queried from server.
         """
 
-        attributes = self.get_attributes_for_type(entity_type)
+        # Event does not have attributes
+        if entity_type == "event":
+            return set(DEFAULT_EVENT_FIELDS)
+
         if entity_type == "project":
-            return DEFAULT_PROJECT_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+            entity_type_defaults = set(DEFAULT_PROJECT_FIELDS)
+            if not self.graphql_allows_data_in_query:
+                entity_type_defaults.discard("data")
 
-        if entity_type == "folder":
-            return DEFAULT_FOLDER_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+        elif entity_type == "folder":
+            entity_type_defaults = set(DEFAULT_FOLDER_FIELDS)
+            if not self.graphql_allows_data_in_query:
+                entity_type_defaults.discard("data")
 
-        if entity_type == "task":
-            return DEFAULT_TASK_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+        elif entity_type == "task":
+            entity_type_defaults = set(DEFAULT_TASK_FIELDS)
+            if not self.graphql_allows_data_in_query:
+                entity_type_defaults.discard("data")
 
-        if entity_type == "product":
-            return DEFAULT_PRODUCT_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+        elif entity_type == "product":
+            entity_type_defaults = set(DEFAULT_PRODUCT_FIELDS)
+            if not self.graphql_allows_data_in_query:
+                entity_type_defaults.discard("data")
 
-        if entity_type == "version":
-            return DEFAULT_VERSION_FIELDS | {
-                "attrib.{}".format(attr)
-                for attr in attributes
-            }
+        elif entity_type == "version":
+            entity_type_defaults = set(DEFAULT_VERSION_FIELDS)
+            if not self.graphql_allows_data_in_query:
+                entity_type_defaults.discard("data")
 
-        if entity_type == "representation":
-            return (
+        elif entity_type == "representation":
+            entity_type_defaults = (
                 DEFAULT_REPRESENTATION_FIELDS
                 | REPRESENTATION_FILES_FIELDS
-                | {
-                    "attrib.{}".format(attr)
-                    for attr in attributes
-                }
             )
+            if not self.graphql_allows_data_in_query:
+                entity_type_defaults.discard("data")
 
-        if entity_type == "productType":
-            return DEFAULT_PRODUCT_TYPE_FIELDS
+        elif entity_type == "productType":
+            entity_type_defaults = set(DEFAULT_PRODUCT_TYPE_FIELDS)
 
-        raise ValueError("Unknown entity type \"{}\"".format(entity_type))
+        elif entity_type == "workfile":
+            entity_type_defaults = set(DEFAULT_WORKFILE_INFO_FIELDS)
+            if not self.graphql_allows_data_in_query:
+                entity_type_defaults.discard("data")
+
+        elif entity_type == "user":
+            entity_type_defaults = set(DEFAULT_USER_FIELDS)
+            # Backwards compatibility for server 0.3.x
+            #   - will be removed in future releases
+            major, minor, _, _, _ = self.server_version_tuple
+            if major == 0 and minor <= 3:
+                entity_type_defaults.discard("accessGroups")
+                entity_type_defaults.discard("defaultAccessGroups")
+                entity_type_defaults.add("roles")
+                entity_type_defaults.add("defaultRoles")
+
+        else:
+            raise ValueError("Unknown entity type \"{}\"".format(entity_type))
+        return (
+            entity_type_defaults
+            | self.get_attributes_fields_for_type(entity_type)
+        )
 
     def get_addons_info(self, details=True):
         """Get information about addons available on server.
@@ -2011,6 +2401,34 @@ class ServerAPI(object):
         response.raise_for_status("Failed to create/update dependency")
         return response.data
 
+    def _get_dependency_package_route(
+        self, filename=None, platform_name=None
+    ):
+        major, minor, patch, _, _ = self.server_version_tuple
+        if (major, minor, patch) <= (0, 2, 0):
+            # Backwards compatibility for AYON server 0.2.0 and lower
+            self.log.warning((
+                "Using deprecated dependency package route."
+                " Please update your AYON server to version 0.2.1 or higher."
+                " Backwards compatibility for this route will be removed"
+                " in future releases of ayon-python-api."
+            ))
+            if platform_name is None:
+                platform_name = platform.system().lower()
+            base = "dependencies"
+            if not filename:
+                return base
+            return "{}/{}/{}".format(base, filename, platform_name)
+
+        if (major, minor) <= (0, 3):
+            endpoint = "desktop/dependency_packages"
+        else:
+            endpoint = "desktop/dependencyPackages"
+
+        if filename:
+            return "{}/{}".format(endpoint, filename)
+        return endpoint
+
     def get_dependency_packages(self):
         """Information about dependency packages on server.
 
@@ -2038,27 +2456,10 @@ class ServerAPI(object):
                 server.
         """
 
-        result = self.get("desktop/dependency_packages")
+        endpoint = self._get_dependency_package_route()
+        result = self.get(endpoint)
         result.raise_for_status()
         return result.data
-
-    def _get_dependency_package_route(
-        self, filename=None, platform_name=None
-    ):
-        major, minor, patch, _, _ = self.server_version_tuple
-        if major == 0 and (minor > 2 or (minor == 2 and patch >= 1)):
-            base = "desktop/dependency_packages"
-            if not filename:
-                return base
-            return "{}/{}".format(base, filename)
-
-        # Backwards compatibility for AYON server 0.2.0 and lower
-        if platform_name is None:
-            platform_name = platform.system().lower()
-        base = "dependencies"
-        if not filename:
-            return base
-        return "{}/{}/{}".format(base, filename, platform_name)
 
     def create_dependency_package(
         self,
@@ -2926,6 +3327,79 @@ class ServerAPI(object):
             only_values=only_values
         )
 
+    def get_secrets(self):
+        """Get all secrets.
+
+        Example output:
+            [
+                {
+                    "name": "secret_1",
+                    "value": "secret_value_1",
+                },
+                {
+                    "name": "secret_2",
+                    "value": "secret_value_2",
+                }
+            ]
+
+        Returns:
+            list[dict[str, str]]: List of secret entities.
+        """
+
+        response = self.get("secrets")
+        response.raise_for_status()
+        return response.data
+
+    def get_secret(self, secret_name):
+        """Get secret by name.
+
+        Example output:
+            {
+                "name": "secret_name",
+                "value": "secret_value",
+            }
+
+        Args:
+            secret_name (str): Name of secret.
+
+        Returns:
+            dict[str, str]: Secret entity data.
+        """
+
+        response = self.get("secrets/{}".format(secret_name))
+        response.raise_for_status()
+        return response.data
+
+    def save_secret(self, secret_name, secret_value):
+        """Save secret.
+
+        This endpoint can create and update secret.
+
+        Args:
+            secret_name (str): Name of secret.
+            secret_value (str): Value of secret.
+        """
+
+        response = self.put(
+            "secrets/{}".format(secret_name),
+            name=secret_name,
+            value=secret_value,
+        )
+        response.raise_for_status()
+        return response.data
+
+
+    def delete_secret(self, secret_name):
+        """Delete secret by name.
+
+        Args:
+            secret_name (str): Name of secret to delete.
+        """
+
+        response = self.delete("secrets/{}".format(secret_name))
+        response.raise_for_status()
+        return response.data
+
     # Entity getters
     def get_rest_project(self, project_name):
         """Query project by name.
@@ -3070,8 +3544,6 @@ class ServerAPI(object):
         else:
             use_rest = False
             fields = set(fields)
-            if own_attributes:
-                fields.add("ownAttrib")
             for field in fields:
                 if field.startswith("config"):
                     use_rest = True
@@ -3084,6 +3556,13 @@ class ServerAPI(object):
                 yield project
 
         else:
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("project")
+
+            if own_attributes:
+                fields.add("ownAttrib")
+
             query = projects_graphql_query(fields)
             for parsed_data in query.continuous_query(self):
                 for project in parsed_data["projects"]:
@@ -3124,8 +3603,12 @@ class ServerAPI(object):
                 fill_own_attribs(project)
             return project
 
+        if "attrib" in fields:
+            fields.remove("attrib")
+            fields |= self.get_attributes_fields_for_type("project")
+
         if own_attributes:
-            field.add("ownAttrib")
+            fields.add("ownAttrib")
         query = project_graphql_query(fields)
         query.set_variable_value("projectName", project_name)
 
@@ -3203,8 +3686,16 @@ class ServerAPI(object):
         folder_ids=None,
         folder_paths=None,
         folder_names=None,
+        folder_types=None,
         parent_ids=None,
+        folder_path_regex=None,
+        has_products=None,
+        has_tasks=None,
+        has_children=None,
+        statuses=None,
+        tags=None,
         active=True,
+        has_links=None,
         fields=None,
         own_attributes=False
     ):
@@ -3224,10 +3715,26 @@ class ServerAPI(object):
                 for filtering.
             folder_names (Optional[Iterable[str]]): Folder names used
                 for filtering.
+            folder_types (Optional[Iterable[str]]): Folder types used
+                for filtering.
             parent_ids (Optional[Iterable[str]]): Ids of folder parents.
                 Use 'None' if folder is direct child of project.
+            folder_path_regex (Optional[str]): Folder path regex used
+                for filtering.
+            has_products (Optional[bool]): Filter folders with/without
+                products. Ignored when None, default behavior.
+            has_tasks (Optional[bool]): Filter folders with/without
+                tasks. Ignored when None, default behavior.
+            has_children (Optional[bool]): Filter folders with/without
+                children. Ignored when None, default behavior.
+            statuses (Optional[Iterable[str]]): Folder statuses used
+                for filtering.
+            tags (Optional[Iterable[str]]): Folder tags used
+                for filtering.
             active (Optional[bool]): Filter active/inactive folders.
                 Both are returned if is set to None.
+            has_links (Optional[Literal[IN, OUT, ANY]]): Filter
+                representations with IN/OUT/ANY links.
             fields (Optional[Iterable[str]]): Fields to be queried for
                 folder. All possible folder fields are returned
                 if 'None' is passed.
@@ -3262,6 +3769,24 @@ class ServerAPI(object):
                 return
             filters["folderNames"] = list(folder_names)
 
+        if folder_types is not None:
+            folder_types = set(folder_types)
+            if not folder_types:
+                return
+            filters["folderTypes"] = list(folder_types)
+
+        if statuses is not None:
+            statuses = set(statuses)
+            if not statuses:
+                return
+            filters["folderStatuses"] = list(statuses)
+
+        if tags is not None:
+            tags = set(tags)
+            if not tags:
+                return
+            filters["folderTags"] = list(tags)
+
         if parent_ids is not None:
             parent_ids = set(parent_ids)
             if not parent_ids:
@@ -3282,13 +3807,31 @@ class ServerAPI(object):
 
             filters["parentFolderIds"] = list(parent_ids)
 
-        if fields:
-            fields = set(fields)
-        else:
+        if folder_path_regex is not None:
+            filters["folderPathRegex"] = folder_path_regex
+
+        if has_products is not None:
+            filters["folderHasProducts"] = has_products
+
+        if has_tasks is not None:
+            filters["folderHasTasks"] = has_tasks
+
+        if has_links is not None:
+            filters["folderHasLinks"] = has_links.upper()
+
+        if has_children is not None:
+            filters["folderHasChildren"] = has_children
+
+        if not fields:
             fields = self.get_default_fields_for_type("folder")
+        else:
+            fields = set(fields)
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("folder")
 
         use_rest = False
-        if "data" in fields:
+        if "data" in fields and not self.graphql_allows_data_in_query:
             use_rest = True
             fields = {"id"}
 
@@ -3309,6 +3852,8 @@ class ServerAPI(object):
 
                 if use_rest:
                     folder = self.get_rest_folder(project_name, folder["id"])
+                else:
+                    self._convert_entity_data(folder)
 
                 if own_attributes:
                     fill_own_attribs(folder)
@@ -3461,6 +4006,10 @@ class ServerAPI(object):
         task_names=None,
         task_types=None,
         folder_ids=None,
+        assignees=None,
+        assignees_all=None,
+        statuses=None,
+        tags=None,
         active=True,
         fields=None,
         own_attributes=False
@@ -3474,6 +4023,16 @@ class ServerAPI(object):
             task_types (Iterable[str]): Task types used for filtering.
             folder_ids (Iterable[str]): Ids of task parents. Use 'None'
                 if folder is direct child of project.
+            assignees (Optional[Iterable[str]]): Task assignees used for
+                filtering. All tasks with any of passed assignees are
+                returned.
+            assignees_all (Optional[Iterable[str]]): Task assignees used
+                for filtering. Task must have all of passed assignees to be
+                returned.
+            statuses (Optional[Iterable[str]]): Task statuses used for
+                filtering.
+            tags (Optional[Iterable[str]]): Task tags used for
+                filtering.
             active (Optional[bool]): Filter active/inactive tasks.
                 Both are returned if is set to None.
             fields (Optional[Iterable[str]]): Fields to be queried for
@@ -3517,13 +4076,40 @@ class ServerAPI(object):
                 return
             filters["folderIds"] = list(folder_ids)
 
+        if assignees is not None:
+            assignees = set(assignees)
+            if not assignees:
+                return
+            filters["taskAssigneesAny"] = list(assignees)
+
+        if assignees_all is not None:
+            assignees_all = set(assignees_all)
+            if not assignees_all:
+                return
+            filters["taskAssigneesAll"] = list(assignees_all)
+
+        if statuses is not None:
+            statuses = set(statuses)
+            if not statuses:
+                return
+            filters["taskStatuses"] = list(statuses)
+
+        if tags is not None:
+            tags = set(tags)
+            if not tags:
+                return
+            filters["taskTags"] = list(tags)
+
         if not fields:
             fields = self.get_default_fields_for_type("task")
-
-        fields = set(fields)
+        else:
+            fields = set(fields)
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("task")
 
         use_rest = False
-        if "data" in fields:
+        if "data" in fields and not self.graphql_allows_data_in_query:
             use_rest = True
             fields = {"id"}
 
@@ -3544,6 +4130,8 @@ class ServerAPI(object):
 
                 if use_rest:
                     task = self.get_rest_task(project_name, task["id"])
+                else:
+                    self._convert_entity_data(task)
 
                 if own_attributes:
                     fill_own_attribs(task)
@@ -3624,6 +4212,8 @@ class ServerAPI(object):
 
         if use_rest:
             product = self.get_rest_product(project_name, product["id"])
+        else:
+            self._convert_entity_data(product)
 
         if own_attributes:
             fill_own_attribs(product)
@@ -3636,7 +4226,12 @@ class ServerAPI(object):
         product_ids=None,
         product_names=None,
         folder_ids=None,
+        product_types=None,
+        product_name_regex=None,
+        product_path_regex=None,
         names_by_folder_ids=None,
+        statuses=None,
+        tags=None,
         active=True,
         fields=None,
         own_attributes=False
@@ -3654,8 +4249,17 @@ class ServerAPI(object):
                 filtering.
             folder_ids (Optional[Iterable[str]]): Ids of task parents.
                 Use 'None' if folder is direct child of project.
+            product_types (Optional[Iterable[str]]): Product types used for
+                filtering.
+            product_name_regex (Optional[str]): Filter products by name regex.
+            product_path_regex (Optional[str]): Filter products by path regex.
+                Path starts with folder path and ends with product name.
             names_by_folder_ids (Optional[dict[str, Iterable[str]]]): Product
                 name filtering by folder id.
+            statuses (Optional[Iterable[str]]): Product statuses used
+                for filtering.
+            tags (Optional[Iterable[str]]): Product tags used
+                for filtering.
             active (Optional[bool]): Filter active/inactive products.
                 Both are returned if is set to None.
             fields (Optional[Iterable[str]]): Fields to be queried for
@@ -3671,11 +4275,7 @@ class ServerAPI(object):
         if not project_name:
             return
 
-        if product_ids is not None:
-            product_ids = set(product_ids)
-            if not product_ids:
-                return
-
+        # Prepare these filters before 'name_by_filter_ids' filter
         filter_product_names = None
         if product_names is not None:
             filter_product_names = set(product_names)
@@ -3705,11 +4305,14 @@ class ServerAPI(object):
         # Convert fields and add minimum required fields
         if fields:
             fields = set(fields) | {"id"}
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("product")
         else:
             fields = self.get_default_fields_for_type("product")
 
         use_rest = False
-        if "data" in fields:
+        if "data" in fields and not self.graphql_allows_data_in_query:
             use_rest = True
             fields = {"id"}
 
@@ -3728,14 +4331,42 @@ class ServerAPI(object):
         filters = {
             "projectName": project_name
         }
+
         if filter_folder_ids:
             filters["folderIds"] = list(filter_folder_ids)
 
-        if product_ids:
-            filters["productIds"] = list(product_ids)
-
         if filter_product_names:
             filters["productNames"] = list(filter_product_names)
+
+        if product_ids is not None:
+            product_ids = set(product_ids)
+            if not product_ids:
+                return
+            filters["productIds"] = list(product_ids)
+
+        if product_types is not None:
+            product_types = set(product_types)
+            if not product_types:
+                return
+            filters["productTypes"] = list(product_types)
+
+        if statuses is not None:
+            statuses = set(statuses)
+            if not statuses:
+                return
+            filters["productStatuses"] = list(statuses)
+
+        if tags is not None:
+            tags = set(tags)
+            if not tags:
+                return
+            filters["productTags"] = list(tags)
+
+        if product_name_regex:
+            filters["productNameRegex"] = product_name_regex
+
+        if product_path_regex:
+            filters["productPathRegex"] = product_path_regex
 
         query = products_graphql_query(fields)
         for attr, filter_value in filters.items():
@@ -3928,6 +4559,8 @@ class ServerAPI(object):
         hero=True,
         standard=True,
         latest=None,
+        statuses=None,
+        tags=None,
         active=True,
         fields=None,
         own_attributes=False
@@ -3947,6 +4580,10 @@ class ServerAPI(object):
             latest (Optional[bool]): Return only latest version of standard
                 versions. This can be combined only with 'standard' attribute
                 set to True.
+            statuses (Optional[Iterable[str]]): Representation statuses used
+                for filtering.
+            tags (Optional[Iterable[str]]): Representation tags used
+                for filtering.
             active (Optional[bool]): Receive active/inactive entities.
                 Both are returned when 'None' is passed.
             fields (Optional[Iterable[str]]): Fields to be queried
@@ -3961,18 +4598,22 @@ class ServerAPI(object):
 
         if not fields:
             fields = self.get_default_fields_for_type("version")
-        fields = set(fields)
-
-        if active is not None:
-            fields.add("active")
+        else:
+            fields = set(fields)
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type("version")
 
         # Make sure fields have minimum required fields
         fields |= {"id", "version"}
 
         use_rest = False
-        if "data" in fields:
+        if "data" in fields and not self.graphql_allows_data_in_query:
             use_rest = True
             fields = {"id"}
+
+        if active is not None:
+            fields.add("active")
 
         if own_attributes:
             fields.add("ownAttrib")
@@ -3998,6 +4639,18 @@ class ServerAPI(object):
             if not versions:
                 return
             filters["versions"] = list(versions)
+
+        if statuses is not None:
+            statuses = set(statuses)
+            if not statuses:
+                return
+            filters["versionStatuses"] = list(statuses)
+
+        if tags is not None:
+            tags = set(tags)
+            if not tags:
+                return
+            filters["versionTags"] = list(tags)
 
         if not hero and not standard:
             return
@@ -4047,6 +4700,8 @@ class ServerAPI(object):
                         version = self.get_rest_version(
                             project_name, version["id"]
                         )
+                    else:
+                        self._convert_entity_data(version)
 
                     if own_attributes:
                         fill_own_attribs(version)
@@ -4253,6 +4908,10 @@ class ServerAPI(object):
             dict[str, dict[str, Any]]: Last versions by product id.
         """
 
+        if fields:
+            fields = set(fields)
+            fields.add("productId")
+
         versions = self.get_versions(
             project_name,
             product_ids=product_ids,
@@ -4262,7 +4921,7 @@ class ServerAPI(object):
             own_attributes=own_attributes
         )
         return {
-            version["parent"]: version
+            version["productId"]: version
             for version in versions
         }
 
@@ -4376,6 +5035,23 @@ class ServerAPI(object):
         )
         return latest_version["id"] == version_id
 
+    def _representation_conversion(self, representation):
+        if "context" in representation:
+            orig_context = representation["context"]
+            context = {}
+            if orig_context and orig_context != "null":
+                context = json.loads(orig_context)
+            representation["context"] = context
+
+        repre_files = representation.get("files")
+        if not repre_files:
+            return
+
+        for repre_file in repre_files:
+            repre_file_size = repre_file.get("size")
+            if repre_file_size is not None:
+                repre_file["size"] = int(repre_file["size"])
+
     def get_representations(
         self,
         project_name,
@@ -4383,7 +5059,10 @@ class ServerAPI(object):
         representation_names=None,
         version_ids=None,
         names_by_version_ids=None,
+        statuses=None,
+        tags=None,
         active=True,
+        has_links=None,
         fields=None,
         own_attributes=False
     ):
@@ -4405,8 +5084,14 @@ class ServerAPI(object):
             names_by_version_ids (Optional[bool]): Find representations
                 by names and version ids. This filter discard all
                 other filters.
+            statuses (Optional[Iterable[str]]): Representation statuses used
+                for filtering.
+            tags (Optional[Iterable[str]]): Representation tags used
+                for filtering.
             active (Optional[bool]): Receive active/inactive entities.
                 Both are returned when 'None' is passed.
+            has_links (Optional[Literal[IN, OUT, ANY]]): Filter
+                representations with IN/OUT/ANY links.
             fields (Optional[Iterable[str]]): Fields to be queried for
                 representation. All possible fields are returned if 'None' is
                 passed.
@@ -4419,10 +5104,16 @@ class ServerAPI(object):
 
         if not fields:
             fields = self.get_default_fields_for_type("representation")
-        fields = set(fields)
+        else:
+            fields = set(fields)
+            if "attrib" in fields:
+                fields.remove("attrib")
+                fields |= self.get_attributes_fields_for_type(
+                    "representation"
+                )
 
         use_rest = False
-        if "data" in fields:
+        if "data" in fields and not self.graphql_allows_data_in_query:
             use_rest = True
             fields = {"id"}
 
@@ -4471,6 +5162,21 @@ class ServerAPI(object):
         if representaion_names_filter:
             filters["representationNames"] = list(representaion_names_filter)
 
+        if statuses is not None:
+            statuses = set(statuses)
+            if not statuses:
+                return
+            filters["representationStatuses"] = list(statuses)
+
+        if tags is not None:
+            tags = set(tags)
+            if not tags:
+                return
+            filters["representationTags"] = list(tags)
+
+        if has_links is not None:
+            filters["representationHasLinks"] = has_links.upper()
+
         query = representations_graphql_query(fields)
 
         for attr, filter_value in filters.items():
@@ -4485,13 +5191,10 @@ class ServerAPI(object):
                     repre = self.get_rest_representation(
                         project_name, repre["id"]
                     )
+                else:
+                    self._convert_entity_data(repre)
 
-                if "context" in repre:
-                    orig_context = repre["context"]
-                    context = {}
-                    if orig_context and orig_context != "null":
-                        context = json.loads(orig_context)
-                    repre["context"] = context
+                self._representation_conversion(repre)
 
                 if own_attributes:
                     fill_own_attribs(repre)
@@ -4604,6 +5307,9 @@ class ServerAPI(object):
             version = repre.pop("version")
             product = version.pop("product")
             folder = product.pop("folder")
+            self._convert_entity_data(version)
+            self._convert_entity_data(product)
+            self._convert_entity_data(folder)
             output[repre_id] = RepresentationParents(
                 version, product, folder, project
             )
@@ -4725,6 +5431,10 @@ class ServerAPI(object):
         workfile_ids=None,
         task_ids=None,
         paths=None,
+        path_regex=None,
+        statuses=None,
+        tags=None,
+        has_links=None,
         fields=None,
         own_attributes=False
     ):
@@ -4735,6 +5445,13 @@ class ServerAPI(object):
             workfile_ids (Optional[Iterable[str]]): Workfile ids.
             task_ids (Optional[Iterable[str]]): Task ids.
             paths (Optional[Iterable[str]]): Rootless workfiles paths.
+            path_regex (Optional[str]): Regex filter for workfile path.
+            statuses (Optional[Iterable[str]]): Workfile info statuses used
+                for filtering.
+            tags (Optional[Iterable[str]]): Workfile info tags used
+                for filtering.
+            has_links (Optional[Literal[IN, OUT, ANY]]): Filter
+                representations with IN/OUT/ANY links.
             fields (Optional[Iterable[str]]): Fields to be queried for
                 representation. All possible fields are returned if 'None' is
                 passed.
@@ -4758,15 +5475,40 @@ class ServerAPI(object):
                 return
             filters["paths"] = list(paths)
 
+        if path_regex is not None:
+            filters["workfilePathRegex"] = path_regex
+
         if workfile_ids is not None:
             workfile_ids = set(workfile_ids)
             if not workfile_ids:
                 return
             filters["workfileIds"] = list(workfile_ids)
 
+        if statuses is not None:
+            statuses = set(statuses)
+            if not statuses:
+                return
+            filters["workfileStatuses"] = list(statuses)
+
+        if tags is not None:
+            tags = set(tags)
+            if not tags:
+                return
+            filters["workfileTags"] = list(tags)
+
+        if has_links is not None:
+            filters["workfilehasLinks"] = has_links.upper()
+
         if not fields:
-            fields = DEFAULT_WORKFILE_INFO_FIELDS
+            fields = self.get_default_fields_for_type("workfile")
+
         fields = set(fields)
+        if "attrib" in fields:
+            fields.remove("attrib")
+            fields |= {
+                "attrib.{}".format(attr)
+                for attr in self.get_attributes_for_type("workfile")
+            }
         if own_attributes:
             fields.add("ownAttrib")
 
@@ -4843,18 +5585,61 @@ class ServerAPI(object):
             return workfile_info
         return None
 
+    def _prepare_thumbnail_content(self, project_name, response):
+        content = None
+        content_type = response.content_type
+
+        # It is expected the response contains thumbnail id otherwise the
+        #   content cannot be cached and filepath returned
+        thumbnail_id = response.headers.get("X-Thumbnail-Id")
+        if thumbnail_id is not None:
+            content = response.content
+
+        return ThumbnailContent(
+            project_name, thumbnail_id, content, content_type
+        )
+
+    def get_thumbnail_by_id(self, project_name, thumbnail_id):
+        """Get thumbnail from server by id.
+
+        Permissions of thumbnails are related to entities so thumbnails must
+        be queried per entity. So an entity type and entity type is required
+        to be passed.
+
+        Notes:
+            It is recommended to use one of prepared entity type specific
+                methods 'get_folder_thumbnail', 'get_version_thumbnail' or
+                'get_workfile_thumbnail'.
+            We do recommend pass thumbnail id if you have access to it. Each
+                entity that allows thumbnails has 'thumbnailId' field, so it
+                can be queried.
+
+        Args:
+            project_name (str): Project under which the entity is located.
+            thumbnail_id (Optional[str]): DEPRECATED Use
+                'get_thumbnail_by_id'.
+
+        Returns:
+            ThumbnailContent: Thumbnail content wrapper. Does not have to be
+                valid.
+        """
+
+        response = self.raw_get(
+            "projects/{}/thumbnails/{}".format(
+                project_name,
+                thumbnail_id
+            )
+        )
+        return self._prepare_thumbnail_content(project_name, response)
+
     def get_thumbnail(
         self, project_name, entity_type, entity_id, thumbnail_id=None
     ):
         """Get thumbnail from server.
 
-        Permissions of thumbnails are related to entities so thumbnails must be
-        queried per entity. So an entity type and entity type is required to
-        be passed.
-
-        If thumbnail id is passed logic can look into locally cached thumbnails
-        before calling server which can enhance loading time. If thumbnail id
-        is not passed the thumbnail is always downloaded even if is available.
+        Permissions of thumbnails are related to entities so thumbnails must
+        be queried per entity. So an entity type and entity type is required
+        to be passed.
 
         Notes:
             It is recommended to use one of prepared entity type specific
@@ -4868,20 +5653,16 @@ class ServerAPI(object):
             project_name (str): Project under which the entity is located.
             entity_type (str): Entity type which passed entity id represents.
             entity_id (str): Entity id for which thumbnail should be returned.
-            thumbnail_id (Optional[str]): Prepared thumbnail id from entity.
-                Used only to check if thumbnail was already cached.
+            thumbnail_id (Optional[str]): DEPRECATED Use
+                'get_thumbnail_by_id'.
 
         Returns:
-            Union[str, None]: Path to downloaded thumbnail or none if entity
-                does not have any (or if user does not have permissions).
+            ThumbnailContent: Thumbnail content wrapper. Does not have to be
+                valid.
         """
 
-        # Look for thumbnail into cache and return the path if was found
-        filepath = self._thumbnail_cache.get_thumbnail_filepath(
-            project_name, thumbnail_id
-        )
-        if filepath:
-            return filepath
+        if thumbnail_id:
+            return self.get_thumbnail_by_id(project_name, thumbnail_id)
 
         if entity_type in (
             "folder",
@@ -4890,29 +5671,12 @@ class ServerAPI(object):
         ):
             entity_type += "s"
 
-        # Receive thumbnail content from server
-        result = self.raw_get("projects/{}/{}/{}/thumbnail".format(
+        response = self.raw_get("projects/{}/{}/{}/thumbnail".format(
             project_name,
             entity_type,
             entity_id
         ))
-
-        if result.content_type is None:
-            return None
-
-        # It is expected the response contains thumbnail id otherwise the
-        #   content cannot be cached and filepath returned
-        thumbnail_id = result.headers.get("X-Thumbnail-Id")
-        if thumbnail_id is None:
-            return None
-
-        # Cache thumbnail and return path
-        return self._thumbnail_cache.store_thumbnail(
-            project_name,
-            thumbnail_id,
-            result.content,
-            result.content_type
-        )
+        return self._prepare_thumbnail_content(project_name, response)
 
     def get_folder_thumbnail(
         self, project_name, folder_id, thumbnail_id=None
@@ -5027,16 +5791,14 @@ class ServerAPI(object):
             return thumbnail_id
 
         mime_type = self._get_thumbnail_mime_type(src_filepath)
-        with open(src_filepath, "rb") as stream:
-            content = stream.read()
-
-        response = self.raw_post(
+        response = self.upload_file(
             "projects/{}/thumbnails".format(project_name),
+            src_filepath,
+            request_type=RequestTypes.post,
             headers={"Content-Type": mime_type},
-            data=content
         )
         response.raise_for_status()
-        return response.data["id"]
+        return response.json()["id"]
 
     def update_thumbnail(self, project_name, thumbnail_id, src_filepath):
         """Change thumbnail content by id.
@@ -5057,13 +5819,11 @@ class ServerAPI(object):
             raise ValueError("Entered filepath does not exist.")
 
         mime_type = self._get_thumbnail_mime_type(src_filepath)
-        with open(src_filepath, "rb") as stream:
-            content = stream.read()
-
-        response = self.raw_put(
+        response = self.upload_file(
             "projects/{}/thumbnails/{}".format(project_name, thumbnail_id),
+            src_filepath,
+            request_type=RequestTypes.put,
             headers={"Content-Type": mime_type},
-            data=content
         )
         response.raise_for_status()
 
@@ -5463,19 +6223,22 @@ class ServerAPI(object):
         """Helper method to get links from server for entity types.
 
         Example output:
-            [
-                {
-                    "id": "59a212c0d2e211eda0e20242ac120002",
-                    "linkType": "reference",
-                    "description": "reference link between folders",
-                    "projectName": "my_project",
-                    "author": "frantadmin",
-                    "entityId": "b1df109676db11ed8e8c6c9466b19aa8",
-                    "entityType": "folder",
-                    "direction": "out"
-                },
+            {
+                "59a212c0d2e211eda0e20242ac120001": [
+                    {
+                        "id": "59a212c0d2e211eda0e20242ac120002",
+                        "linkType": "reference",
+                        "description": "reference link between folders",
+                        "projectName": "my_project",
+                        "author": "frantadmin",
+                        "entityId": "b1df109676db11ed8e8c6c9466b19aa8",
+                        "entityType": "folder",
+                        "direction": "out"
+                    },
+                    ...
+                ],
                 ...
-            ]
+            }
 
         Args:
             project_name (str): Project where links are.
@@ -5882,3 +6645,13 @@ class ServerAPI(object):
                     op_result["detail"],
                 ))
         return op_results
+
+    def _convert_entity_data(self, entity):
+        if not entity:
+            return
+        entity_data = entity.get("data")
+        if (
+            entity_data is not None
+            and isinstance(entity_data, six.string_types)
+        ):
+            entity["data"] = json.loads(entity_data)

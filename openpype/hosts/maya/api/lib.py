@@ -62,19 +62,6 @@ SHAPE_ATTRS = {"castsShadows",
                "doubleSided",
                "opposite"}
 
-RENDER_ATTRS = {"vray": {
-    "node": "vraySettings",
-    "prefix": "fileNamePrefix",
-    "padding": "fileNamePadding",
-    "ext": "imageFormatStr"
-},
-    "default": {
-    "node": "defaultRenderGlobals",
-    "prefix": "imageFilePrefix",
-    "padding": "extensionPadding"
-}
-}
-
 
 DEFAULT_MATRIX = [1.0, 0.0, 0.0, 0.0,
                   0.0, 1.0, 0.0, 0.0,
@@ -115,8 +102,6 @@ _alembic_options = {
 INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
 FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
-RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
-
 
 DISPLAY_LIGHTS_ENUM = [
     {"label": "Use Project Settings", "value": "project_settings"},
@@ -146,6 +131,10 @@ def suspended_refresh(suspend=True):
 
     cmds.ogs(pause=True) is a toggle so we cant pass False.
     """
+    if IS_HEADLESS:
+        yield
+        return
+
     original_state = cmds.ogs(query=True, pause=True)
     try:
         if suspend and not original_state:
@@ -181,6 +170,51 @@ def maintained_selection():
                         noExpand=True)
         else:
             cmds.select(clear=True)
+
+
+def get_namespace(node):
+    """Return namespace of given node"""
+    node_name = node.rsplit("|", 1)[-1]
+    if ":" in node_name:
+        return node_name.rsplit(":", 1)[0]
+    else:
+        return ""
+
+
+def strip_namespace(node, namespace):
+    """Strip given namespace from node path.
+
+    The namespace will only be stripped from names
+    if it starts with that namespace. If the namespace
+    occurs within another namespace it's not removed.
+
+    Examples:
+        >>> strip_namespace("namespace:node", namespace="namespace:")
+        "node"
+        >>> strip_namespace("hello:world:node", namespace="hello:world")
+        "node"
+        >>> strip_namespace("hello:world:node", namespace="hello")
+        "world:node"
+        >>> strip_namespace("hello:world:node", namespace="world")
+        "hello:world:node"
+        >>> strip_namespace("ns:group|ns:node", namespace="ns")
+        "group|node"
+
+    Returns:
+        str: Node name without given starting namespace.
+
+    """
+
+    # Ensure namespace ends with `:`
+    if not namespace.endswith(":"):
+        namespace = "{}:".format(namespace)
+
+    # The long path for a node can also have the namespace
+    # in its parents so we need to remove it from each
+    return "|".join(
+        name[len(namespace):] if name.startswith(namespace) else name
+        for name in node.split("|")
+    )
 
 
 def get_custom_namespace(custom_namespace):
@@ -922,7 +956,7 @@ def no_display_layers(nodes):
 
 
 @contextlib.contextmanager
-def namespaced(namespace, new=True):
+def namespaced(namespace, new=True, relative_names=None):
     """Work inside namespace during context
 
     Args:
@@ -934,15 +968,19 @@ def namespaced(namespace, new=True):
 
     """
     original = cmds.namespaceInfo(cur=True, absoluteName=True)
+    original_relative_names = cmds.namespace(query=True, relativeNames=True)
     if new:
         namespace = unique_namespace(namespace)
         cmds.namespace(add=namespace)
-
+    if relative_names is not None:
+        cmds.namespace(relativeNames=relative_names)
     try:
         cmds.namespace(set=namespace)
         yield namespace
     finally:
         cmds.namespace(set=original)
+        if relative_names is not None:
+            cmds.namespace(relativeNames=original_relative_names)
 
 
 @contextlib.contextmanager
@@ -2571,7 +2609,7 @@ def bake_to_world_space(nodes,
             new_name = "{0}_baked".format(short_name)
             new_node = cmds.duplicate(node,
                                       name=new_name,
-                                      renameChildren=True)[0]
+                                      renameChildren=True)[0]  # noqa
 
             # Connect all attributes on the node except for transform
             # attributes
@@ -2979,194 +3017,6 @@ class shelf():
                     cmds.deleteUI(each)
         else:
             cmds.shelfLayout(self.name, p="ShelfLayout")
-
-
-def _get_render_instances():
-    """Return all 'render-like' instances.
-
-    This returns list of instance sets that needs to receive information
-    about render layer changes.
-
-    Returns:
-        list: list of instances
-
-    """
-    objectset = cmds.ls("*.id", long=True, exactType="objectSet",
-                        recursive=True, objectsOnly=True)
-
-    instances = []
-    for objset in objectset:
-        if not cmds.attributeQuery("id", node=objset, exists=True):
-            continue
-
-        id_attr = "{}.id".format(objset)
-        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
-            continue
-
-        has_family = cmds.attributeQuery("family",
-                                         node=objset,
-                                         exists=True)
-        if not has_family:
-            continue
-
-        if cmds.getAttr(
-                "{}.family".format(objset)) in RENDERLIKE_INSTANCE_FAMILIES:
-            instances.append(objset)
-
-    return instances
-
-
-renderItemObserverList = []
-
-
-class RenderSetupListObserver:
-    """Observer to catch changes in render setup layers."""
-
-    def listItemAdded(self, item):
-        print("--- adding ...")
-        self._add_render_layer(item)
-
-    def listItemRemoved(self, item):
-        print("--- removing ...")
-        self._remove_render_layer(item.name())
-
-    def _add_render_layer(self, item):
-        render_sets = _get_render_instances()
-        layer_name = item.name()
-
-        for render_set in render_sets:
-            members = cmds.sets(render_set, query=True) or []
-
-            namespace_name = "_{}".format(render_set)
-            if not cmds.namespace(exists=namespace_name):
-                index = 1
-                namespace_name = "_{}".format(render_set)
-                try:
-                    cmds.namespace(rm=namespace_name)
-                except RuntimeError:
-                    # namespace is not empty, so we leave it untouched
-                    pass
-                orignal_namespace_name = namespace_name
-                while(cmds.namespace(exists=namespace_name)):
-                    namespace_name = "{}{}".format(
-                        orignal_namespace_name, index)
-                    index += 1
-
-                namespace = cmds.namespace(add=namespace_name)
-
-            if members:
-                # if set already have namespaced members, use the same
-                # namespace as others.
-                namespace = members[0].rpartition(":")[0]
-            else:
-                namespace = namespace_name
-
-            render_layer_set_name = "{}:{}".format(namespace, layer_name)
-            if render_layer_set_name in members:
-                continue
-            print("  - creating set for {}".format(layer_name))
-            maya_set = cmds.sets(n=render_layer_set_name, empty=True)
-            cmds.sets(maya_set, forceElement=render_set)
-            rio = RenderSetupItemObserver(item)
-            print("-   adding observer for {}".format(item.name()))
-            item.addItemObserver(rio.itemChanged)
-            renderItemObserverList.append(rio)
-
-    def _remove_render_layer(self, layer_name):
-        render_sets = _get_render_instances()
-
-        for render_set in render_sets:
-            members = cmds.sets(render_set, query=True)
-            if not members:
-                continue
-
-            # all sets under set should have the same namespace
-            namespace = members[0].rpartition(":")[0]
-            render_layer_set_name = "{}:{}".format(namespace, layer_name)
-
-            if render_layer_set_name in members:
-                print("  - removing set for {}".format(layer_name))
-                cmds.delete(render_layer_set_name)
-
-
-class RenderSetupItemObserver:
-    """Handle changes in render setup items."""
-
-    def __init__(self, item):
-        self.item = item
-        self.original_name = item.name()
-
-    def itemChanged(self, *args, **kwargs):
-        """Item changed callback."""
-        if self.item.name() == self.original_name:
-            return
-
-        render_sets = _get_render_instances()
-
-        for render_set in render_sets:
-            members = cmds.sets(render_set, query=True)
-            if not members:
-                continue
-
-            # all sets under set should have the same namespace
-            namespace = members[0].rpartition(":")[0]
-            render_layer_set_name = "{}:{}".format(
-                namespace, self.original_name)
-
-            if render_layer_set_name in members:
-                print(" <> renaming {} to {}".format(self.original_name,
-                                                     self.item.name()))
-                cmds.rename(render_layer_set_name,
-                            "{}:{}".format(
-                                namespace, self.item.name()))
-            self.original_name = self.item.name()
-
-
-renderListObserver = RenderSetupListObserver()
-
-
-def add_render_layer_change_observer():
-    import maya.app.renderSetup.model.renderSetup as renderSetup
-
-    rs = renderSetup.instance()
-    render_sets = _get_render_instances()
-
-    layers = rs.getRenderLayers()
-    for render_set in render_sets:
-        members = cmds.sets(render_set, query=True)
-        if not members:
-            continue
-        # all sets under set should have the same namespace
-        namespace = members[0].rpartition(":")[0]
-        for layer in layers:
-            render_layer_set_name = "{}:{}".format(namespace, layer.name())
-            if render_layer_set_name not in members:
-                continue
-            rio = RenderSetupItemObserver(layer)
-            print("-   adding observer for {}".format(layer.name()))
-            layer.addItemObserver(rio.itemChanged)
-            renderItemObserverList.append(rio)
-
-
-def add_render_layer_observer():
-    import maya.app.renderSetup.model.renderSetup as renderSetup
-
-    print(">   adding renderSetup observer ...")
-    rs = renderSetup.instance()
-    rs.addListObserver(renderListObserver)
-    pass
-
-
-def remove_render_layer_observer():
-    import maya.app.renderSetup.model.renderSetup as renderSetup
-
-    print("<   removing renderSetup observer ...")
-    rs = renderSetup.instance()
-    try:
-        rs.removeListObserver(renderListObserver)
-    except ValueError:
-        # no observer set yet
-        pass
 
 
 def update_content_on_context_change():
@@ -4100,14 +3950,19 @@ def create_rig_animation_instance(
     """
     if options is None:
         options = {}
-
+    name = context["representation"]["name"]
     output = next((node for node in nodes if
                    node.endswith("out_SET")), None)
     controls = next((node for node in nodes if
                      node.endswith("controls_SET")), None)
+    if name != "fbx":
+        assert output, "No out_SET in rig, this is a bug."
+        assert controls, "No controls_SET in rig, this is a bug."
 
-    assert output, "No out_SET in rig, this is a bug."
-    assert controls, "No controls_SET in rig, this is a bug."
+    anim_skeleton = next((node for node in nodes if
+                          node.endswith("skeletonAnim_SET")), None)
+    skeleton_mesh = next((node for node in nodes if
+                          node.endswith("skeletonMesh_SET")), None)
 
     # Find the roots amongst the loaded nodes
     roots = (
@@ -4119,9 +3974,7 @@ def create_rig_animation_instance(
     custom_subset = options.get("animationSubsetName")
     if custom_subset:
         formatting_data = {
-            # TODO remove 'asset_type' and replace 'asset_name' with 'asset'
-            "asset_name": context['asset']['name'],
-            "asset_type": context['asset']['type'],
+            "asset": context["asset"],
             "subset": context['subset']['name'],
             "family": (
                 context['subset']['data'].get('family') or
@@ -4142,10 +3995,12 @@ def create_rig_animation_instance(
 
     host = registered_host()
     create_context = CreateContext(host)
-
     # Create the animation instance
+    rig_sets = [output, controls, anim_skeleton, skeleton_mesh]
+    # Remove sets that this particular rig does not have
+    rig_sets = [s for s in rig_sets if s is not None]
     with maintained_selection():
-        cmds.select([output, controls] + roots, noExpand=True)
+        cmds.select(rig_sets + roots, noExpand=True)
         create_context.create(
             creator_identifier=creator_identifier,
             variant=namespace,

@@ -51,7 +51,7 @@ class ComponentOpen(BaseAction):
         else:
             return {
                 'success': False,
-                'message': "Didn't found file: " + fpath
+                'message': "Didn't find file: " + fpath
             }
 
         return {

@@ -286,7 +286,7 @@ class SitesWidget(QtWidgets.QWidget):
                 continue
 
             site_inputs = []
-            site_config = site_configs[site_name]
+            site_config = site_configs.get(site_name, {})
             for root_name, path_entity in site_config.get("root", {}).items():
                 if not path_entity:
                     continue

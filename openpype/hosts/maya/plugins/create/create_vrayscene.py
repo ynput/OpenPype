@@ -22,7 +22,7 @@ class CreateVRayScene(plugin.RenderlayerCreator):
     singleton_node_name = "vraysceneMain"
 
     @classmethod
-    def apply_settings(cls, project_settings, system_settings):
+    def apply_settings(cls, project_settings):
         cls.render_settings = project_settings["maya"]["RenderSettings"]
 
     def create(self, subset_name, instance_data, pre_create_data):

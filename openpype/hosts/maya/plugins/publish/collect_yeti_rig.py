@@ -119,7 +119,6 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         texture_filenames = []
         if image_search_paths:
 
-
             # TODO: Somehow this uses OS environment path separator, `:` vs `;`
             # Later on check whether this is pipeline OS cross-compatible.
             image_search_paths = [p for p in
@@ -130,13 +129,13 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
             # List all related textures
             texture_filenames = cmds.pgYetiCommand(node, listTextures=True)
-            self.log.info("Found %i texture(s)" % len(texture_filenames))
+            self.log.debug("Found %i texture(s)" % len(texture_filenames))
 
         # Get all reference nodes
         reference_nodes = cmds.pgYetiGraph(node,
                                            listNodes=True,
                                            type="reference")
-        self.log.info("Found %i reference node(s)" % len(reference_nodes))
+        self.log.debug("Found %i reference node(s)" % len(reference_nodes))
 
         if texture_filenames and not image_search_paths:
             raise ValueError("pgYetiMaya node '%s' is missing the path to the "

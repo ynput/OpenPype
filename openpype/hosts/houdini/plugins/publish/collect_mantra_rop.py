@@ -24,7 +24,9 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
     """
 
     label = "Mantra ROP Render Products"
-    order = pyblish.api.CollectorOrder + 0.4
+    # This specific order value is used so that
+    # this plugin runs after CollectFrames
+    order = pyblish.api.CollectorOrder + 0.11
     hosts = ["houdini"]
     families = ["mantra_rop"]
 
@@ -137,8 +139,9 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
             return path
 
         expected_files = []
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
+
         for i in range(int(start), (int(end) + 1)):
             expected_files.append(
                 os.path.join(dir, (file % i)).replace("\\", "/"))

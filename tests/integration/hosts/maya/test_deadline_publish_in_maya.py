@@ -21,18 +21,17 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/maya  # noqa: E501
 
     """
-    PERSIST = True
+    PERSIST = False
 
     TEST_FILES = [
-        ("1dDY7CbdFXfRksGVoiuwjhnPoTRCCf5ea",
-         "test_maya_deadline_publish.zip", "")
+        ("test_deadline_publish_in_maya", "", "")
     ]
 
     APP_GROUP = "maya"
     # keep empty to locate latest installed variant or explicit
     APP_VARIANT = ""
 
-    TIMEOUT = 120  # publish timeout
+    TIMEOUT = 180  # publish timeout
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""

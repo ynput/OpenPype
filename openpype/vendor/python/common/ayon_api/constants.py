@@ -1,8 +1,34 @@
 # Environments where server url and api key are stored for global connection
 SERVER_URL_ENV_KEY = "AYON_SERVER_URL"
 SERVER_API_ENV_KEY = "AYON_API_KEY"
+SERVER_TIMEOUT_ENV_KEY = "AYON_SERVER_TIMEOUT"
+SERVER_RETRIES_ENV_KEY = "AYON_SERVER_RETRIES"
+# Default variant used for settings
+DEFAULT_VARIANT_ENV_KEY = "AYON_DEFAULT_SETTINGS_VARIANT"
+# Default site id used for connection
+SITE_ID_ENV_KEY = "AYON_SITE_ID"
+
 # Backwards compatibility
 SERVER_TOKEN_ENV_KEY = SERVER_API_ENV_KEY
+
+# --- User ---
+DEFAULT_USER_FIELDS = {
+    "accessGroups",
+    "defaultAccessGroups",
+    "name",
+    "isService",
+    "isManager",
+    "isGuest",
+    "isAdmin",
+    "createdAt",
+    "active",
+    "hasPassword",
+    "updatedAt",
+    "apiKeyPreview",
+    "attrib.avatarUrl",
+    "attrib.email",
+    "attrib.fullName",
+}
 
 # --- Product types ---
 DEFAULT_PRODUCT_TYPE_FIELDS = {
@@ -18,6 +44,7 @@ DEFAULT_PROJECT_FIELDS = {
     "code",
     "config",
     "createdAt",
+    "data",
 }
 
 # --- Folders ---
@@ -30,6 +57,7 @@ DEFAULT_FOLDER_FIELDS = {
     "parentId",
     "active",
     "thumbnailId",
+    "data",
 }
 
 # --- Tasks ---
@@ -41,6 +69,7 @@ DEFAULT_TASK_FIELDS = {
     "folderId",
     "active",
     "assignees",
+    "data",
 }
 
 # --- Products ---
@@ -50,6 +79,7 @@ DEFAULT_PRODUCT_FIELDS = {
     "folderId",
     "active",
     "productType",
+    "data",
 }
 
 # --- Versions ---
@@ -64,6 +94,7 @@ DEFAULT_VERSION_FIELDS = {
     "thumbnailId",
     "createdAt",
     "updatedAt",
+    "data",
 }
 
 # --- Representations ---
@@ -74,6 +105,7 @@ DEFAULT_REPRESENTATION_FIELDS = {
     "createdAt",
     "active",
     "versionId",
+    "data",
 }
 
 REPRESENTATION_FILES_FIELDS = {
@@ -97,6 +129,7 @@ DEFAULT_WORKFILE_INFO_FIELDS = {
     "thumbnailId",
     "updatedAt",
     "updatedBy",
+    "data",
 }
 
 DEFAULT_EVENT_FIELDS = {

@@ -24,7 +24,9 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
     """
 
     label = "VRay ROP Render Products"
-    order = pyblish.api.CollectorOrder + 0.4
+    # This specific order value is used so that
+    # this plugin runs after CollectFrames
+    order = pyblish.api.CollectorOrder + 0.11
     hosts = ["houdini"]
     families = ["vray_rop"]
 
@@ -99,14 +101,9 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
     def get_render_product_name(self, prefix, suffix="<reName>"):
         """Return the beauty output filename if render element enabled
         """
+        # Remove aov suffix from the product: `prefix.aov_suffix` -> `prefix`
         aov_parm = ".{}".format(suffix)
-        beauty_product = None
-        if aov_parm in prefix:
-            beauty_product = prefix.replace(aov_parm, "")
-        else:
-            beauty_product = prefix
-
-        return beauty_product
+        return prefix.replace(aov_parm, "")
 
     def get_render_element_name(self, node, prefix, suffix="<reName>"):
         """Return the output filename using the AOV prefix and suffix
@@ -139,8 +136,9 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
             return path
 
         expected_files = []
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
+
         for i in range(int(start), (int(end) + 1)):
             expected_files.append(
                 os.path.join(dir, (file % i)).replace("\\", "/"))

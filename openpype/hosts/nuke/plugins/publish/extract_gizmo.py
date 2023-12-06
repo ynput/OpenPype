@@ -85,8 +85,5 @@ class ExtractGizmo(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '{}' to: {}".format(
+        self.log.debug("Extracted instance '{}' to: {}".format(
             instance.name, path))
-
-        self.log.info("Data {}".format(
-            instance.data))

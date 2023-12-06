@@ -275,10 +275,10 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
                     backup_hero_publish_dir = _backup_hero_publish_dir
                     break
                 except Exception:
-                    self.log.info((
+                    self.log.info(
                         "Could not remove previous backup folder."
-                        " Trying to add index to folder name"
-                    ))
+                        " Trying to add index to folder name."
+                    )
 
                 _backup_hero_publish_dir = (
                     backup_hero_publish_dir + str(idx)

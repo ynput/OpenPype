@@ -10,7 +10,6 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.4
     label = "Maya Current File"
     hosts = ['maya']
-    families = ["workfile"]
 
     def process(self, context):
         """Inject the current working file"""

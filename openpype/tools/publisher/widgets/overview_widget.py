@@ -1,5 +1,7 @@
 from qtpy import QtWidgets, QtCore
 
+from openpype import AYON_SERVER_ENABLED
+
 from .border_label_widget import BorderedLabelWidget
 
 from .card_view_widgets import InstanceCardView
@@ -35,7 +37,10 @@ class OverviewWidget(QtWidgets.QFrame):
         # --- Created Subsets/Instances ---
         # Common widget for creation and overview
         subset_views_widget = BorderedLabelWidget(
-            "Subsets to publish", subset_content_widget
+            "{} to publish".format(
+                "Products" if AYON_SERVER_ENABLED else "Subsets"
+            ),
+            subset_content_widget
         )
 
         subset_view_cards = InstanceCardView(controller, subset_views_widget)
@@ -168,7 +173,7 @@ class OverviewWidget(QtWidgets.QFrame):
     def make_sure_animation_is_finished(self):
         if self._change_anim.state() == QtCore.QAbstractAnimation.Running:
             self._change_anim.stop()
-            self._on_change_anim_finished()
+        self._on_change_anim_finished()
 
     def set_state(self, new_state, animate):
         if new_state == self._current_state:

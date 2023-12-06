@@ -11,12 +11,15 @@ import pyblish.api
 from pyblish.lib import MessageHandler
 
 import openpype
+from openpype import AYON_SERVER_ENABLED
 from openpype.host import HostBase
 from openpype.client import (
     get_project,
     get_asset_by_id,
     get_asset_by_name,
     version_is_latest,
+    get_asset_name_identifier,
+    get_ayon_server_api_connection,
 )
 from openpype.lib.events import emit_event
 from openpype.modules import load_modules, ModulesManager
@@ -42,7 +45,7 @@ from . import (
 
 _is_installed = False
 _process_id = None
-_registered_root = {"_": ""}
+_registered_root = {"_": {}}
 _registered_host = {"_": None}
 # Keep modules manager (and it's modules) in memory
 # - that gives option to register modules' callbacks
@@ -83,15 +86,22 @@ def register_root(path):
 
 
 def registered_root():
-    """Return currently registered root"""
-    root = _registered_root["_"]
-    if root:
-        return root
+    """Return registered roots from current project anatomy.
 
-    root = legacy_io.Session.get("AVALON_PROJECTS")
-    if root:
-        return os.path.normpath(root)
-    return ""
+    Consider this does return roots only for current project and current
+        platforms, only if host was installer using 'install_host'.
+
+    Deprecated:
+        Please use project 'Anatomy' to get roots. This function is still used
+            at current core functions of load logic, but that will change
+            in future and this function will be removed eventually. Using this
+            function at new places can cause problems in the future.
+
+    Returns:
+        dict[str, str]: Root paths.
+    """
+
+    return _registered_root["_"]
 
 
 def install_host(host):
@@ -104,6 +114,10 @@ def install_host(host):
     global _is_installed
 
     _is_installed = True
+
+    # Make sure global AYON connection has set site id and version
+    if AYON_SERVER_ENABLED:
+        get_ayon_server_api_connection()
 
     legacy_io.install()
     modules_manager = _get_modules_manager()
@@ -480,6 +494,27 @@ def get_template_data_from_session(session=None, system_settings=None):
     )
 
 
+def get_current_context_template_data(system_settings=None):
+    """Prepare template data for current context.
+
+    Args:
+        system_settings (Optional[Dict[str, Any]]): Prepared system settings.
+
+    Returns:
+        Dict[str, Any] Template data for current context.
+    """
+
+    context = get_current_context()
+    project_name = context["project_name"]
+    asset_name = context["asset_name"]
+    task_name = context["task_name"]
+    host_name = get_current_host_name()
+
+    return get_template_data_with_names(
+        project_name, asset_name, task_name, host_name, system_settings
+    )
+
+
 def get_workdir_from_session(session=None, template_key=None):
     """Template data for template fill from session keys.
 
@@ -565,14 +600,12 @@ def compute_session_changes(
         Dict[str, str]: Changes in the Session dictionary.
     """
 
-    changes = {}
-
     # Get asset document and asset
     if not asset_doc:
         task_name = None
         asset_name = None
     else:
-        asset_name = asset_doc["name"]
+        asset_name = get_asset_name_identifier(asset_doc)
 
     # Detect any changes compared session
     mapping = {
