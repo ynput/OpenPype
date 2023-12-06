@@ -1,3 +1,4 @@
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import get_asset_by_name
 from openpype.pipeline import CreatedInstance
 from openpype.hosts.tvpaint.api.plugin import TVPaintAutoCreator
@@ -34,6 +35,13 @@ class TVPaintReviewCreator(TVPaintAutoCreator):
         task_name = create_context.get_current_task_name()
 
         if existing_instance is None:
+            existing_asset_name = None
+        elif AYON_SERVER_ENABLED:
+            existing_asset_name = existing_instance["folderPath"]
+        else:
+            existing_asset_name = existing_instance["asset"]
+
+        if existing_instance is None:
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
                 self.default_variant,
@@ -43,10 +51,14 @@ class TVPaintReviewCreator(TVPaintAutoCreator):
                 host_name
             )
             data = {
-                "asset": asset_name,
                 "task": task_name,
                 "variant": self.default_variant
             }
+            if AYON_SERVER_ENABLED:
+                data["folderPath"] = asset_name
+            else:
+                data["asset"] = asset_name
+
             if not self.active_on_create:
                 data["active"] = False
 
@@ -59,7 +71,7 @@ class TVPaintReviewCreator(TVPaintAutoCreator):
             self._add_instance_to_context(new_instance)
 
         elif (
-            existing_instance["asset"] != asset_name
+            existing_asset_name != asset_name
             or existing_instance["task"] != task_name
         ):
             asset_doc = get_asset_by_name(project_name, asset_name)
@@ -71,6 +83,9 @@ class TVPaintReviewCreator(TVPaintAutoCreator):
                 host_name,
                 existing_instance
             )
-            existing_instance["asset"] = asset_name
+            if AYON_SERVER_ENABLED:
+                existing_instance["folderPath"] = asset_name
+            else:
+                existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
             existing_instance["subset"] = subset_name

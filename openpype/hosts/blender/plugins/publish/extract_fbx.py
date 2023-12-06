@@ -7,7 +7,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractFBX(publish.Extractor):
+class ExtractFBX(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract as FBX."""
 
     label = "Extract FBX"
@@ -16,24 +16,28 @@ class ExtractFBX(publish.Extractor):
     optional = True
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.fbx"
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        instance_name = f"{asset_name}_{subset}"
+        filename = f"{instance_name}.fbx"
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
-        self.log.info("Performing extraction..")
+        self.log.debug("Performing extraction..")
 
         plugin.deselect_all()
 
-        selected = []
-        asset_group = None
+        asset_group = instance.data["transientData"]["instance_node"]
 
+        selected = []
         for obj in instance:
             obj.select_set(True)
             selected.append(obj)
-            if obj.get(AVALON_PROPERTY):
-                asset_group = obj
 
         context = plugin.create_blender_context(
             active=asset_group, selected=selected)
@@ -84,5 +88,5 @@ class ExtractFBX(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.debug("Extracted instance '%s' to: %s",
+                       instance.name, representation)

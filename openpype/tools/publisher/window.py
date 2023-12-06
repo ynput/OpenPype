@@ -9,12 +9,14 @@ from openpype import (
     resources,
     style
 )
+from openpype import AYON_SERVER_ENABLED
 from openpype.tools.utils import (
     ErrorMessageBox,
     PlaceholderLineEdit,
     MessageOverlayObject,
     PixmapLabel,
 )
+from openpype.tools.utils.lib import center_window
 
 from .constants import ResetKeySequence
 from .publish_report_viewer import PublishReportViewerWidget
@@ -52,7 +54,9 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self.setObjectName("PublishWindow")
 
-        self.setWindowTitle("OpenPype publisher")
+        self.setWindowTitle("{} publisher".format(
+            "AYON" if AYON_SERVER_ENABLED else "OpenPype"
+        ))
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
@@ -388,6 +392,45 @@ class PublisherWindow(QtWidgets.QDialog):
     def controller(self):
         return self._controller
 
+    def show_and_publish(self, comment=None):
+        """Show the window and start publishing.
+
+        The method will reset controller and start the publishing afterwards.
+
+        Todos:
+            Move validations from '_on_publish_clicked' and change of
+                'comment' value in controller to controller so it can be
+                simplified.
+
+        Args:
+            comment (Optional[str]): Comment to be set to publish.
+                If is set to 'None' a comment is not changed at all.
+        """
+
+        self._reset_on_show = False
+        self._reset_on_first_show = False
+
+        if comment is not None:
+            self.set_comment(comment)
+        self.make_sure_is_visible()
+        # Reset controller
+        self._controller.reset()
+        # Fake publish click to trigger save validation and propagate
+        #   comment to controller
+        self._on_publish_clicked()
+
+    def set_comment(self, comment):
+        """Change comment text.
+
+        Todos:
+            Be able to set the comment via controller.
+
+        Args:
+            comment (str): Comment text.
+        """
+
+        self._comment_input.setText(comment)
+
     def make_sure_is_visible(self):
         if self._window_is_visible:
             self.setWindowState(QtCore.Qt.WindowActive)
@@ -490,6 +533,7 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
         self.setStyleSheet(style.load_stylesheet())
+        center_window(self)
         self._reset_on_show = self._reset_on_first_show
 
     def _on_show_timer(self):

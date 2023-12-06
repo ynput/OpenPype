@@ -4,7 +4,7 @@ class SelectionModel(object):
     Triggering events:
     - "selection.folder.changed"
     - "selection.task.changed"
-    - "workarea.selection.changed"
+    - "selection.workarea.changed"
     - "selection.representation.changed"
     """
 
@@ -29,7 +29,10 @@ class SelectionModel(object):
         self._folder_id = folder_id
         self._controller.emit_event(
             "selection.folder.changed",
-            {"folder_id": folder_id},
+            {
+                "project_name": self._controller.get_current_project_name(),
+                "folder_id": folder_id
+            },
             self.event_source
         )
 
@@ -39,10 +42,7 @@ class SelectionModel(object):
     def get_selected_task_id(self):
         return self._task_id
 
-    def set_selected_task(self, folder_id, task_id, task_name):
-        if folder_id != self._folder_id:
-            self.set_selected_folder(folder_id)
-
+    def set_selected_task(self, task_id, task_name):
         if task_id == self._task_id:
             return
 
@@ -51,7 +51,8 @@ class SelectionModel(object):
         self._controller.emit_event(
             "selection.task.changed",
             {
-                "folder_id": folder_id,
+                "project_name": self._controller.get_current_project_name(),
+                "folder_id": self._folder_id,
                 "task_name": task_name,
                 "task_id": task_id
             },
@@ -67,8 +68,9 @@ class SelectionModel(object):
 
         self._workfile_path = path
         self._controller.emit_event(
-            "workarea.selection.changed",
+            "selection.workarea.changed",
             {
+                "project_name": self._controller.get_current_project_name(),
                 "path": path,
                 "folder_id": self._folder_id,
                 "task_name": self._task_name,
@@ -86,6 +88,9 @@ class SelectionModel(object):
         self._representation_id = representation_id
         self._controller.emit_event(
             "selection.representation.changed",
-            {"representation_id": representation_id},
+            {
+                "project_name": self._controller.get_current_project_name(),
+                "representation_id": representation_id,
+            },
             self.event_source
         )

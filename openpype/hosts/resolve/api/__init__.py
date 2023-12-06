@@ -6,13 +6,10 @@ from .utils import (
 )
 
 from .pipeline import (
-    install,
-    uninstall,
+    ResolveHost,
     ls,
     containerise,
     update_container,
-    publish,
-    launch_workfiles_app,
     maintained_selection,
     remove_instance,
     list_instances
@@ -76,14 +73,10 @@ __all__ = [
     "bmdvf",
 
     # pipeline
-    "install",
-    "uninstall",
+    "ResolveHost",
     "ls",
     "containerise",
     "update_container",
-    "reload_pipeline",
-    "publish",
-    "launch_workfiles_app",
     "maintained_selection",
     "remove_instance",
     "list_instances",

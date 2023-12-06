@@ -33,11 +33,13 @@ class ExtractReviewIntermediates(publish.Extractor):
         """
         nuke_publish = project_settings["nuke"]["publish"]
         deprecated_setting = nuke_publish["ExtractReviewDataMov"]
-        current_setting = nuke_publish["ExtractReviewIntermediates"]
+        current_setting = nuke_publish.get("ExtractReviewIntermediates")
         if deprecated_setting["enabled"]:
             # Use deprecated settings if they are still enabled
             cls.viewer_lut_raw = deprecated_setting["viewer_lut_raw"]
             cls.outputs = deprecated_setting["outputs"]
+        elif current_setting is None:
+            pass
         elif current_setting["enabled"]:
             cls.viewer_lut_raw = current_setting["viewer_lut_raw"]
             cls.outputs = current_setting["outputs"]
@@ -50,7 +52,7 @@ class ExtractReviewIntermediates(publish.Extractor):
 
         task_type = instance.context.data["taskType"]
         subset = instance.data["subset"]
-        self.log.info("Creating staging dir...")
+        self.log.debug("Creating staging dir...")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -60,10 +62,10 @@ class ExtractReviewIntermediates(publish.Extractor):
 
         instance.data["stagingDir"] = staging_dir
 
-        self.log.info(
+        self.log.debug(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
-        self.log.info(self.outputs)
+        self.log.debug("Outputs: {}".format(self.outputs))
 
         # generate data
         with maintained_selection():
@@ -102,9 +104,10 @@ class ExtractReviewIntermediates(publish.Extractor):
                         re.search(s, subset) for s in f_subsets):
                     continue
 
-                self.log.info(
+                self.log.debug(
                     "Baking output `{}` with settings: {}".format(
-                        o_name, o_data))
+                        o_name, o_data)
+                )
 
                 # check if settings have more then one preset
                 # so we dont need to add outputName to representation
@@ -153,10 +156,10 @@ class ExtractReviewIntermediates(publish.Extractor):
             instance.data["useSequenceForReview"] = False
         else:
             instance.data["families"].remove("review")
-            self.log.info((
+            self.log.debug(
                 "Removing `review` from families. "
                 "Not available baking profile."
-            ))
+            )
             self.log.debug(instance.data["families"])
 
         self.log.debug(

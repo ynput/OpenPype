@@ -83,6 +83,30 @@ select your render camera.
 All the render outputs are stored in the pyblish/render directory within your project path.\
 For Karma-specific render, it also outputs the USD render as default.
 
+## Publishing cache to Deadline
+Artist can publish cache to deadline which increases productivity as artist can use local machine
+could be used for other tasks.
+Caching on the farm is supported for:
+
+**Arnold ASS (.ass)**
+**Pointcache (.bgeo and .abc)**
+**VDB (.vdb)**
+**Redshift Proxy (.rs)**
+
+To submit your cache to deadline, you need to create the instance(s) with clicking
+**Submitting to Farm** and you can also enable  **Use selection** to
+select the object for caching in farm.
+![Houdini Farm Cache Creator](assets/houdini_farm_cache_creator.png)
+
+When you go to Publish Tab and click the instance(s), you can set up your preferred
+**Frame per task**.
+![Houdini Farm Per Task](assets/houdini_frame_per_task.png)
+
+Once you hit **Publish**, the cache would be submitted and rendered in deadline.
+When the render is finished, all the caches would be located in your publish folder.
+You can see them in the Loader.
+![Houdini Farm Per Task](assets/houdini_farm_cache_loader.png)
+
 ## USD (experimental support)
 ### Publishing USD
 You can publish your Solaris Stage as USD file.

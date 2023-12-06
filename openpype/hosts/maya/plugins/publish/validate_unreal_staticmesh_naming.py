@@ -69,11 +69,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
 
         invalid = []
 
-        project_settings = get_project_settings(
-            legacy_io.Session["AVALON_PROJECT"]
-        )
         collision_prefixes = (
-            project_settings
+            instance.context.data["project_settings"]
             ["maya"]
             ["create"]
             ["CreateUnrealStaticMesh"]
@@ -105,7 +102,8 @@ class ValidateUnrealStaticMeshName(pyblish.api.InstancePlugin,
 
             cl_r = re.compile(regex_collision)
 
-            mesh_name = "{}{}".format(instance.data["asset"],
+            asset_name = instance.data["assetEntity"]["name"]
+            mesh_name = "{}{}".format(asset_name,
                                       instance.data.get("variant", []))
 
             for obj in collision_set:

@@ -59,8 +59,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         args = [application_path, "-batch",
                 "-frames", str(frame_start), str(frame_end),
-                "-scene", scene_path]
-        self.log.info(f"running [ {application_path} {' '.join(args)}")
+                scene_path]
+        self.log.info(f"running: {' '.join(args)}")
         proc = subprocess.Popen(
             args,
             stdout=subprocess.PIPE,

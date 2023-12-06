@@ -70,6 +70,12 @@
         },
         "ExtractThumbnail": {
             "enabled": true,
+            "oiiotool_defaults": {
+                "type": "colorspace",
+                "colorspace": "color_picking",
+                "view": "sRGB",
+                "display": "default"
+            },
             "ffmpeg_args": {
                 "input": [
                     "-apply_trc gamma22"
@@ -546,6 +552,17 @@
                     "task_types": [],
                     "task_names": [],
                     "template_name": "online"
+                },
+                {
+                    "families": [
+                        "tycache"
+                    ],
+                    "hosts": [
+                        "max"
+                    ],
+                    "task_types": [],
+                    "task_names": [],
+                    "template_name": "tycache"
                 }
             ],
             "hero_template_name_profiles": [

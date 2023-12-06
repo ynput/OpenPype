@@ -6,6 +6,8 @@ from abc import (
 )
 import six
 import hou
+
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import (
     CreatorError,
     LegacyCreator,
@@ -13,7 +15,7 @@ from openpype.pipeline import (
     CreatedInstance
 )
 from openpype.lib import BoolDef
-from .lib import imprint, read, lsattr
+from .lib import imprint, read, lsattr, add_self_publish_button
 
 
 class OpenPypeCreatorError(CreatorError):
@@ -142,12 +144,13 @@ class HoudiniCreatorBase(object):
 
     @staticmethod
     def create_instance_node(
-            node_name, parent,
-            node_type="geometry"):
+        asset_name, node_name, parent, node_type="geometry"
+    ):
         # type: (str, str, str) -> hou.Node
         """Create node representing instance.
 
         Arguments:
+            asset_name (str): Asset name.
             node_name (str): Name of the new node.
             parent (str): Name of the parent node.
             node_type (str, optional): Type of the node.
@@ -168,6 +171,7 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
     """Base class for most of the Houdini creator plugins."""
     selected_nodes = []
     settings_name = None
+    add_publish_button = False
 
     def create(self, subset_name, instance_data, pre_create_data):
         try:
@@ -181,19 +185,29 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
             if node_type is None:
                 node_type = "geometry"
 
+            if AYON_SERVER_ENABLED:
+                asset_name = instance_data["folderPath"]
+            else:
+                asset_name = instance_data["asset"]
+
             instance_node = self.create_instance_node(
-                subset_name, "/out", node_type)
+                asset_name, subset_name, "/out", node_type)
 
             self.customize_node_look(instance_node)
 
             instance_data["instance_node"] = instance_node.path()
+            instance_data["instance_id"] = instance_node.path()
             instance = CreatedInstance(
                 self.family,
                 subset_name,
                 instance_data,
                 self)
             self._add_instance_to_context(instance)
-            imprint(instance_node, instance.data_to_store())
+            self.imprint(instance_node, instance.data_to_store())
+
+            if self.add_publish_button:
+                add_self_publish_button(instance_node)
+
             return instance
 
         except hou.Error as er:
@@ -222,24 +236,41 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
         self.cache_subsets(self.collection_shared_data)
         for instance in self.collection_shared_data[
                 "houdini_cached_subsets"].get(self.identifier, []):
+
+            node_data = read(instance)
+
+            # Node paths are always the full node path since that is unique
+            # Because it's the node's path it's not written into attributes
+            # but explicitly collected
+            node_path = instance.path()
+            node_data["instance_id"] = node_path
+            node_data["instance_node"] = node_path
+
             created_instance = CreatedInstance.from_existing(
-                read(instance), self
+                node_data, self
             )
             self._add_instance_to_context(created_instance)
 
     def update_instances(self, update_list):
         for created_inst, changes in update_list:
             instance_node = hou.node(created_inst.get("instance_node"))
-
             new_values = {
                 key: changes[key].new_value
                 for key in changes.changed_keys
             }
-            imprint(
+            # Update parm templates and values
+            self.imprint(
                 instance_node,
                 new_values,
                 update=True
             )
+
+    def imprint(self, node, values, update=False):
+        # Never store instance node and instance id since that data comes
+        # from the node's path
+        values.pop("instance_node", None)
+        values.pop("instance_id", None)
+        imprint(node, values, update=update)
 
     def remove_instances(self, instances):
         """Remove specified instance from the scene.
@@ -299,6 +330,12 @@ class HoudiniCreator(NewCreator, HoudiniCreatorBase):
     def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
+        # Apply General Settings
+        houdini_general_settings = project_settings["houdini"]["general"]
+        self.add_publish_button = houdini_general_settings.get(
+            "add_self_publish_button", False)
+
+        # Apply Creator Settings
         settings_name = self.settings_name
         if settings_name is None:
             settings_name = self.__class__.__name__
