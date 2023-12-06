@@ -1,7 +1,5 @@
 import re
 import os
-import json
-from collections import defaultdict
 
 from tests.integration.hosts.maya.lib import MayaLocalPublishTestClass
 
