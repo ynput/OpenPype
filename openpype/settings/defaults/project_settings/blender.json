@@ -2,7 +2,7 @@
     "unit_scale_settings": {
         "enabled": true,
         "apply_on_opening": false,
-        "base_file_unit_scale": 1.00
+        "base_file_unit_scale": 0.01
     },
     "set_resolution_startup": true,
     "set_frames_startup": true,
@@ -31,7 +31,7 @@
     },
     "publish": {
         "ValidateCameraZeroKeyframe": {
-            "enabled": false,
+            "enabled": true,
             "optional": true,
             "active": true
         },
@@ -62,13 +62,13 @@
             "active": true
         },
         "ValidateTransformZero": {
-            "enabled": false,
-            "optional": true,
+            "enabled": true,
+            "optional": false,
             "active": true
         },
         "ValidateNoColonsInName": {
-            "enabled": false,
-            "optional": true,
+            "enabled": true,
+            "optional": false,
             "active": true
         },
         "ValidateInstanceEmpty": {
@@ -90,9 +90,9 @@
             ]
         },
         "ExtractFBX": {
-            "enabled": false,
+            "enabled": true,
             "optional": true,
-            "active": true
+            "active": false
         },
         "ExtractModelABC": {
             "enabled": true,
@@ -105,9 +105,9 @@
             "active": true
         },
         "ExtractAnimationFBX": {
-            "enabled": false,
+            "enabled": true,
             "optional": true,
-            "active": true
+            "active": false
         },
         "ExtractCamera": {
             "enabled": true,

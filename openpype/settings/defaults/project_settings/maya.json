@@ -1,5 +1,5 @@
 {
-    "open_workfile_post_initialization": true,
+    "open_workfile_post_initialization": false,
     "explicit_plugins_loading": {
         "enabled": false,
         "plugins_to_load": [
@@ -458,7 +458,7 @@
         "per_task_type": []
     },
     "scriptsmenu": {
-        "name": "Custom Tools",
+        "name": "OpenPype Tools",
         "definition": [
             {
                 "type": "action",
@@ -708,7 +708,7 @@
             "sync_workfile_version": false
         },
         "CollectFbxAnimation": {
-            "enabled": false
+            "enabled": true
         },
         "CollectFbxCamera": {
             "enabled": false
@@ -785,7 +785,7 @@
             ]
         },
         "ValidatePluginPathAttributes": {
-            "enabled": false,
+            "enabled": true,
             "optional": false,
             "active": true,
             "attribute": {
@@ -840,12 +840,12 @@
             "active": true
         },
         "ValidateGLSLMaterial": {
-            "enabled": false,
+            "enabled": true,
             "optional": false,
             "active": true
         },
         "ValidateGLSLPlugin": {
-            "enabled": false,
+            "enabled": true,
             "optional": false,
             "active": true
         },
@@ -1096,7 +1096,7 @@
             "active": true
         },
         "ExtractProxyAlembic": {
-            "enabled": false,
+            "enabled": true,
             "families": [
                 "proxyAbc"
             ]
@@ -1383,7 +1383,7 @@
             "keep_image_planes": false
         },
         "ExtractGLB": {
-            "enabled": false,
+            "enabled": true,
             "active": true,
             "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
         },
@@ -1581,7 +1581,7 @@
                     {
                         "subset_name_filters": [],
                         "families": [
-                            "setdress"
+                            "sedress"
                         ],
                         "repre_names": [
                             "ma"
