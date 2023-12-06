@@ -24,12 +24,11 @@ class LaunchNewConsoleApps(PreLaunchHook):
         # - on Windows some apps will create new window using its console
         # Set `stdout` and `stderr` to None so new created console does not
         #   have redirected output to DEVNULL in build
-        self.launch_context.kwargs.update({
-            "creationflags": subprocess.CREATE_NEW_CONSOLE
-        })
-
-        if "stdout" not in self.launch_context.kwargs:
-            self.launch_context.kwargs["stdout"] = None
-
-        if "stderr"not in self.launch_context.kwargs:
-            self.launch_context.kwargs["stderr"] = None
+        for key, value in (
+            ("stdout", None),
+            ("stderr", None),
+            ("creationflags", subprocess.CREATE_NEW_CONSOLE),
+        ):
+            if key in self.launch_context.kwargs:
+                continue
+            self.launch_context.kwargs[key] = value
