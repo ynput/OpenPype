@@ -204,6 +204,38 @@
                 },
                 {
                     "type": "dict",
+                    "collapsible": true,
+                    "key": "oiiotool_defaults",
+                    "label": "OIIOtool defaults",
+                    "children": [
+                        {
+                            "type": "enum",
+                            "key": "type",
+                            "label": "Target type",
+                            "enum_items": [
+                                { "colorspace": "Colorspace" },
+                                { "display_and_view": "Display & View" }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "key": "colorspace",
+                            "label": "Colorspace"
+                        },
+                        {
+                            "type": "text",
+                            "key": "view",
+                            "label": "View"
+                        },
+                        {
+                            "type": "text",
+                            "key": "display",
+                            "label": "Display"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
                     "key": "ffmpeg_args",
                     "children": [
                         {
