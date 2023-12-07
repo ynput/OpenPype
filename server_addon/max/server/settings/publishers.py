@@ -107,22 +107,22 @@ DEFAULT_PUBLISH_SETTINGS = {
         "family_plugins_mapping": []
     },
     "ExtractModelObj": {
-        "enabled": False,
+        "enabled": True,
         "optional": True,
-        "active": True
+        "active": False
     },
     "ExtractModelFbx": {
-        "enabled": False,
+        "enabled": True,
         "optional": True,
-        "active": True
+        "active": False
     },
     "ExtractModelUSD": {
-        "enabled": False,
+        "enabled": True,
         "optional": True,
-        "active": True
+        "active": False
     },
     "ExtractModel": {
-        "enabled": False,
+        "enabled": True,
         "optional": True,
         "active": True
     },
