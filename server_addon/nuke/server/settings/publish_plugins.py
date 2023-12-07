@@ -126,16 +126,29 @@ class IntermediateOutputModel(BaseSettingsModel):
     name: str = Field(title="Output name")
     filter: BakingStreamFilterModel = Field(
         title="Filter", default_factory=BakingStreamFilterModel)
-    read_raw: bool = Field(title="Read raw switch")
-    viewer_process_override: str = Field(title="Viewer process override")
-    bake_viewer_process: bool = Field(title="Bake viewer process")
+    read_raw: bool = Field(
+        False,
+        title="Read raw switch"
+    )
+    viewer_process_override: str = Field(
+        "",
+        title="Viewer process override"
+    )
+    bake_viewer_process: bool = Field(
+        True,
+        title="Bake viewer process"
+    )
     bake_viewer_input_process: bool = Field(
+        True,
         title="Bake viewer input process node (LUT)"
     )
     reformat_nodes_config: ReformatNodesConfigModel = Field(
         default_factory=ReformatNodesConfigModel,
         title="Reformat Nodes")
-    extension: str = Field(title="File extension")
+    extension: str = Field(
+        "mov",
+        title="File extension"
+    )
     add_custom_tags: list[str] = Field(
         title="Custom tags", default_factory=list)
 
