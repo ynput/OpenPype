@@ -618,7 +618,8 @@ def prompt_new_file_with_mesh(mesh_filepath):
         if not mesh_filename_label.text():
             dialog.close()
             substance_painter.logging.warning(
-                f"Failed to set mesh path with the prompt dialog: {mesh_filepath}\n\n"
+                "Failed to set mesh path with the prompt dialog:"
+                f"{mesh_filepath}\n\n"
                 "Creating new project directly with the mesh path instead.")
         else:
             dialog.done(dialog.Accepted)
