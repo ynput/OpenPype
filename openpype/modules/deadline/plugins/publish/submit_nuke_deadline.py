@@ -398,7 +398,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         self.log.debug("Submitting..")
         self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
-        # adding expectied files to instance.data
+        # adding expected files to instance.data
         self.expected_files(
             instance,
             render_path,
@@ -454,7 +454,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     def expected_files(
         self,
         instance,
-        path,
+        filepath,
         start_frame,
         end_frame
     ):
@@ -463,8 +463,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         if not instance.data.get("expectedFiles"):
             instance.data["expectedFiles"] = []
 
-        dirname = os.path.dirname(path)
-        file = os.path.basename(path)
+        dirname = os.path.dirname(filepath)
+        file = os.path.basename(filepath)
 
         # since some files might be already tagged as publish_on_farm
         # we need to avoid adding them to expected files since those would be
@@ -475,24 +475,32 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             # Skip if 'publish_on_farm' not available
             if "publish_on_farm" not in repre.get("tags", []):
                 continue
-            # is file in representations files?
+
+            # in case where single file (video, image) is already in
+            # representation file. Will be added to expected files via
+            # submit_publish_job.py
             if file in repre.get("files", []):
                 self.log.debug(
-                    "Skipping expected file: {}".format(path))
+                    "Skipping expected file: {}".format(filepath))
                 return
 
+        # in case path is hashed sequence expression
+        # (e.g. /path/to/file.####.png)
         if "#" in file:
             pparts = file.split("#")
             padding = "%0{}d".format(len(pparts) - 1)
             file = pparts[0] + padding + pparts[-1]
 
+        # in case input path was single file (video or image)
         if "%" not in file:
-            instance.data["expectedFiles"].append(path)
+            instance.data["expectedFiles"].append(filepath)
             return
 
+        # shift start frame by 1 if slate is present
         if instance.data.get("slate"):
             start_frame -= 1
 
+        # add sequence files to expected files
         for i in range(start_frame, (end_frame + 1)):
             instance.data["expectedFiles"].append(
                 os.path.join(dirname, (file % i)).replace("\\", "/"))
