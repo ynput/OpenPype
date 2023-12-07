@@ -12,7 +12,6 @@ class ExtractThumbnail(publish.Extractor):
     label = "Extract Thumbnail"
     hosts = ["max"]
     families = ["review"]
-    optional = True
 
     def process(self, instance):
         ext = instance.data.get("imageFormat")
