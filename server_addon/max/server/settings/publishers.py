@@ -71,7 +71,7 @@ class PublishersModel(BaseSettingsModel):
     ExtractModelObj: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Extract OBJ",
-        section="Publishers"
+        section="Extractors"
     )
     ExtractModelFbx: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
