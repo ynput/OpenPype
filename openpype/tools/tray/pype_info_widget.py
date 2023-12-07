@@ -6,6 +6,7 @@ import ayon_api
 from qtpy import QtCore, QtGui, QtWidgets
 
 from openpype import style
+import openpype.version
 from openpype import resources
 from openpype import AYON_SERVER_ENABLED
 from openpype.settings.lib import get_local_settings
@@ -512,6 +513,18 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
                 QtWidgets.QLabel(label), row, 0, 1, 1
             )
             value_label = QtWidgets.QLabel(value)
+            value_label.setTextInteractionFlags(
+                QtCore.Qt.TextSelectableByMouse
+            )
+            info_layout.addWidget(
+                value_label, row, 1, 1, 1
+            )
+        if AYON_SERVER_ENABLED:
+            row = info_layout.rowCount()
+            info_layout.addWidget(
+                QtWidgets.QLabel("OpenPype Addon:"), row, 0, 1, 1
+            )
+            value_label = QtWidgets.QLabel(openpype.version.__version__)
             value_label.setTextInteractionFlags(
                 QtCore.Qt.TextSelectableByMouse
             )
