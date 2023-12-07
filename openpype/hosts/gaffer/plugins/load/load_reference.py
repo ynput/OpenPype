@@ -25,7 +25,9 @@ class GafferLoadReference(load.LoaderPlugin):
 
         path = self.filepath_from_context(context).replace("\\", "/")
 
-        reference = Gaffer.Reference()
+        name = "{}_{}".format(context["asset"]["name"],
+                              context["subset"]["name"])
+        reference = Gaffer.Reference(name)
         script.addChild(reference)
         reference.load(path)
 
