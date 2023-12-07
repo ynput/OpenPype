@@ -212,8 +212,8 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     def _get_explicit_repres_for_thumbnail(self, instance):
         src_repres = instance.data.get("representations") or []
         # This is mainly for Nuke where we have multiple representations for
-        #   one instance. We want to use only one representation for thumbnail
-        # first check if any of the representations have
+        #   one instance and representations are tagged for thumbnail.
+        # First check if any of the representations have
         # `need_thumbnail` in tags and add them to filtered_repres
         need_thumb_repres = [
             repre for repre in src_repres
