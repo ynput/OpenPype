@@ -1,23 +1,28 @@
 # -*- coding: utf-8 -*-
 """Submitting render job to RoyalRender."""
 import os
-import re
+import json
 import platform
+import re
+import tempfile
+import uuid
 from datetime import datetime
 
 import pyblish.api
-from openpype.tests.lib import is_in_tests
-from openpype.pipeline.publish.lib import get_published_workfile_instance
-from openpype.pipeline.publish import KnownPublishError
+
+from openpype.lib import BoolDef, NumberDef, is_running_from_build
+from openpype.lib.execute import run_openpype_process
 from openpype.modules.royalrender.api import Api as rrApi
 from openpype.modules.royalrender.rr_job import (
-    RRJob, CustomAttribute, get_rr_platform)
-from openpype.lib import (
-    is_running_from_build,
-    BoolDef,
-    NumberDef,
+    CustomAttribute,
+    RRJob,
+    RREnvList,
+    get_rr_platform,
 )
 from openpype.pipeline import OpenPypePyblishPluginMixin
+from openpype.pipeline.publish import KnownPublishError
+from openpype.pipeline.publish.lib import get_published_workfile_instance
+from openpype.tests.lib import is_in_tests
 
 
 class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
@@ -302,3 +307,68 @@ class BaseCreateRoyalRenderJob(pyblish.api.InstancePlugin,
             path = path.replace(first_frame, "#" * padding)
 
         return path
+
+    def inject_environment(self, instance, job):
+        # type: (pyblish.api.Instance, RRJob) -> RRJob
+        """Inject environment variables for RR submission.
+
+        This function mimics the behaviour of the Deadline
+        integration. It is just temporary solution until proper
+        runtime environment injection is implemented in RR.
+
+        Args:
+            instance (pyblish.api.Instance): Publishing instance
+            job (RRJob): RRJob instance to be injected.
+
+        Returns:
+            RRJob: Injected RRJob instance.
+
+        Throws:
+            RuntimeError: If any of the required env vars is missing.
+
+        """
+
+        temp_file_name = "{}_{}.json".format(
+            datetime.utcnow().strftime('%Y%m%d%H%M%S%f'),
+            str(uuid.uuid1())
+        )
+
+        export_url = os.path.join(tempfile.gettempdir(), temp_file_name)
+        print(">>> Temporary path: {}".format(export_url))
+
+        args = [
+            "--headless",
+            "extractenvironments",
+            export_url
+        ]
+
+        anatomy_data = instance.context.data["anatomyData"]
+
+        add_kwargs = {
+            "project": anatomy_data["project"]["name"],
+            "asset": instance.context.data["asset"],
+            "task": anatomy_data["task"]["name"],
+            "app": instance.context.data.get("appName"),
+            "envgroup": "farm"
+        }
+
+        if os.getenv('IS_TEST'):
+            args.append("--automatic-tests")
+
+        if not all(add_kwargs.values()):
+            raise RuntimeError((
+                "Missing required env vars: AVALON_PROJECT, AVALON_ASSET,"
+                " AVALON_TASK, AVALON_APP_NAME"
+            ))
+
+        for key, value in add_kwargs.items():
+            args.extend([f"--{key}", value])
+        self.log.debug("Executing: {}".format(" ".join(args)))
+        run_openpype_process(*args, logger=self.log)
+
+        self.log.debug("Loading file ...")
+        with open(export_url) as fp:
+            contents = json.load(fp)
+
+        job.rrEnvList = RREnvList(contents).serialize()
+        return job
