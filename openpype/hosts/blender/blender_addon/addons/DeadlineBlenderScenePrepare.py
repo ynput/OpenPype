@@ -22,13 +22,18 @@ bl_info = {
 
 
 class PathsParts(Enum):
-    WINDOWS = "\\\\prod9.prs.vfx.int\\fs209\\Projets\\2023"
-    LINUX = "/prod/project/"
+    WINDOWS = "//prod9.prs.vfx.int/fs209/Projets/2023"
+    LINUX = "/prod/project"
 
 
 class NodesNames(Enum):
     RENDER_LAYERS = 'R_LAYERS'
     OUTPUT_FILE = 'OUTPUT_FILE'
+
+
+MODIFIERS_ATTRIBUTES_TO_REPLACE = [
+    'simulation_bake_directory'
+]
 
 
 RENDER_PROPERTIES_SELECTORS = [
@@ -143,11 +148,12 @@ class PrepareTemporaryFile(bpy.types.Operator):
 
     def execute(self, context):
         set_scene_render_properties()
-        save_as_temporary_scene()
-        convert_windows_path_to_linux()
+        convert_cache_files_windows_path_to_linux()
+        convert_modifers_windows_path_to_linux()
         set_engine('CYCLES')
         set_global_output_path()
         set_render_nodes_output_path()
+        save_as_temporary_scene()
 
         return {'FINISHED'}
 
@@ -187,14 +193,34 @@ def save_as_temporary_scene():
     bpy.ops.wm.save_as_mainfile(filepath=temporary_scene_file_path)
 
 
-def convert_windows_path_to_linux():
+def convert_cache_files_windows_path_to_linux():
     for cache_file in bpy.data.cache_files:
-        cache_file.filepath = bpy.path.abspath(
-            cache_file.filepath.replace(
-                PathsParts.WINDOWS.value,
-                PathsParts.LINUX.value
-            )
-        )
+        cache_file.filepath = _replace_paths_part(cache_file.filepath)
+
+
+def convert_modifers_windows_path_to_linux():
+    for modifier in _get_all_modifiers():
+        for modifier_attribute in MODIFIERS_ATTRIBUTES_TO_REPLACE:
+            path_to_replace = getattr(modifier, modifier_attribute, None)
+            if not path_to_replace:
+                continue
+
+            setattr(modifier, modifier_attribute, _replace_paths_part(path_to_replace))
+
+
+def _get_all_modifiers():
+    modifiers = list()
+    for obj in bpy.data.objects:
+        modifiers.extend(obj.modifiers)
+
+    return modifiers
+
+
+def _replace_paths_part(path):
+    return bpy.path.abspath(path).replace('\\', '/').replace(
+        PathsParts.WINDOWS.value,
+        PathsParts.LINUX.value
+    )
 
 
 def set_engine(engine):
