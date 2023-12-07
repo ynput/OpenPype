@@ -599,7 +599,10 @@ class TrayManager:
         subversion = os.environ.get("OPENPYPE_SUBVERSION")
         client_name = os.environ.get("OPENPYPE_CLIENT")
 
-        version_string = openpype.version.__version__
+        if AYON_SERVER_ENABLED:
+            version_string = os.getenv("AYON_VERSION", "AYON Info")
+        else:
+            version_string = openpype.version.__version__
         if subversion:
             version_string += " ({})".format(subversion)
 
