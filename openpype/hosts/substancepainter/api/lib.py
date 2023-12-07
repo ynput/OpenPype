@@ -583,7 +583,9 @@ def prompt_new_file_with_mesh(mesh_filepath):
         file_dialog.setDirectory(os.path.dirname(mesh_filepath))
         url = QtCore.QUrl.fromLocalFile(os.path.basename(mesh_filepath))
         file_dialog.selectUrl(url)
-        file_dialog.close()
+        app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents, 3000)
+
+        file_dialog.done(file_dialog.Accepted)
         app.processEvents(QtCore.QEventLoop.AllEvents)
 
     def _setup_prompt():
