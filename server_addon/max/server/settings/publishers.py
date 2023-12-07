@@ -68,6 +68,20 @@ class PublishersModel(BaseSettingsModel):
         default_factory=ValidateLoadedPluginModel,
         title="Validate Loaded Plugin"
     )
+    ExtractModelObj: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract OBJ",
+        section="Publishers"
+    )
+    ExtractModelFbx: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract FBX"
+    )
+    ExtractModelUSD: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract Geometry (USD)"
+    )
+
 
 DEFAULT_PUBLISH_SETTINGS = {
     "ValidateFrameRange": {
@@ -83,5 +97,20 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": False,
         "optional": True,
         "family_plugins_mapping": []
+    },
+    "ExtractModelObj": {
+        "enabled": False,
+        "optional": True,
+        "active": True
+    },
+    "ExtractModelFbx": {
+        "enabled": False,
+        "optional": True,
+        "active": True
+    },
+    "ExtractModelUSD": {
+        "enabled": False,
+        "optional": True,
+        "active": True
     }
 }

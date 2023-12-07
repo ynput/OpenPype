@@ -56,6 +56,21 @@
             "enabled": false,
             "optional": true,
             "family_plugins_mapping": []
+        },
+        "ExtractModelObj": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ExtractModelFbx": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ExtractModelUSD": {
+            "enabled": false,
+            "optional": true,
+            "active": true
         }
     }
 }
