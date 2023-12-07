@@ -145,7 +145,10 @@ class ExtractAnimationFBX(
 
         root.select_set(True)
         armature.select_set(True)
-        fbx_filename = f"{instance.name}_{armature.name}.fbx"
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        instance_name = f"{asset_name}_{subset}"
+        fbx_filename = f"{instance_name}_{armature.name}.fbx"
         filepath = os.path.join(stagingdir, fbx_filename)
 
         override = plugin.create_blender_context(
@@ -178,7 +181,7 @@ class ExtractAnimationFBX(
                 pair[1].user_clear()
                 bpy.data.actions.remove(pair[1])
 
-        json_filename = f"{instance.name}.json"
+        json_filename = f"{instance_name}.json"
         json_path = os.path.join(stagingdir, json_filename)
 
         json_dict = {

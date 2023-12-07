@@ -21,7 +21,7 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
         {OPENPYPE_ROOT}/.venv/Scripts/python.exe {OPENPYPE_ROOT}/start.py runtests ../tests/integration/hosts/maya  # noqa: E501
 
     """
-    PERSIST = True
+    PERSIST = False
 
     TEST_FILES = [
         ("test_deadline_publish_in_maya", "", "")

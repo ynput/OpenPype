@@ -572,6 +572,27 @@ def _convert_maya_project_settings(ayon_settings, output):
         for item in viewport_options["pluginObjects"]
     }
 
+    ayon_playblast_settings = ayon_publish["ExtractPlayblast"]["profiles"]
+    if ayon_playblast_settings:
+        for setting in ayon_playblast_settings:
+            capture_preset = setting["capture_preset"]
+            display_options = capture_preset["DisplayOptions"]
+            for key in ("background", "backgroundBottom", "backgroundTop"):
+                display_options[key] = _convert_color(display_options[key])
+
+            for src_key, dst_key in (
+                ("DisplayOptions", "Display Options"),
+                ("ViewportOptions", "Viewport Options"),
+                ("CameraOptions", "Camera Options"),
+            ):
+                capture_preset[dst_key] = capture_preset.pop(src_key)
+
+            viewport_options = capture_preset["Viewport Options"]
+            viewport_options["pluginObjects"] = {
+                item["name"]: item["value"]
+                for item in viewport_options["pluginObjects"]
+            }
+
     # Extract Camera Alembic bake attributes
     try:
         bake_attributes = json.loads(
@@ -1219,6 +1240,26 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
 
         profile["outputs"] = new_outputs
 
+    # ExtractThumbnail plugin
+    ayon_extract_thumbnail = ayon_publish["ExtractThumbnail"]
+    # fix display and view at oiio defaults
+    ayon_default_oiio = copy.deepcopy(
+        ayon_extract_thumbnail["oiiotool_defaults"])
+    display_and_view = ayon_default_oiio.pop("display_and_view")
+    ayon_default_oiio["display"] = display_and_view["display"]
+    ayon_default_oiio["view"] = display_and_view["view"]
+    ayon_extract_thumbnail["oiiotool_defaults"] = ayon_default_oiio
+    # fix target size
+    ayon_default_resize = copy.deepcopy(ayon_extract_thumbnail["target_size"])
+    resize = ayon_default_resize.pop("resize")
+    ayon_default_resize["width"] = resize["width"]
+    ayon_default_resize["height"] = resize["height"]
+    ayon_extract_thumbnail["target_size"] = ayon_default_resize
+    # fix background color
+    ayon_extract_thumbnail["background_color"] = _convert_color(
+        ayon_extract_thumbnail["background_color"]
+    )
+
     # ExtractOIIOTranscode plugin
     extract_oiio_transcode = ayon_publish["ExtractOIIOTranscode"]
     extract_oiio_transcode_profiles = extract_oiio_transcode["profiles"]
@@ -1569,3 +1610,18 @@ def get_ayon_system_settings(default_values):
     return convert_system_settings(
         ayon_settings, default_values, addon_versions
     )
+
+
+def get_ayon_settings(project_name=None):
+    """AYON studio settings.
+
+    Raw AYON settings values.
+
+    Args:
+        project_name (Optional[str]): Project name.
+
+    Returns:
+        dict[str, Any]: AYON settings.
+    """
+
+    return _AyonSettingsCache.get_value_by_project(project_name)

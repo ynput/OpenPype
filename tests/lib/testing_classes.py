@@ -70,7 +70,9 @@ class ModuleUnitTest(BaseTest):
         )
 
     @pytest.fixture(scope="module")
-    def download_test_data(self, test_data_folder, persist, request):
+    def download_test_data(
+        self, test_data_folder, persist, request, dump_databases
+    ):
         test_data_folder = test_data_folder or self.TEST_DATA_FOLDER
         if test_data_folder:
             print("Using existing folder {}".format(test_data_folder))
@@ -100,13 +102,13 @@ class ModuleUnitTest(BaseTest):
                 if ext and ext.lstrip('.') in handler_class.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
                     handler_class.unzip(os.path.join(tmpdir, file_name))
 
-                yield tmpdir
+            yield tmpdir
 
-                persist = (persist or self.PERSIST or
-                           self.is_test_failed(request))
-                if not persist:
-                    print("Removing {}".format(tmpdir))
-                    shutil.rmtree(tmpdir)
+            persist = (persist or self.PERSIST or
+                       self.is_test_failed(request) or dump_databases)
+            if not persist:
+                print("Removing {}".format(tmpdir))
+                shutil.rmtree(tmpdir)
 
     @pytest.fixture(scope="module")
     def output_folder_url(self, download_test_data):
@@ -163,7 +165,7 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def db_setup(self, download_test_data, env_var, monkeypatch_session,
-                 request, mongo_url):
+                 request, mongo_url, dump_databases, persist):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
         uri = os.environ.get("OPENPYPE_MONGO")
@@ -178,7 +180,17 @@ class ModuleUnitTest(BaseTest):
 
         yield db_handler
 
-        persist = self.PERSIST or self.is_test_failed(request)
+        if dump_databases:
+            print("Dumping databases to {}".format(download_test_data))
+            output_dir = os.path.join(download_test_data, "output", "dumps")
+            db_handler.backup_to_dump(
+                self.TEST_DB_NAME, output_dir, format=dump_databases
+            )
+            db_handler.backup_to_dump(
+                self.TEST_OPENPYPE_NAME, output_dir, format=dump_databases
+            )
+
+        persist = persist or self.PERSIST or self.is_test_failed(request)
         if not persist:
             db_handler.teardown(self.TEST_DB_NAME)
             db_handler.teardown(self.TEST_OPENPYPE_NAME)
@@ -218,11 +230,7 @@ class ModuleUnitTest(BaseTest):
         yield mongo_client[self.TEST_OPENPYPE_NAME]["settings"]
 
     def is_test_failed(self, request):
-        # if request.node doesn't have rep_call, something failed
-        try:
-            return request.node.rep_call.failed
-        except AttributeError:
-            return True
+        return getattr(request.node, "module_test_failure", False)
 
 
 class PublishTest(ModuleUnitTest):
