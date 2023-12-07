@@ -81,6 +81,14 @@ class PublishersModel(BaseSettingsModel):
         default_factory=BasicValidateModel,
         title="Extract Geometry (USD)"
     )
+    ExtractModel: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract Geometry (Alembic)"
+    )
+    ExtractMaxSceneRaw: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract Max Scene (Raw)"
+    )
 
 
 DEFAULT_PUBLISH_SETTINGS = {
@@ -110,6 +118,16 @@ DEFAULT_PUBLISH_SETTINGS = {
     },
     "ExtractModelUSD": {
         "enabled": False,
+        "optional": True,
+        "active": True
+    },
+    "ExtractModel": {
+        "enabled": False,
+        "optional": True,
+        "active": True
+    },
+    "ExtractMaxSceneRaw": {
+        "enabled": True,
         "optional": True,
         "active": True
     }

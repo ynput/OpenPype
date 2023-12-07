@@ -71,6 +71,16 @@
             "enabled": false,
             "optional": true,
             "active": true
+        },
+        "ExtractModel": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractMaxSceneRaw": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     }
 }
