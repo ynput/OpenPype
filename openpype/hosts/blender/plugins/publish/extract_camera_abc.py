@@ -4,14 +4,15 @@ import bpy
 
 from openpype.pipeline import publish
 from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class ExtractAnimationABC(publish.Extractor):
-    """Extract as ABC."""
+class ExtractCameraABC(publish.Extractor):
+    """Extract camera as ABC."""
 
-    label = "Extract Animation ABC"
+    label = "Extract Camera (ABC)"
     hosts = ["blender"]
-    families = ["animation"]
+    families = ["camera"]
     optional = True
 
     def process(self, instance):
@@ -25,33 +26,30 @@ class ExtractAnimationABC(publish.Extractor):
 
         plugin.deselect_all()
 
-        selected = []
         asset_group = None
-
-        objects = []
         for obj in instance:
-            if isinstance(obj, bpy.types.Collection):
-                for child in obj.all_objects:
-                    objects.append(child)
-        for obj in objects:
-            children = [o for o in bpy.data.objects if o.parent == obj]
-            for child in children:
-                objects.append(child)
+            if obj.get(AVALON_PROPERTY):
+                asset_group = obj
+                break
+        assert asset_group, "No asset group found"
 
-        for obj in objects:
+        # Need to cast to list because children is a tuple
+        selected = list(asset_group.children)
+        active = selected[0]
+
+        for obj in selected:
             obj.select_set(True)
-            selected.append(obj)
 
         context = plugin.create_blender_context(
-            active=asset_group, selected=selected)
+            active=active, selected=selected)
 
-        # We export the abc
-        bpy.ops.wm.alembic_export(
-            context,
-            filepath=filepath,
-            selected=True,
-            flatten=False
-        )
+        with bpy.context.temp_override(**context):
+            # We export the abc
+            bpy.ops.wm.alembic_export(
+                filepath=filepath,
+                selected=True,
+                flatten=True
+            )
 
         plugin.deselect_all()
 

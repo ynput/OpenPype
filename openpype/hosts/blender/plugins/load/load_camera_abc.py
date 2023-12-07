@@ -1,6 +1,5 @@
-"""Load a camera asset in Blender."""
+"""Load an asset in Blender from an Alembic file."""
 
-import logging
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
@@ -11,28 +10,23 @@ from openpype.pipeline import (
     get_representation_path,
     AVALON_CONTAINER_ID,
 )
-from openpype.hosts.blender.api import plugin
+from openpype.hosts.blender.api import plugin, lib
 from openpype.hosts.blender.api.pipeline import (
     AVALON_CONTAINERS,
     AVALON_PROPERTY,
 )
 
-logger = logging.getLogger("openpype").getChild(
-    "blender").getChild("load_camera")
 
+class AbcCameraLoader(plugin.AssetLoader):
+    """Load a camera from Alembic file.
 
-class BlendCameraLoader(plugin.AssetLoader):
-    """Load a camera from a .blend file.
-
-    Warning:
-        Loading the same asset more then once is not properly supported at the
-        moment.
+    Stores the imported asset in an empty named after the asset.
     """
 
     families = ["camera"]
-    representations = ["blend"]
+    representations = ["abc"]
 
-    label = "Link Camera (Blend)"
+    label = "Load Camera (ABC)"
     icon = "code-fork"
     color = "orange"
 
@@ -40,68 +34,45 @@ class BlendCameraLoader(plugin.AssetLoader):
         objects = list(asset_group.children)
 
         for obj in objects:
-            if obj.type == 'CAMERA':
+            if obj.type == "CAMERA":
                 bpy.data.cameras.remove(obj.data)
+            elif obj.type == "EMPTY":
+                objects.extend(obj.children)
+                bpy.data.objects.remove(obj)
 
     def _process(self, libpath, asset_group, group_name):
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=False
-        ) as (data_from, data_to):
-            data_to.objects = data_from.objects
+        plugin.deselect_all()
 
-        parent = bpy.context.scene.collection
+        bpy.ops.wm.alembic_import(filepath=libpath)
 
-        empties = [obj for obj in data_to.objects if obj.type == 'EMPTY']
+        objects = lib.get_selection()
 
-        container = None
-
-        for empty in empties:
-            if empty.get(AVALON_PROPERTY):
-                container = empty
-                break
-
-        assert container, "No asset group found"
-
-        # Children must be linked before parents,
-        # otherwise the hierarchy will break
-        objects = []
-        nodes = list(container.children)
-
-        for obj in nodes:
+        for obj in objects:
             obj.parent = asset_group
 
-        for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
-
-        objects.reverse()
-
         for obj in objects:
-            parent.objects.link(obj)
+            name = obj.name
+            obj.name = f"{group_name}:{name}"
+            if obj.type != "EMPTY":
+                name_data = obj.data.name
+                obj.data.name = f"{group_name}:{name_data}"
 
-        for obj in objects:
-            local_obj = plugin.prepare_data(obj, group_name)
+            if not obj.get(AVALON_PROPERTY):
+                obj[AVALON_PROPERTY] = dict()
 
-            if local_obj.type != 'EMPTY':
-                plugin.prepare_data(local_obj.data, group_name)
-
-            if not local_obj.get(AVALON_PROPERTY):
-                local_obj[AVALON_PROPERTY] = dict()
-
-            avalon_info = local_obj[AVALON_PROPERTY]
+            avalon_info = obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
-
-        objects.reverse()
-
-        bpy.data.orphans_purge(do_local_ids=False)
 
         plugin.deselect_all()
 
         return objects
 
     def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
+        self,
+        context: dict,
+        name: str,
+        namespace: Optional[str] = None,
+        options: Optional[Dict] = None,
     ) -> Optional[List]:
         """
         Arguments:
@@ -110,7 +81,9 @@ class BlendCameraLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-        libpath = self.fname
+
+        libpath = self.filepath_from_context(context)
+
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
@@ -125,10 +98,16 @@ class BlendCameraLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.link(avalon_container)
 
         asset_group = bpy.data.objects.new(group_name, object_data=None)
-        asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
 
-        objects = self._process(libpath, asset_group, group_name)
+        self._process(libpath, asset_group, group_name)
+
+        objects = []
+        nodes = list(asset_group.children)
+
+        for obj in nodes:
+            objects.append(obj)
+            nodes.extend(list(obj.children))
 
         bpy.context.scene.collection.objects.link(asset_group)
 
@@ -136,14 +115,14 @@ class BlendCameraLoader(plugin.AssetLoader):
             "schema": "openpype:container-2.0",
             "id": AVALON_CONTAINER_ID,
             "name": name,
-            "namespace": namespace or '',
+            "namespace": namespace or "",
             "loader": str(self.__class__.__name__),
             "representation": str(context["representation"]["_id"]),
             "libpath": libpath,
             "asset_name": asset_name,
             "parent": str(context["representation"]["parent"]),
             "family": context["representation"]["context"]["family"],
-            "objectName": group_name
+            "objectName": group_name,
         }
 
         self[:] = objects
@@ -152,8 +131,14 @@ class BlendCameraLoader(plugin.AssetLoader):
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset.
 
-        This will remove all children of the asset group, load the new ones
-        and add them as children of the group.
+        This will remove all objects of the current collection, load the new
+        ones and add them to the collection.
+        If the objects of the collection are used in another collection they
+        will not be removed, only unlinked. Normally this should not be the
+        case though.
+
+        Warning:
+            No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
@@ -167,27 +152,20 @@ class BlendCameraLoader(plugin.AssetLoader):
         )
 
         assert asset_group, (
-            f"The asset is not loaded: {container['objectName']}"
-        )
+            f"The asset is not loaded: {container['objectName']}")
         assert libpath, (
-            "No existing library file found for {container['objectName']}"
-        )
-        assert libpath.is_file(), (
-            f"The file doesn't exist: {libpath}"
-        )
+            f"No existing library file found for {container['objectName']}")
+        assert libpath.is_file(), f"The file doesn't exist: {libpath}"
         assert extension in plugin.VALID_EXTENSIONS, (
-            f"Unsupported file: {libpath}"
-        )
+            f"Unsupported file: {libpath}")
 
         metadata = asset_group.get(AVALON_PROPERTY)
         group_libpath = metadata["libpath"]
 
-        normalized_group_libpath = (
-            str(Path(bpy.path.abspath(group_libpath)).resolve())
-        )
-        normalized_libpath = (
-            str(Path(bpy.path.abspath(str(libpath))).resolve())
-        )
+        normalized_group_libpath = str(
+            Path(bpy.path.abspath(group_libpath)).resolve())
+        normalized_libpath = str(
+            Path(bpy.path.abspath(str(libpath))).resolve())
         self.log.debug(
             "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_group_libpath,
@@ -197,29 +175,15 @@ class BlendCameraLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
-        # Check how many assets use the same library
-        count = 0
-        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
-            if obj.get(AVALON_PROPERTY).get('libpath') == group_libpath:
-                count += 1
-
         mat = asset_group.matrix_basis.copy()
 
         self._remove(asset_group)
-
-        # If it is the last object to use that library, remove it
-        if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(group_libpath))
-            if library:
-                bpy.data.libraries.remove(library)
-
         self._process(str(libpath), asset_group, object_name)
 
         asset_group.matrix_basis = mat
 
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
-        metadata["parent"] = str(representation["parent"])
 
     def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -230,16 +194,12 @@ class BlendCameraLoader(plugin.AssetLoader):
 
         Returns:
             bool: Whether the container was deleted.
+
+        Warning:
+            No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
-        libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
-
-        # Check how many assets use the same library
-        count = 0
-        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
-            if obj.get(AVALON_PROPERTY).get('libpath') == libpath:
-                count += 1
 
         if not asset_group:
             return False
@@ -247,10 +207,5 @@ class BlendCameraLoader(plugin.AssetLoader):
         self._remove(asset_group)
 
         bpy.data.objects.remove(asset_group)
-
-        # If it is the last object to use that library, remove it
-        if count == 1:
-            library = bpy.data.libraries.get(bpy.path.basename(libpath))
-            bpy.data.libraries.remove(library)
 
         return True

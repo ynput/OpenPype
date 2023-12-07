@@ -1,4 +1,4 @@
-"""Create a rig asset."""
+"""Create a Blender scene asset."""
 
 import bpy
 
@@ -7,13 +7,13 @@ from openpype.hosts.blender.api import plugin, lib, ops
 from openpype.hosts.blender.api.pipeline import AVALON_INSTANCES
 
 
-class CreateRig(plugin.Creator):
-    """Artist-friendly rig with controls to direct motion"""
+class CreateBlendScene(plugin.Creator):
+    """Generic group of assets"""
 
-    name = "rigMain"
-    label = "Rig"
-    family = "rig"
-    icon = "wheelchair"
+    name = "blendScene"
+    label = "Blender Scene"
+    family = "blendScene"
+    icon = "cubes"
 
     def process(self):
         """ Run the creator on Blender main thread"""

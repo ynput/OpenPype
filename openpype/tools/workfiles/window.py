@@ -441,8 +441,11 @@ class Window(QtWidgets.QWidget):
         # NOTE hornet fix for workspace
         fix_list = ['anim','lgt','lay','mdl','rig','look','previz','lgt']
         if task_name in fix_list and task_type in fix_list :
-            from openpype.hpipe import maya_fix
-            maya_fix.fix_workspace()
+            try:
+                from openpype.hpipe import maya_fix
+                maya_fix.fix_workspace()
+            except:
+                pass
         # END
 
         asset_is_valid = asset_id is not None
