@@ -212,6 +212,11 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 not instance_thumb_path
                 or not os.path.isfile(instance_thumb_path)
             ):
+                self.log.debug(
+                    "Adding thumbnail path to instance data: {}".format(
+                        full_output_path
+                    )
+                )
                 instance.data["thumbnailPath"] = full_output_path
 
             new_repre_tags = ["thumbnail"]
