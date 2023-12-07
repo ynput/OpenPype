@@ -617,7 +617,9 @@ def prompt_new_file_with_mesh(mesh_filepath):
         mesh_filename_label = mesh_filename.findChild(QtWidgets.QLabel)
         if not mesh_filename_label.text():
             dialog.close()
-            raise RuntimeError(f"Failed to set mesh path: {mesh_filepath}")
+            substance_painter.logging.warning(
+                f"Failed to set mesh path with the prompt dialog: {mesh_filepath}\n\n"
+                "Creating new project directly with the mesh path instead.")
         else:
             dialog.done(dialog.Accepted)
 
