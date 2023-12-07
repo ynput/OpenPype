@@ -821,28 +821,6 @@ def _convert_nuke_project_settings(ayon_settings, output):
             collect_instance_data.pop(
                 "sync_workfile_version_on_product_types"))
 
-    # TODO 'ExtractThumbnail' does not have ideal schema in v3
-    ayon_extract_thumbnail = ayon_publish["ExtractThumbnail"]
-    new_thumbnail_nodes = {}
-    for item in ayon_extract_thumbnail["nodes"]:
-        name = item["nodeclass"]
-        value = []
-        for knob in _convert_nuke_knobs(item["knobs"]):
-            knob_name = knob["name"]
-            # This may crash
-            if knob["type"] == "expression":
-                knob_value = knob["expression"]
-            else:
-                knob_value = knob["value"]
-            value.append([knob_name, knob_value])
-        new_thumbnail_nodes[name] = value
-
-    ayon_extract_thumbnail["nodes"] = new_thumbnail_nodes
-
-    if "reposition_nodes" in ayon_extract_thumbnail:
-        for item in ayon_extract_thumbnail["reposition_nodes"]:
-            item["knobs"] = _convert_nuke_knobs(item["knobs"])
-
     # --- ImageIO ---
     # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
     _convert_host_imageio(ayon_nuke)
