@@ -1,10 +1,10 @@
 import os
 import pyblish.api
-from openpype.pipeline import publish, OptionalPyblishPluginMixin
+from openpype.pipeline import publish
 from openpype.hosts.max.api.preview_animation import render_preview_animation
 
 
-class ExtractThumbnail(publish.Extractor, OptionalPyblishPluginMixin):
+class ExtractThumbnail(publish.Extractor):
     """Extract Thumbnail for Review
     """
 
@@ -15,8 +15,6 @@ class ExtractThumbnail(publish.Extractor, OptionalPyblishPluginMixin):
     optional = True
 
     def process(self, instance):
-        if not self.is_active(instance.data):
-            return
         ext = instance.data.get("imageFormat")
         frame = int(instance.data["frameStart"])
         staging_dir = self.staging_dir(instance)
