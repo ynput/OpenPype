@@ -28,7 +28,14 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
         "imagesequence", "render", "render2d", "prerender",
         "source", "clip", "take", "online", "image"
     ]
-    hosts = ["shell", "fusion", "resolve", "traypublisher", "substancepainter"]
+    hosts = [
+        "shell",
+        "fusion",
+        "resolve",
+        "traypublisher",
+        "substancepainter",
+        "nuke",
+    ]
     enabled = False
 
     integrate_thumbnail = False
@@ -44,6 +51,26 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     ffmpeg_args = None
 
     def process(self, instance):
+        # run main process
+        self._main_process(instance)
+
+        # Make sure cleanup happens to representations which are having both
+        # tags `delete` and `need_thumbnail`
+        for repre in tuple(instance.data["representations"]):
+            tags = repre.get("tags") or []
+            # skip representations which are going to be published on farm
+            if "publish_on_farm" in tags:
+                continue
+            if (
+                "delete" in tags
+                and "need_thumbnail" in tags
+            ):
+                self.log.debug(
+                    "Removing representation: {}".format(repre)
+                )
+                instance.data["representations"].remove(repre)
+
+    def _main_process(self, instance):
         subset_name = instance.data["subset"]
         instance_repres = instance.data.get("representations")
         if not instance_repres:
@@ -76,7 +103,13 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             self.log.debug("Skipping crypto passes.")
             return
 
-        filtered_repres = self._get_filtered_repres(instance)
+        # first check for any explicitly marked representations for thumbnail
+        explicit_repres = self._get_explicit_repres_for_thumbnail(instance)
+        if explicit_repres:
+            filtered_repres = explicit_repres
+        else:
+            filtered_repres = self._get_filtered_repres(instance)
+
         if not filtered_repres:
             self.log.info(
                 "Instance doesn't have representations that can be used "
@@ -168,6 +201,24 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             if not thumbnail_created:
                 continue
 
+            if len(explicit_repres) > 1:
+                repre_name = "thumbnail_{}".format(repre["outputName"])
+            else:
+                repre_name = "thumbnail"
+
+            # add thumbnail path to instance data for integrator
+            instance_thumb_path = instance.data.get("thumbnailPath")
+            if (
+                not instance_thumb_path
+                or not os.path.isfile(instance_thumb_path)
+            ):
+                self.log.debug(
+                    "Adding thumbnail path to instance data: {}".format(
+                        full_output_path
+                    )
+                )
+                instance.data["thumbnailPath"] = full_output_path
+
             new_repre_tags = ["thumbnail"]
             # for workflows which needs to have thumbnails published as
             # separate representations `delete` tag should not be added
@@ -175,7 +226,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 new_repre_tags.append("delete")
 
             new_repre = {
-                "name": "thumbnail",
+                "name": repre_name,
                 "ext": "jpg",
                 "files": jpeg_file,
                 "stagingDir": dst_staging,
@@ -184,12 +235,21 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
             }
 
             # adding representation
-            self.log.debug(
-                "Adding thumbnail representation: {}".format(new_repre)
-            )
             instance.data["representations"].append(new_repre)
-            # There is no need to create more then one thumbnail
-            break
+
+            if explicit_repres:
+                # this key will then align assetVersion ftrack thumbnail sync
+                new_repre["outputName"] = (
+                    repre.get("outputName") or repre["name"])
+                self.log.debug(
+                    "Adding explicit thumbnail representation: {}".format(
+                        new_repre))
+            else:
+                self.log.debug(
+                    "Adding thumbnail representation: {}".format(new_repre)
+                )
+                # There is no need to create more then one thumbnail
+                break
 
         if not thumbnail_created:
             self.log.warning("Thumbnail has not been created.")
@@ -208,12 +268,42 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 return True
         return False
 
+    def _get_explicit_repres_for_thumbnail(self, instance):
+        src_repres = instance.data.get("representations") or []
+        # This is mainly for Nuke where we have multiple representations for
+        #   one instance and representations are tagged for thumbnail.
+        # First check if any of the representations have
+        # `need_thumbnail` in tags and add them to filtered_repres
+        need_thumb_repres = [
+            repre for repre in src_repres
+            if "need_thumbnail" in repre.get("tags", [])
+            if "publish_on_farm" not in repre.get("tags", [])
+        ]
+        if not need_thumb_repres:
+            return []
+
+        self.log.info(
+            "Instance has representation with tag `need_thumbnail`. "
+            "Using only this representations for thumbnail creation. "
+        )
+        self.log.debug(
+            "Representations: {}".format(need_thumb_repres)
+        )
+        return need_thumb_repres
+
     def _get_filtered_repres(self, instance):
         filtered_repres = []
         src_repres = instance.data.get("representations") or []
+
         for repre in src_repres:
             self.log.debug(repre)
             tags = repre.get("tags") or []
+
+            if "publish_on_farm" in tags:
+                # only process representations with are going
+                # to be published locally
+                continue
+
             valid = "review" in tags or "thumb-nuke" in tags
             if not valid:
                 continue
@@ -286,7 +376,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
                 display=repre_display or oiio_default_display,
                 view=repre_view or oiio_default_view,
                 target_colorspace=oiio_default_colorspace,
-                additional_input_args=resolution_arg,
+                additional_command_args=resolution_arg,
                 logger=self.log,
             )
         except Exception:
