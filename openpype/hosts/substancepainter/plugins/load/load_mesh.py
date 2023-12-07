@@ -50,6 +50,8 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         if not substance_painter.project.is_open():
             # Allow to 'initialize' a new project
             path = self.filepath_from_context(context)
+            #TODO: improve the prompt dialog function to not
+            # only works for simple polygon scene
             result = prompt_new_file_with_mesh(mesh_filepath=path)
             if not result:
                 self.log.info("User cancelled new project prompt."

@@ -583,6 +583,8 @@ def prompt_new_file_with_mesh(mesh_filepath):
         file_dialog.setDirectory(os.path.dirname(mesh_filepath))
         url = QtCore.QUrl.fromLocalFile(os.path.basename(mesh_filepath))
         file_dialog.selectUrl(url)
+        # TODO: find a way to improve the process event to
+        # load more complicated mesh
         app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents, 3000)
 
         file_dialog.done(file_dialog.Accepted)
