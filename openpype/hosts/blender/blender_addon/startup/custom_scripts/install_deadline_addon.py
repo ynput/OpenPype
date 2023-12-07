@@ -10,14 +10,15 @@ from pathlib import Path
 
 def execute():
     path = get_repository_path("submission/Blender/Client")
+    blender_addons_folder_path = get_addons_folder_path()
     if not path:
         logging.warning("Can't find Deadline submission repository for Blender. Abort process.")
         raise ImportError
 
-    deadline_addon_file_name = _get_python_addon_file(path)
+    deadline_addon_file_name = get_python_addon_file(path)
     deadline_addon_name = Path(deadline_addon_file_name).stem
 
-    if _is_already_installed(deadline_addon_name):
+    if _is_already_installed(deadline_addon_name, blender_addons_folder_path):
         logging.info("Deadline addon is already installed")
     else:
         try:
@@ -32,26 +33,29 @@ def execute():
         )
         deadline_addon_name = Path(deadline_addon_file_name).stem
         logging.info("Deadline addon has been correctly installed.")
-
-    bpy.ops.preferences.addon_enable(module=deadline_addon_name)
+    print(deadline_addon_name)
+    enable_user_addons(blender_addons_folder_path)
     bpy.ops.wm.save_userpref()
 
 
-def _get_python_addon_file(path):
-    return next(
-        iter(
-            [
-                file_name for file_name in os.listdir(path) if
-                os.path.isfile(os.path.join(path, file_name)) and
-                file_name.endswith('.py')
-            ]
-        )
-    )
+def get_python_addon_file(path):
+    return next(iter(_list_python_files_in_dir(path)))
 
 
-def _is_already_installed(deadline_addon_name):
+def get_python_addons_files(path):
+    return _list_python_files_in_dir(path)
+
+
+def _list_python_files_in_dir(path):
+    return [
+        file_name for file_name in os.listdir(path) if
+        os.path.isfile(os.path.join(path, file_name)) and
+        file_name.endswith('.py')
+    ]
+
+
+def _is_already_installed(deadline_addon_name, blender_addons_folder_path):
     try:
-        blender_addons_folder_path = get_addons_folder_path()
         return next(
             iter(
                 deadline_addon_name in file \
@@ -69,6 +73,11 @@ def get_addons_folder_path():
         sys.argv[sys.argv.index("--") + 1 :]
     )
     return args.blender_addons_folder
+
+
+def enable_user_addons(blender_addons_folder_path):
+    for addon in get_python_addons_files(blender_addons_folder_path):
+        bpy.ops.preferences.addon_enable(module=Path(addon).stem)
 
 
 def get_deadline_command():
