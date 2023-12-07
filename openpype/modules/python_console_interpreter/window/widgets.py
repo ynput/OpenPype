@@ -8,6 +8,7 @@ import appdirs
 from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype import resources
+from openpype import AYON_SERVER_ENABLED
 from openpype.style import load_stylesheet
 from openpype.lib import JSONSettingRegistry
 
@@ -339,7 +340,9 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(PythonInterpreterWidget, self).__init__(parent)
 
-        self.setWindowTitle("OpenPype Console")
+        self.setWindowTitle("{} Console".format(
+            "AYON" if AYON_SERVER_ENABLED else "OpenPype"
+        ))
         self.setWindowIcon(QtGui.QIcon(resources.get_openpype_icon_filepath()))
 
         self.ansi_escape = re.compile(
