@@ -491,19 +491,45 @@ class DeadlinePublishTest(PublishTest):
             if not response.json():
                 raise ValueError("Couldn't find {}".format(deadline_job_id))
 
-            # Get errors from job and its dependents.
+            job = response.json()[0]
+
+            def recursive_dependencies(job, results=[]):
+                for dependency in job["Props"]["Dep"]:
+                    dependency = requests.get(
+                        "{}/api/jobs?JobId={}".format(
+                            deadline_url, dependency["JobID"]
+                        ),
+                        timeout=10
+                    ).json()[0]
+                    results.append(dependency)
+                    grand_dependencies = recursive_dependencies(
+                        dependency, results=results
+                    )
+                    for grand_dependency in grand_dependencies:
+                        if grand_dependency not in results:
+                            results.append(grand_dependency)
+                return results
+
+            job_status = {
+                0: "Unknown",
+                1: "Active",
+                2: "Suspended",
+                3: "Completed",
+                4: "Failed",
+                6: "Pending"
+            }
+
+            jobs_to_validate = [job]
+            jobs_to_validate.extend(recursive_dependencies(job))
+            failed_jobs = []
             errors = []
-            resp_error = requests.get(
-                "{}/api/jobreports?JobID={}&Data=allerrorcontents".format(
-                    deadline_url, deadline_job_id
-                ),
-                timeout=10
-            )
-            errors.extend(resp_error.json())
-            for dependency in response.json()[0]["Props"]["Dep"]:
+            for job in jobs_to_validate:
+                if "Failed" == job_status[job["Stat"]]:
+                    failed_jobs.append(job)
+
                 resp_error = requests.get(
                     "{}/api/jobreports?JobID={}&Data=allerrorcontents".format(
-                        deadline_url, dependency["JobID"]
+                        deadline_url, job["_id"]
                     ),
                     timeout=10
                 )
@@ -512,6 +538,10 @@ class DeadlinePublishTest(PublishTest):
             msg = "Errors in Deadline:\n"
             msg += "\n".join(errors)
             assert not errors, msg
+
+            msg = "Failed in Deadline:\n"
+            msg += "\n".join(failed_jobs)
+            assert not failed_jobs, msg
 
             # '0001-...' returned until job is finished
             valid_date_finished = response.json()[0]["DateComp"][:4] != "0001"
