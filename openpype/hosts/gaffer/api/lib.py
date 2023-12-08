@@ -158,8 +158,8 @@ def find_paths_by_type(scene_plug: GafferScene.ScenePlug,
         # ['/cube', '/nested/path/cube']
         >>> find_paths_by_type(plug, "NullObject")     # all nulls (groups)
         # ['/nested/path']
-        >>> find_paths_by_type(plug, "Camera")     # all cameras
-        # ['/nested/path']
+        >>> find_paths_by_type(plug, "Camera")         # all cameras
+        # ['/camera', /nested/camera2']
 
     Args:
         scene_plug (GafferScene.ScenePlug): Plug scene to traverse.
