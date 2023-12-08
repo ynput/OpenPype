@@ -52,7 +52,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
 
     @classmethod
     def get_attribute_defs(cls):
-        return [
+        defs = super(NukeSubmitDeadline, cls).get_attribute_defs()
+        defs.extend([
             NumberDef(
                 "priority",
                 label="Priority",
@@ -85,7 +86,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
                 default=False,
                 label="Suspend publish"
             )
-        ]
+        ])
+        return defs
 
     def process(self, instance):
         if not instance.data.get("farm"):
@@ -366,6 +368,14 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         # add allowed keys from preset if any
         if self.env_allowed_keys:
             keys += self.env_allowed_keys
+
+        # add all gizmos and plugin paths to the NUKE_PATH for the render farm
+        nuke_path = os.environ.get("NUKE_PATH", "")
+        nuke_paths = [path for path in nuke_path.split(os.pathsep) if path]
+        for nuke_plugin_path in nuke.pluginPath():
+            if nuke_plugin_path not in nuke_paths:
+                nuke_paths.append(nuke_plugin_path)
+        os.environ["NUKE_PATH"] = os.pathsep.join(nuke_paths)
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **legacy_io.Session)
