@@ -7,7 +7,7 @@ import bpy
 import pyblish.api
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
-    BL_TYPE_DATAPATH,
+    BL_TYPE_DATACOL,
 )
 from openpype.pipeline import AVALON_CONTAINER_ID, AVALON_INSTANCE_ID
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
@@ -78,7 +78,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             non_outliner_datacols = set(
                 chain.from_iterable(
                     getattr(bpy.data, datacol)
-                    for bl_type, datacol in BL_TYPE_DATAPATH.items()
+                    for bl_type, datacol in BL_TYPE_DATACOL.items()
                     if bl_type not in BL_OUTLINER_TYPES
                 )
             )

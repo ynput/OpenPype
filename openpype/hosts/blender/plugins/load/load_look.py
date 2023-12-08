@@ -22,7 +22,7 @@ from openpype.hosts.blender.api.pipeline import (
 # In order to implement lookdev extractor and loader with blend file.
 
 
-class BlendLookLoader(plugin.AssetLoader):
+class BlendLookLoader(plugin.BlendLoader):
     """Load models from a .blend file.
 
     Because they come from a .blend file we can simply link the collection that

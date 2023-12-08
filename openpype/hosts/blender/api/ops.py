@@ -26,7 +26,7 @@ from openpype.client.entities import (
 from openpype.hosts.blender.api.lib import add_datablocks_to_container
 from openpype.hosts.blender.api.utils import (
     BL_OUTLINER_TYPES,
-    BL_TYPE_DATAPATH,
+    BL_TYPE_DATACOL,
     build_op_basename,
     get_parent_collection,
     link_to_collection,
@@ -349,14 +349,14 @@ class LaunchLibrary(LaunchQtApp):
 def _update_entries_preset(self, context):
     """Update some entries with a preset.
 
-    - Set `datapath`'s value to the first item of the list to avoid `None`
+    - Set `datacol`'s value to the first item of the list to avoid `None`
     values when the length of the items list reduces.
     - Update variant name to the first item.
     """
     creator_params = context.scene["openpype_creators"][self.creator_name]
 
-    # Set default datapath and datablock
-    self.datapath = creator_params["bl_types"][0][0]
+    # Set default datacol and datablock
+    self.datacol = creator_params["bl_types"][0][0]
     self.datablock_name = ""
 
     # Change names
@@ -433,11 +433,11 @@ def _update_datacol(self: bpy.types.Operator, context: bpy.types.Context):
     """
     # Prefill with selected entity
     if (
-        self.datapath == "collections"
+        self.datacol == "collections"
         and context.collection != context.scene.collection
     ):
         active_entity = context.collection
-    elif self.datapath == "objects":
+    elif self.datacol == "objects":
         active_entity = context.active_object
     else:
         active_entity = None
@@ -489,14 +489,14 @@ class ManageOpenpypeInstance:
         name="Compatible with outliner"
     )
     use_selection: bpy.props.BoolProperty(name="Use selection")
-    datapath: EnumProperty(
+    datacol: EnumProperty(
         name="Data type",
-        # Build datapath items by getting the creator by its name
-        # Matching the appropriate datapath using the bl_types field
+        # Build datacol items by getting the creator by its name
+        # Matching the appropriate datacol using the bl_types field
         # which lists all relevant data types
         items=lambda self, context: [
-            (datapath, name, "")
-            for datapath, name in context.scene["openpype_creators"][
+            (datacol, name, "")
+            for datacol, name in context.scene["openpype_creators"][
                 self.creator_name
             ]["bl_types"]
         ],
@@ -570,14 +570,14 @@ class SCENE_OT_CreateOpenpypeInstance(
 
             # Search data into list
             row.prop_search(
-                self, "datablock_name", bpy.data, self.datapath, text=""
-            ) if self.datapath else layout.label(
+                self, "datablock_name", bpy.data, self.datacol, text=""
+            ) if self.datacol else layout.label(
                 text=f"Not supported family: {self.creator_name}"
             )
 
             # Pick list if several possibilities match
             if len(creator_plugin["bl_types"]) > 1:
-                row.prop(self, "datapath", text="", icon_only=True)
+                row.prop(self, "datacol", text="", icon_only=True)
 
         # Checkbox to gather selected element in outliner
         draw_gather_into_collection(self, context)
@@ -599,11 +599,11 @@ class SCENE_OT_CreateOpenpypeInstance(
         plugin = Creator(
             self.subset_name, self.asset_name, {"variant": self.variant_name}
         )
-        datapath = getattr(bpy.data, self.datapath)
+        datacol = getattr(bpy.data, self.datacol)
         plugin.process(
             bpy.context.selected_objects
             if self.use_selection
-            else [datapath.get(self.datablock_name)],
+            else [datacol.get(self.datablock_name)],
             gather_into_collection=self.gather_into_collection
         )
 
@@ -680,20 +680,20 @@ class SCENE_OT_AddToOpenpypeInstance(
 
         # Search data into list
         row.prop_search(
-            self, "datablock_name", bpy.data, self.datapath, text=""
+            self, "datablock_name", bpy.data, self.datacol, text=""
         )
 
         # Pick list if several possibilities match
         if self.bl_types_count > 1:
-            row.prop(self, "datapath", text="", icon_only=True)
+            row.prop(self, "datacol", text="", icon_only=True)
 
         # Checkbox to gather selected element in outliner
         draw_gather_into_collection(self, context)
 
     def execute(self, context):
         # Get datablock
-        datapath = getattr(bpy.data, self.datapath)
-        datablock = datapath.get(self.datablock_name)
+        datacol = getattr(bpy.data, self.datacol)
+        datablock = datacol.get(self.datablock_name)
 
         # Get openpype instance
         openpype_instances = context.scene.openpype_instances
@@ -720,7 +720,7 @@ class SCENE_OT_AddToOpenpypeInstance(
             avalon_prop["asset"],
             {"variant": op_instance.name},
         )
-        datapath = getattr(bpy.data, self.datapath)
+        datacol = getattr(bpy.data, self.datacol)
         plugin.process(
             [datablock], gather_into_collection=self.gather_into_collection
         )
@@ -738,12 +738,17 @@ def draw_gather_into_collection(self, context):
 
     Only if collections are handled by creator family.
     """
-    if self.datapath in {BL_TYPE_DATAPATH.get(t) for t in BL_OUTLINER_TYPES} and bpy.types.Collection.__name__ in {
-        t[1]
-        for t in context.scene["openpype_creators"][self.creator_name][
-            "bl_types"
-        ]
-    } or self.use_selection:
+    if (
+        self.datacol in {BL_TYPE_DATACOL.get(t) for t in BL_OUTLINER_TYPES}
+        and bpy.types.Collection.__name__
+        in {
+            t[1]
+            for t in context.scene["openpype_creators"][self.creator_name][
+                "bl_types"
+            ]
+        }
+        or self.use_selection
+    ):
         self.layout.prop(self, "gather_into_collection")
 
 
@@ -1118,7 +1123,7 @@ class SCENE_OT_MakeContainerPublishable(bpy.types.Operator):
                 for datablock in root_outliner_datablocks
             ),
             use_selection=False,
-            datapath="collections",
+            datacol="collections",
             datablock_name=root_outliner_datablocks[0].name,
         )
 
@@ -1279,7 +1284,7 @@ def discover_creators_handler(_):
             "defaults": creator.defaults,
             "family": creator.family,
             "bl_types": [
-                (BL_TYPE_DATAPATH.get(t), t.__name__) for t in creator.bl_types
+                (BL_TYPE_DATACOL.get(t), t.__name__) for t in creator.bl_types
             ],
         }
 

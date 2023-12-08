@@ -9,7 +9,7 @@ from openpype.hosts.blender.api import plugin
 from openpype.hosts.blender.api.properties import OpenpypeContainer
 
 
-class AudioLoader(plugin.AssetLoader):
+class AudioLoader(plugin.BlendLoader):
     """Load audio in Blender."""
 
     families = ["audio"]
@@ -21,7 +21,7 @@ class AudioLoader(plugin.AssetLoader):
 
     load_type = "APPEND"  # TODO meaningless here, must be refactored
 
-    def _load_library_datablocks(
+    def _load_blend_datablocks_as_container(
         self,
         libpath: Path,
         container_name: str,
@@ -92,7 +92,7 @@ class AudioLoader(plugin.AssetLoader):
         Args:
             container (Dict): Container OpenPype metadata
         """
-        container_metadata = self._get_scene_container(container_metadata)
+        container_metadata = self._get_blend_container(container_metadata)
         sound_seq = bpy.context.scene.sequence_editor.sequences.get(
             container_metadata["sequence_name"]
         )

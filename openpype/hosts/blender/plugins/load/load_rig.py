@@ -12,7 +12,7 @@ from openpype.hosts.blender.api import plugin, get_selection
 from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 
 
-class RigLoader(plugin.AssetLoader):
+class RigLoader(plugin.BlendLoader):
     """Load rigs from a .blend file."""
 
     color = "orange"

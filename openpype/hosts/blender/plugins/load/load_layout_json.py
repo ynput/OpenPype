@@ -11,7 +11,7 @@ from openpype.pipeline import (
 from openpype.hosts.blender.api import plugin
 
 
-class JsonLayoutLoader(plugin.AssetLoader):
+class JsonLayoutLoader(plugin.Loader):
     """Load layout from a .json file."""
 
     families = ["layout"]

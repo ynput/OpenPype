@@ -5,7 +5,7 @@ from openpype.hosts.blender.api.properties import OpenpypeContainer
 from openpype.hosts.blender.api import plugin
 
 
-class LayoutLoader(plugin.AssetLoader):
+class LayoutLoader(plugin.BlendLoader):
     """Link layout from a .blend file."""
 
     color = "orange"

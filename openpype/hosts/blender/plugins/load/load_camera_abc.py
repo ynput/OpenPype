@@ -17,7 +17,7 @@ from openpype.hosts.blender.api.pipeline import (
 )
 
 
-class AbcCameraLoader(plugin.AssetLoader):
+class AbcCameraLoader(plugin.Loader):
     """Load a camera from Alembic file.
 
     Stores the imported asset in an empty named after the asset.

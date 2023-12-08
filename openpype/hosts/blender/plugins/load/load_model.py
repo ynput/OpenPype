@@ -5,7 +5,7 @@ import bpy
 from openpype.hosts.blender.api import plugin
 
 
-class LinkModelLoader(plugin.AssetLoader):
+class LinkModelLoader(plugin.BlendLoader):
     """Link models from a .blend file."""
 
     families = ["model"]
@@ -19,7 +19,7 @@ class LinkModelLoader(plugin.AssetLoader):
     load_type = "LINK"
 
 
-class AppendModelLoader(plugin.AssetLoader):
+class AppendModelLoader(plugin.BlendLoader):
     """Append models from a .blend file."""
 
     families = ["model"]
@@ -33,7 +33,7 @@ class AppendModelLoader(plugin.AssetLoader):
     load_type = "APPEND"
 
 
-class InstanceModelLoader(plugin.AssetLoader):
+class InstanceModelLoader(plugin.BlendLoader):
     """load models from a .blend file as instance collection."""
 
     families = ["model"]

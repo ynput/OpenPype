@@ -5,7 +5,7 @@ import bpy
 from openpype.hosts.blender.api import plugin
 
 
-class CacheModelLoader(plugin.AssetLoader):
+class CacheModelLoader(plugin.Loader):
     """Import cache models.
 
     Stores the imported asset in a collection named after the asset.

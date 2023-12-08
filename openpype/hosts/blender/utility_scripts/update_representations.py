@@ -33,10 +33,13 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "--datapaths",
+        "--datacols",
         type=str,
         nargs="*",
-        help="list of datapaths to get datablocks from",
+        help=(
+            "list of data collections (bpy.data.<collection>) "
+            "to get datablocks from"
+        ),
         required=True,
         # TODO set default with outliner types
     )
@@ -53,9 +56,9 @@ if __name__ == "__main__":
     )
 
     containerized_datablocks = set()
-    for datapath in args.datapaths:
+    for datacol in args.datacols:
         for datablock_name in args.datablocks:
-            datablock = getattr(bpy.data, datapath).get(datablock_name)
+            datablock = getattr(bpy.data, datacol).get(datablock_name)
             if (
                 not datablock
                 or datablock in containerized_datablocks

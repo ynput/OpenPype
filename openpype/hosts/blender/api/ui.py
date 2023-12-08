@@ -1,6 +1,6 @@
 import bpy
 from bpy.types import Menu, UIList
-from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH, BL_TYPE_ICON
+from openpype.hosts.blender.api.utils import BL_TYPE_DATACOL, BL_TYPE_ICON
 
 
 def check_type_validity_for_creator(
@@ -17,7 +17,7 @@ def check_type_validity_for_creator(
     """
     creator = bpy.context.scene["openpype_creators"].get(creator_name, {})
 
-    return BL_TYPE_DATAPATH.get(type(datablock)) in {
+    return BL_TYPE_DATACOL.get(type(datablock)) in {
         t[0] for t in creator["bl_types"]
     }
 
@@ -194,7 +194,7 @@ class SCENE_PT_OpenpypeDatablocksManager(bpy.types.Panel):
                 active_openpype_instance.datablock_refs[0].datablock,
                 active_openpype_instance["creator_name"],
             ):
-                props.datapath = BL_TYPE_DATAPATH.get(
+                props.datacol = BL_TYPE_DATACOL.get(
                     type(active_openpype_instance.datablock_refs[0].datablock)
                 )
 

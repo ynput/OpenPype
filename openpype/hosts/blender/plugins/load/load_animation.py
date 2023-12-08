@@ -1,13 +1,11 @@
 """Load an animation in Blender."""
 
-from typing import Dict, Optional
-
 import bpy
 
 from openpype.hosts.blender.api import plugin
 
 
-class AnimationLoader(plugin.AssetLoader):
+class AnimationLoader(plugin.BlendLoader):
     """Load animations from a .blend file."""
     families = ["animation"]
 

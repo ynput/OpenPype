@@ -3,13 +3,13 @@ from itertools import chain
 import bpy
 
 from openpype.hosts.blender.api import plugin
-from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH
+from openpype.hosts.blender.api.utils import BL_TYPE_DATACOL
 
 
-class WorkfileLoader(plugin.AssetLoader):
+class WorkfileLoader(plugin.BlendLoader):
     """Load Workfile from a .blend file."""
 
-    bl_types = frozenset(BL_TYPE_DATAPATH.keys())  # All available types
+    bl_types = frozenset(BL_TYPE_DATACOL.keys())  # All available types
 
     def load(self, *args, **kwargs):
         container, datablocks = super().load(*args, **kwargs)

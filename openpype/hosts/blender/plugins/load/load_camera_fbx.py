@@ -3,7 +3,7 @@
 from openpype.hosts.blender.api import plugin
 
 
-class FbxCameraLoader(plugin.AssetLoader):
+class FbxCameraLoader(plugin.Loader):
     """Import a camera from a .fbx file.
 
     Stores the imported asset in a collection named after the asset.

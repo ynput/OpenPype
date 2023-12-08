@@ -6,7 +6,7 @@ import bpy
 from bson.objectid import ObjectId
 import pyblish
 
-from openpype.hosts.blender.api.utils import BL_TYPE_DATAPATH
+from openpype.hosts.blender.api.utils import BL_TYPE_DATACOL
 from openpype.hosts.blender.utility_scripts import (
     make_paths_relative,
     update_representations,
@@ -97,11 +97,11 @@ class IntegrateBlenderAsset(pyblish.api.ContextPlugin):
                             instance.data["subset"],
                             "--datablocks",
                             *[i.name for i in instance],
-                            "--datapaths",
+                            "--datacols",
                             *{
-                                BL_TYPE_DATAPATH.get(type(d))
+                                BL_TYPE_DATACOL.get(type(d))
                                 for d in instance
-                                if BL_TYPE_DATAPATH.get(type(d)) is not None
+                                if BL_TYPE_DATACOL.get(type(d)) is not None
                             },
                             "--id",
                             str(repre_id),

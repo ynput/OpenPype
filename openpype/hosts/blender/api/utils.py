@@ -23,8 +23,8 @@ from openpype.pipeline.workfile import get_last_workfile_representation
 # Key for metadata dict
 AVALON_PROPERTY = "avalon"
 
-# Match Blender type to a datapath to look into. Needed for native UI creator.
-BL_TYPE_DATAPATH = (  # TODO rename DATACOL
+# Match Blender type to a datacol to look into. Needed for native UI creator.
+BL_TYPE_DATACOL = (
     {  # NOTE Order is important for some hierarchy based processes!
         bpy.types.Collection: "collections",  # NOTE Must be always first
         bpy.types.Object: "objects",
@@ -470,7 +470,8 @@ def make_paths_absolute(source_filepath: Path = None):
                     isinstance(d, bpy.types.Image)
                     and d.source == "TILED"
                     and not d.packed_file
-                    or Path(d.filepath).name in {
+                    or Path(d.filepath).name
+                    in {
                         Path(file.get("path", "")).name
                         for file in workfile_repre.get("files")
                     }
@@ -574,3 +575,328 @@ def get_used_datablocks(
         ).items()
         if users & user_datablocks
     }
+
+
+def load_blend_datablocks(
+    filepath: Path,
+    bl_types: Set[bpy.types.ID],
+    link: Optional[bool] = True,
+    do_override: Optional[bool] = False,
+) -> Set[bpy.types.ID]:
+    """Load datablocks from blend file.
+
+    Args:
+        libpath (Path): Path of blend file.
+        bl_types (Set[bpy.types.ID]): Types of datablocks to load.
+        link (bool, optional): Only link datablocks (not made local).
+            Defaults to True.
+        do_override (bool, optional): Apply library override to
+            linked datablocks. Defaults to False.
+
+    Returns:
+        Tuple[OpenpypeContainer, Set[bpy.types.ID]]:
+            (Created scene container, Loaded datablocks)
+    """
+    # Load datablocks from libpath library.
+    loaded_data_collections = []
+    loaded_names = []
+    with bpy.data.libraries.load(
+        filepath.as_posix(), link=link, relative=False
+    ) as (
+        data_from,
+        data_to,
+    ):
+        for bl_type in bl_types:
+            data_collection_name = BL_TYPE_DATACOL.get(bl_type)
+            loaded_datablocks = list(getattr(data_from, data_collection_name))
+            setattr(
+                data_to,
+                data_collection_name,
+                loaded_datablocks,
+            )
+
+            # Keep collection name
+            loaded_data_collections.append(data_collection_name)
+
+            # Keep loaded datablocks names
+            loaded_names.extend([str(l) for l in loaded_datablocks])
+
+    datablocks = set()
+    i = 0
+    for datacol_name in loaded_data_collections:
+        loaded_datablocks = getattr(data_to, datacol_name)
+        # Assign original datablocks names to avoid name conflicts
+        for datablock in loaded_datablocks:
+            datablock["source_name"] = loaded_names[i]
+            i += 1
+
+        # Get datablocks
+        datablocks.update(loaded_datablocks)
+
+        # Remove fake user from loaded datablocks
+        datacol = getattr(bpy.data, datacol_name)
+        seq = [False if d in datablocks else d.use_fake_user for d in datacol]
+        datacol.foreach_set("use_fake_user", seq)
+
+    # Override datablocks if needed
+    if link and do_override:
+        # Get datablocks to override, only outliner datablocks which have
+        # no user in the loaded datablocks (orphan at this point)
+        datablocks_to_override = {
+            d
+            for d, users in bpy.data.user_map(subset=datablocks).items()
+            if not users & set(datablocks)
+            and isinstance(d, tuple(BL_OUTLINER_TYPES))
+        }
+
+        override_datablocks = set()
+        for d in datablocks_to_override:
+            # Override datablock and its children
+            d = d.override_hierarchy_create(
+                bpy.context.scene,
+                bpy.context.view_layer
+                # NOTE After BL3.4: do_fully_editable=True
+            )
+
+            # Update datablocks because could have been renamed
+            override_datablocks.add(d)
+            if isinstance(d, bpy.types.Object):
+                override_datablocks.update(d.children_recursive)
+            elif isinstance(d, bpy.types.Collection):
+                override_datablocks.update(
+                    itertools.chain(
+                        (
+                            col
+                            for col in d.children_recursive
+                            # Only not empty collections
+                            if col.children or col.all_objects
+                        ),
+                        d.all_objects,
+                    )
+                )
+
+        for d in override_datablocks:
+            # Ensure user override NOTE: will be unecessary after BL3.4
+            if d and hasattr(d.override_library, "is_system_override"):
+                d.override_library.is_system_override = False
+
+            # Set source_name
+            if d.override_library:
+                d["source_name"] = d.override_library.reference.name
+
+            # Override datablock data
+            if (
+                isinstance(d, bpy.types.Object)
+                and hasattr(d, "data")
+                and d.data
+            ):
+                d.data.override_create(remap_local_usages=True)
+
+        # Add override datablocks to datablocks
+        datablocks.update(override_datablocks)
+
+    # Add meshes to datablocks
+    datablocks.update(
+        {d.data for d in datablocks if d and isinstance(d, bpy.types.Object)}
+    )
+
+    return datablocks
+
+
+def replace_datablocks(
+    old_datablocks: Set[bpy.types.ID], new_datablocks: Set[bpy.types.ID]
+):
+    """Replace datablocks with other ones matching their type and name.
+
+    For a more accurate matching, the 'source_name' key is tested first.
+    Transform, modifiers, constraints, drivers and action are transfered.
+    """
+    # Rename old datablocks
+    for old_datablock in old_datablocks:
+        if not old_datablock.library:
+            old_datablock.name += ".old"
+
+        # Restore original name for linked datablocks
+        if (
+            old_datablock.override_library
+            and old_datablock.override_library.reference
+        ):
+            old_datablock[
+                "source_name"
+            ] = old_datablock.override_library.reference.name
+        elif old_datablock.library or not old_datablock.get("source_name"):
+            old_datablock["source_name"] = old_datablock.name
+
+        old_datablock.use_fake_user = False
+
+    # Unlink from parent collection if existing
+    parent_collections = {}
+    for outliner_datablock in get_root_datablocks(
+        old_datablocks, BL_OUTLINER_TYPES
+    ):
+        if parent_collection := get_parent_collection(outliner_datablock):
+            unlink_from_collection(outliner_datablock, parent_collection)
+
+            # Store parent collection by name
+            parent_collections.setdefault(parent_collection, []).append(
+                outliner_datablock["source_name"]
+            )
+
+    # Sort with source datablocks at the end
+    new_datablocks.discard(None)
+    datablocks_to_remap = sorted(
+        new_datablocks, key=lambda d: 1 if d.library else 0
+    )
+
+    # Old datablocks remap
+    for old_datablock in sorted(
+        old_datablocks, key=lambda d: 1 if d.library else 0
+    ):
+        # Match new datablock by name
+        if new_datablock := next(
+            (
+                d
+                for d in datablocks_to_remap
+                if type(d) is type(old_datablock)
+                and old_datablock.get("source_name") == d.get("source_name")
+            ),
+            None,
+        ):
+            old_datablock.user_remap(new_datablock)
+
+            # Remove remapped datablock
+            datablocks_to_remap.remove(new_datablock)
+
+            # Skip if pure link because changes won't be saved
+            if new_datablock.library:
+                continue
+
+            # Transfer transforms
+            if isinstance(old_datablock, bpy.types.Object):
+                new_datablock.location = old_datablock.location
+                new_datablock.rotation_euler = old_datablock.rotation_euler
+                new_datablock.scale = old_datablock.scale
+
+            # Ensure action relink
+            if (  # Object
+                hasattr(old_datablock, "animation_data")
+                and old_datablock.animation_data
+            ):
+                transfer_action(old_datablock, new_datablock)
+            if (  # Object data (ie mesh, light...)
+                hasattr(old_datablock, "data")
+                and hasattr(old_datablock.data, "animation_data")
+                and old_datablock.data.animation_data
+            ):
+                transfer_action(old_datablock.data, new_datablock.data)
+
+            # Ensure modifiers reassignation
+            if hasattr(old_datablock, "modifiers"):
+                transfer_stack(old_datablock, "modifiers", new_datablock)
+
+            # Ensure constraints reassignation
+            if hasattr(old_datablock, "constraints"):
+                transfer_stack(old_datablock, "constraints", new_datablock)
+
+            # Transfer custom properties
+            is_source_switch = (
+                old_datablock.override_library
+                and new_datablock.override_library
+            )
+            for k, v in old_datablock.items():
+                # Consider if value has changed between source datablocks
+                # that it is an update which should be preserved locally.
+                if not (
+                    is_source_switch
+                    and old_datablock.override_library.reference.get(k)
+                    != new_datablock.override_library.reference.get(k)
+                ):
+                    new_datablock[k] = v
+
+            # Ensure bones constraints reassignation
+            if hasattr(old_datablock, "pose") and old_datablock.pose:
+                for bone in old_datablock.pose.bones:
+                    if new_datablock.pose:
+                        if new_bone := new_datablock.pose.bones.get(bone.name):
+                            transfer_stack(bone, "constraints", new_bone)
+
+                            # Transfer custom properties
+                            for k, v in bone.items():
+                                # Consider if value has changed between
+                                # source datablocks that it is an update
+                                # which should be preserved locally.
+                                old_source_bone = (
+                                    old_datablock
+                                    .override_library
+                                    .reference
+                                    .pose
+                                    .bones[
+                                        bone.name
+                                    ]
+                                )
+                                new_source_bone = (
+                                    new_datablock
+                                    .override_library
+                                    .reference
+                                    .pose
+                                    .bones[
+                                        new_bone.name
+                                    ]
+                                )
+                                if not (
+                                    is_source_switch
+                                    and old_source_bone.get(k)
+                                    != new_source_bone.get(k)
+                                ):
+                                    new_bone[k] = v
+
+            # Ensure drivers reassignation
+            if (
+                isinstance(old_datablock, bpy.types.Object)
+                and hasattr(new_datablock.data, "shape_keys")
+                and new_datablock.data.shape_keys
+                and new_datablock.data.shape_keys.animation_data
+                and old_datablock.data
+                and old_datablock.data.shape_keys
+                and old_datablock.data.shape_keys.animation_data
+                and old_datablock.data.shape_keys.animation_data.drivers
+            ):
+                for i, driver in enumerate(
+                    new_datablock.data.shape_keys.animation_data.drivers
+                ):
+                    for j, var in enumerate(driver.driver.variables):
+                        for k, target in enumerate(var.targets):
+                            target.id = (
+                                old_datablock
+                                .data
+                                .shape_keys
+                                .animation_data
+                                .drivers[
+                                    i
+                                ]
+                                .driver.variables[j]
+                                .targets[k]
+                                .id
+                            )
+        else:
+            # Remove .old
+            if old_datablock.name.endswith(".old"):
+                old_datablock.name = old_datablock.name.replace(".old", "")
+
+    # Restore parent collection if existing
+    for (
+        parent_collection,
+        datablock_names,
+    ) in parent_collections.items():
+        datablocks_to_change_parent = {
+            d
+            for d in new_datablocks
+            if d and not d.library and d.get("source_name") in datablock_names
+        }
+        link_to_collection(datablocks_to_change_parent, parent_collection)
+
+        # Need to unlink from scene collection to avoid duplicates
+        if parent_collection != bpy.context.scene.collection:
+            unlink_from_collection(
+                datablocks_to_change_parent, bpy.context.scene.collection
+            )
