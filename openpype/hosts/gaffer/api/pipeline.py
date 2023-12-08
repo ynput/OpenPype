@@ -194,7 +194,7 @@ def imprint(node: Gaffer.Node,
 
     FLAGS = Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic
 
-    for key, value in data:
+    for key, value in data.items():
         # Dict to JSON
         if isinstance(value, dict):
             value = json.dumps(value)
