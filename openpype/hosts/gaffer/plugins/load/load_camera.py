@@ -3,7 +3,12 @@ from openpype.pipeline import (
     get_representation_path,
 )
 from openpype.hosts.gaffer.api import get_root, imprint_container
-from openpype.hosts.gaffer.api.lib import set_node_color, arrange, make_box, find_camera_paths
+from openpype.hosts.gaffer.api.lib import (
+    set_node_color,
+    arrange,
+    make_box,
+    find_camera_paths
+)
 
 import Gaffer
 import GafferScene
@@ -54,7 +59,7 @@ class GafferLoadAlembicCamera(load.LoaderPlugin):
         path = self.filepath_from_context(context).replace("\\", "/")
         box["fileName"].setValue(path)
 
-        # find the path to the cameras in the newly read file to base our filter on
+        # Find all cameras in the loaded scene
         cameras = find_camera_paths(reader["out"])
         if len(cameras) > 0:
             camera_filter = cameras

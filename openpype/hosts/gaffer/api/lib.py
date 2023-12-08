@@ -1,4 +1,5 @@
 from typing import Tuple, List, Optional
+from queue import SimpleQueue
 
 import Gaffer
 import GafferScene
@@ -81,38 +82,72 @@ def arrange(nodes: List[Gaffer.Node], parent: Optional[Gaffer.Node] = None):
     graph.getLayout().layoutNodes(graph, Gaffer.StandardSet(nodes))
 
 
-def find_camera_paths(out_plug, starting_path="/"):
-    """Traverses the scene starting at `starting_path` collecting a list of paths
-    to all the Camera objects it finds
+def traverse_scene(scene_plug: GafferScene.ScenePlug, root: str = "/"):
+    """Yields breadth first all children from given `root`.
+
+    Note: This also yields the root itself.
+    This traverses down without the need for a recursive function.
 
     Args:
-        out_plug (GafferScene.ScenePlug): Typically the `["out]` plug of a node to traverse
-            the scene hierarchy from.
-        starting_path (string): The path to the starting point of the traversal.
+        scene_plug (GafferScene.ScenePlug): Plug scene to traverse.
+            Typically, the out plug of a node (`node["out"]`).
+        root (string): The root path as starting point of the traversal.
+
+    Yields:
+        str: Child path
+
+    """
+    queue = SimpleQueue()
+    queue.put_nowait(root)
+    while not queue.empty():
+        path = queue.get_nowait()
+        yield path
+
+        for child_name in scene_plug.childNames(path):
+            child_path = f"{path.rstrip('/')}/{child_name}"
+            queue.put_nowait(child_path)
+
+
+def find_camera_paths(scene_plug: GafferScene.ScenePlug,
+                      root: str = "/"):
+    """Traverses the scene plug starting at `root` returning all cameras.
+
+    Args:
+        scene_plug (GafferScene.ScenePlug): Plug scene to traverse.
+            Typically, the out plug of a node (`node["out"]`).
+        root (string): The root path as starting point of the traversal.
 
     Returns:
         list: List of found paths to cameras.
 
     """
-    cameras = []
-    find_paths(out_plug, starting_path, "Camera", cameras)
-    return cameras
+    return find_paths_by_type(scene_plug, "Camera", root)
 
 
-def find_paths(scene, path, object_type_name, found_paths_list):
-    """The actual scene traversal function. Populates the passed `found_paths_list` wit found paths.
+def find_paths_by_type(scene_plug: GafferScene.ScenePlug,
+                       object_type_name: str,
+                       root: str = "/") -> List[str]:
+    """Return all paths in scene plug under `path` that match given type.
+
+    Examples:
+        >>> find_paths_by_type(plug, "MeshPrimitive")  # all meshes
+        # ['/cube', '/nested/path/cube']
+        >>> find_paths_by_type(plug, "NullObject")     # all nulls (groups)
+        # ['/nested/path']
+        >>> find_paths_by_type(plug, "Camera")     # all cameras
+        # ['/nested/path']
 
     Args:
-        scene (GafferScene.ScenePlug): The plug whose scene we will traverse.
-        path (string): Starting path of traversal.
-        object_type_name (String): The name of the objec type we want to find paths for.
-        found_paths_list (list): The list of paths that will are found.
+        scene_plug (GafferScene.ScenePlug): The plug whose scene we will traverse.
+        object_type_name (String): The name of the object type we want to find.
+        root (string): Starting root path of traversal.
 
     Returns:
         None
 
     """
-    if scene.object(path).typeName() == object_type_name:
-        found_paths_list.append(path)
-    for childName in scene.childNames(path):
-        find_paths(scene, path.rstrip("/") + "/" + str(childName), object_type_name, found_paths_list)
+    result = []
+    for path in traverse_scene(scene_plug, root):
+        if scene_plug.object(path).typeName() == object_type_name:
+            result.append(path)
+    return result

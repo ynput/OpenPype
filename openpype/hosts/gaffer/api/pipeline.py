@@ -144,10 +144,13 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return {}
 
     def _register_callbacks(self):
-        self.application.root()["scripts"].childAddedSignal().connect(self._on_scene_new, scoped=False)
+        scripts_list = self.application.root()["scripts"]
+        scripts_list.childAddedSignal().connect(self._on_scene_new,
+                                                scoped=False)
 
     def _on_scene_new(self, script_container, script_node):
-        script_node['variables']['projectRootDirectory']['value'].setValue(self.work_root(os.environ))
+        # Update the projectRootDirectory variable for new workfile scripts
+        script_node['variables']['projectRootDirectory']['value'].setValue(self.work_root(os.environ))  # noqa
 
 
 def imprint_container(node: Gaffer.Node,
