@@ -493,7 +493,10 @@ class DeadlinePublishTest(PublishTest):
 
             job = response.json()[0]
 
-            def recursive_dependencies(job, results=[]):
+            def recursive_dependencies(job, results=None):
+                if results is None:
+                    results = []
+
                 for dependency in job["Props"]["Dep"]:
                     dependency = requests.get(
                         "{}/api/jobs?JobId={}".format(
