@@ -2,14 +2,14 @@ import sys
 from queue import SimpleQueue
 from typing import Tuple, List, Optional
 
+import Gaffer
+import GafferScene
+import imath
+
 if sys.version_info >= (3, 9, 0):
     from collections.abc import Iterator
 else:
     from typing import Iterator
-
-import Gaffer
-import GafferScene
-import imath
 
 
 def set_node_color(node: Gaffer.Node, color: Tuple[float, float, float]):
