@@ -1,4 +1,5 @@
 from typing import Tuple, List, Optional
+from collections.abc import Generator
 from queue import SimpleQueue
 
 import Gaffer
@@ -82,7 +83,8 @@ def arrange(nodes: List[Gaffer.Node], parent: Optional[Gaffer.Node] = None):
     graph.getLayout().layoutNodes(graph, Gaffer.StandardSet(nodes))
 
 
-def traverse_scene(scene_plug: GafferScene.ScenePlug, root: str = "/"):
+def traverse_scene(scene_plug: GafferScene.ScenePlug,
+                   root: str = "/") -> Generator[str]:
     """Yields breadth first all children from given `root`.
 
     Note: This also yields the root itself.
@@ -109,7 +111,7 @@ def traverse_scene(scene_plug: GafferScene.ScenePlug, root: str = "/"):
 
 
 def find_camera_paths(scene_plug: GafferScene.ScenePlug,
-                      root: str = "/"):
+                      root: str = "/") -> List[str]:
     """Traverses the scene plug starting at `root` returning all cameras.
 
     Args:
@@ -118,7 +120,7 @@ def find_camera_paths(scene_plug: GafferScene.ScenePlug,
         root (string): The root path as starting point of the traversal.
 
     Returns:
-        list: List of found paths to cameras.
+        List[str]: List of found paths to cameras.
 
     """
     return find_paths_by_type(scene_plug, "Camera", root)
@@ -143,7 +145,7 @@ def find_paths_by_type(scene_plug: GafferScene.ScenePlug,
         root (string): Starting root path of traversal.
 
     Returns:
-        None
+        List[str]: List of found paths matching the object type name.
 
     """
     result = []
