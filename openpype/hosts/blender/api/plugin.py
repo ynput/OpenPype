@@ -1258,6 +1258,21 @@ class AssetLoader(Loader):
                 if hasattr(old_datablock, "constraints"):
                     transfer_stack(old_datablock, "constraints", new_datablock)
 
+                # Transfer custom properties
+                is_source_switch = (
+                    old_datablock.override_library
+                    and new_datablock.override_library
+                )
+                for k, v in old_datablock.items():
+                    # Consider if value has changed between source datablocks
+                    # that it is an update which should be preserved locally.
+                    if not (
+                        is_source_switch
+                        and old_datablock.override_library.reference.get(k)
+                        != new_datablock.override_library.reference.get(k)
+                    ):
+                        new_datablock[k] = v
+
                 # Ensure bones constraints reassignation
                 if hasattr(old_datablock, "pose") and old_datablock.pose:
                     for bone in old_datablock.pose.bones:
@@ -1266,6 +1281,36 @@ class AssetLoader(Loader):
                                 bone.name
                             ):
                                 transfer_stack(bone, "constraints", new_bone)
+
+                                # Transfer custom properties
+                                for k, v in bone.items():
+                                    # Consider if value has changed between
+                                    # source datablocks that it is an update
+                                    # which should be preserved locally.
+                                    old_source_bone = (
+                                        old_datablock
+                                        .override_library
+                                        .reference
+                                        .pose
+                                        .bones[
+                                            bone.name
+                                        ]
+                                    )
+                                    new_source_bone = (
+                                        new_datablock
+                                        .override_library
+                                        .reference
+                                        .pose
+                                        .bones[
+                                            new_bone.name
+                                        ]
+                                    )
+                                    if not (
+                                        is_source_switch
+                                        and old_source_bone.get(k)
+                                        != new_source_bone.get(k)
+                                    ):
+                                        new_bone[k] = v
 
                 # Ensure drivers reassignation
                 if (
