@@ -47,7 +47,6 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     def __init__(self):
         super(GafferHost, self).__init__()
-        self._has_been_setup = False
 
     def install(self):
         pyblish.api.register_host("gaffer")
@@ -55,20 +54,6 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
-
-        log.info("Installing callbacks ... ")
-        # register_event_callback("init", on_init)
-        # self._register_callbacks()
-        # register_event_callback("before.save", before_save)
-        # register_event_callback("save", on_save)
-        # register_event_callback("open", on_open)
-        # register_event_callback("new", on_new)
-
-        # pyblish.api.register_callback(
-        #     "instanceToggled", on_pyblish_instance_toggled
-        # )
-
-        self._has_been_setup = True
 
     def has_unsaved_changes(self):
         script = get_root()

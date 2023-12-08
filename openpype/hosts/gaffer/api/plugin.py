@@ -7,13 +7,8 @@ def read(node):
     if "user" not in node:
         # No user attributes
         return {}
-
-    user = node["user"]
-    for key in user:
-        print(key, type(key), dir(key))
-
     return {
-        plug.getName(): plug.getValue() for plug in user
+        plug.getName(): plug.getValue() for plug in node["user"]
     }
 
 
