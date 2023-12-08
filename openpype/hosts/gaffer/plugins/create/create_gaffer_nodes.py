@@ -12,12 +12,12 @@ from openpype.hosts.gaffer.api.plugin import CreatorImprintReadMixin
 import Gaffer
 
 
-class CreateGafferScene(NewCreator, CreatorImprintReadMixin):
-    identifier = "io.openpype.creators.gaffer.gafferscene"
-    label = "Gaffer Scene"
-    family = "gafferScene"
+class CreateGafferNodes(NewCreator, CreatorImprintReadMixin):
+    identifier = "io.openpype.creators.gaffer.gaffernodes"
+    label = "Gaffer Box"
+    family = "gafferNodes"
     default_variants = ["Main"]
-    description = "Export selected as .gfr for single gaffer node"
+    description = "Export Box node for referencing"
     icon = "gears"
 
     attr_prefix = "openpype_"

@@ -11,7 +11,7 @@ import Gaffer
 class GafferLoadReference(load.LoaderPlugin):
     """Reference a gaffer scene"""
 
-    families = ["gafferScene"]
+    families = ["gafferNodes"]
     representations = ["gfr"]
 
     label = "Reference Gaffer Scene"

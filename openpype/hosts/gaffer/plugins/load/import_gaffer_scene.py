@@ -10,7 +10,7 @@ import Gaffer
 class GafferImportScene(load.LoaderPlugin):
     """Import a gaffer scene (unmanaged)"""
 
-    families = ["gafferScene", "workfile"]
+    families = ["gafferNodes", "workfile"]
     representations = ["gfr"]
 
     label = "Import Gaffer Scene"

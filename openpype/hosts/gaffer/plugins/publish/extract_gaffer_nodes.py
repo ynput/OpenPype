@@ -4,16 +4,16 @@ import pyblish.api
 from openpype.pipeline import publish
 
 
-class ExtractGafferScript(
+class ExtractGafferNodes(
     publish.Extractor,
     publish.OpenPypePyblishPluginMixin
 ):
-    """Render the current Fusion composition locally."""
+    """Export box nodes for reference."""
 
     order = pyblish.api.ExtractorOrder - 0.2
     label = "Gaffer Script"
     hosts = ["gaffer"]
-    families = ["gafferScene"]
+    families = ["gafferNodes"]
 
     def process(self, instance):
 
