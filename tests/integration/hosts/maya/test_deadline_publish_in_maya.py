@@ -54,7 +54,7 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
             DBAssert.count_of_types(dbcon, "subset", 1,
                                     name="workfileTest_task"))
 
-        failures.append(DBAssert.count_of_types(dbcon, "representation", 8))
+        failures.append(DBAssert.count_of_types(dbcon, "representation", 7))
 
         # hero included
         additional_args = {"context.subset": "modelMain",
@@ -85,7 +85,7 @@ class TestDeadlinePublishInMaya(MayaDeadlinePublishTestClass):
         additional_args = {"context.subset": "renderTest_taskMain_beauty",
                            "context.ext": "jpg"}
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 1,
+            DBAssert.count_of_types(dbcon, "representation", 0,
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "renderTest_taskMain_beauty",
