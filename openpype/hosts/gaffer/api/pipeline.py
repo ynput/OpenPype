@@ -33,11 +33,11 @@ self.root = None
 JSON_PREFIX = "JSON:::"
 
 
-def set_root(root):
+def set_root(root: Gaffer.ScriptNode):
     self.root = root
 
 
-def get_root():
+def get_root() -> Gaffer.ScriptNode:
     return self.root
 
 
@@ -141,19 +141,19 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return {}
 
 
-def imprint_container(node,
-                      name,
-                      namespace,
-                      context,
-                      loader=None):
+def imprint_container(node: Gaffer.Node,
+                      name: str,
+                      namespace: str,
+                      context: dict,
+                      loader: str = None):
     """Imprint a Loader with metadata
 
     Containerisation enables a tracking of version, author and origin
     for loaded assets.
 
     Arguments:
-        tool (object): The node in Fusion to imprint as container, usually a
-            Loader.
+        node (Gaffer.Node): The node in Gaffer to imprint as container,
+            usually a node loaded by a Loader.
         name (str): Name of resulting assembly
         namespace (str): Namespace under which to host container
         context (dict): Asset information
@@ -163,16 +163,14 @@ def imprint_container(node,
         None
 
     """
-
-    data = [
-        ("schema", "openpype:container-2.0"),
-        ("id", AVALON_CONTAINER_ID),
-        ("name", str(name)),
-        ("namespace", str(namespace)),
-        ("loader", str(loader)),
-        ("representation", str(context["representation"]["_id"])),
-    ]
-
+    data = {
+        "schema": "openpype:container-2.0",
+        "id": AVALON_CONTAINER_ID,
+        "name": str(name),
+        "namespace": str(namespace),
+        "loader": str(loader),
+        "representation": str(context["representation"]["_id"]),
+    }
     imprint(node, data)
 
 

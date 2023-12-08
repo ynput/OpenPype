@@ -2,6 +2,8 @@ import json
 
 from openpype.hosts.gaffer.api.pipeline import imprint, JSON_PREFIX
 
+import Gaffer
+
 
 def read(node):
     """Read all 'user' custom data on the node"""
@@ -19,7 +21,7 @@ class CreatorImprintReadMixin:
 
     attr_prefix = "openpype_"
 
-    def _read(self, node):
+    def _read(self, node: Gaffer.Node) -> dict:
         all_user_data = read(node)
 
         # Consider only data with the special attribute prefix
@@ -41,7 +43,7 @@ class CreatorImprintReadMixin:
 
         return openpype_data
 
-    def _imprint(self, node, data):
+    def _imprint(self, node: Gaffer.Node, data: dict):
         # Instance id is the node's unique full name so we don't need to
         # imprint as data. This makes it so that duplicating a node will
         # correctly detect it as a new unique instance.
@@ -53,4 +55,4 @@ class CreatorImprintReadMixin:
             key = f"{self.attr_prefix}{key}"
             openpype_data[key] = value
 
-        imprint(node, openpype_data.items())
+        imprint(node, openpype_data)

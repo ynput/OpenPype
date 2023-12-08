@@ -3,7 +3,7 @@ import GafferScene
 import imath
 
 
-def set_node_color(node, color):
+def set_node_color(node: Gaffer.Node, color: tuple[float, float, float]):
     """Set node color.
 
     Args:
@@ -19,11 +19,11 @@ def set_node_color(node, color):
                                   imath.Color3f(*color))
 
 
-def make_box(name,
-             add_input=True,
-             add_output=True,
-             description=None,
-             hide_add_buttons=True):
+def make_box(name: str,
+             add_input: bool = True,
+             add_output: bool = True,
+             description: bool = None,
+             hide_add_buttons: bool = True) -> Gaffer.Box:
     """Create a Box node with BoxIn and BoxOut nodes"""
 
     box = Gaffer.Box(name)
@@ -53,12 +53,12 @@ def make_box(name,
     return box
 
 
-def arrange(nodes, parent=None):
+def arrange(nodes: list[Gaffer.Node], parent: Gaffer.Node = None):
     """Layout the nodes in the graph.
 
     Args:
         nodes (list): The nodes to rearrange into a nice layout.
-        parent (Gaffer.Node): Optional. The parent node to layout in.
+        parent (list[Gaffer.Node]): Optional. The parent node to layout in.
             If not provided the parent of the first node is taken. The
             assumption is made that all nodes reside within the same parent.
 
