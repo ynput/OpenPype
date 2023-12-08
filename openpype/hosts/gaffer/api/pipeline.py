@@ -46,8 +46,9 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
     _context_plug = "openpype_context"
 
-    def __init__(self):
+    def __init__(self, application):
         super(GafferHost, self).__init__()
+        self.application = application
 
     def install(self):
         pyblish.api.register_host("gaffer")
@@ -55,6 +56,8 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         pyblish.api.register_plugin_path(PUBLISH_PATH)
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
+
+        self._register_callbacks()
 
     def has_unsaved_changes(self):
         script = get_root()
@@ -139,6 +142,12 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             data_str = script["user"][self._context_plug].getValue()
             return json.loads(data_str)
         return {}
+
+    def _register_callbacks(self):
+        self.application.root()["scripts"].childAddedSignal().connect(self._on_scene_new, scoped=False)
+
+    def _on_scene_new(self, script_container, script_node):
+        script_node['variables']['projectRootDirectory']['value'].setValue(self.work_root(os.environ))
 
 
 def imprint_container(node: Gaffer.Node,
