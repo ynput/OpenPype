@@ -1,3 +1,4 @@
+from pprint import pformat
 import pyblish.api
 
 from openpype.pipeline import (
@@ -33,13 +34,24 @@ class ValidateColorspace(pyblish.api.InstancePlugin,
             config_path = colorspace_data["config"]["path"]
             if config_path not in config_colorspaces:
                 colorspaces = get_ocio_config_colorspaces(config_path)
-                config_colorspaces[config_path] = set(colorspaces)
+                if not colorspaces.get("colorspaces"):
+                    raise PublishValidationError(
+                        title="Colorspace validation",
+                        message=f"OCIO config '{config_path}' does not contain "
+                                f"any colorspaces. This is error in config. "
+                                "Contact your pipeline TD.",
+                        description=f"OCIO config '{config_path}' does not "
+                                    f"contain any colorspaces. This is error "
+                                    "in config. Contact your pipeline TD."
+                    )
+                config_colorspaces[config_path] = set(colorspaces["colorspaces"])
 
             colorspace = colorspace_data["colorspace"]
             self.log.debug(
                 f"Validating representation '{repre['name']}' "
                 f"colorspace '{colorspace}'"
             )
+            self.log.debug(pformat(config_colorspaces[config_path]))
             if colorspace not in config_colorspaces[config_path]:
                 message = (
                     f"Representation '{repre['name']}' colorspace "
