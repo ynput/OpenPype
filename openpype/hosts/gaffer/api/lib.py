@@ -1,9 +1,11 @@
+from typing import Tuple, List, Optional
+
 import Gaffer
 import GafferScene
 import imath
 
 
-def set_node_color(node: Gaffer.Node, color: tuple[float, float, float]):
+def set_node_color(node: Gaffer.Node, color: Tuple[float, float, float]):
     """Set node color.
 
     Args:
@@ -22,7 +24,7 @@ def set_node_color(node: Gaffer.Node, color: tuple[float, float, float]):
 def make_box(name: str,
              add_input: bool = True,
              add_output: bool = True,
-             description: bool = None,
+             description: Optional[str] = None,
              hide_add_buttons: bool = True) -> Gaffer.Box:
     """Create a Box node with BoxIn and BoxOut nodes"""
 
@@ -53,7 +55,7 @@ def make_box(name: str,
     return box
 
 
-def arrange(nodes: list[Gaffer.Node], parent: Gaffer.Node = None):
+def arrange(nodes: List[Gaffer.Node], parent: Optional[Gaffer.Node] = None):
     """Layout the nodes in the graph.
 
     Args:
