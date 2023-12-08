@@ -1,12 +1,12 @@
-from openpype.hosts.gaffer.api import (
-    get_root,
-)
-from openpype.hosts.gaffer.api.lib import make_box
-
 from openpype.pipeline import (
     Creator as NewCreator,
     CreatedInstance,
 )
+
+from openpype.hosts.gaffer.api import (
+    get_root,
+)
+from openpype.hosts.gaffer.api.lib import make_box
 from openpype.hosts.gaffer.api.plugin import CreatorImprintReadMixin
 
 import Gaffer
