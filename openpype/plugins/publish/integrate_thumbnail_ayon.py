@@ -72,7 +72,7 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
         )
 
     def _prepare_instances(self, context):
-        context_thumbnail_path = context.get("thumbnailPath")
+        context_thumbnail_path = context.data.get("thumbnailPath")
         valid_context_thumbnail = bool(
             context_thumbnail_path
             and os.path.exists(context_thumbnail_path)
@@ -92,8 +92,13 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
                 continue
 
             # Find thumbnail path on instance
-            thumbnail_path = self._get_instance_thumbnail_path(
-                published_repres)
+            thumbnail_source = instance.data.get("thumbnailSource")
+            thumbnail_path = instance.data.get("thumbnailPath")
+            thumbnail_path = (
+                thumbnail_source
+                or thumbnail_path
+                or self._get_instance_thumbnail_path(published_repres)
+            )
             if thumbnail_path:
                 self.log.debug((
                     "Found thumbnail path for instance \"{}\"."
@@ -131,7 +136,7 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
         thumb_repre_doc = None
         for repre_info in published_representations.values():
             repre_doc = repre_info["representation"]
-            if repre_doc["name"].lower() == "thumbnail":
+            if "thumbnail" in repre_doc["name"].lower():
                 thumb_repre_doc = repre_doc
                 break
 

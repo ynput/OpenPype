@@ -371,7 +371,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 continue
             for node in data["nodes"]:
                 lib.set_attribute(data["attribute"], data["values"][0], node)
-
         with lib.renderlayer(layer_node):
 
             # Repair animation must be enabled
@@ -392,13 +391,11 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             if renderer != "renderman":
                 prefix_attr = RenderSettings.get_image_prefix_attr(renderer)
                 fname_prefix = default_prefix
-                cmds.setAttr("{}.{}".format(node, prefix_attr),
-                             fname_prefix, type="string")
+                cmds.setAttr(prefix_attr, fname_prefix, type="string")
 
                 # Repair padding
                 padding_attr = RenderSettings.get_padding_attr(renderer)
-                cmds.setAttr("{}.{}".format(node, padding_attr),
-                             cls.DEFAULT_PADDING)
+                cmds.setAttr(padding_attr, cls.DEFAULT_PADDING)
             else:
                 # renderman handles stuff differently
                 cmds.setAttr("rmanGlobals.imageFileFormat",

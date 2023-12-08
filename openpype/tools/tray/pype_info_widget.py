@@ -6,6 +6,7 @@ import ayon_api
 from qtpy import QtCore, QtGui, QtWidgets
 
 from openpype import style
+import openpype.version
 from openpype import resources
 from openpype import AYON_SERVER_ENABLED
 from openpype.settings.lib import get_local_settings
@@ -219,7 +220,9 @@ class PypeInfoWidget(QtWidgets.QWidget):
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
-        self.setWindowTitle("OpenPype info")
+        self.setWindowTitle(
+            "{} info".format("AYON" if AYON_SERVER_ENABLED else "OpenPype")
+        )
 
         scroll_area = QtWidgets.QScrollArea(self)
         info_widget = PypeInfoSubWidget(scroll_area)
@@ -441,16 +444,19 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
             info_values = {
                 "executable": executable_args[-1],
                 "server_url": os.environ["AYON_SERVER_URL"],
+                "bundle_name": os.environ["AYON_BUNDLE_NAME"],
                 "username": username
             }
             key_label_mapping = {
                 "executable": "AYON Executable:",
                 "server_url": "AYON Server:",
+                "bundle_name": "AYON Bundle:",
                 "username": "AYON Username:"
             }
             # Prepare keys order
             keys_order = [
                 "server_url",
+                "bundle_name",
                 "username",
                 "executable",
             ]
@@ -507,6 +513,18 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
                 QtWidgets.QLabel(label), row, 0, 1, 1
             )
             value_label = QtWidgets.QLabel(value)
+            value_label.setTextInteractionFlags(
+                QtCore.Qt.TextSelectableByMouse
+            )
+            info_layout.addWidget(
+                value_label, row, 1, 1, 1
+            )
+        if AYON_SERVER_ENABLED:
+            row = info_layout.rowCount()
+            info_layout.addWidget(
+                QtWidgets.QLabel("OpenPype Addon:"), row, 0, 1, 1
+            )
+            value_label = QtWidgets.QLabel(openpype.version.__version__)
             value_label.setTextInteractionFlags(
                 QtCore.Qt.TextSelectableByMouse
             )

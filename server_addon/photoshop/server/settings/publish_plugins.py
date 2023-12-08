@@ -150,7 +150,7 @@ class PhotoshopPublishPlugins(BaseSettingsModel):
     )
 
     CollectVersion: CollectVersionPlugin = Field(
-        title="Create Image",
+        title="Collect Version",
         default_factory=CollectVersionPlugin,
     )
 

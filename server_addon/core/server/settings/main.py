@@ -198,7 +198,7 @@ DEFAULT_VALUES = {
     },
     "studio_name": "",
     "studio_code": "",
-    "environments": "{}",
+    "environments": "{\n\"STUDIO_SW\": {\n        \"darwin\": \"/mnt/REPO_SW\",\n        \"linux\": \"/mnt/REPO_SW\",\n        \"windows\": \"P:/REPO_SW\"\n    }\n}",
     "tools": DEFAULT_TOOLS_VALUES,
     "version_start_category": {
         "profiles": []

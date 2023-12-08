@@ -145,6 +145,9 @@ def get_transferable_representations(instance):
 
         trans_rep = representation.copy()
 
+        # remove publish_on_farm from representations tags
+        trans_rep["tags"].remove("publish_on_farm")
+
         staging_dir = trans_rep.get("stagingDir")
 
         if staging_dir:

@@ -89,8 +89,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Make sure cleanup happens and pop representations with "delete" tag.
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
-            if "delete" in tags and "thumbnail" not in tags:
-                instance.data["representations"].remove(repre)
+            # Representation is not marked to be deleted
+            if "delete" not in tags:
+                continue
+
+            # The representation can be used as thumbnail source
+            if "thumbnail" in tags or "need_thumbnail" in tags:
+                continue
+
+            self.log.debug(
+                "Removing representation: {}".format(repre)
+            )
+            instance.data["representations"].remove(repre)
 
     def _get_outputs_for_instance(self, instance):
         host_name = instance.context.data["hostName"]
@@ -321,19 +331,26 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             # Create copy of representation
             new_repre = copy.deepcopy(repre)
+            new_tags = new_repre.get("tags") or []
             # Make sure new representation has origin staging dir
             #   - this is because source representation may change
             #       it's staging dir because of ffmpeg conversion
             new_repre["stagingDir"] = src_repre_staging_dir
 
             # Remove "delete" tag from new repre if there is
-            if "delete" in new_repre["tags"]:
-                new_repre["tags"].remove("delete")
+            if "delete" in new_tags:
+                new_tags.remove("delete")
+
+            if "need_thumbnail" in new_tags:
+                new_tags.remove("need_thumbnail")
 
             # Add additional tags from output definition to representation
             for tag in output_def["tags"]:
-                if tag not in new_repre["tags"]:
-                    new_repre["tags"].append(tag)
+                if tag not in new_tags:
+                    new_tags.append(tag)
+
+            # Return tags to new representation
+            new_repre["tags"] = new_tags
 
             # Add burnin link from output definition to representation
             for burnin in output_def["burnins"]:
