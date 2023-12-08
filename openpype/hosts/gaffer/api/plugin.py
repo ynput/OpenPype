@@ -1,4 +1,5 @@
 import json
+
 from openpype.hosts.gaffer.api.pipeline import imprint, JSON_PREFIX
 
 

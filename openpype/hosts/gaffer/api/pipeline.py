@@ -29,6 +29,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 self = sys.modules[__name__]
 self.root = None
 
+# A prefix used for storing JSON blobs in string plugs
 JSON_PREFIX = "JSON:::"
 
 
