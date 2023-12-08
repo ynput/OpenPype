@@ -54,7 +54,7 @@ class GafferLoadArnoldVDB(load.LoaderPlugin):
         node["fileName"].setValue(path)
 
         # Update the imprinted representation
-        node["user"]["representation"].SetValue(str(representation["_id"]))
+        node["user"]["representation"].setValue(str(representation["_id"]))
 
     def remove(self, container):
         node = container["_node"]
