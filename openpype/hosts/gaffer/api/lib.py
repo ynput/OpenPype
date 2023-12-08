@@ -1,6 +1,11 @@
-from typing import Tuple, List, Optional
-from collections.abc import Generator
+import sys
 from queue import SimpleQueue
+from typing import Tuple, List, Optional
+
+if sys.version_info >= (3, 9, 0):
+    from collections.abc import Iterator
+else:
+    from typing import Iterator
 
 import Gaffer
 import GafferScene
@@ -28,7 +33,24 @@ def make_box(name: str,
              add_output: bool = True,
              description: Optional[str] = None,
              hide_add_buttons: bool = True) -> Gaffer.Box:
-    """Create a Box node with BoxIn and BoxOut nodes"""
+    """Create a Box node with BoxIn and BoxOut nodes
+
+    Note:
+        The box is not added as child anywhere - to have it visually
+        appear make sure to call e.g. `parent.addChild(box)`
+
+    Arguments:
+        name (str): The name to give the box.
+        add_input (bool): Whether to add an input child plug.
+        add_output (bool): Whether to add an output child plug.
+        description (Optional[str]): A description to register for the box.
+        hide_add_buttons (bool): Whether the add buttons on the box
+            node should be hidden or not. By default, this will hide them.
+
+    Returns:
+        Gaffer.Box: The created box
+
+    """
 
     box = Gaffer.Box(name)
 
@@ -84,7 +106,7 @@ def arrange(nodes: List[Gaffer.Node], parent: Optional[Gaffer.Node] = None):
 
 
 def traverse_scene(scene_plug: GafferScene.ScenePlug,
-                   root: str = "/") -> Generator[str]:
+                   root: str = "/") -> Iterator[str]:
     """Yields breadth first all children from given `root`.
 
     Note: This also yields the root itself.
