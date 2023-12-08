@@ -162,7 +162,8 @@ def find_paths_by_type(scene_plug: GafferScene.ScenePlug,
         # ['/nested/path']
 
     Args:
-        scene_plug (GafferScene.ScenePlug): The plug whose scene we will traverse.
+        scene_plug (GafferScene.ScenePlug): Plug scene to traverse.
+            Typically, the out plug of a node (`node["out"]`).
         object_type_name (String): The name of the object type we want to find.
         root (string): Starting root path of traversal.
 
