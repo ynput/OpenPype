@@ -79,3 +79,40 @@ def arrange(nodes: List[Gaffer.Node], parent: Optional[Gaffer.Node] = None):
 
     graph = GafferUI.GraphGadget(parent)
     graph.getLayout().layoutNodes(graph, Gaffer.StandardSet(nodes))
+
+
+def find_camera_paths(out_plug, starting_path="/"):
+    """Traverses the scene starting at `starting_path` collecting a list of paths
+    to all the Camera objects it finds
+
+    Args:
+        out_plug (GafferScene.ScenePlug): Typically the `["out]` plug of a node to traverse
+            the scene hierarchy from.
+        starting_path (string): The path to the starting point of the traversal.
+
+    Returns:
+        list: List of found paths to cameras.
+
+    """
+    cameras = []
+    find_paths(out_plug, starting_path, "Camera", cameras)
+    return cameras
+
+
+def find_paths(scene, path, object_type_name, found_paths_list):
+    """The actual scene traversal function. Populates the passed `found_paths_list` wit found paths.
+
+    Args:
+        scene (GafferScene.ScenePlug): The plug whose scene we will traverse.
+        path (string): Starting path of traversal.
+        object_type_name (String): The name of the objec type we want to find paths for.
+        found_paths_list (list): The list of paths that will are found.
+
+    Returns:
+        None
+
+    """
+    if scene.object(path).typeName() == object_type_name:
+        found_paths_list.append(path)
+    for childName in scene.childNames(path):
+        find_paths(scene, path.rstrip("/") + "/" + str(childName), object_type_name, found_paths_list)

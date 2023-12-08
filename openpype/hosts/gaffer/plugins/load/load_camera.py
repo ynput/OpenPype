@@ -3,7 +3,7 @@ from openpype.pipeline import (
     get_representation_path,
 )
 from openpype.hosts.gaffer.api import get_root, imprint_container
-from openpype.hosts.gaffer.api.lib import set_node_color, arrange, make_box
+from openpype.hosts.gaffer.api.lib import set_node_color, arrange, make_box, find_camera_paths
 
 import Gaffer
 import GafferScene
@@ -40,7 +40,7 @@ class GafferLoadAlembicCamera(load.LoaderPlugin):
 
         path_filter = GafferScene.PathFilter("all")
         box.addChild(path_filter)
-        path_filter["paths"].setValue(IECore.StringVectorData(["*"]))
+
         create_set["filter"].setInput(path_filter["out"])
 
         box["BoxOut"]["in"].setInput(create_set["out"])
@@ -53,6 +53,14 @@ class GafferLoadAlembicCamera(load.LoaderPlugin):
         # Set the filename
         path = self.filepath_from_context(context).replace("\\", "/")
         box["fileName"].setValue(path)
+
+        # find the path to the cameras in the newly read file to base our filter on
+        cameras = find_camera_paths(reader["out"])
+        if len(cameras) > 0:
+            camera_filter = cameras
+        else:
+            camera_filter = ['*']
+        path_filter["paths"].setValue(IECore.StringVectorData(camera_filter))
 
         # Layout the nodes within the box
         arrange(box.children(Gaffer.Node))
