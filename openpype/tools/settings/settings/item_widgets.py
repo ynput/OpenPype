@@ -912,6 +912,10 @@ class PathWidget(BaseWidget):
     def get_invalid(self):
         return self.input_field.get_invalid()
 
+    def set_read_only(self, status):
+        self._read_only = status
+        self.input_field.setEnabled(not self._read_only)
+
 
 class PathInputWidget(InputWidget):
     def _add_inputs_to_layout(self):
