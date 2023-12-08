@@ -64,7 +64,7 @@ def _install_openpype_menu():
 
 def _install_openpype():
     print("Installing OpenPype ...")
-    install_host(GafferHost())
+    install_host(GafferHost(application))
 
 
 _install_openpype()
