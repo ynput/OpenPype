@@ -248,16 +248,16 @@ class HoudiniSubmitDeadline(
             family = instance.data.get("family")
             if family == "arnold_rop":
                 plugin_info = ArnoldRenderDeadlinePluginInfo(
-                    InputFile=instance.data["ifdFile"]
+                    InputFile=instance.data.get("ifdFile", "")
                 )
             elif family == "mantra_rop":
                 plugin_info = MantraRenderDeadlinePluginInfo(
-                    SceneFile=instance.data["ifdFile"],
+                    SceneFile=instance.data.get("ifdFile", ""),
                     Version=hou_major_minor,
                 )
             elif family == "vray_rop":
                 plugin_info = VrayRenderPluginInfo(
-                    InputFilename=instance.data["ifdFile"],
+                    InputFilename=instance.data.get("ifdFile", ""),
                 )
             else:
                 self.log.error(
