@@ -2,7 +2,7 @@
     Helper class for automatic testing, provides dump and restore via command
     line utilities.
 
-    Expect mongodump, mongoimport and mongorestore present at PATH
+    Expect mongodump, mongoexport, mongoimport and mongorestore present at PATH
 """
 import os
 import pymongo
@@ -148,7 +148,7 @@ class DBHandler:
         self.client.drop_database(db_name)
 
     def backup_to_dump(self, db_name, dump_dir, overwrite=False,
-                       collection=None):
+                       collection=None, format="bson"):
         """
             Helper method for running mongodump for specific 'db_name'
         """
@@ -160,15 +160,24 @@ class DBHandler:
             raise RuntimeError("Backup already exists, "
                                "run with overwrite=True")
 
-        query = self._dump_query(self.uri, dump_dir,
-                                 db_name=db_name, collection=collection)
-        print("Mongodump query:: {}".format(query))
-        subprocess.run(query)
+        collections = [collection]
+        if format == "json" and collection is None:
+            collections = self.client[db_name].list_collection_names()
+
+        for collection in collections:
+            query = self._dump_query(self.uri, dump_dir,
+                                     db_name=db_name, collection=collection,
+                                     format=format)
+            print("Mongodump query:: {}".format(query))
+            process = subprocess.run(query)
+            assert process.returncode == 0, "Mongo dump failed."
 
     def _db_exists(self, db_name):
         return db_name in self.client.list_database_names()
 
-    def _dump_query(self, uri, output_path, db_name=None, collection=None):
+    def _dump_query(
+        self, uri, output_path, db_name=None, collection=None, format="bson"
+    ):
         """Prepares dump query based on 'db_name' or 'collection'."""
         db_part = coll_part = ""
         if db_name:
@@ -177,11 +186,22 @@ class DBHandler:
             if not db_name:
                 raise ValueError("db_name must be present")
             coll_part = "--collection={}".format(collection)
-        query = "\"{}\" --uri=\"{}\" --out={} {} {}".format(
-            "mongodump", uri, output_path, db_part, coll_part
-        )
 
-        return query
+        tool = "mongodump"
+        query = "{} --uri=\"{}\""
+
+        if format == "json":
+            assert collection, "Collection is needed for json export."
+
+            query += " --jsonArray --pretty"
+            tool = "mongoexport"
+            output_path = os.path.join(
+                output_path, "{}.{}.json".format(db_name, collection)
+            )
+
+        query += " --out={} {} {}"
+
+        return query.format(tool, uri, output_path, db_part, coll_part)
 
     def _restore_query(self, uri, dump_dir,
                        db_name=None, db_name_out=None,
