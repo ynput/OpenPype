@@ -68,6 +68,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 ]
 
     def process(self, instance):
+
         anatomy = instance.context.data["anatomy"]
 
         template_data = copy.deepcopy(instance.data["anatomyData"])

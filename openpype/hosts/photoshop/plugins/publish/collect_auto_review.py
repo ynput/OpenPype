@@ -7,6 +7,7 @@ Provides:
 """
 import pyblish.api
 
+from openpype.client import get_asset_name_identifier
 from openpype.hosts.photoshop import api as photoshop
 from openpype.pipeline.create import get_subset_name
 
@@ -60,12 +61,13 @@ class CollectAutoReview(pyblish.api.ContextPlugin):
         variant = (context.data.get("variant") or
                    auto_creator["default_variant"])
 
-        project_name = context.data["anatomyData"]["project"]["name"]
+        project_name = context.data["projectName"]
         proj_settings = context.data["project_settings"]
-        task_name = context.data["anatomyData"]["task"]["name"]
+        task_name = context.data["task"]
         host_name = context.data["hostName"]
         asset_doc = context.data["assetEntity"]
-        asset_name = asset_doc["name"]
+
+        asset_name = get_asset_name_identifier(asset_doc)
 
         subset_name = get_subset_name(
             family,

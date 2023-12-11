@@ -237,8 +237,13 @@ class UISeparatorDef(UIDef):
 class UILabelDef(UIDef):
     type = "label"
 
-    def __init__(self, label):
-        super(UILabelDef, self).__init__(label=label)
+    def __init__(self, label, key=None):
+        super(UILabelDef, self).__init__(label=label, key=key)
+
+    def __eq__(self, other):
+        if not super(UILabelDef, self).__eq__(other):
+            return False
+        return self.label == other.label
 
 
 # ---------------------------------------

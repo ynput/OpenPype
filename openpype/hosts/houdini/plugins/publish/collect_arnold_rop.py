@@ -21,8 +21,8 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
 
     label = "Arnold ROP Render Products"
     # This specific order value is used so that
-    # this plugin runs after CollectRopFrameRange
-    order = pyblish.api.CollectorOrder + 0.4999
+    # this plugin runs after CollectFrames
+    order = pyblish.api.CollectorOrder + 0.11
     hosts = ["houdini"]
     families = ["arnold_rop"]
 
@@ -39,6 +39,25 @@ class CollectArnoldROPRenderProducts(pyblish.api.InstancePlugin):
 
         default_prefix = evalParmNoFrame(rop, "ar_picture")
         render_products = []
+
+        # Store whether we are splitting the render job (export + render)
+        export_job = bool(rop.parm("ar_ass_export_enable").eval())
+        instance.data["exportJob"] = export_job
+        export_prefix = None
+        export_products = []
+        if export_job:
+            export_prefix = evalParmNoFrame(
+                rop, "ar_ass_file", pad_character="0"
+            )
+            beauty_export_product = self.get_render_product_name(
+                prefix=export_prefix,
+                suffix=None)
+            export_products.append(beauty_export_product)
+            self.log.debug(
+                "Found export product: {}".format(beauty_export_product)
+            )
+            instance.data["ifdFile"] = beauty_export_product
+            instance.data["exportFiles"] = list(export_products)
 
         # Default beauty AOV
         beauty_product = self.get_render_product_name(prefix=default_prefix,

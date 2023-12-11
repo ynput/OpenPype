@@ -61,26 +61,20 @@ class PublishPuginsModel(BaseSettingsModel):
     ValidateCameraZeroKeyframe: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Validate Camera Zero Keyframe",
-        section="Validators"
+        section="General Validators"
     )
     ValidateFileSaved: ValidateFileSavedModel = Field(
         default_factory=ValidateFileSavedModel,
         title="Validate File Saved",
-        section="Validators"
     )
-    ValidateRenderCameraIsSet: ValidatePluginModel = Field(
+    ValidateInstanceEmpty: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
-        title="Validate Render Camera Is Set",
-        section="Validators"
-    )
-    ValidateDeadlinePublish: ValidatePluginModel = Field(
-        default_factory=ValidatePluginModel,
-        title="Validate Render Output for Deadline",
-        section="Validators"
+        title="Validate Instance is not Empty"
     )
     ValidateMeshHasUvs: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
-        title="Validate Mesh Has Uvs"
+        title="Validate Mesh Has Uvs",
+        section="Model Validators"
     )
     ValidateMeshNoNegativeScale: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
@@ -93,6 +87,15 @@ class PublishPuginsModel(BaseSettingsModel):
     ValidateNoColonsInName: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
         title="Validate No Colons In Name"
+    )
+    ValidateRenderCameraIsSet: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Validate Render Camera Is Set",
+        section="Render Validators"
+    )
+    ValidateDeadlinePublish: ValidatePluginModel = Field(
+        default_factory=ValidatePluginModel,
+        title="Validate Render Output for Deadline",
     )
     ExtractBlend: ExtractBlendModel = Field(
         default_factory=ExtractBlendModel,
@@ -125,7 +128,7 @@ class PublishPuginsModel(BaseSettingsModel):
     )
     ExtractLayout: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
-        title="Extract Layout"
+        title="Extract Layout (JSON)"
     )
     ExtractThumbnail: ExtractPlayblastModel = Field(
         default_factory=ExtractPlayblastModel,
@@ -139,7 +142,7 @@ class PublishPuginsModel(BaseSettingsModel):
 
 DEFAULT_BLENDER_PUBLISH_SETTINGS = {
     "ValidateCameraZeroKeyframe": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
         "active": True
     },
@@ -170,11 +173,16 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "active": True
     },
     "ValidateTransformZero": {
-        "enabled": True,
-        "optional": False,
+        "enabled": False,
+        "optional": True,
         "active": True
     },
     "ValidateNoColonsInName": {
+        "enabled": False,
+        "optional": True,
+        "active": True
+    },
+    "ValidateInstanceEmpty": {
         "enabled": True,
         "optional": False,
         "active": True
@@ -193,9 +201,9 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         ]
     },
     "ExtractFBX": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
-        "active": False
+        "active": True
     },
     "ExtractModelABC": {
         "enabled": True,
@@ -208,9 +216,9 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "active": True
     },
     "ExtractAnimationFBX": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
-        "active": False
+        "active": True
     },
     "ExtractCamera": {
         "enabled": True,

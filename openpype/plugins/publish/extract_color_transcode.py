@@ -326,7 +326,6 @@ class ExtractOIIOTranscode(publish.Extractor):
               " | Task type \"{}\" | Subset \"{}\" "
             ).format(host_name, family, task_name, task_type, subset))
 
-        self.log.debug("profile: {}".format(profile))
         return profile
 
     def _repre_is_valid(self, repre):

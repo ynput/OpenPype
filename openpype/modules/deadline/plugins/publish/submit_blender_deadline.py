@@ -6,10 +6,14 @@ import getpass
 import attr
 from datetime import datetime
 
-import bpy
-
-from openpype.lib import is_running_from_build
+from openpype.lib import (
+    is_running_from_build,
+    BoolDef,
+    NumberDef,
+    TextDef,
+)
 from openpype.pipeline import legacy_io
+from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 from openpype.pipeline.farm.tools import iter_expected_files
 from openpype.tests.lib import is_in_tests
 
@@ -24,10 +28,11 @@ class BlenderPluginInfo():
     SaveFile = attr.ib(default=True)
 
 
-class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
+class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
+                            OpenPypePyblishPluginMixin):
     label = "Submit Render to Deadline"
     hosts = ["blender"]
-    families = ["render.farm"]
+    families = ["render"]
 
     use_published = True
     priority = 50
@@ -35,6 +40,7 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
     jobInfo = {}
     pluginInfo = {}
     group = None
+    job_delay = "00:00:00:00"
 
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="Blender")
@@ -69,8 +75,7 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
         job_info.Pool = instance.data.get("primaryPool")
         job_info.SecondaryPool = instance.data.get("secondaryPool")
-        job_info.Comment = context.data.get("comment")
-        job_info.Priority = instance.data.get("priority", self.priority)
+        job_info.Comment = instance.data.get("comment")
 
         if self.group != "none" and self.group:
             job_info.Group = self.group
@@ -85,8 +90,10 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
                 machine_list_key = "Blacklist"
             render_globals[machine_list_key] = machine_list
 
-        job_info.Priority = attr_values.get("priority")
-        job_info.ChunkSize = attr_values.get("chunkSize")
+        job_info.ChunkSize = attr_values.get("chunkSize", self.chunk_size)
+        job_info.Priority = attr_values.get("priority", self.priority)
+        job_info.ScheduledType = "Once"
+        job_info.JobDelay = attr_values.get("job_delay", self.job_delay)
 
         # Add options from RenderGlobals
         render_globals = instance.data.get("renderGlobals", {})
@@ -142,6 +149,9 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         return job_info
 
     def get_plugin_info(self):
+        # Not all hosts can import this module.
+        import bpy
+
         plugin_info = BlenderPluginInfo(
             SceneFile=self.scene_path,
             Version=bpy.app.version_string,
@@ -179,3 +189,39 @@ class BlenderSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
         the metadata and the rendered files are in the same location.
         """
         return super().from_published_scene(False)
+
+    @classmethod
+    def get_attribute_defs(cls):
+        defs = super(BlenderSubmitDeadline, cls).get_attribute_defs()
+        defs.extend([
+            BoolDef("use_published",
+                    default=cls.use_published,
+                    label="Use Published Scene"),
+
+            NumberDef("priority",
+                      minimum=1,
+                      maximum=250,
+                      decimals=0,
+                      default=cls.priority,
+                      label="Priority"),
+
+            NumberDef("chunkSize",
+                      minimum=1,
+                      maximum=50,
+                      decimals=0,
+                      default=cls.chunk_size,
+                      label="Frame Per Task"),
+
+            TextDef("group",
+                    default=cls.group,
+                    label="Group Name"),
+
+            TextDef("job_delay",
+                    default=cls.job_delay,
+                    label="Job Delay",
+                    placeholder="dd:hh:mm:ss",
+                    tooltip="Delay the job by the specified amount of time. "
+                            "Timecode: dd:hh:mm:ss."),
+        ])
+
+        return defs

@@ -188,7 +188,7 @@ def imprint(node: bpy.types.bpy_struct_meta_idprop, data: Dict):
             # Support values evaluated at imprint
             value = value()
 
-        if not isinstance(value, (int, float, bool, str, list)):
+        if not isinstance(value, (int, float, bool, str, list, dict)):
             raise TypeError(f"Unsupported type: {type(value)}")
 
         imprint_data[key] = value
@@ -266,9 +266,59 @@ def read(node: bpy.types.bpy_struct_meta_idprop):
     return data
 
 
-def get_selection() -> List[bpy.types.Object]:
-    """Return the selected objects from the current scene."""
-    return [obj for obj in bpy.context.scene.objects if obj.select_get()]
+def get_selected_collections():
+    """
+    Returns a list of the currently selected collections in the outliner.
+
+    Raises:
+        RuntimeError: If the outliner cannot be found in the main Blender
+        window.
+
+    Returns:
+        list: A list of `bpy.types.Collection` objects that are currently
+        selected in the outliner.
+    """
+    window = bpy.context.window or bpy.context.window_manager.windows[0]
+
+    try:
+        area = next(
+            area for area in window.screen.areas
+            if area.type == 'OUTLINER')
+        region = next(
+            region for region in area.regions
+            if region.type == 'WINDOW')
+    except StopIteration as e:
+        raise RuntimeError("Could not find outliner. An outliner space "
+                           "must be in the main Blender window.") from e
+
+    with bpy.context.temp_override(
+        window=window,
+        area=area,
+        region=region,
+        screen=window.screen
+    ):
+        ids = bpy.context.selected_ids
+
+    return [id for id in ids if isinstance(id, bpy.types.Collection)]
+
+
+def get_selection(include_collections: bool = False) -> List[bpy.types.Object]:
+    """
+    Returns a list of selected objects in the current Blender scene.
+
+    Args:
+        include_collections (bool, optional): Whether to include selected
+        collections in the result. Defaults to False.
+
+    Returns:
+        List[bpy.types.Object]: A list of selected objects.
+    """
+    selection = [obj for obj in bpy.context.scene.objects if obj.select_get()]
+
+    if include_collections:
+        selection.extend(get_selected_collections())
+
+    return selection
 
 
 @contextlib.contextmanager

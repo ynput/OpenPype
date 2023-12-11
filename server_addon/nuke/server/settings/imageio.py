@@ -213,16 +213,16 @@ class ImageIOSettings(BaseSettingsModel):
 
 DEFAULT_IMAGEIO_SETTINGS = {
     "viewer": {
-        "viewerProcess": "sRGB"
+        "viewerProcess": "sRGB (default)"
     },
     "baking": {
-        "viewerProcess": "rec709"
+        "viewerProcess": "rec709 (default)"
     },
     "workfile": {
-        "color_management": "Nuke",
+        "color_management": "OCIO",
         "native_ocio_config": "nuke-default",
-        "working_space": "linear",
-        "thumbnail_space": "sRGB",
+        "working_space": "scene_linear",
+        "thumbnail_space": "sRGB (default)",
     },
     "nodes": {
         "required_nodes": [
@@ -269,7 +269,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                     {
                         "type": "text",
                         "name": "colorspace",
-                        "text": "linear"
+                        "text": "scene_linear"
                     },
                     {
                         "type": "boolean",
@@ -321,7 +321,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                     {
                         "type": "text",
                         "name": "colorspace",
-                        "text": "linear"
+                        "text": "scene_linear"
                     },
                     {
                         "type": "boolean",
@@ -368,7 +368,7 @@ DEFAULT_IMAGEIO_SETTINGS = {
                     {
                         "type": "text",
                         "name": "colorspace",
-                        "text": "sRGB"
+                        "text": "texture_paint"
                     },
                     {
                         "type": "boolean",
