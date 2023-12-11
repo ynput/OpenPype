@@ -8,7 +8,7 @@ from maya import cmds
 from maya.app.renderSetup.model import renderSetup
 
 from openpype import AYON_SERVER_ENABLED
-from openpype.lib import BoolDef, Logger
+from openpype.lib import BoolDef, EnumDef, Logger
 from openpype.settings import get_project_settings
 from openpype.pipeline import (
     AVALON_CONTAINER_ID,
@@ -404,20 +404,59 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
         # A Renderlayer is never explicitly created using the create method.
         # Instead, renderlayers from the scene are collected. Thus "create"
         # would only ever be called to say, 'hey, please refresh collect'
-        self.create_singleton_node()
+        has_singleton = bool(self._get_singleton_node())
+        if not has_singleton:
+            self.create_singleton_node()
 
-        # if no render layers are present, create default one with
-        # asterisk selector
-        rs = renderSetup.instance()
-        if not rs.getRenderLayers():
-            render_layer = rs.createRenderLayer("Main")
-            collection = render_layer.createCollection("defaultCollection")
-            collection.getSelector().setPattern('*')
+        create_mode = pre_create_data.get("create_renderlayer",
+                                          "create_first_renderlayer")
 
-        # By RenderLayerCreator.create we make it so that the renderlayer
-        # instances directly appear even though it just collects scene
-        # renderlayers. This doesn't actually 'create' any scene contents.
-        self.collect_instances()
+        # Create the renderlayer if user chose layer creation
+        render_layer = None
+        if create_mode in {"create", "create_first_renderlayer"}:
+            rs = renderSetup.instance()
+            existing_layers = rs.getRenderLayers()
+            if create_mode == "create" or not existing_layers:
+                variant = instance_data["variant"]
+                for layer in existing_layers:
+                    if layer.name() == variant:
+                        raise CreatorError(
+                            "Can't create multiple renderlayers of the "
+                            "same variant: {}.\nThis is because the variant "
+                            "defines the renderlayer name.".format(variant)
+                        )
+
+                render_layer = rs.createRenderLayer(variant)
+                collection = render_layer.createCollection("defaultCollection")
+                collection.getSelector().setPattern('*')
+
+        # Error if nothing happened
+        if has_singleton and render_layer is None:
+            # The singleton node already existed and the user did not request
+            # the creation of a new renderlayer. As such, nothing changes.
+            raise CreatorError(
+                "The renderlayer singleton node already exists and user "
+                "requested no new layer to be created.\n"
+                "As such, no actions we performed."
+            )
+
+        # Update the list of instances in the publisher
+        if has_singleton:
+            if render_layer is not None:
+                instance = self._get_renderlayer_instance(render_layer)
+                self._add_instance_to_context(instance)
+        else:
+            # Collect all, including any renderlayers that might have existed.
+            # By doing this we make sure that whenever anyone creates a render
+            # instance and already has renderlayers present in their scene
+            # these renderlayers will directly show up in the list on create.
+            # (This is crucial because the singleton node itself does not show)
+            # By RenderLayerCreator.create we make it so that the renderlayer
+            # instances directly appear even though it just collects scene
+            # renderlayers. This doesn't actually 'create' any scene contents.
+            # Since renderlayers might have changed (manually by user) we want
+            # to make sure we list all of them that haven't been listed yet.
+            self.collect_instances()
 
     def create_singleton_node(self):
         if self._get_singleton_node():
@@ -441,40 +480,46 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
         rs = renderSetup.instance()
         layers = rs.getRenderLayers()
         for layer in layers:
-            layer_instance_node = self.find_layer_instance_node(layer)
-            if layer_instance_node:
-                data = self.read_instance_node(layer_instance_node)
-                instance = CreatedInstance.from_existing(data, creator=self)
-            else:
-                # No existing scene instance node for this layer. Note that
-                # this instance will not have the `instance_node` data yet
-                # until it's been saved/persisted at least once.
-                project_name = self.create_context.get_current_project_name()
-                asset_name = self.create_context.get_current_asset_name()
-                instance_data = {
-                    "task": self.create_context.get_current_task_name(),
-                    "variant": layer.name(),
-                }
-                if AYON_SERVER_ENABLED:
-                    instance_data["folderPath"] = asset_name
-                else:
-                    instance_data["asset"] = asset_name
-                asset_doc = get_asset_by_name(project_name, asset_name)
-                subset_name = self.get_subset_name(
-                    layer.name(),
-                    instance_data["task"],
-                    asset_doc,
-                    project_name)
-
-                instance = CreatedInstance(
-                    family=self.family,
-                    subset_name=subset_name,
-                    data=instance_data,
-                    creator=self
-                )
-
-            instance.transient_data["layer"] = layer
+            instance = self._get_renderlayer_instance(layer)
             self._add_instance_to_context(instance)
+
+    def _get_renderlayer_instance(self, layer):
+
+        layer_instance_node = self.find_layer_instance_node(layer)
+        if layer_instance_node:
+            data = self.read_instance_node(layer_instance_node)
+            data["variant"] = layer.name()
+            instance = CreatedInstance.from_existing(data, creator=self)
+        else:
+            # No existing scene instance node for this layer. Note that
+            # this instance will not have the `instance_node` data yet
+            # until it's been saved/persisted at least once.
+            project_name = self.create_context.get_current_project_name()
+            asset_name = self.create_context.get_current_asset_name()
+            instance_data = {
+                "task": self.create_context.get_current_task_name(),
+                "variant": layer.name(),
+            }
+            if AYON_SERVER_ENABLED:
+                instance_data["folderPath"] = asset_name
+            else:
+                instance_data["asset"] = asset_name
+            asset_doc = get_asset_by_name(project_name, asset_name)
+            subset_name = self.get_subset_name(
+                layer.name(),
+                instance_data["task"],
+                asset_doc,
+                project_name)
+
+            instance = CreatedInstance(
+                family=self.family,
+                subset_name=subset_name,
+                data=instance_data,
+                creator=self
+            )
+
+        instance.transient_data["layer"] = layer
+        return instance
 
     def find_layer_instance_node(self, layer):
         connected_sets = cmds.listConnections(
@@ -528,13 +573,30 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
             instance_node = instance.data.get("instance_node")
 
             # Ensure a node exists to persist the data to
+            layer = instance.transient_data["layer"]
+
+            # Ensure layer name is synced with variant
+            new_data = instance.data_to_store()
+            if new_data["variant"] != layer.name():
+                # Rename layer to the new variant
+                layer.setName(new_data["variant"])
+
+            # Ensure instance node is synced with variant
+            if instance_node:
+                # Rename the instance node to match with the variant
+                # change
+                base, old_name = instance_node.rsplit(":", 1)
+                if old_name != new_data["variant"]:
+                    new_name = ":".join([base, new_data["variant"]])
+                    instance_node = cmds.rename(instance_node, new_name)
+                    instance.data["instance_node"] = instance_node
+
             if not instance_node:
-                layer = instance.transient_data["layer"]
                 instance_node = self._create_layer_instance_node(layer)
                 instance.data["instance_node"] = instance_node
 
             self.imprint_instance_node(instance_node,
-                                       data=instance.data_to_store())
+                                       data=new_data)
 
     def imprint_instance_node(self, node, data):
         # Do not ever try to update the `renderlayer` since it'll try
@@ -544,6 +606,7 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
         # TODO: Improve how this is handled
         data.pop("renderlayer", None)
         data.get("creator_attributes", {}).pop("renderlayer", None)
+        data.pop("variant", None)  # Do not store variant since it's layer name
 
         return super(RenderlayerCreator, self).imprint_instance_node(node,
                                                                      data=data)
@@ -581,12 +644,45 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
         host_name=None,
         instance=None
     ):
-        # creator.family != 'render' as expected
-        return get_subset_name(self.layer_instance_prefix,
-                               variant,
-                               task_name,
-                               asset_doc,
-                               project_name)
+        # creator.family != 'render' as expected for render layer instances
+        # but are overridden to be 'render' in subset name but the family is
+        # 'renderlayer'
+        family = self.layer_instance_prefix or self.family
+
+        dynamic_data = self.get_dynamic_data(
+            variant, task_name, asset_doc, project_name, host_name, instance
+        )
+
+        return get_subset_name(
+            family,
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name,
+            dynamic_data=dynamic_data,
+            project_settings=self.project_settings
+        )
+
+    def get_pre_create_attr_defs(self):
+        items = {
+            "create": "Create renderlayer",
+            "create_first_renderlayer": "Create renderlayer if not existing",
+            "create_singleton_only": "Collect existing renderlayers"
+        }
+
+        return [
+            EnumDef(
+                "create_renderlayer",
+                label="Create Renderlayer",
+                items=items,
+                default="create_first_renderlayer",
+                tooltip=(
+                    "Whether to create renderlayer on create or only create "
+                    "the node which collects existing renderlayers."
+                )
+            )
+        ]
 
 
 class Loader(LoaderPlugin):

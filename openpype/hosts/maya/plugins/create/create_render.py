@@ -38,13 +38,11 @@ class CreateRenderlayer(plugin.RenderlayerCreator):
         cls.render_settings = project_settings["maya"]["RenderSettings"]
 
     def create(self, subset_name, instance_data, pre_create_data):
-        # Only allow a single render instance to exist
-        if self._get_singleton_node():
-            raise CreatorError("A Render instance already exists - only "
-                               "one can be configured.")
-
-        # Apply default project render settings on create
-        if self.render_settings.get("apply_render_settings"):
+        # Only apply the render settings on first creation of the singleton
+        if (
+                not self._get_singleton_node()
+                and self.render_settings.get("apply_render_settings")
+        ):
             lib_rendersettings.RenderSettings().set_default_renderer_settings()
 
         super(CreateRenderlayer, self).create(subset_name,
