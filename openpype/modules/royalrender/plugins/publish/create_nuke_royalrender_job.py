@@ -25,6 +25,7 @@ class CreateNukeRoyalRenderJob(lib.BaseCreateRoyalRenderJob):
         jobs = self.create_jobs(instance)
         for job in jobs:
             job = self.update_job_with_host_specific(instance, job)
+            job = self.inject_environment(instance, job)
 
             instance.data["rrJobs"].append(job)
 

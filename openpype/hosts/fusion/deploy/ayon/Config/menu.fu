@@ -1,0 +1,60 @@
+{
+    Action
+    {
+        ID = "AYON_Menu",
+        Category = "AYON",
+        Name = "AYON Menu",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    local scriptPath = app:MapPath("AYON:../MenuScripts/launch_menu.py")
+                    if bmd.fileexists(scriptPath) == false then
+                        print("[AYON Error] Can't run file: " .. scriptPath)
+                    else
+                        target:RunScript(scriptPath)
+                    end
+                ]=],
+            },
+        },
+    },
+    Action
+    {
+        ID = "AYON_Install_PySide2",
+        Category = "AYON",
+        Name = "Install PySide2",
+
+        Targets =
+        {
+            Composition =
+            {
+                Execute = _Lua [=[
+                    local scriptPath = app:MapPath("AYON:../MenuScripts/install_pyside2.py")
+                    if bmd.fileexists(scriptPath) == false then
+                        print("[AYON Error] Can't run file: " .. scriptPath)
+                    else
+                        target:RunScript(scriptPath)
+                    end
+                ]=],
+            },
+        },
+    },
+    Menus
+    {
+        Target = "ChildFrame",
+
+        Before "Help"
+        {
+            Sub "AYON"
+            {
+                "AYON_Menu{}",
+                "_",
+                Sub "Admin" {
+                    "AYON_Install_PySide2{}"
+                }
+            }
+        },
+    },
+}

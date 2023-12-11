@@ -80,8 +80,8 @@ def _get_subsets(
 
     for subset in con.get_products(
         project_name,
-        subset_ids,
-        subset_names,
+        product_ids=subset_ids,
+        product_names=subset_names,
         folder_ids=folder_ids,
         names_by_folder_ids=names_by_folder_ids,
         active=active,
@@ -113,23 +113,23 @@ def _get_versions(
 
     queried_versions = con.get_versions(
         project_name,
-        version_ids,
-        subset_ids,
-        versions,
-        hero,
-        standard,
-        latest,
+        version_ids=version_ids,
+        product_ids=subset_ids,
+        versions=versions,
+        hero=hero,
+        standard=standard,
+        latest=latest,
         active=active,
         fields=fields
     )
 
-    versions = []
+    version_entities = []
     hero_versions = []
     for version in queried_versions:
         if version["version"] < 0:
             hero_versions.append(version)
         else:
-            versions.append(convert_v4_version_to_v3(version))
+            version_entities.append(convert_v4_version_to_v3(version))
 
     if hero_versions:
         subset_ids = set()
@@ -159,9 +159,9 @@ def _get_versions(
                     break
             conv_hero = convert_v4_version_to_v3(hero_version)
             conv_hero["version_id"] = version_id
-            versions.append(conv_hero)
+            version_entities.append(conv_hero)
 
-    return versions
+    return version_entities
 
 
 def get_asset_by_id(project_name, asset_id, fields=None):
@@ -539,11 +539,11 @@ def get_representations(
 
     representations = con.get_representations(
         project_name,
-        representation_ids,
-        representation_names,
-        version_ids,
-        names_by_version_ids,
-        active,
+        representation_ids=representation_ids,
+        representation_names=representation_names,
+        version_ids=version_ids,
+        names_by_version_ids=names_by_version_ids,
+        active=active,
         fields=fields
     )
     for representation in representations:

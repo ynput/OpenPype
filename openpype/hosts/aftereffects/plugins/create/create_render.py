@@ -56,15 +56,14 @@ class RenderCreator(Creator):
         use_composition_name = (pre_create_data.get("use_composition_name") or
                                 len(comps) > 1)
         for comp in comps:
+            composition_name = re.sub(
+                "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
+                "",
+                comp.name
+            )
             if use_composition_name:
                 if "{composition}" not in subset_name_from_ui.lower():
                     subset_name_from_ui += "{Composition}"
-
-                composition_name = re.sub(
-                    "[^{}]+".format(SUBSET_NAME_ALLOWED_SYMBOLS),
-                    "",
-                    comp.name
-                )
 
                 dynamic_fill = prepare_template_data({"composition":
                                                       composition_name})
@@ -81,6 +80,8 @@ class RenderCreator(Creator):
                         inst.subset_name))
 
             data["members"] = [comp.id]
+            data["orig_comp_name"] = composition_name
+
             new_instance = CreatedInstance(self.family, subset_name, data,
                                            self)
             if "farm" in pre_create_data:
@@ -88,7 +89,7 @@ class RenderCreator(Creator):
                 new_instance.creator_attributes["farm"] = use_farm
 
             review = pre_create_data["mark_for_review"]
-            new_instance.creator_attributes["mark_for_review"] = review
+            new_instance. creator_attributes["mark_for_review"] = review
 
             api.get_stub().imprint(new_instance.id,
                                    new_instance.data_to_store())
@@ -150,16 +151,18 @@ class RenderCreator(Creator):
                                            subset_change.new_value)
 
     def remove_instances(self, instances):
+        """Removes metadata and renames to original comp name if available."""
         for instance in instances:
             self._remove_instance_from_context(instance)
             self.host.remove_instance(instance)
 
-            subset = instance.data["subset"]
             comp_id = instance.data["members"][0]
             comp = api.get_stub().get_item(comp_id)
+            orig_comp_name = instance.data.get("orig_comp_name")
             if comp:
-                new_comp_name = comp.name.replace(subset, '')
-                if not new_comp_name:
+                if orig_comp_name:
+                    new_comp_name = orig_comp_name
+                else:
                     new_comp_name = "dummyCompName"
                 api.get_stub().rename_item(comp_id,
                                            new_comp_name)
