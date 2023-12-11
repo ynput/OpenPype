@@ -28,7 +28,8 @@ bl_info = {
 
 
 class PathsParts(Enum):
-    WINDOWS = "//prod9.prs.vfx.int/fs209/Projets/2023"
+    WINDOWS_L = "L:/2023"
+    WINDOWS_PROD9 = "//prod9.prs.vfx.int/fs209/Projets/2023"
     LINUX = "/prod/project"
 
 
@@ -247,7 +248,10 @@ def _get_all_modifiers():
 
 def _replace_paths_part(path):
     return bpy.path.abspath(path).replace('\\', '/').replace(
-        PathsParts.WINDOWS.value,
+        PathsParts.WINDOWS_L.value,
+        PathsParts.LINUX.value
+    ).replace(
+        PathsParts.WINDOWS_PROD9.value,
         PathsParts.LINUX.value
     )
 
