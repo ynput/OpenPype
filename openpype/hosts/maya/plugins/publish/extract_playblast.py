@@ -49,7 +49,8 @@ class ExtractPlayblast(publish.Extractor):
             else:
                 self.log.debug(
                     "Reload Textures during playblasting is disabled.")
-        preset.pop("reloadTextures", None)  # not supported by `capture`
+        # not supported by `capture`
+        preset["viewport_options"].pop("reloadTextures", None)
         path = capture.capture(log=self.log, **preset)
         self.log.debug("playblast path  {}".format(path))
 
