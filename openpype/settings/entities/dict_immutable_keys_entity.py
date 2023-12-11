@@ -42,6 +42,10 @@ class DictImmutableKeysEntity(ItemEntity):
         "collapsed": True
     }
 
+    def __init__(self, schema_data, parent, is_dynamic_item=False):
+        super(DictImmutableKeysEntity, self).__init__(schema_data, parent, is_dynamic_item)
+        self.protect_attrs = False
+
     def __getitem__(self, key):
         """Return entity inder key."""
         return self.non_gui_children[key]
