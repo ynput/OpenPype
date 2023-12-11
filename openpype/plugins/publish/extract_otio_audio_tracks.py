@@ -319,6 +319,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         Returns:
             str: temp fpath
         """
+        name = name.replace("/", "_")
         return os.path.normpath(
             tempfile.mktemp(
                 prefix="pyblish_tmp_{}_".format(name),

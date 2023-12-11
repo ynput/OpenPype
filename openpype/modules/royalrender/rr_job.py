@@ -32,7 +32,7 @@ class RREnvList(dict):
         """Parse rrEnvList string and return it as RREnvList object."""
         out = RREnvList()
         for var in data.split("~~~"):
-            k, v = var.split("=")
+            k, v = var.split("=", maxsplit=1)
             out[k] = v
         return out
 
@@ -172,7 +172,7 @@ class RRJob(object):
 
     # Environment
     # only used in RR 8.3 and newer
-    rrEnvList = attr.ib(default=None)  # type: str
+    rrEnvList = attr.ib(default=None, type=str)  # type: str
 
 
 class SubmitterParameter:

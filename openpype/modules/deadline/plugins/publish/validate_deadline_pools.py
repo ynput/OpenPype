@@ -22,7 +22,8 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
                 "render.frames_farm",
                 "renderFarm",
                 "renderlayer",
-                "maxrender"]
+                "maxrender",
+                "publish.hou"]
     optional = True
 
     # cache

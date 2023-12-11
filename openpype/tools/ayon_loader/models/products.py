@@ -317,6 +317,42 @@ class ProductsModel:
 
         return output
 
+    def get_versions_repre_count(self, project_name, version_ids, sender):
+        """Get representation count for passed version ids.
+
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+            sender (Union[str, None]): Who triggered the method.
+
+        Returns:
+            dict[str, int]: Number of representations by version id.
+        """
+
+        output = {}
+        if not any((project_name, version_ids)):
+            return output
+
+        invalid_version_ids = set()
+        project_cache = self._repre_items_cache[project_name]
+        for version_id in version_ids:
+            version_cache = project_cache[version_id]
+            if version_cache.is_valid:
+                output[version_id] = len(version_cache.get_data())
+            else:
+                invalid_version_ids.add(version_id)
+
+        if invalid_version_ids:
+            self.refresh_representation_items(
+                project_name, invalid_version_ids, sender
+            )
+
+        for version_id in invalid_version_ids:
+            version_cache = project_cache[version_id]
+            output[version_id] = len(version_cache.get_data())
+
+        return output
+
     def change_products_group(self, project_name, product_ids, group_name):
         """Change group name for passed product ids.
 

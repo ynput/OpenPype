@@ -406,26 +406,42 @@ class ClipLoader:
             self.active_bin
         )
         _clip_property = media_pool_item.GetClipProperty
+        source_in = int(_clip_property("Start"))
+        source_out = int(_clip_property("End"))
+        source_duration = int(_clip_property("Frames"))
 
-        # get handles
-        handle_start = self.data["versionData"].get("handleStart")
-        handle_end = self.data["versionData"].get("handleEnd")
-        if handle_start is None:
-            handle_start = int(self.data["assetData"]["handleStart"])
-        if handle_end is None:
-            handle_end = int(self.data["assetData"]["handleEnd"])
+        if not self.with_handles:
+            # Load file without the handles of the source media
+            # We remove the handles from the source in and source out
+            # so that the handles are excluded in the timeline
+            handle_start = 0
+            handle_end = 0
 
-        # check frame duration from versionData or assetData
-        frame_start = self.data["versionData"].get("frameStart")
-        if frame_start is None:
-            frame_start = self.data["assetData"]["frameStart"]
+            # get version data frame data from db
+            version_data = self.data["versionData"]
+            frame_start = version_data.get("frameStart")
+            frame_end = version_data.get("frameEnd")
 
-        # check frame duration from versionData or assetData
-        frame_end = self.data["versionData"].get("frameEnd")
-        if frame_end is None:
-            frame_end = self.data["assetData"]["frameEnd"]
-
-        db_frame_duration = int(frame_end) - int(frame_start) + 1
+            # The version data usually stored the frame range + handles of the
+            # media however certain representations may be shorter because they
+            # exclude those handles intentionally. Unfortunately the
+            # representation does not store that in the database currently;
+            # so we should compensate for those cases. If the media is shorter
+            # than the frame range specified in the database we assume it is
+            # without handles and thus we do not need to remove the handles
+            # from source and out
+            if frame_start is not None and frame_end is not None:
+                # Version has frame range data, so we can compare media length
+                handle_start = version_data.get("handleStart", 0)
+                handle_end = version_data.get("handleEnd", 0)
+                frame_start_handle = frame_start - handle_start
+                frame_end_handle = frame_start + handle_end
+                database_frame_duration = int(
+                    frame_end_handle - frame_start_handle + 1
+                )
+                if source_duration >= database_frame_duration:
+                    source_in += handle_start
+                    source_out -= handle_end
 
         # get timeline in
         timeline_start = self.active_timeline.GetStartFrame()
@@ -436,24 +452,6 @@ class ClipLoader:
             # set timeline start frame + original clip in frame
             timeline_in = int(
                 timeline_start + self.data["assetData"]["clipIn"])
-
-        source_in = int(_clip_property("Start"))
-        source_out = int(_clip_property("End"))
-        source_duration = int(_clip_property("Frames"))
-
-        # check if source duration is shorter than db frame duration
-        source_with_handles = True
-        if source_duration < db_frame_duration:
-            source_with_handles = False
-
-        # only exclude handles if source has no handles or
-        # if user wants to load without handles
-        if (
-            not self.with_handles
-            or not source_with_handles
-        ):
-            source_in += handle_start
-            source_out -= handle_end
 
         # make track item from source in bin as item
         timeline_item = lib.create_timeline_item(
@@ -868,7 +866,7 @@ class PublishClip:
     def _convert_to_entity(self, key):
         """ Converting input key to key with type. """
         # convert to entity type
-        entity_type = self.types.get(key, None)
+        entity_type = self.types.get(key)
 
         assert entity_type, "Missing entity type for `{}`".format(
             key

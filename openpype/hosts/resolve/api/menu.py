@@ -7,6 +7,9 @@ from openpype.tools.utils import host_tools
 from openpype.pipeline import registered_host
 
 
+MENU_LABEL = os.environ["AVALON_LABEL"]
+
+
 def load_stylesheet():
     path = os.path.join(os.path.dirname(__file__), "menu_style.qss")
     if not os.path.exists(path):
@@ -39,7 +42,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super(OpenPypeMenu, self).__init__(*args, **kwargs)
 
-        self.setObjectName("OpenPypeMenu")
+        self.setObjectName(f"{MENU_LABEL}Menu")
 
         self.setWindowFlags(
             QtCore.Qt.Window
@@ -49,7 +52,7 @@ class OpenPypeMenu(QtWidgets.QWidget):
             | QtCore.Qt.WindowStaysOnTopHint
         )
 
-        self.setWindowTitle("OpenPype")
+        self.setWindowTitle(f"{MENU_LABEL}")
         save_current_btn = QtWidgets.QPushButton("Save current file", self)
         workfiles_btn = QtWidgets.QPushButton("Workfiles ...", self)
         create_btn = QtWidgets.QPushButton("Create ...", self)
