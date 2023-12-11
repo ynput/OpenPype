@@ -177,7 +177,7 @@ def set_scene_render_properties():
 
     for render_property in bpy.context.window_manager.render_list_properties:
         set_attribute(render_property.path, render_property.items)
-        log.info(f"attribute {render_property.path} has been set to {render_property.value}")
+        log.info(f"attribute {render_property.path} has been set to {render_property.items}")
 
 
 def set_attribute(path, value):
@@ -224,6 +224,7 @@ def convert_cache_files_windows_path_to_linux():
         cache_file.filepath = _replace_paths_part(cache_file.filepath)
         log.info(f"Cache file path has updated from {old_path} to {cache_file.filepath}")
 
+
 def convert_modifers_windows_path_to_linux():
     for modifier in _get_all_modifiers():
         for modifier_attribute in MODIFIERS_ATTRIBUTES_TO_REPLACE:
@@ -258,7 +259,7 @@ def set_engine(engine):
 
 def set_global_output_path():
     bpy.context.scene.render.filepath = bpy.context.scene.output_path
-    log.info(f"Global output path has been set to {bpy.context.scene.output_path}")
+    log.info(f"Global output path has been set to '{bpy.context.scene.output_path}'")
 
 
 def set_render_nodes_output_path():
@@ -270,7 +271,7 @@ def set_render_nodes_output_path():
             render_layer_name=render_layer_name,
             version = version
         ) + '_'
-        log.info(f"Output node {output_node.name} path has been set to '{output_node.base_path}'.")
+        log.info(f"Output node '{output_node.name}' path has been set to '{output_node.base_path}'.")
 
 
 def _browse_render_nodes(nodes_inputs):
