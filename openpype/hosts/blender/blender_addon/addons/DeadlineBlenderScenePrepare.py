@@ -271,7 +271,7 @@ def set_render_nodes_output_path():
             render_layer_name=render_layer_name,
             version = version
         ) + '_'
-        log.info(f"Output node '{output_node.name}' path has been set to '{output_node.base_path}'.")
+        log.info(f"File output path has been set to '{output_node.base_path}'.")
 
 
 def _browse_render_nodes(nodes_inputs):
