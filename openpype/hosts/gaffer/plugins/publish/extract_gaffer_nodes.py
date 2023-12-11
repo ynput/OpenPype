@@ -10,7 +10,7 @@ class ExtractGafferNodes(
 ):
     """Export box nodes for reference."""
 
-    order = pyblish.api.ExtractorOrder - 0.2
+    order = pyblish.api.ExtractorOrder
     label = "Gaffer Script"
     hosts = ["gaffer"]
     families = ["gafferNodes"]
