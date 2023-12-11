@@ -75,7 +75,7 @@ DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
     "CollectAssetHandles": {
         "use_asset_handles": True
     },
-    "CollectChunkSize" : {
+    "CollectChunkSize": {
         "enabled": True,
         "optional": True,
         "chunk_size": 999999
