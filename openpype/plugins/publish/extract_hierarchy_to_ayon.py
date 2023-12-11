@@ -223,23 +223,24 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
         valid_ids = set()
 
         hierarchy_queue = collections.deque()
-        hierarchy_queue.append((project_id, project_children_context))
+        hierarchy_queue.append((project_id, "", project_children_context))
         while hierarchy_queue:
             queue_item = hierarchy_queue.popleft()
-            parent_id, children_context = queue_item
+            parent_id, parent_path, children_context = queue_item
             if not children_context:
                 continue
 
-            for asset, asset_info in children_context.items():
+            for folder_name, folder_info in children_context.items():
+                folder_path = "{}/{}".format(parent_path, folder_name)
                 if (
-                    asset not in active_folder_paths
-                    and not asset_info.get("childs")
+                    folder_path not in active_folder_paths
+                    and not folder_info.get("childs")
                 ):
                     continue
-                asset_name = asset.split("/")[-1]
+
                 item_id = uuid.uuid4().hex
-                new_item = copy.deepcopy(asset_info)
-                new_item["name"] = asset_name
+                new_item = copy.deepcopy(folder_info)
+                new_item["name"] = folder_name
                 new_item["children"] = []
                 new_children_context = new_item.pop("childs", None)
                 tasks = new_item.pop("tasks", {})
@@ -253,9 +254,11 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
                 items_by_id[item_id] = new_item
                 parent_id_by_item_id[item_id] = parent_id
 
-                if asset in active_folder_paths:
+                if folder_path in active_folder_paths:
                     valid_ids.add(item_id)
-                hierarchy_queue.append((item_id, new_children_context))
+                hierarchy_queue.append(
+                    (item_id, folder_path, new_children_context)
+                )
 
         if not valid_ids:
             return None
