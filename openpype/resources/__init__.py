@@ -1,6 +1,6 @@
 import os
 from openpype import AYON_SERVER_ENABLED
-from openpype.lib.openpype_version import is_running_staging
+from openpype.lib.openpype_version import is_staging_enabled
 
 RESOURCES_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -59,7 +59,7 @@ def get_openpype_icon_filepath(staging=None):
         return get_resource("icons", "AYON_icon_dev.png")
 
     if staging is None:
-        staging = is_running_staging()
+        staging = is_staging_enabled()
 
     if staging:
         return get_openpype_staging_icon_filepath()
@@ -68,7 +68,7 @@ def get_openpype_icon_filepath(staging=None):
 
 def get_openpype_splash_filepath(staging=None):
     if staging is None:
-        staging = is_running_staging()
+        staging = is_staging_enabled()
 
     if AYON_SERVER_ENABLED:
         if os.getenv("AYON_USE_DEV") == "1":
