@@ -43,7 +43,7 @@ class DeadlineModule(OpenPypeModule, IPluginPaths):
         if self._plugin_folders and not regenerate_cache:
             return self._plugin_folders
 
-        parent_folder_path = Path(__file__).parent.joinpath("plugins")
+        parent_folder_path = Path(__file__).parent
 
         hosts_folders_iterator = parent_folder_path.glob('*/')
         for host_folder_path in hosts_folders_iterator:
