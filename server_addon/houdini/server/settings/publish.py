@@ -13,6 +13,14 @@ class CollectAssetHandlesModel(BaseSettingsModel):
         title="Use asset handles")
 
 
+class CollectChunkSizeModel(BaseSettingsModel):
+    """Collect Chunk Size."""
+    enabled: bool = Field(title="Enabled")
+    optional: bool = Field(title="Optional")
+    chunk_size: int = Field(
+        title="Frames Per Task")
+
+
 class ValidateWorkfilePathsModel(BaseSettingsModel):
     enabled: bool = Field(title="Enabled")
     optional: bool = Field(title="Optional")
@@ -38,6 +46,10 @@ class PublishPluginsModel(BaseSettingsModel):
         title="Collect Asset Handles.",
         section="Collectors"
     )
+    CollectChunkSize: CollectChunkSizeModel = Field(
+        default_factory=CollectChunkSizeModel,
+        title="Collect Chunk Size."
+    )
     ValidateContainers: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Latest Containers.",
@@ -62,6 +74,11 @@ class PublishPluginsModel(BaseSettingsModel):
 DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
     "CollectAssetHandles": {
         "use_asset_handles": True
+    },
+    "CollectChunkSize" : {
+        "enabled": True,
+        "optional": True,
+        "chunk_size": 999999
     },
     "ValidateContainers": {
         "enabled": True,
