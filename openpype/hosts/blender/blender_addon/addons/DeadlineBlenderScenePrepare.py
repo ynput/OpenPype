@@ -3,11 +3,17 @@ import tempfile
 import functools
 import logging
 import re
+import uuid
 from enum import Enum
-
 
 import bpy
 from bpy.app.handlers import persistent
+
+import logging
+
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 bl_info = {
@@ -69,6 +75,11 @@ RENDER_PROPERTIES_CHECKBOX = [
         'name': 'Render region',
         'path': 'render.use_border',
         'default': False
+    },
+    {
+        'name': 'Use nodes',
+        'path': 'use_nodes',
+        'default': True
     }
 ]
 
@@ -147,6 +158,7 @@ class PrepareTemporaryFile(bpy.types.Operator):
     bl_description = "Create temporary blender file and set properties"
 
     def execute(self, context):
+        log.info("Preparing temporary scene for Deadline's render")
         set_scene_render_properties()
         convert_cache_files_windows_path_to_linux()
         convert_modifers_windows_path_to_linux()
@@ -161,9 +173,11 @@ class PrepareTemporaryFile(bpy.types.Operator):
 def set_scene_render_properties():
     for render_property in bpy.context.window_manager.render_bool_properties:
         set_attribute(render_property.path, render_property.value)
+        log.info(f"attribute {render_property.path} has been set to {render_property.value}")
 
     for render_property in bpy.context.window_manager.render_list_properties:
         set_attribute(render_property.path, render_property.items)
+        log.info(f"attribute {render_property.path} has been set to {render_property.value}")
 
 
 def set_attribute(path, value):
@@ -183,20 +197,32 @@ def set_attribute(path, value):
 
 def save_as_temporary_scene():
     bpy.context.window_manager.scene_filepath = bpy.data.filepath
-    temporary_scene_file_path = os.path.join(
-        tempfile.gettempdir(),
-        bpy.path.basename(bpy.context.blend_data.filepath)
-    )
+    temporary_scene_file_path = _generate_temporary_file_path()
     if os.path.isfile(temporary_scene_file_path):
-        os.remove(temporary_scene_file_path)
+        try:
+            os.remove(temporary_scene_file_path)
+        except PermissionError:
+            log.warning(f"Can't remove temporary scene file {temporary_scene_file_path}.")
+            temporary_scene_file_path = _generate_temporary_file_path(
+                suffix='_' + str(uuid.uuid4())
+            )
 
     bpy.ops.wm.save_as_mainfile(filepath=temporary_scene_file_path)
+    log.info(f"Temporary scene has been saved to {temporary_scene_file_path}")
+
+
+def _generate_temporary_file_path(suffix='')
+    return os.path.join(
+        tempfile.gettempdir(),
+        bpy.path.basename(bpy.context.blend_data.filepath) + suffix
+    )
 
 
 def convert_cache_files_windows_path_to_linux():
     for cache_file in bpy.data.cache_files:
+        old_path = cache_file.filepath
         cache_file.filepath = _replace_paths_part(cache_file.filepath)
-
+        log.info(f"Cache file path has updated from {old_path} to {cache_file.filepath}")
 
 def convert_modifers_windows_path_to_linux():
     for modifier in _get_all_modifiers():
@@ -206,6 +232,8 @@ def convert_modifers_windows_path_to_linux():
                 continue
 
             setattr(modifier, modifier_attribute, _replace_paths_part(path_to_replace))
+            new_path = getattr(modifier, modifier_attribute, None)
+            log.info(f"Cache file path has updated from {path_to_replace} to {new_path}")
 
 
 def _get_all_modifiers():
@@ -225,10 +253,12 @@ def _replace_paths_part(path):
 
 def set_engine(engine):
     bpy.context.scene.render.engine = engine
+    log.info(f"Engine has been set to {engine}")
 
 
 def set_global_output_path():
     bpy.context.scene.render.filepath = bpy.context.scene.output_path
+    log.info(f"Global output path has been set to {bpy.context.scene.output_path}")
 
 
 def set_render_nodes_output_path():
@@ -240,7 +270,7 @@ def set_render_nodes_output_path():
             render_layer_name=render_layer_name,
             version = version
         ) + '_'
-        logging.info(f"Output node {output_node.name} path has been set to '{output_node.base_path}'.")
+        log.info(f"Output node {output_node.name} path has been set to '{output_node.base_path}'.")
 
 
 def _browse_render_nodes(nodes_inputs):
@@ -269,9 +299,8 @@ class LoadPreviousScene(bpy.types.Operator):
     bl_description = "Load previous Blender scene"
 
     def execute(self, context):
-        print('LoadPreviousScene')
         bpy.ops.wm.open_mainfile(filepath=bpy.context.window_manager.scene_filepath)
-        print("Everything is complete")
+        logging.info(f"Previous scene has been loaded from {bpy.context.window_manager.scene_filepath}")
         return {'FINISHED'}
 
 
