@@ -528,7 +528,7 @@ class DeadlinePublishTest(PublishTest):
             errors = []
             for job in jobs_to_validate:
                 if "Failed" == job_status[job["Stat"]]:
-                    failed_jobs.append(job)
+                    failed_jobs.append(str(job))
 
                 resp_error = requests.get(
                     "{}/api/jobreports?JobID={}&Data=allerrorcontents".format(
