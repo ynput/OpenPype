@@ -1,6 +1,8 @@
 import os
 import pyblish.api
 
+from openpype.client import get_asset_name_identifier
+
 
 class CollectCelactionInstances(pyblish.api.ContextPlugin):
     """ Adds the celaction render instances """
@@ -17,8 +19,10 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
 
+        asset_name = get_asset_name_identifier(asset_entity)
+
         shared_instance_data = {
-            "asset": asset_entity["name"],
+            "asset": asset_name,
             "frameStart": asset_entity["data"]["frameStart"],
             "frameEnd": asset_entity["data"]["frameEnd"],
             "handleStart": asset_entity["data"]["handleStart"],

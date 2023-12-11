@@ -1,5 +1,6 @@
 import bpy
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import CreatedInstance, AutoCreator
 from openpype.client import get_asset_by_name
 from openpype.hosts.blender.api.plugin import BaseCreator
@@ -24,7 +25,7 @@ class CreateWorkfile(BaseCreator, AutoCreator):
 
     def create(self):
         """Create workfile instances."""
-        current_instance = next(
+        existing_instance = next(
             (
                 instance for instance in self.create_context.instances
                 if instance.creator_identifier == self.identifier
@@ -37,16 +38,27 @@ class CreateWorkfile(BaseCreator, AutoCreator):
         task_name = self.create_context.get_current_task_name()
         host_name = self.create_context.host_name
 
-        if not current_instance:
+        existing_asset_name = None
+        if existing_instance is not None:
+            if AYON_SERVER_ENABLED:
+                existing_asset_name = existing_instance.get("folderPath")
+
+            if existing_asset_name is None:
+                existing_asset_name = existing_instance["asset"]
+
+        if not existing_instance:
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
                 task_name, task_name, asset_doc, project_name, host_name
             )
             data = {
-                "asset": asset_name,
                 "task": task_name,
                 "variant": task_name,
             }
+            if AYON_SERVER_ENABLED:
+                data["folderPath"] = asset_name
+            else:
+                data["asset"] = asset_name
             data.update(
                 self.get_dynamic_data(
                     task_name,
@@ -54,7 +66,7 @@ class CreateWorkfile(BaseCreator, AutoCreator):
                     asset_doc,
                     project_name,
                     host_name,
-                    current_instance,
+                    existing_instance,
                 )
             )
             self.log.info("Auto-creating workfile instance...")
@@ -65,17 +77,21 @@ class CreateWorkfile(BaseCreator, AutoCreator):
             current_instance.transient_data["instance_node"] = instance_node
             self._add_instance_to_context(current_instance)
         elif (
-            current_instance["asset"] != asset_name
-            or current_instance["task"] != task_name
+            existing_asset_name != asset_name
+            or existing_instance["task"] != task_name
         ):
             # Update instance context if it's different
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
                 task_name, task_name, asset_doc, project_name, host_name
             )
-            current_instance["asset"] = asset_name
-            current_instance["task"] = task_name
-            current_instance["subset"] = subset_name
+            if AYON_SERVER_ENABLED:
+                existing_instance["folderPath"] = asset_name
+            else:
+                existing_instance["asset"] = asset_name
+
+            existing_instance["task"] = task_name
+            existing_instance["subset"] = subset_name
 
     def collect_instances(self):
 

@@ -18,6 +18,7 @@ from openpype.client import (
     get_asset_by_id,
     get_asset_by_name,
     version_is_latest,
+    get_asset_name_identifier,
     get_ayon_server_api_connection,
 )
 from openpype.lib.events import emit_event
@@ -44,7 +45,7 @@ from . import (
 
 _is_installed = False
 _process_id = None
-_registered_root = {"_": ""}
+_registered_root = {"_": {}}
 _registered_host = {"_": None}
 # Keep modules manager (and it's modules) in memory
 # - that gives option to register modules' callbacks
@@ -85,15 +86,22 @@ def register_root(path):
 
 
 def registered_root():
-    """Return currently registered root"""
-    root = _registered_root["_"]
-    if root:
-        return root
+    """Return registered roots from current project anatomy.
 
-    root = legacy_io.Session.get("AVALON_PROJECTS")
-    if root:
-        return os.path.normpath(root)
-    return ""
+    Consider this does return roots only for current project and current
+        platforms, only if host was installer using 'install_host'.
+
+    Deprecated:
+        Please use project 'Anatomy' to get roots. This function is still used
+            at current core functions of load logic, but that will change
+            in future and this function will be removed eventually. Using this
+            function at new places can cause problems in the future.
+
+    Returns:
+        dict[str, str]: Root paths.
+    """
+
+    return _registered_root["_"]
 
 
 def install_host(host):
@@ -592,14 +600,12 @@ def compute_session_changes(
         Dict[str, str]: Changes in the Session dictionary.
     """
 
-    changes = {}
-
     # Get asset document and asset
     if not asset_doc:
         task_name = None
         asset_name = None
     else:
-        asset_name = asset_doc["name"]
+        asset_name = get_asset_name_identifier(asset_doc)
 
     # Detect any changes compared session
     mapping = {

@@ -8,8 +8,10 @@ import appdirs
 from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype import resources
+from openpype import AYON_SERVER_ENABLED
 from openpype.style import load_stylesheet
 from openpype.lib import JSONSettingRegistry
+
 
 
 openpype_art = """
@@ -27,6 +29,18 @@ openpype_art = """
          ~P3.OPPPO3OP~ . ..  .
            .  ' '. .  .. . . . ..  .
 
+"""
+
+ayon_art = r"""
+
+                    ▄██▄
+         ▄███▄ ▀██▄ ▀██▀ ▄██▀ ▄██▀▀▀██▄    ▀███▄      █▄
+        ▄▄ ▀██▄  ▀██▄  ▄██▀ ██▀      ▀██▄  ▄  ▀██▄    ███
+       ▄██▀  ██▄   ▀ ▄▄ ▀  ██         ▄██  ███  ▀██▄  ███
+      ▄██▀    ▀██▄   ██    ▀██▄      ▄██▀  ███    ▀██ ▀█▀
+     ▄██▀      ▀██▄  ▀█      ▀██▄▄▄▄██▀    █▀      ▀██▄
+
+     ·  · - =[ by YNPUT ]:[ http://ayon.ynput.io ]= - ·  ·
 
 """
 
@@ -41,8 +55,12 @@ class PythonInterpreterRegistry(JSONSettingRegistry):
     """
 
     def __init__(self):
-        self.vendor = "pypeclub"
-        self.product = "openpype"
+        if AYON_SERVER_ENABLED:
+            self.vendor = "ynput"
+            self.product = "ayon"
+        else:
+            self.vendor = "pypeclub"
+            self.product = "openpype"
         name = "python_interpreter_tool"
         path = appdirs.user_data_dir(self.product, self.vendor)
         super(PythonInterpreterRegistry, self).__init__(name, path)
@@ -339,7 +357,9 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(PythonInterpreterWidget, self).__init__(parent)
 
-        self.setWindowTitle("OpenPype Console")
+        self.setWindowTitle("{} Console".format(
+            "AYON" if AYON_SERVER_ENABLED else "OpenPype"
+        ))
         self.setWindowIcon(QtGui.QIcon(resources.get_openpype_icon_filepath()))
 
         self.ansi_escape = re.compile(
@@ -387,7 +407,10 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         self._tab_widget = tab_widget
         self._line_check_timer = line_check_timer
 
-        self._append_lines([openpype_art])
+        if AYON_SERVER_ENABLED:
+            self._append_lines([ayon_art])
+        else:
+            self._append_lines([openpype_art])
 
         self._first_show = True
         self._splitter_size_ratio = None
