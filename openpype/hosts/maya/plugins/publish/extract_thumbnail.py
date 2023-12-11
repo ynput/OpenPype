@@ -154,12 +154,16 @@ class ExtractThumbnail(publish.Extractor):
                 )
             if "textures" in preset["viewport_options"]:
                 if "reloadTextures" in preset["viewport_options"]:
-                    lib.reload_textures()
+                    with lib.material_loading_mode():
+                        lib.reload_textures()
+                        preset["viewport_options"].pop("reloadTextures", None)
+                        path = capture.capture(**preset)
                 else:
                     self.log.debug(
                         "Reload Textures during playblasting is disabled.")
+                    preset["viewport_options"].pop("reloadTextures", None)
+                    path = capture.capture(**preset)
             # not supported by `capture`
-            preset["viewport_options"].pop("reloadTextures", None)
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
 

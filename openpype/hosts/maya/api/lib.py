@@ -180,7 +180,17 @@ def reload_textures():
         for texture_file in texture_files:
             if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
                 cmds.ogs(regenerateUVTilePreview=texture_file)
-    cmds.ogs(reloadTextures=True)
+
+
+@contextlib.contextmanager
+def material_loading_mode(mode="immediate"):
+    """Set material loading mode during context"""
+    original = cmds.displayPref(query=True, materialLoadingMode=True)
+    cmds.displayPref(materialLoadingMode=mode)
+    try:
+        yield
+    finally:
+        cmds.displayPref(materialLoadingMode=original)
 
 
 def get_namespace(node):

@@ -43,15 +43,17 @@ class ExtractPlayblast(publish.Extractor):
                     json.dumps(preset, indent=4, sort_keys=True)
                 )
             )
-        if "textures" in preset["viewport_options"]:
-            if "reloadTextures" in preset["viewport_options"]:
+        if "textures" in preset["viewport_options"] and (
+            "reloadTextures" in preset["viewport_options"]
+        ):
+            with lib.material_loading_mode():
                 lib.reload_textures()
-            else:
-                self.log.debug(
-                    "Reload Textures during playblasting is disabled.")
-        # not supported by `capture`
-        preset["viewport_options"].pop("reloadTextures", None)
-        path = capture.capture(log=self.log, **preset)
+                # not supported by `capture`
+                preset["viewport_options"].pop("reloadTextures", None)
+                path = capture.capture(log=self.log, **preset)
+        else:
+            preset["viewport_options"].pop("reloadTextures", None)
+            path = capture.capture(log=self.log, **preset)
         self.log.debug("playblast path  {}".format(path))
 
     def process(self, instance):
