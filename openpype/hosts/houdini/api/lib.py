@@ -138,11 +138,13 @@ def get_output_parameter(node):
 
     Note 1:
         I'm using node.type().name() to get on par with the creators,
-        Because the return value of `node.type().name()` is the same string value used in creators
+        Because the return value of `node.type().name()` is the same string
+        value used in creators
         e.g. instance_data.update({"node_type": "alembic"})
 
     Note 2:
-        Rop nodes in different network categories have the same output parameter.
+        Rop nodes in different network categories have
+        the same output parameter.
         So, I took that into consideration as a hint for future development.
 
     """
@@ -152,12 +154,17 @@ def get_output_parameter(node):
     # Figure out which type of node is being rendered
     if node_type == "alembic" or node_type == "rop_alembic":
         return node.parm("filename")
-    elif  node_type == "arnold":
+    elif node_type == "arnold":
         if node_type.evalParm("ar_ass_export_enable"):
             return node.parm("ar_ass_file")
         else:
             return node.parm("ar_picture")
-    elif node_type == "geometry" or node_type == "rop_geometry" or node_type == "filmboxfbx" or node_type == "rop_fbx" :
+    elif (
+        node_type == "geometry" or
+        node_type == "rop_geometry" or
+        node_type == "filmboxfbx" or
+        node_type == "rop_fbx"
+    ):
         return node.parm("sopoutput")
     elif node_type == "comp":
         return node.parm("copoutput")
@@ -172,7 +179,11 @@ def get_output_parameter(node):
         return node.parm("RS_archive_file")
     elif node_type == "Redshift_ROP":
         return node.parm("RS_outputFileNamePrefix")
-    elif node_type == "usd" or node_type == "usd_rop" or node_type == "usdexport":
+    elif (
+        node_type == "usd" or
+        node_type == "usd_rop" or
+        node_type == "usdexport"
+    ):
         return node.parm("lopoutput")
     elif node_type == "usdrender" or node_type == "usdrender_rop":
         return node.parm("outputimage")
