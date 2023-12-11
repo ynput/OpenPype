@@ -381,15 +381,19 @@ or updating already created. Publishing will create OTIO file.
         """
         self.asset_name_check = []
 
-        tracks = otio_timeline.each_child(
-            descended_from_type=otio.schema.Track
-        )
+        tracks = [
+            track for track in otio_timeline.each_child(
+                descended_from_type=otio.schema.Track)
+            if track.kind == "Video"
+        ]
 
-        # media data for audio sream and reference solving
+        # media data for audio stream and reference solving
         media_data = self._get_media_source_metadata(media_path)
 
         for track in tracks:
+            # set track name
             track.name = f"{sequence_file_name} - {otio_timeline.name}"
+
             try:
                 track_start_frame = (
                     abs(track.source_range.start_time.value)
@@ -397,7 +401,6 @@ or updating already created. Publishing will create OTIO file.
                 track_start_frame -= self.timeline_frame_start
             except AttributeError:
                 track_start_frame = 0
-
 
             for clip in track.each_child():
                 if not self._validate_clip_for_processing(clip):
