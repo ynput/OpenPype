@@ -3,7 +3,6 @@ from qtpy import QtWidgets, QtGui, QtCore
 from openpype import style
 
 from openpype.lib import is_admin_password_required
-from openpype.lib.openpype_version import is_running_locally
 from openpype.lib.events import EventSystem
 from openpype.widgets import PasswordDialog
 
@@ -151,7 +150,7 @@ class MainWidget(QtWidgets.QWidget):
 
         current_settings = get_system_settings()
         production_version = current_settings.get('general').get("production_version")
-        if not is_running_locally() and production_version != studio_widget._current_version:
+        if production_version != studio_widget._current_version:
             self._protect_system_settings = True
             self._controller.set_edit_mode(EditMode.PROTECT)
 

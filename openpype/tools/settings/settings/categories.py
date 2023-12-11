@@ -942,6 +942,7 @@ class SystemWidget(SettingsCategoryWidget):
 class ProjectWidget(SettingsCategoryWidget):
     def __init__(self, *args, **kwargs):
         super(ProjectWidget, self).__init__(*args, **kwargs)
+        self.protect_attrs = False
 
     def set_edit_mode(self, enabled):
         super(ProjectWidget, self).set_edit_mode(enabled)

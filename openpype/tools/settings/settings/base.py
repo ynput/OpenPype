@@ -498,6 +498,9 @@ class BaseWidget(QtWidgets.QWidget):
                 dialog.exec_()
 
     def show_actions_menu(self, event=None):
+        if self._read_only:
+            return
+
         if event and event.button() != QtCore.Qt.RightButton:
             return
 

@@ -783,7 +783,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         defs.extend([
             NumberDef("priority",
                       label="Priority",
-                      default=cls.default_priority,
+                      default=cls.priority,
                       decimals=0),
             NumberDef("chunkSize",
                       label="Frames Per Task",

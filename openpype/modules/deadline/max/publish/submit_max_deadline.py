@@ -58,7 +58,7 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
                                          cls.use_published)
         cls.priority = settings.get("priority",
                                     cls.priority)
-        cls.chuck_size = settings.get("chunk_size", cls.chunk_size)
+        cls.chunk_size = settings.get("chunk_size", cls.chunk_size)
         cls.group = settings.get("group", cls.group)
 
     def get_job_info(self):

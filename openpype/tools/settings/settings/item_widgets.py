@@ -30,16 +30,32 @@ from .base import (
 
 
 class DictImmutableKeysWidget(BaseWidget):
-    def create_ui(self):
-        self.input_fields = []
-        self.checkbox_child = None
 
-        self.label_widget = None
+    def __init__(self, category_widget, entity, entity_widget):
+        self.input_fields = []
+
         self.body_widget = None
         self.content_widget = None
         self.content_layout = None
 
+        self.checkbox_child = None
+
+        self._protect_attrs = False
+
+        self._direct_children_widgets = []
+        self._parent_widget_by_entity_id = {}
+        self._added_wrapper_ids = set()
+
+        super(DictImmutableKeysWidget, self).__init__(category_widget, entity, entity_widget)
+
+    def create_ui(self):
+
+        self.checkbox_child = None
+
+        self.label_widget = None
+
         self._read_only = getattr(self.entity, "read_only", False)
+        self._protect_attrs = getattr(self.entity, "protect_attrs", False)
 
         label = None
         if self.entity.is_dynamic_item:
@@ -122,6 +138,10 @@ class DictImmutableKeysWidget(BaseWidget):
 
     def set_read_only(self, status):
         self._read_only = status
+
+        if self._protect_attrs:
+            return
+
         for input_field in self.input_fields:
             input_field.set_read_only(self._read_only)
 
@@ -911,6 +931,10 @@ class PathWidget(BaseWidget):
 
     def get_invalid(self):
         return self.input_field.get_invalid()
+
+    def set_read_only(self, status):
+        self._read_only = status
+        self.input_field.setEnabled(not self._read_only)
 
 
 class PathInputWidget(InputWidget):
