@@ -289,25 +289,24 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         }
 
         # add assembly jobs as dependencies
-        if not bool(os.environ.get("IS_TEST")):
-            if instance.data.get("tileRendering"):
-                self.log.info("Adding tile assembly jobs as dependencies...")
-                job_index = 0
-                for assembly_id in instance.data.get("assemblySubmissionJobs"):
-                    payload["JobInfo"]["JobDependency{}".format(
-                        job_index)] = assembly_id  # noqa: E501
-                    job_index += 1
-            elif instance.data.get("bakingSubmissionJobs"):
-                self.log.info(
-                    "Adding baking submission jobs as dependencies..."
-                )
-                job_index = 0
-                for assembly_id in instance.data["bakingSubmissionJobs"]:
-                    payload["JobInfo"]["JobDependency{}".format(
-                        job_index)] = assembly_id  # noqa: E501
-                    job_index += 1
-            elif job.get("_id"):
-                payload["JobInfo"]["JobDependency0"] = job["_id"]
+        if instance.data.get("tileRendering"):
+            self.log.info("Adding tile assembly jobs as dependencies...")
+            job_index = 0
+            for assembly_id in instance.data.get("assemblySubmissionJobs"):
+                payload["JobInfo"]["JobDependency{}".format(
+                    job_index)] = assembly_id  # noqa: E501
+                job_index += 1
+        elif instance.data.get("bakingSubmissionJobs"):
+            self.log.info(
+                "Adding baking submission jobs as dependencies..."
+            )
+            job_index = 0
+            for assembly_id in instance.data["bakingSubmissionJobs"]:
+                payload["JobInfo"]["JobDependency{}".format(
+                    job_index)] = assembly_id  # noqa: E501
+                job_index += 1
+        elif job.get("_id"):
+            payload["JobInfo"]["JobDependency0"] = job["_id"]
 
         for index, (key_, value_) in enumerate(environment.items()):
             payload["JobInfo"].update(
