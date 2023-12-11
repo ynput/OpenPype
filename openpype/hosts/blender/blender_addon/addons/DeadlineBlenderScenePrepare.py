@@ -211,7 +211,7 @@ def save_as_temporary_scene():
     log.info(f"Temporary scene has been saved to {temporary_scene_file_path}")
 
 
-def _generate_temporary_file_path(suffix='')
+def _generate_temporary_file_path(suffix=''):
     return os.path.join(
         tempfile.gettempdir(),
         bpy.path.basename(bpy.context.blend_data.filepath) + suffix
