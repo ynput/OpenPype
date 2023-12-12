@@ -439,7 +439,7 @@ def version(build):
               help="User name in Ftrack that would publish the files",
               default=None)
 @click.option("--ignore-validators", help="Option to ignore validators",
-              default=None)
+              default=None, is_flag=True)
 def ingest(directory, project, ftrack_user, ignore_validators):
     """Start headless publishing of CSV editorial."""
 
