@@ -785,7 +785,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "sync_workfile_version": False
     },
     "CollectFbxAnimation": {
-        "enabled": True
+        "enabled": False
     },
     "CollectFbxCamera": {
         "enabled": False
@@ -862,7 +862,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         ]
     },
     "ValidatePluginPathAttributes": {
-        "enabled": True,
+        "enabled": False,
         "optional": False,
         "active": True,
         "attribute": [
@@ -917,12 +917,12 @@ DEFAULT_PUBLISH_SETTINGS = {
         "active": True
     },
     "ValidateGLSLMaterial": {
-        "enabled": True,
+        "enabled": False,
         "optional": False,
         "active": True
     },
     "ValidateGLSLPlugin": {
-        "enabled": True,
+        "enabled": False,
         "optional": False,
         "active": True
     },
@@ -1154,7 +1154,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "active": True
     },
     "ExtractProxyAlembic": {
-        "enabled": True,
+        "enabled": False,
         "families": [
             "proxyAbc"
         ]
@@ -1311,7 +1311,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "bake_attributes": "[]"
     },
     "ExtractGLB": {
-        "enabled": True,
+        "enabled": False,
         "active": True,
         "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
     },

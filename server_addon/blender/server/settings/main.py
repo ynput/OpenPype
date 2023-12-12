@@ -57,7 +57,7 @@ DEFAULT_VALUES = {
     "unit_scale_settings": {
         "enabled": True,
         "apply_on_opening": False,
-        "base_file_unit_scale": 0.01
+        "base_file_unit_scale": 1.00
     },
     "set_frames_startup": True,
     "set_resolution_startup": True,
