@@ -1,4 +1,3 @@
-from pprint import pformat
 import pyblish.api
 
 from openpype.pipeline import (
