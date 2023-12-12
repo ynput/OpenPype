@@ -52,7 +52,6 @@ class ValidateColorspace(pyblish.api.InstancePlugin,
                 f"Validating representation '{repre['name']}' "
                 f"colorspace '{colorspace}'"
             )
-            self.log.debug(pformat(config_colorspaces[config_path]))
             if colorspace not in config_colorspaces[config_path]:
                 message = (
                     f"Representation '{repre['name']}' colorspace "
