@@ -80,6 +80,18 @@
                                     "farm_rendering": "Farm rendering"
                                 }
                             ]
+                        },
+                        {
+                            "key": "image_format",
+                            "label": "Output Image Format",
+                            "type": "enum",
+                            "multiselect": false,
+                            "enum_items": [
+                                {"exr": "exr"},
+                                {"tga": "tga"},
+                                {"png": "png"},
+                                {"jpg": "jpg"}
+                            ]
                         }
                     ]
                 }
