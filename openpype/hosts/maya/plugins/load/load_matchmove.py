@@ -34,7 +34,7 @@ class MatchmoveLoader(Loader):
         path = self.filepath_from_context(context)
         custom_group_name, custom_namespace, options = \
             self.get_custom_namespace_and_group(
-                context, options,"matchmove_loader")
+                context, options, "matchmove_loader")
 
         namespace = lib.get_custom_namespace(custom_namespace)
 

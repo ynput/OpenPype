@@ -1,5 +1,4 @@
 from pathlib import Path
-from unittest.mock import patch
 
 import pyblish.api
 import tde4  # noqa: F401

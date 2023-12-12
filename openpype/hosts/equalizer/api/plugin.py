@@ -13,7 +13,6 @@ from openpype.pipeline import (
     CreatedInstance,
     Creator,
     OptionalPyblishPluginMixin,
-    publish,
 )
 
 

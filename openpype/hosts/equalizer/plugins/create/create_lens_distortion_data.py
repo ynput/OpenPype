@@ -1,7 +1,4 @@
-import tde4
-
 from openpype.hosts.equalizer.api import EqualizerCreator
-from openpype.lib import EnumDef
 
 
 class CreateLensDistortionData(EqualizerCreator):
