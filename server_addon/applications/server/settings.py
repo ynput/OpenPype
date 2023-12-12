@@ -164,10 +164,14 @@ class ApplicationsSettings(BaseSettingsModel):
         default_factory=AppGroupWithPython, title="Adobe After Effects")
     celaction: AppGroup = Field(
         default_factory=AppGroupWithPython, title="Celaction 2D")
+    substancepainter: AppGroup = Field(
+        default_factory=AppGroupWithPython, title="Substance Painter")
     unreal: AppGroup = Field(
         default_factory=AppGroupWithPython, title="Unreal Editor")
     equalizer: AppGroup = Field(
         default_factory=AppGroupWithPython, title="3DEqualizer")
+    wrap: AppGroup = Field(
+        default_factory=AppGroupWithPython, title="Wrap")
     additional_apps: list[AdditionalAppGroup] = Field(
         default_factory=list, title="Additional Applications")
 
@@ -197,5 +201,5 @@ class ApplicationsAddonSettings(BaseSettingsModel):
 
 
 DEFAULT_VALUES = {
-    "only_available": False
+    "only_available": True
 }

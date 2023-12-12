@@ -19,7 +19,10 @@ class ExtractABC(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.abc"
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        instance_name = f"{asset_name}_{subset}"
+        filename = f"{instance_name}.abc"
         filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction

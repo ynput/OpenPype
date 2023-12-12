@@ -68,12 +68,6 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 ]
 
     def process(self, instance):
-        # editorial would fail since they might not be in database yet
-        is_editorial = instance.data.get("isEditorial")
-        if is_editorial:
-            self.log.debug("Instance is Editorial. Skipping.")
-            return
-
         anatomy = instance.context.data["anatomy"]
 
         template_data = copy.deepcopy(instance.data["anatomyData"])
@@ -85,11 +79,18 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
             "representation": "TEMP"
         })
 
-        # For the first time publish
-        if instance.data.get("hierarchy"):
-            template_data.update({
-                "hierarchy": instance.data["hierarchy"]
-            })
+        # Add fill keys for editorial publishing creating new entity
+        # TODO handle in editorial plugin
+        if instance.data.get("newAssetPublishing"):
+            if "hierarchy" not in instance.data:
+                template_data["hierarchy"] = instance.data["hierarchy"]
+
+            if "asset" not in template_data:
+                asset_name = instance.data["asset"].split("/")[-1]
+                template_data["asset"] = asset_name
+                template_data["folder"] = {
+                    "name": asset_name
+                }
 
         publish_templates = anatomy.templates_obj["publish"]
         if "folder" in publish_templates:
