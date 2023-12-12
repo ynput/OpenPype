@@ -204,7 +204,8 @@ class ExtractHierarchyToAYON(pyblish.api.ContextPlugin):
 
         project_item = None
         project_children_context = None
-        for key, value in context.data["hierarchyContext"].items():
+        hierarchy_context = copy.deepcopy(context.data["hierarchyContext"])
+        for key, value in hierarchy_context.items():
             project_item = copy.deepcopy(value)
             project_children_context = project_item.pop("childs", None)
             project_item["name"] = key
