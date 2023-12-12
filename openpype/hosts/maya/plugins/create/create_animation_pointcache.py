@@ -44,20 +44,20 @@ def _get_alembic_boolean_arguments(cls):
     """
 
     # The Arguments that can be modified by the Publisher
-    abc_args_overrides = getattr(cls, "abc_args_overrides", [])
+    abc_args_overrides = set(getattr(cls, "abc_args_overrides", []))
 
     # What we have set in the Settings as defaults.
-    abc_settings_boolean_args = getattr(cls, "abc_boolean_args", [])
+    abc_settings_boolean_args = set(getattr(cls, "abc_boolean_args", []))
 
-    abc_defaults = [
+    abc_defaults = {
         arg
         for arg in abc_settings_boolean_args
         if arg not in abc_args_overrides
-    ]
+    }
 
-    abc_overrideable = [
+    abc_overrideable = {
         arg for arg in abc_settings_boolean_args if arg in abc_args_overrides
-    ]
+    }
 
     return abc_defaults, abc_overrideable
 
@@ -96,7 +96,6 @@ def _get_animation_abc_attr_defs(cls):
         abc_boolean_overrides,
     ) = _get_alembic_boolean_arguments(cls)
 
-    # We display them to the user, but disable it
     abc_defs.append(
         EnumDef(
             "abcDefaultExportBooleanArguments",
@@ -105,6 +104,7 @@ def _get_animation_abc_attr_defs(cls):
             multiselection=True,
             label="Settings Defined Arguments",
             disabled=True,
+            hidden=True
         )
     )
 
@@ -201,9 +201,10 @@ def _ensure_defaults(cls, instance_data):
 
     creator_attr["abcDefaultExportBooleanArguments"] = abc_boolean_defaults
 
-    for idx, arg in enumerate(creator_attr["abcExportBooleanArguments"]):
-        if arg not in abc_boolean_overrides:
-            del creator_attr["abcExportBooleanArguments"][idx]
+    creator_attr["abcExportBooleanArguments"] = [
+        arg for arg in creator_attr["abcExportBooleanArguments"]
+        if arg not in abc_boolean_overrides
+    ]
 
     return instance_data
 
@@ -284,6 +285,3 @@ class CreatePointCache(plugin.MayaCreator):
         # For Arnold standin proxy
         proxy_set = cmds.sets(name=instance_node + "_proxy_SET", empty=True)
         cmds.sets(proxy_set, forceElement=instance_node)
-
-    def apply_settings(self, project_settings):
-        super(CreatePointCache, self).apply_settings(project_settings)
