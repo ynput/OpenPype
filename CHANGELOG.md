@@ -1,6 +1,27 @@
 # Changelog
 
 
+## [3.18.0](https://github.com/ynput/OpenPype/tree/3.18.0)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/...3.18.0)
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Chore: Fix subst paths handling <a href="https://github.com/ynput/OpenPype/pull/5702">#5702</a></summary>
+
+Make sure that source disk ends with `\` instead of destination disk.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.17.7](https://github.com/ynput/OpenPype/tree/3.17.7)
 
 
