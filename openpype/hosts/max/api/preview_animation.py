@@ -198,8 +198,8 @@ def _render_preview_animation_max_pre_2024(
             res_width, res_height, filename=filepath
         )
         dib = rt.gw.getViewportDib()
-        dib_width = rt.renderWidth
-        dib_height = rt.renderHeight
+        dib_width = float(dib.width)
+        dib_height = float(dib.height)
         # aspect ratio
         viewportRatio = dib_width / dib_height
         renderRatio = float(res_width / res_height)
