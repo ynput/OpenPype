@@ -583,18 +583,9 @@ def prompt_new_file_with_mesh(mesh_filepath):
         file_dialog.setDirectory(os.path.dirname(mesh_filepath))
         url = QtCore.QUrl.fromLocalFile(os.path.basename(mesh_filepath))
         file_dialog.selectUrl(url)
-
-        # Give the explorer window time to refresh to the folder and select
-        # the file
-        while not file_dialog.selectedFiles():
-            app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents, 1000)
-        print(f"Selected: {file_dialog.selectedFiles()}")
-
-        # Set it again now we know the path is refreshed - without this
-        # accepting the dialog will often not trigger the correct filepath
-        file_dialog.setDirectory(os.path.dirname(mesh_filepath))
-        url = QtCore.QUrl.fromLocalFile(os.path.basename(mesh_filepath))
-        file_dialog.selectUrl(url)
+        # TODO: find a way to improve the process event to
+        # load more complicated mesh
+        app.processEvents(QtCore.QEventLoop.ExcludeUserInputEvents, 3000)
 
         file_dialog.done(file_dialog.Accepted)
         app.processEvents(QtCore.QEventLoop.AllEvents)
@@ -628,7 +619,12 @@ def prompt_new_file_with_mesh(mesh_filepath):
         mesh_filename_label = mesh_filename.findChild(QtWidgets.QLabel)
         if not mesh_filename_label.text():
             dialog.close()
-            raise RuntimeError(f"Failed to set mesh path: {mesh_filepath}")
+            substance_painter.logging.warning(
+                "Failed to set mesh path with the prompt dialog:"
+                f"{mesh_filepath}\n\n"
+                "Creating new project directly with the mesh path instead.")
+        else:
+            dialog.done(dialog.Accepted)
 
     new_action = _get_new_project_action()
     if not new_action:
