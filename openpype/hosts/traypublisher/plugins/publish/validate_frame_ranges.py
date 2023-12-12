@@ -31,9 +31,9 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
             return
 
         # editorial would fail since they might not be in database yet
-        is_editorial = instance.data.get("isEditorial")
-        if is_editorial:
-            self.log.debug("Instance is Editorial. Skipping.")
+        new_asset_publishing = instance.data.get("newAssetPublishing")
+        if new_asset_publishing:
+            self.log.debug("Instance is creating new asset. Skipping.")
             return
 
         if (self.skip_timelines_check and
@@ -41,6 +41,7 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
                 for pattern in self.skip_timelines_check)):
             self.log.info("Skipping for {} task".format(instance.data["task"]))
 
+        asset_doc = instance.data["assetEntity"]
         asset_data = asset_doc["data"]
         frame_start = asset_data["frameStart"]
         frame_end = asset_data["frameEnd"]

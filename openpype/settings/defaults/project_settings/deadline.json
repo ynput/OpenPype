@@ -107,7 +107,16 @@
             "use_published": true,
             "priority": 50,
             "chunk_size": 10,
-            "group": "none"
+            "group": "none",
+            "job_delay": "00:00:00:00"
+        },
+        "ProcessSubmittedCacheJobOnFarm": {
+            "enabled": true,
+            "deadline_department": "",
+            "deadline_pool": "",
+            "deadline_group": "",
+            "deadline_chunk_size": 1,
+            "deadline_priority": 50
         },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,

@@ -5,6 +5,8 @@ import json
 
 import pyblish.api
 
+from openpype.client import get_asset_name_identifier
+
 
 class CollectFrameTagInstances(pyblish.api.ContextPlugin):
     """Collect frames from tags.
@@ -99,6 +101,9 @@ class CollectFrameTagInstances(pyblish.api.ContextPlugin):
 
         # first collect all available subset tag frames
         subset_data = {}
+        context_asset_doc = context.data["assetEntity"]
+        context_asset_name = get_asset_name_identifier(context_asset_doc)
+
         for tag_data in sequence_tags:
             frame = int(tag_data["start"])
 
@@ -115,7 +120,7 @@ class CollectFrameTagInstances(pyblish.api.ContextPlugin):
                 subset_data[subset] = {
                     "frames": [frame],
                     "format": tag_data["format"],
-                    "asset": context.data["assetEntity"]["name"]
+                    "asset": context_asset_name
                 }
         return subset_data
 

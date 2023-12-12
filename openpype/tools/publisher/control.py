@@ -12,10 +12,12 @@ from abc import ABCMeta, abstractmethod
 import six
 import pyblish.api
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.client import (
     get_assets,
     get_asset_by_id,
     get_subsets,
+    get_asset_name_identifier,
 )
 from openpype.lib.events import EventSystem
 from openpype.lib.attribute_definitions import (
@@ -73,6 +75,8 @@ class AssetDocsCache:
         "data.visualParent": True,
         "data.tasks": True
     }
+    if AYON_SERVER_ENABLED:
+        projection["data.parents"] = True
 
     def __init__(self, controller):
         self._controller = controller
@@ -105,7 +109,7 @@ class AssetDocsCache:
             elif "tasks" not in asset_doc["data"]:
                 asset_doc["data"]["tasks"] = {}
 
-            asset_name = asset_doc["name"]
+            asset_name = get_asset_name_identifier(asset_doc)
             asset_tasks = asset_doc["data"]["tasks"]
             task_names_by_asset_name[asset_name] = list(asset_tasks.keys())
             asset_docs_by_name[asset_name] = asset_doc
@@ -2513,7 +2517,7 @@ class PublisherController(BasePublisherController):
                 else:
                     msg = (
                         "Something went wrong. Send report"
-                        " to your supervisor or OpenPype."
+                        " to your supervisor or Ynput team."
                     )
                 self.publish_error_msg = msg
                 self.publish_has_crashed = True

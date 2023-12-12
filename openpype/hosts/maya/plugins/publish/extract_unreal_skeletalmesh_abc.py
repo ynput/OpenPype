@@ -13,16 +13,6 @@ from openpype.hosts.maya.api.lib import (
 )
 
 
-@contextmanager
-def renamed(original_name, renamed_name):
-    # type: (str, str) -> None
-    try:
-        cmds.rename(original_name, renamed_name)
-        yield
-    finally:
-        cmds.rename(renamed_name, original_name)
-
-
 class ExtractUnrealSkeletalMeshAbc(publish.Extractor):
     """Extract Unreal Skeletal Mesh as FBX from Maya. """
 

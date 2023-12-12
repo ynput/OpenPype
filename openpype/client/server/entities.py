@@ -80,8 +80,8 @@ def _get_subsets(
 
     for subset in con.get_products(
         project_name,
-        subset_ids,
-        subset_names,
+        product_ids=subset_ids,
+        product_names=subset_names,
         folder_ids=folder_ids,
         names_by_folder_ids=names_by_folder_ids,
         active=active,
@@ -113,23 +113,23 @@ def _get_versions(
 
     queried_versions = con.get_versions(
         project_name,
-        version_ids,
-        subset_ids,
-        versions,
-        hero,
-        standard,
-        latest,
+        version_ids=version_ids,
+        product_ids=subset_ids,
+        versions=versions,
+        hero=hero,
+        standard=standard,
+        latest=latest,
         active=active,
         fields=fields
     )
 
-    versions = []
+    version_entities = []
     hero_versions = []
     for version in queried_versions:
         if version["version"] < 0:
             hero_versions.append(version)
         else:
-            versions.append(convert_v4_version_to_v3(version))
+            version_entities.append(convert_v4_version_to_v3(version))
 
     if hero_versions:
         subset_ids = set()
@@ -159,9 +159,9 @@ def _get_versions(
                     break
             conv_hero = convert_v4_version_to_v3(hero_version)
             conv_hero["version_id"] = version_id
-            versions.append(conv_hero)
+            version_entities.append(conv_hero)
 
-    return versions
+    return version_entities
 
 
 def get_asset_by_id(project_name, asset_id, fields=None):
@@ -180,6 +180,19 @@ def get_asset_by_name(project_name, asset_name, fields=None):
     for asset in assets:
         return asset
     return None
+
+
+def _folders_query(project_name, con, fields, **kwargs):
+    if fields is None or "tasks" in fields:
+        folders = get_folders_with_tasks(
+            con, project_name, fields=fields, **kwargs
+        )
+
+    else:
+        folders = con.get_folders(project_name, fields=fields, **kwargs)
+
+    for folder in folders:
+        yield folder
 
 
 def get_assets(
@@ -201,20 +214,39 @@ def get_assets(
     fields = folder_fields_v3_to_v4(fields, con)
     kwargs = dict(
         folder_ids=asset_ids,
-        folder_names=asset_names,
         parent_ids=parent_ids,
         active=active,
-        fields=fields
     )
+    if not asset_names:
+        for folder in _folders_query(project_name, con, fields, **kwargs):
+            yield convert_v4_folder_to_v3(folder, project_name)
+        return
 
-    if fields is None or "tasks" in fields:
-        folders = get_folders_with_tasks(con, project_name, **kwargs)
+    new_asset_names = set()
+    folder_paths = set()
+    for name in asset_names:
+        if "/" in name:
+            folder_paths.add(name)
+        else:
+            new_asset_names.add(name)
 
-    else:
-        folders = con.get_folders(project_name, **kwargs)
+    yielded_ids = set()
+    if folder_paths:
+        for folder in _folders_query(
+            project_name, con, fields, folder_paths=folder_paths, **kwargs
+        ):
+            yielded_ids.add(folder["id"])
+            yield convert_v4_folder_to_v3(folder, project_name)
 
-    for folder in folders:
-        yield convert_v4_folder_to_v3(folder, project_name)
+    if not new_asset_names:
+        return
+
+    for folder in _folders_query(
+        project_name, con, fields, folder_names=new_asset_names, **kwargs
+    ):
+        if folder["id"] not in yielded_ids:
+            yielded_ids.add(folder["id"])
+            yield convert_v4_folder_to_v3(folder, project_name)
 
 
 def get_archived_assets(
@@ -507,11 +539,11 @@ def get_representations(
 
     representations = con.get_representations(
         project_name,
-        representation_ids,
-        representation_names,
-        version_ids,
-        names_by_version_ids,
-        active,
+        representation_ids=representation_ids,
+        representation_names=representation_names,
+        version_ids=version_ids,
+        names_by_version_ids=names_by_version_ids,
+        active=active,
         fields=fields
     )
     for representation in representations:
