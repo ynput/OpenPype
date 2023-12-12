@@ -9,7 +9,7 @@ The Photoshop integration requires two components to work; `extension` and `serv
 To install the extension download [Extension Manager Command Line tool (ExManCmd)](https://github.com/Adobe-CEP/Getting-Started-guides/tree/master/Package%20Distribute%20Install#option-2---exmancmd).
 
 ```
-ExManCmd /install {path to avalon-core}\avalon\photoshop\extension.zxp
+ExManCmd /install {path to addon}/api/extension.zxp
 ```
 
 ### Server
@@ -17,16 +17,16 @@ ExManCmd /install {path to avalon-core}\avalon\photoshop\extension.zxp
 The easiest way to get the server and Photoshop launch is with:
 
 ```
-python -c ^"import avalon.photoshop;avalon.photoshop.launch(""C:\Program Files\Adobe\Adobe Photoshop 2020\Photoshop.exe"")^"
+python -c ^"import openpype.hosts.photoshop;openpype.hosts.photoshop.launch(""C:\Program Files\Adobe\Adobe Photoshop 2020\Photoshop.exe"")^"
 ```
 
 `avalon.photoshop.launch` launches the application and server, and also closes the server when Photoshop exists.
 
 ## Usage
 
-The Photoshop extension can be found under `Window > Extensions > Avalon`. Once launched you should be presented with a panel like this:
+The Photoshop extension can be found under `Window > Extensions > Ayon`. Once launched you should be presented with a panel like this:
 
-![Avalon Panel](panel.PNG "Avalon Panel")
+![Ayon Panel](panel.png "AYON Panel")
 
 
 ## Developing
@@ -37,7 +37,7 @@ When developing the extension you can load it [unsigned](https://github.com/Adob
 When signing the extension you can use this [guide](https://github.com/Adobe-CEP/Getting-Started-guides/tree/master/Package%20Distribute%20Install#package-distribute-install-guide).
 
 ```
-ZXPSignCmd -selfSignedCert NA NA Avalon Avalon-Photoshop avalon extension.p12
+ZXPSignCmd -selfSignedCert NA NA Ayon Ayon-Photoshop Ayon extension.p12
 ZXPSignCmd -sign {path to avalon-core}\avalon\photoshop\extension {path to avalon-core}\avalon\photoshop\extension.zxp extension.p12 avalon
 ```
 
