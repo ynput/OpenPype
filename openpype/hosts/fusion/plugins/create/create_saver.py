@@ -230,7 +230,7 @@ class CreateSaver(NewCreator):
         )
 
     def _get_image_format_enum(self):
-        image_format_options = ["exr", "tga", "png", "jpg"]
+        image_format_options = ["exr", "tga", "tif", "png", "jpg"]
         return EnumDef(
             "image_format",
             items=image_format_options,

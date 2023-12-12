@@ -90,6 +90,7 @@
                                 {"exr": "exr"},
                                 {"tga": "tga"},
                                 {"png": "png"},
+                                {"tif": "tif"},
                                 {"jpg": "jpg"}
                             ]
                         }
