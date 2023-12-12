@@ -5,6 +5,7 @@ from openpype.pipeline import (
 )
 from openpype.lib import EnumDef
 from openpype.pipeline import colorspace
+from openpype.pipeline.publish import KnownPublishError
 
 
 class CollectColorspace(pyblish.api.InstancePlugin,
@@ -37,7 +38,6 @@ class CollectColorspace(pyblish.api.InstancePlugin,
         self.log.debug("Explicit colorspace name: {}".format(colorspace_name))
 
         context = instance.context
-        context.data["colorspaceConfigItems"] = self.config_items
         for repre in instance.data.get("representations", {}):
             self.set_representation_colorspace(
                 representation=repre,
@@ -60,8 +60,11 @@ class CollectColorspace(pyblish.api.InstancePlugin,
         elif colorspace_data["type"] == "roles":
             return colorspace_data["colorspace"]
         else:
-            raise KeyError("Unknown colorspace type: {}".format(
-                colorspace_data["type"]))
+            raise KnownPublishError(
+                "Collecting of colorspace failed. used config is missing "
+                "colorspace type: '{}' .".format(colorspace_data["type"])
+                "Please contact your pipeline TD."
+            )
 
     @classmethod
     def apply_settings(cls, project_settings):
