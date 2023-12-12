@@ -9,7 +9,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.load.utils import get_representation_path_from_context
 from openpype.pipeline.colorspace import (
-    get_imageio_colorspace_from_filepath,
+    get_imageio_file_rules_colorspace_from_filepath,
     get_imageio_config,
     get_imageio_file_rules
 )
@@ -285,10 +285,10 @@ class FileNodeLoader(load.LoaderPlugin):
         )
 
         path = get_representation_path_from_context(context)
-        colorspace = get_imageio_colorspace_from_filepath(
-            path=path,
-            host_name=host_name,
-            project_name=project_name,
+        colorspace = get_imageio_file_rules_colorspace_from_filepath(
+            path,
+            host_name,
+            project_name,
             config_data=config_data,
             file_rules=file_rules,
             project_settings=project_settings

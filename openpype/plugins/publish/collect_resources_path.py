@@ -68,11 +68,6 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 ]
 
     def process(self, instance):
-        # editorial would fail since they might not be in database yet
-        is_editorial = instance.data.get("isEditorial")
-        if is_editorial:
-            self.log.debug("Instance is Editorial. Skipping.")
-            return
 
         anatomy = instance.context.data["anatomy"]
 

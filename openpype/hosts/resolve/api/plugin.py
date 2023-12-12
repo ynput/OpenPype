@@ -1,10 +1,11 @@
 import re
 import uuid
+import copy
+
 import qargparse
 from qtpy import QtWidgets, QtCore
 
 from openpype.settings import get_current_project_settings
-from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.pipeline import (
     LegacyCreator,
     LoaderPlugin,
@@ -18,7 +19,7 @@ from .menu import load_stylesheet
 class CreatorWidget(QtWidgets.QDialog):
 
     # output items
-    items = dict()
+    items = {}
 
     def __init__(self, name, info, ui_inputs, parent=None):
         super(CreatorWidget, self).__init__(parent)
@@ -100,7 +101,7 @@ class CreatorWidget(QtWidgets.QDialog):
         self.close()
 
     def value(self, data, new_data=None):
-        new_data = new_data or dict()
+        new_data = new_data or {}
         for k, v in data.items():
             new_data[k] = {
                 "target": None,
@@ -289,7 +290,7 @@ class Spacer(QtWidgets.QWidget):
 class ClipLoader:
 
     active_bin = None
-    data = dict()
+    data = {}
 
     def __init__(self, loader_obj, context, **options):
         """ Initialize object
@@ -386,8 +387,8 @@ class ClipLoader:
         joint `data` key with asset.data dict into the representation
 
         """
-        asset_name = self.context["representation"]["context"]["asset"]
-        self.data["assetData"] = get_current_project_asset(asset_name)["data"]
+
+        self.data["assetData"] = copy.deepcopy(self.context["asset"]["data"])
 
     def load(self, files):
         """Load clip into timeline
@@ -405,26 +406,42 @@ class ClipLoader:
             self.active_bin
         )
         _clip_property = media_pool_item.GetClipProperty
+        source_in = int(_clip_property("Start"))
+        source_out = int(_clip_property("End"))
+        source_duration = int(_clip_property("Frames"))
 
-        # get handles
-        handle_start = self.data["versionData"].get("handleStart")
-        handle_end = self.data["versionData"].get("handleEnd")
-        if handle_start is None:
-            handle_start = int(self.data["assetData"]["handleStart"])
-        if handle_end is None:
-            handle_end = int(self.data["assetData"]["handleEnd"])
+        if not self.with_handles:
+            # Load file without the handles of the source media
+            # We remove the handles from the source in and source out
+            # so that the handles are excluded in the timeline
+            handle_start = 0
+            handle_end = 0
 
-        # check frame duration from versionData or assetData
-        frame_start = self.data["versionData"].get("frameStart")
-        if frame_start is None:
-            frame_start = self.data["assetData"]["frameStart"]
+            # get version data frame data from db
+            version_data = self.data["versionData"]
+            frame_start = version_data.get("frameStart")
+            frame_end = version_data.get("frameEnd")
 
-        # check frame duration from versionData or assetData
-        frame_end = self.data["versionData"].get("frameEnd")
-        if frame_end is None:
-            frame_end = self.data["assetData"]["frameEnd"]
-
-        db_frame_duration = int(frame_end) - int(frame_start) + 1
+            # The version data usually stored the frame range + handles of the
+            # media however certain representations may be shorter because they
+            # exclude those handles intentionally. Unfortunately the
+            # representation does not store that in the database currently;
+            # so we should compensate for those cases. If the media is shorter
+            # than the frame range specified in the database we assume it is
+            # without handles and thus we do not need to remove the handles
+            # from source and out
+            if frame_start is not None and frame_end is not None:
+                # Version has frame range data, so we can compare media length
+                handle_start = version_data.get("handleStart", 0)
+                handle_end = version_data.get("handleEnd", 0)
+                frame_start_handle = frame_start - handle_start
+                frame_end_handle = frame_start + handle_end
+                database_frame_duration = int(
+                    frame_end_handle - frame_start_handle + 1
+                )
+                if source_duration >= database_frame_duration:
+                    source_in += handle_start
+                    source_out -= handle_end
 
         # get timeline in
         timeline_start = self.active_timeline.GetStartFrame()
@@ -435,24 +452,6 @@ class ClipLoader:
             # set timeline start frame + original clip in frame
             timeline_in = int(
                 timeline_start + self.data["assetData"]["clipIn"])
-
-        source_in = int(_clip_property("Start"))
-        source_out = int(_clip_property("End"))
-        source_duration = int(_clip_property("Frames"))
-
-        # check if source duration is shorter than db frame duration
-        source_with_handles = True
-        if source_duration < db_frame_duration:
-            source_with_handles = False
-
-        # only exclude handles if source has no handles or
-        # if user wants to load without handles
-        if (
-            not self.with_handles
-            or not source_with_handles
-        ):
-            source_in += handle_start
-            source_out -= handle_end
 
         # make track item from source in bin as item
         timeline_item = lib.create_timeline_item(
@@ -587,8 +586,8 @@ class PublishClip:
     Returns:
         hiero.core.TrackItem: hiero track item object with openpype tag
     """
-    vertical_clip_match = dict()
-    tag_data = dict()
+    vertical_clip_match = {}
+    tag_data = {}
     types = {
         "shot": "shot",
         "folder": "folder",
@@ -664,15 +663,23 @@ class PublishClip:
         new_name = self.tag_data.pop("newClipName")
 
         if self.rename:
-            self.tag_data["asset"] = new_name
+            self.tag_data["asset_name"] = new_name
         else:
-            self.tag_data["asset"] = self.ti_name
+            self.tag_data["asset_name"] = self.ti_name
 
+        # AYON unique identifier
+        folder_path = "/{}/{}".format(
+            self.tag_data["hierarchy"],
+            self.tag_data["asset_name"]
+        )
+        self.tag_data["folder_path"] = folder_path
+
+        # create new name for track item
         if not lib.pype_marker_workflow:
             # create compound clip workflow
             lib.create_compound_clip(
                 self.timeline_item_data,
-                self.tag_data["asset"],
+                self.tag_data["asset_name"],
                 self.mp_folder
             )
 
@@ -764,7 +771,7 @@ class PublishClip:
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
 
-        hierarchy_formatting_data = dict()
+        hierarchy_formatting_data = {}
         _data = self.timeline_item_default_data.copy()
         if self.ui_inputs:
             # adding tag metadata from ui
@@ -853,14 +860,13 @@ class PublishClip:
             "parents": self.parents,
             "hierarchyData": hierarchy_formatting_data,
             "subset": self.subset,
-            "family": self.subset_family,
-            "families": ["clip"]
+            "family": self.subset_family
         }
 
     def _convert_to_entity(self, key):
         """ Converting input key to key with type. """
         # convert to entity type
-        entity_type = self.types.get(key, None)
+        entity_type = self.types.get(key)
 
         assert entity_type, "Missing entity type for `{}`".format(
             key

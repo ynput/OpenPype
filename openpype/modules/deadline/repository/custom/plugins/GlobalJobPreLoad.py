@@ -429,7 +429,7 @@ def inject_ayon_environment(deadlinePlugin):
                "separated list \"{}\"."
                "The path to the render executable can be configured"
                " from the Plugin Configuration in the Deadline Monitor."
-            ).format(";".join(exe_list)))
+            ).format(exe_list))
 
         print("--- Ayon executable: {}".format(exe))
 

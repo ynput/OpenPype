@@ -137,7 +137,7 @@ class VersionItem:
         handles,
         step,
         comment,
-        source
+        source,
     ):
         self.version_id = version_id
         self.product_id = product_id
@@ -215,7 +215,7 @@ class RepreItem:
         representation_name,
         representation_icon,
         product_name,
-        folder_label,
+        folder_label
     ):
         self.representation_id = representation_id
         self.representation_name = representation_name
@@ -591,6 +591,22 @@ class FrontendLoaderController(_BaseLoaderController):
         pass
 
     @abstractmethod
+    def get_versions_representation_count(
+        self, project_name, version_ids, sender=None
+    ):
+        """
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+            sender (Optional[str]): Sender who requested the items.
+
+        Returns:
+            dict[str, int]: Representation count by version id.
+        """
+
+        pass
+
+    @abstractmethod
     def get_thumbnail_path(self, project_name, thumbnail_id):
         """Get thumbnail path for thumbnail id.
 
@@ -846,6 +862,83 @@ class FrontendLoaderController(_BaseLoaderController):
         Returns:
             bool: Frontend should filter out non-library projects, except
                 current context project.
+        """
+
+        pass
+
+    # Site sync functions
+    @abstractmethod
+    def is_site_sync_enabled(self, project_name=None):
+        """Is site sync enabled.
+
+        Site sync addon can be enabled but can be disabled per project.
+
+        When asked for enabled state without project name, it should return
+            True if site sync addon is available and enabled.
+
+        Args:
+            project_name (Optional[str]): Project name.
+
+        Returns:
+            bool: True if site sync is enabled.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_active_site_icon_def(self, project_name):
+        """Active site icon definition.
+
+        Args:
+            project_name (Union[str, None]): Project name.
+
+        Returns:
+            Union[dict[str, Any], None]: Icon definition or None if site sync
+                is not enabled for the project.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_remote_site_icon_def(self, project_name):
+        """Remote site icon definition.
+
+        Args:
+            project_name (Union[str, None]): Project name.
+
+        Returns:
+            Union[dict[str, Any], None]: Icon definition or None if site sync
+                is not enabled for the project.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_version_sync_availability(self, project_name, version_ids):
+        """Version sync availability.
+
+        Args:
+            project_name (str): Project name.
+            version_ids (Iterable[str]): Version ids.
+
+        Returns:
+            dict[str, tuple[int, int]]: Sync availability by version id.
+        """
+
+        pass
+
+    @abstractmethod
+    def get_representations_sync_status(
+        self, project_name, representation_ids
+    ):
+        """Representations sync status.
+
+        Args:
+            project_name (str): Project name.
+            representation_ids (Iterable[str]): Representation ids.
+
+        Returns:
+            dict[str, tuple[int, int]]: Sync status by representation id.
         """
 
         pass

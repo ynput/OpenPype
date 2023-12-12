@@ -14,7 +14,7 @@ from openpype.hosts.blender.api.pipeline import AVALON_PROPERTY
 class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """Extract a layout."""
 
-    label = "Extract Layout"
+    label = "Extract Layout (JSON)"
     hosts = ["blender"]
     families = ["layout"]
     optional = True
@@ -224,7 +224,11 @@ class ExtractLayout(publish.Extractor, publish.OptionalPyblishPluginMixin):
 
             json_data.append(json_element)
 
-        json_filename = "{}.json".format(instance.name)
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        instance_name = f"{asset_name}_{subset}"
+        json_filename = f"{instance_name}.json"
+
         json_path = os.path.join(stagingdir, json_filename)
 
         with open(json_path, "w+") as file:

@@ -265,6 +265,7 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
 class MayaUSDReferenceLoader(ReferenceLoader):
     """Reference USD file to native Maya nodes using MayaUSDImport reference"""
 
+    label = "Reference Maya USD"
     families = ["usd"]
     representations = ["usd"]
     extensions = {"usd", "usda", "usdc"}

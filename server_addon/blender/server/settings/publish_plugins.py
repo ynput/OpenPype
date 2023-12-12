@@ -128,7 +128,7 @@ class PublishPuginsModel(BaseSettingsModel):
     )
     ExtractLayout: ValidatePluginModel = Field(
         default_factory=ValidatePluginModel,
-        title="Extract Layout"
+        title="Extract Layout (JSON)"
     )
     ExtractThumbnail: ExtractPlayblastModel = Field(
         default_factory=ExtractPlayblastModel,
@@ -142,7 +142,7 @@ class PublishPuginsModel(BaseSettingsModel):
 
 DEFAULT_BLENDER_PUBLISH_SETTINGS = {
     "ValidateCameraZeroKeyframe": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
         "active": True
     },
@@ -173,13 +173,13 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "active": True
     },
     "ValidateTransformZero": {
-        "enabled": True,
-        "optional": False,
+        "enabled": False,
+        "optional": True,
         "active": True
     },
     "ValidateNoColonsInName": {
-        "enabled": True,
-        "optional": False,
+        "enabled": False,
+        "optional": True,
         "active": True
     },
     "ValidateInstanceEmpty": {
@@ -201,9 +201,9 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         ]
     },
     "ExtractFBX": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
-        "active": False
+        "active": True
     },
     "ExtractModelABC": {
         "enabled": True,
@@ -216,9 +216,9 @@ DEFAULT_BLENDER_PUBLISH_SETTINGS = {
         "active": True
     },
     "ExtractAnimationFBX": {
-        "enabled": True,
+        "enabled": False,
         "optional": True,
-        "active": False
+        "active": True
     },
     "ExtractCamera": {
         "enabled": True,
