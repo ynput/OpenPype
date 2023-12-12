@@ -68,7 +68,6 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
                 ]
 
     def process(self, instance):
-
         anatomy = instance.context.data["anatomy"]
 
         template_data = copy.deepcopy(instance.data["anatomyData"])
@@ -85,6 +84,18 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
             template_data.update({
                 "hierarchy": instance.data["hierarchy"]
             })
+
+        # Add fill keys for editorial publishing creating new entity
+        # TODO handle in editorial plugin
+        if (
+            instance.data.get("newAssetPublishing")
+            and "asset" not in template_data
+        ):
+            asset_name = instance.data["asset"].split("/")[-1]
+            template_data["asset"] = asset_name
+            template_data["folder"] = {
+                "name": asset_name
+            }
 
         publish_templates = anatomy.templates_obj["publish"]
         if "folder" in publish_templates:
