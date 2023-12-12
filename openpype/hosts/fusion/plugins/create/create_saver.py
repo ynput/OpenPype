@@ -132,7 +132,7 @@ class CreateSaver(NewCreator):
         frame_padding = anatomy.templates["frame_padding"]
 
         # get output format
-        ext = data["creator_attribute"]["image_format"]
+        ext = data["creator_attributes"]["image_format"]
 
         # Subset change detected
         workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
