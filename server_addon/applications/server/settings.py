@@ -168,6 +168,8 @@ class ApplicationsSettings(BaseSettingsModel):
         default_factory=AppGroupWithPython, title="Substance Painter")
     unreal: AppGroup = Field(
         default_factory=AppGroupWithPython, title="Unreal Editor")
+    equalizer: AppGroup = Field(
+        default_factory=AppGroupWithPython, title="3DEqualizer")
     wrap: AppGroup = Field(
         default_factory=AppGroupWithPython, title="Wrap")
     additional_apps: list[AdditionalAppGroup] = Field(

@@ -1,0 +1,13 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "equalizer",
+    "label": "3DEqualizer",
+    "is_file": true,
+    "children": [
+        {
+            "type": "schema",
+            "name": "schema_equalizer_create"
+        }
+    ]
+}
