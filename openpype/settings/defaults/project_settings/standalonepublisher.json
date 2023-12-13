@@ -141,6 +141,16 @@
             "defaults": [],
             "help": "Hierarchical data structure for the efficient storage and manipulation of sparse volumetric data discretized on three-dimensional grids"
         },
+        "editorial_csv": {
+            "name": "editorial_csv",
+            "label": "Editorial CSV",
+            "family": "editorialcsv",
+            "icon": "image",
+            "defaults": [
+                "Main"
+            ],
+            "help": "Publishing complex editorial from CSV"
+        },
         "__dynamic_keys_labels__": {
             "create_workfile": "Workfile",
             "create_model": "Model",
@@ -212,6 +222,151 @@
             },
             "workfile_subset_template": "textures{Subset}Workfile",
             "texture_subset_template": "textures{Subset}_{Shader}_{Channel}"
+        },
+        "CollectEditorialCSV": {
+            "csv_delimiter": ",",
+            "tags_delimiter": ";",
+            "default_tags": [
+                "review"
+            ],
+            "columns_config": {
+                "Project": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Vendor": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Package": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Filename": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Context": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Task": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Version": {
+                    "type": "number",
+                    "default": 1,
+                    "required": true,
+                    "validate": "^(\\d{1,3})$"
+                },
+                "Color": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Notes": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Intent": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Output": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Family": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Slate": {
+                    "type": "bool",
+                    "default": true,
+                    "required": false,
+                    "validate": "([Tt]rue|[Ff]alse)"
+                },
+                "Tags": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Variant": {
+                    "type": "text",
+                    "default": "",
+                    "required": false,
+                    "validate": "^(.*)$"
+                },
+                "Start": {
+                    "type": "number",
+                    "default": 0,
+                    "required": false,
+                    "validate": "^(\\d{1,8})$|None"
+                },
+                "End": {
+                    "type": "number",
+                    "default": 0,
+                    "required": false,
+                    "validate": "^(\\d{1,8})$|None"
+                },
+                "Length": {
+                    "type": "number",
+                    "default": 0,
+                    "required": false,
+                    "validate": "^(\\d{1,8})$|None"
+                }
+            },
+            "representation_config": {
+                "preview": {
+                    "extensions": [
+                        ".mp4",
+                        ".mov"
+                    ]
+                },
+                "exr": {
+                    "extensions": [
+                        ".exr"
+                    ]
+                },
+                "edit": {
+                    "extensions": [
+                        ".mov"
+                    ]
+                },
+                "review": {
+                    "extensions": [
+                        ".mov"
+                    ]
+                },
+                "nuke": {
+                    "extensions": [
+                        ".nk"
+                    ]
+                }
+            }
         },
         "ValidateSceneSettings": {
             "enabled": true,

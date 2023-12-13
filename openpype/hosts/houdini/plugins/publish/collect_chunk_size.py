@@ -14,17 +14,12 @@ class CollectChunkSize(pyblish.api.InstancePlugin,
     hosts = ["houdini"]
     targets = ["local", "remote"]
     label = "Collect Chunk Size"
-    chunkSize = 999999
+    chunk_size = 999999
 
     def process(self, instance):
         # need to get the chunk size info from the setting
         attr_values = self.get_attr_values_from_data(instance.data)
         instance.data["chunkSize"] = attr_values.get("chunkSize")
-
-    @classmethod
-    def apply_settings(cls, project_settings):
-        project_setting = project_settings["houdini"]["publish"]["CollectChunkSize"]         # noqa
-        cls.chunkSize = project_setting["chunk_size"]
 
     @classmethod
     def get_attribute_defs(cls):
@@ -33,7 +28,6 @@ class CollectChunkSize(pyblish.api.InstancePlugin,
                       minimum=1,
                       maximum=999999,
                       decimals=0,
-                      default=cls.chunkSize,
+                      default=cls.chunk_size,
                       label="Frame Per Task")
-
         ]
