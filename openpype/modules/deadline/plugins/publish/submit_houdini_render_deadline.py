@@ -124,7 +124,7 @@ class HoudiniSubmitDeadline(
 
         # Whether Deadline render submission is being split in two
         # (extract + render)
-        split_render_job = instance.data.get("exportJob")
+        split_render_job = instance.data.get("split_render")
 
         # If there's some dependency job ids we can assume this is a render job
         # and not an export job

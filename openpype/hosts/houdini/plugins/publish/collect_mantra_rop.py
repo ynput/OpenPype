@@ -45,11 +45,11 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
             render_products = []
 
             # Store whether we are splitting the render job (export + render)
-            export_job = bool(rop.parm("soho_outputmode").eval())
-            instance.data["exportJob"] = export_job
+            split_render = bool(rop.parm("soho_outputmode").eval())
+            instance.data["split_render"] = split_render
             export_prefix = None
             export_products = []
-            if export_job:
+            if split_render:
                 export_prefix = evalParmNoFrame(
                     rop, "soho_diskfile", pad_character="0"
                 )
