@@ -1,0 +1,22 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "openrv",
+    "label": "OpenRV",
+    "is_file": true,
+    "children": [
+        {
+            "key": "imageio",
+            "type": "dict",
+            "label": "Color Management (OCIO managed)",
+            "collapsible": true,
+            "is_group": true,
+            "children": [
+                {
+                    "type": "template",
+                    "name": "template_host_color_management_ocio"
+                }
+            ]
+        }
+    ]
+}
