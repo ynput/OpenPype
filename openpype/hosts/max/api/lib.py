@@ -569,5 +569,9 @@ def reset_frame_range_tyFlow(members, frameStart, frameEnd):
             for node_name in node_names:
                 node_sub_anim = rt.GetSubAnim(sub_anim, node_name)
                 if rt.hasProperty(node_sub_anim, "exportMode"):
+                    if node_sub_anim.frameStart == frameStart and (
+                        node_sub_anim.frameEnd == frameEnd
+                    ):
+                        continue
                     node_sub_anim.frameStart = frameStart
                     node_sub_anim.frameEnd = frameEnd
