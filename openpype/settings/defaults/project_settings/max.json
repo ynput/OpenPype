@@ -48,6 +48,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateTyCacheFrameRange": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateAttributes": {
             "enabled": false,
             "attributes": {}

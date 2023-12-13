@@ -32,6 +32,31 @@
       {
         "type": "dict",
         "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ValidateTyCacheFrameRange",
+        "label": "Validate Frame Range (TyCache)",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
         "key": "ValidateAttributes",
         "label": "ValidateAttributes",
         "checkbox_key": "enabled",
