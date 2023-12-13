@@ -235,7 +235,7 @@ def convert_modifers_windows_path_to_linux():
 
             setattr(modifier, modifier_attribute, _replace_paths_part(path_to_replace))
             new_path = getattr(modifier, modifier_attribute, None)
-            log.info(f"Cache file path has updated from {path_to_replace} to {new_path}")
+            log.info(f"Cache file path has been updated from {path_to_replace} to {new_path}")
 
 
 def _get_all_modifiers():
@@ -247,6 +247,7 @@ def _get_all_modifiers():
 
 
 def _replace_paths_part(path):
+    print(bpy.path.abspath(path).replace('\\', '/'))
     return bpy.path.abspath(path).replace('\\', '/').replace(
         PathsParts.WINDOWS_L.value,
         PathsParts.LINUX.value
@@ -328,7 +329,7 @@ def register():
 
         ExecutionOrder.define("DEADLINE_OT_prepare_temporary_scene")
         ExecutionOrder.define("OPS_OT_submit_blender_to_deadline")
-        ExecutionOrder.define("DEADLINE_OT_load_previous_scene")
+        #ExecutionOrder.define("DEADLINE_OT_load_previous_scene")
 
         bpy.app.handlers.load_post.append(populate_render_properties)
 
