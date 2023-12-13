@@ -311,18 +311,18 @@ class PypeCommands:
         unpack_project(zip_filepath, new_root, database_only)
 
     @staticmethod
-    def ingest(directory, project, ftrack_user, ignore_validators):
+    def ingest(csv_filepath, project, username, ignore_validators):
         """Start headless publishing of CSV editorial.
 
         Args:
-            directory (str): Path to directory with CSV files.
+            csv_filepath (str): Path to CSV file.
             project (str): Project name.
             ftrack_user (str): Ftrack user name.
             ignore_validators (bool): Ignore validators.
         """
 
-        if not directory:
-            raise RuntimeError("No directory specified")
+        if not csv_filepath:
+            raise RuntimeError("No CSV file specified")
 
         if not project:
             raise RuntimeError("No project specified")

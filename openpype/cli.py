@@ -433,14 +433,45 @@ def version(build):
 
 
 @main.command()
-@click.option("--directory", help="Full path to package csv", default=None)
-@click.option("--project", help="Project name", default=None)
-@click.option("--ftrack-user",
-              help="User name in Ftrack that would publish the files",
-              default=None)
-@click.option("--ignore-validators", help="Option to ignore validators",
-              default=None, is_flag=True)
-def ingest(directory, project, ftrack_user, ignore_validators):
+@click.option(
+    "--csv-filepath",
+    help="Full path to CSV file with data",
+    type=click.Path(exists=True),
+    required=True
+)
+@click.option(
+    "--project",
+    help="Project name in which the context will be used",
+    type=str,
+    required=True
+)
+@click.option(
+    "--username",
+    help="User name identified as publisher",
+    default=None,
+    type=str,
+    required=False
+)
+@click.option(
+    "--ignore-validators",
+    help="Option to ignore validators",
+    type=bool,
+    is_flag=True,
+    required=False
+)
+@click.option(
+    "--interactive",
+    help="Option to publish in headless mode",
+    type=bool,
+    is_flag=True,
+    required=False
+)
+def ingest(csv_filepath, project, username, ignore_validators, interactive):
     """Start headless publishing of CSV editorial."""
-
-    PypeCommands.ingest(directory, project, ftrack_user, ignore_validators)
+    print("Starting ingest...")
+    print(f"csv_filepath: {csv_filepath}")
+    print(f"project: {project}")
+    print(f"username: {username}")
+    print(f"ignore_validators: {ignore_validators}")
+    print(f"interactive: {interactive}")
+    PypeCommands.ingest(csv_filepath, project, username, ignore_validators)
