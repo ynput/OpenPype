@@ -1,12 +1,11 @@
-import os
-from openpype.lib import Logger
 import pyblish.api
 import pyblish.util
 
 from openpype.hosts.traypublisher.api import TrayPublisherHost
-from openpype.pipeline import register_host
+from openpype.pipeline import install_host
 from openpype.lib.attribute_definitions import FileDefItem
 from openpype.pipeline.create import CreateContext
+from openpype.client import get_asset_by_name
 
 
 from pprint import pformat
@@ -14,6 +13,8 @@ from pprint import pformat
 def csvpublish(
     csv_filepath,
     project_name,
+    asset_name,
+    task_name=None,
     username=None,
     targets=None
 ):
@@ -27,30 +28,29 @@ def csvpublish(
         targets (Optional[list[str]]): List of targets.
         logger (Optional[Logger]): Logger instance.
     """
-    os.environ["AVALON_PROJECT"] = project_name
 
     host = TrayPublisherHost()
-    register_host(host)
+    install_host(host)
 
-    # create context and loop trough all csv creator
-
-    # will need to create publish context
-    # in publish context in context.data `create_context`
+    host.set_project_name(project_name)
 
     file_field = FileDefItem.from_paths([csv_filepath], False).pop().to_dict()
-    print(f"file_field: {file_field}")
-
     precreate_data = {
-        "file": file_field,
-        "project": project_name
+        "csv_filepath_data": file_field,
     }
-    create_context = CreateContext(host)
+    create_context = CreateContext(host, headless=True)
+
+    asset_doc = get_asset_by_name(
+        project_name,
+        asset_name
+    )
+
     create_context.create(
-        "creator.identifier",
-        variant,
-        asset_doc,
-        task_name,
-        precreate_data
+        "io.openpype.creators.traypublisher.csv_ingest",
+        "Main",
+        asset_doc=asset_doc,
+        task_name=task_name,
+        pre_create_data=precreate_data,
     )
 
     # if username is provided add it to create context

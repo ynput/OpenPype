@@ -17,12 +17,13 @@ from openpype.lib import FileDef, BoolDef
 import clique
 from pprint import pformat
 
+
 class IngestCSV(TrayPublishCreator):
     """Editorial CSV creator class"""
 
     label = "CSV Ingest"
     family = "editorialcsv"
-    identifier = "csv_ingest"
+    identifier = "io.openpype.creators.traypublisher.csv_ingest"
     default_variants = ["Main"]
     description = "Ingest products' data from CSV file"
     detailed_description = """

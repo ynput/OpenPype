@@ -69,6 +69,18 @@ def launch():
     required=True
 )
 @click.option(
+    "--asset-name",
+    help="Asset name in which the context will be used",
+    type=str,
+    required=True
+)
+@click.option(
+    "--task-name",
+    help="Task name under Asset in which the context will be used",
+    type=str,
+    required=False
+)
+@click.option(
     "--username",
     help="User name identified as publisher",
     default=None,
@@ -82,7 +94,14 @@ def launch():
     is_flag=True,
     required=False
 )
-def ingestcsv(csv_filepath, project_name, username, ignore_validators):
+def ingestcsv(
+    csv_filepath,
+    project_name,
+    asset_name,
+    task_name,
+    username,
+    ignore_validators
+):
     """Ingest CSV file into project.
 
     This command will ingest CSV file into project. CSV file must be in
@@ -90,12 +109,6 @@ def ingestcsv(csv_filepath, project_name, username, ignore_validators):
     """
     from .csv_publish import csvpublish
     from openpype.lib import get_openpype_username
-
-    print("Starting ingest...")
-    print(f"csv_filepath: {csv_filepath}")
-    print(f"project_name: {project_name}")
-    print(f"username: {username}")
-    print(f"ignore_validators: {ignore_validators}")
 
     targets = None
     if ignore_validators:
@@ -108,6 +121,8 @@ def ingestcsv(csv_filepath, project_name, username, ignore_validators):
     csvpublish(
         csv_filepath,
         project_name,
+        asset_name,
+        task_name,
         username,
         targets
     )
