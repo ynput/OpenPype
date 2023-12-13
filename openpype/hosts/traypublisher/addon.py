@@ -53,3 +53,61 @@ def launch():
     from openpype.tools import traypublisher
 
     traypublisher.main()
+
+
+@cli_main.command()
+@click.option(
+    "--csv-filepath",
+    help="Full path to CSV file with data",
+    type=click.Path(exists=True),
+    required=True
+)
+@click.option(
+    "--project-name",
+    help="Project name in which the context will be used",
+    type=str,
+    required=True
+)
+@click.option(
+    "--username",
+    help="User name identified as publisher",
+    default=None,
+    type=str,
+    required=False
+)
+@click.option(
+    "--ignore-validators",
+    help="Option to ignore validators",
+    type=bool,
+    is_flag=True,
+    required=False
+)
+def ingestcsv(csv_filepath, project_name, username, ignore_validators):
+    """Ingest CSV file into project.
+
+    This command will ingest CSV file into project. CSV file must be in
+    specific format. See documentation for more information.
+    """
+    from .csv_publish import csvpublish
+    from openpype.lib import get_openpype_username
+
+    print("Starting ingest...")
+    print(f"csv_filepath: {csv_filepath}")
+    print(f"project_name: {project_name}")
+    print(f"username: {username}")
+    print(f"ignore_validators: {ignore_validators}")
+
+    targets = None
+    if ignore_validators:
+        targets = ["ingest"]
+
+    # get username from env variable
+    if not username:
+        username = get_openpype_username()
+
+    csvpublish(
+        csv_filepath,
+        project_name,
+        username,
+        targets
+    )
