@@ -128,64 +128,57 @@ def get_output_parameter(node):
         root = hou.node("/obj")
         my_alembic_node = root.createNode("alembic")
         get_output_parameter(my_alembic_node)
-        # Result: "filename"
+        >>> "filename"
+
+    Notes:
+        I'm using node.type().name() to get on par with the creators,
+            Because the return value of `node.type().name()` is the
+            same string value used in creators
+            e.g. instance_data.update({"node_type": "alembic"})
+
+        Rop nodes in different network categories have
+            the same output parameter.
+            So, I took that into consideration as a hint for
+            future development.
 
     Args:
         node(hou.Node): node instance
 
     Returns:
         hou.Parm
-
-    Note 1:
-        I'm using node.type().name() to get on par with the creators,
-        Because the return value of `node.type().name()` is the same string
-        value used in creators
-        e.g. instance_data.update({"node_type": "alembic"})
-
-    Note 2:
-        Rop nodes in different network categories have
-        the same output parameter.
-        So, I took that into consideration as a hint for future development.
-
     """
 
     node_type = node.type().name()
 
     # Figure out which type of node is being rendered
-    if node_type == "alembic" or node_type == "rop_alembic":
+    if node_type in {"alembic", "rop_alembic"}:
         return node.parm("filename")
     elif node_type == "arnold":
         if node_type.evalParm("ar_ass_export_enable"):
             return node.parm("ar_ass_file")
-        else:
-            return node.parm("ar_picture")
-    elif (
-        node_type == "geometry" or
-        node_type == "rop_geometry" or
-        node_type == "filmboxfbx" or
-        node_type == "rop_fbx"
-    ):
+        return node.parm("ar_picture")
+    elif node_type in {
+        "geometry",
+        "rop_geometry",
+        "filmboxfbx",
+        "rop_fbx"
+    }:
         return node.parm("sopoutput")
     elif node_type == "comp":
         return node.parm("copoutput")
-    elif node_type == "karma" or node_type == "opengl":
+    elif node_type in {"karma", "opengl"}:
         return node.parm("picture")
     elif node_type == "ifd":  # Matnra
         if node.evalParm("soho_outputmode"):
             return node.parm("soho_diskfile")
-        else:
-            return node.parm("vm_picture")
+        return node.parm("vm_picture")
     elif node_type == "Redshift_Proxy_Output":
         return node.parm("RS_archive_file")
     elif node_type == "Redshift_ROP":
         return node.parm("RS_outputFileNamePrefix")
-    elif (
-        node_type == "usd" or
-        node_type == "usd_rop" or
-        node_type == "usdexport"
-    ):
+    elif node_type in {"usd", "usd_rop", "usdexport"}:
         return node.parm("lopoutput")
-    elif node_type == "usdrender" or node_type == "usdrender_rop":
+    elif node_type in {"usdrender", "usdrender_rop"}:
         return node.parm("outputimage")
     elif node_type == "vray_renderer":
         return node.parm("SettingsOutput_img_file_path")
