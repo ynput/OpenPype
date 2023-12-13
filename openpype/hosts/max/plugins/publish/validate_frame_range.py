@@ -115,7 +115,7 @@ class ValidateTyCacheFrameRange(ValidateFrameRange):
                     f"with the start frame ({frameStart}) set on the asset data. ")    # noqa
             if frameEnd != inst_frame_end:
                 invalid.append(
-                    f"End frame ({inst_frame_end}) on {opt_name} does not match "
+                    f"End frame ({inst_frame_end}) on {opt_name} does not match "      # noqa
                     f"with the end frame ({frameEnd}) "
                     "from the asset data. ")
             return invalid
