@@ -7,7 +7,7 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
     """Validate TyFlow plugins or relevant operators are set correctly."""
 
     order = pyblish.api.ValidatorOrder
-    families = ["pointcloud", "tycache"]
+    families = ["pointcloud", "tycache", "tyspline"]
     hosts = ["max"]
     label = "TyFlow Data"
 

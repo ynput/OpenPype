@@ -511,3 +511,63 @@ def render_resolution(width, height):
     finally:
         rt.renderWidth = current_renderWidth
         rt.renderHeight = current_renderHeight
+
+
+def get_operators(members):
+    """Get Export Particles Operator.
+
+    Args:
+        members (list): Instance members.
+
+    Returns:
+        list of particle operators
+
+    """
+    opt_list = []
+    for member in members:
+        obj = member.baseobject
+        anim_names = rt.GetSubAnimNames(obj)
+        for anim_name in anim_names:
+            sub_anim = rt.GetSubAnim(obj, anim_name)
+            # Isolate only the events
+            if not rt.isKindOf(sub_anim, rt.tyEvent):
+                continue
+
+            # Look through all the nodes in the events
+            node_names = rt.GetSubAnimNames(sub_anim)
+            for node_name in node_names:
+                node_sub_anim = rt.GetSubAnim(sub_anim, node_name)
+                if rt.hasProperty(node_sub_anim, "exportMode"):
+                    opt = f"${member.Name}.{sub_anim.Name}.{node_name}"
+                    opt_list.append((opt,
+                                     node_sub_anim.frameStart,
+                                     node_sub_anim.frameEnd,
+                                     node_name))
+    return opt_list
+
+
+def reset_frame_range_tyFlow(members, frameStart, frameEnd):
+    """Reset frame range in Export Particles Operator(s).
+
+    Args:
+        members (list): Instance members
+        frameStart(int): Start frame
+        frameEnd(int): End frame
+
+    """
+    for member in members:
+        obj = member.baseobject
+        anim_names = rt.GetSubAnimNames(obj)
+        for anim_name in anim_names:
+            sub_anim = rt.GetSubAnim(obj, anim_name)
+            # Isolate only the events
+            if not rt.isKindOf(sub_anim, rt.tyEvent):
+                continue
+
+            # Look through all the nodes in the events
+            node_names = rt.GetSubAnimNames(sub_anim)
+            for node_name in node_names:
+                node_sub_anim = rt.GetSubAnim(sub_anim, node_name)
+                if rt.hasProperty(node_sub_anim, "exportMode"):
+                    node_sub_anim.frameStart = frameStart
+                    node_sub_anim.frameEnd = frameEnd

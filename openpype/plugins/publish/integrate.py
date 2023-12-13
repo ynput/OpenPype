@@ -141,7 +141,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "uasset",
                 "blendScene",
                 "yeticacheUE",
-                "tycache"
+                "tycache",
+                "tyspline"
                 ]
 
     default_template_name = "publish"
