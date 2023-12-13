@@ -1,6 +1,27 @@
 # Changelog
 
 
+## [3.18.1](https://github.com/ynput/OpenPype/tree/3.18.1)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.0...3.18.1)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>AYON: Update ayon api to 1.0.0-rc.3 <a href="https://github.com/ynput/OpenPype/pull/6052">#6052</a></summary>
+
+Updated ayon python api to 1.0.0-rc.3.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.0](https://github.com/ynput/OpenPype/tree/3.18.0)
 
 
