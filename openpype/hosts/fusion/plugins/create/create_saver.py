@@ -256,6 +256,6 @@ class CreateSaver(NewCreator):
         self.temp_rendering_path_template = plugin_settings.get(
             "temp_rendering_path_template", self.temp_rendering_path_template
         )
-        self.image_foramt = plugin_settings.get(
+        self.image_format = plugin_settings.get(
             "image_format", self.image_format
         )
