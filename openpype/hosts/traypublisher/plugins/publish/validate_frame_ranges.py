@@ -16,6 +16,8 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
     label = "Validate Frame Range"
     hosts = ["traypublisher"]
     families = ["render", "plate"]
+    targets = ["local"]
+
     order = ValidateContentsOrder
 
     optional = True

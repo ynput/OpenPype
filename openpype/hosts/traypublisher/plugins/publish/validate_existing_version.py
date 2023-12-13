@@ -16,6 +16,7 @@ class ValidateExistingVersion(
     order = ValidateContentsOrder
 
     hosts = ["traypublisher"]
+    targets = ["local"]
 
     actions = [RepairAction]
 
