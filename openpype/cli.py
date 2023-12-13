@@ -430,3 +430,17 @@ def version(build):
         print(local_version)
         return
     print(f"{__version__} (booted: {local_version})")
+
+
+@main.command()
+@click.option("--directory", help="Full path to package csv", default=None)
+@click.option("--project", help="Project name", default=None)
+@click.option("--ftrack-user",
+              help="User name in Ftrack that would publish the files",
+              default=None)
+@click.option("--ignore-validators", help="Option to ignore validators",
+              default=None, is_flag=True)
+def ingest(directory, project, ftrack_user, ignore_validators):
+    """Start headless publishing of CSV editorial."""
+
+    PypeCommands.ingest(directory, project, ftrack_user, ignore_validators)
