@@ -1,3 +1,4 @@
+import os
 import pyblish.api
 import pyblish.util
 
@@ -34,6 +35,13 @@ def csvpublish(
 
     host.set_project_name(project_name)
 
+    # add asset context to environment
+    os.environ.update({
+        "AVALON_PROJECT": project_name,
+        "AVALON_ASSET": asset_name,
+        "AVALON_TASK": task_name
+    })
+
     file_field = FileDefItem.from_paths([csv_filepath], False).pop().to_dict()
     precreate_data = {
         "csv_filepath_data": file_field,
@@ -61,8 +69,10 @@ def csvpublish(
         pyblish_context.data["user"] = username
 
     if targets:
+        pyblish.api.deregister_all_targets()
         for target in targets:
             print(f"setting target: {target}")
             pyblish.api.register_target(target)
+
 
     pyblish.util.publish(context=pyblish_context)

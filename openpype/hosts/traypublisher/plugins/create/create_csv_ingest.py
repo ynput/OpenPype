@@ -186,9 +186,12 @@ configuration in project settings.
                     representation_data = self._get_representation_data(
                         filepath, repre_data, staging_dir
                     )
-                    # add representation to the new instance
-                    new_instance["representations"].append(
-                        representation_data)
+                    if not new_instance.transient_data.get("representations"):
+                        new_instance.transient_data["representations"] = []
+
+                    new_instance.transient_data["representations"].append(
+                        representation_data
+                    )
 
                 # update instance data frame Start and End with representation
                 # this is for case when Start and End columns are missing
@@ -196,7 +199,7 @@ configuration in project settings.
                 # we can override asset_doc frameStart and frameEnd
                 repre_frame_start = None
                 repre_frame_end = None
-                for repre in new_instance["representations"]:
+                for repre in new_instance.transient_data["representations"]:
                     if repre.get("frameStart") and repre.get("frameEnd"):
                         repre_frame_start = repre["frameStart"]
                         repre_frame_end = repre["frameEnd"]
