@@ -10,5 +10,5 @@ class CollectTyCacheData(pyblish.api.InstancePlugin):
     families = ["tycache", "tyspline"]
 
     def process(self, instance):
-        family  = instance.data["family"]
+        family = instance.data["family"]
         instance.data["exportMode"] = 2 if family == "tycache" else 6

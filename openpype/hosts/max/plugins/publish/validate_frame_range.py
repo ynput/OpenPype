@@ -105,17 +105,17 @@ class ValidateTyCacheFrameRange(ValidateFrameRange):
 
     @classmethod
     def get_invalid(cls, instance, frameStart, frameEnd):
-       members = instance.data["members"]
-       invalid = []
-       for operators in get_operators(members):
-            _, inst_frame_start, inst_frame_end, operator_name = operators
+        members = instance.data["members"]
+        invalid = []
+        for operators in get_operators(members):
+            _, inst_frame_start, inst_frame_end, opt_name = operators
             if frameStart != inst_frame_start:
                 invalid.append(
-                    f"Start frame ({inst_frame_start}) on {operator_name} Odoes not match " # noqa
+                    f"Start frame ({inst_frame_start}) on {opt_name} does not match " # noqa
                     f"with the start frame ({frameStart}) set on the asset data. ")    # noqa
             if frameEnd != inst_frame_end:
                 invalid.append(
-                    f"End frame ({inst_frame_end}) on {operator_name} does not match "
+                    f"End frame ({inst_frame_end}) on {opt_name} does not match "
                     f"with the end frame ({frameEnd}) "
                     "from the asset data. ")
             return invalid

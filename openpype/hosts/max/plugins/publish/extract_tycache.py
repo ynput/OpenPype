@@ -66,7 +66,8 @@ class ExtractTyCache(publish.Extractor):
                     "outputName": 'tyMesh'
                 }
                 representations.append(mesh_repres)
-                self.log.debug(f"Extracted instance '{instance.name}' to: {filenames}")
+                self.log.debug(
+                    f"Extracted instance '{instance.name}' to: {filenames}")
 
     def get_files(self, instance, operator, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
