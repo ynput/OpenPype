@@ -92,7 +92,9 @@ class CreateWorkfile(BaseCreator, AutoCreator):
             workfile_instance["task"] = task_name
             workfile_instance["subset"] = subset_name
 
-        instance_node = bpy.data.collections.get(AVALON_CONTAINERS, {})
+        instance_node = bpy.data.collections.get(AVALON_CONTAINERS)
+        if not instance_node:
+            instance_node = bpy.data.collections.new(name=AVALON_CONTAINERS)
         workfile_instance.transient_data["instance_node"] = instance_node
 
     def collect_instances(self):
