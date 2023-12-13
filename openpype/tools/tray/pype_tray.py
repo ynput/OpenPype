@@ -599,7 +599,10 @@ class TrayManager:
         subversion = os.environ.get("OPENPYPE_SUBVERSION")
         client_name = os.environ.get("OPENPYPE_CLIENT")
 
-        version_string = openpype.version.__version__
+        if AYON_SERVER_ENABLED:
+            version_string = os.getenv("AYON_VERSION", "AYON Info")
+        else:
+            version_string = openpype.version.__version__
         if subversion:
             version_string += " ({})".format(subversion)
 
@@ -632,6 +635,14 @@ class TrayManager:
             self.exit()
 
         elif result.restart or result.token_changed:
+            # Remove environment variables from current connection
+            # - keep develop, staging, headless values
+            for key in {
+                "AYON_SERVER_URL",
+                "AYON_API_KEY",
+                "AYON_BUNDLE_NAME",
+            }:
+                os.environ.pop(key, None)
             self.restart()
 
     def _on_restart_action(self):

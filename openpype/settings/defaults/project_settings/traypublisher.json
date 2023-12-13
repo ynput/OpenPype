@@ -245,19 +245,6 @@
             ]
         },
         {
-            "family": "simpleUnrealTexture",
-            "identifier": "",
-            "label": "Simple UE texture",
-            "icon": "fa.image",
-            "default_variants": [],
-            "description": "Simple Unreal Engine texture",
-            "detailed_description": "Texture files with Unreal Engine naming conventions",
-            "allow_sequences": false,
-            "allow_multiple_items": true,
-            "allow_version_control": false,
-            "extensions": []
-        },
-        {
             "family": "audio",
             "identifier": "",
             "label": "Audio ",

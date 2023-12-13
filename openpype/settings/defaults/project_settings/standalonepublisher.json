@@ -133,14 +133,6 @@
             ],
             "help": "Texture files with UDIM together with worfile"
         },
-        "create_simple_unreal_texture": {
-            "name": "simple_unreal_texture",
-            "label": "Simple Unreal Texture",
-            "family": "simpleUnrealTexture",
-            "icon": "Image",
-            "defaults": [],
-            "help": "Texture files with Unreal naming convention"
-        },
         "create_vdb": {
             "name": "vdb",
             "label": "VDB Volumetric Data",

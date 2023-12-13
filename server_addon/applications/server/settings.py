@@ -199,5 +199,5 @@ class ApplicationsAddonSettings(BaseSettingsModel):
 
 
 DEFAULT_VALUES = {
-    "only_available": False
+    "only_available": True
 }
