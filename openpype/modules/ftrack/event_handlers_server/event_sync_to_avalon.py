@@ -879,7 +879,6 @@ class SyncToAvalonEvent(BaseEvent):
             username = user_entity["username"] or username
         return username
 
-
     def process_removed(self):
         """
             Handles removed entities (not removed tasks - handle separately).
@@ -2536,7 +2535,8 @@ class SyncToAvalonEvent(BaseEvent):
             "type": "label",
             "value": (
                 "<p><i>NOTE: It is not allowed to use the same name"
-                " for multiple entities in the same project</i></p>"
+                " for multiple entities in the same project. Please"
+                " delete or rename your newly created item.</i></p>"
             )
         })
 
