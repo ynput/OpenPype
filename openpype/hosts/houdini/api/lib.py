@@ -168,7 +168,7 @@ def get_output_parameter(node):
         return node.parm("copoutput")
     elif node_type in {"karma", "opengl"}:
         return node.parm("picture")
-    elif node_type == "ifd":  # Matnra
+    elif node_type == "ifd":  # Mantra
         if node.evalParm("soho_outputmode"):
             return node.parm("soho_diskfile")
         return node.parm("vm_picture")
