@@ -366,8 +366,8 @@ def run_disk_mapping_commands(settings):
             destination = destination.replace("/", "\\").rstrip("\\")
             source = source.replace("/", "\\").rstrip("\\")
             # Add slash after ':' ('G:' -> 'G:\')
-            if destination.endswith(":"):
-                destination += "\\"
+            if source.endswith(":"):
+                source += "\\"
         else:
             destination = destination.rstrip("/")
             source = source.rstrip("/")
