@@ -25,7 +25,7 @@ class CreateWorkfile(BaseCreator, AutoCreator):
 
     def create(self):
         """Create workfile instances."""
-        existing_instance = next(
+        workfile_instance = next(
             (
                 instance for instance in self.create_context.instances
                 if instance.creator_identifier == self.identifier
@@ -39,14 +39,14 @@ class CreateWorkfile(BaseCreator, AutoCreator):
         host_name = self.create_context.host_name
 
         existing_asset_name = None
-        if existing_instance is not None:
+        if workfile_instance is not None:
             if AYON_SERVER_ENABLED:
-                existing_asset_name = existing_instance.get("folderPath")
+                existing_asset_name = workfile_instance.get("folderPath")
 
             if existing_asset_name is None:
-                existing_asset_name = existing_instance["asset"]
+                existing_asset_name = workfile_instance["asset"]
 
-        if not existing_instance:
+        if not workfile_instance:
             asset_doc = get_asset_by_name(project_name, asset_name)
             subset_name = self.get_subset_name(
                 task_name, task_name, asset_doc, project_name, host_name
@@ -66,19 +66,18 @@ class CreateWorkfile(BaseCreator, AutoCreator):
                     asset_doc,
                     project_name,
                     host_name,
-                    existing_instance,
+                    workfile_instance,
                 )
             )
             self.log.info("Auto-creating workfile instance...")
-            current_instance = CreatedInstance(
+            workfile_instance = CreatedInstance(
                 self.family, subset_name, data, self
             )
-            instance_node = bpy.data.collections.get(AVALON_CONTAINERS, {})
-            current_instance.transient_data["instance_node"] = instance_node
-            self._add_instance_to_context(current_instance)
+            self._add_instance_to_context(workfile_instance)
+
         elif (
             existing_asset_name != asset_name
-            or existing_instance["task"] != task_name
+            or workfile_instance["task"] != task_name
         ):
             # Update instance context if it's different
             asset_doc = get_asset_by_name(project_name, asset_name)
@@ -86,12 +85,15 @@ class CreateWorkfile(BaseCreator, AutoCreator):
                 task_name, task_name, asset_doc, project_name, host_name
             )
             if AYON_SERVER_ENABLED:
-                existing_instance["folderPath"] = asset_name
+                workfile_instance["folderPath"] = asset_name
             else:
-                existing_instance["asset"] = asset_name
+                workfile_instance["asset"] = asset_name
 
-            existing_instance["task"] = task_name
-            existing_instance["subset"] = subset_name
+            workfile_instance["task"] = task_name
+            workfile_instance["subset"] = subset_name
+
+        instance_node = bpy.data.collections.get(AVALON_CONTAINERS, {})
+        workfile_instance.transient_data["instance_node"] = instance_node
 
     def collect_instances(self):
 
