@@ -1,4 +1,4 @@
-from openpype.hosts.fusion.lib import GenericCreateSaver
+from openpype.hosts.fusion.api.plugin import GenericCreateSaver
 
 
 class CreateImageSaver(GenericCreateSaver):
