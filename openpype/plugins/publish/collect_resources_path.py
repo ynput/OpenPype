@@ -82,7 +82,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
         # Add fill keys for editorial publishing creating new entity
         # TODO handle in editorial plugin
         if instance.data.get("newAssetPublishing"):
-            if "hierarchy" not in instance.data:
+            if "hierarchy" not in template_data:
                 template_data["hierarchy"] = instance.data["hierarchy"]
 
             if "asset" not in template_data:
