@@ -247,7 +247,6 @@ def _get_all_modifiers():
 
 
 def _replace_paths_part(path):
-    print(bpy.path.abspath(path).replace('\\', '/'))
     return bpy.path.abspath(path).replace('\\', '/').replace(
         PathsParts.WINDOWS_L.value,
         PathsParts.LINUX.value
@@ -329,7 +328,7 @@ def register():
 
         ExecutionOrder.define("DEADLINE_OT_prepare_temporary_scene")
         ExecutionOrder.define("OPS_OT_submit_blender_to_deadline")
-        #ExecutionOrder.define("DEADLINE_OT_load_previous_scene")
+        ExecutionOrder.define("DEADLINE_OT_load_previous_scene")
 
         bpy.app.handlers.load_post.append(populate_render_properties)
 

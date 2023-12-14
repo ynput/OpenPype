@@ -5,16 +5,15 @@ from openpype.hosts.blender.hooks import pre_add_run_python_script_arg
 from openpype.lib import PreLaunchHook
 
 
-class InstallDeadlineAddon(PreLaunchHook):
-    """Detect and append all custom scripts from
-    blender_addon/startup/custom_scripts to Blender execution command.
+class SetSceneProperties(PreLaunchHook):
+    """Set required scene data for custom scripts
     """
 
     order = pre_add_run_python_script_arg.AddPythonScriptToLaunchArgs.order - 1
     app_groups = [
         "blender",
     ]
-    script_file_name = 'set_deadline_scene_properties.py'
+    script_file_name = 'set_scene_properties.py'
 
     def get_formatted_outputs_paths(self):
         data = self.launch_context.data

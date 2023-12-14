@@ -4,7 +4,7 @@ from openpype.hosts.blender.hooks import pre_add_run_python_script_arg
 from openpype.lib import PreLaunchHook
 
 
-class InstallDeadlineAddon(PreLaunchHook):
+class InstallCustomAddons(PreLaunchHook):
     """Detect and append all custom scripts from
     blender_addon/startup/custom_scripts to Blender execution command.
     """
@@ -13,7 +13,7 @@ class InstallDeadlineAddon(PreLaunchHook):
     app_groups = [
         "blender",
     ]
-    script_file_name = 'install_deadline_addon.py'
+    script_file_name = 'install_custom_addons.py'
 
     def execute(self):
         hooks_folder_path = os.path.dirname(os.path.realpath(__file__))
