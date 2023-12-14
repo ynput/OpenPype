@@ -132,18 +132,21 @@ class HoudiniSubmitDeadline(
         if dependency_job_ids:
             is_export_job = False
 
+        job_type = "[RENDER]"
         if split_render_job and not is_export_job:
             # Convert from family to Deadline plugin name
             # i.e., arnold_rop -> Arnold
             plugin = instance.data["family"].replace("_rop", "").capitalize()
         else:
             plugin = "Houdini"
+            if split_render_job:
+                job_type = "[EXPORT IFD]"
 
         job_info = DeadlineJobInfo(Plugin=plugin)
 
         filepath = context.data["currentFile"]
         filename = os.path.basename(filepath)
-        job_info.Name = "{} - {}".format(filename, instance.name)
+        job_info.Name = "{} - {} {}".format(filename, instance.name, job_type)
         job_info.BatchName = filename
 
         job_info.UserName = context.data.get(
