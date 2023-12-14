@@ -1,36 +1,39 @@
-from hmac import new
 import os
 import re
 import csv
+import clique
 from copy import deepcopy, copy
+
 from openpype.client import get_asset_by_name
 from openpype.pipeline.create import get_subset_name
+from openpype.pipeline import CreatedInstance
+from openpype.lib import FileDef, BoolDef
 from openpype.lib.local_settings import get_openpype_username
-from openpype.hosts.traypublisher.api.plugin import (
-    TrayPublishCreator
-)
 from openpype.lib.transcoding import (
     VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
 )
-from openpype.pipeline import CreatedInstance, KnownPublishError
-from openpype.lib import FileDef, BoolDef
-import clique
-from pprint import pformat
+
+from openpype.hosts.traypublisher.api.plugin import (
+    TrayPublishCreator
+)
 
 
 class IngestCSV(TrayPublishCreator):
     """Editorial CSV creator class"""
 
+    icon = "fa.file"
+
     label = "CSV Ingest"
     family = "editorialcsv"
     identifier = "io.openpype.creators.traypublisher.csv_ingest"
+
     default_variants = ["Main"]
+
     description = "Ingest products' data from CSV file"
     detailed_description = """
 Ingest products' data from CSV file following column and representation
 configuration in project settings.
 """
-    icon = "fa.file"
 
     # Position batch creator after editorial creator
     order = 10
@@ -41,7 +44,6 @@ configuration in project settings.
         )
         self.column_config = creator_settings["columns_config"]
         self.representation_config = creator_settings["representations_config"]
-
 
     def create(self, subset_name, instance_data, pre_create_data):
         """Create an product from each row found in the CSV.
@@ -84,9 +86,8 @@ configuration in project settings.
         )
         self._store_new_instance(new_instance)
 
-
-
-        # from special function get all data from csv file and convert them to new instances
+        # from special function get all data from csv file and convert them
+        # to new instances
         csv_data_for_instances = self._get_data_from_csv(
             staging_dir, filename)
 
@@ -94,7 +95,6 @@ configuration in project settings.
         self._create_instances_from_csv_data(
             csv_data_for_instances, staging_dir
         )
-
 
     def _create_instances_from_csv_data(
         self,
@@ -131,7 +131,7 @@ configuration in project settings.
                 frame_end = None
                 comment = None
                 intent = None
-                for filepath, repre_data in product_data["representations"].items():
+                for filepath, repre_data in product_data["representations"].items():  # noqa: E501
                     if not comment and repre_data["notes"]:
                         comment = repre_data["notes"]
                     if not intent and repre_data["intent"]:
@@ -158,6 +158,7 @@ configuration in project settings.
 
                 # make product data
                 product_data = {
+                    "name": instance_name,
                     "asset": asset_name,
                     "families": ["csv"],
                     "label": label,
@@ -175,7 +176,6 @@ configuration in project settings.
                 new_instance = CreatedInstance(
                     product_type, product_name, product_data, self
                 )
-                self.log.debug(pformat(dict(new_instance.data)))
                 self._store_new_instance(new_instance)
 
                 if not new_instance.get("representations"):
@@ -195,8 +195,8 @@ configuration in project settings.
 
                 # update instance data frame Start and End with representation
                 # this is for case when Start and End columns are missing
-                # since sequence representation will have frameStart and frameEnd
-                # we can override asset_doc frameStart and frameEnd
+                # since sequence representation will have frameStart and
+                # frameEnd we can override asset_doc frameStart and frameEnd
                 repre_frame_start = None
                 repre_frame_end = None
                 for repre in new_instance.transient_data["representations"]:
@@ -222,7 +222,6 @@ configuration in project settings.
                     )
 
                 new_instance["thumbnailSource"] = thumbnail_source
-
 
     def _get_representation_data(
         self, filepath, repre_data, staging_dir
@@ -253,7 +252,7 @@ configuration in project settings.
         # example: file.###.exr -> file.%03d.exr
         if "#" in basename:
             padding = len(basename.split("#")) - 1
-            basename = basename.replace("#"*padding, f"%0{padding}d")
+            basename = basename.replace("#" * padding, f"%0{padding}d")
             is_sequence = True
 
         # make absolute path to file
@@ -351,7 +350,8 @@ configuration in project settings.
             # fix fieldnames
             # sometimes someone can keep extra space at the start or end of
             # the column name
-            all_columns = [" ".join(column.rsplit()) for column in csv_reader.fieldnames]
+            all_columns = [
+                " ".join(column.rsplit()) for column in csv_reader.fieldnames]
             # return back fixed fieldnames
             csv_reader.fieldnames = all_columns
 
@@ -369,7 +369,8 @@ configuration in project settings.
                     "Project", row, default_value=project_name
                 )
 
-                # raise if row project name is not equal to current project name
+                # raise if row project name is not equal to current
+                # project name
                 if row_project_name != project_name:
                     raise ValueError(
                         f"Project name in csv file '{row_project_name}' "
@@ -380,9 +381,6 @@ configuration in project settings.
                 package = self._get_row_value_with_validation(
                     "Package", row, default_value=package_dir)
 
-                self.log.debug("_"*50)
-                self.log.debug(f"package: `{package}`")
-                self.log.debug(f"package_dir: `{package_dir}`")
                 if (package and package != os.path.basename(package_dir)):
                     raise ValueError(
                         f"Package name in csv file '{package}' "
@@ -423,12 +421,14 @@ configuration in project settings.
                 filename, representation_data = \
                     self._get_representation_row_data(row)
 
-                # get all csv data into one dict and make sure there are no duplicates
-                # data are already validated and sorted under correct existing asset
-                # also check if asset exists and if task name is valid task in asset doc
-                # and representations are distributed under products following variants
+                # get all csv data into one dict and make sure there are no
+                # duplicates data are already validated and sorted under
+                # correct existing asset also check if asset exists and if
+                # task name is valid task in asset doc and representations
+                # are distributed under products following variants
                 if context_asset_name not in csv_data:
-                    asset_doc = get_asset_by_name(project_name, context_asset_name)
+                    asset_doc = get_asset_by_name(
+                        project_name, context_asset_name)
                     # make sure asset exists
                     if not asset_doc:
                         raise ValueError(
@@ -572,14 +572,14 @@ configuration in project settings.
             column_value = column_default
 
         # set column value to correct type following column type
-        if column_type == "number" and column_value != None:
+        if column_type == "number" and column_value is not None:
             column_value = int(column_value)
         elif column_type == "bool":
             column_value = column_value in ["true", "True"]
 
         # check if column value matches validation regex
         if (
-            column_value != None and
+            column_value is not None and
             not re.match(str(column_validation), str(column_value))
         ):
             raise ValueError(
@@ -610,7 +610,6 @@ configuration in project settings.
             "stagingDir": staging_dir,
             "stagingDir_persistent": True,
         })
-
 
     def get_instance_attr_defs(self):
         return [

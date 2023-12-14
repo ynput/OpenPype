@@ -1,15 +1,15 @@
 import os
+
 import pyblish.api
 import pyblish.util
 
-from openpype.hosts.traypublisher.api import TrayPublisherHost
-from openpype.pipeline import install_host
-from openpype.lib.attribute_definitions import FileDefItem
-from openpype.pipeline.create import CreateContext
 from openpype.client import get_asset_by_name
+from openpype.lib.attribute_definitions import FileDefItem
+from openpype.pipeline import install_host
+from openpype.pipeline.create import CreateContext
 
+from openpype.hosts.traypublisher.api import TrayPublisherHost
 
-from pprint import pformat
 
 def csvpublish(
     csv_filepath,
@@ -24,30 +24,36 @@ def csvpublish(
     Args:
         csv_filepath (str): Path to CSV file.
         project_name (str): Project name.
+        asset_name (str): Asset name.
+        task_name (Optional[str]): Task name.
         username (Optional[str]): User name.
         hostname (Optional[str]): Host name.
         targets (Optional[list[str]]): List of targets.
-        logger (Optional[Logger]): Logger instance.
     """
 
+    # initialization of host
     host = TrayPublisherHost()
     install_host(host)
 
+    # setting host context into project
     host.set_project_name(project_name)
 
     # add asset context to environment
+    # TODO: perhaps this can be done in a better way?
     os.environ.update({
         "AVALON_PROJECT": project_name,
         "AVALON_ASSET": asset_name,
         "AVALON_TASK": task_name
     })
 
+    # form precreate data with field values
     file_field = FileDefItem.from_paths([csv_filepath], False).pop().to_dict()
     precreate_data = {
         "csv_filepath_data": file_field,
     }
-    create_context = CreateContext(host, headless=True)
 
+    # create context initialization
+    create_context = CreateContext(host, headless=True)
     asset_doc = get_asset_by_name(
         project_name,
         asset_name
@@ -61,10 +67,11 @@ def csvpublish(
         pre_create_data=precreate_data,
     )
 
-    # if username is provided add it to create context
+    # publishing context initialization
     pyblish_context = pyblish.api.Context()
     pyblish_context.data["create_context"] = create_context
 
+    # setting username and targets
     if username:
         pyblish_context.data["user"] = username
 
@@ -74,5 +81,5 @@ def csvpublish(
             print(f"setting target: {target}")
             pyblish.api.register_target(target)
 
-
+    # publishing
     pyblish.util.publish(context=pyblish_context)

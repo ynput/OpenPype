@@ -66,7 +66,8 @@ class CollectEditorialCSV(
                 passing_instance_data
             )
 
-            # from special function get all data from csv file and convert them to new instances
+            # from special function get all data from csv file and convert
+            # them to new instances
             csv_data_for_instances = self._get_data_from_csv(
                 context,
                 csv_file_path,
@@ -118,7 +119,7 @@ class CollectEditorialCSV(
                 frame_end = None
                 comment = None
                 intent = None
-                for filepath, repre_data in product_data["representations"].items():
+                for filepath, repre_data in product_data["representations"].items():  # noqa
                     if not comment and repre_data["notes"]:
                         comment = repre_data["notes"]
                     if not intent and repre_data["intent"]:
@@ -181,8 +182,8 @@ class CollectEditorialCSV(
 
                 # update instance data frame Start and End with representation
                 # this is for case when Start and End columns are missing
-                # since sequence representation will have frameStart and frameEnd
-                # we can override asset_doc frameStart and frameEnd
+                # since sequence representation will have frameStart and
+                # frameEnd we can override asset_doc frameStart and frameEnd
                 repre_frame_start = None
                 repre_frame_end = None
                 for repre in new_instance.data["representations"]:
@@ -244,7 +245,7 @@ class CollectEditorialCSV(
         # example: file.###.exr -> file.%03d.exr
         if "#" in basename:
             padding = len(basename.split("#")) - 1
-            basename = basename.replace("#"*padding, f"%0{padding}d")
+            basename = basename.replace("#" * padding, f"%0{padding}d")
             is_sequence = True
 
         # make absolute path to file
@@ -340,7 +341,8 @@ class CollectEditorialCSV(
             # fix fieldnames
             # sometimes someone can keep extra space at the start or end of
             # the column name
-            all_columns = [" ".join(column.rsplit()) for column in csv_reader.fieldnames]
+            all_columns = [
+                " ".join(column.rsplit()) for column in csv_reader.fieldnames]
             # return back fixed fieldnames
             csv_reader.fieldnames = all_columns
 
@@ -359,7 +361,8 @@ class CollectEditorialCSV(
                     default_value=project_name
                 )
 
-                # raise if row project name is not equal to current project name
+                # raise if row project name is not equal to current project
+                # name
                 if row_project_name != project_name:
                     raise ValueError(
                         f"Project name in csv file '{row_project_name}' "
@@ -368,7 +371,11 @@ class CollectEditorialCSV(
                     )
                 # get Package row value
                 package = self._get_row_value_with_validation(
-                    "Package", row, column_config, default_value=package_folder)
+                    "Package",
+                    row,
+                    column_config,
+                    default_value=package_folder
+                )
 
                 if (package and package != package_folder):
                     raise ValueError(
@@ -412,12 +419,14 @@ class CollectEditorialCSV(
                     self._get_representation_row_data(
                         row, column_config)
 
-                # get all csv data into one dict and make sure there are no duplicates
-                # data are already validated and sorted under correct existing asset
-                # also check if asset exists and if task name is valid task in asset doc
-                # and representations are distributed under products following variants
+                # get all csv data into one dict and make sure there are no
+                # duplicates data are already validated and sorted under
+                # correct existing asset also check if asset exists and if
+                # task name is valid task in asset doc and representations
+                # are distributed under products following variants
                 if context_asset_name not in csv_data:
-                    asset_doc = get_asset_by_name(project_name, context_asset_name)
+                    asset_doc = get_asset_by_name(
+                        project_name, context_asset_name)
                     # make sure asset exists
                     if not asset_doc:
                         raise ValueError(
@@ -558,14 +567,14 @@ class CollectEditorialCSV(
             column_value = column_default
 
         # set column value to correct type following column type
-        if column_type == "number" and column_value != None:
+        if column_type == "number" and column_value is not None:
             column_value = int(column_value)
         elif column_type == "bool":
             column_value = column_value in ["true", "True"]
 
         # check if column value matches validation regex
         if (
-            column_value != None and
+            column_value is not None and
             not re.match(str(column_validation), str(column_value))
         ):
             raise ValueError(
