@@ -1,25 +1,26 @@
 from openpype.hosts.fusion.lib import GenericCreateSaver
 
 
-class CreateSaver(GenericCreateSaver):
-    """Fusion Saver to generate image sequence of 'render' product type.
+class CreateImageSaver(GenericCreateSaver):
+    """Fusion Saver to generate single image.
 
-     Original Saver creator targeted for 'render' product type. It uses
-     original not to descriptive name because of values in Settings.
+     Created to explicitly separate single ('image') or
+        multi frame('render) outputs.
     """
-    identifier = "io.openpype.creators.fusion.saver"
-    label = "Render (saver)"
-    name = "render"
-    family = "render"
-    description = "Fusion Saver to generate image sequence"
+    identifier = "io.openpype.creators.fusion.imagesaver"
+    label = "Image (saver)"
+    name = "image"
+    family = "image"
+    description = "Fusion Saver to generate image"
 
     def get_detail_description(self):
-        return """Fusion Saver to generate image sequence.
+        return """Fusion Saver to generate single image.
 
         This creator is expected for publishing of image sequences for 'render'
         product type. (But can publish even single frame 'render'.
 
-        Select what should be source of render range:
+        Select what should be source of rendered image:
+        (select only single frame):
         - "Current asset context" - values set on Asset in DB (Ftrack)
         - "From render in/out" - from node itself
         - "From composition timeline" - from timeline
@@ -32,4 +33,7 @@ class CreateSaver(GenericCreateSaver):
         - png
         - tif
         - jpg
+
+        Created to explicitly separate single ('image') or
+        multi frame('render) outputs.
         """

@@ -58,7 +58,11 @@ class CreateSaverPluginModel(BaseSettingsModel):
 class CreatPluginsModel(BaseSettingsModel):
     CreateSaver: CreateSaverPluginModel = Field(
         default_factory=CreateSaverPluginModel,
-        title="Create Saver"
+        title="Create Image Sequence Saver"
+    )
+    CreateImageSaver: CreateSaverPluginModel = Field(
+        default_factory=CreateSaverPluginModel,
+        title="Create Image Saver"
     )
 
 
@@ -95,6 +99,18 @@ DEFAULT_VALUES = {
     },
     "create": {
         "CreateSaver": {
+            "temp_rendering_path_template": "{workdir}/renders/fusion/{product[name]}/{product[name]}.{frame}.{ext}",
+            "default_variants": [
+                "Main",
+                "Mask"
+            ],
+            "instance_attributes": [
+                "reviewable",
+                "farm_rendering"
+            ],
+            "image_format": "exr"
+        },
+        "CreateImageSaver": {
             "temp_rendering_path_template": "{workdir}/renders/fusion/{product[name]}/{product[name]}.{frame}.{ext}",
             "default_variants": [
                 "Main",

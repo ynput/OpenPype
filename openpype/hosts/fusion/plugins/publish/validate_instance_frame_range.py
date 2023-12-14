@@ -8,7 +8,7 @@ class ValidateInstanceFrameRange(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Filename Has Extension"
-    families = ["render"]
+    families = ["render", "image"]
     hosts = ["fusion"]
 
     def process(self, instance):
@@ -20,6 +20,21 @@ class ValidateInstanceFrameRange(pyblish.api.InstancePlugin):
         render_start = instance.data["frameStartHandle"]
         render_end = instance.data["frameEndHandle"]
 
+        if instance.data["family"] == "image":
+            too_many_frames = (isinstance(instance.data["expectedFiles"], list)
+                               and len(instance.data["expectedFiles"]) > 1)
+
+            if render_end - render_start > 0 or too_many_frames:
+                desc = "Trying to render {}-{} and expected {}.".format(
+                    render_end, render_start, instance.data["expectedFiles"])
+                desc += ("Either change frame range based on "
+                         "`Frame range source (eg. asset, node or timeline)"
+                         " or use 'Render (saver)' creator")
+                raise PublishValidationError(
+                    title="Frame range outside of comp range",
+                    message="Image product type expects only single frame",
+                    description=desc
+                )
         if render_start < global_start or render_end > global_end:
 
             message = (
