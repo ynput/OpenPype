@@ -51,7 +51,7 @@
                     "type": "dict",
                     "collapsible": true,
                     "key": "CreateSaver",
-                    "label": "Create Image Sequence Saver",
+                    "label": "Create Render Saver",
                     "is_group": true,
                     "children": [
                         {
