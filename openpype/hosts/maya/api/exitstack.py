@@ -1,11 +1,10 @@
 import contextlib
- # TODO: Remove the entire script once dropping Python 2.
+# TODO: Remove the entire script once dropping Python 2.
 if getattr(contextlib, "nested", None):
     from contextlib import ExitStack    # noqa
 else:
     import sys
     from collections import deque
-
 
     class ExitStack(object):
         """Context manager for dynamic management of a stack of exit callbacks
@@ -13,7 +12,8 @@ else:
         For example:
 
             with ExitStack() as stack:
-                files = [stack.enter_context(open(fname)) for fname in filenames]
+                files = [stack.enter_context(open(fname))
+                for fname in filenames]
                 # All opened files will automatically be closed at the end of
                 # the with statement, even if attempts to open files later
                 # in the list raise an exception
@@ -30,7 +30,8 @@ else:
             return new_stack
 
         def _push_cm_exit(self, cm, cm_exit):
-            """Helper to correctly register callbacks to __exit__ methods"""
+            """Helper to correctly register callbacks
+            to __exit__ methods"""
             def _exit_wrapper(*exc_details):
                 return cm_exit(cm, *exc_details)
             _exit_wrapper.__self__ = cm
@@ -54,7 +55,7 @@ else:
                 self._exit_callbacks.append(exit)
             else:
                 self._push_cm_exit(exit, exit_method)
-            return exit # Allow use as a decorator
+            return exit     # Allow use as a decorator
 
         def callback(self, callback, *args, **kwds):
             """Registers an arbitrary callback and arguments.
@@ -67,7 +68,7 @@ else:
             # setting __wrapped__ may still help with introspection
             _exit_wrapper.__wrapped__ = callback
             self.push(_exit_wrapper)
-            return callback # Allow use as a decorator
+            return callback     # Allow use as a decorator
 
         def enter_context(self, cm):
             """Enters the supplied context manager
@@ -75,7 +76,8 @@ else:
             If successful, also pushes its __exit__ method as a callback and
             returns the result of the __enter__ method.
             """
-            # We look up the special methods on the type to match the with statement
+            # We look up the special methods on the type to
+            # match the with statement
             _cm_type = type(cm)
             _exit = _cm_type.__exit__
             result = _cm_type.__enter__(cm)
@@ -93,6 +95,7 @@ else:
             # We manipulate the exception state so it behaves as though
             # we were actually nesting multiple with statements
             frame_exc = sys.exc_info()[1]
+
             def _fix_exception_context(new_exc, old_exc):
                 while 1:
                     exc_context = new_exc.__context__
@@ -110,7 +113,7 @@ else:
                     if cb(*exc_details):
                         suppressed_exc = True
                         exc_details = (None, None, None)
-                except:
+                except Exception:
                     new_exc_details = sys.exc_info()
                     # simulate the stack of exceptions by setting the context
                     _fix_exception_context(new_exc_details[1], exc_details[1])
