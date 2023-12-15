@@ -868,15 +868,14 @@ class Loader(LoaderPlugin):
             return False
 
         # Remove fake user
-        for d_ref in container.datablock_refs:
-            if d_ref.datablock:
-                datacol = getattr(
-                    bpy.data, BL_TYPE_DATACOL.get(type(d_ref.datablock), ""), None
-                )
-                if not datacol:
-                    continue
-                d_ref.datablock.use_fake_user = False
-                datacol.remove(d_ref.datablock)
+        for datablock in container.get_datablocks():
+            datacol = getattr(
+                bpy.data, BL_TYPE_DATACOL.get(type(datablock), ""), None
+            )
+            if not datacol:
+                continue
+            datablock.use_fake_user = False
+            datacol.remove(datablock)
 
         # Unreference container datablocks
         container.datablock_refs.clear()
