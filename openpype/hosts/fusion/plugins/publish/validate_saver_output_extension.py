@@ -46,8 +46,7 @@ class ValidateSaverOutputExtension(pyblish.api.InstancePlugin):
             "openpype.creator_attributes.image_format",
             instance.data["image_format"],
         )
-        saver.Clip[1] = output_path
 
 
 def get_file_extension(full_path):
-    return os.path.splitext(full_path)[1].replace(".", "")
+    return os.path.splitext(full_path)[1].lstrip(".")
