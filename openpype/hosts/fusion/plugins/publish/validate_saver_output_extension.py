@@ -26,6 +26,9 @@ class ValidateSaverOutputExtension(
     actions = [SelectInvalidAction, RepairAction]
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         saver = instance.data["tool"]
         current_extension = get_file_extension(saver.Clip[1])
         expected_extension = instance.data["image_format"]
