@@ -17,6 +17,7 @@ class ValidateSaverOutputExtension(pyblish.api.InstancePlugin):
     label = "Validate Saver Output Extension"
     families = ["render"]
     hosts = ["fusion"]
+    optional = True
     actions = [SelectInvalidAction, RepairAction]
 
     def process(self, instance):
