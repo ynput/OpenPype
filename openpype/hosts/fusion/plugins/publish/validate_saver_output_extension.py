@@ -8,7 +8,10 @@ from openpype.hosts.fusion.api.action import SelectInvalidAction
 
 class ValidateSaverOutputExtension(pyblish.api.InstancePlugin):
     """
-    Temp docstring
+    Validate Saver Output Extension matches Publish menu
+
+    This ensures that if the user tweaks the 'Output File Extension' in the publish menu,
+    it is respected during the publish.
     """
 
     order = pyblish.api.ValidatorOrder
