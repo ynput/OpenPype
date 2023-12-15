@@ -5,7 +5,9 @@ if getattr(contextlib, "nested", None):
 else:
     import sys
     from collections import deque
-    class ExitStack(object)
+
+    class ExitStack(object):
+
         """Context manager for dynamic management of a stack of exit callbacks
 
         For example:
@@ -22,7 +24,8 @@ else:
             self._exit_callbacks = deque()
 
         def pop_all(self):
-            """Preserve the context stack by transferring it to a new instance"""
+            """Preserve the context stack by transferring
+            it to a new instance"""
             new_stack = type(self)()
             new_stack._exit_callbacks = self._exit_callbacks
             self._exit_callbacks = deque()
