@@ -5,7 +5,19 @@
     pull into a scene.
 
     This one is used only as image describing content of published item and
-    shows up only in Loader in right column section.
+    shows up only in Loader or Server UI in right column section.
+
+    Possible sources of thumbnail paths (OR):
+    - context.data.get("thumbnailPath")
+    (instance must have "published_representations")
+    - instance.data.get("thumbnailSource")
+    - instance.data.get("thumbnailPath")
+    - representation with 'thumbnail' name from "published_representations"
+
+    (issue with last option is that we most likely don't want to integrate
+    thumbnail, eg. store it DB. Integrated representation would be polluting
+    Loaader (and DB) and its use is likely minimal.)
+
 """
 
 import os
