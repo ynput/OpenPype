@@ -172,8 +172,9 @@ def maintained_selection():
             cmds.select(clear=True)
 
 
-def reload_textures():
-    """Reload textures during playblast
+def reload_all_udim_tile_previews():
+    """Regenerate all UDIM tile preview in texture file
+    nodes during context
     """
     texture_files = cmds.ls(type="file")
     if texture_files:

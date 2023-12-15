@@ -43,17 +43,13 @@ class ExtractPlayblast(publish.Extractor):
                     json.dumps(preset, indent=4, sort_keys=True)
                 )
             )
-        if "textures" in preset["viewport_options"] and (
-            "reloadTextures" in preset["viewport_options"]
-        ):
-            with lib.material_loading_mode():
-                lib.reload_textures()
-                # not supported by `capture`
-                preset["viewport_options"].pop("reloadTextures", None)
-                path = capture.capture(log=self.log, **preset)
-        else:
-            preset["viewport_options"].pop("reloadTextures", None)
-            path = capture.capture(log=self.log, **preset)
+
+        if preset["viewport_options"].get("reloadTextures"):
+            # Regenerate all UDIM tiles previews
+            lib.reload_all_udim_tile_previews()
+            # not supported by `capture`
+        preset["viewport_options"].pop("reloadTextures", None)
+        path = capture.capture(log=self.log, **preset)
         self.log.debug("playblast path  {}".format(path))
 
     def process(self, instance):
@@ -206,11 +202,23 @@ class ExtractPlayblast(publish.Extractor):
         # TODO: Remove once dropping Python 2.
         if getattr(contextlib, "nested", None):
             # Python 3 compatibility.
-            with contextlib.nested(
-                lib.maintained_time(),
-                panel_camera(instance.data["panel"], preset["camera"])
-            ):
-                self._capture(preset)
+            if preset["viewport_options"].get("textures"):
+                # If capture includes textures then ensure material
+                # load mode is set to `immediate` to ensure all
+                # textures have loaded when playblast starts
+                with contextlib.nested(
+                    lib.maintained_time(),
+                    panel_camera(instance.data["panel"], preset["camera"]),
+                    lib.material_loading_mode()
+                ):
+                    self._capture(preset)
+
+            else:
+                with contextlib.nested(
+                    lib.maintained_time(),
+                    panel_camera(instance.data["panel"], preset["camera"])
+                ):
+                    self._capture(preset)
         else:
             # Python 2 compatibility.
             with contextlib.ExitStack() as stack:
@@ -218,6 +226,8 @@ class ExtractPlayblast(publish.Extractor):
                 stack.enter_context(
                     panel_camera(instance.data["panel"], preset["camera"])
                 )
+                if preset["viewport_options"].get("textures"):
+                    stack.enter_context(lib.material_loading_mode())
 
                 self._capture(preset)
 
