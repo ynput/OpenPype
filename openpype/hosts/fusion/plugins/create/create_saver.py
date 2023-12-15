@@ -119,7 +119,7 @@ class CreateSaver(NewCreator):
         if "subset" not in data:
             return
 
-        original_data = tool.GetData("openpype")
+        original_data = tool.GetData("openpype.creator_attributes")
         if original_data != data["creator_attributes"]:
             self._configure_saver_tool(data, tool, data["subset"])
 
