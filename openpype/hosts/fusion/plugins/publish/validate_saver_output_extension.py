@@ -24,7 +24,7 @@ class ValidateSaverOutputExtension(pyblish.api.InstancePlugin):
         current_extension = get_file_extension(saver.Clip[1])
         expected_extension = instance.data["image_format"]
 
-        if current_ext != expected_ext:
+        if current_extension != expected_extension:
             raise PublishValidationError(
                 f"Instance {saver.Name} output image format does not match the current publish selection.\n\n"
                 f"Current: {current_ext}\n\n"
