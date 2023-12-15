@@ -17,21 +17,12 @@ class ValidateSaverOutputExtension(pyblish.api.InstancePlugin):
     hosts = ["fusion"]
     actions = [SelectInvalidAction, RepairAction]
 
-    @classmethod
-    def get_invalid(cls, instance):
-        saver = instance.data["tool"]
-        output_path = saver.Clip[1]
-        current_ext = get_file_extension(output_path)
-        ext = instance.data["image_format"]
-        if not current_ext == ext:
-            return (saver, current_ext, ext)
-
     def process(self, instance):
         saver = instance.data["tool"]
-        current_ext = get_file_extension(saver.Clip[1])
-        expected_ext = instance.data["image_format"]
+        current_extension = get_file_extension(saver.Clip[1])
+        expected_extension = instance.data["image_format"]
 
-        if not current_ext == expected_ext:
+        if current_ext != expected_ext:
             raise PublishValidationError(
                 f"Instance {saver.Name} output image format does not match the current publish selection.\n\n"
                 f"Current: {current_ext}\n\n"
