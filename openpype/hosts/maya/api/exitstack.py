@@ -5,8 +5,7 @@ if getattr(contextlib, "nested", None):
 else:
     import sys
     from collections import deque
-
-    class ExitStack(object):
+    class ExitStack(object)
         """Context manager for dynamic management of a stack of exit callbacks
 
         For example:
