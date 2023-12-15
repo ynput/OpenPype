@@ -1356,49 +1356,49 @@ def create_write_node(
         now_node.setInput(0, prev_node)
 
     # add divider
-    GN.addKnob(nuke.Text_Knob('', 'Rendering'))
+    #GN.addKnob(nuke.Text_Knob('', 'Rendering'))
 
     # Add linked knobs.
     linked_knob_names = []
 
     # add input linked knobs and create group only if any input
-    if linked_knobs:
-        linked_knob_names.append("_grp-start_")
-        linked_knob_names.extend(linked_knobs)
-        linked_knob_names.append("_grp-end_")
+    # if linked_knobs:
+    #     linked_knob_names.append("_grp-start_")
+    #     linked_knob_names.extend(linked_knobs)
+    #     linked_knob_names.append("_grp-end_")
 
-    linked_knob_names.append("Render")
+    # linked_knob_names.append("Render")
 
-    for _k_name in linked_knob_names:
-        if "_grp-start_" in _k_name:
-            knob = nuke.Tab_Knob(
-                "rnd_attr", "Rendering attributes", nuke.TABBEGINCLOSEDGROUP)
-            GN.addKnob(knob)
-        elif "_grp-end_" in _k_name:
-            knob = nuke.Tab_Knob(
-                "rnd_attr_end", "Rendering attributes", nuke.TABENDGROUP)
-            GN.addKnob(knob)
-        else:
-            if "___" in _k_name:
-                # add divider
-                GN.addKnob(nuke.Text_Knob(""))
-            else:
-                # add linked knob by _k_name
-                link = nuke.Link_Knob("")
-                link.makeLink(write_node.name(), _k_name)
-                link.setName(_k_name)
+    # for _k_name in linked_knob_names:
+    #     if "_grp-start_" in _k_name:
+    #         knob = nuke.Tab_Knob(
+    #             "rnd_attr", "Rendering attributes", nuke.TABBEGINCLOSEDGROUP)
+    #         GN.addKnob(knob)
+    #     elif "_grp-end_" in _k_name:
+    #         knob = nuke.Tab_Knob(
+    #             "rnd_attr_end", "Rendering attributes", nuke.TABENDGROUP)
+    #         GN.addKnob(knob)
+    #     else:
+    #         if "___" in _k_name:
+    #             # add divider
+    #             GN.addKnob(nuke.Text_Knob(""))
+    #         else:
+    #             # add linked knob by _k_name
+    #             link = nuke.Link_Knob("")
+    #             link.makeLink(write_node.name(), _k_name)
+    #             link.setName(_k_name)
 
-                # make render
-                if "Render" in _k_name:
-                    link.setLabel("Render Local")
-                link.setFlag(0x1000)
-                GN.addKnob(link)
-
-    # adding write to read button
-    add_button_write_to_read(GN)
+    #             # make render
+    #             if "Render" in _k_name:
+    #                 link.setLabel("Render Local")
+    #             link.setFlag(0x1000)
+    #             GN.addKnob(link)
 
     # adding write to read button
-    add_button_clear_rendered(GN, os.path.dirname(fpath))
+    #add_button_write_to_read(GN)
+
+    # adding write to read button, hornet, we have our own
+    #add_button_clear_rendered(GN, os.path.dirname(fpath))
 
     # set tile color
     tile_color = next(
@@ -1616,50 +1616,50 @@ def create_write_node_legacy(
     # Add linked knobs.
     linked_knob_names = []
 
-    # add input linked knobs and create group only if any input
-    if linked_knobs:
-        linked_knob_names.append("_grp-start_")
-        linked_knob_names.extend(linked_knobs)
-        linked_knob_names.append("_grp-end_")
+    # # add input linked knobs and create group only if any input
+    # if linked_knobs:
+    #     linked_knob_names.append("_grp-start_")
+    #     linked_knob_names.extend(linked_knobs)
+    #     linked_knob_names.append("_grp-end_")
 
-    linked_knob_names.append("Render")
+    # linked_knob_names.append("Render")
 
-    for _k_name in linked_knob_names:
-        if "_grp-start_" in _k_name:
-            knob = nuke.Tab_Knob(
-                "rnd_attr", "Rendering attributes", nuke.TABBEGINCLOSEDGROUP)
-            GN.addKnob(knob)
-        elif "_grp-end_" in _k_name:
-            knob = nuke.Tab_Knob(
-                "rnd_attr_end", "Rendering attributes", nuke.TABENDGROUP)
-            GN.addKnob(knob)
-        else:
-            if "___" in _k_name:
-                # add divider
-                GN.addKnob(nuke.Text_Knob(""))
-            else:
-                # add linked knob by _k_name
-                link = nuke.Link_Knob("")
-                link.makeLink(write_node.name(), _k_name)
-                link.setName(_k_name)
+    # for _k_name in linked_knob_names:
+    #     if "_grp-start_" in _k_name:
+    #         knob = nuke.Tab_Knob(
+    #             "rnd_attr", "Rendering attributes", nuke.TABBEGINCLOSEDGROUP)
+    #         GN.addKnob(knob)
+    #     elif "_grp-end_" in _k_name:
+    #         knob = nuke.Tab_Knob(
+    #             "rnd_attr_end", "Rendering attributes", nuke.TABENDGROUP)
+    #         GN.addKnob(knob)
+    #     else:
+    #         if "___" in _k_name:
+    #             # add divider
+    #             GN.addKnob(nuke.Text_Knob(""))
+    #         else:
+    #             # add linked knob by _k_name
+    #             link = nuke.Link_Knob("")
+    #             link.makeLink(write_node.name(), _k_name)
+    #             link.setName(_k_name)
 
-                # make render
-                if "Render" in _k_name:
-                    link.setLabel("Render Local")
-                link.setFlag(0x1000)
-                GN.addKnob(link)
+    #             # make render
+    #             if "Render" in _k_name:
+    #                 link.setLabel("Render Local")
+    #             link.setFlag(0x1000)
+    #             GN.addKnob(link)
 
-    # adding write to read button
-    add_button_write_to_read(GN)
+    # # adding write to read button
+    # add_button_write_to_read(GN)
 
-    # adding write to read button
-    add_button_clear_rendered(GN, os.path.dirname(fpath))
+    # # adding write to read button
+    # add_button_clear_rendered(GN, os.path.dirname(fpath))
 
     # Deadline tab.
-    add_deadline_tab(GN)
+    #add_deadline_tab(GN)
 
     # open the our Tab as default
-    GN[_NODE_TAB_NAME].setFlag(0)
+    #GN[_NODE_TAB_NAME].setFlag(0)
 
     # set tile color
     tile_color = _data.get("tile_color", "0xff0000ff")
@@ -1811,7 +1811,6 @@ def add_review_knob(node):
     '''
     if "review" not in node.knobs():
         knob = nuke.Boolean_Knob("review", "Review")
-        knob.setValue(True)
         node.addKnob(knob)
     return node
 

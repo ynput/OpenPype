@@ -19,7 +19,7 @@ class ValidateScriptAttributes(
     order = pyblish.api.ValidatorOrder + 0.1
     families = ["workfile"]
     label = "Validate script attributes"
-    hosts = ["nuke"]
+    hosts = []    # hornet: simpify comp publish
     optional = True
     actions = [RepairAction]
 

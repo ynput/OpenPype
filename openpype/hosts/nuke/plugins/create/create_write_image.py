@@ -47,7 +47,8 @@ class CreateWriteImage(napi.NukeWriteCreator):
     def _get_render_target_enum(self):
         rendering_targets = {
             "local": "Local machine rendering",
-            "frames": "Use existing frames"
+            "local_frames": "Use existing frames",
+            "a_frames_farm": "Use existing frames on farm"
         }
 
         return EnumDef(

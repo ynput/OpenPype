@@ -57,7 +57,7 @@ class ValidateNukeWriteNode(
     families = ["render"]
     label = "Validate write node"
     actions = [RepairNukeWriteNodeAction]
-    hosts = ["nuke"]
+    hosts = []
 
     def process(self, instance):
         if not self.is_active(instance.data):

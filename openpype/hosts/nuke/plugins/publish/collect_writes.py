@@ -12,7 +12,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin,
     order = pyblish.api.CollectorOrder + 0.0021
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
-    families = ["render", "prerender", "image"]
+    families = ["render", "prerender", "image","render.a_frames_farm"]
 
     # cache
     _write_nodes = {}
