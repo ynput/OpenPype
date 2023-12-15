@@ -153,11 +153,11 @@ class ExtractThumbnail(publish.Extractor):
                     )
                 )
 
-            if "reloadTextures" in preset["viewport_options"]:
+            if preset["viewport_options"].get("reloadTextures"):
                 lib.reload_all_udim_tile_previews()
 
             preset["viewport_options"].pop("reloadTextures", None)
-            if "textures" in preset["viewport_options"]:
+            if preset["viewport_options"].get("textures"):
                 with lib.material_loading_mode():
                     path = capture.capture(**preset)
             else:

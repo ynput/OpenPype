@@ -7,6 +7,7 @@ import capture
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api.exitstack import ExitStack
 
 from maya import cmds
 
@@ -199,37 +200,15 @@ class ExtractPlayblast(publish.Extractor):
             preset.update(panel_preset)
 
         # Need to ensure Python 2 compatibility.
-        # TODO: Remove once dropping Python 2.
-        if getattr(contextlib, "nested", None):
-            # Python 3 compatibility.
+        with ExitStack() as stack:
+            stack.enter_context(lib.maintained_time())
+            stack.enter_context(
+                panel_camera(instance.data["panel"], preset["camera"])
+            )
             if preset["viewport_options"].get("textures"):
-                # If capture includes textures then ensure material
-                # load mode is set to `immediate` to ensure all
-                # textures have loaded when playblast starts
-                with contextlib.nested(
-                    lib.maintained_time(),
-                    panel_camera(instance.data["panel"], preset["camera"]),
-                    lib.material_loading_mode()
-                ):
-                    self._capture(preset)
+                stack.enter_context(lib.material_loading_mode())
 
-            else:
-                with contextlib.nested(
-                    lib.maintained_time(),
-                    panel_camera(instance.data["panel"], preset["camera"])
-                ):
-                    self._capture(preset)
-        else:
-            # Python 2 compatibility.
-            with contextlib.ExitStack() as stack:
-                stack.enter_context(lib.maintained_time())
-                stack.enter_context(
-                    panel_camera(instance.data["panel"], preset["camera"])
-                )
-                if preset["viewport_options"].get("textures"):
-                    stack.enter_context(lib.material_loading_mode())
-
-                self._capture(preset)
+            self._capture(preset)
 
         # Restoring viewport options.
         if viewport_defaults:
