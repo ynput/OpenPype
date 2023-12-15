@@ -1,5 +1,4 @@
 import os
-
 import pyblish.api
 from openpype.pipeline import PublishValidationError
 from openpype.pipeline.publish import RepairAction
@@ -38,10 +37,13 @@ class ValidateSaverOutputExtension(pyblish.api.InstancePlugin):
     def repair(cls, instance):
         saver = instance.data["tool"]
         output_path = saver.Clip[1]
-        ext = get_file_extension(output_path)
-        output_path = output_path.replace(
-            f".{ext}", f".{instance.data['image_format']}"
-        )
+
+        root, old_extension = os.path.splitext(output_path)
+        new_extension = instance.data["image_format"]
+
+        new_output_path = f"{root}.{new_extension}"
+        saver.Clip[1] = new_output_path
+
         saver.SetData(
             "openpype.creator_attributes.image_format",
             instance.data["image_format"],
