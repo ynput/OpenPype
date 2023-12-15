@@ -1,11 +1,16 @@
 import os
 import pyblish.api
-from openpype.pipeline import PublishValidationError
+from openpype.pipeline import (
+    PublishValidationError,
+    OptionalPyblishPluginMixin,
+)
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.fusion.api.action import SelectInvalidAction
 
 
-class ValidateSaverOutputExtension(pyblish.api.InstancePlugin):
+class ValidateSaverOutputExtension(
+    pyblish.api.InstancePlugin, OptionalPyblishPluginMixin
+):
     """
     Validate Saver Output Extension matches Publish menu
 
