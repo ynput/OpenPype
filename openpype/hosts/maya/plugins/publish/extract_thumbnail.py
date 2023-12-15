@@ -161,7 +161,8 @@ class ExtractThumbnail(publish.Extractor):
                 with lib.material_loading_mode():
                     path = capture.capture(**preset)
             else:
-                self.log.debug("Reload Textures during playblasting is disabled.")
+                self.log.debug(
+                    "Reload Textures during playblasting is disabled.")
                 path = capture.capture(**preset)
 
             playblast = self._fix_playblast_output_path(path)
