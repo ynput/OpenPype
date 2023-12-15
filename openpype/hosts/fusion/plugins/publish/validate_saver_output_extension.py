@@ -27,8 +27,8 @@ class ValidateSaverOutputExtension(pyblish.api.InstancePlugin):
         if current_extension != expected_extension:
             raise PublishValidationError(
                 f"Instance {saver.Name} output image format does not match the current publish selection.\n\n"
-                f"Current: {current_ext}\n\n"
-                f"Expected: {expected_ext}\n\n"
+                f"Current: {current_extension}\n\n"
+                f"Expected: {expected_extension}\n\n"
                 "You can use the repair action to update this instance.",
                 title=self.label,
             )
