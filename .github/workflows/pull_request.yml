@@ -49,5 +49,6 @@ jobs:
         $awsCliPath = "C:\Program Files\Amazon\AWSCLIV2\aws.exe"
         cd build
         $sourcePath = $openpype_version
-        $destinationPath = "${{ vars.S3_BUCKET_WIN }}/pull-request/$openpype_version/"
+        $destinationPath = "${{ vars.S3_BUCKET }}/${{ vars.BUILDS }}/pull-request/$openpype_version/"
         & $awsCliPath s3 sync $sourcePath $destinationPath
+        echo "$sourcePath --> $destinationPath"
