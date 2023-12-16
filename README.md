@@ -7,6 +7,10 @@ OpenPype
 
 [![documentation](https://github.com/pypeclub/pype/actions/workflows/documentation.yml/badge.svg)](https://github.com/pypeclub/pype/actions/workflows/documentation.yml) ![GitHub VFX Platform](https://img.shields.io/badge/vfx%20platform-2022-lightgrey?labelColor=303846)
 
+## Important Notice!
+
+OpenPype as a standalone product has reach end of it's life and this repository is now used as a pipeline core code for [AYON](https://ynput.io/ayon/). You can read more details about the end of life process here https://community.ynput.io/t/openpype-end-of-life-timeline/877
+
 
 Introduction
 ------------
