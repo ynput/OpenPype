@@ -36,6 +36,12 @@ def prepare_scene_name(
     if namespace:
         name = f"{name}_{namespace}"
     name = f"{name}_{subset}"
+
+    # Blender name for a collection or object cannot be longer than 63
+    # characters. If the name is longer, it will raise an error.
+    if len(name) > 63:
+        raise ValueError(f"Asset name '{name}' is too long.")
+
     return name
 
 
