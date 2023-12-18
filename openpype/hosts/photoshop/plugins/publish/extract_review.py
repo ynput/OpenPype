@@ -170,8 +170,7 @@ class ExtractReview(publish.Extractor):
         # Generate mov.
         mov_path = os.path.join(staging_dir, "review.mov")
         self.log.info(f"Generate mov review: {mov_path}")
-        args = [
-            ffmpeg_path,
+        args = ffmpeg_path + [
             "-y",
             "-i", source_files_pattern,
             "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
