@@ -338,7 +338,7 @@
                     "Project": {
                         "type": "text",
                         "default": "",
-                        "required": false,
+                        "required": true,
                         "validate": "^(.*)$"
                     },
                     "Vendor": {
@@ -350,25 +350,25 @@
                     "Package": {
                         "type": "text",
                         "default": "",
-                        "required": false,
+                        "required": true,
                         "validate": "^(.*)$"
                     },
                     "Filename": {
                         "type": "text",
                         "default": "",
-                        "required": false,
-                        "validate": "^(.*)$"
+                        "required": true,
+                        "validate": "^([a-z0-9#._\\/]*)$"
                     },
                     "Context": {
                         "type": "text",
                         "default": "",
-                        "required": false,
-                        "validate": "^(.*)$"
+                        "required": true,
+                        "validate": "^([a-zA-Z0-9_]*)$"
                     },
                     "Task": {
                         "type": "text",
                         "default": "",
-                        "required": false,
+                        "required": true,
                         "validate": "^(.*)$"
                     },
                     "Version": {
