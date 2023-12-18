@@ -224,6 +224,7 @@ class ExtractReview(publish.Extractor):
             "stagingDir": staging_dir,
             "tags": ["thumbnail", "delete"]
         })
+        instance.data["thumbnailPath"] = thumbnail_path
 
     def _check_and_resize(self, processed_img_names, source_files_pattern,
                           staging_dir):
