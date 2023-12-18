@@ -58,7 +58,7 @@ class CreateSaverPluginModel(BaseSettingsModel):
 class CreatPluginsModel(BaseSettingsModel):
     CreateSaver: CreateSaverPluginModel = Field(
         default_factory=CreateSaverPluginModel,
-        title="Create Image Sequence Saver"
+        title="Create Render Saver"
     )
     CreateImageSaver: CreateSaverPluginModel = Field(
         default_factory=CreateSaverPluginModel,
