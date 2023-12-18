@@ -5,7 +5,7 @@
     pull into a scene.
 
     This one is used only as image describing content of published item and
-    shows up only in Loader or Server UI in right column section.
+        shows up only in Loader or WebUI.
 
     Possible sources of thumbnail paths (OR):
     - context.data.get("thumbnailPath")
