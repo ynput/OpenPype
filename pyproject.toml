@@ -43,7 +43,7 @@ arrow = "^0.17"
 shotgun_api3 = {git = "https://github.com/shotgunsoftware/python-api.git", rev = "v3.3.3"}
 gazu = "^0.9.3"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
-jsonschema = "^2.6.0"
+jsonschema = "^4"
 keyring = "^22.0.1"
 log4mongo = "^1.7"
 pathlib2= "^2.3.5" # deadline submit publish job only (single place, maybe not needed?)
@@ -73,6 +73,7 @@ dropbox = "^11.20.0"
 aiohttp-middlewares = "^2.0.0"
 Unidecode = "1.2.0"
 cryptography = "39.0.0"
+deal = "^4.0.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^6.0"
@@ -101,6 +102,8 @@ wheel = "*"
 enlighten = "*"  # cool terminal progress bars
 toml = "^0.10.2" # for parsing pyproject.toml
 pre-commit = "*"
+openassetio-traitgen = "*" # for generating traits from yaml definitions
+openassetio-mediacreation = "*" # for default media creation traits
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
@@ -109,7 +112,7 @@ pre-commit = "*"
 [[tool.poetry.source]]
 name = "openpype"
 url = "https://distribute.openpype.io/wheels/"
-secondary = true
+priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -167,7 +170,6 @@ hash = "4ac17c1f7de83465e6f51dd352d7117e07e765b66d00443257916c828e35b6ce"
 include = [
     "igniter",
     "openpype",
-    "repos",
     "vendor"
 ]
 exclude = [
@@ -178,6 +180,3 @@ ignore = ["website", "docs", ".git"]
 
 reportMissingImports = true
 reportMissingTypeStubs = false
-
-[tool.poetry.extras]
-docs = ["Sphinx", "furo", "sphinxcontrib-napoleon"]

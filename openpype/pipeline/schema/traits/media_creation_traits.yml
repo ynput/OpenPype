@@ -1,0 +1,896 @@
+# Thi is a YAML file that defines the traits and specifications that
+# are available to AYON. This is temporarily copied from the
+# OpenAssetIO-MediaCreation project, but once trait versioning
+# is implemented, this will be hopefully used from there.
+
+
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/OpenAssetIO/OpenAssetIO-TraitGen/main/python/openassetio_traitgen/schema.json
+# yamllint disable-line rule:document-start
+package: openassetio-mediacreation
+description: Well-known Traits and Specifications for use in OpenAssetIO
+  hosts and managers.
+traits:
+  usage:
+    description: >
+      Base traits that scope a trait set for use within a specific
+      context, such as resolution or relationship queries. Exactly
+      one of these should be included in any given Specification.
+    members:
+      Entity:
+        description: The trait set defines qualities of an entity.
+        usage:
+          - entity
+      Relationship:
+        description: >
+          The trait set defines a relationship between one or more
+          entities.
+        usage:
+          - relationship
+  color:
+    description: Traits related to chromatic information in entity data.
+    members:
+      OCIOColorManaged:
+        description: >
+          Color data is managed using the OpenColorIO color management
+          system.
+
+
+          https://opencolorio.readthedocs.io
+        usage:
+          - entity
+        properties:
+          colorspace:
+            description: >
+              An OCIO colorspace name available in the "current" OCIO context.
+            type: string
+  content:
+    description: Traits related to abstract content.
+    members:
+      LocatableContent:
+        description: >
+          This trait characterizes an entity whose data is persisted
+          externally to the API through data accessible via a valid
+          URL.
+
+
+          The `location` property holds the most applicable location
+          of the entity's content for the current process environment
+          - considering platform, host, etc. Location is in the form
+          of a URL.
+        usage:
+          - entity
+        properties:
+          location:
+            type: string
+            description: >
+              The location of the entity's external content.
+
+
+              This must be a valid URL, so special characters need to
+              be encoded accordingly.
+          mimeType:
+            type: string
+            description: >
+              The MIME type of the data referenced by the location
+              property.
+
+
+              See https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+          isTemplated:
+            type: boolean
+            description: >
+              The URL in the location property contains variables (post
+              decoding) that must be expanded before any loading is
+              attempted.
+
+
+              Variables use the OpenAssetIO syntax (eg:
+              "image.{frame:04d}.{view}.exr") see the OpenAssetIO
+              documentation for more details.
+
+
+              The following well-known variables are defined within the
+              MediaCreation ecosystem, and must be used where applicable
+              to any specific workflow:
+
+                - frame: An integer frame number for the current time.
+                - view: A string representing the current view (eg.
+                  "left").
+  application:
+    description: >
+      Traits that describe the usage or function of structured data,
+      that aren't strongly associated with any other more descriptive
+      namespace.
+    members:
+      Config:
+        description: >
+          The entity data represents the configuration of a system,
+          application or tool.
+        usage:
+          - entity
+      Manifest:
+        description: >
+          The entity data represents a list or other manifest of
+          associated entities or information.
+        usage:
+          - entity
+      Work:
+        description: >
+          The entity data is the product of some manual task or process,
+          that often defines how to produce or derive other data.
+
+
+          Common examples are the documents opened, worked on and saved
+          by artists using DCC tools to create models/images/etc.
+  identity:
+    description: Traits that aid the identification of an entity.
+    members:
+      DisplayName:
+        description: >
+          Names that can be presented to a user in order to identify
+          and/or disambiguate the entity. These strings are potentially
+          unstable and should not be used as a UUID or other persistent
+          anchor.
+        usage:
+          - entity
+        properties:
+          name:
+            type: string
+            description: >
+              The humanized name of entity itself, not including any
+              hierarchy or classification.
+
+
+              For example:
+              - `"Cuttlefish v1"` - for a version of an asset
+              - `"seq003"` - for a sequence in a hierarchy
+
+          qualifiedName:
+            type: string
+            description: >
+              An unambiguous, humanized name for the entity.
+
+
+              The display name may want to consider the host, and any other
+              relevant Context information to form a display name for an
+              entity that can uniquely identify the entity in that context.
+
+
+              For example:
+              - `"dive / build / cuttlefish / model / v1"` for a version
+                  of an asset in an 'open recent' menu.
+              - `"Sequence 003 [ Dive / Episode 1 ]"` for a sequence in
+                 a hierarchy as a window title.
+  imaging:
+    description: >
+      Traits that are concerned with entities related to the derivation
+      of an image from other source data.
+    members:
+      Camera:
+        description: >
+          The entity represents a device that captures a view through
+          re-projection or encoding into some other form.
+        usage:
+          - entity
+  metadata:
+    description: >
+      Traits that are concerned with describing additional data
+      associated with an entity that is not considered part of its
+      primary definition.
+    members:
+      ArbitraryMetadata:
+        description: >
+          Additional key/value pairs associated with the entity that
+          have no standardised definition of their values. This allows
+          extra data specific to any given use case or pipeline to be
+          conveyed through the Traits mechanism.
+
+
+          Hosts may propagate this data throughout their own data model
+          for use in downstream actions.
+
+
+          As there are no standardised keys, the low level TraitsData
+          API must be used to determine which keys/values are present.
+  threeDimensional:
+    description: >
+      Traits that are concerned with describing three-dimensional data,
+      such as models, scenes, cameras, lights, etc.
+    members:
+      Spatial:
+        description: >
+          A family trait that should be composed with more specific
+          traits for any entity that holds data described in three
+          dimensions.
+        usage:
+          - entity
+        properties:
+          upAxis:
+            type: string
+            description: >
+              The axis considered to point "up", legal values are: "y" or "z".
+
+
+              It is assumed that the "x" axis is always horizontal,
+              perpendicular to the depth axis. Consequently the depth
+              axis is always which ever of "y" or "z" that is not set as
+              the upAxis.
+          handedness:
+            type: string
+            description: >
+              Determines which direction positive depth is based on the
+              "left hand or right hand rule"
+
+              Legal values are "left" and "right"
+          metersPerUnit:
+            type: float
+            description: >
+              How many meters are represented by a linear unit in the
+              data.
+      Geometry:
+        description: >
+          The entity represents one or more "objects" within
+          three-dimensional space.
+        usage:
+          - entity
+      Lighting:
+        description: >
+          The entity represents scene or object lighting, which may be a
+          single light, a rig, or any other relevant construction.
+        usage:
+          - entity
+      Shader:
+        description: >
+          The entity represents a parameterised algorithm that is
+          evaluated during processing of a three-dimensional scene.
+        usage:
+          - entity
+      IESProfile:
+        description: >
+          The entity represent an IES lighting profile, as defined by
+          IES-LM-63, see:
+
+              https://store.ies.org/product/lm-63-19-approved-method-ies-standard-file-format-for-the-electronic-transfer-of-photometric-data-and-related-information
+      SourcePath:
+        description: >
+          Defines a singular path within the entity's scene
+          hierarchy that should be used as the root, ignoring any other
+          peer paths.
+
+          For example "/cameras/1103/camera"
+        usage:
+          - entity
+        properties:
+          path:
+            description: >
+              A forward slash (/) delimited path considered absolute
+              from the root of the entity's scene hierarchy.
+            type: string
+      SourcePaths:
+        description: >
+          Defines the root paths within the entity data that form the
+          start of a discrete hierarchy, labelled by the property key.
+
+
+          For example:
+            left: "/cameras/1103/camera/left"
+            right: "/cameras/1103/camera/right"
+
+
+          As there are no standardised keys, the low level TraitsData
+          API must be used to determine which keys/values are present.
+        usage:
+          - entity
+  timeDomain:
+    description: >
+      Traits that are concerned with describing how data changes or is
+      parameterised over time.
+    members:
+      FrameRanged:
+        description: The data varies over a number of discrete frames.
+        usage:
+          - entity
+        properties:
+          startFrame:
+            description: >
+              The first frame covered by the entity data (inclusive).
+            type: integer
+          endFrame:
+            description: >
+              The last frame covered by the entity data (inclusive).
+            type: integer
+          inFrame:
+            description: >
+              The first frame to be used within startFrame/endFrame
+              (inclusive).
+            type: integer
+          outFrame:
+            description: >
+              The last frame to be used within startFrame/endFrame
+              (inclusive).
+            type: integer
+          framesPerSecond:
+            description: >
+              The number of frames that occur within one second.
+            type: float
+          step:
+            description: >
+              The interval between frames of the entity's data. A
+              startFrame of 21 and a step of 10 would indicate that the
+              entity data only covers frames 21, 31, 41, ...
+            type: integer
+      Static:
+        description: The data does not vary over time.
+        usage:
+          - entity
+  twoDimensional:
+    description: >
+      Traits that are concerned with describing two-dimensional data,
+      more colloquially known as 'images'.
+    members:
+      Image:
+        description: >
+          A family trait that should be composed with more specific
+          traits for any entity that holds two-dimensional data.
+        usage:
+          - entity
+      PixelBased:
+        description: >
+          Entity data is encoded in a pixel grid of two dimensions.
+          Also known as 'raster' data.
+
+
+          Note: Properties (or most likely traits) to describe overscan
+          and/or other cases where the data window differs, need to be
+          added once we have a more concrete definition of required
+          workflows.
+        properties:
+          displayWindowWidth:
+            description: >
+              The number of pixels in the width dimension before
+              pixel aspect ratio is taken into account. If the data
+              contains additional hidden pixels (overscan) then this
+              should not be included in this value.
+            type: integer
+          displayWindowHeight:
+            description: >
+              The number of pixels in the height dimension
+              before pixel aspect ratio is taken into account. If the
+              data contains additional hidden pixels (overscan) then
+              this should not be included in this value.
+            type: integer
+          pixelAspectRatio:
+            description: >
+              The aspect ratio of each pixel expressed as width divided
+              by height. The value represents how much the width of the
+              pixel should be stretched for display.
+            type: float
+        usage:
+          - entity
+      Planar:
+        description: >
+          The entity data contains a single sample for each data point
+          in the two dimensional width/height domain, such that the
+          resulting image lies on a plane.
+      Deep:
+        description: >
+          The entity data contains multiple depth samples for each data
+          point in the two dimensional width/height domain.
+        usage:
+          - entity
+  lifecycle:
+    description: >
+      Traits that are concerned with describing aspects of the life
+      cycle of an entity, such as versioning.
+    members:
+      Version:
+        description: >
+          Describes a specific version of an entity.
+
+
+          A version is defined as a revision or iteration of what is
+          otherwise the same logical entity. If supported by a manager,
+          versions are created when new data is published to an existing
+          entity. Not all managers may version all types of entity.
+
+
+          There is no requirement for version to be a singular atomic
+          series, managers may wish to support "meta versions", such as
+          'vLatest' or similar, or provide multiple parallel versioning
+          streams.
+
+
+          This trait can be used in several places:
+           - When resolved, the manager should provide information about
+             the version of the referenced entity. This trait should only
+             be imbued if the target entity is considered versioned by the
+             manager, and it can populate the stableTag property.
+           - When responding to managementPolicy for an entity trait set,
+             the manager should imbue this trait if that type of entity
+             is version managed by the manager (not all managers version
+             all types of entity).
+           - When used within a relationship query, this trait indicates
+             that the returned entities should be constrained to other
+             versions of the logical entity targeted by the reference.
+        usage:
+          - entity
+          - relationship
+          - managementPolicy
+        properties:
+          specifiedTag:
+            type: string
+            description: >
+              An unambiguous identifier (tag) for the specific version of
+              an entity targeted by a specific reference.
+
+
+              Examples of version tags include "1", "v2", "latest".
+
+
+              If the reference itself does not contain a version
+              specifier and relies on dynamic behaviour, this will be
+              set to a tag that produces equivalent behaviour. This can
+              then be used for user presentation or as a filter with a
+              relationship query.
+          stableTag:
+            type: string
+            description: >
+              The tag (see 'specifiedTag') targeted by the reference once
+              meta-versions or other dynamic behaviour is applied.
+
+
+              If, for example, references without an explicit version
+              yield the most recent, then this would be set to
+              the tag of that version. When referencing some other
+              semantic state (eg. approval), this would be set to the
+              tag of the concrete version that matches the specific
+              state.
+
+
+              Examples of stable version tags include "1", "v2".
+
+
+              This property should always be set when the Version trait
+              is imbued as part of a resolve response. If the entity is
+              not versioned, then the trait itself should not be imbued.
+      Stable:
+        description: >
+          Defines that the entity references returned from a
+          relationship query with this trait must be devoid of any
+          dynamic behaviour. This includes concepts such as
+          meta-versioning or context-specific variation that results
+          logically different data being supplied.
+
+
+          This is generally used to snapshot/bookmark specific
+          configurations to avoid temporal instability and/or ensure
+          processes are repeatable.
+
+
+          Note: This does not include variations such as regional
+          adaptation of the LocatableContent trait, where the underlying
+          data remains the same.
+        usage:
+          - relationship
+  managementPolicy:
+    description: Traits used in a Manager's managementPolicy response.
+    members:
+      Managed:
+        description: >
+          A trait indicating that the data matching the supplied trait set
+          is handled by the manager.
+
+
+          There are three possible policies determined by
+          applying/querying this trait:
+          * If the response is not imbued with this trait, then the
+            Manager has no interest in participating in the management of
+            entities that match the queried trait set, for either read or
+            write.
+          * If the response is imbued with this trait, but the "exclusive"
+            property is not set, or set to False, then the Manager would
+              like the opportunity to manage the data, but the user should
+              still be presented with standard Host UI for the type as an
+              option.
+            * If the "exclusive" property is set to true, then the Manager
+              takes exclusive control over data with the queried trait set,
+              and any standard host interfaces etc should be suppressed.
+        usage:
+          - managementPolicy
+        properties:
+          exclusive:
+            type: boolean
+            description: >
+              Determines if the manager exclusively handles data matching
+              the supplied trait set.
+
+
+              If True, then standard host controls should be disabled
+              in favour of manager delegated UI. For example, file system
+              browsers when determining where to load/save data.
+
+
+              If False, then standard host controls can be presented in
+              addition to any custom manager UI.
+  relationship:
+    description: Traits specific to qualities of a relationship.
+    members:
+      Singular:
+        description: >
+          The relationship should return at most one reference for each
+          input. Unless otherwise qualified, relationships are
+          considered one-to-many.
+        usage:
+          - relationship
+      Unbounded:
+        description: >
+          The relationship may return large numbers of results for each
+          input, and so must be used with the paged API methods, such as
+          Manager.getWithRelationshipPaged.
+        usage:
+          - relationship
+  representation:
+    description: >
+      Traits relating to alternate representations of what is otherwise
+      logically the same entity.
+    members:
+      Proxy:
+        description: >
+          An alternate scale/quality representation. In the case of
+          images, this is usually either a lower resolution, a reduced
+          quality encoding or a comnination of the two. For spatial data
+          this may be reduced spacial fedlity or number of points.
+        usage:
+          - entity
+          - relationship
+        properties:
+          scaleRatio:
+            type: float
+            description: >
+              The ratio of the representation's dimensions compared to
+              the original.
+          qualityRatio:
+            type: float
+            description: >
+              The ratio of the representation's quality compared to the
+              original.
+          label:
+            type: string
+            description: >
+              A short user-facing label that identifies the representation.
+              This should not be the Entity name.
+
+              e.g. "half", "mobile friendly"
+      Original:
+        description: >
+          The original canonical/source representation of the entity
+          from which other proxy representations may have been derived.
+        usage:
+          - entity
+          - relationship
+  auth:
+    description: Traits related to authentication and authorization.
+    members:
+      BearerToken:
+        description: >
+          This trait holds an authentication token that the manager may
+          pass to a back-end service.
+        usage:
+          - locale
+        properties:
+          token:
+            type: string
+            description: >
+              Contents of the token.
+  audio:
+    description: Traits related to sound.
+    members:
+      Audio:
+        description: >
+          A family trait that should be composed with more specific
+          traits for any entity that hold audio data.
+      SampleBased:
+        description: >
+          Audio that is encoded in a series of discrete time samples,
+          for some number of channels.
+specifications:
+  audio:
+    description: >
+      Specifications for commonly encountered sound data types.
+    members:
+      Audio:
+        description: >
+          Any entity that holds audio data
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: audio
+            name: Audio
+      SampledAudioResource:
+        description: >
+          Any entity that holds time-sampled audio data in an
+          independent resource.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: audio
+            name: Audio
+          - namespace: content
+            name: LocatableContent
+  application:
+    description: >
+      Specifications for entities that undertake specific functional roles.
+    members:
+      Workfile:
+        description: >
+          The entity is the product of some manual task or process,
+          that often defines how to produce or derive other data.
+
+
+          Common examples are the documents opened, worked on and saved
+          by artists using DCC tools to create models/images/etc.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: application
+            name: Work
+          - namespace: content
+            name: LocatableContent
+  threeDimensional:
+    description: >
+      Specifications for commonly encountered three-dimensional data types.
+    members:
+      Spatial:
+        description: >
+          Any entity that holds three-dimensional data.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: threeDimensional
+            name: Spatial
+      SceneResource:
+        description: >
+          Any entity that holds three-dimensional data in an independent
+          resource.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: threeDimensional
+            name: Spatial
+          - namespace: content
+            name: LocatableContent
+      SceneGeometryResource:
+        description: >
+          Any entity that holds three-dimensional data describing one or
+          more objects, in an independent resource.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: threeDimensional
+            name: Spatial
+          - namespace: threeDimensional
+            name: Geometry
+          - namespace: content
+            name: LocatableContent
+      SceneCameraResource:
+        description: >
+          Any entity that holds a digital representation of a camera, in
+          an independent resource.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: threeDimensional
+            name: Spatial
+          - namespace: imaging
+            name: Camera
+          - namespace: content
+            name: LocatableContent
+      SceneLightingResource:
+        description: >
+          Any entity that holds three-dimensional data describing scene
+          or object lighting, in an independent resource.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: threeDimensional
+            name: Spatial
+          - namespace: threeDimensional
+            name: Lighting
+          - namespace: content
+            name: LocatableContent
+      ShaderResource:
+        description: >
+          Any entity that holds a parameterised algorithm that is
+          evaluated during processing of a three-dimensional scene, in
+          an independent resource.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: threeDimensional
+            name: Spatial
+          - namespace: threeDimensional
+            name: Shader
+          - namespace: content
+            name: LocatableContent
+      IESProfileResource:
+        description: >
+          Any entity that holds an IES lighting profile, as defined by
+          IES-LM-63, in an independent resource. See:
+
+              https://store.ies.org/product/lm-63-19-approved-method-ies-standard-file-format-for-the-electronic-transfer-of-photometric-data-and-related-information
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: threeDimensional
+            name: Spatial
+          - namespace: threeDimensional
+            name: IESProfile
+          - namespace: content
+            name: LocatableContent
+
+  twoDimensional:
+    description: Specifications for commonly encountered image types.
+    members:
+      Image:
+        description: Any entity that holds two-dimensional data
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: twoDimensional
+            name: Image
+      BitmapImageResource:
+        description: >
+          Any entity that holds two-dimensional data as a pixel grid in
+          an independent resource.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: twoDimensional
+            name: Image
+          - namespace: twoDimensional
+            name: PixelBased
+          - namespace: content
+            name: LocatableContent
+      PlanarBitmapImageResource:
+        description: >
+          Any entity that holds two-dimensional data as a pixel grid
+          with a single sample per pixel, in an independent resource.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: twoDimensional
+            name: Image
+          - namespace: twoDimensional
+            name: PixelBased
+          - namespace: twoDimensional
+            name: Planar
+          - namespace: content
+            name: LocatableContent
+      DeepBitmapImageResource:
+        description: >
+          Any entity that holds two-dimensional data as a pixel grid
+          with multiple depth samples per pixel, in an independent
+          resource.
+        usage:
+          - entity
+        traitSet:
+          - namespace: usage
+            name: Entity
+          - namespace: twoDimensional
+            name: Image
+          - namespace: twoDimensional
+            name: PixelBased
+          - namespace: twoDimensional
+            name: Deep
+          - namespace: content
+            name: LocatableContent
+  lifecycle:
+    description:
+      Specifications that are concerned with describing aspects of the
+      life cycle of an entity, such as versioning.
+    members:
+      EntityVersionsRelationship:
+        description: >
+          A relationship between alternate versions of the same logical
+          entity. This may include unstable versions such as "latest".
+          Results will be ordered with the most relevant first. This
+          is usually reverse chronological order.
+        traitSet:
+          - namespace: usage
+            name: Relationship
+          - namespace: relationship
+            name: Unbounded
+          - namespace: lifecycle
+            name: Version
+        usage:
+          - relationship
+      StableEntityVersionsRelationship:
+        description: >
+          Retrieves references to alternate stable versions of the same
+          logical entity. This will not include unstable versions such
+          as "latest".
+        traitSet:
+          - namespace: usage
+            name: Relationship
+          - namespace: relationship
+            name: Unbounded
+          - namespace: lifecycle
+            name: Version
+          - namespace: lifecycle
+            name: Stable
+        usage:
+          - relationship
+      StableReferenceRelationship:
+        description: >
+          Retrieves a stable reference to the supplied entity that is
+          guaranteed to always point to that specific entity and version.
+
+
+          This will apply and remove any dynamic behaviour such as
+          "latest version" or other context-sensitive behaviour. The
+          result may be used as a persistent bookmark (such as in an
+          "open recent" menu), or to snapshot the specific entities used
+          by a process for archival.
+        traitSet:
+          - namespace: usage
+            name: Relationship
+          - namespace: relationship
+            name: Singular
+          - namespace: lifecycle
+            name: Stable
+        usage:
+          - relationship
+  representation:
+    description: >
+      Specifications for alternative presentations of a specific entity.
+    members:
+      OriginalRepresentationRelationship:
+        description: >
+          Defines the definitive representation of an entity.
+        usage:
+          - relationship
+        traitSet:
+          - namespace: usage
+            name: Relationship
+          - namespace: relationship
+            name: Singular
+          - namespace: representation
+            name: Original
+      ProxyRepresentationRelationship:
+        description: >
+          Defines alternative representations of an entity that depict
+          the same logical content, but at different quality or scale.
+        usage:
+          - relationship
+        traitSet:
+          - namespace: usage
+            name: Relationship
+          - namespace: representation
+            name: Proxy
