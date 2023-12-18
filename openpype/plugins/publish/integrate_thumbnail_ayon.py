@@ -7,12 +7,13 @@
     This one is used only as image describing content of published item and
         shows up only in Loader or WebUI.
 
-    Possible sources of thumbnail paths (OR):
-    - context.data.get("thumbnailPath")
-    (instance must have "published_representations")
-    - instance.data.get("thumbnailSource")
-    - instance.data.get("thumbnailPath")
-    - representation with 'thumbnail' name from "published_representations"
+    Instance must have 'published_representations' to
+        be able to integrate thumbnail.
+    Possible sources of thumbnail paths:
+    - instance.data["thumbnailPath"]
+    - representation with 'thumbnail' name in 'published_representations'
+    - context.data["thumbnailPath"]
+    
 
     (issue with last option is that we most likely don't want to integrate
     thumbnail, eg. store it DB. Integrated representation would be polluting
