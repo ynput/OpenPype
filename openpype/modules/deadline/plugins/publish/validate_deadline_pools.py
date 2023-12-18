@@ -34,7 +34,7 @@ class ValidateDeadlinePools(OptionalPyblishPluginMixin,
             return
 
         if not instance.data.get("farm"):
-            self.log.debug("Skipping local instance.")
+            self.log.info("Skipping local instance.")
             return
 
         deadline_url = self.get_deadline_url(instance)
