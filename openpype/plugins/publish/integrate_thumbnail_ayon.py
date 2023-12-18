@@ -15,9 +15,11 @@
     - context.data["thumbnailPath"]
     
 
-    (issue with last option is that we most likely don't want to integrate
-    thumbnail, eg. store it DB. Integrated representation would be polluting
-    Loaader (and DB) and its use is likely minimal.)
+    Notes:
+        Issue with 'thumbnail' representation is that we most likely don't
+            want to integrate it as representation. Integrated representation
+            is polluting Loader and database without real usage. That's why
+            they usually have 'delete' tag to skip the integration.
 
 """
 
