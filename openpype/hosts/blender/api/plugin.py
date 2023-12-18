@@ -226,7 +226,7 @@ class BaseCreator(Creator):
 
         # Create asset group
         if AYON_SERVER_ENABLED:
-            asset_name = instance_data["folderPath"]
+            asset_name = instance_data["folderPath"].split("/")[-1]
         else:
             asset_name = instance_data["asset"]
 
@@ -311,6 +311,8 @@ class BaseCreator(Creator):
                 or asset_name_key in changes.changed_keys
             ):
                 asset_name = data[asset_name_key]
+                if AYON_SERVER_ENABLED:
+                    asset_name = asset_name.split("/")[-1]
                 name = prepare_scene_name(
                     asset=asset_name, subset=data["subset"]
                 )
