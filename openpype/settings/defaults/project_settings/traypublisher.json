@@ -359,6 +359,12 @@
                         "required": true,
                         "validate": "^([a-z0-9#._\\/]*)$"
                     },
+                    "Thumbnail": {
+                        "type": "text",
+                        "default": "",
+                        "required": false,
+                        "validate": "^([a-z0-9#._\\/]*)$"
+                    },
                     "Context": {
                         "type": "text",
                         "default": "",
@@ -436,6 +442,18 @@
                         "default": 0,
                         "required": false,
                         "validate": "^(\\d{1,8})$|None"
+                    },
+                    "Head": {
+                        "type": "number",
+                        "default": 0,
+                        "required": false,
+                        "validate": "^(\\d)$|None"
+                    },
+                    "Tail": {
+                        "type": "number",
+                        "default": 0,
+                        "required": false,
+                        "validate": "^(\\d)$|None"
                     },
                     "Length": {
                         "type": "number",
