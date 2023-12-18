@@ -190,7 +190,7 @@ configuration in project settings.
                         new_instance.transient_data["representations"] = []
 
                     new_instance.transient_data["representations"].append(
-                        representation_data
+                        (repre_data["color"], representation_data)
                     )
 
                 # update instance data frame Start and End with representation
@@ -314,14 +314,6 @@ configuration in project settings.
             representation_data["frameStart"] = frame_start
         if frame_end:
             representation_data["frameEnd"] = frame_end
-
-        # set colorspace to representation data
-        # TODO: add this to publishing collector
-        # self.set_representation_colorspace(
-        #     representation_data,
-        #     context=context,
-        #     colorspace=repre_data["color"]
-        # )
 
         return representation_data
 

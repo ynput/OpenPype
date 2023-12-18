@@ -18,8 +18,16 @@ class CollectCSVIngestInstancesData(
 
     def process(self, instance):
         self.log.info(f"Collecting {instance.name}")
+        instance.data["representations"] = []
 
-        representations = instance.data["transientData"]["representations"]
-        instance.data["representations"] = representations
+        # expecting [(colorspace, repre_data), ...]
+        prepared_repres_data_items = instance.data["transientData"]["representations"]
+
+        for colorspace, repre_data in prepared_repres_data_items:
+            # colorspace name is passed from CSV column
+            self.set_representation_colorspace(
+                repre_data, instance.context, colorspace
+            )
+            instance.data["representations"].append(repre_data)
 
         self.log.debug(pformat(instance.data))
