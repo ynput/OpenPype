@@ -13,7 +13,6 @@
     - instance.data["thumbnailPath"]
     - representation with 'thumbnail' name in 'published_representations'
     - context.data["thumbnailPath"]
-    
 
     Notes:
         Issue with 'thumbnail' representation is that we most likely don't
