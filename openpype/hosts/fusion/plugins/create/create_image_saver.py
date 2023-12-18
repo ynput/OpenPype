@@ -6,6 +6,10 @@ class CreateImageSaver(GenericCreateSaver):
 
      Created to explicitly separate single ('image') or
         multi frame('render) outputs.
+
+    This might be temporary creator until 'alias' functionality will be
+    implemented to limit creation of additional product types with similar, but
+    not the same workflows.
     """
     identifier = "io.openpype.creators.fusion.imagesaver"
     label = "Image (saver)"
