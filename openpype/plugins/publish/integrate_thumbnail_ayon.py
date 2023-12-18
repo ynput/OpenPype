@@ -5,7 +5,21 @@
     pull into a scene.
 
     This one is used only as image describing content of published item and
-    shows up only in Loader in right column section.
+        shows up only in Loader or WebUI.
+
+    Instance must have 'published_representations' to
+        be able to integrate thumbnail.
+    Possible sources of thumbnail paths:
+    - instance.data["thumbnailPath"]
+    - representation with 'thumbnail' name in 'published_representations'
+    - context.data["thumbnailPath"]
+
+    Notes:
+        Issue with 'thumbnail' representation is that we most likely don't
+            want to integrate it as representation. Integrated representation
+            is polluting Loader and database without real usage. That's why
+            they usually have 'delete' tag to skip the integration.
+
 """
 
 import os
