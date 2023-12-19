@@ -29,7 +29,7 @@
             "image_format": "exr"
         },
         "CreateImageSaver": {
-            "temp_rendering_path_template": "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}",
+            "temp_rendering_path_template": "{workdir}/renders/fusion/{subset}/{subset}.{ext}",
             "default_variants": [
                 "Main",
                 "Mask"
