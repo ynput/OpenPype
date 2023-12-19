@@ -61,9 +61,10 @@ class CollectColorspace(pyblish.api.InstancePlugin,
             return colorspace_data["colorspace"]
         else:
             raise KnownPublishError(
-                "Collecting of colorspace failed. used config is missing "
-                "colorspace type: '{}' .".format(colorspace_data["type"])
-                "Please contact your pipeline TD."
+                (
+                    "Collecting of colorspace failed. used config is missing "
+                    "colorspace type: '{}' . Please contact your pipeline TD."
+                ).format(colorspace_data['type'])
             )
 
     @classmethod
