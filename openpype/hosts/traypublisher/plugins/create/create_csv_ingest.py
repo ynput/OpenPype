@@ -403,6 +403,14 @@ configuration in project settings.
                 version = self._get_row_value_with_validation(
                     "Version", row)
 
+                # get Head row value
+                handle_start = self._get_row_value_with_validation(
+                    "Head", row)
+
+                # get Tail row value
+                handle_end = self._get_row_value_with_validation(
+                    "Tail", row)
+
                 pre_product_name = (
                     f"{task_name}{variant_name}{product_type}"
                     f"{version}".replace(" ", "").lower()
@@ -434,6 +442,8 @@ configuration in project settings.
                     csv_data[context_asset_name] = {
                         "asset_doc": asset_doc,
                         "vendor_name": row_vendor_name,
+                        "handle_start": handle_start,
+                        "handle_end": handle_end,
                         "products": {
                             pre_product_name: {
                                 "task_name": task_name,
@@ -515,14 +525,6 @@ configuration in project settings.
         # get End row value
         frame_end = self._get_row_value_with_validation(
             "End", row_data)
-
-        # get Head row value
-        handle_start = self._get_row_value_with_validation(
-            "Head", row_data)
-
-        # get Tail row value
-        handle_end = self._get_row_value_with_validation(
-            "Tail", row_data)
 
         frame_length = self._get_row_value_with_validation(
             "Length", row_data)
