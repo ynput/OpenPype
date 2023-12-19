@@ -153,16 +153,16 @@ class ExtractThumbnail(publish.Extractor):
                     )
                 )
 
-            if preset["viewport_options"].get("reloadTextures"):
-                lib.reload_all_udim_tile_previews()
-
-            preset["viewport_options"].pop("reloadTextures", None)
             if preset["viewport_options"].get("textures"):
                 with lib.material_loading_mode():
+                    if preset["viewport_options"].get("reloadTextures"):
+                        lib.reload_all_udim_tile_previews()
+                    preset["viewport_options"].pop("reloadTextures", None)
                     path = capture.capture(**preset)
             else:
                 self.log.debug(
                     "Reload Textures during playblasting is disabled.")
+                preset["viewport_options"].pop("reloadTextures", None)
                 path = capture.capture(**preset)
 
             playblast = self._fix_playblast_output_path(path)

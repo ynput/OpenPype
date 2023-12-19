@@ -45,13 +45,20 @@ class ExtractPlayblast(publish.Extractor):
                 )
             )
 
-        if preset["viewport_options"].get("reloadTextures"):
-            # Regenerate all UDIM tiles previews
-            lib.reload_all_udim_tile_previews()
-            # not supported by `capture`
-        preset["viewport_options"].pop("reloadTextures", None)
-        path = capture.capture(log=self.log, **preset)
-        self.log.debug("playblast path  {}".format(path))
+        if preset["viewport_options"].get("textures"):
+            with ExitStack() as stack:
+                stack.enter_context(lib.material_loading_mode())
+                if preset["viewport_options"].get("reloadTextures"):
+                    # Regenerate all UDIM tiles previews
+                    lib.reload_all_udim_tile_previews()
+                    # not supported by `capture`
+                preset["viewport_options"].pop("reloadTextures", None)
+                path = capture.capture(log=self.log, **preset)
+                self.log.debug("playblast path  {}".format(path))
+        else:
+            preset["viewport_options"].pop("reloadTextures", None)
+            path = capture.capture(log=self.log, **preset)
+            self.log.debug("playblast path  {}".format(path))
 
     def process(self, instance):
         self.log.debug("Extracting capture..")
@@ -205,9 +212,6 @@ class ExtractPlayblast(publish.Extractor):
             stack.enter_context(
                 panel_camera(instance.data["panel"], preset["camera"])
             )
-            if preset["viewport_options"].get("textures"):
-                stack.enter_context(lib.material_loading_mode())
-
             self._capture(preset)
 
         # Restoring viewport options.
