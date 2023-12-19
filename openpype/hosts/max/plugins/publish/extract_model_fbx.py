@@ -20,12 +20,9 @@ class ExtractModelFbx(publish.Extractor, OptionalPyblishPluginMixin):
         if not self.is_active(instance.data):
             return
 
-        self.log.debug("Extracting Geometry ...")
-
         stagingdir = self.staging_dir(instance)
         filename = "{name}.fbx".format(**instance.data)
         filepath = os.path.join(stagingdir, filename)
-        self.log.info("Writing FBX '%s' to '%s'" % (filepath, stagingdir))
 
         rt.FBXExporterSetParam("Animation", False)
         rt.FBXExporterSetParam("Cameras", False)
@@ -46,7 +43,6 @@ class ExtractModelFbx(publish.Extractor, OptionalPyblishPluginMixin):
                 using=rt.FBXEXP,
             )
 
-        self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
