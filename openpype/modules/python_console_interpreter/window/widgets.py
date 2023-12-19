@@ -415,7 +415,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         self._first_show = True
         self._splitter_size_ratio = None
         self._allow_save_registry = allow_save_registry
-        self._should_save_registry = False
+        self._registry_saved = True
 
         self._init_from_registry()
 
@@ -460,9 +460,10 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
     def save_registry(self):
         # Window was not showed
-        if not self._allow_save_registry or not self._should_save_registry:
+        if not self._allow_save_registry or self._registry_saved:
             return
 
+        self._registry_saved = True
         setting_registry = PythonInterpreterRegistry()
 
         setting_registry.set_item("width", self.width())
@@ -656,8 +657,8 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
     def showEvent(self, event):
         self._line_check_timer.start()
+        self._registry_saved = False
         super(PythonInterpreterWidget, self).showEvent(event)
-        self._should_save_registry = True
         # First show setup
         if self._first_show:
             self._first_show = False
@@ -683,6 +684,5 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
     def closeEvent(self, event):
         self.save_registry()
-        self._should_save_registry = False
         super(PythonInterpreterWidget, self).closeEvent(event)
         self._line_check_timer.stop()
