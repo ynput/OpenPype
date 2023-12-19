@@ -140,13 +140,17 @@ configuration in project settings.
                             comment = f"{intent}: {comment}"
 
                     extension = os.path.splitext(filepath)[-1]
+                    # INFO: mp4 representation doesn't have to have frameStart
+                    # and frameEnd columns
                     if extension in [".mp4"]:
                         continue
+
                     if not frame_start and repre_data["frameStart"]:
                         frame_start = repre_data["frameStart"]
                     if not frame_end and repre_data["frameEnd"]:
                         frame_end = repre_data["frameEnd"]
 
+                # for cases where no frame start and end columns are present
                 if not frame_start:
                     frame_start = asset_doc["data"]["frameStart"]
                 if not frame_end:
@@ -428,6 +432,7 @@ configuration in project settings.
                 if context_asset_name not in csv_data:
                     asset_doc = get_asset_by_name(
                         project_name, context_asset_name)
+
                     # make sure asset exists
                     if not asset_doc:
                         raise ValueError(
