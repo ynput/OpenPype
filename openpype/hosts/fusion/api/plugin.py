@@ -36,18 +36,6 @@ class GenericCreateSaver(NewCreator):
     def create(self, subset_name, instance_data, pre_create_data):
         self.pass_pre_attributes_to_instance(instance_data, pre_create_data)
 
-        instance_data.update(
-            {"id": "pyblish.avalon.instance", "subset": subset_name}
-        )
-
-        comp = get_current_comp()
-        with comp_lock_and_undo_chunk(comp):
-            args = (-32768, -32768)  # Magical position numbers
-            saver = comp.AddTool("Saver", *args)
-
-            self._update_tool_with_data(saver, data=instance_data)
-
-        # Register the CreatedInstance
         instance = CreatedInstance(
             family=self.family,
             subset_name=subset_name,
@@ -55,6 +43,14 @@ class GenericCreateSaver(NewCreator):
             creator=self,
         )
         data = instance.data_to_store()
+        comp = get_current_comp()
+        with comp_lock_and_undo_chunk(comp):
+            args = (-32768, -32768)  # Magical position numbers
+            saver = comp.AddTool("Saver", *args)
+
+            self._update_tool_with_data(saver, data=data)
+
+        # Register the CreatedInstance
         self._imprint(saver, data)
 
         # Insert the transient data
