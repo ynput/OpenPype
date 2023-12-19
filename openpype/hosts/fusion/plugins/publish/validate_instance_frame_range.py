@@ -7,7 +7,7 @@ class ValidateInstanceFrameRange(pyblish.api.InstancePlugin):
     """Validate instance frame range is within comp's global render range."""
 
     order = pyblish.api.ValidatorOrder
-    label = "Validate Filename Has Extension"
+    label = "Validate Frame Range"
     families = ["render", "image"]
     hosts = ["fusion"]
 
@@ -32,7 +32,7 @@ class ValidateInstanceFrameRange(pyblish.api.InstancePlugin):
                          " or use `Render (saver)` creator")
                 raise PublishValidationError(
                     title="Frame range outside of comp range",
-                    message="Image product type expects only single frame",
+                    message=desc,
                     description=desc
                 )
         if render_start < global_start or render_end > global_end:
