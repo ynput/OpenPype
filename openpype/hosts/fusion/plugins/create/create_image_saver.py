@@ -1,4 +1,7 @@
+from openpype.lib import NumberDef
+
 from openpype.hosts.fusion.api.plugin import GenericCreateSaver
+from openpype.hosts.fusion.api import get_current_comp
 
 
 class CreateImageSaver(GenericCreateSaver):
@@ -41,3 +44,29 @@ class CreateImageSaver(GenericCreateSaver):
         Created to explicitly separate single ('image') or
         multi frame('render) outputs.
         """
+
+    def get_pre_create_attr_defs(self):
+        """Settings for create page"""
+        attr_defs = [
+            self._get_render_target_enum(),
+            self._get_reviewable_bool(),
+            self._get_frame_int(),
+            self._get_image_format_enum(),
+        ]
+        return attr_defs
+
+    def _get_frame_int(self):
+        default_value = 1
+        comp = get_current_comp()
+
+        if comp:
+            comp_attrs = comp.GetAttrs()
+            default_value = comp_attrs["COMPN_GlobalStart"]
+
+        return NumberDef(
+            "frame",
+            default=default_value,
+            label="Frame",
+            tooltip="Set frame to be rendered, must be inside of global "
+                    "timeline range"
+        )
