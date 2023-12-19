@@ -1,5 +1,4 @@
 import os
-import json
 import contextlib
 
 import clique
@@ -8,6 +7,7 @@ import capture
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
 from openpype.hosts.maya.api.exitstack import ExitStack
+
 
 from maya import cmds
 
@@ -36,29 +36,6 @@ class ExtractPlayblast(publish.Extractor):
     optional = True
     capture_preset = {}
     profiles = None
-
-    def _capture(self, preset):
-        if os.environ.get("OPENPYPE_DEBUG") == "1":
-            self.log.debug(
-                "Using preset: {}".format(
-                    json.dumps(preset, indent=4, sort_keys=True)
-                )
-            )
-
-        if preset["viewport_options"].get("textures"):
-            with ExitStack() as stack:
-                stack.enter_context(lib.material_loading_mode())
-                if preset["viewport_options"].get("reloadTextures"):
-                    # Regenerate all UDIM tiles previews
-                    lib.reload_all_udim_tile_previews()
-                    # not supported by `capture`
-                preset["viewport_options"].pop("reloadTextures", None)
-                path = capture.capture(log=self.log, **preset)
-                self.log.debug("playblast path  {}".format(path))
-        else:
-            preset["viewport_options"].pop("reloadTextures", None)
-            path = capture.capture(log=self.log, **preset)
-            self.log.debug("playblast path  {}".format(path))
 
     def process(self, instance):
         self.log.debug("Extracting capture..")
@@ -212,7 +189,7 @@ class ExtractPlayblast(publish.Extractor):
             stack.enter_context(
                 panel_camera(instance.data["panel"], preset["camera"])
             )
-            self._capture(preset)
+            path = lib.capture_with_preset(preset)
 
         # Restoring viewport options.
         if viewport_defaults:

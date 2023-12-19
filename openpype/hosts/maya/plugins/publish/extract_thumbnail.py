@@ -1,9 +1,6 @@
 import os
 import glob
 import tempfile
-import json
-
-import capture
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
@@ -146,24 +143,7 @@ class ExtractThumbnail(publish.Extractor):
                 preset.update(panel_preset)
                 cmds.setFocus(panel)
 
-            if os.environ.get("OPENPYPE_DEBUG") == "1":
-                self.log.debug(
-                    "Using preset: {}".format(
-                        json.dumps(preset, indent=4, sort_keys=True)
-                    )
-                )
-
-            if preset["viewport_options"].get("textures"):
-                with lib.material_loading_mode():
-                    if preset["viewport_options"].get("reloadTextures"):
-                        lib.reload_all_udim_tile_previews()
-                    preset["viewport_options"].pop("reloadTextures", None)
-                    path = capture.capture(**preset)
-            else:
-                self.log.debug(
-                    "Reload Textures during playblasting is disabled.")
-                preset["viewport_options"].pop("reloadTextures", None)
-                path = capture.capture(**preset)
+            path = lib.capture_with_preset(preset)
 
             playblast = self._fix_playblast_output_path(path)
 

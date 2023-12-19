@@ -9,6 +9,8 @@ import re
 import json
 import logging
 import contextlib
+import capture
+from .exitstack import ExitStack
 from collections import OrderedDict, defaultdict
 from math import ceil
 from six import string_types
@@ -181,6 +183,32 @@ def reload_all_udim_tile_previews():
         for texture_file in texture_files:
             if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
                 cmds.ogs(regenerateUVTilePreview=texture_file)
+
+
+def capture_with_preset(preset):
+    if os.environ.get("OPENPYPE_DEBUG") == "1":
+        log.debug(
+            "Using preset: {}".format(
+                json.dumps(preset, indent=4, sort_keys=True)
+            )
+        )
+
+    if preset["viewport_options"].get("textures"):
+        with ExitStack() as stack:
+            stack.enter_context(material_loading_mode())
+            if preset["viewport_options"].get("reloadTextures"):
+                # Regenerate all UDIM tiles previews
+                reload_all_udim_tile_previews()
+                # not supported by `capture`
+            preset["viewport_options"].pop("reloadTextures", None)
+            path = capture.capture(log=self.log, **preset)
+            self.log.debug("playblast path  {}".format(path))
+    else:
+        preset["viewport_options"].pop("reloadTextures", None)
+        path = capture.capture(log=self.log, **preset)
+        self.log.debug("playblast path  {}".format(path))
+
+    return path
 
 
 @contextlib.contextmanager
