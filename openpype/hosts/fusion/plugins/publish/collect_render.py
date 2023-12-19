@@ -63,12 +63,16 @@ class CollectFusionRender(
             frame_start_handle = inst.data["frameStartHandle"]
             frame_end_handle = inst.data["frameEndHandle"]
 
+            label = inst.data["label"]
             if family == "image":
                 frame = inst.data["creator_attributes"].get("frame")
                 if not frame:
                     break
 
                 frame = int(frame)
+                label = label.replace(str(frame_start), str(frame))
+                label = label.replace(str(frame_end), str(frame))
+
                 frame_start = frame
                 frame_end = frame
                 frame_start_handle = frame
@@ -84,7 +88,7 @@ class CollectFusionRender(
                 version=version,
                 time="",
                 source=current_file,
-                label=inst.data["label"],
+                label=label,
                 subset=subset_name,
                 asset=inst.data["asset"],
                 task=task_name,
