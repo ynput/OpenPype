@@ -111,7 +111,7 @@ DEFAULT_VALUES = {
             "image_format": "exr"
         },
         "CreateImageSaver": {
-            "temp_rendering_path_template": "{workdir}/renders/fusion/{product[name]}/{product[name]}.{frame}.{ext}",
+            "temp_rendering_path_template": "{workdir}/renders/fusion/{product[name]}/{product[name]}.{ext}",
             "default_variants": [
                 "Main",
                 "Mask"
