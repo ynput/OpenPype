@@ -260,7 +260,7 @@ def _install_menu():
             "Create...",
             lambda: host_tools.show_publisher(
                 parent=(
-                    main_window if nuke.NUKE_VERSION_RELEASE >= 14 else None
+                    main_window if nuke.NUKE_VERSION_MAJOR >= 14 else None
                 ),
                 tab="create"
             )
@@ -271,7 +271,7 @@ def _install_menu():
             "Publish...",
             lambda: host_tools.show_publisher(
                 parent=(
-                    main_window if nuke.NUKE_VERSION_RELEASE >= 14 else None
+                    main_window if nuke.NUKE_VERSION_MAJOR >= 14 else None
                 ),
                 tab="publish"
             )

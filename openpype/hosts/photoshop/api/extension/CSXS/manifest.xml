@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<ExtensionManifest ExtensionBundleId="com.openpype.PS.panel" ExtensionBundleVersion="1.0.12" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest ExtensionBundleId="io.ynput.PS.panel" ExtensionBundleVersion="1.1.0" Version="7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.openpype.PS.panel" Version="1.0.1" />
+    <Extension Id="io.ynput.PS.panel" Version="1.0.1" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
@@ -16,7 +16,7 @@
     </RequiredRuntimeList>
   </ExecutionEnvironment>
   <DispatchInfoList>
-    <Extension Id="com.openpype.PS.panel">
+    <Extension Id="io.ynput.PS.panel">
       <DispatchInfo>
         <Resources>
           <MainPath>./index.html</MainPath>
@@ -32,7 +32,7 @@
 		</Lifecycle>
         <UI>
           <Type>Panel</Type>
-          <Menu>OpenPype</Menu>
+          <Menu>AYON</Menu>
           <Geometry>
             <Size>
               <Width>300</Width>
@@ -44,7 +44,7 @@
             </MaxSize>
           </Geometry>
           <Icons>
-            <Icon Type="Normal">./icons/avalon-logo-48.png</Icon>
+            <Icon Type="Normal">./icons/ayon_logo.png</Icon>
           </Icons>
         </UI>
       </DispatchInfo>
