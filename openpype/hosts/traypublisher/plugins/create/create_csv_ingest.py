@@ -178,18 +178,17 @@ configuration in project settings.
                 )
                 self._store_new_instance(new_instance)
 
-                if not new_instance.get("representations"):
-                    new_instance["representations"] = []
+
+                if not new_instance.get("prepared_data_for_repres"):
+                    new_instance["prepared_data_for_repres"] = []
 
                 for filepath, repre_data in representations.items():
                     # get representation data
                     representation_data = self._get_representation_data(
                         filepath, repre_data, staging_dir
                     )
-                    if not new_instance.transient_data.get("representations"):
-                        new_instance.transient_data["representations"] = []
 
-                    new_instance.transient_data["representations"].append(
+                    new_instance["prepared_data_for_repres"].append(
                         (repre_data["color"], representation_data)
                     )
 
@@ -199,7 +198,7 @@ configuration in project settings.
                 # frameEnd we can override asset_doc frameStart and frameEnd
                 repre_frame_start = None
                 repre_frame_end = None
-                for repre in new_instance.transient_data["representations"]:
+                for _, repre in new_instance["prepared_data_for_repres"]:
                     if repre.get("frameStart") and repre.get("frameEnd"):
                         repre_frame_start = repre["frameStart"]
                         repre_frame_end = repre["frameEnd"]
@@ -516,6 +515,14 @@ configuration in project settings.
         # get End row value
         frame_end = self._get_row_value_with_validation(
             "End", row_data)
+
+        # get Head row value
+        handle_start = self._get_row_value_with_validation(
+            "Head", row_data)
+
+        # get Tail row value
+        handle_end = self._get_row_value_with_validation(
+            "Tail", row_data)
 
         frame_length = self._get_row_value_with_validation(
             "Length", row_data)

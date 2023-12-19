@@ -12,16 +12,16 @@ class CollectCSVIngestInstancesData(
     """
 
     label = "Collect CSV Ingest instances data"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.1
     hosts = ["traypublisher"]
     families = ["csv"]
 
     def process(self, instance):
         self.log.info(f"Collecting {instance.name}")
-        instance.data["representations"] = []
 
         # expecting [(colorspace, repre_data), ...]
-        prepared_repres_data_items = instance.data["transientData"]["representations"]
+        prepared_repres_data_items = instance.data[
+            "prepared_data_for_repres"]
 
         for colorspace, repre_data in prepared_repres_data_items:
             # colorspace name is passed from CSV column
