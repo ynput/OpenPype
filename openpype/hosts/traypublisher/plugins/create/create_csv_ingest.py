@@ -171,6 +171,8 @@ configuration in project settings.
 
                     # recalculating framerange since handles are included in
                     # frameStart and frameEnd and also slate is included too
+                    # INFO: handles are expected to be included so they
+                    #   are taken out from frameStart and frameEnd
                     if frame_start and frame_end and not is_calculated:
                         # exclude handle only if any
                         if handle_start is not None:
@@ -180,7 +182,7 @@ configuration in project settings.
                             frame_start = frame_start + 1
                         # exclude handle only if any
                         if handle_end is not None:
-                            frame_end = frame_end + handle_end
+                            frame_end = frame_end - handle_end
 
                         is_calculated = True
 
