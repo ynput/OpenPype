@@ -129,8 +129,11 @@ configuration in project settings.
                 # published
                 frame_start = None
                 frame_end = None
+                handle_start = None
+                handle_end = None
                 comment = None
                 intent = None
+                is_calculated = False
                 for filepath, repre_data in product_data["representations"].items():  # noqa: E501
                     if not comment and repre_data["notes"]:
                         comment = repre_data["notes"]
@@ -145,16 +148,51 @@ configuration in project settings.
                     if extension in [".mp4"]:
                         continue
 
-                    if not frame_start and repre_data["frameStart"]:
+                    if (
+                        frame_start is None
+                        and repre_data["frameStart"] is not None
+                    ):
                         frame_start = repre_data["frameStart"]
-                    if not frame_end and repre_data["frameEnd"]:
+                    if (
+                        frame_end is None
+                        and repre_data["frameEnd"] is not None
+                    ):
                         frame_end = repre_data["frameEnd"]
+                    if (
+                        handle_start is None
+                        and repre_data["handleStart"] is not None
+                    ):
+                        handle_start = repre_data["handleStart"]
+                    if (
+                        handle_end is None
+                        and repre_data["handleEnd"] is not None
+                    ):
+                        handle_end = repre_data["handleEnd"]
+
+                    # recalculating framerange since handles are included in
+                    # frameStart and frameEnd and also slate is included too
+                    if frame_start and frame_end and not is_calculated:
+                        # exclude handle only if any
+                        if handle_start is not None:
+                            frame_start = frame_start + handle_start
+                        # also include slate frame if slate is True
+                        if repre_data["slate"]:
+                            frame_start = frame_start + 1
+                        # exclude handle only if any
+                        if handle_end is not None:
+                            frame_end = frame_end + handle_end
+
+                        is_calculated = True
 
                 # for cases where no frame start and end columns are present
                 if not frame_start:
                     frame_start = asset_doc["data"]["frameStart"]
                 if not frame_end:
                     frame_end = asset_doc["data"]["frameEnd"]
+                if handle_start is None:
+                    handle_start = asset_doc["data"]["handleStart"]
+                if handle_end is None:
+                    handle_end = asset_doc["data"]["handleEnd"]
 
                 # get representations from product data
                 representations = product_data["representations"]
@@ -172,6 +210,8 @@ configuration in project settings.
                     "user": vendor_name,
                     "frameStart": frame_start,
                     "frameEnd": frame_end,
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end,
                     "version": version,
                     "comment": comment,
                 }
@@ -181,7 +221,6 @@ configuration in project settings.
                     product_type, product_name, product_data, self
                 )
                 self._store_new_instance(new_instance)
-
 
                 if not new_instance.get("prepared_data_for_repres"):
                     new_instance["prepared_data_for_repres"] = []
@@ -196,35 +235,24 @@ configuration in project settings.
                         (repre_data["color"], representation_data)
                     )
 
-                # update instance data frame Start and End with representation
-                # this is for case when Start and End columns are missing
-                # since sequence representation will have frameStart and
-                # frameEnd we can override asset_doc frameStart and frameEnd
-                repre_frame_start = None
-                repre_frame_end = None
-                for _, repre in new_instance["prepared_data_for_repres"]:
-                    if repre.get("frameStart") and repre.get("frameEnd"):
-                        repre_frame_start = repre["frameStart"]
-                        repre_frame_end = repre["frameEnd"]
-                        break
+                # TODO: rework this code for use with thumbnail creation
+                # if repre_frame_start and repre_frame_end:
+                #     new_instance["frameStart"] = repre_frame_start
+                #     new_instance["frameEnd"] = repre_frame_end
 
-                if repre_frame_start and repre_frame_end:
-                    new_instance["frameStart"] = repre_frame_start
-                    new_instance["frameEnd"] = repre_frame_end
+                #     # for thumbnail creation
+                #     thumb_index = 0
+                #     if "slate" in repre_data and repre_data["slate"]:
+                #         thumb_index += 1
+                #     thumbnail_source = os.path.join(
+                #         repre["stagingDir"], repre["files"][thumb_index]
+                #     )
+                # else:
+                #     thumbnail_source = os.path.join(
+                #         repre["stagingDir"], repre["files"]
+                #     )
 
-                    # for thumbnail creation
-                    thumb_index = 0
-                    if "slate" in repre_data and repre_data["slate"]:
-                        thumb_index += 1
-                    thumbnail_source = os.path.join(
-                        repre["stagingDir"], repre["files"][thumb_index]
-                    )
-                else:
-                    thumbnail_source = os.path.join(
-                        repre["stagingDir"], repre["files"]
-                    )
-
-                new_instance["thumbnailSource"] = thumbnail_source
+                # new_instance["thumbnailSource"] = thumbnail_source
 
     def _get_representation_data(
         self, filepath, repre_data, staging_dir
@@ -407,14 +435,6 @@ configuration in project settings.
                 version = self._get_row_value_with_validation(
                     "Version", row)
 
-                # get Head row value
-                handle_start = self._get_row_value_with_validation(
-                    "Head", row)
-
-                # get Tail row value
-                handle_end = self._get_row_value_with_validation(
-                    "Tail", row)
-
                 pre_product_name = (
                     f"{task_name}{variant_name}{product_type}"
                     f"{version}".replace(" ", "").lower()
@@ -447,8 +467,6 @@ configuration in project settings.
                     csv_data[context_asset_name] = {
                         "asset_doc": asset_doc,
                         "vendor_name": row_vendor_name,
-                        "handle_start": handle_start,
-                        "handle_end": handle_end,
                         "products": {
                             pre_product_name: {
                                 "task_name": task_name,
@@ -531,6 +549,14 @@ configuration in project settings.
         frame_end = self._get_row_value_with_validation(
             "End", row_data)
 
+        # get Head row value
+        handle_start = self._get_row_value_with_validation(
+            "Head", row_data)
+
+        # get Tail row value
+        handle_end = self._get_row_value_with_validation(
+            "Tail", row_data)
+
         frame_length = self._get_row_value_with_validation(
             "Length", row_data)
 
@@ -542,10 +568,13 @@ configuration in project settings.
             "output": output,
             "slate": slate,
             "tags": tags_list,
-            "frameStart": int(frame_start) if frame_start else None,
-            "frameEnd": int(frame_end) if frame_end else None,
+            "frameStart": int(frame_start) if frame_start != None else None,
+            "frameEnd": int(frame_end) if frame_end != None else None,
+            "handleStart": int(handle_start) if handle_start != None else None,
+            "handleEnd": int(handle_end) if handle_end != None else None,
             "frameLength": int(frame_length) if frame_length else None,
         }
+
         return filename, representation_data
 
     def _get_row_value_with_validation(
