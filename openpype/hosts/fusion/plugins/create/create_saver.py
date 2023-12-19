@@ -120,8 +120,15 @@ class CreateSaver(NewCreator):
             return
 
         original_subset = tool.GetData("openpype.subset")
+        original_format = tool.GetData(
+            "openpype.creator_attributes.image_format"
+        )
+
         subset = data["subset"]
-        if original_subset != subset:
+        if (
+            original_subset != subset
+            or original_format != data["creator_attributes"]["image_format"]
+        ):
             self._configure_saver_tool(data, tool, subset)
 
     def _configure_saver_tool(self, data, tool, subset):
