@@ -232,37 +232,111 @@ configuration in project settings.
                 if not new_instance.get("prepared_data_for_repres"):
                     new_instance["prepared_data_for_repres"] = []
 
+                base_thumbnail_repre_data = {
+                    "name": "thumbnail",
+                    "ext": None,
+                    "files": None,
+                    "stagingDir": None,
+                    "stagingDir_persistent": True,
+                    "tags": ["thumbnail", "delete"],
+                }
+                # need to populate all thumbnails for all representations
+                # so we can check if unique thumbnail per representation
+                # is needed
+                thumbnails = [
+                    repre_data["thumbnailPath"]
+                    for repre_data in representations.values()
+                    if repre_data["thumbnailPath"]
+                ]
+                multiple_thumbnails = len(set(thumbnails)) > 1
+                explicit_output_name = None
+                thumbnails_processed = False
                 for filepath, repre_data in representations.items():
+                    # check if any review derivate tag is present
+                    reviewable = any(
+                        tag for tag in repre_data.get("tags", [])
+                        # tag can be `ftrackreview` or `review`
+                        if "review" in tag
+                    )
+                    # since we need to populate multiple thumbnails as
+                    # representation with outputName for ftrack instance
+                    # integrator is able to pair them with reviewable
+                    # representations
+                    if (
+                        thumbnails
+                        and multiple_thumbnails
+                        and reviewable
+                    ):
+                        # multiple unique thumbnails per representation
+                        explicit_output_name = repre_data["output"]
+                        relative_thumbnail_path = repre_data["thumbnailPath"]
+                        # representation might not have thumbnail path
+                        # so ignore this one
+                        if not relative_thumbnail_path:
+                            continue
+                        thumb_dir, thumb_file = \
+                            self._get_refactor_thumbnail_path(
+                                staging_dir, relative_thumbnail_path)
+                        filename, ext = os.path.splitext(thumb_file)
+                        thumbnail_repr_data = deepcopy(
+                            base_thumbnail_repre_data)
+                        thumbnail_repr_data.update({
+                            "name": "thumbnail_{}".format(filename),
+                            "ext": ext[1:],
+                            "files": thumb_file,
+                            "stagingDir": thumb_dir,
+                            "outputName": explicit_output_name,
+                        })
+                        new_instance["prepared_data_for_repres"].append(
+                            ("_thumbnail_", thumbnail_repr_data)
+                        )
+                    elif (
+                        thumbnails
+                        and not multiple_thumbnails
+                        and not thumbnails_processed
+                        or not reviewable
+                    ):
+                        # here we will use only one thumbnail for
+                        # all representations
+                        relative_thumbnail_path = repre_data["thumbnailPath"]
+                        if not relative_thumbnail_path:
+                            relative_thumbnail_path = thumbnails.pop()
+                        thumb_dir, thumb_file = \
+                            self._get_refactor_thumbnail_path(
+                                staging_dir, relative_thumbnail_path)
+                        _, ext = os.path.splitext(thumb_file)
+                        thumbnail_repr_data = deepcopy(
+                            base_thumbnail_repre_data)
+                        thumbnail_repr_data.update({
+                            "ext": ext[1:],
+                            "files": thumb_file,
+                            "stagingDir": thumb_dir
+                        })
+                        new_instance["prepared_data_for_repres"].append(
+                            ("_thumbnail_", thumbnail_repr_data)
+                        )
+                        thumbnails_processed = True
+
+
                     # get representation data
                     representation_data = self._get_representation_data(
-                        filepath, repre_data, staging_dir
+                        filepath, repre_data, staging_dir,
+                        explicit_output_name=explicit_output_name
                     )
 
                     new_instance["prepared_data_for_repres"].append(
                         (repre_data["color"], representation_data)
                     )
 
-                # TODO: rework this code for use with thumbnail creation
-                # if repre_frame_start and repre_frame_end:
-                #     new_instance["frameStart"] = repre_frame_start
-                #     new_instance["frameEnd"] = repre_frame_end
-
-                #     # for thumbnail creation
-                #     thumb_index = 0
-                #     if "slate" in repre_data and repre_data["slate"]:
-                #         thumb_index += 1
-                #     thumbnail_source = os.path.join(
-                #         repre["stagingDir"], repre["files"][thumb_index]
-                #     )
-                # else:
-                #     thumbnail_source = os.path.join(
-                #         repre["stagingDir"], repre["files"]
-                #     )
-
-                # new_instance["thumbnailSource"] = thumbnail_source
+    def _get_refactor_thumbnail_path(
+            self, staging_dir, relative_thumbnail_path):
+        thumbnail_abs_path = os.path.join(
+            staging_dir, relative_thumbnail_path)
+        return os.path.split(
+            thumbnail_abs_path)
 
     def _get_representation_data(
-        self, filepath, repre_data, staging_dir
+        self, filepath, repre_data, staging_dir, explicit_output_name=None
     ):
         """Get representation data"""
 
@@ -347,6 +421,9 @@ configuration in project settings.
                 "fps": 25,
                 "outputName": output,
             })
+
+        if explicit_output_name:
+            representation_data["outputName"] = explicit_output_name
 
         if frame_start:
             representation_data["frameStart"] = frame_start
@@ -515,6 +592,8 @@ configuration in project settings.
         # get Filename row value
         filename = self._get_row_value_with_validation(
             "Filename", row_data)
+        thumbnail_path = self._get_row_value_with_validation(
+            "Thumbnail", row_data)
         # get Version row value
         version = self._get_row_value_with_validation(
             "Version", row_data)
@@ -540,6 +619,7 @@ configuration in project settings.
         # convert tags value to list
         tags_list = copy(self.representation_config["default_tags"])
         if tags:
+            tags_list = []
             tags_delimiter = self.representation_config["tags_delimiter"]
             # strip spaces from tags
             if tags_delimiter in tags:
@@ -575,6 +655,7 @@ configuration in project settings.
             "output": output,
             "slate": slate,
             "tags": tags_list,
+            "thumbnailPath": thumbnail_path,
             "frameStart": (
                 int(frame_start) if frame_start is not None else None),
             "frameEnd": (

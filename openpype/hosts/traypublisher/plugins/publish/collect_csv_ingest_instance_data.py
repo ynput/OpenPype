@@ -24,10 +24,13 @@ class CollectCSVIngestInstancesData(
             "prepared_data_for_repres"]
 
         for colorspace, repre_data in prepared_repres_data_items:
-            # colorspace name is passed from CSV column
-            self.set_representation_colorspace(
-                repre_data, instance.context, colorspace
-            )
+            # only apply colorspace to those which are not marked as thumbnail
+            if colorspace != "_thumbnail_":
+                # colorspace name is passed from CSV column
+                self.set_representation_colorspace(
+                    repre_data, instance.context, colorspace
+                )
+
             instance.data["representations"].append(repre_data)
 
         self.log.debug(pformat(instance.data))
