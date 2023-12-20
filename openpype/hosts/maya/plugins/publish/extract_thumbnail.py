@@ -4,7 +4,6 @@ import tempfile
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
-from maya.cmds import cmds
 
 
 class ExtractThumbnail(publish.Extractor):
@@ -60,8 +59,7 @@ class ExtractThumbnail(publish.Extractor):
             "displayFilmPivot": False,
             "displayFilmOrigin": False,
             "overscan": 1.0,
-            }
-        )
+        })
         path = lib.render_capture_preset(preset)
 
         playblast = self._fix_playblast_output_path(path)
