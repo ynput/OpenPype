@@ -63,7 +63,7 @@ class ExtractThumbnail(publish.Extractor):
             "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),                # noqa
             }
         )
-        path = lib.playblast_capture(preset, instance)
+        path = lib.render_capture_preset(preset)
 
         playblast = self._fix_playblast_output_path(path)
 

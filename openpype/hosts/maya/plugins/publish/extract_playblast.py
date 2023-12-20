@@ -57,7 +57,7 @@ class ExtractPlayblast(publish.Extractor):
             instance, camera, path,
             start=start, end=end,
             capture_preset=capture_preset)
-        path = lib.playblast_capture(preset, instance)
+        path = lib.render_capture_preset(preset)
 
         collected_files = os.listdir(stagingdir)
         patterns = [clique.PATTERNS["frames"]]
