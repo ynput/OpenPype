@@ -570,11 +570,15 @@ configuration in project settings.
             "output": output,
             "slate": slate,
             "tags": tags_list,
-            "frameStart": int(frame_start) if frame_start != None else None,
-            "frameEnd": int(frame_end) if frame_end != None else None,
-            "handleStart": int(handle_start) if handle_start != None else None,
-            "handleEnd": int(handle_end) if handle_end != None else None,
-            "frameLength": int(frame_length) if frame_length else None,
+            "frameStart": (
+                int(frame_start) if frame_start is not None else None),
+            "frameEnd": (
+                int(frame_end) if frame_end is not None else None),
+            "handleStart": (
+                int(handle_start) if handle_start is not None else None),
+            "handleEnd": (
+                int(handle_end) if handle_end is not None else None),
+            "frameLength": int(frame_length) if frame_length else None
         }
 
         return filename, representation_data
