@@ -2912,8 +2912,6 @@ def load_capture_preset(data):
 
     """
 
-    import capture
-
     options = dict()
     viewport_options = dict()
     viewport2_options = dict()
