@@ -175,9 +175,7 @@ def maintained_selection():
 
 
 def reload_all_udim_tile_previews():
-    """Regenerate all UDIM tile preview in texture file
-    nodes during context
-    """
+    """Regenerate all UDIM tile preview in texture file"""
     texture_files = cmds.ls(type="file")
     if texture_files:
         for texture_file in texture_files:
@@ -188,6 +186,13 @@ def reload_all_udim_tile_previews():
 
 @contextlib.contextmanager
 def panel_camera(panel, camera):
+    """Set modelPanel's camera during the context.
+
+    Arguments:
+        panel (str): modelPanel name.
+        camera (str): camera name.
+
+    """
     original_camera = cmds.modelPanel(panel, query=True, camera=True)
     try:
         cmds.modelPanel(panel, edit=True, camera=camera)
@@ -196,36 +201,48 @@ def panel_camera(panel, camera):
         cmds.modelPanel(panel, edit=True, camera=original_camera)
 
 
-def playblast_capture(preset, instance):
-    """Function for playblast capturing with the preset options
+def render_capture_preset(preset):
+    """Capture playblast with a preset.
+
+    To generate the preset use `generate_capture_preset`.
 
     Args:
         preset (dict): preset options
-        instance (str): instance
 
     Returns:
-        _type_: _description_
+        str: Output path of `capture.capture`
     """
+
+    # Force a refresh at the start of the timeline
+    # TODO (Question): Why do we need to do this? What bug does it solve?
+    #   Is this for simulations?
+    cmds.refresh(force=True)
+    refresh_frame_int = int(cmds.playbackOptions(query=True, minTime=True))
+    cmds.currentTime(refresh_frame_int - 1, edit=True)
+    cmds.currentTime(refresh_frame_int, edit=True)
+
     if os.environ.get("OPENPYPE_DEBUG") == "1":
         log.debug(
             "Using preset: {}".format(
                 json.dumps(preset, indent=4, sort_keys=True)
             )
         )
+
+    # not supported by `capture` so we pop it off of the preset
+    reload_textures = preset["viewport_options"].pop("reloadTextures", True)
+
     with ExitStack() as stack:
         stack.enter_context(maintained_time())
-        stack.enter_context(panel_camera(
-            instance.data["panel"], preset["camera"]))
-        stack.enter_context(viewport_default_options(preset, instance))
+        stack.enter_context(panel_camera(preset["panel"], preset["camera"]))
+        stack.enter_context(viewport_default_options(preset))
         if preset["viewport_options"].get("textures"):
-            stack.enter_context(material_loading_mode())
-            if preset["viewport_options"].get("reloadTextures"):
+            # Force immediate texture loading when to ensure
+            # all textures have loaded before the playblast starts
+            stack.enter_context(material_loading_mode("immediate"))
+            if reload_textures:
                 # Regenerate all UDIM tiles previews
                 reload_all_udim_tile_previews()
-        # not supported by `capture`
-        preset["viewport_options"].pop("reloadTextures", None)
         path = capture.capture(log=self.log, **preset)
-        self.log.debug("playblast path  {}".format(path))
 
     return path
 
@@ -236,7 +253,7 @@ def generate_capture_preset(instance, camera, path,
     playblast capturing
 
     Args:
-        instance (str): instance
+        instance (pyblish.api.Instance): instance
         camera (str): review camera
         path (str): filepath
         start (int): frameStart
@@ -244,9 +261,20 @@ def generate_capture_preset(instance, camera, path,
         capture_preset (dict): capture preset
 
     Returns:
-        _type_: _description_
+        dict: Resulting preset
     """
     preset = load_capture_preset(data=capture_preset)
+
+    preset["camera"] = camera
+    preset["start_frame"] = start
+    preset["end_frame"] = end
+    preset["filename"] = path
+    preset["overwrite"] = True
+    preset["panel"] = instance.data["panel"]
+
+    # Disable viewer since we use the rendering logic for publishing
+    # We don't want to open the generated playblast in a viewer directly.
+    preset["viewer"] = False
 
     # "isolate_view" will already have been applied at creation, so we'll
     # ignore it here.
@@ -262,7 +290,6 @@ def generate_capture_preset(instance, camera, path,
     asset_height = asset_data.get("resolutionHeight")
     review_instance_width = instance.data.get("review_width")
     review_instance_height = instance.data.get("review_height")
-    preset["camera"] = camera
 
     # Tests if project resolution is set,
     # if it is a value other than zero, that value is
@@ -277,31 +304,6 @@ def generate_capture_preset(instance, camera, path,
     elif asset_width and asset_height:
         preset["width"] = asset_width
         preset["height"] = asset_height
-    preset["start_frame"] = start
-    preset["end_frame"] = end
-
-    # Enforce persisting camera depth of field
-    camera_options = preset.setdefault("camera_options", {})
-    camera_options["depthOfField"] = cmds.getAttr(
-        "{0}.depthOfField".format(camera))
-
-    preset["filename"] = path
-    preset["overwrite"] = True
-
-    cmds.refresh(force=True)
-
-    refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
-    cmds.currentTime(refreshFrameInt - 1, edit=True)
-    cmds.currentTime(refreshFrameInt, edit=True)
-
-    # Use displayLights setting from instance
-    key = "displayLights"
-    preset["viewport_options"][key] = instance.data[key]
-
-    # Override transparency if requested.
-    transparency = instance.data.get("transparency", 0)
-    if transparency != 0:
-        preset["viewport2_options"]["transparencyAlgorithm"] = transparency
 
     # Isolate view is requested by having objects in the set besides a
     # camera. If there is only 1 member it'll be the camera because we
@@ -309,17 +311,26 @@ def generate_capture_preset(instance, camera, path,
     if instance.data["isolate"] and len(instance.data["setMembers"]) > 1:
         preset["isolate"] = instance.data["setMembers"]
 
-    # Show/Hide image planes on request.
-    image_plane = instance.data.get("imagePlane", True)
-    if "viewport_options" in preset:
-        preset["viewport_options"]["imagePlane"] = image_plane
-    else:
-        preset["viewport_options"] = {"imagePlane": image_plane}
+    # Override camera options
+    # Enforce persisting camera depth of field
+    camera_options = preset.setdefault("camera_options", {})
+    camera_options["depthOfField"] = cmds.getAttr(
+        "{0}.depthOfField".format(camera)
+    )
 
-    # Force viewer to False in call to capture because we have our own
-    # viewer opening call to allow a signal to trigger between
-    # playblast and viewer
-    preset["viewer"] = False
+    # Use Pan/Zoom from instance data instead of from preset
+    preset.pop("pan_zoom", None)
+    preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
+
+    # Override viewport options by instance data
+    viewport_options = preset.setdefault("viewport_options", {})
+    viewport_options["displayLights"] = instance.data["displayLights"]
+    viewport_options["imagePlane"] = instance.data.get("imagePlane", True)
+
+    # Override transparency if requested.
+    transparency = instance.data.get("transparency", 0)
+    if transparency != 0:
+        preset["viewport2_options"]["transparencyAlgorithm"] = transparency
 
     # Update preset with current panel setting
     # if override_viewport_options is turned off
@@ -335,15 +346,16 @@ def generate_capture_preset(instance, camera, path,
 
 
 @contextlib.contextmanager
-def viewport_default_options(preset, instance):
-    # Disable Pan/Zoom.
-    pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
-    preset.pop("pan_zoom", None)
-    preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
+def viewport_default_options(preset):
+    """Context manager used by `render_capture_preset`.
 
+    We need to explicitly enable some viewport changes so the viewport is
+    refreshed ahead of playblasting.
+
+    """
+    # TODO: Clarify in the docstring WHY we need to set it ahead of
+    #  playblasting. What issues does it solve?
     viewport_defaults = {}
-    # Need to explicitly enable some viewport changes so the viewport is
-    # refreshed ahead of playblasting.
     try:
         keys = [
             "useDefaultMaterial",
@@ -355,24 +367,19 @@ def viewport_default_options(preset, instance):
         ]
         for key in keys:
             viewport_defaults[key] = cmds.modelEditor(
-                instance.data["panel"], query=True, **{key: True}
+                preset["panel"], query=True, **{key: True}
             )
             if preset["viewport_options"][key]:
                 cmds.modelEditor(
-                    instance.data["panel"], edit=True, **{key: True}
+                    preset["panel"], edit=True, **{key: True}
                 )
         yield
     finally:
         # Restoring viewport options.
         if viewport_defaults:
             cmds.modelEditor(
-                instance.data["panel"], edit=True, **viewport_defaults
+                preset["panel"], edit=True, **viewport_defaults
             )
-        try:
-            cmds.setAttr(
-                "{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
-        except RuntimeError:
-            self.log.warning("Cannot restore Pan/Zoom settings.")
 
 
 @contextlib.contextmanager
@@ -2891,7 +2898,7 @@ def bake_to_world_space(nodes,
     return world_space_nodes
 
 
-def load_capture_preset(data=None):
+def load_capture_preset(data):
     """Convert OpenPype Extract Playblast settings to `capture` arguments
 
     Input data is the settings from:
