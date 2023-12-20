@@ -195,16 +195,6 @@ def panel_camera(panel, camera):
         cmds.modelPanel(panel, edit=True, camera=original_camera)
 
 
-@contextlib.contextmanager
-def panel_camera(panel, camera):
-    original_camera = cmds.modelPanel(panel, query=True, camera=True)
-    try:
-        cmds.modelPanel(panel, edit=True, camera=camera)
-        yield
-    finally:
-        cmds.modelPanel(panel, edit=True, camera=original_camera)
-
-
 def capture_with_preset(preset, instance):
     """Function for playblast capturing with the preset options
 
