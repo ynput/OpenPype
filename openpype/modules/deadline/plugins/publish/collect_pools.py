@@ -1,17 +1,4 @@
 # -*- coding: utf-8 -*-
-"""Collect pools from instance or attributes, from Setting otherwise.
-
-Pools are used to control which DL workers could render the job.
-
-Pools might be set directly on the instance (set directly in DCC eg. Maya)
-or from Publisher attributes or from defaults from Settings.
-
-Publisher attributes could be shown even for local instances as visibility
-is driven by product type of the instance (which will be `render` most
-likely). (Might be resolved in the future and class attribute 'families' should
-be cleaned up.)
-
-"""
 import pyblish.api
 from openpype.lib import TextDef
 from openpype.pipeline.publish import OpenPypePyblishPluginMixin
@@ -19,7 +6,23 @@ from openpype.pipeline.publish import OpenPypePyblishPluginMixin
 
 class CollectDeadlinePools(pyblish.api.InstancePlugin,
                            OpenPypePyblishPluginMixin):
-    """Collect pools from instance or attributes, from Setting otherwise."""
+    """Collect pools from instance or Publisher attributes, from Setting
+    otherwise.
+
+    Pools are used to control which DL workers could render the job.
+
+    Pools might be set:
+    - directly on the instance (set directly in DCC)
+    - from Publisher attributes
+    - from defaults from Settings.
+
+    Publisher attributes could be shown even for instances that should be
+    rendered locally as visibility is driven by product type of the instance
+    (which will be `render` most likely).
+    (Might be resolved in the future and class attribute 'families' should
+    be cleaned up.)
+
+    """
 
     order = pyblish.api.CollectorOrder + 0.420
     label = "Collect Deadline Pools"
