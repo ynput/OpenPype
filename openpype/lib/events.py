@@ -312,27 +312,31 @@ class EventSystem(object):
     System wraps registered callbacks and triggered events into single object
     so it is possible to create mutltiple independent systems that have their
     topics and callbacks.
-
-
     """
+
+    default_order = 0
 
     def __init__(self):
         self._registered_callbacks = []
 
-    def add_callback(self, topic, callback):
+    def add_callback(self, topic, callback, order=None):
         """Register callback in event system.
 
         Args:
             topic (str): Topic for EventCallback.
             callback (Callable): Function or method that will be called
                 when topic is triggered.
+            order (Optional[int]): Order of callback. Lower number means
+                higher priority.
 
         Returns:
             EventCallback: Created callback object which can be used to
                 stop listening.
         """
 
-        callback = EventCallback(topic, callback)
+        if order is None:
+            order = self.default_order
+        callback = EventCallback(topic, callback, order)
         self._registered_callbacks.append(callback)
         return callback
 
@@ -375,14 +379,13 @@ class EventSystem(object):
             event (Event): Prepared event with topic and data.
         """
 
-        invalid_callbacks = []
-        for callback in self._registered_callbacks:
+        callbacks = tuple(sorted(
+            self._registered_callbacks, key=lambda x: x.order
+        ))
+        for callback in callbacks:
             callback.process_event(event)
             if not callback.is_ref_valid:
-                invalid_callbacks.append(callback)
-
-        for callback in invalid_callbacks:
-            self._registered_callbacks.remove(callback)
+                self._registered_callbacks.remove(callback)
 
     def emit_event(self, event):
         """Emit event object.
