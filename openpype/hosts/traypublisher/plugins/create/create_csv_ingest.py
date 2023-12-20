@@ -81,10 +81,15 @@ configuration in project settings.
             filename
         )
 
-        new_instance = CreatedInstance(
+        csv_instance = CreatedInstance(
             self.family, subset_name, instance_data, self
         )
-        self._store_new_instance(new_instance)
+        self._store_new_instance(csv_instance)
+
+        csv_instance["csvFileData"] = {
+            "filename": filename,
+            "staging_dir": staging_dir,
+        }
 
         # from special function get all data from csv file and convert them
         # to new instances
