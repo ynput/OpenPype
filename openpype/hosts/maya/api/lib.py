@@ -218,7 +218,7 @@ def playblast_capture(preset, instance):
             instance.data["panel"], preset["camera"]))
         stack.enter_context(viewport_default_options(preset, instance))
         if preset["viewport_options"].get("textures"):
-            material_loading_mode()
+            stack.enter_context(material_loading_mode())
             if preset["viewport_options"].get("reloadTextures"):
                 # Regenerate all UDIM tiles previews
                 reload_all_udim_tile_previews()
