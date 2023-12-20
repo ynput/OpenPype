@@ -60,7 +60,6 @@ class ExtractThumbnail(publish.Extractor):
             "displayFilmPivot": False,
             "displayFilmOrigin": False,
             "overscan": 1.0,
-            "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),                # noqa
             }
         )
         path = lib.render_capture_preset(preset)
