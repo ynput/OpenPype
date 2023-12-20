@@ -41,8 +41,8 @@ class CreateImageSaver(GenericCreateSaver):
         - tif
         - jpg
 
-        Created to explicitly separate single ('image') or
-        multi frame('render) outputs.
+        Created to explicitly separate single frame ('image') or
+        multi frame ('render') outputs.
         """
 
     def get_pre_create_attr_defs(self):
