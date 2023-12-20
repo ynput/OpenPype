@@ -145,12 +145,16 @@ class ExtractYetiRig(publish.Extractor):
             if resource["files"]:
                 for file in resource['files']:
                     src = file
-                    dst = os.path.join(image_search_path, os.path.basename(file))
+                    dst = os.path.join(
+                        image_search_path, os.path.basename(file))
                     instance.data['transfers'].append([src, dst])
             else:
                 for file in resource['source']:
-                    src = file if os.path.isabs(file) else os.path.abspath(file)
-                    dst = os.path.join(image_search_path, os.path.basename(file))
+                    src = (
+                        file if os.path.isabs(file) else os.path.abspath(file)
+                    )
+                    dst = os.path.join(
+                        image_search_path, os.path.basename(file))
                     instance.data['transfers'].append([src, dst])
 
             self.log.debug("adding transfer {} -> {}". format(src, dst))
