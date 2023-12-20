@@ -223,7 +223,8 @@ def capture_with_preset(preset, instance):
         )
     with ExitStack() as stack:
         stack.enter_context(maintained_time())
-        stack.enter_context(panel_camera(instance.data["panel"], preset["camera"]))
+        stack.enter_context(panel_camera(
+            instance.data["panel"], preset["camera"]))
         if preset["viewport_options"].get("textures"):
             stack.enter_context(material_loading_mode())
             if preset["viewport_options"].get("reloadTextures"):
@@ -240,6 +241,7 @@ def capture_with_preset(preset, instance):
 
     return path
 
+
 def get_presets(instance, camera, path, start, end, capture_preset):
     """Function for getting all the data of preset options for
     playblast capturing
@@ -255,133 +257,133 @@ def get_presets(instance, camera, path, start, end, capture_preset):
     Returns:
         _type_: _description_
     """
-        preset = load_capture_preset(data=capture_preset)
+    preset = load_capture_preset(data=capture_preset)
 
-        # "isolate_view" will already have been applied at creation, so we'll
-        # ignore it here.
-        preset.pop("isolate_view")
+    # "isolate_view" will already have been applied at creation, so we'll
+    # ignore it here.
+    preset.pop("isolate_view")
 
-        # Set resolution variables from capture presets
-        width_preset = capture_preset["Resolution"]["width"]
-        height_preset = capture_preset["Resolution"]["height"]
+    # Set resolution variables from capture presets
+    width_preset = capture_preset["Resolution"]["width"]
+    height_preset = capture_preset["Resolution"]["height"]
 
-        # Set resolution variables from asset values
-        asset_data = instance.data["assetEntity"]["data"]
-        asset_width = asset_data.get("resolutionWidth")
-        asset_height = asset_data.get("resolutionHeight")
-        review_instance_width = instance.data.get("review_width")
-        review_instance_height = instance.data.get("review_height")
-        preset["camera"] = camera
+    # Set resolution variables from asset values
+    asset_data = instance.data["assetEntity"]["data"]
+    asset_width = asset_data.get("resolutionWidth")
+    asset_height = asset_data.get("resolutionHeight")
+    review_instance_width = instance.data.get("review_width")
+    review_instance_height = instance.data.get("review_height")
+    preset["camera"] = camera
 
-        # Tests if project resolution is set,
-        # if it is a value other than zero, that value is
-        # used, if not then the asset resolution is
-        # used
-        if review_instance_width and review_instance_height:
-            preset["width"] = review_instance_width
-            preset["height"] = review_instance_height
-        elif width_preset and height_preset:
-            preset["width"] = width_preset
-            preset["height"] = height_preset
-        elif asset_width and asset_height:
-            preset["width"] = asset_width
-            preset["height"] = asset_height
-        preset["start_frame"] = start
-        preset["end_frame"] = end
+    # Tests if project resolution is set,
+    # if it is a value other than zero, that value is
+    # used, if not then the asset resolution is
+    # used
+    if review_instance_width and review_instance_height:
+        preset["width"] = review_instance_width
+        preset["height"] = review_instance_height
+    elif width_preset and height_preset:
+        preset["width"] = width_preset
+        preset["height"] = height_preset
+    elif asset_width and asset_height:
+        preset["width"] = asset_width
+        preset["height"] = asset_height
+    preset["start_frame"] = start
+    preset["end_frame"] = end
 
-        # Enforce persisting camera depth of field
-        camera_options = preset.setdefault("camera_options", {})
-        camera_options["depthOfField"] = cmds.getAttr(
-            "{0}.depthOfField".format(camera))
+    # Enforce persisting camera depth of field
+    camera_options = preset.setdefault("camera_options", {})
+    camera_options["depthOfField"] = cmds.getAttr(
+        "{0}.depthOfField".format(camera))
 
-        preset["filename"] = path
-        preset["overwrite"] = True
+    preset["filename"] = path
+    preset["overwrite"] = True
 
-        cmds.refresh(force=True)
+    cmds.refresh(force=True)
 
-        refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
-        cmds.currentTime(refreshFrameInt - 1, edit=True)
-        cmds.currentTime(refreshFrameInt, edit=True)
+    refreshFrameInt = int(cmds.playbackOptions(q=True, minTime=True))
+    cmds.currentTime(refreshFrameInt - 1, edit=True)
+    cmds.currentTime(refreshFrameInt, edit=True)
 
-        # Use displayLights setting from instance
-        key = "displayLights"
-        preset["viewport_options"][key] = instance.data[key]
+    # Use displayLights setting from instance
+    key = "displayLights"
+    preset["viewport_options"][key] = instance.data[key]
 
-        # Override transparency if requested.
-        transparency = instance.data.get("transparency", 0)
-        if transparency != 0:
-            preset["viewport2_options"]["transparencyAlgorithm"] = transparency
+    # Override transparency if requested.
+    transparency = instance.data.get("transparency", 0)
+    if transparency != 0:
+        preset["viewport2_options"]["transparencyAlgorithm"] = transparency
 
-        # Isolate view is requested by having objects in the set besides a
-        # camera. If there is only 1 member it'll be the camera because we
-        # validate to have 1 camera only.
-        if instance.data["isolate"] and len(instance.data["setMembers"]) > 1:
-            preset["isolate"] = instance.data["setMembers"]
+    # Isolate view is requested by having objects in the set besides a
+    # camera. If there is only 1 member it'll be the camera because we
+    # validate to have 1 camera only.
+    if instance.data["isolate"] and len(instance.data["setMembers"]) > 1:
+        preset["isolate"] = instance.data["setMembers"]
 
-        # Show/Hide image planes on request.
-        image_plane = instance.data.get("imagePlane", True)
-        if "viewport_options" in preset:
-            preset["viewport_options"]["imagePlane"] = image_plane
-        else:
-            preset["viewport_options"] = {"imagePlane": image_plane}
+    # Show/Hide image planes on request.
+    image_plane = instance.data.get("imagePlane", True)
+    if "viewport_options" in preset:
+        preset["viewport_options"]["imagePlane"] = image_plane
+    else:
+        preset["viewport_options"] = {"imagePlane": image_plane}
 
-        # Disable Pan/Zoom.
-        pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
-        preset.pop("pan_zoom", None)
-        preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
+    # Disable Pan/Zoom.
+    pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
+    preset.pop("pan_zoom", None)
+    preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
 
-        # Need to explicitly enable some viewport changes so the viewport is
-        # refreshed ahead of playblasting.
-        keys = [
-            "useDefaultMaterial",
-            "wireframeOnShaded",
-            "xray",
-            "jointXray",
-            "backfaceCulling",
-            "textures"
-        ]
-        viewport_defaults = {}
-        for key in keys:
-            viewport_defaults[key] = cmds.modelEditor(
-                instance.data["panel"], query=True, **{key: True}
+    # Need to explicitly enable some viewport changes so the viewport is
+    # refreshed ahead of playblasting.
+    keys = [
+        "useDefaultMaterial",
+        "wireframeOnShaded",
+        "xray",
+        "jointXray",
+        "backfaceCulling",
+        "textures"
+    ]
+    viewport_defaults = {}
+    for key in keys:
+        viewport_defaults[key] = cmds.modelEditor(
+            instance.data["panel"], query=True, **{key: True}
+        )
+        if preset["viewport_options"][key]:
+            cmds.modelEditor(
+                instance.data["panel"], edit=True, **{key: True}
             )
-            if preset["viewport_options"][key]:
-                cmds.modelEditor(
-                    instance.data["panel"], edit=True, **{key: True}
-                )
 
-        override_viewport_options = (
-            capture_preset["Viewport Options"]["override_viewport_options"]
+    override_viewport_options = (
+        capture_preset["Viewport Options"]["override_viewport_options"]
+    )
+
+    # Force viewer to False in call to capture because we have our own
+    # viewer opening call to allow a signal to trigger between
+    # playblast and viewer
+    preset["viewer"] = False
+
+    # Update preset with current panel setting
+    # if override_viewport_options is turned off
+    if not override_viewport_options:
+        panel_preset = capture.parse_view(instance.data["panel"])
+        panel_preset.pop("camera")
+        preset.update(panel_preset)
+
+    path = capture_with_preset(
+        preset, instance)
+
+    # Restoring viewport options.
+    if viewport_defaults:
+        cmds.modelEditor(
+            instance.data["panel"], edit=True, **viewport_defaults
         )
 
-        # Force viewer to False in call to capture because we have our own
-        # viewer opening call to allow a signal to trigger between
-        # playblast and viewer
-        preset["viewer"] = False
+    try:
+        cmds.setAttr(
+            "{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
+    except RuntimeError:
+        self.log.warning("Cannot restore Pan/Zoom settings.")
 
-        # Update preset with current panel setting
-        # if override_viewport_options is turned off
-        if not override_viewport_options:
-            panel_preset = capture.parse_view(instance.data["panel"])
-            panel_preset.pop("camera")
-            preset.update(panel_preset)
-
-        path = capture_with_preset(
-            preset, instance)
-
-        # Restoring viewport options.
-        if viewport_defaults:
-            cmds.modelEditor(
-                instance.data["panel"], edit=True, **viewport_defaults
-            )
-
-        try:
-            cmds.setAttr(
-                "{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
-        except RuntimeError:
-            self.log.warning("Cannot restore Pan/Zoom settings.")
-
-        return preset
+    return preset
 
 
 @contextlib.contextmanager
