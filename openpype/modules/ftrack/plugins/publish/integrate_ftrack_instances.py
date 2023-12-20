@@ -354,6 +354,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             if (
                 not self.keep_first_subset_name_for_review
                 and extended_asset_name
+                and multiple_reviewable
             ):
                 other_item["asset_data"]["name"] = extended_asset_name
 
