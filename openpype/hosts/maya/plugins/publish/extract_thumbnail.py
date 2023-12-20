@@ -4,6 +4,7 @@ import tempfile
 
 from openpype.pipeline import publish
 from openpype.hosts.maya.api import lib
+from maya.cmds import cmds
 
 
 class ExtractThumbnail(publish.Extractor):
@@ -43,11 +44,26 @@ class ExtractThumbnail(publish.Extractor):
         path = os.path.join(dst_staging, filename)
 
         self.log.debug("Outputting images to %s" % path)
-        preset = lib.get_presets(
+
+        preset = lib.generate_capture_preset(
             instance, camera, path,
             start=1, end=1,
             capture_preset=capture_preset)
-        path = lib.capture_with_preset(preset, instance)
+
+        preset["camera_options"].update({
+                "displayGateMask": False,
+                "displayResolution": False,
+                "displayFilmGate": False,
+                "displayFieldChart": False,
+                "displaySafeAction": False,
+                "displaySafeTitle": False,
+                "displayFilmPivot": False,
+                "displayFilmOrigin": False,
+                "overscan": 1.0,
+                "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),
+            }
+        )
+        path = lib.playblast_capture(preset, instance)
 
         playblast = self._fix_playblast_output_path(path)
 

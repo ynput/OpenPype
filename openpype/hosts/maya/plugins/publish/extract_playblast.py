@@ -53,11 +53,11 @@ class ExtractPlayblast(publish.Extractor):
         self.log.debug("Outputting images to %s" % path)
         # get cameras
         camera = instance.data["review_camera"]
-        preset = lib.get_presets(
+        preset = lib.generate_capture_preset(
             instance, camera, path,
             start=start, end=end,
             capture_preset=capture_preset)
-        path = lib.capture_with_preset(preset, instance)
+        path = lib.playblast_capture(preset, instance)
 
         collected_files = os.listdir(stagingdir)
         patterns = [clique.PATTERNS["frames"]]

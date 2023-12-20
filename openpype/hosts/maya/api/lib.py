@@ -195,7 +195,7 @@ def panel_camera(panel, camera):
         cmds.modelPanel(panel, edit=True, camera=original_camera)
 
 
-def capture_with_preset(preset, instance):
+def playblast_capture(preset, instance):
     """Function for playblast capturing with the preset options
 
     Args:
@@ -215,24 +215,22 @@ def capture_with_preset(preset, instance):
         stack.enter_context(maintained_time())
         stack.enter_context(panel_camera(
             instance.data["panel"], preset["camera"]))
+        stack.enter_context(viewport_default_options(preset, instance))
         if preset["viewport_options"].get("textures"):
-            stack.enter_context(material_loading_mode())
+            material_loading_mode()
             if preset["viewport_options"].get("reloadTextures"):
                 # Regenerate all UDIM tiles previews
                 reload_all_udim_tile_previews()
-                # not supported by `capture`
-            preset["viewport_options"].pop("reloadTextures", None)
-            path = capture.capture(log=self.log, **preset)
-            self.log.debug("playblast path  {}".format(path))
-        else:
-            preset["viewport_options"].pop("reloadTextures", None)
-            path = capture.capture(log=self.log, **preset)
-            self.log.debug("playblast path  {}".format(path))
+        # not supported by `capture`
+        preset["viewport_options"].pop("reloadTextures", None)
+        path = capture.capture(log=self.log, **preset)
+        self.log.debug("playblast path  {}".format(path))
 
     return path
 
 
-def get_presets(instance, camera, path, start, end, capture_preset):
+def generate_capture_preset(instance, camera, path,
+                            start=None, end=None, capture_preset={}):
     """Function for getting all the data of preset options for
     playblast capturing
 
@@ -317,35 +315,6 @@ def get_presets(instance, camera, path, start, end, capture_preset):
     else:
         preset["viewport_options"] = {"imagePlane": image_plane}
 
-    # Disable Pan/Zoom.
-    pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
-    preset.pop("pan_zoom", None)
-    preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
-
-    # Need to explicitly enable some viewport changes so the viewport is
-    # refreshed ahead of playblasting.
-    keys = [
-        "useDefaultMaterial",
-        "wireframeOnShaded",
-        "xray",
-        "jointXray",
-        "backfaceCulling",
-        "textures"
-    ]
-    viewport_defaults = {}
-    for key in keys:
-        viewport_defaults[key] = cmds.modelEditor(
-            instance.data["panel"], query=True, **{key: True}
-        )
-        if preset["viewport_options"][key]:
-            cmds.modelEditor(
-                instance.data["panel"], edit=True, **{key: True}
-            )
-
-    override_viewport_options = (
-        capture_preset["Viewport Options"]["override_viewport_options"]
-    )
-
     # Force viewer to False in call to capture because we have our own
     # viewer opening call to allow a signal to trigger between
     # playblast and viewer
@@ -353,27 +322,56 @@ def get_presets(instance, camera, path, start, end, capture_preset):
 
     # Update preset with current panel setting
     # if override_viewport_options is turned off
+    override_viewport_options = (
+        capture_preset["Viewport Options"]["override_viewport_options"]
+    )
     if not override_viewport_options:
         panel_preset = capture.parse_view(instance.data["panel"])
         panel_preset.pop("camera")
         preset.update(panel_preset)
 
-    path = capture_with_preset(
-        preset, instance)
-
-    # Restoring viewport options.
-    if viewport_defaults:
-        cmds.modelEditor(
-            instance.data["panel"], edit=True, **viewport_defaults
-        )
-
-    try:
-        cmds.setAttr(
-            "{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
-    except RuntimeError:
-        self.log.warning("Cannot restore Pan/Zoom settings.")
-
     return preset
+
+
+@contextlib.contextmanager
+def viewport_default_options(preset, instance):
+    # Disable Pan/Zoom.
+    pan_zoom = cmds.getAttr("{}.panZoomEnabled".format(preset["camera"]))
+    preset.pop("pan_zoom", None)
+    preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
+
+    viewport_defaults = {}
+    # Need to explicitly enable some viewport changes so the viewport is
+    # refreshed ahead of playblasting.
+    try:
+        keys = [
+            "useDefaultMaterial",
+            "wireframeOnShaded",
+            "xray",
+            "jointXray",
+            "backfaceCulling",
+            "textures"
+        ]
+        for key in keys:
+            viewport_defaults[key] = cmds.modelEditor(
+                instance.data["panel"], query=True, **{key: True}
+            )
+            if preset["viewport_options"][key]:
+                cmds.modelEditor(
+                    instance.data["panel"], edit=True, **{key: True}
+                )
+        yield
+    finally:
+        # Restoring viewport options.
+        if viewport_defaults:
+            cmds.modelEditor(
+                instance.data["panel"], edit=True, **viewport_defaults
+            )
+        try:
+            cmds.setAttr(
+                "{}.panZoomEnabled".format(preset["camera"]), pan_zoom)
+        except RuntimeError:
+            self.log.warning("Cannot restore Pan/Zoom settings.")
 
 
 @contextlib.contextmanager
