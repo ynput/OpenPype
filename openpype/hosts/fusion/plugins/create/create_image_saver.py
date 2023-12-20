@@ -23,14 +23,11 @@ class CreateImageSaver(GenericCreateSaver):
     def get_detail_description(self):
         return """Fusion Saver to generate single image.
 
-        This creator is expected for publishing of image sequences for 'render'
-        product type. (But can publish even single frame 'render'.
+        This creator is expected for publishing of single frame `image` product
+        type.
 
-        Select what should be source of rendered image:
-        (select only single frame):
-        - "Current asset context" - values set on Asset in DB (Ftrack)
-        - "From render in/out" - from node itself
-        - "From composition timeline" - from timeline
+        Artist should provide frame number (integer) to specify which frame
+        should be published. It must be inside of global timeline frame range.
 
         Supports local and deadline rendering.
 
