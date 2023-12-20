@@ -291,10 +291,10 @@ def generate_capture_preset(instance, camera, path,
     review_instance_width = instance.data.get("review_width")
     review_instance_height = instance.data.get("review_height")
 
-    # Tests if project resolution is set,
-    # if it is a value other than zero, that value is
-    # used, if not then the asset resolution is
-    # used
+    # Use resolution from instance if review width/height is set
+    # Otherwise use the resolution from preset if it has non-zero values
+    # Otherwise fall back to asset width x height
+    # Else define no width, then `capture.capture` will use render resolution
     if review_instance_width and review_instance_height:
         preset["width"] = review_instance_width
         preset["height"] = review_instance_height
@@ -320,7 +320,7 @@ def generate_capture_preset(instance, camera, path,
 
     # Use Pan/Zoom from instance data instead of from preset
     preset.pop("pan_zoom", None)
-    preset["camera_options"]["panZoomEnabled"] = instance.data["panZoom"]
+    camera_options["panZoomEnabled"] = instance.data["panZoom"]
 
     # Override viewport options by instance data
     viewport_options = preset.setdefault("viewport_options", {})
@@ -334,10 +334,7 @@ def generate_capture_preset(instance, camera, path,
 
     # Update preset with current panel setting
     # if override_viewport_options is turned off
-    override_viewport_options = (
-        capture_preset["Viewport Options"]["override_viewport_options"]
-    )
-    if not override_viewport_options:
+    if not capture_preset["Viewport Options"]["override_viewport_options"]:
         panel_preset = capture.parse_view(instance.data["panel"])
         panel_preset.pop("camera")
         preset.update(panel_preset)
