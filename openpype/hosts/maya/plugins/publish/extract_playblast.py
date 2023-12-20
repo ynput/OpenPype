@@ -57,28 +57,25 @@ class ExtractPlayblast(publish.Extractor):
             instance, camera, path,
             start=start, end=end,
             capture_preset=capture_preset)
-        path = lib.render_capture_preset(preset)
+        lib.render_capture_preset(preset)
 
+        # Find playblast sequence
         collected_files = os.listdir(stagingdir)
         patterns = [clique.PATTERNS["frames"]]
         collections, remainder = clique.assemble(collected_files,
                                                  minimum_items=1,
                                                  patterns=patterns)
 
-        filename = preset.get("filename", "%TEMP%")
-        self.log.debug("filename {}".format(filename))
+        self.log.debug("Searching playblast collection for: %s", path)
         frame_collection = None
         for collection in collections:
             filebase = collection.format("{head}").rstrip(".")
-            self.log.debug("collection head {}".format(filebase))
-            if filebase in filename:
+            self.log.debug("Checking collection head: %s", filebase)
+            if filebase in path:
                 frame_collection = collection
                 self.log.debug(
-                    "we found collection of interest {}".format(
-                        str(frame_collection)))
-
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
+                    "Found playblast collection: %s", frame_collection
+                )
 
         tags = ["review"]
         if not instance.data.get("keepImages"):
@@ -91,6 +88,9 @@ class ExtractPlayblast(publish.Extractor):
         # single frame file shouldn't be in list, only as a string
         if len(collected_files) == 1:
             collected_files = collected_files[0]
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
         representation = {
             "name": capture_preset["Codec"]["compression"],
