@@ -2,6 +2,7 @@ import os
 
 import click
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.lib import get_openpype_execute_args
 from openpype.lib.execute import run_detached_process
 from openpype.modules import OpenPypeModule, ITrayAction, IHostAddon
@@ -107,6 +108,13 @@ def ingestcsv(
     This command will ingest CSV file into project. CSV file must be in
     specific format. See documentation for more information.
     """
+    if AYON_SERVER_ENABLED:
+        print(
+            "This feature is not supported in Ayon yet. "
+            "Contact support for more info."
+        )
+        return
+
     from .csv_publish import csvpublish
     from openpype.lib import get_openpype_username
 
