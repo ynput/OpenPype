@@ -20,7 +20,7 @@ class ExtractThumbnail(publish.Extractor):
     families = ["review"]
 
     def process(self, instance):
-        self.log.debug("Extracting capture..")
+        self.log.debug("Extracting thumbnail..")
 
         camera = instance.data["review_camera"]
 

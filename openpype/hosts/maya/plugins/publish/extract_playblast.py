@@ -24,7 +24,7 @@ class ExtractPlayblast(publish.Extractor):
     profiles = None
 
     def process(self, instance):
-        self.log.debug("Extracting capture..")
+        self.log.debug("Extracting playblast..")
 
         # get scene fps
         fps = instance.data.get("fps") or instance.context.data.get("fps")
