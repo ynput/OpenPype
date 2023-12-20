@@ -60,8 +60,7 @@ class ExtractThumbnail(publish.Extractor):
             "displayFilmPivot": False,
             "displayFilmOrigin": False,
             "overscan": 1.0,
-            "depthOfField": cmds.getAttr(
-                "{0}.depthOfField".format(camera))
+            "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),                # noqa
             }
         )
         path = lib.playblast_capture(preset, instance)
