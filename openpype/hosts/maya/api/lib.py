@@ -183,6 +183,7 @@ def reload_all_udim_tile_previews():
         for texture_file in texture_files:
             if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
                 cmds.ogs(regenerateUVTilePreview=texture_file)
+    cmds.ogs(reloadTextures=True)
 
 
 @contextlib.contextmanager
