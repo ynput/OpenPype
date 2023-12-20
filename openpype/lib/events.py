@@ -345,9 +345,13 @@ class Event(object):
 class EventSystem(object):
     """Encapsulate event handling into an object.
 
-    System wraps registered callbacks and triggered events into single object
-    so it is possible to create mutltiple independent systems that have their
+    System wraps registered callbacks and triggered events into single object,
+    so it is possible to create multiple independent systems that have their
     topics and callbacks.
+
+    Callbacks are stored by order of their registration, but it is possible to
+    manually define order of callbacks using 'order' argument within
+    'add_callback'.
     """
 
     default_order = 0
