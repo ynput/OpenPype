@@ -8,7 +8,7 @@ class ValidateImageFrame(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Image Frame"
-    families = [ "image"]
+    families = ["image"]
     hosts = ["fusion"]
 
     def process(self, instance):
