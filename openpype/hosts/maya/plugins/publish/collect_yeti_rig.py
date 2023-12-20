@@ -124,30 +124,25 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             image_search_paths = [p for p in
                                   image_search_paths.split(os.path.pathsep) if p]
 
-            # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
-            image_search_paths = self._replace_tokens(image_search_paths)
+        # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
+        image_search_paths = self._replace_tokens(image_search_paths)
 
-            # List all related textures
-            texture_nodes = cmds.pgYetiGraph(
-                node, listNodes=True, type="texture")
-            texture_filenames = [
-                cmds.pgYetiGraph(
-                    node, node=texture_node,
-                    param="file_name", getParamValue=True)
-                for texture_node in texture_nodes
-            ]
-            self.log.debug("Found %i texture(s)" % len(texture_filenames))
+        # List all related textures
+        texture_nodes = cmds.pgYetiGraph(
+            node, listNodes=True, type="texture")
+        texture_filenames = [
+            cmds.pgYetiGraph(
+                node, node=texture_node,
+                param="file_name", getParamValue=True)
+            for texture_node in texture_nodes
+        ]
+        self.log.debug("Found %i texture(s)" % len(texture_filenames))
 
         # Get all reference nodes
         reference_nodes = cmds.pgYetiGraph(node,
                                            listNodes=True,
                                            type="reference")
         self.log.debug("Found %i reference node(s)" % len(reference_nodes))
-
-        if texture_filenames and not image_search_paths:
-            raise ValueError("pgYetiMaya node '%s' is missing the path to the "
-                             "files in the 'imageSearchPath "
-                             "atttribute'" % node)
 
         # Collect all texture files
         # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
