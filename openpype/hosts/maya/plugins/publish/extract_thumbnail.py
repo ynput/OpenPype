@@ -51,16 +51,17 @@ class ExtractThumbnail(publish.Extractor):
             capture_preset=capture_preset)
 
         preset["camera_options"].update({
-                "displayGateMask": False,
-                "displayResolution": False,
-                "displayFilmGate": False,
-                "displayFieldChart": False,
-                "displaySafeAction": False,
-                "displaySafeTitle": False,
-                "displayFilmPivot": False,
-                "displayFilmOrigin": False,
-                "overscan": 1.0,
-                "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),
+            "displayGateMask": False,
+            "displayResolution": False,
+            "displayFilmGate": False,
+            "displayFieldChart": False,
+            "displaySafeAction": False,
+            "displaySafeTitle": False,
+            "displayFilmPivot": False,
+            "displayFilmOrigin": False,
+            "overscan": 1.0,
+            "depthOfField": cmds.getAttr(
+                "{0}.depthOfField".format(camera))
             }
         )
         path = lib.playblast_capture(preset, instance)

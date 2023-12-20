@@ -230,7 +230,7 @@ def playblast_capture(preset, instance):
 
 
 def generate_capture_preset(instance, camera, path,
-                            start=None, end=None, capture_preset={}):
+                            start=None, end=None, capture_preset=None):
     """Function for getting all the data of preset options for
     playblast capturing
 
