@@ -97,7 +97,7 @@ DEFAULT_MEL_WORKSPACE_SETTINGS = "\n".join((
     'workspace -fr "renderData" "renderData";',
     'workspace -fr "sourceImages" "sourceimages";',
     'workspace -fr "fileCache" "cache/nCache";',
-    'workspace -fr "autoSave" "autosave"',
+    'workspace -fr "autoSave" "autosave";',
     '',
 ))
 
