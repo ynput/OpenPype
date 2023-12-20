@@ -464,7 +464,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin,
         self.log.info("Submitted job to Deadline: {}.".format(job_id))
 
         # TODO: Find a way that's more generic and not render type specific
-        if instance.data.get("split_render"):
+        if instance.data.get("splitRender"):
             self.log.info("Splitting export and render in two jobs")
             self.log.info("Export job id: %s", job_id)
             render_job_info = self.get_job_info(dependency_job_ids=[job_id])
