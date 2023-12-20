@@ -146,11 +146,15 @@ class FusionRenderLocal(
 
         staging_dir = os.path.dirname(path)
 
+        files = [os.path.basename(f) for f in expected_files]
+        if len(expected_files) == 1:
+            files = files[0]
+
         repre = {
             "name": ext[1:],
             "ext": ext[1:],
             "frameStart": f"%0{padding}d" % start,
-            "files": [os.path.basename(f) for f in expected_files],
+            "files": files,
             "stagingDir": staging_dir,
         }
 
