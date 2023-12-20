@@ -17,6 +17,43 @@ class MissingEventSystem(Exception):
     pass
 
 
+def _get_func_info(func):
+    """Receive function name and path.
+
+    Args:
+        func (Callable): Function or method.
+
+    Returns:
+        tuple[str, str]: Function name and path to file.
+    """
+
+    # Partial functions don't have '__name__' attribute, and we would like
+    #   to know name and path of the original function
+    is_partial = False
+    while isinstance(func, (functools.partial, functools.partialmethod)):
+        is_partial = True
+        if not hasattr(func, "func"):
+            break
+        func = func.func
+
+    if hasattr(func, "__name__"):
+        func_name = func.__name__
+    else:
+        func_name = str(func)
+
+    if is_partial:
+        func_name = "<partial {}>".format(func_name)
+
+    # Get path to file and fallback to '<unknown path>' if fails
+    # NOTE This was added because of 'partial' functions which is handled, but
+    #   who knows what else can cause this to fail?
+    try:
+        func_path = os.path.abspath(inspect.getfile(func))
+    except TypeError:
+        func_path = "<unknown path>"
+    return func_name, func_path
+
+
 class EventCallback(object):
     """Callback registered to a topic.
 
@@ -77,8 +114,7 @@ class EventCallback(object):
             ).format(str(func)))
 
         # Collect function name and path to file for logging
-        func_name = func.__name__
-        func_path = os.path.abspath(inspect.getfile(func))
+        func_name, func_path = _get_func_info(func)
 
         # Get expected arguments from function spec
         # - positional arguments are always preferred
