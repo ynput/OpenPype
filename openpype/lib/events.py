@@ -5,6 +5,7 @@ import copy
 import inspect
 import collections
 import logging
+import functools
 import weakref
 from uuid import uuid4
 
@@ -45,9 +46,10 @@ class EventCallback(object):
         TypeError: When passed function is not a callable object.
     """
 
-    def __init__(self, topic, func):
+    def __init__(self, topic, func, order):
         self._log = None
         self._topic = topic
+        self._order = order
         # Replace '*' with any character regex and escape rest of text
         #   - when callback is registered for '*' topic it will receive all
         #       events
@@ -127,6 +129,31 @@ class EventCallback(object):
         """Calling this function will cause that callback will be removed."""
         # Fake reference
         self._ref_valid = False
+
+    def get_order(self):
+        """Get callback order.
+
+        Returns:
+            int: Callback order.
+        """
+
+        return self._order
+
+    def set_order(self, order):
+        """Change callback order.
+
+        Args:
+            order (int): Order of callback. Lower number means higher
+                priority.
+        """
+
+        if not isinstance(order, int):
+            raise TypeError(
+                "Expected type 'int' got '{}'.".format(str(type(order)))
+            )
+        self._order = order
+
+    order = property(get_order, set_order)
 
     def topic_matches(self, topic):
         """Check if event topic matches callback's topic."""
