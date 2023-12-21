@@ -478,9 +478,6 @@ def _convert_maya_project_settings(ayon_settings, output):
         for item in ayon_maya["ext_mapping"]
     }
 
-    # Publish UI filters
-    ayon_maya["filters"] = {}
-
     # Maya dirmap
     ayon_maya_dirmap = ayon_maya.pop("maya_dirmap")
     ayon_maya_dirmap_path = ayon_maya_dirmap["paths"]
@@ -946,8 +943,6 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
     ayon_tvpaint = ayon_settings["tvpaint"]
 
     _convert_host_imageio(ayon_tvpaint)
-
-    ayon_tvpaint["filters"] = {}
 
     ayon_publish_settings = ayon_tvpaint["publish"]
     for plugin_name in (
