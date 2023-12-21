@@ -606,7 +606,7 @@ def convert_v4_version_to_v3(version):
             output_data[dst_key] = version[src_key]
 
     if "createdAt" in version:
-        created_at = arrow.get(version["createdAt"])
+        created_at = arrow.get(version["createdAt"]).to("local")
         output_data["time"] = created_at.strftime("%Y%m%dT%H%M%SZ")
 
     output["data"] = output_data

@@ -511,3 +511,20 @@ def render_resolution(width, height):
     finally:
         rt.renderWidth = current_renderWidth
         rt.renderHeight = current_renderHeight
+
+
+@contextlib.contextmanager
+def suspended_refresh():
+    """Suspended refresh for scene and modify panel redraw.
+    """
+    if is_headless():
+        yield
+        return
+    rt.disableSceneRedraw()
+    rt.suspendEditing()
+    try:
+        yield
+
+    finally:
+        rt.enableSceneRedraw()
+        rt.resumeEditing()
