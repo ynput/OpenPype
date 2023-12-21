@@ -247,7 +247,7 @@ class TimersManager(
         return {
             "project_name": project_name,
             "asset_id": str(asset_doc["_id"]),
-            "asset_name": asset_doc["name"],
+            "asset_name": asset_name,
             "task_name": task_name,
             "task_type": task_type,
             "hierarchy": hierarchy_items

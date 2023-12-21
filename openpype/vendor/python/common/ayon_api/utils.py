@@ -1,3 +1,4 @@
+import os
 import re
 import datetime
 import uuid
@@ -15,6 +16,11 @@ except ImportError:
 import requests
 import unidecode
 
+from .constants import (
+    SERVER_TIMEOUT_ENV_KEY,
+    DEFAULT_VARIANT_ENV_KEY,
+    SITE_ID_ENV_KEY,
+)
 from .exceptions import UrlError
 
 REMOVED_VALUE = object()
@@ -25,6 +31,43 @@ RepresentationParents = collections.namedtuple(
     "RepresentationParents",
     ("version", "product", "folder", "project")
 )
+
+
+def get_default_timeout():
+    """Default value for requests timeout.
+
+    First looks for environment variable SERVER_TIMEOUT_ENV_KEY which
+    can affect timeout value. If not available then use 10.0 s.
+
+    Returns:
+        float: Timeout value in seconds.
+    """
+
+    try:
+        return float(os.environ.get(SERVER_TIMEOUT_ENV_KEY))
+    except (ValueError, TypeError):
+        pass
+    return 10.0
+
+
+def get_default_settings_variant():
+    """Default settings variant.
+
+    Returns:
+        str: Settings variant from environment variable or 'production'.
+    """
+
+    return os.environ.get(DEFAULT_VARIANT_ENV_KEY) or "production"
+
+
+def get_default_site_id():
+    """Site id used for server connection.
+
+    Returns:
+        Union[str, None]: Site id from environment variable or None.
+    """
+
+    return os.environ.get(SITE_ID_ENV_KEY)
 
 
 class ThumbnailContent:
@@ -231,30 +274,36 @@ def _try_parse_url(url):
         return None
 
 
-def _try_connect_to_server(url):
+def _try_connect_to_server(url, timeout=None):
+    if timeout is None:
+        timeout = get_default_timeout()
     try:
         # TODO add validation if the url lead to Ayon server
-        #   - thiw won't validate if the url lead to 'google.com'
-        requests.get(url)
+        #   - this won't validate if the url lead to 'google.com'
+        requests.get(url, timeout=timeout)
 
     except BaseException:
         return False
     return True
 
 
-def login_to_server(url, username, password):
+def login_to_server(url, username, password, timeout=None):
     """Use login to the server to receive token.
 
     Args:
         url (str): Server url.
         username (str): User's username.
         password (str): User's password.
+        timeout (Optional[float]): Timeout for request. Value from
+            'get_default_timeout' is used if not specified.
 
     Returns:
         Union[str, None]: User's token if login was successfull.
             Otherwise 'None'.
     """
 
+    if timeout is None:
+        timeout = get_default_timeout()
     headers = {"Content-Type": "application/json"}
     response = requests.post(
         "{}/api/auth/login".format(url),
@@ -262,7 +311,8 @@ def login_to_server(url, username, password):
         json={
             "name": username,
             "password": password
-        }
+        },
+        timeout=timeout,
     )
     token = None
     # 200 - success
@@ -273,47 +323,67 @@ def login_to_server(url, username, password):
     return token
 
 
-def logout_from_server(url, token):
+def logout_from_server(url, token, timeout=None):
     """Logout from server and throw token away.
 
     Args:
         url (str): Url from which should be logged out.
         token (str): Token which should be used to log out.
+        timeout (Optional[float]): Timeout for request. Value from
+            'get_default_timeout' is used if not specified.
     """
 
+    if timeout is None:
+        timeout = get_default_timeout()
     headers = {
         "Content-Type": "application/json",
         "Authorization": "Bearer {}".format(token)
     }
     requests.post(
         url + "/api/auth/logout",
-        headers=headers
+        headers=headers,
+        timeout=timeout,
     )
 
 
-def is_token_valid(url, token):
+def is_token_valid(url, token, timeout=None):
     """Check if token is valid.
+
+    Token can be a user token or service api key.
 
     Args:
         url (str): Server url.
         token (str): User's token.
+        timeout (Optional[float]): Timeout for request. Value from
+            'get_default_timeout' is used if not specified.
 
     Returns:
         bool: True if token is valid.
     """
 
-    headers = {
+    if timeout is None:
+        timeout = get_default_timeout()
+
+    base_headers = {
         "Content-Type": "application/json",
-        "Authorization": "Bearer {}".format(token)
     }
-    response = requests.get(
-        "{}/api/users/me".format(url),
-        headers=headers
-    )
-    return response.status_code == 200
+    for header_value in (
+        {"Authorization": "Bearer {}".format(token)},
+        {"X-Api-Key": token},
+    ):
+        headers = base_headers.copy()
+        headers.update(header_value)
+        response = requests.get(
+            "{}/api/users/me".format(url),
+            headers=headers,
+            timeout=timeout,
+        )
+        if response.status_code == 200:
+            return True
+    return False
 
 
-def validate_url(url):
+def validate_url(url, timeout=None):
     """Validate url if is valid and server is available.
 
     Validation checks if can be parsed as url and contains scheme.
@@ -334,6 +404,7 @@ def validate_url(url):
 
     Args:
         url (str): Server url.
+        timeout (Optional[int]): Timeout in seconds for connection to server.
 
     Returns:
         Url which was used to connect to server.
@@ -369,10 +440,10 @@ def validate_url(url):
     # - this will trigger UrlError if both will crash
     if not parsed_url.scheme:
         new_url = "https://" + modified_url
-        if _try_connect_to_server(new_url):
+        if _try_connect_to_server(new_url, timeout=timeout):
             return new_url
 
-    if _try_connect_to_server(modified_url):
+    if _try_connect_to_server(modified_url, timeout=timeout):
         return modified_url
 
     hints = []

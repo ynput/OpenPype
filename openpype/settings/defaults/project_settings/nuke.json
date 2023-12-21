@@ -19,16 +19,16 @@
             "rules": {}
         },
         "viewer": {
-            "viewerProcess": "sRGB"
+            "viewerProcess": "sRGB (default)"
         },
         "baking": {
-            "viewerProcess": "rec709"
+            "viewerProcess": "rec709 (default)"
         },
         "workfile": {
-            "colorManagement": "Nuke",
+            "colorManagement": "OCIO",
             "OCIO_config": "nuke-default",
-            "workingSpaceLUT": "linear",
-            "monitorLut": "sRGB"
+            "workingSpaceLUT": "scene_linear",
+            "monitorLut": "sRGB (default)"
         },
         "nodes": {
             "requiredNodes": [
@@ -76,7 +76,7 @@
                         {
                             "type": "text",
                             "name": "colorspace",
-                            "value": "linear"
+                            "value": "scene_linear"
                         },
                         {
                             "type": "bool",
@@ -129,7 +129,7 @@
                         {
                             "type": "text",
                             "name": "colorspace",
-                            "value": "linear"
+                            "value": "scene_linear"
                         },
                         {
                             "type": "bool",
@@ -177,7 +177,7 @@
                         {
                             "type": "text",
                             "name": "colorspace",
-                            "value": "sRGB"
+                            "value": "texture_paint"
                         },
                         {
                             "type": "bool",
@@ -193,7 +193,7 @@
             "inputs": [
                 {
                     "regex": "(beauty).*(?=.exr)",
-                    "colorspace": "linear"
+                    "colorspace": "scene_linear"
                 }
             ]
         }
@@ -341,7 +341,7 @@
                 "write"
             ]
         },
-        "ValidateCorrectAssetName": {
+        "ValidateCorrectAssetContext": {
             "enabled": true,
             "optional": true,
             "active": true
@@ -374,72 +374,10 @@
             "optional": true,
             "active": true
         },
-        "ValidateScript": {
+        "ValidateScriptAttributes": {
             "enabled": true,
             "optional": true,
             "active": true
-        },
-        "ExtractThumbnail": {
-            "enabled": true,
-            "use_rendered": true,
-            "bake_viewer_process": true,
-            "bake_viewer_input_process": true,
-            "nodes": {
-                "Reformat": [
-                    [
-                        "type",
-                        "to format"
-                    ],
-                    [
-                        "format",
-                        "HD_1080"
-                    ],
-                    [
-                        "filter",
-                        "Lanczos6"
-                    ],
-                    [
-                        "black_outside",
-                        true
-                    ],
-                    [
-                        "pbb",
-                        false
-                    ]
-                ]
-            },
-            "reposition_nodes": [
-                {
-                    "node_class": "Reformat",
-                    "knobs": [
-                        {
-                            "type": "text",
-                            "name": "type",
-                            "value": "to format"
-                        },
-                        {
-                            "type": "text",
-                            "name": "format",
-                            "value": "HD_1080"
-                        },
-                        {
-                            "type": "text",
-                            "name": "filter",
-                            "value": "Lanczos6"
-                        },
-                        {
-                            "type": "bool",
-                            "name": "black_outside",
-                            "value": true
-                        },
-                        {
-                            "type": "bool",
-                            "name": "pbb",
-                            "value": false
-                        }
-                    ]
-                }
-            ]
         },
         "ExtractReviewData": {
             "enabled": false
@@ -602,6 +540,5 @@
     },
     "templated_workfile_build": {
         "profiles": []
-    },
-    "filters": {}
+    }
 }

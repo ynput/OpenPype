@@ -374,7 +374,7 @@ def get_default_settings_variant():
     """
 
     con = get_server_api_connection()
-    return con.get_client_version()
+    return con.get_default_settings_variant()
 
 
 def set_default_settings_variant(variant):
@@ -602,25 +602,15 @@ def delete_installer(*args, **kwargs):
 
 def download_installer(*args, **kwargs):
     con = get_server_api_connection()
-    con.download_installer(*args, **kwargs)
+    return con.download_installer(*args, **kwargs)
 
 
 def upload_installer(*args, **kwargs):
     con = get_server_api_connection()
-    con.upload_installer(*args, **kwargs)
+    return con.upload_installer(*args, **kwargs)
 
 
 # Dependency packages
-def get_dependencies_info(*args, **kwargs):
-    con = get_server_api_connection()
-    return con.get_dependencies_info(*args, **kwargs)
-
-
-def update_dependency_info(*args, **kwargs):
-    con = get_server_api_connection()
-    return con.update_dependency_info(*args, **kwargs)
-
-
 def download_dependency_package(*args, **kwargs):
     con = get_server_api_connection()
     return con.download_dependency_package(*args, **kwargs)
@@ -753,12 +743,12 @@ def get_secrets(*args, **kwargs):
 
 def get_secret(*args, **kwargs):
     con = get_server_api_connection()
-    return con.delete_secret(*args, **kwargs)
+    return con.get_secret(*args, **kwargs)
 
 
 def save_secret(*args, **kwargs):
     con = get_server_api_connection()
-    return con.delete_secret(*args, **kwargs)
+    return con.save_secret(*args, **kwargs)
 
 
 def delete_secret(*args, **kwargs):
@@ -978,12 +968,14 @@ def delete_project(project_name):
 
 def get_thumbnail_by_id(project_name, thumbnail_id):
     con = get_server_api_connection()
-    con.get_thumbnail_by_id(project_name, thumbnail_id)
+    return con.get_thumbnail_by_id(project_name, thumbnail_id)
 
 
 def get_thumbnail(project_name, entity_type, entity_id, thumbnail_id=None):
     con = get_server_api_connection()
-    con.get_thumbnail(project_name, entity_type, entity_id, thumbnail_id)
+    return con.get_thumbnail(
+        project_name, entity_type, entity_id, thumbnail_id
+    )
 
 
 def get_folder_thumbnail(project_name, folder_id, thumbnail_id=None):

@@ -32,6 +32,7 @@ from .utils import (
 
     loaders_from_repre_context,
     loaders_from_representation,
+    filter_repre_contexts_by_loader,
 
     any_outdated_containers,
     get_outdated_containers,
@@ -85,6 +86,7 @@ __all__ = (
 
     "loaders_from_repre_context",
     "loaders_from_representation",
+    "filter_repre_contexts_by_loader",
 
     "any_outdated_containers",
     "get_outdated_containers",

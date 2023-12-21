@@ -20,13 +20,10 @@ class ExtractCameraFbx(publish.Extractor, OptionalPyblishPluginMixin):
         if not self.is_active(instance.data):
             return
 
-        self.log.debug("Extracting Camera ...")
         stagingdir = self.staging_dir(instance)
         filename = "{name}.fbx".format(**instance.data)
 
         filepath = os.path.join(stagingdir, filename)
-        self.log.info(f"Writing fbx file '{filename}' to '{filepath}'")
-
         rt.FBXExporterSetParam("Animation", True)
         rt.FBXExporterSetParam("Cameras", True)
         rt.FBXExporterSetParam("AxisConversionMethod", "Animation")

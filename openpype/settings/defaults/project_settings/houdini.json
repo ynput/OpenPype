@@ -1,5 +1,6 @@
 {
     "general": {
+        "add_self_publish_button": false,
         "update_houdini_var_context": {
             "enabled": true,
             "houdini_vars":[
@@ -24,12 +25,84 @@
     },
     "shelves": [],
     "create": {
+        "CreateAlembicCamera": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
         "CreateArnoldAss": {
             "enabled": true,
             "default_variants": [
                 "Main"
             ],
             "ext": ".ass"
+        },
+        "CreateArnoldRop": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreateCompositeSequence": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreateHDA": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreateKarmaROP": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreateMantraIFD": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreateMantraROP": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreatePointCache": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreateBGEO": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreateRedshiftProxy": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreateRedshiftROP": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
+        "CreateReview": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
         },
         "CreateStaticMesh": {
             "enabled": true,
@@ -44,31 +117,13 @@
                 "UCX"
             ]
         },
-        "CreateAlembicCamera": {
+        "CreateUSD": {
             "enabled": true,
             "default_variants": [
                 "Main"
             ]
         },
-        "CreateCompositeSequence": {
-            "enabled": true,
-            "default_variants": [
-                "Main"
-            ]
-        },
-        "CreatePointCache": {
-            "enabled": true,
-            "default_variants": [
-                "Main"
-            ]
-        },
-        "CreateRedshiftROP": {
-            "enabled": true,
-            "default_variants": [
-                "Main"
-            ]
-        },
-        "CreateRemotePublish": {
+        "CreateUSDRender": {
             "enabled": true,
             "default_variants": [
                 "Main"
@@ -80,32 +135,47 @@
                 "Main"
             ]
         },
-        "CreateUSD": {
-            "enabled": false,
-            "default_variants": [
-                "Main"
-            ]
-        },
-        "CreateUSDModel": {
-            "enabled": false,
-            "default_variants": [
-                "Main"
-            ]
-        },
-        "USDCreateShadingWorkspace": {
-            "enabled": false,
-            "default_variants": [
-                "Main"
-            ]
-        },
-        "CreateUSDRender": {
-            "enabled": false,
+        "CreateVrayROP": {
+            "enabled": true,
             "default_variants": [
                 "Main"
             ]
         }
     },
     "publish": {
+        "CollectAssetHandles": {
+            "use_asset_handles": true
+        },
+        "CollectChunkSize": {
+            "enabled": true,
+            "optional": true,
+            "chunk_size": 999999
+        },
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshIsStatic": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateReviewColorspace": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateSubsetName": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateUnrealStaticMeshName": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateWorkfilePaths": {
             "enabled": true,
             "optional": true,
@@ -117,31 +187,6 @@
                 "$HIP",
                 "$JOB"
             ]
-        },
-        "ValidateReviewColorspace": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateContainers": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateSubsetName": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateMeshIsStatic": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
-        "ValidateUnrealStaticMeshName": {
-            "enabled": false,
-            "optional": true,
-            "active": true
         }
     }
 }

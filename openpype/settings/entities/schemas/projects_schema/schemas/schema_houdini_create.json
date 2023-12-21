@@ -5,6 +5,16 @@
     "label": "Creator plugins",
     "children": [
         {
+            "type": "schema_template",
+            "name": "template_create_plugin",
+            "template_data": [
+                {
+                    "key": "CreateAlembicCamera",
+                    "label": "Create Alembic Camera"
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "CreateArnoldAss",
@@ -38,6 +48,56 @@
                 }
             ]
 
+        },
+        {
+            "type": "schema_template",
+            "name": "template_create_plugin",
+            "template_data": [
+                {
+                    "key": "CreateArnoldRop",
+                    "label": "Create Arnold ROP"
+                },
+                {
+                    "key": "CreateCompositeSequence",
+                    "label": "Create Composite (Image Sequence)"
+                },
+                {
+                    "key": "CreateHDA",
+                    "label": "Create Houdini Digital Asset"
+                },
+                {
+                    "key": "CreateKarmaROP",
+                    "label": "Create Karma ROP"
+                },
+                {
+                    "key": "CreateMantraIFD",
+                    "label": "Create Mantra IFD"
+                },
+                {
+                    "key": "CreateMantraROP",
+                    "label": "Create Mantra ROP"
+                },
+                {
+                    "key": "CreatePointCache",
+                    "label": "Create PointCache (Abc)"
+                },
+                {
+                    "key": "CreateBGEO",
+                    "label": "Create PointCache (Bgeo)"
+                },
+                {
+                    "key": "CreateRedshiftProxy",
+                    "label": "Create Redshift Proxy"
+                },
+                {
+                    "key": "CreateRedshiftROP",
+                    "label": "Create Redshift ROP"
+                },
+                {
+                    "key": "CreateReview",
+                    "label": "Create Review"
+                }
+            ]
         },
         {
             "type": "dict",
@@ -75,44 +135,20 @@
             "name": "template_create_plugin",
             "template_data": [
                 {
-                    "key": "CreateAlembicCamera",
-                    "label": "Create Alembic Camera"
+                    "key": "CreateUSD",
+                    "label": "Create USD (experimental)"
                 },
                 {
-                    "key": "CreateCompositeSequence",
-                    "label": "Create Composite (Image Sequence)"
-                },
-                {
-                    "key": "CreatePointCache",
-                    "label": "Create Point Cache"
-                },
-                {
-                    "key": "CreateRedshiftROP",
-                    "label": "Create Redshift ROP"
-                },
-                {
-                    "key": "CreateRemotePublish",
-                    "label": "Create Remote Publish"
+                    "key": "CreateUSDRender",
+                    "label": "Create USD render (experimental)"
                 },
                 {
                     "key": "CreateVDBCache",
                     "label": "Create VDB Cache"
                 },
                 {
-                    "key": "CreateUSD",
-                    "label": "Create USD"
-                },
-                {
-                    "key": "CreateUSDModel",
-                    "label": "Create USD Model"
-                },
-                {
-                    "key": "USDCreateShadingWorkspace",
-                    "label": "Create USD Shading Workspace"
-                },
-                {
-                    "key": "CreateUSDRender",
-                    "label": "Create USD Render"
+                    "key": "CreateVrayROP",
+                    "label": "Create VRay ROP"
                 }
             ]
         }

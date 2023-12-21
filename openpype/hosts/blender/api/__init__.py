@@ -10,6 +10,7 @@ from .pipeline import (
     ls,
     publish,
     containerise,
+    BlenderHost,
 )
 
 from .plugin import (
@@ -47,6 +48,7 @@ __all__ = [
     "ls",
     "publish",
     "containerise",
+    "BlenderHost",
 
     "Creator",
     "Loader",

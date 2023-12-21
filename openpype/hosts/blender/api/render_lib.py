@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import bpy
 
@@ -59,7 +59,7 @@ def get_render_product(output_path, name, aov_sep):
         instance (pyblish.api.Instance): The instance to publish.
         ext (str): The image format to render.
     """
-    filepath = os.path.join(output_path, name)
+    filepath = output_path / name.lstrip("/")
     render_product = f"{filepath}{aov_sep}beauty.####"
     render_product = render_product.replace("\\", "/")
 
@@ -180,7 +180,7 @@ def set_node_tree(output_path, name, aov_sep, ext, multilayer):
         return []
 
     output.file_slots.clear()
-    output.base_path = output_path
+    output.base_path = str(output_path)
 
     aov_file_products = []
 
@@ -191,8 +191,9 @@ def set_node_tree(output_path, name, aov_sep, ext, multilayer):
 
         output.file_slots.new(filepath)
 
-        aov_file_products.append(
-            (render_pass.name, os.path.join(output_path, filepath)))
+        filename = str(output_path / filepath.lstrip("/"))
+
+        aov_file_products.append((render_pass.name, filename))
 
         node_input = output.inputs[-1]
 
@@ -214,12 +215,11 @@ def imprint_render_settings(node, data):
 def prepare_rendering(asset_group):
     name = asset_group.name
 
-    filepath = bpy.data.filepath
+    filepath = Path(bpy.data.filepath)
     assert filepath, "Workfile not saved. Please save the file first."
 
-    file_path = os.path.dirname(filepath)
-    file_name = os.path.basename(filepath)
-    file_name, _ = os.path.splitext(file_name)
+    dirpath = filepath.parent
+    file_name = Path(filepath.name).stem
 
     project = get_current_project_name()
     settings = get_project_settings(project)
@@ -232,7 +232,7 @@ def prepare_rendering(asset_group):
     set_render_format(ext, multilayer)
     aov_list, custom_passes = set_render_passes(settings)
 
-    output_path = os.path.join(file_path, render_folder, file_name)
+    output_path = Path.joinpath(dirpath, render_folder, file_name)
 
     render_product = get_render_product(output_path, name, aov_sep)
     aov_file_product = set_node_tree(

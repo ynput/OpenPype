@@ -1,18 +1,20 @@
 from .projects_widget import (
     # ProjectsWidget,
     ProjectsCombobox,
-    ProjectsModel,
+    ProjectsQtModel,
     ProjectSortFilterProxy,
 )
 
 from .folders_widget import (
     FoldersWidget,
-    FoldersModel,
+    FoldersQtModel,
+    FOLDERS_MODEL_SENDER_NAME,
 )
 
 from .tasks_widget import (
     TasksWidget,
-    TasksModel,
+    TasksQtModel,
+    TASKS_MODEL_SENDER_NAME,
 )
 from .utils import (
     get_qt_icon,
@@ -23,14 +25,16 @@ from .utils import (
 __all__ = (
     # "ProjectsWidget",
     "ProjectsCombobox",
-    "ProjectsModel",
+    "ProjectsQtModel",
     "ProjectSortFilterProxy",
 
     "FoldersWidget",
-    "FoldersModel",
+    "FoldersQtModel",
+    "FOLDERS_MODEL_SENDER_NAME",
 
     "TasksWidget",
-    "TasksModel",
+    "TasksQtModel",
+    "TASKS_MODEL_SENDER_NAME",
 
     "get_qt_icon",
     "RefreshThread",

@@ -21,7 +21,7 @@ Providing functionality:
 
 import click
 import json
-from pathlib2 import Path
+from pathlib import Path
 import PyOpenColorIO as ocio
 
 
@@ -106,10 +106,46 @@ def _get_colorspace_data(config_path):
 
     config = ocio.Config().CreateFromFile(str(config_path))
 
-    return {
-        c_.getName(): c_.getFamily()
-        for c_ in config.getColorSpaces()
+    colorspace_data = {
+        "roles": {},
+        "colorspaces": {
+            color.getName(): {
+                "family": color.getFamily(),
+                "categories": list(color.getCategories()),
+                "aliases": list(color.getAliases()),
+                "equalitygroup": color.getEqualityGroup(),
+            }
+            for color in config.getColorSpaces()
+        },
+        "displays_views": {
+            f"{view} ({display})": {
+                "display": display,
+                "view": view
+
+            }
+            for display in config.getDisplays()
+            for view in config.getViews(display)
+        },
+        "looks": {}
     }
+
+    # add looks
+    looks = config.getLooks()
+    if looks:
+        colorspace_data["looks"] = {
+            look.getName(): {"process_space": look.getProcessSpace()}
+            for look in looks
+        }
+
+    # add roles
+    roles = config.getRoles()
+    if roles:
+        colorspace_data["roles"] = {
+            role: {"colorspace": colorspace}
+            for (role, colorspace) in roles
+        }
+
+    return colorspace_data
 
 
 @config.command(
