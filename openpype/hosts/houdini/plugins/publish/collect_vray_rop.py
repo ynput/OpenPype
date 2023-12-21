@@ -45,7 +45,26 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         render_products = []
         # TODO: add render elements if render element
 
-        beauty_product = self.get_beauty_render_product(default_prefix)
+        # Store whether we are splitting the render job in an export + render
+        split_render = rop.parm("render_export_mode").eval() == "2"
+        instance.data["splitRender"] = split_render
+        export_prefix = None
+        export_products = []
+        if split_render:
+            export_prefix = evalParmNoFrame(
+                rop, "render_export_filepath", pad_character="0"
+            )
+            beauty_export_product = self.get_render_product_name(
+                prefix=export_prefix,
+                suffix=None)
+            export_products.append(beauty_export_product)
+            self.log.debug(
+                "Found export product: {}".format(beauty_export_product)
+            )
+            instance.data["ifdFile"] = beauty_export_product
+            instance.data["exportFiles"] = list(export_products)
+
+        beauty_product = self.get_render_product_name(default_prefix)
         render_products.append(beauty_product)
         files_by_aov = {
             "RGB Color": self.generate_expected_files(instance,
@@ -79,7 +98,7 @@ class CollectVrayROPRenderProducts(pyblish.api.InstancePlugin):
         instance.data["colorspaceDisplay"] = colorspace_data["display"]
         instance.data["colorspaceView"] = colorspace_data["view"]
 
-    def get_beauty_render_product(self, prefix, suffix="<reName>"):
+    def get_render_product_name(self, prefix, suffix="<reName>"):
         """Return the beauty output filename if render element enabled
         """
         # Remove aov suffix from the product: `prefix.aov_suffix` -> `prefix`

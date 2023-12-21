@@ -75,8 +75,6 @@ from ._api import (
     download_installer,
     upload_installer,
 
-    get_dependencies_info,
-    update_dependency_info,
     get_dependency_packages,
     create_dependency_package,
     update_dependency_package,
@@ -277,8 +275,6 @@ __all__ = (
     "download_installer",
     "upload_installer",
 
-    "get_dependencies_info",
-    "update_dependency_info",
     "get_dependency_packages",
     "create_dependency_package",
     "update_dependency_package",

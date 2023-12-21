@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Creator plugin for creating Arnold ASS files."""
 from openpype.hosts.houdini.api import plugin
+from openpype.lib import BoolDef
 
 
 class CreateArnoldAss(plugin.HoudiniCreator):
@@ -21,6 +22,9 @@ class CreateArnoldAss(plugin.HoudiniCreator):
 
         instance_data.pop("active", None)
         instance_data.update({"node_type": "arnold"})
+        creator_attributes = instance_data.setdefault(
+            "creator_attributes", dict())
+        creator_attributes["farm"] = pre_create_data["farm"]
 
         instance = super(CreateArnoldAss, self).create(
             subset_name,
@@ -52,3 +56,15 @@ class CreateArnoldAss(plugin.HoudiniCreator):
         # Lock any parameters in this list
         to_lock = ["ar_ass_export_enable", "family", "id"]
         self.lock_parameters(instance_node, to_lock)
+
+    def get_instance_attr_defs(self):
+        return [
+            BoolDef("farm",
+                    label="Submitting to Farm",
+                    default=False)
+        ]
+
+    def get_pre_create_attr_defs(self):
+        attrs = super().get_pre_create_attr_defs()
+        # Use same attributes as for instance attributes
+        return attrs + self.get_instance_attr_defs()

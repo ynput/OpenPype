@@ -9,6 +9,7 @@ from openpype.hosts.resolve.api.lib import (
     get_publish_attribute,
     get_otio_clip_instance_data,
 )
+from openpype import AYON_SERVER_ENABLED
 
 
 class PrecollectInstances(pyblish.api.ContextPlugin):
@@ -29,7 +30,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
         for timeline_item_data in selected_timeline_items:
 
-            data = dict()
+            data = {}
             timeline_item = timeline_item_data["clip"]["item"]
 
             # get pype tag data
@@ -60,24 +61,24 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 if k not in ("id", "applieswhole", "label")
             })
 
-            asset = tag_data["asset"]
+            if AYON_SERVER_ENABLED:
+                asset = tag_data["folder_path"]
+            else:
+                asset = tag_data["asset_name"]
+
             subset = tag_data["subset"]
 
-            # insert family into families
-            family = tag_data["family"]
-            families = [str(f) for f in tag_data["families"]]
-            families.insert(0, str(family))
-
             data.update({
-                "name": "{} {} {}".format(asset, subset, families),
+                "name": "{}_{}".format(asset, subset),
+                "label": "{} {}".format(asset, subset),
                 "asset": asset,
                 "item": timeline_item,
-                "families": families,
                 "publish": get_publish_attribute(timeline_item),
                 "fps": context.data["fps"],
                 "handleStart": handle_start,
                 "handleEnd": handle_end,
-                "newAssetPublishing": True
+                "newAssetPublishing": True,
+                "families": ["clip"],
             })
 
             # otio clip data
@@ -135,7 +136,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         family = "shot"
 
         data.update({
-            "name": "{} {} {}".format(asset, subset, family),
+            "name": "{}_{}".format(asset, subset),
+            "label": "{} {}".format(asset, subset),
             "subset": subset,
             "asset": asset,
             "family": family,

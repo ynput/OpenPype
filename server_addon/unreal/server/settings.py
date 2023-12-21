@@ -53,11 +53,11 @@ class UnrealSettings(BaseSettingsModel):
 
 
 DEFAULT_VALUES = {
-    "level_sequences_for_layouts": False,
+    "level_sequences_for_layouts": True,
     "delete_unmatched_assets": False,
     "render_config_path": "",
     "preroll_frames": 0,
-    "render_format": "png",
+    "render_format": "exr",
     "project_setup": {
         "dev_mode": False
     }

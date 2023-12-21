@@ -45,11 +45,23 @@ FILE_NODES = {
     "PxrTexture": "filename"
 }
 
+RENDER_SET_TYPES = [
+    "VRayDisplacement",
+    "VRayLightMesh",
+    "VRayObjectProperties",
+    "RedshiftObjectId",
+    "RedshiftMeshParameters",
+]
+
 # Keep only node types that actually exist
 all_node_types = set(cmds.allNodeTypes())
 for node_type in list(FILE_NODES.keys()):
     if node_type not in all_node_types:
         FILE_NODES.pop(node_type)
+
+for node_type in RENDER_SET_TYPES:
+    if node_type not in all_node_types:
+        RENDER_SET_TYPES.remove(node_type)
 del all_node_types
 
 # Cache pixar dependency node types so we can perform a type lookup against it
@@ -69,9 +81,7 @@ def get_attributes(dictionary, attr, node=None):
     else:
         val = dictionary.get(attr, [])
 
-    if not isinstance(val, list):
-        return [val]
-    return val
+    return val if isinstance(val, list) else [val]
 
 
 def get_look_attrs(node):
@@ -106,7 +116,7 @@ def get_look_attrs(node):
 
 
 def node_uses_image_sequence(node, node_path):
-    # type: (str) -> bool
+    # type: (str, str) -> bool
     """Return whether file node uses an image sequence or single image.
 
     Determine if a node uses an image sequence or just a single image,
@@ -114,6 +124,7 @@ def node_uses_image_sequence(node, node_path):
 
     Args:
         node (str): Name of the Maya node
+        node_path (str): The file path of the node
 
     Returns:
         bool: True if node uses an image sequence
@@ -247,7 +258,7 @@ def get_file_node_files(node):
 
     # For sequences get all files and filter to only existing files
     result = []
-    for index, path in enumerate(paths):
+    for path in paths:
         if node_uses_image_sequence(node, path):
             glob_pattern = seq_to_glob(path)
             result.extend(glob.glob(glob_pattern))
@@ -358,6 +369,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                 for attr in shader_attrs:
                     if cmds.attributeQuery(attr, node=look, exists=True):
                         existing_attrs.append("{}.{}".format(look, attr))
+
             materials = cmds.listConnections(existing_attrs,
                                              source=True,
                                              destination=False) or []
@@ -367,30 +379,32 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.log.debug("Found the following sets:\n{}".format(look_sets))
             # Get the entire node chain of the look sets
             # history = cmds.listHistory(look_sets, allConnections=True)
-            history = cmds.listHistory(materials, allConnections=True)
+            # if materials list is empty, listHistory() will crash with
+            # RuntimeError
+            history = set()
+            if materials:
+                history = set(
+                    cmds.listHistory(materials, allConnections=True))
 
             # Since we retrieved history only of the connected materials
             # connected to the look sets above we now add direct history
             # for some of the look sets directly
             # handling render attribute sets
-            render_set_types = [
-                "VRayDisplacement",
-                "VRayLightMesh",
-                "VRayObjectProperties",
-                "RedshiftObjectId",
-                "RedshiftMeshParameters",
-            ]
-            render_sets = cmds.ls(look_sets, type=render_set_types)
-            if render_sets:
-                history.extend(
-                    cmds.listHistory(render_sets,
-                                     future=False,
-                                     pruneDagObjects=True)
-                    or []
-                )
+
+            # Maya (at least 2024) crashes with Warning when render set type
+            # isn't available. cmds.ls() will return empty list
+            if RENDER_SET_TYPES:
+                render_sets = cmds.ls(look_sets, type=RENDER_SET_TYPES)
+                if render_sets:
+                    history.update(
+                        cmds.listHistory(render_sets,
+                                         future=False,
+                                         pruneDagObjects=True)
+                        or []
+                    )
 
             # Ensure unique entries only
-            history = list(set(history))
+            history = list(history)
 
             files = cmds.ls(history,
                             # It's important only node types are passed that
