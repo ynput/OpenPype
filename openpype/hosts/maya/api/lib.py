@@ -232,7 +232,7 @@ def render_capture_preset(preset):
     with ExitStack() as stack:
         stack.enter_context(maintained_time())
         stack.enter_context(panel_camera(panel, preset["camera"]))
-        stack.enter_context(viewport_default_options(preset, panel))
+        stack.enter_context(viewport_default_options(panel, preset))
         if preset["viewport_options"].get("textures"):
             # Force immediate texture loading when to ensure
             # all textures have loaded before the playblast starts
@@ -341,7 +341,7 @@ def generate_capture_preset(instance, camera, path,
 
 
 @contextlib.contextmanager
-def viewport_default_options(preset, panel):
+def viewport_default_options(panel, preset):
     """Context manager used by `render_capture_preset`.
 
     We need to explicitly enable some viewport changes so the viewport is
