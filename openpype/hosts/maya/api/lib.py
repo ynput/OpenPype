@@ -2584,8 +2584,8 @@ def bake_to_world_space(nodes,
                 cmds.setAttr(new_node_attr, lock=False)
 
                 cmds.connectAttr(orig_node_attr,
-                                new_node_attr,
-                                force=True)
+                                 new_node_attr,
+                                 force=True)
             yield
         finally:
             for attr, lock_state in original_attrs_lock.items():
@@ -2596,18 +2596,18 @@ def bake_to_world_space(nodes,
        # If shapes are also baked then connect those keyable attributes
         if shape:
             children_shapes = cmds.listRelatives(new_node,
-                                                children=True,
-                                                fullPath=True,
-                                                shapes=True)
+                                                 children=True,
+                                                 fullPath=True,
+                                                 shapes=True)
             if children_shapes:
                 orig_children_shapes = cmds.listRelatives(node,
-                                                        children=True,
-                                                        fullPath=True,
-                                                        shapes=True)
+                                                          children=True,
+                                                          fullPath=True,
+                                                          shapes=True)
                 original_shape_lock_attrs = {}
                 try:
                     for orig_shape, new_shape in zip(orig_children_shapes,
-                                                    children_shapes):
+                                                     children_shapes):
                         attrs = _get_attrs(orig_shape)
                         for attr in attrs:
                             orig_node_attr = '{0}.{1}'.format(orig_shape, attr)
@@ -2619,8 +2619,8 @@ def bake_to_world_space(nodes,
                             cmds.setAttr(new_node_attr, lock=False)
 
                             cmds.connectAttr(orig_node_attr,
-                                            new_node_attr,
-                                            force=True)
+                                             new_node_attr,
+                                             force=True)
                     yield
                 finally:
                     for attr, lock_state in original_shape_lock_attrs.items():
