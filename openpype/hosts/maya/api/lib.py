@@ -335,7 +335,7 @@ def generate_capture_preset(instance, camera, path,
     # Update preset with current panel setting
     # if override_viewport_options is turned off
     if not capture_preset["Viewport Options"]["override_viewport_options"]:
-        panel_preset = capture.parse_view(instance.data["panel"])
+        panel_preset = capture.parse_view(preset["panel"])
         panel_preset.pop("camera")
         preset.update(panel_preset)
 
