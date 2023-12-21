@@ -6,6 +6,7 @@ from maya import cmds
 import pyblish.api
 
 from openpype.hosts.maya.api import lib
+from openpype.pipeline.publish import KnownPublishError
 
 
 SETTINGS = {"renderDensity",
@@ -116,7 +117,6 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         resources = []
 
         image_search_paths = cmds.getAttr("{}.imageSearchPath".format(node))
-        texture_filenames = []
         if image_search_paths:
 
             # TODO: Somehow this uses OS environment path separator, `:` vs `;`
@@ -124,8 +124,8 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             image_search_paths = [p for p in
                                   image_search_paths.split(os.path.pathsep) if p]
 
-        # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
-        image_search_paths = self._replace_tokens(image_search_paths)
+            # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
+            image_search_paths = self._replace_tokens(image_search_paths)
 
         # List all related textures
         texture_nodes = cmds.pgYetiGraph(
@@ -163,7 +163,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                         break
 
             if not files:
-                self.log.warning(
+                raise KnownPublishError(
                     "No texture found for: %s "
                     "(searched: %s)" % (texture, image_search_paths))
 
