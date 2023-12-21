@@ -2671,27 +2671,30 @@ def bake_to_world_space(nodes,
                                       renameChildren=True)[0]  # noqa
             with _revert_lock_attributes(node, new_node):
                 with _revert_lock_shape_attributes(node, new_node):
-                # Parent to world
+                    # Parent to world
                     if cmds.listRelatives(new_node, parent=True):
                         new_node = cmds.parent(new_node, world=True)[0]
 
                     # Unlock transform attributes so constraint can be created
                     for attr in transform_attrs:
-                        cmds.setAttr('{0}.{1}'.format(new_node, attr), lock=False)
+                        cmds.setAttr(
+                            '{0}.{1}'.format(new_node, attr), lock=False)
 
                     # Constraints
-                    delete_bin.extend(cmds.parentConstraint(node, new_node, mo=False))
-                    delete_bin.extend(cmds.scaleConstraint(node, new_node, mo=False))
+                    delete_bin.extend(
+                        cmds.parentConstraint(node, new_node, mo=False))
+                    delete_bin.extend(
+                        cmds.scaleConstraint(node, new_node, mo=False))
 
                     world_space_nodes.append(new_node)
 
                     bake(world_space_nodes,
-                        frame_range=frame_range,
-                        step=step,
-                        simulation=simulation,
-                        preserve_outside_keys=preserve_outside_keys,
-                        disable_implicit_control=disable_implicit_control,
-                        shape=shape)
+                         frame_range=frame_range,
+                         step=step,
+                         simulation=simulation,
+                         preserve_outside_keys=preserve_outside_keys,
+                         disable_implicit_control=disable_implicit_control,
+                         shape=shape)
 
     return world_space_nodes
 
