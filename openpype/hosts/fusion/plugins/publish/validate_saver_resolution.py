@@ -38,10 +38,13 @@ class ValidateSaverResolution(
 
     @classmethod
     def get_invalid(cls, instance):
-        resolution = cls.get_resolution(instance)
+        saver = instance.data["tool"]
+        try:
+            resolution = cls.get_resolution(instance)
+        except PublishValidationError:
+            resolution = None
         expected_resolution = cls.get_expected_resolution(instance)
         if resolution != expected_resolution:
-            saver = instance.data["tool"]
             return [saver]
 
     @classmethod
