@@ -7,7 +7,7 @@ import requests
 
 import pyblish.api
 
-from openpype.client import get_project, get_asset_by_name
+from openpype.client import get_asset_by_name
 from openpype.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 from openpype.hosts.tvpaint import TVPAINT_ROOT_DIR
 from openpype.settings import get_current_project_settings
@@ -83,10 +83,6 @@ class TVPaintHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         pyblish.api.register_plugin_path(publish_dir)
         register_loader_plugin_path(load_dir)
         register_creator_plugin_path(create_dir)
-
-        registered_callbacks = (
-            pyblish.api.registered_callbacks().get("instanceToggled") or []
-        )
 
         register_event_callback("application.launched", self.initial_launch)
         register_event_callback("application.exit", self.application_exit)

@@ -51,17 +51,6 @@ class NodeModel(BaseSettingsModel):
         return value
 
 
-class ThumbnailRepositionNodeModel(BaseSettingsModel):
-    node_class: str = Field(title="Node class")
-    knobs: list[KnobModel] = Field(title="Knobs", default_factory=list)
-
-    @validator("knobs")
-    def ensure_unique_names(cls, value):
-        """Ensure name fields within the lists have unique names."""
-        ensure_unique_names(value)
-        return value
-
-
 class CollectInstanceDataModel(BaseSettingsModel):
     sync_workfile_version_on_product_types: list[str] = Field(
         default_factory=list,
@@ -87,22 +76,6 @@ class ValidateKnobsModel(BaseSettingsModel):
     @validator("knobs")
     def validate_json(cls, value):
         return validate_json_dict(value)
-
-
-class ExtractThumbnailModel(BaseSettingsModel):
-    enabled: bool = Field(title="Enabled")
-    use_rendered: bool = Field(title="Use rendered images")
-    bake_viewer_process: bool = Field(title="Bake view process")
-    bake_viewer_input_process: bool = Field(title="Bake viewer input process")
-
-    nodes: list[NodeModel] = Field(
-        default_factory=list,
-        title="Nodes (deprecated)"
-    )
-    reposition_nodes: list[ThumbnailRepositionNodeModel] = Field(
-        title="Reposition nodes",
-        default_factory=list
-    )
 
 
 class ExtractReviewDataModel(BaseSettingsModel):
@@ -153,16 +126,29 @@ class IntermediateOutputModel(BaseSettingsModel):
     name: str = Field(title="Output name")
     filter: BakingStreamFilterModel = Field(
         title="Filter", default_factory=BakingStreamFilterModel)
-    read_raw: bool = Field(title="Read raw switch")
-    viewer_process_override: str = Field(title="Viewer process override")
-    bake_viewer_process: bool = Field(title="Bake viewer process")
+    read_raw: bool = Field(
+        False,
+        title="Read raw switch"
+    )
+    viewer_process_override: str = Field(
+        "",
+        title="Viewer process override"
+    )
+    bake_viewer_process: bool = Field(
+        True,
+        title="Bake viewer process"
+    )
     bake_viewer_input_process: bool = Field(
+        True,
         title="Bake viewer input process node (LUT)"
     )
     reformat_nodes_config: ReformatNodesConfigModel = Field(
         default_factory=ReformatNodesConfigModel,
         title="Reformat Nodes")
-    extension: str = Field(title="File extension")
+    extension: str = Field(
+        "mov",
+        title="File extension"
+    )
     add_custom_tags: list[str] = Field(
         title="Custom tags", default_factory=list)
 
@@ -267,11 +253,6 @@ class PublishPuginsModel(BaseSettingsModel):
         title="Validate workfile attributes",
         default_factory=OptionalPluginModel
     )
-    ExtractThumbnail: ExtractThumbnailModel = Field(
-        title="Extract Thumbnail",
-        default_factory=ExtractThumbnailModel,
-        section="Extractors"
-    )
     ExtractReviewData: ExtractReviewDataModel = Field(
         title="Extract Review Data",
         default_factory=ExtractReviewDataModel
@@ -349,78 +330,6 @@ DEFAULT_PUBLISH_PLUGIN_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": True
-    },
-    "ExtractThumbnail": {
-        "enabled": True,
-        "use_rendered": True,
-        "bake_viewer_process": True,
-        "bake_viewer_input_process": True,
-        "nodes": [
-            {
-                "name": "Reformat01",
-                "nodeclass": "Reformat",
-                "dependency": "",
-                "knobs": [
-                    {
-                        "type": "text",
-                        "name": "type",
-                        "text": "to format"
-                    },
-                    {
-                        "type": "text",
-                        "name": "format",
-                        "text": "HD_1080"
-                    },
-                    {
-                        "type": "text",
-                        "name": "filter",
-                        "text": "Lanczos6"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "black_outside",
-                        "boolean": True
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "pbb",
-                        "boolean": False
-                    }
-                ]
-            }
-        ],
-        "reposition_nodes": [
-            {
-                "node_class": "Reformat",
-                "knobs": [
-                    {
-                        "type": "text",
-                        "name": "type",
-                        "text": "to format"
-                    },
-                    {
-                        "type": "text",
-                        "name": "format",
-                        "text": "HD_1080"
-                    },
-                    {
-                        "type": "text",
-                        "name": "filter",
-                        "text": "Lanczos6"
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "black_outside",
-                        "boolean": True
-                    },
-                    {
-                        "type": "boolean",
-                        "name": "pbb",
-                        "boolean": False
-                    }
-                ]
-            }
-        ]
     },
     "ExtractReviewData": {
         "enabled": False

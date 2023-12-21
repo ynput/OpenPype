@@ -57,7 +57,17 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
             return
 
         rop_node = hou.node(instance.data["instance_node"])
-        if instance.data["frameStart"] > instance.data["frameEnd"]:
+        frame_start = instance.data.get("frameStart")
+        frame_end = instance.data.get("frameEnd")
+
+        if frame_start is None or frame_end is None:
+            cls.log.debug(
+                "Skipping frame range validation for "
+                "instance without frame data: {}".format(rop_node.path())
+            )
+            return
+
+        if frame_start > frame_end:
             cls.log.info(
                 "The ROP node render range is set to "
                 "{0[frameStartHandle]} - {0[frameEndHandle]} "
@@ -89,7 +99,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                           .format(instance))
             return
 
-        created_instance.publish_attributes["CollectRopFrameRange"]["use_handles"] = False  # noqa
+        created_instance.publish_attributes["CollectAssetHandles"]["use_handles"] = False  # noqa
 
         create_context.save_changes()
         cls.log.debug("use asset handles is turned off for '{}'"

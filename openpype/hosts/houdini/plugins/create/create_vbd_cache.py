@@ -2,6 +2,7 @@
 """Creator plugin for creating VDB Caches."""
 from openpype.hosts.houdini.api import plugin
 from openpype.pipeline import CreatedInstance
+from openpype.lib import BoolDef
 
 import hou
 
@@ -19,15 +20,20 @@ class CreateVDBCache(plugin.HoudiniCreator):
 
         instance_data.pop("active", None)
         instance_data.update({"node_type": "geometry"})
-
+        creator_attributes = instance_data.setdefault(
+            "creator_attributes", dict())
+        creator_attributes["farm"] = pre_create_data["farm"]
         instance = super(CreateVDBCache, self).create(
             subset_name,
             instance_data,
             pre_create_data)  # type: CreatedInstance
 
         instance_node = hou.node(instance.get("instance_node"))
+        file_path = "{}{}".format(
+            hou.text.expandString("$HIP/pyblish/"),
+            "{}.$F4.vdb".format(subset_name))
         parms = {
-            "sopoutput": "$HIP/pyblish/{}.$F4.vdb".format(subset_name),
+            "sopoutput": file_path,
             "initsim": True,
             "trange": 1
         }
@@ -40,6 +46,7 @@ class CreateVDBCache(plugin.HoudiniCreator):
     def get_network_categories(self):
         return [
             hou.ropNodeTypeCategory(),
+            hou.objNodeTypeCategory(),
             hou.sopNodeTypeCategory()
         ]
 
@@ -102,3 +109,15 @@ class CreateVDBCache(plugin.HoudiniCreator):
         else:
             return min(outputs,
                        key=lambda node: node.evalParm('outputidx'))
+
+    def get_instance_attr_defs(self):
+        return [
+            BoolDef("farm",
+                    label="Submitting to Farm",
+                    default=False)
+        ]
+
+    def get_pre_create_attr_defs(self):
+        attrs = super().get_pre_create_attr_defs()
+        # Use same attributes as for instance attributes
+        return attrs + self.get_instance_attr_defs()

@@ -51,7 +51,7 @@ class ValidateShaderName(pyblish.api.InstancePlugin,
 
         descendants = cmds.ls(descendants, noIntermediate=True, long=True)
         shapes = cmds.ls(descendants, type=["nurbsSurface", "mesh"], long=True)
-        asset_name = instance.data.get("asset", None)
+        asset_name = instance.data.get("asset")
 
         # Check the number of connected shadingEngines per shape
         regex_compile = re.compile(cls.regex)

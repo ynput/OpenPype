@@ -190,7 +190,7 @@ class LoadImage(plugin.Loader):
 
         if pop_idx is None:
             self.log.warning(
-                "Didn't found container in workfile containers. {}".format(
+                "Didn't find container in workfile containers. {}".format(
                     container
                 )
             )

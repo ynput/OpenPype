@@ -6,7 +6,10 @@ import contextlib
 from opentimelineio import opentime
 
 from openpype.lib import Logger
-from openpype.pipeline.editorial import is_overlapping_otio_ranges
+from openpype.pipeline.editorial import (
+    is_overlapping_otio_ranges,
+    frames_to_timecode
+)
 
 from ..otio import davinci_export as otio_export
 
@@ -246,18 +249,22 @@ def get_media_pool_item(filepath, root: object = None) -> object:
     return None
 
 
-def create_timeline_item(media_pool_item: object,
-                         timeline: object = None,
-                         source_start: int = None,
-                         source_end: int = None) -> object:
+def create_timeline_item(
+        media_pool_item: object,
+        timeline: object = None,
+        timeline_in: int = None,
+        source_start: int = None,
+        source_end: int = None,
+) -> object:
     """
     Add media pool item to current or defined timeline.
 
     Args:
         media_pool_item (resolve.MediaPoolItem): resolve's object
-        timeline (resolve.Timeline)[optional]: resolve's object
-        source_start (int)[optional]: media source input frame (sequence frame)
-        source_end (int)[optional]: media source output frame (sequence frame)
+        timeline (Optional[resolve.Timeline]): resolve's object
+        timeline_in (Optional[int]): timeline input frame (sequence frame)
+        source_start (Optional[int]): media source input frame (sequence frame)
+        source_end (Optional[int]): media source output frame (sequence frame)
 
     Returns:
         object: resolve.TimelineItem
@@ -269,16 +276,29 @@ def create_timeline_item(media_pool_item: object,
     clip_name = _clip_property("File Name")
     timeline = timeline or get_current_timeline()
 
+    # timing variables
+    if all([timeline_in, source_start, source_end]):
+        fps = timeline.GetSetting("timelineFrameRate")
+        duration = source_end - source_start
+        timecode_in = frames_to_timecode(timeline_in, fps)
+        timecode_out = frames_to_timecode(timeline_in + duration, fps)
+    else:
+        timecode_in = None
+        timecode_out = None
+
     # if timeline was used then switch it to current timeline
     with maintain_current_timeline(timeline):
         # Add input mediaPoolItem to clip data
-        clip_data = {"mediaPoolItem": media_pool_item}
+        clip_data = {
+            "mediaPoolItem": media_pool_item,
+        }
 
-        # add source time range if input was given
-        if source_start is not None:
-            clip_data.update({"startFrame": source_start})
-        if source_end is not None:
-            clip_data.update({"endFrame": source_end})
+        if source_start:
+            clip_data["startFrame"] = source_start
+        if source_end:
+            clip_data["endFrame"] = source_end
+        if timecode_in:
+            clip_data["recordFrame"] = timeline_in
 
         # add to timeline
         media_pool.AppendToTimeline([clip_data])
@@ -286,10 +306,15 @@ def create_timeline_item(media_pool_item: object,
         output_timeline_item = get_timeline_item(
             media_pool_item, timeline)
 
-    assert output_timeline_item, AssertionError(
-        "Track Item with name `{}` doesn't exist on the timeline: `{}`".format(
-            clip_name, timeline.GetName()
-        ))
+    assert output_timeline_item, AssertionError((
+        "Clip name '{}' was't created on the timeline: '{}' \n\n"
+        "Please check if correct track position is activated, \n"
+        "or if a clip is not already at the timeline in \n"
+        "position: '{}' out: '{}'. \n\n"
+        "Clip data: {}"
+    ).format(
+        clip_name, timeline.GetName(), timecode_in, timecode_out, clip_data
+    ))
     return output_timeline_item
 
 
@@ -490,7 +515,7 @@ def imprint(timeline_item, data=None):
 
     Arguments:
         timeline_item (hiero.core.TrackItem): hiero track item object
-        data (dict): Any data which needst to be imprinted
+        data (dict): Any data which needs to be imprinted
 
     Examples:
         data = {

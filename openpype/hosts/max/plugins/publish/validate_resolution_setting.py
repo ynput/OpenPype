@@ -1,9 +1,12 @@
 import pyblish.api
+from pymxs import runtime as rt
 from openpype.pipeline import (
-    PublishValidationError,
     OptionalPyblishPluginMixin
 )
-from pymxs import runtime as rt
+from openpype.pipeline.publish import (
+    RepairAction,
+    PublishValidationError
+)
 from openpype.hosts.max.api.lib import reset_scene_resolution
 
 
@@ -16,6 +19,7 @@ class ValidateResolutionSetting(pyblish.api.InstancePlugin,
     hosts = ["max"]
     label = "Validate Resolution Setting"
     optional = True
+    actions = [RepairAction]
 
     def process(self, instance):
         if not self.is_active(instance.data):

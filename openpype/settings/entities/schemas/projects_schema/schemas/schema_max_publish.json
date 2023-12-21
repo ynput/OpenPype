@@ -28,6 +28,193 @@
                 "label": "Active"
             }
         ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "key": "ValidateAttributes",
+        "label": "ValidateAttributes",
+        "checkbox_key": "enabled",
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "raw-json",
+                "key": "attributes",
+                "label": "Attributes"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "key": "ValidateLoadedPlugin",
+        "label": "Validate Loaded Plugin",
+        "checkbox_key": "enabled",
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "list",
+                "collapsible": true,
+                "key": "family_plugins_mapping",
+                "label": "Family Plugins Mapping",
+                "use_label_wrap": true,
+                "object_type": {
+                    "type": "dict",
+                    "children": [
+                        {
+                            "key": "families",
+                            "label": "Famiies",
+                            "type": "list",
+                            "object_type": "text"
+                        },
+                        {
+                            "key": "plugins",
+                            "label": "Plugins",
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    ]
+                }
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractModelObj",
+        "label": "Extract Obj",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractModelFbx",
+        "label": "Extract FBX",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractModelUSD",
+        "label": "Extract Geometry (USD)",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractModel",
+        "label": "Extract Geometry (Alembic)",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractMaxSceneRaw",
+        "label": "Extract Max Scene (Raw)",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
       }
     ]
   }

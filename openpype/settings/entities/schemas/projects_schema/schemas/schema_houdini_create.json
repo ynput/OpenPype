@@ -70,6 +70,10 @@
                     "label": "Create Karma ROP"
                 },
                 {
+                    "key": "CreateMantraIFD",
+                    "label": "Create Mantra IFD"
+                },
+                {
                     "key": "CreateMantraROP",
                     "label": "Create Mantra ROP"
                 },

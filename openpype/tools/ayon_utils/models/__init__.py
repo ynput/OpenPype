@@ -13,6 +13,7 @@ from .hierarchy import (
     HIERARCHY_MODEL_SENDER,
 )
 from .thumbnails import ThumbnailsModel
+from .selection import HierarchyExpectedSelection
 
 
 __all__ = (
@@ -29,4 +30,6 @@ __all__ = (
     "HIERARCHY_MODEL_SENDER",
 
     "ThumbnailsModel",
+
+    "HierarchyExpectedSelection",
 )
