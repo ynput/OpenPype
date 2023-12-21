@@ -48,7 +48,7 @@ class ExtractPlayblast(publish.Extractor):
             self.log
         )
         stagingdir = self.staging_dir(instance)
-        filename = "{0}".format(instance.name)
+        filename = instance.name
         path = os.path.join(stagingdir, filename)
         self.log.debug("Outputting images to %s" % path)
         # get cameras
