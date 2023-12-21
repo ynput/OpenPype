@@ -135,71 +135,95 @@ def set_render_passes(settings):
     return aov_list, custom_passes
 
 
-def set_node_tree(output_path, name, aov_sep, ext, multilayer):
+def set_node_tree(output_path, render_product, name, aov_sep, ext, multilayer):
     # Set the scene to use the compositor node tree to render
     bpy.context.scene.use_nodes = True
 
     tree = bpy.context.scene.node_tree
 
+    comp_layer_type = "CompositorNodeRLayers"
+    output_type = "CompositorNodeOutputFile"
+
     # Get the Render Layers node
     rl_node = None
     for node in tree.nodes:
-        if node.bl_idname == "CompositorNodeRLayers":
+        if node.bl_idname == comp_layer_type:
             rl_node = node
             break
 
     # If there's not a Render Layers node, we create it
     if not rl_node:
-        rl_node = tree.nodes.new("CompositorNodeRLayers")
+        rl_node = tree.nodes.new(comp_layer_type)
 
     # Get the enabled output sockets, that are the active passes for the
     # render.
     # We also exclude some layers.
-    exclude_sockets = ["Image", "Alpha", "Noisy Image"]
+    exclude_sockets = ["Alpha", "Noisy Image"]
     passes = [
         socket
         for socket in rl_node.outputs
         if socket.enabled and socket.name not in exclude_sockets
     ]
 
-    # Remove all output nodes
+    old_output = None
+
+    # Remove all output nodes that inlcude "AYON" in the name.
+    # There should be only one.
     for node in tree.nodes:
-        if node.bl_idname == "CompositorNodeOutputFile":
-            tree.nodes.remove(node)
+        if node.bl_idname == output_type and "AYON" in node.name:
+            old_output = node
+            break
 
     # Create a new output node
-    output = tree.nodes.new("CompositorNodeOutputFile")
+    output = tree.nodes.new(output_type)
 
     image_settings = bpy.context.scene.render.image_settings
     output.format.file_format = image_settings.file_format
 
+    slots = None
+
     # In case of a multilayer exr, we don't need to use the output node,
     # because the blender render already outputs a multilayer exr.
-    if ext == "exr" and multilayer:
-        output.layer_slots.clear()
-        return []
+    multi_exr = ext == "exr" and multilayer
+    slots = output.layer_slots if multi_exr else output.file_slots
+    output.base_path = render_product if multi_exr else str(output_path)
 
-    output.file_slots.clear()
-    output.base_path = str(output_path)
+    slots.clear()
 
     aov_file_products = []
 
     # For each active render pass, we add a new socket to the output node
     # and link it
-    for render_pass in passes:
-        filepath = f"{name}{aov_sep}{render_pass.name}.####"
+    for rpass in passes:
+        if rpass.name == "Image":
+            pass_name = "rgba" if multi_exr else "beauty"
+        else:
+            pass_name = rpass.name
+        filepath = f"{name}{aov_sep}{pass_name}.####"
 
-        output.file_slots.new(filepath)
+        slots.new(pass_name if multi_exr else filepath)
 
         filename = str(output_path / filepath.lstrip("/"))
 
-        aov_file_products.append((render_pass.name, filename))
+        aov_file_products.append((rpass.name, filename))
 
-        node_input = output.inputs[-1]
+        if not old_output:
+            node_input = output.inputs[-1]
+            tree.links.new(rpass, node_input)
 
-        tree.links.new(render_pass, node_input)
+    for link in tree.links:
+        if link.to_node == old_output:
+            socket_name = link.to_socket.name
+            new_socket = output.inputs.get(socket_name)
+            if new_socket:
+                tree.links.new(link.from_socket, new_socket)
 
-    return aov_file_products
+    if old_output:
+        output.location = old_output.location
+        tree.nodes.remove(old_output)
+    output.name = "AYON File Output"
+
+    return [] if multi_exr else aov_file_products
 
 
 def imprint_render_settings(node, data):
@@ -236,9 +260,11 @@ def prepare_rendering(asset_group):
 
     render_product = get_render_product(output_path, name, aov_sep)
     aov_file_product = set_node_tree(
-        output_path, name, aov_sep, ext, multilayer)
+        output_path, render_product, name, aov_sep, ext, multilayer)
 
-    bpy.context.scene.render.filepath = render_product
+    # Clear the render filepath, so that the output is handled only by the
+    # output node in the compositor.
+    bpy.context.scene.render.filepath = ""
 
     render_settings = {
         "render_folder": render_folder,
