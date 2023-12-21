@@ -494,9 +494,11 @@ class AbstractTemplateBuilder(object):
 
         """
 
-        if any(value is None for value in [template_path,
-                                           keep_placeholders,
-                                           create_first_version]):
+        if (
+            template_path is None
+            or keep_placeholders is None
+            or create_first_version is None
+        ):
             template_preset = self.get_template_preset()
             if template_path is None:
                 template_path = template_preset["path"]
