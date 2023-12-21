@@ -220,22 +220,6 @@ def _convert_deadline_system_settings(
     output["modules"]["deadline"] = deadline_settings
 
 
-def _convert_muster_system_settings(
-    ayon_settings, output, addon_versions, default_settings
-):
-    enabled = addon_versions.get("muster") is not None
-    muster_settings = default_settings["modules"]["muster"]
-    muster_settings["enabled"] = enabled
-    if enabled:
-        ayon_muster = ayon_settings["muster"]
-        muster_settings["MUSTER_REST_URL"] = ayon_muster["MUSTER_REST_URL"]
-        muster_settings["templates_mapping"] = {
-            item["name"]: item["value"]
-            for item in ayon_muster["templates_mapping"]
-        }
-    output["modules"]["muster"] = muster_settings
-
-
 def _convert_royalrender_system_settings(
     ayon_settings, output, addon_versions, default_settings
 ):
@@ -261,7 +245,6 @@ def _convert_modules_system(
         _convert_timers_manager_system_settings,
         _convert_clockify_system_settings,
         _convert_deadline_system_settings,
-        _convert_muster_system_settings,
         _convert_royalrender_system_settings,
     ):
         func(ayon_settings, output, addon_versions, default_settings)
