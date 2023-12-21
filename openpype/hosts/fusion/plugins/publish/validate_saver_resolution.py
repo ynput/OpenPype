@@ -92,11 +92,9 @@ class ValidateSaverResolution(
                     has_expression = True
                     old_comment = tool["Comments"].GetExpression()
                     tool["Comments"].SetExpression(None)
-                    cls.log.info("a")
                 else:
                     old_comment = tool["Comments"][frame]
                     tool["Comments"][frame] = ""
-                    cls.log.info("b")
 
             # Get input width
             tool["Comments"].SetExpression("self.Input.OriginalWidth")
