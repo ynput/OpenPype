@@ -242,6 +242,7 @@ def render_capture_preset(preset):
             if reload_textures:
                 # Regenerate all UDIM tiles previews
                 reload_all_udim_tile_previews()
+        preset.pop("panel")
         path = capture.capture(log=self.log, **preset)
 
     return path
