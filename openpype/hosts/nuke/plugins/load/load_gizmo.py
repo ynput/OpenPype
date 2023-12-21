@@ -64,11 +64,12 @@ class LoadGizmo(load.LoaderPlugin):
         add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
                     "source", "author", "fps"]
 
-        data_imprint = {"frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname,
+            "colorspaceInput": colorspace
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -111,7 +112,7 @@ class LoadGizmo(load.LoaderPlugin):
         version_doc = get_version_by_id(project_name, representation["parent"])
 
         # get corresponding node
-        group_node = nuke.toNode(container['objectName'])
+        group_node = container["node"]
 
         file = get_representation_path(representation).replace("\\", "/")
         name = container['name']
@@ -126,12 +127,13 @@ class LoadGizmo(load.LoaderPlugin):
         add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
                     "source", "author", "fps"]
 
-        data_imprint = {"representation": str(representation["_id"]),
-                        "frameStart": first,
-                        "frameEnd": last,
-                        "version": vname,
-                        "colorspaceInput": colorspace,
-                        "objectName": object_name}
+        data_imprint = {
+            "representation": str(representation["_id"]),
+            "frameStart": first,
+            "frameEnd": last,
+            "version": vname,
+            "colorspaceInput": colorspace
+        }
 
         for k in add_keys:
             data_imprint.update({k: version_data[k]})
@@ -175,6 +177,6 @@ class LoadGizmo(load.LoaderPlugin):
         self.update(container, representation)
 
     def remove(self, container):
-        node = nuke.toNode(container['objectName'])
+        node = container["node"]
         with viewer_update_and_undo_stop():
             nuke.delete(node)

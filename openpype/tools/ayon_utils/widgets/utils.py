@@ -15,6 +15,7 @@ class RefreshThread(QtCore.QThread):
         self._callback = partial(func, *args, **kwargs)
         self._exception = None
         self._result = None
+        self.finished.connect(self._on_finish_callback)
 
     @property
     def id(self):
@@ -29,10 +30,18 @@ class RefreshThread(QtCore.QThread):
             self._result = self._callback()
         except Exception as exc:
             self._exception = exc
-        self.refresh_finished.emit(self.id)
 
     def get_result(self):
         return self._result
+
+    def _on_finish_callback(self):
+        """Trigger custom signal with thread id.
+
+        Listening for 'finished' signal we make sure that execution of thread
+            finished and QThread object can be safely deleted.
+        """
+
+        self.refresh_finished.emit(self.id)
 
 
 class _IconsCache:
@@ -54,6 +63,8 @@ class _IconsCache:
 
     @classmethod
     def get_icon(cls, icon_def):
+        if not icon_def:
+            return None
         icon_type = icon_def["type"]
         cache_key = cls._get_cache_key(icon_def)
         cache = cls._cache.get(cache_key)

@@ -2,7 +2,7 @@ from pprint import pformat
 
 import pyblish.api
 
-from openpype.client import get_assets
+from openpype.client import get_assets, get_asset_name_identifier
 
 
 class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
@@ -34,8 +34,11 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
         self.log.debug("__ db_assets: {}".format(db_assets))
 
         asset_db_docs = {
-            str(e["name"]): [str(p) for p in e["data"]["parents"]]
-            for e in db_assets}
+            get_asset_name_identifier(asset_doc): list(
+                asset_doc["data"]["parents"]
+            )
+            for asset_doc in db_assets
+        }
 
         self.log.debug("__ project_entities: {}".format(
             pformat(asset_db_docs)))

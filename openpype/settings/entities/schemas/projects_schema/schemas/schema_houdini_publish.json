@@ -11,8 +11,8 @@
     {
       "type": "dict",
       "collapsible": true,
-      "key": "CollectRopFrameRange",
-      "label": "Collect Rop Frame Range",
+      "key": "CollectAssetHandles",
+      "label": "Collect Asset Handles",
       "children": [
         {
           "type": "label",
@@ -22,6 +22,31 @@
             "type": "boolean",
             "key": "use_asset_handles",
             "label": "Use asset handles"
+        }
+      ]
+    },
+    {
+      "type": "dict",
+      "collapsible": true,
+      "checkbox_key": "enabled",
+      "key": "CollectChunkSize",
+      "label": "Collect Chunk Size",
+      "is_group": true,
+      "children": [
+        {
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        },
+        {
+          "type": "boolean",
+          "key": "optional",
+          "label": "Optional"
+        },
+        {
+            "type": "number",
+            "key": "chunk_size",
+            "label": "Frames Per Task"
         }
       ]
     },

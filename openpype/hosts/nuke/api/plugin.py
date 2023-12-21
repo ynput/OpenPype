@@ -21,6 +21,11 @@ from openpype.pipeline import (
     CreatedInstance,
     get_current_task_name
 )
+from openpype.pipeline.colorspace import (
+    get_display_view_colorspace_name,
+    get_colorspace_settings_from_publish_context,
+    set_colorspace_data_to_representation
+)
 from openpype.lib.transcoding import (
     VIDEO_EXTENSIONS
 )
@@ -537,6 +542,7 @@ class NukeLoader(LoaderPlugin):
             node.addKnob(knob)
 
     def clear_members(self, parent_node):
+        parent_class = parent_node.Class()
         members = self.get_members(parent_node)
 
         dependent_nodes = None
@@ -549,6 +555,8 @@ class NukeLoader(LoaderPlugin):
             break
 
         for member in members:
+            if member.Class() == parent_class:
+                continue
             self.log.info("removing node: `{}".format(member.name()))
             nuke.delete(member)
 
@@ -609,7 +617,7 @@ class ExporterReview(object):
 
     def get_representation_data(
         self, tags=None, range=False,
-        custom_tags=None
+        custom_tags=None, colorspace=None
     ):
         """ Add representation data to self.data
 
@@ -649,6 +657,14 @@ class ExporterReview(object):
         if self.publish_on_farm:
             repre["tags"].append("publish_on_farm")
 
+        # add colorspace data to representation
+        if colorspace:
+            set_colorspace_data_to_representation(
+                repre,
+                self.instance.context.data,
+                colorspace=colorspace,
+                log=self.log
+            )
         self.data["representations"].append(repre)
 
     def get_imageio_baking_profile(self):
@@ -863,6 +879,13 @@ class ExporterReviewMov(ExporterReview):
         return path
 
     def generate_mov(self, farm=False, **kwargs):
+        # colorspace data
+        colorspace = None
+        # get colorspace settings
+        # get colorspace data from context
+        config_data, _ = get_colorspace_settings_from_publish_context(
+            self.instance.context.data)
+
         add_tags = []
         self.publish_on_farm = farm
         read_raw = kwargs["read_raw"]
@@ -948,6 +971,14 @@ class ExporterReviewMov(ExporterReview):
                 # assign viewer
                 dag_node["view"].setValue(viewer)
 
+                if config_data:
+                    # convert display and view to colorspace
+                    colorspace = get_display_view_colorspace_name(
+                        config_path=config_data["path"],
+                        display=display,
+                        view=viewer
+                    )
+
                 self._connect_to_above_nodes(dag_node, subset, "OCIODisplay...   `{}`")
         # Write node
         write_node = nuke.createNode("Write")
@@ -993,9 +1024,10 @@ class ExporterReviewMov(ExporterReview):
 
         # ---------- generate representation data
         self.get_representation_data(
-            tags=["review", "delete"] + add_tags,
+            tags=["review", "need_thumbnail", "delete"] + add_tags,
             custom_tags=add_custom_tags,
-            range=True
+            range=True,
+            colorspace=colorspace
         )
 
         self.log.debug("Representation...   `{}`".format(self.data))

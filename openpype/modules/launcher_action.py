@@ -40,7 +40,7 @@ class LauncherAction(OpenPypeModule, ITrayAction):
         actions_paths = self.manager.collect_plugin_paths()["actions"]
         for path in actions_paths:
             if path and os.path.exists(path):
-                register_launcher_action_path(actions_dir)
+                register_launcher_action_path(path)
 
         paths_str = os.environ.get("AVALON_ACTIONS") or ""
         if paths_str:

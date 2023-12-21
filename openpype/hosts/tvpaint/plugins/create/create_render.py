@@ -37,7 +37,8 @@ Todos:
 import collections
 from typing import Any, Optional, Union
 
-from openpype.client import get_asset_by_name
+from openpype import AYON_SERVER_ENABLED
+from openpype.client import get_asset_by_name, get_asset_name_identifier
 from openpype.lib import (
     prepare_template_data,
     AbstractAttrDef,
@@ -784,18 +785,25 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             project_name,
             host_name=self.create_context.host_name,
         )
+        asset_name = get_asset_name_identifier(asset_doc)
         if existing_instance is not None:
-            existing_instance["asset"] = asset_doc["name"]
+            if AYON_SERVER_ENABLED:
+                existing_instance["folderPath"] = asset_name
+            else:
+                existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
             existing_instance["subset"] = subset_name
             return existing_instance
 
         instance_data: dict[str, str] = {
-            "asset": asset_doc["name"],
             "task": task_name,
             "family": creator.family,
             "variant": variant
         }
+        if AYON_SERVER_ENABLED:
+            instance_data["folderPath"] = asset_name
+        else:
+            instance_data["asset"] = asset_name
         pre_create_data: dict[str, str] = {
             "group_id": group_id,
             "mark_for_review": mark_for_review
@@ -820,6 +828,8 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             for layer_name in render_pass["layer_names"]:
                 render_pass_by_layer_name[layer_name] = render_pass
 
+        asset_name = get_asset_name_identifier(asset_doc)
+
         for layer in layers:
             layer_name = layer["name"]
             variant = layer_name
@@ -838,17 +848,25 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
             )
 
             if render_pass is not None:
-                render_pass["asset"] = asset_doc["name"]
+                if AYON_SERVER_ENABLED:
+                    render_pass["folderPath"] = asset_name
+                else:
+                    render_pass["asset"] = asset_name
+
                 render_pass["task"] = task_name
                 render_pass["subset"] = subset_name
                 continue
 
             instance_data: dict[str, str] = {
-                "asset": asset_doc["name"],
                 "task": task_name,
                 "family": creator.family,
                 "variant": variant
             }
+            if AYON_SERVER_ENABLED:
+                instance_data["folderPath"] = asset_name
+            else:
+                instance_data["asset"] = asset_name
+
             pre_create_data: dict[str, Any] = {
                 "render_layer_instance_id": render_layer_instance.id,
                 "layer_names": [layer_name],
@@ -882,9 +900,13 @@ class TVPaintAutoDetectRenderCreator(TVPaintCreator):
 
     def create(self, subset_name, instance_data, pre_create_data):
         project_name: str = self.create_context.get_current_project_name()
-        asset_name: str = instance_data["asset"]
+        if AYON_SERVER_ENABLED:
+            asset_name: str = instance_data["folderPath"]
+        else:
+            asset_name: str = instance_data["asset"]
         task_name: str = instance_data["task"]
-        asset_doc: dict[str, Any] = get_asset_by_name(project_name, asset_name)
+        asset_doc: dict[str, Any] = get_asset_by_name(
+            project_name, asset_name)
 
         render_layers_by_group_id: dict[int, CreatedInstance] = {}
         render_passes_by_render_layer_id: dict[int, list[CreatedInstance]] = (
@@ -1061,7 +1083,6 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
             host_name
         )
         data = {
-            "asset": asset_name,
             "task": task_name,
             "variant": self.default_variant,
             "creator_attributes": {
@@ -1073,6 +1094,10 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
                 self.default_pass_name
             )
         }
+        if AYON_SERVER_ENABLED:
+            data["folderPath"] = asset_name
+        else:
+            data["asset"] = asset_name
         if not self.active_on_create:
             data["active"] = False
 
@@ -1101,8 +1126,14 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
         asset_name = create_context.get_current_asset_name()
         task_name = create_context.get_current_task_name()
 
+        existing_name = None
+        if AYON_SERVER_ENABLED:
+            existing_name = existing_instance.get("folderPath")
+        if existing_name is None:
+            existing_name = existing_instance["asset"]
+
         if (
-            existing_instance["asset"] != asset_name
+            existing_name != asset_name
             or existing_instance["task"] != task_name
         ):
             asset_doc = get_asset_by_name(project_name, asset_name)
@@ -1114,7 +1145,10 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
                 host_name,
                 existing_instance
             )
-            existing_instance["asset"] = asset_name
+            if AYON_SERVER_ENABLED:
+                existing_instance["folderPath"] = asset_name
+            else:
+                existing_instance["asset"] = asset_name
             existing_instance["task"] = task_name
             existing_instance["subset"] = subset_name
 

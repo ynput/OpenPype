@@ -3,7 +3,7 @@ from ayon_server.settings import BaseSettingsModel
 
 
 # Publish Plugins
-class CollectRopFrameRangeModel(BaseSettingsModel):
+class CollectAssetHandlesModel(BaseSettingsModel):
     """Collect Frame Range
     Disable this if you want the publisher to
     ignore start and end handles specified in the
@@ -11,6 +11,14 @@ class CollectRopFrameRangeModel(BaseSettingsModel):
     """
     use_asset_handles: bool = Field(
         title="Use asset handles")
+
+
+class CollectChunkSizeModel(BaseSettingsModel):
+    """Collect Chunk Size."""
+    enabled: bool = Field(title="Enabled")
+    optional: bool = Field(title="Optional")
+    chunk_size: int = Field(
+        title="Frames Per Task")
 
 
 class ValidateWorkfilePathsModel(BaseSettingsModel):
@@ -33,10 +41,14 @@ class BasicValidateModel(BaseSettingsModel):
 
 
 class PublishPluginsModel(BaseSettingsModel):
-    CollectRopFrameRange: CollectRopFrameRangeModel = Field(
-        default_factory=CollectRopFrameRangeModel,
-        title="Collect Rop Frame Range.",
+    CollectAssetHandles: CollectAssetHandlesModel = Field(
+        default_factory=CollectAssetHandlesModel,
+        title="Collect Asset Handles.",
         section="Collectors"
+    )
+    CollectChunkSize: CollectChunkSizeModel = Field(
+        default_factory=CollectChunkSizeModel,
+        title="Collect Chunk Size."
     )
     ValidateContainers: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
@@ -60,8 +72,13 @@ class PublishPluginsModel(BaseSettingsModel):
 
 
 DEFAULT_HOUDINI_PUBLISH_SETTINGS = {
-    "CollectRopFrameRange": {
+    "CollectAssetHandles": {
         "use_asset_handles": True
+    },
+    "CollectChunkSize": {
+        "enabled": True,
+        "optional": True,
+        "chunk_size": 999999
     },
     "ValidateContainers": {
         "enabled": True,
