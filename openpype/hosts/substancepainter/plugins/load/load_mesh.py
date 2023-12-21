@@ -44,14 +44,22 @@ class SubstanceLoadProjectMesh(load.LoaderPlugin):
         # Get user inputs
         import_cameras = data.get("import_cameras", True)
         preserve_strokes = data.get("preserve_strokes", True)
-
+        sp_settings = substance_painter.project.Settings(
+            import_cameras=import_cameras
+        )
         if not substance_painter.project.is_open():
             # Allow to 'initialize' a new project
             path = self.filepath_from_context(context)
+            # TODO: improve the prompt dialog function to not
+            # only works for simple polygon scene
             result = prompt_new_file_with_mesh(mesh_filepath=path)
             if not result:
-                self.log.info("User cancelled new project prompt.")
-                return
+                self.log.info("User cancelled new project prompt."
+                              "Creating new project directly from"
+                              " Substance Painter API Instead.")
+                settings = substance_painter.project.create(
+                    mesh_file_path=path, settings=sp_settings
+                )
 
         else:
             # Reload the mesh

@@ -1,0 +1,19 @@
+{
+Locked = true,
+Global = {
+  Paths = {
+    Map = {
+      ["AYON:"] = "$(OPENPYPE_FUSION)/deploy/ayon",
+      ["Config:"] = "UserPaths:Config;AYON:Config",
+      ["Scripts:"] = "UserPaths:Scripts;Reactor:System/Scripts",
+    },
+  },
+  Script = {
+    PythonVersion = 3,
+    Python3Forced = true
+    },
+  UserInterface = {
+    Language = "en_US"
+    },
+  },
+}

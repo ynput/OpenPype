@@ -13,6 +13,9 @@ class CreateArnoldRop(plugin.HoudiniCreator):
     # Default extension
     ext = "exr"
 
+    # Default to split export and render jobs
+    export_job = True
+
     def create(self, subset_name, instance_data, pre_create_data):
         import hou
 
@@ -48,6 +51,15 @@ class CreateArnoldRop(plugin.HoudiniCreator):
             "ar_exr_half_precision": 1           # half precision
         }
 
+        if pre_create_data.get("export_job"):
+            ass_filepath = \
+                "{export_dir}{subset_name}/{subset_name}.$F4.ass".format(
+                    export_dir=hou.text.expandString("$HIP/pyblish/ass/"),
+                    subset_name=subset_name,
+                )
+            parms["ar_ass_export_enable"] = 1
+            parms["ar_ass_file"] = ass_filepath
+
         instance_node.setParms(parms)
 
         # Lock any parameters in this list
@@ -66,6 +78,9 @@ class CreateArnoldRop(plugin.HoudiniCreator):
             BoolDef("farm",
                     label="Submitting to Farm",
                     default=True),
+            BoolDef("export_job",
+                    label="Split export and render jobs",
+                    default=self.export_job),
             EnumDef("image_format",
                     image_format_enum,
                     default=self.ext,
