@@ -144,6 +144,7 @@ def product_types_query(fields):
             query_queue.append((k, v, field))
     return query
 
+
 def project_product_types_query(fields):
     query = GraphQlQuery("ProjectProductTypes")
     project_query = query.add_field("project")
@@ -174,8 +175,15 @@ def folders_graphql_query(fields):
     folder_ids_var = query.add_variable("folderIds", "[String!]")
     parent_folder_ids_var = query.add_variable("parentFolderIds", "[String!]")
     folder_paths_var = query.add_variable("folderPaths", "[String!]")
+    folder_path_regex_var = query.add_variable("folderPathRegex", "String!")
     folder_names_var = query.add_variable("folderNames", "[String!]")
+    folder_types_var = query.add_variable("folderTypes", "[String!]")
     has_products_var = query.add_variable("folderHasProducts", "Boolean!")
+    has_tasks_var = query.add_variable("folderHasTasks", "Boolean!")
+    has_links_var = query.add_variable("folderHasLinks", "HasLinksFilter")
+    has_children_var = query.add_variable("folderHasChildren", "Boolean!")
+    statuses_var = query.add_variable("folderStatuses", "[String!]")
+    tags_var = query.add_variable("folderTags", "[String!]")
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
@@ -185,7 +193,14 @@ def folders_graphql_query(fields):
     folders_field.set_filter("parentIds", parent_folder_ids_var)
     folders_field.set_filter("names", folder_names_var)
     folders_field.set_filter("paths", folder_paths_var)
+    folders_field.set_filter("pathEx", folder_path_regex_var)
+    folders_field.set_filter("folderTypes", folder_types_var)
+    folders_field.set_filter("statuses", statuses_var)
+    folders_field.set_filter("tags", tags_var)
     folders_field.set_filter("hasProducts", has_products_var)
+    folders_field.set_filter("hasTasks", has_tasks_var)
+    folders_field.set_filter("hasLinks", has_links_var)
+    folders_field.set_filter("hasChildren", has_children_var)
 
     nested_fields = fields_to_dict(fields)
     add_links_fields(folders_field, nested_fields)
@@ -213,6 +228,10 @@ def tasks_graphql_query(fields):
     task_names_var = query.add_variable("taskNames", "[String!]")
     task_types_var = query.add_variable("taskTypes", "[String!]")
     folder_ids_var = query.add_variable("folderIds", "[String!]")
+    assignees_any_var = query.add_variable("taskAssigneesAny", "[String!]")
+    assignees_all_var = query.add_variable("taskAssigneesAll", "[String!]")
+    statuses_var = query.add_variable("taskStatuses", "[String!]")
+    tags_var = query.add_variable("taskTags", "[String!]")
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
@@ -223,6 +242,10 @@ def tasks_graphql_query(fields):
     tasks_field.set_filter("names", task_names_var)
     tasks_field.set_filter("taskTypes", task_types_var)
     tasks_field.set_filter("folderIds", folder_ids_var)
+    tasks_field.set_filter("assigneesAny", assignees_any_var)
+    tasks_field.set_filter("assignees", assignees_all_var)
+    tasks_field.set_filter("statuses", statuses_var)
+    tasks_field.set_filter("tags", tags_var)
 
     nested_fields = fields_to_dict(fields)
     add_links_fields(tasks_field, nested_fields)
@@ -251,7 +274,10 @@ def products_graphql_query(fields):
     product_names_var = query.add_variable("productNames", "[String!]")
     folder_ids_var = query.add_variable("folderIds", "[String!]")
     product_types_var = query.add_variable("productTypes", "[String!]")
-    statuses_var = query.add_variable("statuses", "[String!]")
+    product_name_regex_var = query.add_variable("productNameRegex", "String!")
+    product_path_regex_var = query.add_variable("productPathRegex", "String!")
+    statuses_var = query.add_variable("productStatuses.", "[String!]")
+    tags_var = query.add_variable("productTags.", "[String!]")
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
@@ -262,6 +288,9 @@ def products_graphql_query(fields):
     products_field.set_filter("folderIds", folder_ids_var)
     products_field.set_filter("productTypes", product_types_var)
     products_field.set_filter("statuses", statuses_var)
+    products_field.set_filter("tags", tags_var)
+    products_field.set_filter("nameEx", product_name_regex_var)
+    products_field.set_filter("pathEx", product_path_regex_var)
 
     nested_fields = fields_to_dict(set(fields))
     add_links_fields(products_field, nested_fields)
@@ -294,24 +323,28 @@ def versions_graphql_query(fields):
     hero_or_latest_only_var = query.add_variable(
         "heroOrLatestOnly", "Boolean"
     )
+    statuses_var = query.add_variable("versionStatuses", "[String!]")
+    tags_var = query.add_variable("versionTags", "[String!]")
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
 
-    products_field = project_field.add_field_with_edges("versions")
-    products_field.set_filter("ids", version_ids_var)
-    products_field.set_filter("productIds", product_ids_var)
-    products_field.set_filter("versions", versions_var)
-    products_field.set_filter("heroOnly", hero_only_var)
-    products_field.set_filter("latestOnly", latest_only_var)
-    products_field.set_filter("heroOrLatestOnly", hero_or_latest_only_var)
+    versions_field = project_field.add_field_with_edges("versions")
+    versions_field.set_filter("ids", version_ids_var)
+    versions_field.set_filter("productIds", product_ids_var)
+    versions_field.set_filter("versions", versions_var)
+    versions_field.set_filter("heroOnly", hero_only_var)
+    versions_field.set_filter("latestOnly", latest_only_var)
+    versions_field.set_filter("heroOrLatestOnly", hero_or_latest_only_var)
+    versions_field.set_filter("statuses", statuses_var)
+    versions_field.set_filter("tags", tags_var)
 
     nested_fields = fields_to_dict(set(fields))
-    add_links_fields(products_field, nested_fields)
+    add_links_fields(versions_field, nested_fields)
 
     query_queue = collections.deque()
     for key, value in nested_fields.items():
-        query_queue.append((key, value, products_field))
+        query_queue.append((key, value, versions_field))
 
     while query_queue:
         item = query_queue.popleft()
@@ -332,6 +365,13 @@ def representations_graphql_query(fields):
     repre_ids_var = query.add_variable("representationIds", "[String!]")
     repre_names_var = query.add_variable("representationNames", "[String!]")
     version_ids_var = query.add_variable("versionIds", "[String!]")
+    has_links_var = query.add_variable("representationHasLinks", "HasLinksFilter")
+    statuses_var = query.add_variable(
+        "representationStatuses", "[String!]"
+    )
+    tags_var = query.add_variable(
+        "representationTags", "[String!]"
+    )
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
@@ -340,6 +380,9 @@ def representations_graphql_query(fields):
     repres_field.set_filter("ids", repre_ids_var)
     repres_field.set_filter("versionIds", version_ids_var)
     repres_field.set_filter("names", repre_names_var)
+    repres_field.set_filter("hasLinks", has_links_var)
+    repres_field.set_filter("statuses", statuses_var)
+    repres_field.set_filter("tags", tags_var)
 
     nested_fields = fields_to_dict(set(fields))
     add_links_fields(repres_field, nested_fields)
@@ -407,6 +450,10 @@ def workfiles_info_graphql_query(fields):
     workfiles_info_ids = query.add_variable("workfileIds", "[String!]")
     task_ids_var = query.add_variable("taskIds", "[String!]")
     paths_var = query.add_variable("paths", "[String!]")
+    path_regex_var = query.add_variable("workfilePathRegex", "String!")
+    has_links_var = query.add_variable("workfilehasLinks", "HasLinksFilter")
+    statuses_var = query.add_variable("workfileStatuses", "[String!]")
+    tags_var = query.add_variable("workfileTags", "[String!]")
 
     project_field = query.add_field("project")
     project_field.set_filter("name", project_name_var)
@@ -415,6 +462,10 @@ def workfiles_info_graphql_query(fields):
     workfiles_field.set_filter("ids", workfiles_info_ids)
     workfiles_field.set_filter("taskIds", task_ids_var)
     workfiles_field.set_filter("paths", paths_var)
+    workfiles_field.set_filter("pathEx", path_regex_var)
+    workfiles_field.set_filter("hasLinks", has_links_var)
+    workfiles_field.set_filter("statuses", statuses_var)
+    workfiles_field.set_filter("tags", tags_var)
 
     nested_fields = fields_to_dict(set(fields))
     add_links_fields(workfiles_field, nested_fields)
@@ -442,6 +493,9 @@ def events_graphql_query(fields):
     states_var = query.add_variable("eventStates", "[String!]")
     users_var = query.add_variable("eventUsers", "[String!]")
     include_logs_var = query.add_variable("includeLogsFilter", "Boolean!")
+    has_children_var = query.add_variable("hasChildrenFilter", "Boolean!")
+    newer_than_var = query.add_variable("newerThanFilter", "String!")
+    older_than_var = query.add_variable("olderThanFilter", "String!")
 
     events_field = query.add_field_with_edges("events")
     events_field.set_filter("topics", topics_var)
@@ -449,6 +503,9 @@ def events_graphql_query(fields):
     events_field.set_filter("states", states_var)
     events_field.set_filter("users", users_var)
     events_field.set_filter("includeLogs", include_logs_var)
+    events_field.set_filter("hasChildren", has_children_var)
+    events_field.set_filter("newerThan", newer_than_var)
+    events_field.set_filter("olderThan", older_than_var)
 
     nested_fields = fields_to_dict(set(fields))
 

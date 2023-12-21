@@ -25,20 +25,24 @@ def enabled_savers(comp, savers):
     """
     passthrough_key = "TOOLB_PassThrough"
     original_states = {}
-    enabled_save_names = {saver.Name for saver in savers}
+    enabled_saver_names = {saver.Name for saver in savers}
+
+    all_savers = comp.GetToolList(False, "Saver").values()
+    savers_by_name = {saver.Name: saver for saver in all_savers}
+
     try:
-        all_savers = comp.GetToolList(False, "Saver").values()
         for saver in all_savers:
             original_state = saver.GetAttrs()[passthrough_key]
-            original_states[saver] = original_state
+            original_states[saver.Name] = original_state
 
             # The passthrough state we want to set (passthrough != enabled)
-            state = saver.Name not in enabled_save_names
+            state = saver.Name not in enabled_saver_names
             if state != original_state:
                 saver.SetAttrs({passthrough_key: state})
         yield
     finally:
-        for saver, original_state in original_states.items():
+        for saver_name, original_state in original_states.items():
+            saver = savers_by_name[saver_name]
             saver.SetAttrs({"TOOLB_PassThrough": original_state})
 
 
@@ -142,11 +146,15 @@ class FusionRenderLocal(
 
         staging_dir = os.path.dirname(path)
 
+        files = [os.path.basename(f) for f in expected_files]
+        if len(expected_files) == 1:
+            files = files[0]
+
         repre = {
             "name": ext[1:],
             "ext": ext[1:],
             "frameStart": f"%0{padding}d" % start,
-            "files": [os.path.basename(f) for f in expected_files],
+            "files": files,
             "stagingDir": staging_dir,
         }
 

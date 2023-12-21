@@ -433,6 +433,10 @@ class PublishersModel(BaseSettingsModel):
         default_factory=ValidateRenderSettingsModel,
         title="Validate Render Settings"
     )
+    ValidateResolution: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Validate Resolution Setting"
+    )
     ValidateCurrentRenderLayerIsRenderable: BasicValidateModel = Field(
         default_factory=BasicValidateModel,
         title="Validate Current Render Layer Has Renderable Camera"
@@ -781,7 +785,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "sync_workfile_version": False
     },
     "CollectFbxAnimation": {
-        "enabled": True
+        "enabled": False
     },
     "CollectFbxCamera": {
         "enabled": False
@@ -858,7 +862,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         ]
     },
     "ValidatePluginPathAttributes": {
-        "enabled": True,
+        "enabled": False,
         "optional": False,
         "active": True,
         "attribute": [
@@ -902,18 +906,23 @@ DEFAULT_PUBLISH_SETTINGS = {
         "redshift_render_attributes": [],
         "renderman_render_attributes": []
     },
+    "ValidateResolution": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
     "ValidateCurrentRenderLayerIsRenderable": {
         "enabled": True,
         "optional": False,
         "active": True
     },
     "ValidateGLSLMaterial": {
-        "enabled": True,
+        "enabled": False,
         "optional": False,
         "active": True
     },
     "ValidateGLSLPlugin": {
-        "enabled": True,
+        "enabled": False,
         "optional": False,
         "active": True
     },
@@ -1145,7 +1154,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "active": True
     },
     "ExtractProxyAlembic": {
-        "enabled": True,
+        "enabled": False,
         "families": [
             "proxyAbc"
         ]
@@ -1302,7 +1311,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "bake_attributes": "[]"
     },
     "ExtractGLB": {
-        "enabled": True,
+        "enabled": False,
         "active": True,
         "ogsfx_path": "/maya2glTF/PBR/shaders/glTF_PBR.ogsfx"
     },

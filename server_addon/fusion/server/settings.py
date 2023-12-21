@@ -25,6 +25,16 @@ def _create_saver_instance_attributes_enum():
     ]
 
 
+def _image_format_enum():
+    return [
+        {"value": "exr", "label": "exr"},
+        {"value": "tga", "label": "tga"},
+        {"value": "png", "label": "png"},
+        {"value": "tif", "label": "tif"},
+        {"value": "jpg", "label": "jpg"},
+    ]
+
+
 class CreateSaverPluginModel(BaseSettingsModel):
     _isGroup = True
     temp_rendering_path_template: str = Field(
@@ -38,6 +48,10 @@ class CreateSaverPluginModel(BaseSettingsModel):
         default_factory=list,
         enum_resolver=_create_saver_instance_attributes_enum,
         title="Instance attributes"
+    )
+    image_format: str = Field(
+        enum_resolver=_image_format_enum,
+        title="Output Image Format"
     )
 
 
@@ -89,7 +103,8 @@ DEFAULT_VALUES = {
             "instance_attributes": [
                 "reviewable",
                 "farm_rendering"
-            ]
+            ],
+            "image_format": "exr"
         }
     }
 }

@@ -8,8 +8,10 @@ import appdirs
 from qtpy import QtCore, QtWidgets, QtGui
 
 from openpype import resources
+from openpype import AYON_SERVER_ENABLED
 from openpype.style import load_stylesheet
 from openpype.lib import JSONSettingRegistry
+
 
 
 openpype_art = """
@@ -27,6 +29,18 @@ openpype_art = """
          ~P3.OPPPO3OP~ . ..  .
            .  ' '. .  .. . . . ..  .
 
+"""
+
+ayon_art = r"""
+
+                    ▄██▄
+         ▄███▄ ▀██▄ ▀██▀ ▄██▀ ▄██▀▀▀██▄    ▀███▄      █▄
+        ▄▄ ▀██▄  ▀██▄  ▄██▀ ██▀      ▀██▄  ▄  ▀██▄    ███
+       ▄██▀  ██▄   ▀ ▄▄ ▀  ██         ▄██  ███  ▀██▄  ███
+      ▄██▀    ▀██▄   ██    ▀██▄      ▄██▀  ███    ▀██ ▀█▀
+     ▄██▀      ▀██▄  ▀█      ▀██▄▄▄▄██▀    █▀      ▀██▄
+
+     ·  · - =[ by YNPUT ]:[ http://ayon.ynput.io ]= - ·  ·
 
 """
 
@@ -41,8 +55,12 @@ class PythonInterpreterRegistry(JSONSettingRegistry):
     """
 
     def __init__(self):
-        self.vendor = "pypeclub"
-        self.product = "openpype"
+        if AYON_SERVER_ENABLED:
+            self.vendor = "ynput"
+            self.product = "ayon"
+        else:
+            self.vendor = "pypeclub"
+            self.product = "openpype"
         name = "python_interpreter_tool"
         path = appdirs.user_data_dir(self.product, self.vendor)
         super(PythonInterpreterRegistry, self).__init__(name, path)
@@ -336,10 +354,12 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
     default_width = 1000
     default_height = 600
 
-    def __init__(self, parent=None):
+    def __init__(self, allow_save_registry=True, parent=None):
         super(PythonInterpreterWidget, self).__init__(parent)
 
-        self.setWindowTitle("OpenPype Console")
+        self.setWindowTitle("{} Console".format(
+            "AYON" if AYON_SERVER_ENABLED else "OpenPype"
+        ))
         self.setWindowIcon(QtGui.QIcon(resources.get_openpype_icon_filepath()))
 
         self.ansi_escape = re.compile(
@@ -387,10 +407,15 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         self._tab_widget = tab_widget
         self._line_check_timer = line_check_timer
 
-        self._append_lines([openpype_art])
+        if AYON_SERVER_ENABLED:
+            self._append_lines([ayon_art])
+        else:
+            self._append_lines([openpype_art])
 
         self._first_show = True
         self._splitter_size_ratio = None
+        self._allow_save_registry = allow_save_registry
+        self._registry_saved = True
 
         self._init_from_registry()
 
@@ -434,6 +459,11 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
             pass
 
     def save_registry(self):
+        # Window was not showed
+        if not self._allow_save_registry or self._registry_saved:
+            return
+
+        self._registry_saved = True
         setting_registry = PythonInterpreterRegistry()
 
         setting_registry.set_item("width", self.width())
@@ -627,6 +657,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
     def showEvent(self, event):
         self._line_check_timer.start()
+        self._registry_saved = False
         super(PythonInterpreterWidget, self).showEvent(event)
         # First show setup
         if self._first_show:

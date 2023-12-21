@@ -77,11 +77,12 @@ DEFAULT_MEL_WORKSPACE_SETTINGS = "\n".join((
     'workspace -fr "renderData" "renderData";',
     'workspace -fr "sourceImages" "sourceimages";',
     'workspace -fr "fileCache" "cache/nCache";',
+    'workspace -fr "autoSave" "autosave";',
     '',
 ))
 
 DEFAULT_MAYA_SETTING = {
-    "open_workfile_post_initialization": False,
+    "open_workfile_post_initialization": True,
     "explicit_plugins_loading": DEFAULT_EXPLITCIT_PLUGINS_LOADING_SETTINGS,
     "imageio": DEFAULT_IMAGEIO_SETTINGS,
     "mel_workspace": DEFAULT_MEL_WORKSPACE_SETTINGS,

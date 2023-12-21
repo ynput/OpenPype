@@ -436,7 +436,7 @@
             "viewTransform": "sRGB gamma"
         }
     },
-    "mel_workspace": "workspace -fr \"shaders\" \"renderData/shaders\";\nworkspace -fr \"images\" \"renders/maya\";\nworkspace -fr \"particles\" \"particles\";\nworkspace -fr \"mayaAscii\" \"\";\nworkspace -fr \"mayaBinary\" \"\";\nworkspace -fr \"scene\" \"\";\nworkspace -fr \"alembicCache\" \"cache/alembic\";\nworkspace -fr \"renderData\" \"renderData\";\nworkspace -fr \"sourceImages\" \"sourceimages\";\nworkspace -fr \"fileCache\" \"cache/nCache\";\n",
+    "mel_workspace": "workspace -fr \"shaders\" \"renderData/shaders\";\nworkspace -fr \"images\" \"renders/maya\";\nworkspace -fr \"particles\" \"particles\";\nworkspace -fr \"mayaAscii\" \"\";\nworkspace -fr \"mayaBinary\" \"\";\nworkspace -fr \"scene\" \"\";\nworkspace -fr \"alembicCache\" \"cache/alembic\";\nworkspace -fr \"renderData\" \"renderData\";\nworkspace -fr \"sourceImages\" \"sourceimages\";\nworkspace -fr \"fileCache\" \"cache/nCache\";\nworkspace -fr \"autoSave\" \"autosave\";",
     "ext_mapping": {
         "model": "ma",
         "mayaAscii": "ma",
@@ -828,6 +828,11 @@
             "vray_render_attributes": [],
             "redshift_render_attributes": [],
             "renderman_render_attributes": []
+        },
+        "ValidateResolution": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         },
         "ValidateCurrentRenderLayerIsRenderable": {
             "enabled": true,

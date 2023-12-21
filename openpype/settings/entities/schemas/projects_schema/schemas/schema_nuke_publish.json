@@ -61,7 +61,7 @@
             "name": "template_publish_plugin",
             "template_data": [
                 {
-                    "key": "ValidateCorrectAssetName",
+                    "key": "ValidateCorrectAssetContext",
                     "label": "Validate Correct Asset Name"
                 }
             ]
@@ -113,8 +113,8 @@
                     "label": "Validate Gizmo (Group)"
                 },
                 {
-                    "key": "ValidateScript",
-                    "label": "Validate script settings"
+                    "key": "ValidateScriptAttributes",
+                    "label": "Validate workfile attributes"
                 }
             ]
         },
@@ -124,81 +124,6 @@
         {
             "type": "label",
             "label": "Extractors"
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "key": "ExtractThumbnail",
-            "label": "ExtractThumbnail",
-            "is_group": true,
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "boolean",
-                    "key": "use_rendered",
-                    "label": "Use rendered images"
-                },
-                {
-                    "type": "boolean",
-                    "key": "bake_viewer_process",
-                    "label": "Bake viewer process"
-                },
-                {
-                    "type": "boolean",
-                    "key": "bake_viewer_input_process",
-                    "label": "Bake viewer input process"
-                },
-                {
-                    "type": "collapsible-wrap",
-                    "label": "Nodes",
-                    "collapsible": true,
-                    "children": [
-                        {
-                            "type": "label",
-                            "label": "Nodes attribute will be deprecated in future releases. Use reposition_nodes instead."
-                        },
-                        {
-                            "type": "raw-json",
-                            "key": "nodes",
-                            "label": "Nodes [depricated]"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Reposition knobs supported only. You can add multiple reformat nodes <br/>and set their knobs. Order of reformat nodes is important. First reformat node <br/>will be applied first and last reformat node will be applied last."
-                        },
-                        {
-                            "key": "reposition_nodes",
-                            "type": "list",
-                            "label": "Reposition nodes",
-                            "object_type": {
-                                "type": "dict",
-                                "children": [
-                                    {
-                                        "key": "node_class",
-                                        "label": "Node class",
-                                        "type": "text"
-                                    },
-                                    {
-                                        "type": "schema_template",
-                                        "name": "template_nuke_knob_inputs",
-                                        "template_data": [
-                                            {
-                                                "label": "Node knobs",
-                                                "key": "knobs"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                }
-            ]
         },
         {
             "type": "dict",

@@ -1,11 +1,12 @@
 import os
+import tempfile
+
 import pyblish
+
 from openpype.lib import (
     get_ffmpeg_tool_args,
     run_subprocess
 )
-import tempfile
-import opentimelineio as otio
 
 
 class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
@@ -155,6 +156,9 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         Returns:
             list: list of audio clip dictionaries
         """
+        # Not all hosts can import this module.
+        import opentimelineio as otio
+
         output = []
         # go trough all audio tracks
         for otio_track in otio_timeline.tracks:
@@ -315,6 +319,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         Returns:
             str: temp fpath
         """
+        name = name.replace("/", "_")
         return os.path.normpath(
             tempfile.mktemp(
                 prefix="pyblish_tmp_{}_".format(name),

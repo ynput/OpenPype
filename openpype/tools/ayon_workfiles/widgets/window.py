@@ -5,30 +5,14 @@ from openpype.tools.utils import (
     PlaceholderLineEdit,
     MessageOverlayObject,
 )
-from openpype.tools.utils.lib import get_qta_icon_by_name_and_color
 
+from openpype.tools.ayon_utils.widgets import FoldersWidget, TasksWidget
 from openpype.tools.ayon_workfiles.control import BaseWorkfileController
+from openpype.tools.utils import GoToCurrentButton, RefreshButton
 
 from .side_panel import SidePanelWidget
-from .folders_widget import FoldersWidget
-from .tasks_widget import TasksWidget
 from .files_widget import FilesWidget
 from .utils import BaseOverlayFrame
-
-
-# TODO move to utils
-# from openpype.tools.utils.lib import (
-#     get_refresh_icon, get_go_to_current_icon)
-def get_refresh_icon():
-    return get_qta_icon_by_name_and_color(
-        "fa.refresh", style.get_default_tools_icon_color()
-    )
-
-
-def get_go_to_current_icon():
-    return get_qta_icon_by_name_and_color(
-        "fa.arrow-down", style.get_default_tools_icon_color()
-    )
 
 
 class InvalidHostOverlay(BaseOverlayFrame):
@@ -80,7 +64,7 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
         self._default_window_flags = flags
 
-        self._folder_widget = None
+        self._folders_widget = None
         self._folder_filter_input = None
 
         self._files_widget = None
@@ -100,7 +84,9 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         home_body_widget = QtWidgets.QWidget(home_page_widget)
 
         col_1_widget = self._create_col_1_widget(controller, parent)
-        tasks_widget = TasksWidget(controller, home_body_widget)
+        tasks_widget = TasksWidget(
+            controller, home_body_widget, handle_expected_selection=True
+        )
         col_3_widget = self._create_col_3_widget(controller, home_body_widget)
         side_panel = SidePanelWidget(controller, home_body_widget)
 
@@ -151,11 +137,11 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
             self._on_open_finished
         )
         controller.register_event_callback(
-            "controller.refresh.started",
+            "controller.reset.started",
             self._on_controller_refresh_started,
         )
         controller.register_event_callback(
-            "controller.refresh.finished",
+            "controller.reset.finished",
             self._on_controller_refresh_finished,
         )
 
@@ -188,19 +174,12 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         folder_filter_input = PlaceholderLineEdit(header_widget)
         folder_filter_input.setPlaceholderText("Filter folders..")
 
-        go_to_current_btn = QtWidgets.QPushButton(header_widget)
-        go_to_current_btn.setIcon(get_go_to_current_icon())
-        go_to_current_btn_sp = go_to_current_btn.sizePolicy()
-        go_to_current_btn_sp.setVerticalPolicy(QtWidgets.QSizePolicy.Minimum)
-        go_to_current_btn.setSizePolicy(go_to_current_btn_sp)
+        go_to_current_btn = GoToCurrentButton(header_widget)
+        refresh_btn = RefreshButton(header_widget)
 
-        refresh_btn = QtWidgets.QPushButton(header_widget)
-        refresh_btn.setIcon(get_refresh_icon())
-        refresh_btn_sp = refresh_btn.sizePolicy()
-        refresh_btn_sp.setVerticalPolicy(QtWidgets.QSizePolicy.Minimum)
-        refresh_btn.setSizePolicy(refresh_btn_sp)
-
-        folder_widget = FoldersWidget(controller, col_widget)
+        folder_widget = FoldersWidget(
+            controller, col_widget, handle_expected_selection=True
+        )
 
         header_layout = QtWidgets.QHBoxLayout(header_widget)
         header_layout.setContentsMargins(0, 0, 0, 0)
@@ -218,7 +197,7 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         refresh_btn.clicked.connect(self._on_refresh_clicked)
 
         self._folder_filter_input = folder_filter_input
-        self._folder_widget = folder_widget
+        self._folders_widget = folder_widget
 
         return col_widget
 
@@ -300,7 +279,7 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
     def refresh(self):
         """Trigger refresh of workfiles tool controller."""
 
-        self._controller.refresh()
+        self._controller.reset()
 
     def showEvent(self, event):
         super(WorkfilesToolWindow, self).showEvent(event)
@@ -338,7 +317,7 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
         self._side_panel.set_published_mode(published_mode)
 
     def _on_folder_filter_change(self, text):
-        self._folder_widget.set_name_filer(text)
+        self._folders_widget.set_name_filter(text)
 
     def _on_go_to_current_clicked(self):
         self._controller.go_to_current_context()
@@ -356,6 +335,10 @@ class WorkfilesToolWindow(QtWidgets.QWidget):
 
         if not self._host_is_valid:
             return
+
+        self._folders_widget.set_project_name(
+            self._controller.get_current_project_name()
+        )
 
     def _on_save_as_finished(self, event):
         if event["failed"]:

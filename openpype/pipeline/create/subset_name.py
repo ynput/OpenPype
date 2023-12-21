@@ -14,6 +14,13 @@ class TaskNotSetError(KeyError):
         super(TaskNotSetError, self).__init__(msg)
 
 
+class TemplateFillError(Exception):
+    def __init__(self, msg=None):
+        if not msg:
+            msg = "Creator's subset name template is missing key value."
+        super(TemplateFillError, self).__init__(msg)
+
+
 def get_subset_name_template(
     project_name,
     family,
@@ -112,6 +119,10 @@ def get_subset_name(
             for project. Settings are queried if not passed.
         family_filter (Optional[str]): Use different family for subset template
             filtering. Value of 'family' is used when not passed.
+
+    Raises:
+        TemplateFillError: If filled template contains placeholder key which is not
+            collected.
     """
 
     if not family:
@@ -154,4 +165,10 @@ def get_subset_name(
         for key, value in dynamic_data.items():
             fill_pairs[key] = value
 
-    return template.format(**prepare_template_data(fill_pairs))
+    try:
+        return template.format(**prepare_template_data(fill_pairs))
+    except KeyError as exp:
+        raise TemplateFillError(
+            "Value for {} key is missing in template '{}'."
+            " Available values are {}".format(str(exp), template, fill_pairs)
+        )

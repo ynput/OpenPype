@@ -2,8 +2,6 @@ import os
 import attr
 from datetime import datetime
 
-from maya import cmds
-
 from openpype import AYON_SERVER_ENABLED
 from openpype.pipeline import legacy_io, PublishXmlValidationError
 from openpype.tests.lib import is_in_tests
@@ -127,7 +125,8 @@ class MayaSubmitRemotePublishDeadline(
             job_info.EnvironmentKeyValue[key] = value
 
     def get_plugin_info(self):
-
+        # Not all hosts can import this module.
+        from maya import cmds
         scene = self._instance.context.data["currentFile"]
 
         plugin_info = MayaPluginInfo()
