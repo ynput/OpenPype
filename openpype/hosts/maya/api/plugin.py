@@ -400,6 +400,37 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
         if nodes:
             return nodes if return_all else nodes[0]
 
+    def _create_renderlayer(self, instance_data, pre_create_data):
+        """Create Render Setup Render Layer if requested
+
+        This may not create a renderlayer if it already had an existing
+        layer but no renderlayer creation was forced.
+        """
+        create_mode = pre_create_data.get("create_renderlayer",
+                                          "create_first_renderlayer")
+        if create_mode not in {"create", "create_first_renderlayer"}:
+            return None
+
+        rs = renderSetup.instance()
+        existing_layers = rs.getRenderLayers()
+        if existing_layers and create_mode != "create":
+            return None
+
+        variant = instance_data["variant"]
+        for layer in existing_layers:
+            if layer.name() == variant:
+                raise CreatorError(
+                    "Can't create multiple renderlayers of the same "
+                    "variant: {}.\n"
+                    "This is because the variant defines the renderlayer name."
+                    .format(variant)
+                )
+
+        render_layer = rs.createRenderLayer(variant)
+        collection = render_layer.createCollection("defaultCollection")
+        collection.getSelector().setPattern('*')
+        return render_layer
+
     def create(self, subset_name, instance_data, pre_create_data):
         # A Renderlayer is never explicitly created using the create method.
         # Instead, renderlayers from the scene are collected. Thus "create"
@@ -408,29 +439,10 @@ class RenderlayerCreator(NewCreator, MayaCreatorBase):
         if not has_singleton:
             self.create_singleton_node()
 
-        create_mode = pre_create_data.get("create_renderlayer",
-                                          "create_first_renderlayer")
-
         # Create the renderlayer if user chose layer creation
-        render_layer = None
-        if create_mode in {"create", "create_first_renderlayer"}:
-            rs = renderSetup.instance()
-            existing_layers = rs.getRenderLayers()
-            if create_mode == "create" or not existing_layers:
-                variant = instance_data["variant"]
-                for layer in existing_layers:
-                    if layer.name() == variant:
-                        raise CreatorError(
-                            "Can't create multiple renderlayers of the "
-                            "same variant: {}.\nThis is because the variant "
-                            "defines the renderlayer name.".format(variant)
-                        )
+        # Error if nothing happened during this create
+        render_layer = self._create_renderlayer(instance_data, pre_create_data)
 
-                render_layer = rs.createRenderLayer(variant)
-                collection = render_layer.createCollection("defaultCollection")
-                collection.getSelector().setPattern('*')
-
-        # Error if nothing happened
         if has_singleton and render_layer is None:
             # The singleton node already existed and the user did not request
             # the creation of a new renderlayer. As such, nothing changes.
