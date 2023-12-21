@@ -228,12 +228,11 @@ def render_capture_preset(preset):
     preset = copy.deepcopy(preset)
     # not supported by `capture` so we pop it off of the preset
     reload_textures = preset["viewport_options"].pop("reloadTextures", True)
-
+    panel = preset.pop("panel")
     with ExitStack() as stack:
         stack.enter_context(maintained_time())
-        stack.enter_context(panel_camera(preset["panel"], preset["camera"]))
-        stack.enter_context(viewport_default_options(preset))
-        preset.pop("panel")
+        stack.enter_context(panel_camera(panel, preset["camera"]))
+        stack.enter_context(viewport_default_options(preset, panel))
         if preset["viewport_options"].get("textures"):
             # Force immediate texture loading when to ensure
             # all textures have loaded before the playblast starts
@@ -342,7 +341,7 @@ def generate_capture_preset(instance, camera, path,
 
 
 @contextlib.contextmanager
-def viewport_default_options(preset):
+def viewport_default_options(preset, panel):
     """Context manager used by `render_capture_preset`.
 
     We need to explicitly enable some viewport changes so the viewport is
@@ -363,18 +362,18 @@ def viewport_default_options(preset):
         ]
         for key in keys:
             viewport_defaults[key] = cmds.modelEditor(
-                preset["panel"], query=True, **{key: True}
+                panel, query=True, **{key: True}
             )
             if preset["viewport_options"][key]:
                 cmds.modelEditor(
-                    preset["panel"], edit=True, **{key: True}
+                    panel, edit=True, **{key: True}
                 )
         yield
     finally:
         # Restoring viewport options.
         if viewport_defaults:
             cmds.modelEditor(
-                preset["panel"], edit=True, **viewport_defaults
+                panel, edit=True, **viewport_defaults
             )
 
 
