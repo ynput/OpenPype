@@ -74,7 +74,7 @@ def get_template_name_profiles(
         project_settings
         ["global"]
         ["publish"]
-        ["IntegrateHeroVersion"]
+        ["IntegrateAssetNew"]
         ["template_name_profiles"]
     )
     if legacy_profiles:
