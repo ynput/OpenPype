@@ -2565,6 +2565,66 @@ def bake_to_world_space(nodes,
          list: The newly created and baked node names.
 
     """
+    @contextlib.contextmanager
+    def _revert_lock_attributes(node, new_node):
+        # Connect all attributes on the node except for transform
+        # attributes
+        attrs = _get_attrs(node)
+        attrs = set(attrs) - transform_attrs if attrs else []
+        original_attrs_lock = {}
+        try:
+            for attr in attrs:
+                orig_node_attr = '{0}.{1}'.format(node, attr)
+                new_node_attr = '{0}.{1}'.format(new_node, attr)
+                original_attrs_lock[new_node_attr] = (
+                    cmds.getAttr(new_node_attr, lock=True)
+                )
+
+                # unlock to avoid connection errors
+                cmds.setAttr(new_node_attr, lock=False)
+
+                cmds.connectAttr(orig_node_attr,
+                                new_node_attr,
+                                force=True)
+            yield
+        finally:
+            for attr, lock_state in original_attrs_lock.items():
+                cmds.setAttr(attr, lock=lock_state)
+
+    @contextlib.contextmanager
+    def _revert_lock_shape_attributes(node, new_node, shape):
+       # If shapes are also baked then connect those keyable attributes
+        if shape:
+            children_shapes = cmds.listRelatives(new_node,
+                                                children=True,
+                                                fullPath=True,
+                                                shapes=True)
+            if children_shapes:
+                orig_children_shapes = cmds.listRelatives(node,
+                                                        children=True,
+                                                        fullPath=True,
+                                                        shapes=True)
+                original_shape_lock_attrs = {}
+                try:
+                    for orig_shape, new_shape in zip(orig_children_shapes,
+                                                    children_shapes):
+                        attrs = _get_attrs(orig_shape)
+                        for attr in attrs:
+                            orig_node_attr = '{0}.{1}'.format(orig_shape, attr)
+                            new_node_attr = '{0}.{1}'.format(new_shape, attr)
+                            original_shape_lock_attrs[new_node_attr] = (
+                                cmds.getAttr(new_node_attr, lock=True)
+                            )
+                            # unlock to avoid connection errors
+                            cmds.setAttr(new_node_attr, lock=False)
+
+                            cmds.connectAttr(orig_node_attr,
+                                            new_node_attr,
+                                            force=True)
+                    yield
+                finally:
+                    for attr, lock_state in original_shape_lock_attrs.items():
+                        cmds.setAttr(attr, lock=lock_state)
 
     def _get_attrs(node):
         """Workaround for buggy shape attribute listing with listAttr"""
@@ -2599,7 +2659,6 @@ def bake_to_world_space(nodes,
 
     world_space_nodes = []
     with delete_after() as delete_bin:
-
         # Create the duplicate nodes that are in world-space connected to
         # the originals
         for node in nodes:
@@ -2610,69 +2669,29 @@ def bake_to_world_space(nodes,
             new_node = cmds.duplicate(node,
                                       name=new_name,
                                       renameChildren=True)[0]  # noqa
+            with _revert_lock_attributes(node, new_node):
+                with _revert_lock_shape_attributes(node, new_node):
+                # Parent to world
+                    if cmds.listRelatives(new_node, parent=True):
+                        new_node = cmds.parent(new_node, world=True)[0]
 
-            # Connect all attributes on the node except for transform
-            # attributes
-            attrs = _get_attrs(node)
-            attrs = set(attrs) - transform_attrs if attrs else []
+                    # Unlock transform attributes so constraint can be created
+                    for attr in transform_attrs:
+                        cmds.setAttr('{0}.{1}'.format(new_node, attr), lock=False)
 
-            for attr in attrs:
-                orig_node_attr = '{0}.{1}'.format(node, attr)
-                new_node_attr = '{0}.{1}'.format(new_node, attr)
+                    # Constraints
+                    delete_bin.extend(cmds.parentConstraint(node, new_node, mo=False))
+                    delete_bin.extend(cmds.scaleConstraint(node, new_node, mo=False))
 
-                # unlock to avoid connection errors
-                cmds.setAttr(new_node_attr, lock=False)
+                    world_space_nodes.append(new_node)
 
-                cmds.connectAttr(orig_node_attr,
-                                 new_node_attr,
-                                 force=True)
-
-            # If shapes are also baked then connect those keyable attributes
-            if shape:
-                children_shapes = cmds.listRelatives(new_node,
-                                                     children=True,
-                                                     fullPath=True,
-                                                     shapes=True)
-                if children_shapes:
-                    orig_children_shapes = cmds.listRelatives(node,
-                                                              children=True,
-                                                              fullPath=True,
-                                                              shapes=True)
-                    for orig_shape, new_shape in zip(orig_children_shapes,
-                                                     children_shapes):
-                        attrs = _get_attrs(orig_shape)
-                        for attr in attrs:
-                            orig_node_attr = '{0}.{1}'.format(orig_shape, attr)
-                            new_node_attr = '{0}.{1}'.format(new_shape, attr)
-
-                            # unlock to avoid connection errors
-                            cmds.setAttr(new_node_attr, lock=False)
-
-                            cmds.connectAttr(orig_node_attr,
-                                             new_node_attr,
-                                             force=True)
-
-            # Parent to world
-            if cmds.listRelatives(new_node, parent=True):
-                new_node = cmds.parent(new_node, world=True)[0]
-
-            # Unlock transform attributes so constraint can be created
-            for attr in transform_attrs:
-                cmds.setAttr('{0}.{1}'.format(new_node, attr), lock=False)
-
-            # Constraints
-            delete_bin.extend(cmds.parentConstraint(node, new_node, mo=False))
-            delete_bin.extend(cmds.scaleConstraint(node, new_node, mo=False))
-
-            world_space_nodes.append(new_node)
-
-        bake(world_space_nodes,
-             frame_range=frame_range,
-             step=step,
-             simulation=simulation,
-             preserve_outside_keys=preserve_outside_keys,
-             disable_implicit_control=disable_implicit_control,
-             shape=shape)
+                    bake(world_space_nodes,
+                        frame_range=frame_range,
+                        step=step,
+                        simulation=simulation,
+                        preserve_outside_keys=preserve_outside_keys,
+                        disable_implicit_control=disable_implicit_control,
+                        shape=shape)
 
     return world_space_nodes
 
