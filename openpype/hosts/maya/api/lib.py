@@ -1,6 +1,7 @@
 """Standalone helper functions"""
 
 import os
+import copy
 from pprint import pformat
 import sys
 import uuid
@@ -176,12 +177,9 @@ def maintained_selection():
 
 def reload_all_udim_tile_previews():
     """Regenerate all UDIM tile preview in texture file"""
-    texture_files = cmds.ls(type="file")
-    if texture_files:
-        for texture_file in texture_files:
-            if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
-                cmds.ogs(regenerateUVTilePreview=texture_file)
-    cmds.ogs(reloadTextures=True)
+    for texture_file in cmds.ls(type="file"):
+        if cmds.getAttr("{}.uvTilingMode".format(texture_file)) > 0:
+            cmds.ogs(regenerateUVTilePreview=texture_file)
 
 
 @contextlib.contextmanager
@@ -227,7 +225,7 @@ def render_capture_preset(preset):
                 json.dumps(preset, indent=4, sort_keys=True)
             )
         )
-
+    preset = copy.deepcopy(preset)
     # not supported by `capture` so we pop it off of the preset
     reload_textures = preset["viewport_options"].pop("reloadTextures", True)
 
@@ -235,6 +233,7 @@ def render_capture_preset(preset):
         stack.enter_context(maintained_time())
         stack.enter_context(panel_camera(preset["panel"], preset["camera"]))
         stack.enter_context(viewport_default_options(preset))
+        preset.pop("panel")
         if preset["viewport_options"].get("textures"):
             # Force immediate texture loading when to ensure
             # all textures have loaded before the playblast starts
@@ -242,7 +241,6 @@ def render_capture_preset(preset):
             if reload_textures:
                 # Regenerate all UDIM tiles previews
                 reload_all_udim_tile_previews()
-        preset.pop("panel")
         path = capture.capture(log=self.log, **preset)
 
     return path

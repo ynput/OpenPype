@@ -1,5 +1,19 @@
+"""Backwards compatible implementation of ExitStack for Python 2.
+
+ExitStack contextmanager was implemented with Python 3.3. As long as we support
+Python 2 hosts we can use this backwards compatible implementation to support both
+Python 2 and Python 3.
+
+Instead of using ExitStack from contextlib, use it from this module:
+
+>>> from openpype.hosts.maya.api.exitstack import ExitStack
+
+It will provide the appropriate ExitStack implementation for the current
+running Python version.
+
+"""
+# TODO: Remove the entire script once dropping Python 2 support.
 import contextlib
-# TODO: Remove the entire script once dropping Python 2.
 if getattr(contextlib, "nested", None):
     from contextlib import ExitStack    # noqa
 else:
