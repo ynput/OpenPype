@@ -252,10 +252,6 @@ class AbstractTemplateBuilder(object):
             self._log = Logger.get_logger(repr(self))
         return self._log
 
-    @property
-    def event_system(self):
-        return self._event_system
-
     def refresh(self):
         """Reset cached data."""
 
@@ -725,7 +721,7 @@ class AbstractTemplateBuilder(object):
                 placeholder.set_finished()
 
             # Trigger on_depth_processed event
-            self.event_system.emit(
+            self._event_system.emit(
                 topic="template.depth_processed",
                 data={
                     "depth": iter_counter,
@@ -753,7 +749,7 @@ class AbstractTemplateBuilder(object):
                 placeholders.append(placeholder)
 
         # Trigger on_finished event
-        self.event_system.emit(
+        self._event_system.emit(
             topic="template.finished",
             data={
                 "depth": iter_counter,
@@ -886,6 +882,10 @@ class AbstractTemplateBuilder(object):
             "keep_placeholder": keep_placeholder,
             "create_first_version": create_first_version
         }
+
+    def add_event_callback(self, topic, callback, order=None):
+        """Register event callback with the builder"""
+        return self._event_system.add_callback(topic, callback, order=order)
 
 
 @six.add_metaclass(ABCMeta)
@@ -1147,9 +1147,11 @@ class PlaceholderPlugin(object):
         # by the event system as a valid function reference. We do that here
         # always just so it's easier to develop plugins where callbacks might
         # be partials or lambdas
+        # TODO: Resolve this differently, do not store in data structure
         placeholder.data.setdefault("callbacks", []).append(callback)
+
         self.log.debug("Registering '%s' callback: %s", topic, callback)
-        self.builder.event_system.add_callback(topic, callback, order=order)
+        self.builder.add_event_callback(topic, callback, order=order)
 
 
 class PlaceholderItem(object):
