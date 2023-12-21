@@ -42,24 +42,6 @@ from .widgets import (
 )
 
 
-class CaptureEnterKeyWidget(QtWidgets.QWidget):
-    """Do not allow key enter/return press events to leave this widget.
-
-    Fixes #5838
-    """
-    # TODO: This might be obfuscating another source issue
-    def keyPressEvent(self, event):
-        # Whenever we accept an event we stop it from further propagating
-        if event.key() in {
-            QtCore.Qt.Key_Return,
-            QtCore.Qt.Key_Enter,
-        }:
-            event.accept()
-            return
-
-        return super(CaptureEnterKeyWidget, self).keyPressEvent(event)
-
-
 class PublisherWindow(QtWidgets.QDialog):
     """Main window of publisher."""
     default_width = 1300
@@ -191,7 +173,7 @@ class PublisherWindow(QtWidgets.QDialog):
         #   margins (QStackedLayout can't have margins)
         content_widget = QtWidgets.QWidget(under_publish_widget)
 
-        content_stacked_widget = CaptureEnterKeyWidget(content_widget)
+        content_stacked_widget = QtWidgets.QWidget(content_widget)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         marings = content_layout.contentsMargins()
@@ -510,6 +492,14 @@ class PublisherWindow(QtWidgets.QDialog):
     def keyPressEvent(self, event):
         # Ignore escape button to close window
         if event.key() == QtCore.Qt.Key_Escape:
+            event.accept()
+            return
+
+        # Avoid enter key to activate the "help" dialog, fix #5791
+        if event.key() in {
+            QtCore.Qt.Key_Return,
+            QtCore.Qt.Key_Enter,
+        }:
             event.accept()
             return
 
