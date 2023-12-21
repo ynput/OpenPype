@@ -1,8 +1,8 @@
 """Backwards compatible implementation of ExitStack for Python 2.
 
-ExitStack contextmanager was implemented with Python 3.3. As long as we support
-Python 2 hosts we can use this backwards compatible implementation to support both
-Python 2 and Python 3.
+ExitStack contextmanager was implemented with Python 3.3.
+As long as we supportPython 2 hosts we can use this backwards
+compatible implementation to support bothPython 2 and Python 3.
 
 Instead of using ExitStack from contextlib, use it from this module:
 
