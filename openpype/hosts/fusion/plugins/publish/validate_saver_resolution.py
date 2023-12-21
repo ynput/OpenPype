@@ -71,6 +71,14 @@ class ValidateSaverResolution(
             tuple: width, height as 2-tuple of integers
 
         """
+        if tool["Comments"][frame] is None:
+            raise PublishValidationError(
+                "Cannot get resolution info for frame '{}'.\n\n "
+                "Please check that saver has connected input.".format(
+                    frame
+                )
+            )
+
         comp = tool.Composition
 
         # False undo removes the undo-stack from the undo list
