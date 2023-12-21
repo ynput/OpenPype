@@ -479,13 +479,7 @@ def _convert_maya_project_settings(ayon_settings, output):
     }
 
     # Publish UI filters
-    new_filters = {}
-    for item in ayon_maya["filters"]:
-        new_filters[item["name"]] = {
-            subitem["name"]: subitem["value"]
-            for subitem in item["value"]
-        }
-    ayon_maya["filters"] = new_filters
+    ayon_maya["filters"] = {}
 
     # Maya dirmap
     ayon_maya_dirmap = ayon_maya.pop("maya_dirmap")
@@ -885,14 +879,7 @@ def _convert_hiero_project_settings(ayon_settings, output):
     ayon_hiero = ayon_settings["hiero"]
     _convert_host_imageio(ayon_hiero)
 
-    new_gui_filters = {}
-    for item in ayon_hiero.pop("filters"):
-        subvalue = {}
-        key = item["name"]
-        for subitem in item["value"]:
-            subvalue[subitem["name"]] = subitem["value"]
-        new_gui_filters[key] = subvalue
-    ayon_hiero["filters"] = new_gui_filters
+    ayon_hiero["filters"] = {}
 
     ayon_load_clip = ayon_hiero["load"]["LoadClip"]
     if "product_types" in ayon_load_clip:
@@ -953,16 +940,7 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
 
     _convert_host_imageio(ayon_tvpaint)
 
-    filters = {}
-    for item in ayon_tvpaint["filters"]:
-        value = item["value"]
-        try:
-            value = json.loads(value)
-
-        except ValueError:
-            value = {}
-        filters[item["name"]] = value
-    ayon_tvpaint["filters"] = filters
+    ayon_tvpaint["filters"] = {}
 
     ayon_publish_settings = ayon_tvpaint["publish"]
     for plugin_name in (
