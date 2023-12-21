@@ -879,7 +879,14 @@ def _convert_hiero_project_settings(ayon_settings, output):
     ayon_hiero = ayon_settings["hiero"]
     _convert_host_imageio(ayon_hiero)
 
-    ayon_hiero["filters"] = {}
+    new_gui_filters = {}
+    for item in ayon_hiero.pop("filters", []):
+        subvalue = {}
+        key = item["name"]
+        for subitem in item["value"]:
+            subvalue[subitem["name"]] = subitem["value"]
+        new_gui_filters[key] = subvalue
+    ayon_hiero["filters"] = new_gui_filters
 
     ayon_load_clip = ayon_hiero["load"]["LoadClip"]
     if "product_types" in ayon_load_clip:
