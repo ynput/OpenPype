@@ -81,3 +81,63 @@ def test_manual_event_system_queue():
 
     assert output == expected_output, (
         "Callbacks were not called in correct order")
+
+
+def test_unordered_events():
+    """
+    Test if pyblish filter can filter and modify plugins on-the-fly.
+    """
+
+    result = []
+
+    def function_a():
+        result.append("A")
+
+    def function_b():
+        result.append("B")
+
+    def function_c():
+        result.append("C")
+
+    # Without order
+    event_system = QueuedEventSystem()
+    event_system.add_callback("test", function_a)
+    event_system.add_callback("test", function_b)
+    event_system.add_callback("test", function_c)
+    event_system.emit("test", {}, "test")
+
+    assert result == ["A", "B", "C"]
+
+
+def test_ordered_events():
+    result = []
+
+    def function_a():
+        result.append("A")
+
+    def function_b():
+        result.append("B")
+
+    def function_c():
+        result.append("C")
+
+    def function_d():
+        result.append("D")
+
+    def function_e():
+        result.append("E")
+
+    def function_f():
+        result.append("F")
+
+    # Without order
+    event_system = QueuedEventSystem()
+    event_system.add_callback("test", function_a)
+    event_system.add_callback("test", function_b, order=-10)
+    event_system.add_callback("test", function_c, order=10)
+    event_system.add_callback("test", function_d, order=5)
+    event_system.add_callback("test", function_e)
+    event_system.add_callback("test", function_f, order=10)
+    event_system.emit("test", {}, "test")
+
+    assert result == ["B", "A", "E", "D", "C", "F"]
