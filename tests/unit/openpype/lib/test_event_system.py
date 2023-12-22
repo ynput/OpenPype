@@ -86,7 +86,7 @@ def test_manual_event_system_queue():
 
 def test_unordered_events():
     """
-    Test if pyblish filter can filter and modify plugins on-the-fly.
+    Validate if callbacks are triggered in order of their register.
     """
 
     result = []
@@ -111,6 +111,10 @@ def test_unordered_events():
 
 
 def test_ordered_events():
+    """
+    Validate if callbacks are triggered by their order and order
+        of their register.
+    """
     result = []
 
     def function_a():
@@ -145,6 +149,10 @@ def test_ordered_events():
 
 
 def test_events_partial_callbacks():
+    """
+    Validate if partial callbacks are triggered.
+    """
+
     result = []
 
     def function(name):
