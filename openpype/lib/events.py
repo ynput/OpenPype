@@ -27,10 +27,16 @@ def _get_func_info(func):
         tuple[str, str]: Function name and path to file.
     """
 
+    # Python 3.4+ supports 'partialmethod'
+    # TODO remove when support for Python 2.x is completely dropped
+    partial_types = [functools.partial]
+    if hasattr(functools, "partialmethod"):
+        partial_types.append(functools.partialmethod)
+    partial_types = tuple(partial_types)
     # Partial functions don't have '__name__' attribute, and we would like
     #   to know name and path of the original function
     is_partial = False
-    while isinstance(func, (functools.partial, functools.partialmethod)):
+    while isinstance(func, partial_types):
         is_partial = True
         if not hasattr(func, "func"):
             break
