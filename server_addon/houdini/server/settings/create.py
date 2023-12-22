@@ -26,7 +26,7 @@ class CreateStaticMeshModel(BaseSettingsModel):
         default_factory=list,
         title="Default Products"
     )
-    static_mesh_prefixes: str = Field("S", title="Static Mesh Prefix")
+    static_mesh_prefix: str = Field("S", title="Static Mesh Prefix")
     collision_prefixes: list[str] = Field(
         default_factory=list,
         title="Collision Prefixes"
@@ -52,6 +52,9 @@ class CreatePluginsModel(BaseSettingsModel):
     CreateKarmaROP: CreatorModel = Field(
         default_factory=CreatorModel,
         title="Create Karma ROP")
+    CreateMantraIFD: CreatorModel = Field(
+        default_factory=CreatorModel,
+        title="Create Mantra IFD")
     CreateMantraROP: CreatorModel = Field(
         default_factory=CreatorModel,
         title="Create Mantra ROP")
@@ -111,6 +114,10 @@ DEFAULT_HOUDINI_CREATE_SETTINGS = {
         "default_variants": ["Main"]
     },
     "CreateKarmaROP": {
+        "enabled": True,
+        "default_variants": ["Main"]
+    },
+    "CreateMantraIFD": {
         "enabled": True,
         "default_variants": ["Main"]
     },

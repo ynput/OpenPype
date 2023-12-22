@@ -14,7 +14,7 @@ from openpype.pipeline import (
     legacy_io,
     Creator as NewCreator,
     CreatedInstance,
-    Anatomy
+    Anatomy,
 )
 
 
@@ -27,27 +27,20 @@ class CreateSaver(NewCreator):
     description = "Fusion Saver to generate image sequence"
     icon = "fa5.eye"
 
-    instance_attributes = [
-        "reviewable"
-    ]
+    instance_attributes = ["reviewable"]
+    image_format = "exr"
 
     # TODO: This should be renamed together with Nuke so it is aligned
     temp_rendering_path_template = (
-        "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}")
+        "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}"
+    )
 
     def create(self, subset_name, instance_data, pre_create_data):
-        self.pass_pre_attributes_to_instance(
-            instance_data,
-            pre_create_data
+        self.pass_pre_attributes_to_instance(instance_data, pre_create_data)
+
+        instance_data.update(
+            {"id": "pyblish.avalon.instance", "subset": subset_name}
         )
-
-        instance_data.update({
-            "id": "pyblish.avalon.instance",
-            "subset": subset_name
-        })
-
-        # TODO: Add pre_create attributes to choose file format?
-        file_format = "OpenEXRFormat"
 
         comp = get_current_comp()
         with comp_lock_and_undo_chunk(comp):
@@ -55,19 +48,6 @@ class CreateSaver(NewCreator):
             saver = comp.AddTool("Saver", *args)
 
             self._update_tool_with_data(saver, data=instance_data)
-
-            saver["OutputFormat"] = file_format
-
-            # Check file format settings are available
-            if saver[file_format] is None:
-                raise RuntimeError(
-                    f"File format is not set to {file_format}, this is a bug"
-                )
-
-            # Set file format attributes
-            saver[file_format]["Depth"] = 0  # Auto | float16 | float32
-            # TODO Is this needed?
-            saver[file_format]["SaveAlpha"] = 1
 
         # Register the CreatedInstance
         instance = CreatedInstance(
@@ -140,8 +120,15 @@ class CreateSaver(NewCreator):
             return
 
         original_subset = tool.GetData("openpype.subset")
+        original_format = tool.GetData(
+            "openpype.creator_attributes.image_format"
+        )
+
         subset = data["subset"]
-        if original_subset != subset:
+        if (
+            original_subset != subset
+            or original_format != data["creator_attributes"]["image_format"]
+        ):
             self._configure_saver_tool(data, tool, subset)
 
     def _configure_saver_tool(self, data, tool, subset):
@@ -149,21 +136,19 @@ class CreateSaver(NewCreator):
 
         # get frame padding from anatomy templates
         anatomy = Anatomy()
-        frame_padding = int(
-            anatomy.templates["render"].get("frame_padding", 4)
-        )
+        frame_padding = anatomy.templates["frame_padding"]
+
+        # get output format
+        ext = data["creator_attributes"]["image_format"]
 
         # Subset change detected
         workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
-        formatting_data.update({
-            "workdir": workdir,
-            "frame": "0" * frame_padding,
-            "ext": "exr"
-        })
+        formatting_data.update(
+            {"workdir": workdir, "frame": "0" * frame_padding, "ext": ext}
+        )
 
         # build file path to render
-        filepath = self.temp_rendering_path_template.format(
-            **formatting_data)
+        filepath = self.temp_rendering_path_template.format(**formatting_data)
 
         comp = get_current_comp()
         tool["Clip"] = comp.ReverseMapPath(os.path.normpath(filepath))
@@ -203,7 +188,8 @@ class CreateSaver(NewCreator):
         attr_defs = [
             self._get_render_target_enum(),
             self._get_reviewable_bool(),
-            self._get_frame_range_enum()
+            self._get_frame_range_enum(),
+            self._get_image_format_enum(),
         ]
         return attr_defs
 
@@ -211,11 +197,7 @@ class CreateSaver(NewCreator):
         """Settings for publish page"""
         return self.get_pre_create_attr_defs()
 
-    def pass_pre_attributes_to_instance(
-        self,
-        instance_data,
-        pre_create_data
-    ):
+    def pass_pre_attributes_to_instance(self, instance_data, pre_create_data):
         creator_attrs = instance_data["creator_attributes"] = {}
         for pass_key in pre_create_data.keys():
             creator_attrs[pass_key] = pre_create_data[pass_key]
@@ -238,13 +220,13 @@ class CreateSaver(NewCreator):
         frame_range_options = {
             "asset_db": "Current asset context",
             "render_range": "From render in/out",
-            "comp_range": "From composition timeline"
+            "comp_range": "From composition timeline",
         }
 
         return EnumDef(
             "frame_range_source",
             items=frame_range_options,
-            label="Frame range source"
+            label="Frame range source",
         )
 
     def _get_reviewable_bool(self):
@@ -254,20 +236,33 @@ class CreateSaver(NewCreator):
             label="Review",
         )
 
+    def _get_image_format_enum(self):
+        image_format_options = ["exr", "tga", "tif", "png", "jpg"]
+        return EnumDef(
+            "image_format",
+            items=image_format_options,
+            default=self.image_format,
+            label="Output Image Format",
+        )
+
     def apply_settings(self, project_settings):
         """Method called on initialization of plugin to apply settings."""
 
         # plugin settings
-        plugin_settings = (
-            project_settings["fusion"]["create"][self.__class__.__name__]
-        )
+        plugin_settings = project_settings["fusion"]["create"][
+            self.__class__.__name__
+        ]
 
         # individual attributes
         self.instance_attributes = plugin_settings.get(
-            "instance_attributes") or self.instance_attributes
+            "instance_attributes", self.instance_attributes
+        )
         self.default_variants = plugin_settings.get(
-            "default_variants") or self.default_variants
-        self.temp_rendering_path_template = (
-            plugin_settings.get("temp_rendering_path_template")
-            or self.temp_rendering_path_template
+            "default_variants", self.default_variants
+        )
+        self.temp_rendering_path_template = plugin_settings.get(
+            "temp_rendering_path_template", self.temp_rendering_path_template
+        )
+        self.image_format = plugin_settings.get(
+            "image_format", self.image_format
         )

@@ -38,7 +38,7 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin,
             "families": family,
             "tasks": task_data.get("name"),
             "task_types": task_data.get("type"),
-            "hosts": instance.data["anatomyData"]["app"],
+            "hosts": instance.context.data["hostName"],
             "subsets": instance.data["subset"]
         }
         profile = filter_profiles(self.profiles, key_values,
