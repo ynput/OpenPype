@@ -16,42 +16,13 @@ from .python_module_tools import is_func_signature_supported
 class MissingEventSystem(Exception):
     pass
 
+
 # Python 3.4+ supports 'partialmethod'
 # TODO remove when support for Python 2.x is completely dropped
 _partial_types = [functools.partial]
 if hasattr(functools, "partialmethod"):
     _partial_types.append(functools.partialmethod)
 _partial_types = tuple(_partial_types)
-
-
-def _get_func_info(func, is_partial):
-    """Receive function name and path.
-
-    Args:
-        func (Callable): Function or method.
-        is_partial (bool): Function is partial.
-
-    Returns:
-        tuple[str, str, Function]: Function name, path to its file and
-            real function which should be checked for reference.
-    """
-
-    if hasattr(func, "__name__"):
-        func_name = func.__name__
-    else:
-        func_name = str(func)
-
-    if is_partial:
-        func_name = "<partial {}>".format(func_name)
-
-    # Get path to file and fallback to '<unknown path>' if fails
-    # NOTE This was added because of 'partial' functions which is handled, but
-    #   who knows what else can cause this to fail?
-    try:
-        func_path = os.path.abspath(inspect.getfile(func))
-    except TypeError:
-        func_path = "<unknown path>"
-    return func_name, func_path
 
 
 class _WrappedFunc(object):
