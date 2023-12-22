@@ -75,24 +75,6 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                     "job", "instances", "session", "version"]
         assert all(elem in data.keys() for elem in required), data_err
 
-        # set context by first json file
-        ctx = self._context.data
-
-        ctx["asset"] = ctx.get("asset") or data.get("asset")
-        ctx["intent"] = ctx.get("intent") or data.get("intent")
-        ctx["comment"] = ctx.get("comment") or data.get("comment")
-        ctx["user"] = ctx.get("user") or data.get("user")
-        ctx["version"] = ctx.get("version") or data.get("version")
-
-        # basic sanity check to see if we are working in same context
-        # if some other json file has different context, bail out.
-        ctx_err = "inconsistent contexts in json files - %s"
-        assert ctx.get("asset") == data.get("asset"), ctx_err % "asset"
-        assert ctx.get("intent") == data.get("intent"), ctx_err % "intent"
-        assert ctx.get("comment") == data.get("comment"), ctx_err % "comment"
-        assert ctx.get("user") == data.get("user"), ctx_err % "user"
-        assert ctx.get("version") == data.get("version"), ctx_err % "version"
-
         # ftrack credentials are passed as environment variables by Deadline
         # to publish job, but Muster doesn't pass them.
         if data.get("ftrack") and not os.environ.get("FTRACK_API_USER"):
