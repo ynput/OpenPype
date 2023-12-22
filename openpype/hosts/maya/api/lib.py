@@ -2691,13 +2691,13 @@ def bake_to_world_space(nodes,
 
             world_space_nodes.append(new_node)
 
-            bake(world_space_nodes,
-                 frame_range=frame_range,
-                 step=step,
-                 simulation=simulation,
-                 preserve_outside_keys=preserve_outside_keys,
-                 disable_implicit_control=disable_implicit_control,
-                 shape=shape)
+        bake(world_space_nodes,
+             frame_range=frame_range,
+             step=step,
+             simulation=simulation,
+             preserve_outside_keys=preserve_outside_keys,
+             disable_implicit_control=disable_implicit_control,
+             shape=shape)
 
     return world_space_nodes
 
