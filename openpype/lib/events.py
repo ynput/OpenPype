@@ -162,8 +162,8 @@ class _WrappedFunc(object):
             name = str(func)
 
         # Get path to file and fallback to '<unknown path>' if fails
-        # NOTE This was added because of 'partial' functions which is handled, but
-        #   who knows what else can cause this to fail?
+        # NOTE This was added because of 'partial' functions which is handled,
+        #   but who knows what else can cause this to fail?
         try:
             path = os.path.abspath(inspect.getfile(func))
         except TypeError:
