@@ -15,7 +15,7 @@ class ValidateFilePath(pyblish.api.InstancePlugin):
     This is primarily created for Simple Creator instances.
     """
 
-    label = "Validate Workfile"
+    label = "Validate Filepaths"
     order = pyblish.api.ValidatorOrder - 0.49
 
     hosts = ["traypublisher"]
