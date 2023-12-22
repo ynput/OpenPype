@@ -16,31 +16,25 @@ from .python_module_tools import is_func_signature_supported
 class MissingEventSystem(Exception):
     pass
 
+# Python 3.4+ supports 'partialmethod'
+# TODO remove when support for Python 2.x is completely dropped
+_partial_types = [functools.partial]
+if hasattr(functools, "partialmethod"):
+    _partial_types.append(functools.partialmethod)
+_partial_types = tuple(_partial_types)
 
-def _get_func_info(func):
+
+def _get_func_info(func, is_partial):
     """Receive function name and path.
 
     Args:
         func (Callable): Function or method.
+        is_partial (bool): Function is partial.
 
     Returns:
-        tuple[str, str]: Function name and path to file.
+        tuple[str, str, Function]: Function name, path to its file and
+            real function which should be checked for reference.
     """
-
-    # Python 3.4+ supports 'partialmethod'
-    # TODO remove when support for Python 2.x is completely dropped
-    partial_types = [functools.partial]
-    if hasattr(functools, "partialmethod"):
-        partial_types.append(functools.partialmethod)
-    partial_types = tuple(partial_types)
-    # Partial functions don't have '__name__' attribute, and we would like
-    #   to know name and path of the original function
-    is_partial = False
-    while isinstance(func, partial_types):
-        is_partial = True
-        if not hasattr(func, "func"):
-            break
-        func = func.func
 
     if hasattr(func, "__name__"):
         func_name = func.__name__
@@ -58,6 +52,168 @@ def _get_func_info(func):
     except TypeError:
         func_path = "<unknown path>"
     return func_name, func_path
+
+
+class _WrappedFunc(object):
+    """Wrap function to be able to check if reference is valid.
+
+    Can create sub-wrappers for 'partial' functions.
+
+    Args:
+        func (Callable): Function to wrap.
+    """
+
+    def __init__(self, func):
+        is_partial = False
+        args = None
+        kwargs = None
+        sub_func = None
+        if isinstance(func, _partial_types):
+            is_partial = True
+            func_ref = None
+            args = func.args
+            kwargs = func.keywords
+            sub_func = _WrappedFunc(func.func)
+            expect_args = False
+            expect_kwargs = False
+        else:
+            # Convert callback into references
+            #   - deleted functions won't cause crashes
+            if inspect.ismethod(func):
+                func_ref = WeakMethod(func)
+            else:
+                func_ref = weakref.ref(func)
+
+            # Get expected arguments from function spec
+            # - positional arguments are always preferred
+            expect_args = is_func_signature_supported(func, "fake")
+            expect_kwargs = is_func_signature_supported(func, event="fake")
+
+        self._func_ref = func_ref
+
+        self._is_partial = is_partial
+        self._sub_func = sub_func
+        self._args = args
+        self._kwargs = kwargs
+        self._ref_is_valid = None
+        self._expect_args = expect_args
+        self._expect_kwargs = expect_kwargs
+
+        self._name = None
+        self._path = None
+
+        self._fill_func_info(func)
+
+    @property
+    def name(self):
+        """Get name of function.
+
+        Returns:
+            str: Name of function.
+        """
+
+        return self._name
+
+    @property
+    def path(self):
+        """Get path to file where function is defined.
+
+        Returns:
+            str: Path to file.
+        """
+
+        return self._path
+
+    @property
+    def expect_args(self):
+        """
+
+        Returns:
+            Callback expects arguments.
+        """
+
+        return self._expect_args
+
+    @property
+    def expect_kwargs(self):
+        """
+
+        Returns:
+            Callback expects 'event' kwarg.
+        """
+
+        return self._expect_kwargs
+
+    def is_valid(self):
+        """Check if reference to function is valid.
+
+        Returns:
+            bool: Is reference valid.
+        """
+
+        self._validate_ref()
+        return self._ref_is_valid
+
+    def get_callback(self):
+        """Get callback function.
+
+        Returns:
+            Union[Callable, None]: Callback function.
+        """
+
+        if self._is_partial:
+            callback = self._sub_func.get_callback()
+            if callback is None:
+                return None
+            return functools.partial(callback, *self._args, **self._kwargs)
+        if self._func_ref is None:
+            return None
+        return self._func_ref()
+
+    def deregister(self):
+        """Calling this function will cause that callback will be removed."""
+
+        if self._is_partial:
+            self._sub_func.deregister()
+        else:
+            # Fake invalid reference
+            self._ref_is_valid = False
+
+    def _fill_func_info(self, func):
+        if self._is_partial:
+            self._name = self._sub_func.name
+            self._path = self._sub_func.path
+            return
+
+        if hasattr(func, "__name__"):
+            name = func.__name__
+        else:
+            name = str(func)
+
+        # Get path to file and fallback to '<unknown path>' if fails
+        # NOTE This was added because of 'partial' functions which is handled, but
+        #   who knows what else can cause this to fail?
+        try:
+            path = os.path.abspath(inspect.getfile(func))
+        except TypeError:
+            path = "<unknown path>"
+
+        self._name = name
+        self._path = path
+
+    def _validate_ref(self):
+        if self._ref_is_valid is False:
+            return
+
+        if self._is_partial:
+            self._ref_is_valid = self._sub_func.is_valid()
+
+        elif self._func_ref is None:
+            self._ref_is_valid = False
+
+        else:
+            func = self._func_ref()
+            self._ref_is_valid = func is not None
 
 
 class EventCallback(object):
@@ -78,18 +234,29 @@ class EventCallback(object):
     or none arguments. When 1 argument is expected then the processed 'Event'
     object is passed in.
 
-    The registered callbacks don't keep function in memory so it is not
-    possible to store lambda function as callback.
+    The callbacks are validated against their reference counter, that is
+        achieved using 'weakref' module. That means that the callback must
+        be stored in memory somewhere. e.g. lambda functions are not
+        supported as valid callback.
+
+    You can use 'partial' functions. In that case is partial object stored
+        in the callback object and reference counter is checked for the
+        wrapped function.
 
     Args:
         topic(str): Topic which will be listened.
-        func(func): Callback to a topic.
+        func(Callable): Callback to a topic.
 
     Raises:
         TypeError: When passed function is not a callable object.
     """
 
     def __init__(self, topic, func, order):
+        if not callable(func):
+            raise TypeError((
+                "Registered callback is not callable. \"{}\""
+            ).format(str(func)))
+
         self._log = None
         self._topic = topic
         self._order = order
@@ -108,36 +275,14 @@ class EventCallback(object):
         topic_regex = re.compile(topic_regex_str)
         self._topic_regex = topic_regex
 
-        # Convert callback into references
-        #   - deleted functions won't cause crashes
-        if inspect.ismethod(func):
-            func_ref = WeakMethod(func)
-        elif callable(func):
-            func_ref = weakref.ref(func)
-        else:
-            raise TypeError((
-                "Registered callback is not callable. \"{}\""
-            ).format(str(func)))
-
-        # Collect function name and path to file for logging
-        func_name, func_path = _get_func_info(func)
-
-        # Get expected arguments from function spec
-        # - positional arguments are always preferred
-        expect_args = is_func_signature_supported(func, "fake")
-        expect_kwargs = is_func_signature_supported(func, event="fake")
-
-        self._func_ref = func_ref
-        self._func_name = func_name
-        self._func_path = func_path
-        self._expect_args = expect_args
-        self._expect_kwargs = expect_kwargs
-        self._ref_valid = func_ref is not None
+        self._wrapper_func = _WrappedFunc(func)
         self._enabled = True
 
     def __repr__(self):
         return "< {} - {} > {}".format(
-            self.__class__.__name__, self._func_name, self._func_path
+            self.__class__.__name__,
+            self._wrapper_func.name,
+            self._wrapper_func.path
         )
 
     @property
@@ -148,29 +293,48 @@ class EventCallback(object):
 
     @property
     def is_ref_valid(self):
-        return self._ref_valid
+        """
+
+        Returns:
+            bool: Is reference to callback valid.
+        """
+
+        return self._wrapper_func.is_valid()
 
     def validate_ref(self):
-        if not self._ref_valid:
-            return
+        """Validate if reference to callback is valid.
 
-        callback = self._func_ref()
-        if not callback:
-            self._ref_valid = False
+        Deprecated:
+            Reference is always live checkd with 'is_ref_valid'.
+        """
+
+        # Trigger validate by getting 'is_valid'
+        _ = self.is_ref_valid
 
     @property
     def enabled(self):
-        """Is callback enabled."""
+        """Is callback enabled.
+
+        Returns:
+            bool: Is callback enabled.
+        """
+
         return self._enabled
 
     def set_enabled(self, enabled):
-        """Change if callback is enabled."""
+        """Change if callback is enabled.
+
+        Args:
+            enabled (bool): Change enabled state of the callback.
+        """
+
         self._enabled = enabled
 
     def deregister(self):
         """Calling this function will cause that callback will be removed."""
+
         # Fake reference
-        self._ref_valid = False
+        self._wrapper_func.deregister()
 
     def get_order(self):
         """Get callback order.
@@ -198,7 +362,15 @@ class EventCallback(object):
     order = property(get_order, set_order)
 
     def topic_matches(self, topic):
-        """Check if event topic matches callback's topic."""
+        """Check if event topic matches callback's topic.
+
+        Args:
+            topic (str): Topic name.
+
+        Returns:
+            bool: Topic matches callback's topic.
+        """
+
         return self._topic_regex.match(topic)
 
     def process_event(self, event):
@@ -208,36 +380,36 @@ class EventCallback(object):
             event(Event): Event that was triggered.
         """
 
-        # Skip if callback is not enabled or has invalid reference
-        if not self._ref_valid or not self._enabled:
+        # Skip if callback is not enabled
+        if not self._enabled:
             return
 
-        # Get reference
-        callback = self._func_ref()
-        # Check if reference is valid or callback's topic matches the event
-        if not callback:
-            # Change state if is invalid so the callback is removed
-            self._ref_valid = False
+        # Get reference and skip if is not available
+        callback = self._wrapper_func.get_callback()
+        if callback is None:
+            return
 
-        elif self.topic_matches(event.topic):
-            # Try execute callback
-            try:
-                if self._expect_args:
-                    callback(event)
+        if not self.topic_matches(event.topic):
+            return
 
-                elif self._expect_kwargs:
-                    callback(event=event)
+        # Try to execute callback
+        try:
+            if self._wrapper_func.expect_args:
+                callback(event)
 
-                else:
-                    callback()
+            elif self._wrapper_func.expect_kwargs:
+                callback(event=event)
 
-            except Exception:
-                self.log.warning(
-                    "Failed to execute event callback {}".format(
-                        str(repr(self))
-                    ),
-                    exc_info=True
-                )
+            else:
+                callback()
+
+        except Exception:
+            self.log.warning(
+                "Failed to execute event callback {}".format(
+                    str(repr(self))
+                ),
+                exc_info=True
+            )
 
 
 # Inherit from 'object' for Python 2 hosts

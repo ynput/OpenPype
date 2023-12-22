@@ -1,3 +1,4 @@
+from functools import partial
 from openpype.lib.events import EventSystem, QueuedEventSystem
 
 
@@ -141,3 +142,21 @@ def test_ordered_events():
     event_system.emit("test", {}, "test")
 
     assert result == ["B", "A", "E", "D", "C", "F"]
+
+
+def test_events_partial_callbacks():
+    result = []
+
+    def function(name):
+        result.append(name)
+
+    def function_regular():
+        result.append("regular")
+
+    event_system = QueuedEventSystem()
+    event_system.add_callback("test", partial(function, "foo"))
+    event_system.add_callback("test", function_regular)
+    event_system.add_callback("test", partial(function, "bar"))
+    event_system.emit("test", {}, "test")
+
+    assert result == ["foo", "regular", "bar"]
