@@ -167,4 +167,8 @@ def test_events_partial_callbacks():
     event_system.add_callback("test", partial(function, "bar"))
     event_system.emit("test", {}, "test")
 
-    assert result == ["foo", "regular", "bar"]
+    # Delete function should also make partial callbacks invalid
+    del function
+    event_system.emit("test", {}, "test")
+
+    assert result == ["foo", "regular", "bar", "regular"]
