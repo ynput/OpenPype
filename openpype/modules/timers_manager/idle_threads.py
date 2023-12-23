@@ -11,11 +11,21 @@ def get_idle_time():
 
 if platform.system().lower() == "windows":
     try:
-        import win32api
+        import ctypes
+
+        class LASTINPUTINFO(ctypes.Structure):
+            _fields_ = [
+                ("cbSize", ctypes.c_uint),
+                ("dwTime", ctypes.c_uint),
+            ]
 
         def _windows_get_idle_time():
-            return int((
-                win32api.GetTickCount() - win32api.GetLastInputInfo()) / 1000)
+            lii = LASTINPUTINFO()
+            lii.cbSize = ctypes.sizeof(lii)
+            if ctypes.windll.user32.GetLastInputInfo(ctypes.byref(lii)):
+                millis = ctypes.windll.kernel32.GetTickCount() - lii.dwTime
+                return int(millis / 1000.0)
+            return None
 
         get_idle_time = _windows_get_idle_time
 
