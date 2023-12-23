@@ -130,7 +130,7 @@ class WidgetUserIdle(QtWidgets.QWidget):
             self._count_timer.stop()
             return
 
-        if self._countdown <= 0:
+        if self._countdown <= 1:
             self._stop_timers()
             self.set_timer_stopped()
         else:

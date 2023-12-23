@@ -139,13 +139,9 @@ class TimersManager(
         from .idle_threads import IdleThread
         from .widget_user_idle import WidgetUserIdle
 
-        idle_thread = IdleThread()
-        idle_thread.add_reset_callback(self._on_idle_time_reset)
-        idle_thread.add_time_callback(
-            self.time_show_message, self._on_idle_time_message_show
-        )
-        idle_thread.add_time_callback(
-            self.time_stop_timer, self._on_idle_time_stop_timer
+        idle_thread = IdleThread(
+            self.time_show_message,
+            self._on_idle_time_message_show,
         )
 
         widget_user_idle = WidgetUserIdle(self)
@@ -158,15 +154,6 @@ class TimersManager(
 
     def _on_idle_time_message_show(self):
         self.execute_in_main_thread(self.show_message)
-
-    def _on_idle_time_stop_timer(self):
-        self.execute_in_main_thread(self.stop_timers)
-
-    def _on_idle_time_reset(self):
-        if self._widget_user_idle is not None:
-            self.execute_in_main_thread(
-                self._widget_user_idle.reset_countdown
-            )
 
     def tray_start(self, *_a, **_kw):
         if self._idle_thread is not None:

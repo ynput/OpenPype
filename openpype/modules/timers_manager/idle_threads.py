@@ -33,52 +33,6 @@ if platform.system().lower() == "windows":
         pass
 
 
-class IdleCallback(object):
-    def __init__(self, func, idle_time):
-        self._func = func
-        self._triggered = False
-        self._idle_time = idle_time
-
-    def reset(self):
-        self._triggered = False
-
-    def trigger(self, idle_time):
-        if self._triggered or idle_time < self._idle_time:
-            return
-
-        self._triggered = True
-        self._func()
-
-
-class IdleThreadState(object):
-    """Helper to handle state of a thread.
-
-    Python thread may not handle attributes as expected. e.g. having an
-    attribute 'stopped' and changing it from different thread may not
-    be propagated correctly. Using middle object will cause that code in
-    'run' won't look into cache but into the memory pointer.
-    """
-
-    def __init__(self):
-        self._is_running = False
-        self._stopped = False
-
-    def get_is_running(self):
-        return self._is_running
-
-    def set_is_running(self, is_running):
-        self._is_running = is_running
-
-    def get_stopped(self):
-        return self._stopped
-
-    def set_stopped(self, stopped):
-        self._stopped = stopped
-
-    is_running = property(get_is_running, set_is_running)
-    stopped = property(get_stopped, set_stopped)
-
-
 class IdleThread(threading.Thread):
     """ Measure user's idle time in seconds.
 
@@ -86,27 +40,20 @@ class IdleThread(threading.Thread):
     needed.
     """
 
-    def __init__(self):
+    def __init__(self, idle_time, on_idle_time):
         super(IdleThread, self).__init__()
         self.log = Logger.get_logger(self.__class__.__name__)
 
-        self._idle_time = 0
-        self._callbacks = []
-        self._reset_callbacks = []
-        self._idle_thread_state = IdleThreadState()
+        self._idle_time = -1
 
-    def add_time_callback(self, emit_time, func):
-        """ If any module want to use IdleManager, need to use add_time_signal
+        self._expected_idle_time = idle_time
+        self._on_idle_callback = on_idle_time
+        self._callback_triggered = False
 
-        Args:
-            emit_time (int): Time when signal will be emitted.
-            func (Function): Function callback.
-        """
+        self._is_running = False
+        self._stop_event = threading.Event()
 
-        self._callbacks.append(IdleCallback(func, emit_time))
-
-    def add_reset_callback(self, func):
-        self._reset_callbacks.append(func)
+        self._secret_idle = 0.0
 
     @property
     def is_running(self):
@@ -116,29 +63,26 @@ class IdleThread(threading.Thread):
             bool: Thread is running.
         """
 
-        return self._idle_thread_state.is_running
+        return self._is_running
 
     @property
     def idle_time(self):
         return self._idle_time
 
     def run(self):
-        self._idle_thread_state.is_running = True
+        self._is_running = True
         self.log.info("IdleManager has started")
 
-        while True:
-            print(self._idle_thread_state.stopped)
-            if self._idle_thread_state.stopped:
-                break
-
+        while not self._stop_event.is_set():
             idle_time = get_idle_time()
             if idle_time is None:
                 self._idle_time = None
                 break
             self._set_idle_time(idle_time)
-            time.sleep(1)
+            time.sleep(0.1)
 
-        self._idle_thread_state.is_running = False
+        self._is_running = False
+        self._stop_event = threading.Event()
         self.log.info("IdleManager has stopped")
 
     def stop(self):
@@ -147,26 +91,22 @@ class IdleThread(threading.Thread):
         This will cause that the thread should stop in next 0.3 seconds.
         """
 
-        self._idle_thread_state.stopped = True
-
-    def _reset(self, skip_callbacks=False):
-        if not skip_callbacks:
-            for callback in self._callbacks:
-                callback.reset()
-
-        for func in self._reset_callbacks:
-            func()
+        self._stop_event.set()
 
     def _set_idle_time(self, idle_time):
+        self._secret_idle += 0.2
+        idle_time = int(self._secret_idle)
         if self._idle_time == idle_time:
-            if idle_time == 0:
-                self._reset(skip_callbacks=True)
             return
 
-        previous_idle_time = self._idle_time
-        self._idle_time = idle_time
-        if previous_idle_time > idle_time:
-            self._reset()
+        print(idle_time, self._expected_idle_time)
+        if idle_time == self._expected_idle_time:
+            self._callback_triggered = True
+            self._on_idle_callback()
 
-        for callback in self._callbacks:
-            callback.trigger(idle_time)
+        elif idle_time < self._expected_idle_time:
+            prev_idle_time = self._idle_time
+            if prev_idle_time > idle_time:
+                self._callback_triggered = False
+
+        self._idle_time = idle_time
