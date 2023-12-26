@@ -109,11 +109,12 @@ class CreateProjectFolders(BaseAction):
                         {
                             "type": "label",
                             "value": "The following pair of paths coexist in the same parent directory "
-                                     "and its probably an issue:\n{}".format(path_list_str)
+                                     "and its probably an issue (only the first folder path of every pair "
+                                     "should exists):\n{}".format(path_list_str)
                         },
                         {
                             "type": "label",
-                            "value": "Only the first folder path of every pair should exists."
+                            "value": "Please move content and delete duplicate folders."
                         }
                     ],
                     "title": "Create Project Structure",
