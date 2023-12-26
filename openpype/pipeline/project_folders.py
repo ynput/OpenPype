@@ -76,6 +76,7 @@ def create_project_folders(project_name, basic_paths=None):
         if path.is_dir():
             log.debug("Folder already exists: {}".format(path_str))
         else:
+            log.debug("Creating folder: {}".format(path_str))
             # Check case-insensitive for the whole path
             # Needed for case-sensitive OSs (Unix based)
             path_parent = Path(path.absolute().parts[0])
@@ -95,8 +96,6 @@ def create_project_folders(project_name, basic_paths=None):
                 os.makedirs(path_current)
                 path_parent = path_current
 
-            log.debug("Creating folder: {}".format(path_str))
-            os.makedirs(path_str)
 
     return case_sensitivity_issues
 
