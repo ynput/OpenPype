@@ -86,11 +86,13 @@ def create_project_folders(project_name, basic_paths=None):
                 path_current = path_parent.joinpath(path_part)
                 # Check if the current path already exists, so no need to check for doppelgängers
                 if path_current.exists():
+                    path_parent = path_current
                     continue
                 for dir_child_path_str in os.listdir(path_parent):
                     if dir_child_path_str.lower() == path_part.lower():
                         case_sensitivity_issues.append((path_current, str(path_parent.joinpath(dir_child_path_str))))
                 # Set the current looked dir as the new parent
+                os.makedirs(path_current)
                 path_parent = path_current
 
             log.debug("Creating folder: {}".format(path_str))
