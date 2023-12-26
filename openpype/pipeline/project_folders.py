@@ -4,6 +4,8 @@ import json
 
 import six
 
+from pathlib import Path
+
 from openpype.settings import get_project_settings
 from openpype.lib import Logger
 
@@ -67,12 +69,24 @@ def create_project_folders(project_name, basic_paths=None):
     filled_paths = fill_paths(concat_paths, anatomy)
 
     # Create folders
-    for path in filled_paths:
-        if os.path.exists(path):
-            log.debug("Folder already exists: {}".format(path))
+    case_sensitivity_issues = []
+    for path_str in filled_paths:
+        path = Path(path_str)
+
+        if path.is_dir():
+            log.debug("Folder already exists: {}".format(path_str))
         else:
-            log.debug("Creating folder: {}".format(path))
-            os.makedirs(path)
+            log.debug("Creating folder: {}".format(path_str))
+            os.makedirs(path_str)
+            # Check case-insensitive inside the parent folder
+            # Needed for case-sensitive OSs (Unix based)
+            for dir_child_path_str in os.listdir(path.parent):
+                if dir_child_path_str.lower() == path.stem.lower():
+                    # Another folder already exists with this name
+                    case_sensitivity_issues.append((path_str, str(path.parent.joinpath(dir_child_path_str))))
+
+
+    return case_sensitivity_issues
 
 
 def _list_path_items(folder_structure):
