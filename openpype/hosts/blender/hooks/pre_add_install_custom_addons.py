@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from openpype.hosts.blender.hooks import pre_add_run_python_script_arg
 from openpype.lib import PreLaunchHook
@@ -16,12 +17,16 @@ class InstallCustomAddons(PreLaunchHook):
     script_file_name = 'install_custom_addons.py'
 
     def execute(self):
-        hooks_folder_path = os.path.dirname(os.path.realpath(__file__))
-        custom_script_folder = os.path.join(os.path.dirname(hooks_folder_path), "blender_addon/startup/custom_scripts")
-        blender_addons_folder = os.path.join(os.path.dirname(hooks_folder_path), "blender_addon/addons")
-        self.log.warning(blender_addons_folder)
+        hooks_folder_path = Path(__file__).parent
+        custom_script_folder = hooks_folder_path.parent.joinpath("blender_addon", "startup", "custom_scripts")
+        blender_addons_folder = hooks_folder_path.parent.joinpath("blender_addon", "addons").resolve()
+
+        script_file = custom_script_folder.joinpath(self.script_file_name)
+        if not script_file.exists() or not script_file.is_file():
+            raise FileNotFoundError(f"Can't find {self.script_file_name} in {custom_script_folder}.")
+
         self.launch_context.data.setdefault("python_scripts", []).append(
-            os.path.join(custom_script_folder, self.script_file_name)
+            custom_script_folder.joinpath(self.script_file_name).resolve()
         )
         self.launch_context.data.setdefault("script_args", []).extend(
             [

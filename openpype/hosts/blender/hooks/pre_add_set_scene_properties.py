@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import tempfile
 
 from openpype.hosts.blender.hooks import pre_add_run_python_script_arg
@@ -36,7 +37,7 @@ class SetSceneProperties(PreLaunchHook):
         sequence_name, shot_name = data['asset_name'].split('_')
 
         try:
-            base_output_path = os.path.join(
+            base_output_path = Path(
                     data['project_name'],
                     'Shots',
                     sequence_name,
@@ -70,7 +71,7 @@ class SetSceneProperties(PreLaunchHook):
 
 
     def _generate_path_with_version(self, work_dir, base_path, project_name, shot_name):
-        return os.path.join(
+        return Path(
             work_dir,
             base_path,
             '{version}',
@@ -79,7 +80,7 @@ class SetSceneProperties(PreLaunchHook):
         )
 
     def _generate_path_without_version(self, work_dir, base_path, project_name, shot_name):
-        return os.path.join(
+        return Path(
             work_dir,
             base_path,
             '{render_layer_name}',
@@ -87,11 +88,15 @@ class SetSceneProperties(PreLaunchHook):
         )
 
     def execute(self):
-        hooks_folder_path = os.path.dirname(os.path.realpath(__file__))
-        custom_script_folder = os.path.join(os.path.dirname(hooks_folder_path), "blender_addon/startup/custom_scripts")
+        hooks_folder_path = Path(__file__).parent
+        custom_script_folder = hooks_folder_path.parent.joinpath("blender_addon", "startup", "custom_scripts")
+
+        script_file = custom_script_folder.joinpath(self.script_file_name)
+        if not script_file.exists() or not script_file.is_file():
+            raise FileNotFoundError(f"Can't find {self.script_file_name} in {custom_script_folder}.")
 
         self.launch_context.data.setdefault("python_scripts", []).append(
-            os.path.join(custom_script_folder, self.script_file_name)
+            custom_script_folder.joinpath(self.script_file_name)
         )
         render_layer_path, output_path = self.get_formatted_outputs_paths()
         self.launch_context.data.setdefault("script_args", []).extend(
