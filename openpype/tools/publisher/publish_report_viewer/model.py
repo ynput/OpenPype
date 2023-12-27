@@ -27,9 +27,8 @@ class InstancesModel(QtGui.QStandardItemModel):
 
     def set_report(self, report_item):
         root_item = self.invisibleRootItem()
-        if root_item.rowCount():
+        if root_item.rowCount() > 0:
             root_item.removeRows(0, root_item.rowCount())
-
         self._items_by_id.clear()
         self._plugin_items_by_id.clear()
         if not report_item:
