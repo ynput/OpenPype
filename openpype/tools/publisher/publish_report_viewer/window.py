@@ -2,9 +2,9 @@ import os
 import json
 import six
 import uuid
-import datetime
 
 import appdirs
+import arrow
 from qtpy import QtWidgets, QtCore, QtGui
 
 from openpype import style
@@ -56,10 +56,8 @@ class PublishReportItem:
         if os.path.exists(report_path):
             file_modified = os.path.getmtime(report_path)
 
-        created_at_obj = datetime.datetime.strptime(
-            content["created_at"], "%Y-%m-%d %H:%M:%S"
-        )
-        created_at = created_at_obj.timestamp()
+        created_at_obj = arrow.get(content["created_at"]).to("local")
+        created_at = created_at_obj.float_timestamp
 
         self.content = content
         self.report_path = report_path
@@ -243,10 +241,10 @@ class PublishReportItem:
         # Auto fix 'created_at', use file modification time if it is not set
         #   or current time if modification could not be received.
         if file_modified is not None:
-            created_at_obj = datetime.datetime.fromtimestamp(file_modified)
+            created_at_obj = arrow.Arrow.fromtimestamp(file_modified)
         else:
-            created_at_obj = datetime.datetime.now()
-        content["created_at"] = created_at_obj.strftime("%Y-%m-%d %H:%M:%S")
+            created_at_obj = arrow.utcnow()
+        content["created_at"] = created_at_obj.to("local").isoformat()
         return True
 
 
@@ -320,9 +318,8 @@ class LoadedFilesModel(QtGui.QStandardItemModel):
 
     def refresh(self):
         root_item = self.invisibleRootItem()
-        if root_item.rowCount():
+        if root_item.rowCount() > 0:
             root_item.removeRows(0, root_item.rowCount())
-
         self._items_by_id = {}
         self._report_items_by_id = {}
 
