@@ -2,6 +2,7 @@ import os
 import json
 import six
 import uuid
+import datetime
 
 import appdirs
 from qtpy import QtWidgets, QtCore, QtGui
@@ -47,47 +48,79 @@ class PublishReportItem:
     """Report item representing one file in report directory."""
 
     def __init__(self, content):
-        item_id = content.get("id")
-        changed = False
-        if not item_id:
-            item_id = str(uuid.uuid4())
-            changed = True
-            content["id"] = item_id
+        changed = self._fix_content(content)
 
-        if not content.get("report_version"):
-            changed = True
-            content["report_version"] = "0.0.1"
-
-        report_path = os.path.join(get_reports_dir(), item_id)
+        report_path = os.path.join(get_reports_dir(), content["id"])
         file_modified = None
         if os.path.exists(report_path):
             file_modified = os.path.getmtime(report_path)
+
+        created_at_obj = datetime.datetime.strptime(
+            content["created_at"], "%Y-%m-%d %H:%M:%S"
+        )
+        created_at = self.date_obj_to_timestamp(created_at_obj)
+
         self.content = content
         self.report_path = report_path
         self.file_modified = file_modified
+        self.created_at = float(created_at)
         self._loaded_label = content.get("label")
         self._changed = changed
         self.publish_report = PublishReport(content)
 
     @property
     def version(self):
+        """Publish report version.
+
+        Returns:
+            str: Publish report version.
+        """
         return self.content["report_version"]
 
     @property
     def id(self):
+        """Publish report id.
+
+        Returns:
+            str: Publish report id.
+        """
+
         return self.content["id"]
 
     def get_label(self):
+        """Publish report label.
+
+        Returns:
+            str: Publish report label showed in UI.
+        """
+
         return self.content.get("label") or "Unfilled label"
 
     def set_label(self, label):
+        """Set publish report label.
+
+        Args:
+            label (str): New publish report label.
+        """
+
         if not label:
             self.content.pop("label", None)
         self.content["label"] = label
 
     label = property(get_label, set_label)
 
+    @property
+    def loaded_label(self):
+        return self._loaded_label
+
+    def mark_as_changed(self):
+        """Mark report as changed."""
+
+        self._changed = True
+
     def save(self):
+        """Save publish report to file."""
+
         save = False
         if (
             self._changed
@@ -109,6 +142,15 @@ class PublishReportItem:
 
     @classmethod
     def from_filepath(cls, filepath):
+        """Create report item from file.
+
+        Args:
+            filepath (str): Path to report file. Content must be json.
+
+        Returns:
+            PublishReportItem: Report item.
+        """
+
         if not os.path.exists(filepath):
             return None
 
@@ -116,15 +158,25 @@ class PublishReportItem:
             with open(filepath, "r") as stream:
                 content = json.load(stream)
 
-            return cls(content)
+            file_modified = os.path.getmtime(filepath)
+            changed = cls._fix_content(content, file_modified=file_modified)
+            obj = cls(content)
+            if changed:
+                obj.mark_as_changed()
+            return obj
+
         except Exception:
             return None
 
     def remove_file(self):
+        """Remove report file."""
+
         if os.path.exists(self.report_path):
             os.remove(self.report_path)
 
     def update_file_content(self):
+        """Update report content in file."""
+
         if not os.path.exists(self.report_path):
             return
 
@@ -147,6 +199,63 @@ class PublishReportItem:
 
         self.content = content
         self.file_modified = file_modified
+
+    @staticmethod
+    def date_obj_to_timestamp(date_obj):
+        if hasattr(date_obj, "timestamp"):
+            return date_obj.timestamp()
+
+        # Python 2 support
+        epoch = datetime.datetime.fromtimestamp(0)
+        return (date_obj - epoch).total_seconds()
+
+    @classmethod
+    def _fix_content(cls, content, file_modified=None):
+        """Fix content for backward compatibility of older report items.
+
+        Args:
+            content (dict[str, Any]): Report content.
+            file_modified (Optional[float]): File modification time.
+
+        Returns:
+            bool: True if content was changed, False otherwise.
+        """
+
+        # Fix created_at key
+        changed = cls._fix_created_at(content, file_modified)
+
+        # NOTE backward compatibility for 'id' and 'report_version' is from
+        #    28.10.2022 https://github.com/ynput/OpenPype/pull/4040
+        # We can probably safely remove it
+
+        # Fix missing 'id'
+        item_id = content.get("id")
+        if not item_id:
+            item_id = str(uuid.uuid4())
+            changed = True
+            content["id"] = item_id
+
+        # Fix missing 'report_version'
+        if not content.get("report_version"):
+            changed = True
+            content["report_version"] = "0.0.1"
+        return changed
+
+    @classmethod
+    def _fix_created_at(cls, content, file_modified):
+        # Key 'create_at' was added in report version 1.0.1
+        created_at = content.get("created_at")
+        if created_at:
+            return False
+
+        # Auto fix 'created_at', use file modification time if it is not set
+        #   , or current time if modification could not be received.
+        if file_modified is not None:
+            created_at_obj = datetime.datetime.fromtimestamp(file_modified)
+        else:
+            created_at_obj = datetime.datetime.now()
+        content["created_at"] = created_at_obj.strftime("%Y-%m-%d %H:%M:%S")
+        return True
 
 
 class PublisherReportHandler:
@@ -278,16 +387,16 @@ class LoadedFilesModel(QtGui.QStandardItemModel):
 
         new_items = []
         for normalized_path in filtered_paths:
-            try:
-                with open(normalized_path, "r") as stream:
-                    data = json.load(stream)
-                report_item = PublishReportItem(data)
-            except Exception:
-                # TODO handle errors
+            report_item = PublishReportItem.from_filepath(normalized_path)
+            if report_item is None:
                 continue
 
-            label = data.get("label")
-            if not label:
+            # Skip already added report items
+            # QUESTION: Should we replace existing or skip the item?
+            if report_item.id in self._items_by_id:
+                continue
+
+            if not report_item.loaded_label:
                 report_item.label = (
                     os.path.splitext(os.path.basename(filepath))[0]
                 )
