@@ -290,7 +290,15 @@ class PublisherReportHandler:
         self._reports_by_id = reports_by_id
         return reports
 
-    def remove_report_items(self, item_id):
+    def remove_report_item(self, item_id):
+        """Remove report item by id.
+
+        Remove from cache and also remove the file with the content.
+
+        Args:
+            item_id (str): Report item id.
+        """
+
         item = self._reports_by_id.get(item_id)
         if item:
             try:
@@ -439,7 +447,7 @@ class LoadedFilesModel(QtGui.QStandardItemModel):
         if not report_item:
             return
 
-        self._handler.remove_report_items(item_id)
+        self._handler.remove_report_item(item_id)
         item = self._items_by_id.get(item_id)
 
         parent = self.invisibleRootItem()
