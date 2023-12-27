@@ -241,7 +241,7 @@ class PublishReportItem:
             return False
 
         # Auto fix 'created_at', use file modification time if it is not set
-        #   , or current time if modification could not be received.
+        #   or current time if modification could not be received.
         if file_modified is not None:
             created_at_obj = datetime.datetime.fromtimestamp(file_modified)
         else:
