@@ -26,6 +26,7 @@ else:
 
 
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
+ITEM_CREATED_AT_ROLE = QtCore.Qt.UserRole + 2
 
 
 def get_reports_dir():
@@ -300,8 +301,15 @@ class PublisherReportHandler:
 
 
 class LoadedFilesModel(QtGui.QStandardItemModel):
+    header_labels = ("Reports", "Created")
+
     def __init__(self, *args, **kwargs):
         super(LoadedFilesModel, self).__init__(*args, **kwargs)
+
+        # Column count must be set before setting header data
+        self.setColumnCount(len(self.header_labels))
+        for col, label in enumerate(self.header_labels):
+            self.setHeaderData(col, QtCore.Qt.Horizontal, label)
 
         self._items_by_id = {}
         self._report_items_by_id = {}
@@ -311,9 +319,14 @@ class LoadedFilesModel(QtGui.QStandardItemModel):
         self._loading_registry = False
 
     def refresh(self):
-        self._handler.reset()
+        root_item = self.invisibleRootItem()
+        if root_item.rowCount():
+            root_item.removeRows(0, root_item.rowCount())
+
         self._items_by_id = {}
         self._report_items_by_id = {}
+
+        self._handler.reset()
 
         new_items = []
         for report_item in self._handler.list_reports():
@@ -326,26 +339,26 @@ class LoadedFilesModel(QtGui.QStandardItemModel):
             root_item = self.invisibleRootItem()
             root_item.appendRows(new_items)
 
-    def headerData(self, section, orientation, role):
-        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
-            if section == 0:
-                return "Exports"
-            if section == 1:
-                return "Modified"
-            return ""
-        super(LoadedFilesModel, self).headerData(section, orientation, role)
-
     def data(self, index, role=None):
         if role is None:
             role = QtCore.Qt.DisplayRole
 
         col = index.column()
+        if col == 1:
+            if role in (
+                QtCore.Qt.DisplayRole, QtCore.Qt.InitialSortOrderRole
+            ):
+                role = ITEM_CREATED_AT_ROLE
+
         if col != 0:
             index = self.index(index.row(), 0, index.parent())
 
         return super(LoadedFilesModel, self).data(index, role)
 
-    def setData(self, index, value, role):
+    def setData(self, index, value, role=None):
+        if role is None:
+            role = QtCore.Qt.EditRole
+
         if role == QtCore.Qt.EditRole:
             item_id = index.data(ITEM_ID_ROLE)
             report_item = self._report_items_by_id.get(item_id)
@@ -356,6 +369,12 @@ class LoadedFilesModel(QtGui.QStandardItemModel):
 
         return super(LoadedFilesModel, self).setData(index, value, role)
 
+    def flags(self, index):
+        # Allow editable flag only for first column
+        if index.column() > 0:
+            return QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
+        return super(LoadedFilesModel, self).flags(index)
+
     def _create_item(self, report_item):
         if report_item.id in self._items_by_id:
             return None
@@ -363,6 +382,7 @@ class LoadedFilesModel(QtGui.QStandardItemModel):
         item = QtGui.QStandardItem(report_item.label)
         item.setColumnCount(self.columnCount())
         item.setData(report_item.id, ITEM_ID_ROLE)
+        item.setData(report_item.created_at, ITEM_CREATED_AT_ROLE)
 
         return item
 
@@ -444,12 +464,17 @@ class LoadedFilesView(QtWidgets.QTreeView):
         )
         self.setIndentation(0)
         self.setAlternatingRowColors(True)
+        self.setSortingEnabled(True)
 
         model = LoadedFilesModel()
-        self.setModel(model)
+        proxy_model = QtCore.QSortFilterProxyModel()
+        proxy_model.setSourceModel(model)
+        self.setModel(proxy_model)
 
         time_delegate = PrettyTimeDelegate()
         self.setItemDelegateForColumn(1, time_delegate)
+
+        self.sortByColumn(1, QtCore.Qt.AscendingOrder)
 
         remove_btn = IconButton(self)
         remove_icon_path = resources.get_icon_path("delete")
@@ -465,6 +490,7 @@ class LoadedFilesView(QtWidgets.QTreeView):
         )
 
         self._model = model
+        self._proxy_model = proxy_model
         self._time_delegate = time_delegate
         self._remove_btn = remove_btn
 
