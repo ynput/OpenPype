@@ -4,6 +4,7 @@ import logging
 import traceback
 import collections
 import uuid
+import datetime
 import tempfile
 import shutil
 import inspect
@@ -285,6 +286,8 @@ class PublishReportMaker:
 
     def get_report(self, publish_plugins=None):
         """Report data with all details of current state."""
+
+        now = datetime.datetime.now()
         instances_details = {}
         for instance in self._all_instances_by_id.values():
             instances_details[instance.id] = self._extract_instance_data(
@@ -334,7 +337,8 @@ class PublishReportMaker:
             "context": self._extract_context_data(self._current_context),
             "crashed_file_paths": crashed_file_paths,
             "id": uuid.uuid4().hex,
-            "report_version": "1.0.0"
+            "created_at": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "report_version": "1.0.1",
         }
 
     def _extract_context_data(self, context):
