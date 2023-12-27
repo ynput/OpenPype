@@ -59,7 +59,7 @@ class PublishReportItem:
         created_at_obj = datetime.datetime.strptime(
             content["created_at"], "%Y-%m-%d %H:%M:%S"
         )
-        created_at = self.date_obj_to_timestamp(created_at_obj)
+        created_at = created_at_obj.timestamp()
 
         self.content = content
         self.report_path = report_path
@@ -200,15 +200,6 @@ class PublishReportItem:
 
         self.content = content
         self.file_modified = file_modified
-
-    @staticmethod
-    def date_obj_to_timestamp(date_obj):
-        if hasattr(date_obj, "timestamp"):
-            return date_obj.timestamp()
-
-        # Python 2 support
-        epoch = datetime.datetime.fromtimestamp(0)
-        return (date_obj - epoch).total_seconds()
 
     @classmethod
     def _fix_content(cls, content, file_modified=None):
