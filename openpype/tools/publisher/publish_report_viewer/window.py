@@ -283,8 +283,9 @@ class PublisherReportHandler:
                 continue
             filepath = os.path.join(report_dir, filename)
             item = PublishReportItem.from_filepath(filepath)
-            reports.append(item)
-            reports_by_id[item.id] = item
+            if item is not None:
+                reports.append(item)
+                reports_by_id[item.id] = item
 
         self._reports = reports
         self._reports_by_id = reports_by_id
