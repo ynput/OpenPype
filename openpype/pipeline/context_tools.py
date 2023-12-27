@@ -104,16 +104,40 @@ def registered_root():
     return _registered_root["_"]
 
 
-def install_host(host):
+def install_host(host, pyblish_targets=None):
     """Install `host` into the running Python session.
 
     Args:
-        host (module): A Python module containing the Avalon
-            avalon host-interface.
+        host (Union[HostBase, types.Module]): Host object.
+        pyblish_targets (Optional[list[str]]): List of pyblish targets
+            to register.
     """
+
     global _is_installed
 
     _is_installed = True
+
+    if pyblish_targets is None:
+        # target "local" == local publishing - based on created instances in
+        #   current session
+        # target "remote" == remote publishing - headless publishing based
+        #   on workfile with created instances
+        # target "automated" == automated publishing - headless publishing
+        #   based on workfile without created instances, those are created
+        #   on the fly
+        pyblish_targets = []
+        if os.environ.get("OPENPYPE_REMOTE_PUBLISH"):
+            print("Registering pyblish target: remote")
+            pyblish_targets.append("remote")
+        else:
+            pyblish_targets.append("local")
+
+        if is_in_tests():
+            print("Registering pyblish target: automated")
+            pyblish_targets.append("automated")
+
+    for target in pyblish_targets:
+        pyblish.api.register_target(target)
 
     # Make sure global AYON connection has set site id and version
     if AYON_SERVER_ENABLED:
@@ -148,18 +172,6 @@ def install_host(host):
         obj.records.append(record)
 
     MessageHandler.emit = modified_emit
-
-    if os.environ.get("OPENPYPE_REMOTE_PUBLISH"):
-        # target "farm" == rendering on farm, expects OPENPYPE_PUBLISH_DATA
-        # target "remote" == remote execution, installs host
-        print("Registering pyblish target: remote")
-        pyblish.api.register_target("remote")
-    else:
-        pyblish.api.register_target("local")
-
-    if is_in_tests():
-        print("Registering pyblish target: automated")
-        pyblish.api.register_target("automated")
 
     project_name = os.environ.get("AVALON_PROJECT")
     host_name = os.environ.get("AVALON_APP")
