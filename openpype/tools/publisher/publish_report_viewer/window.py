@@ -260,7 +260,7 @@ class PublishReportItem:
 
 
 class PublisherReportHandler:
-    """Class handling storing publish report tool."""
+    """Class handling storing publish report items."""
 
     def __init__(self):
         self._reports = None
