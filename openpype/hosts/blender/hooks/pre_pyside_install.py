@@ -86,6 +86,12 @@ class InstallPySideToBlender(PreLaunchHook):
 
         # Change PYTHONPATH to contain blender's packages as first
         python_paths = [
+            # Python lib has been removed from PYTHONPATH because it was
+            # causing Blender to use the wrong Python version in specific
+            # cases (e.g. with Deadline add-on) instead of the embedded one.
+            # See https://github.com/quadproduction/issues/issues/214#issuecomment-1833613833
+            # for more informations.
+            #python_lib,
             os.path.join(python_lib, "site-packages"),
         ]
         python_path = self.launch_context.env.get("PYTHONPATH") or ""
