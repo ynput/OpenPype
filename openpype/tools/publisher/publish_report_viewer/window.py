@@ -435,15 +435,13 @@ class LoadedFilesModel(QtGui.QStandardItemModel):
             root_item.appendRows(new_items)
 
     def remove_item_by_id(self, item_id):
-        report_item = self._report_items_by_id.get(item_id)
-        if not report_item:
-            return
-
         self._handler.remove_report_item(item_id)
-        item = self._items_by_id.get(item_id)
 
-        parent = self.invisibleRootItem()
-        parent.removeRow(item.row())
+        self._report_items_by_id.pop(item_id, None)
+        item = self._items_by_id.pop(item_id)
+        if item is not None:
+            parent = self.invisibleRootItem()
+            parent.removeRow(item.row())
 
     def get_report_by_id(self, item_id):
         report_item = self._report_items_by_id.get(item_id)
