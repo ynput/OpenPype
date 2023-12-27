@@ -157,7 +157,7 @@ def install_host(host, pyblish_targets=None):
             json.dumps(legacy_io.Session, indent=4, sort_keys=True)
         ))
 
-    project_name = legacy_io.Session["AVALON_PROJECT"]
+    project_name = os.environ.get("AVALON_PROJECT")
     log.info("Activating %s.." % project_name)
 
     # Optional host install function
@@ -173,7 +173,6 @@ def install_host(host, pyblish_targets=None):
 
     MessageHandler.emit = modified_emit
 
-    project_name = os.environ.get("AVALON_PROJECT")
     host_name = os.environ.get("AVALON_APP")
 
     # Give option to handle host installation
