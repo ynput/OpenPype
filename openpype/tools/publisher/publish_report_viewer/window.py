@@ -538,7 +538,8 @@ class LoadedFilesView(QtWidgets.QTreeView):
         if index.isValid():
             return
 
-        index = self._model.index(0, 0)
+        model = self.model()
+        index = model.index(0, 0)
         if index.isValid():
             self.setCurrentIndex(index)
 
