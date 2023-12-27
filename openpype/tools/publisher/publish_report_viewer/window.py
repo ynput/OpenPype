@@ -438,7 +438,7 @@ class LoadedFilesModel(QtGui.QStandardItemModel):
         self._handler.remove_report_item(item_id)
 
         self._report_items_by_id.pop(item_id, None)
-        item = self._items_by_id.pop(item_id)
+        item = self._items_by_id.pop(item_id, None)
         if item is not None:
             parent = self.invisibleRootItem()
             parent.removeRow(item.row())
