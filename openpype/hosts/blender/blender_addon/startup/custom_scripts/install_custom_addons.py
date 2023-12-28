@@ -2,7 +2,6 @@ import sys
 import os
 import bpy
 import argparse
-import addon_utils
 import logging
 import subprocess
 from pathlib import Path
@@ -87,7 +86,6 @@ def get_deadline_command():
     except KeyError:
         #if the error is a key error it means that DEADLINE_PATH is not set. however Deadline command may be in the PATH or on OSX it could be in the file /Users/Shared/Thinkbox/DEADLINE_PATH
         deadlineBin = "C:/Program Files/Thinkbox/Deadline10/bin/"
-        pass
 
     # Determine if the installer is being run on OSX
     if sys.platform == "darwin":
