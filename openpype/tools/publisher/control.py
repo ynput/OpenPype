@@ -2500,6 +2500,7 @@ class PublisherController(BasePublisherController):
         result = pyblish.plugin.process(
             plugin, self._publish_context, instance
         )
+        pyblish.api.emit("pluginProcessed", result=result)
 
         exception = result.get("error")
         if exception:
