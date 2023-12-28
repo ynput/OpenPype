@@ -1,9 +1,7 @@
 import sys
 import bpy
 import os
-from bpy.app.handlers import persistent
 import argparse
-import re
 import logging
 
 

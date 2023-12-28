@@ -7,7 +7,6 @@ import uuid
 from enum import Enum
 
 import bpy
-from bpy.app.handlers import persistent
 
 import logging
 
@@ -102,9 +101,8 @@ def generate_enums_from_render_selectors(self, context):
     return items
 
 
-@persistent
+@bpy.app.handlers.persistent
 def populate_render_properties(dummy=None):
-
         def _set_common_infos(item, render_property):
             item.value = render_property['default']
             item.name = render_property['name']
@@ -162,7 +160,7 @@ class PrepareTemporaryFile(bpy.types.Operator):
         log.info("Preparing temporary scene for Deadline's render")
         set_scene_render_properties()
         convert_cache_files_windows_path_to_linux()
-        convert_modifers_windows_path_to_linux()
+        convert_modifiers_windows_path_to_linux()
         set_engine('CYCLES')
         set_global_output_path()
         set_render_nodes_output_path()
@@ -226,7 +224,7 @@ def convert_cache_files_windows_path_to_linux():
         log.info(f"Cache file path has updated from {old_path} to {cache_file.filepath}")
 
 
-def convert_modifers_windows_path_to_linux():
+def convert_modifiers_windows_path_to_linux():
     for modifier in _get_all_modifiers():
         for modifier_attribute in MODIFIERS_ATTRIBUTES_TO_REPLACE:
             path_to_replace = getattr(modifier, modifier_attribute, None)
@@ -287,9 +285,9 @@ def _browse_render_nodes(nodes_inputs):
         target_node = node_link.from_node
         if target_node.type == NodesNames.RENDER_LAYERS.value:
             return target_node
-        else:
-            target_node = _browse_render_nodes(target_node.inputs)
-            if target_node: return target_node
+
+        target_node = _browse_render_nodes(target_node.inputs)
+        if target_node: return target_node
 
 
 def _extract_version_number_from_filepath(filepath):
@@ -315,36 +313,36 @@ class ExecutionOrder(bpy.types.Macro):
 
 
 def register():
-        bpy.utils.register_class(PrepareTemporaryFile)
-        bpy.utils.register_class(LoadPreviousScene)
-        bpy.utils.register_class(ExecutionOrder)
-        bpy.utils.register_class(PrepareAndRenderScene)
-        bpy.utils.register_class(RenderBoolProperty)
-        bpy.utils.register_class(RenderListProperty)
+    bpy.utils.register_class(PrepareTemporaryFile)
+    bpy.utils.register_class(LoadPreviousScene)
+    bpy.utils.register_class(ExecutionOrder)
+    bpy.utils.register_class(PrepareAndRenderScene)
+    bpy.utils.register_class(RenderBoolProperty)
+    bpy.utils.register_class(RenderListProperty)
 
-        bpy.types.WindowManager.scene_filepath = bpy.props.StringProperty('')
-        bpy.types.WindowManager.render_bool_properties = bpy.props.CollectionProperty(type=RenderBoolProperty)
-        bpy.types.WindowManager.render_list_properties = bpy.props.CollectionProperty(type=RenderListProperty)
+    bpy.types.WindowManager.scene_filepath = bpy.props.StringProperty('')
+    bpy.types.WindowManager.render_bool_properties = bpy.props.CollectionProperty(type=RenderBoolProperty)
+    bpy.types.WindowManager.render_list_properties = bpy.props.CollectionProperty(type=RenderListProperty)
 
-        ExecutionOrder.define("DEADLINE_OT_prepare_temporary_scene")
-        ExecutionOrder.define("OPS_OT_submit_blender_to_deadline")
-        ExecutionOrder.define("DEADLINE_OT_load_previous_scene")
+    ExecutionOrder.define("DEADLINE_OT_prepare_temporary_scene")
+    ExecutionOrder.define("OPS_OT_submit_blender_to_deadline")
+    ExecutionOrder.define("DEADLINE_OT_load_previous_scene")
 
-        bpy.app.handlers.load_post.append(populate_render_properties)
+    bpy.app.handlers.load_post.append(populate_render_properties)
 
-        populate_render_properties()
+    populate_render_properties()
 
 
 def unregister():
-        bpy.utils.unregister_class(PrepareTemporaryFile)
-        bpy.utils.unregister_class(LoadPreviousScene)
-        bpy.utils.unregister_class(ExecutionOrder)
-        bpy.utils.unregister_class(PrepareAndRenderScene)
-        bpy.utils.unregister_class(RenderBoolProperty)
-        bpy.utils.unregister_class(RenderListProperty)
+    bpy.utils.unregister_class(PrepareTemporaryFile)
+    bpy.utils.unregister_class(LoadPreviousScene)
+    bpy.utils.unregister_class(ExecutionOrder)
+    bpy.utils.unregister_class(PrepareAndRenderScene)
+    bpy.utils.unregister_class(RenderBoolProperty)
+    bpy.utils.unregister_class(RenderListProperty)
 
-        del bpy.types.WindowManager.scene_filepath
-        del bpy.types.WindowManager.render_bool_properties
-        del bpy.types.WindowManager.render_list_properties
+    del bpy.types.WindowManager.scene_filepath
+    del bpy.types.WindowManager.render_bool_properties
+    del bpy.types.WindowManager.render_list_properties
 
-        bpy.app.handlers.load_post.remove(populate_render_properties)
+    bpy.app.handlers.load_post.remove(populate_render_properties)

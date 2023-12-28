@@ -33,7 +33,7 @@ def execute():
         )
         deadline_addon_name = Path(deadline_addon_file_name).stem
         logging.info("Deadline addon has been correctly installed.")
-    print(deadline_addon_name)
+
     enable_user_addons(blender_addons_folder_path)
     bpy.ops.wm.save_userpref()
 
@@ -106,7 +106,7 @@ def get_repository_path(subdir = None):
     startupinfo = None
 
     args = [deadlineCommand, "-GetRepositoryPath "]
-    if subdir != None and subdir != "":
+    if subdir:
         args.append(subdir)
 
     # Specifying PIPE for all handles to workaround a Python bug on Windows. The unused handles are then closed immediatley afterwards.
