@@ -540,7 +540,6 @@ class SyncToAvalonEvent(BaseEvent):
                     ent_info["keys"] = ["name"]
                     ent_info["changes"] = {"name": changes.pop("name")}
                     filtered_updates[ftrack_id] = ent_info
-                continue
 
             for _key in self.ignore_keys:
                 if _key in changed_keys:
@@ -662,6 +661,10 @@ class SyncToAvalonEvent(BaseEvent):
 
                 elif "typeid" in changes or "name" in changes:
                     self.modified_tasks_ftrackids.add(ent_info["parentId"])
+                elif action == "update":
+                    self.modified_tasks_ftrackids.add(ent_info["parentId"])
+                    found_actions.add(action)
+                    entities_by_action[action][ftrack_id] = ent_info
                 continue
 
             if action == "move":
@@ -736,7 +739,6 @@ class SyncToAvalonEvent(BaseEvent):
             and not self.modified_tasks_ftrackids
         ):
             return True
-
         ft_project = self.cur_project
         # Check if auto-sync custom attribute exists
         if CUST_ATTR_AUTO_SYNC not in ft_project["custom_attributes"]:
@@ -878,7 +880,6 @@ class SyncToAvalonEvent(BaseEvent):
         if user_entity:
             username = user_entity["username"] or username
         return username
-
 
     def process_removed(self):
         """
@@ -1893,6 +1894,8 @@ class SyncToAvalonEvent(BaseEvent):
         ftrack_mongo_mapping = {}
         not_found_ids = []
         for ftrack_id, ent_info in ent_infos.items():
+            if ent_info["entity_type"] == "Task":
+                ftrack_id = ent_info["parentId"]
             avalon_ent = self.avalon_ents_by_ftrack_id.get(ftrack_id)
             if not avalon_ent:
                 not_found_ids.append(ftrack_id)
@@ -1927,6 +1930,8 @@ class SyncToAvalonEvent(BaseEvent):
                 cust_attrs_by_obj_id[obj_id][key] = cust_attr
 
         for ftrack_id, ent_info in ent_infos.items():
+            if ent_info["entity_type"] == "Task":
+                ftrack_id = ent_info["parentId"]
             mongo_id = ftrack_mongo_mapping[ftrack_id]
             entType = ent_info["entityType"]
             ent_path = self.get_ent_path(ftrack_id)
@@ -2450,7 +2455,8 @@ class SyncToAvalonEvent(BaseEvent):
                 continue
 
             tasks_per_ftrack_id[ftrack_id][task_entity["name"]] = {
-                "type": task_type["name"]
+                "type": task_type["name"],
+                "custom_attributes": dict(task_entity["custom_attributes"])
             }
 
         # find avalon entity by parentId
@@ -2536,7 +2542,8 @@ class SyncToAvalonEvent(BaseEvent):
             "type": "label",
             "value": (
                 "<p><i>NOTE: It is not allowed to use the same name"
-                " for multiple entities in the same project</i></p>"
+                " for multiple entities in the same project. Please"
+                " delete or rename your newly created item.</i></p>"
             )
         })
 

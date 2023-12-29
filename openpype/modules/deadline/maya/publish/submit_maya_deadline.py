@@ -136,6 +136,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         cls.strict_error_checking = settings.get("strict_error_checking",
                                                  cls.strict_error_checking)
 
+        cls.jobInfo = settings.get("jobInfo", cls.jobInfo)
+        cls.pluginInfo = settings.get("pluginInfo", cls.pluginInfo)
+
     def get_job_info(self):
         job_info = DeadlineJobInfo(Plugin="MayaBatch")
 
