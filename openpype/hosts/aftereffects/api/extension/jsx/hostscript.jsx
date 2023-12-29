@@ -645,9 +645,10 @@ function getRenderInfo(comp_id){
                 continue;
             }
             comp_id_count += 1;
-            var item = render_item.outputModule(1);
 
             for (j = 1; j<= render_item.numOutputModules; ++j){
+
+                var item = render_item.outputModule(j);
                 var file_url = item.file.toString();
                 output_metadata.push(
                     JSON.stringify({
