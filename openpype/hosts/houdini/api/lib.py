@@ -1073,8 +1073,7 @@ def getSceneViewer():
 def sceneview_snapshoot(
         filename="$HIP/thumbnails/$HIPNAME.$F4.jpg",
         fstart=None,
-        fend=None
-    ):
+        fend=None):
     """
     It takes snapshoot of your scene view fot the given frame range.
     So, it's capable of generating snapshoots image sequence.
@@ -1116,7 +1115,7 @@ def sceneview_snapshoot(
 
         # this will open an mplay window to show the result
         flip_settings = sceneview.flipbookSettings().stash()
-        flip_settings.frameRange( (fstart, fend) )
+        flip_settings.frameRange((fstart, fend))
         flip_settings.output(filename)
         flip_settings.outputToMPlay(False)
         sceneview.flipbook(viewport, flip_settings)
