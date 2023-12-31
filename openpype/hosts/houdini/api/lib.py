@@ -1054,3 +1054,73 @@ def add_self_publish_button(node):
     template = node.parmTemplateGroup()
     template.insertBefore((0,), button_parm)
     node.setParmTemplateGroup(template)
+
+
+def getSceneViewer():
+    """
+    return an instance of a visible viewport.
+    There may be many, some could be closed, any visible are current
+    """
+    panes = hou.ui.paneTabs()
+    panes = [x for x in panes if x.type() == hou.paneTabType.SceneViewer]
+    panes = sorted(panes, key=lambda x: x.isCurrentTab())
+    if panes:
+        return panes[-1]
+    else:
+        return None
+
+
+def sceneview_snapshoot(
+        filename="$HIP/thumbnails/$HIPNAME.$F4.jpg",
+        fstart=None,
+        fend=None
+    ):
+    """
+    It takes snapshoot of your scene view fot the given frame range.
+    So, it's capable of generating snapshoots image sequence.
+    It works in different Houdini context e.g. Objects, Solaris
+
+    Example:
+        from openpype.hosts.houdini.api import lib
+        lib.sceneview_snapshoot()
+
+    Notes:
+        .png output will render poorly, so use .jpg.
+
+        How it works:
+            Get the current sceneviewer (may be more than one or hidden)
+            and screengrab the perspective viewport to a file in the
+            publish location to be picked up with the publish.
+
+        Credits:
+            https://www.sidefx.com/forum/topic/42808/?page=1#post-354796
+
+    Args:
+        filename (str): filename with the desired full path.
+        fstart (int): the frame at which snapshooting starts
+        fend (int): the frame at which snapshooting ends
+    """
+
+    try:
+
+        if fstart is None:
+            fstart = hou.frame()
+        if fend is None:
+            fend = fstart = hou.frame()
+
+        sceneview = getSceneViewer()
+        if not sceneview:
+            log.debug("No SceneViewers detected.")
+            return
+        viewport = sceneview.curViewport()
+
+        # this will open an mplay window to show the result
+        flip_settings = sceneview.flipbookSettings().stash()
+        flip_settings.frameRange( (fstart, fend) )
+        flip_settings.output(filename)
+        flip_settings.outputToMPlay(False)
+        sceneview.flipbook(viewport, flip_settings)
+        log.debug("A snap of sceneview has been saved to: {}".format(filename))
+
+    except Exception as e:
+        log.debug(e)
