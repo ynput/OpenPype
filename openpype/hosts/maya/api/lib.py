@@ -227,19 +227,19 @@ def render_capture_preset(preset):
         )
     preset = copy.deepcopy(preset)
     # not supported by `capture` so we pop it off of the preset
-    reload_textures = preset["viewport_options"].pop("reloadTextures", True)
+    reload_textures = preset["viewport_options"].get("loadTextures")
     panel = preset.pop("panel")
     with ExitStack() as stack:
         stack.enter_context(maintained_time())
         stack.enter_context(panel_camera(panel, preset["camera"]))
         stack.enter_context(viewport_default_options(panel, preset))
-        if preset["viewport_options"].get("textures"):
+        if reload_textures:
             # Force immediate texture loading when to ensure
             # all textures have loaded before the playblast starts
-            stack.enter_context(material_loading_mode("immediate"))
-            if reload_textures:
-                # Regenerate all UDIM tiles previews
-                reload_all_udim_tile_previews()
+            stack.enter_context(material_loading_mode(mode="immediate"))
+            # Regenerate all UDIM tiles previews
+            reload_all_udim_tile_previews()
+        preset["viewport_options"].pop("loadTextures")
         path = capture.capture(log=self.log, **preset)
 
     return path

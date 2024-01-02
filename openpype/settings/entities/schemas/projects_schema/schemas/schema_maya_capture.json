@@ -238,8 +238,8 @@
                         },
                         {
                             "type": "boolean",
-                            "key": "reloadTextures",
-                            "label": "Reload Textures"
+                            "key": "loadTextures",
+                            "label": "Load Textures"
                         },
                         {
                             "type": "boolean",
@@ -915,8 +915,8 @@
                                     },
                                     {
                                         "type": "boolean",
-                                        "key": "reloadTextures",
-                                        "label": "Reload Textures",
+                                        "key": "loadTextures",
+                                        "label": "Load Textures",
                                         "default": false
                                     },
                                     {
