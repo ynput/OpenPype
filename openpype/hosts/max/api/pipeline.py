@@ -3,6 +3,7 @@
 import os
 import logging
 from operator import attrgetter
+from functools import partial
 
 import json
 
@@ -12,6 +13,10 @@ from openpype.pipeline import (
     register_creator_plugin_path,
     register_loader_plugin_path,
     AVALON_CONTAINER_ID,
+)
+from openpype.lib import (
+    register_event_callback,
+    emit_event
 )
 from openpype.hosts.max.api.menu import OpenPypeMenu
 from openpype.hosts.max.api import lib
@@ -46,19 +51,14 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         register_loader_plugin_path(LOAD_PATH)
         register_creator_plugin_path(CREATE_PATH)
 
-        # self._register_callbacks()
+        self._register_callbacks()
         self.menu = OpenPypeMenu()
+        register_event_callback(
+            "init", self._deferred_menu_creation)
 
         self._has_been_setup = True
-
-        def context_setting():
-            return lib.set_context_setting()
-
-        rt.callbacks.addScript(rt.Name('systemPostNew'),
-                               context_setting)
-
-        rt.callbacks.addScript(rt.Name('filePostOpen'),
-                               lib.check_colorspace)
+        register_event_callback("open", on_open)
+        register_event_callback("new", on_new)
 
     def has_unsaved_changes(self):
         # TODO: how to get it from 3dsmax?
@@ -83,11 +83,28 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return ls()
 
     def _register_callbacks(self):
-        rt.callbacks.removeScripts(id=rt.name("OpenPypeCallbacks"))
-
-        rt.callbacks.addScript(
+        unique_id = rt.Name("openpype_callbacks")
+        for handler, event in self._op_events.copy().items():
+            if event is None:
+                continue
+            try:
+                rt.callbacks.removeScripts(id=unique_id)
+                self._op_events[handler] = None
+            except RuntimeError as exc:
+                self.log.info(exc)
+        #self._deferred_menu_creation
+        self._op_events["init"] = rt.callbacks.addScript(
             rt.Name("postLoadingMenus"),
-            self._deferred_menu_creation, id=rt.Name('OpenPypeCallbacks'))
+            partial(_emit_event_notification_param, "init"),
+            id=unique_id)
+        self._op_events["new"] = rt.callbacks.addScript(
+            rt.Name('systemPostNew'),
+            partial(_emit_event_notification_param, "new"),
+            id=unique_id)
+        self._op_events["open"] = rt.callbacks.addScript(
+            rt.Name('filePostOpen'),
+            partial(_emit_event_notification_param, "open"),
+            id=unique_id)
 
     def _deferred_menu_creation(self):
         self.log.info("Building menu ...")
@@ -142,6 +159,19 @@ attributes "OpenPypeContext"
         # Force forwards slashes to avoid segfault
         dst_path = dst_path.replace("\\", "/")
         rt.saveMaxFile(dst_path)
+
+
+def _emit_event_notification_param(event):
+    notification = rt.callbacks.notificationParam()
+    emit_event(event, {"notificationParam": notification})
+
+
+def on_open():
+    return lib.check_colorspace()
+
+
+def on_new():
+    return lib.set_context_setting()
 
 
 def ls() -> list:

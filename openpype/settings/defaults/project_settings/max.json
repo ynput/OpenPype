@@ -1,4 +1,8 @@
 {
+    "unit_scale_settings": {
+        "enabled": true,
+        "scene_unit_scale": "Inches"
+    },
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {
