@@ -190,12 +190,12 @@ class DJVViewAction(BaseAction):
         """Callback method for DJVView action."""
 
         # Launching application
-        event_data = event["data"]
-        if "values" not in event_data:
+        event_values = event["data"].get("value")
+        if not event_values:
             return
 
-        djv_app_name = event_data["djv_app_name"]
-        app = self.applicaion_manager.applications.get(djv_app_name)
+        djv_app_name = event_values["djv_app_name"]
+        app = self.application_manager.applications.get(djv_app_name)
         executable = None
         if app is not None:
             executable = app.find_executable()
@@ -206,11 +206,11 @@ class DJVViewAction(BaseAction):
                 "message": "Couldn't find DJV executable."
             }
 
-        filpath = os.path.normpath(event_data["values"]["path"])
+        filpath = os.path.normpath(event_values["path"])
 
         cmd = [
             # DJV path
-            executable,
+            str(executable),
             # PATH TO COMPONENT
             filpath
         ]
