@@ -63,6 +63,7 @@ class ExtractModelFbx(publish.Extractor, OptionalPyblishPluginMixin):
         if unit_scale:
             rt.FBXExporterSetParam("ConvertUnit", unit_scale)
 
+
 class ExtractCameraFbx(ExtractModelFbx):
     """Extract Camera with FbxExporter."""
 

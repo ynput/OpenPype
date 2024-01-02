@@ -92,7 +92,7 @@ class MaxHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                 self._op_events[handler] = None
             except RuntimeError as exc:
                 self.log.info(exc)
-        #self._deferred_menu_creation
+
         self._op_events["init"] = rt.callbacks.addScript(
             rt.Name("postLoadingMenus"),
             partial(_emit_event_notification_param, "init"),

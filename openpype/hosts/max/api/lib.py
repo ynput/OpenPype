@@ -304,6 +304,7 @@ def reset_unit_scale():
         scene_scale = unit_scale_setting["scene_unit_scale"]
         rt.units.SystemType = rt.Name(scene_scale)
 
+
 def convert_unit_scale():
     """Convert system unit scale in 3dsMax
     for fbx export
