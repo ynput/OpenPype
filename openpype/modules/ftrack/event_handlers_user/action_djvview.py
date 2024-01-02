@@ -217,7 +217,10 @@ class DJVViewAction(BaseAction):
 
         try:
             # Run DJV with these commands
-            subprocess.Popen(cmd)
+            _process = subprocess.Popen(cmd)
+            # Keep process in memory for some time
+            time.sleep(0.1)
+
         except FileNotFoundError:
             return {
                 "success": False,
