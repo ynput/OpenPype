@@ -608,7 +608,7 @@ class UnknownAttrWidget(_BaseAttrDefWidget):
 class HiddenAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
         self.setVisible(False)
-        self._value = None
+        self._value = self.attr_def.default
         self._multivalue = False
 
     def setVisible(self, visible):

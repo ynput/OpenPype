@@ -29,7 +29,7 @@ Command line arguments
  - "--timeout" - "Provide specific timeout value for test case",
  - "--setup_only" - "Only create dbs, do not run tests",
  - "--mongo_url" - "MongoDB for testing.",
-
+ - "--dump_databases" - ("json"|"bson") export database in expected format after successful test (to output folder in temp location - which is made persistent by this, must be cleared manually)
 Run Tray for test
 -----------------
 In case of failed test you might want to run it manually and visually debug what happened.

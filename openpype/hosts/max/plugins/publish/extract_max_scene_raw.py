@@ -26,7 +26,6 @@ class ExtractMaxSceneRaw(publish.Extractor, OptionalPyblishPluginMixin):
         filename = "{name}.max".format(**instance.data)
 
         max_path = os.path.join(stagingdir, filename)
-        self.log.info("Writing max file '%s' to '%s'" % (filename, max_path))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

@@ -95,16 +95,16 @@ def menu_install():
 
     menu.addSeparator()
 
-    publish_action = menu.addAction("Publish...")
-    publish_action.setIcon(QtGui.QIcon("icons:Output.png"))
-    publish_action.triggered.connect(
-        lambda *args: publish(hiero.ui.mainWindow())
-    )
-
     creator_action = menu.addAction("Create...")
     creator_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     creator_action.triggered.connect(
         lambda: host_tools.show_creator(parent=main_window)
+    )
+
+    publish_action = menu.addAction("Publish...")
+    publish_action.setIcon(QtGui.QIcon("icons:Output.png"))
+    publish_action.triggered.connect(
+        lambda *args: publish(hiero.ui.mainWindow())
     )
 
     loader_action = menu.addAction("Load...")
