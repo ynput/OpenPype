@@ -13,7 +13,7 @@ class DJVViewAction(BaseAction):
     description = "DJV View Launcher"
     icon = statics_icon("app_icons", "djvView.png")
 
-    type = 'Application'
+    type = "Application"
 
     allowed_types = [
         "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
@@ -190,7 +190,7 @@ class DJVViewAction(BaseAction):
         """Callback method for DJVView action."""
 
         # Launching application
-        event_values = event["data"].get("value")
+        event_values = event["data"].get("values")
         if not event_values:
             return
 
