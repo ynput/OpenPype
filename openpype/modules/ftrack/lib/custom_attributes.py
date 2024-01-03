@@ -66,7 +66,7 @@ def get_openpype_attr(session, split_hierarchical=True, query_keys=None):
         "select {}"
         " from CustomAttributeConfiguration"
         # Kept `pype` for Backwards Compatibility
-        " where group.name in (\"pype\", \"{}\")"
+        " where group.name in (\"pype\", \"ayon\", \"{}\")"
     ).format(", ".join(query_keys), CUST_ATTR_GROUP)
     all_avalon_attr = session.query(cust_attrs_query).all()
     for cust_attr in all_avalon_attr:

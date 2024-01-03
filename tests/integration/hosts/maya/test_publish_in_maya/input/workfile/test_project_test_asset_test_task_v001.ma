@@ -179,7 +179,7 @@ createNode objectSet -n "modelMain";
 	addAttr -ci true -sn "task" -ln "task" -dt "string";
 	addAttr -ci true -sn "writeColorSets" -ln "writeColorSets" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "writeFaceSets" -ln "writeFaceSets" -min 0 -max 1 -at "bool";
-	addAttr -ci true -sn "includeParentHierarchy" -ln "includeParentHierarchy" -min
+	addAttr -ci true -sn "includeParentHierarchy" -ln "includeParentHierarchy" -min 
 		0 -max 1 -at "bool";
 	addAttr -ci true -sn "attr" -ln "attr" -dt "string";
 	addAttr -ci true -sn "attrPrefix" -ln "attrPrefix" -dt "string";

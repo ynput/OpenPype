@@ -29,7 +29,7 @@ class ColorCodeMappings(BaseSettingsModel):
     )
 
     layer_name_regex: list[str] = Field(
-        "",
+        default_factory=list,
         title="Layer name regex"
     )
 

@@ -512,52 +512,58 @@ QAbstractItemView::item:selected:hover {
 }
 
 /* Row colors (alternate colors) are from left - right */
-QAbstractItemView:branch {
-    background: transparent;
+QTreeView::branch {
+    background: {color:bg-view};
+}
+QTreeView::branch:hover {
+    background: {color:bg-view};
+}
+QTreeView::branch:selected {
+    background: {color:bg-view};
 }
 
 QAbstractItemView::branch:open:has-children:!has-siblings,
 QAbstractItemView::branch:open:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images/branch_open.png);
-    background: transparent;
+    background: {color:bg-view};
 }
 QAbstractItemView::branch:open:has-children:!has-siblings:hover,
 QAbstractItemView::branch:open:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images/branch_open_on.png);
-    background: transparent;
+    background: {color:bg-view};
 }
 
 QAbstractItemView::branch:has-children:!has-siblings:closed,
 QAbstractItemView::branch:closed:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images/branch_closed.png);
-    background: transparent;
+    background: {color:bg-view};
 }
 QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
 QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images/branch_closed_on.png);
-    background: transparent;
+    background: {color:bg-view};
 }
 
 QAbstractItemView::branch:has-siblings:!adjoins-item {
     border-image: none;
     image: url(:/openpype/images/transparent.png);
-    background: transparent;
+    background: {color:bg-view};
 }
 
 QAbstractItemView::branch:has-siblings:adjoins-item {
     border-image: none;
     image: url(:/openpype/images/transparent.png);
-    background: transparent;
+    background: {color:bg-view};
 }
 
 QAbstractItemView::branch:!has-children:!has-siblings:adjoins-item {
     border-image: none;
     image: url(:/openpype/images/transparent.png);
-    background: transparent;
+    background: {color:bg-view};
 }
 
 CompleterView {

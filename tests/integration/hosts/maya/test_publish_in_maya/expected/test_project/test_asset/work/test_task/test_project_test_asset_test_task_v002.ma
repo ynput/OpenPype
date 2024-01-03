@@ -1,6 +1,6 @@
 //Maya ASCII 2023 scene
 //Name: test_project_test_asset_test_task_v002.ma
-//Last modified: Thu, Dec 07, 2023 03:53:06 PM
+//Last modified: Thu, Dec 07, 2023 03:55:12 PM
 //Codeset: 1252
 requires maya "2023";
 requires -nodeType "simpleSelector" -nodeType "renderSetupLayer" -nodeType "renderSetup"
@@ -16,7 +16,7 @@ fileInfo "version" "2023";
 fileInfo "cutIdentifier" "202211021031-847a9f9623";
 fileInfo "osv" "Windows 10 Pro v2009 (Build: 19045)";
 fileInfo "license" "education";
-fileInfo "UUID" "7A992745-4AD5-777F-5575-B4BFAC62B1D0";
+fileInfo "UUID" "7CC7E6D5-4F37-DB90-8A84-8493449019BF";
 fileInfo "OpenPypeContext" "eyJwdWJsaXNoX2F0dHJpYnV0ZXMiOiB7IlZhbGlkYXRlQ29udGFpbmVycyI6IHsiYWN0aXZlIjogdHJ1ZX19fQ==";
 createNode transform -s -n "persp";
 	rename -uid "D52C935B-47C9-D868-A875-D799DD17B3A1";
@@ -142,20 +142,20 @@ createNode camera -n "perspShape1" -p "persp1";
 	setAttr ".hc" -type "string" "viewSet -p %camera";
 	setAttr ".dr" yes;
 createNode lightLinker -s -n "lightLinker1";
-	rename -uid "09465BD3-42E5-18E4-7906-20A99BB2A6C0";
+	rename -uid "FBA13844-432C-E5C2-040E-A0925F2F0B8F";
 	setAttr -s 2 ".lnk";
 	setAttr -s 2 ".slnk";
 createNode shapeEditorManager -n "shapeEditorManager";
-	rename -uid "9F2E8009-4D69-046B-FCC4-28A8CE8F86DB";
+	rename -uid "E3FDBA44-4665-FFBF-74F3-BDBF4F8F7B32";
 createNode poseInterpolatorManager -n "poseInterpolatorManager";
-	rename -uid "6757AD81-40B0-A747-69C3-D9A56259571E";
+	rename -uid "8834BA6F-47BE-8E76-4510-E2A7F3525077";
 createNode displayLayerManager -n "layerManager";
-	rename -uid "6F055ED5-4D91-8F85-7951-B4A13543A561";
+	rename -uid "427D260A-43FC-DC22-4E80-46A0E90839B2";
 createNode displayLayer -n "defaultLayer";
 	rename -uid "4A776D1B-401F-7069-1C74-A7AAE84CEE03";
 	setAttr ".ufem" -type "stringArray" 0  ;
 createNode renderLayerManager -n "renderLayerManager";
-	rename -uid "55626D2B-4FD5-61A1-7AB2-47B13F19D8AA";
+	rename -uid "F1B8B519-43D1-5DE5-00F6-42A9514335E8";
 	setAttr -s 2 ".rlmi[1]"  1;
 	setAttr -s 2 ".rlmi";
 createNode renderLayer -n "defaultRenderLayer";
@@ -179,7 +179,7 @@ createNode objectSet -n "modelMain";
 	addAttr -ci true -sn "task" -ln "task" -dt "string";
 	addAttr -ci true -sn "writeColorSets" -ln "writeColorSets" -min 0 -max 1 -at "bool";
 	addAttr -ci true -sn "writeFaceSets" -ln "writeFaceSets" -min 0 -max 1 -at "bool";
-	addAttr -ci true -sn "includeParentHierarchy" -ln "includeParentHierarchy" -min
+	addAttr -ci true -sn "includeParentHierarchy" -ln "includeParentHierarchy" -min 
 		0 -max 1 -at "bool";
 	addAttr -ci true -sn "attr" -ln "attr" -dt "string";
 	addAttr -ci true -sn "attrPrefix" -ln "attrPrefix" -dt "string";

@@ -155,8 +155,6 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
             else {}
         )
 
-        asset_name = instance.data["asset"]
-
         # get handles
         handle_start = int(instance.data["handleStart"])
         handle_end = int(instance.data["handleEnd"])
@@ -177,6 +175,8 @@ class CollectShotInstance(pyblish.api.InstancePlugin):
 
         parents = instance.data.get('parents', [])
 
+        # Split by '/' for AYON where asset is a path
+        asset_name = instance.data["asset"].split("/")[-1]
         actual = {asset_name: in_info}
 
         for parent in reversed(parents):
