@@ -317,7 +317,6 @@ configuration in project settings.
                         )
                         thumbnails_processed = True
 
-
                     # get representation data
                     representation_data = self._get_representation_data(
                         filepath, repre_data, staging_dir,

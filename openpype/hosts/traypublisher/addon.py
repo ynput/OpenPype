@@ -109,14 +109,10 @@ def ingestcsv(
 
     from .csv_publish import csvpublish
 
-    targets = None
-    if ignore_validators:
-        targets = ["default", "ingest"]
-
     csvpublish(
         csv_filepath,
         project_name,
         asset_name,
         task_name,
-        targets
+        ignore_validators
     )

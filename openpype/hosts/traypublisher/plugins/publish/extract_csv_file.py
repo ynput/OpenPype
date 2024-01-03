@@ -1,5 +1,3 @@
-import os
-
 import pyblish.api
 
 from openpype.pipeline import publish

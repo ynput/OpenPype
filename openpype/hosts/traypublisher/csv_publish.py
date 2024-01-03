@@ -16,7 +16,7 @@ def csvpublish(
     project_name,
     asset_name,
     task_name=None,
-    targets=None
+    ignore_validators=False
 ):
     """Publish CSV file.
 
@@ -25,9 +25,7 @@ def csvpublish(
         project_name (str): Project name.
         asset_name (str): Asset name.
         task_name (Optional[str]): Task name.
-        username (Optional[str]): User name.
-        hostname (Optional[str]): Host name.
-        targets (Optional[list[str]]): List of targets.
+        ignore_validators (Optional[bool]): Option to ignore validators.
     """
 
     # initialization of host
@@ -69,6 +67,10 @@ def csvpublish(
     # publishing context initialization
     pyblish_context = pyblish.api.Context()
     pyblish_context.data["create_context"] = create_context
+
+    # redefine targets
+    if ignore_validators:
+        targets = ["default", "ingest"]
 
     # publishing
     pyblish.util.publish(context=pyblish_context, targets=targets)
