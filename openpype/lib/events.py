@@ -70,7 +70,7 @@ class weakref_partial:
         self._args = args
         self._kwargs = kwargs
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self):
         func = self._func_ref()
         if func is not None:
             return func(*self._args, **self._kwargs)
@@ -92,7 +92,7 @@ class weakref_partial:
             bool: Is wrapped function still valid.
         """
 
-        return self.get_func() is not None
+        return self._func_ref() is not None
 
 
 class EventCallback(object):
@@ -323,7 +323,7 @@ class EventCallback(object):
 
     def _get_callback(self):
         if self._partial_func is not None:
-            return self._partial_func.get_func()
+            return self._partial_func
 
         if self._func_ref is not None:
             return self._func_ref()
