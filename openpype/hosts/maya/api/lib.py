@@ -2839,7 +2839,7 @@ def bake_to_world_space(nodes,
                        "sx", "sy", "sz"}
 
     world_space_nodes = []
-    with contextlib.ExitStack() as stack:
+    with ExitStack() as stack:
         delete_bin = stack.enter_context(delete_after())
         # Create the duplicate nodes that are in world-space connected to
         # the originals
