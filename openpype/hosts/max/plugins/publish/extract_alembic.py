@@ -39,45 +39,41 @@ Note:
 """
 import os
 import pyblish.api
-from openpype.pipeline import publish
+from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
 from openpype.hosts.max.api import maintained_selection
+from openpype.hosts.max.api.lib import suspended_refresh
+from openpype.lib import BoolDef
 
 
-class ExtractAlembic(publish.Extractor):
+class ExtractAlembic(publish.Extractor,
+                     OptionalPyblishPluginMixin):
     order = pyblish.api.ExtractorOrder
     label = "Extract Pointcache"
     hosts = ["max"]
     families = ["pointcache"]
+    optional = True
 
     def process(self, instance):
-        start = instance.data["frameStartHandle"]
-        end = instance.data["frameEndHandle"]
-
-        self.log.debug("Extracting pointcache ...")
+        if not self.is_active(instance.data):
+            return
 
         parent_dir = self.staging_dir(instance)
         file_name = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, file_name)
 
-        # We run the render
-        self.log.info("Writing alembic '%s' to '%s'" % (file_name, parent_dir))
-
-        rt.AlembicExport.ArchiveType = rt.name("ogawa")
-        rt.AlembicExport.CoordinateSystem = rt.name("maya")
-        rt.AlembicExport.StartFrame = start
-        rt.AlembicExport.EndFrame = end
-
-        with maintained_selection():
-            # select and export
-            node_list = instance.data["members"]
-            rt.Select(node_list)
-            rt.exportFile(
-                path,
-                rt.name("noPrompt"),
-                selectedOnly=True,
-                using=rt.AlembicExport,
-            )
+        with suspended_refresh():
+            self._set_abc_attributes(instance)
+            with maintained_selection():
+                # select and export
+                node_list = instance.data["members"]
+                rt.Select(node_list)
+                rt.exportFile(
+                    path,
+                    rt.name("noPrompt"),
+                    selectedOnly=True,
+                    using=rt.AlembicExport,
+                )
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -89,3 +85,51 @@ class ExtractAlembic(publish.Extractor):
             "stagingDir": parent_dir,
         }
         instance.data["representations"].append(representation)
+
+    def _set_abc_attributes(self, instance):
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
+        attr_values = self.get_attr_values_from_data(instance.data)
+        custom_attrs = attr_values.get("custom_attrs", False)
+        if not custom_attrs:
+            self.log.debug(
+                "No Custom Attributes included in this abc export...")
+        rt.AlembicExport.ArchiveType = rt.Name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.Name("maya")
+        rt.AlembicExport.StartFrame = start
+        rt.AlembicExport.EndFrame = end
+        rt.AlembicExport.CustomAttributes = custom_attrs
+
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            BoolDef("custom_attrs",
+                    label="Custom Attributes",
+                    default=False),
+        ]
+
+
+class ExtractCameraAlembic(ExtractAlembic):
+    """Extract Camera with AlembicExport."""
+
+    label = "Extract Alembic Camera"
+    families = ["camera"]
+
+
+class ExtractModel(ExtractAlembic):
+    """Extract Geometry in Alembic Format"""
+    label = "Extract Geometry (Alembic)"
+    families = ["model"]
+
+    def _set_abc_attributes(self, instance):
+        attr_values = self.get_attr_values_from_data(instance.data)
+        custom_attrs = attr_values.get("custom_attrs", False)
+        if not custom_attrs:
+            self.log.debug(
+                "No Custom Attributes included in this abc export...")
+        rt.AlembicExport.ArchiveType = rt.name("ogawa")
+        rt.AlembicExport.CoordinateSystem = rt.name("maya")
+        rt.AlembicExport.CustomAttributes = custom_attrs
+        rt.AlembicExport.UVs = True
+        rt.AlembicExport.VertexColors = True
+        rt.AlembicExport.PreserveInstances = True

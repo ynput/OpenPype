@@ -44,7 +44,6 @@ from .workfile_builder import (
 from .templated_workfile_build import (
     TemplatedWorkfileBuildModel
 )
-from .filters import PublishGUIFilterItemModel
 
 
 class NukeSettings(BaseSettingsModel):
@@ -98,16 +97,6 @@ class NukeSettings(BaseSettingsModel):
         default_factory=TemplatedWorkfileBuildModel
     )
 
-    filters: list[PublishGUIFilterItemModel] = Field(
-        default_factory=list
-    )
-
-    @validator("filters")
-    def ensure_unique_names(cls, value):
-        """Ensure name fields within the lists have unique names."""
-        ensure_unique_names(value)
-        return value
-
 
 DEFAULT_VALUES = {
     "general": DEFAULT_GENERAL_SETTINGS,
@@ -121,6 +110,5 @@ DEFAULT_VALUES = {
     "workfile_builder": DEFAULT_WORKFILE_BUILDER_SETTINGS,
     "templated_workfile_build": {
         "profiles": []
-    },
-    "filters": []
+    }
 }
