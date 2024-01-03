@@ -13,7 +13,7 @@ class DJVViewAction(BaseAction):
     description = "DJV View Launcher"
     icon = statics_icon("app_icons", "djvView.png")
 
-    type = 'Application'
+    type = "Application"
 
     allowed_types = [
         "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
@@ -60,7 +60,7 @@ class DJVViewAction(BaseAction):
         return False
 
     def interface(self, session, entities, event):
-        if event['data'].get('values', {}):
+        if event["data"].get("values", {}):
             return
 
         entity = entities[0]
@@ -70,32 +70,32 @@ class DJVViewAction(BaseAction):
         if entity_type == "assetversion":
             if (
                 entity[
-                    'components'
-                ][0]['file_type'][1:] in self.allowed_types
+                    "components"
+                ][0]["file_type"][1:] in self.allowed_types
             ):
                 versions.append(entity)
         else:
             master_entity = entity
             if entity_type == "task":
-                master_entity = entity['parent']
+                master_entity = entity["parent"]
 
-            for asset in master_entity['assets']:
-                for version in asset['versions']:
+            for asset in master_entity["assets"]:
+                for version in asset["versions"]:
                     # Get only AssetVersion of selected task
                     if (
                         entity_type == "task" and
-                        version['task']['id'] != entity['id']
+                        version["task"]["id"] != entity["id"]
                     ):
                         continue
                     # Get only components with allowed type
-                    filetype = version['components'][0]['file_type']
+                    filetype = version["components"][0]["file_type"]
                     if filetype[1:] in self.allowed_types:
                         versions.append(version)
 
         if len(versions) < 1:
             return {
-                'success': False,
-                'message': 'There are no Asset Versions to open.'
+                "success": False,
+                "message": "There are no Asset Versions to open."
             }
 
         # TODO sort them (somehow?)
@@ -134,68 +134,68 @@ class DJVViewAction(BaseAction):
         last_available = None
         select_value = None
         for version in versions:
-            for component in version['components']:
+            for component in version["components"]:
                 label = base_label.format(
-                    str(version['version']).zfill(3),
-                    version['asset']['type']['name'],
-                    component['name']
+                    str(version["version"]).zfill(3),
+                    version["asset"]["type"]["name"],
+                    component["name"]
                 )
 
                 try:
                     location = component[
-                        'component_locations'
-                    ][0]['location']
+                        "component_locations"
+                    ][0]["location"]
                     file_path = location.get_filesystem_path(component)
                 except Exception:
                     file_path = component[
-                        'component_locations'
-                    ][0]['resource_identifier']
+                        "component_locations"
+                    ][0]["resource_identifier"]
 
                 if os.path.isdir(os.path.dirname(file_path)):
                     last_available = file_path
-                    if component['name'] == default_component:
+                    if component["name"] == default_component:
                         select_value = file_path
                     version_items.append(
-                        {'label': label, 'value': file_path}
+                        {"label": label, "value": file_path}
                     )
 
         if len(version_items) == 0:
             return {
-                'success': False,
-                'message': (
-                    'There are no Asset Versions with accessible path.'
+                "success": False,
+                "message": (
+                    "There are no Asset Versions with accessible path."
                 )
             }
 
         item = {
-            'label': 'Items to view',
-            'type': 'enumerator',
-            'name': 'path',
-            'data': sorted(
+            "label": "Items to view",
+            "type": "enumerator",
+            "name": "path",
+            "data": sorted(
                 version_items,
-                key=itemgetter('label'),
+                key=itemgetter("label"),
                 reverse=True
             )
         }
         if select_value is not None:
-            item['value'] = select_value
+            item["value"] = select_value
         else:
-            item['value'] = last_available
+            item["value"] = last_available
 
         items.append(item)
 
-        return {'items': items}
+        return {"items": items}
 
     def launch(self, session, entities, event):
         """Callback method for DJVView action."""
 
         # Launching application
-        event_data = event["data"]
-        if "values" not in event_data:
+        event_values = event["data"].get("values")
+        if not event_values:
             return
 
-        djv_app_name = event_data["djv_app_name"]
-        app = self.applicaion_manager.applications.get(djv_app_name)
+        djv_app_name = event_values["djv_app_name"]
+        app = self.application_manager.applications.get(djv_app_name)
         executable = None
         if app is not None:
             executable = app.find_executable()
@@ -206,18 +206,21 @@ class DJVViewAction(BaseAction):
                 "message": "Couldn't find DJV executable."
             }
 
-        filpath = os.path.normpath(event_data["values"]["path"])
+        filpath = os.path.normpath(event_values["path"])
 
         cmd = [
             # DJV path
-            executable,
+            str(executable),
             # PATH TO COMPONENT
             filpath
         ]
 
         try:
             # Run DJV with these commands
-            subprocess.Popen(cmd)
+            _process = subprocess.Popen(cmd)
+            # Keep process in memory for some time
+            time.sleep(0.1)
+
         except FileNotFoundError:
             return {
                 "success": False,
