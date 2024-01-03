@@ -1056,7 +1056,7 @@ def add_self_publish_button(node):
     node.setParmTemplateGroup(template)
 
 
-def getSceneViewer():
+def get_scene_viewer():
     """
     return an instance of a visible viewport.
     There may be many, some could be closed, any visible are current
@@ -1066,12 +1066,13 @@ def getSceneViewer():
     panes = sorted(panes, key=lambda x: x.isCurrentTab())
     if panes:
         return panes[-1]
-    else:
-        return None
+
+    return None
 
 
-def sceneview_snapshoot(
-        filename="$HIP/thumbnails/$HIPNAME.$F4.jpg",
+def sceneview_snapshot(
+        sceneview,
+        filepath="$HIP/thumbnails/$HIPNAME.$F4.jpg",
         fstart=None,
         fend=None):
     """
@@ -1081,7 +1082,8 @@ def sceneview_snapshoot(
 
     Example:
         from openpype.hosts.houdini.api import lib
-        lib.sceneview_snapshoot()
+        sceneview = hou.ui.paneTabOfType(hou.paneTabType.SceneViewer)
+        lib.sceneview_snapshot(sceneview)
 
     Notes:
         .png output will render poorly, so use .jpg.
@@ -1095,31 +1097,28 @@ def sceneview_snapshoot(
             https://www.sidefx.com/forum/topic/42808/?page=1#post-354796
 
     Args:
-        filename (str): filename with the desired full path.
-        fstart (int): the frame at which snapshooting starts
-        fend (int): the frame at which snapshooting ends
+        sceneview (hou.SceneViewer): The scene view pane from which you want
+                                     to take a snapshot.
+        filepath (str): thumbnail filepath.
+        fstart (int): the frame at which snapshot starts
+        fend (int): the frame at which snapshot ends
     """
 
-    try:
+    if fstart is None:
+        fstart = hou.frame()
+    if fend is None:
+        fend = fstart
 
-        if fstart is None:
-            fstart = hou.frame()
-        if fend is None:
-            fend = fstart = hou.frame()
+    if not isinstance(sceneview, hou.SceneViewer):
+        log.debug("Wrong Input. {} is not of type hou.SceneViewer."
+                  .format(sceneview))
+        return
+    viewport = sceneview.curViewport()
 
-        sceneview = getSceneViewer()
-        if not sceneview:
-            log.debug("No SceneViewers detected.")
-            return
-        viewport = sceneview.curViewport()
-
-        # this will open an mplay window to show the result
-        flip_settings = sceneview.flipbookSettings().stash()
-        flip_settings.frameRange((fstart, fend))
-        flip_settings.output(filename)
-        flip_settings.outputToMPlay(False)
-        sceneview.flipbook(viewport, flip_settings)
-        log.debug("A snap of sceneview has been saved to: {}".format(filename))
-
-    except Exception as e:
-        log.debug(e)
+    # this will open an mplay window to show the result
+    flip_settings = sceneview.flipbookSettings().stash()
+    flip_settings.frameRange((fstart, fend))
+    flip_settings.output(filepath)
+    flip_settings.outputToMPlay(False)
+    sceneview.flipbook(viewport, flip_settings)
+    log.debug("A snap of sceneview has been saved to: {}".format(filepath))
