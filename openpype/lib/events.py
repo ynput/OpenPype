@@ -47,8 +47,13 @@ class weakref_partial:
     """Partial function with weak reference to the wrapped function.
 
     Can be used as 'functools.partial' but it will store weak reference to
-        function. That means that the function must be stored in memory
-        somewhere. e.g. lambda functions are not supported as valid callback.
+        function. That means that the function must be reference counted
+        to avoid garbage collecting the function itself.
+
+        When the referenced functions is garbage collected then calling the
+        weakref partial (no matter the args/kwargs passed) will do nothing.
+        It will fail silently, returning `None`. The `is_valid()` method can
+        be used to detect whether the reference is still valid.
 
     Is useful for object methods. In that case the callback is
         deregistered when object is destroyed.
