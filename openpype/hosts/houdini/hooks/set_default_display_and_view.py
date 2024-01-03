@@ -39,29 +39,20 @@ class SetDefaultDisplayView(PreLaunchHook):
         default_display = houdini_color_settings["default_display"]
         if default_display:
             # get 'OCIO_ACTIVE_DISPLAYS' value if exists.
-            OCIO_ACTIVE_DISPLAYS = self.launch_context.env.get(
-                "OCIO_ACTIVE_DISPLAYS", ""
-            )
-            default_display = ":".join(
-                key for key in [default_display, OCIO_ACTIVE_DISPLAYS] if key
-            )
-            self.log.info(
-                "Setting OCIO_ACTIVE_DISPLAYS environment to: {}"
-                .format(default_display)
-            )
-            self.launch_context.env["OCIO_ACTIVE_DISPLAYS"] = default_display
+            self._set_context_env("OCIO_ACTIVE_DISPLAYS", default_display)
 
         default_view = houdini_color_settings["default_view"]
         if default_view:
             # get 'OCIO_ACTIVE_VIEWS' value if exists.
-            OCIO_ACTIVE_VIEWS = self.launch_context.env.get(
-                "OCIO_ACTIVE_VIEWS", ""
+            self._set_context_env("OCIO_ACTIVE_VIEWS", default_view)
+
+    def _set_context_env(self, env_var, default_value):
+        env_value = self.launch_context.env.get(env_var, "")
+        new_value = ":".join(
+                key for key in [default_value, env_value] if key
             )
-            default_view = ":".join(
-                key for key in [default_view, OCIO_ACTIVE_VIEWS] if key
+        self.log.info(
+                "Setting {} environment to: {}"
+                .format(env_var, new_value)
             )
-            self.log.info(
-                "Setting OCIO_ACTIVE_VIEWS environment to: {}"
-                .format(default_view)
-            )
-            self.launch_context.env["OCIO_ACTIVE_VIEWS"] = default_view
+        self.launch_context.env[env_var] = new_value
