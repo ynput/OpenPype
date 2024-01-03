@@ -34,7 +34,7 @@ class ExtractThumbnail(publish.Extractor):
 
         # Create temp directory for thumbnail
         # - this is to avoid "override" of source file
-        dst_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
+        dst_staging = tempfile.mkdtemp(prefix="pyblish_tmp_thumbnail")
         self.log.debug(
             "Create temp directory {} for thumbnail".format(dst_staging)
         )
