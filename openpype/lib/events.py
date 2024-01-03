@@ -146,7 +146,7 @@ class EventCallback(object):
         be stored in memory somewhere. e.g. lambda functions are not
         supported as valid callback.
 
-    You can use 'werkref_partial' functions. In that case is partial object
+    You can use 'weakref_partial' functions. In that case is partial object
         stored in the callback object and reference counter is checked for
         the wrapped function.
 
