@@ -55,7 +55,7 @@ class CollectEditorialCSV(
                 os.path.basename(csv_file_path)
             )
             if extension != ".csv":
-                raise TypeError(
+                raise KnownPublishError(
                     "Editorial CSV file must have .csv extension."
                 )
 
