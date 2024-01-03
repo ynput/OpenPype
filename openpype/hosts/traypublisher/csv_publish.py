@@ -43,7 +43,7 @@ def csvpublish(
     os.environ.update({
         "AVALON_PROJECT": project_name,
         "AVALON_ASSET": asset_name,
-        "AVALON_TASK": task_name
+        "AVALON_TASK": task_name or ""
     })
 
     # form precreate data with field values
