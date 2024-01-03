@@ -323,6 +323,7 @@ def convert_unit_scale():
     current_unit_scale = rt.Execute("units.MetricType as string")
     return unit_scale_dict[current_unit_scale]
 
+
 def set_context_setting():
     """Apply the project settings from the project definition
 
