@@ -1,5 +1,9 @@
 from functools import partial
-from openpype.lib.events import EventSystem, QueuedEventSystem
+from openpype.lib.events import (
+    EventSystem,
+    QueuedEventSystem,
+    weakref_partial,
+)
 
 
 def test_default_event_system():
@@ -162,13 +166,13 @@ def test_events_partial_callbacks():
         result.append("regular")
 
     event_system = QueuedEventSystem()
-    event_system.add_callback("test", partial(function, "foo"))
     event_system.add_callback("test", function_regular)
-    event_system.add_callback("test", partial(function, "bar"))
+    event_system.add_callback("test", partial(function, "foo"))
+    event_system.add_callback("test", weakref_partial(function, "bar"))
     event_system.emit("test", {}, "test")
 
     # Delete function should also make partial callbacks invalid
     del function
     event_system.emit("test", {}, "test")
 
-    assert result == ["foo", "regular", "bar", "regular"]
+    assert result == ["regular", "bar", "regular"]
