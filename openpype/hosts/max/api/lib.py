@@ -299,9 +299,9 @@ def reset_unit_scale():
     """
     project_name = get_current_project_name()
     settings = get_project_settings(project_name).get("max")
-    unit_scale_setting = settings.get("unit_scale_settings")
-    if unit_scale_setting:
-        scene_scale = unit_scale_setting["scene_unit_scale"]
+    scene_scale = settings.get("unit_scale_settings",
+                               {}).get("scene_unit_scale")
+    if scene_scale:
         rt.units.SystemType = rt.Name(scene_scale)
 
 
