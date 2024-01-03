@@ -215,8 +215,10 @@ class EventCallback(object):
         wrapped function.
 
     Args:
-        topic(str): Topic which will be listened.
-        func(Callable): Callback to a topic.
+        topic (str): Topic which will be listened.
+        func (Callable): Callback to a topic.
+        order (Union[int, None]): Order of callback. Lower number means higher
+            priority.
 
     Raises:
         TypeError: When passed function is not a callable object.
@@ -311,7 +313,7 @@ class EventCallback(object):
         """Get callback order.
 
         Returns:
-            int: Callback order.
+            Union[int, None]: Callback order.
         """
 
         return self._order
@@ -320,15 +322,17 @@ class EventCallback(object):
         """Change callback order.
 
         Args:
-            order (int): Order of callback. Lower number means higher
-                priority.
+            order (Union[int, None]): Order of callback. Lower number means
+                higher priority.
         """
 
-        if not isinstance(order, int):
-            raise TypeError(
-                "Expected type 'int' got '{}'.".format(str(type(order)))
-            )
-        self._order = order
+        if order is None or isinstance(order, int):
+            self._order = order
+            return
+
+        raise TypeError(
+            "Expected type 'None' or 'int' got '{}'.".format(str(type(order)))
+        )
 
     order = property(get_order, set_order)
 
@@ -503,8 +507,6 @@ class EventSystem(object):
     'add_callback'.
     """
 
-    default_order = 0
-
     def __init__(self):
         self._registered_callbacks = []
 
@@ -523,8 +525,6 @@ class EventSystem(object):
                 stop listening.
         """
 
-        if order is None:
-            order = self.default_order
         callback = EventCallback(topic, callback, order)
         self._registered_callbacks.append(callback)
         return callback
@@ -568,8 +568,14 @@ class EventSystem(object):
             event (Event): Prepared event with topic and data.
         """
 
+        def callback_sorter(item):
+            # Put callbacks without order to the end of the list
+            if item.order is None:
+                return (1, 0)
+            return (0, item.order)
+
         callbacks = tuple(sorted(
-            self._registered_callbacks, key=lambda x: x.order
+            self._registered_callbacks, key=callback_sorter
         ))
         for callback in callbacks:
             callback.process_event(event)
