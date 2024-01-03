@@ -143,10 +143,10 @@ def test_ordered_events():
     event_system = QueuedEventSystem()
     event_system.add_callback("test", function_a)
     event_system.add_callback("test", function_b, order=-10)
-    event_system.add_callback("test", function_c, order=10)
-    event_system.add_callback("test", function_d, order=5)
+    event_system.add_callback("test", function_c, order=200)
+    event_system.add_callback("test", function_d, order=150)
     event_system.add_callback("test", function_e)
-    event_system.add_callback("test", function_f, order=10)
+    event_system.add_callback("test", function_f, order=200)
     event_system.emit("test", {}, "test")
 
     assert result == ["B", "A", "E", "D", "C", "F"]

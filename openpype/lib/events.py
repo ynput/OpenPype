@@ -166,6 +166,8 @@ class EventCallback(object):
                 "Registered callback is not callable. \"{}\""
             ).format(str(func)))
 
+        self._validate_order(order)
+
         self._log = None
         self._topic = topic
         self._order = order
@@ -289,13 +291,8 @@ class EventCallback(object):
                 higher priority.
         """
 
-        if order is None or isinstance(order, int):
-            self._order = order
-            return
-
-        raise TypeError(
-            "Expected type 'None' or 'int' got '{}'.".format(str(type(order)))
-        )
+        self._validate_order(order)
+        self._order = order
 
     order = property(get_order, set_order)
 
@@ -348,6 +345,14 @@ class EventCallback(object):
                 ),
                 exc_info=True
             )
+
+    def _validate_order(self, order):
+        if isinstance(order, int):
+            return
+
+        raise TypeError(
+            "Expected type 'int' got '{}'.".format(str(type(order)))
+        )
 
     def _get_callback(self):
         if self._partial_func is not None:
@@ -495,6 +500,8 @@ class EventSystem(object):
     'add_callback'.
     """
 
+    default_order = 100
+
     def __init__(self):
         self._registered_callbacks = []
 
@@ -512,6 +519,9 @@ class EventSystem(object):
             EventCallback: Created callback object which can be used to
                 stop listening.
         """
+
+        if order is None:
+            order = self.default_order
 
         callback = EventCallback(topic, callback, order)
         self._registered_callbacks.append(callback)
@@ -565,14 +575,8 @@ class EventSystem(object):
             event (Event): Prepared event with topic and data.
         """
 
-        def callback_sorter(item):
-            # Put callbacks without order to the end of the list
-            if item.order is None:
-                return (1, 0)
-            return (0, item.order)
-
         callbacks = tuple(sorted(
-            self._registered_callbacks, key=callback_sorter
+            self._registered_callbacks, key=lambda x: x.order
         ))
         for callback in callbacks:
             callback.process_event(event)
