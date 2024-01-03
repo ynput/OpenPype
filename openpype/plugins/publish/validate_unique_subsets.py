@@ -1,4 +1,5 @@
 from collections import defaultdict
+from sys import version
 import pyblish.api
 from openpype.pipeline.publish import (
     PublishXmlValidationError,
@@ -9,8 +10,8 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
     """Validate all subset names are unique.
 
     This only validates whether the instances currently set to publish from
-    the workfile overlap one another for the asset + subset they are publishing
-    to.
+    the workfile overlap one another for the asset + subset + version number
+    they are publishing to.
 
     This does not perform any check against existing publishes in the database
     since it is allowed to publish into existing subsets resulting in
@@ -49,17 +50,27 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
                                  "{}".format(instance.name))
                 continue
 
-            instance_per_asset_subset[(asset, subset)].append(instance)
+            # for cases where multiple versions under same subset are published
+            version = instance.data.get("version")
+            if version is None:
+                self.log.warning("Instance found without `version` data: "
+                                 "{}".format(instance.name))
+                continue
+
+            instance_per_asset_subset[(asset, subset, version)].append(instance)
 
         non_unique = []
-        for (asset, subset), instances in instance_per_asset_subset.items():
+        for (asset, subset, version), instances in instance_per_asset_subset.items():
 
             # A single instance per asset, subset is fine
             if len(instances) < 2:
                 continue
 
-            non_unique.append("{asset} > {subset}".format(asset=asset,
-                                                          subset=subset))
+            non_unique.append(
+                "{asset} > {subset} > {version}".format(
+                    asset=asset, subset=subset, version=version
+                )
+            )
 
         if not non_unique:
             # All is ok
@@ -71,6 +82,5 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
             "non_unique": ",".join(non_unique)
         }
 
-        if non_unique:
-            raise PublishXmlValidationError(self, msg,
-                                            formatting_data=formatting_data)
+        raise PublishXmlValidationError(
+            self, msg, formatting_data=formatting_data)
