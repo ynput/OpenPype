@@ -19,7 +19,11 @@ from .products_model import (
     VERSION_ID_ROLE,
     VERSION_THUMBNAIL_ID_ROLE,
 )
-from .products_delegates import VersionDelegate, LoadedInSceneDelegate
+from .products_delegates import (
+    VersionDelegate,
+    LoadedInSceneDelegate,
+    SiteSyncDelegate
+)
 from .actions_utils import show_actions_menu
 
 
@@ -92,7 +96,7 @@ class ProductsWidget(QtWidgets.QWidget):
         55,   # Handles
         10,   # Step
         25,   # Loaded in scene
-        65,   # Site info (maybe?)
+        65,   # Site sync info
     )
 
     def __init__(self, controller, parent):
@@ -135,6 +139,10 @@ class ProductsWidget(QtWidgets.QWidget):
         products_view.setItemDelegateForColumn(
             products_model.in_scene_col, in_scene_delegate)
 
+        site_sync_delegate = SiteSyncDelegate()
+        products_view.setItemDelegateForColumn(
+            products_model.site_sync_avail_col, site_sync_delegate)
+
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(products_view, 1)
@@ -167,6 +175,8 @@ class ProductsWidget(QtWidgets.QWidget):
 
         self._version_delegate = version_delegate
         self._time_delegate = time_delegate
+        self._in_scene_delegate = in_scene_delegate
+        self._site_sync_delegate = site_sync_delegate
 
         self._selected_project_name = None
         self._selected_folder_ids = set()
@@ -181,6 +191,9 @@ class ProductsWidget(QtWidgets.QWidget):
         products_view.setColumnHidden(
             products_model.in_scene_col,
             not controller.is_loaded_products_supported()
+        )
+        self._set_site_sync_visibility(
+            self._controller.is_site_sync_enabled()
         )
 
     def set_name_filter(self, name):
@@ -215,6 +228,12 @@ class ProductsWidget(QtWidgets.QWidget):
 
     def refresh(self):
         self._refresh_model()
+
+    def _set_site_sync_visibility(self, site_sync_enabled):
+        self._products_view.setColumnHidden(
+            self._products_model.site_sync_avail_col,
+            not site_sync_enabled
+        )
 
     def _fill_version_editor(self):
         model = self._products_proxy_model
@@ -375,7 +394,12 @@ class ProductsWidget(QtWidgets.QWidget):
         self._on_selection_change()
 
     def _on_folders_selection_change(self, event):
-        self._selected_project_name = event["project_name"]
+        project_name = event["project_name"]
+        site_sync_enabled = self._controller.is_site_sync_enabled(
+            project_name
+        )
+        self._set_site_sync_visibility(site_sync_enabled)
+        self._selected_project_name = project_name
         self._selected_folder_ids = event["folder_ids"]
         self._refresh_model()
         self._update_folders_label_visible()

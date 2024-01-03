@@ -203,6 +203,104 @@
                     "label": "Enabled"
                 },
                 {
+                    "type": "boolean",
+                    "key": "integrate_thumbnail",
+                    "label": "Integrate thumbnail as representation"
+                },
+                {
+                    "type": "dict-conditional",
+                    "use_label_wrap": false,
+                    "collapsible": false,
+                    "key": "target_size",
+                    "label": "Target size",
+                    "enum_key": "type",
+                    "enum_label": "Type",
+                    "enum_children": [
+                        {
+                            "key": "source",
+                            "label": "Image source",
+                            "children": [
+                                {
+                                    "type": "label",
+                                    "label": "Image size will be inherited from source image."
+                                }
+                            ]
+                        },
+                        {
+                            "key": "resize",
+                            "label": "Resize",
+                            "children": [
+                                {
+                                    "type": "label",
+                                    "label": "Image will be resized to specified size."
+                                },
+                                {
+                                    "type": "number",
+                                    "key": "width",
+                                    "label": "Width",
+                                    "decimal": 0,
+                                    "minimum": 0,
+                                    "maximum": 99999
+                                },
+                                {
+                                    "type": "number",
+                                    "key": "height",
+                                    "label": "Height",
+                                    "decimal": 0,
+                                    "minimum": 0,
+                                    "maximum": 99999
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "color",
+                    "label": "Background color",
+                    "key": "background_color"
+                },
+                {
+                    "key": "duration_split",
+                    "label": "Duration split ratio",
+                    "type": "number",
+                    "decimal": 1,
+                    "default": 0.5,
+                    "minimum": 0,
+                    "maximum": 1
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "oiiotool_defaults",
+                    "label": "OIIOtool defaults",
+                    "children": [
+                        {
+                            "type": "enum",
+                            "key": "type",
+                            "label": "Target type",
+                            "enum_items": [
+                                { "colorspace": "Colorspace" },
+                                { "display_and_view": "Display & View" }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "key": "colorspace",
+                            "label": "Colorspace"
+                        },
+                        {
+                            "type": "text",
+                            "key": "view",
+                            "label": "View"
+                        },
+                        {
+                            "type": "text",
+                            "key": "display",
+                            "label": "Display"
+                        }
+                    ]
+                },
+                {
                     "type": "dict",
                     "key": "ffmpeg_args",
                     "children": [

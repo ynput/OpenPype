@@ -9,7 +9,7 @@ from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
 
 
-class ExtractPlayblast(publish.Extractor):
+class ExtractPlayblast(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """
     Extract viewport playblast.
 
@@ -24,7 +24,8 @@ class ExtractPlayblast(publish.Extractor):
     order = pyblish.api.ExtractorOrder + 0.01
 
     def process(self, instance):
-        self.log.debug("Extracting capture..")
+        if not self.is_active(instance.data):
+            return
 
         # get scene fps
         fps = instance.data.get("fps")
@@ -50,7 +51,10 @@ class ExtractPlayblast(publish.Extractor):
 
         # get output path
         stagingdir = self.staging_dir(instance)
-        filename = instance.name
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        filename = f"{asset_name}_{subset}"
+
         path = os.path.join(stagingdir, filename)
 
         self.log.debug(f"Outputting images to {path}")

@@ -25,7 +25,8 @@
             "instance_attributes": [
                 "reviewable",
                 "farm_rendering"
-            ]
+            ],
+            "image_format": "exr"
         }
     },
     "publish": {

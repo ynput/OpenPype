@@ -29,6 +29,11 @@ VERSION_HANDLES_ROLE = QtCore.Qt.UserRole + 18
 VERSION_STEP_ROLE = QtCore.Qt.UserRole + 19
 VERSION_AVAILABLE_ROLE = QtCore.Qt.UserRole + 20
 VERSION_THUMBNAIL_ID_ROLE = QtCore.Qt.UserRole + 21
+ACTIVE_SITE_ICON_ROLE = QtCore.Qt.UserRole + 22
+REMOTE_SITE_ICON_ROLE = QtCore.Qt.UserRole + 23
+REPRESENTATIONS_COUNT_ROLE = QtCore.Qt.UserRole + 24
+SYNC_ACTIVE_SITE_AVAILABILITY = QtCore.Qt.UserRole + 25
+SYNC_REMOTE_SITE_AVAILABILITY = QtCore.Qt.UserRole + 26
 
 
 class ProductsModel(QtGui.QStandardItemModel):
@@ -68,6 +73,7 @@ class ProductsModel(QtGui.QStandardItemModel):
     published_time_col = column_labels.index("Time")
     folders_label_col = column_labels.index("Folder")
     in_scene_col = column_labels.index("In scene")
+    site_sync_avail_col = column_labels.index("Availability")
 
     def __init__(self, controller):
         super(ProductsModel, self).__init__()
@@ -303,7 +309,26 @@ class ProductsModel(QtGui.QStandardItemModel):
         model_item.setData(
             version_item.thumbnail_id, VERSION_THUMBNAIL_ID_ROLE)
 
-    def _get_product_model_item(self, product_item):
+        # TODO call site sync methods for all versions at once
+        project_name = self._last_project_name
+        version_id = version_item.version_id
+        repre_count = self._controller.get_versions_representation_count(
+            project_name, [version_id]
+        )[version_id]
+        active, remote = self._controller.get_version_sync_availability(
+            project_name, [version_id]
+        )[version_id]
+
+        model_item.setData(repre_count, REPRESENTATIONS_COUNT_ROLE)
+        model_item.setData(active, SYNC_ACTIVE_SITE_AVAILABILITY)
+        model_item.setData(remote, SYNC_REMOTE_SITE_AVAILABILITY)
+
+    def _get_product_model_item(
+        self,
+        product_item,
+        active_site_icon,
+        remote_site_icon
+    ):
         model_item = self._items_by_id.get(product_item.product_id)
         versions = list(product_item.version_items.values())
         versions.sort()
@@ -329,6 +354,9 @@ class ProductsModel(QtGui.QStandardItemModel):
         in_scene = 1 if product_item.product_in_scene else 0
         model_item.setData(in_scene, PRODUCT_IN_SCENE_ROLE)
 
+        model_item.setData(active_site_icon, ACTIVE_SITE_ICON_ROLE)
+        model_item.setData(remote_site_icon, REMOTE_SITE_ICON_ROLE)
+
         self._set_version_data_to_product_item(model_item, last_version)
         return model_item
 
@@ -340,6 +368,15 @@ class ProductsModel(QtGui.QStandardItemModel):
 
         self._last_project_name = project_name
         self._last_folder_ids = folder_ids
+
+        active_site_icon_def = self._controller.get_active_site_icon_def(
+            project_name
+        )
+        remote_site_icon_def = self._controller.get_remote_site_icon_def(
+            project_name
+        )
+        active_site_icon = get_qt_icon(active_site_icon_def)
+        remote_site_icon = get_qt_icon(remote_site_icon_def)
 
         product_items = self._controller.get_product_items(
             project_name,
@@ -402,7 +439,11 @@ class ProductsModel(QtGui.QStandardItemModel):
                 new_root_items.append(parent_item)
 
             for product_item in top_items:
-                item = self._get_product_model_item(product_item)
+                item = self._get_product_model_item(
+                    product_item,
+                    active_site_icon,
+                    remote_site_icon,
+                )
                 new_items.append(item)
 
             for path_info in merged_product_items.values():
@@ -418,7 +459,11 @@ class ProductsModel(QtGui.QStandardItemModel):
                 merged_product_types = set()
                 new_merged_items = []
                 for product_item in product_items:
-                    item = self._get_product_model_item(product_item)
+                    item = self._get_product_model_item(
+                        product_item,
+                        active_site_icon,
+                        remote_site_icon,
+                    )
                     new_merged_items.append(item)
                     merged_product_types.add(product_item.product_type)
 

@@ -16,93 +16,120 @@ from openpype.pipeline.context_tools import (
 )
 from openpype.pipeline.workfile import create_workdir_extra_folders
 
+from openpype.tools.ayon_utils.models import (
+    HierarchyModel,
+    HierarchyExpectedSelection,
+    ProjectsModel,
+)
+
 from .abstract import (
     AbstractWorkfilesFrontend,
     AbstractWorkfilesBackend,
 )
-from .models import SelectionModel, EntitiesModel, WorkfilesModel
+from .models import SelectionModel, WorkfilesModel
 
 
-class ExpectedSelection:
-    def __init__(self):
-        self._folder_id = None
-        self._task_name = None
+class WorkfilesToolExpectedSelection(HierarchyExpectedSelection):
+    def __init__(self, controller):
+        super(WorkfilesToolExpectedSelection, self).__init__(
+            controller,
+            handle_project=False,
+            handle_folder=True,
+            handle_task=True,
+        )
+
         self._workfile_name = None
         self._representation_id = None
-        self._folder_selected = True
-        self._task_selected = True
-        self._workfile_name_selected = True
-        self._representation_id_selected = True
+
+        self._workfile_selected = True
+        self._representation_selected = True
 
     def set_expected_selection(
         self,
-        folder_id,
-        task_name,
+        project_name=None,
+        folder_id=None,
+        task_name=None,
         workfile_name=None,
-        representation_id=None
+        representation_id=None,
     ):
-        self._folder_id = folder_id
-        self._task_name = task_name
         self._workfile_name = workfile_name
         self._representation_id = representation_id
-        self._folder_selected = False
-        self._task_selected = False
-        self._workfile_name_selected = workfile_name is None
-        self._representation_id_selected = representation_id is None
+
+        self._workfile_selected = False
+        self._representation_selected = False
+
+        super(WorkfilesToolExpectedSelection, self).set_expected_selection(
+            project_name,
+            folder_id,
+            task_name,
+        )
 
     def get_expected_selection_data(self):
-        return {
-            "folder_id": self._folder_id,
-            "task_name": self._task_name,
-            "workfile_name": self._workfile_name,
-            "representation_id": self._representation_id,
-            "folder_selected": self._folder_selected,
-            "task_selected": self._task_selected,
-            "workfile_name_selected": self._workfile_name_selected,
-            "representation_id_selected": self._representation_id_selected,
+        data = super(
+            WorkfilesToolExpectedSelection, self
+        ).get_expected_selection_data()
+
+        _is_current = (
+            self._project_selected
+            and self._folder_selected
+            and self._task_selected
+        )
+        workfile_is_current = False
+        repre_is_current = False
+        if _is_current:
+            workfile_is_current = not self._workfile_selected
+            repre_is_current = not self._representation_selected
+
+        data["workfile"] = {
+            "name": self._workfile_name,
+            "current": workfile_is_current,
+            "selected": self._workfile_selected,
         }
+        data["representation"] = {
+            "id": self._representation_id,
+            "current": repre_is_current,
+            "selected": self._workfile_selected,
+        }
+        return data
 
-    def is_expected_folder_selected(self, folder_id):
-        return folder_id == self._folder_id and self._folder_selected
+    def is_expected_workfile_selected(self, workfile_name):
+        return (
+            workfile_name == self._workfile_name
+            and self._workfile_selected
+        )
 
-    def is_expected_task_selected(self, folder_id, task_name):
-        if not self.is_expected_folder_selected(folder_id):
-            return False
-        return task_name == self._task_name and self._task_selected
+    def is_expected_representation_selected(self, representation_id):
+        return (
+            representation_id == self._representation_id
+            and self._representation_selected
+        )
 
-    def expected_folder_selected(self, folder_id):
+    def expected_workfile_selected(self, folder_id, task_name, workfile_name):
         if folder_id != self._folder_id:
-            return False
-        self._folder_selected = True
-        return True
-
-    def expected_task_selected(self, folder_id, task_name):
-        if not self.is_expected_folder_selected(folder_id):
             return False
 
         if task_name != self._task_name:
             return False
 
-        self._task_selected = True
-        return True
-
-    def expected_workfile_selected(self, folder_id, task_name, workfile_name):
-        if not self.is_expected_task_selected(folder_id, task_name):
-            return False
-
         if workfile_name != self._workfile_name:
             return False
-        self._workfile_name_selected = True
+        self._workfile_selected = True
+        self._emit_change()
         return True
 
     def expected_representation_selected(
         self, folder_id, task_name, representation_id
     ):
-        if not self.is_expected_task_selected(folder_id, task_name):
+        if folder_id != self._folder_id:
             return False
+
+        if task_name != self._task_name:
+            return False
+
         if representation_id != self._representation_id:
             return False
-        self._representation_id_selected = True
+        self._representation_selected = True
+        self._emit_change()
         return True
 
 
@@ -136,9 +163,9 @@ class BaseWorkfileController(
 
         # Expected selected folder and task
         self._expected_selection = self._create_expected_selection_obj()
-
         self._selection_model = self._create_selection_model()
-        self._entities_model = self._create_entities_model()
+        self._projects_model = self._create_projects_model()
+        self._hierarchy_model = self._create_hierarchy_model()
         self._workfiles_model = self._create_workfiles_model()
 
     @property
@@ -151,13 +178,16 @@ class BaseWorkfileController(
         return self._host_is_valid
 
     def _create_expected_selection_obj(self):
-        return ExpectedSelection()
+        return WorkfilesToolExpectedSelection(self)
+
+    def _create_projects_model(self):
+        return ProjectsModel(self)
 
     def _create_selection_model(self):
         return SelectionModel(self)
 
-    def _create_entities_model(self):
-        return EntitiesModel(self)
+    def _create_hierarchy_model(self):
+        return HierarchyModel(self)
 
     def _create_workfiles_model(self):
         return WorkfilesModel(self)
@@ -193,14 +223,17 @@ class BaseWorkfileController(
             self._project_anatomy = Anatomy(self.get_current_project_name())
         return self._project_anatomy
 
-    def get_project_entity(self):
-        return self._entities_model.get_project_entity()
+    def get_project_entity(self, project_name):
+        return self._projects_model.get_project_entity(
+            project_name)
 
-    def get_folder_entity(self, folder_id):
-        return self._entities_model.get_folder_entity(folder_id)
+    def get_folder_entity(self, project_name, folder_id):
+        return self._hierarchy_model.get_folder_entity(
+            project_name, folder_id)
 
-    def get_task_entity(self, task_id):
-        return self._entities_model.get_task_entity(task_id)
+    def get_task_entity(self, project_name, task_id):
+        return self._hierarchy_model.get_task_entity(
+            project_name, task_id)
 
     # ---------------------------------
     # Implementation of abstract methods
@@ -293,9 +326,8 @@ class BaseWorkfileController(
     def get_selected_task_name(self):
         return self._selection_model.get_selected_task_name()
 
-    def set_selected_task(self, folder_id, task_id, task_name):
-        return self._selection_model.set_selected_task(
-            folder_id, task_id, task_name)
+    def set_selected_task(self, task_id, task_name):
+        return self._selection_model.set_selected_task(task_id, task_name)
 
     def get_selected_workfile_path(self):
         return self._selection_model.get_selected_workfile_path()
@@ -318,7 +350,11 @@ class BaseWorkfileController(
         representation_id=None
     ):
         self._expected_selection.set_expected_selection(
-            folder_id, task_name, workfile_name, representation_id
+            self.get_current_project_name(),
+            folder_id,
+            task_name,
+            workfile_name,
+            representation_id
         )
         self._trigger_expected_selection_changed()
 
@@ -355,11 +391,13 @@ class BaseWorkfileController(
         )
 
     # Model functions
-    def get_folder_items(self, sender):
-        return self._entities_model.get_folder_items(sender)
+    def get_folder_items(self, project_name, sender=None):
+        return self._hierarchy_model.get_folder_items(project_name, sender)
 
-    def get_task_items(self, folder_id, sender):
-        return self._entities_model.get_tasks_items(folder_id, sender)
+    def get_task_items(self, project_name, folder_id, sender=None):
+        return self._hierarchy_model.get_task_items(
+            project_name, folder_id, sender
+        )
 
     def get_workarea_dir_by_context(self, folder_id, task_id):
         return self._workfiles_model.get_workarea_dir_by_context(
@@ -394,7 +432,9 @@ class BaseWorkfileController(
     def get_published_file_items(self, folder_id, task_id):
         task_name = None
         if task_id:
-            task = self.get_task_entity(task_id)
+            task = self.get_task_entity(
+                self.get_current_project_name(), task_id
+            )
             task_name = task.get("name")
 
         return self._workfiles_model.get_published_file_items(
@@ -410,24 +450,30 @@ class BaseWorkfileController(
             folder_id, task_id, filepath, note
         )
 
-    def refresh(self):
+    def reset(self):
         if not self._host_is_valid:
-            self._emit_event("controller.refresh.started")
-            self._emit_event("controller.refresh.finished")
+            self._emit_event("controller.reset.started")
+            self._emit_event("controller.reset.finished")
             return
         expected_folder_id = self.get_selected_folder_id()
         expected_task_name = self.get_selected_task_name()
+        expected_work_path = self.get_selected_workfile_path()
+        expected_repre_id = self.get_selected_representation_id()
+        expected_work_name = None
+        if expected_work_path:
+            expected_work_name = os.path.basename(expected_work_path)
 
-        self._emit_event("controller.refresh.started")
+        self._emit_event("controller.reset.started")
 
         context = self._get_host_current_context()
 
         project_name = context["project_name"]
         folder_name = context["asset_name"]
         task_name = context["task_name"]
+        current_file = self.get_current_workfile()
         folder_id = None
         if folder_name:
-            folder = ayon_api.get_folder_by_name(project_name, folder_name)
+            folder = ayon_api.get_folder_by_path(project_name, folder_name)
             if folder:
                 folder_id = folder["id"]
 
@@ -439,17 +485,24 @@ class BaseWorkfileController(
         self._current_folder_id = folder_id
         self._current_task_name = task_name
 
+        self._projects_model.reset()
+        self._hierarchy_model.reset()
+
         if not expected_folder_id:
             expected_folder_id = folder_id
             expected_task_name = task_name
+            if current_file:
+                expected_work_name = os.path.basename(current_file)
+
+        self._emit_event("controller.reset.finished")
 
         self._expected_selection.set_expected_selection(
-            expected_folder_id, expected_task_name
+            project_name,
+            expected_folder_id,
+            expected_task_name,
+            expected_work_name,
+            expected_repre_id,
         )
-
-        self._entities_model.refresh()
-
-        self._emit_event("controller.refresh.finished")
 
     # Controller actions
     def open_workfile(self, folder_id, task_id, filepath):
@@ -579,9 +632,9 @@ class BaseWorkfileController(
         self, project_name, folder_id, task_id, folder=None, task=None
     ):
         if folder is None:
-            folder = self.get_folder_entity(folder_id)
+            folder = self.get_folder_entity(project_name, folder_id)
         if task is None:
-            task = self.get_task_entity(task_id)
+            task = self.get_task_entity(project_name, task_id)
         # NOTE keys should be OpenPype compatible
         return {
             "project_name": project_name,
@@ -633,8 +686,8 @@ class BaseWorkfileController(
     ):
         # Trigger before save event
         project_name = self.get_current_project_name()
-        folder = self.get_folder_entity(folder_id)
-        task = self.get_task_entity(task_id)
+        folder = self.get_folder_entity(project_name, folder_id)
+        task = self.get_task_entity(project_name, task_id)
         task_name = task["name"]
 
         # QUESTION should the data be different for 'before' and 'after'?
@@ -674,6 +727,9 @@ class BaseWorkfileController(
         else:
             self._host_save_workfile(dst_filepath)
 
+        # Make sure workfile info exists
+        self.save_workfile_info(folder_id, task_id, dst_filepath, None)
+
         # Create extra folders
         create_workdir_extra_folders(
             workdir,
@@ -685,4 +741,4 @@ class BaseWorkfileController(
 
         # Trigger after save events
         emit_event("workfile.save.after", event_data, source="workfiles.tool")
-        self.refresh()
+        self.reset()
