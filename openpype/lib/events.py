@@ -549,6 +549,15 @@ class EventSystem(object):
         event.emit()
         return event
 
+    def emit_event(self, event):
+        """Emit event object.
+
+        Args:
+            event (Event): Prepared event with topic and data.
+        """
+
+        self._process_event(event)
+
     def _process_event(self, event):
         """Process event topic and trigger callbacks.
 
@@ -569,15 +578,6 @@ class EventSystem(object):
             callback.process_event(event)
             if not callback.is_ref_valid:
                 self._registered_callbacks.remove(callback)
-
-    def emit_event(self, event):
-        """Emit event object.
-
-        Args:
-            event (Event): Prepared event with topic and data.
-        """
-
-        self._process_event(event)
 
 
 class QueuedEventSystem(EventSystem):
