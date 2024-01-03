@@ -1,7 +1,7 @@
 {
     "unit_scale_settings": {
         "enabled": true,
-        "scene_unit_scale": "Inches"
+        "scene_unit_scale": "Meters"
     },
     "imageio": {
         "activate_host_color_management": true,

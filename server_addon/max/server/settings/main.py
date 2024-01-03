@@ -15,9 +15,6 @@ from .publishers import (
 def unit_scale_enum():
     """Return enumerator for scene unit scale."""
     return [
-        {"label": "in", "value": "Inches"},
-        {"label": "ft", "value": "Feet"},
-        {"label": "mi", "value": "Miles"},
         {"label": "mm", "value": "Millimeters"},
         {"label": "cm", "value": "Centimeters"},
         {"label": "m", "value": "Meters"},
@@ -74,7 +71,7 @@ class MaxSettings(BaseSettingsModel):
 DEFAULT_VALUES = {
     "unit_scale_settings": {
         "enabled": True,
-        "scene_unit_scale": "cm"
+        "scene_unit_scale": "m"
     },
     "RenderSettings": DEFAULT_RENDER_SETTINGS,
     "CreateReview": DEFAULT_CREATE_REVIEW_SETTINGS,

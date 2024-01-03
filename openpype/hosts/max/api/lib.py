@@ -302,8 +302,10 @@ def reset_unit_scale():
     scene_scale = settings.get("unit_scale_settings",
                                {}).get("scene_unit_scale")
     if scene_scale:
-        rt.units.SystemType = rt.Name(scene_scale)
-
+        rt.units.DisplayType = rt.Name("Metric")
+        rt.units.MetricType = rt.Name(scene_scale)
+    else:
+        rt.units.DisplayType = rt.Name("Generic")
 
 def convert_unit_scale():
     """Convert system unit scale in 3dsMax
@@ -313,15 +315,12 @@ def convert_unit_scale():
         str: unit scale
     """
     unit_scale_dict = {
-        "inches": "in",
-        "feet": "ft",
-        "miles": "mi",
         "millimeters": "mm",
         "centimeters": "cm",
         "meters": "m",
         "kilometers": "km"
     }
-    current_unit_scale = rt.Execute("units.SystemType as string")
+    current_unit_scale = rt.Execute("units.MetricType as string")
     return unit_scale_dict[current_unit_scale]
 
 def set_context_setting():

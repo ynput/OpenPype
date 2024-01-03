@@ -25,9 +25,6 @@
                     "multiselection": false,
                     "defaults": "exr",
                     "enum_items": [
-                      {"Inches": "in"},
-                      {"Feet":  "ft"},
-                      {"Miles":  "mi"},
                       {"Millimeters": "mm"},
                       {"Centimeters": "cm"},
                       {"Meters":  "m"},
