@@ -56,6 +56,7 @@ class LoadEffects(load.LoaderPlugin):
         namespace = namespace or context['asset']['name']
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
+        selected_nodes = nuke.selectedNodes()
 
         # prepare data for imprinting
         # add additional metadata from the version to imprint to Avalon knob
@@ -91,7 +92,6 @@ class LoadEffects(load.LoaderPlugin):
             "name {}_1".format(object_name),
             inpanel=False
         )
-
         # adding content to the group node
         with GN:
             pre_node = nuke.createNode("Input")
@@ -131,8 +131,7 @@ class LoadEffects(load.LoaderPlugin):
             output.setInput(0, pre_node)
 
         # try to find parent read node
-        self.connect_read_node(GN, namespace, json_f["assignTo"])
-
+        self.connect_read_node(GN, selected_nodes)
         GN["tile_color"].setValue(int("0x3469ffff", 16))
 
         self.log.info("Loaded lut setup: `{}`".format(GN["name"].value()))
@@ -171,6 +170,7 @@ class LoadEffects(load.LoaderPlugin):
         namespace = container['namespace']
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
+        selected_nodes = nuke.selectedNodes()
 
         add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
                     "source", "author", "fps"]
@@ -247,7 +247,7 @@ class LoadEffects(load.LoaderPlugin):
             output.setInput(0, pre_node)
 
         # try to find parent read node
-        self.connect_read_node(GN, namespace, json_f["assignTo"])
+        self.connect_read_node(GN, selected_nodes)
 
         last_version_doc = get_last_version_by_subset_id(
             project_name, version_doc["parent"], fields=["_id"]
@@ -263,7 +263,7 @@ class LoadEffects(load.LoaderPlugin):
 
         self.log.info("updated to version: {}".format(version_doc.get("name")))
 
-    def connect_read_node(self, group_node, asset, subset):
+    def connect_read_node(self, group_node, selected_nodes):
         """
         Finds read node and selects it
 
@@ -274,14 +274,9 @@ class LoadEffects(load.LoaderPlugin):
             nuke node: node is selected
             None: if nothing found
         """
-        search_name = "{0}_{1}".format(asset, subset)
 
-        node = [
-            n for n in nuke.allNodes(filter="Read")
-            if search_name in n["file"].value()
-        ]
-        if len(node) > 0:
-            rn = node[0]
+        if len(selected_nodes) > 0:
+            rn = selected_nodes[0]
         else:
             rn = None
 
@@ -289,7 +284,6 @@ class LoadEffects(load.LoaderPlugin):
         # solving connections
         if rn:
             dep_nodes = rn.dependent()
-
             if len(dep_nodes) > 0:
                 for dn in dep_nodes:
                     dn.setInput(0, group_node)
