@@ -70,7 +70,9 @@ class ModuleUnitTest(BaseTest):
         )
 
     @pytest.fixture(scope="module")
-    def download_test_data(self, test_data_folder, persist, request):
+    def download_test_data(
+        self, test_data_folder, persist, request, dump_databases
+    ):
         test_data_folder = test_data_folder or self.TEST_DATA_FOLDER
         if test_data_folder:
             print("Using existing folder {}".format(test_data_folder))
@@ -100,13 +102,13 @@ class ModuleUnitTest(BaseTest):
                 if ext and ext.lstrip('.') in handler_class.IMPLEMENTED_ZIP_FORMATS:  # noqa: E501
                     handler_class.unzip(os.path.join(tmpdir, file_name))
 
-                yield tmpdir
+            yield tmpdir
 
-                persist = (persist or self.PERSIST or
-                           self.is_test_failed(request))
-                if not persist:
-                    print("Removing {}".format(tmpdir))
-                    shutil.rmtree(tmpdir)
+            persist = (persist or self.PERSIST or
+                       self.is_test_failed(request) or dump_databases)
+            if not persist:
+                print("Removing {}".format(tmpdir))
+                shutil.rmtree(tmpdir)
 
     @pytest.fixture(scope="module")
     def output_folder_url(self, download_test_data):
@@ -163,7 +165,7 @@ class ModuleUnitTest(BaseTest):
 
     @pytest.fixture(scope="module")
     def db_setup(self, download_test_data, env_var, monkeypatch_session,
-                 request, mongo_url):
+                 request, mongo_url, dump_databases, persist):
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
         uri = os.environ.get("OPENPYPE_MONGO")
@@ -178,7 +180,17 @@ class ModuleUnitTest(BaseTest):
 
         yield db_handler
 
-        persist = self.PERSIST or self.is_test_failed(request)
+        if dump_databases:
+            print("Dumping databases to {}".format(download_test_data))
+            output_dir = os.path.join(download_test_data, "output", "dumps")
+            db_handler.backup_to_dump(
+                self.TEST_DB_NAME, output_dir, format=dump_databases
+            )
+            db_handler.backup_to_dump(
+                self.TEST_OPENPYPE_NAME, output_dir, format=dump_databases
+            )
+
+        persist = persist or self.PERSIST or self.is_test_failed(request)
         if not persist:
             db_handler.teardown(self.TEST_DB_NAME)
             db_handler.teardown(self.TEST_OPENPYPE_NAME)
@@ -515,7 +527,7 @@ class DeadlinePublishTest(PublishTest):
         while not valid_date_finished:
             time.sleep(0.5)
             if time.time() - time_start > timeout:
-                raise ValueError("Timeout for DL finish reached")
+                raise ValueError("Timeout for Deadline finish reached")
 
             response = requests.get(url, timeout=10)
             if not response.ok:
@@ -524,6 +536,61 @@ class DeadlinePublishTest(PublishTest):
 
             if not response.json():
                 raise ValueError("Couldn't find {}".format(deadline_job_id))
+
+            job = response.json()[0]
+
+            def recursive_dependencies(job, results=None):
+                if results is None:
+                    results = []
+
+                for dependency in job["Props"]["Dep"]:
+                    dependency = requests.get(
+                        "{}/api/jobs?JobId={}".format(
+                            deadline_url, dependency["JobID"]
+                        ),
+                        timeout=10
+                    ).json()[0]
+                    results.append(dependency)
+                    grand_dependencies = recursive_dependencies(
+                        dependency, results=results
+                    )
+                    for grand_dependency in grand_dependencies:
+                        if grand_dependency not in results:
+                            results.append(grand_dependency)
+                return results
+
+            job_status = {
+                0: "Unknown",
+                1: "Active",
+                2: "Suspended",
+                3: "Completed",
+                4: "Failed",
+                6: "Pending"
+            }
+
+            jobs_to_validate = [job]
+            jobs_to_validate.extend(recursive_dependencies(job))
+            failed_jobs = []
+            errors = []
+            for job in jobs_to_validate:
+                if "Failed" == job_status[job["Stat"]]:
+                    failed_jobs.append(str(job))
+
+                resp_error = requests.get(
+                    "{}/api/jobreports?JobID={}&Data=allerrorcontents".format(
+                        deadline_url, job["_id"]
+                    ),
+                    timeout=10
+                )
+                errors.extend(resp_error.json())
+
+            msg = "Errors in Deadline:\n"
+            msg += "\n".join(errors)
+            assert not errors, msg
+
+            msg = "Failed in Deadline:\n"
+            msg += "\n".join(failed_jobs)
+            assert not failed_jobs, msg
 
             # '0001-...' returned until job is finished
             valid_date_finished = response.json()[0]["DateComp"][:4] != "0001"

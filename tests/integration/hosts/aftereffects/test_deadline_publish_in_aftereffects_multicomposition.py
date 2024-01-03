@@ -71,7 +71,7 @@ class TestDeadlinePublishInAfterEffectsMultiComposition(AEDeadlinePublishTestCla
                                     name="renderTest_taskMain2"))
 
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 5))
+            DBAssert.count_of_types(dbcon, "representation", 4))
 
         additional_args = {"context.subset": "workfileTest_task",
                            "context.ext": "aep"}
@@ -89,7 +89,7 @@ class TestDeadlinePublishInAfterEffectsMultiComposition(AEDeadlinePublishTestCla
         additional_args = {"context.subset": "renderTest_taskMain",
                            "name": "thumbnail"}
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 1,
+            DBAssert.count_of_types(dbcon, "representation", 0,
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "renderTest_taskMain",

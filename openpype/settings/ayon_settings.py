@@ -478,15 +478,6 @@ def _convert_maya_project_settings(ayon_settings, output):
         for item in ayon_maya["ext_mapping"]
     }
 
-    # Publish UI filters
-    new_filters = {}
-    for item in ayon_maya["filters"]:
-        new_filters[item["name"]] = {
-            subitem["name"]: subitem["value"]
-            for subitem in item["value"]
-        }
-    ayon_maya["filters"] = new_filters
-
     # Maya dirmap
     ayon_maya_dirmap = ayon_maya.pop("maya_dirmap")
     ayon_maya_dirmap_path = ayon_maya_dirmap["paths"]
@@ -571,6 +562,27 @@ def _convert_maya_project_settings(ayon_settings, output):
         item["name"]: item["value"]
         for item in viewport_options["pluginObjects"]
     }
+
+    ayon_playblast_settings = ayon_publish["ExtractPlayblast"]["profiles"]
+    if ayon_playblast_settings:
+        for setting in ayon_playblast_settings:
+            capture_preset = setting["capture_preset"]
+            display_options = capture_preset["DisplayOptions"]
+            for key in ("background", "backgroundBottom", "backgroundTop"):
+                display_options[key] = _convert_color(display_options[key])
+
+            for src_key, dst_key in (
+                ("DisplayOptions", "Display Options"),
+                ("ViewportOptions", "Viewport Options"),
+                ("CameraOptions", "Camera Options"),
+            ):
+                capture_preset[dst_key] = capture_preset.pop(src_key)
+
+            viewport_options = capture_preset["Viewport Options"]
+            viewport_options["pluginObjects"] = {
+                item["name"]: item["value"]
+                for item in viewport_options["pluginObjects"]
+            }
 
     # Extract Camera Alembic bake attributes
     try:
@@ -722,16 +734,6 @@ def _convert_nuke_project_settings(ayon_settings, output):
         dirmap["paths"][dst_key] = dirmap["paths"].pop(src_key)
     ayon_nuke["nuke-dirmap"] = dirmap
 
-    # --- Filters ---
-    new_gui_filters = {}
-    for item in ayon_nuke.pop("filters"):
-        subvalue = {}
-        key = item["name"]
-        for subitem in item["value"]:
-            subvalue[subitem["name"]] = subitem["value"]
-        new_gui_filters[key] = subvalue
-    ayon_nuke["filters"] = new_gui_filters
-
     # --- Load ---
     ayon_load = ayon_nuke["load"]
     ayon_load["LoadClip"]["_representations"] = (
@@ -821,28 +823,6 @@ def _convert_nuke_project_settings(ayon_settings, output):
             collect_instance_data.pop(
                 "sync_workfile_version_on_product_types"))
 
-    # TODO 'ExtractThumbnail' does not have ideal schema in v3
-    ayon_extract_thumbnail = ayon_publish["ExtractThumbnail"]
-    new_thumbnail_nodes = {}
-    for item in ayon_extract_thumbnail["nodes"]:
-        name = item["nodeclass"]
-        value = []
-        for knob in _convert_nuke_knobs(item["knobs"]):
-            knob_name = knob["name"]
-            # This may crash
-            if knob["type"] == "expression":
-                knob_value = knob["expression"]
-            else:
-                knob_value = knob["value"]
-            value.append([knob_name, knob_value])
-        new_thumbnail_nodes[name] = value
-
-    ayon_extract_thumbnail["nodes"] = new_thumbnail_nodes
-
-    if "reposition_nodes" in ayon_extract_thumbnail:
-        for item in ayon_extract_thumbnail["reposition_nodes"]:
-            item["knobs"] = _convert_nuke_knobs(item["knobs"])
-
     # --- ImageIO ---
     # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
     _convert_host_imageio(ayon_nuke)
@@ -897,7 +877,7 @@ def _convert_hiero_project_settings(ayon_settings, output):
     _convert_host_imageio(ayon_hiero)
 
     new_gui_filters = {}
-    for item in ayon_hiero.pop("filters"):
+    for item in ayon_hiero.pop("filters", []):
         subvalue = {}
         key = item["name"]
         for subitem in item["value"]:
@@ -963,17 +943,6 @@ def _convert_tvpaint_project_settings(ayon_settings, output):
     ayon_tvpaint = ayon_settings["tvpaint"]
 
     _convert_host_imageio(ayon_tvpaint)
-
-    filters = {}
-    for item in ayon_tvpaint["filters"]:
-        value = item["value"]
-        try:
-            value = json.loads(value)
-
-        except ValueError:
-            value = {}
-        filters[item["name"]] = value
-    ayon_tvpaint["filters"] = filters
 
     ayon_publish_settings = ayon_tvpaint["publish"]
     for plugin_name in (
@@ -1240,6 +1209,26 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
                 output_def["height"] = output_def.pop("output_height")
 
         profile["outputs"] = new_outputs
+
+    # ExtractThumbnail plugin
+    ayon_extract_thumbnail = ayon_publish["ExtractThumbnail"]
+    # fix display and view at oiio defaults
+    ayon_default_oiio = copy.deepcopy(
+        ayon_extract_thumbnail["oiiotool_defaults"])
+    display_and_view = ayon_default_oiio.pop("display_and_view")
+    ayon_default_oiio["display"] = display_and_view["display"]
+    ayon_default_oiio["view"] = display_and_view["view"]
+    ayon_extract_thumbnail["oiiotool_defaults"] = ayon_default_oiio
+    # fix target size
+    ayon_default_resize = copy.deepcopy(ayon_extract_thumbnail["target_size"])
+    resize = ayon_default_resize.pop("resize")
+    ayon_default_resize["width"] = resize["width"]
+    ayon_default_resize["height"] = resize["height"]
+    ayon_extract_thumbnail["target_size"] = ayon_default_resize
+    # fix background color
+    ayon_extract_thumbnail["background_color"] = _convert_color(
+        ayon_extract_thumbnail["background_color"]
+    )
 
     # ExtractOIIOTranscode plugin
     extract_oiio_transcode = ayon_publish["ExtractOIIOTranscode"]

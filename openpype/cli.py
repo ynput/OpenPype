@@ -300,12 +300,17 @@ def run(script):
               help="Keep launched application open for interaction.",
               is_flag=True,
               default=False)
+@click.option("--dump_databases",
+              help="Dump all databases to data folder.",
+              default=None)
 def runtests(folder, mark, pyargs, test_data_folder, persist, app_variant,
-             timeout, setup_only, mongo_url, app_group, keep_app_open):
+             timeout, setup_only, mongo_url, app_group, dump_databases,
+             keep_app_open):
     """Run all automatic tests after proper initialization via start.py"""
     PypeCommands().run_tests(folder, mark, pyargs, test_data_folder,
                              persist, app_variant, timeout, setup_only,
-                             mongo_url, app_group, keep_app_open)
+                             mongo_url, app_group, dump_databases,
+                             keep_app_open)
 
 
 @main.command(help="DEPRECATED - run sync server")

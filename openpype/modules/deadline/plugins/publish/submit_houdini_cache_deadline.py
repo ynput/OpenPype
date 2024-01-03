@@ -2,8 +2,6 @@ import os
 import getpass
 from datetime import datetime
 
-import hou
-
 import attr
 import pyblish.api
 from openpype.lib import (
@@ -141,6 +139,9 @@ class HoudiniCacheSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         return job_info
 
     def get_plugin_info(self):
+        # Not all hosts can import this module.
+        import hou
+
         instance = self._instance
         version = hou.applicationVersionString()
         version = ".".join(version.split(".")[:2])
@@ -167,6 +168,9 @@ class HoudiniCacheSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         instance.data["toBeRenderedOn"] = "deadline"
 
     def get_rop_node(self, instance):
+        # Not all hosts can import this module.
+        import hou
+
         rop = instance.data.get("instance_node")
         rop_node = hou.node(rop)
 

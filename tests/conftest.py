@@ -44,6 +44,11 @@ def pytest_addoption(parser):
         help="Keeps the launched app open for interaction."
     )
 
+    parser.addoption(
+        "--dump_databases", action="store", default=None,
+        help="Dump databases to data folder."
+    )
+
 
 @pytest.fixture(scope="module")
 def test_data_folder(request):
@@ -83,6 +88,11 @@ def mongo_url(request):
 @pytest.fixture(scope="module")
 def keep_app_open(request):
     return request.config.getoption("--keep_app_open")
+
+
+@pytest.fixture(scope="module")
+def dump_databases(request):
+    return request.config.getoption("--dump_databases")
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

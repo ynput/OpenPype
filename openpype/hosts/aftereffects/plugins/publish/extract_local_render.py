@@ -60,8 +60,9 @@ class ExtractLocalRender(publish.Extractor):
             first_repre = not representations
             if instance.data["review"] and first_repre:
                 repre_data["tags"] = ["review"]
-                thumbnail_path = os.path.join(staging_dir, files[0])
-                instance.data["thumbnailSource"] = thumbnail_path
+                # TODO return back when Extract from source same as regular
+                # thumbnail_path = os.path.join(staging_dir, files[0])
+                # instance.data["thumbnailSource"] = thumbnail_path
 
             representations.append(repre_data)
 

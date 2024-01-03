@@ -606,7 +606,7 @@ class PublishWorkfilesModel:
             print("Failed to format workfile path: {}".format(exc))
 
         dirpath, filename = os.path.split(workfile_path)
-        created_at = arrow.get(repre_entity["createdAt"])
+        created_at = arrow.get(repre_entity["createdAt"]).to("local")
         return FileItem(
             dirpath,
             filename,

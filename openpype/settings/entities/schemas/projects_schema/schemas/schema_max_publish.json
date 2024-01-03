@@ -90,6 +90,131 @@
                 }
             }
         ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractModelObj",
+        "label": "Extract Obj",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractModelFbx",
+        "label": "Extract FBX",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractModelUSD",
+        "label": "Extract Geometry (USD)",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractModel",
+        "label": "Extract Geometry (Alembic)",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
+      },
+      {
+        "type": "dict",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "key": "ExtractMaxSceneRaw",
+        "label": "Extract Max Scene (Raw)",
+        "is_group": true,
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "boolean",
+                "key": "optional",
+                "label": "Optional"
+            },
+            {
+                "type": "boolean",
+                "key": "active",
+                "label": "Active"
+            }
+        ]
       }
     ]
   }
