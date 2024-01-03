@@ -1,6 +1,323 @@
 # Changelog
 
 
+## [3.18.2](https://github.com/ynput/OpenPype/tree/3.18.2)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.1...3.18.2)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Testing: Release Maya/Deadline job from pending when testing. <a href="https://github.com/ynput/OpenPype/pull/5988">#5988</a></summary>
+
+When testing we wont put the Deadline jobs into pending with dependencies, so the worker can start as soon as possible.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Tweaks on Extractions for the exporters <a href="https://github.com/ynput/OpenPype/pull/5814">#5814</a></summary>
+
+With this PR
+- Suspend Refresh would be introduced in abc & obj extractors for optimization.
+- Allow users to choose the custom attributes to be included in abc exports
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Optional preserve references. <a href="https://github.com/ynput/OpenPype/pull/5994">#5994</a></summary>
+
+Optional preserve references when publishing Maya scenes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON ftrack: Expect 'ayon' group in custom attributes <a href="https://github.com/ynput/OpenPype/pull/6066">#6066</a></summary>
+
+Expect `ayon` group as one of options to get custom attributes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON Chore: Remove dependencies related to separated addons <a href="https://github.com/ynput/OpenPype/pull/6074">#6074</a></summary>
+
+Removed dependencies from openpype client pyproject.toml that are already defined by addons which require them.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Editorial & chore: Stop using pathlib2 <a href="https://github.com/ynput/OpenPype/pull/6075">#6075</a></summary>
+
+Do not use `pathlib2` which is Python 2 backport for `pathlib` module in python 3.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Traypublisher: Correct validator label <a href="https://github.com/ynput/OpenPype/pull/6084">#6084</a></summary>
+
+Use correct label for Validate filepaths.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Extract Review Intermediate disabled when both Extract Review Mov and Extract Review Intermediate disabled in setting <a href="https://github.com/ynput/OpenPype/pull/6089">#6089</a></summary>
+
+Report in Discord https://discord.com/channels/517362899170230292/563751989075378201/1187874498234556477
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Bug fix the file from texture node not being collected correctly in Yeti Rig <a href="https://github.com/ynput/OpenPype/pull/5990">#5990</a></summary>
+
+Fix the bug of collect Yeti Rig not being able to get the file parameter(s) from the texture node(s), resulting to the failure of publishing the textures to the resource directory.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bug: fix AYON settings for Maya workspace <a href="https://github.com/ynput/OpenPype/pull/6069">#6069</a></summary>
+
+This is changing bug in default AYON setting for Maya workspace, where missing semicolumn caused workspace not being set. This is also syncing default workspace settings to OpenPype
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Refactor colorspace handling in CollectColorspace plugin <a href="https://github.com/ynput/OpenPype/pull/6033">#6033</a></summary>
+
+Traypublisher is now capable set available colorspaces or roles to publishing images sequence or video. This is fix of new implementation where we allowed to use roles in the enumerator selector.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: Houdini render split bugs <a href="https://github.com/ynput/OpenPype/pull/6037">#6037</a></summary>
+
+This PR is a follow up PR to https://github.com/ynput/OpenPype/pull/5420This PR does:
+- refactor `get_output_parameter` to what is used to be.
+- fix a bug with split render
+- rename `exportJob` flag to `split_render`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: fix for single frame rendering <a href="https://github.com/ynput/OpenPype/pull/6056">#6056</a></summary>
+
+Fixes publishes of single frame of `render` product type.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: fix layer publish thumbnail missing in loader <a href="https://github.com/ynput/OpenPype/pull/6061">#6061</a></summary>
+
+Thumbnails from any products (either `review` nor separate layer instances) weren't stored in Ayon.This resulted in not showing them in Loader and Server UI. After this PR thumbnails should be shown in the Loader and on the Server (`http://YOUR_AYON_HOSTNAME:5000/projects/YOUR_PROJECT/browser`).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON Chore: Do not use thumbnailSource for thumbnail integration <a href="https://github.com/ynput/OpenPype/pull/6063">#6063</a></summary>
+
+Do not use `thumbnailSource` for thumbnail integration.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: fix creation of .mov <a href="https://github.com/ynput/OpenPype/pull/6064">#6064</a></summary>
+
+Generation of .mov file with 1 frame per published layer was failing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: fix Collect Color Coded settings <a href="https://github.com/ynput/OpenPype/pull/6065">#6065</a></summary>
+
+Fix for wrong default value for `Collect Color Coded Instances` Settings
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bug: Fix Publisher parent window in Nuke <a href="https://github.com/ynput/OpenPype/pull/6067">#6067</a></summary>
+
+Fixing issue where publisher parent window wasn't set because wrong use of version constant.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Python console widget: Save registry fix <a href="https://github.com/ynput/OpenPype/pull/6076">#6076</a></summary>
+
+Do not save registry until there is something to save.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: update asset names for multiple reviewable items <a href="https://github.com/ynput/OpenPype/pull/6077">#6077</a></summary>
+
+Multiple reviewable assetVersion components with better grouping to asset version name.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: DJV action fixes <a href="https://github.com/ynput/OpenPype/pull/6098">#6098</a></summary>
+
+Fix bugs in DJV  ftrack action.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON Workfiles tool: Fix arrow to timezone typo <a href="https://github.com/ynput/OpenPype/pull/6099">#6099</a></summary>
+
+Fix parenthesis typo with arrow local timezone function.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Chore: Update folder-favorite icon to ayon icon <a href="https://github.com/ynput/OpenPype/pull/5718">#5718</a></summary>
+
+Updates old "Pype-2.0-era" (from ancient greece times) to AYON logo equivalent.I believe it's only used in Nuke.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Chore: Maya / Nuke remove publish gui filters from settings <a href="https://github.com/ynput/OpenPype/pull/5570">#5570</a></summary>
+
+- Remove Publish GUI Filters from Nuke settings
+- Remove Publish GUI Filters from Maya settings
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Project/User option for output format (create_saver) <a href="https://github.com/ynput/OpenPype/pull/6045">#6045</a></summary>
+
+Adds "Output Image Format" option which can be set via project settings and overwritten by users in "Create" menu. This replaces the current behaviour of being hardcoded to "exr". Replacing the need for people to manually edit the saver path if they require a different extension.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Output Image Format Updating Instances (create_saver) <a href="https://github.com/ynput/OpenPype/pull/6060">#6060</a></summary>
+
+Adds the ability to update Saver image output format if changed in the Publish UI.~~Adds an optional validator that compares "Output Image Format" in the Publish menu against the one currently found on the saver. It then offers a repair action to update the output extension on the saver.~~
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Tests: Fix representation count for AE legacy test <a href="https://github.com/ynput/OpenPype/pull/6072">#6072</a></summary>
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.1](https://github.com/ynput/OpenPype/tree/3.18.1)
 
 
