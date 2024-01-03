@@ -71,7 +71,7 @@ class MaxSettings(BaseSettingsModel):
 DEFAULT_VALUES = {
     "unit_scale_settings": {
         "enabled": True,
-        "scene_unit_scale": "m"
+        "scene_unit_scale": "Centimeters"
     },
     "RenderSettings": DEFAULT_RENDER_SETTINGS,
     "CreateReview": DEFAULT_CREATE_REVIEW_SETTINGS,
