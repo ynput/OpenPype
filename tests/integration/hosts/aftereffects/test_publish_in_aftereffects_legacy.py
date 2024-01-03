@@ -60,7 +60,7 @@ class TestPublishInAfterEffects(AELocalPublishTestClass):
                                     name="renderTest_taskMain"))
 
         failures.append(
-            DBAssert.count_of_types(dbcon, "representation", 2))
+            DBAssert.count_of_types(dbcon, "representation", 3))
 
         additional_args = {"context.subset": "workfileTest_task",
                            "context.ext": "aep"}

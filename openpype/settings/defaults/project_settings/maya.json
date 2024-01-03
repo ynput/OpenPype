@@ -1609,14 +1609,5 @@
     },
     "templated_workfile_build": {
         "profiles": []
-    },
-    "filters": {
-        "preset 1": {
-            "ValidateNoAnimation": false,
-            "ValidateShapeDefaultNames": false
-        },
-        "preset 2": {
-            "ValidateNoAnimation": false
-        }
     }
 }
