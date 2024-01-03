@@ -16,7 +16,6 @@ def csvpublish(
     project_name,
     asset_name,
     task_name=None,
-    username=None,
     targets=None
 ):
     """Publish CSV file.
@@ -70,10 +69,6 @@ def csvpublish(
     # publishing context initialization
     pyblish_context = pyblish.api.Context()
     pyblish_context.data["create_context"] = create_context
-
-    # setting username and targets
-    if username:
-        pyblish_context.data["user"] = username
 
     # publishing
     pyblish.util.publish(context=pyblish_context, targets=targets)

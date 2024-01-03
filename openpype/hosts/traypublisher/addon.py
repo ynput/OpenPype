@@ -82,13 +82,6 @@ def launch():
     required=False
 )
 @click.option(
-    "--username",
-    help="User name identified as publisher",
-    default=None,
-    type=str,
-    required=False
-)
-@click.option(
     "--ignore-validators",
     help="Option to ignore validators",
     type=bool,
@@ -100,7 +93,6 @@ def ingestcsv(
     project_name,
     asset_name,
     task_name,
-    username,
     ignore_validators
 ):
     """Ingest CSV file into project.
@@ -116,21 +108,15 @@ def ingestcsv(
         return
 
     from .csv_publish import csvpublish
-    from openpype.lib import get_openpype_username
 
     targets = None
     if ignore_validators:
         targets = ["default", "ingest"]
-
-    # get username from env variable
-    if not username:
-        username = get_openpype_username()
 
     csvpublish(
         csv_filepath,
         project_name,
         asset_name,
         task_name,
-        username,
         targets
     )
