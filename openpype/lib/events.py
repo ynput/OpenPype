@@ -70,10 +70,15 @@ class weakref_partial:
         self._args = args
         self._kwargs = kwargs
 
-    def __call__(self):
+    def __call__(self, *args, **kwargs):
         func = self._func_ref()
-        if func is not None:
-            return func(*self._args, **self._kwargs)
+        if func is None:
+            return
+
+        new_args = tuple(list(self._args) + list(args))
+        new_kwargs = dict(self._kwargs)
+        new_kwargs.update(kwargs)
+        return func(*new_args, **new_kwargs)
 
     def get_func(self):
         """Get wrapped function.
@@ -93,6 +98,24 @@ class weakref_partial:
         """
 
         return self._func_ref() is not None
+
+    def validate_signature(self, *args, **kwargs):
+        """Validate if passed arguments are supported by wrapped function.
+
+        Returns:
+            bool: Are passed arguments supported by wrapped function.
+        """
+
+        func = self._func_ref()
+        if func is None:
+            return False
+
+        new_args = tuple(list(self._args) + list(args))
+        new_kwargs = dict(self._kwargs)
+        new_kwargs.update(kwargs)
+        return is_func_signature_supported(
+            func, *new_args, **new_kwargs
+        )
 
 
 class EventCallback(object):
@@ -118,9 +141,9 @@ class EventCallback(object):
         be stored in memory somewhere. e.g. lambda functions are not
         supported as valid callback.
 
-    You can use 'partial' functions. In that case is partial object stored
-        in the callback object and reference counter is checked for the
-        wrapped function.
+    You can use 'werkref_partial' functions. In that case is partial object
+        stored in the callback object and reference counter is checked for
+        the wrapped function.
 
     Args:
         topic (str): Topic which will be listened.
@@ -162,8 +185,8 @@ class EventCallback(object):
             partial_func = func
             (name, path) = _get_func_info(func.get_func())
             func_ref = None
-            expect_args = False
-            expect_kwargs = False
+            expect_args = partial_func.validate_signature("fake")
+            expect_kwargs = partial_func.validate_signature(event="fake")
 
         else:
             partial_func = None
