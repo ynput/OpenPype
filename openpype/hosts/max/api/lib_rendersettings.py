@@ -80,7 +80,7 @@ class RenderSettings(object):
             )]
         except KeyError:
             aov_separator = "."
-        output_filename = "{0}..{1}".format(output, img_fmt)
+        output_filename = f"{output}..{img_fmt}"
         output_filename = output_filename.replace("{aov_separator}",
                                                   aov_separator)
         rt.rendOutputFilename = output_filename
@@ -146,13 +146,13 @@ class RenderSettings(object):
         for i in range(render_elem_num):
             renderlayer_name = render_elem.GetRenderElement(i)
             target, renderpass = str(renderlayer_name).split(":")
-            aov_name = "{0}_{1}..{2}".format(dir, renderpass, ext)
+            aov_name = f"{dir}_{renderpass}..{ext}"
             render_elem.SetRenderElementFileName(i, aov_name)
 
     def get_render_output(self, container, output_dir):
         output = os.path.join(output_dir, container)
         img_fmt = self._project_settings["max"]["RenderSettings"]["image_format"]   # noqa
-        output_filename = "{0}..{1}".format(output, img_fmt)
+        output_filename = f"{output}..{img_fmt}"
         return output_filename
 
     def get_render_element(self):
@@ -181,8 +181,7 @@ class RenderSettings(object):
         for i in range(render_elem_num):
             renderlayer_name = render_elem.GetRenderElement(i)
             target, renderpass = str(renderlayer_name).split(":")
-            aov_name = "{0}_{1}_{2}..{3}".format(
-                output, camera, renderpass, img_fmt)
+            aov_name = f"{output}_{camera}_{renderpass}..{img_fmt}"
             render_element_list.append(aov_name)
         return render_element_list
 
@@ -205,8 +204,7 @@ class RenderSettings(object):
         for i in range(render_elem_num):
             renderlayer_name = render_elem.GetRenderElement(i)
             target, renderpass = str(renderlayer_name).split(":")
-            aov_name = "{0}_{1}_{2}..{3}".format(
-                directory, camera, renderpass, ext)
+            aov_name = f"{directory}_{camera}_{renderpass}..{ext}"
             render_elem.SetRenderElementFileName(i, aov_name)
 
     def batch_render_layer(self, container,
@@ -224,7 +222,6 @@ class RenderSettings(object):
                 renderlayer = rt.batchRenderMgr.GetView(layer_no)
             # use camera name as renderlayer name
             renderlayer.name = cam
-            renderlayer.outputFilename = "{0}_{1}..{2}".format(
-                output, cam, img_fmt)
+            renderlayer.outputFilename = f"{output}_{cam}..{img_fmt}"
             outputs.append(renderlayer.outputFilename)
         return outputs

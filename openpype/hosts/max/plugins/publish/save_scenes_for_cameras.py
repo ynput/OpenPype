@@ -31,13 +31,12 @@ class SaveScenesForCamera(pyblish.api.InstancePlugin):
         cameras = instance.data.get("cameras")
         if not cameras:
             return
-        new_folder = "{}_{}".format(current_folder, filename)
+        new_folder = f"{current_folder}_{filename}"
         os.makedirs(new_folder, exist_ok=True)
         for camera in cameras:
             new_output = RenderSettings().get_batch_render_output(camera)       # noqa
             new_output = new_output.replace("\\", "/")
-            new_filename = "{}_{}{}".format(
-                filename, camera, ext)
+            new_filename = f"{filename}_{camera}{ext}"
             new_filepath = os.path.join(new_folder, new_filename)
             new_filepath = new_filepath.replace("\\", "/")
             camera_scene_files.append(new_filepath)
@@ -61,7 +60,7 @@ if render_elem_num > 0:
     for i in range(render_elem_num):
         renderlayer_name = render_elem.GetRenderElement(i)
         target, renderpass = str(renderlayer_name).split(":")
-        aov_name = directory + "_" + camera + "_" + renderpass + "." + "." + ext        # noqa
+        aov_name =  f"{{directory}}_{camera}_{{renderpass}}..{ext}"
         render_elem.SetRenderElementFileName(i, aov_name)
 rt.saveMaxFile(new_filepath)
         """).format(filename=instance.name,
