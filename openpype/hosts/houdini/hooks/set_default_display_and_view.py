@@ -49,10 +49,10 @@ class SetDefaultDisplayView(PreLaunchHook):
     def _set_context_env(self, env_var, default_value):
         env_value = self.launch_context.env.get(env_var, "")
         new_value = ":".join(
-                key for key in [default_value, env_value] if key
-            )
+            key for key in [default_value, env_value] if key
+        )
         self.log.info(
-                "Setting {} environment to: {}"
-                .format(env_var, new_value)
-            )
+            "Setting {} environment to: {}"
+            .format(env_var, new_value)
+        )
         self.launch_context.env[env_var] = new_value
