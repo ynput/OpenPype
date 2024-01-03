@@ -11,7 +11,6 @@ readme = "README.md"
 keywords = ["Pipeline", "Avalon", "VFX", "animation", "automation", "tracking", "asset management"]
 packages = [
     {include = "igniter"},
-    {include = "repos"},
     {include = "tools"},
     {include = "tests"},
     {include = "docs"},
