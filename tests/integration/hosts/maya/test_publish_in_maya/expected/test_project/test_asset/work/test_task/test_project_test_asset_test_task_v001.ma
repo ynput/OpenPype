@@ -185,7 +185,7 @@ createNode objectSet -n "modelMain";
 	addAttr -ci true -sn "attrPrefix" -ln "attrPrefix" -dt "string";
 	addAttr -ci true -sn "publish_attributes" -ln "publish_attributes" -dt "string";
 	addAttr -ci true -sn "creator_attributes" -ln "creator_attributes" -dt "string";
-	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys" 
+	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys"
 		-dt "string";
 	setAttr ".ihi" 0;
 	setAttr ".cbId" -type "string" "60df31e2be2b48bd3695c056:7364ea6776c9";
@@ -296,7 +296,7 @@ createNode objectSet -n "workfileMain";
 	addAttr -ci true -sn "task" -ln "task" -dt "string";
 	addAttr -ci true -sn "publish_attributes" -ln "publish_attributes" -dt "string";
 	addAttr -ci true -sn "creator_attributes" -ln "creator_attributes" -dt "string";
-	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys" 
+	addAttr -ci true -sn "__creator_attributes_keys" -ln "__creator_attributes_keys"
 		-dt "string";
 	setAttr ".ihi" 0;
 	setAttr ".hio" yes;
