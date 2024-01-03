@@ -120,7 +120,7 @@ def ingestcsv(
 
     targets = None
     if ignore_validators:
-        targets = ["ingest"]
+        targets = ["default", "ingest"]
 
     # get username from env variable
     if not username:

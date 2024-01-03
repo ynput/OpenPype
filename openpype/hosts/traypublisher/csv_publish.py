@@ -75,11 +75,5 @@ def csvpublish(
     if username:
         pyblish_context.data["user"] = username
 
-    if targets:
-        pyblish.api.deregister_all_targets()
-        for target in targets:
-            print(f"setting target: {target}")
-            pyblish.api.register_target(target)
-
     # publishing
-    pyblish.util.publish(context=pyblish_context)
+    pyblish.util.publish(context=pyblish_context, targets=targets)
