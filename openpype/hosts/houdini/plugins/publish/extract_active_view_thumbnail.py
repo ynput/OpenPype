@@ -1,12 +1,8 @@
-import os
-
 import pyblish.api
 
 from openpype.pipeline import publish, registered_host
 from openpype.hosts.houdini.api import lib
 from openpype.hosts.houdini.api.pipeline import IS_HEADLESS
-
-import hou
 
 
 class ExtractActiveViewThumbnail(publish.Extractor):
@@ -47,7 +43,8 @@ class ExtractActiveViewThumbnail(publish.Extractor):
         host = registered_host()
         current_filepath = host.get_current_workfile()
         if not current_filepath:
-            self.log.error("No current workfile path. Thumbnail generation skipped")
+            self.log.error("No current workfile path. "
+                           "Thumbnail generation skipped")
             return
 
         thumbnail_path = "{}_thumbnail.jpg".format(
