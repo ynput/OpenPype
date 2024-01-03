@@ -575,3 +575,20 @@ def reset_frame_range_tyFlow(members, frameStart, frameEnd):
                         continue
                     node_sub_anim.frameStart = frameStart
                     node_sub_anim.frameEnd = frameEnd
+
+
+@contextlib.contextmanager
+def suspended_refresh():
+    """Suspended refresh for scene and modify panel redraw.
+    """
+    if is_headless():
+        yield
+        return
+    rt.disableSceneRedraw()
+    rt.suspendEditing()
+    try:
+        yield
+
+    finally:
+        rt.enableSceneRedraw()
+        rt.resumeEditing()
