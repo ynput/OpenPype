@@ -307,6 +307,7 @@ def reset_unit_scale():
     else:
         rt.units.DisplayType = rt.Name("Generic")
 
+
 def convert_unit_scale():
     """Convert system unit scale in 3dsMax
     for fbx export
