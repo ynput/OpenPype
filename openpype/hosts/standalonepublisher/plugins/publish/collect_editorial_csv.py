@@ -22,7 +22,7 @@ class CollectEditorialCSV(
     """Collect Editorial CSV"""
 
     order = pyblish.api.CollectorOrder + 0.002
-    label = ">>>> Collect Editorial CSV"
+    label = "Collect Editorial CSV"
     hosts = ["standalonepublisher"]
     families = ["editorialcsv"]
 
@@ -55,7 +55,7 @@ class CollectEditorialCSV(
                 os.path.basename(csv_file_path)
             )
             if extension != ".csv":
-                raise KnownPublishError(
+                raise publish.KnownPublishError(
                     "Editorial CSV file must have .csv extension."
                 )
 
