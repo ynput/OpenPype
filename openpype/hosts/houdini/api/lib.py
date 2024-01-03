@@ -1076,8 +1076,8 @@ def sceneview_snapshot(
         fstart=None,
         fend=None):
     """
-    It takes snapshoot of your scene view fot the given frame range.
-    So, it's capable of generating snapshoots image sequence.
+    It takes snapshot of your scene view fot the given frame range.
+    So, it's capable of generating snapshots image sequence.
     It works in different Houdini context e.g. Objects, Solaris
 
     Example:
@@ -1121,4 +1121,4 @@ def sceneview_snapshot(
     flip_settings.output(filepath)
     flip_settings.outputToMPlay(False)
     sceneview.flipbook(viewport, flip_settings)
-    log.debug("A snap of sceneview has been saved to: {}".format(filepath))
+    log.debug("A snapshot of sceneview has been saved to: {}".format(filepath))
