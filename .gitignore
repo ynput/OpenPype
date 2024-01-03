@@ -119,3 +119,8 @@ tools/dev_*
 ########
 /openpype/addons/*
 !/openpype/addons/README.md
+
+# Traits
+########
+/openpype/pipeline/traits/generated/*
+!/openpype/pipeline/traits/generated/__init__.py
