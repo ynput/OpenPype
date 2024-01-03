@@ -5,7 +5,6 @@ import copy
 import inspect
 import collections
 import logging
-import functools
 import weakref
 from uuid import uuid4
 
@@ -17,174 +16,83 @@ class MissingEventSystem(Exception):
     pass
 
 
-# Python 3.4+ supports 'partialmethod'
-# TODO remove when support for Python 2.x is completely dropped
-_partial_types = [functools.partial]
-if hasattr(functools, "partialmethod"):
-    _partial_types.append(functools.partialmethod)
-_partial_types = tuple(_partial_types)
+def _get_func_ref(func):
+    if inspect.ismethod(func):
+        return WeakMethod(func)
+    return weakref.ref(func)
 
 
-class _WrappedFunc(object):
-    """Wrap function to be able to check if reference is valid.
+def _get_func_info(func):
+    path = "<unknown path>"
+    if func is None:
+        return "<unknown>", path
 
-    Can create sub-wrappers for 'partial' functions.
+    if hasattr(func, "__name__"):
+        name = func.__name__
+    else:
+        name = str(func)
+
+    # Get path to file and fallback to '<unknown path>' if fails
+    # NOTE This was added because of 'partial' functions which is handled,
+    #   but who knows what else can cause this to fail?
+    try:
+        path = os.path.abspath(inspect.getfile(func))
+    except TypeError:
+        pass
+
+    return name, path
+
+
+class weakref_partial:
+    """Partial function with weak reference to the wrapped function.
+
+    Can be used as 'functools.partial' but it will store weak reference to
+        function. That means that the function must be stored in memory
+        somewhere. e.g. lambda functions are not supported as valid callback.
+
+    Is useful for object methods. In that case the callback is
+        deregistered when object is destroyed.
+
+    Warnings:
+        Values passed as *args and **kwargs are stored strongly in memory.
+            That may "keep alive" objects that should be already destroyed.
+            It is recommended to pass only immutable objects like 'str',
+            'bool', 'int' etc.
 
     Args:
         func (Callable): Function to wrap.
+        *args: Arguments passed to the wrapped function.
+        **kwargs: Keyword arguments passed to the wrapped function.
     """
 
-    def __init__(self, func):
-        is_partial = False
-        args = None
-        kwargs = None
-        sub_func = None
-        if isinstance(func, _partial_types):
-            is_partial = True
-            func_ref = None
-            args = func.args
-            kwargs = func.keywords
-            sub_func = _WrappedFunc(func.func)
-            expect_args = False
-            expect_kwargs = False
-        else:
-            # Convert callback into references
-            #   - deleted functions won't cause crashes
-            if inspect.ismethod(func):
-                func_ref = WeakMethod(func)
-            else:
-                func_ref = weakref.ref(func)
-
-            # Get expected arguments from function spec
-            # - positional arguments are always preferred
-            expect_args = is_func_signature_supported(func, "fake")
-            expect_kwargs = is_func_signature_supported(func, event="fake")
-
-        self._func_ref = func_ref
-
-        self._is_partial = is_partial
-        self._sub_func = sub_func
+    def __init__(self, func, *args, **kwargs):
+        self._func_ref = _get_func_ref(func)
         self._args = args
         self._kwargs = kwargs
-        self._ref_is_valid = None
-        self._expect_args = expect_args
-        self._expect_kwargs = expect_kwargs
 
-        self._name = None
-        self._path = None
+    def __call__(self, *args, **kwargs):
+        func = self._func_ref()
+        if func is not None:
+            return func(*self._args, **self._kwargs)
 
-        self._fill_func_info(func)
-
-    @property
-    def name(self):
-        """Get name of function.
+    def get_func(self):
+        """Get wrapped function.
 
         Returns:
-            str: Name of function.
+            Union[Callable, None]: Wrapped function or None if it was
+                destroyed.
         """
 
-        return self._name
-
-    @property
-    def path(self):
-        """Get path to file where function is defined.
-
-        Returns:
-            str: Path to file.
-        """
-
-        return self._path
-
-    @property
-    def expect_args(self):
-        """
-
-        Returns:
-            Callback expects arguments.
-        """
-
-        return self._expect_args
-
-    @property
-    def expect_kwargs(self):
-        """
-
-        Returns:
-            Callback expects 'event' kwarg.
-        """
-
-        return self._expect_kwargs
-
-    def is_valid(self):
-        """Check if reference to function is valid.
-
-        Returns:
-            bool: Is reference valid.
-        """
-
-        self._validate_ref()
-        return self._ref_is_valid
-
-    def get_callback(self):
-        """Get callback function.
-
-        Returns:
-            Union[Callable, None]: Callback function.
-        """
-
-        if self._is_partial:
-            callback = self._sub_func.get_callback()
-            if callback is None:
-                return None
-            return functools.partial(callback, *self._args, **self._kwargs)
-        if self._func_ref is None:
-            return None
         return self._func_ref()
 
-    def deregister(self):
-        """Calling this function will cause that callback will be removed."""
+    def is_valid(self):
+        """Check if wrapped function is still valid.
 
-        if self._is_partial:
-            self._sub_func.deregister()
-        else:
-            # Fake invalid reference
-            self._ref_is_valid = False
+        Returns:
+            bool: Is wrapped function still valid.
+        """
 
-    def _fill_func_info(self, func):
-        if self._is_partial:
-            self._name = self._sub_func.name
-            self._path = self._sub_func.path
-            return
-
-        if hasattr(func, "__name__"):
-            name = func.__name__
-        else:
-            name = str(func)
-
-        # Get path to file and fallback to '<unknown path>' if fails
-        # NOTE This was added because of 'partial' functions which is handled,
-        #   but who knows what else can cause this to fail?
-        try:
-            path = os.path.abspath(inspect.getfile(func))
-        except TypeError:
-            path = "<unknown path>"
-
-        self._name = name
-        self._path = path
-
-    def _validate_ref(self):
-        if self._ref_is_valid is False:
-            return
-
-        if self._is_partial:
-            self._ref_is_valid = self._sub_func.is_valid()
-
-        elif self._func_ref is None:
-            self._ref_is_valid = False
-
-        else:
-            func = self._func_ref()
-            self._ref_is_valid = func is not None
+        return self.get_func() is not None
 
 
 class EventCallback(object):
@@ -233,6 +141,7 @@ class EventCallback(object):
         self._log = None
         self._topic = topic
         self._order = order
+        self._enabled = True
         # Replace '*' with any character regex and escape rest of text
         #   - when callback is registered for '*' topic it will receive all
         #       events
@@ -248,14 +157,38 @@ class EventCallback(object):
         topic_regex = re.compile(topic_regex_str)
         self._topic_regex = topic_regex
 
-        self._wrapper_func = _WrappedFunc(func)
-        self._enabled = True
+        # Callback function prep
+        if isinstance(func, weakref_partial):
+            partial_func = func
+            (name, path) = _get_func_info(func.get_func())
+            func_ref = None
+            expect_args = False
+            expect_kwargs = False
+
+        else:
+            partial_func = None
+            (name, path) = _get_func_info(func)
+            # Convert callback into references
+            #   - deleted functions won't cause crashes
+            func_ref = _get_func_ref(func)
+
+            # Get expected arguments from function spec
+            # - positional arguments are always preferred
+            expect_args = is_func_signature_supported(func, "fake")
+            expect_kwargs = is_func_signature_supported(func, event="fake")
+
+        self._func_ref = func_ref
+        self._partial_func = partial_func
+        self._ref_is_valid = True
+        self._expect_args = expect_args
+        self._expect_kwargs = expect_kwargs
+
+        self._name = name
+        self._path = path
 
     def __repr__(self):
         return "< {} - {} > {}".format(
-            self.__class__.__name__,
-            self._wrapper_func.name,
-            self._wrapper_func.path
+            self.__class__.__name__, self._name, self._path
         )
 
     @property
@@ -272,7 +205,8 @@ class EventCallback(object):
             bool: Is reference to callback valid.
         """
 
-        return self._wrapper_func.is_valid()
+        self._validate_ref()
+        return self._ref_is_valid
 
     def validate_ref(self):
         """Validate if reference to callback is valid.
@@ -306,8 +240,9 @@ class EventCallback(object):
     def deregister(self):
         """Calling this function will cause that callback will be removed."""
 
-        # Fake reference
-        self._wrapper_func.deregister()
+        self._ref_is_valid = False
+        self._partial_func = None
+        self._func_ref = None
 
     def get_order(self):
         """Get callback order.
@@ -360,7 +295,7 @@ class EventCallback(object):
             return
 
         # Get reference and skip if is not available
-        callback = self._wrapper_func.get_callback()
+        callback = self._get_callback()
         if callback is None:
             return
 
@@ -369,10 +304,10 @@ class EventCallback(object):
 
         # Try to execute callback
         try:
-            if self._wrapper_func.expect_args:
+            if self._expect_args:
                 callback(event)
 
-            elif self._wrapper_func.expect_kwargs:
+            elif self._expect_kwargs:
                 callback(event=event)
 
             else:
@@ -385,6 +320,31 @@ class EventCallback(object):
                 ),
                 exc_info=True
             )
+
+    def _get_callback(self):
+        if self._partial_func is not None:
+            return self._partial_func.get_func()
+
+        if self._func_ref is not None:
+            return self._func_ref()
+        return None
+
+    def _validate_ref(self):
+        if self._ref_is_valid is False:
+            return
+
+        if self._func_ref is not None:
+            self._ref_is_valid = self._func_ref() is not None
+
+        elif self._partial_func is not None:
+            self._ref_is_valid = self._partial_func.is_valid()
+
+        else:
+            self._ref_is_valid = False
+
+        if not self._ref_is_valid:
+            self._func_ref = None
+            self._partial_func = None
 
 
 # Inherit from 'object' for Python 2 hosts
@@ -515,8 +475,8 @@ class EventSystem(object):
 
         Args:
             topic (str): Topic for EventCallback.
-            callback (Callable): Function or method that will be called
-                when topic is triggered.
+            callback (Union[Callable, weakref_partial]): Function or method
+                that will be called when topic is triggered.
             order (Optional[int]): Order of callback. Lower number means
                 higher priority.
 
