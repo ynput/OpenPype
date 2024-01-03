@@ -101,11 +101,10 @@ def ingestcsv(
     specific format. See documentation for more information.
     """
     if AYON_SERVER_ENABLED:
-        print(
+        raise RuntimeError(
             "This feature is not supported in Ayon yet. "
             "Contact support for more info."
         )
-        return
 
     from .csv_publish import csvpublish
 
