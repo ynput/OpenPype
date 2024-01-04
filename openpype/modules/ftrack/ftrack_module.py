@@ -294,7 +294,7 @@ class FtrackModule(
 
         system_settings = get_system_settings()
         protect_attrs = system_settings["general"].get("project", {}).get("protect_anatomy_attributes", False)
-        if protect_attrs:
+        if protect_attrs and old_attr_values.keys() == new_attr_values.keys():
             self.log.warning("Anatomy attributes are protected/locked. "
                              "The only way to modify them is through the project settings on Ftrack.")
             return
