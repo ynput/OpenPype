@@ -137,6 +137,14 @@ class RedshiftProxyLoader(load.LoaderPlugin):
         cmds.connectAttr("{}.outMesh".format(rs_mesh),
                          "{}.inMesh".format(mesh_shape))
 
+        # TODO: use the assigned shading group as shaders if existed
+        # assign default shader to redshift proxy
+        shader_grp = next(
+            (shader_group for shader_group in cmds.ls(type="shadingEngine")
+             if shader_group=="initialShadingGroup")
+        )
+        cmds.sets(mesh_shape, forceElement=shader_grp)
+
         group_node = cmds.group(empty=True, name="{}_GRP".format(name))
         mesh_transform = cmds.listRelatives(mesh_shape,
                                             parent=True, fullPath=True)
