@@ -17,7 +17,7 @@ class CreateSaver(GenericCreateSaver):
         return """Fusion Saver to generate image sequence.
 
         This creator is expected for publishing of image sequences for 'render'
-        product type. (But can publish even single frame 'render'.
+        product type. (But can publish even single frame 'render'.)
 
         Select what should be source of render range:
         - "Current asset context" - values set on Asset in DB (Ftrack)
