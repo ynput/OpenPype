@@ -12,13 +12,13 @@ from openpype.lib import (
 )
 from openpype.pipeline import (
     legacy_io,
-    Creator as NewCreator,
+    Creator,
     CreatedInstance,
     Anatomy
 )
 
 
-class GenericCreateSaver(NewCreator):
+class GenericCreateSaver(Creator):
     default_variants = ["Main", "Mask"]
     description = "Fusion Saver to generate image sequence"
     icon = "fa5.eye"
