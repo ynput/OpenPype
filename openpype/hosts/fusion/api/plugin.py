@@ -137,9 +137,15 @@ class GenericCreateSaver(Creator):
 
         # Subset change detected
         workdir = os.path.normpath(legacy_io.Session["AVALON_WORKDIR"])
-        formatting_data.update(
-            {"workdir": workdir, "frame": "0" * frame_padding, "ext": ext}
-        )
+        formatting_data.update({
+            "workdir": workdir,
+            "frame": "0" * frame_padding,
+            "ext": ext,
+            "product": {
+                "name": formatting_data["subset"],
+                "type": formatting_data["family"],
+            },
+        })
 
         # build file path to render
         filepath = self.temp_rendering_path_template.format(**formatting_data)
