@@ -62,6 +62,12 @@
                 "Main"
             ]
         },
+        "CreateMantraIFD": {
+            "enabled": true,
+            "default_variants": [
+                "Main"
+            ]
+        },
         "CreateMantraROP": {
             "enabled": true,
             "default_variants": [
@@ -139,6 +145,11 @@
     "publish": {
         "CollectAssetHandles": {
             "use_asset_handles": true
+        },
+        "CollectChunkSize": {
+            "enabled": true,
+            "optional": true,
+            "chunk_size": 999999
         },
         "ValidateContainers": {
             "enabled": true,

@@ -663,7 +663,7 @@ or updating already created. Publishing will create OTIO file.
         variant_name = instance_data["variant"]
 
         # basic unique asset name
-        clip_name = os.path.splitext(otio_clip.name)[0].lower()
+        clip_name = os.path.splitext(otio_clip.name)[0]
         project_doc = get_project(self.project_name)
 
         shot_name, shot_metadata = self._shot_metadata_solver.generate_data(

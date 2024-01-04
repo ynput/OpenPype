@@ -97,7 +97,6 @@ class VRayPluginInfo(object):
 @attr.s
 class ArnoldPluginInfo(object):
     ArnoldFile = attr.ib(default=None)
-    ArnoldVerbose = attr.ib(default=2)
 
 
 class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
@@ -232,7 +231,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         job_info.EnvironmentKeyValue["OPENPYPE_LOG_NO_COLORS"] = "1"
 
         # Adding file dependencies.
-        if self.asset_dependencies:
+        if not bool(os.environ.get("IS_TEST")) and self.asset_dependencies:
             dependencies = instance.context.data["fileDependencies"]
             for dependency in dependencies:
                 job_info.AssetDependency += dependency
@@ -571,7 +570,7 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
 
         job_info = copy.deepcopy(self.job_info)
 
-        if self.asset_dependencies:
+        if not bool(os.environ.get("IS_TEST")) and self.asset_dependencies:
             # Asset dependency to wait for at least the scene file to sync.
             job_info.AssetDependency += self.scene_path
 
@@ -661,12 +660,9 @@ class MayaSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         # Plugin Info
         ass_file, _ = os.path.splitext(data["output_filename_0"])
         ass_filepath = ass_file + ".ass"
-        current_verbosity_level = cmds.getAttr(
-            "defaultArnoldRenderOptions.log_verbosity")
 
         plugin_info = ArnoldPluginInfo(
-            ArnoldFile=ass_filepath,
-            ArnoldVerbose=current_verbosity_level
+            ArnoldFile=ass_filepath
         )
 
         return job_info, attr.asdict(plugin_info)
