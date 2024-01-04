@@ -1,5 +1,4 @@
 from collections import defaultdict
-from sys import version
 import pyblish.api
 from openpype.pipeline.publish import (
     PublishXmlValidationError,
