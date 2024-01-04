@@ -143,7 +143,8 @@ class RedshiftProxyLoader(load.LoaderPlugin):
             (shader_group for shader_group in cmds.ls(type="shadingEngine")
              if shader_group=="initialShadingGroup")
         )
-        cmds.sets(mesh_shape, forceElement=shader_grp)
+        if shader_grp:
+            cmds.sets(mesh_shape, forceElement=shader_grp)
 
         group_node = cmds.group(empty=True, name="{}_GRP".format(name))
         mesh_transform = cmds.listRelatives(mesh_shape,
