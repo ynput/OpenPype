@@ -77,8 +77,8 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
             instance_per_asset_subset[key].append(instance)
 
         non_unique = []
-        for (asset, subset, version), instances in instance_per_asset_subset.items():
-
+        for key, instances in instance_per_asset_subset.items():
+            asset, subset, version = key
             # A single instance per asset, subset is fine
             if len(instances) < 2:
                 continue
