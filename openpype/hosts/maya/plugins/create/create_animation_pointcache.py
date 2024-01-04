@@ -229,7 +229,12 @@ class CreateAnimation(plugin.MayaHiddenCreator):
     include_user_defined_attributes = False
 
     def collect_instances(self):
-        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        try:
+            cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        except KeyError:
+            self.cache_subsets(self.collection_shared_data)
+            cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+
         for node in cached_subsets.get(self.identifier, []):
             node_data = self.read_instance_node(node)
             _ensure_defaults(self, node_data)
@@ -259,7 +264,12 @@ class CreatePointCache(plugin.MayaCreator):
     include_user_defined_attributes = False
 
     def collect_instances(self):
-        cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        try:
+            cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+        except KeyError:
+            self.cache_subsets(self.collection_shared_data)
+            cached_subsets = self.collection_shared_data["maya_cached_subsets"]
+
         for node in cached_subsets.get(self.identifier, []):
             node_data = self.read_instance_node(node)
             _ensure_defaults(self, node_data)
