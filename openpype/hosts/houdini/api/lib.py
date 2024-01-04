@@ -10,7 +10,9 @@ import json
 
 import six
 
-from openpype.lib import StringTemplate
+from qtpy import QtCore, QtWidgets
+
+from openpype.lib import StringTemplate, env_value_to_bool
 from openpype.client import get_project, get_asset_by_name
 from openpype.settings import get_current_project_settings
 from openpype.pipeline import (
@@ -24,8 +26,8 @@ from openpype.pipeline import (
 from openpype.pipeline.create import CreateContext
 from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.context_tools import get_current_project_asset
+from openpype.tools.utils import host_tools
 from openpype.widgets import popup
-from openpype.tools.utils.host_tools import get_tool_by_name
 
 import hou
 
@@ -970,7 +972,7 @@ def publisher_show_and_publish(comment=None):
     """
 
     main_window = get_main_window()
-    publisher_window = get_tool_by_name(
+    publisher_window = host_tools.get_tool_by_name(
         tool_name="publisher",
         parent=main_window,
     )
@@ -1054,3 +1056,71 @@ def add_self_publish_button(node):
     template = node.parmTemplateGroup()
     template.insertBefore((0,), button_parm)
     node.setParmTemplateGroup(template)
+
+class Context:
+    main_window = None
+    context_action_item = None
+    project_name = os.getenv("AVALON_PROJECT")
+    # Workfile related code
+    workfiles_launched = False
+    workfiles_tool_timer = None
+
+
+def launch_workfiles_app():
+    """Show workfiles tool on nuke launch.
+
+    Trigger to show workfiles tool on application launch. Can be executed only
+    once all other calls are ignored.
+
+    Workfiles tool show is deferred after application initialization using
+    QTimer.
+    """
+
+    if Context.workfiles_launched:
+        return
+
+    Context.workfiles_launched = True
+
+    # get all imortant settings
+    open_at_start = env_value_to_bool(
+        env_key="OPENPYPE_WORKFILE_TOOL_ON_START",
+        default=None)
+
+    # return if none is defined
+    if not open_at_start:
+        return
+
+    # Show workfiles tool using timer
+    # - this will be probably triggered during initialization in that case
+    #   the application is not be able to show uis so it must be
+    #   deferred using timer
+    # - timer should be processed when initialization ends
+    #       When applications starts to process events.
+    timer = QtCore.QTimer()
+    timer.timeout.connect(_launch_workfile_app)
+    timer.setInterval(100)
+    Context.workfiles_tool_timer = timer
+    timer.start()
+
+
+def _launch_workfile_app():
+    # Safeguard to not show window when application is still starting up
+    #   or is already closing down.
+    closing_down = QtWidgets.QApplication.closingDown()
+    starting_up = QtWidgets.QApplication.startingUp()
+
+    # Stop the timer if application finished start up of is closing down
+    if closing_down or not starting_up:
+        Context.workfiles_tool_timer.stop()
+        Context.workfiles_tool_timer = None
+
+    # Skip if application is starting up or closing down
+    if starting_up or closing_down:
+        return
+
+    # Make sure on top is enabled on first show so the window is not hidden
+    #   under main nuke window
+    #   - this happened on Centos 7 and it is because the focus of nuke
+    #       changes to the main window after showing because of initialization
+    #       which moves workfiles tool under it
+    host_tools.show_workfiles(parent=None, on_top=True)
