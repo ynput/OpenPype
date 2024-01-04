@@ -1073,8 +1073,8 @@ def get_scene_viewer():
 def sceneview_snapshot(
         sceneview,
         filepath="$HIP/thumbnails/$HIPNAME.$F4.jpg",
-        fstart=None,
-        fend=None):
+        frame_start=None,
+        frame_end=None):
     """
     It takes snapshot of your scene view fot the given frame range.
     So, it's capable of generating snapshots image sequence.
@@ -1100,14 +1100,14 @@ def sceneview_snapshot(
         sceneview (hou.SceneViewer): The scene view pane from which you want
                                      to take a snapshot.
         filepath (str): thumbnail filepath.
-        fstart (int): the frame at which snapshot starts
-        fend (int): the frame at which snapshot ends
+        frame_start (int): the frame at which snapshot starts
+        frame_end (int): the frame at which snapshot ends
     """
 
-    if fstart is None:
-        fstart = hou.frame()
-    if fend is None:
-        fend = fstart
+    if frame_start is None:
+        frame_start = hou.frame()
+    if frame_end is None:
+        frame_end = frame_start
 
     if not isinstance(sceneview, hou.SceneViewer):
         log.debug("Wrong Input. {} is not of type hou.SceneViewer."
@@ -1117,7 +1117,7 @@ def sceneview_snapshot(
 
     # this will open an mplay window to show the result
     flip_settings = sceneview.flipbookSettings().stash()
-    flip_settings.frameRange((fstart, fend))
+    flip_settings.frameRange((frame_start, frame_end))
     flip_settings.output(filepath)
     flip_settings.outputToMPlay(False)
     sceneview.flipbook(viewport, flip_settings)

@@ -1,6 +1,6 @@
 import pyblish.api
-
-from openpype.pipeline import publish, registered_host
+import tempfile
+from openpype.pipeline import publish
 from openpype.hosts.houdini.api import lib
 from openpype.hosts.houdini.api.pipeline import IS_HEADLESS
 
@@ -27,7 +27,6 @@ class ExtractActiveViewThumbnail(publish.Extractor):
             return
 
         thumbnail = instance.data.get("thumbnailPath")
-        self.log.debug(thumbnail)
         if not thumbnail:
             view_thumbnail = self.get_view_thumbnail(instance)
             if not view_thumbnail:
@@ -40,15 +39,11 @@ class ExtractActiveViewThumbnail(publish.Extractor):
 
     def get_view_thumbnail(self, instance):
 
-        host = registered_host()
-        current_filepath = host.get_current_workfile()
-        if not current_filepath:
-            self.log.error("No current workfile path. "
-                           "Thumbnail generation skipped")
-            return
+        with tempfile.NamedTemporaryFile("w", suffix=".jpg") as tmp:
+            thumbnail_path = tmp.name
 
-        thumbnail_path = "{}_thumbnail.jpg".format(
-            current_filepath.rsplit('.', 1)[0])
+        instance.context.data["cleanupFullPaths"].append(thumbnail_path)
+
         sceneview = lib.get_scene_viewer()
         lib.sceneview_snapshot(sceneview, thumbnail_path)
 
