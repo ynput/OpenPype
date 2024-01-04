@@ -93,36 +93,13 @@ def get_hero_template_name_profiles(
     if not project_settings:
         project_settings = get_project_settings(project_name)
 
-    profiles = (
+    return copy.deepcopy(
         project_settings
         ["global"]
         ["tools"]
         ["publish"]
         ["hero_template_name_profiles"]
     )
-    if profiles:
-        return copy.deepcopy(profiles)
-
-    # Use legacy approach for cases new settings are not filled yet for the
-    #   project
-    legacy_profiles = copy.deepcopy(
-        project_settings
-        ["global"]
-        ["publish"]
-        ["IntegrateHeroVersion"]
-        ["template_name_profiles"]
-    )
-    if legacy_profiles:
-        if not logger:
-            logger = Logger.get_logger("get_hero_template_name_profiles")
-
-        logger.warning((
-            "Project \"{}\" is using legacy access to hero publish template."
-            " It is recommended to move settings to new location"
-            " 'project_settings/global/tools/publish/"
-            "hero_template_name_profiles'."
-        ).format(project_name))
-    return legacy_profiles
 
 
 def get_publish_template_name(
