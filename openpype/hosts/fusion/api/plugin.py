@@ -26,6 +26,8 @@ class GenericCreateSaver(Creator):
         "reviewable"
     ]
 
+    settings_category = "fusion"
+
     image_format = "exr"
 
     # TODO: This should be renamed together with Nuke so it is aligned
@@ -235,26 +237,4 @@ class GenericCreateSaver(Creator):
             items=image_format_options,
             default=self.image_format,
             label="Output Image Format",
-        )
-
-    def apply_settings(self, project_settings):
-        """Method called on initialization of plugin to apply settings."""
-
-        # plugin settings
-        plugin_settings = project_settings["fusion"]["create"][
-            self.__class__.__name__
-        ]
-
-        # individual attributes
-        self.instance_attributes = plugin_settings.get(
-            "instance_attributes", self.instance_attributes
-        )
-        self.default_variants = plugin_settings.get(
-            "default_variants", self.default_variants
-        )
-        self.temp_rendering_path_template = plugin_settings.get(
-            "temp_rendering_path_template", self.temp_rendering_path_template
-        )
-        self.image_format = plugin_settings.get(
-            "image_format", self.image_format
         )
