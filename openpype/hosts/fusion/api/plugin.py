@@ -13,8 +13,7 @@ from openpype.lib import (
 from openpype.pipeline import (
     legacy_io,
     Creator,
-    CreatedInstance,
-    Anatomy
+    CreatedInstance
 )
 
 
@@ -129,8 +128,7 @@ class GenericCreateSaver(Creator):
         formatting_data = deepcopy(data)
 
         # get frame padding from anatomy templates
-        anatomy = Anatomy()
-        frame_padding = anatomy.templates["frame_padding"]
+        frame_padding = self.project_anatomy.templates["frame_padding"]
 
         # get output format
         ext = data["creator_attributes"]["image_format"]
