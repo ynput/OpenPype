@@ -52,9 +52,11 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
             # for cases where multiple versions under same subset are published
             version = instance.data.get("version")
             if version is None:
-                self.log.warning("Instance found without `version` data: "
+                # this might happen when workfile version sync is disabled
+                # we still need to validate cases where multiple "next version"
+                # instances are published under same subset
+                self.log.info("Instance found without `version` data: "
                                  "{}".format(instance.name))
-                continue
 
             instance_per_asset_subset[(asset, subset, version)].append(instance)
 
