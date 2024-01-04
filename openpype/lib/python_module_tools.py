@@ -269,7 +269,7 @@ def is_func_signature_supported(func, *args, **kwargs):
         True
 
     Args:
-        func (function): A function where the signature should be tested.
+        func (Callable): A function where the signature should be tested.
         *args (Any): Positional arguments for function signature.
         **kwargs (Any): Keyword arguments for function signature.
 
