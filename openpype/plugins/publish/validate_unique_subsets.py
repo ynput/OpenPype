@@ -58,7 +58,8 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
                 self.log.info("Instance found without `version` data: "
                                  "{}".format(instance.name))
 
-            instance_per_asset_subset[(asset, subset, version)].append(instance)
+            key = asset, subset, version
+            instance_per_asset_subset[key].append(instance)
 
         non_unique = []
         for (asset, subset, version), instances in instance_per_asset_subset.items():
