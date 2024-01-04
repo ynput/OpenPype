@@ -24,7 +24,7 @@ class CreateSaver(GenericCreateSaver):
         - "From render in/out" - from node itself
         - "From composition timeline" - from timeline
 
-        Supports local and deadline rendering.
+        Supports local and farm rendering.
 
         Supports selection from predefined set of output file extensions:
         - exr
