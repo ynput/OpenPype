@@ -26,7 +26,7 @@ from openpype.lib.applications import ApplicationManager
 class RVActionView(BaseAction):
     """ Launch RV action """
     identifier = "openrv.launch.action"
-    label = "DEBUG Open with RV"
+    label = "Open with RV"
     description = "OpenRV Launcher"
     icon = statics_icon("ftrack", "action_icons", "RV.png")
 
