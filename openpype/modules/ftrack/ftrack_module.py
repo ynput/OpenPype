@@ -2,6 +2,7 @@ import os
 import json
 import collections
 import platform
+import inspect
 
 import click
 
@@ -292,9 +293,18 @@ class FtrackModule(
             # If no values or same as before, then just skip the update process
             return
 
+        # Get all the files called to trigger this function
+        callers_filename = []
+        stack = inspect.stack()
+        for frame in stack:
+            caller_filename = frame.filename
+            caller_filename = os.path.basename(caller_filename)
+            caller_filename = os.path.splitext(caller_filename)[0]
+            callers_filename.append(caller_filename)
+
         system_settings = get_system_settings()
         protect_attrs = system_settings["general"].get("project", {}).get("protect_anatomy_attributes", False)
-        if protect_attrs and old_attr_values.keys() == new_attr_values.keys():
+        if protect_attrs and "action_prepare_project" not in callers_filename:
             self.log.warning("Anatomy attributes are protected/locked. "
                              "The only way to modify them is through the project settings on Ftrack.")
             return
