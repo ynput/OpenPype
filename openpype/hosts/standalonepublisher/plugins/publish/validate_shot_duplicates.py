@@ -17,9 +17,6 @@ class ValidateShotDuplicates(pyblish.api.ContextPlugin):
         shot_names = []
         duplicate_names = []
         for instance in context:
-            if "csv" in instance.data["families"]:
-                continue
-
             name = instance.data["name"]
             if name in shot_names:
                 duplicate_names.append(name)
