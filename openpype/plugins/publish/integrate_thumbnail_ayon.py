@@ -5,7 +5,21 @@
     pull into a scene.
 
     This one is used only as image describing content of published item and
-    shows up only in Loader in right column section.
+        shows up only in Loader or WebUI.
+
+    Instance must have 'published_representations' to
+        be able to integrate thumbnail.
+    Possible sources of thumbnail paths:
+    - instance.data["thumbnailPath"]
+    - representation with 'thumbnail' name in 'published_representations'
+    - context.data["thumbnailPath"]
+
+    Notes:
+        Issue with 'thumbnail' representation is that we most likely don't
+            want to integrate it as representation. Integrated representation
+            is polluting Loader and database without real usage. That's why
+            they usually have 'delete' tag to skip the integration.
+
 """
 
 import os
@@ -72,7 +86,7 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
         )
 
     def _prepare_instances(self, context):
-        context_thumbnail_path = context.get("thumbnailPath")
+        context_thumbnail_path = context.data.get("thumbnailPath")
         valid_context_thumbnail = bool(
             context_thumbnail_path
             and os.path.exists(context_thumbnail_path)
@@ -92,8 +106,10 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
                 continue
 
             # Find thumbnail path on instance
-            thumbnail_path = self._get_instance_thumbnail_path(
-                published_repres)
+            thumbnail_path = (
+                instance.data.get("thumbnailPath")
+                or self._get_instance_thumbnail_path(published_repres)
+            )
             if thumbnail_path:
                 self.log.debug((
                     "Found thumbnail path for instance \"{}\"."
@@ -131,7 +147,7 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
         thumb_repre_doc = None
         for repre_info in published_representations.values():
             repre_doc = repre_info["representation"]
-            if repre_doc["name"].lower() == "thumbnail":
+            if "thumbnail" in repre_doc["name"].lower():
                 thumb_repre_doc = repre_doc
                 break
 
