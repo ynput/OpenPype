@@ -1115,7 +1115,6 @@ def sceneview_snapshot(
         return
     viewport = sceneview.curViewport()
 
-    # this will open an mplay window to show the result
     flip_settings = sceneview.flipbookSettings().stash()
     flip_settings.frameRange((frame_start, frame_end))
     flip_settings.output(filepath)
