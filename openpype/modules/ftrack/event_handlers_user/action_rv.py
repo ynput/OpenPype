@@ -20,12 +20,13 @@ from openpype.pipeline import (
     Anatomy,
 )
 from openpype_modules.ftrack.lib import BaseAction, statics_icon
+from openpype.lib.applications import ApplicationManager
 
 
 class RVActionView(BaseAction):
     """ Launch RV action """
     identifier = "openrv.launch.action"
-    label = "Open with RV"
+    label = "DEBUG Open with RV"
     description = "OpenRV Launcher"
     icon = statics_icon("ftrack", "action_icons", "RV.png")
 
@@ -40,42 +41,24 @@ class RVActionView(BaseAction):
         # QUESTION load RV application data from AppplicationManager?
         rv_path = None
 
-        rv_path = "PATH_TO_BIN/bin/rv.exe"
-        self.rv_home = "PATH_TO+RV_HOME"
+        app_manager = ApplicationManager()
+        self.openrv_app = app_manager.find_latest_available_variant_for_group("openrv")
+        rv_path = str(self.openrv_app.find_executable())
+        self.rv_home = os.path.dirname(os.path.dirname(rv_path))
         os.environ["RV_HOME"] = os.path.normpath(self.rv_home)
         sys.path.append(os.path.join(self.rv_home, "lib"))
-
-        # RV_HOME should be set if properly installed
-        # if os.environ.get('RV_HOME'):
-        #     rv_path = os.path.join(
-        #         os.environ.get('RV_HOME'),
-        #         'bin',
-        #         'rv'
-        #     )
-        #     if not os.path.exists(rv_path):
-        #         rv_path = None
 
         if not rv_path:
             self.log.info("RV path was not found.")
             self.ignore_me = True
 
-        self.rv_path = rv_path
 
     def discover(self, session, entities, event):
         """Return available actions based on *event*. """
-        data = event['data']
-        selection = data.get('selection', [])
-        print(selection[0]["entityType"])
-        if selection[0]["entityType"] != "list":
-            return {'items': [{
-                'label': self.label,
-                'description': self.description,
-                'actionIdentifier': self.identifier
-            }]
-            }
+        return True
 
     def preregister(self):
-        if self.rv_path is None:
+        if self.openrv_app is None:
             return (
                 'RV is not installed or paths in presets are not set correctly'
             )
@@ -255,28 +238,24 @@ class RVActionView(BaseAction):
         # Commit to end job.
         session.commit()
 
-        args = [os.path.normpath(self.rv_path)]
+        args = []
 
         fps = entities[0].get("custom_attributes", {}).get("fps", None)
         if fps is not None:
             args.extend(["-fps", str(fps)])
 
         args.extend(paths)
-        # CORE EDIT SET UP THE PATHS
-        # TODO (Critical) This should not be as hardcoded as it is now
-        self.log.info("setting up env vars")
-        os.environ["RV_HOME"] = os.path.normpath(self.rv_home)
-        sys.path.append(os.path.join(self.rv_home, "lib"))
-        sys.path.append(self.rv_home)
-        self.log.info("Running rv: {}".format(args))
-        self.home = os.path.normpath(
-            os.path.join("c:/Users", getpass.getuser())
-        )
-        os.environ["HOME"] = self.home
-        env = os.environ.copy()
-        env['PYTHONPATH'] = ''
-        subprocess.Popen(args, env=env)
 
+        self.log.info("Running rv: {}".format(args))
+        self.openrv_app.arguments = args
+        entity = entities[0]
+        task_name = entity["name"]
+        asset_name = entity["parent"]["name"]
+        project_name = entity["project"]["full_name"]
+        self.openrv_app.launch(
+            project_name=project_name,
+            asset_name=asset_name,
+            task_name=task_name)
         return True
 
     def get_file_paths(self, session, event):
@@ -305,9 +284,12 @@ class RVActionView(BaseAction):
                 if neighbour_component["name"] != "ftrackreview-mp4_src":
                     continue
 
-                paths.append(
-                    location.get_filesystem_path(neighbour_component)
-                )
+                try:
+                    paths.append(
+                        location.get_filesystem_path(neighbour_component)
+                    )
+                except Exception:
+                    continue
                 online_source = True
 
             if online_source:
