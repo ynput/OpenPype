@@ -6,10 +6,7 @@ from openpype.pipeline import (
 )
 from openpype.pipeline.publish import RepairAction
 from openpype.hosts.houdini.api.action import SelectROPAction
-from openpype.hosts.houdini.api.lib import (
-    get_houdini_color_settings,
-    set_review_color_space
-)
+from openpype.hosts.houdini.api.lib import set_review_color_space
 
 import os
 import hou
@@ -65,10 +62,11 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
                 .format(rop_node.path())
             )
 
-        color_settings = get_houdini_color_settings()
-        # skip if houdini color settings are disabled
-        if color_settings["enabled"]:
-            review_color_space = color_settings["review_color_space"]
+        workfile_color_settings = instance.context.data["project_settings"]["houdini"]["imageio"]["workfile"]  # noqa
+        # skip if houdini workfile color settings are disabled
+        if workfile_color_settings["enabled"]:
+            review_color_space = workfile_color_settings["review_color_space"]
+
             # skip if review color space setting is empty.
             if review_color_space and \
                     rop_node.evalParm("ociocolorspace") != review_color_space:
@@ -94,4 +92,12 @@ class ValidateReviewColorspace(pyblish.api.InstancePlugin,
         """
 
         opengl_node = hou.node(instance.data["instance_node"])
-        set_review_color_space(opengl_node, log=cls.log)
+
+        workfile_color_settings = instance.context.data["project_settings"]["houdini"]["imageio"]["workfile"]  # noqa
+        review_color_space = workfile_color_settings["enabled"] and \
+            workfile_color_settings["review_color_space"]
+
+        set_review_color_space(
+            opengl_node,
+            review_color_space,
+            log=cls.log)

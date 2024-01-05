@@ -2,6 +2,7 @@
 """Creator plugin for creating openGL reviews."""
 from openpype.hosts.houdini.api import plugin
 from openpype.lib import EnumDef, BoolDef, NumberDef
+from openpype.settings import get_current_project_settings
 from openpype.hosts.houdini.api.lib import set_review_color_space
 import os
 import hou
@@ -14,6 +15,11 @@ class CreateReview(plugin.HoudiniCreator):
     label = "Review"
     family = "review"
     icon = "video-camera"
+    workfile_color_settings = {}
+
+    def apply_settings(self, project_settings):
+        super(CreateReview, self).apply_settings(project_settings)
+        self.workfile_color_settings = project_settings["houdini"]["imageio"]["workfile"]
 
     def create(self, subset_name, instance_data, pre_create_data):
 
@@ -87,7 +93,15 @@ class CreateReview(plugin.HoudiniCreator):
         # Set OCIO Colorspace to the default output colorspace
         #  if there's OCIO
         if os.getenv("OCIO"):
-            set_review_color_space(instance_node, log=self.log)
+            workfile_color_settings = self.project_settings["houdini"]["imageio"]["workfile"]
+            review_color_space = workfile_color_settings["enabled"] and \
+                workfile_color_settings["review_color_space"]
+
+            set_review_color_space(
+                instance_node,
+                review_color_space,
+                log=self.log)
+
 
         to_lock = ["id", "family"]
 

@@ -866,35 +866,17 @@ def get_current_context_template_data_with_asset_data():
     return template_data
 
 
-def get_houdini_color_settings():
-    """Get Houdini working file color settings.
-
-    Returns:
-        Dict: The dictionary contains the Houdini working file color settings
-              if the settings are enabled, otherwise it is an empty dictionary.
-    """
-
-    project_settings = get_current_project_settings()
-    color_settings = project_settings["houdini"]["imageio"]["workfile"]
-
-    # Remove leading, and trailing whitespaces
-    color_settings["review_color_space"] = \
-        color_settings["review_color_space"].strip()
-    return color_settings
-
-
-def set_review_color_space(opengl_node, log=None):
+def set_review_color_space(opengl_node, review_color_space="", log=None):
     """Set ociocolorspace parameter for the given OpenGL node.
 
-    If workfile settings are enabled, it will use the value
-    exposed in the settings.
-
-    If the value exposed in the settings is empty,
-    it will use the default colorspace corresponding to
-    the display & view of the current Houdini session.
+    Set `ociocolorspace` parameter of the given OpenGl node
+    to to the given review_color_space value.
+    If review_color_space is empty, a default colorspace corresponding to
+    the display & view of the current Houdini session will be used.
 
     Args:
-        OpenGl node (hou.Node): ROP node to set its ociocolorspace parameter.
+        opengl_node (hou.Node): ROP node to set its ociocolorspace parameter.
+        review_color_space (str): Colorspace value for ociocolorspace parameter.
         log (logging.Logger): Logger to log to.
     """
 
@@ -909,10 +891,6 @@ def set_review_color_space(opengl_node, log=None):
             "'Color Correction' parm on '{}' has been set to"
             " 'OpenColorIO'".format(opengl_node.path())
         )
-
-    # Get review color space
-    color_settings = get_houdini_color_settings()
-    review_color_space = color_settings["review_color_space"] if color_settings["enabled"] else ""  # noqa
 
     # fall to default review color space if the setting is empty.
     if not review_color_space:
