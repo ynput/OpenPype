@@ -41,6 +41,11 @@ class VrayRenderPluginInfo():
     SeparateFilesPerFrame = attr.ib(default=True)
 
 
+@attr.s
+class RedshiftRenderPluginInfo():
+    SceneFile = attr.ib(default=None)
+    Version = attr.ib(default=None)
+
 class HoudiniSubmitDeadline(
     abstract_submit_deadline.AbstractSubmitDeadline,
     OpenPypePyblishPluginMixin
@@ -261,6 +266,11 @@ class HoudiniSubmitDeadline(
             elif family == "vray_rop":
                 plugin_info = VrayRenderPluginInfo(
                     InputFilename=instance.data["ifdFile"],
+                )
+            elif family == "redshift_rop":
+                plugin_info = RedshiftRenderPluginInfo(
+                    SceneFile=instance.data["ifdFile"],
+                    Version=os.getenv("REDSHIFT_VERSION", "3.5.22"),
                 )
             else:
                 self.log.error(
