@@ -18,7 +18,7 @@ class CreateReview(plugin.HoudiniCreator):
 
     def apply_settings(self, project_settings):
         super(CreateReview, self).apply_settings(project_settings)
-        self.workfile_color_settings = project_settings["houdini"]["imageio"]["workfile"]
+        self.workfile_color_settings = project_settings["houdini"]["imageio"]["workfile"]  # noqa
 
     def create(self, subset_name, instance_data, pre_create_data):
 
