@@ -123,4 +123,4 @@ tools/dev_*
 # Traits
 ########
 /openpype/pipeline/traits/generated/*
-!/openpype/pipeline/traits/generated/__init__.py
+/openpype/pipeline/traits/generated/__init__.py
