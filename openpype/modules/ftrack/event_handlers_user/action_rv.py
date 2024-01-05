@@ -36,7 +36,7 @@ class RVActionView(BaseAction):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
+        self.context_args = {}
         # TODO (Critical) This should not be as hardcoded as it is now
         # QUESTION load RV application data from AppplicationManager?
         rv_path = None
@@ -75,6 +75,12 @@ class RVActionView(BaseAction):
         """
 
         if entity.entity_type.lower() == "assetversion":
+            self.context_args['task_name'] = entity['task']['name']
+            for item in entity['link']:
+                if item['type'] == 'Project':
+                    self.context_args['project_name'] = item['name']
+                if item['type'] == 'TypedContext':
+                    self.context_args['asset_name'] = item['name']
             for component in entity["components"]:
                 if component["file_type"][1:] not in self.allowed_types:
                     continue
@@ -89,6 +95,9 @@ class RVActionView(BaseAction):
             return
 
         if entity.entity_type.lower() == "task":
+            self.context_args['project_name'] = entity["project"]["full_name"]
+            self.context_args['task_name'] = entity["name"]
+            self.context_args['asset_name'] = entity["parent"]["name"]
             query = "AssetVersion where task_id is '{0}'".format(entity["id"])
             for assetversion in session.query(query):
                 self.get_components_from_entity(
@@ -248,14 +257,7 @@ class RVActionView(BaseAction):
 
         self.log.info("Running rv: {}".format(args))
         self.openrv_app.arguments = args
-        entity = entities[0]
-        task_name = entity["name"]
-        asset_name = entity["parent"]["name"]
-        project_name = entity["project"]["full_name"]
-        self.openrv_app.launch(
-            project_name=project_name,
-            asset_name=asset_name,
-            task_name=task_name)
+        self.openrv_app.launch(**self.context_args)
         return True
 
     def get_file_paths(self, session, event):
