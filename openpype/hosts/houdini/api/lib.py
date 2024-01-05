@@ -875,8 +875,8 @@ def set_review_color_space(opengl_node, review_color_space="", log=None):
     the display & view of the current Houdini session will be used.
 
     Args:
-        opengl_node (hou.Node): ROP node to set its ociocolorspace parameter.
-        review_color_space (str): Colorspace value for ociocolorspace parameter.
+        opengl_node (hou.Node): ROP node to set its ociocolorspace parm.
+        review_color_space (str): Colorspace value for ociocolorspace parm.
         log (logging.Logger): Logger to log to.
     """
 

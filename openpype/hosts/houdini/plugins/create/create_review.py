@@ -93,7 +93,7 @@ class CreateReview(plugin.HoudiniCreator):
         # Set OCIO Colorspace to the default output colorspace
         #  if there's OCIO
         if os.getenv("OCIO"):
-            workfile_color_settings = self.project_settings["houdini"]["imageio"]["workfile"]
+            workfile_color_settings = self.project_settings["houdini"]["imageio"]["workfile"]  # noqa
             review_color_space = workfile_color_settings["enabled"] and \
                 workfile_color_settings["review_color_space"]
 
