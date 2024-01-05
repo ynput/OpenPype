@@ -26,9 +26,11 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
     families = ["*"]
 
     def process(self, context):
+
         # Find instance per (asset,subset)
         instance_per_asset_subset = defaultdict(list)
         for instance in context:
+
             # Ignore disabled instances
             if not instance.data.get('publish', True):
                 continue
