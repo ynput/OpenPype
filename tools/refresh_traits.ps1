@@ -79,15 +79,43 @@ $temp_traits = New-TemporaryDirectory
 Write-Color ">>> ", "Generating traits ..." -Color Green, Gray
 Write-Color ">>> ", "Temporary directory: ", $temp_traits -Color Green, Gray, Cyan
 
-$directoryPath = "$($openpype_root)\openpype\pipeline\schema\traits"
+$directoryPath = "$($openpype_root)\openpype\pipeline\traits"
+
+Write-Color ">>> ", "Cleaning generated traits ..." -Color Green, Gray
+try {
+    Remove-Item -Recurse -Force "$($directoryPath)\generated\*"
+}
+catch {
+    Write-Color -Text "!!! ", "Cannot clean generated Traits director." -Color Red, Gray
+    Write-Color -Text $_.Exception.Message -Color Red
+    Exit-WithCode 1
+}
 
 Get-ChildItem -Path $directoryPath -Filter "*.yml" | ForEach-Object {
-
+    Write-Color "  - ", "Generating from [ ", $_.FullName , " ]" -Color Green, Gray, White, Gray
     & "$env:POETRY_HOME\bin\poetry.exe" run openassetio-traitgen -o $temp_traits -g python -v $_.FullName
     $content = Get-Content $_.FullName
     Write-Output $content
 }
 
 Write-Color ">>> ", "Moving traits to repository ..." -Color Green, Gray
-Move-Item -Path $temp_traits -Destination "$($openpype_root)\openpype\pipeline\traits" -Force
+Move-Item -Path $temp_traits\* -Destination "$($directoryPath)\generated" -Force
+# Get all subdirectories
+$subDirs = Get-ChildItem -Path "$($directoryPath)\generated" -Directory
+$initContent = ""
+$allSubmodules = ""
+# Loop through each subdirectory
+foreach ($subDir in $subDirs) {
+    # Extract the directory name
+    $moduleName = $subDir.Name
+
+    # Add the import statement to the content
+    $initContent += "from . import $moduleName`n"
+    $allSubmodules += "    $($subDir.Name),`n"
+}
+$initContent += "`n`n__all__ = [`n$allSubmodules]`n"
+
+Write-Color ">>> ", "Writing index ..." -Color Green, Gray
+$initContent | Out-File -FilePath "$directoryPath\generated\__init__.py" -Encoding utf8 -Force
+
 Write-Color -Text ">>> ", "Traits generated." -Color Green, White
