@@ -16,3 +16,8 @@ pynput = "^1.7.2" # Timers manager - TODO remove
 "Qt.py" = "^1.3.3"
 qtawesome = "0.7.3"
 speedcopy = "^2.1"
+
+[ayon.runtimeDependencies]
+OpenTimelineIO = "0.14.1"
+opencolorio = "2.2.1"
+Pillow = "9.5.0"
