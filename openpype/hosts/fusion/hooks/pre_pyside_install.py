@@ -1,17 +1,13 @@
 import os
-import sys
-import re
 import subprocess
-from platform import system
+import platform
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
 class InstallPySideToFusion(PreLaunchHook):
-    """Install Qt binding to fusion's python packages.
+    """Automatically installs Qt binding to fusion's python packages.
 
-    Prelaunch hook does 2 things:
-    1.) Fusion's python packages are pushed to the beginning of PYTHONPATH.
-    2.) Check if fusion has installed PySide2 and will try to install if not.
+    Check if fusion has installed PySide2 and will try to install if not.
 
     For pipeline implementation is required to have Qt binding installed in
     fusion's python packages.
@@ -30,8 +26,9 @@ class InstallPySideToFusion(PreLaunchHook):
                 "Processing of {} crashed.".format(self.__class__.__name__),
                 exc_info=True
             )
+            raise
 
-    def inner_execute(self, fusion_python3_home):
+    def inner_execute(self):
         self.log.debug("Check for PySide2 installation.")
 
         fusion_python3_home = self.data.get("fusion_python3_home")
@@ -46,7 +43,7 @@ class InstallPySideToFusion(PreLaunchHook):
         if not os.path.exists(python_executable):
             self.log.warning(
                 "Couldn't find python executable for fusion. {}".format(
-                    pip_executable
+                    python_executable
                 )
             )
             return
@@ -56,8 +53,9 @@ class InstallPySideToFusion(PreLaunchHook):
             self.log.debug("Fusion has already installed PySide2.")
             return
 
+        self.log.debug("Installing PySide2.")
         # Install PySide2 in fusion's python
-        if platform == "windows":
+        if platform.system().lower() == "windows":
             result = self.install_pyside_windows(python_executable)
         else:
             result = self.install_pyside(python_executable)
@@ -103,7 +101,8 @@ class InstallPySideToFusion(PreLaunchHook):
                 lpDirectory=os.path.dirname(python_executable)
             )
             process_handle = process_info["hProcess"]
-            win32event.WaitForSingleObject(process_handle, win32event.INFINITE)
+            win32event.WaitForSingleObject(process_handle,
+                                           win32event.INFINITE)
             returncode = win32process.GetExitCodeProcess(process_handle)
             return returncode == 0
         except pywintypes.error:
@@ -140,28 +139,14 @@ class InstallPySideToFusion(PreLaunchHook):
             pass
 
     def is_pyside_installed(self, python_executable):
-        """Check if PySide2 module is in fusion's pip list.
+        """Check if PySide2 module is in fusion's pip list."""
+        args = [python_executable, "-c", "import PySide2"]
+        process = subprocess.Popen(args,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        _, stderr = process.communicate()
+        stderr = stderr.decode()
+        if "ModuleNotFound" in stderr:
+            return False
+        return True
 
-        Check that PySide2 is installed directly in fusion's site-packages.
-        It is possible that it is installed in user's site-packages but that
-        may be incompatible with fusion's python.
-        """
-        # Get pip list from fusion's python executable
-        args = [python_executable, "-m", "pip", "list"]
-        process = subprocess.Popen(args, stdout=subprocess.PIPE)
-        stdout, _ = process.communicate()
-        lines = stdout.decode().split(os.linesep)
-        # Second line contain dashes that define maximum length of module name.
-        #   Second column of dashes define maximum length of module version.
-        package_dashes, *_ = lines[1].split(" ")
-        package_len = len(package_dashes)
-
-        # Got through printed lines starting at line 3
-        for idx in range(2, len(lines)):
-            line = lines[idx]
-            if not line:
-                continue
-            package_name = line[0:package_len].strip()
-            if package_name.lower() == "pyside2":
-                return True
-        return False
