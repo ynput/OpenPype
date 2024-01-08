@@ -15,6 +15,7 @@ class CollectDeadlinePools(pyblish.api.InstancePlugin,
     label = "Collect Deadline Pools"
     families = ["rendering",
                 "render.farm",
+                "render.frames_farm",
                 "renderFarm",
                 "renderlayer",
                 "maxrender"]
