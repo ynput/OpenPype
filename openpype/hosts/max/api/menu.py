@@ -124,6 +124,10 @@ class OpenPypeMenu(object):
         colorspace_action.triggered.connect(self.colorspace_callback)
         openpype_menu.addAction(colorspace_action)
 
+        unit_scale_action = QtWidgets.QAction("Set Unit Scale", openpype_menu)
+        unit_scale_action.triggered.connect(self.unit_scale_callback)
+        openpype_menu.addAction(unit_scale_action)
+
         return openpype_menu
 
     def load_callback(self):
@@ -157,3 +161,7 @@ class OpenPypeMenu(object):
     def colorspace_callback(self):
         """Callback to reset colorspace"""
         return lib.reset_colorspace()
+
+    def unit_scale_callback(self):
+        """Callback to reset unit scale"""
+        return lib.reset_unit_scale()

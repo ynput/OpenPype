@@ -12,6 +12,25 @@ from .publishers import (
 )
 
 
+def unit_scale_enum():
+    """Return enumerator for scene unit scale."""
+    return [
+        {"label": "mm", "value": "Millimeters"},
+        {"label": "cm", "value": "Centimeters"},
+        {"label": "m", "value": "Meters"},
+        {"label": "km", "value": "Kilometers"}
+    ]
+
+
+class UnitScaleSettings(BaseSettingsModel):
+    enabled: bool = Field(True, title="Enabled")
+    scene_unit_scale: str = Field(
+        "Centimeters",
+        title="Scene Unit Scale",
+        enum_resolver=unit_scale_enum
+    )
+
+
 class PRTAttributesModel(BaseSettingsModel):
     _layout = "compact"
     name: str = Field(title="Name")
@@ -24,6 +43,10 @@ class PointCloudSettings(BaseSettingsModel):
 
 
 class MaxSettings(BaseSettingsModel):
+    unit_scale_settings: UnitScaleSettings = Field(
+        default_factory=UnitScaleSettings,
+        title="Set Unit Scale"
+    )
     imageio: ImageIOSettings = Field(
         default_factory=ImageIOSettings,
         title="Color Management (ImageIO)"
@@ -46,6 +69,10 @@ class MaxSettings(BaseSettingsModel):
 
 
 DEFAULT_VALUES = {
+    "unit_scale_settings": {
+        "enabled": True,
+        "scene_unit_scale": "Centimeters"
+    },
     "RenderSettings": DEFAULT_RENDER_SETTINGS,
     "CreateReview": DEFAULT_CREATE_REVIEW_SETTINGS,
     "PointCloud": {

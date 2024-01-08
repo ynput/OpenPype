@@ -12,7 +12,7 @@ def set_context_favorites(favorites=None):
         favorites (dict): couples of {name:path}
     """
     favorites = favorites or {}
-    icon_path = resources.get_resource("icons", "folder-favorite3.png")
+    icon_path = resources.get_resource("icons", "folder-favorite.png")
     for name, path in favorites.items():
         nuke.addFavoriteDir(
             name,
