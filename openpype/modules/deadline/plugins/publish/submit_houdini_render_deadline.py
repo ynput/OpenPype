@@ -273,8 +273,20 @@ class HoudiniSubmitDeadline(
                 plugin_info = RedshiftRenderPluginInfo(
                     SceneFile=instance.data["ifdFile"]
                 )
+                # Note: To use different versions of Redshift on Deadline
+                #       set the `REDSHIFT_VERSION` env variable in the Tools
+                #       settings in the AYON Application plugin. You will also
+                #       need to set that version in `Redshift.param` file
+                #       of the Redshift Deadline plugin:
+                #           [Redshift_Executable_*]
+                #           where * is the version number.
                 if os.getenv("REDSHIFT_VERSION"):
-                    plugin_info.Version = os.getenv("REDSHIFT_VERSION"),
+                    plugin_info.Version = os.getenv("REDSHIFT_VERSION")
+                else:
+                    self.log.warning((
+                        "REDSHIFT_VERSION env variable is not set"
+                        " - using version configured in Deadline"
+                    ))
 
             else:
                 self.log.error(
