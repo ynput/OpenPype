@@ -298,6 +298,7 @@ class FtrackModule(
         # If we just create the project on the server (prepare project) we want to send attributes to Ftrack
         bypass_protect_anatomy_attributes = new_value_metadata.get("bypass_protect_anatomy_attributes", False)
         if bypass_protect_anatomy_attributes:
+            # Disable the protection
             protect_attrs = False
 
         if protect_attrs:

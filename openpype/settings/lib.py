@@ -271,6 +271,7 @@ def save_project_anatomy(project_name, anatomy_data):
     Raises:
         SaveWarningExc: If any module raises the exception.
     """
+    bypass_protect_attrs = anatomy_data.pop("bypass_protect_anatomy_attributes", None)
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
 
@@ -288,9 +289,9 @@ def save_project_anatomy(project_name, anatomy_data):
         new_data = apply_overrides(default_values, copy.deepcopy(anatomy_data))
 
     new_data_with_metadata = copy.deepcopy(new_data)
+    if bypass_protect_attrs is not None:
+        new_data_with_metadata["bypass_protect_anatomy_attributes"] = bypass_protect_attrs
     clear_metadata_from_settings(new_data)
-    # Removing the needed bypass flag from the data dict (leaving it in new_data_with_metadata)
-    new_data.non_gui_children.pop("bypass_protect_anatomy_attributes", None)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
