@@ -46,6 +46,7 @@ class RedshiftRenderPluginInfo():
     SceneFile = attr.ib(default=None)
     Version = attr.ib(default=None)
 
+
 class HoudiniSubmitDeadline(
     abstract_submit_deadline.AbstractSubmitDeadline,
     OpenPypePyblishPluginMixin
