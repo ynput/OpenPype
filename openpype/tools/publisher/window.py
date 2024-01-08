@@ -64,15 +64,13 @@ class PublisherWindow(QtWidgets.QWidget):
         if reset_on_show is None:
             reset_on_show = True
 
-        flags = (
+        self.setWindowFlags(
             QtCore.Qt.Window
             | QtCore.Qt.WindowTitleHint
             | QtCore.Qt.WindowMaximizeButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
             | QtCore.Qt.WindowCloseButtonHint
         )
-
-        self.setWindowFlags(flags)
 
         if controller is None:
             controller = QtPublisherController()
