@@ -26,7 +26,6 @@ class InstallPySideToFusion(PreLaunchHook):
                 "Processing of {} crashed.".format(self.__class__.__name__),
                 exc_info=True
             )
-            raise
 
     def inner_execute(self):
         self.log.debug("Check for PySide2 installation.")
@@ -149,4 +148,3 @@ class InstallPySideToFusion(PreLaunchHook):
         if "ModuleNotFound" in stderr:
             return False
         return True
-
