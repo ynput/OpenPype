@@ -23,7 +23,7 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
     optional = True
 
     DEFAULTS = ["fov", "nearrange", "farrange",
-                "nearclip","farclip"]
+                "nearclip", "farclip"]
     CAM_TYPE = ["Freecamera", "Targetcamera",
                 "Physical"]
 
@@ -32,7 +32,9 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
         invalid = []
         cameras = instance.data["members"]
         project_settings = instance.context.data["project_settings"].get("max")
-        cam_attr_settings = project_settings["publish"]["ValidateCameraAttributes"]
+        cam_attr_settings = (
+            project_settings["publish"]["ValidateCameraAttributes"]
+        )
         for camera in cameras:
             if str(rt.ClassOf(camera)) not in cls.CAM_TYPE:
                 cls.log.debug(
