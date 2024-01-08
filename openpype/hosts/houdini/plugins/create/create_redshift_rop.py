@@ -15,6 +15,9 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
     icon = "magic"
     ext = "exr"
 
+    # Default to split export and render jobs
+    split_render = True
+
     def create(self, subset_name, instance_data, pre_create_data):
 
         instance_data.pop("active", None)
@@ -76,6 +79,18 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
                     camera = node.path()
             parms.update({
                 "RS_renderCamera": camera or ""})
+
+        rs_filepath = \
+            "{export_dir}{subset_name}/{subset_name}.$F4.rs".format(
+                export_dir=hou.text.expandString("$HIP/pyblish/rs/"),
+                subset_name=subset_name,
+            )
+        parms["RS_archive_file"] = rs_filepath
+
+        if pre_create_data.get("split_render", self.split_render):
+            parms["RS_archive_enable"] = 1
+
+
         instance_node.setParms(parms)
 
         # Lock some Avalon attributes
@@ -102,6 +117,9 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
             BoolDef("farm",
                     label="Submitting to Farm",
                     default=True),
+            BoolDef("split_render",
+                    label="Split export and render jobs",
+                    default=self.split_render),
             EnumDef("image_format",
                     image_format_enum,
                     default=self.ext,
