@@ -271,9 +271,11 @@ class HoudiniSubmitDeadline(
                 )
             elif family == "redshift_rop":
                 plugin_info = RedshiftRenderPluginInfo(
-                    SceneFile=instance.data["ifdFile"],
-                    Version=os.getenv("REDSHIFT_VERSION", "3.5.22"),
+                    SceneFile=instance.data["ifdFile"]
                 )
+                if os.getenv("REDSHIFT_VERSION"):
+                    plugin_info.Version = os.getenv("REDSHIFT_VERSION"),
+
             else:
                 self.log.error(
                     "Family '%s' not supported yet to split render job",
