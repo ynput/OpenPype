@@ -407,7 +407,7 @@ class PrepareProjectLocal(BaseAction):
         project_anatomy_settings = project_settings["project_anatomy"]
         project_anatomy_settings["roots"] = root_data
         # Add a flag to be able to bypass the enabled protection for the anatomy attrs
-        dummy_bool_false_obj = BoolEntity("boolean", None)
+        dummy_bool_false_obj = BoolEntity({}, None)
         dummy_bool_false_obj.set(False)
         project_anatomy_settings.non_gui_children["bypass_protect_anatomy_attributes"] = dummy_bool_false_obj
 
