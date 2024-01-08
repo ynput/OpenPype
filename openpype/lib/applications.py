@@ -1917,13 +1917,6 @@ def _prepare_last_workfile(data, workdir, modules_manager):
     data["env"]["AVALON_LAST_WORKFILE"] = last_workfile_path
     data["last_workfile_path"] = last_workfile_path
 
-    # If last workfile path is found, don't launch workfile tool
-    if start_last_workfile and last_workfile_path:
-        data["env"]["OPENPYPE_WORKFILE_TOOL_ON_START"] = "0"
-        log.debug(
-            "Last workfile path found so workfile tool won't be launched."
-        )
-
 
 def should_start_last_workfile(
     project_name, host_name, task_name, task_type, default_output=False

@@ -1057,14 +1057,6 @@ def add_self_publish_button(node):
     template.insertBefore((0,), button_parm)
     node.setParmTemplateGroup(template)
 
-class Context:
-    main_window = None
-    context_action_item = None
-    project_name = os.getenv("AVALON_PROJECT")
-    # Workfile related code
-    workfiles_launched = False
-    workfiles_tool_timer = None
-
 
 def launch_workfiles_app():
     """Show workfiles tool on nuke launch.
@@ -1075,52 +1067,24 @@ def launch_workfiles_app():
     Workfiles tool show is deferred after application initialization using
     QTimer.
     """
-
-    if Context.workfiles_launched:
+    # Return early if environ doesn't exist or is set to False
+    if not env_value_to_bool("OPENPYPE_WORKFILE_TOOL_ON_START"):
         return
 
-    Context.workfiles_launched = True
-
-    # get all imortant settings
-    open_at_start = env_value_to_bool(
-        env_key="OPENPYPE_WORKFILE_TOOL_ON_START",
-        default=None)
-
-    # return if none is defined
-    if not open_at_start:
+    # If opening last workfile is enabled and last workfile path exists
+    # ignore launching workfile tool
+    if env_value_to_bool("AVALON_OPEN_LAST_WORKFILE") and \
+            env_value_to_bool("AVALON_LAST_WORKFILE"):
+        log.debug(
+            "Last workfile path found so workfile tool won't be launched."
+        )
         return
 
-    # Show workfiles tool using timer
-    # - this will be probably triggered during initialization in that case
-    #   the application is not be able to show uis so it must be
-    #   deferred using timer
-    # - timer should be processed when initialization ends
-    #       When applications starts to process events.
-    timer = QtCore.QTimer()
-    timer.timeout.connect(_launch_workfile_app)
-    timer.setInterval(100)
-    Context.workfiles_tool_timer = timer
-    timer.start()
-
-
-def _launch_workfile_app():
-    # Safeguard to not show window when application is still starting up
-    #   or is already closing down.
-    closing_down = QtWidgets.QApplication.closingDown()
-    starting_up = QtWidgets.QApplication.startingUp()
-
-    # Stop the timer if application finished start up of is closing down
-    if closing_down or not starting_up:
-        Context.workfiles_tool_timer.stop()
-        Context.workfiles_tool_timer = None
-
-    # Skip if application is starting up or closing down
-    if starting_up or closing_down:
-        return
-
-    # Make sure on top is enabled on first show so the window is not hidden
-    #   under main nuke window
-    #   - this happened on Centos 7 and it is because the focus of nuke
-    #       changes to the main window after showing because of initialization
-    #       which moves workfiles tool under it
-    host_tools.show_workfiles(parent=None, on_top=True)
+    # Parent tool to main Houdini window - if not found, we force the
+    # tool to be on top to avoid it remaining hidden behind e.g. Houdini
+    # window.
+    # TODO: Check whether there are any cases where Houdini's main window
+    #   does not exist yet.
+    parent = get_main_window()
+    on_top = not parent
+    host_tools.show_workfiles(parent=parent, on_top=on_top)
