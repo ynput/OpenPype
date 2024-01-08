@@ -82,7 +82,7 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
                     camera = node.path()
             parms["RS_renderCamera"] = camera or ""
 
-        export_dir=hou.text.expandString("$HIP/pyblish/rs/")
+        export_dir = hou.text.expandString("$HIP/pyblish/rs/")
         rs_filepath = f"{export_dir}{subset_name}/{subset_name}.$F4.rs"
         parms["RS_archive_file"] = rs_filepath
 
