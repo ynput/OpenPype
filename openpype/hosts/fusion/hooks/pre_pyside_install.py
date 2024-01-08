@@ -81,7 +81,7 @@ class InstallPySideToFusion(PreLaunchHook):
             from win32comext.shell import shellcon
         except Exception:
             self.log.warning("Couldn't import \"pywin32\" modules")
-            return
+            return False
 
         try:
             # Parameters
