@@ -105,7 +105,7 @@ class InstallPySideToFusion(PreLaunchHook):
             returncode = win32process.GetExitCodeProcess(process_handle)
             return returncode == 0
         except pywintypes.error:
-            pass
+            return False
 
     def install_pyside(self, python_executable):
         """Install PySide2 python module to fusion's python."""
