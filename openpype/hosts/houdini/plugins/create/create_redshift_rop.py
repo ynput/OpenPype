@@ -86,9 +86,10 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
         rs_filepath = f"{export_dir}{subset_name}/{subset_name}.$F4.rs"
         parms["RS_archive_file"] = rs_filepath
 
-        instance_node.setParms(parms)
         if pre_create_data.get("split_render", self.split_render):
             parms["RS_archive_enable"] = 1
+
+        instance_node.setParms(parms)
 
         # Lock some Avalon attributes
         to_lock = ["family", "id"]
