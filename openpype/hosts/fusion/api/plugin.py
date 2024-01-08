@@ -1,5 +1,8 @@
 from copy import deepcopy
 import os
+import re
+
+from openpype.client import get_representation_by_id
 
 from openpype.hosts.fusion.api import (
     get_current_comp,
@@ -196,6 +199,35 @@ class GenericCreateSaver(Creator):
     def get_instance_attr_defs(self):
         """Settings for publish page"""
         return self.get_pre_create_attr_defs()
+
+    def get_default_variants(self):
+        """Calculate variants from Settings and loaded containers.
+
+        Tries to parse out variant from loaded containers.
+        """
+        variants = super().get_default_variants()
+
+        for container in self.host.get_containers():
+            repre_id = container.get("representation")
+            if not repre_id:
+                continue
+            repre_doc = get_representation_by_id(self.project_name,
+                                                 repre_id)
+            if not repre_doc:
+                self.log.warning(f"No representation for {repre_id}")
+                continue
+
+            context = repre_doc["data"]["context"]
+            product_info = context["product"]
+            variant = product_info["name"]
+            # try to get "clean" variant from loaded product name
+            for replace_str in [product_info["name"], context["asset"],
+                                context["task"]["name"]]:
+                variant = re.sub(replace_str, "",
+                                 variant, flags=re.I)
+            variants.append(variant)
+
+        return variants
 
     def pass_pre_attributes_to_instance(self, instance_data, pre_create_data):
         creator_attrs = instance_data["creator_attributes"] = {}
