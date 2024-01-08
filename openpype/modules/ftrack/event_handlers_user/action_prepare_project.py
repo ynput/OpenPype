@@ -406,6 +406,8 @@ class PrepareProjectLocal(BaseAction):
         project_settings = ProjectSettings(project_name)
         project_anatomy_settings = project_settings["project_anatomy"]
         project_anatomy_settings["roots"] = root_data
+        # Add a flag to be able to bypass the enabled protection for the anatomy attrs
+        project_anatomy_settings["bypass_protect_anatomy_attributes"] = True
 
         custom_attribute_values = {}
         attributes_entity = project_anatomy_settings["attributes"]
