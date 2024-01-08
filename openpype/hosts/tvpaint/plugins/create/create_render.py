@@ -1039,6 +1039,7 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
         self.mark_for_review = plugin_settings["mark_for_review"]
         self.active_on_create = plugin_settings["active_on_create"]
         self.default_pass_name = plugin_settings["default_pass_name"]
+        self.extract_psd = plugin_settings.get("extract_psd", True)
 
     def get_dynamic_data(self, variant, *args, **kwargs):
         dynamic_data = super().get_dynamic_data(variant, *args, **kwargs)
@@ -1067,7 +1068,8 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
             "variant": self.default_variant,
             "creator_attributes": {
                 "render_pass_name": self.default_pass_name,
-                "mark_for_review": True
+                "mark_for_review": True,
+                "extract_psd": self.extract_psd,
             },
             "label": self._get_label(
                 subset_name,
@@ -1144,6 +1146,11 @@ class TVPaintSceneRenderCreator(TVPaintAutoCreator):
                     "Value is calculated during publishing and UI will update"
                     " label after refresh."
                 )
+            ),
+            BoolDef(
+                "extract_psd",
+                label="Extract PSD",
+                default=self.extract_psd
             ),
             BoolDef(
                 "mark_for_review",
