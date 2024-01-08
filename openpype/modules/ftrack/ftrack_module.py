@@ -2,7 +2,6 @@ import os
 import json
 import collections
 import platform
-import inspect
 
 import click
 
@@ -293,18 +292,15 @@ class FtrackModule(
             # If no values or same as before, then just skip the update process
             return
 
-        # Get all the files called to trigger this function
-        callers_filename = []
-        stack = inspect.stack()
-        for frame in stack:
-            caller_filename = frame.filename
-            caller_filename = os.path.basename(caller_filename)
-            caller_filename = os.path.splitext(caller_filename)[0]
-            callers_filename.append(caller_filename)
-
         system_settings = get_system_settings()
         protect_attrs = system_settings["general"].get("project", {}).get("protect_anatomy_attributes", False)
-        if protect_attrs and "action_prepare_project" not in callers_filename:
+
+        # If we just create the project on the server (prepare project) we want to send attributes to Ftrack
+        bypass_protect_anatomy_attributes = new_value_metadata.get("bypass_protect_anatomy_attributes", False)
+        if bypass_protect_anatomy_attributes:
+            protect_attrs = False
+
+        if protect_attrs:
             self.log.warning("Anatomy attributes are protected/locked. "
                              "The only way to modify them is through the project settings on Ftrack.")
             return
