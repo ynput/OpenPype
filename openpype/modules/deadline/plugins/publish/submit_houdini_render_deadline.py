@@ -15,6 +15,7 @@ from openpype.lib import (
     NumberDef
 )
 
+
 @attr.s
 class DeadlinePluginInfo():
     SceneFile = attr.ib(default=None)
