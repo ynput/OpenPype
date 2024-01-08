@@ -80,14 +80,16 @@ class CreateRedshiftROP(plugin.HoudiniCreator):
             parms.update({
                 "RS_renderCamera": camera or ""})
 
-        if pre_create_data.get("split_render"):
-            rs_filepath = \
-                "{export_dir}{subset_name}/{subset_name}.$F4.rs".format(
-                    export_dir=hou.text.expandString("$HIP/pyblish/rs/"),
-                    subset_name=subset_name,
-                )
+        rs_filepath = \
+            "{export_dir}{subset_name}/{subset_name}.$F4.rs".format(
+                export_dir=hou.text.expandString("$HIP/pyblish/rs/"),
+                subset_name=subset_name,
+            )
+        parms["RS_archive_file"] = rs_filepath
+
+        if pre_create_data.get("split_render", self.split_render):
             parms["RS_archive_enable"] = 1
-            parms["RS_archive_file"] = rs_filepath
+
 
         instance_node.setParms(parms)
 
