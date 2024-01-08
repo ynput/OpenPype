@@ -56,6 +56,16 @@
             "enabled": false,
             "attributes": {}
         },
+        "ValidateCameraAttributes": {
+            "enabled": true,
+            "optional": true,
+            "active": false,
+            "fov": 45.0,
+            "nearrange": 0.0,
+            "farrange": 1000.0,
+            "nearclip": 1.0,
+            "farclip": 1000.0
+        },
         "ValidateLoadedPlugin": {
             "enabled": false,
             "optional": true,

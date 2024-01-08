@@ -27,6 +27,17 @@ class ValidateAttributesModel(BaseSettingsModel):
         return value
 
 
+class ValidateCameraAttributesModel(BaseSettingsModel):
+    enabled: bool = Field(title="Enabled")
+    optional: bool = Field(title="Optional")
+    active: bool = Field(title="Active")
+    fov: float = Field(0.0, title="Focal Length")
+    nearrange: float = Field(0.0, title="Near Range")
+    farrange: float = Field(0.0, title="Far Range")
+    nearclip: float = Field(0.0, title="Near Clip")
+    farclip: float = Field(0.0, title="Far Clip")
+
+
 class FamilyMappingItemModel(BaseSettingsModel):
     product_types: list[str] = Field(
         default_factory=list,
@@ -63,7 +74,10 @@ class PublishersModel(BaseSettingsModel):
         default_factory=ValidateAttributesModel,
         title="Validate Attributes"
     )
-
+    ValidateCameraAttributes: ValidateCameraAttributesModel = Field(
+        default_factory=ValidateCameraAttributesModel,
+        title="Validate Camera Attributes"
+    )
     ValidateLoadedPlugin: ValidateLoadedPluginModel = Field(
         default_factory=ValidateLoadedPluginModel,
         title="Validate Loaded Plugin"
@@ -100,6 +114,16 @@ DEFAULT_PUBLISH_SETTINGS = {
     "ValidateAttributes": {
         "enabled": False,
         "attributes": "{}"
+    },
+    "ValidateCameraAttributes": {
+        "enabled": True,
+        "optional": True,
+        "active": False,
+        "fov": 45.0,
+        "nearrange": 0.0,
+        "farrange": 1000.0,
+        "nearclip": 1.0,
+        "farclip": 1000.0
     },
     "ValidateLoadedPlugin": {
         "enabled": False,
