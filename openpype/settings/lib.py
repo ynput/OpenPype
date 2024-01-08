@@ -289,6 +289,8 @@ def save_project_anatomy(project_name, anatomy_data):
 
     new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
+    # Removing the needed bypass flag from the data dict (leaving it in new_data_with_metadata)
+    new_data.non_gui_children.pop("bypass_protect_anatomy_attributes", None)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
