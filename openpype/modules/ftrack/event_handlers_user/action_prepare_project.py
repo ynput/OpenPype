@@ -3,7 +3,7 @@ import copy
 
 from openpype.client import get_project, create_project
 from openpype.settings import ProjectSettings, SaveWarningExc
-
+from openpype.settings.entities import BoolEntity
 from openpype_modules.ftrack.lib import (
     BaseAction,
     statics_icon,
@@ -407,7 +407,9 @@ class PrepareProjectLocal(BaseAction):
         project_anatomy_settings = project_settings["project_anatomy"]
         project_anatomy_settings["roots"] = root_data
         # Add a flag to be able to bypass the enabled protection for the anatomy attrs
-        project_anatomy_settings.non_gui_children["bypass_protect_anatomy_attributes"] = True
+        dummy_bool_false_obj = BoolEntity("boolean", None)
+        dummy_bool_false_obj.set(False)
+        project_anatomy_settings.non_gui_children["bypass_protect_anatomy_attributes"] = dummy_bool_false_obj
 
         custom_attribute_values = {}
         attributes_entity = project_anatomy_settings["attributes"]
