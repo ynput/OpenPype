@@ -10,8 +10,6 @@ import json
 
 import six
 
-from qtpy import QtCore, QtWidgets
-
 from openpype.lib import StringTemplate, env_value_to_bool
 from openpype.client import get_project, get_asset_by_name
 from openpype.settings import get_current_project_settings
