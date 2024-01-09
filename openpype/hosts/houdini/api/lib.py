@@ -1058,7 +1058,8 @@ def add_self_publish_button(node):
 
 def get_scene_viewer():
     """
-    return an instance of a visible viewport.
+    Return an instance of a visible viewport.
+
     There may be many, some could be closed, any visible are current
     """
     panes = hou.ui.paneTabs()
@@ -1075,8 +1076,9 @@ def sceneview_snapshot(
         filepath="$HIP/thumbnails/$HIPNAME.$F4.jpg",
         frame_start=None,
         frame_end=None):
-    """
-    It takes snapshot of your scene view fot the given frame range.
+    """Take a snapshot of your scene view.
+
+    It takes snapshot of your scene view for the given frame range.
     So, it's capable of generating snapshots image sequence.
     It works in different Houdini context e.g. Objects, Solaris
 
