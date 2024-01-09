@@ -35,6 +35,14 @@ def _image_format_enum():
     ]
 
 
+def _frame_range_options_enum():
+    return [
+        {"value": "asset_db", "label": "Current asset context"},
+        {"value": "render_range", "label": "From render in/out"},
+        {"value": "comp_range", "label": "From composition timeline"},
+    ]
+
+
 class CreateSaverPluginModel(BaseSettingsModel):
     _isGroup = True
     temp_rendering_path_template: str = Field(
@@ -55,14 +63,29 @@ class CreateSaverPluginModel(BaseSettingsModel):
     )
 
 
-class CreatPluginsModel(BaseSettingsModel):
-    CreateSaver: CreateSaverPluginModel = Field(
-        default_factory=CreateSaverPluginModel,
-        title="Create Render Saver"
+class CreateSaverModel(CreateSaverPluginModel):
+    default_frame_range_option: str = Field(
+        default="asset_db",
+        enum_resolver=_frame_range_options_enum,
+        title="Default frame range source"
     )
-    CreateImageSaver: CreateSaverPluginModel = Field(
-        default_factory=CreateSaverPluginModel,
-        title="Create Image Saver"
+
+
+class CreateImageSaverModel(CreateSaverPluginModel):
+    default_frame: int = Field(
+        0,
+        title="Default rendered frame"
+    )
+class CreatPluginsModel(BaseSettingsModel):
+    CreateSaver: CreateSaverModel = Field(
+        default_factory=CreateSaverModel,
+        title="Create Saver",
+        description="Creator for render product type (eg. sequence)"
+    )
+    CreateImageSaver: CreateImageSaverModel = Field(
+        default_factory=CreateImageSaverModel,
+        title="Create Image Saver",
+        description="Creator for image product type (eg. single)"
     )
 
 
@@ -109,6 +132,8 @@ DEFAULT_VALUES = {
                 "farm_rendering"
             ],
             "image_format": "exr"
+            "image_format": "exr",
+            "default_frame_range_option": "asset_db"
         },
         "CreateImageSaver": {
             "temp_rendering_path_template": "{workdir}/renders/fusion/{product[name]}/{product[name]}.{ext}",
@@ -121,6 +146,8 @@ DEFAULT_VALUES = {
                 "farm_rendering"
             ],
             "image_format": "exr"
+            "image_format": "exr",
+            "default_frame": 0
         }
     }
 }
