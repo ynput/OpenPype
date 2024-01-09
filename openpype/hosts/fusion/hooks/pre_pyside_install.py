@@ -4,7 +4,7 @@ import platform
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
-class l(PreLaunchHook):
+class InstallPySideToFusion(PreLaunchHook):
     """Automatically installs Qt binding to fusion's python packages.
 
     Check if fusion has installed PySide2 and will try to install if not.
