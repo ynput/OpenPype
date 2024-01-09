@@ -39,8 +39,15 @@ class InstallPySideToFusion(PreLaunchHook):
                              "Installation of PySide2 not possible")
             return
 
-        exe = "python.exe" if os.name == "nt" else "python"
-        python_executable = os.path.join(fusion_python3_home, exe)
+        if platform.system().lower() == "windows":
+            exe_filenames = ["python.exe"]
+        else:
+            exe_filenames = ["python3", "python"]
+
+        for exe_filename in exe_filenames:
+            python_executable = os.path.join(fusion_python3_home, exe_filename)
+            if os.path.exists(python_executable):
+                break
 
         if not os.path.exists(python_executable):
             self.log.warning(
