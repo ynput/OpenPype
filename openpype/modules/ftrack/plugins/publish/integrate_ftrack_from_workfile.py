@@ -22,10 +22,6 @@ class IntegrateFtrackFromWorkfile(pyblish.api.InstancePlugin):
     families = ["ftrack"]
     optional = True
 
-    # Can be set in settings:
-    # - Allows `intent` and `comment` keys
-    description_template = "{comment}"
-
     def process(self, instance):
         # Check if there are any integrated AssetVersion entities
         asset_versions_key = "ftrackIntegratedAssetVersionsData"
@@ -34,45 +30,14 @@ class IntegrateFtrackFromWorkfile(pyblish.api.InstancePlugin):
             self.log.info("There are any integrated AssetVersions")
             return
 
-        # If we would like to use more "optional" possibilities we would have
-        #   come up with some expressions in templates or speicifc templates
-        #   for all 3 possible combinations when comment and intent are
-        #   set or not (when both are not set then description does not
-        #   make sense).
-        fill_data = {}
-        if comment:
-            fill_data["comment"] = comment
-        if intent:
-            fill_data["intent"] = intent
-
-        description = StringTemplate.format_template(
-            self.description_template, fill_data
-        )
-        if not description.solved:
-            self.log.warning((
-                "Couldn't solve template \"{}\" with data {}"
-            ).format(
-                self.description_template, json.dumps(fill_data, indent=4)
-            ))
-            return
-
-        if not description:
-            self.log.debug((
-                "Skipping. Result of template is empty string."
-                " Template \"{}\" Fill data: {}"
-            ).format(
-                self.description_template, json.dumps(fill_data, indent=4)
-            ))
-            return
+        source = "TEST FOR SOURCE WORKFILE"
 
         session = instance.context.data["ftrackSession"]
         for asset_version_data in asset_versions_data_by_id.values():
             asset_version = asset_version_data["asset_version"]
 
-            # Backwards compatibility for older settings using
-            #   attribute 'note_with_intent_template'
-
-            asset_version["fix_fromworkfile"] = description
+            asset_version["custom_attributes"]["fix_fromworkfile"] = source
+            self.log.debug(f"ASSET_VERSION_KEYS: {asset_version['custom_attributes'].keys()}")
 
             try:
                 session.commit()
