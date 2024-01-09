@@ -20,6 +20,8 @@ class CreateImageSaver(GenericCreateSaver):
     family = "image"
     description = "Fusion Saver to generate image"
 
+    default_frame = 0
+
     def get_detail_description(self):
         return """Fusion Saver to generate single image.
 
@@ -53,16 +55,9 @@ class CreateImageSaver(GenericCreateSaver):
         return attr_defs
 
     def _get_frame_int(self):
-        default_value = 1
-        comp = get_current_comp()
-
-        if comp:
-            comp_attrs = comp.GetAttrs()
-            default_value = comp_attrs["COMPN_GlobalStart"]
-
         return NumberDef(
             "frame",
-            default=default_value,
+            default=self.default_frame,
             label="Frame",
             tooltip="Set frame to be rendered, must be inside of global "
                     "timeline range"
