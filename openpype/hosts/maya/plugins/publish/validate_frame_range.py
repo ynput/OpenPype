@@ -53,6 +53,21 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
             )
             return
 
+        # Check the include handle settings of the actual project
+        include_handles_settings = context.data["project_settings"]["maya"]["include_handles"]
+        current_task = context.data["anatomyData"]["task"]["name"]
+        include_task_handles = False
+        # Define if we had to include/exclude the handles
+        for item in include_handles_settings["per_task_type"]:
+            if current_task in item["task_type"]:
+                include_task_handles = item["include_handles"]
+        # if we exclude, initialize handles values to origin(frame start, frame end)
+        if not include_task_handles:
+            context.data["frameStartHandle"] = int(context.data.get("frameStart"))
+            context.data["frameEndHandle"] = int(context.data.get("frameEnd"))
+            context.data["handleStart"] = 0
+            context.data["handleEnd"] = 0
+
         frame_start_handle = int(context.data.get("frameStartHandle"))
         frame_end_handle = int(context.data.get("frameEndHandle"))
         handle_start = int(context.data.get("handleStart"))
