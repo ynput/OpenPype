@@ -14,8 +14,9 @@ pymongo = "^3.11.2"
 log4mongo = "^1.7"
 pyblish-base = "^1.8.11"
 pynput = "^1.7.2" # Timers manager - TODO remove
-qtawesome = "0.7.3"
 speedcopy = "^2.1"
+six = "^1.15"
+qtawesome = "0.7.3"
 
 [ayon.runtimeDependencies]
 OpenTimelineIO = "0.14.1"
