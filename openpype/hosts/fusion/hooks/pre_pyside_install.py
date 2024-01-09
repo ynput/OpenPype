@@ -20,6 +20,9 @@ class InstallPySideToFusion(PreLaunchHook):
     def execute(self):
         # Prelaunch hook is not crucial
         try:
+            settings = self.data["project_settings"][self.host_name]
+            if not settings["hooks"]["InstallPySideToFusion"]["enabled"]:
+                return
             self.inner_execute()
         except Exception:
             self.log.warning(
