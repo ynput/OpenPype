@@ -4,7 +4,7 @@ import platform
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
-class InstallPySideToFusion(PreLaunchHook):
+class l(PreLaunchHook):
     """Automatically installs Qt binding to fusion's python packages.
 
     Check if fusion has installed PySide2 and will try to install if not.
@@ -142,12 +142,12 @@ class InstallPySideToFusion(PreLaunchHook):
 
     def is_pyside_installed(self, python_executable):
         """Check if PySide2 module is in fusion's pip list."""
-        args = [python_executable, "-c", "import PySide2"]
+        args = [python_executable, "-c", "from qtpy import QtWidgets"]
         process = subprocess.Popen(args,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         _, stderr = process.communicate()
         stderr = stderr.decode()
-        if "ModuleNotFound" in stderr:
+        if stderr:
             return False
         return True
