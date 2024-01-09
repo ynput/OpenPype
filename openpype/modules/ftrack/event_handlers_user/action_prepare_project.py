@@ -3,7 +3,6 @@ import copy
 
 from openpype.client import get_project, create_project
 from openpype.settings import ProjectSettings, SaveWarningExc
-from openpype.settings.entities import BoolEntity
 from openpype_modules.ftrack.lib import (
     BaseAction,
     statics_icon,
