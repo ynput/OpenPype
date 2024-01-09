@@ -25,24 +25,24 @@ class ExtractLocalRender(publish.Extractor):
         stub.render(staging_dir, comp_id)
 
         representations = []
+        self.log.info('"staging_files::{}'.format(os.listdir(staging_dir)))
         for file_name in instance.data["file_names"]:
             _, ext = os.path.splitext(os.path.basename(file_name))
             ext = ext[1:]
 
-            first_file_path = None
             files = []
+            self.log.info("file_name::{}".format(file_name))
+            self.log.info("ext::{}".format(ext))
             for found_file_name in os.listdir(staging_dir):
+                self.log.info("found_file_name::{}".format(found_file_name))
                 if not found_file_name.endswith(ext):
                     continue
 
                 files.append(found_file_name)
-                if first_file_path is None:
-                    first_file_path = os.path.join(staging_dir,
-                                                   found_file_name)
 
             if not files:
                 self.log.info("no files")
-                return
+                continue
 
             # single file cannot be wrapped in array
             resulting_files = files
@@ -57,6 +57,8 @@ class ExtractLocalRender(publish.Extractor):
                 "files": resulting_files,
                 "stagingDir": staging_dir
             }
+            self.log.info("not representations::{}".format(not representations))
+            self.log.info('instance.data["review"]::{}'.format(instance.data["review"]))
             first_repre = not representations
             if instance.data["review"] and first_repre:
                 repre_data["tags"] = ["review"]

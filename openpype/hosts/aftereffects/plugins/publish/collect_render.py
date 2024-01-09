@@ -84,6 +84,9 @@ class CollectAERender(publish.AbstractCollectRender):
             task_name = inst.data.get("task")  # legacy
 
             render_q = CollectAERender.get_stub().get_render_info(comp_id)
+            self.log.info('render_q')
+            self.log.info(comp_id)
+            self.log.info(render_q)
             if not render_q:
                 raise ValueError("No file extension set in Render Queue")
             render_item = render_q[0]
@@ -119,6 +122,7 @@ class CollectAERender(publish.AbstractCollectRender):
                 publish_attributes=inst.data.get("publish_attributes", {}),
                 file_names=[item.file_name for item in render_q]
             )
+            self.log.info(instance.file_names)
 
             comp = compositions_by_id.get(comp_id)
             if not comp:

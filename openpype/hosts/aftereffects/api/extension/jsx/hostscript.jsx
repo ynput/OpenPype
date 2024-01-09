@@ -955,17 +955,17 @@ function render(target_folder, comp_id){
 
             render_item.render = true;
 
-            var om1 = app.project.renderQueue.item(i).outputModule(1);
-            var file_name = File.decode( om1.file.name ).replace('℗', ''); // Name contains special character, space?
-
-            var omItem1_settable_str = app.project.renderQueue.item(i).outputModule(1).getSettings( GetSettingsFormat.STRING_SETTABLE );
-
             var targetFolder = new Folder(target_folder);
             if (!targetFolder.exists) {
                 targetFolder.create();
             }
 
-            om1.file = new File(targetFolder.fsName + '/' + file_name);
+            for (j = 1; j <= render_item.numOutputModules; ++j){
+                var om1 = app.project.renderQueue.item(i).outputModule(j);
+                var file_name = File.decode( om1.file.name ).replace('℗', ''); // Name contains special character, space?
+
+                om1.file = new File(targetFolder.fsName + '/' + file_name);
+            }
         }else{
             if (render_item.status != RQItemStatus.DONE){
                 render_item.render = false;
