@@ -39,7 +39,7 @@ class InstallPySideToFusion(PreLaunchHook):
                              "Installation of PySide2 not possible")
             return
 
-        exe = "python.exe" if os.name == 'nt' else "python"
+        exe = "python.exe" if os.name == "nt" else "python"
         python_executable = os.path.join(fusion_python3_home, exe)
 
         if not os.path.exists(python_executable):
@@ -84,7 +84,7 @@ class InstallPySideToFusion(PreLaunchHook):
             from win32comext.shell import shellcon
         except Exception:
             self.log.warning("Couldn't import \"pywin32\" modules")
-            return
+            return False
 
         try:
             # Parameters
@@ -108,7 +108,7 @@ class InstallPySideToFusion(PreLaunchHook):
             returncode = win32process.GetExitCodeProcess(process_handle)
             return returncode == 0
         except pywintypes.error:
-            pass
+            return False
 
     def install_pyside(self, python_executable):
         """Install PySide2 python module to fusion's python."""
