@@ -973,9 +973,6 @@ class ApplicationLaunchContext:
 
         self.env_group = env_group
 
-        stdout = data.pop("stdout", None)
-        stderr = data.pop("stderr", None)
-
         self.data = dict(data)
 
         launch_args = []
@@ -1016,12 +1013,18 @@ class ApplicationLaunchContext:
             )
             self.kwargs["creationflags"] = flags
 
+        stdout = self.data.pop("stdout", None)
+        stderr = self.data.pop("stderr", None)
+        # Force to use DEVNULL if 'sys.stdout' is 'None'
+        # - this is because of UI build on Windows
         if not sys.stdout:
             stdout = subprocess.DEVNULL
             stderr = subprocess.DEVNULL
 
-        self.kwargs["stdout"] = stdout
-        self.kwargs["stderr"] = stderr
+        if stdout is not None:
+            self.kwargs["stdout"] = stdout
+        if stderr is not None:
+            self.kwargs["stderr"] = stderr
 
         self.prelaunch_hooks = None
         self.postlaunch_hooks = None
