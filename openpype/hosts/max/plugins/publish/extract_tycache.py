@@ -38,8 +38,8 @@ class ExtractTyCache(publish.Extractor):
         export_mode = instance.data.get("exportMode", 2)
         members = instance.data["members"]
         representations = instance.data.setdefault("representations", [])
-        tyc_filenames = []
-        tyc_mesh_filenames = []
+        tyc_fnames = []
+        tyc_mesh_fnames = []
         with maintained_selection():
             for operators in get_tyflow_export_particle_operators(members):
                 operator, start_frame, end_frame, name = operators
@@ -50,26 +50,26 @@ class ExtractTyCache(publish.Extractor):
                 job_args = self.get_export_particles_job_args(
                     operator, path, export_mode)
                 mesh_filename = f"{instance.name}_{name}__tyMesh.tyc"
-                tyc_filenames.extend(filenames)
-                tyc_mesh_filenames.append(mesh_filename)
+                tyc_fnames.extend(filenames)
+                tyc_mesh_fnames.append(mesh_filename)
                 for job in job_args:
                     rt.Execute(job)
 
         representation = {
             "name": "tyc",
             "ext": "tyc",
-            "files": tyc_filenames,
+            "files": tyc_fnames,
             "stagingDir": stagingdir
         }
         representations.append(representation)
         mesh_repres = {
             'name': 'tyMesh',
             'ext': 'tyc',
-            'files': tyc_mesh_filenames,
+            'files': tyc_mesh_fnames,
             "stagingDir": stagingdir
         }
         representations.append(mesh_repres)
-        self.log.debug(f"Extracted instance '{instance.name}' to: {tyc_filenames}")
+        self.log.debug(f"Extracted instance '{instance.name}' to: {tyc_fnames}")
 
     def get_files(self, instance, operator, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
