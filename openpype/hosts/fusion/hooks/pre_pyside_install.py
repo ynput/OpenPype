@@ -166,6 +166,9 @@ class InstallPySideToFusion(PreLaunchHook):
         return True
 
     def _windows_require_permissions(self, dirpath):
+        if platform.system().lower() != "windows":
+            return False
+
         try:
             # Attempt to create a temporary file in the folder
             temp_file_path = os.path.join(dirpath, uuid.uuid4().hex)
