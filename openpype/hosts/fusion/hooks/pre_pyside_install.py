@@ -1,6 +1,8 @@
 import os
 import subprocess
 import platform
+import uuid
+
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
 
 
@@ -58,23 +60,24 @@ class InstallPySideToFusion(PreLaunchHook):
             return
 
         # Check if PySide2 is installed and skip if yes
-        if self.is_pyside_installed(python_executable):
+        if self._is_pyside_installed(python_executable):
             self.log.debug("Fusion has already installed PySide2.")
             return
 
         self.log.debug("Installing PySide2.")
         # Install PySide2 in fusion's python
-        if platform.system().lower() == "windows":
-            result = self.install_pyside_windows(python_executable)
+        if self._windows_require_permissions(
+                os.path.dirname(python_executable)):
+            result = self._install_pyside_windows(python_executable)
         else:
-            result = self.install_pyside(python_executable)
+            result = self._install_pyside(python_executable)
 
         if result:
             self.log.info("Successfully installed PySide2 module to fusion.")
         else:
             self.log.warning("Failed to install PySide2 module to fusion.")
 
-    def install_pyside_windows(self, python_executable):
+    def _install_pyside_windows(self, python_executable):
         """Install PySide2 python module to fusion's python.
 
         Installation requires administration rights that's why it is required
@@ -117,13 +120,15 @@ class InstallPySideToFusion(PreLaunchHook):
         except pywintypes.error:
             return False
 
-    def install_pyside(self, python_executable):
+    def _install_pyside(self, python_executable):
         """Install PySide2 python module to fusion's python."""
         try:
             # Parameters
             # - use "-m pip" as module pip to install PySide2 and argument
             #   "--ignore-installed" is to force install module to fusion's
             #   site-packages and make sure it is binary compatible
+            env = dict(os.environ)
+            del env['PYTHONPATH']
             args = [
                 python_executable,
                 "-m",
@@ -133,7 +138,8 @@ class InstallPySideToFusion(PreLaunchHook):
                 "PySide2",
             ]
             process = subprocess.Popen(
-                args, stdout=subprocess.PIPE, universal_newlines=True
+                args, stdout=subprocess.PIPE, universal_newlines=True,
+                env=env
             )
             process.communicate()
             return process.returncode == 0
@@ -147,7 +153,7 @@ class InstallPySideToFusion(PreLaunchHook):
         except subprocess.SubprocessError:
             pass
 
-    def is_pyside_installed(self, python_executable):
+    def _is_pyside_installed(self, python_executable):
         """Check if PySide2 module is in fusion's pip list."""
         args = [python_executable, "-c", "from qtpy import QtWidgets"]
         process = subprocess.Popen(args,
@@ -158,3 +164,22 @@ class InstallPySideToFusion(PreLaunchHook):
         if stderr:
             return False
         return True
+
+    def _windows_require_permissions(self, dirpath):
+        try:
+            # Attempt to create a temporary file in the folder
+            temp_file_path = os.path.join(dirpath, uuid.uuid4().hex)
+            with open(temp_file_path, "w"):
+                pass
+            os.remove(temp_file_path)  # Clean up temporary file
+            return False
+
+        except PermissionError:
+            return True
+
+        except BaseException as exc:
+            print((
+                      "Failed to determine if root requires permissions."
+                      "Unexpected error: {}"
+                  ).format(exc))
+            return False
