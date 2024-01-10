@@ -38,75 +38,38 @@ class ExtractTyCache(publish.Extractor):
         export_mode = instance.data.get("exportMode", 2)
         members = instance.data["members"]
         representations = instance.data.setdefault("representations", [])
+        tyc_filenames = []
+        tyc_mesh_filenames = []
         with maintained_selection():
-            tycache_info = self._tycache_info(
-                instance, members, stagingdir, export_mode)
-            for count, filenames, mesh_filename, node_name, job_args in (
-                tycache_info
-            ):
+            for operators in get_tyflow_export_particle_operators(members):
+                operator, start_frame, end_frame, name = operators
+                filename = f"{instance.name}_{name}.tyc"
+                path = os.path.join(stagingdir, filename)
+                filenames = self.get_files(
+                    instance, name, start_frame, end_frame)
+                job_args = self.get_export_particles_job_args(
+                    operator, path, export_mode)
+                mesh_filename = f"{instance.name}_{name}__tyMesh.tyc"
+                tyc_filenames.extend(filenames)
+                tyc_mesh_filenames.append(mesh_filename)
                 for job in job_args:
                     rt.Execute(job)
-                if count > 1:
-                    node_name = str(node_name)
-                    representation = {
-                        "name": node_name,
-                        "ext": "tyc",
-                        "files": filenames,
-                        "stagingDir": stagingdir
-                    }
-                    representations.append(representation)
-                    # Get the tyMesh filename for extraction
 
-                    mesh_repres = {
-                        'name': f'{node_name}_tyMesh',
-                        'ext': 'tyc',
-                        'files': mesh_filename,
-                        "stagingDir": stagingdir
-                    }
-                    representations.append(mesh_repres)
-                else:
-                    representation = {
-                        "name": "tyc",
-                        "ext": "tyc",
-                        "files": filenames,
-                        "stagingDir": stagingdir
-                    }
-                    representations.append(representation)
-                    mesh_repres = {
-                        'name': 'tyMesh',
-                        'ext': 'tyc',
-                        'files': mesh_filename,
-                        "stagingDir": stagingdir
-                    }
-                    representations.append(mesh_repres)
-
-    def _tycache_info(self, instance, members, stagingdir, export_mode):
-        """Function to store tycache information for publishing
-        Args:
-            instance (pyblish.api.Instance): instance
-            members (list): Member nodes of the instance.
-            stagingdir (str): staging directory
-            export_mode (int): Export Mode for the TyCache Output.
-
-        Returns:
-            tycache_info: list of tuples with tycache info.
-        """
-        export_operator_count = 0
-        tycache_info = []
-        for operators in get_tyflow_export_particle_operators(members):
-            operator, start_frame, end_frame, name = operators
-            filename = f"{instance.name}_{name}.tyc"
-            path = os.path.join(stagingdir, filename)
-            filenames = self.get_files(
-                instance, name, start_frame, end_frame)
-            job_args = self.get_export_particles_job_args(
-                operator, path, export_mode)
-            mesh_filename = f"{instance.name}_{name}__tyMesh.tyc"
-            export_operator_count += 1
-            tycache_info.append(
-                (export_operator_count, filenames,
-                 mesh_filename, name, job_args))
-        return tycache_info
+        representation = {
+            "name": "tyc",
+            "ext": "tyc",
+            "files": tyc_filenames,
+            "stagingDir": stagingdir
+        }
+        representations.append(representation)
+        mesh_repres = {
+            'name': 'tyMesh',
+            'ext': 'tyc',
+            'files': tyc_mesh_filenames,
+            "stagingDir": stagingdir
+        }
+        representations.append(mesh_repres)
+        self.log.debug(f"Extracted instance '{instance.name}' to: {tyc_filenames}")
 
     def get_files(self, instance, operator, start_frame, end_frame):
         """Get file names for tyFlow in tyCache format.
@@ -115,7 +78,7 @@ class ExtractTyCache(publish.Extractor):
         naming extension(.tyc) for the publishing purpose
 
         Actual File Output from tyFlow in tyCache format:
-        <InstanceName>__tyPart_<frame>.tyc
+        <InstanceName>_<operator>__tyPart_<frame>.tyc
 
         e.g. tycacheMain__tyPart_00000.tyc
 
