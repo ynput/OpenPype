@@ -131,7 +131,6 @@ DEFAULT_VALUES = {
                 "reviewable",
                 "farm_rendering"
             ],
-            "image_format": "exr"
             "image_format": "exr",
             "default_frame_range_option": "asset_db"
         },
@@ -145,7 +144,6 @@ DEFAULT_VALUES = {
                 "reviewable",
                 "farm_rendering"
             ],
-            "image_format": "exr"
             "image_format": "exr",
             "default_frame": 0
         }
