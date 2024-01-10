@@ -931,8 +931,8 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
-                    "key": "IntegrateFtrackFromWorkfile",
-                    "label": "IntegrateFtrackFromWorkfile",
+                    "key": "IntegrateFtrackSourceWorkfile",
+                    "label": "IntegrateFtrackSourceWorkfile",
                     "is_group": true,
                     "children": [
                         {
@@ -941,9 +941,9 @@
                             "label": "Enabled"
                         },
                         {
-                            "type": "text",
-                            "key": "source_filename",
-                            "label": "Source filename"
+                            "type": "boolean",
+                            "key": "full_path",
+                            "label": "Full Path"
                         }
                     ]
                 },

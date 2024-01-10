@@ -446,9 +446,9 @@
             "active": true,
             "description_template": "{comment}"
         },
-        "IntegrateFtrackFromWorkfile": {
+        "IntegrateFtrackSourceWorkfile": {
             "enabled": true,
-            "source_filename": "{asset}_{task[name]}_{version}_{comment}.{ext}"
+            "full_path": false
         },
         "ValidateFtrackAttributes": {
             "enabled": false,
