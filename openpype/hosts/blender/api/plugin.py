@@ -311,11 +311,13 @@ class BaseCreator(Creator):
                 )
                 return
 
-            # Rename the instance node in the scene if subset or asset changed
+            # Rename the instance node in the scene if subset or asset changed.
+            # Do not rename the instance if the family is workfile, as the
+            # workfile instance is included in the AVALON_CONTAINER collection.
             if (
                 "subset" in changes.changed_keys
                 or asset_name_key in changes.changed_keys
-            ):
+            ) and created_instance.family != "workfile":
                 asset_name = data[asset_name_key]
                 if AYON_SERVER_ENABLED:
                     asset_name = asset_name.split("/")[-1]
