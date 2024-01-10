@@ -98,6 +98,10 @@ class ValidateTyFlowData(pyblish.api.InstancePlugin):
                                 node_sub_anim.exportMode == 6:
                             has_export_particle = True
                             break
+
+            if has_export_particle:
+                break
+
             if not has_export_particle:
                 invalid.append(f"{member.name} has invalid Export Mode.")
 
@@ -214,7 +218,6 @@ class ValidateTyFlowTySplineData(ValidateTyFlowData):
                             has_export_particle.append("True")
                         else:
                             has_export_particle.append("False")
-            self.log.debug(f"{has_export_particle}")
             if "False" in has_export_particle:
                 invalid.append(f"{member.name} has invalid Export Mode.")
 
