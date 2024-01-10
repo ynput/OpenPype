@@ -13,8 +13,8 @@ from openpype.pipeline.publish import (
 from openpype.hosts.max.api.lib import (
     get_frame_range,
     set_timeline,
-    get_operators,
-    reset_frame_range_tyFlow
+    get_tyflow_export_particle_operators,
+    reset_frame_range_tyflow
 )
 
 
@@ -107,7 +107,7 @@ class ValidateTyCacheFrameRange(ValidateFrameRange):
     def get_invalid(cls, instance, frameStart, frameEnd):
         members = instance.data["members"]
         invalid = []
-        for operators in get_operators(members):
+        for operators in get_tyflow_export_particle_operators(members):
             _, inst_frame_start, inst_frame_end, opt_name = operators
             if frameStart != inst_frame_start:
                 invalid.append(
@@ -125,6 +125,6 @@ class ValidateTyCacheFrameRange(ValidateFrameRange):
         frame_range = get_frame_range()
         frame_start_handle = frame_range["frameStartHandle"]
         frame_end_handle = frame_range["frameEndHandle"]
-        reset_frame_range_tyFlow(instance.data["members"],
+        reset_frame_range_tyflow(instance.data["members"],
                                  frame_start_handle,
                                  frame_end_handle)

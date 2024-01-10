@@ -513,14 +513,14 @@ def render_resolution(width, height):
         rt.renderHeight = current_renderHeight
 
 
-def get_operators(members):
-    """Get Export Particles Operator.
+def get_tyflow_export_particle_operators(members):
+    """Get Tyflow Export Particles Operators.
 
     Args:
         members (list): Instance members.
 
     Returns:
-        list of particle operators
+        list: Particle operators
 
     """
     opt_list = []
@@ -546,7 +546,7 @@ def get_operators(members):
     return opt_list
 
 
-def reset_frame_range_tyFlow(members, frameStart, frameEnd):
+def reset_frame_range_tyflow(members, frameStart, frameEnd):
     """Reset frame range in Export Particles Operator(s).
 
     Args:

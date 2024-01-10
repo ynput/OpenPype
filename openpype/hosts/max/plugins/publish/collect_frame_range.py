@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import pyblish.api
 from pymxs import runtime as rt
-from openpype.hosts.max.api.lib import get_operators
+from openpype.hosts.max.api.lib import (
+    get_tyflow_export_particle_operators
+)
 
 
 class CollectFrameRange(pyblish.api.InstancePlugin):
@@ -22,7 +24,7 @@ class CollectFrameRange(pyblish.api.InstancePlugin):
 
         elif instance.data["family"] == "tycache":
             members = instance.data["members"]
-            for operator in get_operators(members):
+            for operator in get_tyflow_export_particle_operators(members):
                 _, start, end, operator_name = operator
                 instance.data[operator_name] = {}
                 instance.data[operator_name]["frameStartHandle"] = start
