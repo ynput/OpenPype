@@ -178,8 +178,6 @@ class InstallPySideToFusion(PreLaunchHook):
             return True
 
         except BaseException as exc:
-            print((
-                      "Failed to determine if root requires permissions."
-                      "Unexpected error: {}"
-                  ).format(exc))
+            print(("Failed to determine if root requires permissions."
+                   "Unexpected error: {}").format(exc))
             return False
