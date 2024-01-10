@@ -68,7 +68,7 @@ def csvpublish(
     pyblish_context = pyblish.api.Context()
     pyblish_context.data["create_context"] = create_context
 
-    # redefine targets
+    # redefine targets (skip 'local' to disable validators)
     if ignore_validators:
         targets = ["default", "ingest"]
 
