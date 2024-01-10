@@ -57,9 +57,23 @@ class CreateSaverPluginModel(BaseSettingsModel):
         enum_resolver=_create_saver_instance_attributes_enum,
         title="Instance attributes"
     )
-    image_format: str = Field(
-        enum_resolver=_image_format_enum,
-        title="Output Image Format"
+    output_formats: list[str] = Field(
+        default_factory=list,
+        title="Output formats"
+    )
+
+
+class HookOptionalModel(BaseSettingsModel):
+    enabled: bool = Field(
+        True,
+        title="Enabled"
+    )
+
+
+class HooksModel(BaseSettingsModel):
+    InstallPySideToFusion: HookOptionalModel = Field(
+        default_factory=HookOptionalModel,
+        title="Install PySide2"
     )
 
 
@@ -98,6 +112,10 @@ class FusionSettings(BaseSettingsModel):
         default_factory=CopyFusionSettingsModel,
         title="Local Fusion profile settings"
     )
+    hooks: HooksModel = Field(
+        default_factory=HooksModel,
+        title="Hooks"
+    )
     create: CreatPluginsModel = Field(
         default_factory=CreatPluginsModel,
         title="Creator plugins"
@@ -119,6 +137,11 @@ DEFAULT_VALUES = {
         "copy_path": "~/.openpype/hosts/fusion/profiles",
         "copy_status": False,
         "force_sync": False
+    },
+    "hooks": {
+        "InstallPySideToFusion": {
+            "enabled": True
+        }
     },
     "create": {
         "CreateSaver": {
