@@ -294,6 +294,37 @@ def reset_frame_range(fps: bool = True):
         frame_range["frameStartHandle"], frame_range["frameEndHandle"])
 
 
+def reset_unit_scale():
+    """Apply the unit scale setting to 3dsMax
+    """
+    project_name = get_current_project_name()
+    settings = get_project_settings(project_name).get("max")
+    scene_scale = settings.get("unit_scale_settings",
+                               {}).get("scene_unit_scale")
+    if scene_scale:
+        rt.units.DisplayType = rt.Name("Metric")
+        rt.units.MetricType = rt.Name(scene_scale)
+    else:
+        rt.units.DisplayType = rt.Name("Generic")
+
+
+def convert_unit_scale():
+    """Convert system unit scale in 3dsMax
+    for fbx export
+
+    Returns:
+        str: unit scale
+    """
+    unit_scale_dict = {
+        "millimeters": "mm",
+        "centimeters": "cm",
+        "meters": "m",
+        "kilometers": "km"
+    }
+    current_unit_scale = rt.Execute("units.MetricType as string")
+    return unit_scale_dict[current_unit_scale]
+
+
 def set_context_setting():
     """Apply the project settings from the project definition
 
@@ -310,6 +341,7 @@ def set_context_setting():
     reset_scene_resolution()
     reset_frame_range()
     reset_colorspace()
+    reset_unit_scale()
 
 
 def get_max_version():
