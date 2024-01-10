@@ -7,9 +7,21 @@ import six
 from ._api import get_server_api_connection
 from .utils import create_entity_id, convert_entity_id, slugify_string
 
-UNKNOWN_VALUE = object()
-PROJECT_PARENT_ID = object()
-_NOT_SET = object()
+
+class _CustomNone(object):
+    def __init__(self, name=None):
+        self._name = name or "CustomNone"
+
+    def __repr__(self):
+        return "<{}>".format(self._name)
+
+    def __bool__(self):
+        return False
+
+
+UNKNOWN_VALUE = _CustomNone("UNKNOWN_VALUE")
+PROJECT_PARENT_ID = _CustomNone("PROJECT_PARENT_ID")
+_NOT_SET = _CustomNone("_NOT_SET")
 
 
 class EntityHub(object):
@@ -1284,7 +1296,10 @@ class BaseEntity(object):
             changes["name"] = self._name
 
         if self._entity_hub.allow_data_changes:
-            if self._orig_data != self._data:
+            if (
+                self._data is not UNKNOWN_VALUE
+                and self._orig_data != self._data
+            ):
                 changes["data"] = self._data
 
         if self._orig_thumbnail_id != self._thumbnail_id:

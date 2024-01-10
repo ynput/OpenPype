@@ -611,16 +611,6 @@ def upload_installer(*args, **kwargs):
 
 
 # Dependency packages
-def get_dependencies_info(*args, **kwargs):
-    con = get_server_api_connection()
-    return con.get_dependencies_info(*args, **kwargs)
-
-
-def update_dependency_info(*args, **kwargs):
-    con = get_server_api_connection()
-    return con.update_dependency_info(*args, **kwargs)
-
-
 def download_dependency_package(*args, **kwargs):
     con = get_server_api_connection()
     return con.download_dependency_package(*args, **kwargs)

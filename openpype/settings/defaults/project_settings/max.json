@@ -1,4 +1,8 @@
 {
+    "unit_scale_settings": {
+        "enabled": true,
+        "scene_unit_scale": "Meters"
+    },
     "imageio": {
         "activate_host_color_management": true,
         "ocio_config": {
@@ -56,6 +60,31 @@
             "enabled": false,
             "optional": true,
             "family_plugins_mapping": []
+        },
+        "ExtractModelObj": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractModelFbx": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractModelUSD": {
+            "enabled": true,
+            "optional": true,
+            "active": false
+        },
+        "ExtractModel": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractMaxSceneRaw": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     }
 }

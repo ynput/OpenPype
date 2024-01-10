@@ -68,6 +68,28 @@ class PublishersModel(BaseSettingsModel):
         default_factory=ValidateLoadedPluginModel,
         title="Validate Loaded Plugin"
     )
+    ExtractModelObj: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract OBJ",
+        section="Extractors"
+    )
+    ExtractModelFbx: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract FBX"
+    )
+    ExtractModelUSD: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract Geometry (USD)"
+    )
+    ExtractModel: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract Geometry (Alembic)"
+    )
+    ExtractMaxSceneRaw: BasicValidateModel = Field(
+        default_factory=BasicValidateModel,
+        title="Extract Max Scene (Raw)"
+    )
+
 
 DEFAULT_PUBLISH_SETTINGS = {
     "ValidateFrameRange": {
@@ -83,5 +105,30 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": False,
         "optional": True,
         "family_plugins_mapping": []
+    },
+    "ExtractModelObj": {
+        "enabled": True,
+        "optional": True,
+        "active": False
+    },
+    "ExtractModelFbx": {
+        "enabled": True,
+        "optional": True,
+        "active": False
+    },
+    "ExtractModelUSD": {
+        "enabled": True,
+        "optional": True,
+        "active": False
+    },
+    "ExtractModel": {
+        "enabled": True,
+        "optional": True,
+        "active": True
+    },
+    "ExtractMaxSceneRaw": {
+        "enabled": True,
+        "optional": True,
+        "active": True
     }
 }

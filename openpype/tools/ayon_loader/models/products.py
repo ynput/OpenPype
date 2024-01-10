@@ -44,7 +44,7 @@ def version_item_from_entity(version):
     # NOTE There is also 'updatedAt', should be used that instead?
     # TODO skip conversion - converting to '%Y%m%dT%H%M%SZ' is because
     #   'PrettyTimeDelegate' expects it
-    created_at = arrow.get(version["createdAt"])
+    created_at = arrow.get(version["createdAt"]).to("local")
     published_time = created_at.strftime("%Y%m%dT%H%M%SZ")
     author = version["author"]
     version_num = version["version"]
