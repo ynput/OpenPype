@@ -17,7 +17,8 @@ class ExtractTyCache(publish.Extractor):
         self.get_export_particles_job_args(): sets up all job arguments
             for attributes to be exported in MAXscript
 
-        self.get_tyflow_export_particle_operators(): get the export_particle operator
+        self.get_tyflow_export_particle_operators(): get the
+            export_particle operator
 
         self.get_files(): get the files with tyFlow naming convention
             before publishing
@@ -40,7 +41,9 @@ class ExtractTyCache(publish.Extractor):
         with maintained_selection():
             tycache_info = self._tycache_info(
                 instance, members, stagingdir, export_mode)
-            for count, filenames, mesh_filename, node_name, job_args in tycache_info:
+            for count, filenames, mesh_filename, node_name, job_args in (
+                tycache_info
+            ):
                 for job in job_args:
                     rt.Execute(job)
                 if count > 1:
@@ -101,7 +104,8 @@ class ExtractTyCache(publish.Extractor):
             mesh_filename = f"{instance.name}_{name}__tyMesh.tyc"
             export_operator_count += 1
             tycache_info.append(
-                (export_operator_count, filenames, mesh_filename, name, job_args))
+                (export_operator_count, filenames,
+                 mesh_filename, name, job_args))
         return tycache_info
 
     def get_files(self, instance, operator, start_frame, end_frame):
