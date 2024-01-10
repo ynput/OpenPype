@@ -229,9 +229,15 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 }
 
             # Define version
+            version_number = None
             if self.follow_workfile_version:
-                version_number = context.data('version')
-            else:
+                version_number = context.data("version")
+
+            # Even if 'follow_workfile_version' is enabled, it may not be set
+            #   because workfile version was not collected to 'context.data'
+            # - that can happen e.g. in 'traypublisher' or other hosts without
+            #   a workfile
+            if version_number is None:
                 version_number = instance.data.get("version")
 
             # use latest version (+1) if already any exist
