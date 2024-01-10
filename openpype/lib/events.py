@@ -16,6 +16,113 @@ class MissingEventSystem(Exception):
     pass
 
 
+def _get_func_ref(func):
+    if inspect.ismethod(func):
+        return WeakMethod(func)
+    return weakref.ref(func)
+
+
+def _get_func_info(func):
+    path = "<unknown path>"
+    if func is None:
+        return "<unknown>", path
+
+    if hasattr(func, "__name__"):
+        name = func.__name__
+    else:
+        name = str(func)
+
+    # Get path to file and fallback to '<unknown path>' if fails
+    # NOTE This was added because of 'partial' functions which is handled,
+    #   but who knows what else can cause this to fail?
+    try:
+        path = os.path.abspath(inspect.getfile(func))
+    except TypeError:
+        pass
+
+    return name, path
+
+
+class weakref_partial:
+    """Partial function with weak reference to the wrapped function.
+
+    Can be used as 'functools.partial' but it will store weak reference to
+        function. That means that the function must be reference counted
+        to avoid garbage collecting the function itself.
+
+        When the referenced functions is garbage collected then calling the
+        weakref partial (no matter the args/kwargs passed) will do nothing.
+        It will fail silently, returning `None`. The `is_valid()` method can
+        be used to detect whether the reference is still valid.
+
+    Is useful for object methods. In that case the callback is
+        deregistered when object is destroyed.
+
+    Warnings:
+        Values passed as *args and **kwargs are stored strongly in memory.
+            That may "keep alive" objects that should be already destroyed.
+            It is recommended to pass only immutable objects like 'str',
+            'bool', 'int' etc.
+
+    Args:
+        func (Callable): Function to wrap.
+        *args: Arguments passed to the wrapped function.
+        **kwargs: Keyword arguments passed to the wrapped function.
+    """
+
+    def __init__(self, func, *args, **kwargs):
+        self._func_ref = _get_func_ref(func)
+        self._args = args
+        self._kwargs = kwargs
+
+    def __call__(self, *args, **kwargs):
+        func = self._func_ref()
+        if func is None:
+            return
+
+        new_args = tuple(list(self._args) + list(args))
+        new_kwargs = dict(self._kwargs)
+        new_kwargs.update(kwargs)
+        return func(*new_args, **new_kwargs)
+
+    def get_func(self):
+        """Get wrapped function.
+
+        Returns:
+            Union[Callable, None]: Wrapped function or None if it was
+                destroyed.
+        """
+
+        return self._func_ref()
+
+    def is_valid(self):
+        """Check if wrapped function is still valid.
+
+        Returns:
+            bool: Is wrapped function still valid.
+        """
+
+        return self._func_ref() is not None
+
+    def validate_signature(self, *args, **kwargs):
+        """Validate if passed arguments are supported by wrapped function.
+
+        Returns:
+            bool: Are passed arguments supported by wrapped function.
+        """
+
+        func = self._func_ref()
+        if func is None:
+            return False
+
+        new_args = tuple(list(self._args) + list(args))
+        new_kwargs = dict(self._kwargs)
+        new_kwargs.update(kwargs)
+        return is_func_signature_supported(
+            func, *new_args, **new_kwargs
+        )
+
+
 class EventCallback(object):
     """Callback registered to a topic.
 
@@ -34,20 +141,37 @@ class EventCallback(object):
     or none arguments. When 1 argument is expected then the processed 'Event'
     object is passed in.
 
-    The registered callbacks don't keep function in memory so it is not
-    possible to store lambda function as callback.
+    The callbacks are validated against their reference counter, that is
+        achieved using 'weakref' module. That means that the callback must
+        be stored in memory somewhere. e.g. lambda functions are not
+        supported as valid callback.
+
+    You can use 'weakref_partial' functions. In that case is partial object
+        stored in the callback object and reference counter is checked for
+        the wrapped function.
 
     Args:
-        topic(str): Topic which will be listened.
-        func(func): Callback to a topic.
+        topic (str): Topic which will be listened.
+        func (Callable): Callback to a topic.
+        order (Union[int, None]): Order of callback. Lower number means higher
+            priority.
 
     Raises:
         TypeError: When passed function is not a callable object.
     """
 
-    def __init__(self, topic, func):
+    def __init__(self, topic, func, order):
+        if not callable(func):
+            raise TypeError((
+                "Registered callback is not callable. \"{}\""
+            ).format(str(func)))
+
+        self._validate_order(order)
+
         self._log = None
         self._topic = topic
+        self._order = order
+        self._enabled = True
         # Replace '*' with any character regex and escape rest of text
         #   - when callback is registered for '*' topic it will receive all
         #       events
@@ -63,37 +187,38 @@ class EventCallback(object):
         topic_regex = re.compile(topic_regex_str)
         self._topic_regex = topic_regex
 
-        # Convert callback into references
-        #   - deleted functions won't cause crashes
-        if inspect.ismethod(func):
-            func_ref = WeakMethod(func)
-        elif callable(func):
-            func_ref = weakref.ref(func)
+        # Callback function prep
+        if isinstance(func, weakref_partial):
+            partial_func = func
+            (name, path) = _get_func_info(func.get_func())
+            func_ref = None
+            expect_args = partial_func.validate_signature("fake")
+            expect_kwargs = partial_func.validate_signature(event="fake")
+
         else:
-            raise TypeError((
-                "Registered callback is not callable. \"{}\""
-            ).format(str(func)))
+            partial_func = None
+            (name, path) = _get_func_info(func)
+            # Convert callback into references
+            #   - deleted functions won't cause crashes
+            func_ref = _get_func_ref(func)
 
-        # Collect function name and path to file for logging
-        func_name = func.__name__
-        func_path = os.path.abspath(inspect.getfile(func))
-
-        # Get expected arguments from function spec
-        # - positional arguments are always preferred
-        expect_args = is_func_signature_supported(func, "fake")
-        expect_kwargs = is_func_signature_supported(func, event="fake")
+            # Get expected arguments from function spec
+            # - positional arguments are always preferred
+            expect_args = is_func_signature_supported(func, "fake")
+            expect_kwargs = is_func_signature_supported(func, event="fake")
 
         self._func_ref = func_ref
-        self._func_name = func_name
-        self._func_path = func_path
+        self._partial_func = partial_func
+        self._ref_is_valid = True
         self._expect_args = expect_args
         self._expect_kwargs = expect_kwargs
-        self._ref_valid = func_ref is not None
-        self._enabled = True
+
+        self._name = name
+        self._path = path
 
     def __repr__(self):
         return "< {} - {} > {}".format(
-            self.__class__.__name__, self._func_name, self._func_path
+            self.__class__.__name__, self._name, self._path
         )
 
     @property
@@ -104,32 +229,83 @@ class EventCallback(object):
 
     @property
     def is_ref_valid(self):
-        return self._ref_valid
+        """
+
+        Returns:
+            bool: Is reference to callback valid.
+        """
+
+        self._validate_ref()
+        return self._ref_is_valid
 
     def validate_ref(self):
-        if not self._ref_valid:
-            return
+        """Validate if reference to callback is valid.
 
-        callback = self._func_ref()
-        if not callback:
-            self._ref_valid = False
+        Deprecated:
+            Reference is always live checkd with 'is_ref_valid'.
+        """
+
+        # Trigger validate by getting 'is_valid'
+        _ = self.is_ref_valid
 
     @property
     def enabled(self):
-        """Is callback enabled."""
+        """Is callback enabled.
+
+        Returns:
+            bool: Is callback enabled.
+        """
+
         return self._enabled
 
     def set_enabled(self, enabled):
-        """Change if callback is enabled."""
+        """Change if callback is enabled.
+
+        Args:
+            enabled (bool): Change enabled state of the callback.
+        """
+
         self._enabled = enabled
 
     def deregister(self):
         """Calling this function will cause that callback will be removed."""
-        # Fake reference
-        self._ref_valid = False
+
+        self._ref_is_valid = False
+        self._partial_func = None
+        self._func_ref = None
+
+    def get_order(self):
+        """Get callback order.
+
+        Returns:
+            Union[int, None]: Callback order.
+        """
+
+        return self._order
+
+    def set_order(self, order):
+        """Change callback order.
+
+        Args:
+            order (Union[int, None]): Order of callback. Lower number means
+                higher priority.
+        """
+
+        self._validate_order(order)
+        self._order = order
+
+    order = property(get_order, set_order)
 
     def topic_matches(self, topic):
-        """Check if event topic matches callback's topic."""
+        """Check if event topic matches callback's topic.
+
+        Args:
+            topic (str): Topic name.
+
+        Returns:
+            bool: Topic matches callback's topic.
+        """
+
         return self._topic_regex.match(topic)
 
     def process_event(self, event):
@@ -139,36 +315,69 @@ class EventCallback(object):
             event(Event): Event that was triggered.
         """
 
-        # Skip if callback is not enabled or has invalid reference
-        if not self._ref_valid or not self._enabled:
+        # Skip if callback is not enabled
+        if not self._enabled:
             return
 
-        # Get reference
-        callback = self._func_ref()
-        # Check if reference is valid or callback's topic matches the event
-        if not callback:
-            # Change state if is invalid so the callback is removed
-            self._ref_valid = False
+        # Get reference and skip if is not available
+        callback = self._get_callback()
+        if callback is None:
+            return
 
-        elif self.topic_matches(event.topic):
-            # Try execute callback
-            try:
-                if self._expect_args:
-                    callback(event)
+        if not self.topic_matches(event.topic):
+            return
 
-                elif self._expect_kwargs:
-                    callback(event=event)
+        # Try to execute callback
+        try:
+            if self._expect_args:
+                callback(event)
 
-                else:
-                    callback()
+            elif self._expect_kwargs:
+                callback(event=event)
 
-            except Exception:
-                self.log.warning(
-                    "Failed to execute event callback {}".format(
-                        str(repr(self))
-                    ),
-                    exc_info=True
-                )
+            else:
+                callback()
+
+        except Exception:
+            self.log.warning(
+                "Failed to execute event callback {}".format(
+                    str(repr(self))
+                ),
+                exc_info=True
+            )
+
+    def _validate_order(self, order):
+        if isinstance(order, int):
+            return
+
+        raise TypeError(
+            "Expected type 'int' got '{}'.".format(str(type(order)))
+        )
+
+    def _get_callback(self):
+        if self._partial_func is not None:
+            return self._partial_func
+
+        if self._func_ref is not None:
+            return self._func_ref()
+        return None
+
+    def _validate_ref(self):
+        if self._ref_is_valid is False:
+            return
+
+        if self._func_ref is not None:
+            self._ref_is_valid = self._func_ref() is not None
+
+        elif self._partial_func is not None:
+            self._ref_is_valid = self._partial_func.is_valid()
+
+        else:
+            self._ref_is_valid = False
+
+        if not self._ref_is_valid:
+            self._func_ref = None
+            self._partial_func = None
 
 
 # Inherit from 'object' for Python 2 hosts
@@ -282,30 +491,39 @@ class Event(object):
 class EventSystem(object):
     """Encapsulate event handling into an object.
 
-    System wraps registered callbacks and triggered events into single object
-    so it is possible to create mutltiple independent systems that have their
+    System wraps registered callbacks and triggered events into single object,
+    so it is possible to create multiple independent systems that have their
     topics and callbacks.
 
-
+    Callbacks are stored by order of their registration, but it is possible to
+    manually define order of callbacks using 'order' argument within
+    'add_callback'.
     """
+
+    default_order = 100
 
     def __init__(self):
         self._registered_callbacks = []
 
-    def add_callback(self, topic, callback):
+    def add_callback(self, topic, callback, order=None):
         """Register callback in event system.
 
         Args:
             topic (str): Topic for EventCallback.
-            callback (Callable): Function or method that will be called
-                when topic is triggered.
+            callback (Union[Callable, weakref_partial]): Function or method
+                that will be called when topic is triggered.
+            order (Optional[int]): Order of callback. Lower number means
+                higher priority.
 
         Returns:
             EventCallback: Created callback object which can be used to
                 stop listening.
         """
 
-        callback = EventCallback(topic, callback)
+        if order is None:
+            order = self.default_order
+
+        callback = EventCallback(topic, callback, order)
         self._registered_callbacks.append(callback)
         return callback
 
@@ -341,22 +559,6 @@ class EventSystem(object):
         event.emit()
         return event
 
-    def _process_event(self, event):
-        """Process event topic and trigger callbacks.
-
-        Args:
-            event (Event): Prepared event with topic and data.
-        """
-
-        invalid_callbacks = []
-        for callback in self._registered_callbacks:
-            callback.process_event(event)
-            if not callback.is_ref_valid:
-                invalid_callbacks.append(callback)
-
-        for callback in invalid_callbacks:
-            self._registered_callbacks.remove(callback)
-
     def emit_event(self, event):
         """Emit event object.
 
@@ -365,6 +567,21 @@ class EventSystem(object):
         """
 
         self._process_event(event)
+
+    def _process_event(self, event):
+        """Process event topic and trigger callbacks.
+
+        Args:
+            event (Event): Prepared event with topic and data.
+        """
+
+        callbacks = tuple(sorted(
+            self._registered_callbacks, key=lambda x: x.order
+        ))
+        for callback in callbacks:
+            callback.process_event(event)
+            if not callback.is_ref_valid:
+                self._registered_callbacks.remove(callback)
 
 
 class QueuedEventSystem(EventSystem):
