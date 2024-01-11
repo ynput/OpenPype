@@ -12,6 +12,7 @@ from openpype.pipeline.publish import (
     PublishValidationError,
 )
 from openpype.hosts.maya.api import lib
+from openpype.hosts.maya.api.lib_rendersettings import RenderSettings
 
 
 def convert_to_int_or_float(string_value):
@@ -129,13 +130,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         layer = instance.data['renderlayer']
         cameras = instance.data.get("cameras", [])
 
-        # Get the node attributes for current renderer
-        attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS['default'])
         # Prefix attribute can return None when a value was never set
         prefix = lib.get_attr_in_layer(cls.ImagePrefixes[renderer],
                                        layer=layer) or ""
-        padding = lib.get_attr_in_layer("{node}.{padding}".format(**attrs),
-                                        layer=layer)
+        padding = lib.get_attr_in_layer(
+            attr=RenderSettings.get_padding_attr(renderer),
+            layer=layer
+        )
 
         anim_override = lib.get_attr_in_layer("defaultRenderGlobals.animation",
                                               layer=layer)
@@ -370,10 +371,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 continue
             for node in data["nodes"]:
                 lib.set_attribute(data["attribute"], data["values"][0], node)
-
         with lib.renderlayer(layer_node):
-            default = lib.RENDER_ATTRS['default']
-            render_attrs = lib.RENDER_ATTRS.get(renderer, default)
 
             # Repair animation must be enabled
             cmds.setAttr("defaultRenderGlobals.animation", True)
@@ -391,17 +389,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         default_prefix = default_prefix.replace(variant, "")
 
             if renderer != "renderman":
-                node = render_attrs["node"]
-                prefix_attr = render_attrs["prefix"]
-
+                prefix_attr = RenderSettings.get_image_prefix_attr(renderer)
                 fname_prefix = default_prefix
-                cmds.setAttr("{}.{}".format(node, prefix_attr),
-                             fname_prefix, type="string")
+                cmds.setAttr(prefix_attr, fname_prefix, type="string")
 
                 # Repair padding
-                padding_attr = render_attrs["padding"]
-                cmds.setAttr("{}.{}".format(node, padding_attr),
-                             cls.DEFAULT_PADDING)
+                padding_attr = RenderSettings.get_padding_attr(renderer)
+                cmds.setAttr(padding_attr, cls.DEFAULT_PADDING)
             else:
                 # renderman handles stuff differently
                 cmds.setAttr("rmanGlobals.imageFileFormat",

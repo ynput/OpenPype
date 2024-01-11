@@ -39,6 +39,24 @@ class CreateSaverPluginModel(BaseSettingsModel):
         enum_resolver=_create_saver_instance_attributes_enum,
         title="Instance attributes"
     )
+    output_formats: list[str] = Field(
+        default_factory=list,
+        title="Output formats"
+    )
+
+
+class HookOptionalModel(BaseSettingsModel):
+    enabled: bool = Field(
+        True,
+        title="Enabled"
+    )
+
+
+class HooksModel(BaseSettingsModel):
+    InstallPySideToFusion: HookOptionalModel = Field(
+        default_factory=HookOptionalModel,
+        title="Install PySide2"
+    )
 
 
 class CreatPluginsModel(BaseSettingsModel):
@@ -56,6 +74,10 @@ class FusionSettings(BaseSettingsModel):
     copy_fusion_settings: CopyFusionSettingsModel = Field(
         default_factory=CopyFusionSettingsModel,
         title="Local Fusion profile settings"
+    )
+    hooks: HooksModel = Field(
+        default_factory=HooksModel,
+        title="Hooks"
     )
     create: CreatPluginsModel = Field(
         default_factory=CreatPluginsModel,
@@ -79,6 +101,11 @@ DEFAULT_VALUES = {
         "copy_status": False,
         "force_sync": False
     },
+    "hooks": {
+        "InstallPySideToFusion": {
+            "enabled": True
+        }
+    },
     "create": {
         "CreateSaver": {
             "temp_rendering_path_template": "{workdir}/renders/fusion/{product[name]}/{product[name]}.{frame}.{ext}",
@@ -89,6 +116,15 @@ DEFAULT_VALUES = {
             "instance_attributes": [
                 "reviewable",
                 "farm_rendering"
+            ],
+            "output_formats": [
+                "exr",
+                "jpg",
+                "jpeg",
+                "jpg",
+                "tiff",
+                "png",
+                "tga"
             ]
         }
     }

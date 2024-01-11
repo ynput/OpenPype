@@ -276,7 +276,7 @@ class ExtractSlateFrame(publish.Extractor):
 
         if not matching_repre:
             self.log.info(
-                "Matching reresentation was not found."
+                "Matching representation was not found."
                 " Representation files were not filled with slate."
             )
             return
@@ -294,7 +294,7 @@ class ExtractSlateFrame(publish.Extractor):
             self.log.debug(
                 "__ matching_repre: {}".format(pformat(matching_repre)))
 
-        self.log.warning("Added slate frame to representation files")
+        self.log.info("Added slate frame to representation files")
 
     def add_comment_slate_node(self, instance, node):
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.17.5" # OpenPype
+version = "3.18.2" # OpenPype
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -181,3 +181,8 @@ reportMissingTypeStubs = false
 
 [tool.poetry.extras]
 docs = ["Sphinx", "furo", "sphinxcontrib-napoleon"]
+
+[tool.pydocstyle]
+inherit = false
+convetion = "google"
+match = "(?!test_).*\\.py"

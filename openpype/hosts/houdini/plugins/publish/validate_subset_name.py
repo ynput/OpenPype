@@ -54,12 +54,13 @@ class ValidateSubsetName(pyblish.api.InstancePlugin,
         rop_node = hou.node(instance.data["instance_node"])
 
         # Check subset name
+        asset_doc = instance.data["assetEntity"]
         subset_name = get_subset_name(
             family=instance.data["family"],
             variant=instance.data["variant"],
             task_name=instance.data["task"],
-            asset_doc=instance.data["assetEntity"],
-            dynamic_data={"asset": instance.data["asset"]}
+            asset_doc=asset_doc,
+            dynamic_data={"asset": asset_doc["name"]}
         )
 
         if instance.data.get("subset") != subset_name:
@@ -76,12 +77,13 @@ class ValidateSubsetName(pyblish.api.InstancePlugin,
         rop_node = hou.node(instance.data["instance_node"])
 
         # Check subset name
+        asset_doc = instance.data["assetEntity"]
         subset_name = get_subset_name(
             family=instance.data["family"],
             variant=instance.data["variant"],
             task_name=instance.data["task"],
-            asset_doc=instance.data["assetEntity"],
-            dynamic_data={"asset": instance.data["asset"]}
+            asset_doc=asset_doc,
+            dynamic_data={"asset": asset_doc["name"]}
         )
 
         instance.data["subset"] = subset_name

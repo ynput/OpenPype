@@ -104,7 +104,7 @@ DEFAULT_WORKFILE_SETTING = {
                 {
                     "product_name_filters": [],
                     "product_types": [
-                        "sedress"
+                        "setdress"
                     ],
                     "repre_names": [
                         "ma"

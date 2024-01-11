@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Base class for Pype Modules."""
+"""Base class for AYON addons."""
 import copy
 import os
 import sys
@@ -11,6 +11,7 @@ import platform
 import threading
 import collections
 import traceback
+
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 
@@ -29,9 +30,12 @@ from openpype.settings import (
 
 from openpype.settings.lib import (
     get_studio_system_settings_overrides,
-    load_json_file
+    load_json_file,
 )
-from openpype.settings.ayon_settings import is_dev_mode_enabled
+from openpype.settings.ayon_settings import (
+    is_dev_mode_enabled,
+    get_ayon_settings,
+)
 
 from openpype.lib import (
     Logger,
@@ -47,11 +51,11 @@ from .interfaces import (
     ITrayService
 )
 
-# Files that will be always ignored on modules import
+# Files that will be always ignored on addons import
 IGNORED_FILENAMES = (
     "__pycache__",
 )
-# Files ignored on modules import from "./openpype/modules"
+# Files ignored on addons import from "./openpype/modules"
 IGNORED_DEFAULT_FILENAMES = (
     "__init__.py",
     "base.py",
@@ -59,14 +63,18 @@ IGNORED_DEFAULT_FILENAMES = (
     "example_addons",
     "default_modules",
 )
-# Modules that won't be loaded in AYON mode from "./openpype/modules"
-# - the same modules are ignored in "./server_addon/create_ayon_addons.py"
+# Addons that won't be loaded in AYON mode from "./openpype/modules"
+# - the same addons are ignored in "./server_addon/create_ayon_addons.py"
 IGNORED_FILENAMES_IN_AYON = {
     "ftrack",
     "shotgrid",
     "sync_server",
     "slack",
     "kitsu",
+}
+IGNORED_HOSTS_IN_AYON = {
+    "flame",
+    "harmony",
 }
 
 
@@ -466,7 +474,7 @@ def _load_ayon_addons(openpype_modules, modules_key, log):
                     attr = getattr(mod, attr_name)
                     if (
                         inspect.isclass(attr)
-                        and issubclass(attr, OpenPypeModule)
+                        and issubclass(attr, AYONAddon)
                     ):
                         imported_modules.append(mod)
                         break
@@ -536,6 +544,11 @@ def _load_modules():
     addons_dir = os.path.join(os.path.dirname(current_dir), "addons")
     module_dirs.append(addons_dir)
 
+    ignored_host_names = set(IGNORED_HOSTS_IN_AYON)
+    ignored_current_dir_filenames = set(IGNORED_DEFAULT_FILENAMES)
+    if AYON_SERVER_ENABLED:
+        ignored_current_dir_filenames |= IGNORED_FILENAMES_IN_AYON
+
     processed_paths = set()
     for dirpath in frozenset(module_dirs):
         # Skip already processed paths
@@ -551,9 +564,6 @@ def _load_modules():
 
         is_in_current_dir = dirpath == current_dir
         is_in_host_dir = dirpath == hosts_dir
-        ignored_current_dir_filenames = set(IGNORED_DEFAULT_FILENAMES)
-        if AYON_SERVER_ENABLED:
-            ignored_current_dir_filenames |= IGNORED_FILENAMES_IN_AYON
 
         for filename in os.listdir(dirpath):
             # Ignore filenames
@@ -563,6 +573,12 @@ def _load_modules():
             if (
                 is_in_current_dir
                 and filename in ignored_current_dir_filenames
+            ):
+                continue
+
+            if (
+                is_in_host_dir
+                and filename in ignored_host_names
             ):
                 continue
 
@@ -633,25 +649,21 @@ def _load_modules():
 
 
 @six.add_metaclass(ABCMeta)
-class OpenPypeModule:
-    """Base class of pype module.
+class AYONAddon(object):
+    """Base class of AYON addon.
 
     Attributes:
-        id (UUID): Module's id.
-        enabled (bool): Is module enabled.
-        name (str): Module name.
-        manager (ModulesManager): Manager that created the module.
+        id (UUID): Addon object id.
+        enabled (bool): Is addon enabled.
+        name (str): Addon name.
+
+    Args:
+        manager (ModulesManager): Manager object who discovered addon.
+        settings (dict[str, Any]): AYON settings.
     """
 
-    # Disable by default
-    enabled = False
+    enabled = True
     _id = None
-
-    @property
-    @abstractmethod
-    def name(self):
-        """Module's name."""
-        pass
 
     def __init__(self, manager, settings):
         self.manager = manager
@@ -662,22 +674,45 @@ class OpenPypeModule:
 
     @property
     def id(self):
+        """Random id of addon object.
+
+        Returns:
+            str: Object id.
+        """
+
         if self._id is None:
             self._id = uuid4()
         return self._id
 
+    @property
     @abstractmethod
-    def initialize(self, module_settings):
-        """Initialization of module attributes.
+    def name(self):
+        """Addon name.
 
-        It is not recommended to override __init__ that's why specific method
-        was implemented.
+        Returns:
+            str: Addon name.
         """
 
         pass
 
-    def connect_with_modules(self, enabled_modules):
-        """Connect with other enabled modules."""
+    def initialize(self, settings):
+        """Initialization of module attributes.
+
+        It is not recommended to override __init__ that's why specific method
+        was implemented.
+
+        Args:
+            settings (dict[str, Any]): Settings.
+        """
+
+        pass
+
+    def connect_with_modules(self, enabled_addons):
+        """Connect with other enabled addons.
+
+        Args:
+            enabled_addons (list[AYONAddon]): Addons that are enabled.
+        """
 
         pass
 
@@ -685,6 +720,9 @@ class OpenPypeModule:
         """Get global environments values of module.
 
         Environment variables that can be get only from system settings.
+
+        Returns:
+            dict[str, str]: Environment variables.
         """
 
         return {}
@@ -697,7 +735,7 @@ class OpenPypeModule:
 
         Args:
             application (Application): Application that is launched.
-            env (dict): Current environment variables.
+            env (dict[str, str]): Current environment variables.
         """
 
         pass
@@ -713,7 +751,8 @@ class OpenPypeModule:
         to receive from 'host' object.
 
         Args:
-            host (ModuleType): Access to installed/registered host object.
+            host (Union[ModuleType, HostBase]): Access to installed/registered
+                host object.
             host_name (str): Name of host.
             project_name (str): Project name which is main part of host
                 context.
@@ -727,47 +766,66 @@ class OpenPypeModule:
         The best practise is to create click group for whole module which is
         used to separate commands.
 
-        class MyPlugin(OpenPypeModule):
-            ...
-            def cli(self, module_click_group):
-                module_click_group.add_command(cli_main)
+        Example:
+            class MyPlugin(AYONAddon):
+                ...
+                def cli(self, module_click_group):
+                    module_click_group.add_command(cli_main)
 
 
-        @click.group(<module name>, help="<Any help shown in cmd>")
-        def cli_main():
-            pass
+            @click.group(<module name>, help="<Any help shown in cmd>")
+            def cli_main():
+                pass
 
-        @cli_main.command()
-        def mycommand():
-            print("my_command")
+            @cli_main.command()
+            def mycommand():
+                print("my_command")
+
+        Args:
+            module_click_group (click.Group): Group to which can be added
+                commands.
         """
 
         pass
+
+
+class OpenPypeModule(AYONAddon):
+    """Base class of OpenPype module.
+
+    Instead of 'AYONAddon' are passed in module settings.
+
+    Args:
+        manager (ModulesManager): Manager object who discovered addon.
+        settings (dict[str, Any]): OpenPype settings.
+    """
+
+    # Disable by default
+    enabled = False
 
 
 class OpenPypeAddOn(OpenPypeModule):
     # Enable Addon by default
     enabled = True
 
-    def initialize(self, module_settings):
-        """Initialization is not be required for most of addons."""
-        pass
-
 
 class ModulesManager:
     """Manager of Pype modules helps to load and prepare them to work.
 
     Args:
-        modules_settings(dict): To be able create module manager with specified
-            data. For settings changes callbacks and testing purposes.
+        system_settings (Optional[dict[str, Any]]): OpenPype system settings.
+        ayon_settings (Optional[dict[str, Any]]): AYON studio settings.
     """
+
     # Helper attributes for report
     _report_total_key = "Total"
+    _system_settings = None
+    _ayon_settings = None
 
-    def __init__(self, _system_settings=None):
+    def __init__(self, system_settings=None, ayon_settings=None):
         self.log = logging.getLogger(self.__class__.__name__)
 
-        self._system_settings = _system_settings
+        self._system_settings = system_settings
+        self._ayon_settings = ayon_settings
 
         self.modules = []
         self.modules_by_id = {}
@@ -789,8 +847,9 @@ class ModulesManager:
             default (Any): Default output if module is not available.
 
         Returns:
-            Union[OpenPypeModule, None]: Module found by name or None.
+            Union[AYONAddon, None]: Module found by name or None.
         """
+
         return self.modules_by_name.get(module_name, default)
 
     def get_enabled_module(self, module_name, default=None):
@@ -804,7 +863,7 @@ class ModulesManager:
                 not enabled.
 
         Returns:
-            Union[OpenPypeModule, None]: Enabled module found by name or None.
+            Union[AYONAddon, None]: Enabled module found by name or None.
         """
 
         module = self.get(module_name)
@@ -819,11 +878,20 @@ class ModulesManager:
 
         import openpype_modules
 
-        self.log.debug("*** Pype modules initialization.")
+        self.log.debug("*** {} initialization.".format(
+            "AYON addons"
+            if AYON_SERVER_ENABLED
+            else "OpenPype modules"
+        ))
         # Prepare settings for modules
-        system_settings = getattr(self, "_system_settings", None)
+        system_settings = self._system_settings
         if system_settings is None:
             system_settings = get_system_settings()
+
+        ayon_settings = self._ayon_settings
+        if AYON_SERVER_ENABLED and ayon_settings is None:
+            ayon_settings = get_ayon_settings()
+
         modules_settings = system_settings["modules"]
 
         report = {}
@@ -836,12 +904,13 @@ class ModulesManager:
             for name in dir(module):
                 modules_item = getattr(module, name, None)
                 # Filter globals that are not classes which inherit from
-                #   OpenPypeModule
+                #   AYONAddon
                 if (
                     not inspect.isclass(modules_item)
+                    or modules_item is AYONAddon
                     or modules_item is OpenPypeModule
                     or modules_item is OpenPypeAddOn
-                    or not issubclass(modules_item, OpenPypeModule)
+                    or not issubclass(modules_item, AYONAddon)
                 ):
                     continue
 
@@ -866,10 +935,14 @@ class ModulesManager:
                 module_classes.append(modules_item)
 
         for modules_item in module_classes:
+            is_openpype_module = issubclass(modules_item, OpenPypeModule)
+            settings = (
+                modules_settings if is_openpype_module else ayon_settings
+            )
+            name = modules_item.__name__
             try:
-                name = modules_item.__name__
                 # Try initialize module
-                module = modules_item(self, modules_settings)
+                module = modules_item(self, settings)
                 # Store initialized object
                 self.modules.append(module)
                 self.modules_by_id[module.id] = module
@@ -924,8 +997,9 @@ class ModulesManager:
         """Enabled modules initialized by the manager.
 
         Returns:
-            list: Initialized and enabled modules.
+            list[AYONAddon]: Initialized and enabled modules.
         """
+
         return [
             module
             for module in self.modules
@@ -1108,7 +1182,7 @@ class ModulesManager:
             host_name (str): Host name for which is found host module.
 
         Returns:
-            OpenPypeModule: Found host module by name.
+            AYONAddon: Found host module by name.
             None: There was not found module inheriting IHostAddon which has
                 host name set to passed 'host_name'.
         """
@@ -1129,12 +1203,11 @@ class ModulesManager:
                 inheriting 'IHostAddon'.
         """
 
-        host_names = {
+        return {
             module.host_name
             for module in self.get_enabled_modules()
             if isinstance(module, IHostAddon)
         }
-        return host_names
 
     def print_report(self):
         """Print out report of time spent on modules initialization parts.
@@ -1290,6 +1363,10 @@ class TrayModulesManager(ModulesManager):
         callback can be defined with `doubleclick_callback` attribute.
 
         Missing feature how to define default callback.
+
+        Args:
+            addon (AYONAddon): Addon object.
+            callback (FunctionType): Function callback.
         """
         callback_name = "_".join([module.name, callback.__name__])
         if callback_name not in self.doubleclick_callbacks:
@@ -1310,11 +1387,17 @@ class TrayModulesManager(ModulesManager):
         self.tray_menu(tray_menu)
 
     def get_enabled_tray_modules(self):
-        output = []
-        for module in self.modules:
-            if module.enabled and isinstance(module, ITrayModule):
-                output.append(module)
-        return output
+        """Enabled tray modules.
+
+        Returns:
+            list[AYONAddon]: Enabled addons that inherit from tray interface.
+        """
+
+        return [
+            module
+            for module in self.modules
+            if module.enabled and isinstance(module, ITrayModule)
+        ]
 
     def restart_tray(self):
         if self.tray_manager:

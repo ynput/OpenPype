@@ -138,16 +138,22 @@ def _template_replacements_to_v3(template):
     )
 
 
-def _convert_template_item(template):
-    # Others won't have 'directory'
-    if "directory" not in template:
-        return
-    folder = _template_replacements_to_v3(template.pop("directory"))
-    template["folder"] = folder
-    template["file"] = _template_replacements_to_v3(template["file"])
-    template["path"] = "/".join(
-        (folder, template["file"])
-    )
+def _convert_template_item(template_item):
+    for key, value in tuple(template_item.items()):
+        template_item[key] = _template_replacements_to_v3(value)
+
+    # Change 'directory' to 'folder'
+    if "directory" in template_item:
+        template_item["folder"] = template_item.pop("directory")
+
+    if (
+        "path" not in template_item
+        and "file" in template_item
+        and "folder" in template_item
+    ):
+        template_item["path"] = "/".join(
+            (template_item["folder"], template_item["file"])
+        )
 
 
 def _fill_template_category(templates, cat_templates, cat_key):
@@ -212,10 +218,27 @@ def convert_v4_project_to_v3(project):
             _convert_template_item(template)
             new_others_templates[name] = template
 
+        staging_templates = templates.pop("staging", None)
+        # Key 'staging_directories' is legacy key that changed
+        #   to 'staging_dir'
+        _legacy_staging_templates = templates.pop("staging_directories", None)
+        if staging_templates is None:
+            staging_templates = _legacy_staging_templates
+
+        if staging_templates is None:
+            staging_templates = {}
+
+        # Prefix all staging template names with 'staging_' prefix
+        #   and add them to 'others'
+        for name, template in staging_templates.items():
+            _convert_template_item(template)
+            new_name = "staging_{}".format(name)
+            new_others_templates[new_name] = template
+
         for key in (
             "work",
             "publish",
-            "hero"
+            "hero",
         ):
             cat_templates = templates.pop(key)
             _fill_template_category(templates, cat_templates, key)
@@ -583,7 +606,7 @@ def convert_v4_version_to_v3(version):
             output_data[dst_key] = version[src_key]
 
     if "createdAt" in version:
-        created_at = arrow.get(version["createdAt"])
+        created_at = arrow.get(version["createdAt"]).to("local")
         output_data["time"] = created_at.strftime("%Y%m%dT%H%M%SZ")
 
     output["data"] = output_data

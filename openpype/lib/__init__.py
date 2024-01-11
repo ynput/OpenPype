@@ -111,6 +111,7 @@ from .transcoding import (
     get_ffmpeg_format_args,
     convert_ffprobe_fps_value,
     convert_ffprobe_fps_to_float,
+    get_rescaled_command_arguments,
 )
 
 from .local_settings import (
@@ -232,6 +233,7 @@ __all__ = [
     "get_ffmpeg_format_args",
     "convert_ffprobe_fps_value",
     "convert_ffprobe_fps_to_float",
+    "get_rescaled_command_arguments",
 
     "IniSettingRegistry",
     "JSONSettingRegistry",

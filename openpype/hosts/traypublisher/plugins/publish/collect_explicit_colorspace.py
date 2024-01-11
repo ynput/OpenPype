@@ -5,6 +5,7 @@ from openpype.pipeline import (
 )
 from openpype.lib import EnumDef
 from openpype.pipeline import colorspace
+from openpype.pipeline.publish import KnownPublishError
 
 
 class CollectColorspace(pyblish.api.InstancePlugin,
@@ -26,18 +27,44 @@ class CollectColorspace(pyblish.api.InstancePlugin,
 
     def process(self, instance):
         values = self.get_attr_values_from_data(instance.data)
-        colorspace = values.get("colorspace", None)
-        if colorspace is None:
+        colorspace_value = values.get("colorspace", None)
+        if colorspace_value is None:
             return
 
-        self.log.debug("Explicit colorspace set to: {}".format(colorspace))
+        color_data = colorspace.convert_colorspace_enumerator_item(
+            colorspace_value, self.config_items)
+
+        colorspace_name = self._colorspace_name_by_type(color_data)
+        self.log.debug("Explicit colorspace name: {}".format(colorspace_name))
 
         context = instance.context
         for repre in instance.data.get("representations", {}):
             self.set_representation_colorspace(
                 representation=repre,
                 context=context,
-                colorspace=colorspace
+                colorspace=colorspace_name
+            )
+
+    def _colorspace_name_by_type(self, colorspace_data):
+        """
+        Returns colorspace name by type
+
+        Arguments:
+            colorspace_data (dict): colorspace data
+
+        Returns:
+            str: colorspace name
+        """
+        if colorspace_data["type"] == "colorspaces":
+            return colorspace_data["name"]
+        elif colorspace_data["type"] == "roles":
+            return colorspace_data["colorspace"]
+        else:
+            raise KnownPublishError(
+                (
+                    "Collecting of colorspace failed. used config is missing "
+                    "colorspace type: '{}' . Please contact your pipeline TD."
+                ).format(colorspace_data['type'])
             )
 
     @classmethod
