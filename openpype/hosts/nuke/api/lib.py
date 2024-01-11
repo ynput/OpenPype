@@ -3494,11 +3494,8 @@ def create_camera_node_by_version():
     Returns:
         Node: camera node
     """
-    nuke_version = nuke.NUKE_VERSION_STRING
-    nuke_number_version = next(
-        ver for ver in re.findall(
-            r"\d+\.\d+", nuke_version))
-    if float(nuke_number_version) >= 14.0:
+    nuke_number_version = nuke.NUKE_VERSION_MAJOR
+    if nuke_number_version >= 14:
         return nuke.createNode("Camera4")
     else:
         return nuke.createNode("Camera2")
