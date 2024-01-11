@@ -1,5 +1,6 @@
 import subprocess
 from openpype.lib.applications import PreLaunchHook, LaunchTypes
+from openpype.tests.lib import is_in_tests
 
 
 class LaunchNewConsoleApps(PreLaunchHook):
@@ -20,16 +21,16 @@ class LaunchNewConsoleApps(PreLaunchHook):
     launch_types = {LaunchTypes.local}
 
     def execute(self):
+        # Disable this plugin when doing tests.
+        if is_in_tests():
+            return
+
         # Change `creationflags` to CREATE_NEW_CONSOLE
         # - on Windows some apps will create new window using its console
         # Set `stdout` and `stderr` to None so new created console does not
         #   have redirected output to DEVNULL in build
         self.launch_context.kwargs.update({
-            "creationflags": subprocess.CREATE_NEW_CONSOLE
+            "creationflags": subprocess.CREATE_NEW_CONSOLE,
+            "stdout": None,
+            "stderr": None
         })
-
-        if "stdout" not in self.launch_context.kwargs:
-            self.launch_context.kwargs["stdout"] = None
-
-        if "stderr"not in self.launch_context.kwargs:
-            self.launch_context.kwargs["stderr"] = None
