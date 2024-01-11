@@ -931,6 +931,26 @@
                     "type": "dict",
                     "collapsible": true,
                     "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackSourceWorkfile",
+                    "label": "IntegrateFtrackSourceWorkfile",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "full_path",
+                            "label": "Full Path"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
                     "key": "ValidateFtrackAttributes",
                     "label": "ValidateFtrackAttributes",
                     "is_group": true,
