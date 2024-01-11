@@ -61,6 +61,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin,
         for item in include_handles_settings["per_task_type"]:
             if current_task in item["task_type"]:
                 include_task_handles = item["include_handles"]
+                break
+
         # if we exclude, initialize handles values to origin(frame start, frame end)
         if not include_task_handles:
             context.data["frameStartHandle"] = int(context.data.get("frameStart"))
