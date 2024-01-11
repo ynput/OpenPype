@@ -31,6 +31,11 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
     @classmethod
     def get_invalid(cls, instance):
         invalid = []
+        if rt.units.DisplayType != rt.Name("Generic"):
+            cls.log.warning(
+                "Generic Type is not used as a scene unit\n\n"
+                "sure you tweak the settings with your own values\n\n"
+                "before validation.")
         cameras = instance.data["members"]
         project_settings = instance.context.data["project_settings"].get("max")
         cam_attr_settings = (
@@ -43,13 +48,12 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
                 continue
             for attr in cls.DEFAULTS:
                 default_value = cam_attr_settings.get(attr)
-                cls.log.debug(f"default value: {default_value}")
                 if default_value == float(0):
                     cls.log.debug(
                         f"the value of {attr} in setting set to"
                         " zero. Skipping the check.")
                     continue
-                if rt.getProperty(camera, attr) != default_value:
+                if round(rt.getProperty(camera, attr), 1) != default_value:
                     cls.log.error(
                         f"Invalid attribute value for {camera.name}:{attr} "
                         f"(should be: {default_value}))")
