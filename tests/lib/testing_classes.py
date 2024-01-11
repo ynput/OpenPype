@@ -404,12 +404,10 @@ class PublishTest(ModuleUnitTest):
         print("Publish finished")
 
         if launched_app.returncode != 0:
-            stderr = None
             with open(stderr_path, "r") as f:
                 stderr = f.read()
             raise ValueError("Launched app errored:\n{}".format(stderr))
 
-        stdout = None
         with open(stdout_path, "r") as f:
             stdout = f.read()
 
