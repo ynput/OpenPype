@@ -222,8 +222,8 @@
             "label": "Include/Exclude Handles in default playback & render range",
             "children": [
                 {
-                            "type": "label",
-                            "label": "WARNING: Do not add the same task twice."
+                    "type": "label",
+                    "label": "WARNING: Do not add the same task in multiple items of the include/exclude list below."
                 },
                 {
                     "key": "include_handles_default",
