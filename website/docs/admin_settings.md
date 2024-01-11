@@ -7,7 +7,7 @@ sidebar_label: Working with settings
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-OpenPype stores all of its settings and configuration in the mongo database. To make the configuration as easy as possible we provide a robust GUI where you can access and change everything that is configurable
+OpenPype stores all of its settings and configuration in the database. To make the configuration as easy as possible we provide a robust GUI where you can access and change everything that is configurable
 
 **Settings** GUI can be started from the tray menu *Admin -> Studio Settings*.
 
