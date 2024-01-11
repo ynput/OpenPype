@@ -80,6 +80,10 @@
                 "maximum": 100.0
             },
             {
+                "type": "label",
+                "label": "If the value of the camera attributes set to 0, the system automatically skips checking it"
+            },
+            {
                 "type": "number",
                 "key": "nearrange",
                 "label": "Near Range",

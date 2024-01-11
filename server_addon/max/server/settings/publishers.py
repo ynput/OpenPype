@@ -76,7 +76,11 @@ class PublishersModel(BaseSettingsModel):
     )
     ValidateCameraAttributes: ValidateCameraAttributesModel = Field(
         default_factory=ValidateCameraAttributesModel,
-        title="Validate Camera Attributes"
+        title="Validate Camera Attributes",
+        description=(
+            "If the value of the camera attributes set to 0, "
+            "the system automatically skips checking it"
+        )
     )
     ValidateLoadedPlugin: ValidateLoadedPluginModel = Field(
         default_factory=ValidateLoadedPluginModel,

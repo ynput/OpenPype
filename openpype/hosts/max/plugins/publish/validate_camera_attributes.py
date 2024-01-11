@@ -18,7 +18,7 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
     order = pyblish.api.ValidatorOrder
     families = ['camera']
     hosts = ['max']
-    label = 'Camera Attributes'
+    label = 'Validate Camera Attributes'
     actions = [SelectInvalidAction]
     optional = True
 
@@ -42,9 +42,14 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
                 continue
             for attr in cls.DEFAULTS:
                 default_value = cam_attr_settings.get(attr)
+                if default_value == 0:
+                    cls.log.debug(
+                        f"the value of {attr} in setting set to"
+                        " zero. Skipping the check..")
+                    continue
                 if rt.getProperty(camera, attr) != default_value:
                     cls.log.error(
-                        f"Invalid attribute value: {attr} "
+                        f"Invalid attribute value for {camera.name}:{attr} "
                         f"(should be: {default_value}))")
                     invalid.append(camera)
 
@@ -58,4 +63,4 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
 
         if invalid:
             raise PublishValidationError(
-                f"Invalid camera attributes: {invalid}")
+                "Invalid camera attributes found. See log.")
