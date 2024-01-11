@@ -29,7 +29,8 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     PERSIST = False
 
     TEST_FILES = [
-        ("test_publish_in_maya", "", "")
+        ("test_publish_in_maya", "", ""),
+        ("shared", "", "")
     ]
 
     # By default run through mayapy. For interactive mode, change to "maya" or
