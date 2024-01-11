@@ -336,6 +336,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             return
 
         project_name = instance.context.data["projectName"]
+        # OpenPype approach vs AYON approach
         if "/" not in asset_name:
             tasks_info = self._find_tasks_info_in_hierarchy(
                 hierarchy_context, asset_name
@@ -344,7 +345,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             current_data = hierarchy_context.get(project_name, {})
             for key in asset_name.split("/"):
                 if key:
-                   current_data = current_data.get(key, {})
+                    current_data = current_data.get("childs", {}).get(key, {})
             tasks_info = current_data.get("tasks", {})
 
         task_info = tasks_info.get(task_name, {})
