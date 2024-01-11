@@ -181,3 +181,8 @@ reportMissingTypeStubs = false
 
 [tool.poetry.extras]
 docs = ["Sphinx", "furo", "sphinxcontrib-napoleon"]
+
+[tool.pydocstyle]
+inherit = false
+convetion = "google"
+match = "(?!test_).*\\.py"
