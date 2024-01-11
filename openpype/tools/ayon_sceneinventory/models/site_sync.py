@@ -42,8 +42,16 @@ class SiteSyncModel:
 
         if not self.is_sync_server_enabled():
             return {}
-        site_sync = self._get_sync_server_module()
-        return site_sync.get_site_icons()
+        site_sync_addon = self._get_sync_server_module()
+        icon_paths = {}
+        icon_defs = site_sync_addon.get_site_icons()
+        for provider, icon_def in icon_defs.items():
+            icon_def_type = icon_def.get("type")
+            if icon_def_type != "path":
+                continue
+            icon_paths[provider] = icon_def["path"]
+
+        return icon_paths
 
     def get_sites_information(self):
         return {
