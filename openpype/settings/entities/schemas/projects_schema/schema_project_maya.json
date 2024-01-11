@@ -223,7 +223,8 @@
             "children": [
                 {
                             "type": "label",
-                            "label": "WARNING: Do not add the same task twice."},
+                            "label": "WARNING: Do not add the same task twice."
+                },
                 {
                     "key": "include_handles_default",
                     "label": "Include handles by default",
