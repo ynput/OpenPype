@@ -477,7 +477,7 @@ class PublishTest(ModuleUnitTest):
 class DeadlinePublishTest(PublishTest):
     @pytest.fixture(scope="module")
     def publish_finished(self, dbcon, launched_app, download_test_data,
-                         timeout):
+                         timeout, stdout_path, stderr_path):
         """Dummy fixture waiting for publish to finish"""
         import time
         time_start = time.time()
@@ -589,7 +589,16 @@ class DeadlinePublishTest(PublishTest):
 
         # some clean exit test possible?
         print("Publish finished")
-        yield True
+
+        if launched_app.returncode != 0:
+            with open(stderr_path, "r") as f:
+                stderr = f.read()
+            raise ValueError("Launched app errored:\n{}".format(stderr))
+
+        with open(stdout_path, "r") as f:
+            stdout = f.read()
+
+        yield stdout
 
 
 class HostFixtures():
