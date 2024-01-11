@@ -2,6 +2,7 @@ import pyblish.api
 from pymxs import runtime as rt
 
 from openpype.pipeline.publish import (
+    RepairAction,
     OptionalPyblishPluginMixin,
     PublishValidationError
 )
@@ -19,7 +20,7 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
     families = ['camera']
     hosts = ['max']
     label = 'Validate Camera Attributes'
-    actions = [SelectInvalidAction]
+    actions = [SelectInvalidAction, RepairAction]
     optional = True
 
     DEFAULTS = ["fov", "nearrange", "farrange",
@@ -42,10 +43,11 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
                 continue
             for attr in cls.DEFAULTS:
                 default_value = cam_attr_settings.get(attr)
-                if default_value == 0:
+                cls.log.debug(f"default value: {default_value}")
+                if default_value == float(0):
                     cls.log.debug(
                         f"the value of {attr} in setting set to"
-                        " zero. Skipping the check..")
+                        " zero. Skipping the check.")
                     continue
                 if rt.getProperty(camera, attr) != default_value:
                     cls.log.error(
@@ -57,10 +59,26 @@ class ValidateCameraAttributes(OptionalPyblishPluginMixin,
 
     def process(self, instance):
         if not self.is_active(instance.data):
-            self.log.debug("Skipping Validate Camera Attributes...")
+            self.log.debug("Skipping Validate Camera Attributes.")
             return
         invalid = self.get_invalid(instance)
 
         if invalid:
             raise PublishValidationError(
                 "Invalid camera attributes found. See log.")
+
+    @classmethod
+    def repair(cls, instance):
+        invalid_cameras = cls.get_invalid(instance)
+        project_settings = instance.context.data["project_settings"].get("max")
+        cam_attr_settings = (
+            project_settings["publish"]["ValidateCameraAttributes"]
+        )
+        for camera in invalid_cameras:
+            for attr in cls.DEFAULTS:
+                expected_value = cam_attr_settings.get(attr)
+                if expected_value == float(0):
+                    cls.log.debug(
+                        f"the value of {attr} in setting set to zero.")
+                    continue
+                rt.setProperty(camera, attr, expected_value)
