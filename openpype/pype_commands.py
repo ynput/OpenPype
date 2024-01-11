@@ -276,9 +276,7 @@ class PypeCommands:
             args.extend(["--mongo_url", mongo_url])
 
         if keep_app_open:
-            # -s flag will output stdout instead of pytest holding it back and
-            # making a report at the end.
-            args.extend(["--keep_app_open", "-s"])
+            args.append("--keep_app_open")
 
         if dump_databases:
             msg = "dump_databases format is not recognized: {}".format(

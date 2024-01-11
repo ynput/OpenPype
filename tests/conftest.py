@@ -41,7 +41,7 @@ def pytest_addoption(parser):
 
     parser.addoption(
         "--keep_app_open", action="store_true", default=False,
-        help="Keeps the launched app open for interaction."
+        help="Keeps the launched app open for interaction. UIs only."
     )
 
     parser.addoption(

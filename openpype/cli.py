@@ -297,7 +297,7 @@ def run(script):
               help="MongoDB for testing.",
               default=None)
 @click.option("--keep_app_open",
-              help="Keep launched application open for interaction.",
+              help="Keep launched application open for interaction. UIs only.",
               is_flag=True,
               default=False)
 @click.option("--dump_databases",

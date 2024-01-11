@@ -388,13 +388,7 @@ class PublishTest(ModuleUnitTest):
         if keep_app_open:
             timeout = 100000
 
-        new_lines = []
         while launched_app.poll() is None:
-            with open(stdout_path, "r") as f:
-                for line in f.readlines():
-                    if line not in new_lines:
-                        new_lines.append(line)
-                        print(line.strip())
             time.sleep(0.5)
             if time.time() - time_start > timeout:
                 launched_app.terminate()
