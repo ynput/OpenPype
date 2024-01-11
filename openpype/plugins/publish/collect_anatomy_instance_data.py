@@ -190,11 +190,11 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         project_task_types = project_doc["config"]["tasks"]
 
         for instance in context:
-            asset_doc = instance.data.get("assetEntity")
-            anatomy_updates = {
+            anatomy_data = copy.deepcopy(context.data["anatomyData"])
+            anatomy_data.update({
                 "family": instance.data["family"],
                 "subset": instance.data["subset"],
-            }
+            })
             if asset_doc:
                 parents = asset_doc["data"].get("parents") or list()
                 parent_name = project_doc["name"]
@@ -202,7 +202,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     parent_name = parents[-1]
 
                 hierarchy = "/".join(parents)
-                anatomy_updates.update({
+                anatomy_data.update({
                     "asset": asset_doc["name"],
                     "hierarchy": hierarchy,
                     "parent": parent_name,
@@ -222,7 +222,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     .get(task_type, {})
                     .get("short_name")
                 )
-                anatomy_updates["task"] = {
+                anatomy_data["task"] = {
                     "name": task_name,
                     "type": task_type,
                     "short": task_code
@@ -250,29 +250,26 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     family=instance.data["family"],
                     subset=instance.data["subset"]
                 )
-            anatomy_updates["version"] = version_number
+            anatomy_data["version"] = version_number
 
             # Additional data
             resolution_width = instance.data.get("resolutionWidth")
             if resolution_width:
-                anatomy_updates["resolution_width"] = resolution_width
+                anatomy_data["resolution_width"] = resolution_width
 
             resolution_height = instance.data.get("resolutionHeight")
             if resolution_height:
-                anatomy_updates["resolution_height"] = resolution_height
+                anatomy_data["resolution_height"] = resolution_height
 
             pixel_aspect = instance.data.get("pixelAspect")
             if pixel_aspect:
-                anatomy_updates["pixel_aspect"] = float(
+                anatomy_data["pixel_aspect"] = float(
                     "{:0.2f}".format(float(pixel_aspect))
                 )
 
             fps = instance.data.get("fps")
             if fps:
-                anatomy_updates["fps"] = float("{:0.2f}".format(float(fps)))
-
-            anatomy_data = copy.deepcopy(context.data["anatomyData"])
-            anatomy_data.update(anatomy_updates)
+                anatomy_data["fps"] = float("{:0.2f}".format(float(fps)))
 
             # Store anatomy data
             instance.data["projectEntity"] = project_doc
