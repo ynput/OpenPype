@@ -189,7 +189,7 @@ class PublisherWindow(QtWidgets.QDialog):
             controller, content_stacked_widget
         )
 
-        report_widget = ReportPageWidget(controller, parent)
+        report_widget = ReportPageWidget(controller, content_stacked_widget)
 
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(
