@@ -1,4 +1,9 @@
-from openpype.lib.events import EventSystem, QueuedEventSystem
+from functools import partial
+from openpype.lib.events import (
+    EventSystem,
+    QueuedEventSystem,
+    weakref_partial,
+)
 
 
 def test_default_event_system():
@@ -81,3 +86,93 @@ def test_manual_event_system_queue():
 
     assert output == expected_output, (
         "Callbacks were not called in correct order")
+
+
+def test_unordered_events():
+    """
+    Validate if callbacks are triggered in order of their register.
+    """
+
+    result = []
+
+    def function_a():
+        result.append("A")
+
+    def function_b():
+        result.append("B")
+
+    def function_c():
+        result.append("C")
+
+    # Without order
+    event_system = QueuedEventSystem()
+    event_system.add_callback("test", function_a)
+    event_system.add_callback("test", function_b)
+    event_system.add_callback("test", function_c)
+    event_system.emit("test", {}, "test")
+
+    assert result == ["A", "B", "C"]
+
+
+def test_ordered_events():
+    """
+    Validate if callbacks are triggered by their order and order
+        of their register.
+    """
+    result = []
+
+    def function_a():
+        result.append("A")
+
+    def function_b():
+        result.append("B")
+
+    def function_c():
+        result.append("C")
+
+    def function_d():
+        result.append("D")
+
+    def function_e():
+        result.append("E")
+
+    def function_f():
+        result.append("F")
+
+    # Without order
+    event_system = QueuedEventSystem()
+    event_system.add_callback("test", function_a)
+    event_system.add_callback("test", function_b, order=-10)
+    event_system.add_callback("test", function_c, order=200)
+    event_system.add_callback("test", function_d, order=150)
+    event_system.add_callback("test", function_e)
+    event_system.add_callback("test", function_f, order=200)
+    event_system.emit("test", {}, "test")
+
+    assert result == ["B", "A", "E", "D", "C", "F"]
+
+
+def test_events_partial_callbacks():
+    """
+    Validate if partial callbacks are triggered.
+    """
+
+    result = []
+
+    def function(name):
+        result.append(name)
+
+    def function_regular():
+        result.append("regular")
+
+    event_system = QueuedEventSystem()
+    event_system.add_callback("test", function_regular)
+    event_system.add_callback("test", partial(function, "foo"))
+    event_system.add_callback("test", weakref_partial(function, "bar"))
+    event_system.emit("test", {}, "test")
+
+    # Delete function should also make partial callbacks invalid
+    del function
+    event_system.emit("test", {}, "test")
+
+    assert result == ["regular", "bar", "regular"]

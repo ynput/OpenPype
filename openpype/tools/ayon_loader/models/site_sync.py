@@ -140,12 +140,10 @@ class SiteSyncModel:
             Union[dict[str, Any], None]: Site icon definition.
         """
 
-        if not project_name:
+        if not project_name or not self.is_site_sync_enabled(project_name):
             return None
-
         active_site = self.get_active_site(project_name)
-        provider = self._get_provider_for_site(project_name, active_site)
-        return self._get_provider_icon(provider)
+        return self._get_site_icon_def(project_name, active_site)
 
     def get_remote_site_icon_def(self, project_name):
         """Remote site icon definition.
@@ -160,7 +158,14 @@ class SiteSyncModel:
         if not project_name or not self.is_site_sync_enabled(project_name):
             return None
         remote_site = self.get_remote_site(project_name)
-        provider = self._get_provider_for_site(project_name, remote_site)
+        return self._get_site_icon_def(project_name, remote_site)
+
+    def _get_site_icon_def(self, project_name, site_name):
+        # use different icon for studio even if provider is 'local_drive'
+        if site_name == self._site_sync_addon.DEFAULT_SITE:
+            provider = "studio"
+        else:
+            provider = self._get_provider_for_site(project_name, site_name)
         return self._get_provider_icon(provider)
 
     def get_version_sync_availability(self, project_name, version_ids):
