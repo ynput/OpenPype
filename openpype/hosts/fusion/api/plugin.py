@@ -183,10 +183,6 @@ class GenericCreateSaver(Creator):
 
         return data
 
-    def get_pre_create_attr_defs(self):
-        """Settings for create page"""
-        raise NotImplementedError
-
     def get_instance_attr_defs(self):
         """Settings for publish page"""
         return self.get_pre_create_attr_defs()
