@@ -162,11 +162,11 @@ class SiteSyncModel:
             active_site_provider = "studio"
             remote_site_provider = "studio"
             if active_site != "studio":
-                active_site_provider = site_sync.get_active_provider(
+                active_site_provider = site_sync.get_provider_for_site(
                     project_name, active_site
                 )
             if remote_site != "studio":
-                remote_site_provider = site_sync.get_active_provider(
+                remote_site_provider = site_sync.get_provider_for_site(
                     project_name, remote_site
                 )
 
