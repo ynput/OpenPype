@@ -656,7 +656,9 @@ def has_rgb_channel_in_texture_set(texture_set_name, map_identifier):
         colorspace_dict: A dictionary which stores the boolean
             value of textures having RGB channels
     """
-    texture_stack = substance_painter.textureset.Stack.from_name(texture_set_name)
+    texture_stack = (
+        substance_painter.textureset.Stack.from_name(texture_set_name)
+    )
     # 2D_View is always True as it exports all texture maps
     colorspace_dict = {"2D_View": True}
     colorspace_dict["BaseColor"] = texture_stack.get_channel(
@@ -686,7 +688,7 @@ def texture_set_filtering(texture_set_same, template):
     """
     texture_filter = {}
     channel_stack = substance_painter.textureset.Stack.from_name(
-    texture_set_same)
+        texture_set_same)
     has_emissive = channel_stack.has_channel(
         substance_painter.textureset.ChannelType.Emissive)
     map_identifier = strip_template(template)

@@ -44,9 +44,9 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
                 if texture_set_filtering(texture_set_name, template):
                     self.log.info(f"Processing {template}")
                     self.create_image_instance(instance, template, outputs,
-                                            asset_doc=asset_doc,
-                                            texture_set_name=texture_set_name,
-                                            stack_name=stack_name)
+                                               asset_doc=asset_doc,
+                                               texture_set_name=texture_set_name,
+                                               stack_name=stack_name)
 
     def create_image_instance(self, instance, template, outputs,
                               asset_doc, texture_set_name, stack_name):
