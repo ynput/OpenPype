@@ -411,11 +411,7 @@ class ClipLoader:
 
         # Trim clip start if slate is present
         if "slate" in self.data["versionData"]["families"]:
-            print("LOAD: slate found ")
             source_in += 1
-            print("LOAD media pool item source in slate : {}".format(source_in))
-        # Calculate source duration excluding slate
-        source_duration = source_out - source_in + 1
 
         if not self.with_handles:
             # Load file without the handles of the source media
