@@ -10,7 +10,7 @@ class ExtractCSVFile(publish.Extractor):
 
     label = "Extract CSV file"
     order = pyblish.api.ExtractorOrder - 0.45
-    families = ["editorialcsv"]
+    families = ["csv_ingest_file"]
     hosts = ["traypublisher"]
 
     def process(self, instance):

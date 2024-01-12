@@ -19,12 +19,12 @@ from openpype.hosts.traypublisher.api.plugin import (
 
 
 class IngestCSV(TrayPublishCreator):
-    """Editorial CSV creator class"""
+    """CSV ingest creator class"""
 
     icon = "fa.file"
 
     label = "CSV Ingest"
-    family = "editorialcsv"
+    family = "csv_ingest_file"
     identifier = "io.openpype.creators.traypublisher.csv_ingest"
 
     default_variants = ["Main"]
@@ -35,15 +35,12 @@ Ingest products' data from CSV file following column and representation
 configuration in project settings.
 """
 
-    # Position batch creator after editorial creator
+    # Position in the list of creators.
     order = 10
 
-    def apply_settings(self, project_settings):
-        creator_settings = (
-            project_settings["traypublisher"]["create"]["IngestCSV"]
-        )
-        self.column_config = creator_settings["columns_config"]
-        self.representation_config = creator_settings["representations_config"]
+    # settings for this creator
+    column_config = {}
+    representation_config = {}
 
     def create(self, subset_name, instance_data, pre_create_data):
         """Create an product from each row found in the CSV.
@@ -74,7 +71,7 @@ configuration in project settings.
             filename (str): The filename.
         """
 
-        # create new instance from the csv editorial file via self function
+        # create new instance from the csv file via self function
         self._pass_data_to_csv_instance(
             instance_data,
             staging_dir,
@@ -110,117 +107,75 @@ configuration in project settings.
 
         for asset_name, _data in csv_data_for_instances.items():
             asset_doc = _data["asset_doc"]
-            vendor_name = _data["vendor_name"]
             products = _data["products"]
 
             for instance_name, product_data in products.items():
                 # get important instance variables
                 task_name = product_data["task_name"]
-                variant_name = product_data["variant_name"]
+                variant = product_data["variant"]
                 product_type = product_data["product_type"]
                 version = product_data["version"]
 
                 # create subset/product name
                 product_name = get_subset_name(
                     product_type,
-                    variant_name,
+                    variant,
                     task_name,
                     asset_doc,
                 )
 
                 # make sure frame start/end is inherited from csv columns
-                # if they exists or inherit them from asset doc for case where
-                # columns are missing because only mov or mp4 files needs to be
-                # published
-                frame_start = None
-                frame_end = None
-                handle_start = None
-                handle_end = None
-                comment = None
-                intent = None
-                is_calculated = False
-                for filepath, repre_data in product_data["representations"].items():  # noqa: E501
-                    if not comment and repre_data["notes"]:
-                        comment = repre_data["notes"]
-                    if not intent and repre_data["intent"]:
-                        intent = repre_data["intent"]
-                        if intent:
-                            comment = f"{intent}: {comment}"
+                # expected frame range data are handles excluded
+                for _, repre_data in product_data["representations"].items():  # noqa: E501
+                    frame_start = repre_data["frameStart"]
+                    frame_end = repre_data["frameEnd"]
+                    handle_start = repre_data["handleStart"]
+                    handle_end = repre_data["handleEnd"]
+                    fps = repre_data["fps"]
+                    break
 
-                    extension = os.path.splitext(filepath)[-1]
-                    # INFO: mp4 representation doesn't have to have frameStart
-                    # and frameEnd columns
-                    if extension in [".mp4"]:
-                        continue
+                # try to find any version comment in representation data
+                version_comment = next(
+                    iter(
+                        repre_data["comment"]
+                        for _, repre_data in product_data["representations"].items()  # noqa: E501
+                        if repre_data["comment"]
+                    ),
+                    None
+                )
 
-                    if (
-                        frame_start is None
-                        and repre_data["frameStart"] is not None
-                    ):
-                        frame_start = repre_data["frameStart"]
-                    if (
-                        frame_end is None
-                        and repre_data["frameEnd"] is not None
-                    ):
-                        frame_end = repre_data["frameEnd"]
-                    if (
-                        handle_start is None
-                        and repre_data["handleStart"] is not None
-                    ):
-                        handle_start = repre_data["handleStart"]
-                    if (
-                        handle_end is None
-                        and repre_data["handleEnd"] is not None
-                    ):
-                        handle_end = repre_data["handleEnd"]
-
-                    # recalculating framerange since handles are included in
-                    # frameStart and frameEnd and also slate is included too
-                    # INFO: handles are expected to be included so they
-                    #   are taken out from frameStart and frameEnd
-                    if frame_start and frame_end and not is_calculated:
-                        # exclude handle only if any
-                        if handle_start is not None:
-                            frame_start = frame_start + handle_start
-                        # also include slate frame if slate is True
-                        if repre_data["slate"]:
-                            frame_start = frame_start + 1
-                        # exclude handle only if any
-                        if handle_end is not None:
-                            frame_end = frame_end - handle_end
-
-                        is_calculated = True
-
-                # for cases where no frame start and end columns are present
-                if not frame_start:
-                    frame_start = asset_doc["data"]["frameStart"]
-                if not frame_end:
-                    frame_end = asset_doc["data"]["frameEnd"]
-                if handle_start is None:
-                    handle_start = asset_doc["data"]["handleStart"]
-                if handle_end is None:
-                    handle_end = asset_doc["data"]["handleEnd"]
+                # try to find any slate switch in representation data
+                slate_exists = any(
+                    repre_data["slate"]
+                    for _, repre_data in product_data["representations"].items()  # noqa: E501
+                )
 
                 # get representations from product data
                 representations = product_data["representations"]
                 label = f"{asset_name}_{product_name}_v{version:>03}"
 
+                families = ["csv_ingest"]
+                if slate_exists:
+                    # adding slate to families mainly for loaders to be able
+                    # to filter out slates
+                    families.append("slate")
+
                 # make product data
                 product_data = {
                     "name": instance_name,
                     "asset": asset_name,
-                    "families": ["csv"],
+                    "families": families,
                     "label": label,
                     "task": task_name,
-                    "variant": variant_name,
+                    "variant": variant,
                     "source": "csv",
-                    "user": vendor_name,
                     "frameStart": frame_start,
                     "frameEnd": frame_end,
                     "handleStart": handle_start,
                     "handleEnd": handle_end,
+                    "fps": fps,
                     "version": version,
-                    "comment": comment,
+                    "comment": version_comment,
                 }
 
                 # create new instance
@@ -259,16 +214,17 @@ configuration in project settings.
                         if "review" in tag
                     )
                     # since we need to populate multiple thumbnails as
-                    # representation with outputName for ftrack instance
-                    # integrator is able to pair them with reviewable
-                    # representations
+                    # representation with outputName for (Ftrack instance
+                    # integrator) pairing with reviewable video representations
                     if (
                         thumbnails
                         and multiple_thumbnails
                         and reviewable
                     ):
-                        # multiple unique thumbnails per representation
-                        explicit_output_name = repre_data["output"]
+                        # multiple unique thumbnails per representation needs
+                        # grouping by outputName
+                        # mainly used in Ftrack instance integrator
+                        explicit_output_name = repre_data["representationName"]
                         relative_thumbnail_path = repre_data["thumbnailPath"]
                         # representation might not have thumbnail path
                         # so ignore this one
@@ -320,7 +276,7 @@ configuration in project settings.
                     # get representation data
                     representation_data = self._get_representation_data(
                         filepath, repre_data, staging_dir,
-                        explicit_output_name=explicit_output_name
+                        explicit_output_name
                     )
 
                     new_instance["prepared_data_for_repres"].append(
@@ -337,7 +293,16 @@ configuration in project settings.
     def _get_representation_data(
         self, filepath, repre_data, staging_dir, explicit_output_name=None
     ):
-        """Get representation data"""
+        """Get representation data
+
+        Args:
+            filepath (str): Filepath to representation file.
+            repre_data (dict): Representation data from CSV file.
+            staging_dir (str): Staging directory.
+            explicit_output_name (Optional[str]): Explicit output name.
+                For grouping purposes with reviewable components.
+                Defaults to None.
+        """
 
         # get extension of file
         basename = os.path.basename(filepath)
@@ -345,12 +310,13 @@ configuration in project settings.
 
         # validate filepath is having correct extension based on output
         config_repre_data = self.representation_config["representations"]
-        output = repre_data["output"]
-        if output not in config_repre_data:
+        repre_name = repre_data["representationName"]
+        if repre_name not in config_repre_data:
             raise KeyError(
-                f"Output '{output}' not found in config representation data."
+                f"Representation '{repre_name}' not found "
+                "in config representation data."
             )
-        validate_extensions = config_repre_data[output]["extensions"]
+        validate_extensions = config_repre_data[repre_name]["extensions"]
         if extension not in validate_extensions:
             raise TypeError(
                 f"File extension '{extension}' not valid for "
@@ -408,7 +374,7 @@ configuration in project settings.
 
         # get representation data
         representation_data = {
-            "name": output,
+            "name": repre_name,
             "ext": extension[1:],
             "files": files,
             "stagingDir": dirname,
@@ -417,8 +383,8 @@ configuration in project settings.
         }
         if extension in VIDEO_EXTENSIONS:
             representation_data.update({
-                "fps": 25,
-                "outputName": output,
+                "fps": repre_data["fps"],
+                "outputName": repre_name,
             })
 
         if explicit_output_name:
@@ -434,10 +400,9 @@ configuration in project settings.
     def _get_data_from_csv(
         self, package_dir, filename
     ):
-        """Generate instances from the csv editorial file"""
+        """Generate instances from the csv file"""
         # get current project name and code from context.data
         project_name = self.create_context.get_current_project_name()
-        current_username = get_openpype_username()
 
         csv_file_path = os.path.join(
             package_dir, filename
@@ -470,56 +435,22 @@ configuration in project settings.
             csv_data = {}
             # get data from csv file
             for row in csv_reader:
-                # get project from row or get default current project
-                row_project_name = self._get_row_value_with_validation(
-                    "Project", row, default_value=project_name
-                )
-
-                # raise if row project name is not equal to current
-                # project name
-                if row_project_name != project_name:
-                    raise ValueError(
-                        f"Project name in csv file '{row_project_name}' "
-                        "must be equal to current project name: "
-                        f"{project_name}"
-                    )
-                # get Package row value
-                package = self._get_row_value_with_validation(
-                    "Package", row, default_value=package_dir)
-
-                if (package and package != os.path.basename(package_dir)):
-                    raise ValueError(
-                        f"Package name in csv file '{package}' "
-                        "must be equal to package folder name: "
-                        f"{package_dir}"
-                    )
-
-                row_vendor_name = self._get_row_value_with_validation(
-                    "Vendor", row, default_value=current_username
-                )
-
-                # get related shot asset
+                # Get required columns first
                 context_asset_name = self._get_row_value_with_validation(
-                    "Context", row)
-
-                # get Task row value
+                    "Folder Context", row)
                 task_name = self._get_row_value_with_validation(
-                    "Task", row)
-
-                # get Variant row value
-                variant_name = self._get_row_value_with_validation(
-                    "Variant", row)
-
-                # get Family row value
-                product_type = self._get_row_value_with_validation(
-                    "Family", row)
-
-                # get Version row value
+                    "Task Name", row)
                 version = self._get_row_value_with_validation(
                     "Version", row)
 
+                # Get optional columns
+                variant = self._get_row_value_with_validation(
+                    "Variant", row)
+                product_type = self._get_row_value_with_validation(
+                    "Product Type", row)
+
                 pre_product_name = (
-                    f"{task_name}{variant_name}{product_type}"
+                    f"{task_name}{variant}{product_type}"
                     f"{version}".replace(" ", "").lower()
                 )
 
@@ -549,11 +480,10 @@ configuration in project settings.
 
                     csv_data[context_asset_name] = {
                         "asset_doc": asset_doc,
-                        "vendor_name": row_vendor_name,
                         "products": {
                             pre_product_name: {
                                 "task_name": task_name,
-                                "variant_name": variant_name,
+                                "variant": variant,
                                 "product_type": product_type,
                                 "version": version,
                                 "representations": {
@@ -568,7 +498,7 @@ configuration in project settings.
                     if pre_product_name not in csv_products:
                         csv_products[pre_product_name] = {
                             "task_name": task_name,
-                            "variant_name": variant_name,
+                            "variant": variant,
                             "product_type": product_type,
                             "version": version,
                             "representations": {
@@ -588,85 +518,62 @@ configuration in project settings.
 
     def _get_representation_row_data(self, row_data):
         """Get representation row data"""
-        # get Filename row value
-        filename = self._get_row_value_with_validation(
-            "Filename", row_data)
+        # Get required columns first
+        file_path = self._get_row_value_with_validation(
+            "File Path", row_data)
+        frame_start = self._get_row_value_with_validation(
+            "Frame Start", row_data)
+        frame_end = self._get_row_value_with_validation(
+            "Frame End", row_data)
+        handle_start = self._get_row_value_with_validation(
+            "Handle Start", row_data)
+        handle_end = self._get_row_value_with_validation(
+            "Handle End", row_data)
+        fps = self._get_row_value_with_validation(
+            "FPS", row_data)
+
+        # Get optional columns
         thumbnail_path = self._get_row_value_with_validation(
             "Thumbnail", row_data)
-        # get Version row value
-        version = self._get_row_value_with_validation(
-            "Version", row_data)
-        # get Color row value
-        color = self._get_row_value_with_validation(
-            "Color", row_data)
-        # get Notes row value
-        notes = self._get_row_value_with_validation(
-            "Notes", row_data)
-        # get Intent row value
-        intent = self._get_row_value_with_validation(
-            "Intent", row_data)
-        # get Output row value
-        output = self._get_row_value_with_validation(
-            "Output", row_data)
-        # get Slate row value
-        slate = self._get_row_value_with_validation(
-            "Slate", row_data)
-        # get Tag row value
-        tags = self._get_row_value_with_validation(
-            "Tags", row_data)
+        colorspace = self._get_row_value_with_validation(
+            "Colorspace", row_data)
+        comment = self._get_row_value_with_validation(
+            "Version Comment", row_data)
+        repre = self._get_row_value_with_validation(
+            "Representation", row_data)
+        slate_exists = self._get_row_value_with_validation(
+            "Slate Exists", row_data)
+        repre_tags = self._get_row_value_with_validation(
+            "Representation Tags", row_data)
 
         # convert tags value to list
         tags_list = copy(self.representation_config["default_tags"])
-        if tags:
+        if repre_tags:
             tags_list = []
             tags_delimiter = self.representation_config["tags_delimiter"]
-            # strip spaces from tags
-            if tags_delimiter in tags:
-                tags = tags.split(tags_delimiter)
+            # strip spaces from repre_tags
+            if tags_delimiter in repre_tags:
+                tags = repre_tags.split(tags_delimiter)
                 for _tag in tags:
                     tags_list.append(("".join(_tag.strip())).lower())
             else:
                 tags_list.append(("".join(tags.strip())).lower())
 
-        # get Start row value
-        frame_start = self._get_row_value_with_validation(
-            "Start", row_data)
-        # get End row value
-        frame_end = self._get_row_value_with_validation(
-            "End", row_data)
-
-        # get Head row value
-        handle_start = self._get_row_value_with_validation(
-            "Head", row_data)
-
-        # get Tail row value
-        handle_end = self._get_row_value_with_validation(
-            "Tail", row_data)
-
-        frame_length = self._get_row_value_with_validation(
-            "Length", row_data)
-
         representation_data = {
-            "version": int(version),
-            "color": color,
-            "notes": notes,
-            "intent": intent,
-            "output": output,
-            "slate": slate,
+            "colorspace": colorspace,
+            "comment": comment,
+            "representationName": repre,
+            "slate": slate_exists,
             "tags": tags_list,
             "thumbnailPath": thumbnail_path,
-            "frameStart": (
-                int(frame_start) if frame_start is not None else None),
-            "frameEnd": (
-                int(frame_end) if frame_end is not None else None),
-            "handleStart": (
-                int(handle_start) if handle_start is not None else None),
-            "handleEnd": (
-                int(handle_end) if handle_end is not None else None),
-            "frameLength": int(frame_length) if frame_length else None
+            "frameStart": int(frame_start),
+            "frameEnd": int(frame_end),
+            "handleStart": int(handle_start),
+            "handleEnd": int(handle_end),
+            "fps": float(fps),
         }
 
-        return filename, representation_data
+        return file_path, representation_data
 
     def _get_row_value_with_validation(
         self, column_name, row_data, default_value=None
@@ -682,6 +589,14 @@ configuration in project settings.
 
         # get column value from row
         column_value = row_data.get(column_name)
+        column_required = column_data["required"]
+
+        # check if column value is not empty string and column is required
+        if column_value == "" and column_required:
+            raise ValueError(
+                f"Value in column '{column_name}' is required."
+            )
+
         # get column type
         column_type = column_data["type"]
         # get column validation regex
@@ -689,7 +604,7 @@ configuration in project settings.
         # get column default value
         column_default = default_value or column_data["default"]
 
-        if column_type == "number" and column_default == 0:
+        if column_type in ["number", "decimal"] and column_default == 0:
             column_default = None
 
         # check if column value is not empty string
@@ -700,6 +615,8 @@ configuration in project settings.
         # set column value to correct type following column type
         if column_type == "number" and column_value is not None:
             column_value = int(column_value)
+        elif column_type == "decimal" and column_value is not None:
+            column_value = float(column_value)
         elif column_type == "bool":
             column_value = column_value in ["true", "True"]
 

@@ -14,7 +14,7 @@ class CollectCSVIngestInstancesData(
     label = "Collect CSV Ingest instances data"
     order = pyblish.api.CollectorOrder + 0.1
     hosts = ["traypublisher"]
-    families = ["csv"]
+    families = ["csv_ingest"]
 
     def process(self, instance):
         self.log.info(f"Collecting {instance.name}")
