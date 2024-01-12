@@ -44,6 +44,29 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "hooks",
+            "label": "Hooks",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "InstallPySideToFusion",
+                    "label": "Install PySide2",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "create",
             "label": "Creator plugins",
             "children": [

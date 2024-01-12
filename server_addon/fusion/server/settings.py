@@ -25,16 +25,6 @@ def _create_saver_instance_attributes_enum():
     ]
 
 
-def _image_format_enum():
-    return [
-        {"value": "exr", "label": "exr"},
-        {"value": "tga", "label": "tga"},
-        {"value": "png", "label": "png"},
-        {"value": "tif", "label": "tif"},
-        {"value": "jpg", "label": "jpg"},
-    ]
-
-
 class CreateSaverPluginModel(BaseSettingsModel):
     _isGroup = True
     temp_rendering_path_template: str = Field(
@@ -49,9 +39,23 @@ class CreateSaverPluginModel(BaseSettingsModel):
         enum_resolver=_create_saver_instance_attributes_enum,
         title="Instance attributes"
     )
-    image_format: str = Field(
-        enum_resolver=_image_format_enum,
-        title="Output Image Format"
+    output_formats: list[str] = Field(
+        default_factory=list,
+        title="Output formats"
+    )
+
+
+class HookOptionalModel(BaseSettingsModel):
+    enabled: bool = Field(
+        True,
+        title="Enabled"
+    )
+
+
+class HooksModel(BaseSettingsModel):
+    InstallPySideToFusion: HookOptionalModel = Field(
+        default_factory=HookOptionalModel,
+        title="Install PySide2"
     )
 
 
@@ -70,6 +74,10 @@ class FusionSettings(BaseSettingsModel):
     copy_fusion_settings: CopyFusionSettingsModel = Field(
         default_factory=CopyFusionSettingsModel,
         title="Local Fusion profile settings"
+    )
+    hooks: HooksModel = Field(
+        default_factory=HooksModel,
+        title="Hooks"
     )
     create: CreatPluginsModel = Field(
         default_factory=CreatPluginsModel,
@@ -93,6 +101,11 @@ DEFAULT_VALUES = {
         "copy_status": False,
         "force_sync": False
     },
+    "hooks": {
+        "InstallPySideToFusion": {
+            "enabled": True
+        }
+    },
     "create": {
         "CreateSaver": {
             "temp_rendering_path_template": "{workdir}/renders/fusion/{product[name]}/{product[name]}.{frame}.{ext}",
@@ -104,7 +117,15 @@ DEFAULT_VALUES = {
                 "reviewable",
                 "farm_rendering"
             ],
-            "image_format": "exr"
+            "output_formats": [
+                "exr",
+                "jpg",
+                "jpeg",
+                "jpg",
+                "tiff",
+                "png",
+                "tga"
+            ]
         }
     }
 }

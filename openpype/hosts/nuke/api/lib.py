@@ -3483,3 +3483,19 @@ def get_filenames_without_hash(filename, frame_start, frame_end):
             new_filename = filename_without_hashes.format(frame)
             filenames.append(new_filename)
     return filenames
+
+
+def create_camera_node_by_version():
+    """Function to create the camera with the latest node class
+    For Nuke version 14.0 or later, the Camera4 camera node class
+        would be used
+    For the version before, the Camera2 camera node class
+        would be used
+    Returns:
+        Node: camera node
+    """
+    nuke_number_version = nuke.NUKE_VERSION_MAJOR
+    if nuke_number_version >= 14:
+        return nuke.createNode("Camera4")
+    else:
+        return nuke.createNode("Camera2")
