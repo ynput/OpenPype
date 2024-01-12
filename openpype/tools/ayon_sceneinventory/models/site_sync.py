@@ -42,8 +42,8 @@ class SiteSyncModel:
 
         if not self.is_sync_server_enabled():
             return {}
-        site_sync = self._get_sync_server_module()
-        return site_sync.get_site_icons()
+        site_sync_addon = self._get_sync_server_module()
+        return site_sync_addon.get_site_icons()
 
     def get_sites_information(self):
         return {
