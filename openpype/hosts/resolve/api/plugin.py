@@ -412,6 +412,7 @@ class ClipLoader:
         # Trim clip start if slate is present
         if "slate" in self.data["versionData"]["families"]:
             source_in += 1
+        source_duration = source_out - source_in + 1
 
         if not self.with_handles:
             # Load file without the handles of the source media
@@ -442,8 +443,9 @@ class ClipLoader:
                 database_frame_duration = int(
                     frame_end_handle - frame_start_handle + 1
                 )
-                source_in += handle_start
-                source_out -= handle_end
+                if source_duration >= database_frame_duration:
+                    source_in += handle_start
+                    source_out -= handle_end
 
         # get timeline in
         timeline_start = self.active_timeline.GetStartFrame()
