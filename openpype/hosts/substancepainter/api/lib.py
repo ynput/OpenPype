@@ -653,45 +653,23 @@ def has_rgb_channel_in_texture_set(texture_set_name, map_identifier):
         map_identifier (str): Map identifier
 
     Returns:
-        colorspace_dict: A dictionary which stores the boolean
-            value of textures having RGB channels
+        bool: Whether the channel type identifier has RGB channel or not
+            in the texture stack.
     """
+
+    # 2D_View is always True as it exports all texture maps
     texture_stack = (
         substance_painter.textureset.Stack.from_name(texture_set_name)
     )
     # 2D_View is always True as it exports all texture maps
-    colorspace_dict = {"2D_View": True}
-    colorspace_dict["BaseColor"] = texture_stack.get_channel(
-        substance_painter.textureset.ChannelType.BaseColor).is_color()
-    colorspace_dict["Roughness"] = texture_stack.get_channel(
-        substance_painter.textureset.ChannelType.Roughness).is_color()
-    colorspace_dict["Metallic"] = texture_stack.get_channel(
-        substance_painter.textureset.ChannelType.Metallic).is_color()
-    colorspace_dict["Height"] = texture_stack.get_channel(
-        substance_painter.textureset.ChannelType.Height).is_color()
-    colorspace_dict["Normal"] = texture_stack.get_channel(
-        substance_painter.textureset.ChannelType.Normal).is_color()
-    return colorspace_dict.get(map_identifier, False)
+    if map_identifier == "2D_View":
+        return True
 
+    channel_type = getattr(
+        substance_painter.textureset.ChannelType, map_identifier, None)
+    if channel_type is None:
+        return False
+    if not texture_stack.has_channel(channel_type):
+        return False
 
-def texture_set_filtering(texture_set_same, template):
-    """Function to check whether some specific textures(e.g. Emissive)
-    are parts of the texture stack in Substance Painter
-
-    Args:
-        texture_set_same (str): Name of Texture Set
-        template (str): texture template name
-
-    Returns:
-        texture_filter: A dictionary which stores the boolean
-            value of whether the texture exist in the channel.
-    """
-    texture_filter = {}
-    channel_stack = substance_painter.textureset.Stack.from_name(
-        texture_set_same)
-    has_emissive = channel_stack.has_channel(
-        substance_painter.textureset.ChannelType.Emissive)
-    map_identifier = strip_template(template)
-    if map_identifier == "Emissive":
-        texture_filter[map_identifier] = has_emissive
-    return texture_filter.get(map_identifier, True)
+    return texture_stack.get_channel(channel_type).is_color()
