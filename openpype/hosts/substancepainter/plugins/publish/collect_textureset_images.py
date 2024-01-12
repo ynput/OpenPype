@@ -8,8 +8,7 @@ import substance_painter.textureset
 from openpype.hosts.substancepainter.api.lib import (
     get_parsed_export_maps,
     strip_template,
-    has_rgb_channel_in_texture_set,
-    texture_set_filtering
+    has_rgb_channel_in_texture_set
 )
 from openpype.pipeline.create import get_subset_name
 from openpype.client import get_asset_by_name
