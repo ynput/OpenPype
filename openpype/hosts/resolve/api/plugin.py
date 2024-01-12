@@ -408,7 +408,14 @@ class ClipLoader:
         _clip_property = media_pool_item.GetClipProperty
         source_in = int(_clip_property("Start"))
         source_out = int(_clip_property("End"))
-        source_duration = int(_clip_property("Frames"))
+
+        # Trim clip start if slate is present
+        if "slate" in self.data["versionData"]["families"]:
+            print("LOAD: slate found ")
+            source_in += 1
+            print("LOAD media pool item source in slate : {}".format(source_in))
+        # Calculate source duration excluding slate
+        source_duration = source_out - source_in + 1
 
         if not self.with_handles:
             # Load file without the handles of the source media
@@ -435,13 +442,12 @@ class ClipLoader:
                 handle_start = version_data.get("handleStart", 0)
                 handle_end = version_data.get("handleEnd", 0)
                 frame_start_handle = frame_start - handle_start
-                frame_end_handle = frame_start + handle_end
+                frame_end_handle = frame_end + handle_end
                 database_frame_duration = int(
                     frame_end_handle - frame_start_handle + 1
                 )
-                if source_duration >= database_frame_duration:
-                    source_in += handle_start
-                    source_out -= handle_end
+                source_in += handle_start
+                source_out -= handle_end
 
         # get timeline in
         timeline_start = self.active_timeline.GetStartFrame()

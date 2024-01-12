@@ -279,6 +279,10 @@ def create_timeline_item(
     # timing variables
     if all([timeline_in, source_start, source_end]):
         fps = timeline.GetSetting("timelineFrameRate")
+        # Strangely, Resolve seem to output '23' instead of 23.976
+        if fps == '23':
+            fps = 23.976
+
         duration = source_end - source_start
         timecode_in = frames_to_timecode(timeline_in, fps)
         timecode_out = frames_to_timecode(timeline_in + duration, fps)
