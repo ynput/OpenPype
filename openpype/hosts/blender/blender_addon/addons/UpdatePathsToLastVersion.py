@@ -89,9 +89,6 @@ class UpdateObjectsPathsVersion(bpy.types.Operator):
             objects=mesh_objects,
             modifiers_cache_files=modifiers_cache_files
         )
-        logging.info('MESH OBJECTS')
-        logging.info(mesh_objects)
-        logging.info([meshe_sequence_cache for meshe_sequence_cache in mesh_sequence_caches])
 
         update_versions(bpy.data.cache_files)
         disable_uv_data_reading(mesh_sequence_caches)
@@ -106,14 +103,9 @@ def get_objects_by_type(object_type):
 def get_modifiers_by_type(modifier_type, given_objects=None):
     retrieved_modifiers = list()
     given_objects = given_objects if given_objects else bpy.data.objects
-    logging.info('juste before getting modifiers')
-    logging.info(len(given_objects))
     for obj in given_objects:
-        logging.info(obj.name)
         for modifier in obj.modifiers:
-            logging.info(modifier.type)
             if modifier.type == modifier_type:
-                logging.info('GOOD')
                 retrieved_modifiers.append(modifier)
     return retrieved_modifiers
 
@@ -280,9 +272,7 @@ def apply_scale(objects, scale):
 
 
 def disable_uv_data_reading(mesh_sequence_caches):
-    logging.info('DISABLE UV DATA')
     for mesh_sequence_cache in mesh_sequence_caches:
-        print(mesh_sequence_cache)
         mesh_sequence_cache.read_data = {'COLOR', 'POLY', 'VERT'}
 
 
