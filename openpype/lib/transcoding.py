@@ -120,6 +120,10 @@ def get_oiio_info_for_input(filepath, logger=None, subimages=False):
 
     output = []
     for subimage_lines in subimages_lines:
+        # First line of oiiotool for xml format is "Reading path/to/file.ext".
+        if not subimage_lines[0].startswith("<ImageSpec"):
+            subimage_lines = subimage_lines[1:]
+
         xml_text = "\n".join(subimage_lines)
         output.append(parse_oiio_xml_output(xml_text, logger=logger))
 
