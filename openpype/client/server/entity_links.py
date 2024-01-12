@@ -131,7 +131,7 @@ def get_linked_representation_id(
             link_direction="out")
 
         versions_to_check = set()
-        for _, links in versions_links.items():
+        for links in versions_links.values():
             for link in links:
                 # Care only about version links
                 if link["entityType"] != "version":
