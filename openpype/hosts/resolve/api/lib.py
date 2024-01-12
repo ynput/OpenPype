@@ -713,6 +713,11 @@ def swap_clips(from_clip, to_clip, to_in_frame, to_out_frame):
         bool: True if successfully replaced
 
     """
+    # copy ACES input transform from timeline clip to new media item
+    mediapool_item_from_timeline = from_clip.GetMediaPoolItem()
+    _idt = mediapool_item_from_timeline.GetClipProperty('IDT')
+    to_clip.SetClipProperty('IDT', _idt)
+
     _clip_prop = to_clip.GetClipProperty
     to_clip_name = _clip_prop("File Name")
     # add clip item as take to timeline
