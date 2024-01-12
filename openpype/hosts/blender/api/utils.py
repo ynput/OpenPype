@@ -764,6 +764,9 @@ def replace_datablocks(
         ):
             old_datablock.user_remap(new_datablock)
 
+            # Transfer name
+            new_datablock.name = new_datablock["source_name"]
+
             # Remove remapped datablock
             datablocks_to_remap.remove(new_datablock)
 
