@@ -7,7 +7,9 @@ from openpype.pipeline import publish
 import substance_painter.textureset
 from openpype.hosts.substancepainter.api.lib import (
     get_parsed_export_maps,
-    strip_template
+    strip_template,
+    has_rgb_channel_in_texture_set,
+    texture_set_filtering
 )
 from openpype.pipeline.create import get_subset_name
 from openpype.client import get_asset_by_name
@@ -39,11 +41,12 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         for (texture_set_name, stack_name), template_maps in maps.items():
             self.log.info(f"Processing {texture_set_name}/{stack_name}")
             for template, outputs in template_maps.items():
-                self.log.info(f"Processing {template}")
-                self.create_image_instance(instance, template, outputs,
-                                           asset_doc=asset_doc,
-                                           texture_set_name=texture_set_name,
-                                           stack_name=stack_name)
+                if texture_set_filtering(texture_set_name, template):
+                    self.log.info(f"Processing {template}")
+                    self.create_image_instance(instance, template, outputs,
+                                            asset_doc=asset_doc,
+                                            texture_set_name=texture_set_name,
+                                            stack_name=stack_name)
 
     def create_image_instance(self, instance, template, outputs,
                               asset_doc, texture_set_name, stack_name):
@@ -78,7 +81,6 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         # Always include the map identifier
         map_identifier = strip_template(template)
         suffix += f".{map_identifier}"
-
         image_subset = get_subset_name(
             # TODO: The family actually isn't 'texture' currently but for now
             #       this is only done so the subset name starts with 'texture'
@@ -132,7 +134,9 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         # Store color space with the instance
         # Note: The extractor will assign it to the representation
         colorspace = outputs[0].get("colorSpace")
-        if colorspace:
+        has_rgb_channel = has_rgb_channel_in_texture_set(
+            texture_set_name, map_identifier)
+        if colorspace and has_rgb_channel:
             self.log.debug(f"{image_subset} colorspace: {colorspace}")
             image_instance.data["colorspace"] = colorspace
 
