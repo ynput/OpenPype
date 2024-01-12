@@ -294,6 +294,13 @@ class FtrackModule(
 
         system_settings = get_system_settings()
         protect_attrs = system_settings["general"].get("project", {}).get("protect_anatomy_attributes", False)
+
+        # If we just create the project on the server (prepare project) we want to send attributes to Ftrack
+        bypass_protect_anatomy_attributes = new_value_metadata.get("bypass_protect_anatomy_attributes", False)
+        if bypass_protect_anatomy_attributes:
+            # Disable the protection
+            protect_attrs = False
+
         if protect_attrs:
             self.log.warning("Anatomy attributes are protected/locked. "
                              "The only way to modify them is through the project settings on Ftrack.")

@@ -157,6 +157,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
     # poor man exclusion
     skip_integration_repre_list = []
 
+    @classmethod
+    def apply_settings(cls, project_settings, system_settings):
+        # deadline.publish.ProcessSubmittedJobOnFarm
+        settings = project_settings["deadline"]["publish"]["ProcessSubmittedJobOnFarm"]  # noqa
+
+        cls.deadline_department = settings.get("deadline_department", "")
+        cls.deadline_pool = settings.get("deadline_pool", "")
+        cls.deadline_group = settings.get("deadline_group", "")
+        cls.deadline_chunk_size = settings.get("deadline_chunk_size", 1)
+        cls.deadline_priority = settings.get("deadline_priority", None)
+
     def _submit_deadline_post_job(self, instance, job, instances):
         """Submit publish job to Deadline.
 

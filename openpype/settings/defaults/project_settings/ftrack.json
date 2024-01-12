@@ -446,6 +446,10 @@
             "active": true,
             "description_template": "{comment}"
         },
+        "IntegrateFtrackSourceWorkfile": {
+            "enabled": true,
+            "full_path": false
+        },
         "ValidateFtrackAttributes": {
             "enabled": false,
             "ftrack_custom_attributes": {}
