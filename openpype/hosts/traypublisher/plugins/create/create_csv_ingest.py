@@ -8,7 +8,6 @@ from openpype.client import get_asset_by_name
 from openpype.pipeline.create import get_subset_name
 from openpype.pipeline import CreatedInstance
 from openpype.lib import FileDef, BoolDef
-from openpype.lib.local_settings import get_openpype_username
 from openpype.lib.transcoding import (
     VIDEO_EXTENSIONS, IMAGE_EXTENSIONS
 )
