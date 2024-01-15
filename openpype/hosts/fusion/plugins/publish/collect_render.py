@@ -56,13 +56,6 @@ class CollectFusionRender(
             task_name = context.data["task"]
             tool = inst.data["transientData"]["tool"]
 
-            frame_start = inst.data["frameStart"]
-            frame_end = inst.data["frameEnd"]
-            handle_start = inst.data["handleStart"]
-            handle_end = inst.data["handleEnd"]
-            frame_start_handle = inst.data["frameStartHandle"]
-            frame_end_handle = inst.data["frameEndHandle"]
-
             instance_families = inst.data.get("families", [])
             subset_name = inst.data["subset"]
             instance = FusionRenderInstance(
@@ -88,12 +81,12 @@ class CollectFusionRender(
                 tilesX=0,
                 tilesY=0,
                 review="review" in instance_families,
-                frameStart=frame_start,
-                frameEnd=frame_end,
-                handleStart=handle_start,
-                handleEnd=handle_end,
-                frameStartHandle=frame_start_handle,
-                frameEndHandle=frame_end_handle,
+                frameStart=inst.data["frameStart"],
+                frameEnd=inst.data["frameEnd"],
+                handleStart=inst.data["handleStart"],
+                handleEnd=inst.data["handleEnd"],
+                frameStartHandle=inst.data["frameStartHandle"],
+                frameEndHandle=inst.data["frameEndHandle"],
                 frameStep=1,
                 fps=comp_frame_format_prefs.get("Rate"),
                 app_version=comp.GetApp().Version,
