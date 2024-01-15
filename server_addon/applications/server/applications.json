@@ -307,7 +307,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--nukeassist"],
                         "darwin": [],
                         "linux": []
                     },
@@ -329,7 +329,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--nukeassist"],
                         "darwin": [],
                         "linux": []
                     },
@@ -351,7 +351,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--nukeassist"],
                         "darwin": [],
                         "linux": []
                     },
@@ -382,7 +382,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--nukex"],
                         "darwin": [],
                         "linux": []
                     },
@@ -404,7 +404,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--nukex"],
                         "darwin": [],
                         "linux": []
                     },
@@ -426,7 +426,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--nukex"],
                         "darwin": [],
                         "linux": []
                     },
@@ -457,7 +457,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--studio"],
                         "darwin": [],
                         "linux": []
                     },
@@ -479,7 +479,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--studio"],
                         "darwin": [],
                         "linux": []
                     },
@@ -501,7 +501,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--studio"],
                         "darwin": [],
                         "linux": []
                     },
@@ -532,7 +532,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--hiero"],
                         "darwin": [],
                         "linux": []
                     },
@@ -554,7 +554,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--hiero"],
                         "darwin": [],
                         "linux": []
                     },
@@ -576,7 +576,7 @@
                         ]
                     },
                     "arguments": {
-                        "windows": [],
+                        "windows": ["--hiero"],
                         "darwin": [],
                         "linux": []
                     },
