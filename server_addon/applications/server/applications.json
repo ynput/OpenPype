@@ -309,7 +309,7 @@
                     "arguments": {
                         "windows": ["--nukeassist"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--nukeassist"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -331,7 +331,7 @@
                     "arguments": {
                         "windows": ["--nukeassist"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--nukeassist"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -353,7 +353,7 @@
                     "arguments": {
                         "windows": ["--nukeassist"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--nukeassist"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -384,7 +384,7 @@
                     "arguments": {
                         "windows": ["--nukex"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--nukex"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -406,7 +406,7 @@
                     "arguments": {
                         "windows": ["--nukex"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--nukex"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -428,7 +428,7 @@
                     "arguments": {
                         "windows": ["--nukex"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--nukex"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -459,7 +459,7 @@
                     "arguments": {
                         "windows": ["--studio"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--studio"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -481,7 +481,7 @@
                     "arguments": {
                         "windows": ["--studio"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--studio"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -503,7 +503,7 @@
                     "arguments": {
                         "windows": ["--studio"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--studio"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -534,7 +534,7 @@
                     "arguments": {
                         "windows": ["--hiero"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--hiero"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -556,7 +556,7 @@
                     "arguments": {
                         "windows": ["--hiero"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--hiero"]
                     },
                     "environment": "{}",
                     "use_python_2": false
@@ -578,7 +578,7 @@
                     "arguments": {
                         "windows": ["--hiero"],
                         "darwin": [],
-                        "linux": []
+                        "linux": ["--hiero"]
                     },
                     "environment": "{}",
                     "use_python_2": false
