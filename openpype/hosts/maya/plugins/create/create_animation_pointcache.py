@@ -201,10 +201,14 @@ def _ensure_defaults(cls, instance_data):
 
     creator_attr["abcDefaultExportBooleanArguments"] = abc_boolean_defaults
 
-    creator_attr["abcExportBooleanArguments"] = [
-        arg for arg in creator_attr["abcExportBooleanArguments"]
-        if arg not in abc_boolean_overrides
-    ]
+    if creator_attr.get("abcExportBooleanArguments", []):
+        abc_boolean_overrides = set(abc_boolean_overrides)
+        abc_boolean_args = creator_attr["abcExportBooleanArguments"].copy()
+
+        creator_attr["abcExportBooleanArguments"] = [
+            arg for arg in abc_boolean_args
+            if arg not in abc_boolean_overrides
+        ]
 
     return instance_data
 
