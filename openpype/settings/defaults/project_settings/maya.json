@@ -561,7 +561,6 @@
             "step": 1.0,
             "abc_boolean_args": [
                 "writeColorSets",
-                "visibleOnly",
                 "worldSpace",
                 "writeNormals"
             ],
@@ -581,7 +580,7 @@
             "dataFormat": "ogawa",
             "preRollStartFrame": 0,
             "refresh": false,
-            "stripNamespaces": false
+            "visibleOnly": false
         },
         "CreateModel": {
             "enabled": true,

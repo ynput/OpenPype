@@ -1,6 +1,8 @@
 from maya import cmds
 
 from openpype.hosts.maya.api import lib, plugin
+from openpype.hosts.maya.api.alembic import ALEMBIC_ARGS
+
 from openpype.lib import (
     BoolDef,
     TextDef,
@@ -27,8 +29,7 @@ def _get_animation_attr_defs(cls):
             BoolDef("refresh", label="Refresh viewport during export"),
             BoolDef(
                 "includeParentHierarchy", label="Include Parent Hierarchy"
-            ),
-            BoolDef("writeNormals", label="Write Normals"),
+            )
         ]
     )
 
@@ -36,30 +37,36 @@ def _get_animation_attr_defs(cls):
 
 
 def _get_alembic_boolean_arguments(cls):
-    """Get two lists with the Alembic flags.
+    """Get two sets with the Alembic flags.
 
     Alembic flags are treted as booleans, so here we get all the possible
     options, and work out a list with all the ones that can be toggled and the
     list of defaults (un-toggleable.)
     """
+    all_alembic_booleans = {
+        arg
+        for arg, arg_type in ALEMBIC_ARGS.items()
+        if arg_type is bool
+    }
 
     # The Arguments that can be modified by the Publisher
-    abc_args_overrides = set(getattr(cls, "abc_args_overrides", []))
+    abc_args_overrides = set(getattr(cls, "abc_args_overrides", set()))
 
     # What we have set in the Settings as defaults.
-    abc_settings_boolean_args = set(getattr(cls, "abc_boolean_args", []))
+    abc_settings_boolean_args = set(getattr(cls, "abc_boolean_args", set()))
 
-    abc_defaults = {
+    abc_boolean_args = {
         arg
         for arg in abc_settings_boolean_args
         if arg not in abc_args_overrides
     }
 
-    abc_overrideable = {
-        arg for arg in abc_settings_boolean_args if arg in abc_args_overrides
+    abc_args_overrides = {
+        arg
+        for arg in abc_args_overrides
+        if arg in all_alembic_booleans
     }
-
-    return abc_defaults, abc_overrideable
+    return abc_boolean_args, abc_args_overrides
 
 
 def _get_animation_abc_attr_defs(cls):
@@ -99,8 +106,8 @@ def _get_animation_abc_attr_defs(cls):
     abc_defs.append(
         EnumDef(
             "abcDefaultExportBooleanArguments",
-            abc_boolean_defaults,
-            default=abc_boolean_defaults,
+            list(abc_boolean_defaults),
+            default=list(abc_boolean_defaults),
             multiselection=True,
             label="Settings Defined Arguments",
             disabled=True,
@@ -112,7 +119,7 @@ def _get_animation_abc_attr_defs(cls):
     abc_defs.append(
         EnumDef(
             "abcExportBooleanArguments",
-            abc_boolean_overrides if abc_boolean_overrides else [""],
+            list(abc_boolean_overrides) if abc_boolean_overrides else [""],
             multiselection=True,
             label="Arguments Overrides",
             disabled=True if not abc_boolean_overrides else False,
@@ -199,10 +206,9 @@ def _ensure_defaults(cls, instance_data):
         abc_boolean_overrides,
     ) = _get_alembic_boolean_arguments(cls)
 
-    creator_attr["abcDefaultExportBooleanArguments"] = abc_boolean_defaults
+    creator_attr["abcDefaultExportBooleanArguments"] = list(abc_boolean_defaults)
 
     if creator_attr.get("abcExportBooleanArguments", []):
-        abc_boolean_overrides = set(abc_boolean_overrides)
         abc_boolean_args = creator_attr["abcExportBooleanArguments"].copy()
 
         creator_attr["abcExportBooleanArguments"] = [

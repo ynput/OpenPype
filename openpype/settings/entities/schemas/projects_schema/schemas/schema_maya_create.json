@@ -234,6 +234,11 @@
                   "decimal": 4
                 },
                 {
+                    "type": "boolean",
+                    "key": "visibleOnly",
+                    "label": "Visible Only default"
+                },
+                {
                     "type": "text",
                     "key": "attr",
                     "label": "Attributes"
