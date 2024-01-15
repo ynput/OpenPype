@@ -74,7 +74,56 @@
                     "type": "dict",
                     "collapsible": true,
                     "key": "CreateSaver",
-                    "label": "Create Saver",
+                    "label": "Create Render Saver",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "temp_rendering_path_template",
+                            "label": "Temporary rendering path template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "default_variants",
+                            "label": "Default variants",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "key": "instance_attributes",
+                            "label": "Instance attributes",
+                            "type": "enum",
+                            "multiselection": true,
+                            "enum_items": [
+                                {
+                                    "reviewable": "Reviewable"
+                                },
+                                {
+                                    "farm_rendering": "Farm rendering"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "image_format",
+                            "label": "Output Image Format",
+                            "type": "enum",
+                            "multiselect": false,
+                            "enum_items": [
+                                {"exr": "exr"},
+                                {"tga": "tga"},
+                                {"png": "png"},
+                                {"tif": "tif"},
+                                {"jpg": "jpg"}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CreateImageSaver",
+                    "label": "Create Image Saver",
                     "is_group": true,
                     "children": [
                         {
