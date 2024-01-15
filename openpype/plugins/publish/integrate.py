@@ -590,6 +590,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         files = repre["files"]
         template_data["representation"] = repre["name"]
         template_data["ext"] = repre["ext"]
+        encoding = repre.get('encoding', None)
+        if encoding:
+            template_data['encoding'] = encoding
 
         # allow overwriting existing version
         template_data["version"] = version["name"]

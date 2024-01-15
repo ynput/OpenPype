@@ -32,11 +32,11 @@ class ExtractLocalRender(publish.Extractor):
             files = []
 
             for found_file_name in os.listdir(staging_dir):
-                self.log.info("found_file_name::{}".format(found_file_name))
 
                 if found_file_name != Path(file_name).name:
                     continue
 
+                self.log.info("found_file_name::{}".format(found_file_name))
                 files.append(found_file_name)
 
             if not files:
@@ -51,6 +51,7 @@ class ExtractLocalRender(publish.Extractor):
             repre_data = {
                 "frameStart": instance.data["frameStart"],
                 "frameEnd": instance.data["frameEnd"],
+                "encoding": instance.data["encoding"],
                 "name": ext,
                 "ext": ext,
                 "files": resulting_files,

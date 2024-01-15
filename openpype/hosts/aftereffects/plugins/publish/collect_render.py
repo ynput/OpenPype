@@ -106,6 +106,7 @@ class CollectAERender(publish.AbstractCollectRender):
                 name=subset_name,
                 resolutionWidth=render_item.width,
                 resolutionHeight=render_item.height,
+                encoding=render_item.encoding,
                 pixelAspect=1,
                 tileRendering=False,
                 tilesX=0,
