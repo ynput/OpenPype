@@ -95,7 +95,7 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
     label = "Collect Inputs"
     order = pyblish.api.CollectorOrder + 0.2
     hosts = ["fusion"]
-    families = ["render"]
+    families = ["render", "image"]
 
     def process(self, instance):
 

@@ -84,9 +84,9 @@ class SceneInventoryController:
     def get_containers(self):
         host = self._host
         if isinstance(host, ILoadHost):
-            return host.get_containers()
+            return list(host.get_containers())
         elif hasattr(host, "ls"):
-            return host.ls()
+            return list(host.ls())
         return []
 
     # Site Sync methods

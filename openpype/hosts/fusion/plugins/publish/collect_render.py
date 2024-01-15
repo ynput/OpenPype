@@ -50,7 +50,7 @@ class CollectFusionRender(
                 continue
 
             family = inst.data["family"]
-            if family != "render":
+            if family not in ["render", "image"]:
                 continue
 
             task_name = context.data["task"]
@@ -59,7 +59,7 @@ class CollectFusionRender(
             instance_families = inst.data.get("families", [])
             subset_name = inst.data["subset"]
             instance = FusionRenderInstance(
-                family="render",
+                family=family,
                 tool=tool,
                 workfileComp=comp,
                 families=instance_families,
