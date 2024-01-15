@@ -26,7 +26,7 @@ from openpype.pipeline.template_data import get_template_data
 from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.widgets import popup
 from openpype.tools.utils.host_tools import get_tool_by_name
-
+import pyblish.util
 import hou
 
 
@@ -1019,12 +1019,42 @@ def find_rop_inputs_chain(node):
     return all_input_nodes
 
 
+def run_publish_logic(context):
+    """Run Headless publish logic.
+
+    It runs publish logic for the given context.
+    Usually you will use this with custom context.
+
+    Arguments:
+        context (openpype.pipeline.create.context.CreateContext)
+
+    """
+
+    pyblish_context = pyblish.api.Context()
+    pyblish_context.data["create_context"] = context
+    pyblish_plugins = context.publish_plugins
+
+    error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
+    for result in pyblish.util.publish_iter(pyblish_context, pyblish_plugins):
+        for record in result["records"]:
+            log.debug("{}: {}".format(result["plugin"].label, record.msg))
+
+        # Exit as soon as any error occurs.
+        if result["error"]:
+            error_message = error_format.format(**result)
+            log.debug(error_message)
+
+
 def self_publish():
     """Self publish from ROP nodes.
 
     Firstly, it gets the node and its input nodes chain.
     Then, it deactivates all other ROPs
     And finally, it triggers the publishing action.
+
+    Arguments:
+        use_publisher (bool)
     """
 
     result, comment = hou.ui.readInput(
@@ -1041,18 +1071,35 @@ def self_publish():
     all_input_nodes = find_rop_inputs_chain(current_node)
     all_input_nodes.append(current_node)
 
-    all_input_nodes = [n.path() for n in all_input_nodes]
+    all_input_subsets = [n.evalParm("subset") for n in all_input_nodes]
 
     host = registered_host()
     context = CreateContext(host, reset=True)
 
+    undesired_instances = []
     for instance in context.instances:
-        node_path = instance.data.get("instance_node")
-        instance["active"] = node_path and node_path in all_input_nodes
+        if instance.get("subset") not in all_input_subsets:
+            undesired_instances.append(instance)
+            instance["active"] = False
+            continue
+
+        # make sure the instance is active
+        instance["active"] = True
 
     context.save_changes()
 
-    publisher_show_and_publish(comment)
+    publish_mode_parm = current_node.parm("ayon_self_publish_selection")
+    if publish_mode_parm and publish_mode_parm.eval():
+        publisher_show_and_publish(comment)
+        return
+
+    for instance in undesired_instances:
+        log.debug("Remove {} instance".format(instance.get("subset")))
+        context.creator_removed_instance(instance)
+
+    # TODO: Sort context to match selection
+
+    run_publish_logic(context)
 
 
 def add_self_publish_button(node):
@@ -1069,6 +1116,17 @@ def add_self_publish_button(node):
         join_with_next=True
     )
 
+    menu_parm = hou.MenuParmTemplate(
+        "ayon_self_publish_selection",
+        "{}_self_publish_selection".format(label),
+        (
+            "Silent Publish",
+            "Use Publisher UI"
+        ),
+        is_label_hidden=True
+    )
+
     template = node.parmTemplateGroup()
+    template.insertBefore((0,), menu_parm)
     template.insertBefore((0,), button_parm)
     node.setParmTemplateGroup(template)
