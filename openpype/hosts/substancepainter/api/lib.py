@@ -643,33 +643,3 @@ def prompt_new_file_with_mesh(mesh_filepath):
         return
 
     return project_mesh
-
-
-def has_rgb_channel_in_texture_set(texture_set_name, map_identifier):
-    """Function to check whether the texture has RGB channel.
-
-    Args:
-        texture_set_name (str): Name of Texture Set
-        map_identifier (str): Map identifier
-
-    Returns:
-        bool: Whether the channel type identifier has RGB channel or not
-            in the texture stack.
-    """
-
-    # 2D_View is always True as it exports all texture maps
-    texture_stack = (
-        substance_painter.textureset.Stack.from_name(texture_set_name)
-    )
-    # 2D_View is always True as it exports all texture maps
-    if map_identifier == "2D_View":
-        return True
-
-    channel_type = getattr(
-        substance_painter.textureset.ChannelType, map_identifier, None)
-    if channel_type is None:
-        return False
-    if not texture_stack.has_channel(channel_type):
-        return False
-
-    return texture_stack.get_channel(channel_type).is_color()

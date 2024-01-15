@@ -7,8 +7,7 @@ from openpype.pipeline import publish
 import substance_painter.textureset
 from openpype.hosts.substancepainter.api.lib import (
     get_parsed_export_maps,
-    strip_template,
-    has_rgb_channel_in_texture_set
+    strip_template
 )
 from openpype.pipeline.create import get_subset_name
 from openpype.client import get_asset_by_name
@@ -79,6 +78,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         # Always include the map identifier
         map_identifier = strip_template(template)
         suffix += f".{map_identifier}"
+
         image_subset = get_subset_name(
             # TODO: The family actually isn't 'texture' currently but for now
             #       this is only done so the subset name starts with 'texture'
@@ -132,9 +132,7 @@ class CollectTextureSet(pyblish.api.InstancePlugin):
         # Store color space with the instance
         # Note: The extractor will assign it to the representation
         colorspace = outputs[0].get("colorSpace")
-        has_rgb_channel = has_rgb_channel_in_texture_set(
-            texture_set_name, map_identifier)
-        if colorspace and has_rgb_channel:
+        if colorspace:
             self.log.debug(f"{image_subset} colorspace: {colorspace}")
             image_instance.data["colorspace"] = colorspace
 
