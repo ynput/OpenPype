@@ -29,32 +29,39 @@ class KeepUserActiveForDeadline(BaseEvent):
         if not user:
             return
 
-        job_ids = self.get_user_active_deadline_jobs(user)
-        if job_ids:
-            # activate the account
-            user['is_active'] = True
-            session.commit()
-            # Return the issue message form
-            return {
-                "type": "form",
-                "items": [
-                    {
-                        "type": "label",
-                        "value": "#Warning: The user has been re-activated!"
-                    },
-                    {
-                        "type": "label",
-                        "value": "The following jobs from this user are currently active "
-                                    "on deadline:\n{}".format("\n".join(job_ids))
-                    },
-                    {
-                        "type": "label",
-                        "value": "Please try later when all the jobs are done."
-                    }
-                ],
-                "title": "Create Project Structure",
-                "submit_button_label": "I will do the changes"
+        job_ids = self.get_user_active_deadline_jobs(user['username'])
+        if not job_ids:
+            return
+
+        # activate the account
+        user['is_active'] = True
+        session.commit()
+        self.log.info("the user {} has been re-activated".format(user['username']))
+
+        # Return the issue message form
+        items = [
+            {
+                "type": "label",
+                "value": "#Warning: The user has been re-activated!"
+            },
+            {
+                "type": "label",
+                "value": "The following jobs from this user are currently active "
+                            "on deadline:\n{}".format("\n".join(job_ids))
+            },
+            {
+                "type": "label",
+                "value": "Please try later when all the jobs are done."
             }
+        ]
+
+        self.show_interface(
+            items,
+            title="The User Must Remain Active",
+            event=event,
+            submit_btn_label="I will try later!"
+        )
+        return True
 
     def get_user_active_deadline_jobs(self, user):
         """Get all active deadline jobs of the user
@@ -62,7 +69,6 @@ class KeepUserActiveForDeadline(BaseEvent):
         deadline_url = "http://deadline.prs.vfx.int:8081"
 
         requested_arguments = {
-            # "IdOnly": True,
             "States":"Active"
         }
 
@@ -73,7 +79,10 @@ class KeepUserActiveForDeadline(BaseEvent):
             **requested_arguments
         )
 
-        user_jobs = [job['_id'] for job in jobs if job['Props']['User']==user]
+        user_jobs = []
+        for job in jobs:
+            if job['Props']['Env'].get('FTRACK_API_USER')==user:
+                user_jobs.append(job['_id'])
 
         return user_jobs
 
