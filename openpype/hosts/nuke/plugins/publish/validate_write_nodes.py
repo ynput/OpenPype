@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+import nuke
+
 import pyblish.api
 from openpype.pipeline.publish import get_errored_instances_from_context
 from openpype.hosts.nuke.api.lib import (
@@ -11,6 +13,7 @@ from openpype.hosts.nuke.api.lib import (
 from openpype.pipeline.publish import (
     PublishXmlValidationError,
     OptionalPyblishPluginMixin,
+    PublishValidationError
 )
 
 
@@ -38,6 +41,19 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
             correct_data = get_write_node_template_attr(write_group_node)
 
             set_node_knobs_from_settings(write_node, correct_data["knobs"])
+
+            nuke_settings = instance.context.data["project_settings"]["nuke"]
+            create_settings = nuke_settings["create"]["CreateWriteRender"]
+            exposed_knobs = create_settings["exposed_knobs"]
+            for knob in exposed_knobs:
+                if knob in write_group_node.knobs():
+                    continue
+
+                link = nuke.Link_Knob("")
+                link.makeLink(write_node.name(), knob)
+                link.setName(knob)
+                link.setFlag(0x1000)
+                write_group_node.addKnob(link)
 
             self.log.debug("Node attributes were fixed")
 
@@ -133,6 +149,27 @@ class ValidateNukeWriteNode(
 
         if check:
             self._make_error(check)
+
+        nuke_settings = instance.context.data["project_settings"]["nuke"]
+        create_settings = nuke_settings["create"]["CreateWriteRender"]
+        exposed_knobs = create_settings["exposed_knobs"]
+        unexposed_knobs = []
+        for knob in exposed_knobs:
+            if knob not in write_group_node.knobs():
+                unexposed_knobs.append(knob)
+
+            """
+            link = nuke.Link_Knob("")
+            link.makeLink(write_node.name(), knob)
+            link.setName(knob)
+            link.setFlag(0x1000)
+            write_group_node.addKnob(link)
+            """
+
+        if unexposed_knobs:
+            raise PublishValidationError(
+                "Missing exposed knobs: {}".format(unexposed_knobs)
+            )
 
     def _make_error(self, check):
         # sourcery skip: merge-assign-and-aug-assign, move-assign-in-block
