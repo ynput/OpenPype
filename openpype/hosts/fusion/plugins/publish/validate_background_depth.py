@@ -17,7 +17,7 @@ class ValidateBackgroundDepth(
     order = pyblish.api.ValidatorOrder
     label = "Validate Background Depth 32 bit"
     hosts = ["fusion"]
-    families = ["render"]
+    families = ["render", "image"]
     optional = True
 
     actions = [SelectInvalidAction, publish.RepairAction]
