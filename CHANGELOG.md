@@ -1,6 +1,579 @@
 # Changelog
 
 
+## [3.18.3](https://github.com/ynput/OpenPype/tree/3.18.3)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.2...3.18.3)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Apply initial viewport shader for Redshift Proxy after loading <a href="https://github.com/ynput/OpenPype/pull/6102">#6102</a></summary>
+
+When the published redshift proxy is being loaded, the shader of the proxy is missing. This is different from the manual load through creating redshift proxy for files. This PR is to assign the default lambert to the redshift proxy, which replicates the same approach when the user manually loads the proxy with filepath.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: We should keep current subset version when we switch only the representation type <a href="https://github.com/ynput/OpenPype/pull/4629">#4629</a></summary>
+
+When we switch only the representation type of subsets, we should not get the representation from the last version of the subset.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Add loader for redshift proxy family <a href="https://github.com/ynput/OpenPype/pull/5948">#5948</a></summary>
+
+Loader for Redshift Proxy in Houdini (Thanks for @BigRoy contribution)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: exposing Deadline pools fields in Publisher UI <a href="https://github.com/ynput/OpenPype/pull/6079">#6079</a></summary>
+
+Deadline pools might be adhoc set by an artist during publishing. AfterEffects implementation wasn't providing this.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Event callbacks can have order <a href="https://github.com/ynput/OpenPype/pull/6080">#6080</a></summary>
+
+Event callbacks can have order in which are called, and fixed issue with getting function name and file when using `partial` function as callback.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: OpenPype addon defines runtime dependencies <a href="https://github.com/ynput/OpenPype/pull/6095">#6095</a></summary>
+
+Moved runtime dependencies from ayon-launcher to openpype addon.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: User's setting for scene unit scale  <a href="https://github.com/ynput/OpenPype/pull/6097">#6097</a></summary>
+
+Options for users to set the default scene unit scale for their scenes.AYONLegacy OP
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Remove deprecated templates profiles <a href="https://github.com/ynput/OpenPype/pull/6103">#6103</a></summary>
+
+Remove deprecated usage of template profiles from settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Window is not always on top <a href="https://github.com/ynput/OpenPype/pull/6107">#6107</a></summary>
+
+Goal of this PR is to avoid using `WindowStaysOnTopHint` which causes issues, especially in cases when DCC shows a popup dialog that is behind the window, in that case both Publisher and DCC are frozen and there is nothing to do.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: add split job export support for Redshift ROP <a href="https://github.com/ynput/OpenPype/pull/6108">#6108</a></summary>
+
+This is adding support for splitting of export and render jobs for Redshift as is already implemented for Vray, Mantra and Arnold.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: automatic installation of PySide2 <a href="https://github.com/ynput/OpenPype/pull/6111">#6111</a></summary>
+
+This PR adds hook which tries to check if PySide2 is installed in Python used by Fusion and if not, it tries to install it automatically.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: OpenPype addon dependencies <a href="https://github.com/ynput/OpenPype/pull/6113">#6113</a></summary>
+
+Added `click` and `six` to requirements of openpype addon, and removed `Qt.py` requirement, which is not used anywhere.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Thumbnail representation has 'outputName' <a href="https://github.com/ynput/OpenPype/pull/6114">#6114</a></summary>
+
+Add thumbnail output name to thumbnail representation to prevent same output filename during integration.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu: Clear credentials is safe <a href="https://github.com/ynput/OpenPype/pull/6116">#6116</a></summary>
+
+Do not remove not existing keyring items.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: bug fix the playblast without textures <a href="https://github.com/ynput/OpenPype/pull/5942">#5942</a></summary>
+
+Bug fix the texture not being displayed when users enable texture placement in the OP/AYON setting
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Workfile instance update fix <a href="https://github.com/ynput/OpenPype/pull/6048">#6048</a></summary>
+
+Make sure workfile instance has always available 'instance_node' in transient data.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Fix issue with parenting of widgets <a href="https://github.com/ynput/OpenPype/pull/6106">#6106</a></summary>
+
+Don't use publisher window parent (usually main DCC window) as parent for report widget.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>:wrench: fix and update pydocstyle configuration <a href="https://github.com/ynput/OpenPype/pull/6109">#6109</a></summary>
+
+Fix pydocstyle configuration and move it to `pyproject.toml`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Create camera node with the latest camera node class in Nuke 14 <a href="https://github.com/ynput/OpenPype/pull/6118">#6118</a></summary>
+
+Creating instance fails for certain cameras, and it seems to only exist in Nuke 14. The reason of causing that contributes to the new camera node class `Camera4`  while the camera creator is working with the `Camera2` class.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Site Sync: small fixes in Loader <a href="https://github.com/ynput/OpenPype/pull/6119">#6119</a></summary>
+
+Resolves issue:
+- local and studio icons were same, they should be different
+- `TypeError: string indices must be integers` error when downloading/uploading workfiles
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Template data for editorial publishing <a href="https://github.com/ynput/OpenPype/pull/6120">#6120</a></summary>
+
+Template data for editorial publishing are filled during `CollectInstanceAnatomyData`. The structure for editorial is determined, as it's required for ExtractHierarchy AYON/OpenPype plugins.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>SceneInventory: Fix site sync icon conversion <a href="https://github.com/ynput/OpenPype/pull/6123">#6123</a></summary>
+
+Use 'get_qt_icon' to convert icon definitions from site sync.
+
+
+___
+
+</details>
+
+
+
+
+## [3.18.2](https://github.com/ynput/OpenPype/tree/3.18.2)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.1...3.18.2)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Testing: Release Maya/Deadline job from pending when testing. <a href="https://github.com/ynput/OpenPype/pull/5988">#5988</a></summary>
+
+When testing we wont put the Deadline jobs into pending with dependencies, so the worker can start as soon as possible.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: Tweaks on Extractions for the exporters <a href="https://github.com/ynput/OpenPype/pull/5814">#5814</a></summary>
+
+With this PR
+- Suspend Refresh would be introduced in abc & obj extractors for optimization.
+- Allow users to choose the custom attributes to be included in abc exports
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Maya: Optional preserve references. <a href="https://github.com/ynput/OpenPype/pull/5994">#5994</a></summary>
+
+Optional preserve references when publishing Maya scenes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON ftrack: Expect 'ayon' group in custom attributes <a href="https://github.com/ynput/OpenPype/pull/6066">#6066</a></summary>
+
+Expect `ayon` group as one of options to get custom attributes.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON Chore: Remove dependencies related to separated addons <a href="https://github.com/ynput/OpenPype/pull/6074">#6074</a></summary>
+
+Removed dependencies from openpype client pyproject.toml that are already defined by addons which require them.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Editorial & chore: Stop using pathlib2 <a href="https://github.com/ynput/OpenPype/pull/6075">#6075</a></summary>
+
+Do not use `pathlib2` which is Python 2 backport for `pathlib` module in python 3.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Traypublisher: Correct validator label <a href="https://github.com/ynput/OpenPype/pull/6084">#6084</a></summary>
+
+Use correct label for Validate filepaths.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Extract Review Intermediate disabled when both Extract Review Mov and Extract Review Intermediate disabled in setting <a href="https://github.com/ynput/OpenPype/pull/6089">#6089</a></summary>
+
+Report in Discord https://discord.com/channels/517362899170230292/563751989075378201/1187874498234556477
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Bug fix the file from texture node not being collected correctly in Yeti Rig <a href="https://github.com/ynput/OpenPype/pull/5990">#5990</a></summary>
+
+Fix the bug of collect Yeti Rig not being able to get the file parameter(s) from the texture node(s), resulting to the failure of publishing the textures to the resource directory.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bug: fix AYON settings for Maya workspace <a href="https://github.com/ynput/OpenPype/pull/6069">#6069</a></summary>
+
+This is changing bug in default AYON setting for Maya workspace, where missing semicolumn caused workspace not being set. This is also syncing default workspace settings to OpenPype
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Refactor colorspace handling in CollectColorspace plugin <a href="https://github.com/ynput/OpenPype/pull/6033">#6033</a></summary>
+
+Traypublisher is now capable set available colorspaces or roles to publishing images sequence or video. This is fix of new implementation where we allowed to use roles in the enumerator selector.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bugfix: Houdini render split bugs <a href="https://github.com/ynput/OpenPype/pull/6037">#6037</a></summary>
+
+This PR is a follow up PR to https://github.com/ynput/OpenPype/pull/5420This PR does:
+- refactor `get_output_parameter` to what is used to be.
+- fix a bug with split render
+- rename `exportJob` flag to `split_render`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: fix for single frame rendering <a href="https://github.com/ynput/OpenPype/pull/6056">#6056</a></summary>
+
+Fixes publishes of single frame of `render` product type.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: fix layer publish thumbnail missing in loader <a href="https://github.com/ynput/OpenPype/pull/6061">#6061</a></summary>
+
+Thumbnails from any products (either `review` nor separate layer instances) weren't stored in Ayon.This resulted in not showing them in Loader and Server UI. After this PR thumbnails should be shown in the Loader and on the Server (`http://YOUR_AYON_HOSTNAME:5000/projects/YOUR_PROJECT/browser`).
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON Chore: Do not use thumbnailSource for thumbnail integration <a href="https://github.com/ynput/OpenPype/pull/6063">#6063</a></summary>
+
+Do not use `thumbnailSource` for thumbnail integration.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: fix creation of .mov <a href="https://github.com/ynput/OpenPype/pull/6064">#6064</a></summary>
+
+Generation of .mov file with 1 frame per published layer was failing.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Photoshop: fix Collect Color Coded settings <a href="https://github.com/ynput/OpenPype/pull/6065">#6065</a></summary>
+
+Fix for wrong default value for `Collect Color Coded Instances` Settings
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Bug: Fix Publisher parent window in Nuke <a href="https://github.com/ynput/OpenPype/pull/6067">#6067</a></summary>
+
+Fixing issue where publisher parent window wasn't set because wrong use of version constant.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Python console widget: Save registry fix <a href="https://github.com/ynput/OpenPype/pull/6076">#6076</a></summary>
+
+Do not save registry until there is something to save.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: update asset names for multiple reviewable items <a href="https://github.com/ynput/OpenPype/pull/6077">#6077</a></summary>
+
+Multiple reviewable assetVersion components with better grouping to asset version name.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Ftrack: DJV action fixes <a href="https://github.com/ynput/OpenPype/pull/6098">#6098</a></summary>
+
+Fix bugs in DJV  ftrack action.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON Workfiles tool: Fix arrow to timezone typo <a href="https://github.com/ynput/OpenPype/pull/6099">#6099</a></summary>
+
+Fix parenthesis typo with arrow local timezone function.
+
+
+___
+
+</details>
+
+### **🔀 Refactored code**
+
+
+<details>
+<summary>Chore: Update folder-favorite icon to ayon icon <a href="https://github.com/ynput/OpenPype/pull/5718">#5718</a></summary>
+
+Updates old "Pype-2.0-era" (from ancient greece times) to AYON logo equivalent.I believe it's only used in Nuke.
+
+
+___
+
+</details>
+
+### **Merged pull requests**
+
+
+<details>
+<summary>Chore: Maya / Nuke remove publish gui filters from settings <a href="https://github.com/ynput/OpenPype/pull/5570">#5570</a></summary>
+
+- Remove Publish GUI Filters from Nuke settings
+- Remove Publish GUI Filters from Maya settings
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Project/User option for output format (create_saver) <a href="https://github.com/ynput/OpenPype/pull/6045">#6045</a></summary>
+
+Adds "Output Image Format" option which can be set via project settings and overwritten by users in "Create" menu. This replaces the current behaviour of being hardcoded to "exr". Replacing the need for people to manually edit the saver path if they require a different extension.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: Output Image Format Updating Instances (create_saver) <a href="https://github.com/ynput/OpenPype/pull/6060">#6060</a></summary>
+
+Adds the ability to update Saver image output format if changed in the Publish UI.~~Adds an optional validator that compares "Output Image Format" in the Publish menu against the one currently found on the saver. It then offers a repair action to update the output extension on the saver.~~
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Tests: Fix representation count for AE legacy test <a href="https://github.com/ynput/OpenPype/pull/6072">#6072</a></summary>
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.1](https://github.com/ynput/OpenPype/tree/3.18.1)
 
 

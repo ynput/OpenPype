@@ -17,7 +17,7 @@ class ValidateFilenameHasExtension(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Filename Has Extension"
-    families = ["render"]
+    families = ["render", "image"]
     hosts = ["fusion"]
     actions = [SelectInvalidAction]
 
