@@ -697,13 +697,6 @@ class IntegrateHeroVersionModel(BaseSettingsModel):
     optional: bool = Field(False, title="Optional")
     active: bool = Field(True, title="Active")
     families: list[str] = Field(default_factory=list, title="Families")
-    # TODO remove when removed from client code
-    template_name_profiles: list[IntegrateHeroTemplateNameProfileModel] = (
-        Field(
-            default_factory=list,
-            title="Template name profiles"
-        )
-    )
 
 
 class CleanUpModel(BaseSettingsModel):
@@ -1049,19 +1042,6 @@ DEFAULT_PUBLISH_VALUES = {
             "layout",
             "mayaScene",
             "simpleUnrealTexture"
-        ],
-        "template_name_profiles": [
-            {
-                "product_types": [
-                    "simpleUnrealTexture"
-                ],
-                "hosts": [
-                    "standalonepublisher"
-                ],
-                "task_types": [],
-                "task_names": [],
-                "template_name": "simpleUnrealTextureHero"
-            }
         ]
     },
     "CleanUp": {

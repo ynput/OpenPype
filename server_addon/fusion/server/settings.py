@@ -35,6 +35,14 @@ def _image_format_enum():
     ]
 
 
+def _frame_range_options_enum():
+    return [
+        {"value": "asset_db", "label": "Current asset context"},
+        {"value": "render_range", "label": "From render in/out"},
+        {"value": "comp_range", "label": "From composition timeline"},
+    ]
+
+
 class CreateSaverPluginModel(BaseSettingsModel):
     _isGroup = True
     temp_rendering_path_template: str = Field(
@@ -49,16 +57,49 @@ class CreateSaverPluginModel(BaseSettingsModel):
         enum_resolver=_create_saver_instance_attributes_enum,
         title="Instance attributes"
     )
-    image_format: str = Field(
-        enum_resolver=_image_format_enum,
-        title="Output Image Format"
+    output_formats: list[str] = Field(
+        default_factory=list,
+        title="Output formats"
     )
 
 
+class HookOptionalModel(BaseSettingsModel):
+    enabled: bool = Field(
+        True,
+        title="Enabled"
+    )
+
+
+class HooksModel(BaseSettingsModel):
+    InstallPySideToFusion: HookOptionalModel = Field(
+        default_factory=HookOptionalModel,
+        title="Install PySide2"
+    )
+
+
+class CreateSaverModel(CreateSaverPluginModel):
+    default_frame_range_option: str = Field(
+        default="asset_db",
+        enum_resolver=_frame_range_options_enum,
+        title="Default frame range source"
+    )
+
+
+class CreateImageSaverModel(CreateSaverPluginModel):
+    default_frame: int = Field(
+        0,
+        title="Default rendered frame"
+    )
 class CreatPluginsModel(BaseSettingsModel):
-    CreateSaver: CreateSaverPluginModel = Field(
-        default_factory=CreateSaverPluginModel,
-        title="Create Saver"
+    CreateSaver: CreateSaverModel = Field(
+        default_factory=CreateSaverModel,
+        title="Create Saver",
+        description="Creator for render product type (eg. sequence)"
+    )
+    CreateImageSaver: CreateImageSaverModel = Field(
+        default_factory=CreateImageSaverModel,
+        title="Create Image Saver",
+        description="Creator for image product type (eg. single)"
     )
 
 
@@ -70,6 +111,10 @@ class FusionSettings(BaseSettingsModel):
     copy_fusion_settings: CopyFusionSettingsModel = Field(
         default_factory=CopyFusionSettingsModel,
         title="Local Fusion profile settings"
+    )
+    hooks: HooksModel = Field(
+        default_factory=HooksModel,
+        title="Hooks"
     )
     create: CreatPluginsModel = Field(
         default_factory=CreatPluginsModel,
@@ -93,6 +138,11 @@ DEFAULT_VALUES = {
         "copy_status": False,
         "force_sync": False
     },
+    "hooks": {
+        "InstallPySideToFusion": {
+            "enabled": True
+        }
+    },
     "create": {
         "CreateSaver": {
             "temp_rendering_path_template": "{workdir}/renders/fusion/{product[name]}/{product[name]}.{frame}.{ext}",
@@ -104,7 +154,21 @@ DEFAULT_VALUES = {
                 "reviewable",
                 "farm_rendering"
             ],
-            "image_format": "exr"
+            "image_format": "exr",
+            "default_frame_range_option": "asset_db"
+        },
+        "CreateImageSaver": {
+            "temp_rendering_path_template": "{workdir}/renders/fusion/{product[name]}/{product[name]}.{ext}",
+            "default_variants": [
+                "Main",
+                "Mask"
+            ],
+            "instance_attributes": [
+                "reviewable",
+                "farm_rendering"
+            ],
+            "image_format": "exr",
+            "default_frame": 0
         }
     }
 }
