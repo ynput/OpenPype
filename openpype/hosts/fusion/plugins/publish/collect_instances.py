@@ -59,7 +59,8 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
 
         frame = instance.data["creator_attributes"].get("frame")
         # explicitly publishing only single frame
-        if frame:
+
+        if frame is not None:
             frame = int(frame)
 
             start = frame
