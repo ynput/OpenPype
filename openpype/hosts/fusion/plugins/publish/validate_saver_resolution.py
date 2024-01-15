@@ -64,7 +64,7 @@ class ValidateSaverResolution(
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Asset Resolution"
-    families = ["render"]
+    families = ["render", "image"]
     hosts = ["fusion"]
     optional = True
     actions = [SelectInvalidAction]
