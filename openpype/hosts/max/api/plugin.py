@@ -65,12 +65,12 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 
         on button_add pressed do
         (
-            current_selection = selectByName title:"Select Objects to add to
+            current_sel = selectByName title:"Select Objects to add to
             the Container" buttontext:"Add" filter:nodes_to_add
-            if current_selection == undefined then return False
+            if current_sel == undefined then return False
             temp_arr = #()
             i_node_arr = #()
-            for c in current_selection do
+            for c in current_sel do
             (
                 handle_name = node_to_name c
                 node_ref = NodeTransformMonitor node:c
@@ -89,15 +89,18 @@ MS_CUSTOM_ATTRIB = """attributes "openPypeData"
 
         on button_del pressed do
         (
-            current_selection = selectByName title:"Select Objects to remove
+            current_sel = selectByName title:"Select Objects to remove
             from the Container" buttontext:"Remove" filter: nodes_to_rmv
-            if current_selection == undefined then return False
+            if current_sel == undefined or current_sel.count == 0 then
+            (
+                return False
+            )
             temp_arr = #()
             i_node_arr = #()
             new_i_node_arr = #()
             new_temp_arr = #()
 
-            for c in current_selection do
+            for c in current_sel do
             (
                 node_ref = NodeTransformMonitor node:c as string
                 handle_name = node_to_name c
@@ -201,6 +204,8 @@ class MaxCreator(Creator, MaxCreatorBase):
     def create(self, subset_name, instance_data, pre_create_data):
         if pre_create_data.get("use_selection"):
             self.selected_nodes = rt.GetCurrentSelection()
+        if rt.getNodeByName(subset_name):
+            raise CreatorError(f"'{subset_name}' is already created..")
 
         instance_node = self.create_instance_node(subset_name)
         instance_data["instance_node"] = instance_node.name
@@ -243,14 +248,25 @@ class MaxCreator(Creator, MaxCreatorBase):
     def update_instances(self, update_list):
         for created_inst, changes in update_list:
             instance_node = created_inst.get("instance_node")
-
             new_values = {
                 key: changes[key].new_value
                 for key in changes.changed_keys
             }
+            subset = new_values.get("subset", "")
+            if subset and instance_node != subset:
+                node = rt.getNodeByName(instance_node)
+                new_subset_name = new_values["subset"]
+                if rt.getNodeByName(new_subset_name):
+                    raise CreatorError(
+                        "The subset '{}' already exists.".format(
+                            new_subset_name))
+                instance_node = new_subset_name
+                created_inst["instance_node"] = instance_node
+                node.name = instance_node
+
             imprint(
                 instance_node,
-                new_values,
+                created_inst.data_to_store(),
             )
 
     def remove_instances(self, instances):

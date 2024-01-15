@@ -138,16 +138,22 @@ def _template_replacements_to_v3(template):
     )
 
 
-def _convert_template_item(template):
-    # Others won't have 'directory'
-    if "directory" not in template:
-        return
-    folder = _template_replacements_to_v3(template.pop("directory"))
-    template["folder"] = folder
-    template["file"] = _template_replacements_to_v3(template["file"])
-    template["path"] = "/".join(
-        (folder, template["file"])
-    )
+def _convert_template_item(template_item):
+    for key, value in tuple(template_item.items()):
+        template_item[key] = _template_replacements_to_v3(value)
+
+    # Change 'directory' to 'folder'
+    if "directory" in template_item:
+        template_item["folder"] = template_item.pop("directory")
+
+    if (
+        "path" not in template_item
+        and "file" in template_item
+        and "folder" in template_item
+    ):
+        template_item["path"] = "/".join(
+            (template_item["folder"], template_item["file"])
+        )
 
 
 def _fill_template_category(templates, cat_templates, cat_key):
@@ -212,10 +218,27 @@ def convert_v4_project_to_v3(project):
             _convert_template_item(template)
             new_others_templates[name] = template
 
+        staging_templates = templates.pop("staging", None)
+        # Key 'staging_directories' is legacy key that changed
+        #   to 'staging_dir'
+        _legacy_staging_templates = templates.pop("staging_directories", None)
+        if staging_templates is None:
+            staging_templates = _legacy_staging_templates
+
+        if staging_templates is None:
+            staging_templates = {}
+
+        # Prefix all staging template names with 'staging_' prefix
+        #   and add them to 'others'
+        for name, template in staging_templates.items():
+            _convert_template_item(template)
+            new_name = "staging_{}".format(name)
+            new_others_templates[new_name] = template
+
         for key in (
             "work",
             "publish",
-            "hero"
+            "hero",
         ):
             cat_templates = templates.pop(key)
             _fill_template_category(templates, cat_templates, key)
@@ -235,6 +258,8 @@ def convert_v4_project_to_v3(project):
         new_task_types = {}
         for task_type in task_types:
             name = task_type.pop("name")
+            # Change 'shortName' to 'short_name'
+            task_type["short_name"] = task_type.pop("shortName", None)
             new_task_types[name] = task_type
 
         config["tasks"] = new_task_types
@@ -581,7 +606,7 @@ def convert_v4_version_to_v3(version):
             output_data[dst_key] = version[src_key]
 
     if "createdAt" in version:
-        created_at = arrow.get(version["createdAt"])
+        created_at = arrow.get(version["createdAt"]).to("local")
         output_data["time"] = created_at.strftime("%Y%m%dT%H%M%SZ")
 
     output["data"] = output_data
@@ -663,9 +688,12 @@ def convert_v4_representation_to_v3(representation):
         if isinstance(context, six.string_types):
             context = json.loads(context)
 
-        if "folder" in context:
-            _c_folder = context.pop("folder")
+        if "asset" not in context and "folder" in context:
+            _c_folder = context["folder"]
             context["asset"] = _c_folder["name"]
+
+        elif "asset" in context and "folder" not in context:
+            context["folder"] = {"name": context["asset"]}
 
         if "product" in context:
             _c_product = context.pop("product")
@@ -959,9 +987,11 @@ def convert_create_representation_to_v4(representation, con):
     converted_representation["files"] = new_files
 
     context = representation["context"]
-    context["folder"] = {
-        "name": context.pop("asset", None)
-    }
+    if "folder" not in context:
+        context["folder"] = {
+            "name": context.get("asset")
+        }
+
     context["product"] = {
         "type": context.pop("family", None),
         "name": context.pop("subset", None),
@@ -1074,7 +1104,7 @@ def convert_update_folder_to_v4(project_name, asset_id, update_data, con):
     parent_id = None
     tasks = None
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.pop("attrib", {})
     if "type" in update_data:
         new_update_data["active"] = update_data["type"] == "asset"
 
@@ -1113,6 +1143,9 @@ def convert_update_folder_to_v4(project_name, asset_id, update_data, con):
         print("Folder has new data: {}".format(new_data))
         new_update_data["data"] = new_data
 
+    if attribs:
+        new_update_data["attrib"] = attribs
+
     if has_task_changes:
         raise ValueError("Task changes of folder are not implemented")
 
@@ -1126,7 +1159,7 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
     full_update_data = _from_flat_dict(update_data)
     data = full_update_data.get("data")
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.pop("attrib", {})
     if data:
         if "family" in data:
             family = data.pop("family")
@@ -1148,9 +1181,6 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
             elif value is not REMOVED_VALUE:
                 new_data[key] = value
 
-    if attribs:
-        new_update_data["attribs"] = attribs
-
     if "name" in update_data:
         new_update_data["name"] = update_data["name"]
 
@@ -1165,6 +1195,9 @@ def convert_update_subset_to_v4(project_name, subset_id, update_data, con):
         new_update_data["folderId"] = update_data["parent"]
 
     flat_data = _to_flat_dict(new_update_data)
+    if attribs:
+        flat_data["attrib"] = attribs
+
     if new_data:
         print("Subset has new data: {}".format(new_data))
         flat_data["data"] = new_data
@@ -1179,7 +1212,7 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
     full_update_data = _from_flat_dict(update_data)
     data = full_update_data.get("data")
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.pop("attrib", {})
     if data:
         if "author" in data:
             new_update_data["author"] = data.pop("author")
@@ -1196,9 +1229,6 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
             elif value is not REMOVED_VALUE:
                 new_data[key] = value
 
-    if attribs:
-        new_update_data["attribs"] = attribs
-
     if "name" in update_data:
         new_update_data["version"] = update_data["name"]
 
@@ -1213,6 +1243,9 @@ def convert_update_version_to_v4(project_name, version_id, update_data, con):
         new_update_data["productId"] = update_data["parent"]
 
     flat_data = _to_flat_dict(new_update_data)
+    if attribs:
+        flat_data["attrib"] = attribs
+
     if new_data:
         print("Version has new data: {}".format(new_data))
         flat_data["data"] = new_data
@@ -1252,7 +1285,7 @@ def convert_update_representation_to_v4(
     data = full_update_data.get("data")
 
     new_data = {}
-    attribs = {}
+    attribs = full_update_data.pop("attrib", {})
     if data:
         for key, value in data.items():
             if key in folder_attributes:
@@ -1282,7 +1315,7 @@ def convert_update_representation_to_v4(
 
     if "context" in update_data:
         context = update_data["context"]
-        if "asset" in context:
+        if "folder" not in context and "asset" in context:
             context["folder"] = {"name": context.pop("asset")}
 
         if "family" in context or "subset" in context:
@@ -1309,6 +1342,9 @@ def convert_update_representation_to_v4(
         new_update_data["files"] = new_files
 
     flat_data = _to_flat_dict(new_update_data)
+    if attribs:
+        flat_data["attrib"] = attribs
+
     if new_data:
         print("Representation has new data: {}".format(new_data))
         flat_data["data"] = new_data

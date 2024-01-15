@@ -1,3 +1,6 @@
+import re
+import os
+
 from tests.lib.assert_classes import DBAssert
 from tests.integration.hosts.maya.lib import MayaLocalPublishTestClass
 
@@ -26,7 +29,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     PERSIST = False
 
     TEST_FILES = [
-        ("1BTSIIULJTuDc8VvXseuiJV_fL6-Bu7FP", "test_maya_publish.zip", "")
+        ("test_publish_in_maya", "", "")
     ]
 
     APP_GROUP = "maya"
@@ -34,6 +37,32 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
     APP_VARIANT = ""
 
     TIMEOUT = 120  # publish timeout
+
+    def test_publish(
+        self,
+        dbcon,
+        publish_finished,
+        download_test_data
+    ):
+        """Testing Pyblish and Python logs within Maya."""
+
+        # All maya output via MAYA_CMD_FILE_OUTPUT env var during test run
+        logging_path = os.path.join(download_test_data, "output.log")
+        with open(logging_path, "r") as f:
+            logging_output = f.read()
+
+        print(("-" * 50) + "LOGGING" + ("-" * 50))
+        print(logging_output)
+
+        # Check for pyblish errors.
+        error_regex = r"pyblish \(ERROR\)((.|\n)*?)((pyblish \())"
+        matches = re.findall(error_regex, logging_output)
+        assert not matches, matches[0][0]
+
+        # Check for python errors.
+        error_regex = r"// Error((.|\n)*)"
+        matches = re.findall(error_regex, logging_output)
+        assert not matches, matches[0][0]
 
     def test_db_asserts(self, dbcon, publish_finished):
         """Host and input data dependent expected results in DB."""
@@ -67,7 +96,7 @@ class TestPublishInMaya(MayaLocalPublishTestClass):
                                     additional_args=additional_args))
 
         additional_args = {"context.subset": "workfileTest_task",
-                           "context.ext": "mb"}
+                           "context.ext": "ma"}
         failures.append(
             DBAssert.count_of_types(dbcon, "representation", 1,
                                     additional_args=additional_args))

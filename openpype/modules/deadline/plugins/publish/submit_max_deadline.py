@@ -1,8 +1,8 @@
 import os
 import getpass
 import copy
-
 import attr
+
 from openpype.lib import (
     TextDef,
     BoolDef,
@@ -12,12 +12,9 @@ from openpype.pipeline import (
     legacy_io,
     OpenPypePyblishPluginMixin
 )
-from openpype.settings import get_project_settings
-from openpype.hosts.max.api.lib import (
-    get_current_renderer,
-    get_multipass_setting
+from openpype.pipeline.publish.lib import (
+    replace_with_published_scene_path
 )
-from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 from openpype_modules.deadline import abstract_submit_deadline
 from openpype_modules.deadline.abstract_submit_deadline import DeadlineJobInfo
 from openpype.lib import is_running_from_build
@@ -174,7 +171,6 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         first_file = next(self._iter_expected_files(files))
         output_dir = os.path.dirname(first_file)
         instance.data["outputDir"] = output_dir
-        instance.data["toBeRenderedOn"] = "deadline"
 
         filename = os.path.basename(filepath)
 
@@ -190,6 +186,13 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         self.submit(self.assemble_payload(job_info, plugin_info))
 
     def _use_published_name(self, data, project_settings):
+        # Not all hosts can import these modules.
+        from openpype.hosts.max.api.lib import (
+            get_current_renderer,
+            get_multipass_setting
+        )
+        from openpype.hosts.max.api.lib_rendersettings import RenderSettings
+
         instance = self._instance
         job_info = copy.deepcopy(self.job_info)
         plugin_info = copy.deepcopy(self.plugin_info)
@@ -236,7 +239,11 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if renderer == "Redshift_Renderer":
             plugin_data["redshift_SeparateAovFiles"] = instance.data.get(
                 "separateAovFiles")
-
+        if instance.data["cameras"]:
+            camera = instance.data["cameras"][0]
+            plugin_info["Camera0"] = camera
+            plugin_info["Camera"] = camera
+            plugin_info["Camera1"] = camera
         self.log.debug("plugin data:{}".format(plugin_data))
         plugin_info.update(plugin_data)
 
@@ -247,7 +254,8 @@ class MaxSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline,
         if instance.data["renderer"] == "Redshift_Renderer":
             self.log.debug("Using Redshift...published scene wont be used..")
             replace_in_path = False
-            return replace_in_path
+        return replace_with_published_scene_path(
+            instance, replace_in_path)
 
     @staticmethod
     def _iter_expected_files(exp):

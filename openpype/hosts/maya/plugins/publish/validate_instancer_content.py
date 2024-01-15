@@ -21,7 +21,7 @@ class ValidateInstancerContent(pyblish.api.InstancePlugin):
         members = instance.data['setMembers']
         export_members = instance.data['exactExportMembers']
 
-        self.log.info("Contents {0}".format(members))
+        self.log.debug("Contents {0}".format(members))
 
         if not len(members) == len(cmds.ls(members, type="instancer")):
             self.log.error("Instancer can only contain instancers")

@@ -245,17 +245,21 @@
             ]
         },
         {
-            "family": "simpleUnrealTexture",
+            "family": "audio",
             "identifier": "",
-            "label": "Simple UE texture",
-            "icon": "fa.image",
-            "default_variants": [],
-            "description": "Simple Unreal Engine texture",
-            "detailed_description": "Texture files with Unreal Engine naming conventions",
+            "label": "Audio ",
+            "icon": "fa5s.file-audio",
+            "default_variants": [
+                "Main"
+            ],
+            "description": "Audio product",
+            "detailed_description": "Audio files for review or final delivery",
             "allow_sequences": false,
-            "allow_multiple_items": true,
+            "allow_multiple_items": false,
             "allow_version_control": false,
-            "extensions": []
+            "extensions": [
+                ".wav"
+            ]
         }
     ],
     "editorial_creators": {
@@ -329,10 +333,10 @@
         }
     },
     "publish": {
-        "CollectFrameDataFromAssetEntity": {
+        "CollectSequenceFrameData": {
             "enabled": true,
             "optional": true,
-            "active": true
+            "active": false
         },
         "ValidateFrameRange": {
             "enabled": true,

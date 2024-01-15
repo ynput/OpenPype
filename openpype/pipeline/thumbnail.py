@@ -4,7 +4,7 @@ import logging
 
 from openpype import AYON_SERVER_ENABLED
 from openpype.lib import Logger
-from openpype.client import get_project
+from openpype.client import get_project, get_ayon_server_api_connection
 from . import legacy_io
 from .anatomy import Anatomy
 from .plugin_discover import (
@@ -153,8 +153,6 @@ class ServerThumbnailResolver(ThumbnailResolver):
         if not entity_type or not entity_id:
             return None
 
-        import ayon_api
-
         project_name = self.dbcon.active_project()
         thumbnail_id = thumbnail_entity["_id"]
 
@@ -166,8 +164,12 @@ class ServerThumbnailResolver(ThumbnailResolver):
 
         # This is new way how thumbnails can be received from server
         #   - output is 'ThumbnailContent' object
-        if hasattr(ayon_api, "get_thumbnail_by_id"):
-            result = ayon_api.get_thumbnail_by_id(thumbnail_id)
+        # NOTE Use 'get_server_api_connection' because public function
+        #   'get_thumbnail_by_id' does not return output of 'ServerAPI'
+        #   method.
+        con = get_ayon_server_api_connection()
+        if hasattr(con, "get_thumbnail_by_id"):
+            result = con.get_thumbnail_by_id(thumbnail_id)
             if result.is_valid:
                 filepath = cache.store_thumbnail(
                     project_name,
@@ -178,7 +180,7 @@ class ServerThumbnailResolver(ThumbnailResolver):
         else:
             # Backwards compatibility for ayon api where 'get_thumbnail_by_id'
             #   is not implemented and output is filepath
-            filepath = ayon_api.get_thumbnail(
+            filepath = con.get_thumbnail(
                 project_name, entity_type, entity_id, thumbnail_id
             )
 

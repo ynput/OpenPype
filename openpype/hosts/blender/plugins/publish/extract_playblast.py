@@ -9,7 +9,7 @@ from openpype.hosts.blender.api import capture
 from openpype.hosts.blender.api.lib import maintained_time
 
 
-class ExtractPlayblast(publish.Extractor):
+class ExtractPlayblast(publish.Extractor, publish.OptionalPyblishPluginMixin):
     """
     Extract viewport playblast.
 
@@ -24,9 +24,8 @@ class ExtractPlayblast(publish.Extractor):
     order = pyblish.api.ExtractorOrder + 0.01
 
     def process(self, instance):
-        self.log.info("Extracting capture..")
-
-        self.log.info(instance.data)
+        if not self.is_active(instance.data):
+            return
 
         # get scene fps
         fps = instance.data.get("fps")
@@ -34,14 +33,14 @@ class ExtractPlayblast(publish.Extractor):
             fps = bpy.context.scene.render.fps
             instance.data["fps"] = fps
 
-        self.log.info(f"fps: {fps}")
+        self.log.debug(f"fps: {fps}")
 
         # If start and end frames cannot be determined,
         # get them from Blender timeline.
         start = instance.data.get("frameStart", bpy.context.scene.frame_start)
         end = instance.data.get("frameEnd", bpy.context.scene.frame_end)
 
-        self.log.info(f"start: {start}, end: {end}")
+        self.log.debug(f"start: {start}, end: {end}")
         assert end > start, "Invalid time range !"
 
         # get cameras
@@ -52,10 +51,13 @@ class ExtractPlayblast(publish.Extractor):
 
         # get output path
         stagingdir = self.staging_dir(instance)
-        filename = instance.name
+        asset_name = instance.data["assetEntity"]["name"]
+        subset = instance.data["subset"]
+        filename = f"{asset_name}_{subset}"
+
         path = os.path.join(stagingdir, filename)
 
-        self.log.info(f"Outputting images to {path}")
+        self.log.debug(f"Outputting images to {path}")
 
         project_settings = instance.context.data["project_settings"]["blender"]
         presets = project_settings["publish"]["ExtractPlayblast"]["presets"]
@@ -100,7 +102,7 @@ class ExtractPlayblast(publish.Extractor):
 
         frame_collection = collections[0]
 
-        self.log.info(f"We found collection of interest {frame_collection}")
+        self.log.debug(f"Found collection of interest {frame_collection}")
 
         instance.data.setdefault("representations", [])
 

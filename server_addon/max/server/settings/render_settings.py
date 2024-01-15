@@ -44,6 +44,6 @@ class RenderSettingsModel(BaseSettingsModel):
 DEFAULT_RENDER_SETTINGS = {
     "default_render_image_folder": "renders/3dsmax",
     "aov_separator": "underscore",
-    "image_format": "png",
+    "image_format": "exr",
     "multipass": True
 }

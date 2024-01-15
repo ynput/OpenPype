@@ -15,7 +15,7 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
 
     label = "Validate Frame Range"
     hosts = ["traypublisher"]
-    families = ["render"]
+    families = ["render", "plate"]
     order = ValidateContentsOrder
 
     optional = True
@@ -28,6 +28,12 @@ class ValidateFrameRange(OptionalPyblishPluginMixin,
     def process(self, instance):
         # Skip the instance if is not active by data on the instance
         if not self.is_active(instance.data):
+            return
+
+        # editorial would fail since they might not be in database yet
+        new_asset_publishing = instance.data.get("newAssetPublishing")
+        if new_asset_publishing:
+            self.log.debug("Instance is creating new asset. Skipping.")
             return
 
         if (self.skip_timelines_check and

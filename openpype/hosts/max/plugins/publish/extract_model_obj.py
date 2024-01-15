@@ -3,6 +3,8 @@ import pyblish.api
 from openpype.pipeline import publish, OptionalPyblishPluginMixin
 from pymxs import runtime as rt
 from openpype.hosts.max.api import maintained_selection
+from openpype.hosts.max.api.lib import suspended_refresh
+from openpype.pipeline.publish import KnownPublishError
 
 
 class ExtractModelObj(publish.Extractor, OptionalPyblishPluginMixin):
@@ -20,27 +22,25 @@ class ExtractModelObj(publish.Extractor, OptionalPyblishPluginMixin):
         if not self.is_active(instance.data):
             return
 
-        container = instance.data["instance_node"]
-
-        self.log.info("Extracting Geometry ...")
-
         stagingdir = self.staging_dir(instance)
         filename = "{name}.obj".format(**instance.data)
         filepath = os.path.join(stagingdir, filename)
-        self.log.info("Writing OBJ '%s' to '%s'" % (filepath, stagingdir))
 
-        with maintained_selection():
-            # select and export
-            node_list = instance.data["members"]
-            rt.Select(node_list)
-            rt.exportFile(
-                filepath,
-                rt.name("noPrompt"),
-                selectedOnly=True,
-                using=rt.ObjExp,
-            )
+        with suspended_refresh():
+            with maintained_selection():
+                # select and export
+                node_list = instance.data["members"]
+                rt.Select(node_list)
+                rt.exportFile(
+                    filepath,
+                    rt.name("noPrompt"),
+                    selectedOnly=True,
+                    using=rt.ObjExp,
+                )
+        if not os.path.exists(filepath):
+            raise KnownPublishError(
+                "File {} wasn't produced by 3ds max, please check the logs.")
 
-        self.log.info("Performing Extraction ...")
         if "representations" not in instance.data:
             instance.data["representations"] = []
 

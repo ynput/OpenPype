@@ -73,7 +73,7 @@ class CollectRenderInstances(pyblish.api.InstancePlugin):
         render_layer_id = creator_attributes["render_layer_instance_id"]
         for in_data in instance.context.data["workfileInstances"]:
             if (
-                in_data["creator_identifier"] == "render.layer"
+                in_data.get("creator_identifier") == "render.layer"
                 and in_data["instance_id"] == render_layer_id
             ):
                 render_layer_data = in_data

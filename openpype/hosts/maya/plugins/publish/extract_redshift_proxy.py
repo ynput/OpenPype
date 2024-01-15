@@ -50,16 +50,16 @@ class ExtractRedshiftProxy(publish.Extractor):
             # Padding is taken from number of digits of the end_frame.
             # Not sure where Redshift is taking it.
             repr_files = [
-                "{}.{}{}".format(root, str(frame).rjust(4, "0"), ext)  # noqa: E501
+                "{}.{}{}".format(os.path.basename(root), str(frame).rjust(4, "0"), ext)     # noqa: E501
                 for frame in range(
                     int(start_frame),
                     int(end_frame) + 1,
-                    int(instance.data["step"]),
+                    int(instance.data["step"])
             )]
         # vertex_colors = instance.data.get("vertexColors", False)
 
         # Write out rs file
-        self.log.info("Writing: '%s'" % file_path)
+        self.log.debug("Writing: '%s'" % file_path)
         with maintained_selection():
             cmds.select(instance.data["setMembers"], noExpand=True)
             cmds.file(file_path,
@@ -82,5 +82,5 @@ class ExtractRedshiftProxy(publish.Extractor):
         }
         instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s"
-                      % (instance.name, staging_dir))
+        self.log.debug("Extracted instance '%s' to: %s"
+                       % (instance.name, staging_dir))

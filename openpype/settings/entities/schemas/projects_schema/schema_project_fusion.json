@@ -44,6 +44,29 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "hooks",
+            "label": "Hooks",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "InstallPySideToFusion",
+                    "label": "Install PySide2",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "key": "create",
             "label": "Creator plugins",
             "children": [
@@ -80,6 +103,37 @@
                                     "farm_rendering": "Farm rendering"
                                 }
                             ]
+                        },
+                        {
+                            "key": "image_format",
+                            "label": "Output Image Format",
+                            "type": "enum",
+                            "multiselect": false,
+                            "enum_items": [
+                                {"exr": "exr"},
+                                {"tga": "tga"},
+                                {"png": "png"},
+                                {"tif": "tif"},
+                                {"jpg": "jpg"}
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateSaverResolution",
+                            "label": "Validate Saver Resolution"
                         }
                     ]
                 }

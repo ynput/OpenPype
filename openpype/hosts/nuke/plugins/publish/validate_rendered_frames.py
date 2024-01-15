@@ -14,19 +14,18 @@ class RepairActionBase(pyblish.api.Action):
         # Get the errored instances
         return get_errored_instances_from_context(context, plugin=plugin)
 
-    def repair_knob(self, instances, state):
+    def repair_knob(self, context, instances, state):
+        create_context = context.data["create_context"]
         for instance in instances:
-            node = instance.data["transientData"]["node"]
-            files_remove = [os.path.join(instance.data["outputDir"], f)
-                            for r in instance.data.get("representations", [])
-                            for f in r.get("files", [])
-                            ]
-            self.log.info("Files to be removed: {}".format(files_remove))
-            for f in files_remove:
-                os.remove(f)
-                self.log.debug("removing file: {}".format(f))
-            node["render"].setValue(state)
+            # Reset the render knob
+            instance_id = instance.data.get("instance_id")
+            created_instance = create_context.get_instance_by_id(
+                instance_id
+            )
+            created_instance.creator_attributes["render_target"] = state
             self.log.info("Rendering toggled to `{}`".format(state))
+
+        create_context.save_changes()
 
 
 class RepairCollectionActionToLocal(RepairActionBase):
@@ -34,7 +33,7 @@ class RepairCollectionActionToLocal(RepairActionBase):
 
     def process(self, context, plugin):
         instances = self.get_instance(context, plugin)
-        self.repair_knob(instances, "Local")
+        self.repair_knob(context, instances, "local")
 
 
 class RepairCollectionActionToFarm(RepairActionBase):
@@ -42,7 +41,7 @@ class RepairCollectionActionToFarm(RepairActionBase):
 
     def process(self, context, plugin):
         instances = self.get_instance(context, plugin)
-        self.repair_knob(instances, "On farm")
+        self.repair_knob(context, instances, "farm")
 
 
 class ValidateRenderedFrames(pyblish.api.InstancePlugin):
@@ -77,8 +76,8 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                 return
 
             collections, remainder = clique.assemble(repre["files"])
-            self.log.info("collections: {}".format(str(collections)))
-            self.log.info("remainder: {}".format(str(remainder)))
+            self.log.debug("collections: {}".format(str(collections)))
+            self.log.debug("remainder: {}".format(str(remainder)))
 
             collection = collections[0]
 
@@ -104,15 +103,15 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             coll_start = min(collection.indexes)
             coll_end = max(collection.indexes)
 
-            self.log.info("frame_length: {}".format(frame_length))
-            self.log.info("collected_frames_len: {}".format(
+            self.log.debug("frame_length: {}".format(frame_length))
+            self.log.debug("collected_frames_len: {}".format(
                 collected_frames_len))
-            self.log.info("f_start_h-f_end_h: {}-{}".format(
+            self.log.debug("f_start_h-f_end_h: {}-{}".format(
                 f_start_h, f_end_h))
-            self.log.info(
+            self.log.debug(
                 "coll_start-coll_end: {}-{}".format(coll_start, coll_end))
 
-            self.log.info(
+            self.log.debug(
                 "len(collection.indexes): {}".format(collected_frames_len)
             )
 

@@ -90,9 +90,9 @@ class FbxCameraLoader(plugin.AssetLoader):
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
 
-        asset_name = plugin.asset_name(asset, subset)
+        asset_name = plugin.prepare_scene_name(asset, subset)
         unique_number = plugin.get_unique_number(asset, subset)
-        group_name = plugin.asset_name(asset, subset, unique_number)
+        group_name = plugin.prepare_scene_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
 
         avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
@@ -103,7 +103,7 @@ class FbxCameraLoader(plugin.AssetLoader):
         asset_group = bpy.data.objects.new(group_name, object_data=None)
         avalon_container.objects.link(asset_group)
 
-        objects = self._process(libpath, asset_group, group_name)
+        self._process(libpath, asset_group, group_name)
 
         objects = []
         nodes = list(asset_group.children)

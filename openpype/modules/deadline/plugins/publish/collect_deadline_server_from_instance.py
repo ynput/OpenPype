@@ -5,9 +5,8 @@ This is resolving index of server lists stored in `deadlineServers` instance
 attribute or using default server if that attribute doesn't exists.
 
 """
-from maya import cmds
-
 import pyblish.api
+from openpype.pipeline.publish import KnownPublishError
 
 
 class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
@@ -23,7 +22,7 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
         instance.data["deadlineUrl"] = self._collect_deadline_url(instance)
         instance.data["deadlineUrl"] = \
             instance.data["deadlineUrl"].strip().rstrip("/")
-        self.log.info(
+        self.log.debug(
             "Using {} for submission.".format(instance.data["deadlineUrl"]))
 
     def _collect_deadline_url(self, render_instance):
@@ -43,7 +42,8 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
             str: Selected Deadline Webservice URL.
 
         """
-
+        # Not all hosts can import this module.
+        from maya import cmds
         deadline_settings = (
             render_instance.context.data
             ["system_settings"]
@@ -81,13 +81,14 @@ class CollectDeadlineServerFromInstance(pyblish.api.InstancePlugin):
             if k in default_servers
         }
 
-        msg = (
-            "\"{}\" server on instance is not enabled in project settings."
-            " Enabled project servers:\n{}".format(
-                instance_server, project_enabled_servers
+        if instance_server not in project_enabled_servers:
+            msg = (
+                "\"{}\" server on instance is not enabled in project settings."
+                " Enabled project servers:\n{}".format(
+                    instance_server, project_enabled_servers
+                )
             )
-        )
-        assert instance_server in project_enabled_servers, msg
+            raise KnownPublishError(msg)
 
         self.log.debug("Using project approved server.")
         return project_enabled_servers[instance_server]

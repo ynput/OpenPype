@@ -54,7 +54,7 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
             # has any yeti callback set or not since if the callback
             # is there it wouldn't error and if it weren't then
             # nothing happens because there are no yeti nodes.
-            cls.log.info(
+            cls.log.debug(
                 "Yeti is loaded but no yeti nodes were found. "
                 "Callback validation skipped.."
             )
@@ -62,7 +62,7 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
 
         renderer = instance.data["renderer"]
         if renderer == "redshift":
-            cls.log.info("Redshift ignores any pre and post render callbacks")
+            cls.log.debug("Redshift ignores any pre and post render callbacks")
             return False
 
         callback_lookup = cls.callbacks.get(renderer, {})

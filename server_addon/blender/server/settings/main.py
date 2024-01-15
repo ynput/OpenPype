@@ -9,6 +9,10 @@ from .publish_plugins import (
     PublishPuginsModel,
     DEFAULT_BLENDER_PUBLISH_SETTINGS
 )
+from .render_settings import (
+    RenderSettingsModel,
+    DEFAULT_RENDER_SETTINGS
+)
 
 
 class UnitScaleSettingsModel(BaseSettingsModel):
@@ -37,6 +41,8 @@ class BlenderSettings(BaseSettingsModel):
         default_factory=BlenderImageIOModel,
         title="Color Management (ImageIO)"
     )
+    RenderSettings: RenderSettingsModel = Field(
+        default_factory=RenderSettingsModel, title="Render Settings")
     workfile_builder: TemplateWorkfileBaseOptions = Field(
         default_factory=TemplateWorkfileBaseOptions,
         title="Workfile Builder"
@@ -51,10 +57,11 @@ DEFAULT_VALUES = {
     "unit_scale_settings": {
         "enabled": True,
         "apply_on_opening": False,
-        "base_file_unit_scale": 0.01
+        "base_file_unit_scale": 1.00
     },
     "set_frames_startup": True,
     "set_resolution_startup": True,
+    "RenderSettings": DEFAULT_RENDER_SETTINGS,
     "publish": DEFAULT_BLENDER_PUBLISH_SETTINGS,
     "workfile_builder": {
         "create_first_version": False,

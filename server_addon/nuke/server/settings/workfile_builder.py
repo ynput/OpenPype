@@ -48,20 +48,32 @@ class BuilderProfileModel(BaseSettingsModel):
         title="Task names"
     )
     current_context: list[BuilderProfileItemModel] = Field(
-        title="Current context")
+        default_factory=list,
+        title="Current context"
+    )
     linked_assets: list[BuilderProfileItemModel] = Field(
-        title="Linked assets/shots")
+        default_factory=list,
+        title="Linked assets/shots"
+    )
 
 
 class WorkfileBuilderModel(BaseSettingsModel):
+    """[deprecated] use Template Workfile Build Settings instead.
+    """
     create_first_version: bool = Field(
         title="Create first workfile")
     custom_templates: list[CustomTemplateModel] = Field(
-        title="Custom templates")
+        default_factory=list,
+        title="Custom templates"
+    )
     builder_on_start: bool = Field(
-        title="Run Builder at first workfile")
+        default=False,
+        title="Run Builder at first workfile"
+    )
     profiles: list[BuilderProfileModel] = Field(
-        title="Builder profiles")
+        default_factory=list,
+        title="Builder profiles"
+    )
 
 
 DEFAULT_WORKFILE_BUILDER_SETTINGS = {

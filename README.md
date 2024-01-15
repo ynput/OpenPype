@@ -7,6 +7,10 @@ OpenPype
 
 [![documentation](https://github.com/pypeclub/pype/actions/workflows/documentation.yml/badge.svg)](https://github.com/pypeclub/pype/actions/workflows/documentation.yml) ![GitHub VFX Platform](https://img.shields.io/badge/vfx%20platform-2022-lightgrey?labelColor=303846)
 
+## Important Notice!
+
+OpenPype as a standalone product has reach end of it's life and this repository is now used as a pipeline core code for [AYON](https://ynput.io/ayon/). You can read more details about the end of life process here https://community.ynput.io/t/openpype-end-of-life-timeline/877
+
 
 Introduction
 ------------
@@ -62,7 +66,7 @@ development tools like [CMake](https://cmake.org/) and [Visual Studio](https://v
 
 #### Clone repository:
 ```sh
-git clone --recurse-submodules git@github.com:Pypeclub/OpenPype.git
+git clone --recurse-submodules git@github.com:ynput/OpenPype.git
 ```
 
 #### To build OpenPype:
@@ -143,6 +147,10 @@ sudo ./tools/docker_build.sh centos7
 ```
 
 If all is successful, you'll find built OpenPype in `./build/` folder.
+
+Docker build can be also started from Windows machine, just use `./tools/docker_build.ps1` instead of shell script.
+
+This could be used even for building linux build (with argument `centos7` or `debian`)
 
 #### Manual build
 You will need [Python >= 3.9](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll also need [curl](https://curl.se) on systems that doesn't have one preinstalled.
@@ -275,7 +283,7 @@ arguments and it will create zip file that OpenPype can use.
 Building documentation
 ----------------------
 
-Top build API documentation, run `.\tools\make_docs(.ps1|.sh)`. It will create html documentation
+To build API documentation, run `.\tools\make_docs(.ps1|.sh)`. It will create html documentation
 from current sources in `.\docs\build`.
 
 **Note that it needs existing virtual environment.**

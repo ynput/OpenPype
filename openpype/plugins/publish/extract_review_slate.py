@@ -15,6 +15,7 @@ from openpype.lib import (
     get_ffmpeg_format_args,
 )
 from openpype.pipeline import publish
+from openpype.pipeline.publish import KnownPublishError
 
 
 class ExtractReviewSlate(publish.Extractor):
@@ -46,7 +47,7 @@ class ExtractReviewSlate(publish.Extractor):
                 "*": inst_data["slateFrame"]
             }
 
-        self.log.info("_ slates_data: {}".format(pformat(slates_data)))
+        self.log.debug("_ slates_data: {}".format(pformat(slates_data)))
 
         if "reviewToWidth" in inst_data:
             use_legacy_code = True
@@ -76,7 +77,7 @@ class ExtractReviewSlate(publish.Extractor):
             )
             # get slate data
             slate_path = self._get_slate_path(input_file, slates_data)
-            self.log.info("_ slate_path: {}".format(slate_path))
+            self.log.debug("_ slate_path: {}".format(slate_path))
 
             slate_width, slate_height = self._get_slates_resolution(slate_path)
 
@@ -93,9 +94,10 @@ class ExtractReviewSlate(publish.Extractor):
 
             # Raise exception of any stream didn't define input resolution
             if input_width is None:
-                raise AssertionError((
+                raise KnownPublishError(
                     "FFprobe couldn't read resolution from input file: \"{}\""
-                ).format(input_path))
+                    .format(input_path)
+                )
 
             (
                 audio_codec,
@@ -374,9 +376,13 @@ class ExtractReviewSlate(publish.Extractor):
 
         # Remove any representations tagged for deletion.
         for repre in inst_data.get("representations", []):
-            if "delete" in repre.get("tags", []):
-                self.log.debug("Removing representation: {}".format(repre))
-                inst_data["representations"].remove(repre)
+            tags = repre.get("tags", [])
+            if "delete" not in tags:
+                continue
+            if "need_thumbnail" in tags:
+                continue
+            self.log.debug("Removing representation: {}".format(repre))
+            inst_data["representations"].remove(repre)
 
         self.log.debug(inst_data["representations"])
 

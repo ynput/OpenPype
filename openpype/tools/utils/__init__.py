@@ -15,8 +15,15 @@ from .widgets import (
     IconButton,
     PixmapButton,
     SeparatorWidget,
+    VerticalExpandButton,
+    SquareButton,
+    RefreshButton,
+    GoToCurrentButton,
 )
-from .views import DeselectableTreeView
+from .views import (
+    DeselectableTreeView,
+    TreeView,
+)
 from .error_dialog import ErrorMessageBox
 from .lib import (
     WrappedCallbackItem,
@@ -38,6 +45,8 @@ from .models import (
 from .overlay_messages import (
     MessageOverlayObject,
 )
+from .multiselection_combobox import MultiSelectionComboBox
+from .thumbnail_paint_widget import ThumbnailPainterWidget
 
 
 __all__ = (
@@ -59,7 +68,13 @@ __all__ = (
     "PixmapButton",
     "SeparatorWidget",
 
+    "VerticalExpandButton",
+    "SquareButton",
+    "RefreshButton",
+    "GoToCurrentButton",
+
     "DeselectableTreeView",
+    "TreeView",
 
     "ErrorMessageBox",
 
@@ -78,4 +93,8 @@ __all__ = (
     "RecursiveSortFilterProxyModel",
 
     "MessageOverlayObject",
+
+    "MultiSelectionComboBox",
+
+    "ThumbnailPainterWidget",
 )

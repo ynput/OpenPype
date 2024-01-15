@@ -15,6 +15,11 @@
         "copy_status": false,
         "force_sync": false
     },
+    "hooks": {
+        "InstallPySideToFusion": {
+            "enabled": true
+        }
+    },
     "create": {
         "CreateSaver": {
             "temp_rendering_path_template": "{workdir}/renders/fusion/{subset}/{subset}.{frame}.{ext}",
@@ -25,7 +30,15 @@
             "instance_attributes": [
                 "reviewable",
                 "farm_rendering"
-            ]
+            ],
+            "image_format": "exr"
+        }
+    },
+    "publish": {
+        "ValidateSaverResolution": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     }
 }

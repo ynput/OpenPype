@@ -185,7 +185,7 @@ class PypeCommands:
                 task,
                 app,
                 env_group=env_group,
-                launch_type=LaunchTypes.farm_render,
+                launch_type=LaunchTypes.farm_render
             )
         else:
             env = os.environ.copy()
@@ -213,7 +213,8 @@ class PypeCommands:
         pass
 
     def run_tests(self, folder, mark, pyargs,
-                  test_data_folder, persist, app_variant, timeout, setup_only):
+                  test_data_folder, persist, app_variant, timeout, setup_only,
+                  mongo_url, app_group, dump_databases):
         """
             Runs tests from 'folder'
 
@@ -226,6 +227,10 @@ class PypeCommands:
                     end
                 app_variant (str): variant (eg 2020 for AE), empty if use
                     latest installed version
+                timeout (int): explicit timeout for single test
+                setup_only (bool): if only preparation steps should be
+                    triggered, no tests (useful for debugging/development)
+                mongo_url (str): url to Openpype Mongo database
         """
         print("run_tests")
         if folder:
@@ -255,6 +260,9 @@ class PypeCommands:
         if persist:
             args.extend(["--persist", persist])
 
+        if app_group:
+            args.extend(["--app_group", app_group])
+
         if app_variant:
             args.extend(["--app_variant", app_variant])
 
@@ -263,6 +271,16 @@ class PypeCommands:
 
         if setup_only:
             args.extend(["--setup_only", setup_only])
+
+        if mongo_url:
+            args.extend(["--mongo_url", mongo_url])
+
+        if dump_databases:
+            msg = "dump_databases format is not recognized: {}".format(
+                dump_databases
+            )
+            assert dump_databases in ["bson", "json"], msg
+            args.extend(["--dump_databases", dump_databases])
 
         print("run_tests args: {}".format(args))
         import pytest

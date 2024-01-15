@@ -189,7 +189,7 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
 
         environment = RREnvList({
             "AVALON_PROJECT": anatomy_data["project"]["name"],
-            "AVALON_ASSET": anatomy_data["asset"],
+            "AVALON_ASSET": instance.context.data["asset"],
             "AVALON_TASK": anatomy_data["task"]["name"],
             "OPENPYPE_USERNAME": anatomy_data["user"]
         })
@@ -205,6 +205,9 @@ class CreatePublishRoyalRenderJob(pyblish.api.InstancePlugin,
         jobs_pre_ids = []
         for job in instance.data["rrJobs"]:  # type: RRJob
             if job.rrEnvList:
+                if len(job.rrEnvList) > 2000:
+                    self.log.warning(("Job environment is too long "
+                                      f"{len(job.rrEnvList)} > 2000"))
                 job_environ.update(
                     dict(RREnvList.parse(job.rrEnvList))
                 )
