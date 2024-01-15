@@ -1,6 +1,262 @@
 # Changelog
 
 
+## [3.18.3](https://github.com/ynput/OpenPype/tree/3.18.3)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.2...3.18.3)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>Maya: Apply initial viewport shader for Redshift Proxy after loading <a href="https://github.com/ynput/OpenPype/pull/6102">#6102</a></summary>
+
+When the published redshift proxy is being loaded, the shader of the proxy is missing. This is different from the manual load through creating redshift proxy for files. This PR is to assign the default lambert to the redshift proxy, which replicates the same approach when the user manually loads the proxy with filepath.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>General: We should keep current subset version when we switch only the representation type <a href="https://github.com/ynput/OpenPype/pull/4629">#4629</a></summary>
+
+When we switch only the representation type of subsets, we should not get the representation from the last version of the subset.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: Add loader for redshift proxy family <a href="https://github.com/ynput/OpenPype/pull/5948">#5948</a></summary>
+
+Loader for Redshift Proxy in Houdini (Thanks for @BigRoy contribution)
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AfterEffects: exposing Deadline pools fields in Publisher UI <a href="https://github.com/ynput/OpenPype/pull/6079">#6079</a></summary>
+
+Deadline pools might be adhoc set by an artist during publishing. AfterEffects implementation wasn't providing this.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Event callbacks can have order <a href="https://github.com/ynput/OpenPype/pull/6080">#6080</a></summary>
+
+Event callbacks can have order in which are called, and fixed issue with getting function name and file when using `partial` function as callback.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: OpenPype addon defines runtime dependencies <a href="https://github.com/ynput/OpenPype/pull/6095">#6095</a></summary>
+
+Moved runtime dependencies from ayon-launcher to openpype addon.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Max: User's setting for scene unit scale  <a href="https://github.com/ynput/OpenPype/pull/6097">#6097</a></summary>
+
+Options for users to set the default scene unit scale for their scenes.AYONLegacy OP
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Remove deprecated templates profiles <a href="https://github.com/ynput/OpenPype/pull/6103">#6103</a></summary>
+
+Remove deprecated usage of template profiles from settings.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Window is not always on top <a href="https://github.com/ynput/OpenPype/pull/6107">#6107</a></summary>
+
+Goal of this PR is to avoid using `WindowStaysOnTopHint` which causes issues, especially in cases when DCC shows a popup dialog that is behind the window, in that case both Publisher and DCC are frozen and there is nothing to do.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Houdini: add split job export support for Redshift ROP <a href="https://github.com/ynput/OpenPype/pull/6108">#6108</a></summary>
+
+This is adding support for splitting of export and render jobs for Redshift as is already implemented for Vray, Mantra and Arnold.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: automatic installation of PySide2 <a href="https://github.com/ynput/OpenPype/pull/6111">#6111</a></summary>
+
+This PR adds hook which tries to check if PySide2 is installed in Python used by Fusion and if not, it tries to install it automatically.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: OpenPype addon dependencies <a href="https://github.com/ynput/OpenPype/pull/6113">#6113</a></summary>
+
+Added `click` and `six` to requirements of openpype addon, and removed `Qt.py` requirement, which is not used anywhere.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Thumbnail representation has 'outputName' <a href="https://github.com/ynput/OpenPype/pull/6114">#6114</a></summary>
+
+Add thumbnail output name to thumbnail representation to prevent same output filename during integration.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Kitsu: Clear credentials is safe <a href="https://github.com/ynput/OpenPype/pull/6116">#6116</a></summary>
+
+Do not remove not existing keyring items.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: bug fix the playblast without textures <a href="https://github.com/ynput/OpenPype/pull/5942">#5942</a></summary>
+
+Bug fix the texture not being displayed when users enable texture placement in the OP/AYON setting
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Workfile instance update fix <a href="https://github.com/ynput/OpenPype/pull/6048">#6048</a></summary>
+
+Make sure workfile instance has always available 'instance_node' in transient data.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Publisher: Fix issue with parenting of widgets <a href="https://github.com/ynput/OpenPype/pull/6106">#6106</a></summary>
+
+Don't use publisher window parent (usually main DCC window) as parent for report widget.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>:wrench: fix and update pydocstyle configuration <a href="https://github.com/ynput/OpenPype/pull/6109">#6109</a></summary>
+
+Fix pydocstyle configuration and move it to `pyproject.toml`
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Nuke: Create camera node with the latest camera node class in Nuke 14 <a href="https://github.com/ynput/OpenPype/pull/6118">#6118</a></summary>
+
+Creating instance fails for certain cameras, and it seems to only exist in Nuke 14. The reason of causing that contributes to the new camera node class `Camera4`  while the camera creator is working with the `Camera2` class.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Site Sync: small fixes in Loader <a href="https://github.com/ynput/OpenPype/pull/6119">#6119</a></summary>
+
+Resolves issue:
+- local and studio icons were same, they should be different
+- `TypeError: string indices must be integers` error when downloading/uploading workfiles
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore: Template data for editorial publishing <a href="https://github.com/ynput/OpenPype/pull/6120">#6120</a></summary>
+
+Template data for editorial publishing are filled during `CollectInstanceAnatomyData`. The structure for editorial is determined, as it's required for ExtractHierarchy AYON/OpenPype plugins.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>SceneInventory: Fix site sync icon conversion <a href="https://github.com/ynput/OpenPype/pull/6123">#6123</a></summary>
+
+Use 'get_qt_icon' to convert icon definitions from site sync.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.2](https://github.com/ynput/OpenPype/tree/3.18.2)
 
 
