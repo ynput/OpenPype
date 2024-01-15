@@ -1019,7 +1019,7 @@ def find_rop_inputs_chain(node):
     return all_input_nodes
 
 
-def run_publish_logic(context):
+def run_publish_logic(context, comment):
     """Run Headless publish logic.
 
     It runs publish logic for the given context.
@@ -1032,6 +1032,8 @@ def run_publish_logic(context):
 
     pyblish_context = pyblish.api.Context()
     pyblish_context.data["create_context"] = context
+    pyblish_context.data["comment"] = comment
+
     pyblish_plugins = context.publish_plugins
 
     error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
@@ -1099,7 +1101,7 @@ def self_publish():
 
     # TODO: Sort context to match selection
 
-    run_publish_logic(context)
+    run_publish_logic(context, comment)
 
 
 def add_self_publish_button(node):
