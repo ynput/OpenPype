@@ -7,7 +7,6 @@ from openpype.pipeline.publish import (
     PublishValidationError,
     OptionalPyblishPluginMixin
 )
-from openpype.hosts.max.api.lib import get_current_renderer
 from openpype.hosts.max.api.lib_rendersettings import RenderSettings
 
 
@@ -45,23 +44,22 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
         """Function to get invalid beauty render outputs and
         render elements.
 
-        1. Checking Render Output Folder matches the name of
-        the current Max Scene
-        e.g. The name of the current Max scene:
-                John_Doe.max
-            The expected render output directory:
-            {root[work]}/{project[name]}/{hierarchy}
-            /{asset}/work/{task[name]}/render/3dsmax/John_Doe/
+        1. Check Render Output Folder matches the name of
+           the current Max Scene, e.g.
+             The name of the current Max scene:
+               John_Doe.max
+             The expected render output directory:
+               {root[work]}/{project[name]}/{hierarchy}/{asset}/
+               work/{task[name]}/render/3dsmax/John_Doe/
 
-        2. Checking the image extension(s) of the render output(s)
-          does not match with image format in OP/AYON setting.
-        e.g. The current image format in the setting: png
-            The expected render outputs: Joe_Doe.png
+        2. Check image extension(s) of the render output(s)
+           matches the image format in OP/AYON setting, e.g.
+               The current image format in settings: png
+               The expected render outputs: John_Doe.png
 
-        3. Checking the filename of render element is not ended
-            with the name of render element from the 3dsMax Render
-            Element Manager.
-        e.g. The name of render element: RsCryptomatte
+        3. Check filename of render element ends with the name of
+           render element from the 3dsMax Render Element Manager.
+           e.g. The name of render element: RsCryptomatte
             The expected filename: {InstanceName}_RsCryptomatte.png
 
         Args:
@@ -90,8 +88,7 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
         invalid_image_format = cls.get_invalid_image_format(
             cls, instance, ext)
         invalid.extend(invalid_image_format)
-        renderer_class = get_current_renderer()
-        renderer = str(renderer_class).split(":")[0]
+        renderer = instance.data["renderer"]
         if renderer in [
             "ART_Renderer",
             "Redshift_Renderer",
@@ -107,17 +104,17 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
                 renderpass = str(renderlayer_name).split(":")[-1]
                 rend_file = render_elem.GetRenderElementFilename(i)
                 if not rend_file:
-                    cls.log.error(f"No filepath for {renderpass}")
+                    cls.log.error(
+                        f"No filepath for render element {renderpass}")
                     invalid.append((f"Invalid {renderpass}",
                                     "No filepath"))
                 rend_fname, ext = os.path.splitext(
                     os.path.basename(rend_file))
                 if not rend_fname.lstrip(".").endswith(renderpass):
-                    err_msg = (
-                        f"Filename for {renderpass} should be "
-                        f"ended with {renderpass}"
+                    cls.log.error(
+                        f"Filename for {renderpass} should "
+                        f"end with {renderpass}"
                     )
-                    cls.log.error(err_msg)
                     invalid.append((f"Invalid {renderpass}",
                                     os.path.basename(rend_file)))
                 invalid_image_format = cls.get_invalid_image_format(
@@ -125,7 +122,8 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
                 invalid.extend(invalid_image_format)
         elif renderer == "Arnold":
             cls.log.debug(
-                "Temporarily not support to check on Arnold render.")
+                "Renderpass validation not supported Arnold yet,"
+                " validation skipped...")
 
         return invalid
 
@@ -143,10 +141,13 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
         invalid = []
         settings = instance.context.data["project_settings"].get("max")
         image_format = settings["RenderSettings"]["image_format"]
-        if ext.lstrip(".") != image_format:
-            msg = "Invalid image format for render outputs"
+        ext = ext.lstrip(".")
+        if ext != image_format:
+            msg = (
+                f"Invalid image format {ext} for render outputs"
+                f"Should be : {image_format}")
             self.log.error(msg)
-            invalid.append((msg, ext.lstrip(".")))
+            invalid.append((msg, ext))
         return invalid
 
     @classmethod
