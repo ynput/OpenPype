@@ -88,6 +88,31 @@
                         }
                     ]
                 }
+            },
+            {
+                "type": "dict",
+                "collapsible": true,
+                "checkbox_key": "enabled",
+                "key": "ValidateRenderPasses",
+                "label": "Validate Render Passes",
+                "is_group": true,
+                "children": [
+                    {
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                        "type": "boolean",
+                        "key": "optional",
+                        "label": "Optional"
+                    },
+                    {
+                        "type": "boolean",
+                        "key": "active",
+                        "label": "Active"
+                    }
+                ]
             }
         ]
       },

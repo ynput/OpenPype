@@ -61,6 +61,11 @@
             "optional": true,
             "family_plugins_mapping": []
         },
+        "ValidateRenderPasses": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ExtractModelObj": {
             "enabled": true,
             "optional": true,
