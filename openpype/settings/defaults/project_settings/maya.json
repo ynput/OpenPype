@@ -1289,6 +1289,7 @@
                     "twoSidedLighting": true,
                     "lineAAEnable": true,
                     "multiSample": 8,
+                    "loadTextures": false,
                     "useDefaultMaterial": false,
                     "wireframeOnShaded": false,
                     "xray": false,
