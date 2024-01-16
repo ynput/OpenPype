@@ -2,7 +2,7 @@
 import os
 
 import rv
-
+import pymu
 
 def get_path_annotated_frame(frame=None, asset=None, asset_folder=None):
     """Get path for annotations
@@ -18,11 +18,39 @@ def get_path_annotated_frame(frame=None, asset=None, asset_folder=None):
     return filename
 
 
-def extract_annotated_frame(filepath=None):
+def extract_annotated_frame(filepath=None, annotated_frame=None):
     """Export frame to file
     """
-    if filepath:
-        return rv.commands.exportCurrentFrame(filepath)
+    # TODO: Fix this QUADCYPRIEN
+    marked_frames = rv.commands.markedFrames()
+    annotated_frames = rv.extra_commands.findAnnotatedFrames()
+
+    # Use set differences to figure out what frames we need to mark and unmark
+    to_add = list(set(annotated_frames) - set(marked_frames))
+    to_sub = list(set(marked_frames) - set(annotated_frames))
+
+    # Generalize this into a function so you can reverse it after export.
+    for frame_sub in to_sub:
+        rv.commands.markFrame(frame_sub, False)
+    for frame_add in to_add:
+        if frame_add == annotated_frame:
+            rv.commands.markFrame(frame_add, True)
+    rv.commands.redraw()
+
+    # Do your path substitution here
+    os.fork()
+    rv.runtime.eval("""
+    require runtime;
+    use rvtypes;
+    {{
+    runtime.load_module("export_utils");
+    let Fname = runtime.intern_name("export_utils.exportMarkedFrames");
+    (ExternalProcess;string,string) F = runtime.lookup_function(Fname);
+     F("{0}", "default");
+    }}
+    """.format(filepath), [])
+    os.wait()
+
 
 
 def review_attributes(node=None):
