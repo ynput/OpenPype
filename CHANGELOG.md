@@ -1,6 +1,151 @@
 # Changelog
 
 
+## [3.18.4](https://github.com/ynput/OpenPype/tree/3.18.4)
+
+
+[Full Changelog](https://github.com/ynput/OpenPype/compare/3.18.3...3.18.4)
+
+### **🚀 Enhancements**
+
+
+<details>
+<summary>multiple render camera supports for 3dsmax <a href="https://github.com/ynput/OpenPype/pull/5124">#5124</a></summary>
+
+Supports for rendering with multiple cameras in 3dsmax
+- [x] Add Batch Render Layers functions
+- [x] Rewrite lib.rendersetting and lib.renderproduct
+- [x] Add multi-camera options in creator.
+- [x] Collector with batch render-layer when multi-camera enabled.
+- [x] Add instance plugin for saving scene files with different cameras respectively by using subprocess
+- [x] Refactor submit_max_deadline
+- [x] Check with metadata.json in submit publish job
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Fusion: new creator for image product type <a href="https://github.com/ynput/OpenPype/pull/6057">#6057</a></summary>
+
+In many DCC `render` product type is expected to be sequence of files. This PR adds new explicit creator for `image` product type which is focused on single frame image. Workflows for both product types might be a bit different, this gives artists more granularity to choose better workflow.
+
+
+___
+
+</details>
+
+### **🐛 Bug fixes**
+
+
+<details>
+<summary>Maya: Account and ignore free image planes. <a href="https://github.com/ynput/OpenPype/pull/5993">#5993</a></summary>
+
+Free image planes do not have the `->` path separator, so we need to account for that.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Blender: Fix long names for instances <a href="https://github.com/ynput/OpenPype/pull/6070">#6070</a></summary>
+
+Changed naming for instances to use only final part of the `folderPath`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Traypublisher & Chore: Instance version on follow workfile version <a href="https://github.com/ynput/OpenPype/pull/6117">#6117</a></summary>
+
+If `follow_workfile_version` is enabled but context does not have filled workfile version, a version on instance is used instead.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Substance Painter: Thumbnail errors with PBR Texture Set <a href="https://github.com/ynput/OpenPype/pull/6127">#6127</a></summary>
+
+When publishing with PBR Metallic Roughness as Output Template, Emissive Map errors out because of the missing channel in the material and the map can't be generated in Substance Painter. This PR is to make sure `imagestance.data["publish"] = False` so that the related "empty" texture instance would be skipped to generate the output.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Transcoding: Fix reading image sequences through oiiotool <a href="https://github.com/ynput/OpenPype/pull/6129">#6129</a></summary>
+
+When transcoding image sequences, the second image onwards includes the invalid xml line of `Reading path/to/file.exr` of the oiiotool output.This is most likely not the best solution, but it fixes the issue and illustrates the problem.Error:
+```
+ERROR:pyblish.plugin:Traceback (most recent call last):
+  File "C:\Users\tokejepsen\AppData\Local\Ynput\AYON\dependency_packages\ayon_2310271602_windows.zip\dependencies\pyblish\plugin.py", line 527, in __explicit_process
+    runner(*args)
+  File "C:\Users\tokejepsen\OpenPype\openpype\plugins\publish\extract_color_transcode.py", line 152, in process
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 1136, in convert_colorspace
+    input_info = get_oiio_info_for_input(input_path, logger=logger)
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 124, in get_oiio_info_for_input
+    output.append(parse_oiio_xml_output(xml_text, logger=logger))
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 276, in parse_oiio_xml_output
+    tree = xml.etree.ElementTree.fromstring(xml_string)
+  File "xml\etree\ElementTree.py", line 1347, in XML
+xml.etree.ElementTree.ParseError: syntax error: line 1, column 0
+Traceback (most recent call last):
+  File "C:\Users\tokejepsen\AppData\Local\Ynput\AYON\dependency_packages\ayon_2310271602_windows.zip\dependencies\pyblish\plugin.py", line 527, in __explicit_process
+    runner(*args)
+  File "<string>", line 152, in process
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 1136, in convert_colorspace
+    input_info = get_oiio_info_for_input(input_path, logger=logger)
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 124, in get_oiio_info_for_input
+    output.append(parse_oiio_xml_output(xml_text, logger=logger))
+  File "C:\Users\tokejepsen\OpenPype\openpype\lib\transcoding.py", line 276, in parse_oiio_xml_output
+    tree = xml.etree.ElementTree.fromstring(xml_string)
+  File "xml\etree\ElementTree.py", line 1347, in XML
+xml.etree.ElementTree.ParseError: syntax error: line 1, column 0
+```
+
+
+
+___
+
+</details>
+
+
+<details>
+<summary>AYON: Remove 'IntegrateHeroVersion' conversion <a href="https://github.com/ynput/OpenPype/pull/6130">#6130</a></summary>
+
+Remove settings conversion for `IntegrateHeroVersion`.
+
+
+___
+
+</details>
+
+
+<details>
+<summary>Chore tools: Make sure style object is not garbage collected <a href="https://github.com/ynput/OpenPype/pull/6136">#6136</a></summary>
+
+Minor fix in tool utils to make sure style C++ object is not garbage collected when not stored into variable.
+
+
+___
+
+</details>
+
+
+
+
 ## [3.18.3](https://github.com/ynput/OpenPype/tree/3.18.3)
 
 
