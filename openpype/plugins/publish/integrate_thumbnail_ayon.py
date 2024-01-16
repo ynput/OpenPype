@@ -5,7 +5,21 @@
     pull into a scene.
 
     This one is used only as image describing content of published item and
-    shows up only in Loader in right column section.
+        shows up only in Loader or WebUI.
+
+    Instance must have 'published_representations' to
+        be able to integrate thumbnail.
+    Possible sources of thumbnail paths:
+    - instance.data["thumbnailPath"]
+    - representation with 'thumbnail' name in 'published_representations'
+    - context.data["thumbnailPath"]
+
+    Notes:
+        Issue with 'thumbnail' representation is that we most likely don't
+            want to integrate it as representation. Integrated representation
+            is polluting Loader and database without real usage. That's why
+            they usually have 'delete' tag to skip the integration.
+
 """
 
 import os
@@ -72,7 +86,7 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
         )
 
     def _prepare_instances(self, context):
-        context_thumbnail_path = context.get("thumbnailPath")
+        context_thumbnail_path = context.data.get("thumbnailPath")
         valid_context_thumbnail = bool(
             context_thumbnail_path
             and os.path.exists(context_thumbnail_path)
@@ -92,8 +106,10 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
                 continue
 
             # Find thumbnail path on instance
-            thumbnail_path = self._get_instance_thumbnail_path(
-                published_repres)
+            thumbnail_path = (
+                instance.data.get("thumbnailPath")
+                or self._get_instance_thumbnail_path(published_repres)
+            )
             if thumbnail_path:
                 self.log.debug((
                     "Found thumbnail path for instance \"{}\"."
@@ -131,13 +147,13 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
         thumb_repre_doc = None
         for repre_info in published_representations.values():
             repre_doc = repre_info["representation"]
-            if repre_doc["name"].lower() == "thumbnail":
+            if "thumbnail" in repre_doc["name"].lower():
                 thumb_repre_doc = repre_doc
                 break
 
         if thumb_repre_doc is None:
             self.log.debug(
-                "There is not representation with name \"thumbnail\""
+                "There is no representation with name \"thumbnail\""
             )
             return None
 
@@ -157,8 +173,8 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
     ):
         from openpype.client.server.operations import create_thumbnail
 
-        op_session = OperationsSession()
-
+        # Make sure each entity id has defined only one thumbnail id
+        thumbnail_info_by_entity_id = {}
         for instance_item in filtered_instance_items:
             instance, thumbnail_path, version_id = instance_item
             instance_label = self._get_instance_label(instance)
@@ -172,12 +188,10 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
             thumbnail_id = create_thumbnail(project_name, thumbnail_path)
 
             # Set thumbnail id for version
-            op_session.update_entity(
-                project_name,
-                version_doc["type"],
-                version_doc["_id"],
-                {"data.thumbnail_id": thumbnail_id}
-            )
+            thumbnail_info_by_entity_id[version_id] = {
+                "thumbnail_id": thumbnail_id,
+                "entity_type": version_doc["type"],
+            }
             if version_doc["type"] == "hero_version":
                 version_name = "Hero"
             else:
@@ -187,16 +201,23 @@ class IntegrateThumbnailsAYON(pyblish.api.ContextPlugin):
             ))
 
             asset_entity = instance.data["assetEntity"]
-            op_session.update_entity(
-                project_name,
-                asset_entity["type"],
-                asset_entity["_id"],
-                {"data.thumbnail_id": thumbnail_id}
-            )
+            thumbnail_info_by_entity_id[asset_entity["_id"]] = {
+                "thumbnail_id": thumbnail_id,
+                "entity_type": "asset",
+            }
             self.log.debug("Setting thumbnail for asset \"{}\" <{}>".format(
                 asset_entity["name"], version_id
             ))
 
+        op_session = OperationsSession()
+        for entity_id, thumbnail_info in thumbnail_info_by_entity_id.items():
+            thumbnail_id = thumbnail_info["thumbnail_id"]
+            op_session.update_entity(
+                project_name,
+                thumbnail_info["entity_type"],
+                entity_id,
+                {"data.thumbnail_id": thumbnail_id}
+            )
         op_session.commit()
 
     def _get_instance_label(self, instance):

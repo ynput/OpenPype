@@ -294,6 +294,37 @@ def reset_frame_range(fps: bool = True):
         frame_range["frameStartHandle"], frame_range["frameEndHandle"])
 
 
+def reset_unit_scale():
+    """Apply the unit scale setting to 3dsMax
+    """
+    project_name = get_current_project_name()
+    settings = get_project_settings(project_name).get("max")
+    scene_scale = settings.get("unit_scale_settings",
+                               {}).get("scene_unit_scale")
+    if scene_scale:
+        rt.units.DisplayType = rt.Name("Metric")
+        rt.units.MetricType = rt.Name(scene_scale)
+    else:
+        rt.units.DisplayType = rt.Name("Generic")
+
+
+def convert_unit_scale():
+    """Convert system unit scale in 3dsMax
+    for fbx export
+
+    Returns:
+        str: unit scale
+    """
+    unit_scale_dict = {
+        "millimeters": "mm",
+        "centimeters": "cm",
+        "meters": "m",
+        "kilometers": "km"
+    }
+    current_unit_scale = rt.Execute("units.MetricType as string")
+    return unit_scale_dict[current_unit_scale]
+
+
 def set_context_setting():
     """Apply the project settings from the project definition
 
@@ -310,6 +341,7 @@ def set_context_setting():
     reset_scene_resolution()
     reset_frame_range()
     reset_colorspace()
+    reset_unit_scale()
 
 
 def get_max_version():
@@ -331,21 +363,6 @@ def is_headless():
     If it returns False, it runs in 3dsmax.exe
     """
     return rt.maxops.isInNonInteractiveMode()
-
-
-@contextlib.contextmanager
-def viewport_camera(camera):
-    original = rt.viewport.getCamera()
-    if not original:
-        # if there is no original camera
-        # use the current camera as original
-        original = rt.getNodeByName(camera)
-    review_camera = rt.getNodeByName(camera)
-    try:
-        rt.viewport.setCamera(review_camera)
-        yield
-    finally:
-        rt.viewport.setCamera(original)
 
 
 def set_timeline(frameStart, frameEnd):
@@ -373,8 +390,6 @@ def reset_colorspace():
         colorspace_mgr = rt.ColorPipelineMgr
         colorspace_mgr.Mode = rt.Name("OCIO_Custom")
         colorspace_mgr.OCIOConfigPath = ocio_config_path
-
-    colorspace_mgr.OCIOConfigPath = ocio_config_path
 
 
 def check_colorspace():
@@ -509,3 +524,39 @@ def get_plugins() -> list:
         plugin_info_list.append(plugin_info)
 
     return plugin_info_list
+
+
+@contextlib.contextmanager
+def render_resolution(width, height):
+    """Set render resolution option during context
+
+    Args:
+        width (int): render width
+        height (int): render height
+    """
+    current_renderWidth = rt.renderWidth
+    current_renderHeight = rt.renderHeight
+    try:
+        rt.renderWidth = width
+        rt.renderHeight = height
+        yield
+    finally:
+        rt.renderWidth = current_renderWidth
+        rt.renderHeight = current_renderHeight
+
+
+@contextlib.contextmanager
+def suspended_refresh():
+    """Suspended refresh for scene and modify panel redraw.
+    """
+    if is_headless():
+        yield
+        return
+    rt.disableSceneRedraw()
+    rt.suspendEditing()
+    try:
+        yield
+
+    finally:
+        rt.enableSceneRedraw()
+        rt.resumeEditing()

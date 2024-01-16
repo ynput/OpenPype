@@ -89,8 +89,8 @@ class ExtractBurnin(publish.Extractor):
 
         self.main_process(instance)
 
-        # Remove any representations tagged for deletion.
-        # QUESTION Is possible to have representation with "delete" tag?
+        # Remove only representation tagged with both
+        # tags `delete` and `burnin`
         for repre in tuple(instance.data["representations"]):
             if all(x in repre.get("tags", []) for x in ['delete', 'burnin']):
                 self.log.debug("Removing representation: {}".format(repre))
@@ -170,8 +170,6 @@ class ExtractBurnin(publish.Extractor):
                 " | Task type \"{}\" | Subset \"{}\" "
             ).format(host_name, family, task_name, task_type, subset))
             return
-
-        self.log.debug("profile: {}".format(profile))
 
         # Pre-filter burnin definitions by instance families
         burnin_defs = self.filter_burnins_defs(profile, instance)
@@ -450,7 +448,7 @@ class ExtractBurnin(publish.Extractor):
                 filling burnin strings. `temp_data` are for repre pre-process
                 preparation.
         """
-        self.log.debug("Prepring basic data for burnins")
+        self.log.debug("Preparing basic data for burnins")
         context = instance.context
 
         version = instance.data.get("version")

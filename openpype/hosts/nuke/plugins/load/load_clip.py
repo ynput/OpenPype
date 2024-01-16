@@ -189,8 +189,6 @@ class LoadClip(plugin.NukeLoader):
                         value_ = value_.replace("\\", "/")
                     data_imprint[key] = value_
 
-            data_imprint["objectName"] = read_name
-
             if add_retime and version_data.get("retime", None):
                 data_imprint["addRetime"] = True
 
@@ -254,7 +252,7 @@ class LoadClip(plugin.NukeLoader):
 
         is_sequence = len(representation["files"]) > 1
 
-        read_node = nuke.toNode(container['objectName'])
+        read_node = container["node"]
 
         if is_sequence:
             representation = self._representation_with_hash_in_frame(
@@ -299,9 +297,6 @@ class LoadClip(plugin.NukeLoader):
                 "Representation id `{}` is failing to load".format(repre_id))
             return
 
-        read_name = self._get_node_name(representation)
-
-        read_node["name"].setValue(read_name)
         read_node["file"].setValue(filepath)
 
         # to avoid multiple undo steps for rest of process
@@ -356,7 +351,7 @@ class LoadClip(plugin.NukeLoader):
         self.set_as_member(read_node)
 
     def remove(self, container):
-        read_node = nuke.toNode(container['objectName'])
+        read_node = container["node"]
         assert read_node.Class() == "Read", "Must be Read"
 
         with viewer_update_and_undo_stop():

@@ -10,11 +10,11 @@ PROJECT_IS_CURRENT_ROLE = QtCore.Qt.UserRole + 4
 LIBRARY_PROJECT_SEPARATOR_ROLE = QtCore.Qt.UserRole + 5
 
 
-class ProjectsModel(QtGui.QStandardItemModel):
+class ProjectsQtModel(QtGui.QStandardItemModel):
     refreshed = QtCore.Signal()
 
     def __init__(self, controller):
-        super(ProjectsModel, self).__init__()
+        super(ProjectsQtModel, self).__init__()
         self._controller = controller
 
         self._project_items = {}
@@ -35,12 +35,11 @@ class ProjectsModel(QtGui.QStandardItemModel):
 
         self._selected_project = None
 
-        self._is_refreshing = False
         self._refresh_thread = None
 
     @property
     def is_refreshing(self):
-        return self._is_refreshing
+        return self._refresh_thread is not None
 
     def refresh(self):
         self._refresh()
@@ -169,28 +168,33 @@ class ProjectsModel(QtGui.QStandardItemModel):
         return self._select_item
 
     def _refresh(self):
-        if self._is_refreshing:
+        if self._refresh_thread is not None:
             return
-        self._is_refreshing = True
+
         refresh_thread = RefreshThread(
             "projects", self._query_project_items
         )
         refresh_thread.refresh_finished.connect(self._refresh_finished)
-        refresh_thread.start()
+
         self._refresh_thread = refresh_thread
+        refresh_thread.start()
 
     def _query_project_items(self):
-        return self._controller.get_project_items()
+        return self._controller.get_project_items(
+            sender=PROJECTS_MODEL_SENDER
+        )
 
     def _refresh_finished(self):
         # TODO check if failed
         result = self._refresh_thread.get_result()
+        if result is not None:
+            self._fill_items(result)
+
         self._refresh_thread = None
-
-        self._fill_items(result)
-
-        self._is_refreshing = False
-        self.refreshed.emit()
+        if result is None:
+            self._refresh()
+        else:
+            self.refreshed.emit()
 
     def _fill_items(self, project_items):
         new_project_names = {
@@ -403,7 +407,7 @@ class ProjectsCombobox(QtWidgets.QWidget):
         projects_combobox = QtWidgets.QComboBox(self)
         combobox_delegate = QtWidgets.QStyledItemDelegate(projects_combobox)
         projects_combobox.setItemDelegate(combobox_delegate)
-        projects_model = ProjectsModel(controller)
+        projects_model = ProjectsQtModel(controller)
         projects_proxy_model = ProjectSortFilterProxy()
         projects_proxy_model.setSourceModel(projects_model)
         projects_combobox.setModel(projects_proxy_model)
@@ -499,17 +503,6 @@ class ProjectsCombobox(QtWidgets.QWidget):
         self._projects_model.set_current_context_project(project_name)
         self._projects_proxy_model.invalidateFilter()
 
-    def _update_select_item_visiblity(self, **kwargs):
-        if not self._select_item_visible:
-            return
-        if "project_name" not in kwargs:
-            project_name = self.get_selected_project_name()
-        else:
-            project_name = kwargs.get("project_name")
-
-        # Hide the item if a project is selected
-        self._projects_model.set_selected_project(project_name)
-
     def set_select_item_visible(self, visible):
         self._select_item_visible = visible
         self._projects_model.set_select_item_visible(visible)
@@ -529,6 +522,17 @@ class ProjectsCombobox(QtWidgets.QWidget):
 
     def set_library_filter_enabled(self, enabled):
         return self._projects_proxy_model.set_library_filter_enabled(enabled)
+
+    def _update_select_item_visiblity(self, **kwargs):
+        if not self._select_item_visible:
+            return
+        if "project_name" not in kwargs:
+            project_name = self.get_selected_project_name()
+        else:
+            project_name = kwargs.get("project_name")
+
+        # Hide the item if a project is selected
+        self._projects_model.set_selected_project(project_name)
 
     def _on_current_index_changed(self, idx):
         if not self._listen_selection_change:

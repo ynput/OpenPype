@@ -20,7 +20,8 @@ import copy
 import time
 
 import six
-import ayon_api
+
+from openpype.client import get_ayon_server_api_connection
 
 
 def _convert_color(color_value):
@@ -477,15 +478,6 @@ def _convert_maya_project_settings(ayon_settings, output):
         for item in ayon_maya["ext_mapping"]
     }
 
-    # Publish UI filters
-    new_filters = {}
-    for item in ayon_maya["filters"]:
-        new_filters[item["name"]] = {
-            subitem["name"]: subitem["value"]
-            for subitem in item["value"]
-        }
-    ayon_maya["filters"] = new_filters
-
     # Maya dirmap
     ayon_maya_dirmap = ayon_maya.pop("maya_dirmap")
     ayon_maya_dirmap_path = ayon_maya_dirmap["paths"]
@@ -571,6 +563,27 @@ def _convert_maya_project_settings(ayon_settings, output):
         for item in viewport_options["pluginObjects"]
     }
 
+    ayon_playblast_settings = ayon_publish["ExtractPlayblast"]["profiles"]
+    if ayon_playblast_settings:
+        for setting in ayon_playblast_settings:
+            capture_preset = setting["capture_preset"]
+            display_options = capture_preset["DisplayOptions"]
+            for key in ("background", "backgroundBottom", "backgroundTop"):
+                display_options[key] = _convert_color(display_options[key])
+
+            for src_key, dst_key in (
+                ("DisplayOptions", "Display Options"),
+                ("ViewportOptions", "Viewport Options"),
+                ("CameraOptions", "Camera Options"),
+            ):
+                capture_preset[dst_key] = capture_preset.pop(src_key)
+
+            viewport_options = capture_preset["Viewport Options"]
+            viewport_options["pluginObjects"] = {
+                item["name"]: item["value"]
+                for item in viewport_options["pluginObjects"]
+            }
+
     # Extract Camera Alembic bake attributes
     try:
         bake_attributes = json.loads(
@@ -639,6 +652,23 @@ def _convert_3dsmax_project_settings(ayon_settings, output):
             for item in point_cloud_attribute
         }
         ayon_max["PointCloud"]["attribute"] = new_point_cloud_attribute
+    # --- Publish (START) ---
+    ayon_publish = ayon_max["publish"]
+    if "ValidateAttributes" in ayon_publish:
+        try:
+            attributes = json.loads(
+                ayon_publish["ValidateAttributes"]["attributes"]
+            )
+        except ValueError:
+            attributes = {}
+        ayon_publish["ValidateAttributes"]["attributes"] = attributes
+
+    if "ValidateLoadedPlugin" in ayon_publish:
+        loaded_plugin = (
+            ayon_publish["ValidateLoadedPlugin"]["family_plugins_mapping"]
+        )
+        for item in loaded_plugin:
+            item["families"] = item.pop("product_types")
 
     output["max"] = ayon_max
 
@@ -703,16 +733,6 @@ def _convert_nuke_project_settings(ayon_settings, output):
     ):
         dirmap["paths"][dst_key] = dirmap["paths"].pop(src_key)
     ayon_nuke["nuke-dirmap"] = dirmap
-
-    # --- Filters ---
-    new_gui_filters = {}
-    for item in ayon_nuke.pop("filters"):
-        subvalue = {}
-        key = item["name"]
-        for subitem in item["value"]:
-            subvalue[subitem["name"]] = subitem["value"]
-        new_gui_filters[key] = subvalue
-    ayon_nuke["filters"] = new_gui_filters
 
     # --- Load ---
     ayon_load = ayon_nuke["load"]
@@ -803,35 +823,47 @@ def _convert_nuke_project_settings(ayon_settings, output):
             collect_instance_data.pop(
                 "sync_workfile_version_on_product_types"))
 
-    # TODO 'ExtractThumbnail' does not have ideal schema in v3
-    ayon_extract_thumbnail = ayon_publish["ExtractThumbnail"]
-    new_thumbnail_nodes = {}
-    for item in ayon_extract_thumbnail["nodes"]:
-        name = item["nodeclass"]
-        value = []
-        for knob in _convert_nuke_knobs(item["knobs"]):
-            knob_name = knob["name"]
-            # This may crash
-            if knob["type"] == "expression":
-                knob_value = knob["expression"]
-            else:
-                knob_value = knob["value"]
-            value.append([knob_name, knob_value])
-        new_thumbnail_nodes[name] = value
-
-    ayon_extract_thumbnail["nodes"] = new_thumbnail_nodes
-
-    if "reposition_nodes" in ayon_extract_thumbnail:
-        for item in ayon_extract_thumbnail["reposition_nodes"]:
-            item["knobs"] = _convert_nuke_knobs(item["knobs"])
-
     # --- ImageIO ---
     # NOTE 'monitorOutLut' is maybe not yet in v3 (ut should be)
     _convert_host_imageio(ayon_nuke)
     ayon_imageio = ayon_nuke["imageio"]
-    for item in ayon_imageio["nodes"]["requiredNodes"]:
+
+    # workfile
+    imageio_workfile = ayon_imageio["workfile"]
+    workfile_keys_mapping = (
+        ("color_management", "colorManagement"),
+        ("native_ocio_config", "OCIO_config"),
+        ("working_space", "workingSpaceLUT"),
+        ("thumbnail_space", "monitorLut"),
+    )
+    for src, dst in workfile_keys_mapping:
+        if (
+            src in imageio_workfile
+            and dst not in imageio_workfile
+        ):
+            imageio_workfile[dst] = imageio_workfile.pop(src)
+
+    # regex inputs
+    if "regex_inputs" in ayon_imageio:
+        ayon_imageio["regexInputs"] = ayon_imageio.pop("regex_inputs")
+
+    # nodes
+    ayon_imageio_nodes = ayon_imageio["nodes"]
+    if "required_nodes" in ayon_imageio_nodes:
+        ayon_imageio_nodes["requiredNodes"] = (
+            ayon_imageio_nodes.pop("required_nodes"))
+    if "override_nodes" in ayon_imageio_nodes:
+        ayon_imageio_nodes["overrideNodes"] = (
+            ayon_imageio_nodes.pop("override_nodes"))
+
+    for item in ayon_imageio_nodes["requiredNodes"]:
+        if "nuke_node_class" in item:
+            item["nukeNodeClass"] = item.pop("nuke_node_class")
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
-    for item in ayon_imageio["nodes"]["overrideNodes"]:
+
+    for item in ayon_imageio_nodes["overrideNodes"]:
+        if "nuke_node_class" in item:
+            item["nukeNodeClass"] = item.pop("nuke_node_class")
         item["knobs"] = _convert_nuke_knobs(item["knobs"])
 
     output["nuke"] = ayon_nuke
@@ -845,7 +877,7 @@ def _convert_hiero_project_settings(ayon_settings, output):
     _convert_host_imageio(ayon_hiero)
 
     new_gui_filters = {}
-    for item in ayon_hiero.pop("filters"):
+    for item in ayon_hiero.pop("filters", []):
         subvalue = {}
         key = item["name"]
         for subitem in item["value"]:
@@ -888,23 +920,29 @@ def _convert_photoshop_project_settings(ayon_settings, output):
     output["photoshop"] = ayon_photoshop
 
 
+def _convert_substancepainter_project_settings(ayon_settings, output):
+    if "substancepainter" not in ayon_settings:
+        return
+
+    ayon_substance_painter = ayon_settings["substancepainter"]
+    _convert_host_imageio(ayon_substance_painter)
+    if "shelves" in ayon_substance_painter:
+        shelves_items = ayon_substance_painter["shelves"]
+        new_shelves_items = {
+            item["name"]: item["value"]
+            for item in shelves_items
+        }
+        ayon_substance_painter["shelves"] = new_shelves_items
+
+    output["substancepainter"] = ayon_substance_painter
+
+
 def _convert_tvpaint_project_settings(ayon_settings, output):
     if "tvpaint" not in ayon_settings:
         return
     ayon_tvpaint = ayon_settings["tvpaint"]
 
     _convert_host_imageio(ayon_tvpaint)
-
-    filters = {}
-    for item in ayon_tvpaint["filters"]:
-        value = item["value"]
-        try:
-            value = json.loads(value)
-
-        except ValueError:
-            value = {}
-        filters[item["name"]] = value
-    ayon_tvpaint["filters"] = filters
 
     ayon_publish_settings = ayon_tvpaint["publish"]
     for plugin_name in (
@@ -977,10 +1015,14 @@ def _convert_traypublisher_project_settings(ayon_settings, output):
         item["family"] = item.pop("product_type")
 
     shot_add_tasks = ayon_editorial_simple["shot_add_tasks"]
+
+    # TODO: backward compatibility and remove in future
     if isinstance(shot_add_tasks, dict):
         shot_add_tasks = []
+
+    # aggregate shot_add_tasks items
     new_shot_add_tasks = {
-        item["name"]: item["task_type"]
+        item["name"]: {"type": item["task_type"]}
         for item in shot_add_tasks
     }
     ayon_editorial_simple["shot_add_tasks"] = new_shot_add_tasks
@@ -1168,6 +1210,26 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
 
         profile["outputs"] = new_outputs
 
+    # ExtractThumbnail plugin
+    ayon_extract_thumbnail = ayon_publish["ExtractThumbnail"]
+    # fix display and view at oiio defaults
+    ayon_default_oiio = copy.deepcopy(
+        ayon_extract_thumbnail["oiiotool_defaults"])
+    display_and_view = ayon_default_oiio.pop("display_and_view")
+    ayon_default_oiio["display"] = display_and_view["display"]
+    ayon_default_oiio["view"] = display_and_view["view"]
+    ayon_extract_thumbnail["oiiotool_defaults"] = ayon_default_oiio
+    # fix target size
+    ayon_default_resize = copy.deepcopy(ayon_extract_thumbnail["target_size"])
+    resize = ayon_default_resize.pop("resize")
+    ayon_default_resize["width"] = resize["width"]
+    ayon_default_resize["height"] = resize["height"]
+    ayon_extract_thumbnail["target_size"] = ayon_default_resize
+    # fix background color
+    ayon_extract_thumbnail["background_color"] = _convert_color(
+        ayon_extract_thumbnail["background_color"]
+    )
+
     # ExtractOIIOTranscode plugin
     extract_oiio_transcode = ayon_publish["ExtractOIIOTranscode"]
     extract_oiio_transcode_profiles = extract_oiio_transcode["profiles"]
@@ -1228,12 +1290,6 @@ def _convert_global_project_settings(ayon_settings, output, default_settings):
             extract_burnin_def.pop("name"): extract_burnin_def
             for extract_burnin_def in extract_burnin_defs
         }
-
-    ayon_integrate_hero = ayon_publish["IntegrateHeroVersion"]
-    for profile in ayon_integrate_hero["template_name_profiles"]:
-        if "product_types" not in profile:
-            break
-        profile["families"] = profile.pop("product_types")
 
     if "IntegrateProductGroup" in ayon_publish:
         subset_group = ayon_publish.pop("IntegrateProductGroup")
@@ -1342,6 +1398,7 @@ def convert_project_settings(ayon_settings, default_settings):
     _convert_nuke_project_settings(ayon_settings, output)
     _convert_hiero_project_settings(ayon_settings, output)
     _convert_photoshop_project_settings(ayon_settings, output)
+    _convert_substancepainter_project_settings(ayon_settings, output)
     _convert_tvpaint_project_settings(ayon_settings, output)
     _convert_traypublisher_project_settings(ayon_settings, output)
     _convert_webpublisher_project_settings(ayon_settings, output)
@@ -1401,8 +1458,12 @@ class _AyonSettingsCache:
     @classmethod
     def _use_bundles(cls):
         if _AyonSettingsCache.use_bundles is None:
-            major, minor, _, _, _ = ayon_api.get_server_version_tuple()
-            _AyonSettingsCache.use_bundles = major == 0 and minor >= 3
+            con = get_ayon_server_api_connection()
+            major, minor, _, _, _ = con.get_server_version_tuple()
+            use_bundles = True
+            if (major, minor) < (0, 3):
+                use_bundles = False
+            _AyonSettingsCache.use_bundles = use_bundles
         return _AyonSettingsCache.use_bundles
 
     @classmethod
@@ -1415,7 +1476,13 @@ class _AyonSettingsCache:
                 variant = cls._get_dev_mode_settings_variant()
             elif is_staging_enabled():
                 variant = "staging"
+
+            # Cache variant
             _AyonSettingsCache.variant = variant
+
+            # Set the variant to global ayon api connection
+            con = get_ayon_server_api_connection()
+            con.set_default_settings_variant(variant)
         return _AyonSettingsCache.variant
 
     @classmethod
@@ -1430,10 +1497,11 @@ class _AyonSettingsCache:
             str: Name of settings variant.
         """
 
-        bundles = ayon_api.get_bundles()
-        user = ayon_api.get_user()
+        con = get_ayon_server_api_connection()
+        bundles = con.get_bundles()
+        user = con.get_user()
         username = user["name"]
-        for bundle in bundles:
+        for bundle in bundles["bundles"]:
             if (
                 bundle.get("isDev")
                 and bundle.get("activeUser") == username
@@ -1447,20 +1515,23 @@ class _AyonSettingsCache:
     def get_value_by_project(cls, project_name):
         cache_item = _AyonSettingsCache.cache_by_project_name[project_name]
         if cache_item.is_outdated:
+            con = get_ayon_server_api_connection()
             if cls._use_bundles():
-                value = ayon_api.get_addons_settings(
+                value = con.get_addons_settings(
                     bundle_name=cls._get_bundle_name(),
-                    project_name=project_name
+                    project_name=project_name,
+                    variant=cls._get_variant()
                 )
             else:
-                value = ayon_api.get_addons_settings(project_name)
+                value = con.get_addons_settings(project_name)
             cache_item.update_value(value)
         return cache_item.get_value()
 
     @classmethod
     def _get_addon_versions_from_bundle(cls):
+        con = get_ayon_server_api_connection()
         expected_bundle = cls._get_bundle_name()
-        bundles = ayon_api.get_bundles()["bundles"]
+        bundles = con.get_bundles()["bundles"]
         bundle = next(
             (
                 bundle
@@ -1480,8 +1551,11 @@ class _AyonSettingsCache:
             if cls._use_bundles():
                 addons = cls._get_addon_versions_from_bundle()
             else:
-                settings_data = ayon_api.get_addons_settings(
-                    only_values=False, variant=cls._get_variant())
+                con = get_ayon_server_api_connection()
+                settings_data = con.get_addons_settings(
+                    only_values=False,
+                    variant=cls._get_variant()
+                )
                 addons = settings_data["versions"]
             cache_item.update_value(addons)
 
@@ -1500,3 +1574,18 @@ def get_ayon_system_settings(default_values):
     return convert_system_settings(
         ayon_settings, default_values, addon_versions
     )
+
+
+def get_ayon_settings(project_name=None):
+    """AYON studio settings.
+
+    Raw AYON settings values.
+
+    Args:
+        project_name (Optional[str]): Project name.
+
+    Returns:
+        dict[str, Any]: AYON settings.
+    """
+
+    return _AyonSettingsCache.get_value_by_project(project_name)

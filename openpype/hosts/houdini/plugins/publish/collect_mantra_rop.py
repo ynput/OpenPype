@@ -24,7 +24,9 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
     """
 
     label = "Mantra ROP Render Products"
-    order = pyblish.api.CollectorOrder + 0.4
+    # This specific order value is used so that
+    # this plugin runs after CollectFrames
+    order = pyblish.api.CollectorOrder + 0.11
     hosts = ["houdini"]
     families = ["mantra_rop"]
 
@@ -41,6 +43,25 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
 
             default_prefix = evalParmNoFrame(rop, "vm_picture")
             render_products = []
+
+            # Store whether we are splitting the render job (export + render)
+            split_render = bool(rop.parm("soho_outputmode").eval())
+            instance.data["splitRender"] = split_render
+            export_prefix = None
+            export_products = []
+            if split_render:
+                export_prefix = evalParmNoFrame(
+                    rop, "soho_diskfile", pad_character="0"
+                )
+                beauty_export_product = self.get_render_product_name(
+                    prefix=export_prefix,
+                    suffix=None)
+                export_products.append(beauty_export_product)
+                self.log.debug(
+                    "Found export product: {}".format(beauty_export_product)
+                )
+                instance.data["ifdFile"] = beauty_export_product
+                instance.data["exportFiles"] = list(export_products)
 
             # Default beauty AOV
             beauty_product = self.get_render_product_name(
@@ -118,8 +139,9 @@ class CollectMantraROPRenderProducts(pyblish.api.InstancePlugin):
             return path
 
         expected_files = []
-        start = instance.data["frameStart"]
-        end = instance.data["frameEnd"]
+        start = instance.data["frameStartHandle"]
+        end = instance.data["frameEndHandle"]
+
         for i in range(int(start), (int(end) + 1)):
             expected_files.append(
                 os.path.join(dir, (file % i)).replace("\\", "/"))

@@ -6,6 +6,34 @@
     "is_file": true,
     "children": [
         {
+            "key": "unit_scale_settings",
+            "type": "dict",
+            "label": "Set Unit Scale",
+            "collapsible": true,
+            "is_group": true,
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "key": "scene_unit_scale",
+                    "label": "Scene Unit Scale",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "exr",
+                    "enum_items": [
+                      {"Millimeters": "mm"},
+                      {"Centimeters": "cm"},
+                      {"Meters":  "m"},
+                      {"Kilometers":  "km"}
+                    ]
+                }
+            ]
+        },
+        {
             "key": "imageio",
             "type": "dict",
             "label": "Color Management (OCIO managed)",
@@ -62,6 +90,104 @@
                     "type": "boolean",
                     "key": "multipass",
                     "label": "multipass"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateReview",
+            "label": "Create Review",
+            "children": [
+                {
+                    "type": "number",
+                    "key": "review_width",
+                    "label": "Review Width"
+                },
+                {
+                    "type": "number",
+                    "key": "review_height",
+                    "label": "Review Height"
+                },
+                {
+                    "type": "number",
+                    "key": "percentSize",
+                    "label": "Percent of Output"
+                },
+                {
+                    "type": "boolean",
+                    "key": "keep_images",
+                    "label": "Keep Image Sequences"
+                },
+                {
+                  "key": "image_format",
+                  "label": "Image Format Options",
+                  "type": "enum",
+                  "multiselection": false,
+                  "defaults": "exr",
+                  "enum_items": [
+                    {"exr": "exr"},
+                    {"jpg": "jpg"},
+                    {"png": "png"},
+                    {"tga": "tga"}
+                  ]
+                },
+                {
+                    "key": "visual_style",
+                    "label": "Preference",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "Realistic",
+                    "enum_items": [
+                      {"Realistic": "Realistic"},
+                      {"Shaded": "Shaded"},
+                      {"Facets": "Facets"},
+                      {"ConsistentColors": "ConsistentColors"},
+                      {"HiddenLine": "HiddenLine"},
+                      {"Wireframe": "Wireframe"},
+                      {"BoundingBox": "BoundingBox"},
+                      {"Ink": "Ink"},
+                      {"ColorInk": "ColorInk"},
+                      {"Acrylic": "Acrylic"},
+                      {"Tech": "Tech"},
+                      {"Graphite": "Graphite"},
+                      {"ColorPencil": "ColorPencil"},
+                      {"Pastel": "Pastel"},
+                      {"Clay": "Clay"},
+                      {"ModelAssist": "ModelAssist"}
+                    ]
+                },
+                {
+                    "key": "viewport_preset",
+                    "label": "Pre-View Preset",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "Quality",
+                    "enum_items": [
+                      {"Quality": "Quality"},
+                      {"Standard": "Standard"},
+                      {"Performance": "Performance"},
+                      {"DXMode": "DXMode"},
+                      {"Customize": "Customize"}
+                    ]
+                },
+                {
+                    "key": "anti_aliasing",
+                    "label": "Anti-aliasing Quality",
+                    "type": "enum",
+                    "multiselection": false,
+                    "defaults": "None",
+                    "enum_items": [
+                      {"None": "None"},
+                      {"2X": "2X"},
+                      {"4X": "4X"},
+                      {"8X": "8X"}
+                    ]
+                },
+                {
+                    "type": "boolean",
+                    "key": "vp_texture",
+                    "label": "Viewport Texture"
                 }
             ]
         },

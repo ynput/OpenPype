@@ -4,17 +4,24 @@ import bpy
 
 import pyblish.api
 
-from openpype.pipeline.publish import ValidateContentsOrder
+from openpype.pipeline.publish import (
+    ValidateContentsOrder,
+    OptionalPyblishPluginMixin,
+    PublishValidationError
+)
 import openpype.hosts.blender.api.action
 
 
-class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
+class ValidateMeshHasUvs(
+        pyblish.api.InstancePlugin,
+        OptionalPyblishPluginMixin,
+):
     """Validate that the current mesh has UV's."""
 
     order = ValidateContentsOrder
     hosts = ["blender"]
     families = ["model"]
-    label = "Mesh Has UV's"
+    label = "Mesh Has UVs"
     actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
     optional = True
 
@@ -49,8 +56,11 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
         return invalid
 
     def process(self, instance):
+        if not self.is_active(instance.data):
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(
+            raise PublishValidationError(
                 f"Meshes found in instance without valid UV's: {invalid}"
             )

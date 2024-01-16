@@ -40,10 +40,10 @@ class SiteSyncModel:
             dict[str, str]: Path by provider name.
         """
 
-        site_sync = self._get_sync_server_module()
-        if site_sync is None:
+        if not self.is_sync_server_enabled():
             return {}
-        return site_sync.get_site_icons()
+        site_sync_addon = self._get_sync_server_module()
+        return site_sync_addon.get_site_icons()
 
     def get_sites_information(self):
         return {
@@ -150,23 +150,23 @@ class SiteSyncModel:
         return self._remote_site_provider
 
     def _cache_sites(self):
-        site_sync = self._get_sync_server_module()
         active_site = None
         remote_site = None
         active_site_provider = None
         remote_site_provider = None
-        if site_sync is not None:
+        if self.is_sync_server_enabled():
+            site_sync = self._get_sync_server_module()
             project_name = self._controller.get_current_project_name()
             active_site = site_sync.get_active_site(project_name)
             remote_site = site_sync.get_remote_site(project_name)
             active_site_provider = "studio"
             remote_site_provider = "studio"
             if active_site != "studio":
-                active_site_provider = site_sync.get_active_provider(
+                active_site_provider = site_sync.get_provider_for_site(
                     project_name, active_site
                 )
             if remote_site != "studio":
-                remote_site_provider = site_sync.get_active_provider(
+                remote_site_provider = site_sync.get_provider_for_site(
                     project_name, remote_site
                 )
 

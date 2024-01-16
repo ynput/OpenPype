@@ -21,7 +21,7 @@ class ValidateBaseModel(BaseSettingsModel):
 class CollectAnatomyInstanceDataModel(BaseSettingsModel):
     _isGroup = True
     follow_workfile_version: bool = Field(
-        True, title="Collect Anatomy Instance Data"
+        True, title="Follow workfile version"
     )
 
 
@@ -84,7 +84,6 @@ class ValidateIntentModel(BaseSettingsModel):
 
 
 class ExtractThumbnailFFmpegModel(BaseSettingsModel):
-    _layout = "expanded"
     input: list[str] = Field(
         default_factory=list,
         title="FFmpeg input arguments"
@@ -95,9 +94,109 @@ class ExtractThumbnailFFmpegModel(BaseSettingsModel):
     )
 
 
+class ResizeItemModel(BaseSettingsModel):
+    _layout = "expanded"
+    width: int = Field(
+        1920,
+        ge=0,
+        le=100000,
+        title="Width",
+        description="Width and Height must be both set to higher value than 0"
+        " else source resolution is used."
+    )
+    height: int = Field(
+        1080,
+        title="Height",
+        ge=0,
+        le=100000,
+    )
+
+
+_resize_types_enum = [
+    {"value": "source", "label": "Image source"},
+    {"value": "resize", "label": "Resize"},
+]
+
+
+class ResizeModel(BaseSettingsModel):
+    _layout = "expanded"
+
+    type: str = Field(
+        title="Type",
+        description="Type of resizing",
+        enum_resolver=lambda: _resize_types_enum,
+        conditionalEnum=True,
+        default="source"
+    )
+
+    resize: ResizeItemModel = Field(
+        default_factory=ResizeItemModel,
+        title="Resize"
+    )
+
+
+_thumbnail_oiio_transcoding_type = [
+    {"value": "colorspace", "label": "Use Colorspace"},
+    {"value": "display_and_view", "label": "Use Display&View"}
+]
+
+
+class DisplayAndViewModel(BaseSettingsModel):
+    _layout = "expanded"
+    display: str = Field(
+        "default",
+        title="Display"
+    )
+    view: str = Field(
+        "sRGB",
+        title="View"
+    )
+
+
+class ExtractThumbnailOIIODefaultsModel(BaseSettingsModel):
+    type: str = Field(
+        title="Type",
+        description="Transcoding type",
+        enum_resolver=lambda: _thumbnail_oiio_transcoding_type,
+        conditionalEnum=True,
+        default="colorspace"
+    )
+
+    colorspace: str = Field(
+        "",
+        title="Colorspace"
+    )
+    display_and_view: DisplayAndViewModel = Field(
+        default_factory=DisplayAndViewModel,
+        title="Display&View"
+    )
+
+
 class ExtractThumbnailModel(BaseSettingsModel):
     _isGroup = True
     enabled: bool = Field(True)
+    integrate_thumbnail: bool = Field(
+        True,
+        title="Integrate Thumbnail Representation"
+    )
+    target_size: ResizeModel = Field(
+        default_factory=ResizeModel,
+        title="Target size"
+    )
+    background_color: ColorRGBA_uint8 = Field(
+        (0, 0, 0, 0.0),
+        title="Background color"
+    )
+    duration_split: float = Field(
+        0.5,
+        title="Duration split",
+        ge=0.0,
+        le=1.0
+    )
+    oiiotool_defaults: ExtractThumbnailOIIODefaultsModel = Field(
+        default_factory=ExtractThumbnailOIIODefaultsModel,
+        title="OIIOtool defaults"
+    )
     ffmpeg_args: ExtractThumbnailFFmpegModel = Field(
         default_factory=ExtractThumbnailFFmpegModel
     )
@@ -598,13 +697,6 @@ class IntegrateHeroVersionModel(BaseSettingsModel):
     optional: bool = Field(False, title="Optional")
     active: bool = Field(True, title="Active")
     families: list[str] = Field(default_factory=list, title="Families")
-    # TODO remove when removed from client code
-    template_name_profiles: list[IntegrateHeroTemplateNameProfileModel] = (
-        Field(
-            default_factory=list,
-            title="Template name profiles"
-        )
-    )
 
 
 class CleanUpModel(BaseSettingsModel):
@@ -741,6 +833,15 @@ DEFAULT_PUBLISH_VALUES = {
     },
     "ExtractThumbnail": {
         "enabled": True,
+        "integrate_thumbnail": True,
+        "target_size": {
+            "type": "source"
+        },
+        "duration_split": 0.5,
+        "oiiotool_defaults": {
+            "type": "colorspace",
+            "colorspace": "color_picking"
+        },
         "ffmpeg_args": {
             "input": [
                 "-apply_trc gamma22"
@@ -941,19 +1042,6 @@ DEFAULT_PUBLISH_VALUES = {
             "layout",
             "mayaScene",
             "simpleUnrealTexture"
-        ],
-        "template_name_profiles": [
-            {
-                "product_types": [
-                    "simpleUnrealTexture"
-                ],
-                "hosts": [
-                    "standalonepublisher"
-                ],
-                "task_types": [],
-                "task_names": [],
-                "template_name": "simpleUnrealTextureHero"
-            }
         ]
     },
     "CleanUp": {

@@ -89,7 +89,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
     """
 
-    label = "Submit image sequence jobs to Deadline or Muster"
+    label = "Submit Image Publishing job to Deadline"
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
 
@@ -297,7 +297,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                     job_index)] = assembly_id  # noqa: E501
                 job_index += 1
         elif instance.data.get("bakingSubmissionJobs"):
-            self.log.info("Adding baking submission jobs as dependencies...")
+            self.log.info(
+                "Adding baking submission jobs as dependencies..."
+            )
             job_index = 0
             for assembly_id in instance.data["bakingSubmissionJobs"]:
                 payload["JobInfo"]["JobDependency{}".format(
@@ -582,16 +584,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
 
         '''
 
-        render_job = None
-        submission_type = ""
-        if instance.data.get("toBeRenderedOn") == "deadline":
-            render_job = instance.data.pop("deadlineSubmissionJob", None)
-            submission_type = "deadline"
-
-        if instance.data.get("toBeRenderedOn") == "muster":
-            render_job = instance.data.pop("musterSubmissionJob", None)
-            submission_type = "muster"
-
+        render_job = instance.data.pop("deadlineSubmissionJob", None)
         if not render_job and instance.data.get("tileRendering") is False:
             raise AssertionError(("Cannot continue without valid Deadline "
                                   "or Muster submission."))
@@ -624,21 +617,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
 
-        deadline_publish_job_id = None
-        if submission_type == "deadline":
-            # get default deadline webservice url from deadline module
-            self.deadline_url = instance.context.data["defaultDeadline"]
-            # if custom one is set in instance, use that
-            if instance.data.get("deadlineUrl"):
-                self.deadline_url = instance.data.get("deadlineUrl")
-            assert self.deadline_url, "Requires Deadline Webservice URL"
+        # get default deadline webservice url from deadline module
+        self.deadline_url = instance.context.data["defaultDeadline"]
+        # if custom one is set in instance, use that
+        if instance.data.get("deadlineUrl"):
+            self.deadline_url = instance.data.get("deadlineUrl")
+        assert self.deadline_url, "Requires Deadline Webservice URL"
 
-            deadline_publish_job_id = \
-                self._submit_deadline_post_job(instance, render_job, instances)
+        deadline_publish_job_id = \
+            self._submit_deadline_post_job(instance, render_job, instances)
 
-            # Inject deadline url to instances.
-            for inst in instances:
-                inst["deadlineUrl"] = self.deadline_url
+        # Inject deadline url to instances.
+        for inst in instances:
+            inst["deadlineUrl"] = self.deadline_url
 
         # publish job file
         publish_job = {
@@ -663,15 +654,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         audio_file = instance.context.data.get("audioFile")
         if audio_file and os.path.isfile(audio_file):
             publish_job.update({"audio": audio_file})
-
-        # pass Ftrack credentials in case of Muster
-        if submission_type == "muster":
-            ftrack = {
-                "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
-                "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
-                "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
-            }
-            publish_job.update({"ftrack": ftrack})
 
         metadata_path, rootless_metadata_path = \
             create_metadata_path(instance, anatomy)
@@ -708,6 +690,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
         """
 
         project_name = context.data["projectName"]
+        host_name = context.data["hostName"]
         if not version:
             version = get_last_version_by_subset_name(
                 project_name,
@@ -719,7 +702,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin,
             else:
                 version = get_versioning_start(
                     project_name,
-                    template_data["app"],
+                    host_name,
                     task_name=template_data["task"]["name"],
                     task_type=template_data["task"]["type"],
                     family="render",

@@ -257,8 +257,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             if 'shot' not in instance.data.get('family', ''):
                 continue
 
-            name = instance.data["asset"]
-
             # get handles
             handle_start = int(instance.data["handleStart"])
             handle_end = int(instance.data["handleEnd"])
@@ -286,6 +284,8 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             parents = instance.data.get('parents', [])
             self.log.debug(f"parents: {pformat(parents)}")
 
+            # Split by '/' for AYON where asset is a path
+            name = instance.data["asset"].split("/")[-1]
             actual = {name: in_info}
 
             for parent in reversed(parents):

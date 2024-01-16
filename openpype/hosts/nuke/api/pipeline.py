@@ -129,9 +129,6 @@ class NukeHost(
         register_event_callback("workio.open_file", check_inventory_versions)
         register_event_callback("taskChanged", change_context_label)
 
-        pyblish.api.register_callback(
-            "instanceToggled", on_pyblish_instance_toggled)
-
         _install_menu()
 
         # add script menu
@@ -239,9 +236,13 @@ def _install_menu():
 
     if not ASSIST:
         label = get_context_label()
-        Context.context_label = label
-        context_action = menu.addCommand(label)
-        context_action.setEnabled(False)
+        context_action_item = menu.addCommand("Context")
+        context_action_item.setEnabled(False)
+
+        Context.context_action_item = context_action_item
+
+        context_action = context_action_item.action()
+        context_action.setText(label)
 
         # add separator after context label
         menu.addSeparator()
@@ -258,9 +259,7 @@ def _install_menu():
         menu.addCommand(
             "Create...",
             lambda: host_tools.show_publisher(
-                parent=(
-                    main_window if nuke.NUKE_VERSION_RELEASE >= 14 else None
-                ),
+                parent=main_window,
                 tab="create"
             )
         )
@@ -269,9 +268,7 @@ def _install_menu():
         menu.addCommand(
             "Publish...",
             lambda: host_tools.show_publisher(
-                parent=(
-                    main_window if nuke.NUKE_VERSION_RELEASE >= 14 else None
-                ),
+                parent=main_window,
                 tab="publish"
             )
         )
@@ -351,26 +348,21 @@ def _install_menu():
 
 
 def change_context_label():
-    menubar = nuke.menu("Nuke")
-    menu = menubar.findItem(MENU_LABEL)
+    if ASSIST:
+        return
 
-    label = get_context_label()
+    context_action_item = Context.context_action_item
+    if context_action_item is None:
+        return
+    context_action = context_action_item.action()
 
-    rm_item = [
-        (i, item) for i, item in enumerate(menu.items())
-        if Context.context_label in item.name()
-    ][0]
+    old_label = context_action.text()
+    new_label = get_context_label()
 
-    menu.removeItem(rm_item[1].name())
-
-    context_action = menu.addCommand(
-        label,
-        index=(rm_item[0])
-    )
-    context_action.setEnabled(False)
+    context_action.setText(new_label)
 
     log.info("Task label changed from `{}` to `{}`".format(
-        Context.context_label, label))
+        old_label, new_label))
 
 
 def add_shortcuts_from_presets():
@@ -400,25 +392,6 @@ def add_shortcuts_from_presets():
                 menuitem.setShortcut(shortcut_str)
             except (AttributeError, KeyError) as e:
                 log.error(e)
-
-
-def on_pyblish_instance_toggled(instance, old_value, new_value):
-    """Toggle node passthrough states on instance toggles."""
-
-    log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
-        instance, old_value, new_value))
-
-    # Whether instances should be passthrough based on new value
-
-    with viewer_update_and_undo_stop():
-        n = instance[0]
-        try:
-            n["publish"].value()
-        except ValueError:
-            n = add_publish_knob(n)
-            log.info(" `Publish` knob was added to write node..")
-
-        n["publish"].setValue(new_value)
 
 
 def containerise(node,
@@ -478,8 +451,6 @@ def parse_container(node):
     """
     data = read_avalon_data(node)
 
-    # (TODO) Remove key validation when `ls` has re-implemented.
-    #
     # If not all required data return the empty container
     required = ["schema", "id", "name",
                 "namespace", "loader", "representation"]
@@ -487,7 +458,10 @@ def parse_container(node):
         return
 
     # Store the node's name
-    data["objectName"] = node["name"].value()
+    data.update({
+        "objectName": node.fullName(),
+        "node": node,
+    })
 
     return data
 

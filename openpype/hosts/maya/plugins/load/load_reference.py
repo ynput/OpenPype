@@ -1,7 +1,9 @@
 import os
 import difflib
 import contextlib
+
 from maya import cmds
+import qargparse
 
 from openpype.settings import get_project_settings
 import openpype.hosts.maya.api.plugin
@@ -128,6 +130,12 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         if not attach_to_root:
             group_name = namespace
 
+        kwargs = {}
+        if "file_options" in options:
+            kwargs["options"] = options["file_options"]
+        if "file_type" in options:
+            kwargs["type"] = options["file_type"]
+
         path = self.filepath_from_context(context)
         with maintained_selection():
             cmds.loadPlugin("AbcImport.mll", quiet=True)
@@ -139,7 +147,8 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                               reference=True,
                               returnNewNodes=True,
                               groupReference=attach_to_root,
-                              groupName=group_name)
+                              groupName=group_name,
+                              **kwargs)
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
 
@@ -251,3 +260,93 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         else:
             self.log.warning("This version of Maya does not support locking of"
                              " transforms of cameras.")
+
+
+class MayaUSDReferenceLoader(ReferenceLoader):
+    """Reference USD file to native Maya nodes using MayaUSDImport reference"""
+
+    label = "Reference Maya USD"
+    families = ["usd"]
+    representations = ["usd"]
+    extensions = {"usd", "usda", "usdc"}
+
+    options = ReferenceLoader.options + [
+        qargparse.Boolean(
+            "readAnimData",
+            label="Load anim data",
+            default=True,
+            help="Load animation data from USD file"
+        ),
+        qargparse.Boolean(
+            "useAsAnimationCache",
+            label="Use as animation cache",
+            default=True,
+            help=(
+                "Imports geometry prims with time-sampled point data using a "
+                "point-based deformer that references the imported "
+                "USD file.\n"
+                "This provides better import and playback performance when "
+                "importing time-sampled geometry from USD, and should "
+                "reduce the weight of the resulting Maya scene."
+            )
+        ),
+        qargparse.Boolean(
+            "importInstances",
+            label="Import instances",
+            default=True,
+            help=(
+                "Import USD instanced geometries as Maya instanced shapes. "
+                "Will flatten the scene otherwise."
+            )
+        ),
+        qargparse.String(
+            "primPath",
+            label="Prim Path",
+            default="/",
+            help=(
+                "Name of the USD scope where traversing will begin.\n"
+                "The prim at the specified primPath (including the prim) will "
+                "be imported.\n"
+                "Specifying the pseudo-root (/) means you want "
+                "to import everything in the file.\n"
+                "If the passed prim path is empty, it will first try to "
+                "import the defaultPrim for the rootLayer if it exists.\n"
+                "Otherwise, it will behave as if the pseudo-root was passed "
+                "in."
+            )
+        )
+    ]
+
+    file_type = "USD Import"
+
+    def process_reference(self, context, name, namespace, options):
+        cmds.loadPlugin("mayaUsdPlugin", quiet=True)
+
+        def bool_option(key, default):
+            # Shorthand for getting optional boolean file option from options
+            value = int(bool(options.get(key, default)))
+            return "{}={}".format(key, value)
+
+        def string_option(key, default):
+            # Shorthand for getting optional string file option from options
+            value = str(options.get(key, default))
+            return "{}={}".format(key, value)
+
+        options["file_options"] = ";".join([
+            string_option("primPath", default="/"),
+            bool_option("importInstances", default=True),
+            bool_option("useAsAnimationCache", default=True),
+            bool_option("readAnimData", default=True),
+            # TODO: Expose more parameters
+            # "preferredMaterial=none",
+            # "importRelativeTextures=Automatic",
+            # "useCustomFrameRange=0",
+            # "startTime=0",
+            # "endTime=0",
+            # "importUSDZTextures=0"
+        ])
+        options["file_type"] = self.file_type
+
+        return super(MayaUSDReferenceLoader, self).process_reference(
+            context, name, namespace, options
+        )

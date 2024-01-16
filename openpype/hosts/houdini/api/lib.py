@@ -11,20 +11,21 @@ import json
 import six
 
 from openpype.lib import StringTemplate
-from openpype.client import get_asset_by_name
+from openpype.client import get_project, get_asset_by_name
 from openpype.settings import get_current_project_settings
 from openpype.pipeline import (
+    Anatomy,
     get_current_project_name,
     get_current_asset_name,
-    registered_host
+    registered_host,
+    get_current_context,
+    get_current_host_name,
 )
-from openpype.pipeline.context_tools import (
-    get_current_context_template_data,
-    get_current_project_asset
-)
+from openpype.pipeline.create import CreateContext
+from openpype.pipeline.template_data import get_template_data
+from openpype.pipeline.context_tools import get_current_project_asset
 from openpype.widgets import popup
 from openpype.tools.utils.host_tools import get_tool_by_name
-from openpype.pipeline.create import CreateContext
 
 import hou
 
@@ -121,36 +122,66 @@ def get_id_required_nodes():
 
 
 def get_output_parameter(node):
-    """Return the render output parameter name of the given node
+    """Return the render output parameter of the given node
 
     Example:
         root = hou.node("/obj")
         my_alembic_node = root.createNode("alembic")
         get_output_parameter(my_alembic_node)
-        # Result: "output"
+        >>> "filename"
+
+    Notes:
+        I'm using node.type().name() to get on par with the creators,
+            Because the return value of `node.type().name()` is the
+            same string value used in creators
+            e.g. instance_data.update({"node_type": "alembic"})
+
+        Rop nodes in different network categories have
+            the same output parameter.
+            So, I took that into consideration as a hint for
+            future development.
 
     Args:
         node(hou.Node): node instance
 
     Returns:
         hou.Parm
-
     """
 
     node_type = node.type().name()
-    if node_type == "geometry":
-        return node.parm("sopoutput")
-    elif node_type == "alembic":
+
+    # Figure out which type of node is being rendered
+    if node_type in {"alembic", "rop_alembic"}:
         return node.parm("filename")
+    elif node_type == "arnold":
+        if node_type.evalParm("ar_ass_export_enable"):
+            return node.parm("ar_ass_file")
+        return node.parm("ar_picture")
+    elif node_type in {
+        "geometry",
+        "rop_geometry",
+        "filmboxfbx",
+        "rop_fbx"
+    }:
+        return node.parm("sopoutput")
     elif node_type == "comp":
         return node.parm("copoutput")
-    elif node_type == "opengl":
+    elif node_type in {"karma", "opengl"}:
         return node.parm("picture")
-    elif node_type == "arnold":
-        if node.evalParm("ar_ass_export_enable"):
-            return node.parm("ar_ass_file")
+    elif node_type == "ifd":  # Mantra
+        if node.evalParm("soho_outputmode"):
+            return node.parm("soho_diskfile")
+        return node.parm("vm_picture")
     elif node_type == "Redshift_Proxy_Output":
         return node.parm("RS_archive_file")
+    elif node_type == "Redshift_ROP":
+        return node.parm("RS_outputFileNamePrefix")
+    elif node_type in {"usd", "usd_rop", "usdexport"}:
+        return node.parm("lopoutput")
+    elif node_type in {"usdrender", "usdrender_rop"}:
+        return node.parm("outputimage")
+    elif node_type == "vray_renderer":
+        return node.parm("SettingsOutput_img_file_path")
 
     raise TypeError("Node type '%s' not supported" % node_type)
 
@@ -568,29 +599,56 @@ def get_template_from_value(key, value):
     return parm
 
 
-def get_frame_data(node):
-    """Get the frame data: start frame, end frame and steps.
+def get_frame_data(node, log=None):
+    """Get the frame data: `frameStartHandle`, `frameEndHandle`
+    and `byFrameStep`.
+
+    This function uses Houdini node's `trange`, `t1, `t2` and `t3`
+    parameters as the source of truth for the full inclusive frame
+    range to render, as such these are considered as the frame
+    range including the handles.
+
+    The non-inclusive frame start and frame end without handles
+    can be computed by subtracting the handles from the inclusive
+    frame range.
 
     Args:
-        node(hou.Node)
+        node (hou.Node): ROP node to retrieve frame range from,
+            the frame range is assumed to be the frame range
+            *including* the start and end handles.
 
     Returns:
-        dict: frame data for star, end and steps.
+        dict: frame data for `frameStartHandle`, `frameEndHandle`
+            and `byFrameStep`.
 
     """
+
+    if log is None:
+        log = self.log
+
     data = {}
 
     if node.parm("trange") is None:
-
+        log.debug(
+            "Node has no 'trange' parameter: {}".format(node.path())
+        )
         return data
 
     if node.evalParm("trange") == 0:
-        self.log.debug("trange is 0")
-        return data
+        data["frameStartHandle"] = hou.intFrame()
+        data["frameEndHandle"] = hou.intFrame()
+        data["byFrameStep"] = 1.0
 
-    data["frameStart"] = node.evalParm("f1")
-    data["frameEnd"] = node.evalParm("f2")
-    data["steps"] = node.evalParm("f3")
+        log.info(
+            "Node '{}' has 'Render current frame' set.\n"
+            "Asset Handles are ignored.\n"
+            "frameStart and frameEnd are set to the "
+            "current frame.".format(node.path())
+        )
+    else:
+        data["frameStartHandle"] = int(node.evalParm("f1"))
+        data["frameEndHandle"] = int(node.evalParm("f2"))
+        data["byFrameStep"] = node.evalParm("f3")
 
     return data
 
@@ -769,6 +827,45 @@ def get_camera_from_container(container):
     return cameras[0]
 
 
+def get_current_context_template_data_with_asset_data():
+    """
+    TODOs:
+        Support both 'assetData' and 'folderData' in future.
+    """
+
+    context = get_current_context()
+    project_name = context["project_name"]
+    asset_name = context["asset_name"]
+    task_name = context["task_name"]
+    host_name = get_current_host_name()
+
+    anatomy = Anatomy(project_name)
+    project_doc = get_project(project_name)
+    asset_doc = get_asset_by_name(project_name, asset_name)
+
+    # get context specific vars
+    asset_data = asset_doc["data"]
+
+    # compute `frameStartHandle` and `frameEndHandle`
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart")
+    handle_end = asset_data.get("handleEnd")
+    if frame_start is not None and handle_start is not None:
+        asset_data["frameStartHandle"] = frame_start - handle_start
+
+    if frame_end is not None and handle_end is not None:
+        asset_data["frameEndHandle"] = frame_end + handle_end
+
+    template_data = get_template_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+    template_data["root"] = anatomy.roots
+    template_data["assetData"] = asset_data
+
+    return template_data
+
+
 def get_context_var_changes():
     """get context var changes."""
 
@@ -788,7 +885,7 @@ def get_context_var_changes():
         return houdini_vars_to_update
 
     # Get Template data
-    template_data = get_current_context_template_data()
+    template_data = get_current_context_template_data_with_asset_data()
 
     # Set Houdini Vars
     for item in houdini_vars:
@@ -943,7 +1040,7 @@ def self_publish():
 def add_self_publish_button(node):
     """Adds a self publish button to the rop node."""
 
-    label = os.environ.get("AVALON_LABEL") or "OpenPype"
+    label = os.environ.get("AVALON_LABEL") or "AYON"
 
     button_parm = hou.ButtonParmTemplate(
         "ayon_self_publish",

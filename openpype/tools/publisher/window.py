@@ -9,12 +9,14 @@ from openpype import (
     resources,
     style
 )
+from openpype import AYON_SERVER_ENABLED
 from openpype.tools.utils import (
     ErrorMessageBox,
     PlaceholderLineEdit,
     MessageOverlayObject,
     PixmapLabel,
 )
+from openpype.tools.utils.lib import center_window
 
 from .constants import ResetKeySequence
 from .publish_report_viewer import PublishReportViewerWidget
@@ -40,7 +42,7 @@ from .widgets import (
 )
 
 
-class PublisherWindow(QtWidgets.QDialog):
+class PublisherWindow(QtWidgets.QWidget):
     """Main window of publisher."""
     default_width = 1300
     default_height = 800
@@ -48,11 +50,13 @@ class PublisherWindow(QtWidgets.QDialog):
     publish_footer_spacer = 2
 
     def __init__(self, parent=None, controller=None, reset_on_show=None):
-        super(PublisherWindow, self).__init__(parent)
+        super(PublisherWindow, self).__init__()
 
         self.setObjectName("PublishWindow")
 
-        self.setWindowTitle("OpenPype publisher")
+        self.setWindowTitle("{} publisher".format(
+            "AYON" if AYON_SERVER_ENABLED else "OpenPype"
+        ))
 
         icon = QtGui.QIcon(resources.get_openpype_icon_filepath())
         self.setWindowIcon(icon)
@@ -60,17 +64,12 @@ class PublisherWindow(QtWidgets.QDialog):
         if reset_on_show is None:
             reset_on_show = True
 
-        if parent is None:
-            on_top_flag = QtCore.Qt.WindowStaysOnTopHint
-        else:
-            on_top_flag = QtCore.Qt.Dialog
-
         self.setWindowFlags(
-            QtCore.Qt.WindowTitleHint
+            QtCore.Qt.Window
+            | QtCore.Qt.WindowTitleHint
             | QtCore.Qt.WindowMaximizeButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint
             | QtCore.Qt.WindowCloseButtonHint
-            | on_top_flag
         )
 
         if controller is None:
@@ -185,7 +184,7 @@ class PublisherWindow(QtWidgets.QDialog):
             controller, content_stacked_widget
         )
 
-        report_widget = ReportPageWidget(controller, parent)
+        report_widget = ReportPageWidget(controller, content_stacked_widget)
 
         # Details - Publish details
         publish_details_widget = PublishReportViewerWidget(
@@ -294,6 +293,12 @@ class PublisherWindow(QtWidgets.QDialog):
         )
         controller.event_system.add_callback(
             "publish.process.stopped", self._on_publish_stop
+        )
+        controller.event_system.add_callback(
+            "publish.process.instance.changed", self._on_instance_change
+        )
+        controller.event_system.add_callback(
+            "publish.process.plugin.changed", self._on_plugin_change
         )
         controller.event_system.add_callback(
             "show.card.message", self._on_overlay_message
@@ -529,6 +534,7 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_first_show(self):
         self.resize(self.default_width, self.default_height)
         self.setStyleSheet(style.load_stylesheet())
+        center_window(self)
         self._reset_on_show = self._reset_on_first_show
 
     def _on_show_timer(self):
@@ -551,6 +557,18 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._reset_on_show:
             self._reset_on_show = False
             self.reset()
+
+    def _make_sure_on_top(self):
+        """Raise window to top and activate it.
+
+        This may not work for some DCCs without Qt.
+        """
+
+        if not self._window_is_visible:
+            self.show()
+
+        self.setWindowState(QtCore.Qt.WindowActive)
+        self.raise_()
 
     def _checks_before_save(self, explicit_save):
         """Save of changes may trigger some issues.
@@ -864,6 +882,12 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._is_on_create_tab():
             self._go_to_publish_tab()
 
+    def _on_instance_change(self):
+        self._make_sure_on_top()
+
+    def _on_plugin_change(self):
+        self._make_sure_on_top()
+
     def _on_publish_validated_change(self, event):
         if event["value"]:
             self._validate_btn.setEnabled(False)
@@ -874,6 +898,7 @@ class PublisherWindow(QtWidgets.QDialog):
             self._comment_input.setText("")
 
     def _on_publish_stop(self):
+        self._make_sure_on_top()
         self._set_publish_overlay_visibility(False)
         self._reset_btn.setEnabled(True)
         self._stop_btn.setEnabled(False)
