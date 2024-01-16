@@ -70,29 +70,62 @@ class CollectClipEffects(pyblish.api.InstancePlugin):
 
         subset_split.insert(0, "effect")
 
-        name = "".join(subset_split)
+        effect_categories = {
+            x["name"]: x["effect_classes"] for x in self.effect_categories
+        }
 
-        # create new instance and inherit data
-        data = {}
-        for key, value in instance.data.items():
-            if "clipEffectItems" in key:
+        category_by_effect = {}
+        for key, values in effect_categories.items():
+            for cls in values:
+                category_by_effect[cls] = key
+
+        effects_categorized = {k: {} for k in effect_categories.keys()}
+        for key, value in effects.items():
+            if key == "assignTo":
                 continue
-            data[key] = value
 
-        # change names
-        data["subset"] = name
-        data["family"] = family
-        data["families"] = [family]
-        data["name"] = data["subset"] + "_" + data["asset"]
-        data["label"] = "{} - {}".format(
-            data['asset'], data["subset"]
-        )
-        data["effects"] = effects
+            # Some classes can have a number in them. Like Text2.
+            found_cls = None
+            for cls in category_by_effect.keys():
+                if value["class"].startswith(cls):
+                    found_cls = cls
 
-        # create new instance
-        _instance = instance.context.create_instance(**data)
-        self.log.info("Created instance `{}`".format(_instance))
-        self.log.debug("instance.data `{}`".format(_instance.data))
+            if found_cls is None:
+                continue
+
+            effects_categorized[category_by_effect[found_cls]][key] = value
+
+        if effects_categorized:
+            for key in effects_categorized.keys():
+                effects_categorized[key]["assignTo"] = effects["assignTo"]
+        else:
+            effects_categorized[""] = effects
+
+        for category, effects in effects_categorized.items():
+            name = "".join(subset_split)
+            name += category.capitalize()
+
+            # create new instance and inherit data
+            data = {}
+            for key, value in instance.data.items():
+                if "clipEffectItems" in key:
+                    continue
+                data[key] = value
+
+            # change names
+            data["subset"] = name
+            data["family"] = family
+            data["families"] = [family]
+            data["name"] = data["subset"] + "_" + data["asset"]
+            data["label"] = "{} - {}".format(
+                data['asset'], data["subset"]
+            )
+            data["effects"] = effects
+
+            # create new instance
+            _instance = instance.context.create_instance(**data)
+            self.log.info("Created instance `{}`".format(_instance))
+            self.log.debug("instance.data `{}`".format(_instance.data))
 
     def test_overlap(self, effect_t_in, effect_t_out):
         covering_exp = bool(
