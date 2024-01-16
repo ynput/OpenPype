@@ -1027,6 +1027,7 @@ def run_publish_logic(context, comment):
 
     Arguments:
         context (openpype.pipeline.create.context.CreateContext)
+        comment (str)
 
     """
 
@@ -1054,9 +1055,6 @@ def self_publish():
     Firstly, it gets the node and its input nodes chain.
     Then, it deactivates all other ROPs
     And finally, it triggers the publishing action.
-
-    Arguments:
-        use_publisher (bool)
     """
 
     result, comment = hou.ui.readInput(
