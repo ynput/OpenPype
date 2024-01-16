@@ -43,7 +43,26 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
     @classmethod
     def get_invalid(cls, instance):
         """Function to get invalid beauty render outputs and
-        render elements
+        render elements.
+
+        1. Checking Render Output Folder matches the name of
+        the current Max Scene
+        e.g. The name of the current Max scene:
+                John_Doe.max
+            The expected render output directory:
+            {root[work]}/{project[name]}/{hierarchy}
+            /{asset}/work/{task[name]}/render/3dsmax/John_Doe/
+
+        2. Checking the image extension(s) of the render output(s)
+          does not match with image format in OP/AYON setting.
+        e.g. The current image format in the setting: png
+            The expected render outputs: Joe_Doe.png
+
+        3. Checking the filename of render element is not ended
+            with the name of render element from the 3dsMax Render
+            Element Manager.
+        e.g. The name of render element: RsCryptomatte
+            The expected filename: {InstanceName}_RsCryptomatte.png
 
         Args:
             instance (pyblish.api.Instance): instance
