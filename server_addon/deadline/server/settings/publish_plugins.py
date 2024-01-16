@@ -87,7 +87,7 @@ class MayaSubmitDeadlineModel(BaseSettingsModel):
         title="Disable Strict Error Check profiles"
     )
 
-    @validator("limit", "scene_patches")
+    @validator("scene_patches")
     def validate_unique_names(cls, value):
         ensure_unique_names(value)
         return value
