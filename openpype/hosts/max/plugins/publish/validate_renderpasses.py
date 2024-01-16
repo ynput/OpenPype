@@ -116,7 +116,8 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
                     )
                     invalid.append((f"Invalid {renderpass}",
                                     os.path.basename(rend_file)))
-                invalid_image_format = cls.get_invalid_image_format(instance, ext)
+                invalid_image_format = cls.get_invalid_image_format(
+                    instance, ext)
                 invalid.extend(invalid_image_format)
         elif renderer == "Arnold":
             cls.log.debug(
@@ -154,4 +155,5 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
         container = instance.data.get("instance_node")
         # TODO: need to rename the function of render_output
         RenderSettings().render_output(container)
-        cls.log.debug("Finished repairing the render output folder and filenames.")
+        cls.log.debug("Finished repairing the render output "
+                      "folder and filenames.")
