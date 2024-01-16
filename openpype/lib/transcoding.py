@@ -110,8 +110,9 @@ def get_oiio_info_for_input(filepath, logger=None, subimages=False):
             if line == "</ImageSpec>":
                 subimages_lines.append(lines)
                 lines = []
+                xml_started = False
 
-    if not xml_started:
+    if not subimages_lines:
         raise ValueError(
             "Failed to read input file \"{}\".\nOutput:\n{}".format(
                 filepath, output
