@@ -76,7 +76,7 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
         if filename not in rt.rendOutputFilename:
             cls.log.error(
                 "Render output folder "
-                "doesn't match the max scene name! "
+                f"doesn't match the max scene name {filename} "
             )
             invalid_folder_name = os.path.dirname(
                 rt.rendOutputFilename).replace(
@@ -85,8 +85,7 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
                             invalid_folder_name))
         beauty_fname = os.path.basename(rt.rendOutputFilename)
         ext = os.path.splitext(beauty_fname)[-1].lstrip(".")
-        invalid_image_format = cls.get_invalid_image_format(
-            cls, instance, ext)
+        invalid_image_format = cls.get_invalid_image_format(instance, ext)
         invalid.extend(invalid_image_format)
         renderer = instance.data["renderer"]
         if renderer in [
@@ -117,8 +116,7 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
                     )
                     invalid.append((f"Invalid {renderpass}",
                                     os.path.basename(rend_file)))
-                invalid_image_format = cls.get_invalid_image_format(
-                    cls, instance, ext)
+                invalid_image_format = cls.get_invalid_image_format(instance, ext)
                 invalid.extend(invalid_image_format)
         elif renderer == "Arnold":
             cls.log.debug(
@@ -127,7 +125,8 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
 
         return invalid
 
-    def get_invalid_image_format(self, instance, ext):
+    @classmethod
+    def get_invalid_image_format(cls, instance, ext):
         """Function to check if the image format of the render outputs
         aligns with that in the setting.
 
@@ -146,12 +145,13 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
             msg = (
                 f"Invalid image format {ext} for render outputs"
                 f"Should be : {image_format}")
-            self.log.error(msg)
+            cls.log.error(msg)
             invalid.append((msg, ext))
         return invalid
 
     @classmethod
     def repair(cls, instance):
         container = instance.data.get("instance_node")
+        # TODO: need to rename the function of render_output
         RenderSettings().render_output(container)
-        cls.log.debug("Reset the render output folder...")
+        cls.log.debug("Finished repairing the render output folder and filenames.")
