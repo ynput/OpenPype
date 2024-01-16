@@ -190,48 +190,25 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         project_task_types = project_doc["config"]["tasks"]
 
         for instance in context:
-            asset_doc = instance.data.get("assetEntity")
-            anatomy_updates = {
+            anatomy_data = copy.deepcopy(context.data["anatomyData"])
+            anatomy_data.update({
                 "family": instance.data["family"],
                 "subset": instance.data["subset"],
-            }
-            if asset_doc:
-                parents = asset_doc["data"].get("parents") or list()
-                parent_name = project_doc["name"]
-                if parents:
-                    parent_name = parents[-1]
+            })
 
-                hierarchy = "/".join(parents)
-                anatomy_updates.update({
-                    "asset": asset_doc["name"],
-                    "hierarchy": hierarchy,
-                    "parent": parent_name,
-                    "folder": {
-                        "name": asset_doc["name"],
-                    },
-                })
-
-            # Task
-            task_type = None
-            task_name = instance.data.get("task")
-            if task_name:
-                asset_tasks = asset_doc["data"]["tasks"]
-                task_type = asset_tasks.get(task_name, {}).get("type")
-                task_code = (
-                    project_task_types
-                    .get(task_type, {})
-                    .get("short_name")
-                )
-                anatomy_updates["task"] = {
-                    "name": task_name,
-                    "type": task_type,
-                    "short": task_code
-                }
+            self._fill_asset_data(instance, project_doc, anatomy_data)
+            self._fill_task_data(instance, project_task_types, anatomy_data)
 
             # Define version
+            version_number = None
             if self.follow_workfile_version:
-                version_number = context.data('version')
-            else:
+                version_number = context.data("version")
+
+            # Even if 'follow_workfile_version' is enabled, it may not be set
+            #   because workfile version was not collected to 'context.data'
+            # - that can happen e.g. in 'traypublisher' or other hosts without
+            #   a workfile
+            if version_number is None:
                 version_number = instance.data.get("version")
 
             # use latest version (+1) if already any exist
@@ -242,6 +219,9 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
 
             # If version is not specified for instance or context
             if version_number is None:
+                task_data = anatomy_data.get("task") or {}
+                task_name = task_data.get("name")
+                task_type = task_data.get("type")
                 version_number = get_versioning_start(
                     context.data["projectName"],
                     instance.context.data["hostName"],
@@ -250,29 +230,26 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                     family=instance.data["family"],
                     subset=instance.data["subset"]
                 )
-            anatomy_updates["version"] = version_number
+            anatomy_data["version"] = version_number
 
             # Additional data
             resolution_width = instance.data.get("resolutionWidth")
             if resolution_width:
-                anatomy_updates["resolution_width"] = resolution_width
+                anatomy_data["resolution_width"] = resolution_width
 
             resolution_height = instance.data.get("resolutionHeight")
             if resolution_height:
-                anatomy_updates["resolution_height"] = resolution_height
+                anatomy_data["resolution_height"] = resolution_height
 
             pixel_aspect = instance.data.get("pixelAspect")
             if pixel_aspect:
-                anatomy_updates["pixel_aspect"] = float(
+                anatomy_data["pixel_aspect"] = float(
                     "{:0.2f}".format(float(pixel_aspect))
                 )
 
             fps = instance.data.get("fps")
             if fps:
-                anatomy_updates["fps"] = float("{:0.2f}".format(float(fps)))
-
-            anatomy_data = copy.deepcopy(context.data["anatomyData"])
-            anatomy_data.update(anatomy_updates)
+                anatomy_data["fps"] = float("{:0.2f}".format(float(fps)))
 
             # Store anatomy data
             instance.data["projectEntity"] = project_doc
@@ -288,3 +265,157 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 instance_name,
                 json.dumps(anatomy_data, indent=4)
             ))
+
+    def _fill_asset_data(self, instance, project_doc, anatomy_data):
+        # QUESTION should we make sure that all asset data are poped if asset
+        #   data cannot be found?
+        # - 'asset', 'hierarchy', 'parent', 'folder'
+        asset_doc = instance.data.get("assetEntity")
+        if asset_doc:
+            parents = asset_doc["data"].get("parents") or list()
+            parent_name = project_doc["name"]
+            if parents:
+                parent_name = parents[-1]
+
+            hierarchy = "/".join(parents)
+            anatomy_data.update({
+                "asset": asset_doc["name"],
+                "hierarchy": hierarchy,
+                "parent": parent_name,
+                "folder": {
+                    "name": asset_doc["name"],
+                },
+            })
+            return
+
+        if instance.data.get("newAssetPublishing"):
+            hierarchy = instance.data["hierarchy"]
+            anatomy_data["hierarchy"] = hierarchy
+
+            parent_name = project_doc["name"]
+            if hierarchy:
+                parent_name = hierarchy.split("/")[-1]
+
+            asset_name = instance.data["asset"].split("/")[-1]
+            anatomy_data.update({
+                "asset": asset_name,
+                "hierarchy": hierarchy,
+                "parent": parent_name,
+                "folder": {
+                    "name": asset_name,
+                },
+            })
+
+    def _fill_task_data(self, instance, project_task_types, anatomy_data):
+        # QUESTION should we make sure that all task data are poped if task
+        #   data cannot be resolved?
+        # - 'task'
+
+        # Skip if there is no task
+        task_name = instance.data.get("task")
+        if not task_name:
+            return
+
+        # Find task data based on asset entity
+        asset_doc = instance.data.get("assetEntity")
+        task_data = self._get_task_data_from_asset(
+            asset_doc, task_name, project_task_types
+        )
+        if task_data:
+            # Fill task data
+            # - if we're in editorial, make sure the task type is filled
+            if (
+                not instance.data.get("newAssetPublishing")
+                or task_data["type"]
+            ):
+                anatomy_data["task"] = task_data
+                return
+
+        # New hierarchy is not created, so we can only skip rest of the logic
+        if not instance.data.get("newAssetPublishing"):
+            return
+
+        # Try to find task data based on hierarchy context and asset name
+        hierarchy_context = instance.context.data.get("hierarchyContext")
+        asset_name = instance.data.get("asset")
+        if not hierarchy_context or not asset_name:
+            return
+
+        project_name = instance.context.data["projectName"]
+        # OpenPype approach vs AYON approach
+        if "/" not in asset_name:
+            tasks_info = self._find_tasks_info_in_hierarchy(
+                hierarchy_context, asset_name
+            )
+        else:
+            current_data = hierarchy_context.get(project_name, {})
+            for key in asset_name.split("/"):
+                if key:
+                    current_data = current_data.get("childs", {}).get(key, {})
+            tasks_info = current_data.get("tasks", {})
+
+        task_info = tasks_info.get(task_name, {})
+        task_type = task_info.get("type")
+        task_code = (
+            project_task_types
+            .get(task_type, {})
+            .get("short_name")
+        )
+        anatomy_data["task"] = {
+            "name": task_name,
+            "type": task_type,
+            "short": task_code
+        }
+
+    def _get_task_data_from_asset(
+        self, asset_doc, task_name, project_task_types
+    ):
+        """
+
+        Args:
+            asset_doc (Union[dict[str, Any], None]): Asset document.
+            task_name (Union[str, None]): Task name.
+            project_task_types (dict[str, dict[str, Any]]): Project task
+                types.
+
+        Returns:
+            Union[dict[str, str], None]: Task data or None if not found.
+        """
+
+        if not asset_doc or not task_name:
+            return None
+
+        asset_tasks = asset_doc["data"]["tasks"]
+        task_type = asset_tasks.get(task_name, {}).get("type")
+        task_code = (
+            project_task_types
+            .get(task_type, {})
+            .get("short_name")
+        )
+        return {
+            "name": task_name,
+            "type": task_type,
+            "short": task_code
+        }
+
+    def _find_tasks_info_in_hierarchy(self, hierarchy_context, asset_name):
+        """Find tasks info for an asset in editorial hierarchy.
+
+        Args:
+            hierarchy_context (dict[str, Any]): Editorial hierarchy context.
+            asset_name (str): Asset name.
+
+        Returns:
+            dict[str, dict[str, Any]]: Tasks info by name.
+        """
+
+        hierarchy_queue = collections.deque()
+        hierarchy_queue.append(hierarchy_context)
+        while hierarchy_queue:
+            item = hierarchy_context.popleft()
+            if asset_name in item:
+                return item[asset_name].get("tasks") or {}
+
+            for subitem in item.values():
+                hierarchy_queue.extend(subitem.get("childs") or [])
+        return {}
