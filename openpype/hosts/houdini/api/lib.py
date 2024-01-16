@@ -1078,11 +1078,10 @@ def self_publish():
     host = registered_host()
     context = CreateContext(host, reset=True)
 
-    undesired_instances = []
     for instance in context.instances:
         if instance.get("subset") not in all_input_subsets:
-            undesired_instances.append(instance)
             instance["active"] = False
+            instance.data["publish"] = False
             continue
 
         # make sure the instance is active
@@ -1093,15 +1092,8 @@ def self_publish():
     publish_mode_parm = current_node.parm("ayon_self_publish_selection")
     if publish_mode_parm and publish_mode_parm.eval():
         publisher_show_and_publish(comment)
-        return
-
-    for instance in undesired_instances:
-        log.debug("Remove {} instance".format(instance.get("subset")))
-        context.creator_removed_instance(instance)
-
-    # TODO: Sort context to match selection
-
-    run_publish_logic(context, comment)
+    else:
+        run_publish_logic(context, comment)
 
 
 def add_self_publish_button(node):
