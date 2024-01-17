@@ -2,6 +2,7 @@ import os
 import pyblish.api
 import tempfile
 import ftrack_api
+import rv
 
 from openpype.pipeline import publish
 from openpype.hosts.openrv.api.review import (
@@ -19,33 +20,37 @@ class ExtractOpenRVAnnotatedFrames(publish.Extractor):
 
     def process(self, instance):
         asset = instance.data['asset']
-        annotated_frame = instance.data['annotated_frame']
+        annotated_frames = instance.data['annotated_frame']
         version_context = instance.data['version_context']
+        node = instance.data['node']
+
         tmp_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
         self.log.debug(
             f"Create temp directory {tmp_staging} for thumbnail"
         )
 
-        annotated_frame_path = get_path_annotated_frame(
-            frame=annotated_frame,
-            asset=asset,
-            asset_folder=tmp_staging
-        )
-        self.log.info("Annotated frame path: {}".format(annotated_frame_path))
+        export_annotated_filepath = []
+        for annotated_frame in annotated_frames:
+            annotated_frame_path = get_path_annotated_frame(
+                frame=annotated_frame,
+                asset=asset,
+                asset_folder=tmp_staging
+            )
+            self.log.info("Annotated frame path: {}".format(annotated_frame_path))
+            export_annotated_filepath.append(annotated_frame_path)
+            annotated_frame_folder, file = os.path.split(annotated_frame_path)
+            if not os.path.isdir(annotated_frame_folder):
+                os.makedirs(annotated_frame_folder)
 
-        annotated_frame_folder, file = os.path.split(annotated_frame_path)
-        if not os.path.isdir(annotated_frame_folder):
-            os.makedirs(annotated_frame_folder)
-
-        # save the frame
-        extract_annotated_frame(filepath=annotated_frame_path, annotated_frame=annotated_frame)
-        folder, file = os.path.split(annotated_frame_path)
-        filename, ext = os.path.splitext(file)
+            # save the frame
+            extract_annotated_frame(filepath=annotated_frame_path, frame_to_export=annotated_frame)
+            folder, file = os.path.split(annotated_frame_path)
+            filename, ext = os.path.splitext(file)
 
         representation = {
             "name": ext.lstrip("."),
             "ext": ext.lstrip("."),
-            "files": file,
+            "files": export_annotated_filepath,
             "stagingDir": folder,
         }
 
@@ -61,7 +66,10 @@ class ExtractOpenRVAnnotatedFrames(publish.Extractor):
         asset_version = session.query('AssetVersion where asset.name is "{0}" and version is {1}'.format(version_context['subset'], version_context['version'])).one()
 
         # Set up note details
-        note_text = 'Test'
+        properties_name = "{0}.openpype_review.comment".format(node)
+        note_text = ""
+        if rv.commands.propertyExists(properties_name):
+            note_text = rv.commands.getStringProperty(properties_name)[0]
 
         # Create the note
         note = asset_version.create_note(note_text, author=user)
@@ -70,16 +78,17 @@ class ExtractOpenRVAnnotatedFrames(publish.Extractor):
             'Location where name is "ftrack.server"'
         ).one()
 
-        component = session.create_component(
-            annotated_frame_path,
-            data={'name': os.path.basename(annotated_frame_path)},
-            location=server_location
-        )
+        for annotated_frame_path in export_annotated_filepath:
+            component = session.create_component(
+                annotated_frame_path,
+                data={'name': os.path.basename(annotated_frame_path)},
+                location=server_location
+            )
 
-        session.create(
-            'NoteComponent',
-            {'component_id': component['id'], 'note_id': note['id']}
-        )
+            session.create(
+                'NoteComponent',
+                {'component_id': component['id'], 'note_id': note['id']}
+            )
 
         # Commit the changes
         session.commit()

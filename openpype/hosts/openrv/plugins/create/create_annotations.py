@@ -148,38 +148,34 @@ class AnnotationCreator(AutoCreator):
             asset_name=source_representation_asset
         )
 
-        for noted_frame in annotated_frames:
-            print(f"Found annotation for {source_group} frame {noted_frame}")
+        subset_name = self.get_subset_name(
+            variant= f"{namespace}",
+            task_name=source_representation_task,
+            asset_doc=source_representation_asset_doc,
+            project_name=project_name,
+        )
 
-            variant = f"{namespace}_{noted_frame}"
-            subset_name = self.get_subset_name(
-                variant=variant,
-                task_name=source_representation_task,
-                asset_doc=source_representation_asset_doc,
-                project_name=project_name,
-            )
+        data = {
+            "tags": ["review", "ftrackreview"],
+            "task": source_representation_task,
+            "asset": source_representation_asset,
+            "subset": subset_name,
+            "label": subset_name,
+            "publish": True,
+            "review": True,
+            "annotated_frame": annotated_frames,
+            "version_context": repre_doc["context"],
+            "node": node
+        }
 
-            data = {
-                "tags": ["review", "ftrackreview"],
-                "task": source_representation_task,
-                "asset": source_representation_asset,
-                "subset": subset_name,
-                "label": subset_name,
-                "publish": True,
-                "review": True,
-                "annotated_frame": noted_frame,
-                "comment": "NEW COMMENT FROM UI {}".format(noted_frame),
-                "version_context": repre_doc["context"]
-            }
+        instance = CreatedInstance(
+            family=self.family,
+            subset_name=data["subset"],
+            data=data,
+            creator=self
+        )
 
-            instance = CreatedInstance(
-                family=self.family,
-                subset_name=data["subset"],
-                data=data,
-                creator=self
-            )
-
-            self._add_instance_to_context(instance)
+        self._add_instance_to_context(instance)
 
     def update_instances(self, update_list):
         # TODO: Implement storage of annotation instance settings

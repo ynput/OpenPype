@@ -252,8 +252,8 @@ class RVActionView(BaseAction):
         fps = entities[0].get("custom_attributes", {}).get("fps", None)
         if fps is not None:
             args.extend(["-fps", str(fps)])
-
-        args.extend(paths)
+        rv_command = "import rv; rv.commands.addSourceVerbose({0}); vnode = rv.commands.viewNodes()[-1];rv.commands.setViewNode(vnode)".format(paths)
+        args.extend(["-pyeval", rv_command])
 
         self.log.info("Running rv: {}".format(args))
         self.openrv_app.arguments = args

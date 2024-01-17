@@ -18,23 +18,27 @@ def get_path_annotated_frame(frame=None, asset=None, asset_folder=None):
     return filename
 
 
-def extract_annotated_frame(filepath=None, annotated_frame=None):
+def extract_annotated_frame(filepath=None, frame_to_export=None):
     """Export frame to file
     """
-    # TODO: Fix this QUADCYPRIEN
+    current_frame = rv.commands.frameStart()
+    sources = rv.commands.sourcesAtFrame(current_frame)
+    current_source = rv.commands.sourceMediaInfo(sources[0])
+    start_frame = current_source['startFrame']
+    # Rv framerange representation = [120=1, 121=2, etc...]{frame=rvframe}
+    # There is no 0 value at start
+    frame_to_export = frame_to_export - start_frame + 1
+
     marked_frames = rv.commands.markedFrames()
     annotated_frames = rv.extra_commands.findAnnotatedFrames()
 
-    # Use set differences to figure out what frames we need to mark and unmark
-    to_add = list(set(annotated_frames) - set(marked_frames))
-    to_sub = list(set(marked_frames) - set(annotated_frames))
-
     # Generalize this into a function so you can reverse it after export.
-    for frame_sub in to_sub:
-        rv.commands.markFrame(frame_sub, False)
-    for frame_add in to_add:
-        if frame_add == annotated_frame:
-            rv.commands.markFrame(frame_add, True)
+    for marked_frame in marked_frames:
+        rv.commands.markFrame(marked_frame, False)
+
+    for annotated_frame in annotated_frames:
+        if (annotated_frame - start_frame + 1) == frame_to_export:
+            rv.commands.markFrame(annotated_frame, True)
     rv.commands.redraw()
 
     # Do your path substitution here
@@ -51,7 +55,8 @@ def extract_annotated_frame(filepath=None, annotated_frame=None):
     """.format(filepath), [])
     os.wait()
 
-
+    for marked_frame in marked_frames:
+        rv.commands.markFrame(marked_frame, True)
 
 def review_attributes(node=None):
     # TODO: Implement
