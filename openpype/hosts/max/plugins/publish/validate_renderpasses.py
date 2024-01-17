@@ -144,8 +144,8 @@ class ValidateRenderPasses(OptionalPyblishPluginMixin,
         ext = ext.lstrip(".")
         if ext != image_format:
             msg = (
-                f"Invalid image format {ext} for render outputs"
-                f"Should be : {image_format}")
+                f"Invalid image format {ext} for render outputs.\n"
+                f"Should be: {image_format}")
             cls.log.error(msg)
             invalid.append((msg, ext))
         return invalid
