@@ -161,6 +161,8 @@ class NukeSubmitDeadlineModel(BaseSettingsModel):
     group: str = Field(title="Group")
     department: str = Field(title="Department")
     use_gpu: bool = Field(title="Use GPU")
+    workfile_dependency: bool = Field(title="Workfile Dependency")
+    use_published_workfile: bool = Field(title="Use Published Workfile")
 
     env_allowed_keys: list[str] = Field(
         default_factory=list,
@@ -382,6 +384,7 @@ DEFAULT_DEADLINE_PLUGINS_SETTINGS = {
         "group": "",
         "department": "",
         "use_gpu": True,
+        "workfile_dependency": True,
         "env_allowed_keys": [],
         "env_search_replace_values": [],
         "limit_groups": []

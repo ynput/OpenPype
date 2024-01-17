@@ -47,6 +47,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
     env_allowed_keys = []
     env_search_replace_values = {}
     workfile_dependency = True
+    use_published_workfile = True
 
     @classmethod
     def get_attribute_defs(cls):
@@ -85,8 +86,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
             ),
             BoolDef(
                 "workfile_dependency",
-                default=True,
+                default=cls.workfile_dependency,
                 label="Workfile Dependency"
+            ),
+            BoolDef(
+                "use_published_workfile",
+                default=cls.use_published_workfile,
+                label="Use Published Workfile"
             )
         ]
 
@@ -125,20 +131,27 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin,
         render_path = instance.data['path']
         script_path = context.data["currentFile"]
 
-        for item_ in context:
-            if "workfile" in item_.data["family"]:
-                template_data = item_.data.get("anatomyData")
-                rep = item_.data.get("representations")[0].get("name")
-                template_data["representation"] = rep
-                template_data["ext"] = rep
-                template_data["comment"] = None
-                anatomy_filled = context.data["anatomy"].format(template_data)
-                template_filled = anatomy_filled["publish"]["path"]
-                script_path = os.path.normpath(template_filled)
-
-                self.log.info(
-                    "Using published scene for render {}".format(script_path)
-                )
+        use_published_workfile = instance.data["attributeValues"].get(
+            "use_published_workfile", self.use_published_workfile
+        )
+        if use_published_workfile:
+            for item_ in context:
+                if "workfile" in item_.data["family"]:
+                    template_data = item_.data.get("anatomyData")
+                    rep = item_.data.get("representations")[0].get("name")
+                    template_data["representation"] = rep
+                    template_data["ext"] = rep
+                    template_data["comment"] = None
+                    anatomy_filled = context.data["anatomy"].format(
+                        template_data
+                    )
+                    template_filled = anatomy_filled["publish"]["path"]
+                    script_path = os.path.normpath(template_filled)
+                    self.log.info(
+                        "Using published scene for render {}".format(
+                            script_path
+                        )
+                    )
 
         # only add main rendering job if target is not frames_farm
         r_job_response_json = None
