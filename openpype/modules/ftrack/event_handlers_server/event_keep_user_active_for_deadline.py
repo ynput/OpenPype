@@ -1,12 +1,12 @@
 import ftrack_api
 from openpype_modules.ftrack.lib import BaseEvent
-from openpype.modules.deadline.deadline_module import DeadlineModule
+from openpype.modules import ModulesManager
 
 
 class KeepUserActiveForDeadline(BaseEvent):
 
     def launch(self, session, event):
-        '''Ensure the user stays active while having an ongoing job in the Deadline.'''
+        """Ensure the user stays active while having an ongoing job in the Deadline."""
         if not event.get('data'):
             return
 
@@ -66,13 +66,19 @@ class KeepUserActiveForDeadline(BaseEvent):
     def get_user_active_deadline_jobs(self, user):
         """Get all active deadline jobs of the user
         """
-        deadline_url = "http://deadline.prs.vfx.int:8081"
+        manager = ModulesManager()
+        deadline_module = manager.modules_by_name["deadline"]
+        deadline_url = deadline_module.deadline_urls["default"]
+
+        if not deadline_url:
+            self.log.info("Deadline URL not found, skipping.")
+            return
 
         requested_arguments = {
             "States":"Active"
         }
 
-        jobs = DeadlineModule.get_deadline_data(
+        jobs = deadline_module.get_deadline_data(
             deadline_url,
             "jobs",
             log=None,
@@ -87,5 +93,5 @@ class KeepUserActiveForDeadline(BaseEvent):
         return user_jobs
 
 def register(session):
-    '''Register plugin. Called when used as an plugin.'''
+    """Register plugin. Called when used as an plugin."""
     KeepUserActiveForDeadline(session).register()
