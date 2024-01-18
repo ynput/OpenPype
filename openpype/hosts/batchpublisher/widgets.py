@@ -1,13 +1,12 @@
-
-
 import glob
 import os
 
 from openpype import style
 
-from openpype.client.entities import get_projects
-from openpype.client.entities import get_assets
-from openpype.client.entities import get_asset_by_name
+from openpype.client.entities import (
+    get_projects,
+    get_assets,
+)
 from openpype.hosts.batchpublisher import publish
 from openpype.pipeline.create import subset_name
 
