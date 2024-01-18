@@ -44,14 +44,24 @@ class BatchPublishAddon(OpenPypeModule, IHostAddon, ITrayAction):
         # if self._dialog is not None:
         #     return
 
-        import importlib
-        import openpype.hosts.batchpublisher.widgets
-        importlib.reload(openpype.hosts.batchpublisher.widgets)
+        from importlib import reload
 
-        # from openpype.hosts.batchpublisher.widgets \
+        import openpype.hosts.batchpublisher.controller
+        import openpype.hosts.batchpublisher.models.batch_publisher_model
+        import openpype.hosts.batchpublisher.delegates.batch_publisher_delegate
+        import openpype.hosts.batchpublisher.views.batch_publisher_view
+        import openpype.hosts.batchpublisher.ui.window
+
+        reload(openpype.hosts.batchpublisher.controller)
+        reload(openpype.hosts.batchpublisher.models.batch_publisher_model)
+        reload(openpype.hosts.batchpublisher.delegates.batch_publisher_delegate)
+        reload(openpype.hosts.batchpublisher.views.batch_publisher_view)
+        reload(openpype.hosts.batchpublisher.ui.window)
+
+        # from openpype.hosts.batchpublisher.ui.window \
         #     import BatchPublisherWindow
-        self._dialog = openpype.hosts.batchpublisher \
-            .widgets.BatchPublisherWindow()
+        self._dialog = openpype.hosts.batchpublisher.ui.window. \
+            BatchPublisherWindow()
 
     def show_dialog(self):
         """Show dialog with connected modules.
@@ -75,5 +85,5 @@ def cli_main():
 def launch():
     """Launch BatchPublisher tool UI."""
     print("LAUNCHING BATCH PUBLISHER")
-    from openpype.tools import batchpublisher
-    batchpublisher.main()
+    from openpype.hosts.batchpublisher.ui import window
+    window.main()
