@@ -35,7 +35,6 @@ def publish_version(
     source_path = list(expected_representations.values())[0]
 
     instance_data = {
-        "project": project_name,
         "family": family_name,
         "subset": subset_name,
         "families": publish_data.get("families", []),
