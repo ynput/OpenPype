@@ -2,6 +2,7 @@ from pathlib import Path
 
 import bpy
 
+from openpype import AYON_SERVER_ENABLED
 from openpype.settings import get_project_settings
 from openpype.pipeline import get_current_project_name
 
@@ -124,13 +125,14 @@ def set_render_passes(settings):
 
     aovs_names = [aov.name for aov in vl.aovs]
     for cp in custom_passes:
-        cp_name = cp[0]
+        cp_name = cp["attribute"] if AYON_SERVER_ENABLED else cp[0]
         if cp_name not in aovs_names:
             aov = vl.aovs.add()
             aov.name = cp_name
         else:
             aov = vl.aovs[cp_name]
-        aov.type = cp[1].get("type", "VALUE")
+        aov.type = (cp["value"]
+                    if AYON_SERVER_ENABLED else cp[1].get("type", "VALUE"))
 
     return aov_list, custom_passes
 
