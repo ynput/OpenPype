@@ -16,6 +16,10 @@ class BatchPublisherController(object):
         self.model.ingest_settings.project = project
 
     @property
+    def folder_names(self):
+        return self.model.ingest_settings.folder_names
+
+    @property
     def ingest_settings(self):
         return self.model.ingest_settings
 

@@ -3,7 +3,9 @@
 import glob
 import os
 
-from openpype.client.entities import get_asset_by_name
+from openpype.client.entities import (
+    get_asset_by_name,
+    get_assets)
 from openpype.hosts.batchpublisher import publish
 
 from qtpy import QtCore, QtGui
@@ -59,14 +61,15 @@ class IngestFile(object):
         if not self.defined:
             print("Skipping publish, not defined properly: " + self.filepath)
             return
-        msg = "\nPublishing (ingesting): " + self.filepath
-        msg += "\nAs Folder (Asset): {}".format(self.folder_path)
-        msg += "\nTask: {}".format(self.task_name)
-        msg += "\nProduct Type (Family): {}".format(self.product_type)
-        msg += "\nProduct Name (Subset): {}".format(self.product_name)
-        msg += "\nRepresentation: {}".format(self.representation_name)
-        msg += "\nVersion: {}".format(self.version)
-        msg += "\nProject: {}".format(self.ingest_settings.project)
+        msg = f"""
+Publishing (ingesting): {self.filepath}
+As Folder (Asset): {self.folder_path}
+Task: {self.task_name}
+Product Type (Family): {self.product_type}
+Product Name (Subset): {self.product_name}
+Representation: {self.representation_name}
+Version: {self.version}"
+Project: {self.ingest_settings.project}"""
         print(msg)
         publish_data = dict()
         expected_representations = dict()
@@ -89,20 +92,13 @@ class IngestFile(object):
         #     publish_data,
 
     def _cache_task_names(self):
-        msg = "\nCaching task names"
-        msg += "\nFolder: {}".format(self.folder_path)
-        msg += "\nTask: {}".format(self.task_name)
-        msg += "\nProduct Type (Family): {}".format(self.product_type)
-        print(msg)
         if not self.folder_path:
-            print("No folder set")
             self.task_name = str()
             return
         asset_doc = get_asset_by_name(
             self.ingest_settings.project,
             self.folder_path)
         if not asset_doc:
-            print("No asset doc")
             self.task_name = str()
             return
         # Since we have the tasks available for the asset (folder) cache it now
@@ -119,16 +115,32 @@ class IngestSettings(object):
 
     def __init__(self, project=""):
         self._project = ""
+        self._folder_names = []
 
     @property
     def project(self):
         return self._project
+
+    @property
+    def folder_names (self):
+        return self._folder_names
 
     @project.setter
     def project(self, project):
         msg = "Project name changed to: {}".format(project)
         print(msg)
         self._project = project
+        # Update cache of asset names for project
+        # self._folder_names = [
+        #     "assets",
+        #     "assets/myasset",
+        #     "assets/myasset/mytest"]
+        self._folder_names = list()
+        assets = get_assets(project)
+        for asset in assets:
+            asset_name = "/".join(asset["data"]["parents"])
+            asset_name += "/" + asset["name"]
+            self._folder_names.append(asset_name)
 
 
 class BatchPublisherModel(QtCore.QAbstractTableModel):
@@ -179,7 +191,6 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
             glob_full_path = directory + "/" + file_mapping["glob"]
             files = glob.glob(glob_full_path, recursive=False)
             for filepath in files:
-                print(filepath)
                 filename = os.path.basename(filepath)
                 representation_name = os.path.splitext(
                     filename)[1].lstrip(".")
@@ -294,29 +305,18 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
         # elif role == QtCore.Qt.TextAlignmentRole:
         #     return QtCore.Qt.AlignRight
         elif role == QtCore.Qt.ToolTipRole:
-            tooltip = str()
-            tooltip += "Enabled: <b>" + str(
-                ingest_filepath.enabled) + "</b>"
-            tooltip += "<br>Filepath: <b>" + str(
-                ingest_filepath.filepath) + "</b>"
-            tooltip += "<br>Folder (Asset): <b>" + str(
-                ingest_filepath.folder_path) + "</b>"
-            tooltip += "<br>Task: <b>" + str(
-                ingest_filepath.task_name) + "</b>"
-            tooltip += "<br>Product Type (Family): <b>" + str(
-                ingest_filepath.product_type) + "</b>"
-            tooltip += "<br>Product Name (Subset): <b>" + str(
-                ingest_filepath.product_name) + "</b>"
-            tooltip += "<br>Representation: <b>" + str(
-                ingest_filepath.representation_name) + "</b>"
-            tooltip += "<br>Version: <b>" + str(
-                ingest_filepath.version) + "</b>"
-            tooltip += "<br>Project: <b>" + str(
-                self.project) + "</b>"
-            tooltip += "<br>Defined: <b>" + str(
-                ingest_filepath.defined) + "</b>"
-            tooltip += "<br>Task Names: <b>" + str(
-                ingest_filepath.task_names) + "</b>"
+            tooltip = f"""
+Enabled: <b>{ingest_filepath.enabled}</b>
+<br>Filepath: <b>{ingest_filepath.filepath}</b>
+<br>Folder (Asset): <b>{ingest_filepath.folder_path}</b>
+<br>Task: <b>{ingest_filepath.task_name}</b>
+<br>Product Type (Family): <b>{ingest_filepath.product_type}</b>
+<br>Product Name (Subset): <b>{ingest_filepath.product_name}</b>
+<br>Representation: <b>{ingest_filepath.representation_name}</b>
+<br>Version: <b>{ingest_filepath.version}</b>
+<br>Project: <b>{self.project}</b>
+<br>Defined: <b>{ingest_filepath.defined}</b>
+<br>Task Names: <b>{ingest_filepath.task_names}</b>"""
             return tooltip
 
         elif role == QtCore.Qt.CheckStateRole:

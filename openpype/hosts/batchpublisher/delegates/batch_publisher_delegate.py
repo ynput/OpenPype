@@ -1,7 +1,5 @@
 
 
-from openpype.client.entities import get_assets
-
 from openpype.hosts.batchpublisher.models.batch_publisher_model import \
     BatchPublisherModel
 
@@ -13,16 +11,6 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, controller, parent=None):
         super(BatchPublisherTableDelegate, self).__init__(parent)
         self.controller = controller
-        # self._folder_names = [
-        #     "assets",
-        #     "assets/myasset",
-        #     "assets/myasset/mytest"]
-        self._folder_names = list()
-        assets = get_assets(self.controller.project)
-        for asset in assets:
-            asset_name = "/".join(asset["data"]["parents"])
-            asset_name += "/" + asset["name"]
-            self._folder_names.append(asset_name)
 
     def createEditor(self, parent, option, index):
         model = index.model()
@@ -49,7 +37,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             model = QtGui.QStandardItemModel()
             editor.setModel(model)
             assets_map = dict()
-            for asset in self._folder_names:
+            for asset in self.controller.folder_names:
                 asset_split = asset.split("/")
                 self._populate_assets(
                     asset_split,
