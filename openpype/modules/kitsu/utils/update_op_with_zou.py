@@ -462,10 +462,26 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
             project["project_status_name"] = status["name"]
             break
 
-    #  Do not sync closed kitsu project that is not found in openpype
-    if project["project_status_name"] == "Closed" and not get_project(
-        project["name"]
-    ):
+    # Get the project from OpenPype DB
+    project_name = project["name"]
+    project_dict = get_project(project_name)
+    project_active_state_kitsu = KitsuStateToBool[project["project_status_name"]]
+
+    # Early exit condition if the project is deactivated (closed) on Kitsu
+    if not project_active_state_kitsu:
+        if not project_dict:
+            # The project doesn't exist on OpenPype DB, skip
+            return
+
+        # Deactivate the project on the OpenPype DB (if not already), then return
+        op_active_state = project_dict.get('data', {}).get('active', False)
+        if op_active_state != project_active_state_kitsu:
+            log.info(f"Deactivate {project['name']} on OpenPype DB...")
+            update_project_state_in_db(
+                dbcon,
+                project_dict,
+                active=project_active_state_kitsu
+            )
         return
 
     log.info(f"Synchronizing {project['name']}...")
@@ -486,28 +502,15 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
         if naming_pattern.match(item["name"])
     ]
 
-    # Sync project. Create if doesn't exist
-    project_name = project["name"]
-    project_dict = get_project(project_name)
-
-    if project["project_status_name"] == "Closed":
-        kitsu_active_state = KitsuStateToBool[project["project_status_name"]]
-        op_active_state = project_dict.get('data', {}).get('active', False)
-        if op_active_state != kitsu_active_state:
-            update_project_state_in_db(
-                dbcon,
-                project_dict,
-                active=kitsu_active_state
-            )
-        return
-
     if not project_dict:
         log.info("Project created: {}".format(project_name))
+
     bulk_writes.append(write_project_to_op(project, dbcon))
 
-    # Try to find project document
     if not project_dict:
+        # Try to find the newly created project document on OpenPype DB
         project_dict = get_project(project_name)
+
     dbcon.Session["AVALON_PROJECT"] = project_name
 
     # Query all assets of the local project
