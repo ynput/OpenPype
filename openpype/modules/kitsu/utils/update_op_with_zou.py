@@ -332,7 +332,7 @@ def write_project_to_op(project: dict, dbcon: AvalonMongoDB) -> UpdateOne:
             "code": project_code,
             "fps": float(project["fps"]),
             "zou_id": project["id"],
-            "active": project["project_status_name"] != "Closed",
+            "active": KitsuStateToBool[project["project_status_name"]]
         }
     )
 
@@ -489,9 +489,6 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
     # Sync project. Create if doesn't exist
     project_name = project["name"]
     project_dict = get_project(project_name)
-    if not project_dict:
-        log.info("Project created: {}".format(project_name))
-    bulk_writes.append(write_project_to_op(project, dbcon))
 
     if project["project_status_name"] == "Closed":
         kitsu_active_state = KitsuStateToBool[project["project_status_name"]]
@@ -503,6 +500,10 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
                 active=kitsu_active_state
             )
         return
+
+    if not project_dict:
+        log.info("Project created: {}".format(project_name))
+    bulk_writes.append(write_project_to_op(project, dbcon))
 
     # Try to find project document
     if not project_dict:
