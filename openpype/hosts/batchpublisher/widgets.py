@@ -422,6 +422,19 @@ class BatchPublisherModel(QtCore.QAbstractTableModel):
                 ingest_filepath.publish()
 
 
+class ComboBox(QtWidgets.QComboBox):
+
+    def keyPressEvent(self, event):
+        # This is to prevent pressing "a" button with folder cell
+        # selected and the "assets" is selected in QComboBox.
+        # A default behaviour coming from QComboBox, when key is pressed
+        # it selects first matching item in QComboBox root model index.
+        # We don't want to select the "assets", since its not a full path
+        # of folder.
+        if event.type() == QtCore.QEvent.KeyPress:
+            return
+
+
 class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
 
     def __init__(self):
@@ -456,7 +469,8 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
             treeview.setItemsExpandable(True)
             treeview.header().setVisible(False)
             treeview.setMinimumHeight(250)
-            editor = QtWidgets.QComboBox(parent)
+            editor = ComboBox(parent)
+            editor.setInsertPolicy(QtWidgets.QComboBox.NoInsert)
             editor.setView(treeview)
             model = QtGui.QStandardItemModel()
             editor.setModel(model)
