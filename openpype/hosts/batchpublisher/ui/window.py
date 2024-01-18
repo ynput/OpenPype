@@ -84,8 +84,8 @@ class BatchPublisherWindow(QtWidgets.QMainWindow):
         for project_dict in projects:
             self._project_combobox.addItem(project_dict["name"])
 
-        editors_delegate = batch_publisher_delegate.BatchPublisherTableDelegate(
-            self._controller)
+        editors_delegate = batch_publisher_delegate. \
+            BatchPublisherTableDelegate(self._controller)
         table_view.setItemDelegateForColumn(
             batch_publisher_model.BatchPublisherModel.COLUMN_OF_FOLDER,
             editors_delegate)

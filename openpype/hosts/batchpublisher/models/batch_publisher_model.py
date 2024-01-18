@@ -121,10 +121,6 @@ class IngestSettings(object):
     def project(self):
         return self._project
 
-    @property
-    def folder_names(self):
-        return self._folder_names
-
     @project.setter
     def project(self, project):
         msg = "Project name changed to: {}".format(project)
@@ -141,6 +137,10 @@ class IngestSettings(object):
             asset_name = "/".join(asset["data"]["parents"])
             asset_name += "/" + asset["name"]
             self._folder_names.append(asset_name)
+
+    @property
+    def folder_names(self):
+        return self._folder_names
 
 
 class BatchPublisherModel(QtCore.QAbstractTableModel):
