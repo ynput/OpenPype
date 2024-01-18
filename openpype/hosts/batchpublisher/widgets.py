@@ -489,7 +489,7 @@ class BatchPublisherTableDelegate(QtWidgets.QStyledItemDelegate):
 
         elif index.column() == COLUMN_OF_PRODUCT_TYPE:
             from openpype.plugins.publish import integrate
-            product_types = integrate.IntegrateAsset.families
+            product_types = sorted(integrate.IntegrateAsset.families)
             editor = QtWidgets.QComboBox(parent)
             editor.addItems(product_types)
             return editor
