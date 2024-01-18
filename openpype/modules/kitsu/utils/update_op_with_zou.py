@@ -377,6 +377,8 @@ def sync_all_projects(
     Raises:
         gazu.exception.AuthFailedException: Wrong user login and/or password
     """
+    # Set default to an empty list to reduce the number of checks
+    ignore_projects = []
 
     # Authenticate
     if not validate_credentials(login, password):
@@ -405,13 +407,15 @@ def sync_all_projects(
         # all project
         project_to_sync = all_projects
 
+    # Iterate over MongoDB projects and if it's not present in Kitsu project, deactivate it on MongoDB
     for project in dbcon.projects():
         if project['name'] in all_kitsu_projects:
+            # Project exists on Kitsu, skip
             continue
         update_project_state_in_db(dbcon, project, active=False)
 
     for project in project_to_sync:
-        if ignore_projects and project["name"] in ignore_projects:
+        if project["name"] in ignore_projects:
             continue
         sync_project_from_kitsu(dbcon, project)
 
@@ -491,7 +495,7 @@ def sync_project_from_kitsu(dbcon: AvalonMongoDB, project: dict):
 
     if project["project_status_name"] == "Closed":
         kitsu_active_state = KitsuStateToBool[project["project_status_name"]]
-        op_active_state = project_dict.get('data', {}).get('active', None)
+        op_active_state = project_dict.get('data', {}).get('active', False)
         if op_active_state != kitsu_active_state:
             update_project_state_in_db(
                 dbcon,
