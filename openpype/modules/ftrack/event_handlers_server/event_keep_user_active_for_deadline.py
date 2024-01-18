@@ -6,7 +6,7 @@ from openpype.modules import ModulesManager
 class KeepUserActiveForDeadline(BaseEvent):
 
     def launch(self, session, event):
-        """Ensure the user stays active while having an ongoing job in the Deadline."""
+        """Ensure the user stays active while having ongoing job(s) in the Deadline."""
         if not event.get('data'):
             return
 
@@ -20,7 +20,7 @@ class KeepUserActiveForDeadline(BaseEvent):
             return
         if entity_info.get('action', "") != "update":
             return
-        if not "isactive" in entity_info.get('changes', {}):
+        if "isactive" not in entity_info.get('changes', {}):
             return
         if entity_info['changes']['isactive'].get('new') != False:
             return
@@ -47,7 +47,7 @@ class KeepUserActiveForDeadline(BaseEvent):
             {
                 "type": "label",
                 "value": "The following jobs from this user are currently active "
-                            "on deadline:\n{}".format("\n".join(job_ids))
+                         "on deadline:\n{}".format("\n".join(job_ids))
             },
             {
                 "type": "label",
@@ -75,7 +75,7 @@ class KeepUserActiveForDeadline(BaseEvent):
             return
 
         requested_arguments = {
-            "States":"Active"
+            "States": "Active"
         }
 
         jobs = deadline_module.get_deadline_data(
@@ -87,10 +87,11 @@ class KeepUserActiveForDeadline(BaseEvent):
 
         user_jobs = []
         for job in jobs:
-            if job['Props']['Env'].get('FTRACK_API_USER')==user:
+            if job['Props']['Env'].get('FTRACK_API_USER') == user:
                 user_jobs.append(job['_id'])
 
         return user_jobs
+
 
 def register(session):
     """Register plugin. Called when used as an plugin."""
